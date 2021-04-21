@@ -1,22 +1,22 @@
 import os
 import sys
 
+from qtpy import QtGui, QtCore, uic, QtWidgets
 from OpenGL.GL import *
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtCore import Qt
-from PyQt5.QtOpenGL import *
+from qtpy.QtOpenGL import *
+from qtpy.QtCore import Qt
 
 import pymol2
 from chisurf.plots.plotbase import Plot
 
 
-class EmittingStream(QtCore.QObject):
-
-    textWritten = QtCore.pyqtSignal(str)
-
-    def write(self, text):
-        self.textWritten.emit(str(text))
-
+# class EmittingStream(QtCore.QObject):
+#
+#     textWritten = QtCore.pyqtSignal(str)
+#
+#     def write(self, text):
+#         self.textWritten.emit(str(text))
+#
 
 class MolQtWidget(QGLWidget):
     """
@@ -256,7 +256,7 @@ class ControlWidget(QtWidgets.QWidget):
 
     def onExeCommand(self):
         print("onExeCommand")
-        sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
+        #sys.stdout = EmittingStream(textWritten=self.normalOutputWritten)
         c = str(self.lineEdit.text())
         print("%s" % c)
         self.parent.pymolWidget.pymol.cmd.do(c)
@@ -311,7 +311,7 @@ class MolView(Plot):
         self.name = kwargs.get('name', 'MolView')
         self.fit = fit
         self.mode = mode
-        self.pltControl = ControlWidget(self)
+        self.plot_controller = ControlWidget(self)
         self.layout = QtWidgets.QVBoxLayout(self)
 
         self.pymolWidget = MolQtWidget(self, play=False, sequence=sequence, enableUi=enableUi)
@@ -358,7 +358,7 @@ class MolView(Plot):
         #cmd.ramp_new("count", obj, [min(bfacts), max(bfacts)], "rainbow")
         #cmd.recolor()
 
-        self.pltControl.n_states = self.pymol.cmd.count_states(selection="(all)")
+        self.plot_controller.n_states = self.pymol.cmd.count_states(selection="(all)")
 
     def open_structure(self, structure, bfact=None, mode=None):
         mode = mode if mode is not None else self.mode

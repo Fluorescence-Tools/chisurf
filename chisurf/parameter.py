@@ -1,7 +1,8 @@
 from __future__ import annotations
-import typing
+from chisurf import typing
 
 import numpy as np
+import chinet
 
 import chisurf.base
 import chisurf.decorators
@@ -13,9 +14,17 @@ T = typing.TypeVar('T', bound='Parameter')
 class Parameter(
     chisurf.base.Base
 ):
-    """
 
-    """
+    @property
+    def name(self) -> str:
+        return self._port.name
+
+    @name.setter
+    def name(
+            self,
+            v: str
+    ):
+        self._port.name = v
 
     @property
     def bounds(
@@ -24,17 +33,22 @@ class Parameter(
         """A tuple containing the values for the lower (first value) and
         the upper (second value) of the bound.
         """
-        if self.bounds_on:
-            return self.lb, self.ub
-        else:
-            return float("-inf"), float("inf")
+        return self._port.bounds
 
     @bounds.setter
     def bounds(
             self,
             b: typing.Tuple[float, float]
     ):
-        self.lb, self.ub = b
+        self._port.bounds = np.array(b, dtype=np.float)
+
+    @property
+    def bounds_on(self):
+        return self._port.bounded
+
+    @bounds_on.setter
+    def bounds_on(self, v):
+        self._port.bounded = bool(v)
 
     @property
     def value(
@@ -49,34 +63,17 @@ class Parameter(
 
         :return:
         """
-        v = self._value
-        if callable(v):
-            return v()
-        else:
-            if self.is_linked:
-                return self.link.value
-            else:
-                if self.bounds_on:
-                    lb, ub = self.bounds
-                    if lb is not None:
-                        v = max(lb, v)
-                    if ub is not None:
-                        v = min(ub, v)
-                    return v
-                else:
-                    return v
+        return self._port.value.item(0)
 
     @value.setter
     def value(
             self,
             value: float
     ):
-        self._value = value
-        if self.is_linked:
-            self.link.value = value
+        self._port.value = np.array([value], dtype=np.double)
 
     @property
-    def link(self):
+    def link(self) -> chisurf.parameter.Parameter:
         return self._link
 
     @link.setter
@@ -87,26 +84,22 @@ class Parameter(
         if isinstance(link, Parameter):
             self._link = link
             if self.controller is not None:
-                self.controller.set_linked(
-                    link is not None
-                )
+                self.controller.set_linked(link is not None)
+            self._port.link = link._port
         elif link is None:
-            try:
-                self._value = self._link.value
-            except AttributeError:
-                pass
             self._link = None
+            self._port.unlink()
 
     @property
     def is_linked(
             self
     ) -> bool:
-        return isinstance(self._link, Parameter)
+        return self._port.is_linked
 
     def __add__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -116,7 +109,7 @@ class Parameter(
     def __mul__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -126,7 +119,7 @@ class Parameter(
     def __truediv__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -136,7 +129,7 @@ class Parameter(
     def __floordiv__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -146,7 +139,7 @@ class Parameter(
     def __sub__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -156,7 +149,7 @@ class Parameter(
     def __mod__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -166,7 +159,7 @@ class Parameter(
     def __pow__(
             self,
             other: T
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -175,7 +168,7 @@ class Parameter(
 
     def __invert__(
             self
-    ) -> typing.Type[Parameter]:
+    ) -> T:
         a = self.value
         return self.__class__(
             value=(1./a)
@@ -218,26 +211,26 @@ class Parameter(
             value=self.value.__round__()
         )
 
-    def to_dict(self) -> typing.Dict:
-        d = super().to_dict()
-        if self.link is not None:
-            d['_link'] = self.link.unique_identifier
-        return d
-
-    def from_dict(
-            self,
-            v: dict
-    ) -> None:
-        if v['_link'] is not None:
-            unique_identifier = v['_link']
-            for o in self.get_instances():
-                if unique_identifier == o.unique_identifier:
-                    v['_link'] = o
-            super().from_dict(v)
-            if isinstance(v['_link'], str):
-                raise ValueError(
-                    "The linked parameter %s is not instantiated." % unique_identifier
-                )
+    # def to_dict(self) -> typing.Dict:
+    #     d = super().to_dict()
+    #     if self.link is not None:
+    #         d['_link'] = self.link.unique_identifier
+    #     return d
+    #
+    # def from_dict(
+    #         self,
+    #         v: dict
+    # ) -> None:
+    #     if v['_link'] is not None:
+    #         unique_identifier = v['_link']
+    #         for o in self.get_instances():
+    #             if unique_identifier == o.unique_identifier:
+    #                 v['_link'] = o
+    #         super().from_dict(v)
+    #         if isinstance(v['_link'], str):
+    #             raise ValueError(
+    #                 "The linked parameter %s is not instantiated." % unique_identifier
+    #             )
 
     def __init__(
             self,
@@ -253,7 +246,7 @@ class Parameter(
         :param value: the value of the parameter (default 1.0)
         :param link: the (optional) parameter to which the new instance is linked to
         :param lb: the lower bound of the parameter value
-        :param ub: the upper bound of the paramter value
+        :param ub: the upper bound of the parameter value
         :param bounds_on: if this is True the parameter value is bounded between
         the upper and the lower bound as specified by ub and lb.
         :param args:
@@ -263,20 +256,34 @@ class Parameter(
             *args,
             **kwargs
         )
+        name = kwargs.pop('name', '')
+        if callable(value):
+            self._callable = value
+            self._port = chinet.Port(
+                value=np.array([0.0], dtype=np.double),  # the value is not actually used
+                name=name,
+                lb=lb,
+                ub=ub,
+                is_bounded=bounds_on
+            )
+        else:
+            self._callable = None
+            self._port = chinet.Port(
+                value=np.atleast_1d(value),
+                name=name,
+                lb=lb,
+                ub=ub,
+                is_bounded=bounds_on
+            )
         self._link = link
-        self._value = value
-        self.bounds_on = bounds_on
-        self.lb = lb
-        self.ub = ub
+        if isinstance(link, Parameter):
+            self._port.link = link._port
         self.controller = None
 
 
 class ParameterGroup(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     def __init__(
             self,
@@ -319,7 +326,7 @@ class ParameterGroup(
             self,
             key: str
     ):
-        v = self.__dict__[key]
+        v = super().__getattr__(key=key)
         if isinstance(v, chisurf.parameter.Parameter):
             return v.value
         return v

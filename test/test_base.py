@@ -13,7 +13,7 @@ import numpy as np
 
 import chisurf.base
 import chisurf.experiments
-import chisurf.experiments.data
+import chisurf.data
 
 
 def get_data_values(
@@ -65,11 +65,16 @@ class Tests(unittest.TestCase):
         d = {
             'name': 'B',
             'test_parameter': 'aa',
-            'verbose': False,
-            'unique_identifier': 'e7f0eb02-cbab-4aa3-abf2-799aebe96a09'
+            'meta_data': {
+                'verbose': False,
+                'unique_identifier': 'e7f0eb02-cbab-4aa3-abf2-799aebe96a09'
+            }
         }
         b1 = chisurf.base.Base(**d)
-        self.assertEqual(b1.to_dict(), d)
+        self.assertEqual(
+            d,
+            b1.to_dict()
+        )
         b2 = chisurf.base.Base()
         b2.from_dict(d)
         self.assertEqual(b1.to_dict(), b2.to_dict())
@@ -89,7 +94,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_base_yaml(self):
-        yaml_string = 'name: B\ntest_parameter: aa\nunique_identifier: e7f0eb02-cbab-4aa3-abf2-799aebe96a09\nverbose: false\n'
+        yaml_string = 'meta_data:\n  unique_identifier: bf8aa948-d449-48a3-ace7-f361867582dd\n  verbose: false\nname: B\n'
         b1 = chisurf.base.Base()
         b1.from_yaml(yaml_string, verbose=False)
 
@@ -112,7 +117,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_json(self):
-        json_string = '{\n    "name": "B",\n    "test_parameter": "aa",\n    "unique_identifier": "e7f0eb02-cbab-4aa3-abf2-799aebe96a09",\n    "verbose": false\n}'
+        json_string = '{\n    "meta_data": {\n        "unique_identifier": "bf8aa948-d449-48a3-ace7-f361867582dd",\n        "verbose": false\n    },\n    "name": "B"\n}'
         b1 = chisurf.base.Base()
         b1.from_json(json_string, verbose=False)
 
@@ -137,10 +142,11 @@ class Tests(unittest.TestCase):
     def test_base_save_load(self):
         import tempfile
         d = {
-            'name': 'B',
-            'test_parameter': 'aa',
-            'verbose': False,
-            'unique_identifier': 'e7f0eb02-cbab-4aa3-abf2-799aebe96a09'
+            'meta_data': {
+                'unique_identifier': 'bf8aa948-d449-48a3-ace7-f361867582dd',
+                'verbose': False
+            },
+            'name': 'B'
         }
 
         # JSON File
@@ -258,7 +264,7 @@ class Tests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.experiments.data.DataCurve(
+        data = chisurf.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -278,7 +284,7 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        data_group = chisurf.experiments.data.DataGroup(
+        data_group = chisurf.data.DataGroup(
             [data, data2]
         )
         data_group.current_dataset = 0

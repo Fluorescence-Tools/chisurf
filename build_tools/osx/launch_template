@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+script_dir=$(dirname "$(dirname "$0")")
+# Disable user site packages
+export PYTHONNOUSERSITE=1
+export PATH="$script_dir:$script_dir/bin:$PATH"
+export QT_PLUGIN_PATH="$script_dir/plugins"
+export PYTHONPATH="$PYTHONPATH:$script_dir"
+cd $script_dir
+python -m {{ app_name }} $@

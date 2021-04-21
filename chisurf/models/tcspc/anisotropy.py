@@ -96,31 +96,16 @@ class Anisotropy(
 
     def get_decay(
             self,
-            lifetime_spectrum: np.array
+            lifetime_spectrum: np.ndarray
     ):
-        pt = self.polarization_type.upper()
-        a = self.rotation_spectrum
-        f = lifetime_spectrum
-        if pt == 'VH' or pt == 'VV':
-            d = chisurf.math.datatools.elte2(a, f)
-            vv = np.hstack([f, chisurf.math.datatools.e1tn(d, 2)])
-            vh = chisurf.math.datatools.e1tn(
-                np.hstack([f, chisurf.math.datatools.e1tn(d, -1)]),
-                self.g
-            )
-            if self.polarization_type.upper() == 'VH':
-                return np.hstack(
-                    [chisurf.math.datatools.e1tn(vv, self.l2),
-                     chisurf.math.datatools.e1tn(vh, 1 - self.l2)]
-                )
-            elif self.polarization_type.upper() == 'VV':
-                r = np.hstack(
-                    [chisurf.math.datatools.e1tn(vv, 1 - self.l1),
-                     chisurf.math.datatools.e1tn(vh, self.l1)]
-                )
-                return r
-        else:
-            return f
+        return chisurf.fluorescence.anisotropy.decay.calculcate_spectrum(
+            lifetime_spectrum=lifetime_spectrum,
+            anisotropy_spectrum=self.rotation_spectrum,
+            polarization_type=self.polarization_type,
+            g_factor=self.g,
+            l1=self.l1,
+            l2=self.l2
+        )
 
     def __len__(self):
         return len(self._bs)
@@ -129,8 +114,8 @@ class Anisotropy(
             self,
             b: float = 0.2,
             rho: float = 1.0,
-            lb: float = None,
-            ub: float = None,
+            lb: float = 0.0,
+            ub: float = 10000.0,
             fixed: bool = False,
             bound_on: bool = False,
             **kwargs
@@ -139,17 +124,20 @@ class Anisotropy(
         rho_value = rho
 
         b = chisurf.fitting.parameter.FittingParameter(
-            lb=lb, ub=ub,
             value=b_value,
+            lb=lb,
+            ub=ub,
             name='b(%i)' % (len(self) + 1),
             fixed=fixed,
             bounds_on=bound_on
         )
         rho = chisurf.fitting.parameter.FittingParameter(
-            lb=lb, ub=ub,
             value=rho_value,
+            lb=lb,
+            ub=ub,
             name='rho(%i)' % (len(self) + 1),
-            fixed=fixed, bounds_on=bound_on
+            fixed=fixed,
+            bounds_on=bound_on
         )
         self._rhos.append(rho)
         self._bs.append(b)

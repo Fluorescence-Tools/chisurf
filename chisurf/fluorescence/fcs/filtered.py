@@ -9,7 +9,8 @@ def calc_lifetime_filter(
         experimental_decay,
         normalize_patterns: bool = True
 ) -> np.array:
-    """Calculates filters for lifetime filtered correlations according to Enderlein
+    """Calculates filters for lifetime filtered correlations according to
+    Enderlein
 
     :param decays: a list of fluorescence decays
     :param experimental_decay: the experimental fluorescence decay

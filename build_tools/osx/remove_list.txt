@@ -1,0 +1,4 @@
+/share/IMP/npctransport
+/share/IMP/benchmark
+/share/IMP/rmf
+/lib/python3.7/site-packages/pandas/tests

@@ -127,7 +127,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(
             c2.fwhm,
             chisurf.math.signal.calculate_fwhm(
-                c2
+                x_values=c2.x, y_values=c2.y
             )[0]
         )
 

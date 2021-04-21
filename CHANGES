@@ -1,6 +1,26 @@
 CHANGES
 =======
 
+200311
+------
+Last stop decay_histogram refactoring and clsm_pixel_select
+both are very similar in the sense that the inject data into chisurf
+and have curve lists. this should be refelceted by the CurveGroup
+which is an ABC that will be implemented byCLSMPixelSelect and CLSMPixelSelect
+* migrate changes from quest molview to molviewer (qtpy vs PyQt5)
+* migrate PyQt5 imports to qtpy imports
+ - tools.tttr.correlate: 'qtpy.QtCore' has no attribute 'pyqtSignal'
+ - QScintilla depends on PyQt5
+* get rid of Qt in core classes and functions
+  - experiments: clean
+  - fio: clean
+  - fitting: clean
+  - fluorescence: clean
+  - math: clean
+  - settings: clean
+  - structure: clean
+
+
 160525
 ------
 * Internal quality improvements

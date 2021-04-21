@@ -2,10 +2,7 @@
 
 """
 from __future__ import annotations
-import typing
-import deprecation
-
-from qtpy import QtWidgets
+from chisurf import typing
 
 import numpy as np
 
@@ -16,7 +13,7 @@ import chisurf.parameter
 import chisurf.decorators
 import chisurf.models.model
 
-parameter_settings = chisurf.settings.parameter
+#parameter_settings = chisurf.settings.parameter
 
 
 class FittingParameter(
@@ -25,7 +22,11 @@ class FittingParameter(
 
     def __init__(
             self,
-            model: chisurf.models.Model = None,
+            value: float = 1.0,
+            link: chisurf.parameter.Parameter = None,
+            lb: float = float("-inf"),
+            ub: float = float("inf"),
+            bounds_on: bool = False,
             fixed: bool = False,
             *args,
             **kwargs
@@ -39,9 +40,13 @@ class FittingParameter(
         """
         super().__init__(
             *args,
+            value=value,
+            link=link,
+            ub=ub,
+            lb=lb,
+            bounds_on=bounds_on,
             **kwargs
         )
-        self.model = model
         self.fixed = fixed
         self._error_estimate = None
         self._chi2s = None
@@ -97,7 +102,7 @@ class FittingParameter(
     def __str__(self):
         s = "\nVariable\n"
         s += "name: %s\n" % self.name
-        s += "internal-value: %s\n" % self._value
+        s += "internal-value: %s\n" % self._port
         if self.bounds_on:
             s += "bounds: %s\n" % self.bounds
         if self.is_linked:
@@ -105,41 +110,10 @@ class FittingParameter(
             s += "link-value: %s\n" % self.value
         return s
 
-    @deprecation.deprecated(
-        deprecated_in="19.08.23",
-        removed_in="20.01.01",
-        current_version="19.08.23",
-        details="use the fitting.widget.make_fitting_widget function instead"
-    )
-    def make_widget(
-            self,
-            text: str = None,
-            layout: QtWidgets.QLayout = None,
-            decimals: int = 4,
-            **kwargs
-    ) -> chisurf.fitting.widgets.FittingParameterWidget:
-        if text is None:
-            text = self.name
-        update_widget = kwargs.get('update_widget', lambda x: x)
-        kw = {
-            'name': text,
-            'decimals': decimals,
-            'layout': layout
-        }
-        widget = chisurf.fitting.widgets.FittingParameterWidget(
-            self,
-            **kw
-        )
-        self.controller = widget
-        return widget
-
 
 class GlobalFittingParameter(
     FittingParameter
 ):
-    """
-
-    """
 
     @property
     def value(self) -> float:
@@ -189,9 +163,6 @@ class GlobalFittingParameter(
 class FittingParameterGroup(
     chisurf.parameter.ParameterGroup
 ):
-    """
-
-    """
 
     @property
     def parameter_bounds(
@@ -222,7 +193,7 @@ class FittingParameterGroup(
     @property
     def parameters_all_dict(
             self
-    ) -> typing.Dict:
+    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
@@ -240,7 +211,7 @@ class FittingParameterGroup(
     @property
     def parameter_dict(
             self
-    ) -> dict:
+    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         re = dict()
         for p in self.parameters:
             re[p.name] = p
@@ -268,13 +239,24 @@ class FittingParameterGroup(
             ps[i].value = v
 
     def to_dict(
-            self
-    ) -> dict:
-        s = dict()
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
+    ) -> typing.Dict:
+        s = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
         parameters = dict()
         s['parameter'] = parameters
         for parameter in self._parameters:
-            parameters[parameter.name] = parameter.to_dict()
+            parameters[parameter.name] = parameter.to_dict(
+                remove_protected=remove_protected,
+                copy_values=copy_values,
+                convert_values_to_elementary=convert_values_to_elementary
+            )
         return s
 
     def from_dict(
@@ -393,21 +375,4 @@ class FittingParameterGroup(
             p0 = args[0]
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
-
-    # @deprecation.deprecated(
-    #     deprecated_in="19.08.23",
-    #     removed_in="20.01.01",
-    #     current_version="19.08.23",
-    #     details="use the fitting.widget.make_fitting_parameter_group_widget function instead"
-    # )
-    # def to_widget(
-    #         self,
-    #         *args,
-    #         **kwargs
-    # ) -> chisurf.fitting.widgets.FittingParameterGroupWidget:
-    #     return chisurf.fitting.widgets.FittingParameterGroupWidget(
-    #         self, *args,
-    #         **kwargs
-    #     )
-
 

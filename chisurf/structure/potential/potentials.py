@@ -1,18 +1,16 @@
 from __future__ import annotations
 
 import os
-import json
 import math
 import copy
 
 import numpy as np
 import numba as nb
-import scipy.stats
 
 import chisurf.fluorescence
-import chisurf.fluorescence.av
+import chisurf.structure.av
 import chisurf.structure
-import chisurf.structure.potential.cPotentials
+import chisurf.structure.potential.cPotentials_
 
 
 @nb.njit
@@ -30,38 +28,48 @@ def centroid2(
         repulsion: float = 100.0
 ):
     """
-    Calculate the potential energy given the UNRES GBV-Sidechain potential and isotropic conditions.
+    Calculate the potential energy given the UNRES GBV-Sidechain potential and
+    isotropic conditions.
 
     Parameters
     ----------
     atom_lookup : integer array
-            A two dimensional lookup array to find for each residue and atom-type the corresponding
-            position within the coordinate array `r`.
+            A two dimensional lookup array to find for each residue and
+            atom-type the corresponding position within the coordinate array `r`.
     centroid_pos : integer
-            This variable specifies which position in the atom_lookup contains the number of the C-beta
-            atom.
+            This variable specifies which position in the atom_lookup
+            contains the number of the C-beta atom.
     res_types : integer array
-            An array containing the residue types of the residues as a one dimensional array. The residue types
-            are in the order as in :py:const:mfm.structure.residue_atoms_internal:
+            An array containing the residue types of the residues as a one
+            dimensional array. The residue types are in the order as in
+            :py:const:mfm.structure.residue_atoms_internal:
     ca_dist : double array
-            The array `ca_dist` should contain the pair-wise distances of all C-alpha atoms of the protein
+            The array `ca_dist` should contain the pair-wise distances of all
+            C-alpha atoms of the protein
     r : double array
-            The two-dimensional array `r` contains all Cartesian coordinates of all atoms.
+            The two-dimensional array `r` contains all Cartesian coordinates
+            of all atoms.
     potential : double array
-            This 3-dimensional array contains pre-calculated potentials of all possible combinations of amino-
-            acids. potential[1,2,10] has to contain the potential of the amino-acid (1) and (2) at a distance
-            of 10 whereas the actual distance is dependent on the range in which the potential was actually
-            calculated. The potential can be calculated with the small program located in:
+            This 3-dimensional array contains pre-calculated potentials of all
+            possible combinations of amino-acids. potential[1,2,10] has to
+            contain the potential of the amino-acid (1) and (2) at a distance
+            of 10 whereas the actual distance is dependent on the range in
+            which the potential was actually calculated. The potential can be
+            calculated with the small program located in:
             mfm.structure.potential.database.make_unres_lookup.py
     min_dist : double
-            The minimum distance for which the parameter `potential` was calculated. This parameter has to be
-            supplied and depends on the provided pre-calculated potential file.
+            The minimum distance for which the parameter `potential` was
+            calculated. This parameter has to be supplied and depends on the
+            provided pre-calculated potential file.
     max_dist :double
-            The minimum distance for which the parameter `potential` was calculated (see min_dist)
+            The minimum distance for which the parameter `potential` was
+            calculated (see min_dist)
     bin_width : double
-            The spacing between the bin of the distance points in the pre-calculated potential
+            The spacing between the bin of the distance points in the
+            pre-calculated potential
     cutoff : double
-            Distances between the centroids bigger than the cut-off distance will be neglected
+            Distances between the centroids bigger than the cut-off distance
+            will be neglected
 
     Citation
     --------
@@ -151,7 +159,7 @@ def internal_potential_calpha(
 
 @nb.jit(nopython=True)
 def lj_calpha(
-        ca_coordinates: np.array,
+        ca_coordinates: np.ndarray,
         rm: float = 3.8208650279
 ) -> float:
     """Truncated Lennard Jones
@@ -193,7 +201,7 @@ def lennard_jones_calpha(
 
 @nb.njit
 def gb(
-        xyz: np.array,
+        xyz: np.ndarray,
         epsilon: float = 4.0,
         epsilon0: float = 80.1,
         cutoff: float = 12.0
@@ -247,9 +255,9 @@ def gb(
 
 @nb.jit
 def go(
-        ca_dist: np.array,
-        energy_matrix: np.array,
-        rm_matrix: np.array
+        ca_dist: np.ndarray,
+        energy_matrix: np.ndarray,
+        rm_matrix: np.ndarray
 ):
     """
     If cutoff is True the LJ-Potential is cutoff and shifted at 2.5 sigma
@@ -304,7 +312,7 @@ class Ramachandran(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        Erama = chisurf.structure.potential.cPotentials.ramaEnergy(
+        Erama = chisurf.structure.potential.cPotentials_.ramaEnergy(
             c.residue_lookup_i,
             c.iAtoms,
             self.ramaPot
@@ -326,11 +334,11 @@ class Electrostatics(object):
         self.structure = structure
         self.name = 'ele'
         if type == 'gb':
-            self.p = chisurf.structure.potential.cPotentials.gb
+            self.p = chisurf.structure.potential.cPotentials_.gb
 
     def getEnergy(self) -> float:
         structure = self.structure
-        #Eel = mfm.structure.potential.cPotentials.gb(structure.xyz)
+        #Eel = mfm.structure.potential.cPotentials_.gb(structure.xyz)
         Eel = gb(structure.xyz)
         self.E = Eel
         return Eel
@@ -384,7 +392,7 @@ class HPotential(object):
         s1 = self.structure
         cca2 = self.cutoffCA ** 2
         ch2 = self.cutoffH ** 2
-        nHbond, Ehbond = chisurf.structure.potential.cPotentials.hBondLookUpAll(
+        nHbond, Ehbond = chisurf.structure.potential.cPotentials_.hBondLookUpAll(
             s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2
         )
         self.E = Ehbond
@@ -434,14 +442,14 @@ class GoPotential(object):
         c = self.structure
         nnEFactor = self.nnEFactor if self.non_native_contact_on else 0.0
         cutoff = self.cutoff if self.native_cutoff_on else 1e6
-        self.eMatrix, self.sMatrix = chisurf.structure.potential.cPotentials.go_init(
+        self.eMatrix, self.sMatrix = chisurf.structure.potential.cPotentials_.go_init(
             c.residue_lookup_r, c.dist_ca,
             self.epsilon, nnEFactor, cutoff
         )
 
     def getEnergy(self):
         c = self.structure
-        Etot, nNa, Ena, nNN, Enn = chisurf.structure.potential.cPotentials.go(
+        Etot, nNa, Ena, nNN, Enn = chisurf.structure.potential.cPotentials_.go(
             c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix
         )
         #Etot = go(c., c.dist_ca, self.eMatrix, self.sMatrix)
@@ -493,7 +501,7 @@ class MJPotential(object):
 
     def getEnergy(self):
         c = self.structure
-        nCont, Emj = chisurf.structure.potential.cPotentials.mj(
+        nCont, Emj = chisurf.structure.potential.cPotentials_.mj(
             c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff
         )
         self.E = Emj
@@ -603,7 +611,7 @@ class ASA(object):
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
-        self.sphere_points = chisurf.structure.potential.cPotentials.spherePoints(
+        self.sphere_points = chisurf.structure.potential.cPotentials_.spherePoints(
             n_sphere_point
         )
         self.radius = radius
@@ -612,7 +620,7 @@ class ASA(object):
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
-        asa = chisurf.structure.potential.cPotentials.asa(
+        asa = chisurf.structure.potential.cPotentials_.asa(
             c.xyz,
             c.l_res,
             c.dist_ca,
@@ -643,9 +651,8 @@ class ClashPotential(object):
 
         >>> import chisurf.structure
         >>> import chisurf.structure.potential
-
-        >>> s = mfm.structure.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
-        >>> pce = mfm.structure.potential.potentials.ClashPotential(structure=s, clash_tolerance=6.0)
+        >>> s = chisurf.structure.Structure('./test/data/model/hgbp1/hGBP1_closed.pdb', verbose=True, make_coarse=True)
+        >>> pce = chisurf.structure.potential.ClashPotential(structure=s, clash_tolerance=6.0)
         >>> pce.getEnergy()
 
         """
@@ -655,232 +662,232 @@ class ClashPotential(object):
 
     def getEnergy(self) -> float:
         c = self.structure
-        return chisurf.structure.potential.cPotentials.clash_potential(
+        return chisurf.structure.potential.cPotentials_.clash_potential(
             c.xyz,
             c.vdw,
             self.clash_tolerance,
             self.covalent_radius
         )
 
-
-class AvPotential(object):
-    """
-    The AvPotential class provides the possibility to calculate the reduced or unreduced chi2 given a set of
-    labeling positions and experimental distances. Here the labeling positions and distances are provided as
-    dictionaries.
-
-    Examples
-    --------
-
-    >>> import json
-    >>> labeling_file = './test/data/model/labeling.json'
-    >>> labeling = json.load(open(labeling_file, 'r'))
-    >>> distances = labeling['Distances']
-    >>> positions = labeling['Positions']
-    >>> import chisurf
-    >>> av_potential = chisurf.structure.potential.potentials.AvPotential(distances=distances, positions=positions)
-    >>> structure = chisurf.structure.Structure('./test/data/model/HM_1FN5_Naming.pdb')
-    >>> av_potential.getChi2(structure)
-
-    """
-    name = 'Av'
-
-    def __init__(
-            self,
-            labeling_file: str = None,
-            structure: chisurf.structure.Structure = None,
-            verbose: bool = False,
-            rda_axis: np.array = None,
-            av_samples: int = None,
-            min_av: int = 150,
-            **kwargs
-    ):
-        self._labeling_file = labeling_file
-        self._structure = structure
-        self.verbose = verbose
-
-        if rda_axis is None:
-            rda_axis = chisurf.fluorescence.rda_axis
-        self.rda_axis = rda_axis
-
-        self.distances = kwargs.get("Distances", None)
-        self.positions = kwargs.get("Positions", None)
-
-        if av_samples is None:
-            av_samples = chisurf.settings["fps"]["distance_samples"]
-        self.n_av_samples = av_samples
-        self.min_av = min_av
-
-        self.avs = dict()
-
-    @property
-    def labeling_file(self):
-        return self._labeling_file
-
-    @labeling_file.setter
-    def labeling_file(self, v):
-        self._labeling_file = v
-        p = json.load(open(v))
-        self.distances = p["Distances"]
-        self.positions = p["Positions"]
-
-    @property
-    def structure(
-            self
-    ) -> chisurf.structure.Structure:
-        """
-        The Structure object used for the calculation of the accessible volumes
-        """
-        return self._structure
-
-    @structure.setter
-    def structure(
-            self,
-            structure: chisurf.structure.Structure
-    ):
-        self._structure = structure
-        self.calc_avs()
-
-    @property
-    def chi2(self) -> float:
-        """
-        The current unreduced chi2 (recalculated at each call)
-        """
-        return self.getChi2()
-
-    def calc_avs(self):
-        """
-        Calculates/recalculates the accessible volumes.
-        """
-        if self.structure is None:
-            raise ValueError("The structure is not set")
-        if self.positions is None:
-            raise ValueError("Positions not set unable to calculate AVs")
-        arguments = [
-            dict(
-                {'structure': self.structure, 'verbose': self.verbose,},
-                **self.positions[position_key]
-            )
-            for position_key in self.positions
-        ]
-        avs = map(
-            lambda x: chisurf.fluorescence.av.BasicAV(**x),
-            arguments
-        )
-        for i, position_key in enumerate(self.positions):
-            self.avs[position_key] = avs[i]
-
-    def calc_distances(
-            self,
-            structure: chisurf.structure.Structure = None,
-            verbose: bool = False
-    ):
-        """
-
-        :param structure: Structure
-            If this object is provided the attributes regarding dye-attachment are kept constant
-            and the structure is changed prior calculation of the distances.
-        :param verbose: bool
-            If this is True output to stdout is generated
-        """
-        verbose = verbose or self.verbose
-        if isinstance(
-                structure,
-                chisurf.structure.Structure
-        ):
-            self.structure = structure
-        for distance_key in self.distances:
-            distance = self.distances[distance_key]
-            av1 = self.avs[distance['position1_name']]
-            av2 = self.avs[distance['position2_name']]
-            distance_type = distance['distance_type']
-            R0 = distance['Forster_radius']
-            if distance_type == 'RDAMean':
-                d12 = av1.dRDA(av2)
-            elif distance_type == 'Rmp':
-                d12 = av1.dRmp(av1, av2)
-            elif distance_type == 'RDAMeanE':
-                d12 = av1.RDAE(av1, av2, R0)
-            #elif distance_type == 'pRDA':
-            #    rda = np.array(distance['rda'])
-            #    d12 = functions.histogram_rda(av1, av2, rda_axis=rda)[0]
-            distance['model_distance'] = d12
-            if verbose:
-                print("-------------")
-                print("Distance: %s" % distance_key)
-                print("Forster-Radius %.1f" % distance['Forster_radius'])
-                print("Distance type: %s" % distance_type)
-                print("Model distance: %.1f" % d12)
-                print(
-                    "Experimental distance: %.1f (-%.1f, +%.1f)" % (
-                        distance['distance'],
-                        distance['error_neg'], distance['error_pos']
-                    )
-                )
-
-    def getChi2(
-            self,
-            structure: chisurf.structure.Structure = None,
-            reduced: bool = False,
-            verbose: bool = False
-    ):
-        """
-
-        :param structure: Structure
-            A Structure object if provided the attributes regarding dye-attachment are kept constant
-            and the structure is changed prior calculation of the distances.
-        :param reduced: bool
-            If True the reduced chi2 is calculated (by default False)
-        :param verbose: bool
-            Output to stdout
-        :return: A float containig the chi2 (reduced or unreduced) of the current or provided structure.
-        """
-        verbose = self.verbose or verbose
-        if isinstance(
-                structure,
-                chisurf.structure.Structure
-        ):
-            self.structure = structure
-
-        chi2 = 0.0
-        self.calc_distances(verbose=verbose)
-        for distance in list(self.distances.values()):
-            dm = distance['model_distance']
-            de = distance['distance']
-            if distance['distance_type'] == 'pRDA':
-                prda = np.array(distance['prda'])
-                prda /= sum(prda)
-                chi2 += sum((dm - prda)**2)
-            else:
-                error_neg = distance['error_neg']
-                error_pos = distance['error_pos']
-                d = dm - de
-                chi2 += (d / error_neg) ** 2 if d < 0 else (d / error_pos) ** 2
-        if reduced:
-            return chi2 / (len(list(self.distances.keys())) - 1.0)
-        else:
-            return chi2
-
-    def getEnergy(
-            self,
-            structure: chisurf.structure.Structure = None,
-            gauss_bond: bool = True
-    ):
-        if isinstance(structure, chisurf.structure.Structure):
-            self.structure = structure
-        if gauss_bond:
-            energy = 0.0
-            self.calc_distances()
-            for distance in list(self.distances.values()):
-                dm = distance['model_distance']
-                de = distance['distance']
-                error_neg = distance['error_neg']
-                error_pos = distance['error_pos']
-                err = error_neg if (dm - de) < 0 else error_pos
-                energy -= scipy.stats.norm.pdf(de, dm, err)
-            return energy
-        else:
-            return self.getChi2(
-                structure=self.structure
-            )
-
+#
+# class AvPotential(object):
+#     """
+#     The AvPotential class provides the possibility to calculate the reduced or unreduced chi2 given a set of
+#     labeling positions and experimental distances. Here the labeling positions and distances are provided as
+#     dictionaries.
+#
+#     Examples
+#     --------
+#
+#     >>> import json
+#     >>> labeling_file = './test/data/model/labeling.json'
+#     >>> labeling = json.load(open(labeling_file, 'r'))
+#     >>> distances = labeling['Distances']
+#     >>> positions = labeling['Positions']
+#     >>> import chisurf
+#     >>> av_potential = chisurf.structure.potential.potentials.AvPotential(distances=distances, positions=positions)
+#     >>> structure = chisurf.structure.Structure('./test/data/model/HM_1FN5_Naming.pdb')
+#     >>> av_potential.getChi2(structure)
+#
+#     """
+#     name = 'Av'
+#
+#     def __init__(
+#             self,
+#             labeling_file: str = None,
+#             structure: chisurf.structure.Structure = None,
+#             verbose: bool = False,
+#             rda_axis: np.ndarray = None,
+#             av_samples: int = None,
+#             min_av: int = 150,
+#             **kwargs
+#     ):
+#         self._labeling_file = labeling_file
+#         self._structure = structure
+#         self.verbose = verbose
+#
+#         if rda_axis is None:
+#             rda_axis = chisurf.fluorescence.rda_axis
+#         self.rda_axis = rda_axis
+#
+#         self.distances = kwargs.get("Distances", None)
+#         self.positions = kwargs.get("Positions", None)
+#
+#         if av_samples is None:
+#             av_samples = chisurf.settings["fps"]["distance_samples"]
+#         self.n_av_samples = av_samples
+#         self.min_av = min_av
+#
+#         self.avs = dict()
+#
+#     @property
+#     def labeling_file(self):
+#         return self._labeling_file
+#
+#     @labeling_file.setter
+#     def labeling_file(self, v):
+#         self._labeling_file = v
+#         p = json.load(open(v))
+#         self.distances = p["Distances"]
+#         self.positions = p["Positions"]
+#
+#     @property
+#     def structure(
+#             self
+#     ) -> chisurf.structure.Structure:
+#         """
+#         The Structure object used for the calculation of the accessible volumes
+#         """
+#         return self._structure
+#
+#     @structure.setter
+#     def structure(
+#             self,
+#             structure: chisurf.structure.Structure
+#     ):
+#         self._structure = structure
+#         self.calc_avs()
+#
+#     @property
+#     def chi2(self) -> float:
+#         """
+#         The current unreduced chi2 (recalculated at each call)
+#         """
+#         return self.getChi2()
+#
+#     def calc_avs(self):
+#         """
+#         Calculates/recalculates the accessible volumes.
+#         """
+#         if self.structure is None:
+#             raise ValueError("The structure is not set")
+#         if self.positions is None:
+#             raise ValueError("Positions not set unable to calculate AVs")
+#         arguments = [
+#             dict(
+#                 {'structure': self.structure, 'verbose': self.verbose,},
+#                 **self.positions[position_key]
+#             )
+#             for position_key in self.positions
+#         ]
+#         avs = map(
+#             lambda x: chisurf.structure.av.BasicAV(**x),
+#             arguments
+#         )
+#         for i, position_key in enumerate(self.positions):
+#             self.avs[position_key] = avs[i]
+#
+#     def calc_distances(
+#             self,
+#             structure: chisurf.structure.Structure = None,
+#             verbose: bool = False
+#     ):
+#         """
+#
+#         :param structure: Structure
+#             If this object is provided the attributes regarding dye-attachment are kept constant
+#             and the structure is changed prior calculation of the distances.
+#         :param verbose: bool
+#             If this is True output to stdout is generated
+#         """
+#         verbose = verbose or self.verbose
+#         if isinstance(
+#                 structure,
+#                 chisurf.structure.Structure
+#         ):
+#             self.structure = structure
+#         for distance_key in self.distances:
+#             distance = self.distances[distance_key]
+#             av1 = self.avs[distance['position1_name']]
+#             av2 = self.avs[distance['position2_name']]
+#             distance_type = distance['distance_type']
+#             R0 = distance['Forster_radius']
+#             if distance_type == 'RDAMean':
+#                 d12 = av1.dRDA(av2)
+#             elif distance_type == 'Rmp':
+#                 d12 = av1.dRmp(av1, av2)
+#             elif distance_type == 'RDAMeanE':
+#                 d12 = av1.RDAE(av1, av2, R0)
+#             #elif distance_type == 'pRDA':
+#             #    rda = np.array(distance['rda'])
+#             #    d12 = functions.histogram_rda(av1, av2, rda_axis=rda)[0]
+#             distance['model_distance'] = d12
+#             if verbose:
+#                 print("-------------")
+#                 print("Distance: %s" % distance_key)
+#                 print("Forster-Radius %.1f" % distance['Forster_radius'])
+#                 print("Distance type: %s" % distance_type)
+#                 print("Model distance: %.1f" % d12)
+#                 print(
+#                     "Experimental distance: %.1f (-%.1f, +%.1f)" % (
+#                         distance['distance'],
+#                         distance['error_neg'], distance['error_pos']
+#                     )
+#                 )
+#
+#     def getChi2(
+#             self,
+#             structure: chisurf.structure.Structure = None,
+#             reduced: bool = False,
+#             verbose: bool = False
+#     ):
+#         """
+#
+#         :param structure: Structure
+#             A Structure object if provided the attributes regarding dye-attachment are kept constant
+#             and the structure is changed prior calculation of the distances.
+#         :param reduced: bool
+#             If True the reduced chi2 is calculated (by default False)
+#         :param verbose: bool
+#             Output to stdout
+#         :return: A float containig the chi2 (reduced or unreduced) of the current or provided structure.
+#         """
+#         verbose = self.verbose or verbose
+#         if isinstance(
+#                 structure,
+#                 chisurf.structure.Structure
+#         ):
+#             self.structure = structure
+#
+#         chi2 = 0.0
+#         self.calc_distances(verbose=verbose)
+#         for distance in list(self.distances.values()):
+#             dm = distance['model_distance']
+#             de = distance['distance']
+#             if distance['distance_type'] == 'pRDA':
+#                 prda = np.array(distance['prda'])
+#                 prda /= sum(prda)
+#                 chi2 += sum((dm - prda)**2)
+#             else:
+#                 error_neg = distance['error_neg']
+#                 error_pos = distance['error_pos']
+#                 d = dm - de
+#                 chi2 += (d / error_neg) ** 2 if d < 0 else (d / error_pos) ** 2
+#         if reduced:
+#             return chi2 / (len(list(self.distances.keys())) - 1.0)
+#         else:
+#             return chi2
+#
+#     def getEnergy(
+#             self,
+#             structure: chisurf.structure.Structure = None,
+#             gauss_bond: bool = True
+#     ):
+#         if isinstance(structure, chisurf.structure.Structure):
+#             self.structure = structure
+#         if gauss_bond:
+#             energy = 0.0
+#             self.calc_distances()
+#             for distance in list(self.distances.values()):
+#                 dm = distance['model_distance']
+#                 de = distance['distance']
+#                 error_neg = distance['error_neg']
+#                 error_pos = distance['error_pos']
+#                 err = error_neg if (dm - de) < 0 else error_pos
+#                 energy -= scipy.stats.norm.pdf(de, dm, err)
+#             return energy
+#         else:
+#             return self.getChi2(
+#                 structure=self.structure
+#             )
+#

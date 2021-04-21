@@ -2,16 +2,19 @@ import utils
 import os
 import unittest
 import tempfile
-import glob
 import numpy as np
+import scikit_fluorescence.io.zipped
 
+import chisurf.fio.fluorescence.fcs
+import chisurf.fio.fluorescence.tcspc
 
 TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
 
-import chisurf.fio
+
+import chisurf.fio.structure.coordinates
 
 
 class Tests(unittest.TestCase):
@@ -178,7 +181,7 @@ class Tests(unittest.TestCase):
 
     def test_fetch_pdb(self):
         pdb_id = "148L"
-        s = chisurf.fio.coordinates.fetch_pdb_string(pdb_id)
+        s = chisurf.fio.structure.coordinates.fetch_pdb_string(pdb_id)
         self.assertEqual(
             'HEADER    HYDROLASE/HYDROLASE SUBSTRATE           27-OCT-93   148L              \nTITLE     A COVALEN',
             s[:100]
@@ -186,8 +189,8 @@ class Tests(unittest.TestCase):
 
     def test_parse_string_pdb(self):
         pdb_id = "148L"
-        s = chisurf.fio.coordinates.fetch_pdb_string(pdb_id)
-        atoms = chisurf.fio.coordinates.parse_string_pdb(s)
+        s = chisurf.fio.structure.coordinates.fetch_pdb_string(pdb_id)
+        atoms = chisurf.fio.structure.coordinates.parse_string_pdb(s)
         atoms_reference = np.array(
             [[7.71, 28.561, 39.546],
              [8.253, 29.664, 38.758],
@@ -217,15 +220,15 @@ class Tests(unittest.TestCase):
         _, filename = tempfile.mkstemp(
             suffix='.pdb'
         )
-        with chisurf.fio.zipped.open_maybe_zipped(
+        with scikit_fluorescence.io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:
             fp.write(
-                chisurf.fio.coordinates.fetch_pdb_string(pdb_id)
+                chisurf.fio.structure.coordinates.fetch_pdb_string(pdb_id)
             )
 
-        atoms = chisurf.fio.coordinates.read(
+        atoms = chisurf.fio.structure.coordinates.read(
             filename=filename
         )
         atoms_reference = np.array(
@@ -246,9 +249,16 @@ class Tests(unittest.TestCase):
             ),
             True
         )
+        atoms = chisurf.fio.structure.coordinates.read(
+            filename="None"
+        )
+        self.assertEqual(
+            len(atoms),
+            0
+        )
 
     def test_spc2hdf(self):
-        import chisurf.fio.tttr
+        import chisurf.fio.fluorescence.tttr
         import glob
         import tempfile
 
@@ -258,7 +268,7 @@ class Tests(unittest.TestCase):
         )
         output = filename
         spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
-        h5 = chisurf.fio.tttr.spc2hdf(
+        h5 = chisurf.fio.fluorescence.tttr.spc2hdf(
             spc_files,
             routine_name=filetype,
             filename=output
@@ -274,9 +284,9 @@ class Tests(unittest.TestCase):
                 "routine": "bh132",
                 "files": glob.glob(directory + '/BH/132/*.spc'),
                 "n_tac": 4096,
-                "measurement_time": 61.1826801165,
-                "n_photons": 152312,
-                "mt_clk": 1.35e-05,
+                "measurement_time": 62.3288052934344,
+                "n_photons": 183657,
+                "mt_clk": 13.5e-09,
                 "dt": 3.2967032967032967e-09
             },
             # {
@@ -290,7 +300,7 @@ class Tests(unittest.TestCase):
             # },
         ]
         for d in test_data:
-            photons = chisurf.fio.photons.Photons(
+            photons = chisurf.fio.fluorescence.photons.Photons(
                 d["files"],
                 reading_routine=d["routine"]
             )
@@ -351,7 +361,7 @@ class Tests(unittest.TestCase):
         )
 
         # read vv from jordi
-        decay_data_curve_vv = chisurf.fio.fluorescence.read_tcspc_csv(
+        decay_data_curve_vv = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
             filename=filename,
             skiprows=0,
             dt=dt,
@@ -367,7 +377,7 @@ class Tests(unittest.TestCase):
         )
 
         # read vh from jordi
-        decay_data_curve_vh = chisurf.fio.fluorescence.read_tcspc_csv(
+        decay_data_curve_vh = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
             filename=filename,
             skiprows=0,
             dt=dt,
@@ -385,7 +395,7 @@ class Tests(unittest.TestCase):
 
         # combines vv and vh and adjusts the noise of the combined curve (not poisson anymore)
         g_factor = 1.5
-        decay_data_curve_vm = chisurf.fio.fluorescence.read_tcspc_csv(
+        decay_data_curve_vm = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
             filename=filename,
             skiprows=0,
             dt=dt,
@@ -403,7 +413,7 @@ class Tests(unittest.TestCase):
         )
 
         # reads vv/vh in a group
-        decay_data_curve_vv_vh = chisurf.fio.fluorescence.read_tcspc_csv(
+        decay_data_curve_vv_vh = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
             filename=filename,
             skiprows=0,
             dt=dt,
@@ -442,8 +452,8 @@ class Tests(unittest.TestCase):
              3.86823503, 3.76612987, 3.72707586, 3.80236087, 3.7411919]
         )
 
-        filename = './test/data/fcs/Kristine/Kristine_with_error.cor'
-        fcs_data_curve_1 = chisurf.fio.fluorescence.read_fcs(
+        filename = './test/data/fcs/kristine/Kristine_with_error.cor'
+        fcs_data_curve_1 = chisurf.fio.fluorescence.fcs.read_fcs(
             reader_name='kristine',
             filename=filename
         )
@@ -455,8 +465,8 @@ class Tests(unittest.TestCase):
             True
         )
 
-        filename = './test/data/fcs/Kristine/Kristine_without_error.cor'
-        fcs_data_curve_2 = chisurf.fio.fluorescence.read_fcs(
+        filename = './test/data/fcs/kristine/Kristine_without_error.cor'
+        fcs_data_curve_2 = chisurf.fio.fluorescence.fcs.read_fcs(
             reader_name='kristine',
             filename=filename
         )
@@ -472,17 +482,17 @@ class Tests(unittest.TestCase):
     # Removed for now because mmcif does not exist for Windows
     # def test_mmcif_read(self):
     #     import mmcif.fio.PdbxReader
-    #     import chisurf.fio.zipped
+    #     import scikit_fluorescence.io.zipped
     #     filename = "./test/data/atomic_coordinates/mmcif/1ffk.cif.gz"
     #
     #     data = []
-    #     with chisurf.fio.zipped.open_maybe_zipped(
+    #     with scikit_fluorescence.io.zipped.open_maybe_zipped(
     #             filename=filename,
     #             mode='r'
     #     ) as fp:
     #         reader = mmcif.fio.PdbxReader.PdbxReader(fp)
     #         reader.read(data)
-    #     #chisurf.fio.coordinates.keys
+    #     #chisurf.fio.structure.coordinates.keys
     #     #atoms = data[0]['atom_site']
     #
 

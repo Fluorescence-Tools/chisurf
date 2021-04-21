@@ -21,13 +21,26 @@ def correlate(
 ) -> np.array:
     """
 
-    :param n:
-    :param B:
-    :param t:
-    :param taus:
-    :param corr:
-    :param w:
-    :return:
+    Parameters
+    ----------
+    n : int
+        The number of coarsening steps
+    B : int
+        The number of correlation channels per coarsening step
+    t : numpy-array
+        Arrival times of the photons
+    w : numpy-array
+        Weight of the photons
+    taus : numpy-array
+        Correlation time axis
+    corr : numpy-array
+        Correlation amplitude
+
+    Returns
+    -------
+    numpy-array
+        Correlation amplitude array
+
     """
     for b in range(B):
         j = (n * B + b)
@@ -91,39 +104,39 @@ def normalize(
 
 @nb.jit(nopython=True)
 def get_weights(
-        rout: np.ndarray,
-        tac: np.ndarray,
-        wt: np.ndarray,
+        routing_channels: np.ndarray,
+        micro_times: np.ndarray,
+        weights: np.ndarray,
         number_of_photons: int
 ) -> np.ndarray:
     """
 
-    :param rout:
-    :param tac:
-    :param wt:
+    :param routing_channels:
+    :param micro_times:
+    :param weights:
     :param number_of_photons:
     :return:
     """
     w = np.zeros(number_of_photons, dtype=np.float32)
     for i in range(number_of_photons):
-        w[i] = wt[rout[i], tac[i]]
+        w[i] = weights[routing_channels[i], micro_times[i]]
     return w
 
 
 @nb.jit(nopython=True)
 def count_rate_filter(
-        mt: np.array,
-        tw: int,
+        macro_times: np.ndarray,
+        time_window: int,
         n_ph_max: int,
-        w: np.array,
+        weights: np.ndarray,
         n_ph: int
 ):
     """
 
-    :param mt:
-    :param tw:
+    :param macro_times:
+    :param time_window:
     :param n_ph_max:
-    :param w:
+    :param weights:
     :param n_ph:
     :return:
     """
@@ -131,12 +144,12 @@ def count_rate_filter(
     while i < n_ph - 1:
         r = i
         i_ph = 0
-        while (mt[r] - mt[i]) < tw and r < n_ph - 1:
+        while (macro_times[r] - macro_times[i]) < time_window and r < n_ph - 1:
             r += 1
             i_ph += 1
         if i_ph > n_ph_max:
             for k in range(i, r):
-                w[k] = 0
+                weights[k] = 0
         i = r
 
 

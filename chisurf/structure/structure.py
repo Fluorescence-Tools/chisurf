@@ -1,18 +1,16 @@
 from __future__ import annotations
-from typing import Dict
+from chisurf import typing
 
 import copy
 import os
 import tempfile
-from copy import deepcopy
-from typing import List
 
-import mdtraj as md
+import mdtraj
 import pdb2pqr.main
 import numpy as np
 
 import chisurf.fio
-import chisurf.fio.coordinates
+import chisurf.fio.structure.coordinates
 import chisurf.base
 
 clusterCriteria = [
@@ -104,11 +102,7 @@ class Structure(chisurf.base.Base):
             protonate: bool = False,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-
+        super().__init__(*args, **kwargs)
         self.auto_update = auto_update
         self._filename = filename
         self._atoms = None
@@ -116,7 +110,7 @@ class Structure(chisurf.base.Base):
         self._potentials = list()
         self._sequence = None
         self.verbose = verbose
-        self.io = chisurf.fio.coordinates
+        self.io = chisurf.fio.structure.coordinates
         self.pdbid = None
 
         if isinstance(pdb_id, str):
@@ -124,23 +118,16 @@ class Structure(chisurf.base.Base):
             p_object = pdb_id
         if isinstance(filename, str):
             p_object = filename
-
         ####################################################
         #              Load ATOM COORDINATES               #
         ####################################################
-        if isinstance(
-                p_object,
-                Structure
-        ):
+        if isinstance(p_object, Structure):
             self.atoms = np.copy(p_object.atoms)
             self.filename = copy.copy(p_object.filename)
         elif p_object is None:
             self._atoms = None
             self._filename = None
-        elif isinstance(
-                p_object,
-                str
-        ):
+        elif isinstance(p_object, str):
             if os.path.isfile(p_object):
                 self._atoms = self.io.read(
                     p_object,
@@ -156,7 +143,7 @@ class Structure(chisurf.base.Base):
             self.protonate()
 
     @property
-    def sequence(self) -> Dict:
+    def sequence(self) -> typing.Dict:
         if self._sequence is None:
             self._sequence = chisurf.structure.sequence(self)
         return self._sequence
@@ -182,8 +169,8 @@ class Structure(chisurf.base.Base):
             return np.zeros(
                 1,
                 dtype={
-                    'names': chisurf.fio.coordinates.keys,
-                    'formats': chisurf.fio.coordinates.formats
+                    'names': chisurf.fio.structure.coordinates.keys,
+                    'formats': chisurf.fio.structure.coordinates.formats
                 }
             )
 
@@ -228,7 +215,7 @@ class Structure(chisurf.base.Base):
     @property
     def residue_names(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         res_name = list(set(self.atoms['res_name']))
         res_name.sort()
         return res_name
@@ -261,7 +248,7 @@ class Structure(chisurf.base.Base):
     @property
     def residue_ids(
             self
-    ) -> List[int]:
+    ) -> typing.List[int]:
         residue_ids = list(set(self.atoms['res_id']))
         return residue_ids
 
@@ -305,7 +292,7 @@ class Structure(chisurf.base.Base):
     def append_potential(
             self,
             function,
-            kwargs: Dict = None
+            kwargs: typing.Dict = None
     ):
         """
 
@@ -388,7 +375,7 @@ class Structure(chisurf.base.Base):
                 outfile.write(line)
             outfile.close()
 
-        self._atoms = chisurf.fio.coordinates.read(
+        self._atoms = chisurf.fio.structure.coordinates.read(
             filename_pqr,
             assign_charge=False,
         )
@@ -421,7 +408,7 @@ class Structure(chisurf.base.Base):
 
 def onRMSF(
         structures,
-        selectedNbrs: List[int],
+        selectedNbrs: typing.List[int],
         atomName: str = None,
         **kwargs):
     """Calculates the root mean square deviation with respect to the average structure
@@ -436,7 +423,7 @@ def onRMSF(
     weights = kwargs.get('weights', np.ones(len(selectedNbrs), dtype=np.float32))
     weights /= sum(weights)
 
-    candidateStructures = [deepcopy(structures[i]) for i in selectedNbrs]
+    candidateStructures = [copy.deepcopy(structures[i]) for i in selectedNbrs]
     print("calculating average structure as a reference")
     reference = average(candidateStructures, weights=weights)
     print("aligning selected structures with respect to reference")
@@ -530,7 +517,11 @@ def super_impose(
     structure_align.xyz = np.dot(al, rot)
 
 
-def find_best(target, reference, atom_indices=None):
+def find_best(
+        target,
+        reference,
+        atom_indices=None
+):
     """
     target and reference are both of type mdtraj.Trajectory
     reference is of length 1, target of arbitrary length
@@ -545,7 +536,7 @@ def find_best(target, reference, atom_indices=None):
     >>> find_best(times.mdtraj, times.mdtraj[2])
     (2, <mdtraj.Trajectory with 1 frames, 2495 atoms, 164 residues, without unitcells at 0x13570b30>)
     """
-    rmsds = md.rmsd(target, reference, atom_indices=atom_indices)
+    rmsds = mdtraj.rmsd(target, reference, atom_indices=atom_indices)
     iMin = np.argmin(rmsds)
     return iMin, target[iMin]
 
@@ -696,7 +687,7 @@ def get_atom_index_by_name(
 
 def sequence(
         structure_obj
-) -> Dict:
+) -> typing.Dict:
     """Return dictionary of sequences keyed to chain and type of sequence used.
 
     :param structure_obj: Structure
@@ -726,8 +717,8 @@ def count_atoms(topology_dict):
 
 
 def average(
-        structures: List[chisurf.structure.Structure],
-        weights: List[float] = None,
+        structures: typing.List[chisurf.structure.Structure],
+        weights: typing.List[float] = None,
         write: bool = True,
         filename: str = None,
         verbose: bool = True

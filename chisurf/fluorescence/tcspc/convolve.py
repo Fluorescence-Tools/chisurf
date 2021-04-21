@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 
 from math import exp, ceil
@@ -10,66 +7,96 @@ import numpy as np
 
 @nb.jit(nopython=True, nogil=True)
 def convolve_lifetime_spectrum(
-        decay: np.array,
+        output_decay: np.array,
         lifetime_spectrum: np.array,
-        irf: np.array,
-        stop: int = -1,
+        instrument_response_function: np.array,
+        convolution_stop: int = -1,
         time_axis: np.array = None,
+        amplitude_threshold: float = 0,
+        use_amplitude_threshold: bool = False
 ) -> None:
-    """Fills the pre-allocated array with a fluorescence intensity decay convolved (non-periodically)
-    with an instrumental response function.
+    """Compute the fluorescence decay for a lifetime spectrum and a instrument
+    response function.
 
+    Fills the pre-allocated output array `output_decay` with a fluorescence
+    intensity decay defined by a set of fluorescence lifetimes defined by the
+    parameter `lifetime_spectrum`. The fluorescence decay will be convolved
+    (non-periodically) with an instrumental response function that is defined
+    by `instrument_response_function`.
 
-    This function calculates a fluorescence intensity decay that is convolved with an instrumnet response
-    function (IRF). The fluorescence intensity decay is specified by its fluorescence lifetime spectrum, i.e.,
-    an interleaved array containing fluorescence lifetimes with corresponding amplitudes.
+    This function calculates a fluorescence intensity model_decay that is
+    convolved with an instrument response function (IRF). The fluorescence
+    intensity model_decay is specified by its fluorescence lifetime spectrum,
+    i.e., an interleaved array containing fluorescence lifetimes with
+    corresponding amplitudes.
 
-    :param decay: numpy-array This array filled with the values of the computed fluorescence intensity decay
-    :param lifetime_spectrum: interleaved vector of amplitudes and fluorescence lifetimes
-    :param irf: the instrument response function
-    :param stop: convolution stop channel (the index on the time-axis)
-    :param time_axis: the time-axis of the decay
+    Parameters
+    ----------
+    output_decay : numpy.array
+        Output array that is filled with the values of the computed
+        fluorescence intensity decay model
+    lifetime_spectrum : numpy.array
+        Interleaved vector of amplitudes and fluorescence lifetimes
+    instrument_response_function :
+        the instrument response function
+    convolution_stop :
+        convolution stop channel (the index on the time-axis)
+    time_axis :
+        the time-axis of the model_decay
+    amplitude_threshold : float
+        Amplitudes in the fluorescence lifetime spectrum with an absolute value
+        smaller than this number are not considered if `use_amplitude_threshold`
+        is set to True
+    use_amplitude_threshold : bool
+        If this value is True (default False) fluorescence lifetimes in the
+        lifetime spectrum which have an amplitude with an absolute value of
+        that is smaller than `amplitude_threshold` are not considered.
 
-    Example
-    -------
-
+    Examples
+    --------
     >>> import scipy.stats
-    >>> time_axis = np.linspace(0, 50, 2048)
+    >>> time_axis = np.linspace(0, 25, 50)
     >>> irf_position = 5.0
     >>> irf_width = 1.0
     >>> irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
     >>> lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
-    >>> decay = np.zeros_like(time_axis)
-    >>> convolve_lifetime_spectrum(decay, lifetime_spectrum=lifetime_spectrum, irf=irf, time_axis=time_axis)
-
+    >>> model_decay = np.zeros_like(time_axis)
+    >>> convolve_lifetime_spectrum(\
+            model_decay, \
+            lifetime_spectrum=lifetime_spectrum, \
+            instrument_response_function=irf, \
+            time_axis=time_axis\
+        )
     """
-    number_of_exponentials = lifetime_spectrum.shape[0] // 2
-    if stop <= 0:
-        stop = decay.shape[0]
-    for i in range(stop):
-        decay[i] = 0.0
-    for ne in range(number_of_exponentials):
-        current_amplitude = lifetime_spectrum[2 * ne]
-        if current_amplitude == 0.0:
+    n_exp = lifetime_spectrum.shape[0] // 2
+    if convolution_stop <= 0:
+        convolution_stop = output_decay.shape[0]
+    for i in range(convolution_stop):
+        output_decay[i] = 0.0
+
+    lt = lifetime_spectrum
+    irf = instrument_response_function
+    for ne in range(n_exp):
+        a = lt[2 * ne]
+        if (abs(a) < amplitude_threshold) and use_amplitude_threshold:
             continue
-        current_lifetime = (lifetime_spectrum[2 * ne + 1])
+        current_lifetime = (lt[2 * ne + 1])
         if current_lifetime == 0.0:
             continue
         current_model_value = 0.0
-
-        for i in range(1, stop):
+        for i in range(1, convolution_stop):
             dt = (time_axis[i] - time_axis[i - 1])
             dt_2 = dt / 2.0
             current_exponential = exp(-dt / current_lifetime)
-            current_model_value = (current_model_value + dt_2 * irf[i-1]) * current_exponential + dt_2 * irf[i]
-            decay[i] += current_model_value * current_amplitude
+            current_model_value = (current_model_value + dt_2 * irf[i - 1]) * current_exponential + dt_2 * irf[i]
+            output_decay[i] += current_model_value * a
 
 
 @nb.jit(nopython=True, nogil=True)
 def convolve_lifetime_spectrum_periodic(
-        decay: np.array,
-        lifetime_spectrum: np.array,
-        irf: np.array,
+        decay: np.ndarray,
+        lifetime_spectrum: np.ndarray,
+        irf: np.ndarray,
         start: int,
         stop: int,
         n_points: int,
@@ -79,28 +106,35 @@ def convolve_lifetime_spectrum_periodic(
 ):
     """
 
-    :param decay: array of doubles
+    Parameters
+    ----------
+    decay : np.array
+        array of doubles
         Here the convolved fit is stored
-    :param lifetime_spectrum: array of doubles
+    lifetime_spectrum :
+        array of doubles
         Lifetime-spectrum of the form (amplitude, lifetime, amplitude, lifetime, ...)
-    :param irf: array-doubles
+    irf : np.array
+        array-doubles
         The instrument response function
-    :param start: int
+    start : int
         Start channel of convolution (position in array of IRF)
-    :param stop: int
+    stop : int
         Stop channel of convolution (position in array of IRF)
-    :param n_points: int
+    n_points : int
         Number of points in fit and lamp
-    :param period: double
+    period : double
         Period of repetition in nano-seconds
-    :param dt: double
+    dt : double
         Channel-width in nano-seconds
-    :param conv_stop: int
+    conv_stop : int
         Stopping channel of convolution
 
-    Example
+    Returns
     -------
 
+    Examples
+    --------
     >>> import scipy.stats
     >>> n_points = 2048
     >>> time_axis = np.linspace(0, 16, n_points)
@@ -109,15 +143,14 @@ def convolve_lifetime_spectrum_periodic(
     >>> dt = time_axis[1] - time_axis[0]
     >>> irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
     >>> lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
-    >>> decay = np.zeros_like(time_axis)
-    >>> convolve_lifetime_spectrum_periodic(decay, lifetime_spectrum=lifetime_spectrum, irf=irf, start=0, stop=n_points, n_points=n_points, period=16, conv_stop=n_points, dt=dt)
-
+    >>> model_decay = np.zeros_like(time_axis)
+    >>> convolve_lifetime_spectrum_periodic(model_decay, lifetime_spectrum=lifetime_spectrum, irf=irf, start=0, stop=n_points, n_points=n_points, period=16, conv_stop=n_points, dt=dt)
     """
     stop = min(stop, n_points - 1)
     start = max(start, 0)
 
     n_exp = lifetime_spectrum.shape[0] // 2
-    period_n = ceil(period/dt-0.5)
+    period_n = ceil(period / dt - 0.5)
 
     for i in range(start, stop):
         decay[i] = 0
@@ -127,16 +160,12 @@ def convolve_lifetime_spectrum_periodic(
 
     # convolution
     for ne in range(n_exp):
-
         x_curr = lifetime_spectrum[2 * ne]
         lt_curr = lifetime_spectrum[2 * ne + 1]
-
         tail_a = 1./(1.-exp(-period/lt_curr))
         exp_curr = exp(-dt/lt_curr)
-
         fit_curr = 0.
         decay[0] += dt_2 * irf[0] * (exp_curr + 1.) * x_curr
-
         for i in range(conv_stop):
             fit_curr = (fit_curr + dt_2 * irf[i - 1]) * exp_curr + dt_2 * irf[i]
             decay[i] += fit_curr * x_curr
@@ -153,7 +182,7 @@ def convolve_lifetime_spectrum_periodic(
 #
 # @nb.jit(nopython=True, nogil=True)
 # def fconv_per(
-#         decay: np.array,
+#         model_decay: np.array,
 #         lifetime_spectrum: np.array,
 #         irf: np.array,
 #         start: int,
@@ -163,7 +192,7 @@ def convolve_lifetime_spectrum_periodic(
 #         dt: float
 # ):
 #     dt_half = dt * 0.5
-#     decay *= 0.0
+#     model_decay *= 0.0
 #
 #     x = lifetime_spectrum
 #     n_exp = x.shape[0] // 2
@@ -183,18 +212,18 @@ def convolve_lifetime_spectrum_periodic(
 #         fit_curr = 0.0
 #         for i in range(stop1):
 #             fit_curr = (fit_curr + dt_half * irf[i-1]) * exp_curr + dt_half * irf[i]
-#             decay[i] += fit_curr * x_curr
+#             model_decay[i] += fit_curr * x_curr
 #         fit_curr *= exp(-(period_n - stop1 + start)*dt/lt_curr)
 #
 #         for i in range(start, stop):
 #             fit_curr *= exp_curr
-#             decay[i] += fit_curr * x_curr * tail_a
+#             model_decay[i] += fit_curr * x_curr * tail_a
 #     return 0
 #
 #
 # @nb.jit(nopython=True, nogil=True)
 # def fconv_per_dt(
-#         decay: np.array,
+#         model_decay: np.array,
 #         lifetime_spectrum: np.array,
 #         irf: np.array,
 #         start: int,
@@ -214,9 +243,9 @@ def convolve_lifetime_spectrum_periodic(
 #     while irf[irf_start] == 0:
 #         irf_start += 1
 #
-#     decay *= 0.0
+#     model_decay *= 0.0
 #     #for i in range(stop):
-#     #    decay[i] = 0.0
+#     #    model_decay[i] = 0.0
 #
 #     #stop1 = n_points - 1 if period_n + irf_start > n_points - 1 else period_n + irf_start
 #     #if period_n + irf_start > n_points - 1:
@@ -240,39 +269,51 @@ def convolve_lifetime_spectrum_periodic(
 #             dt_half = dt * 0.5
 #             exp_curr = exp(-dt / lt_curr)
 #             fit_curr = (fit_curr + dt_half * irf[i-1]) * exp_curr + dt_half * irf[i]
-#             decay[i] += fit_curr * x_curr
+#             model_decay[i] += fit_curr * x_curr
 #         #fit_curr *= exp(-(period_n - stop1 + start)*dt/lt_curr)
 #
 #         #for i in range(start, stop):
 #         #    fit_curr *= exp_curr
-#         #    decay[i] += fit_curr * x_curr * tail_a
+#         #    model_decay[i] += fit_curr * x_curr * tail_a
 #     return 0
 #
 
 
 @nb.jit(nopython=True, nogil=True)
 def convolve_decay(
-        decay,
-        irf: np.array,
+        decay_curve: np.ndarray,
+        irf: np.ndarray,
         start: int,
         stop: int,
         dt: float
 ) -> np.ndarray:
-    """ Convolves a fluorescence decay with an instrument response function.
-
-    This function convolves a fluorescence decay, that is provided as a numpy array,
+    """Convolves a fluorescence model_decay with an instrument response function.
+    
+    This function convolves a fluorescence model_decay, that is provided as a numpy array,
     with an experimental response function.
 
-    :param decay: fluorescence decay
-    :param irf: instrument response function
-    :param start: convolution start
-    :param stop: convolution stop
-    :param dt: bin-width of the fluorescence decay
-    :return: convolved fluorescence decay as numpy array.
+    Parameters
+    ----------
+    decay_curve : numpy-array
+        fluorescence model_decay
+    irf :
+        instrument response function
+    start : int
+        convolution start
+    stop : int
+        convolution stop
+    dt : float
+        bin-width of the fluorescence model_decay
+    irf : numpy-array
+        np.array:
 
-    Example
+    Returns
     -------
-
+    type
+        convolved fluorescence model_decay as numpy array.
+        
+    Examples
+    --------
     >>> import scipy.stats
     >>> n_points = 2048
     >>> time_axis = np.linspace(0, 16, n_points)
@@ -281,15 +322,14 @@ def convolve_decay(
     >>> dt = time_axis[1] - time_axis[0]
     >>> irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
     >>> decay_u = np.exp(- time_axis / 4.1)
-    >>> decay = convolve_decay(decay_u, irf=irf, start=0, stop=n_points, dt=dt)
-
+    >>> model_decay = convolve_decay(decay_u, irf=irf, start=0, stop=n_points, dt=dt)
     """
-    decay_out = np.empty_like(decay)
+    decay_out = np.empty_like(decay_curve)
     for i in range(start, stop):
-        decay_out[i] = 0.5 * irf[0] * decay[i]
+        decay_out[i] = 0.5 * irf[0] * decay_curve[i]
         for j in range(1, i):
-            decay_out[i] += irf[j] * decay[i - j]
-        decay_out[i] += 0.5 * irf[i] * decay[0]
+            decay_out[i] += irf[j] * decay_curve[i - j]
+        decay_out[i] += 0.5 * irf[i] * decay_curve[0]
         decay_out[i] *= dt
     decay_out[0] = 0
     return decay_out

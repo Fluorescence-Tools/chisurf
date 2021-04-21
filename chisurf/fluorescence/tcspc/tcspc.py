@@ -4,110 +4,110 @@ from math import sqrt
 
 import numba as nb
 import numpy as np
+import deprecation
+import scikit_fluorescence as skf
+import scikit_fluorescence.decay
 
-import chisurf.settings as mfm
 import chisurf.math
 import chisurf.math.datatools
 
 
-@nb.jit(nopython=True, nogil=True)
-def get_scale_bg(
-        fit: np.array,
-        data: np.array,
-        data_weight: np.array,
-        bg: float,
-        start: int,
-        stop: int
-) -> float:
-    """This function calculates a scaling factor for a given
-    experimental histogram and model function. The scaling-factor
-    scales the model function that the weighted photon counts
-    agree
+bin_lifetime_spectrum = skf.decay.rate_spectra.bin_lifetime_spectrum
+# def bin_lifetime_spectrum(
+#     lifetime_spectrum: np.array,
+#     n_lifetimes: int,
+#     discriminate: bool,
+#     discriminator=None
+# ) -> np.array:
+#     """Takes a interleaved lifetime spectrum
+#
+#     :param lifetime_spectrum: interleaved lifetime spectrum
+#     :param n_lifetimes:
+#     :param discriminate:
+#     :param discriminator:
+#     :return: lifetime_spectrum
+#     """
+#     amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
+#         lifetime_spectrum,
+#         sort=False
+#     )
+#     lt, am = chisurf.math.datatools.histogram1D(
+#         values=lifetimes,
+#         weights=amplitudes,
+#         n_bins=n_lifetimes
+#     )
+#     if discriminate and discriminator is not None:
+#         lt, am = chisurf.math.datatools.discriminate(
+#             values=lt,
+#             weights=am,
+#             discriminator=discriminator
+#         )
+#     binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
+#         x=am,
+#         t=lt
+#     )
+#     return binned_lifetime_spectrum
+#
 
-    :param fit:
-    :param data:
-    :param data_weight: 
-    :param bg:
-    :param start:
-    :param stop:
-    :return: scaling factor (float)
-    """
-    w = data_weight[start:stop]
-    f = fit[start:stop]
-    d = data[start:stop]
-
-    w2 = w**2
-    d_bg = np.maximum(d - bg, 0)
-
-    sumnom = np.dot(d_bg * f, w2)
-    sumdenom = np.dot(f * f, w2)
-    scale = sumnom / sumdenom
-
-    return scale
-
-
-def bin_lifetime_spectrum(
-        lifetime_spectrum: np.array,
-        n_lifetimes: int,
-        discriminate: bool,
-        discriminator=None
-) -> np.array:
-    """Takes a interleaved lifetime spectrum
-
-    :param lifetime_spectrum: interleaved lifetime spectrum
-    :param n_lifetimes:
-    :param discriminate:
-    :param discriminator:
-    :return: lifetime_spectrum
-    """
-    amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
-        lifetime_spectrum,
-        sort=False
+@deprecation.deprecated(
+        deprecated_in="20.06.02",
+        current_version="19.08.23",
+        details="Moved to scikit-fluorescence"
     )
-    lt, am = chisurf.math.datatools.histogram1D(
-        lifetimes,
-        amplitudes,
-        n_lifetimes
-    )
-    if discriminate and discriminator is not None:
-        lt, am = chisurf.math.datatools.discriminate(
-            lt,
-            am,
-            discriminator
-        )
-    binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
-        am,
-        lt
-    )
-    return binned_lifetime_spectrum
-
-
 @nb.jit(nopython=True, nogil=True)
 def rescale_w_bg(
-        fit: np.array,
-        decay: np.array,
-        w_res: np.array,
-        bg: float,
+        model_decay: np.array,
+        experimental_decay: np.array,
+        experimental_weights: np.array,
+        experimental_background: float,
         start: int,
         stop: int
 ) -> float:
+    """Computes a scaling factor that scales a model decay to an
+    experimental decay on a defined range.
+
+    Parameters
+    ----------
+    model_decay
+    experimental_decay
+    experimental_weights
+    experimental_background
+    start
+    stop
+
+    Returns
+    -------
+    float:
+        The scaling factor that was used to scale the model function to the
+        experimental decay.
+
+    """
     scale = 0.0
-    sumnom = 0.0
-    sumdenom = 0.0
+    sum_nom = 0.0
+    sum_denom = 0.0
+    w = experimental_weights
+    e = experimental_decay
+    b = experimental_background
+    m = model_decay
     for i in range(start, stop):
-        iwsq = 1.0/(w_res[i]*w_res[i]+1e-12)
-        if decay[i] != 0.0:
-            sumnom += fit[i]*(decay[i]-bg)*iwsq
-            sumdenom += fit[i]*fit[i]*iwsq
-    if sumdenom != 0.0:
-        scale = sumnom / sumdenom
-    for i in range(start, stop):
-        fit[i] *= scale
+        if e[i] > 0.0:
+            iwsq = 1.0 / (w[i] * w[i] + 1e-12)
+            sum_nom += m[i] * (e[i] - b) * iwsq
+            sum_denom += m[i] * m[i] * iwsq
+    if sum_denom != 0.0:
+        scale = sum_nom / sum_denom
     return scale
 
 
 @nb.jit(nopython=True, nogil=True)
-def pddem(decayA, decayB, k, px, pm, pAB):
+def pddem(
+        decayA: np.ndarray,
+        decayB: np.ndarray,
+        k: np.ndarray,
+        px: np.ndarray,
+        pm: np.ndarray,
+        pAB: np.ndarray
+):
     """
     Electronic Energy Transfer within Asymmetric
     Pairs of Fluorophores: Partial Donor-Donor
@@ -123,8 +123,8 @@ def pddem(decayA, decayB, k, px, pm, pAB):
 
     -> same results as Stas pddem code (pddem_t.c)
 
-    :param decayA: decay A in form of [ampl lifetime, apml, lifetime...]
-    :param decayB: decay B in form of [ampl lifetime, apml, lifetime...]
+    :param decayA: model_decay A in form of [ampl lifetime, apml, lifetime...]
+    :param decayB: model_decay B in form of [ampl lifetime, apml, lifetime...]
     :param k: rates of energy transfer [kAB, kBA]
     :param px: probabilities of excitation (pxA, pxB)
     :param pm: probabilities of emission (pmA, pmB)

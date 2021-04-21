@@ -1,5 +1,8 @@
+"""
+
+"""
 from __future__ import annotations
-from typing import List
+from chisurf import typing
 
 import os
 import docx
@@ -9,16 +12,20 @@ import chisurf.base
 import chisurf.experiments
 import chisurf.models
 import chisurf.fitting
-import chisurf.fitting.widgets
-import chisurf.widgets
+import chisurf.gui.widgets.fitting.widgets
+import chisurf.gui.widgets
 import chisurf.macros.tcspc
+import chisurf.macros.parse
 
 
 def add_fit(
-        dataset_indices: List[int] = None,
+        dataset_indices: typing.List[int] = None,
         model_name: str = None
 ):
     cs = chisurf.cs
+    # Process inputs of macro and replace None
+    # with more sensible values that are read
+    # from the GUI
     if dataset_indices is None:
         dataset_indices = [
             cs.dataset_selector.selected_curve_index
@@ -26,28 +33,24 @@ def add_fit(
     if model_name is None:
         model_name = cs.current_model_name
 
+    # create a list of data sets to which a fit with
+    # a particular model is added
     data_sets = [
         cs.dataset_selector.datasets[i] for i in dataset_indices
     ]
-    model_names = data_sets[0].experiment.model_names
 
+    model_names = data_sets[0].experiment.model_names
     model_class = data_sets[0].experiment.model_classes[0]
-    for model_idx, mn in enumerate(
-            model_names
-    ):
+    for model_idx, mn in enumerate(model_names):
         if mn == model_name:
             model_class = data_sets[0].experiment.model_classes[model_idx]
             break
 
     for data_set in data_sets:
         if data_set.experiment is data_sets[0].experiment:
-
             # Make sure the data set is a DataGroup
-            if not isinstance(
-                    data_set,
-                    chisurf.experiments.data.DataGroup
-            ):
-                data_group = chisurf.experiments.data.ExperimentDataCurveGroup(
+            if not isinstance(data_set, chisurf.data.DataGroup):
+                data_group = chisurf.data.ExperimentDataCurveGroup(
                     [data_set]
                 )
             else:
@@ -60,14 +63,14 @@ def add_fit(
             )
             chisurf.fits.append(fit_group)
 
-            fit_control_widget = chisurf.fitting.widgets.FittingControllerWidget(
-                fit_group
+            fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
+                fit=fit_group
             )
             cs.modelLayout.addWidget(fit_control_widget)
             for fit in fit_group:
                 cs.modelLayout.addWidget(fit.model)
 
-            fit_window = chisurf.fitting.widgets.FitSubWindow(
+            fit_window = chisurf.gui.widgets.fitting.FitSubWindow(
                 fit=fit_group,
                 control_layout=cs.plotOptionsLayout,
                 fit_widget=fit_control_widget
@@ -109,11 +112,11 @@ def save_fit(
                 ['screenshot_fit.png', 'screenshot_model.png'],
                 [current_fit_window, model]
             ):
-                png_filename = os.path.join(target_dir, png_name)
+                png_filename = os.path.join(target_path, png_name)
                 source.grab().save(png_filename)
                 document.add_picture(
                     os.path.join(
-                        target_dir,
+                        target_path,
                         png_filename
                     ),
                     width=Inches(2.0)
@@ -179,22 +182,22 @@ def load_fit_result(
 
 
 def group_datasets(
-        dataset_indices: List[int]
+        dataset_indices: typing.List[int]
 ) -> None:
     selected_data = [
         chisurf.imported_datasets[i] for i in dataset_indices
     ]
     if isinstance(
             selected_data[0],
-            chisurf.experiments.data.DataCurve
+            chisurf.data.DataCurve
     ):
         # TODO: check for double names!!!
-        dg = chisurf.experiments.data.ExperimentDataCurveGroup(
+        dg = chisurf.data.ExperimentDataCurveGroup(
             selected_data,
             name="Data-Group"
         )
     else:
-        dg = chisurf.experiments.data.ExperimentDataGroup(
+        dg = chisurf.data.ExperimentDataGroup(
             selected_data,
             name="Data-Group"
         )
@@ -207,7 +210,7 @@ def group_datasets(
 
 
 def remove_datasets(
-        dataset_indices: List[int]
+        dataset_indices: typing.List[int]
 ) -> None:
     if not isinstance(
             dataset_indices,
@@ -249,8 +252,8 @@ def add_dataset(
         )
     dataset_group = dataset if isinstance(
         dataset,
-        chisurf.experiments.data.ExperimentDataGroup
-    ) else chisurf.experiments.data.ExperimentDataCurveGroup(
+        chisurf.data.ExperimentDataGroup
+    ) else chisurf.data.ExperimentDataCurveGroup(
         dataset
     )
     if len(dataset_group) == 1:
@@ -290,8 +293,8 @@ def close_fit(
     chisurf.fits.pop(idx)
     sub_window = chisurf.fit_windows.pop(idx)
     sub_window.close_confirm = False
-    chisurf.widgets.hide_items_in_layout(cs.modelLayout)
-    chisurf.widgets.hide_items_in_layout(cs.plotOptionsLayout)
+    chisurf.gui.widgets.hide_items_in_layout(cs.modelLayout)
+    chisurf.gui.widgets.hide_items_in_layout(cs.plotOptionsLayout)
     sub_window.close()
 
 

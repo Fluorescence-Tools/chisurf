@@ -1,17 +1,19 @@
 from __future__ import annotations
-from typing import List, Tuple
+from chisurf import typing
 
 import csv
 import os
 import numpy as np
+import scikit_fluorescence
+import scikit_fluorescence.io
 
 import chisurf
 
 
 def save_xy(
         filename: str,
-        x: np.array,
-        y: np.array,
+        x: np.ndarray,
+        y: np.ndarray,
         verbose: bool = chisurf.verbose,
         fmt: str = "%.3f\t%.3f",
         header_string: str = None
@@ -29,7 +31,7 @@ def save_xy(
     """
     if verbose:
         print("Writing histogram to file: %s" % filename)
-    with chisurf.fio.zipped.open_maybe_zipped(
+    with scikit_fluorescence.io.zipped.open_maybe_zipped(
             filename=filename,
             mode='w'
     ) as fp:
@@ -42,10 +44,10 @@ def save_xy(
 def load_xy(
         filename: str,
         verbose: bool = chisurf.verbose,
-        usecols: Tuple[int, int] = None,
+        usecols: typing.Tuple[int, int] = None,
         skiprows: int = 0,
         delimiter: str = "\t"
-) -> Tuple[
+) -> typing.Tuple[
     np.array,
     np.array
 ]:
@@ -104,7 +106,7 @@ class Csv(object):
             self,
             *args,
             filename: str = None,
-            colspecs: List[int] = None,
+            colspecs: typing.List[int] = None,
             use_header: bool = False,
             x_on: bool = True,
             y_on: bool = True,
@@ -185,7 +187,7 @@ class Csv(object):
             delimiter: str = None,
             file_type: str = None,
             infer_delimiter: bool = True,
-            usecols: List[int] = None,
+            usecols: typing.List[int] = None,
             **kwargs
     ) -> None:
         """
@@ -209,7 +211,7 @@ class Csv(object):
         # process header
         header = 'infer' if use_header else None
         if use_header:
-            with chisurf.fio.zipped.open_maybe_zipped(
+            with scikit_fluorescence.io.zipped.open_maybe_zipped(
                     filename=filename,
                     mode='r'
             ) as fp:
@@ -227,7 +229,7 @@ class Csv(object):
                 print("Reading: {}".format(filename))
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
-                with chisurf.fio.zipped.open_maybe_zipped(
+                with scikit_fluorescence.io.zipped.open_maybe_zipped(
                         filename=filename,
                         mode='r'
                 ) as csvfile:
@@ -235,7 +237,7 @@ class Csv(object):
 
             if file_type == 'csv':
                 if (delimiter is None) and infer_delimiter:
-                    with chisurf.fio.zipped.open_maybe_zipped(
+                    with scikit_fluorescence.io.zipped.open_maybe_zipped(
                             filename=filename,
                             mode='r'
                     ) as csvfile:
@@ -336,7 +338,7 @@ class Csv(object):
     @property
     def header(
             self
-    ) -> List[str]:
+    ) -> typing.List[str]:
         """
         A list of the column headers
         """

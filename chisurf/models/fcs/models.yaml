@@ -25,6 +25,17 @@
     Ausdruck beschrieben, der von den photochemischen Parametern des Moleküls abhängt.
     WIDENGREN, METS, RIGLER [101] leiteten einen Ausdruck für die Fluoreszenzkorrelationsfunktion
     her, der die translative Diffusion und den Triplettzustand einschloß:</p></body></html>"
+3D Gauss, 2 diffusion terms, 1 global bunching:
+  equation: b+1/abs(N)*(a1*(1+x/td1)**(-1)*(1+1/s**2*x/td1)**(-0.5))+(1-a1)*(1+x/td2)**(-1)*(1+1/s**2*x/td2)*(1-ba+ba*exp(-x/bt))
+  initial:
+    Nc: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt: 0.002
+    ba: 0.1
+  description: "<html><head /><body><h1>3D Gauss, 1 bunching</h1><p>Da von einem
+    Molekül im Triplettzustand keine Fluoreszenz mehr beobachtet werden kann, und
 3D Gauss, 2 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
   initial:

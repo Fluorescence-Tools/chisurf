@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.fitting
 from chisurf.plots import plotbase
 
@@ -42,10 +40,6 @@ class ResidualPlot(plotbase.Plot):
             fit=fit,
             **kwargs
         )
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-
         self.data_x, self.data_y = None, None
 
         curves = list()
@@ -62,7 +56,8 @@ class ResidualPlot(plotbase.Plot):
             curves.append(c)
         self.curves = curves
 
-    def update_all(self, *args, **kwargs):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         # Get parameters from plot-control
         fits = self.fit
         for ci, fi in zip(self.curves, fits):

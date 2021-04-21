@@ -1,1 +1,0 @@
-from . import label_structure

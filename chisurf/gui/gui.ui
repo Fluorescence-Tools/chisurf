@@ -1,0 +1,1624 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1040</width>
+    <height>643</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ChiSurf</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resources/resource.qrc">
+    <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
+  </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::ForceTabbedDocks</set>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="1" column="1">
+     <widget class="QMdiArea" name="mdiarea">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAsNeeded</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAsNeeded</enum>
+      </property>
+      <property name="viewMode">
+       <enum>QMdiArea::SubWindowView</enum>
+      </property>
+      <property name="documentMode">
+       <bool>true</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="tabsMovable">
+       <bool>true</bool>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetAnalysis">
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="features">
+    <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
+   <property name="windowTitle">
+    <string>Analysis</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="verticalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAsNeeded</enum>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>254</width>
+          <height>87</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="modelLayout">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+          </layout>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetPlot">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Plot settings</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_6">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <layout class="QVBoxLayout" name="plotOptionsLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+      </layout>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1040</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="nativeMenuBar">
+    <bool>true</bool>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <widget class="QMenu" name="menuSave_Fit_results">
+     <property name="title">
+      <string>Save Fit-results</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>:/icons/icons/Document-save.svg</normaloff>:/icons/icons/Document-save.svg</iconset>
+     </property>
+     <addaction name="actionSaveCurrentFit"/>
+     <addaction name="actionSaveAllFits"/>
+    </widget>
+    <widget class="QMenu" name="menuClose_fit">
+     <property name="title">
+      <string>Close fit</string>
+     </property>
+     <addaction name="actionClose_Fit"/>
+     <addaction name="actionClose_all_fits"/>
+    </widget>
+    <widget class="QMenu" name="menuProject">
+     <property name="title">
+      <string>Project</string>
+     </property>
+     <addaction name="actionNew_Project_2"/>
+     <addaction name="actionOpen_Project"/>
+     <addaction name="actionSave_Project"/>
+    </widget>
+    <widget class="QMenu" name="menuLoad_Fit_result">
+     <property name="title">
+      <string>Load Fit-result</string>
+     </property>
+     <addaction name="actionLoad_result_in_current_fit"/>
+    </widget>
+    <addaction name="menuProject"/>
+    <addaction name="actionLoad_Data"/>
+    <addaction name="menuLoad_Fit_result"/>
+    <addaction name="menuSave_Fit_results"/>
+    <addaction name="menuClose_fit"/>
+    <addaction name="actionPrint"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit_2"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionHelp_2"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
+    <addaction name="actionUpdate"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionLoading"/>
+    <addaction name="actionPlot_options"/>
+    <addaction name="actionFit_widget"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <widget class="QMenu" name="menuFRET">
+     <property name="title">
+      <string>FRET</string>
+     </property>
+     <property name="icon">
+      <iconset resource="resources/resource.qrc">
+       <normaloff>:/icons/icons/FRET.png</normaloff>:/icons/icons/FRET.png</iconset>
+     </property>
+     <addaction name="actionCalculator"/>
+    </widget>
+    <widget class="QMenu" name="menuAnisotropy">
+     <property name="title">
+      <string>Anisotropy</string>
+     </property>
+     <property name="icon">
+      <iconset resource="resources/resource.qrc">
+       <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
+     </property>
+     <addaction name="actionAnisotropy_Lines"/>
+     <addaction name="actionKappa2_Distribution"/>
+    </widget>
+    <widget class="QMenu" name="menuModelling">
+     <property name="title">
+      <string>Modelling</string>
+     </property>
+     <property name="icon">
+      <iconset resource="resources/resource.qrc">
+       <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
+     </property>
+     <widget class="QMenu" name="menuTrajectory_tools">
+      <property name="title">
+       <string>Trajectory tools</string>
+      </property>
+      <property name="icon">
+       <iconset resource="resources/resource.qrc">
+        <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
+      </property>
+      <addaction name="actionTrajectory_converter"/>
+      <addaction name="actionSave_topology"/>
+      <addaction name="separator"/>
+      <addaction name="actionAlign_trajectory"/>
+      <addaction name="actionRotate_Translate_trajectory"/>
+      <addaction name="separator"/>
+      <addaction name="actionJoin_trajectories"/>
+      <addaction name="actionRemove_clashes"/>
+     </widget>
+     <addaction name="menuTrajectory_tools"/>
+     <addaction name="separator"/>
+     <addaction name="actionStructure2Transfer"/>
+     <addaction name="separator"/>
+     <addaction name="actionPDB2Label"/>
+     <addaction name="separator"/>
+     <addaction name="actionCalculate_Potential"/>
+    </widget>
+    <widget class="QMenu" name="menuTTTR">
+     <property name="title">
+      <string>TTTR</string>
+     </property>
+     <property name="icon">
+      <iconset resource="resources/resource.qrc">
+       <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
+     </property>
+     <addaction name="actionConvert"/>
+     <addaction name="actionGenerate_decay"/>
+     <addaction name="actionCorrelate"/>
+     <addaction name="actionTTTR_CLSM"/>
+    </widget>
+    <addaction name="menuFRET"/>
+    <addaction name="menuAnisotropy"/>
+    <addaction name="menuModelling"/>
+    <addaction name="menuTTTR"/>
+    <addaction name="actionF_Test"/>
+    <addaction name="actionndXplorer"/>
+   </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <addaction name="actionTile_windows"/>
+    <addaction name="actionTab_windows"/>
+    <addaction name="actionCascade"/>
+   </widget>
+   <widget class="QMenu" name="menuMacro">
+    <property name="title">
+     <string>Macro</string>
+    </property>
+    <addaction name="actionRecord"/>
+    <addaction name="actionStop"/>
+    <addaction name="separator"/>
+    <addaction name="actionRun"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionClear_local_settings"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuWindows"/>
+   <addaction name="menuHelp"/>
+   <addaction name="menuMacro"/>
+   <addaction name="menuSettings"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar_2">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Toolbar</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionLoad_Data"/>
+   <addaction name="actionSaveAllFits"/>
+   <addaction name="actionClose_Fit"/>
+   <addaction name="separator"/>
+   <addaction name="actionTile_windows"/>
+   <addaction name="actionTab_windows"/>
+   <addaction name="separator"/>
+   <addaction name="actionExit_2"/>
+   <addaction name="separator"/>
+   <addaction name="actionRun"/>
+   <addaction name="actionStop"/>
+   <addaction name="actionRecord"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_console">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>80</width>
+     <height>150</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>524287</width>
+     <height>524287</height>
+    </size>
+   </property>
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="features">
+    <set>QDockWidget::AllDockWidgetFeatures</set>
+   </property>
+   <property name="windowTitle">
+    <string>Console</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout_7">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetDatasets">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>394</width>
+     <height>182</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>524287</width>
+     <height>524287</height>
+    </size>
+   </property>
+   <property name="windowIcon">
+    <iconset>
+     <normaloff>:/icons/icons/kitesurf.svg</normaloff>:/icons/icons/kitesurf.svg</iconset>
+   </property>
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="windowTitle">
+    <string>Datasets</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item row="2" column="0" colspan="3">
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>Loaded Datasets</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_12">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+         </layout>
+        </item>
+       </layout>
+       <zorder></zorder>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="comboBox_Model">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>This selection box is updated according to the selected dataset.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Add analysis</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetScriptEdit">
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Macro</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_5">
+    <layout class="QGridLayout" name="gridLayout_3">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item row="0" column="0" colspan="2">
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetHistory">
+   <property name="windowTitle">
+    <string>History</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_7">
+    <layout class="QVBoxLayout" name="verticalLayout_11">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QPlainTextEdit" name="plainTextEditHistory">
+       <property name="font">
+        <font>
+         <family>Courier New</family>
+         <pointsize>12</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="lineWrapMode">
+        <enum>QPlainTextEdit::NoWrap</enum>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidgetReadData">
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Read data</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_8">
+    <layout class="QGridLayout" name="gridLayout_4">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item row="1" column="1">
+      <widget class="QLabel" name="label_10">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Experiment</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="5">
+      <widget class="QComboBox" name="comboBox_setupSelect">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>After selecting a setup-type adjust the parameters of the setup used to open the experimental data.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QComboBox" name="comboBox_experimentSelect">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Select a type of experiment. After selecting the experiment type you can select a setup-type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QLabel" name="label_16">
+       <property name="text">
+        <string>File type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="6">
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Add data</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="6">
+      <widget class="QGroupBox" name="groupBox_FileParameters">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Here all necessary parameters to open experimental data files are displayed.</string>
+       </property>
+       <property name="title">
+        <string>File parameters</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_9">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <layout class="QVBoxLayout" name="layout_experiment_reader">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+            </layout>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset>
+     <normalon>:/icons/icons/System-log-out.png</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/save-xxl.png</normaloff>:/icons/save-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save all open-fits&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionLoad">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Load</string>
+   </property>
+  </action>
+  <action name="actionInfo">
+   <property name="text">
+    <string>Info</string>
+   </property>
+  </action>
+  <action name="actionHelp">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
+   </property>
+   <property name="text">
+    <string>Help</string>
+   </property>
+  </action>
+  <action name="actionExit_2">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/System-log-out.png</normaloff>:/icons/icons/System-log-out.png</iconset>
+   </property>
+   <property name="text">
+    <string>Quit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="actionClose_Fit">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Edit-delete.png</normaloff>:/icons/icons/Edit-delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Close Fit</string>
+   </property>
+  </action>
+  <action name="actionFitting">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/fitting.svg</normaloff>:/icons/icons/fitting.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Fitting-parameters</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
+   </property>
+   <property name="text">
+    <string>About ChiSurf</string>
+   </property>
+  </action>
+  <action name="actionHelp_2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
+   </property>
+   <property name="text">
+    <string>Help</string>
+   </property>
+  </action>
+  <action name="actionSave_All_Fit_results">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-save.png</normaloff>:/icons/icons/Document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save All Fit-results</string>
+   </property>
+  </action>
+  <action name="actionPrint">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-print.svg</normaloff>:/icons/icons/Document-print.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Print</string>
+   </property>
+  </action>
+  <action name="actionLoading">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Loading</string>
+   </property>
+  </action>
+  <action name="actionPlot_options">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Plot-options</string>
+   </property>
+  </action>
+  <action name="actionFit_widget">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Fit</string>
+   </property>
+  </action>
+  <action name="actionSaveCurrentFit">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-save.png</normaloff>:/icons/icons/Document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Current Fit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSaveAllFits">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Document-save.png</normaloff>:/icons/icons/Document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>All Fits</string>
+   </property>
+   <property name="iconText">
+    <string>Save fits</string>
+   </property>
+   <property name="toolTip">
+    <string>Save all fits</string>
+   </property>
+  </action>
+  <action name="actionFortune_Cookies">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>:/newPrefix/icons/fortune.png</normaloff>:/newPrefix/icons/fortune.png</iconset>
+   </property>
+   <property name="text">
+    <string>Fortune-Cookies</string>
+   </property>
+  </action>
+  <action name="actionMake_Lifetime_Filter">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/FCS-Filter.png</normaloff>:/icons/icons/FCS-Filter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Make Lifetime Filter</string>
+   </property>
+  </action>
+  <action name="actionCalculator">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/accessories-calculator.png</normaloff>:/icons/icons/accessories-calculator.png</iconset>
+   </property>
+   <property name="text">
+    <string>E-Calculator</string>
+   </property>
+  </action>
+  <action name="actionKappa2_Distribution">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
+   </property>
+   <property name="text">
+    <string>Kappa2-Distribution</string>
+   </property>
+  </action>
+  <action name="actionSimple_Decay">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
+   </property>
+   <property name="text">
+    <string>Simple-Decay</string>
+   </property>
+  </action>
+  <action name="actionAV_Diffusion_2">
+   <property name="text">
+    <string>AV-Diffusion</string>
+   </property>
+  </action>
+  <action name="actionAnisotropy_Lines">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Anisotropy-Lines.png</normaloff>:/icons/icons/Anisotropy-Lines.png</iconset>
+   </property>
+   <property name="text">
+    <string>Anisotropy-Lines</string>
+   </property>
+  </action>
+  <action name="actionDiffusion_Calculator">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
+   </property>
+   <property name="text">
+    <string>Diffusion-Calculator</string>
+   </property>
+  </action>
+  <action name="actionLoad_Data">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Add dataset</string>
+   </property>
+   <property name="toolTip">
+    <string>Add dataset. </string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="actionDye_Diffusion">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
+   </property>
+   <property name="text">
+    <string>Donor diffusion</string>
+   </property>
+  </action>
+  <action name="actionFRET_Peptide_Plane">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/icons/Peptide_FRET.ico</normaloff>:/icons/icons/Peptide_FRET.ico</iconset>
+   </property>
+   <property name="text">
+    <string>FRET Peptide-Plane</string>
+   </property>
+  </action>
+  <action name="actionStructure2Transfer">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/icons/structure2transfer.ico</normaloff>:/icons/icons/structure2transfer.ico</iconset>
+   </property>
+   <property name="text">
+    <string>FRET from trajectory</string>
+   </property>
+  </action>
+  <action name="actionTrajectory_converter">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/hdf2pdb.png</normaloff>:/icons/icons/hdf2pdb.png</iconset>
+   </property>
+   <property name="text">
+    <string>Trajectory converter</string>
+   </property>
+  </action>
+  <action name="actionPDB2Label">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/pdb2label.png</normaloff>:/icons/icons/pdb2label.png</iconset>
+   </property>
+   <property name="text">
+    <string>fps.json editor</string>
+   </property>
+  </action>
+  <action name="actionCalculate_Potential">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/potential.png</normaloff>:/icons/icons/potential.png</iconset>
+   </property>
+   <property name="text">
+    <string>Calculate Potential</string>
+   </property>
+  </action>
+  <action name="actionTile_windows">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/window-layout-xxl.png</normaloff>:/icons/icons/window-layout-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tile windows</string>
+   </property>
+  </action>
+  <action name="actionTab_windows">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tab windows</string>
+   </property>
+   <property name="toolTip">
+    <string>Tab windows</string>
+   </property>
+  </action>
+  <action name="actionAdd_fit">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/list-add.png</normaloff>:/icons/icons/list-add.png</iconset>
+   </property>
+   <property name="text">
+    <string>Add fit</string>
+   </property>
+  </action>
+  <action name="actionRotate_Translate_trajectory">
+   <property name="text">
+    <string>Rotate/Translate</string>
+   </property>
+  </action>
+  <action name="actionClose_all">
+   <property name="icon">
+    <iconset>
+     <normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Close all</string>
+   </property>
+  </action>
+  <action name="actionDelete_dataset">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Edit-delete.png</normaloff>:/icons/icons/Edit-delete.png</iconset>
+   </property>
+   <property name="text">
+    <string>Delete dataset</string>
+   </property>
+  </action>
+  <action name="actionChange_current_dataset">
+   <property name="text">
+    <string>Change current dataset</string>
+   </property>
+  </action>
+  <action name="actionJoin_trajectories">
+   <property name="text">
+    <string>Join trajectories</string>
+   </property>
+  </action>
+  <action name="actionRemove_clashes">
+   <property name="text">
+    <string>Remove clashes</string>
+   </property>
+  </action>
+  <action name="actionAlign_trajectory">
+   <property name="text">
+    <string>Align trajectory</string>
+   </property>
+  </action>
+  <action name="actionSave_topology">
+   <property name="text">
+    <string>Save topology</string>
+   </property>
+  </action>
+  <action name="actionFRET_Diffusion">
+   <property name="text">
+    <string>FRET-Diffusion</string>
+   </property>
+  </action>
+  <action name="actionClose_all_fits">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/x-mark-4-xxl.png</normaloff>:/icons/x-mark-4-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Close all fits</string>
+   </property>
+  </action>
+  <action name="actionNew_Project_2">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionOpen_Project">
+   <property name="text">
+    <string>Open Project</string>
+   </property>
+  </action>
+  <action name="actionSave_Project">
+   <property name="text">
+    <string>Save Project</string>
+   </property>
+  </action>
+  <action name="actionCurrent_fit">
+   <property name="text">
+    <string>Load in current fit</string>
+   </property>
+  </action>
+  <action name="actionLoad_result_in_current_fit">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Load result in current fit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionConvert">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
+   </property>
+   <property name="text">
+    <string>Convert</string>
+   </property>
+  </action>
+  <action name="actionGenerate_decay">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
+   </property>
+   <property name="text">
+    <string>Decay histogram</string>
+   </property>
+  </action>
+  <action name="actionCorrelate">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/FCS.png</normaloff>:/icons/icons/FCS.png</iconset>
+   </property>
+   <property name="text">
+    <string>Correlate</string>
+   </property>
+  </action>
+  <action name="actionVM_VV_2GVH">
+   <property name="text">
+    <string>VM=VV+2GVH</string>
+   </property>
+  </action>
+  <action name="actionSimulate_decay">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
+   </property>
+   <property name="text">
+    <string>Simulate decay</string>
+   </property>
+  </action>
+  <action name="actionExperimentChanged">
+   <property name="text">
+    <string>ExperimentChanged</string>
+   </property>
+  </action>
+  <action name="actionSetupChanged">
+   <property name="text">
+    <string>Setup Changed</string>
+   </property>
+  </action>
+  <action name="actionUpdate">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/available-updates-xxl.png</normaloff>:/icons/available-updates-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Update</string>
+   </property>
+  </action>
+  <action name="actionF_Test">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
+   </property>
+   <property name="text">
+    <string>F-Test</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Edit</string>
+   </property>
+  </action>
+  <action name="actionRecord">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Farm-Fresh_control_record.png</normaloff>:/icons/icons/Farm-Fresh_control_record.png</iconset>
+   </property>
+   <property name="text">
+    <string>Record</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Farm-Fresh_control_play.png</normaloff>:/icons/icons/Farm-Fresh_control_play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Farm-Fresh_control_stop.png</normaloff>:/icons/icons/Farm-Fresh_control_stop.png</iconset>
+   </property>
+   <property name="text">
+    <string>Stop recording</string>
+   </property>
+  </action>
+  <action name="actionCascade">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
+   </property>
+   <property name="text">
+    <string>Cascade</string>
+   </property>
+  </action>
+  <action name="actionTTTR_CLSM">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
+   </property>
+   <property name="text">
+    <string>TTTR CLSM</string>
+   </property>
+  </action>
+  <action name="actionClear_local_settings">
+   <property name="text">
+    <string>Clear local settings</string>
+   </property>
+  </action>
+  <action name="actionndXplorer">
+   <property name="text">
+    <string>ndXplorer</string>
+   </property>
+  </action>
+  <zorder>dockWidgetDatasets</zorder>
+  <zorder>dockWidgetAnalysis</zorder>
+  <zorder>dockWidgetPlot</zorder>
+  <zorder>dockWidget_console</zorder>
+  <zorder>dockWidgetScriptEdit</zorder>
+  <zorder>dockWidgetHistory</zorder>
+  <zorder>dockWidgetReadData</zorder>
+ </widget>
+ <resources>
+  <include location="resources/resource.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>actionExit_2</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>518</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionPlot_options</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dockWidgetPlot</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>192</x>
+     <y>580</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionFit_widget</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dockWidgetAnalysis</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>192</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>actionAdd_fit</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>270</x>
+     <y>404</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>actionLoad_Data</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>321</x>
+     <y>80</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_setupSelect</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>actionSetupChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>298</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_FileParameters</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>widget</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>213</x>
+     <y>182</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>213</x>
+     <y>92</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionLoading</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dockWidgetDatasets</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>192</x>
+     <y>452</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBox_experimentSelect</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>actionExperimentChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>130</x>
+     <y>54</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

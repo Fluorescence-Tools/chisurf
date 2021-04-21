@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>516</width>
+    <height>333</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/icons/icons/Cone.ico</normaloff>:/icons/icons/Cone.ico</iconset>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <item row="12" column="0" colspan="8">
+    <widget class="QWidget" name="widget_2" native="true">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QSplitter" name="splitter">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <widget class="QWidget" name="widget" native="true">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="11" column="6" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="decimals">
+        <number>4</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_8">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="decimals">
+        <number>4</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>k2 (M/SD)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>rDinf</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>rAinf</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="4">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Rapp(M/SD)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>r0</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string>Steady-state anisotropy of donor without FRET</string>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="singleStep">
+      <double>0.001000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.050000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="maximum">
+      <double>4.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.001000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.380000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="4">
+    <widget class="QCheckBox" name="checkBox">
+     <property name="toolTip">
+      <string>Check if FRET-senzitized acceptor anisotropy was measured</string>
+     </property>
+     <property name="text">
+      <string>rADinf</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="2">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_10">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="decimals">
+        <number>4</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_9">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+       <property name="decimals">
+        <number>4</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="5" column="2">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string>Steady-state anisotropy of acceptor direct excited</string>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="maximum">
+      <double>4.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.001000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.100000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="6">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Step-size in degrees</string>
+     </property>
+     <property name="decimals">
+      <number>2</number>
+     </property>
+     <property name="minimum">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>10.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.500000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="4">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>FRET efficiency</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+     <property name="toolTip">
+      <string>Assumed -true- kappa2</string>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.667000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0">
+    <widget class="QRadioButton" name="radioButton_2">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>WIC</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="2">
+    <widget class="QRadioButton" name="radioButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>DWT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>assumed k2</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>#k2 bins</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="6" colspan="2">
+    <widget class="QPushButton" name="pushButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>update</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="6">
+    <widget class="QSpinBox" name="spinBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Number of bins in kappa2-histogram</string>
+     </property>
+     <property name="maximum">
+      <number>999</number>
+     </property>
+     <property name="value">
+      <number>131</number>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="4">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>step-size</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="6" colspan="2">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_11">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="toolTip">
+      <string>FRET efficieny (only used in DWT model)</string>
+     </property>
+     <property name="decimals">
+      <number>3</number>
+     </property>
+     <property name="minimum">
+      <double>0.001000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>0.999000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.001000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.001000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="6" rowspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_7">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Steady-state anisotropy of acceptor (FRET-senzitized)</string>
+       </property>
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="maximum">
+        <double>4.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.000100000000000</double>
+       </property>
+       <property name="value">
+        <double>0.005000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Angle delta in degrees</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../resources/resource.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_7</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>301</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>443</x>
+     <y>49</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_3</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>301</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>443</x>
+     <y>9</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_11</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>120</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>420</x>
+     <y>110</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_7</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>100</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>424</x>
+     <y>86</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>100</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>295</x>
+     <y>86</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>25</x>
+     <y>14</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>295</x>
+     <y>86</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

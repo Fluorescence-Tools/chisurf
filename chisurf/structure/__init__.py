@@ -10,9 +10,11 @@ The module :py:mod:`.mfm.potential` provides a set of potentials. The module :py
 provides a set of functions and classes to work with structures and trajectories.
 
 """
-from . structure import *
-from . trajectory import *
-from . protein import *
+from chisurf.structure.structure import *
+from chisurf.structure.trajectory import *
+from chisurf.structure.protein import *
+import chisurf.structure.av
+
 #from . import potential
 #from . import labeled_structure
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from qtpy import  QtWidgets
 
-import chisurf.settings as mfm
 import chisurf.fitting
 from chisurf.plots import plotbase
 
@@ -22,19 +21,13 @@ class FitInfo(plotbase.Plot):
             parent=parent,
             **kwargs
         )
-        self.pltControl = QtWidgets.QWidget()
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
+        self.plot_controller = QtWidgets.QWidget()
 
         self.textedit = QtWidgets.QPlainTextEdit()
         self.layout.addWidget(self.textedit)
 
-    def update_all(
-            self,
-            *args,
-            **kwargs
-    ):
+    def update(self, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
         fit = self.fit
         self.textedit.setPlainText(str(fit))
 

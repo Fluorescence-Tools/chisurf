@@ -1,27 +1,29 @@
 from __future__ import annotations
 
+from chisurf import typing
 import numpy as np
 import pyqtgraph as pg
+import pyqtgraph.dockarea
+import matplotlib.colors
 from qtpy import QtWidgets
-import matplotlib.colors as mpl_colors
 
+import chisurf.experiments
 import chisurf.decorators
+import chisurf.gui.decorators
 import chisurf.math
 import chisurf.fitting
 import chisurf.settings
-import chisurf.settings as mfm
 import chisurf.math.statistics
 from chisurf.plots import plotbase
-from pyqtgraph.dockarea import *
 
-color_scheme = chisurf.settings.colors
+colors = chisurf.settings.gui['plot']['colors']
 
 
 class LinePlotControl(
     QtWidgets.QWidget
 ):
 
-    @chisurf.decorators.init_with_ui(
+    @chisurf.gui.decorators.init_with_ui(
         ui_filename="linePlotWidget.ui"
     )
     def __init__(
@@ -43,7 +45,7 @@ class LinePlotControl(
         self.xmin = xmin
         self.ymin = ymin
 
-        self.actionUpdate_Plot.triggered.connect(parent.update_all)
+        self.actionUpdate_Plot.triggered.connect(parent.update)
         self.checkBox.stateChanged.connect(self.SetLog)
         self.checkBox_2.stateChanged.connect(self.SetLog)
         self.checkBox_4.stateChanged.connect(self.SetLog)
@@ -231,13 +233,13 @@ class LinePlotControl(
             self.checkBox_3.setCheckState(0)
 
     def SetReference(self):
-        self.parent.update_all()
+        self.parent.update()
 
     def SetLog(self):
-        self.parent.update_all()
+        self.parent.update()
 
     def SetDensity(self):
-        self.parent.update_all()
+        self.parent.update()
 
 
 class LinePlot(plotbase.Plot):
@@ -261,6 +263,30 @@ class LinePlot(plotbase.Plot):
 
     name = "Fit"
 
+    director = {
+        'data': {
+            'lw': 2.0,
+            'target': 'main_plot'
+        },
+        'model': {
+            'lw': 2.0,
+            'target': 'main_plot',
+            'color': colors['model'],
+        },
+        'weighted residuals': {
+            'lw': 2.0,
+            'target': 'top_left_plot',
+            'label': 'w.res.',
+            'color': colors['residuals']
+        },
+        'autocorrelation': {
+            'lw': 2.0,
+            'target': 'top_right_plot',
+            'color': colors['auto_corr'],
+            'label': 'a.cor.'
+        }
+    }
+
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
@@ -270,55 +296,56 @@ class LinePlot(plotbase.Plot):
             reference_curve: bool = False,
             x_label: str = 'x',
             y_label: str = 'y',
-            plot_irf: bool = False,
-            data_x: np.array = None,
-            data_y: np.array = None
+            **kwargs
     ):
-        super().__init__(fit)
-
-        # plot control dialog
-        self.pltControl = LinePlotControl(
-            parent=self,
-            scale_x=scale_x,
-            d_scaley=d_scaley,
-            r_scaley=r_scaley,
-            reference_curve=reference_curve
+        super().__init__(
+            fit=fit,
+            **kwargs
         )
-
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(0)
-
-        self.data_x = data_x
-        self.data_y = data_y
-        self.plot_irf = plot_irf
-
-        area = DockArea()
-        self.layout.addWidget(area)
-        hide_title = chisurf.settings.gui['plot']['hideTitle']
-        d1 = Dock("residuals", size=(250, 80), hideTitle=hide_title)
-        d2 = Dock("a.corr.", size=(250, 80), hideTitle=hide_title)
-        d3 = Dock("Fit", size=(250, 250), hideTitle=hide_title)
-
+        self.plot_controller = LinePlotControl(
+                parent=self,
+                scale_x=scale_x,
+                d_scaley=d_scaley,
+                r_scaley=r_scaley,
+                reference_curve=reference_curve
+        )
         p1 = pg.PlotWidget()
         p2 = pg.PlotWidget()
         p3 = pg.PlotWidget()
+        p1.setXLink(p3)
+        p2.setXLink(p3)
 
+        plots = {
+            'top_left_plot': p1.getPlotItem(),
+            'top_right_plot': p2.getPlotItem(),
+            'main_plot': p3.getPlotItem()
+        }
+
+        hide_dock_title = chisurf.settings.gui['plot']['hideTitle']
+        d1 = pyqtgraph.dockarea.Dock(
+            "Residuals",
+            size=(250, 80),
+            hideTitle=hide_dock_title
+        )
+        d2 = pyqtgraph.dockarea.Dock(
+            "A.corr. residuals",
+            size=(250, 80),
+            hideTitle=hide_dock_title
+        )
+        d3 = pyqtgraph.dockarea.Dock(
+            "Data",
+            size=(250, 250),
+            hideTitle=hide_dock_title
+        )
         d1.addWidget(p1)
         d2.addWidget(p2)
         d3.addWidget(p3)
 
+        area = pyqtgraph.dockarea.DockArea()
         area.addDock(d1, 'top')
         area.addDock(d2, 'top', d1)
         area.addDock(d3, 'bottom', d1)
-
-        residuals_plot = p1.getPlotItem()
-        auto_corr_plot = p2.getPlotItem()
-        data_plot = p3.getPlotItem()
-
-        self.data_plot = data_plot
-        self.res_plot = residuals_plot
-        self.auto_corr_plot = auto_corr_plot
+        self.layout.addWidget(area)
 
         # Labels
         self.text = pg.TextItem(
@@ -327,99 +354,117 @@ class LinePlot(plotbase.Plot):
             fill=(0, 0, 255, 100),
             anchor=(0, 1)
         )
-        # curves = self.fit.get_curves()
-        # data = curves['data']
-        # self.text.setPos(
-        #     min(data.x * 0.5),
-        #     max(data.y * 0.5)
-        # )
-
-        self.data_plot.addItem(self.text)
-        colors = chisurf.settings.gui['plot']['colors']
+        plots['main_plot'].addItem(self.text)
 
         # Fitting-region selector
         if chisurf.settings.gui['plot']['enable_region_selector']:
-            ca = list(mpl_colors.hex2color(colors["region_selector"]))
+            ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
-            data_plot.addItem(region)
+            plots['main_plot'].addItem(region)
             self.region = region
 
             def update_region(evt):
                 lb, ub = region.getRegion()
                 data_x = fit.data.x
-                if self.pltControl.data_is_log_x:
+                if self.plot_controller.data_is_log_x:
                     lb, ub = 10**lb, 10**ub
-                lb -= self.pltControl.x_shift
-                ub -= self.pltControl.x_shift
+                lb -= self.plot_controller.x_shift
+                ub -= self.plot_controller.x_shift
 
                 lb_i = np.searchsorted(data_x, lb, side='right')
                 ub_i = np.searchsorted(data_x, ub, side='left')
-                chisurf.run("cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i))
-                self.update_all(only_fit_range=True)
+                chisurf.run(
+                    "cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i)
+                )
+                self.update(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(update_region)
 
         # Grid
         if chisurf.settings.gui['plot']['enable_grid']:
             if chisurf.settings.gui['plot']['show_data_grid']:
-                data_plot.showGrid(True, True, 0.5)
+                plots['main_plot'].showGrid(True, True, 0.5)
             if chisurf.settings.gui['plot']['show_residual_grid']:
-                residuals_plot.showGrid(True, True, 1.0)
+                plots['top_left_plot'].showGrid(True, True, 1.0)
             if chisurf.settings.gui['plot']['show_acorr_grid']:
-                auto_corr_plot.showGrid(True, True, 1.0)
-
+                plots['top_right_plot'].showGrid(True, True, 1.0)
         # Labels
-        self.residuals_plot = residuals_plot
-        self.auto_corr_plot = auto_corr_plot
-
         if chisurf.settings.gui['plot']['label_axis']:
-            residuals_plot.setLabel('left', "w.res.")
-            auto_corr_plot.setLabel('left', "a.corr.")
-            data_plot.setLabel('left', y_label)
-            data_plot.setLabel('bottom', x_label)
+            plots['top_left_plot'].setLabel('left', "w.res.")
+            plots['top_right_plot'].setLabel('left', "a.corr.")
+            plots['main_plot'].setLabel('left', y_label)
+            plots['main_plot'].setLabel('bottom', x_label)
 
-        lw = chisurf.settings.gui['plot']['line_width']
-        curves = self.fit.get_curves()
         lines = dict()
-        for i, curve_key in enumerate(curves.keys()):
-            if curve_key in ['weighted residuals', 'autocorrelation']:
-                continue
-            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
-            lines[curve_key] = data_plot.plot(
+        curves = self.fit.get_curves()
+        for i, curve_key in enumerate(curves):
+            lines[curve_key] = self.add_plot(
+                curves=curves,
+                curve_key=curve_key,
+                plot_dict=plots,
+                index=i
+            )
+        self.lines = lines
+        self.plots = plots
+
+    def add_plot(
+            self,
+            curves: typing.Dict,
+            curve_key: str,
+            plot_dict: typing.Dict,
+            index: int = 1
+    ):
+        color_idx = index % len(chisurf.settings.colors)
+        pen_color = chisurf.settings.colors[color_idx]['hex']
+        lw = chisurf.settings.gui['plot']['line_width']
+
+        for ik in self.director.keys():
+            # if the curve name matches the template
+            if ik in curve_key:
+                curve_options = self.director[ik]
+                target_plot = plot_dict[
+                    curve_options.get(
+                        'target',
+                        'main_plot'
+                    )
+                ]
+                lw = curve_options.get('lw', lw)
+                pen_color = curve_options.get('color', pen_color)
+                label = curve_options.get('label', curve_key)
+                if curve_key != ik:
+                    # make the line half as wide, and transparent (30%)
+                    lw *= 0.5
+                    pen_color = '#4D' + pen_color.split('#')[1]
+                return target_plot.plot(
+                    x=[0.0], y=[0.0],
+                    pen=pg.mkPen(pen_color, width=lw),
+                    name=label
+                )
+
+        curve = curves[curve_key]
+        if isinstance(curve, chisurf.data.DataCurve):
+            target_plot = plot_dict['main_plot']
+            return target_plot.plot(
                 x=[0.0], y=[0.0],
-                pen=pg.mkPen(color, width=lw),
+                pen=pg.mkPen(pen_color, width=lw),
                 name=curve_key
             )
 
-        lines['weighted residuals'] = residuals_plot.plot(
-            x=[0.0], y=[0.0],
-            pen=pg.mkPen(colors['residuals'], width=lw),
-            name='residues'
-        )
-        lines['autocorrelation'] = self.auto_corr_plot.plot(
-            x=[0.0], y=[0.0],
-            pen=pg.mkPen(colors['auto_corr'], width=lw),
-            name='residues'
-        )
+        return None
 
-        self.lines = lines
-        p1.setXLink(p3)
-        p2.setXLink(p3)
-
-    def update_all(
+    def update(
             self,
             only_fit_range: bool = False,
             *args,
             **kwargs
-    ):
-        # Get parameters from plot-control
-        plt_ctrl = self.pltControl
-        data_log_y = plt_ctrl.data_is_log_y
-        data_log_x = plt_ctrl.data_is_log_x
-        res_log_y = plt_ctrl.res_is_log_y
-        use_reference = self.pltControl.use_reference
+    ) -> None:
+        super().update(
+            *args,
+            **kwargs
+        )
         # # Reference-function
+        # use_reference = self.plot_controller.use_reference
         # if use_reference:
         #     reference = self.fit.model.reference
         #     if reference is None:
@@ -430,50 +475,54 @@ class LinePlot(plotbase.Plot):
         #     mm = max(model_y)
         #     irf_y *= mm / max(irf_y)
 
-        y_shift = plt_ctrl.y_shift
-        x_shift = plt_ctrl.x_shift
+        y_shift = self.plot_controller.y_shift
+        x_shift = self.plot_controller.x_shift
 
         curves = self.fit.get_curves()
-        for curve_key in curves.keys():
+        for i, curve_key in enumerate(curves.keys()):
             curve = curves[curve_key]
-            y = curve.y
-            if self.pltControl.is_density:
+            y = curve.y + y_shift
+            x = curve.x + x_shift
+            if self.plot_controller.is_density:
                 y = curve.y / np.diff(curve.x)
-            self.lines[curve_key].setData(
-                    x=curve.x + x_shift,
-                    y=y
+            try:
+                self.lines[curve_key].setData(x=x, y=y)
+            except AttributeError:
+                self.lines[curve_key] = self.add_plot(
+                    curves=curves,
+                    curve_key=curve_key,
+                    plot_dict=self.plots,
+                    index=i
                 )
 
+        # data_log_y = self.plot_controller.data_is_log_y
+        # data_log_x = self.plot_controller.data_is_log_x
+        # res_log_y = self.plot_controller.res_is_log_y
         #
-        # model_y = np.copy(model.y) + y_shift
-        # data_y = np.copy(data_y) + y_shift
-        #
-
-        # Set log-scales
-        self.res_plot.setLogMode(
-            x=data_log_x,
-            y=res_log_y
-        )
-        self.auto_corr_plot.setLogMode(
-            x=data_log_x,
-            y=res_log_y
-        )
-        self.data_plot.setLogMode(
-            x=data_log_x,
-            y=data_log_y
-        )
-
-        # update region selector
-        data = curves['data']
-        lb_min, ub_max = data.x[0], data.x[-1]
-        lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
-        if data_log_x:
-            lb = np.log10(lb)
-            ub = np.log10(ub)
-            lb_min = np.log10(lb_min)
-            ub_max = np.log10(ub_max)
-        self.region.setBounds((lb_min, ub_max))
-        self.region.setRegion((lb, ub))
+        # # Set log-scales
+        # self.plots['top_left_plot'].setLogMode(
+        #     x=data_log_x,
+        #     y=res_log_y
+        # )
+        # self.plots['top_right_plot'].setLogMode(
+        #     x=data_log_x,
+        #     y=res_log_y
+        # )
+        # self.plots['main_plot'].setLogMode(
+        #     x=data_log_x,
+        #     y=data_log_y
+        # )
+        # # update region selector
+        # data = curves['data']
+        # lb_min, ub_max = data.x[0], data.x[-1]
+        # lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
+        # if data_log_x:
+        #     lb = np.log10(lb)
+        #     ub = np.log10(ub)
+        #     lb_min = np.log10(lb_min)
+        #     ub_max = np.log10(ub_max)
+        # self.region.setBounds((lb_min, ub_max))
+        # self.region.setRegion((lb, ub))
 
         self.text.updateTextPos()
         self.text.setHtml(

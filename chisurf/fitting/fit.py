@@ -2,7 +2,7 @@
 
 """
 from __future__ import annotations
-from typing import List, Tuple, Dict, Type
+from chisurf import typing
 
 import os
 import numpy as np
@@ -14,30 +14,26 @@ import chisurf.base
 import chisurf.fio
 import chisurf.curve
 import chisurf.experiments
-import chisurf.experiments.data
+import chisurf.data
 import chisurf.fitting.parameter
 import chisurf.fitting.sample
 import chisurf.fitting.support_plane
 import chisurf.models
 import chisurf.math.statistics
-
-from chisurf.math.optimization.leastsqbound import leastsqbound
+import chisurf.math.optimization
 
 
 class Fit(
     chisurf.base.Base
 ):
-    """
-
-    """
 
     def __init__(
             self,
-            model_class: Type[chisurf.models.Model] = type,
-            data: chisurf.experiments.data.DataCurve = None,
+            model_class: typing.Type[chisurf.models.Model] = type,
+            data: chisurf.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
-            model_kw: Dict = None,
+            model_kw: typing.Dict = None,
             **kwargs
     ):
         """
@@ -51,11 +47,10 @@ class Fit(
         self._model = None
         self.results = None
         if data is None:
-            data = chisurf.experiments.data.DataCurve(
+            data = chisurf.data.DataCurve(
                 x=np.arange(10),
                 y=np.arange(10)
             )
-
         self._data = data
         self.plots = list()
         self._xmin, self._xmax = xmin, xmax
@@ -109,13 +104,13 @@ class Fit(
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         return self._data
 
     @data.setter
     def data(
             self,
-            v: chisurf.experiments.data.DataCurve
+            v: chisurf.data.DataCurve
     ):
         self._data = v
 
@@ -128,7 +123,7 @@ class Fit(
     @model.setter
     def model(
             self,
-            model_class: Type[
+            model_class: typing.Type[
                 chisurf.models.model.ModelCurve
             ]
     ):
@@ -146,7 +141,8 @@ class Fit(
         wres_y = self.model.weighted_residuals
         return chisurf.curve.Curve(
             x=wres_x,
-            y=wres_y
+            y=wres_y,
+            copy_array=False
         )
 
     @property
@@ -154,7 +150,8 @@ class Fit(
         wres = self.weighted_residuals
         return chisurf.curve.Curve(
             x=wres.x[1:],
-            y=chisurf.math.signal.autocorr(wres.y)[1:]
+            y=chisurf.math.signal.autocorr(wres.y)[1:],
+            copy_array=False
         )
 
     @property
@@ -192,13 +189,13 @@ class Fit(
     @property
     def fit_range(
             self
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
     def fit_range(
             self,
-            v: Tuple[int, int]
+            v: typing.Tuple[int, int]
     ):
         self.xmin, self.xmax = v
 
@@ -219,7 +216,7 @@ class Fit(
     @property
     def covariance_matrix(
             self
-    ) -> Tuple[np.array, List[int]]:
+    ) -> typing.Tuple[np.array, typing.typing.List[int]]:
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -237,14 +234,12 @@ class Fit(
         return self.model.n_free
 
     def get_curves(
-            self
-    ) -> Dict[str, chisurf.curve.Curve]:
-        """Returns a dictionary containing the current data and the
-        model as chisurf.curve.Curve objects.
-
-        :return:
-        """
-        d = self.model.get_curves()
+            self,
+            copy_curves: bool = False
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
+        d = self.model.get_curves(
+            copy_curves=copy_curves
+        )
         d.update(
             {
                 'data': self.data,
@@ -321,11 +316,11 @@ class Fit(
             *args,
             **kwargs
     ) -> None:
-        fitting_options = chisurf.settings.cs_settings['fitting']['leastsq']
+        fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
-        self.results = leastsqbound(
+        self.results = chisurf.math.optimization.leastsqbound(
             get_wres,
             self.model.parameter_values,
             args=(self.model,),
@@ -353,9 +348,9 @@ class Fit(
             self,
             parameter_name: str,
             rel_range: float = None,
-            scan_range: Tuple[float, float] = (None, None),
+            scan_range: typing.Tuple[float, float] = (None, None),
             n_steps: int = 30
-    ) -> Tuple[np.array, np.array]:
+    ) -> typing.Tuple[np.array, np.array]:
         """Perform a chi2-scan on a parameter of the fit.
 
         :param parameter_name: the parameter name
@@ -408,7 +403,7 @@ class FitGroup(
     @property
     def data(
             self
-    ) -> chisurf.experiments.data.DataCurve:
+    ) -> chisurf.data.DataCurve:
         return self.selected_fit.data
 
     @data.setter
@@ -427,7 +422,7 @@ class FitGroup(
     @model.setter
     def model(
             self,
-            v: Type[chisurf.models.Model]
+            v: typing.Type[chisurf.models.Model]
     ):
         self.selected_fit.model = v
 
@@ -454,13 +449,13 @@ class FitGroup(
     @property
     def fit_range(
             self
-    ) -> Tuple[int, int]:
+    ) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
     def fit_range(
             self,
-            v: Tuple[int, int]
+            v: typing.Tuple[int, int]
     ):
         for f in self:
             f.xmin, f.xmax = v
@@ -494,6 +489,20 @@ class FitGroup(
         for f in self:
             f.xmax = v
 
+    def get_curves(
+            self,
+            copy_curves: bool = False
+    ) -> typing.Dict[str, chisurf.curve.Curve]:
+        all_curves = super().get_curves()
+        for i, f in enumerate(self.grouped_fits):
+            fit_curves = f.get_curves(
+                copy_curves=copy_curves
+            )
+            for curve_key in fit_curves:
+                new_curve_key = curve_key + "_%02d" % i
+                all_curves[new_curve_key] = fit_curves[curve_key]
+        return all_curves
+
     def save(
             self,
             filename: str,
@@ -518,8 +527,6 @@ class FitGroup(
             self
     ) -> None:
         self._model.update()
-        for p in self.plots:
-            p.update_all()
         for f in self.grouped_fits:
             f.model.update()
 
@@ -535,26 +542,21 @@ class FitGroup(
         :param kwargs:
         :return:
         """
-        fit = self
+        fit: FitGroup = self
         if local_first is None:
-            local_first = chisurf.settings.fitting['global']['fit_local_first']
-
+            local_first = chisurf.settings.optimization['global_optimize_local_first']
         if local_first:
             for f in fit:
                 f.run(**kwargs)
         for f in fit:
             f.model.find_parameters()
-
         fit._model.find_parameters()
-        fitting_options = chisurf.settings.fitting['leastsq']
+        fitting_options = chisurf.settings.optimization['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
-
-        results = leastsqbound(
-            get_wres,
-            fit._model.parameter_values,
-            args=(
-                fit._model,
-            ),
+        results = chisurf.math.optimization.leastsqbound(
+            func=get_wres,
+            x0=fit._model.parameter_values,
+            args=(fit._model,),
             bounds=bounds,
             **fitting_options
         )
@@ -563,10 +565,9 @@ class FitGroup(
 
     def __init__(
             self,
-            data: chisurf.experiments.data.DataGroup,
-            model_class: Type[chisurf.models.Model] = type,
-            model_kw: Dict = None,
-            **kwargs
+            data: chisurf.data.DataGroup,
+            model_class: typing.Type[chisurf.models.Model] = type,
+            model_kw: typing.Dict = None
     ):
         """
 
@@ -595,9 +596,24 @@ class FitGroup(
             fits=self.grouped_fits
         )
 
-    def to_dict(self) -> Dict:
-        d = super().to_dict()
-        d['grouped_fits'] = [f.to_dict() for f in self.grouped_fits]
+    def to_dict(
+            self,
+            remove_protected: bool = False,
+            copy_values: bool = True,
+            convert_values_to_elementary: bool = False
+    ) -> typing.Dict:
+        d = super().to_dict(
+            remove_protected=remove_protected,
+            copy_values=copy_values,
+            convert_values_to_elementary=convert_values_to_elementary
+        )
+        d['grouped_fits'] = [
+            f.to_dict(
+                remove_protected=remove_protected,
+                copy_values=copy_values,
+                convert_values_to_elementary=convert_values_to_elementary
+            ) for f in self.grouped_fits
+        ]
         return d
 
     def __str__(self):
@@ -617,7 +633,7 @@ class FitGroup(
     def __getitem__(
             self,
             key
-    ) -> List[Fit]:
+    ) -> typing.List[Fit]:
         if isinstance(key, int):
             return self.grouped_fits.__getitem__(key)
         else:
@@ -705,7 +721,7 @@ def approx_grad(
         epsilon: float,
         args=(),
         f0=None
-) -> Tuple[float, np.array]:
+) -> typing.Tuple[float, np.array]:
     """Approximate the derivative of a fit with respect to the parameters
     xk. The return value of the function is an array.
 
@@ -740,7 +756,7 @@ def covariance_matrix(
         fit: chisurf.fitting.fit.Fit,
         epsilon: float = chisurf.settings.eps,
         **kwargs
-) -> Tuple[np.array, List[int]]:
+) -> typing.Tuple[np.array, typing.List[int]]:
     """Calculate the covariance matrix
 
     :param fit:
@@ -783,25 +799,25 @@ def covariance_matrix(
 
 
 def get_wres(
-        parameter: List[float],
+        parameter_values: typing.List[float],
         model: chisurf.models.Model
 ) -> np.array:
     """Returns the weighted residuals for a list of parameters of a models
 
-    :param parameter: a list of the parameter values / or None. If None
+    :param parameter_values: a list of the parameter values / or None. If None
     the models is not updated.
 
     :param model:
     :return:
     """
-    if len(parameter) > 0:
-        model.parameter_values = parameter
+    if len(parameter_values) > 0:
+        model.parameter_values = parameter_values
         model.update_model()
     return model.weighted_residuals
 
 
 def get_chi2(
-        parameter: List[float],
+        parameter_values: typing.List[float],
         model: chisurf.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
@@ -815,7 +831,7 @@ def get_chi2(
     and n_free is the number of model parameters
     :return:
     """
-    chi2 = (get_wres(parameter, model)**2.0).sum()
+    chi2 = (get_wres(parameter_values, model)**2.0).sum()
     chi2 = np.inf if np.isnan(chi2) else chi2
     chi2r = chi2 / float(model.n_points - model.n_free - 1.0)
     if reduced:
@@ -825,10 +841,10 @@ def get_chi2(
 
 
 def lnprior(
-        parameter_values: List[float],
+        parameter_values: typing.List[float],
         fit: chisurf.fitting.fit.Fit,
-        bounds: List[
-            Tuple[float, float]
+        bounds: typing.List[
+            typing.Tuple[float, float]
         ] = None
 ) -> float:
     """The probability determined by the prior which is given by the bounds
@@ -849,11 +865,11 @@ def lnprior(
 
 
 def lnprob(
-        parameter_values: List[float],
+        parameter_values: typing.List[float],
         fit: Fit,
         chi2max: float = float("inf"),
-        bounds: List[
-            Tuple[float, float]
+        bounds: typing.List[
+            typing.Tuple[float, float]
         ] = None
 ) -> float:
     """

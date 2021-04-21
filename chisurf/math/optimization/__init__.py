@@ -1,8 +1,13 @@
 import numpy as np
 
+import scikit_fluorescence as skf
+import scikit_fluorescence.math.optimize
 import chisurf.math.linalg
-from .leastsqbound import leastsqbound
 from .mem import maxent
+
+
+leastsqbound = skf.math.optimize.leastsqbound.leastsqbound
+
 
 def solve_richardson_lucy(
         A: np.array,
