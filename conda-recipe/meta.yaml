@@ -24,6 +24,8 @@ build:
 
 requirements:
   host:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
     - python {{ python }}
     - setuptools
     - typing_extensions
