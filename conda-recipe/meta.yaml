@@ -33,7 +33,7 @@ requirements:
     - pyyaml
     - numpy
     # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt 5.9.*
+    - pyqt 5.12|5.9.*
   run:
     - python
     - numpy
@@ -51,17 +51,14 @@ requirements:
     - numba
     - scipy
     - emcee
-    # dependency issue
-    # - mdtraj
+    - mdtraj
     - ipython
     - qtconsole
     - jupyter_client
     - qscintilla2
-    #- guiqwt=3.0.4
-    # >=1.7.6
-    - guidata  
-    # 2.3.*
-    - pymol-open-source 
+    - guiqwt=3.0.4
+    - guidata=1.7.6
+    - pymol-open-source=2.3.0
     - pyopengl
     - pyopencl
     - python-docx
