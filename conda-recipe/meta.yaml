@@ -42,7 +42,7 @@ requirements:
     - pyyaml
     - pyqt 5.9.*
   run:
-    - python {{ python }}
+    - python
     - numpy
     - pyyaml
     - qtpy
