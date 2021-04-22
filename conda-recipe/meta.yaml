@@ -23,13 +23,6 @@ build:
     {% endfor %}
 
 requirements:
-  build:
-    - python {{ python }}
-    - setuptools
-    - typing_extensions
-    - cython
-    - pyyaml
-    - numpy
   host:
     - python {{ python }}
     - setuptools
