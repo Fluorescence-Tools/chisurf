@@ -3,4 +3,4 @@ channels:
   - salilab
   - tpeulen
   - defaults
-channel_priority: strict
+#channel_priority: strict
