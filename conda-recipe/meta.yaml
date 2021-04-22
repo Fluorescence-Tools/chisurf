@@ -23,7 +23,7 @@ build:
     {% endfor %}
 
 requirements:
-  build:
+  host:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - python {{ python }}
@@ -32,14 +32,7 @@ requirements:
     - typing_extensions
     - cython
     - pyyaml
-  host:
     # Needed for pyrcc5 (updated pyqt resource file)
-    - python {{ python }}
-    - setuptools
-    - numpy
-    - typing_extensions
-    - cython
-    - pyyaml
     - pyqt 5.9.*
   run:
     - python
