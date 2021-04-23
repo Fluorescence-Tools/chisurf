@@ -21,7 +21,7 @@ build:linux:
     - source activate
     - cp .condarc ~/.condarc
     - conda install mamba=$MAMBA_VERSION boa conda-verify
-    - mamba install python=3.7
+    - mamba install -y python=3.7
     - conda mambabuild conda-recipe --output-folder bld-dir
   artifacts:
     expire_in: 7 days
