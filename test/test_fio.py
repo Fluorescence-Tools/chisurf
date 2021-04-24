@@ -267,7 +267,7 @@ class Tests(unittest.TestCase):
             suffix='.photon.h5'
         )
         output = filename
-        spc_files = glob.glob("./test/data/tttr/BH/BH_SPC132.spc")
+        spc_files = glob.glob("../tttr-data/bh/bh_spc132_sm_dna/*.spc")
         h5 = chisurf.fio.fluorescence.tttr.spc2hdf(
             spc_files,
             routine_name=filetype,
@@ -278,11 +278,11 @@ class Tests(unittest.TestCase):
     def test_photons(self):
         import glob
         import chisurf.fio
-        directory = './test/data/tttr/'
+        files = "../tttr-data/bh/bh_spc132_sm_dna/*.spc"
         test_data = [
             {
                 "routine": "bh132",
-                "files": glob.glob(directory + '/BH/132/*.spc'),
+                "files": glob.glob(files),
                 "n_tac": 4096,
                 "measurement_time": 62.3288052934344,
                 "n_photons": 183657,

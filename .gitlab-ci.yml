@@ -12,16 +12,12 @@ build:linux:
   stage: build
   tags:
     - linux
-  image: continuumio/miniconda3:latest
+  image: condaforge/mambaforge
   before_script:
-    - apt-get update -qy
-    # Make command
-    - apt-get install -y build-essential
+    - apt-get update -qy && apt-get install -y build-essential
   script:
-    - source activate
-    - cp .condarc ~/.condarc
-    - conda install mamba=$MAMBA_VERSION boa conda-verify
-    - mamba install -y python=3.7
+    - conda config --add channels tpeulen
+    - mamba install -y python=3.7 boa 
     - conda mambabuild conda-recipe --output-folder bld-dir
   artifacts:
     expire_in: 7 days

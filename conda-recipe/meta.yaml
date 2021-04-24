@@ -63,6 +63,7 @@ requirements:
     - pyopencl
     - python-docx
     - htmd-pdb2pqr
+    # tpeulen
     - chinet >=0.0.8
     - ndxplorer
     - clsmview
