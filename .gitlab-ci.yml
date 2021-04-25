@@ -1,6 +1,6 @@
 stages:
   - build
-  # - deploy # not ready too many bugs
+  - deploy # not ready too many bugs
 
 # Change pip's cache directory to be inside the project directory since we can
 # only cache local items.
@@ -28,15 +28,15 @@ build:linux:
     paths:
       - bld-dir/
 
-deploy:
-  stage: deploy
-  image: continuumio/miniconda3:latest
-  tags:
-    - linux
-  dependencies:
-    - build:linux
-  script:
-    - source activate
-    - conda install anaconda-client
-    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then DEPLOY_LABEL=main; else DEPLOY_LABEL=nightly; fi
-    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${DEPLOY_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
+# deploy:
+#   stage: deploy
+#   image: continuumio/miniconda3:latest
+#   tags:
+#     - linux
+#   dependencies:
+#     - build:linux
+#   script:
+#     - source activate
+#     - conda install anaconda-client
+#     - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then DEPLOY_LABEL=main; else DEPLOY_LABEL=nightly; fi
+#     - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${DEPLOY_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
