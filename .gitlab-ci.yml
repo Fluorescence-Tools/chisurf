@@ -2,41 +2,56 @@ stages:
   - build
   - deploy
 
-# Change pip's cache directory to be inside the project directory since we can
-# only cache local items.
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  CONDA_PACKAGE: "chisurf"
-
 build:linux:
   stage: build
   tags:
     - linux
-  image: continuumio/miniconda3:latest
+  image: condaforge/mambaforge:latest
   before_script:
-    - apt-get update -qy
-    # Make command
-    - apt-get install -y build-essential
+    - apt update -yq && apt -yq install build-essential
+    - git submodule update --init --recursive --remote
   script:
-    - source activate
-    - cp .condarc ~/.condarc
-    - conda install mamba=$MAMBA_VERSION boa conda-verify
-    - mamba install -y python=3.7
-    - conda mambabuild conda-recipe --output-folder bld-dir
+    - ./tools/build.sh
   artifacts:
-    expire_in: 7 days
     paths:
       - bld-dir/
 
-deploy:
+test:linux:
+  stage: test
+  tags:
+    - linux
+  image: condaforge/mambaforge:latest
+  before_script:
+    # Issue with OpenGL and X11 display
+    # See: https://stackoverflow.com/questions/65675765/is-it-possible-to-run-x11-on-gitlab-ci
+    # See: https://github.com/conda-forge/pygridgen-feedstock/issues/10
+    # procps is used to grep the process by name to kill it when needed
+    - apt update -yq
+    - apt install -yq xorg-dev libglu1-mesa libgl1-mesa-dev xvfb libxinerama1 libxcursor1 libgl1-mesa-glx procps
+  script:
+    - source activate
+    # Disable Numba JIT for correct coverage analysis
+    - export NUMBA_DISABLE_JIT=1
+    - cp tools/.condarc ~/.condarc
+    - conda config --add channels "file://`pwd`/bld-dir"
+    - mamba create -n test python chisurf
+    - conda activate test
+    # Run GUI with xvfb - no X11 screen
+    - |
+      xvfb-run -a -s "-screen 0 1400x900x24 +extension RANDR" -- chisurf &
+      sleep 10
+      pgrep -f chisurf | awk '{print "kill -9 " $1}' | sh
+
+deploy:conda:
   stage: deploy
-  image: continuumio/miniconda3:latest
+  image: condaforge/mambaforge:latest
   tags:
     - linux
   dependencies:
-    - build:linux
+    - test:linux
+    - build:windows
+    - build:osx
+  before_script:
+    - git submodule update --init --recursive --remote
   script:
-    - source activate
-    - conda install anaconda-client
-    - if [[ "$CI_COMMIT_REF_NAME" == "master" ]]; then DEPLOY_LABEL=main; else DEPLOY_LABEL=nightly; fi
-    - anaconda -t ${ANACONDA_API_TOKEN} upload -l ${DEPLOY_LABEL} -u ${CONDA_USER} --force bld-dir/linux-64/*.tar.bz2
+    - ./tools/deploy.sh
