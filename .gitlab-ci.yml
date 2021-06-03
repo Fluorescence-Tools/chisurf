@@ -17,6 +17,30 @@ build:linux:
     paths:
       - bld-dir/
 
+build:windows:
+  stage: build
+  tags:
+    - win
+  before_script:
+    - git submodule update --init --recursive --remote
+  script:
+    - .\tools\build.bat
+  artifacts:
+    paths:
+      - bld-dir/
+
+build:osx:
+  stage: build
+  tags:
+    - osx
+  before_script:
+    - git submodule update --init --recursive --remote
+  script:
+    - ./tools/build.sh
+  artifacts:
+    paths:
+      - bld-dir/
+
 test:linux:
   stage: test
   tags:
