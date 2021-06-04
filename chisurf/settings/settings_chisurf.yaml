@@ -171,7 +171,6 @@ gui:
       background: k
       foreground: d
       antialias: false
-      useWeave: true
       leftButtonPan: true
     colors:
       region_selector: "#26a298"
