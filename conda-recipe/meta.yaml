@@ -39,7 +39,7 @@ requirements:
     - python
     - numpy
     - pyyaml
-    - qtpy
+    - qtpy <2.0
     - pyqt
     - pyqtgraph
     - typing_extensions
@@ -50,7 +50,7 @@ requirements:
     - python-slugify
     - numexpr
     - numba
-    - scipy
+    - scipy <1.8
     - emcee
     - mdtraj
     - ipython
