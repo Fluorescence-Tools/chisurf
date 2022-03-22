@@ -38,7 +38,7 @@ requirements:
   run:
     - python
     - numpy
-    - pyyaml
+    - pyyaml <5.4
     - qtpy <2.0
     - pyqt
     - pyqtgraph
