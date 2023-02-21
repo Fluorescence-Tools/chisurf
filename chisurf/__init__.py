@@ -1,11 +1,9 @@
-"""ChiSurf is sth.
-
-"""
 from __future__ import annotations
 
 import sys
 import logging
 import pathlib
+import pyopencl
 
 try:
     if sys.version_info >= (3, 8):
