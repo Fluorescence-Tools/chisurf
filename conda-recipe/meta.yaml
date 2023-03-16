@@ -70,7 +70,8 @@ requirements:
     - pymol-open-source
     - pyopengl
     - pyopencl
-    - pocl
+    - pocl  # [linux, osx]
+    - intel-opencl-rt  # [win]
     - python-docx
     - htmd-pdb2pqr
     - chinet >=0.0.8
