@@ -33,6 +33,7 @@ requirements:
   host:
     - python
     - setuptools
+    - cython
     - pyopencl
     - pocl
     - typing_extensions
