@@ -1,8 +1,4 @@
 #!/usr/bin/python
-try:
-    import numpy as np
-except ImportError:
-    np = None
 import platform
 from setuptools import setup, find_packages, Extension
 try:
@@ -28,6 +24,8 @@ def get_extensions():
     def make_extension(ext):
         """generate an Extension object from its dotted name
         """
+        import numpy as np
+        
         name = (ext[0])[2:-4]
         name = name.replace("/", ".")
         name = name.replace("\\", ".")
@@ -68,10 +66,10 @@ def get_extensions():
             './chisurf/math/reaction/reaction_.pyx'
         ]
     ]
-    if np:
+    try:
         return [make_extension(extension) for extension in eList]
-    else:
-        return []
+    except ImportError:
+        return list()
 
 
 def dict_from_txt(fn):
