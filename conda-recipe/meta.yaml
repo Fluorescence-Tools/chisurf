@@ -23,7 +23,8 @@ requirements:
     - python
     - setuptools
     - pyopencl
-    - pocl
+    - pocl  # [linux, osx]
+    - intel-opencl-rt  # [win]
     - typing_extensions
     - cython
     - pyyaml
@@ -35,7 +36,8 @@ requirements:
     - setuptools
     - cython
     - pyopencl
-    - pocl
+    - pocl  # [linux, osx]
+    - intel-opencl-rt  # [win]
     - typing_extensions
     - pyyaml
     - numpy
