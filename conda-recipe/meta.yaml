@@ -23,6 +23,7 @@ requirements:
     - python
     - setuptools
     - pyopencl
+    - pocl
     - typing_extensions
     - cython
     - pyyaml
@@ -56,6 +57,7 @@ requirements:
     - pymol-open-source
     - pyopengl
     - pyopencl
+    - pocl
     - python-docx
     - htmd-pdb2pqr
     - chinet >=0.0.8
