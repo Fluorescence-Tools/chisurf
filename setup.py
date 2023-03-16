@@ -1,8 +1,10 @@
 #!/usr/bin/python
 import platform
 from setuptools import setup, find_packages, Extension
-from Cython.Distutils import build_ext
-# from setuptools.command.build_ext import build_ext
+try:
+    from Cython.Distutils import build_ext
+except ImportError:
+    from setuptools.command.build_ext import build_ext
 
 from chisurf import info
 
