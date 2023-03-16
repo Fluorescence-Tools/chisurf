@@ -27,8 +27,9 @@ requirements:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
   host:
-    - python {{ python }}
+    - python
     - setuptools
+    - pyopencl
     - typing_extensions
     - cython
     - pyyaml
@@ -38,10 +39,8 @@ requirements:
   run:
     - python
     - numpy
-    - pyyaml <5.4
-    - qtpy <2.0
-    - pyqt
-    - pyqtgraph
+    - pyyaml
+    - qtpy
     - typing_extensions
     - matplotlib
     - scikit-fluorescence
@@ -56,6 +55,8 @@ requirements:
     - ipython
     - qtconsole
     - jupyter_client
+    - pyqt
+    - pyqtgraph
     - qscintilla2
     - guiqwt
     - guidata

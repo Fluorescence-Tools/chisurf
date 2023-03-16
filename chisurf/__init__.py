@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import logging
 import pathlib
+import numpy
 import pyopencl
 
 try:
