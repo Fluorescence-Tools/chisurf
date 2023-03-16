@@ -12,6 +12,7 @@ build:linux:
     - apt update -yq && apt -yq install build-essential
     - git submodule update --init --recursive --remote
   script:
+    - mamba install numpy
     - ./tools/build.sh
   artifacts:
     paths:
@@ -24,6 +25,7 @@ build:windows:
   before_script:
     - git submodule update --init --recursive --remote
   script:
+    - mamba install numpy
     - .\tools\build.bat
   artifacts:
     paths:
@@ -36,7 +38,6 @@ build:osx:
   before_script:
     - git submodule update --init --recursive --remote
   script:
-    - mamba install numpy
     - ./tools/build.sh
   artifacts:
     paths:
