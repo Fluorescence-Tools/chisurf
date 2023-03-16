@@ -23,7 +23,7 @@ build:
     {% endfor %}
 
 requirements:
-  host:
+  build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - python
