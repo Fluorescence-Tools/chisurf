@@ -36,6 +36,7 @@ build:osx:
   before_script:
     - git submodule update --init --recursive --remote
   script:
+    - mamba install numpy
     - ./tools/build.sh
   artifacts:
     paths:
