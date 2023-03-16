@@ -23,10 +23,9 @@ build:
     {% endfor %}
 
 requirements:
-  build:
+  host:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-  host:
     - python
     - setuptools
     - pyopencl
