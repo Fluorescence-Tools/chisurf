@@ -30,6 +30,16 @@ requirements:
     - numpy
     # Needed for pyrcc5 (updated pyqt resource file)
     - pyqt
+  host:
+    - python
+    - setuptools
+    - pyopencl
+    - pocl
+    - typing_extensions
+    - pyyaml
+    - numpy
+    # Needed for pyrcc5 (updated pyqt resource file)
+    - pyqt
   run:
     - python
     - numpy
