@@ -73,6 +73,7 @@ requirements:
     - oclgrind          # [win]
     - python-docx
     - htmd-pdb2pqr
+    - imp
     - chinet >=0.0.8
     - ndxplorer
     - clsmview
