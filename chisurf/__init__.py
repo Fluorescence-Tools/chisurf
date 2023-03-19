@@ -10,6 +10,27 @@ try:
 except ImportError:
     print("Import issue.")
 
+try:
+    if sys.version_info >= (3, 8):
+        import typing
+    elif sys.version_info >= (3, 7):
+        # monkey patch the 3.7 typing system as
+        # TypedDict etc. is missing
+        import typing_extensions
+        import typing
+        for key in typing_extensions.__dict__.keys():
+            f = typing_extensions.__dict__[key]
+            if callable(f):
+                typing.__dict__[key] = f
+    else:
+        import typing_extensions as typing
+except ModuleNotFoundError:
+    print(
+        "WARNING typing_extensions not found",
+        file=sys.stderr
+    )
+    typing = None
+
 import chisurf.settings
 import chisurf.info
 
