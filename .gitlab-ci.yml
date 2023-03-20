@@ -41,12 +41,12 @@ build:osx:
     paths:
       - bld-dir/
 
-test:linux:
+test:lnx_x86:
   stage: test
   tags:
     - linux
-  needs: ["build:lnx_x86"]    
-  image: condaforge/mambaforge:latest
+  image: condaforge/mambaforge
+  needs: ["build:lnx_x86"]
   before_script:
     # Issue with OpenGL and X11 display
     # See: https://stackoverflow.com/questions/65675765/is-it-possible-to-run-x11-on-gitlab-ci
@@ -74,7 +74,7 @@ deploy:conda:
   tags:
     - linux
   dependencies:
-    - build:linux
+    - build:lnx_x86
     - build:windows
     - build:osx
   before_script:
