@@ -75,6 +75,7 @@ requirements:
     - htmd-pdb2pqr
     - imp
     - chinet >=0.0.8
+    - labellib
     - ndxplorer
     - clsmview
     - k2dist
