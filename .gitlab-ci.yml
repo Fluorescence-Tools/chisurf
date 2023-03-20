@@ -3,7 +3,7 @@ stages:
   - test
   - deploy
 
-build:linux:
+build:lnx_x86:
   stage: build
   tags:
     - linux
@@ -45,6 +45,7 @@ test:linux:
   stage: test
   tags:
     - linux
+  needs: ["build:lnx_x86"]    
   image: condaforge/mambaforge:latest
   before_script:
     # Issue with OpenGL and X11 display
