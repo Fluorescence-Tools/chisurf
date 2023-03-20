@@ -69,6 +69,7 @@ requirements:
     - guidata
     - pymol-open-source
     - pyopengl
+    - pyopencl
     - pocl  >=0.14      # [linux or osx]
     - oclgrind          # [win]
     - python-docx
