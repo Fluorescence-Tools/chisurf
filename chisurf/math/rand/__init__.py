@@ -9,7 +9,7 @@ import numpy as np
 from scipy.stats import norm
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def weighted_choice(weights, n=1):
     """
     A weighted random number generator. The random number generator generates
@@ -124,7 +124,7 @@ def brownian(
     return out
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def mc(
         e0: float,
         e1: float,

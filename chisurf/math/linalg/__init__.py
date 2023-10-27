@@ -55,7 +55,7 @@ def cartesian(
     return out
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def angle(
         a: np.array,
         b: np.array,
@@ -88,7 +88,7 @@ def angle(
     return np.arccos(d)
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def sq_dist3(
         u: np.array,
         v: np.array
@@ -99,7 +99,7 @@ def sq_dist3(
     return r
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def cross3(
         a: np.array,
         b: np.array
@@ -111,7 +111,7 @@ def cross3(
     return o
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def norm3(
         a: np.array
 ) -> np.ndarray:
@@ -123,7 +123,7 @@ def norm3(
     return np.sqrt(a[0]**2 + a[1]**2 + a[2]**2)
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def dot3(
         a: np.array,
         b: np.array
@@ -141,7 +141,7 @@ def dot3(
     return s
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def add3(
         a: np.array,
         b: np.array
@@ -159,7 +159,7 @@ def add3(
     return o
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def sub3(
         a: np.array,
         b: np.array
@@ -185,7 +185,7 @@ def sub3(
     return o
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def dist3(
         a: np.array,
         b: np.array
@@ -212,7 +212,7 @@ def dist3(
     return np.sqrt(d2)
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def dihedral(
         v1: np.array,
         v2: np.array,

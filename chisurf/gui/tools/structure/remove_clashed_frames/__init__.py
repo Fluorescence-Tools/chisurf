@@ -14,7 +14,7 @@ import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def below_min_distance(
         xyz: np.ndarray,
         min_distance: float,
