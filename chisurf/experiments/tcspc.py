@@ -183,7 +183,7 @@ class TCSPCSetupDummy(
         self.sample_name = sample_name
         self.lifetime_spectrum = np.array(
             lifetime_spectrum,
-            dtype=np.float
+            dtype=np.float64
         )
         self.n_tac = n_tac
         self.dt = dt
