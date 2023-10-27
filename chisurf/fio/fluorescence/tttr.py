@@ -142,7 +142,7 @@ def bh132_photons(
         current_version="19.08.23",
         details="Reading of TTTR files should be done using tttrlib"
     )
-@nb.jit()
+@nb.jit(nopython=True)
 def ht3_photons(
         b: np.array
 ) -> typing.Tuple[
@@ -190,7 +190,7 @@ def ht3_photons(
         current_version="19.08.23",
         details="Reading of TTTR files should be done using tttrlib"
     )
-@nb.jit()
+@nb.jit(nopython=True)
 def ht3_sf(
         b: np.array,
         stage: int = 0
@@ -243,7 +243,7 @@ def ht3_sf(
     return nph, mt, tac, can
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def iss_16(
         b: np.array,
         can: np.ndarray,
@@ -297,7 +297,7 @@ def iss_16(
     return k
 
 
-@nb.jit()
+@nb.jit(nopython=True)
 def iss_32(
         b,
         can,

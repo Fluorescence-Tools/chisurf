@@ -14,9 +14,7 @@ import chisurf.math
 T = typing.TypeVar('T', bound='Curve')
 
 
-class Curve(
-    chisurf.base.Base
-):
+class Curve(chisurf.base.Base):
 
     x: np.ndarray = None
     y: np.ndarray = None

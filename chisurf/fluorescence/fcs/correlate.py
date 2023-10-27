@@ -170,7 +170,7 @@ def make_fine(
         t[i] = t[i] * number_of_tac_channels + tac[i]
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def count_photons(
         w: np.array
 ):
