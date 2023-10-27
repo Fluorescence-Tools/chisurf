@@ -270,7 +270,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.comboBox_2.addItems(chisurf.fluorescence.fcs.correlationMethods)
         self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
-        self.progressBar.setValue(0.0)
+        self.progressBar.setValue(0)
 
         # connect widgets
         self.pushButton_3.clicked.connect(self.correlator_thread.start)
