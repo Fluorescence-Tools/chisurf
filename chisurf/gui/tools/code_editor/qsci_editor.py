@@ -77,7 +77,7 @@ class SimpleCodeEditor(QsciScintilla):
         font = QtGui.QFont()
         font.setFamily(font_family)
         font.setFixedPitch(True)
-        font.setPointSize(font_point_size)
+        font.setPointSize(int(font_point_size))
 
         self.setFont(font)
         self.setMarginsFont(font)
