@@ -72,7 +72,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @oh.setter
     def oh(self, v):
-        self.checkBox.setChecked(v)
+        self.checkBox.setChecked(bool(v))
 
     @property
     def cn(self):
@@ -80,7 +80,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @cn.setter
     def cn(self, v):
-        self.checkBox_2.setChecked(v)
+        self.checkBox_2.setChecked(bool(v))
 
     @property
     def ch(self):
@@ -88,7 +88,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @ch.setter
     def ch(self, v):
-        self.checkBox_3.setChecked(v)
+        self.checkBox_3.setChecked(bool(v))
 
     @property
     def on(self):
@@ -96,7 +96,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @on.setter
     def on(self, v):
-        self.checkBox_4.setChecked(v)
+        self.checkBox_4.setChecked(bool(v))
 
     @property
     def cutoffH(self):
