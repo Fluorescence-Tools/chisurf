@@ -21,7 +21,7 @@ fluorescence_averaged_lifetime = skf.decay.lifetime.fluorescence_averaged_lifeti
 distance_to_fret_rate_constant = skf.decay.rate_spectra.distance_to_fret_rate_constant
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def distance_to_fret_efficiency(
         distance: float,
         forster_radius: float
@@ -39,7 +39,7 @@ def distance_to_fret_efficiency(
     return 1.0 / (1.0 + (distance / forster_radius) ** 6)
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def lifetime_to_fret_efficiency(
         tau: float,
         tau0: float
@@ -57,7 +57,7 @@ def lifetime_to_fret_efficiency(
     return 1 - tau / tau0
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def fret_efficiency_to_distance(
         fret_efficiency: float,
         forster_radius: float
@@ -76,7 +76,7 @@ def fret_efficiency_to_distance(
     return (1 / fret_efficiency - 1) ** (1.0 / 6.0) * forster_radius
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def fret_efficiency_to_lifetime(
         fret_efficiency: float,
         tau0: float
@@ -493,7 +493,7 @@ def rates2lifetimes_new(
 rates2lifetimes = rates2lifetimes_new
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def calculate_fluorescence_decay(
         lifetime_spectrum: np.ndarray,
         time_axis: np.ndarray,
