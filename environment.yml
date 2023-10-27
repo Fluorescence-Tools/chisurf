@@ -12,7 +12,7 @@ dependencies:
   - qtpy >=1.8.0
   - pyqt >=5.13.0|5.9.2.*|5.6.0.*
   - pyqtgraph >0.10.0|0.9.10
-  - typing_extensions
+  - typing_extensions =4.5.*
   - matplotlib >=3.0.0
   - scikit-fluorescence >=0.0.1
   - deprecation
