@@ -34,6 +34,8 @@ except ModuleNotFoundError:
 import chisurf.settings
 import chisurf.info
 
+__version__ = chisurf.info.__version__
+
 fits: typing.List[chisurf.fitting.fit.FitGroup] = list()
 imported_datasets: typing.List[chisurf.data.DataGroup] = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
