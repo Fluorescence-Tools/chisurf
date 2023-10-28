@@ -200,6 +200,8 @@ def get_filename(
     :return:
     """
     if working_path is None:
+        if chisurf.working_path is None:
+            chisurf.working_path = pathlib.Path(filename).home()
         working_path = chisurf.working_path
     filename_str, _ = QtWidgets.QFileDialog.getOpenFileName(
         None,
@@ -208,7 +210,7 @@ def get_filename(
         file_type
     )
     filename = pathlib.Path(filename_str)
-    chisurf.working_path = pathlib.Path(filename).home()
+    chisurf.working_path = pathlib.Path(filename)
     return filename
 
 
