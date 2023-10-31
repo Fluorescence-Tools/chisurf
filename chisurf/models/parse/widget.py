@@ -9,6 +9,9 @@ from chisurf import typing
 import yaml
 from qtpy import QtWidgets, QtCore
 
+import scikit_fluorescence as skf
+import scikit_fluorescence.io
+
 import chisurf.decorators
 import chisurf.fio
 import chisurf.fitting
@@ -60,7 +63,7 @@ class ParseFormulaWidget(
             self,
             filename: str
     ):
-        with scikit_fluorescence.io.zipped.open_maybe_zipped(
+        with skf.io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='r'
         ) as fp:
