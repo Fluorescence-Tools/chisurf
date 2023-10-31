@@ -247,9 +247,7 @@ def add_dataset(
     if expriment_reader is None:
         expriment_reader = cs.current_experiment_reader
     if dataset is None:
-        dataset = expriment_reader.get_data(
-            **kwargs
-        )
+        dataset = expriment_reader.get_data(**kwargs)
     dataset_group = dataset if isinstance(
         dataset,
         chisurf.data.ExperimentDataGroup
