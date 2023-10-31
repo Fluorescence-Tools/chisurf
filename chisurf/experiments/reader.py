@@ -58,13 +58,8 @@ class ExperimentReader(
         """
         pass
 
-    def get_data(
-            self,
-            **kwargs
-    ) -> chisurf.data.ExperimentDataGroup:
-        data = self.read(
-            **kwargs
-        )
+    def get_data(self, **kwargs) -> chisurf.data.ExperimentDataGroup:
+        data = self.read(**kwargs)
         if isinstance(
                 data,
                 chisurf.data.ExperimentalData
