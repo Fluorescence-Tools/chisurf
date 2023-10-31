@@ -194,10 +194,7 @@ class Main(QtWidgets.QMainWindow):
     def set_current_experiment_idx(self, v):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
-    def closeEvent(
-            self,
-            event: QtGui.QCloseEvent
-    ):
+    def closeEvent(self, event: QtGui.QCloseEvent):
         if chisurf.settings.gui['confirm_close_program']:
             reply = chisurf.gui.widgets.general.MyMessageBox.question(
                 self,
@@ -311,11 +308,9 @@ class Main(QtWidgets.QMainWindow):
                 filename
             )
         )
-
     def set_current_setup_idx(self, v: int):
         self.comboBox_setupSelect.setCurrentIndex(v)
         self._current_setup_idx = v
-
     def onSetupChanged(self):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
@@ -397,6 +392,7 @@ class Main(QtWidgets.QMainWindow):
                 )
             ]
         )
+
         structure.add_model_classes(
             [
                 chisurf.models.tcspc.widgets.LifetimeModelWidget
@@ -538,10 +534,7 @@ class Main(QtWidgets.QMainWindow):
         global_fit.add_reader(global_setup)
         chisurf.experiment[global_fit.name] = global_fit
 
-        chisurf.macros.add_dataset(
-            setup=global_setup,
-            experiment=global_fit
-        )
+        chisurf.macros.add_dataset(global_setup, name="Global Dataset")
 
         ##########################################################
         #       Update UI                                        #
