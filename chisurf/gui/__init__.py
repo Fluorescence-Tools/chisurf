@@ -89,7 +89,6 @@ def setup_gui(
 def get_win(
         app: QtWidgets.QApplication
 ) -> chisurf.gui.main.Main:
-    # type: ()->chisurf.gui.
     # import pyqtgraph at this stage to fix
     # Warning: QApplication was created before pyqtgraph was imported;
     import pyqtgraph
