@@ -4,6 +4,8 @@ from qtpy import QtWidgets
 
 import pathlib
 
+import numpy as np
+
 import chisurf.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
@@ -84,20 +86,14 @@ class TCSPCReaderControlWidget(
     QtWidgets.QWidget
 ):
 
-    def get_filename(
-            self
-    ) -> pathlib.Path:
+    def get_filename(self) -> pathlib.Path:
         return chisurf.gui.widgets.get_filename(
             description='CSV-TCSPC file',
             file_type='All files (*.*)',
             working_path=None
         )
 
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         super().__init__(
             *args,
             **kwargs
@@ -121,33 +117,33 @@ class TCSPCSetupDummyWidget(
     @chisurf.gui.decorators.init_with_ui(
         ui_filename="tcspc_dummy.ui"
     )
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         self.selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
             click_close=False,
             parent=self,
             context_menu_enabled=False
         )
-        self.verticalLayout_2.addWidget(
-            self.selector
-        )
+        self.verticalLayout_2.addWidget(self.selector)
         self.actionParametersChanged.triggered.connect(self.onParametersChanged)
+
+        self.onParametersChanged()
+
+    def get_filename(self):
+        return str(self.lineEdit.text())
 
     def onParametersChanged(self):
         dt = self.doubleSpinBox.value()
         n_tac = self.spinBox.value()
-        lifetime = self.doubleSpinBox_2.value()
         p0 = self.spinBox_2.value()
         sample_name = str(self.lineEdit.text())
+        lt_text = self.lineEdit_2.text()
+        lt = np.array([float(x) for x in lt_text.split(',')], np.float64)
         chisurf.run(
             "\n".join(
                 [
                     "cs.current_setup.sample_name = '%s'" % sample_name,
                     "cs.current_setup.dt = %s" % dt,
-                    "cs.current_setup.lifetime_spectrum = [1.0, %s]" % lifetime,
+                    "cs.current_setup.lifetime_spectrum = np.array([%s], dtype=np.float64)" % lt_text,
                     "cs.current_setup.n_tac = %s" % n_tac,
                     "cs.current_setup.p0 = %s" % p0
                 ]
