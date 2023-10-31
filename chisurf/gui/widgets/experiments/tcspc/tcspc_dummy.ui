@@ -77,7 +77,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>lifetime</string>
+         <string>lifetime spectrum</string>
         </property>
        </widget>
       </item>
@@ -88,13 +88,6 @@
         </property>
         <property name="value">
          <number>4096</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-        <property name="value">
-         <double>4.000000000000000</double>
         </property>
        </widget>
       </item>
@@ -156,6 +149,13 @@
         </layout>
        </widget>
       </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_2">
+        <property name="text">
+         <string>0.4, 1.1, 0.6, 4.1</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -177,22 +177,6 @@
     <hint type="sourcelabel">
      <x>183</x>
      <y>31</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>doubleSpinBox_2</sender>
-   <signal>valueChanged(double)</signal>
-   <receiver>actionParametersChanged</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>115</x>
-     <y>53</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -241,6 +225,22 @@
     <hint type="sourcelabel">
      <x>115</x>
      <y>77</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lineEdit</sender>
+   <signal>editingFinished()</signal>
+   <receiver>actionParametersChanged</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>345</x>
+     <y>31</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>

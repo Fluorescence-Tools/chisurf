@@ -4,6 +4,8 @@ import numpy as np
 
 import chisurf.data
 import chisurf.fio
+import chisurf.fluorescence
+
 from chisurf import typing
 
 
@@ -162,8 +164,5 @@ def read_tcspc_csv(
         )
         data.filename = filename
         data_curves.append(data)
-    data_group = chisurf.data.DataCurveGroup(
-        data_curves,
-        filename,
-    )
+    data_group = chisurf.data.DataCurveGroup(data_curves, filename)
     return data_group

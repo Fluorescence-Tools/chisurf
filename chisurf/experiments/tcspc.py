@@ -71,10 +71,7 @@ class TCSPCReader(
         >>> p.plot(x, y)
 
         """
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         if dt is None:
             dt = chisurf.settings.tcspc['dt']
         if g_factor is None:
@@ -120,7 +117,7 @@ class TCSPCReader(
             **kwargs
     ) -> chisurf.data.DataCurveGroup:
         if self.reading_routine == 'csv':
-            data_group = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
+            data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
                 filename=filename,
                 skiprows=self.skiprows,
                 rebin=self.rebin,
@@ -142,9 +139,7 @@ class TCSPCReader(
                     filename=filename
                 )
                 data_set.experiment = self.experiment
-                data_group = chisurf.data.DataGroup(
-                    [data_set]
-                )
+                data_group = chisurf.data.DataGroup([data_set])
             else:
                 chisurf.logging.warning(
                     "Reading routine '%s' not supported. "
@@ -155,9 +150,7 @@ class TCSPCReader(
         return data_group
 
 
-class TCSPCSetupDummy(
-    TCSPCReader
-):
+class TCSPCSetupDummy(TCSPCReader):
 
     name = "Dummy-TCSPC"
 
@@ -173,12 +166,11 @@ class TCSPCSetupDummy(
             sample_name: str = 'TCSPC-Dummy',
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
-        if lifetime_spectrum is None:
-            lifetime_spectrum = [1.0, 4.1]
+        super().__init__(*args, **kwargs)
+        self.experiment = kwargs.get('experiment', None)
+        if lifetime_spectrum:
+            t = ','.join([str(x) for x in lifetime_spectrum])
+            self.lineEdit_2.setText(t)
         self.instrument_response_function = instrument_response_function
         self.sample_name = sample_name
         self.lifetime_spectrum = np.array(
@@ -193,12 +185,10 @@ class TCSPCSetupDummy(
     def read(
             self,
             filename: str = None,
-            *args,
-            **kwargs
+            *args, **kwargs
     ) -> chisurf.data.DataCurveGroup:
         if filename is None:
             filename = self.sample_name
-
         x = np.arange(self.n_tac) * self.dt
         time_axis, y = chisurf.fluorescence.general.calculate_fluorescence_decay(
             lifetime_spectrum=self.lifetime_spectrum,
@@ -207,13 +197,14 @@ class TCSPCSetupDummy(
         data_set = chisurf.data.DataCurve(
             x=time_axis,
             y=y,
-            ey=chisurf.fluorescence.tcspc.counting_noise(
-                decay=y
-            ),
+            ey=chisurf.fluorescence.tcspc.counting_noise(y),
             setup=self,
-            name=filename
+            name=filename,
+            experiment=self.experiment
         )
         data_set.setup = self
         return chisurf.data.DataCurveGroup(
-            [data_set]
+            [data_set],
+            experiment=self.experiment,
+            data_reader=self
         )
