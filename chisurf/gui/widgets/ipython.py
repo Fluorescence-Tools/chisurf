@@ -19,7 +19,7 @@ import chisurf.settings
 
 class QIPythonWidget(
     qtconsole.qtconsoleapp.RichJupyterWidget
-    #qtconsole.qtconsoleapp.JupyterWidget
+    # qtconsole.qtconsoleapp.JupyterWidget
 ):
 
     def start_recording(self):
@@ -61,58 +61,40 @@ class QIPythonWidget(
         ) as fp:
             fp.write(self._macro)
 
-    def execute(
-            self,
-            *args,
-            hidden: bool = None,
-            **kwargs
-    ):
-        """
+    def do_execute(self, source, complete, indent):
+        if complete:
+            self._append_plain_text('\n')
+            self._input_buffer_executing = self.input_buffer
+            self._executing = True
+            self._finalize_input_request()
 
-        :param source: the source code that is executed via the command line
-        interface.
-        :param args:
-        :param hidden: if hidden is True the execution is neither recorded in
-        the session file nor displayed in the execution history widget
-        :param kwargs:
-        :return:
-        """
-        if hidden is None:
-            hidden = chisurf.settings.cs_settings.get('hidden_execute', False)
-        kwargs['hidden'] = hidden
-        if not hidden:
+            # Perform actual execution.
+            self._execute(source, False)
+
+        else:
+            # Do this inside an edit block so continuation prompts are
+            # removed seamlessly via undo/redo.
+            cursor = self._get_end_cursor()
+            cursor.beginEditBlock()
             try:
-                new_text = args[0] + '\n'
-                with open(self.session_file, 'a+') as fp:
-                    fp.write(new_text)
-                if self.recording:
-                    self._macro += new_text
-                if isinstance(
-                        self.history_widget,
-                        QtWidgets.QPlainTextEdit
-                ):
-                    self.history_widget.insertPlainText(new_text)
-            except IndexError:
-                pass
-        super().execute(
-            *args,
-            **kwargs
-        )
+                cursor.insertText('\n')
+                self._insert_continuation_prompt(cursor, indent)
+            finally:
+                cursor.endEditBlock()
 
-    def execute_function(
-            self,
-            function: typing.Callable,
-    ) -> None:
-        """ Gets the function string executes the function on the command line
+            # Do not do this inside the edit block. It works as expected
+            # when using a QPlainTextEdit control, but does not have an
+            # effect when using a QTextEdit. I believe this is a Qt bug.
+            self._control.moveCursor(QtGui.QTextCursor.End)
 
-        :param function: A callable function that will executed in the ipython
-        environment.
-
-        :return:
-        """
-        self.execute(
-            inspect.getsource(function)
-        )
+        # Record changes to history and file log
+        new_text = source + '\n'
+        with open(self.session_file, 'a+') as fp:
+            fp.write(new_text)
+        if self.recording:
+            self._macro += new_text
+        if isinstance(self.history_widget, QtWidgets.QPlainTextEdit):
+            self.history_widget.insertPlainText(new_text)
 
     def __init__(
             self,
