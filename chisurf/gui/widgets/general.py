@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 from chisurf import typing
 
@@ -9,7 +6,7 @@ import numbers
 import os
 import pathlib
 
-from qtpy import QtGui, QtWidgets
+from chisurf.gui import QtGui, QtWidgets
 from io import BytesIO
 
 import pyqtgraph as pg
@@ -53,9 +50,7 @@ def hide_items_in_layout(
             item.widget().hide()
 
 
-class MyMessageBox(
-    QtWidgets.QMessageBox
-):
+class MyMessageBox(QtWidgets.QMessageBox):
 
     def __init__(
             self,
@@ -64,41 +59,22 @@ class MyMessageBox(
             details: str = None,
             show_fortune: bool = chisurf.settings.cs_settings['fortune']
     ):
-        """This Widget can be used to provide an output for warnings
-        and exceptions. It can also display fortune cookies.
-
-        :param label:
-        :param info:
-        :param show_fortune: if True than a fortune cookie is displayed.
-        """
         super().__init__()
-        self.Icon = 1
         self.setSizeGripEnabled(True)
-        self.setIcon(
-            QtWidgets.QMessageBox.Information
-        )
+        self.setIcon(QtWidgets.QMessageBox.Information)
         if label is not None:
             self.setWindowTitle(label)
         if details is not None:
             self.setDetailedText(details)
+        self.center()
         if show_fortune:
             fortune = chisurf.gui.widgets.fortune.get_fortune()
-            self.setInformativeText(
-                "\n".join(
-                    [
-                        info,
-                        fortune
-                    ]
-                )
-            )
+            self.setInformativeText("\n".join([info, fortune]))
             self.exec_()
-            self.setMinimumWidth(450)
-            self.setSizePolicy(
-                QtWidgets.QSizePolicy.Expanding,
-                QtWidgets.QSizePolicy.Expanding
-            )
         else:
             self.close()
+
+        self.show()
 
     def event(self, e) -> bool:
         result = QtWidgets.QMessageBox.event(self, e)
@@ -122,6 +98,12 @@ class MyMessageBox(
             )
 
         return result
+
+    def center(self):
+        screen = QtGui.QGuiApplication.screenAt(QtGui.QCursor().pos())
+        fg = self.frameGeometry()
+        fg.moveCenter(screen.geometry().center())
+        self.move(fg.topLeft())
 
 
 class FileList(QtWidgets.QListWidget):
@@ -201,7 +183,7 @@ def get_filename(
     """
     if working_path is None:
         if chisurf.working_path is None:
-            chisurf.working_path = pathlib.Path(filename).home()
+            chisurf.working_path = pathlib.Path.home()
         working_path = chisurf.working_path
     filename_str, _ = QtWidgets.QFileDialog.getOpenFileName(
         None,
@@ -210,7 +192,7 @@ def get_filename(
         file_type
     )
     filename = pathlib.Path(filename_str)
-    chisurf.working_path = pathlib.Path(filename)
+    chisurf.working_path = pathlib.Path(filename).parent
     return filename
 
 
@@ -257,16 +239,18 @@ def save_file(
     :param file_type:
     :return:
     """
+    if isinstance(working_path, str):
+        working_path = chisurf.working_path / working_path
     if working_path is None:
         working_path = chisurf.working_path
-    filename = str(
-        QtWidgets.QFileDialog.getSaveFileName(
-            None,
-            description,
-            str(working_path.absolute()),
-            file_type
-        )[0]
+    filename, _ = QtWidgets.QFileDialog.getSaveFileName(
+                None,
+                parent=None,
+                caption=description,
+                dir=str(working_path.absolute()),
+                filter=file_type
     )
+    # Move working path to path of file
     chisurf.working_path = pathlib.Path(filename).home()
     return filename
 
