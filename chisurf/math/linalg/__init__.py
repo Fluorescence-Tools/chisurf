@@ -7,11 +7,8 @@ import numba as nb
 import numpy as np
 
 
-def cartesian(
-        arrays: typing.List[np.array],
-        out=None
-):
-    """Generate a cartesian product of input arrays.
+def cartesian(arrays: typing.List[np.array], out=None):
+    """Compute the cartesian product of input arrays.
 
     :param arrays: list of arrays
         1-D arrays to form the cartesian product of.
@@ -112,9 +109,7 @@ def cross3(
 
 
 @nb.jit(nopython=True)
-def norm3(
-        a: np.array
-) -> np.ndarray:
+def norm3(a: np.array) -> np.ndarray:
     """The length of a 3D-vector
 
     :param a:
@@ -124,10 +119,7 @@ def norm3(
 
 
 @nb.jit(nopython=True)
-def dot3(
-        a: np.array,
-        b: np.array
-) -> float:
+def dot3(a: np.array, b: np.array) -> float:
     """Dot product of 2 3D-vectors
 
     :param a:
