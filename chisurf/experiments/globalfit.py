@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 from chisurf import typing
 
@@ -9,27 +6,13 @@ import chisurf.data
 from . reader import ExperimentReader
 
 
-class GlobalFitSetup(
-    ExperimentReader
-):
-    """
+class GlobalFitSetup(ExperimentReader):
 
-    """
-
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     @staticmethod
-    def autofitrange(
-            *args, **kwargs
-    ) -> typing.Tuple[int, int]:
+    def autofitrange(*args, **kwargs) -> typing.Tuple[int, int]:
         return 0, 0
 
     def read(
