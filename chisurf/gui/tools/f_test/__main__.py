@@ -1,6 +1,6 @@
 import sys
 from chisurf.gui.tools.f_test.f_calculator import FTestWidget
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 
 def main():

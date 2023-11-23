@@ -1,14 +1,8 @@
 from __future__ import annotations
 
-try:
-    import sys
-    import logging
-    import pathlib
-    import numpy
-    import pyopencl
-    import typing
-except ImportError:
-    print("Import issue.")
+import sys
+import logging
+import pathlib
 
 try:
     if sys.version_info >= (3, 8):
@@ -42,7 +36,6 @@ run = lambda x: x   # This is replaced during initialization to execute commands
 cs = object         # The current instance of ChiSurf
 console = object
 experiment: typing.Dict[str, chisurf.experiments.experiment.Experiment] = dict()
-fit_windows = list()
 working_path = pathlib.Path().home()
 verbose = chisurf.settings.verbose
 

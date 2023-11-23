@@ -1,6 +1,6 @@
 import sys
 from . import label_structure
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 
 def main():

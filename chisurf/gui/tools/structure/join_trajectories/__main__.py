@@ -1,6 +1,6 @@
 import sys
 from chisurf.gui.tools.structure.join_trajectories import JoinTrajectoriesWidget
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 
 def main():

@@ -3,16 +3,14 @@ from __future__ import annotations
 import mdtraj as md
 import numpy as np
 import tables
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import chisurf.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 
 
-class JoinTrajectoriesWidget(
-    QtWidgets.QWidget
-):
+class JoinTrajectoriesWidget(QtWidgets.QWidget):
 
     @property
     def stride(self) -> int:

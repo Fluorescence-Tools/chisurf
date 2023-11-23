@@ -1,6 +1,3 @@
-"""
-
-"""
 from .general import *
 import chisurf.gui.widgets.general
 import chisurf.gui.widgets.experiments
@@ -10,3 +7,4 @@ import chisurf.gui.widgets.fluorescence
 import chisurf.gui.widgets.pdb
 import chisurf.gui.widgets.structure
 import chisurf.gui.widgets.ipython
+import chisurf.gui.widgets.fortune
