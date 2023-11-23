@@ -493,7 +493,7 @@ def rates2lifetimes_new(
 rates2lifetimes = rates2lifetimes_new
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=False)
 def calculate_fluorescence_decay(
         lifetime_spectrum: np.ndarray,
         time_axis: np.ndarray,
