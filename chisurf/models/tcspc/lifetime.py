@@ -21,10 +21,7 @@ class Lifetime(FittingParameterGroup):
         return self._abs_amplitudes
 
     @absolute_amplitudes.setter
-    def absolute_amplitudes(
-            self,
-            v: bool
-    ):
+    def absolute_amplitudes(self, v: bool):
         self._abs_amplitudes = v
 
     @property
@@ -32,10 +29,7 @@ class Lifetime(FittingParameterGroup):
         return self._normalize_amplitudes
 
     @normalize_amplitudes.setter
-    def normalize_amplitudes(
-            self,
-            v: bool
-    ):
+    def normalize_amplitudes(self, v: bool):
         self._normalize_amplitudes = v
 
     @property
@@ -64,10 +58,7 @@ class Lifetime(FittingParameterGroup):
         return vs
 
     @amplitudes.setter
-    def amplitudes(
-            self,
-            vs: typing.List[float]
-    ):
+    def amplitudes(self, vs: typing.List[float]):
         for i, v in enumerate(vs):
             self._amplitudes[i].value = v
 
@@ -79,10 +70,7 @@ class Lifetime(FittingParameterGroup):
         return vs
 
     @lifetimes.setter
-    def lifetimes(
-            self,
-            vs: typing.List[float]
-    ):
+    def lifetimes(self, vs: typing.List[float]):
         for i, v in enumerate(vs):
             self._lifetimes[i].value = v
 
@@ -100,10 +88,7 @@ class Lifetime(FittingParameterGroup):
             return self._link.lifetime_spectrum
 
     @lifetime_spectrum.setter
-    def lifetime_spectrum(
-            self,
-            v: np.array
-    ):
+    def lifetime_spectrum(self, v: np.array):
         self._lifetime_spectrum = v
         for p in self.parameters_all:
             p.fixed = True
@@ -151,11 +136,13 @@ class Lifetime(FittingParameterGroup):
             **kwargs
     ):
         n = len(self)
+        i = n + 1
         amplitude = FittingParameter(
             lb=lower_bound_amplitude,
             ub=upper_bound_amplitude,
             value=amplitude,
-            name='x%s%i' % (self.short, n + 1),
+            name=f'x{self.short}{i}',
+            label_text=f'x<sub>{self.short}, {i}</sub>',
             fixed=fixed,
             bounds_on=bound_on
         )
@@ -163,7 +150,8 @@ class Lifetime(FittingParameterGroup):
             lb=lower_bound_lifetime,
             ub=upper_bound_lifetime,
             value=lifetime,
-            name='t%s%i' % (self.short, n + 1),
+            name=f't{self.short}{i}',
+            label_text=f'&tau;<sub>{self.short},{i}</sub>',
             fixed=fixed,
             bounds_on=bound_on
         )
@@ -189,10 +177,7 @@ class Lifetime(FittingParameterGroup):
             link: FittingParameter = None,
             **kwargs
     ):
-        super().__init__(
-            name=name,
-            **kwargs
-        )
+        super().__init__(name=name, **kwargs)
         self.short = short
         self._abs_amplitudes = absolute_amplitudes
         self._normalize_amplitudes = normalize_amplitudes
@@ -213,21 +198,16 @@ class Lifetime(FittingParameterGroup):
 
 
 class LifetimeModel(ModelCurve):
-    """
 
-    """
-
-    name = "Lifetime fit"
+    name = "Lifetime analysis"
 
     def __str__(self):
         s = super().__str__()
         s += "\nLifetimes"
         s += "\n------------------\n"
         s += "\nAverage Lifetimes:\n"
-        s += "<tau>x: %.3f\n<tau>F: %.3f\n" % (
-            self.species_averaged_lifetime,
-            self.fluorescence_averaged_lifetime
-        )
+        s += (f"<tau>x: {self.species_averaged_lifetime:.3f}\n"
+              f"<tau>F: {self.fluorescence_averaged_lifetime:.3f}\n")
         return s
 
     def __init__(
@@ -262,48 +242,32 @@ class LifetimeModel(ModelCurve):
         self.convolve = convolve
 
     @property
-    def species_averaged_lifetime(
-            self
-    ) -> float:
+    def species_averaged_lifetime(self) -> float:
         return species_averaged_lifetime(self.lifetime_spectrum)
 
     @property
-    def var_lifetime(
-            self
-    ) -> float:
+    def var_lifetime(self) -> float:
         lx = self.species_averaged_lifetime
         lf = self.fluorescence_averaged_lifetime
         return lx*(lf-lx)
 
     @property
-    def fluorescence_averaged_lifetime(
-            self
-    ) -> float:
+    def fluorescence_averaged_lifetime(self) -> float:
         return fluorescence_averaged_lifetime(
             self.lifetime_spectrum,
             self.species_averaged_lifetime
         )
 
     @property
-    def lifetime_spectrum(
-            self
-    ) -> np.array:
+    def lifetime_spectrum(self) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
-    def get_curves(
-            self,
-            copy_curves: bool = False
-    ) -> typing.Dict[str, chisurf.curve.Curve]:
-        d = super().get_curves(
-            copy_curves=copy_curves
-        )
+    def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, chisurf.curve.Curve]:
+        d = super().get_curves(copy_curves)
         d['IRF'] = self.convolve.irf
         return d
 
-    def decay(
-            self,
-            time: np.array
-    ) -> np.array:
+    def decay(self, time: np.array) -> np.array:
         amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
             self.lifetime_spectrum
         )
@@ -330,9 +294,7 @@ class LifetimeModel(ModelCurve):
         if background_curve is None:
             background_curve = self.generic.background_curve
 
-        lifetime_spectrum = self.anisotropy.get_decay(
-            lifetime_spectrum
-        )
+        lifetime_spectrum = self.anisotropy.get_decay(lifetime_spectrum)
         decay = self.convolve.convolve(
             lifetime_spectrum,
             verbose=verbose,
@@ -341,10 +303,7 @@ class LifetimeModel(ModelCurve):
         )
 
         # Calculate background curve from reference measurement
-        if isinstance(
-                background_curve,
-                chisurf.curve.Curve
-        ):
+        if isinstance(background_curve, chisurf.curve.Curve):
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
 
