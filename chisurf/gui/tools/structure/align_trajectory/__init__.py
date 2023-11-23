@@ -1,7 +1,7 @@
 import mdtraj as md
 import numpy as np
 import tables
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import chisurf.decorators
 import chisurf.gui.decorators
