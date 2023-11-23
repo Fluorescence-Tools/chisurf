@@ -1,6 +1,6 @@
 import sys
 from . import gui
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 
 def main():

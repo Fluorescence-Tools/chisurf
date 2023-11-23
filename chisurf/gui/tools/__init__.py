@@ -7,5 +7,5 @@ import chisurf.gui.tools.fret
 import chisurf.gui.tools.structure
 import chisurf.gui.tools.code_editor
 import chisurf.gui.tools.f_test
+import chisurf.gui.tools.parameter_editor
 import k2dist as kappa2_distribution
-# import chisurf.gui.tools.kappa2_distribution

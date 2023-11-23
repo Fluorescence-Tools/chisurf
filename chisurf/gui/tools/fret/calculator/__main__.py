@@ -1,6 +1,6 @@
 import sys
 from chisurf.gui.tools.fret.calculator import FRETCalculator
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 
 def main():

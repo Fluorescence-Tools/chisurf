@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import pickle
 import random
 
@@ -11,7 +12,6 @@ def get_fortune(
         max_length: int = 100,
         maximum_number_of_attempts: int = 1000
 ):
-
     if fortunepath is None:
         fortunepath = os.path.dirname(__file__)
 
@@ -23,7 +23,6 @@ def get_fortune(
     attempt = 0
     while True:
         fortune_file = random.choice(fortune_files)
-        print(fortune_file)
         with open(
                 file=os.path.join(
                     fortunepath,
