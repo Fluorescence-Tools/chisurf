@@ -595,7 +595,7 @@ def reset_density_av(density):
     chisurf.structure.av.fps_.reset_density_av(density, ng)
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def random_distances(p1, p2, n_samples):
     """
 
@@ -625,7 +625,7 @@ def random_distances(p1, p2, n_samples):
     return distances
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def split_av_acv(density, dg, radius, rs, r0):
     """
 
