@@ -3,7 +3,7 @@ import os
 
 import mdtraj as md
 from mdtraj.scripts import mdconvert as mdconvert
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import chisurf.decorators
 import chisurf.gui.decorators
