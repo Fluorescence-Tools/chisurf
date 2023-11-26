@@ -14,14 +14,11 @@ from .globalfit import GlobalFitModel
 from chisurf.models import model
 
 
-class GlobalFitModelWidget(
-    GlobalFitModel,
-    model.ModelWidget
-):
+class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     plot_classes = [
                     (plots.FitInfo, {}),
-                    (plots.ResidualPlot, {})
+                    # (plots.ResidualPlot, {})
     ]
 
     @chisurf.gui.decorators.init_with_ui(ui_filename="globalfit_2.ui")
@@ -212,10 +209,7 @@ class GlobalFitModelWidget(
                 "cs.current_fit.model.append_fit(chisurf.fits[%s])" % local_fits_idx[fitIndex]
             )
 
-    def append_fit(
-            self,
-            fit: chisurf.fitting.fit
-    ):
+    def append_fit(self, fit: chisurf.fitting.fit):
         if fit not in self.fits:
 
             table = self.tableWidget
@@ -234,10 +228,7 @@ class GlobalFitModelWidget(
 
         GlobalFitModel.append_fit(self, fit)
 
-    def onAddLink(
-            self,
-            links: List = None
-    ):
+    def onAddLink(self, links: List = None):
         table = self.table_GlobalLinks
         if links is None:
             links = []
@@ -307,9 +298,7 @@ class GlobalFitModelWidget(
             pn.sort()
             self.comboBox_gfTargetParameter.addItems([p.name for p in ft.model.parameters_all])
 
-    def update_widgets(
-            self
-    ):
+    def update_widgets(self):
         self.comboBox.clear()
         self.comboBox.addItems(self.local_fit_names)
 
