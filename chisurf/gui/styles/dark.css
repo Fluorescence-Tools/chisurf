@@ -1,20 +1,22 @@
 *{
     font: 0.5em;
 	background: #191919;
+    background-color: #191919;
 	color: #DDDDDD;
 	border: solid #191919;
+    padding: 0px;
+    margin:0 px;
 }
 
 QToolBar::handle
 {
-     spacing: 3px; /* spacing between items in the tool bar */
+     spacing: 1px; /* spacing between items in the tool bar */
 }
 
 QToolTip
 {
      border: 1px solid black;
      background-color: #ffa02f;
-     padding: 0px;
      color: #000000;
      border-radius: 3px;
      opacity: 100;
@@ -72,7 +74,7 @@ QMenu::item:selected
 
 QWidget:disabled
 {
-    color: #404040;
+    color: #888888;
     background-color: #323232;
 }
 
@@ -81,10 +83,12 @@ QAbstractItemView
     background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #4d4d4d, stop: 0.1 #646464, stop: 1 #5d5d5d);
 }
 
+/*
 QWidget:focus
 {
-    /*border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);*/
+    border: 1px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
 }
+*/
 
 QLineEdit
 {
@@ -207,13 +211,14 @@ QGroupBox::indicator:checked {
 /*
 QGroupBox:focus
 {
-border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
+border: 1px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
 }
- */
+*/
+
 
 QTextEdit:focus
 {
-    border: 2px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
+    border: 1px solid QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
 }
 
 QScrollBar:horizontal {
@@ -519,3 +524,9 @@ QMdiSubWindow:title{
     border-radius: 4px;
 }
 */
+
+QToolButton{
+    background-color: #593535;
+    border: 1px solid #000000;
+    border-radius: 3px;
+}
