@@ -117,7 +117,7 @@ class ParseFormulaWidget(
 
     def onUpdateFunc(self):
         function_str = str(self.plainTextEdit.toPlainText()).strip()
-        chisurf.run("chisurf.macros.parse.change_model('%s')" % function_str)
+        chisurf.run("chisurf.macros.model_parse.change_model('%s')" % function_str)
         try:
             ivs = self.models[self.model_name]['initial']
             for key in ivs.keys():
