@@ -571,7 +571,7 @@ class TrajectoryFile(
             return [make_structure(i) for i in range(start, stop, step)]
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def translate(
         xyz: np.ndarray,
         vector: np.ndarray
@@ -592,7 +592,7 @@ def translate(
                 xyz[i_frame, i_atom, i_dim] += vector[i_dim]
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def rotate(
         xyz: np.ndarray,
         rm: np.ndarray
