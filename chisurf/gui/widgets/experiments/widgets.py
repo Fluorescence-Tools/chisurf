@@ -14,76 +14,56 @@ from chisurf.experiments import reader
 
 
 @chisurf.decorators.register
-class ExperimentalDataSelector(
-    QtWidgets.QTreeWidget
-):
-    """
-
-    """
+class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     @property
-    def curve_name(
-            self
-    ) -> str:
+    def curve_name(self) -> str:
         try:
             return self.selected_dataset.name
         except AttributeError:
-            return "Noname"
+            return "Untitled"
 
-    @property
-    def datasets(
-            self
-    ) -> typing.List[
-        chisurf.data.ExperimentalData
-    ]:
+    def get_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
         data_curves = self.get_data_sets(
             curve_type=self.curve_type
         )
-        if self.data_reader is not None:
-            return [
+        if self.experiment is not None:
+            dv = [
                 d for d in data_curves if isinstance(
-                    d.data_reader,
-                    self.data_reader
+                    d.experiment,
+                    self.experiment
                 )
             ]
+            return dv
         else:
             return data_curves
 
     @property
-    def selected_curve_index(
-            self
-    ) -> int:
+    def datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
+        return self.get_datasets()
+
+    @property
+    def selected_curve_index(self) -> int:
         if self.currentIndex().parent().isValid():
             return self.currentIndex().parent().row()
         else:
             return self.currentIndex().row()
 
     @selected_curve_index.setter
-    def selected_curve_index(
-            self,
-            v: int
-    ):
+    def selected_curve_index(self, v: int):
         self.setCurrentItem(self.topLevelItem(v))
 
     @property
-    def selected_dataset(
-            self
-    ) -> chisurf.data.ExperimentalData:
+    def selected_dataset(self) -> chisurf.data.ExperimentalData:
         return self.datasets[self.selected_curve_index]
 
     @property
-    def selected_datasets(
-            self
-    ) -> typing.List[
-        chisurf.data.ExperimentalData
-    ]:
+    def selected_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
         data_sets_idx = self.selected_dataset_idx
         return [self.datasets[i] for i in data_sets_idx]
 
     @property
-    def selected_dataset_idx(
-            self
-    ) -> typing.List[int]:
+    def selected_dataset_idx(self) -> typing.List[int]:
         return [r.row() for r in self.selectedIndexes()]
 
     def onCurveChanged(self):
@@ -99,13 +79,12 @@ class ExperimentalDataSelector(
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
         ]
-        chisurf.run(
-            'chisurf.macros.remove_datasets(%s)' % dataset_idx
-        )
+        chisurf.run(f'chisurf.macros.remove_datasets({dataset_idx})')
         self.update(update_others=True)
 
     def onSaveDataset(self):
         filename = chisurf.gui.widgets.save_file(
+            working_path=self.curve_name,
             file_type="*.*"
         )
         base_name, extension = os.path.splitext(filename)
@@ -123,13 +102,11 @@ class ExperimentalDataSelector(
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        chisurf.run("chisurf.macros.group_datasets(%s)" % dg)
+        chisurf.run(f"chisurf.macros.group_datasets({dg})")
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = chisurf.data.ExperimentDataGroup(
-            self.selected_datasets
-        )[0]
+        dg = chisurf.data.ExperimentDataGroup(self.selected_datasets)[0]
         dn = list()
         for d in chisurf.imported_datasets:
             if d is not dg:
@@ -174,49 +151,34 @@ class ExperimentalDataSelector(
                     i2 = QtWidgets.QTreeWidgetItem(item, [widget_name])
                     i2.setToolTip(0, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+
         # update other instances
         if update_others:
             for i in self.get_instances():
                 if i is not self:
                     i.update(update_others=False)
 
-    # def dragMoveEvent(
-    #         self,
-    #         event
-    # ):
-    #     super().dragMoveEvent(event)
-    #
-    # def dragEnterEvent(
-    #         self,
-    #         event
-    # ):
-    #     if event.mimeData().hasUrls():
-    #         event.acceptProposedAction()
-    #     else:
-    #         super().dragEnterEvent(event)
-    #
-    # def startDrag(
-    #         self,
-    #         supportedActions
-    # ):
-    #     # self.drag_item = self.currentItem()
-    #     # self.drag_row = self.row(self.drag_item)
-    #     super().startDrag(supportedActions)
+    def dragMoveEvent(self, event):
+        super().dragMoveEvent(event)
 
-    def dropEvent(
-            self,
-            event: QtGui.QDropEvent
-    ):
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def startDrag(self, supportedActions):
+        # self.drag_item = self.currentItem()
+        # self.drag_row = self.row(self.drag_item)
+        super().startDrag(supportedActions)
+
+    def dropEvent(self, event: QtGui.QDropEvent, QDropEvent=None):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            chisurf.run(
-                "\n".join(
-                    [
-                        "chisurf.macros.add_dataset(filename='%s')" % p for p in paths
-                    ]
-                )
-            )
+            command = "\n".join(["chisurf.macros.add_dataset(filename='%s')" % p for p in paths])
+            print(command)
+            chisurf.run(command)
             event.acceptProposedAction()
         else:
             super().dropEvent(event)
@@ -238,7 +200,7 @@ class ExperimentalDataSelector(
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit = None,
-            setup=None,
+            experiment=None,
             drag_enabled: bool = False,
             click_close: bool = True,
             change_event: typing.Callable = None,
@@ -248,19 +210,6 @@ class ExperimentalDataSelector(
             icon: QtGui.QIcon = None,
             context_menu_enabled: bool = True
     ):
-        """
-
-        :param fit:
-        :param setup:
-        :param drag_enabled:
-        :param click_close:
-        :param change_event:
-        :param curve_types:
-        :param get_data_sets:
-        :param parent:
-        :param icon:
-        :param context_menu_enabled: if True there is a context menu
-        """
         if get_data_sets is None:
             def get_data_sets(**kwargs):
                 return chisurf.data.get_data(
@@ -280,12 +229,10 @@ class ExperimentalDataSelector(
         self.curve_type = curve_types
         self.click_close = click_close
         self.fit = fit
-        self.data_reader = setup
+        self.experiment = experiment
         self.context_menu_enabled = context_menu_enabled
 
-        super().__init__(
-            parent=parent
-        )
+        super().__init__(parent)
         self.setWindowIcon(icon)
         self.setWordWrap(True)
         self.setHeaderHidden(True)
@@ -309,9 +256,7 @@ class FCSController(
     QtWidgets.QWidget
 ):
 
-    def get_filename(
-            self
-    ) -> str:
+    def get_filename(self) -> str:
         return chisurf.gui.widgets.get_filename(
                 'FCS-CSV files',
                 file_type=self.file_type
