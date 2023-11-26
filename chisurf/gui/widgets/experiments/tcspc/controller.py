@@ -39,12 +39,7 @@ class CsvTCSPCWidget(
         is_jordi = bool(self.checkBox_3.isChecked())
         try:
             matrix_columns = list(
-                map(
-                    int,
-                    str(
-                        self.lineEdit.text()
-                    ).strip().split(' ')
-                )
+                map(int, str(self.lineEdit.text()).strip().split(' '))
             )
         except ValueError:
             matrix_columns = []
@@ -85,7 +80,6 @@ class TCSPCReaderControlWidget(
     reader.ExperimentReaderController,
     QtWidgets.QWidget
 ):
-
     def get_filename(self) -> pathlib.Path:
         return chisurf.gui.widgets.get_filename(
             description='CSV-TCSPC file',
@@ -94,42 +88,64 @@ class TCSPCReaderControlWidget(
         )
 
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.layout = layout
-        self.layout.addWidget(
-            chisurf.gui.widgets.fio.CsvWidget()
-        )
-        self.layout.addWidget(
-            CsvTCSPCWidget()
-        )
+        csv_widget = chisurf.gui.widgets.fio.CsvWidget()
+        self.layout.addWidget(csv_widget)
+        csv_tcspc_widget = CsvTCSPCWidget()
+        self.layout.addWidget(csv_tcspc_widget)
 
 
-class TCSPCSetupDummyWidget(
-    QtWidgets.QWidget
+class TCSPCTTTRReaderControlWidget(
+    QtWidgets.QWidget,
+    reader.ExperimentReaderController
 ):
+    def get_filename(self) -> pathlib.Path:
+        self.onParametersChanged()
+        return chisurf.gui.widgets.get_filename(
+            description='TTTR files',
+            file_type='All files (*.*)',
+            working_path=None
+        )
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="tcspc_dummy.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui(ui_filename="tcspc_tttr.ui")
+    def __init__(self, *args, **kwargs):
+        self.actionParametersChanged.triggered.connect(self.onParametersChanged)
+        self.onParametersChanged()
+
+    def onParametersChanged(self):
+        micro_time_coarsening = self.comboBox_2.currentText()
+        channel_numbers = self.lineEdit.text()
+        reading_routine = self.comboBox.currentText()
+        chisurf.run(
+            "\n".join(
+                [
+                    "cs.current_setup.channel_numbers = np.array([%s], dtype=np.int8)" % channel_numbers,
+                    "cs.current_setup.reading_routine = '%s'" % reading_routine,
+                    "cs.current_setup.micro_time_coarsening = %s" % micro_time_coarsening
+                ]
+            )
+        )
+
+class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
+
+    @chisurf.gui.decorators.init_with_ui("tcspc_simulator.ui")
     def __init__(self, *args, **kwargs):
         self.selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
             click_close=False,
             parent=self,
-            context_menu_enabled=False
+            context_menu_enabled=False,
+            experiment=chisurf.experiments.types['tcspc']
         )
         self.verticalLayout_2.addWidget(self.selector)
         self.actionParametersChanged.triggered.connect(self.onParametersChanged)
-
         self.onParametersChanged()
 
-    def get_filename(self):
-        return str(self.lineEdit.text())
+    def get_filename(self) -> pathlib.Path:
+        return pathlib.Path(self.lineEdit.text())
 
     def onParametersChanged(self):
         dt = self.doubleSpinBox.value()
@@ -137,7 +153,6 @@ class TCSPCSetupDummyWidget(
         p0 = self.spinBox_2.value()
         sample_name = str(self.lineEdit.text())
         lt_text = self.lineEdit_2.text()
-        lt = np.array([float(x) for x in lt_text.split(',')], np.float64)
         chisurf.run(
             "\n".join(
                 [
