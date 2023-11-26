@@ -18,45 +18,28 @@ class TcspcSDTWidget(
 ):
 
     @property
-    def name(
-            self
-    ) -> str:
+    def name(self) -> str:
         return self.filename + " _ " + str(self.curve_number)
 
     @property
-    def n_curves(
-            self
-    ) -> int:
+    def n_curves(self) -> int:
         n_data_curves = len(self._sdt.data)
         return n_data_curves
 
     @property
-    def curve_number(
-            self
-    ) -> int:
-        """
-        The number of the currently selected curve
-        """
+    def curve_number(self) -> int:
         return int(self.comboBox.currentIndex())
 
     @curve_number.setter
-    def curve_number(
-            self,
-            v: int
-    ):
+    def curve_number(self, v: int):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def filename(
-            self
-    ) -> str:
+    def filename(self) -> str:
         return str(self.lineEdit.text())
 
     @filename.setter
-    def filename(
-            self,
-            v: str
-    ):
+    def filename(self, v: str):
         self._sdt = chisurf.fio.fluorescence.sdtfile.SdtFile(v)
         # refresh GUI
         self.comboBox.clear()
@@ -72,9 +55,7 @@ class TcspcSDTWidget(
         return self._sdt
 
     @property
-    def times(
-            self
-    ) -> np.array:
+    def times(self) -> np.array:
         """
         The time-array in nano-seconds
         """
@@ -90,9 +71,7 @@ class TcspcSDTWidget(
         return np.array(y, dtype=np.float64)
 
     @property
-    def rep_rate(
-            self
-    ) -> float:
+    def rep_rate(self) -> float:
         """
         The repetition rate used during the experiment in MHz.
         """
@@ -103,9 +82,7 @@ class TcspcSDTWidget(
         pass
 
     @property
-    def curve(
-            self
-    ) -> chisurf.data.DataCurve:
+    def curve(self) -> chisurf.data.DataCurve:
         y = self.ph_counts
         ey = chisurf.fluorescence.tcspc.counting_noise(
             decay=y
@@ -137,39 +114,27 @@ class TcspcSDTWidget(
         self.textBrowser.setPlainText(str(self.sdt.info))
 
     @chisurf.gui.decorators.init_with_ui(ui_filename="tcspc_sdt.ui")
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         self._sdt = None
         self.actionOpen_SDT_file.triggered.connect(
             self.onOpenFile
         )
 
 
-class TCSPCSetupSDTWidget(
-    TCSPCReader,
-    QtWidgets.QWidget
-):
+class TCSPCSetupSDTWidget(TCSPCReader, QtWidgets.QWidget):
+
+    name = "TCSPC-SDT"
 
     @property
-    def rep_rate(
-            self
-    ) -> float:
+    def rep_rate(self) -> float:
         return self.tcspcSDT.rep_rate
 
     @rep_rate.setter
-    def rep_rate(
-            self,
-            v
-    ):
+    def rep_rate(self, v):
         pass
 
     @property
-    def dt(
-            self
-    ):
+    def dt(self):
         dt = self.tcspcSDT.times[1] - self.tcspcSDT.times[0]
         return dt
 
@@ -185,16 +150,8 @@ class TCSPCSetupSDTWidget(
     def curve_nbr(self, v):
         self.tcspcSDT.curve_number = v
 
-    def __init__(
-            self,
-            *args,
-            name: str = 'Becker SDT',
-            **kwargs
-    ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+    def __init__(self, *args, name: str = 'Becker SDT', **kwargs):
+        super().__init__(*args, **kwargs)
 
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
@@ -203,11 +160,7 @@ class TCSPCSetupSDTWidget(
         self.name = name
         #self.connect(self.tcspcSDT.actionAdd_curve, QtCore.SIGNAL('triggered()'), )
 
-    def read(
-            self,
-            *args,
-            **kwargs
-    ):
+    def read(self, *args, **kwargs):
         curves = list()
         self.tcspcSDT.onOpenFile(**kwargs)
         for curve_nbr in range(self.tcspcSDT.n_curves):

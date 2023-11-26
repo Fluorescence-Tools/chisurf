@@ -28,9 +28,7 @@ class Curve(chisurf.base.Base):
         return v
 
     @property
-    def cdf(
-            self
-    ) -> Curve:
+    def cdf(self) -> Curve:
         """Cumulative distribution function
         """
         return self.__class__(
@@ -182,10 +180,7 @@ class Curve(chisurf.base.Base):
             self.y /= factor
         return factor
 
-    def __add__(
-            self,
-            c: T
-    ) -> Curve:
+    def __add__(self, c: T) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -195,10 +190,7 @@ class Curve(chisurf.base.Base):
             y=self.y.__add__(c)
         )
 
-    def __sub__(
-            self,
-            c: T
-    ) -> Curve:
+    def __sub__(self, c: T) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -208,10 +200,7 @@ class Curve(chisurf.base.Base):
             y=self.y.__sub__(c)
         )
 
-    def __mul__(
-            self,
-            c: T
-    ) -> Curve:
+    def __mul__(self, c: T) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -221,10 +210,7 @@ class Curve(chisurf.base.Base):
             y=self.y.__mul__(c)
         )
 
-    def __truediv__(
-            self,
-            c: T
-    ) -> Curve:
+    def __truediv__(self, c: T) -> Curve:
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -234,39 +220,23 @@ class Curve(chisurf.base.Base):
             y=self.y.__truediv__(c)
         )
 
-    def __lshift__(
-            self,
-            shift: float
-    ) -> Curve:
+    def __lshift__(self, shift: float) -> Curve:
         return self.__class__(
             x=self.x,
-            y=chisurf.math.signal.shift_array(
-                self.y,
-                shift
-            ),
+            y=chisurf.math.signal.shift_array(self.y, shift),
             copy_array=False
         )
 
-    def __len__(
-            self
-    ) -> int:
+    def __len__(self) -> int:
         return len(self.y)
 
-    def __getitem__(
-            self,
-            key
-    ) -> typing.Tuple[
-        np.ndarray,
-        np.ndarray
-    ]:
+    def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y
 
 
-class CurveGroup(
-    object
-):
+class CurveGroup(object):
 
     _curves: typing.List[chisurf.curve.Curve]
 

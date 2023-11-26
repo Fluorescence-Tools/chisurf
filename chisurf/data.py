@@ -3,6 +3,8 @@
 """
 from __future__ import annotations
 
+import pathlib
+
 from chisurf import typing
 import os.path
 import numpy as np
@@ -15,9 +17,7 @@ import chisurf.fio.ascii
 import chisurf.experiments
 
 
-class ExperimentalData(
-    chisurf.base.Data
-):
+class ExperimentalData(chisurf.base.Data):
 
     meta_data: typing.Dict = None
     data_reader: chisurf.experiments.reader.ExperimentReader = None
@@ -106,13 +106,7 @@ class ExperimentalData(
         return d
 
 
-class DataCurve(
-    chisurf.curve.Curve,
-    ExperimentalData
-):
-
-    ex: np.ndarray = None
-    ey: np.ndarray = None
+class DataCurve(chisurf.curve.Curve, ExperimentalData):
 
     @property
     def data(
@@ -128,13 +122,8 @@ class DataCurve(
         )
 
     @data.setter
-    def data(
-            self,
-            v: np.ndarray
-    ):
-        self.set_data(
-            *v
-        )
+    def data(self, v: np.ndarray):
+        self.set_data(*v)
 
     def __init__(
             self,
@@ -160,11 +149,12 @@ class DataCurve(
             **kwargs
         )
         if load_filename_on_init:
-            if os.path.isfile(filename):
-                self.load(
-                    filename,
-                    **kwargs
-                )
+            if pathlib.Path(filename).is_file():
+                self.load(filename, **kwargs)
+
+        # Compute errors
+        self.ex: np.ndarray = None
+        self.ey: np.ndarray = None
         if not isinstance(ex, np.ndarray):
             ex = np.zeros_like(self.x)
         if not isinstance(ey, np.ndarray):
@@ -344,35 +334,22 @@ class DataCurve(
         return x, y, self.ex[key], self.ey[key]
 
 
-class DataGroup(
-    list,
-    chisurf.base.Base
-):
-    _current_dataset: int = 0
+class DataGroup(list, chisurf.base.Base):
 
     @property
-    def names(
-            self
-    ) -> typing.List[str]:
+    def names(self) -> typing.List[str]:
         return [d.name for d in self]
 
     @property
-    def current_dataset(
-            self
-    ) -> chisurf.base.Data:
+    def current_dataset(self) -> chisurf.base.Data:
         return self[self._current_dataset]
 
     @current_dataset.setter
-    def current_dataset(
-            self,
-            i: int
-    ):
+    def current_dataset(self, i: int):
         self._current_dataset = i
 
     @property
-    def name(
-            self
-    ) -> str:
+    def name(self) -> str:
         try:
             return self.__dict__['name']
         except KeyError:
@@ -394,14 +371,9 @@ class DataGroup(
             ) for d in self
         ]
         d['data'] = data
-        return yaml.dump(
-            data=d
-        )
+        return yaml.dump(data=d)
 
-    def append(
-            self,
-            dataset: chisurf.base.Data
-    ):
+    def append(self, dataset: chisurf.base.Data):
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)
         if isinstance(dataset, list):
@@ -415,6 +387,7 @@ class DataGroup(
             *args,
             **kwargs
     ):
+        self._current_dataset: int = 0
         super().__init__(seq)
 
 
@@ -443,8 +416,7 @@ class DataCurveGroup(DataGroup):
         return self.current_dataset.ex
 
     @ex.setter
-    def ex(self,
-           v: np.array):
+    def ex(self, v: np.array):
         self.current_dataset.ex = v
 
     @property
@@ -452,8 +424,7 @@ class DataCurveGroup(DataGroup):
         return self.current_dataset.ey
 
     @ey.setter
-    def ey(self,
-           v: np.array):
+    def ey(self, v: np.array):
         self.current_dataset.ey = v
 
     def __str__(self):
@@ -481,20 +452,11 @@ class ExperimentDataGroup(DataGroup):
     def experiment(self, v):
         pass
 
-    def __init__(self,
-                 *args,
-                 **kwargs
-                 ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
-class ExperimentDataCurveGroup(
-    ExperimentDataGroup,
-    DataCurveGroup
-):
+class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
 
     @property
     def setup(self):
@@ -505,9 +467,7 @@ class ExperimentDataCurveGroup(
         pass
 
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args, **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
 
 def get_data(
