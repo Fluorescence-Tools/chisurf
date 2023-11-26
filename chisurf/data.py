@@ -1,12 +1,8 @@
-"""
-
-"""
 from __future__ import annotations
 
 import pathlib
 
 from chisurf import typing
-import os.path
 import numpy as np
 import yaml
 
