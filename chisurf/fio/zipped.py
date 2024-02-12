@@ -3,15 +3,12 @@ from __future__ import print_function, division, absolute_import
 import bz2
 import gzip
 import os
+import pathlib
 import zipfile
 import io
 
 
-def open_maybe_zipped(
-        filename: str,
-        mode: str,
-        force_overwrite: bool = True
-):
+def open_maybe_zipped(filename: pathlib.Path, mode: str = "r", force_overwrite: bool = True):
     """Open a file in name (not binary) reading_routine, transparently handling
     .gz or .bz2 compression, with utf-8 encoding.
 
@@ -54,9 +51,20 @@ def open_maybe_zipped(
             binary_fh = bz2.BZ2File(filename, 'wb')
             return io.TextIOWrapper(binary_fh, encoding='utf-8')
         elif extension == '.zip':
-            binary_fh = zipfile.ZipFile(filename, 'wb')
+            binary_fh = zipfile.ZipFile(filename, 'w')
             return io.TextIOWrapper(binary_fh, encoding='utf-8')
         else:
             return open(filename, 'w')
+    elif mode == 'wb':
+        if os.path.exists(filename) and not force_overwrite:
+            raise IOError('"%s" already exists' % filename)
+        if extension == '.gz':
+            return gzip.GzipFile(filename, 'wb')
+        elif extension == '.bz2':
+            return bz2.BZ2File(filename, 'wb')
+        elif extension == '.zip':
+            return zipfile.ZipFile(filename, 'wb')
+        else:
+            return open(filename, 'wb')
     else:
         raise ValueError('Invalid reading_routine "%s"' % mode)
