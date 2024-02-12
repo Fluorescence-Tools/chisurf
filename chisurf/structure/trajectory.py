@@ -279,9 +279,7 @@ class TrajectoryFile(
         self._xyz = v
 
     @property
-    def structure(
-            self
-    ) -> chisurf.structure.Structure:
+    def structure(self) -> chisurf.structure.Structure:
         return self._structure
 
     @structure.setter
@@ -292,9 +290,7 @@ class TrajectoryFile(
         self._structure = copy.copy(v)
 
     @property
-    def invert(
-            self
-    ) -> bool:
+    def invert(self) -> bool:
         """If True the oder of the trajectory is inverted (by default False)
         """
         return self._invert
@@ -307,9 +303,7 @@ class TrajectoryFile(
         self._invert = bool(v)
 
     @property
-    def filename(
-            self
-    ) -> str:
+    def filename(self) -> str:
         """The filename of the trajectory
         """
         return self._filename
@@ -324,15 +318,11 @@ class TrajectoryFile(
             mdtraj.Trajectory.save(self, filename=v)
 
     @property
-    def mdtraj(
-            self
-    ) -> mdtraj.Trajectory:
+    def mdtraj(self) -> mdtraj.Trajectory:
         return self._mdtraj
 
     @property
-    def name(
-            self
-    ) -> str:
+    def name(self) -> str:
         """The name of the trajectory composed of the directory and the filename
         """
         try:
@@ -342,9 +332,7 @@ class TrajectoryFile(
             return "None"
 
     @property
-    def rmsd_ref_state(
-            self
-    ) -> int:
+    def rmsd_ref_state(self) -> int:
         """The index (frame number) of the reference state used for the RMSD
         calculation
         """
@@ -359,17 +347,13 @@ class TrajectoryFile(
         self.rmsd = mdtraj.rmsd(self, self, ref_frame)
 
     @property
-    def directory(
-            self
-    ) -> str:
+    def directory(self) -> str:
         """Directory in which the filename of the trajectory is located in
         """
         return os.path.dirname(self.filename)
 
     @property
-    def reference(
-            self
-    ) -> chisurf.structure.Structure:
+    def reference(self) -> chisurf.structure.Structure:
         """The reference structure used for RMSD-calculation. This cannot be
         set directly but has to be set via the number of the reference state
          :py:attribute`.rmsd_ref_state`
@@ -380,9 +364,7 @@ class TrajectoryFile(
             return self[int(self.rmsd_ref_state)]
 
     @property
-    def average(
-            self
-    ) -> chisurf.structure.Structure:
+    def average(self) -> chisurf.structure.Structure:
         """
         The average structure (:py:class:`~mfm.structure.mfm.structure.Structure`)
         of the trajectory
@@ -390,9 +372,7 @@ class TrajectoryFile(
         return chisurf.structure.average(self[:len(self)])
 
     @property
-    def values(
-            self
-    ) -> np.array:
+    def values(self) -> np.array:
         """A 2D-numpy array containing the RMSD, dRMSD, energy and the chi2
         values of the trajectory
 
