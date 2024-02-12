@@ -183,9 +183,7 @@ class FRETLineGenerator(object):
         return 1.0 - self.fret_species_averaged_lifetime / self.donor_species_averaged_lifetime
 
     @property
-    def polynom_coefficients(
-            self
-    ):
+    def polynom_coefficients(self):
         """
         A numpy array with polynomial coefficients approximating the tauX(tauF) conversion function
         """
@@ -222,7 +220,7 @@ class FRETLineGenerator(object):
     @property
     def parameter_values(self):
         """
-        The values the parameter as defined by :py:attr:`~chisurf.fluorescence.fret_lines.FRETLineGenerator.parameter_name`
+        The values the parameter as defined by :py:attr:`~chisurf.fluorescence.sm_FRETlines.FRETLineGenerator.parameter_name`
         """
         start, stop = self.parameter_range
         n_points = self.n_points
@@ -297,8 +295,8 @@ class StaticFRETLine(
     Examples
     --------
 
-    >>> import chisurf.tools.fret_lines as fret_lines
-    >>> s = fret_lines.StaticFRETLine()
+    >>> import chisurf.tools.sm_FRETlines as sm_FRETlines
+    >>> s = sm_FRETlines.StaticFRETLine()
     >>> s.calc()
 
     Now lets look at the conversion function in comparison to a 1:1 relation
@@ -362,8 +360,8 @@ class DynamicFRETLine(FRETLineGenerator):
     Examples
     --------
 
-    >>> import chisurf.tools.fret_lines as fret_lines
-    >>> d = fret_lines.DynamicFRETLine()
+    >>> import chisurf.tools.sm_FRETlines as sm_FRETlines
+    >>> d = sm_FRETlines.DynamicFRETLine()
     >>> print d.model
     Model: Gaussian-Donor
     Parameter       Value   Bounds  Fixed   Linke
