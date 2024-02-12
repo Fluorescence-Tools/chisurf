@@ -6,9 +6,7 @@ import chisurf.models
 import chisurf.experiments.reader
 
 
-class Experiment(
-    chisurf.base.Base
-):
+class Experiment(chisurf.base.Base):
     """
     All information contained within `ChiSurf` is associated to an experiment.
     Each experiment is associated with a list of models and a list of setups.
@@ -19,35 +17,24 @@ class Experiment(
     hidden: bool = False
 
     @property
-    def readers(
-            self
-    ) -> typing.List[
+    def readers(self) -> typing.List[
         chisurf.experiments.reader.ExperimentReader
     ]:
         return self.get_readers()
 
     @property
-    def reader_names(
-            self
-    ) -> typing.List[str]:
+    def reader_names(self) -> typing.List[str]:
         return self.get_reader_names()
 
     @property
-    def model_classes(
-            self
-    ) -> typing.List[typing.Type[chisurf.models.Model]]:
+    def model_classes(self) -> typing.List[typing.Type[chisurf.models.Model]]:
         return list(self._model_classes)
 
     @property
-    def model_names(
-            self
-    ) -> typing.List[str]:
+    def model_names(self) -> typing.List[str]:
         return self.get_model_names()
 
-    def add_model_class(
-            self,
-            model: typing.Type[chisurf.models.Model]
-    ):
+    def add_model_class(self, model: typing.Type[chisurf.models.Model]):
         if model not in self.model_classes:
             self._model_classes.append(model)
 
@@ -84,9 +71,7 @@ class Experiment(
                 controller
             )
 
-    def get_readers(
-            self
-    ) -> typing.List[
+    def get_readers(self) -> typing.List[
         chisurf.experiments.reader.ExperimentReader
     ]:
         readers = list()
@@ -103,41 +88,29 @@ class Experiment(
                 readers.append(v.experiment_reader)
         return readers
 
-    def get_reader_names(
-            self
-    ) -> typing.List[str]:
+    def get_reader_names(self) -> typing.List[str]:
         names = list()
         for s in self.readers:
             names.append(s.name)
         return names
 
-    def get_model_names(
-            self
-    ) -> typing.List[str]:
+    def get_model_names(self) -> typing.List[str]:
         names = list()
         for s in self.model_classes:
             names.append(str(s.name))
         return names
 
+    def __str__(self):
+        return self.__class__.__name__ + "(" + self.name + ")"
+
     def __init__(
             self,
-            name: str,
+            name: str = '',
             hidden: bool = False,
             *args,
             **kwargs
     ):
-        """
-
-        :param name:
-        :param hidden: If set to True an Experiment is hidden in the GUI
-        :param args:
-        :param kwargs:
-        """
-        super().__init__(
-            name=name,
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, name=name, **kwargs)
         self.hidden = hidden
         self._model_classes = list()
         self._readers = list()
