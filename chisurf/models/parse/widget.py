@@ -1,9 +1,7 @@
-"""
-
-"""
 from __future__ import annotations
 
 import os
+import pathlib
 from chisurf import typing
 
 import yaml
@@ -12,6 +10,7 @@ from qtpy import QtWidgets, QtCore
 import scikit_fluorescence as skf
 import scikit_fluorescence.io
 
+import chisurf
 import chisurf.decorators
 import chisurf.fio
 import chisurf.fitting
@@ -19,17 +18,15 @@ import chisurf.gui.decorators
 import chisurf.models
 import chisurf.settings
 import chisurf.gui.widgets
+import chisurf.gui.tools
+
 from chisurf.models.model import ModelWidget
 from chisurf.models.parse import ParseModel
 
 
-class ParseFormulaWidget(
-    QtWidgets.QWidget
-):
+class ParseFormulaWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="parseWidget.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui("parseWidget.ui")
     def __init__(
             self,
             n_columns: int = None,
@@ -44,62 +41,55 @@ class ParseFormulaWidget(
 
         self._models = {}
         if model_file is None:
-            model_file = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'models.yaml'
-            )
-        self._model_file = model_file
+            model_file = pathlib.Path(__file__).parent / 'models.yaml'
+        self._model_file = model_file.absolute().as_posix()
         self.load_model_file(model_file)
 
         if model_name is None:
             model_name = list(self._models)[0]
 
         self.model_name = model_name
-
+        self.editor = chisurf.gui.tools.code_editor.CodeEditor(None, language='yaml', can_load=False)
+        self.textEdit.setVisible(False)
+        self.editor.hide()
         self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
         self.actionModelChanged.triggered.connect(self.onModelChanged)
+        self.actionLoadModelFile.triggered.connect(self.onLoadModelFile)
+        self.actionEdit_model_file.triggered.connect(self.onEdit_model_file)
 
-    def load_model_file(
-            self,
-            filename: str
-    ):
-        with skf.io.zipped.open_maybe_zipped(
-                filename=filename,
-                mode='r'
-        ) as fp:
+        self.onUpdateFunc()
+
+    def load_model_file(self, filename: pathlib.Path):
+        with skf.io.zipped.open_maybe_zipped(filename, 'r') as fp:
             self._model_file = filename
             self.models = yaml.safe_load(fp)
+            self.lineEdit.setText(str(filename.as_posix()))
+
+    def onLoadModelFile(self, filename: pathlib.Path = None):
+        if filename is None:
+            filename = chisurf.gui.widgets.get_filename("Model-YAML file", file_type='*.yaml')
+        self.load_model_file(filename)
+
+    def onEdit_model_file(self):
+        self.editor.load_file(self._model_file)
+        self.editor.show()
 
     @property
-    def models(
-            self
-    ) -> typing.Dict:
+    def models(self) -> typing.Dict:
         return self._models
 
     @models.setter
-    def models(
-            self,
-            v: typing.Dict
-    ):
+    def models(self, v: typing.Dict):
         self._models = v
         self.comboBox.clear()
         self.comboBox.addItems(list(v.keys()))
 
     @property
-    def model_name(
-            self
-    ) -> typing.List[str]:
-        """
-
-        :return:
-        """
+    def model_name(self) -> typing.List[str]:
         return list(self.models.keys())[self.comboBox.currentIndex()]
 
     @model_name.setter
-    def model_name(
-            self,
-            v: str
-    ):
+    def model_name(self, v: str):
         idx = self.comboBox.findText(v)
         self.comboBox.setCurrentIndex(idx)
 
@@ -108,10 +98,7 @@ class ParseFormulaWidget(
         return self._model_file
 
     @model_file.setter
-    def model_file(
-            self,
-            v: str
-    ):
+    def model_file(self, v: str):
         self._model_file = v
         self.load_model_file(v)
 
@@ -138,7 +125,7 @@ class ParseFormulaWidget(
 
     def onEquationChanged(self):
         self.onUpdateFunc()
-        layout = self.gridLayout_2
+        layout = self.gridLayout_1
         chisurf.gui.widgets.clear_layout(layout)
         n_columns = self.n_columns
         row = 1
@@ -157,10 +144,7 @@ class ParseFormulaWidget(
                 row += 1
             layout.addWidget(pw, row, column)
 
-    def onLoadModelFile(
-            self,
-            filename: str = None
-    ):
+    def onLoadModelFile(self, filename: str = None):
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(
                 'Open models-file',
@@ -171,10 +155,7 @@ class ParseFormulaWidget(
         )
 
 
-class ParseModelWidget(
-    ParseModel,
-    ModelWidget
-):
+class ParseModelWidget(ParseModel, ModelWidget):
 
     def __init__(
             self,
@@ -182,13 +163,10 @@ class ParseModelWidget(
             *args,
             **kwargs
     ):
-        super().__init__(
-            fit,
-            *args,
-            **kwargs
-        )
+        super().__init__(fit, *args, **kwargs)
         parse = ParseFormulaWidget(
-            model=self
+            model=self,
+            model_file=kwargs.get('model_file', None)
         )
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
