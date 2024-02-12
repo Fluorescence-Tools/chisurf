@@ -17,22 +17,6 @@ class GlobalFitModel(model.Model, Curve):
 
     name = "Global fit"
 
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            fits: typing.List[chisurf.fitting.fit.Fit] = None,
-            *args,
-            **kwargs
-    ):
-        if fits is None:
-            fits = list()
-        self.fits = fits
-        self.fit = fit
-        self._global_parameters = dict()
-        self.parameters_calculated = list()
-        self._links = list()
-        super().__init__(fit, *args, **kwargs)
-
     @property
     def weighted_residuals(self) -> np.ndarray:
         if len(self.fits) > 0:
@@ -149,13 +133,7 @@ class GlobalFitModel(model.Model, Curve):
         return re
 
     @property
-    def data(
-            self
-    ) -> typing.Tuple[
-        np.array,
-        np.array,
-        np.array
-    ]:
+    def data(self) -> typing.Tuple[np.array, np.array, np.array]:
         d = list()
         w = list()
         for f in self.fits:
@@ -166,6 +144,23 @@ class GlobalFitModel(model.Model, Curve):
         wn = np.hstack(w)
         xn = np.arange(0, dn.shape[0], 1)
         return xn, dn, wn
+
+    def __init__(
+            self,
+            fit: chisurf.fitting.fit.Fit,
+            fits: typing.List[chisurf.fitting.fit.Fit] = None,
+            *args,
+            **kwargs
+    ):
+        if fits is None:
+            fits = list()
+        self.fits = fits
+        self.fit = fit
+        self._global_parameters = dict()
+        self.parameters_calculated = list()
+        self._links = list()
+        super().__init__(fit, *args, **kwargs)
+
 
     def get_wres(
             self,
