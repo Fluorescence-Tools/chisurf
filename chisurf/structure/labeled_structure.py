@@ -250,9 +250,7 @@ class LabeledStructure(Structure):
     """
 
     @property
-    def donor_lifetime_spectrum(
-            self
-    ) -> np.array:
+    def donor_lifetime_spectrum(self) -> np.array:
         return self._ds
 
     @donor_lifetime_spectrum.setter
@@ -288,9 +286,7 @@ class LabeledStructure(Structure):
         return amplitude, distance
 
     @property
-    def fret_rate_spectrum(
-            self
-    ) -> np.array:
+    def fret_rate_spectrum(self) -> np.array:
         forster_radius = self.forster_radius
         kappa2 = self.kappa2
         tau0 = self.tau0
@@ -305,9 +301,7 @@ class LabeledStructure(Structure):
         return np.hstack(rs).ravel([-1])
 
     @property
-    def lifetime_spectrum(
-            self
-    ) -> np.array:
+    def lifetime_spectrum(self) -> np.array:
         rs = self.fret_rate_spectrum
         ds = self.donor_lifetime_spectrum
         return chisurf.fluorescence.general.rates2lifetimes(rs, ds)
