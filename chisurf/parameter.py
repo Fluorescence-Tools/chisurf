@@ -1,6 +1,8 @@
 from __future__ import annotations
 from chisurf import typing
 
+import abc
+
 import numpy as np
 import chinet
 
@@ -11,36 +13,26 @@ T = typing.TypeVar('T', bound='Parameter')
 
 
 @chisurf.decorators.register
-class Parameter(
-    chisurf.base.Base
-):
+class Parameter(chisurf.base.Base):
 
     @property
     def name(self) -> str:
         return self._port.name
 
     @name.setter
-    def name(
-            self,
-            v: str
-    ):
+    def name(self, v: str):
         self._port.name = v
 
     @property
-    def bounds(
-            self
-    ) -> typing.Tuple[float, float]:
+    def bounds(self) -> typing.Tuple[float, float]:
         """A tuple containing the values for the lower (first value) and
         the upper (second value) of the bound.
         """
         return self._port.bounds
 
     @bounds.setter
-    def bounds(
-            self,
-            b: typing.Tuple[float, float]
-    ):
-        self._port.bounds = np.array(b, dtype=np.float)
+    def bounds(self, b: typing.Tuple[float, float]):
+        self._port.bounds = np.array(b, dtype=np.float64)
 
     @property
     def bounds_on(self):
@@ -51,9 +43,7 @@ class Parameter(
         self._port.bounded = bool(v)
 
     @property
-    def value(
-            self
-    ) -> float:
+    def value(self) -> float:
         """The value of the parameter.
 
         This value of the parameter considers links and
@@ -66,10 +56,7 @@ class Parameter(
         return self._port.value.item(0)
 
     @value.setter
-    def value(
-            self,
-            value: float
-    ):
+    def value(self, value: float):
         self._port.value = np.array([value], dtype=np.double)
 
     @property
@@ -77,10 +64,7 @@ class Parameter(
         return self._link
 
     @link.setter
-    def link(
-            self,
-            link: Parameter
-    ):
+    def link(self, link: Parameter):
         if isinstance(link, Parameter):
             self._link = link
             if self.controller is not None:
@@ -91,84 +75,59 @@ class Parameter(
             self._port.unlink()
 
     @property
-    def is_linked(
-            self
-    ) -> bool:
+    def is_linked(self) -> bool:
         return self._port.is_linked
 
-    def __add__(
-            self,
-            other: T
-    ) -> T:
+    def __add__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a + b)
         )
 
-    def __mul__(
-            self,
-            other: T
-    ) -> T:
+    def __mul__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a * b)
         )
 
-    def __truediv__(
-            self,
-            other: T
-    ) -> T:
+    def __truediv__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a / b)
         )
 
-    def __floordiv__(
-            self,
-            other: T
-    ) -> T:
+    def __floordiv__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a // b)
         )
 
-    def __sub__(
-            self,
-            other: T
-    ) -> T:
+    def __sub__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a - b)
         )
 
-    def __mod__(
-            self,
-            other: T
-    ) -> T:
+    def __mod__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a % b)
         )
 
-    def __pow__(
-            self,
-            other: T
-    ) -> T:
+    def __pow__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
             value=(a ** b)
         )
 
-    def __invert__(
-            self
-    ) -> T:
+    def __invert__(self) -> T:
         a = self.value
         return self.__class__(
             value=(1./a)
@@ -177,10 +136,7 @@ class Parameter(
     def __float__(self):
         return float(self.value)
 
-    def __eq__(
-            self,
-            other: Parameter
-    ) -> bool:
+    def __eq__(self, other: Parameter) -> bool:
         if isinstance(other, Parameter):
             return self.value == other.value
         return NotImplemented
@@ -210,6 +166,10 @@ class Parameter(
         return self.__class__(
             value=self.value.__round__()
         )
+
+    @abc.abstractmethod
+    def update(self):
+        pass
 
     # def to_dict(self) -> typing.Dict:
     #     d = super().to_dict()
@@ -252,10 +212,7 @@ class Parameter(
         :param args:
         :param kwargs:
         """
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         name = kwargs.pop('name', '')
         if callable(value):
             self._callable = value
@@ -281,9 +238,7 @@ class Parameter(
         self.controller = None
 
 
-class ParameterGroup(
-    chisurf.base.Base
-):
+class ParameterGroup(chisurf.base.Base):
 
     def __init__(
             self,
@@ -291,15 +246,7 @@ class ParameterGroup(
             *args,
             **kwargs
     ):
-        """
-
-        :param args:
-        :param kwargs:
-        """
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         if parameters is None:
             parameters = list()
         self._parameter = parameters
@@ -342,15 +289,11 @@ class ParameterGroup(
         self._parameter = list()
 
     @property
-    def parameters(
-            self
-    ) -> typing.List[Parameter]:
+    def parameters(self) -> typing.List[Parameter]:
         return self._parameter
 
     @property
-    def parameter_names(
-            self
-    ) -> typing.List[str]:
+    def parameter_names(self) -> typing.List[str]:
         return [p.name for p in self.parameters]
 
     @property
