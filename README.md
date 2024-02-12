@@ -76,6 +76,16 @@ are not allowed to redistribute any or all of the code, in any manner to other
 parties. The downloaded code is for your use only. ChiSurf is provided free
 of charge to both academic and commercial users.
 
+### Conda
+Either clone the repository and install dependencies using the provided `environemnt.yml` file. Or 
+install `chisurf` using `conda`/`mamba`:
+
+```bash
+conda create -n chisurf
+conda activate chisurf
+conda install chisurf -c tpeulen
+```
+
 ### Windows & macOS
 
 All past and current release can be downloaded from [https://www.peulen.xyz/downloads/](https://www.peulen.xyz/downloads/)
