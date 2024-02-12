@@ -6,9 +6,7 @@ from chisurf.gui import get_app
 
 def main():
     app = get_app()
-    sys.exit(
-        app.exec_()
-    )
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":
