@@ -27,13 +27,10 @@ class DistributionPlotControl(QtWidgets.QWidget):
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         self.layout = QtWidgets.QVBoxLayout()
         self.setLayout(self.layout)
-        self.selector = QtWidgets.QComboBox()
+        self.selector = QtWidgets.QComboBox(None)
         self.layout.addWidget(self.selector)
         self.selector.addItems(
             [
@@ -42,8 +39,7 @@ class DistributionPlotControl(QtWidgets.QWidget):
                 'FRET-rate'
             ]
         )
-
-        self.selector.currentIndexChanged[int].connect(parent.update_all)
+        self.selector.currentIndexChanged[int].connect(parent.update)
 
 
 class DistributionPlot(plotbase.Plot):
@@ -53,14 +49,13 @@ class DistributionPlot(plotbase.Plot):
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
-            parent: QtWidgets.QWidget,
+            parent: QtWidgets.QWidget = None,
             **kwargs
     ):
         super().__init__(
             fit=fit,
             parent=parent
         )
-        self.layout = QtWidgets.QVBoxLayout(self)
         self.data_x, self.data_y = None, None
 
         self.plot_controller = DistributionPlotControl(
@@ -69,29 +64,17 @@ class DistributionPlot(plotbase.Plot):
             **kwargs
         )
 
-        area = DockArea()
-        self.layout.addWidget(area)
-        hide_title = plot_settings['hideTitle']
-        d2 = Dock("Fit", size=(500, 400), hideTitle=hide_title)
+        pw = pg.PlotWidget()
+        self.layout.addWidget(pw)
 
-        self.p1 = QtWidgets.QPlainTextEdit()
-        p2 = pg.PlotWidget(useOpenGL=pyqtgraph_settings['useOpenGL'])
-
-        d2.addWidget(p2)
-
-        area.addDock(d2, 'top')
-
-        distribution_plot = p2.getPlotItem()
-
-        self.distribution_plot = distribution_plot
-        self.distribution_curve = distribution_plot.plot(
+        self.distribution_plot = pw.getPlotItem()
+        pen = pg.mkPen(colors['data'], width=lw)
+        self.distribution_curve = self.distribution_plot.plot(
             x=[0.0],
             y=[0.0],
-            pen=pg.mkPen(
-                colors['data'],
-                width=lw
-            ),
-            name='Data'
+            pen=pen,
+            stepMode='right',
+            fillLevel=0, fillBrush=colors['data']
         )
 
     def update(self, *args, **kwargs) -> None:
@@ -112,7 +95,4 @@ class DistributionPlot(plotbase.Plot):
                 lifetime_spectrum,
                 sort=True
             )
-        self.distribution_curve.setData(
-            x=x,
-            y=y
-        )
+        self.distribution_curve.setData(x, y)
