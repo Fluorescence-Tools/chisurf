@@ -13,9 +13,7 @@ class PhasorWidget(
 ):
 
     @property
-    def phasor_omega(
-            self
-    ) -> float:
+    def phasor_omega(self) -> float:
         return float(self.doubleSpinBox_12.value()) / 1000.0 * np.pi * 2.0
 
     @phasor_omega.setter
