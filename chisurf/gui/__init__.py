@@ -2,10 +2,25 @@ from __future__ import annotations
 
 import sys
 
-from qtpy import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtGui, QtCore, uic
 
 import chisurf.settings
+import chisurf.gui.decorators
 
+
+
+class SplashScreen(QtWidgets.QSplashScreen):
+
+    def __int__(self, *args, **kwargs):
+        super().__int__(*args, **kwargs)
+
+    # TODO: Progress bar and updated version number
+    # def drawContents(self, painter, QPainter=None):
+    #     textPix = QtWidgets.QSplashScreen.pixmap()
+    #     painter.setPen(self.color)
+    #     painter.drawText(self.rect, self.alignment, self.message)
+    #     painter.drawText(QtCore.QRect(75, 337, 400, 30), self.alignment, "0.1")
+    #     painter.drawText(QtCore.QRect(128, 372, 400, 30), self.alignment, "May 29, 2013")
 
 def setup_gui(
         app: QtWidgets.QApplication,
@@ -86,18 +101,28 @@ def setup_gui(
         window.load_tools()
 
 
-def get_win(
-        app: QtWidgets.QApplication
-) -> chisurf.gui.main.Main:
+def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     # import pyqtgraph at this stage to fix
     # Warning: QApplication was created before pyqtgraph was imported;
     import pyqtgraph
     import chisurf.gui.resources
 
     pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
-    splash = QtWidgets.QSplashScreen(pixmap)
+    splash = SplashScreen(pixmap)
+
+    # move splashscreen to center of active window
+    screen = QtGui.QGuiApplication.screenAt(QtGui.QCursor().pos())
+    fg = splash.frameGeometry()
+    fg.moveCenter(screen.geometry().center())
+    splash.move(fg.topLeft())
+
+    getattr(splash, "raise")()
+    splash.activateWindow()
+
     splash.setContentsMargins(0, 0, 0, 64)
+
     splash.show()
+
     app.processEvents()
     align = QtCore.Qt.AlignTop
     offset = "\n" * 17 + " " * 0
@@ -207,3 +232,5 @@ def get_app():
     win.setFocus()
     return app
 
+
+fit_windows = list()
