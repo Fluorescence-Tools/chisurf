@@ -55,7 +55,7 @@ class MyMessageBox(QtWidgets.QMessageBox):
     def __init__(
             self,
             label: str = None,
-            info: str = None,
+            info: str = "",
             details: str = None,
             show_fortune: bool = chisurf.settings.cs_settings['fortune']
     ):
@@ -244,8 +244,7 @@ def save_file(
     if working_path is None:
         working_path = chisurf.working_path
     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-                None,
-                parent=None,
+            None,
                 caption=description,
                 dir=str(working_path.absolute()),
                 filter=file_type
@@ -259,7 +258,7 @@ def get_directory(
         filename_ending: str = None,
         get_files: bool = False,
         directory: pathlib.Path = None
-):
+) -> typing.Tuple[pathlib.Path, typing.List[str]]:
     """Opens a new window where you can choose a directory. The current
     working path is updated to this directory.
 
@@ -272,26 +271,16 @@ def get_directory(
     fn_ending = filename_ending
     if directory is None:
         directory = chisurf.working_path
-    if isinstance(directory, str):
-        directory = str(
-            QtWidgets.QFileDialog.getExistingDirectory(
-                None,
-                "Select Directory",
-                str(directory.absolute()),
-            )
-        )
+    if isinstance(directory, pathlib.Path):
+        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory", str(directory.absolute()))
     else:
-        directory = str(
-            QtWidgets.QFileDialog.getExistingDirectory(
-                None,
-                "Select Directory"
-            )
-        )
-    chisurf.working_path = pathlib.Path(directory)
+        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory")
+    directory = pathlib.Path(directory)
+    chisurf.working_path = directory
     if not get_files:
-        return directory
+        return directory, []
     else:
-        filenames = [directory + '/' + s for s in os.listdir(directory)]
+        filenames = [str(directory / s) for s in os.listdir(directory)]
         if fn_ending is not None:
             filenames = fnmatch.filter(filenames, fn_ending)
         return directory, filenames
