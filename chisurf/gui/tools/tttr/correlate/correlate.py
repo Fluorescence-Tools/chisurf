@@ -28,17 +28,13 @@ correlator_settings = chisurf.settings.cs_settings['correlator']
 plot_settings = chisurf.settings.gui['plot']
 
 
-class Correlator(
-    QtCore.QThread
-):
+class Correlator(QtCore.QThread):
 
     procDone = QtCore.pyqtSignal(bool)
     partDone = QtCore.pyqtSignal(int)
 
     @property
-    def data(
-            self
-    ) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.data.DataCurve:
         if isinstance(self._data_curve, chisurf.data.DataCurve):
             return self._data_curve
         else:
@@ -52,10 +48,7 @@ class Correlator(
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         self.p = photon_source
         self.exiting = False
         self._data_curve = None
@@ -280,9 +273,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.progressBar.setValue(val)
 
     @property
-    def data(
-            self
-    ) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.data.DataCurve:
         return self.correlator_thread.data
 
     @property
@@ -293,9 +284,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         return dt
 
     @property
-    def weighting(
-            self
-    ) -> int:
+    def weighting(self) -> int:
         return self.comboBox_3.currentIndex()
 
     @weighting.setter
@@ -306,9 +295,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.comboBox_3.setCurrentIndex(int(v))
 
     @property
-    def ch1(
-            self
-    ) -> typing.List[int]:
+    def ch1(self) -> typing.List[int]:
         return [int(x) for x in str(self.lineEdit_4.text()).split()]
 
     @ch1.setter
@@ -319,9 +306,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.lineEdit_4.setText(str(v))
 
     @property
-    def ch2(
-            self
-    ) -> typing.List[int]:
+    def ch2(self) -> typing.List[int]:
         return [int(x) for x in str(self.lineEdit_5.text()).split()]
 
     @ch2.setter
@@ -332,9 +317,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.lineEdit_5.setText(str(v))
 
     @property
-    def fine(
-            self
-    ) -> int:
+    def fine(self) -> int:
         return int(self.checkBox.isChecked())
 
     @fine.setter
@@ -345,9 +328,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.checkBox.setCheckState(v)
 
     @property
-    def B(
-            self
-    ) -> int:
+    def B(self) -> int:
         return int(self.spinBox_3.value())
 
     @B.setter
@@ -358,9 +339,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         return self.spinBox_3.setValue(v)
 
     @property
-    def number_of_cascades(
-            self
-    ) -> int:
+    def number_of_cascades(self) -> int:
         return int(self.spinBox_2.value())
 
     @number_of_cascades.setter
@@ -371,15 +350,11 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.spinBox_2.setValue(v)
 
     @property
-    def method(
-            self
-    ) -> str:
+    def method(self) -> str:
         return str(self.comboBox_2.currentText())
 
     @property
-    def split(
-            self
-    ) -> float:
+    def split(self) -> float:
         return int(self.spinBox.value())
 
     @split.setter
@@ -435,9 +410,7 @@ class CrFilterWidget(QtWidgets.QWidget):
         return bool(self.groupBox_2.isChecked())
 
     @property
-    def photons(
-            self
-    ) -> chisurf.fio.photons.Photons:
+    def photons(self) -> chisurf.fio.photons.Photons:
         photons = self.photon_source.photons
         if self.cr_filter_on:
             dt = photons.mt_clk
