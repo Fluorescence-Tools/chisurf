@@ -115,8 +115,9 @@ tcspc:
   - vm
   - vv
   - vh
-  fit_area: 0.99
-  fit_count_threshold: 5
+  fit_area: 0.90
+  fit_count_threshold: 8
+  fit_start_fraction: 0.5
   is_jordi: false
   rebin: [1, 1]
 fcs:
@@ -138,18 +139,23 @@ parameter:
   hide_label: false
 gui:
   editor:
-    margins_background_color: "#cccccc"
-    marker_background_color: "#eeeeee"
-    caret_line_background_color: "#ffe4e4"
+    margins_background_color: "#a1a1a1"
+    marker_background_color: "#d6d6d6"
+    caret_line_background_color: "#747677"
+    paper_color: "#747677"
+    default_color: "#e1e1e1"
     font_size: 9
-    font_family: Courier
+    font_family: Helvetica
     language: Python
-  style_sheet: day.css
+  style_sheet: dark.css
+  RubberBandResize: true
+  RubberBandMove: true
   show_console: true
   show_macro_edit: true
   confirm_close_fit: true
   confirm_close_program: true
   fit_windows_size: [350, 350]
+  fit_window_style: 'border: 2px solid rgba(0, 0, 0, 0.10);background-color: gray;'
   console_style: 'linux' # options are linux, lightbg, or nocolor
   console_init: |
     %matplotlib inline
@@ -162,7 +168,7 @@ gui:
     show_data_grid: true
     show_residual_grid: true
     show_acorr_grid: true
-    line_width: 0.5
+    line_width: 2.0
     hideTitle: true
     enable_region_selector: true
     show_legend: false
@@ -177,6 +183,7 @@ gui:
       region_selector_alpha: 100
       data: "#ffa629"
       model: "#d400cd"
+      irf: "#4284f5"
       residuals: "#df0101"
       auto_corr: "#ff00ff"
       inactive_transparency: 0.2
