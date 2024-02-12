@@ -32,14 +32,10 @@ class FittingControllerWidget(Controller):
         self.comboBox.setCurrentIndex(int(v))
 
     @property
-    def current_fit_type(
-            self
-    ) -> str:
+    def current_fit_type(self) -> str:
         return str(self.comboBox.currentText())
 
-    def change_dataset(
-            self
-    ) -> None:
+    def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
         self.fit.update()
