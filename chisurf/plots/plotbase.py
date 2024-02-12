@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import abc
+
 from qtpy import QtWidgets
 
 import chisurf.fitting
@@ -9,9 +11,7 @@ import chisurf.gui.widgets
 from chisurf.gui.widgets import View
 
 
-class Plot(
-    View
-):
+class Plot(View):
 
     def __init__(
             self,
@@ -32,11 +32,7 @@ class Plot(
             self.plot_controller = plot_controller
         self.widgets = list()
 
-    def update(
-            self,
-            *args,
-            **kwargs
-    ) -> None:
+    def update(self, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
 
     def close(self):
