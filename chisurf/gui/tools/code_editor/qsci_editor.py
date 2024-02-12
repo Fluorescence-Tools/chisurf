@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 
 import sys
@@ -22,6 +19,7 @@ from qtpy import QtWidgets
 import scikit_fluorescence.io
 import chisurf
 import chisurf.fio
+from chisurf import logging
 import chisurf.gui.widgets
 import chisurf.settings
 
@@ -38,7 +36,7 @@ class SimpleCodeEditor(QsciScintilla):
             margins_background_color: str = None,
             marker_background_color: str = None,
             caret_line_background_color: str = None,
-            caret_line_visible: bool = True,
+            caret_line_visible: bool = False,
             language: str = None,
             **kwargs
     ):
@@ -61,17 +59,14 @@ class SimpleCodeEditor(QsciScintilla):
         if font_family is None:
             font_family = chisurf.settings.gui['editor']['font_family']
         if margins_background_color is None:
-            margins_background_color = chisurf.settings.gui[
-                'editor'
-            ]['margins_background_color']
+            margins_background_color = chisurf.settings.gui['editor']['margins_background_color']
         if marker_background_color is None:
-            marker_background_color = chisurf.settings.gui[
-                'editor'
-            ]['marker_background_color']
+            marker_background_color = chisurf.settings.gui['editor']['marker_background_color']
         if caret_line_background_color is None:
-            caret_line_background_color = chisurf.settings.gui[
-                'editor'
-            ]['caret_line_background_color']
+            caret_line_background_color = chisurf.settings.gui['editor']['caret_line_background_color']
+
+        paper_color = kwargs.get("paper_color", chisurf.settings.gui['editor']['paper_color'])
+        default_color = kwargs.get("default_color", chisurf.settings.gui['editor']['default_color'])
 
         # Set the default font
         font = QtGui.QFont()
@@ -86,11 +81,9 @@ class SimpleCodeEditor(QsciScintilla):
         # Margin 0 is used for line numbers
         fontmetrics = QtGui.QFontMetrics(font)
         self.setMarginsFont(font)
-        self.setMarginWidth(0, fontmetrics.width("0000") + 6)
+        self.setMarginWidth(0, fontmetrics.width("000") + 4)
         self.setMarginLineNumbers(0, True)
-        self.setMarginsBackgroundColor(
-            QtGui.QColor(margins_background_color)
-        )
+        self.setMarginsBackgroundColor(QtGui.QColor(margins_background_color))
 
         # Clickable margin 1 for showing markers
         self.setMarginSensitivity(1, True)
@@ -99,21 +92,15 @@ class SimpleCodeEditor(QsciScintilla):
 #            self.on_margin_clicked)
         self.markerDefine(QsciScintilla.RightArrow, self.ARROW_MARKER_NUM)
 
-        self.setMarkerBackgroundColor(
-            QtGui.QColor(marker_background_color),
-            self.ARROW_MARKER_NUM
-        )
+        self.setMarkerBackgroundColor(QtGui.QColor(marker_background_color), self.ARROW_MARKER_NUM)
 
         # Brace matching: enable for a brace immediately before or after
         # the current position
-        #
         self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
 
         # Current line visible with special background color
         self.setCaretLineVisible(caret_line_visible)
-        self.setCaretLineBackgroundColor(
-            QtGui.QColor(caret_line_background_color)
-        )
+        self.setCaretLineBackgroundColor(QtGui.QColor(caret_line_background_color))
 
         # Set Python lexer
         # Set style for Python comments (style number 1) to a fixed-width
@@ -125,20 +112,26 @@ class SimpleCodeEditor(QsciScintilla):
                 lexer = QsciLexerJSON()
             else:
                 lexer = QsciLexerYAML()
-            self.setLexer(lexer)
+            lexer.setDefaultPaper(QtGui.QColor(paper_color))
+            lexer.setDefaultColor(QtGui.QColor(default_color))
             lexer.setDefaultFont(font)
-
-        text = bytearray(str.encode("Arial"))
-        # 32, "Courier New"
-        self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, text)
+            self.setLexer(lexer)
+        #
+        # text = bytearray(str.encode("Arial"))
+        # # 32, "Courier New"
+        # self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, text)
 
         # Don't want to see the horizontal scrollbar at all
         # Use raw message to Scintilla here (all messages are documented
         # here: http://www.scintilla.org/ScintillaDoc.html)
         self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 0)
 
+        # Set the color of the fold boxes
+        fold_margin_color = QtGui.QColor("#006400")  # Replace with your desired color
+        self.setFoldMarginColors(fold_margin_color, fold_margin_color)
+
         # not too small
-        # self.setMinimumSize(400, 200)
+        self.setMinimumSize(400, 200)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
@@ -150,16 +143,12 @@ class SimpleCodeEditor(QsciScintilla):
 
 class CodeEditor(QtWidgets.QWidget):
 
-    def load_file(
-            self,
-            filename: str = None,
-            **kwargs
-    ):
+    def load_file(self, filename: str = None, **kwargs):
         if filename is None:
             filename = chisurf.gui.widgets.get_filename()
         self.filename = filename
         try:
-            print('loading filename: ', filename)
+            logging.log(0, f"Loading file: {filename}")
             text = ""
             with open(filename) as fp:
                 text = fp.read()
@@ -168,24 +157,19 @@ class CodeEditor(QtWidgets.QWidget):
                 str(filename)
             )
         except IOError:
-            print("Not a valid filename.")
+            logging.log(1, f"CodeEditor, not a valid filename: {filename}")
 
     def run_macro(self):
         self.save_text()
-        chisurf.console.run_macro(
-            filename=self.filename
-        )
+        chisurf.console.run_macro(filename=self.filename)
 
     def save_text(self):
         if self.filename is None or self.filename == '':
             self.filename = chisurf.gui.widgets.save_file(file_type='Python script (*.py)')
-        with scikit_fluorescence.io.zipped.open_maybe_zipped(
-                filename=self.filename,
-                mode='w'
-        ) as fp:
+        with scikit_fluorescence.io.zipped.open_maybe_zipped(self.filename, 'w') as fp:
             text = str(self.editor.text())
             fp.write(text)
-            self.line_edit.setText(self.filename)
+            self.line_edit.setText(str(self.filename.as_posix))
 
     def __init__(
             self,
