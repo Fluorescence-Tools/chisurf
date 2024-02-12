@@ -54,9 +54,7 @@ class PDBSelector(
         self.update_chain()
 
     @property
-    def chain_id(
-            self
-    ) -> str:
+    def chain_id(self) -> str:
         return str(self.comboBox.currentText())
 
     @chain_id.setter
@@ -67,9 +65,7 @@ class PDBSelector(
         pass
 
     @property
-    def residue_name(
-            self
-    ) -> str:
+    def residue_name(self) -> str:
         try:
             return str(
                 self.atoms[self.atom_number]['res_name']
@@ -78,9 +74,7 @@ class PDBSelector(
             return "NA"
 
     @property
-    def residue_id(
-            self
-    ) -> int:
+    def residue_id(self) -> int:
         try:
             return int(self.comboBox_2.currentText())
         except ValueError:
@@ -94,9 +88,7 @@ class PDBSelector(
         pass
 
     @property
-    def atom_name(
-            self
-    ) -> str:
+    def atom_name(self) -> str:
         return str(self.comboBox_3.currentText())
 
     @atom_name.setter
@@ -107,9 +99,7 @@ class PDBSelector(
         pass
 
     @property
-    def atom_number(
-            self
-    ) -> int:
+    def atom_number(self) -> int:
         residue_key = self.residue_id
         atom_name = self.atom_name
         chain = self.chain_id
@@ -238,15 +228,11 @@ class PDBFolderLoad(
         self.load_thread.start()
 
     @property
-    def calc_rmsd(
-            self
-    ) -> bool:
+    def calc_rmsd(self) -> bool:
         return self.checkBox_4.isChecked()
 
     @property
-    def n_files(
-            self
-    ) -> int:
+    def n_files(self) -> int:
         return int(self.lineEdit_3.text())
 
     @n_files.setter
@@ -257,27 +243,19 @@ class PDBFolderLoad(
         self.lineEdit_3.setText(str(v))
 
     @property
-    def verbose(
-            self
-    ) -> bool:
+    def verbose(self) -> bool:
         return bool(self.checkBox_3.isChecked())
 
     @property
-    def nAtoms(
-            self
-    ) -> int:
+    def nAtoms(self) -> int:
         return self.trajectory[0].n_atoms
 
     @property
-    def nResidues(
-            self
-    ) -> int:
+    def nResidues(self) -> int:
         return self.trajectory[0].n_residues
 
     @property
-    def folder(
-            self
-    ) -> str:
+    def folder(self) -> str:
         return str(self.lineEdit_7.text())
 
     @folder.setter
@@ -288,13 +266,9 @@ class PDBFolderLoad(
         self.lineEdit_7.setText(v)
 
     @property
-    def use_objects(
-            self
-    ) -> bool:
+    def use_objects(self) -> bool:
         return bool(self.checkBox_2.isChecked())
 
     @property
-    def calc_internal(
-            self
-    ) -> bool:
+    def calc_internal(self) -> bool:
         return self.checkBox.isChecked()
