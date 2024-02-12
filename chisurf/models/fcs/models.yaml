@@ -6,40 +6,47 @@
     s: 3.5
     td: 0.5
     b: 1
-  description: "<html><head /><body><h1>3D Gauss</h1><p></p></body></html>"
+  description: Free diffusion in 3D Gauss
 3D Gauss, 1 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba+ba*exp(-x/bt))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td: 0.5
     b: 1
     bt: 0.002
     ba: 0.1
-  description: "<html><head /><body><h1>3D Gauss, 1 bunching</h1><p>Da von einem
-    Molekül im Triplettzustand keine Fluoreszenz mehr beobachtet werden kann, und
-    die Phosphoreszenz als vernachlässigbar klein betrachtet bzw. durch geeignete
-    Filterwahl abgeblockt werden kann, führt der Übergang eines Fluoreszenzmoleküls
-    in den Triplettzustand zu Fluoreszenzschwankungen, die in der Fluoreszenzkorrelationsfunktion
-    einen charakteristischen Zeitverlauf zeigen. Dieser Zeitverlauf wird durch einen
-    Ausdruck beschrieben, der von den photochemischen Parametern des Moleküls abhängt.
-    WIDENGREN, METS, RIGLER [101] leiteten einen Ausdruck für die Fluoreszenzkorrelationsfunktion
-    her, der die translative Diffusion und den Triplettzustand einschloß:</p></body></html>"
+  description: No description
 3D Gauss, 2 diffusion terms, 1 global bunching:
-  equation: b+1/abs(N)*(a1*(1+x/td1)**(-1)*(1+1/s**2*x/td1)**(-0.5))+(1-a1)*(1+x/td2)**(-1)*(1+1/s**2*x/td2)*(1-ba+ba*exp(-x/bt))
+  equation: b+1/abs(N)*(a1*(1+x/td1)**(-1)*(1+1/s**2*x/td1)**(-0.5)+(1-a1)*(1+x/td2)**(-1)*(1+1/s**2*x/td2)**(-0.5))*(1-ba+ba*exp(-x/bt))
   initial:
-    Nc: 1
+    N: 5
     s: 3.5
-    td: 0.5
+    td1: 0.1
+    a1: 0.5
+    td2: 0.5
     b: 1
     bt: 0.002
     ba: 0.1
-  description: "<html><head /><body><h1>3D Gauss, 1 bunching</h1><p>Da von einem
-    Molekül im Triplettzustand keine Fluoreszenz mehr beobachtet werden kann, und
+  description: No description
+3D Gauss, 2 diffusion terms, 2 global bunching:
+  equation: b+1/abs(N)*(a1*(1+x/td1)**(-1)*(1+1/s**2*x/td1)**(-0.5)+(1-a1)*(1+x/td2)**(-1)*(1+1/s**2*x/td2)**(-0.5))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
+  initial:
+    N: 5
+    s: 3.5
+    td1: 0.1
+    a1: 0.5
+    td2: 0.5
+    b: 1
+    bt1: 0.002
+    ba1: 0.1
+    bt2: 0.002
+    ba2: 0.1
+  description: No description
 3D Gauss, 2 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
   initial:
-    Nc: 1
+    N: 5
     s: 3.5
     td: 0.5
     b: 1
@@ -47,11 +54,11 @@
     ba1: 0.05
     bt2: 0.01
     ba2: 0.05
-  description: "<html><head /><body><h1>3D Gauss, 2 bunching</h1><p></p></body></html>"
+  description: No description!
 3D Gauss, 3 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -61,11 +68,11 @@
     ba2: 0.05
     bt3: 0.1
     ba3: 0.1
-  description: "<html><head /><body><h1>3D Gauss, 3 bunching</h1><p></p></body></html>"
+  description: No description!
 3D Gauss, 7 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-ba6+ba6*exp(-x/bt6))*(1-ba7+ba7*exp(-x/bt7))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -83,12 +90,12 @@
     ba6: 0.1
     bt7: 0.1
     ba7: 0.1
-  description: "<html><head /><body><h1>3D Gauss, 7 bunching (Suren fit31)</h1><p></p></body></html>"
+  description: No description!
 3D Gauss, 1 bunching + 1+5 anti-bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1)))*(1-abs(aba)*exp(-x/abs(abt)))*(1-
     abs(abf)*(abs(aba1)*exp(-x/abs(abt1))+abs(aba2)*exp(-x/abs(abt2))+abs(aba3)*exp(-x/abs(abt3))+abs(aba4)*exp(-x/abs(abt4))+abs(1-abs(aba1)-abs(aba2)-abs(aba3)-abs(aba4))*exp(-x/abs(abt5))))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -106,13 +113,12 @@
     aba4: 0.1
     abt4: 0.5
     abt5: 1
-  description: "<html><head /><body><h1>3D Gauss, 1 bunching + 1+5 anti-bunching
-    (Suren fit85)</h1><p></p></body></html>"
+  description: No description!
 2 comp 3D Gauss, 3 individual bunch:
   equation: b+1/abs(N)*(a1*(1+x/abs(td1))**(-1)/sqrt(1+1/s**2*x/abs(td1))*(1-abs(ba11)+abs(ba11)*exp(-x/abs(bt11))-abs(ba21)+abs(ba21)*exp(-x/abs(bt21))-abs(ba31)+abs(ba31)*exp(-x/abs(bt31)))+(1-a1)
     * (1+x/abs(td2))**(-1)*(1+1/s**2*x/abs(td2))**(-0.5)*(1-abs(ba12)+abs(ba12)*exp(-x/abs(bt12))-abs(ba22)+abs(ba22)*exp(-x/abs(bt22))-abs(ba32)+abs(ba32)*exp(-x/abs(bt32))))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td1: 0.5
     td2: 0.5
@@ -130,11 +136,11 @@
     bt22: 0.1
     bt31: 0.1
     bt32: 0.1
-  description: "<html><head /><body><h1>2 comp 3D Gauss, 3 individual bunch</h1><p></p></body></html>"
+  description: No description!
 3D Gauss, 1 exp. bunch, 1 stretched exp. bunch:
-  equation: b+1/abs(N)*(1+x/abs(td))**(-1)*(1+1/s**2*x/abs(td))**(-0.5)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1))-abs(ba2)+abs(ba2)*exp(-(x/abs(bt2))**bs2))
+  equation: b+1/abs(N)*(a1*(1+x/abs(td1))**(-1)/sqrt(1+1/s**2*x/abs(td1))*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1))-abs(ba2)+abs(ba2)*exp(-(x/abs(bt2))**bs2))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td: 0.5
     b: 1
@@ -143,13 +149,12 @@
     bt1: 0.1
     bt2: 0.1
     bs2: 1
-  description: "<html><head /><body><h1>3D Gauss, 1 exp. bunch, 1 stretched exp.
-    bunch</h1><p></p></body></html>"
+  description: No description!
 2 comp 3D Gauss, ind. 1 exp. + 1 stretched exp.:
   equation: b+1/abs(N) * (a1 * (1+x/abs(td1))**(-1)*(1+1/s**2*x/abs(td1))**(-0.5)*(1-abs(ba11)+abs(ba11)*exp(-x/abs(bt11))-abs(ba21)+abs(ba21)*exp(-(x/abs(bt21))**bs21))+(1-a1)
     * (1+x/abs(td2))**(-1)*(1+1/s**2*x/abs(td2))**(-0.5)*(1-abs(ba12)+abs(ba12)*exp(-x/abs(bt12))-abs(ba22)+abs(ba22)*exp(-(x/abs(bt22))**bs22)))
   initial:
-    Nc: 1
+    N: 1
     s: 3.5
     td1: 0.5
     td2: 0.5
@@ -165,5 +170,307 @@
     bt12: 0.1
     bt22: 0.1
     bs22: 1
-  description: "<html><head /><body><h1>2 comp 3D Gauss, ind. 1 exp. + 1 stretched
-    exp.</h1><p></p></body></html>"
+  description: No description!
+Autocorrelation with biexponential anisotropy term:
+  equation: b+1/N*(1+x/td1)**(-1)/sqrt(1+1/s**2*x/td1)* (1- aab*exp(-x/tab)) * (1+aroc*((1/(1+C))*exp(-x/trc1)+(C/(1+C))*exp(-x/(trc1*trc2trc1))))
+    * (1-abs(ab1)+abs(ab1)*exp(-x/abs(tb1))-abs(ab2)+abs(ab2)*exp(-x/abs(tb2))-abs(ab3)+abs(ab3)*exp(-x/abs(tb3))-abs(ab4)+abs(ab4)*exp(-x/abs(tb4)))
+  initial:
+    b: 1
+    N: 1
+    td: 0.5
+    s: 7
+    aab: 1
+    tab: 4.0e-06
+    aroc: 0.2
+    C: 0.2
+    trc1: 1.0e-05
+    trc2trc1: 50
+    ab1: 0.1
+    tb1: 0.1
+    ab2: 0.1
+    tb2: 0.01
+    ab3: 0.1
+    tb3: 0.001
+    ab4: 0.1
+    tb4: 0.0001
+  description: Model for global fitting of Autocorrelation data of Donly/Adir and
+    DA-AC's gg/rr from cwFCS.
+Simple 2D diffusion:
+  equation: b + 1/abs(N)*(1/(1+ x/abs(td)))
+  initial:
+    b: 1
+    N: 1
+    td: 0.5
+  description: Model for 2-dimensional diffusion in a membrane
+2x 2D diffusion:
+  equation: b +1/N*(a1/(1+x/td1)+(1-a1)/(1+x/td2))
+  initial:
+    b: 1
+    N: 5
+    td1: 1.5
+    a1: 0.5
+    td2: 0.5
+  description: Model for 2x 2-dimensional diffusion in a membrane
+Abnormal diffusion:
+  equation: b + 1/abs(N)*(1/(1+(x/abs(td))**a))
+  initial:
+    b: 1
+    N: 1
+    a: 0.7
+    td: 0.5
+  description: Abnormal diffusion with stretching factor alpha (a), with a between
+    0 and 1
+Simple 2D diffusion & 1x relaxation:
+  equation: b + 1/N*(1/(1+ x/td))*(1-aR+aR*exp(-x/tR))
+  initial:
+    b: 1
+    N: 1
+    td: 0.5
+    aR: 0.5
+    tR: 0.05
+  description: Model for 2-dimensional diffusion in a membrane and one relaxation
+    term, with tR = (kon+koff)^-1 and xR= Keq=kon/koff
+2x 2D diffusion & 1x relaxation:
+  equation: b + 1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-aR+aR*exp(-x/tR))
+  initial:
+    b: 1
+    N: 1
+    td1: 100
+    a1: 0.5
+    td2: 1
+    aR: 0.5
+    tR: 0.005
+  description: Model for 2x 2-dimensional diffusion in a membrane and one relaxation
+    term
+2x 2D diffusion & 3x relaxation:
+  equation: b+1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3))
+  initial:
+    b: 1
+    N: 1
+    td1: 100
+    a1: 0.5
+    td2: 0.5
+    bt1: 0.002
+    ba1: 0.05
+    bt2: 0.01
+    ba2: 0.05
+    bt3: 0.1
+    ba3: 0.1
+  description: Model for 2x 2-dimensional diffusion in a membrane and two relaxation
+    terms
+2x 2D diffusion & 1x anticorrelation:
+  equation: b + 1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-aR*exp(-x/tR))
+  initial:
+    b: 1
+    N: 1
+    td1: 5
+    a1: 0.5
+    td2: 100
+    aR: 0.5
+    tR: 0.005
+  description: Model for 2x 2-dimensional diffusion in a membrane and one anticorrelation
+    term
+2x 2D diffusion & 3x anticorrelation:
+  equation: b + 1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-af*(aR1*exp(-x/tR1)+aR2*exp(-x/tR2)+(1-aR1-aR2)*exp(-x/tR3)))
+  initial:
+    b: 1
+    N: 1
+    td1: 5
+    a1: 0.5
+    td2: 100
+    af: 0.5
+    aR1: 0.05
+    tR1: 0.5
+    aR2: 0.05
+    tR2: 0.005
+    tR3: 0.0005
+  description: Model for 2x 2-dimensional diffusion in a membrane and three anticorrelation
+    terms with total anticorrelation amplitude af
+2x 2D diffusion & 1x anticorrelation, 1x relaxation:
+  equation: b + 1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-aRa*exp(-x/tRa))*(1-aR+aR*exp(-x/tR))
+  initial:
+    b: 1
+    N: 1
+    td1: 5
+    a1: 0.5
+    td2: 100
+    af: 0.5
+    aRa: 0.05
+    tRa: 0.5
+    aR: 0.05
+    tR: 0.005
+  description: Model for 2x 2-dimensional diffusion in a membrane and three anticorrelation
+    terms with total anticorrelation amplitude af
+2x 2D diffusion, 4x relaxation and photon antibunching:
+  equation: b+1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4))*(1-aab*exp(-x/tab))
+  initial:
+    b: 1
+    N: 1
+    td1: 5
+    a1: 0.5
+    td2: 0.5
+    bt1: 0.002
+    ba1: 0.05
+    bt2: 0.01
+    ba2: 0.05
+    bt3: 0.1
+    ba3: 0.1
+    bt4: 1
+    ba4: 0.1
+    aab: 1
+    tab: 4.0e-06
+  description: Model for 2x 2-dimensional diffusion in a membrane, three relaxation
+    terms and photon antibunching
+1x 2D diffusion & 5x relaxation & photon antibunching:
+  equation: b+(1/N*(1/(1+x/td)))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-aab*exp(-x/tab))
+  initial:
+    b: 1
+    N: 1
+    td: 0.5
+    bt1: 0.0002
+    ba1: 0.05
+    bt2: 0.001
+    ba2: 0.05
+    bt3: 0.01
+    ba3: 0.1
+    bt4: 0.1
+    ba4: 0.1
+    bt5: 1
+    ba5: 0.1
+    aab: 1
+    tab: 4.0e-06
+  description: Model for 1x 2-dimensional diffusion in a membrane and four relaxation
+    terms & photon antibunching
+1x 3D diffusion & 5x relaxation & photon antibunching:
+  equation: b+(1/N3)*(1/(1+x/td3))*(1/sqrt(1+1/s**2*x/td3))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-aab*exp(-x/tab))
+  initial:
+    b: 1
+    s: 5
+    N3: 1
+    td3: 1
+    bt1: 2.0e-05
+    ba1: 0.05
+    bt2: 0.0001
+    ba2: 0.05
+    bt3: 0.001
+    ba3: 0.1
+    bt4: 0.01
+    ba4: 0.1
+    bt5: 0.1
+    ba5: 0.1
+    aab: 1
+    tab: 4.0e-06
+  description: Model for 1x 3-dimensional diffusion and five relaxation terms & photon
+    antibunching, for normal FCS data set aab =0
+1x 2D diffusion, 1x 3D diffusion & 5x relaxation & photon antibunching:
+  equation: b+1/N*(a2/(1+ x/td2)+(1-a2)/(1+x/td3)*(1/sqrt(1+1/s**2*x/td3)))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-aab*exp(-x/tab))
+  initial:
+    b: 1
+    N: 1
+    td2: 100
+    s: 5
+    a2: 0.5
+    td3: 1
+    bt1: 2.0e-05
+    ba1: 0.05
+    bt2: 0.0001
+    ba2: 0.05
+    bt3: 0.001
+    ba3: 0.1
+    bt4: 0.01
+    ba4: 0.1
+    bt5: 0.1
+    ba5: 0.1
+    aab: 1
+    tab: 4.0e-06
+  description: Model for 1x 2-dimensional diffusion in a membrane, 1x free 3D diffusion
+    and five relaxation terms & photon antibunching, for normal FCS data set aab =0
+2x 2D diffusion, 1x 3D diffusion & 4x relaxation & photon antibunching:
+  equation: b+1/N*(a21/(1+ x/td21)+(a22/(1+ x/td22))+((1-a21-a22)/(1+x/td3))*(1/sqrt(1+1/s**2*x/td3)))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4))*(1-aab*exp(-x/tab))
+  initial:
+    b: 1
+    N: 1
+    td21: 100
+    a21: 0.25
+    td22: 10
+    s: 5
+    a22: 0.25
+    td3: 1
+    bt1: 0.0002
+    ba1: 0.05
+    bt2: 0.001
+    ba2: 0.05
+    bt3: 0.01
+    ba3: 0.1
+    bt4: 0.1
+    ba4: 0.1
+    aab: 1
+    tab: 4.0e-06
+  description: Model for 2x 2-dimensional diffusion in a membrane, 1x free 3D diffusion
+    and four relaxation terms & photon antibunching, for normal FCS data set aab =0
+1x 2D diffusion, 2x 3D diffusion & 4x relaxation & photon antibunching:
+  equation: b+1/N*(a2/(1+ x/td2)+(a31/(1+x/td31))*(1/sqrt(1+1/s**2*x/td31))+((1-a2-a31)/(1+x/td32))*(1/sqrt(1+1/s**2*x/td32)))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4))*(1-aab*exp(-x/tab))
+  initial:
+    b: 1
+    N: 1
+    td2: 100
+    s: 5
+    a2: 0.5
+    td31: 1
+    a31: 1
+    td32: 10
+    bt1: 0.0002
+    ba1: 0.05
+    bt2: 0.001
+    ba2: 0.05
+    bt3: 0.01
+    ba3: 0.1
+    bt4: 0.1
+    ba4: 0.1
+    aab: 1
+    tab: 4.0e-06
+  description: Model for 2x 2-dimensional diffusion in a membrane, 1x free 3D diffusion
+    and four relaxation terms & photon antibunching, for normal FCS data set aab =
+    0
+2x2D Gauss, 1 bunching + 5 anti-correlation:
+  equation: b+1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-ba1+ba1*exp(-x/bt1))*(1-abf*(aba1*exp(-x/abt1)+aba2*exp(-x/abt2)+aba3*exp(-x/abt3)+aba4*exp(-x/abt4)+abs(1-aba1-aba2-aba3-aba4)*exp(-x/abt5)))
+  initial:
+    N: 1
+    td1: 100
+    a1: 0.5
+    td2: 10
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    abf: 0.5
+    aba1: 0.1
+    abt1: 1
+    aba2: 0.05
+    abt2: 0.1
+    aba3: 0.1
+    abt3: 0.05
+    aba4: 0.1
+    abt4: 0.001
+    abt5: 1
+  description: for crosscorrelation curves
+1x2D Gauss, 1x3D Gauss, 1 bunching + 5 anti-correlation:
+  equation: b+ 1/N*(a2/(1+ x/td2)+(1-a2)/(1+x/td3)*(1/sqrt(1+1/s**2*x/td3)))*(1-ba1+ba1*exp(-x/bt1))*(1-abf*(aba1*exp(-x/abt1)+aba2*exp(-x/abt2)+aba3*exp(-x/abt3)+aba4*exp(-x/abt4)+abs(1-aba1-aba2-aba3-aba4)*exp(-x/abt5)))
+  initial:
+    N: 1
+    td2: 100
+    a2: 0.5
+    td3: 10
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    abf: 0.5
+    aba1: 0.1
+    abt1: 1
+    aba2: 0.05
+    abt2: 0.1
+    aba3: 0.1
+    abt3: 0.05
+    aba4: 0.1
+    abt4: 0.001
+    abt5: 1
+  description: for crosscorrelation curves
