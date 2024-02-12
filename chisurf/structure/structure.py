@@ -153,16 +153,12 @@ class Structure(chisurf.base.Base):
         return None
 
     @property
-    def energy(
-            self
-    ) -> float:
+    def energy(self) -> float:
         energies = [e(self, **kwargs) for e, kwargs in self._potentials]
         return sum(energies)
 
     @property
-    def atoms(
-            self
-    ) -> np.array:
+    def atoms(self) -> np.array:
         if isinstance(self._atoms, np.ndarray):
             return self._atoms
         else:
@@ -183,9 +179,7 @@ class Structure(chisurf.base.Base):
             self._atoms = v
 
     @property
-    def xyz(
-            self
-    ) -> np.array:
+    def xyz(self) -> np.array:
         """Cartesian coordinates of all atoms
         """
         return self.atoms['xyz']
@@ -198,9 +192,7 @@ class Structure(chisurf.base.Base):
         self.atoms['xyz'] = v
 
     @property
-    def vdw(
-            self
-    ) -> np.array:
+    def vdw(self) -> np.array:
         """Van der Waals radii of all atoms
         """
         return self.atoms['radius']
@@ -213,9 +205,7 @@ class Structure(chisurf.base.Base):
         self.atoms['radius'] = v
 
     @property
-    def residue_names(
-            self
-    ) -> typing.List[str]:
+    def residue_names(self) -> typing.List[str]:
         res_name = list(set(self.atoms['res_name']))
         res_name.sort()
         return res_name
@@ -230,15 +220,11 @@ class Structure(chisurf.base.Base):
         return self._residue_dict
 
     @property
-    def n_atoms(
-            self
-    ) -> int:
+    def n_atoms(self) -> int:
         return len(self.atoms)
 
     @property
-    def n_residues(
-            self
-    ) -> int:
+    def n_residues(self) -> int:
         return len(self.residue_ids)
 
     @property
@@ -246,9 +232,7 @@ class Structure(chisurf.base.Base):
         return set(self.atoms['atom_name'])
 
     @property
-    def residue_ids(
-            self
-    ) -> typing.List[int]:
+    def residue_ids(self) -> typing.List[int]:
         residue_ids = list(set(self.atoms['res_id']))
         return residue_ids
 
@@ -264,9 +248,7 @@ class Structure(chisurf.base.Base):
         chisurf.structure.get_atom_index_by_name(self.atoms, atom_names)
 
     @property
-    def b_factors(
-            self
-    ):
+    def b_factors(self):
         """B-factors of the C-alpha atoms
         """
         sel = chisurf.structure.get_atom_index_by_name(self.atoms, ['CA'])[0]
@@ -281,9 +263,7 @@ class Structure(chisurf.base.Base):
             s._atoms[ai]['bfactor'] = bi
 
     @property
-    def radius_gyration(
-            self
-    ) -> float:
+    def radius_gyration(self) -> float:
         coord = self.xyz
         rM = coord[:, :].mean(axis=0)
         rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
@@ -345,9 +325,7 @@ class Structure(chisurf.base.Base):
             append_coordinates=append_coordinates
         )
 
-    def protonate(
-            self
-    ) -> None:
+    def protonate(self) -> None:
         """Saves the current structure as a PDB file, uses PDB2PQR
         to protonate the structure.
         """
