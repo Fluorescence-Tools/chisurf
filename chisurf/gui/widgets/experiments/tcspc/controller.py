@@ -45,8 +45,6 @@ class CsvTCSPCWidget(
             matrix_columns = []
         gfactor = float(self.doubleSpinBox_3.value())
         pol = 'vm'
-        if self.radioButton_4.isChecked():
-            pol = 'vv/vh'
         if self.radioButton_3.isChecked():
             pol = 'vv'
         elif self.radioButton_2.isChecked():
