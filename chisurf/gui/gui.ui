@@ -2,9 +2,6 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
-  <property name="windowModality">
-   <enum>Qt::NonModal</enum>
-  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,6 +10,9 @@
     <height>643</height>
    </rect>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::ClickFocus</enum>
+  </property>
   <property name="windowTitle">
    <string>ChiSurf</string>
   </property>
@@ -20,18 +20,33 @@
    <iconset resource="resources/resource.qrc">
     <normaloff>:/icons/icons/cs_logo.png</normaloff>:/icons/icons/cs_logo.png</iconset>
   </property>
-  <property name="windowOpacity">
-   <double>1.000000000000000</double>
-  </property>
   <property name="dockOptions">
-   <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks|QMainWindow::ForceTabbedDocks</set>
+   <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::ForceTabbedDocks</set>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="1" column="1">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <item row="0" column="0">
      <widget class="QMdiArea" name="mdiarea">
+      <property name="focusPolicy">
+       <enum>Qt::TabFocus</enum>
+      </property>
       <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
+       <enum>QFrame::StyledPanel</enum>
       </property>
       <property name="verticalScrollBarPolicy">
        <enum>Qt::ScrollBarAsNeeded</enum>
@@ -39,11 +54,14 @@
       <property name="horizontalScrollBarPolicy">
        <enum>Qt::ScrollBarAsNeeded</enum>
       </property>
+      <property name="sizeAdjustPolicy">
+       <enum>QAbstractScrollArea::AdjustToContents</enum>
+      </property>
       <property name="viewMode">
        <enum>QMdiArea::SubWindowView</enum>
       </property>
       <property name="documentMode">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
       <property name="tabsClosable">
        <bool>true</bool>
@@ -105,11 +123,6 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>8</pointsize>
-        </font>
-       </property>
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAsNeeded</enum>
        </property>
@@ -125,7 +138,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>87</height>
+          <height>126</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -238,8 +251,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1040</width>
-     <height>21</height>
+     <width>1275</width>
+     <height>24</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -309,9 +322,24 @@
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="actionLoading"/>
-    <addaction name="actionPlot_options"/>
-    <addaction name="actionFit_widget"/>
+    <widget class="QMenu" name="menuTool_Windows">
+     <property name="title">
+      <string>Docks</string>
+     </property>
+     <addaction name="actionLoading"/>
+     <addaction name="actionFit_widget"/>
+     <addaction name="actionPlot_options"/>
+    </widget>
+    <widget class="QMenu" name="menuType_Here">
+     <property name="title">
+      <string>Type Here</string>
+     </property>
+    </widget>
+    <addaction name="menuTool_Windows"/>
+    <addaction name="actionTile_windows"/>
+    <addaction name="actionTab_windows"/>
+    <addaction name="actionCascade"/>
+    <addaction name="menuType_Here"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -391,14 +419,6 @@
     <addaction name="actionF_Test"/>
     <addaction name="actionndXplorer"/>
    </widget>
-   <widget class="QMenu" name="menuWindows">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionTile_windows"/>
-    <addaction name="actionTab_windows"/>
-    <addaction name="actionCascade"/>
-   </widget>
    <widget class="QMenu" name="menuMacro">
     <property name="title">
      <string>Macro</string>
@@ -419,10 +439,9 @@
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuTools"/>
-   <addaction name="menuWindows"/>
-   <addaction name="menuHelp"/>
    <addaction name="menuMacro"/>
    <addaction name="menuSettings"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="toolBar_2">
    <property name="sizePolicy">
@@ -472,7 +491,7 @@
    <property name="minimumSize">
     <size>
      <width>80</width>
-     <height>150</height>
+     <height>100</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -572,39 +591,14 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="2" column="0" colspan="3">
-      <widget class="QGroupBox" name="groupBox">
-       <property name="title">
-        <string>Loaded Datasets</string>
+     <item row="0" column="0" colspan="2">
+      <layout class="QVBoxLayout" name="verticalLayout_8">
+       <property name="spacing">
+        <number>0</number>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_12">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_8">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-         </layout>
-        </item>
-       </layout>
-       <zorder></zorder>
-      </widget>
+      </layout>
      </item>
-     <item row="3" column="1">
+     <item row="1" column="0">
       <widget class="QComboBox" name="comboBox_Model">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -617,16 +611,17 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+     <item row="1" column="1">
+      <widget class="QToolButton" name="toolButton">
        <property name="text">
-        <string>Add analysis</string>
+        <string>Analysis</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources/resource.qrc">
+         <normaloff>:/icons/icons/list-add.png</normaloff>:/icons/icons/list-add.png</iconset>
+       </property>
+       <property name="toolButtonStyle">
+        <enum>Qt::ToolButtonTextBesideIcon</enum>
        </property>
       </widget>
      </item>
@@ -699,9 +694,9 @@
        <property name="font">
         <font>
          <family>Courier New</family>
-         <pointsize>12</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
         </font>
        </property>
        <property name="lineWrapMode">
@@ -742,60 +737,7 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="1" column="1">
-      <widget class="QLabel" name="label_10">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Experiment</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="5">
-      <widget class="QComboBox" name="comboBox_setupSelect">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>After selecting a setup-type adjust the parameters of the setup used to open the experimental data.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QComboBox" name="comboBox_experimentSelect">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>Select a type of experiment. After selecting the experiment type you can select a setup-type</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="4">
-      <widget class="QLabel" name="label_16">
-       <property name="text">
-        <string>File type</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="6">
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string>Add data</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1" colspan="6">
+     <item row="3" column="1" colspan="6">
       <widget class="QGroupBox" name="groupBox_FileParameters">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -866,13 +808,79 @@
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>20</width>
-            <height>40</height>
+            <width>1</width>
+            <height>1</height>
            </size>
           </property>
          </spacer>
         </item>
        </layout>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QComboBox" name="comboBox_experimentSelect">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Select a type of experiment. After selecting the experiment type you can select a setup-type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="label_10">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Experiment</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="label_16">
+       <property name="text">
+        <string>File type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QComboBox" name="comboBox_setupSelect">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>After selecting a setup-type adjust the parameters of the setup used to open the experimental data.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4" rowspan="2">
+      <widget class="QToolButton" name="toolButton_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Data</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources/resource.qrc">
+         <normaloff>:/icons/icons/list-add.png</normaloff>:/icons/icons/list-add.png</iconset>
+       </property>
+       <property name="toolButtonStyle">
+        <enum>Qt::ToolButtonTextBesideIcon</enum>
+       </property>
       </widget>
      </item>
     </layout>
@@ -1010,7 +1018,7 @@
      <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
    </property>
    <property name="text">
-    <string>Loading</string>
+    <string>Datasets</string>
    </property>
   </action>
   <action name="actionPlot_options">
@@ -1217,7 +1225,7 @@
      <normaloff>:/icons/icons/window-layout-xxl.png</normaloff>:/icons/icons/window-layout-xxl.png</iconset>
    </property>
    <property name="text">
-    <string>Tile windows</string>
+    <string>Tile Fit Windows</string>
    </property>
   </action>
   <action name="actionTab_windows">
@@ -1226,7 +1234,7 @@
      <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
    </property>
    <property name="text">
-    <string>Tab windows</string>
+    <string>Tab Fit Windows</string>
    </property>
    <property name="toolTip">
     <string>Tab windows</string>
@@ -1442,7 +1450,7 @@
      <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
    </property>
    <property name="text">
-    <string>Cascade</string>
+    <string>Cascade Fit Windows</string>
    </property>
   </action>
   <action name="actionTTTR_CLSM">
@@ -1462,6 +1470,52 @@
   <action name="actionndXplorer">
    <property name="text">
     <string>ndXplorer</string>
+   </property>
+  </action>
+  <action name="actionAnisotropy">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
+   </property>
+   <property name="text">
+    <string>Anisotropy</string>
+   </property>
+  </action>
+  <action name="action_TCSPC_FRET">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
+   </property>
+   <property name="text">
+    <string>FRET-Analysis</string>
+   </property>
+  </action>
+  <action name="actionAnisotropy_2">
+   <property name="text">
+    <string>Anisotropy</string>
+   </property>
+  </action>
+  <action name="actionSingle_Molecule">
+   <property name="text">
+    <string>Single Molecule</string>
+   </property>
+  </action>
+  <action name="action_TCSPC_ucFRET">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
+   </property>
+   <property name="text">
+    <string>ucFRET</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A Bayesian FRET TCSPC analysis that converts &lt;/p&gt;&lt;p&gt;fluorescence decays into posterior model &lt;/p&gt;&lt;p&gt;densities of distance distributions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>
@@ -1525,14 +1579,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton_2</sender>
+   <sender>toolButton</sender>
    <signal>clicked()</signal>
    <receiver>actionAdd_fit</receiver>
    <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>270</x>
-     <y>404</y>
+     <x>249</x>
+     <y>189</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -1541,14 +1595,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>pushButton</sender>
+   <sender>toolButton_2</sender>
    <signal>clicked()</signal>
    <receiver>actionLoad_Data</receiver>
    <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>321</x>
-     <y>80</y>
+     <x>364</x>
+     <y>283</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
