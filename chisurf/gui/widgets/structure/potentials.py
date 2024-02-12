@@ -190,9 +190,7 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
         self.lineEdit.setText(v)
 
     @property
-    def ca_cutoff(
-            self
-    ) -> float:
+    def ca_cutoff(self) -> float:
         return float(self.lineEdit_2.text())
 
     @ca_cutoff.setter

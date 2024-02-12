@@ -253,7 +253,7 @@ def gb(
     return energy * pre
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def go(
         ca_dist: np.ndarray,
         energy_matrix: np.ndarray,
@@ -377,7 +377,6 @@ class HPotential(object):
                     os.path.abspath(__file__)),
                 './database/hb.npy'
             )
-        print(potential)
         self.structure = structure
         self.cutoffH = cutoff_hbond
         self.cutoffCA = cutoff_ca

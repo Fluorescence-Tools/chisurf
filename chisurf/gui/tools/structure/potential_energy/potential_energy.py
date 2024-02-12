@@ -46,15 +46,11 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         )
 
     @property
-    def potential_number(
-            self
-    ) -> int:
+    def potential_number(self) -> int:
         return int(self.comboBox_2.currentIndex())
 
     @property
-    def potential_name(
-            self
-    ) -> str:
+    def potential_name(self) -> str:
         return list(
             chisurf.gui.widgets.structure.potentialDict
         )[self.potential_number]
