@@ -21,11 +21,8 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
                     # (plots.ResidualPlot, {})
     ]
 
-    @chisurf.gui.decorators.init_with_ui(ui_filename="globalfit_2.ui")
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit
-    ):
+    @chisurf.gui.decorators.init_with_ui(ui_filename="globalfit.ui")
+    def __init__(self, fit: chisurf.fitting.fit.Fit):
         self.pushButton_3.clicked.connect(self.onSaveTable)
         self.pushButton_4.clicked.connect(self.onLoadTable)
         self.pushButton_5.clicked.connect(self.clear_listed_links)
@@ -36,9 +33,9 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.comboBox_gfTargetFit.currentIndexChanged[int].connect(self.update_parameter_target)
         self.comboBox_gfTargetParameter.currentIndexChanged[int].connect(self.update_link_text)
         self.comboBox_gfOriginParameter.currentIndexChanged[int].connect(self.update_link_text)
-        self.table_GlobalLinks.cellDoubleClicked [int, int].connect(self.onTableGlobalLinksDoubleClicked)
-        self.tableWidget.cellDoubleClicked [int, int].connect(self.onRemoveLocalFit)
-        self.checkBox_2.stateChanged [int].connect(self.update_parameter_origin)
+        self.table_GlobalLinks.cellDoubleClicked[int, int].connect(self.onTableGlobalLinksDoubleClicked)
+        self.tableWidget.cellDoubleClicked[int, int].connect(self.onRemoveLocalFit)
+        self.checkBox_2.stateChanged[int].connect(self.update_parameter_origin)
 
         self.actionOnClearVariables.triggered.connect(self.onClearVariables)
         self.actionOnAddToLocalFitList.triggered.connect(self.onAddToLocalFitList)
@@ -71,10 +68,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         return self.checkBox_3.isChecked()
 
     @clear_on_update.setter
-    def clear_on_update(
-            self,
-            v: bool
-    ):
+    def clear_on_update(self, v: bool):
         self.checkBox_3.setChecked(v)
 
     @property
