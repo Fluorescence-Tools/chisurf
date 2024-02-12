@@ -31,9 +31,7 @@ class LCurve(object):
         self._l_curve_sol_norm = np.array([1.0], dtype=np.float64)
 
     @property
-    def l_curve_start(
-            self
-    ) -> float:
+    def l_curve_start(self) -> float:
         """
         The smallest regularization value
         """
@@ -50,9 +48,7 @@ class LCurve(object):
         self._l_curve_start = v
 
     @property
-    def l_curve_stop(
-            self
-    ) -> float:
+    def l_curve_stop(self) -> float:
         """
         The largest regularization value
         """
@@ -66,9 +62,7 @@ class LCurve(object):
         self._l_curve_stop = v
 
     @property
-    def l_curve_steps(
-            self
-    ) -> int:
+    def l_curve_steps(self) -> int:
         """
         The number of points of the l-curve
         """
@@ -82,9 +76,7 @@ class LCurve(object):
         self._l_curve_steps = v
 
     @property
-    def l_curve_reg(
-            self
-    ) -> np.array:
+    def l_curve_reg(self) -> np.array:
         """
         The regulariation parameters of the calculated l-curve
         """
@@ -95,9 +87,7 @@ class LCurve(object):
         )
 
     @property
-    def l_curve_chi2(
-            self
-    ):
+    def l_curve_chi2(self):
         """
         The chi2r of the l-curve
         """
@@ -133,9 +123,7 @@ class LCurve(object):
 class DistanceDistribution(object):
 
     @property
-    def r_DA_min(
-            self
-    ) -> float:
+    def r_DA_min(self) -> float:
         return self._r_DA_min
 
     @r_DA_min.setter
@@ -157,9 +145,7 @@ class DistanceDistribution(object):
         self._r_DA_max = v
 
     @property
-    def r_DA_npoints(
-            self
-    ) -> int:
+    def r_DA_npoints(self) -> int:
         return self._r_DA_npoints
 
     @r_DA_npoints.setter
@@ -170,9 +156,7 @@ class DistanceDistribution(object):
         self._r_DA_npoints = v
 
     @property
-    def kappa2(
-            self
-    ) -> float:
+    def kappa2(self) -> float:
         return self._kappa2
 
     @kappa2.setter
@@ -183,9 +167,7 @@ class DistanceDistribution(object):
         self._kappa2 = v
 
     @property
-    def tau0(
-            self
-    ) -> float:
+    def tau0(self) -> float:
         return self._tau0
 
     @tau0.setter
@@ -196,9 +178,7 @@ class DistanceDistribution(object):
         self._tau0 = v
 
     @property
-    def R0(
-            self
-    ) -> float:
+    def R0(self) -> float:
         return self._R0
 
     @R0.setter
@@ -209,9 +189,7 @@ class DistanceDistribution(object):
         self._R0 = v
 
     @property
-    def p_rDA(
-            self
-    ) -> np.array:
+    def p_rDA(self) -> np.array:
         """
         The the probability distribution of the distances
         """
@@ -225,9 +203,7 @@ class DistanceDistribution(object):
         self._p_rDA = v
 
     @property
-    def r_DA(
-            self
-    ) -> np.array:
+    def r_DA(self) -> np.array:
         """
         The array of donor acceptor distances
         """
@@ -460,9 +436,7 @@ class EtModelFree(
         return x
 
     @property
-    def weighted_residuals(
-            self
-    ):
+    def weighted_residuals(self):
         """
         The current weighted residuals given a lifetime distribution
         :param data:
@@ -596,9 +570,7 @@ class EtModelFreeWidget(
         self.add_fit.connect(self.onUpdateDecays)
 
     @property
-    def l_curve_start(
-            self
-    ) -> float:
+    def l_curve_start(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @l_curve_start.setter
@@ -609,9 +581,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def l_curve_stop(
-            self
-    ) -> float:
+    def l_curve_stop(self) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @l_curve_stop.setter
@@ -622,9 +592,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_9.setValue(v)
 
     @property
-    def l_curve_steps(
-            self
-    ) -> int:
+    def l_curve_steps(self) -> int:
         return int(self.spinBox_6.value())
 
     @l_curve_steps.setter
@@ -635,15 +603,11 @@ class EtModelFreeWidget(
         self.spinBox_6.setValue(int(v))
 
     @property
-    def entropy_weight(
-            self
-    ) -> float:
+    def entropy_weight(self) -> float:
         return float(self.doubleSpinBox_11.value())
 
     @property
-    def t_points(
-            self
-    ) -> int:
+    def t_points(self) -> int:
         return int(self.spinBox.value())
 
     @t_points.setter
@@ -654,9 +618,7 @@ class EtModelFreeWidget(
         self.spinBox.setValue(int(v))
 
     @property
-    def t_min(
-            self
-    ) -> float:
+    def t_min(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @t_min.setter
@@ -678,9 +640,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_4.setValue(v)
 
     @property
-    def t_mode(
-            self
-    ) -> str:
+    def t_mode(self) -> str:
         if self.radioButton_3.isChecked():
             return 'lin'
         else:
@@ -697,9 +657,7 @@ class EtModelFreeWidget(
             self.radioButton_4.setChecked(True)
 
     @property
-    def inversion_method(
-            self
-    ) -> str:
+    def inversion_method(self) -> str:
         if self.radioButton_2.isChecked():
             return 'nnls'
         elif self.radioButton_4.isChecked():
@@ -708,9 +666,7 @@ class EtModelFreeWidget(
             return 'lstsq'
 
     @property
-    def regularization_factor(
-            self
-    ) -> float:
+    def regularization_factor(self) -> float:
         return float(self.doubleSpinBox_10.value())
 
     @regularization_factor.setter
@@ -721,9 +677,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_10.setValue(float(v))
 
     @property
-    def r_DA_min(
-            self
-    ) -> float:
+    def r_DA_min(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @r_DA_min.setter
@@ -734,9 +688,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox.setValue(v)
 
     @property
-    def r_DA_max(
-            self
-    ) -> float:
+    def r_DA_max(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @r_DA_max.setter
@@ -747,9 +699,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def r_DA_npoints(
-            self
-    ) -> int:
+    def r_DA_npoints(self) -> int:
         return int(self.spinBox_2.value())
 
     @r_DA_npoints.setter
@@ -771,9 +721,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def tau0(
-            self
-    ) -> float:
+    def tau0(self) -> float:
         return float(self.doubleSpinBox_8.value())
 
     @tau0.setter
@@ -784,9 +732,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_8.setValue(v)
 
     @property
-    def R0(
-            self
-    ) -> float:
+    def R0(self) -> float:
         return float(self.doubleSpinBox_7.value())
 
     @R0.setter
@@ -797,9 +743,7 @@ class EtModelFreeWidget(
         self.doubleSpinBox_7.setValue(v)
 
     @property
-    def fda_index(
-            self
-    ) -> int:
+    def fda_index(self) -> int:
         return int(self.comboBox_2.currentIndex())
 
     @fda_index.setter
@@ -810,9 +754,7 @@ class EtModelFreeWidget(
         pass
 
     @property
-    def fd0_index(
-            self
-    ) -> int:
+    def fd0_index(self) -> int:
         return int(self.comboBox.currentIndex())
 
     @fd0_index.setter
@@ -823,9 +765,7 @@ class EtModelFreeWidget(
         pass
 
     @property
-    def chi2r(
-            self
-    ) -> float:
+    def chi2r(self) -> float:
         return float(self.lineEdit_2.text())
 
     @chi2r.setter
