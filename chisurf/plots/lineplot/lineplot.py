@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-from chisurf import typing
+from collections import OrderedDict
 import numpy as np
+
+from chisurf import typing
+
+from chisurf.gui import QtWidgets
+
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 import matplotlib.colors
-from qtpy import QtWidgets
 
+import chisurf.data
 import chisurf.experiments
 import chisurf.decorators
 import chisurf.gui.decorators
@@ -19,13 +24,9 @@ from chisurf.plots import plotbase
 colors = chisurf.settings.gui['plot']['colors']
 
 
-class LinePlotControl(
-    QtWidgets.QWidget
-):
+class LinePlotControl(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="linePlotWidget.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui("linePlotWidget.ui")
     def __init__(
             self,
             parent=None,
@@ -53,83 +54,55 @@ class LinePlotControl(
         self.checkBox_3.stateChanged.connect(self.SetDensity)
 
     @property
-    def plot_ftt(
-            self
-    ) -> bool:
-        return bool(
-            self.checkBox_plot_ftt.isChecked()
-        )
+    def plot_ftt(self) -> bool:
+        return bool(self.checkBox_plot_ftt.isChecked())
 
     @plot_ftt.setter
-    def plot_ftt(
-            self,
-            v: bool
-    ) -> None:
+    def plot_ftt(self, v: bool) -> None:
         if v:
             self.checkBox_plot_ftt.setCheckState(2)
         else:
             self.checkBox_plot_ftt.setCheckState(0)
 
     @property
-    def data_logy(
-            self
-    ) -> str:
+    def data_logy(self) -> str:
         """
         y-data is plotted logarithmically
         """
         return 'log' if self.checkBox.isChecked() else 'linear'
 
     @data_logy.setter
-    def data_logy(
-            self,
-            v: str
-    ):
+    def data_logy(self, v: str):
         if v == 'lin':
             self.checkBox.setCheckState(0)
         else:
             self.checkBox.setCheckState(2)
 
     @property
-    def scale_x(
-            self
-    ) -> str:
-        """
-        x-data is plotted logarithmically
-        """
+    def scale_x(self) -> str:
         return 'log' if self.checkBox_2.isChecked() else 'linear'
 
     @scale_x.setter
-    def scale_x(
-            self,
-            v: str
-    ):
+    def scale_x(self, v: str):
         if v == 'lin':
             self.checkBox_2.setCheckState(0)
         else:
             self.checkBox_2.setCheckState(2)
 
     @property
-    def data_is_log_x(
-            self
-    ) -> bool:
+    def data_is_log_x(self) -> bool:
         return self.scale_x == 'log'
 
     @property
-    def data_is_log_y(
-            self
-    ) -> bool:
+    def data_is_log_y(self) -> bool:
         return self.data_logy == 'log'
 
     @property
-    def res_is_log_y(
-            self
-    ) -> bool:
+    def res_is_log_y(self) -> bool:
         return self.res_logy == 'log'
 
     @property
-    def res_logy(
-            self
-    ) -> str:
+    def res_logy(self) -> str:
         """
         y-residuals is plotted logarithmically
         """
@@ -146,87 +119,57 @@ class LinePlotControl(
             self.checkBox_4.setCheckState(2)
 
     @property
-    def use_reference(
-            self
-    ) -> bool:
+    def use_reference(self) -> bool:
         """
         If true use a reference curve for plotting
         """
         return bool(self.checkBox_5.isChecked())
 
     @use_reference.setter
-    def use_reference(
-            self,
-            v: bool
-    ):
+    def use_reference(self, v: bool):
         if v is True:
             self.checkBox_5.setCheckState(2)
         else:
             self.checkBox_5.setCheckState(0)
 
     @property
-    def ymin(
-            self
-    ) -> float:
+    def ymin(self) -> float:
         return self.doubleSpinBox_2.value()
 
     @ymin.setter
-    def ymin(
-            self,
-            v: float
-    ):
+    def ymin(self, v: float):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def xmin(
-            self
-    ) -> float:
+    def xmin(self) -> float:
         return self.doubleSpinBox.value()
 
     @xmin.setter
-    def xmin(
-            self,
-            v: float
-    ):
+    def xmin(self, v: float):
         self.doubleSpinBox.setValue(v)
 
     @property
-    def x_shift(
-            self
-    ) -> float:
+    def x_shift(self) -> float:
         return self.doubleSpinBox_6.value()
 
     @x_shift.setter
-    def x_shift(
-            self,
-            v: float
-    ):
+    def x_shift(self, v: float):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def y_shift(
-            self
-    ) -> float:
+    def y_shift(self) -> float:
         return self.doubleSpinBox_5.value()
 
     @y_shift.setter
-    def y_shift(
-            self,
-            v: float
-    ):
+    def y_shift(self, v: float):
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def is_density(
-            self
-    ) -> bool:
+    def is_density(self) -> bool:
         return bool(self.checkBox_3.isChecked())
 
     @is_density.setter
-    def is_density(
-            self,
-            v: bool
-    ):
+    def is_density(self, v: bool):
         if v is True:
             self.checkBox_3.setCheckState(2)
         else:
@@ -243,29 +186,18 @@ class LinePlotControl(
 
 
 class LinePlot(plotbase.Plot):
-    """
-    Started off as a plotting class to display TCSPC-data displaying the IRF,
-    the experimental data, the residuals and the autocorrelation of the
-    residuals. Now it is also used also for fcs-data.
-
-    In case the models is a :py:class:`~experiment.models.tcspc.LifetimeModel`
-    it takes the irf and displays it:
-
-        irf = fit.models.convolve.irf
-        irf_y = irf.y
-
-    The models data and the weighted residuals are taken directly from the fit:
-
-        model_x, model_y = fit[:]
-        wres_y = fit.weighted_residuals
-
-    """
 
     name = "Fit"
 
     director = {
         'data': {
+            'lw': 1.0,
+            'color': colors['data'],
+            'target': 'main_plot'
+        },
+        'IRF': {
             'lw': 2.0,
+            'color': colors['irf'],
             'target': 'main_plot'
         },
         'model': {
@@ -287,6 +219,22 @@ class LinePlot(plotbase.Plot):
         }
     }
 
+    def get_bounds(
+            self,
+            fit: chisurf.fitting.fit.Fit,
+            region_selector: pg.LinearRegionItem,
+    ) -> typing.Tuple[int, int]:
+        lb, ub = region_selector.getRegion()
+        data_x = fit.data.x
+        if self.plot_controller.data_is_log_x:
+            lb, ub = 10 ** lb, 10 ** ub
+        lb -= self.plot_controller.x_shift
+        ub -= self.plot_controller.x_shift
+
+        lb_i: int = np.searchsorted(data_x, lb, side='right')
+        ub_i: int = np.searchsorted(data_x, ub, side='left')
+        return lb_i - 1, ub_i
+
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
@@ -298,10 +246,12 @@ class LinePlot(plotbase.Plot):
             y_label: str = 'y',
             **kwargs
     ):
-        super().__init__(
-            fit=fit,
-            **kwargs
-        )
+        # Internal state of region selector
+        self.lb_i: int = 0
+        self.ub_i: int = 0
+
+        kwargs['fit'] = fit
+        super().__init__(**kwargs)
         self.plot_controller = LinePlotControl(
                 parent=self,
                 scale_x=scale_x,
@@ -320,6 +270,8 @@ class LinePlot(plotbase.Plot):
             'top_right_plot': p2.getPlotItem(),
             'main_plot': p3.getPlotItem()
         }
+        plots['top_left_plot'].hideAxis('bottom')
+        plots['top_right_plot'].hideAxis('bottom')
 
         hide_dock_title = chisurf.settings.gui['plot']['hideTitle']
         d1 = pyqtgraph.dockarea.Dock(
@@ -352,9 +304,10 @@ class LinePlot(plotbase.Plot):
             text='',
             border='w',
             fill=(0, 0, 255, 100),
-            anchor=(0, 1)
+            anchor=(1, 1)
         )
-        plots['main_plot'].addItem(self.text)
+        self.text.setParentItem(plots['main_plot'])
+        # self.text.setPos(100, 0)
 
         # Fitting-region selector
         if chisurf.settings.gui['plot']['enable_region_selector']:
@@ -363,23 +316,19 @@ class LinePlot(plotbase.Plot):
             region = pg.LinearRegionItem(brush=co)
             plots['main_plot'].addItem(region)
             self.region = region
-
-            def update_region(evt):
-                lb, ub = region.getRegion()
-                data_x = fit.data.x
+            def onRegionUpdate(evt):
+                self.lb_i, self.ub_i = self.get_bounds(fit, region)
+                # Set values of region selector
+                lb, ub = fit.data.x[self.lb_i], fit.data.x[self.ub_i]
                 if self.plot_controller.data_is_log_x:
-                    lb, ub = 10**lb, 10**ub
-                lb -= self.plot_controller.x_shift
-                ub -= self.plot_controller.x_shift
-
-                lb_i = np.searchsorted(data_x, lb, side='right')
-                ub_i = np.searchsorted(data_x, ub, side='left')
-                chisurf.run(
-                    "cs.current_fit.fit_range = (%s, %s)" % (lb_i - 1, ub_i)
-                )
+                    lb = np.log10(lb)
+                    ub = np.log10(ub)
+                self.region.setRegion((lb, ub))
+                chisurf.run(f"cs.current_fit_widget.xmin = {self.lb_i}")
+                chisurf.run(f"cs.current_fit_widget.xmax = {self.ub_i}")
+                chisurf.run(f"cs.current_fit.fit_range = {self.lb_i}, {self.ub_i}")
                 self.update(only_fit_range=True)
-
-            region.sigRegionChangeFinished.connect(update_region)
+            region.sigRegionChangeFinished.connect(onRegionUpdate)
 
         # Grid
         if chisurf.settings.gui['plot']['enable_grid']:
@@ -396,9 +345,10 @@ class LinePlot(plotbase.Plot):
             plots['main_plot'].setLabel('left', y_label)
             plots['main_plot'].setLabel('bottom', x_label)
 
-        lines = dict()
+        lines = OrderedDict()
         curves = self.fit.get_curves()
-        for i, curve_key in enumerate(curves):
+        curves_keys = list(curves.keys())[::-1]
+        for i, curve_key in enumerate(curves_keys):
             lines[curve_key] = self.add_plot(
                 curves=curves,
                 curve_key=curve_key,
@@ -419,50 +369,41 @@ class LinePlot(plotbase.Plot):
         pen_color = chisurf.settings.colors[color_idx]['hex']
         lw = chisurf.settings.gui['plot']['line_width']
 
-        for ik in self.director.keys():
-            # if the curve name matches the template
-            if ik in curve_key:
-                curve_options = self.director[ik]
-                target_plot = plot_dict[
-                    curve_options.get(
-                        'target',
-                        'main_plot'
+        if curve_key in self.director.keys():
+            for ik in self.director.keys():
+                # if the curve name matches the template
+                if ik in curve_key:
+                    curve_options = self.director[ik]
+                    target_plot = plot_dict[
+                        curve_options.get('target', 'main_plot')
+                    ]
+                    lw = curve_options.get('lw', lw)
+                    pen_color = curve_options.get('color', pen_color)
+                    label = curve_options.get('label', curve_key)
+                    if curve_key != ik:
+                        # make the line half as wide, and transparent (30%)
+                        lw *= 0.5
+                        pen_color = '#4D' + pen_color.split('#')[1]
+                    return target_plot.plot(
+                        x=[0.0], y=[0.0],
+                        pen=pg.mkPen(pen_color, width=lw),
+                        name=label
                     )
-                ]
-                lw = curve_options.get('lw', lw)
-                pen_color = curve_options.get('color', pen_color)
-                label = curve_options.get('label', curve_key)
-                if curve_key != ik:
-                    # make the line half as wide, and transparent (30%)
-                    lw *= 0.5
-                    pen_color = '#4D' + pen_color.split('#')[1]
+        else:
+            curve = curves[curve_key]
+            if isinstance(curve, chisurf.data.DataCurve):
+                target_plot = plot_dict['main_plot']
                 return target_plot.plot(
                     x=[0.0], y=[0.0],
                     pen=pg.mkPen(pen_color, width=lw),
-                    name=label
+                    name=curve_key
                 )
-
-        curve = curves[curve_key]
-        if isinstance(curve, chisurf.data.DataCurve):
-            target_plot = plot_dict['main_plot']
-            return target_plot.plot(
-                x=[0.0], y=[0.0],
-                pen=pg.mkPen(pen_color, width=lw),
-                name=curve_key
-            )
 
         return None
 
-    def update(
-            self,
-            only_fit_range: bool = False,
-            *args,
-            **kwargs
-    ) -> None:
-        super().update(
-            *args,
-            **kwargs
-        )
+    def update(self, only_fit_range: bool = False, *args, **kwargs) -> None:
+        super().update(*args, **kwargs)
+
         # # Reference-function
         # use_reference = self.plot_controller.use_reference
         # if use_reference:
@@ -479,52 +420,59 @@ class LinePlot(plotbase.Plot):
         x_shift = self.plot_controller.x_shift
 
         curves = self.fit.get_curves()
-        for i, curve_key in enumerate(curves.keys()):
+        curves_keys = list(curves.keys())[::-1]
+        for i, curve_key in enumerate(curves_keys):
             curve = curves[curve_key]
             y = curve.y + y_shift
             x = curve.x + x_shift
             if self.plot_controller.is_density:
                 y = curve.y / np.diff(curve.x)
-            try:
-                self.lines[curve_key].setData(x=x, y=y)
-            except AttributeError:
-                self.lines[curve_key] = self.add_plot(
-                    curves=curves,
-                    curve_key=curve_key,
-                    plot_dict=self.plots,
-                    index=i
-                )
+            # try:
+            self.lines[curve_key].setData(x=x, y=y)
+            # except AttributeError:
+            #     self.lines[curve_key] = self.add_plot(
+            #         curves=curves,
+            #         curve_key=curve_key,
+            #         plot_dict=self.plots,
+            #         index=i
+            #     )
 
-        # data_log_y = self.plot_controller.data_is_log_y
-        # data_log_x = self.plot_controller.data_is_log_x
-        # res_log_y = self.plot_controller.res_is_log_y
-        #
-        # # Set log-scales
-        # self.plots['top_left_plot'].setLogMode(
-        #     x=data_log_x,
-        #     y=res_log_y
-        # )
-        # self.plots['top_right_plot'].setLogMode(
-        #     x=data_log_x,
-        #     y=res_log_y
-        # )
-        # self.plots['main_plot'].setLogMode(
-        #     x=data_log_x,
-        #     y=data_log_y
-        # )
-        # # update region selector
-        # data = curves['data']
-        # lb_min, ub_max = data.x[0], data.x[-1]
-        # lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
-        # if data_log_x:
-        #     lb = np.log10(lb)
-        #     ub = np.log10(ub)
-        #     lb_min = np.log10(lb_min)
-        #     ub_max = np.log10(ub_max)
-        # self.region.setBounds((lb_min, ub_max))
-        # self.region.setRegion((lb, ub))
+        data_log_y = self.plot_controller.data_is_log_y
+        data_log_x = self.plot_controller.data_is_log_x
+        res_log_y = self.plot_controller.res_is_log_y
 
-        self.text.updateTextPos()
+        # Set log-scales
+        self.plots['top_left_plot'].setLogMode(
+            x=data_log_x,
+            y=res_log_y
+        )
+        self.plots['top_right_plot'].setLogMode(
+            x=data_log_x,
+            y=res_log_y
+        )
+        self.plots['main_plot'].setLogMode(
+            x=data_log_x,
+            y=data_log_y
+        )
+
+        # update region selector
+        data = curves['data']
+
+        # Set bounds of region selector
+        lb_min, ub_max = data.x[0], data.x[-1]
+        if data_log_x:
+            lb_min = np.log10(lb_min)
+            ub_max = np.log10(ub_max)
+        self.region.setBounds((lb_min, ub_max))
+
+        # Set values of region selector
+        lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
+        if data_log_x:
+            lb = np.log10(lb)
+            ub = np.log10(ub)
+        self.region.setRegion((lb, ub))
+
+        # self.text.updateTextPos()
         self.text.setHtml(
             '<div style="name-align: center">'
             '     <span style="color: #FF0; font-size: 10pt;">'
