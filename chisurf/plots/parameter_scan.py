@@ -48,9 +48,7 @@ class ParameterScanWidget(
     def onParameterChanged(self):
         self.parent.update()
 
-    def update(
-            self
-    ) -> None:
+    def update(self) -> None:
         super().update()
         self.comboBox.blockSignals(True)
 
@@ -61,9 +59,7 @@ class ParameterScanWidget(
         self.comboBox.blockSignals(False)
         self.model.update_plots()
 
-    def scan_parameter(
-            self
-    ) -> None:
+    def scan_parameter(self) -> None:
         p_min = float(self.doubleSpinBox.value())
         p_max = float(self.doubleSpinBox_2.value())
         _, name = self.selected_parameter
@@ -82,17 +78,13 @@ class ParameterScanWidget(
         self.parent.update()
 
     @property
-    def selected_parameter(
-            self
-    ) -> typing.Tuple[int, str]:
+    def selected_parameter(self) -> typing.Tuple[int, str]:
         idx = self.comboBox.currentIndex()
         name = self.comboBox.currentText()
         return idx, str(name)
 
     @property
-    def parameter(
-            self
-    ) -> chisurf.parameter.Parameter:
+    def parameter(self) -> chisurf.parameter.Parameter:
         idx, name = self.selected_parameter
         try:
             return self.model.parameters_all_dict[name]
