@@ -43,10 +43,7 @@ class LoadStructureFolder(
         return [self.pdbWidget.trajectory]
 
     @staticmethod
-    def autofitrange(
-            data: chisurf.base.Data,
-            **kwargs
-    ):
+    def autofitrange(data: chisurf.base.Data, **kwargs):
         return None, None
 
 
@@ -55,9 +52,7 @@ class StructureReaderController(
     QtWidgets.QWidget
 ):
 
-    def get_filename(
-            self
-    ) -> str:
+    def get_filename(self) -> str:
         return chisurf.gui.widgets.get_filename(
             description='Open PDB-Structure',
             file_type='PDB-file (*.pdb)',

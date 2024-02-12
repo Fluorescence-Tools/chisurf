@@ -28,10 +28,7 @@ class StructureReader(
         self.compute_internal_coordinates = compute_internal_coordinates
 
     @staticmethod
-    def autofitrange(
-            data: chisurf.base.Data,
-            **kwargs
-    ) -> typing.Tuple[int, int]:
+    def autofitrange(data: chisurf.base.Data, **kwargs) -> typing.Tuple[int, int]:
         return 0, 0
 
     def read(
