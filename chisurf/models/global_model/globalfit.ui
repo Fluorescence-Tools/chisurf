@@ -23,7 +23,16 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
@@ -44,32 +53,53 @@
       <property name="spacing">
        <number>0</number>
       </property>
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
        <widget class="QWidget" name="widget_2" native="true">
         <layout class="QGridLayout" name="gridLayout_2">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <property name="spacing">
           <number>0</number>
          </property>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_5">
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="checkBox">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Fit</string>
+            <string/>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
-         <item row="4" column="0" colspan="8">
+         <item row="4" column="0" colspan="9">
           <widget class="QTableWidget" name="tableWidget">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -105,44 +135,41 @@
            </column>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QCheckBox" name="checkBox">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_5">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="text">
-            <string/>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Fit</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="7">
-          <widget class="QPushButton" name="toolButton_3">
+         <item row="1" column="8">
+          <widget class="QToolButton" name="toolButton_8">
            <property name="text">
             <string>clear</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="6">
-          <widget class="QPushButton" name="toolButton_2">
+         <item row="1" column="7">
+          <widget class="QToolButton" name="toolButton_7">
            <property name="text">
             <string>add</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="5">
-          <widget class="QPushButton" name="toolButton">
+         <item row="1" column="6">
+          <widget class="QToolButton" name="toolButton_6">
            <property name="text">
             <string>update</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="2" colspan="3">
+         <item row="1" column="2" colspan="4">
           <widget class="QComboBox" name="comboBox">
            <property name="enabled">
             <bool>false</bool>
@@ -188,7 +215,16 @@
       <property name="spacing">
        <number>0</number>
       </property>
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
@@ -197,7 +233,16 @@
          <property name="spacing">
           <number>0</number>
          </property>
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -272,13 +317,31 @@
       <property name="spacing">
        <number>0</number>
       </property>
-      <property name="margin">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
        <number>0</number>
       </property>
       <item>
        <widget class="QWidget" name="widget_3" native="true">
         <layout class="QGridLayout" name="gridLayout_4">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <property name="spacing">
@@ -632,14 +695,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton</sender>
+   <sender>toolButton_6</sender>
    <signal>clicked()</signal>
    <receiver>actionUpdate_widgets</receiver>
    <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>117</x>
-     <y>28</y>
+     <x>139</x>
+     <y>39</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -648,14 +711,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton_2</sender>
+   <sender>toolButton_7</sender>
    <signal>clicked()</signal>
    <receiver>actionOnAddToLocalFitList</receiver>
    <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>381</x>
-     <y>27</y>
+     <x>255</x>
+     <y>39</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
@@ -664,14 +727,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton_3</sender>
+   <sender>toolButton_8</sender>
    <signal>clicked()</signal>
    <receiver>actionOn_clear_local_fits</receiver>
    <slot>trigger()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>414</x>
-     <y>27</y>
+     <x>337</x>
+     <y>39</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
