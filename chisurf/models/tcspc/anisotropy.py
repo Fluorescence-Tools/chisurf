@@ -8,22 +8,14 @@ from chisurf.fitting.parameter import FittingParameterGroup
 import chisurf.math.datatools
 
 
-class Anisotropy(
-    FittingParameterGroup
-):
-    """
-
-    """
+class Anisotropy(FittingParameterGroup):
 
     @property
     def r0(self) -> float:
         return self._r0.value
 
     @r0.setter
-    def r0(
-            self,
-            v: chisurf.fitting.parameter.FittingParameter
-    ):
+    def r0(self, v: chisurf.fitting.parameter.FittingParameter):
         self._r0.value = v
 
     @property
@@ -31,21 +23,15 @@ class Anisotropy(
         return self._l1.value
 
     @l1.setter
-    def l1(
-            self,
-            v: chisurf.fitting.parameter.FittingParameter
-    ):
-        self._r0.value = v
+    def l1(self, v: chisurf.fitting.parameter.FittingParameter):
+        self._l1.value = v
 
     @property
     def l2(self) -> float:
         return self._l2.value
 
     @l2.setter
-    def l2(
-            self,
-            v: chisurf.fitting.parameter.FittingParameter
-    ):
+    def l2(self, v: chisurf.fitting.parameter.FittingParameter):
         self._l2.value = v
 
     @property
@@ -53,10 +39,7 @@ class Anisotropy(
         return self._g.value
 
     @g.setter
-    def g(
-            self,
-            v: chisurf.fitting.parameter.FittingParameter
-    ):
+    def g(self, v: chisurf.fitting.parameter.FittingParameter):
         self._g.value = v
 
     @property
@@ -88,16 +71,10 @@ class Anisotropy(
         return self._polarization_type
 
     @polarization_type.setter
-    def polarization_type(
-            self,
-            v: str
-    ):
+    def polarization_type(self, v: str):
         self._polarization_type = v
 
-    def get_decay(
-            self,
-            lifetime_spectrum: np.ndarray
-    ):
+    def get_decay(self, lifetime_spectrum: np.ndarray):
         return chisurf.fluorescence.anisotropy.decay.calculcate_spectrum(
             lifetime_spectrum=lifetime_spectrum,
             anisotropy_spectrum=self.rotation_spectrum,
@@ -122,12 +99,13 @@ class Anisotropy(
     ):
         b_value = b
         rho_value = rho
-
+        i = (len(self) + 1)
         b = chisurf.fitting.parameter.FittingParameter(
             value=b_value,
             lb=lb,
             ub=ub,
-            name='b(%i)' % (len(self) + 1),
+            name=f'b({i})',
+            label_text=f'b<sub>{i}</sub>',
             fixed=fixed,
             bounds_on=bound_on
         )
@@ -135,16 +113,15 @@ class Anisotropy(
             value=rho_value,
             lb=lb,
             ub=ub,
-            name='rho(%i)' % (len(self) + 1),
+            name='rho(%i)' % i,
+            label_text=f'&rho;<sub>{i}</sub>',
             fixed=fixed,
             bounds_on=bound_on
         )
         self._rhos.append(rho)
         self._bs.append(b)
 
-    def remove_rotation(
-            self
-    ) -> None:
+    def remove_rotation(self) -> None:
         self._rhos.pop().close()
         self._bs.pop().close()
 
@@ -152,12 +129,13 @@ class Anisotropy(
             self,
             polarization: str = None,
             name: str = 'Anisotropy',
+            r0: float = 0.38,
+            g_factor: float = 1.0,
+            l1: float = 0.00308,
+            l2: float = 0.00368,
             **kwargs
     ):
-        super(Anisotropy, self).__init__(
-            name=name,
-            **kwargs
-        )
+        super(Anisotropy, self).__init__(name=name, **kwargs)
 
         self._rhos = list()
         self._bs = list()
@@ -168,22 +146,22 @@ class Anisotropy(
 
         self._r0 = chisurf.fitting.parameter.FittingParameter(
             name='r0',
-            value=0.38,
+            value=r0,
             fixed=True
         )
         self._g = chisurf.fitting.parameter.FittingParameter(
             name='g',
-            value=1.00,
+            value=g_factor,
             fixed=True
         )
         self._l1 = chisurf.fitting.parameter.FittingParameter(
             name='l1',
-            value=0.0308,
+            value=l1,
             fixed=True
         )
         self._l2 = chisurf.fitting.parameter.FittingParameter(
             name='l2',
-            value=0.0368,
+            value=l2,
             fixed=True
         )
 
