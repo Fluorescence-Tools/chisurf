@@ -321,9 +321,7 @@ class BasicAV(object):
         )
 
     @property
-    def Rmp(
-            self
-    ) -> np.ndarray:
+    def Rmp(self) -> np.ndarray:
         """
         The mean position of the accessible volume (average x, y, z coordinate)
         """
@@ -358,9 +356,7 @@ class ACV(BasicAV):
     """
 
     @property
-    def contact_volume_trapped_fraction(
-            self
-    ) -> float:
+    def contact_volume_trapped_fraction(self) -> float:
         return self._contact_volume_trapped_fraction
 
     @contact_volume_trapped_fraction.setter
@@ -387,9 +383,7 @@ class ACV(BasicAV):
         self._slow_centers = slow_centers
 
     @property
-    def slow_radius(
-            self
-    ) -> float:
+    def slow_radius(self) -> float:
         return self._slow_radius
 
     @slow_radius.setter
