@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import chisurf.gui.decorators
 from chisurf.fluorescence.general import \
@@ -14,15 +14,8 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="calc_tau2r.ui"
-    )
-    def __init__(
-            self,
-            kappa2=0.667,
-            *args,
-            **kwargs
-    ):
+    @chisurf.gui.decorators.init_with_ui("calc_tau2r.ui")
+    def __init__(self, kappa2=0.667, *args, **kwargs):
         self.kappa2 = kappa2
 
         ## User-interface
@@ -174,10 +167,7 @@ class FRETCalculator(QtWidgets.QWidget):
         return float(self.doubleSpinBox_9.value())
 
     @R.setter
-    def R(
-            self,
-            v: float
-    ):
+    def R(self, v: float):
         self.doubleSpinBox_9.setValue(v)
 
     @property
@@ -185,10 +175,7 @@ class FRETCalculator(QtWidgets.QWidget):
         return float(self.doubleSpinBox_4.value())
 
     @E.setter
-    def E(
-            self,
-            v: float
-    ):
+    def E(self, v: float):
         self.doubleSpinBox_4.setValue(v)
 
 
