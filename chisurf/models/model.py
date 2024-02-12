@@ -1,5 +1,10 @@
 from __future__ import annotations
+
+import abc
+
 from chisurf import typing
+
+from collections import OrderedDict
 
 import numpy as np
 
@@ -12,9 +17,8 @@ from qtpy import QtWidgets, QtGui
 from chisurf.fitting.parameter import FittingParameterGroup
 
 
-class Model(
-    FittingParameterGroup
-):
+class Model(FittingParameterGroup):
+
     name = "Model name not available"
 
     def __init__(
@@ -32,15 +36,11 @@ class Model(
         self.model_number = model_number
 
     @property
-    def n_free(
-            self
-    ) -> int:
+    def n_free(self) -> int:
         return len(self.parameters)
 
     @property
-    def weighted_residuals(
-            self
-    ) -> np.ndarray:
+    def weighted_residuals(self) -> np.ndarray:
         return self.get_wres(
             self.fit,
             xmin=self.fit.xmin,
@@ -64,16 +64,12 @@ class Model(
             xmax=xmax
         )
 
-    def update_model(
-            self,
-            **kwargs
-    ):
+    @abc.abstractmethod
+    def update_model(self, **kwargs):
         pass
 
-    def update(
-            self,
-            **kwargs
-    ) -> None:
+    @abc.abstractmethod
+    def update(self, **kwargs) -> None:
         self.find_parameters()
         self.update_model()
 
@@ -97,15 +93,10 @@ class Model(
         return s
 
 
-class ModelCurve(
-    Model,
-    chisurf.curve.Curve
-):
+class ModelCurve(Model, chisurf.curve.Curve):
 
     @property
-    def n_points(
-            self
-    ) -> int:
+    def n_points(self) -> int:
         return self.fit.xmax - self.fit.xmin
 
     @property
@@ -142,27 +133,14 @@ class ModelCurve(
             **kwargs
         )
 
-    def get_curves(
-            self,
-            copy_curves: bool = False
-    ) -> typing.Dict[str, chisurf.curve.Curve]:
+    def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
         xmin = self.fit.xmin
         xmax = self.fit.xmax
-        return {
-            'model': chisurf.curve.Curve(
-                x=self.x[xmin:xmax],
-                y=self.y[xmin:xmax],
-                copy_array=copy_curves
-            )
-        }
+        d = OrderedDict()
+        d['model'] = chisurf.curve.Curve(x=self.x[xmin:xmax], y=self.y[xmin:xmax], copy_array=copy_curves)
+        return d
 
-    def __getitem__(
-            self,
-            key
-    ) -> typing.Tuple[
-        np.ndarray,
-        np.ndarray
-    ]:
+    def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
         start = key.start
         stop = key.stop
         step = 1 if key.step is None else key.step
@@ -170,10 +148,7 @@ class ModelCurve(
         return x, y
 
 
-class ModelWidget(
-    Model,
-    QtWidgets.QWidget
-):
+class ModelWidget(Model, QtWidgets.QWidget):
 
     plot_classes = [
         (
@@ -182,8 +157,7 @@ class ModelWidget(
                 'd_scaley': 'log',
                 'r_scaley': 'lin',
                 'x_label': 'x',
-                'y_label': 'y',
-                'plot_irf': True
+                'y_label': 'y'
             }
         ),
         (chisurf.plots.FitInfo, {}),
@@ -191,36 +165,20 @@ class ModelWidget(
         (chisurf.plots.ResidualPlot, {})
     ]
 
-    def update_plots(
-            self,
-            *args,
-            **kwargs
-    ) -> None:
+    def update_plots(self, *args, **kwargs) -> None:
         for p in self.fit.plots:
             p.update(*args, **kwargs)
 
-    def update_widgets(
-            self
-    ) -> None:
+    @abc.abstractmethod
+    def update_widgets(self) -> None:
         for parameter in self.parameters:
-            if isinstance(
-                    parameter,
-                    chisurf.gui.widgets.fitting.widgets.FittingParameterWidget
-            ):
-                parameter.update()
+            parameter.update()
 
-    def update(
-            self
-    ) -> None:
+    @abc.abstractmethod
+    def update(self) -> None:
         super().update()
         self.update_widgets()
         self.update_plots()
-
-    # def __getattr__(self, item):
-    #     try:
-    #         return super().__getattr__(item)
-    #     except KeyError:
-    #         return self.model.__getattr__(item)
 
     def __init__(
             self,
