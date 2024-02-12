@@ -8,6 +8,7 @@ import chisurf.fitting.fit
 import chisurf.fitting.parameter
 import chisurf.fitting.sample
 import chisurf.fitting.support_plane
+from chisurf.fitting.fit import Fit, FitGroup
 
 
 # def find_fit_idx_of_model(
@@ -23,7 +24,6 @@ import chisurf.fitting.support_plane
 #     for idx, f in enumerate(fits):
 #         if f.model is model:
 #             return idx
-
 
 def calculate_weighted_residuals(
         data: chisurf.data.DataCurve,
