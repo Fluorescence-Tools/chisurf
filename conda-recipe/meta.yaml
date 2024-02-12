@@ -9,6 +9,7 @@ source:
 
 build:
   number: 0
+  skip: true  # [py310]
   entry_points:
     {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
     {% for entry_point in entry_points -%}
@@ -38,49 +39,42 @@ requirements:
     - pyopencl
     - pocl  >=0.14      # [linux or osx]
     - oclgrind          # [win]
-    - typing_extensions
+    - typing_extensions <=4.5
     - pyyaml
     - numpy
     # Needed for pyrcc5 (updated pyqt resource file)
     - pyqt
   run:
     - python
-    - numpy
+    - numpy <=1.23
     - pyyaml
-    - qtpy
-    - typing_extensions
-    - matplotlib
-    - scikit-fluorescence
-    - deprecation
-    - progressbar2
-    - python-slugify
-    - numexpr
-    - numba
-    - scipy <1.8
-    - emcee
-    - mdtraj
-    - ipython
-    - qtconsole
-    - jupyter_client
-    - pyqt
     - pyqtgraph
-    - qscintilla2
-    - guiqwt
-    - guidata
-    - pymol-open-source
-    - pyopengl
-    - pyopencl
-    - pocl  >=0.14      # [linux or osx]
-    - oclgrind          # [win]
-    - python-docx
-    - htmd-pdb2pqr
-    - imp
+    - matplotlib
+    - deprecation
+    - scikit-fluorescence
+    - typing_extensions 4.5.*
+    - typing_utils 0.1.*
+    - scipy 1.11.*
+    - numba 0.57.*
+    - tttrlib
+    - mdtraj
+    - pdb2pqr 3.2.*
+    - propka 3.4.*
+    - ipython 7.*.*
     - chinet >=0.0.8
     - labellib
+    - pyopencl 2023.*
+    - pytools 2023.*
+    - emcee 3.1.*
+    - pyopengl 3.1.*
+    - pymol-open-source 2.5.*
+    - tttrconvert
+    - qscintilla2
+    - k2dist
+    - python-docx 1.0.*
+    - qtconsole 5.*
     - ndxplorer
     - clsmview
-    - k2dist
-    - tttrconvert
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
