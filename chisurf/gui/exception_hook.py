@@ -1,7 +1,7 @@
 import sys
 import traceback
 import logging
-from qtpy import QtCore, QtWidgets
+from chisurf.gui import QtCore, QtWidgets
 
 # basic logger functionality
 log = logging.getLogger(__name__)
