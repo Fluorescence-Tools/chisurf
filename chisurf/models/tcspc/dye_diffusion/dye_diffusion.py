@@ -539,9 +539,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
     name = "Dye-diffusion"
 
     @property
-    def n_curves(
-            self
-    ) -> int:
+    def n_curves(self) -> int:
         return int(self.spinBox_4.value())
 
     @n_curves.setter
@@ -552,9 +550,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.spinBox_4.setValue(v)
 
     @property
-    def nTAC(
-            self
-    ) -> int:
+    def nTAC(self) -> int:
         return self.nBins
 
     @nTAC.setter
@@ -566,9 +562,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         pass
 
     @property
-    def dtTAC(
-            self
-    ) -> float:
+    def dtTAC(self) -> float:
         return self.convolve.dt
 
     @dtTAC.setter
@@ -579,9 +573,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.convolve.dt = v
 
     @property
-    def decay_mode(
-            self
-    ) -> str:
+    def decay_mode(self) -> str:
         if self.radioButton_3.isChecked():
             return 'photon'
         if self.radioButton_4.isChecked():
@@ -600,9 +592,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             self.radioButton_4.setChecked(False)
 
     @property
-    def settings_file(
-            self
-    ) -> str:
+    def settings_file(self) -> str:
         return str(self.lineEdit_2.text())
 
     @settings_file.setter
@@ -613,9 +603,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         return self.lineEdit_2.setText(v)
 
     @property
-    def all_quencher_atoms(
-            self
-    ) -> bool:
+    def all_quencher_atoms(self) -> bool:
         return not bool(self.groupBox_5.isChecked())
 
     @all_quencher_atoms.setter
@@ -626,34 +614,24 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.groupBox_5.setChecked(not v)
 
     @property
-    def filename_prefix(
-            self
-    ) -> str:
+    def filename_prefix(self) -> str:
         return str(self.lineEdit_5.text())
 
     @property
-    def skip_frame(
-            self
-    ) -> int:
+    def skip_frame(self) -> int:
         return int(self.spinBox_3.value())
 
     @property
-    def n_frames(
-            self
-    ) -> int:
+    def n_frames(self) -> int:
         return int(self.spinBox.value())
 
     @property
-    def nBins(
-            self
-    ) -> int:
+    def nBins(self) -> int:
         nbin = self.fitting_widget.xmax - self.fitting_widget.xmin
         return int(nbin)
 
     @property
-    def n_photons(
-            self
-    ) -> int:
+    def n_photons(self) -> int:
         return int(self.doubleSpinBox_11.value() * 1e6)
 
     @n_photons.setter
@@ -664,9 +642,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.doubleSpinBox_11.setValue(v / 1e6)
 
     @property
-    def critical_distance(
-            self
-    ) -> float:
+    def critical_distance(self) -> float:
         return self.dye_parameter.critical_distance
 
     @critical_distance.setter
@@ -677,9 +653,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.dye_parameter.critical_distance = v
 
     @property
-    def t_max(
-            self
-    ) -> float:
+    def t_max(self) -> float:
         """
         simulation time in nano-seconds
         """
@@ -694,9 +668,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.doubleSpinBox_6.setValue(float(v / 1000.0))
 
     @property
-    def t_step(
-            self
-    ) -> float:
+    def t_step(self) -> float:
         """
         time-step in picoseconds
         """
@@ -711,9 +683,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         return self.doubleSpinBox_7.setValue(float(v * 1000.0))
 
     @property
-    def attachment_chain(
-            self
-    ) -> str:
+    def attachment_chain(self) -> str:
         return self.pdb_selector.chain_id
 
     @attachment_chain.setter
@@ -724,9 +694,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.pdb_selector.chain_id = v
 
     @property
-    def attachment_residue(
-            self
-    ) -> int:
+    def attachment_residue(self) -> int:
         return self.pdb_selector.residue_id
 
     @attachment_residue.setter
@@ -737,9 +705,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.pdb_selector.residue_id = v
 
     @property
-    def attachment_atom_name(
-            self
-    ) -> str:
+    def attachment_atom_name(self) -> str:
         return self.pdb_selector.atom_name
 
     @attachment_atom_name.setter
