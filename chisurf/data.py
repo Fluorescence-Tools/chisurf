@@ -20,9 +20,7 @@ class ExperimentalData(chisurf.base.Data):
     _experiment: chisurf.experiments.experiment.Experiment = None
 
     @property
-    def experiment(
-            self
-    ) -> chisurf.experiments.experiment.Experiment:
+    def experiment(self) -> chisurf.experiments.experiment.Experiment:
         if self._experiment is None:
             if isinstance(
                 self.data_reader,
@@ -105,9 +103,7 @@ class ExperimentalData(chisurf.base.Data):
 class DataCurve(chisurf.curve.Curve, ExperimentalData):
 
     @property
-    def data(
-            self
-    ) -> np.ndarray:
+    def data(self) -> np.ndarray:
         return np.vstack(
             [
                 self.x,

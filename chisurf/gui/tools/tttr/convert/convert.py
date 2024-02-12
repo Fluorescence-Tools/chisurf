@@ -55,9 +55,7 @@ class TTTRConvert(QtWidgets.QWidget):
     def ending_changed(self):
         self.file_list.filename_ending = self.ending
 
-    def open_target(
-            self
-    ):
+    def open_target(self):
         filename = chisurf.gui.widgets.save_file(
             file_type="Photon-HDF (*.photon.h5)"
         )
