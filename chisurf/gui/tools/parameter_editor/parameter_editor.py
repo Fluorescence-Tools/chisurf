@@ -1,23 +1,28 @@
 from __future__ import annotations
+
+import pathlib
+
 from chisurf import typing
 
 import sys
 
-from qtpy import QtGui, QtWidgets
+import chisurf.fio
+import chisurf.settings
+import chisurf.gui.widgets
+from chisurf.gui import QtGui, QtWidgets
+
 import pyqtgraph as pg
 import pyqtgraph.parametertree
 
 import json
 import re
 
-import chisurf.fio
-import chisurf.settings
-import chisurf.gui.widgets
+import scikit_fluorescence as skf
+import scikit_fluorescence.io
 
 
-def dict_to_parameter_tree(
-        origin
-) -> typing.List:
+
+def dict_to_parameter_tree(origin) -> typing.List:
     """Creates an array from a dictionary that can be used to initialize a pyqtgraph parameter-tree
     :param origin:
     :return:
@@ -49,15 +54,9 @@ def dict_to_parameter_tree(
     return target
 
 
-def parameter_tree_to_dict(
-        parameter_tree
-) -> typing.Dict:
+def parameter_tree_to_dict(parameter_tree) -> typing.Dict:
     """Converts a pyqtgraph parameter tree to an ordinary dictionary that could be saved
     as JSON file
-
-    :param parameter_tree:
-    :param target:
-    :return:
     """
     target = dict()
 
@@ -68,15 +67,9 @@ def parameter_tree_to_dict(
         if not child.children():
             value = child.opts['value']
             name = child.name()
-            if isinstance(
-                    value,
-                    QtGui.QColor
-            ):
+            if isinstance(value, QtGui.QColor):
                 value = str(value.name())
-            if isinstance(
-                    child,
-                    pg.parametertree.parameterTypes.ListParameter
-            ):
+            if isinstance(child, pg.parametertree.parameterTypes.ListParameter):
                 target[name + '_options'] = child.opts['values']
             target[name] = value
         else:
@@ -89,10 +82,11 @@ class ParameterEditor(QtWidgets.QWidget):
     def __init__(
             self,
             target: typing.Dict = None,
-            json_file: str = None,
+            json_file: pathlib.Path = None,
             windows_title: str = None,
+            *args, **kwargs
     ):
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
         if json_file is None:
             json_file = chisurf.gui.widgets.get_filename()
@@ -115,47 +109,29 @@ class ParameterEditor(QtWidgets.QWidget):
         )
         self._p.param('Save').sigActivated.connect(self.save)
 
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.setLayout(layout)
+        self.setWindowTitle(windows_title)
+
         t = pg.parametertree.ParameterTree()
         t.setParameters(self._p, showTop=False)
-
-        self.setWindowTitle(windows_title)
-        win = QtWidgets.QWidget()
-        layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        win.setLayout(layout)
-        layout.addWidget(t, 1, 0, 1, 1)
-        win.show()
-        win.resize(450, 400)
-        layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        self.setLayout(layout)
         layout.addWidget(t, 1, 0, 1, 1)
 
-        self.resize(450, 400)
-
-    def save(
-            self,
-            event: QtWidgets.QAction = None,
-            filename: str = None,
-    ):
+    def save(self, event: QtWidgets.QAction = None, filename: str = None):
         if filename is None:
             filename = self._json_file
         with open(filename, 'w+') as fp:
             obj = self.dict
             json.dump(obj, fp, indent=4)
-        self._target.settings = obj
+        self._target = obj
 
     @property
     def dict(self) -> dict:
         if self._p is not None:
-            print("dict")
             return parameter_tree_to_dict(self._p)
         else:
-            print("dict2")
             return self._dict
 
     @property
@@ -175,14 +151,8 @@ class ParameterEditor(QtWidgets.QWidget):
         return self._json_file
 
     @json_file.setter
-    def json_file(
-            self,
-            v: str
-    ):
-        with scikit_fluorescence.io.zipped.open_maybe_zipped(
-                filename=v,
-                mode='r'
-        ) as fp:
+    def json_file(self, v: str):
+        with skf.io.zipped.open_maybe_zipped(v, mode='r') as fp:
             self._dict = json.load(fp)
         self._json_file = v
 
