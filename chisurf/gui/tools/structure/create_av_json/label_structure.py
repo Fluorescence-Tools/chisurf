@@ -7,7 +7,7 @@ import sys
 import json
 import traceback
 
-from qtpy import QtWidgets, QtCore
+from chisurf.gui import QtWidgets, QtCore
 
 import chisurf.fio
 import chisurf.gui.decorators
