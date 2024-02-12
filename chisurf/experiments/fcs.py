@@ -12,7 +12,7 @@ class FCS(
     reader.ExperimentReader
 ):
 
-    name: str = "FCS"
+    name: str = "FCS-CSV"
     skiprows: int = 0
     use_header: bool = False
 
@@ -25,10 +25,7 @@ class FCS(
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         self.name = name
         self.skiprows = skiprows
         self.use_header = use_header
@@ -48,6 +45,7 @@ class FCS(
             reader_name=self.experiment_reader,
             experiment=self.experiment
         )
+        r.current_dataset.data_reader
         return r
 
 
