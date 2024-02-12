@@ -14,7 +14,7 @@
    <string>TTTR-Correlator</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../settings/ui/resource.qrc">
+   <iconset resource="../../../resources/resource.qrc">
     <normaloff>:/icons/icons/FCS.png</normaloff>:/icons/icons/FCS.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -53,7 +53,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>677</width>
+         <width>588</width>
          <height>475</height>
         </rect>
        </property>
@@ -201,7 +201,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../../settings/ui/resource.qrc"/>
+  <include location="../../../resources/resource.qrc"/>
  </resources>
  <connections/>
 </ui>
