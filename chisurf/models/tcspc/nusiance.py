@@ -1,10 +1,9 @@
-"""
-
-"""
 from __future__ import annotations
 
 import numpy as np
+import scipy.stats
 
+import chisurf.data
 import chisurf.experiments
 import chisurf.macros
 import chisurf.fluorescence.tcspc.convolve
@@ -12,18 +11,15 @@ import chisurf.fluorescence.tcspc.corrections
 import chisurf.math
 import chisurf.fluorescence
 from chisurf.curve import Curve
-from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
+from chisurf.fitting.parameter import (
+    FittingParameterGroup, FittingParameter
+)
 
 
 class Generic(FittingParameterGroup):
-    """
-
-    """
 
     @property
-    def n_ph_bg(
-            self
-    ) -> float:
+    def n_ph_bg(self) -> float:
         """Number of background photons
         """
         if isinstance(self.background_curve, Curve):
@@ -32,9 +28,7 @@ class Generic(FittingParameterGroup):
             return 0.0
 
     @property
-    def n_ph_exp(
-            self
-    ) -> int:
+    def n_ph_exp(self) -> int:
         """Number of experimental photons
         """
         if isinstance(self.fit.data, Curve):
@@ -43,17 +37,13 @@ class Generic(FittingParameterGroup):
             return 0
 
     @property
-    def n_ph_fl(
-            self
-    ) -> float:
+    def n_ph_fl(self) -> float:
         """Number of fluorescence photons
         """
         return self.n_ph_exp - self.n_ph_bg
 
     @property
-    def scatter(
-            self
-    ) -> float:
+    def scatter(self) -> float:
         # Scatter amplitude
         return self._sc.value
 
@@ -65,9 +55,7 @@ class Generic(FittingParameterGroup):
         self._sc.value = v
 
     @property
-    def background(
-            self
-    ) -> float:
+    def background(self) -> float:
         # Constant background in fluorescence decay curve
         return self._bg.value
 
@@ -79,9 +67,7 @@ class Generic(FittingParameterGroup):
         self._bg.value = v
 
     @property
-    def background_curve(
-            self
-    ) -> chisurf.curve.Curve:
+    def background_curve(self) -> chisurf.curve.Curve:
         # Background curve
         if isinstance(self._background_curve, Curve):
             return self._background_curve
@@ -97,9 +83,7 @@ class Generic(FittingParameterGroup):
             self._background_curve = v
 
     @property
-    def t_bg(
-            self
-    ) -> float:
+    def t_bg(self) -> float:
         """Measurement time of background-measurement
         """
         return self._tmeas_bg.value
@@ -112,9 +96,7 @@ class Generic(FittingParameterGroup):
         self._tmeas_bg.value = v
 
     @property
-    def t_exp(
-            self
-    ) -> float:
+    def t_exp(self) -> float:
         """Measurement time of experiment
         """
         return self._tmeas_exp.value
@@ -169,9 +151,7 @@ class Corrections(FittingParameterGroup):
     """
 
     @property
-    def lintable(
-            self
-    ) -> np.array:
+    def lintable(self) -> np.array:
         if self._lintable is None:
             self._lintable = np.ones_like(self.fit.data.y)
         return self._lintable[::-1] if self.reverse else self._lintable
@@ -185,9 +165,7 @@ class Corrections(FittingParameterGroup):
         self._lintable = self.calc_lintable(v.y)
 
     @property
-    def window_length(
-            self
-    ) -> int:
+    def window_length(self) -> int:
         return int(self._window_length.value)
 
     @window_length.setter
@@ -199,9 +177,7 @@ class Corrections(FittingParameterGroup):
         self._lintable = self.calc_lintable(self._curve.y)
 
     @property
-    def window_function(
-            self
-    ) -> str:
+    def window_function(self) -> str:
         return self._window_function
 
     @window_function.setter
@@ -213,9 +189,7 @@ class Corrections(FittingParameterGroup):
         self._lintable = self.calc_lintable(self._curve.y)
 
     @property
-    def reverse(
-            self
-    ) -> bool:
+    def reverse(self) -> bool:
         return self._reverse
 
     @reverse.setter
@@ -259,9 +233,7 @@ class Corrections(FittingParameterGroup):
         )
 
     @property
-    def measurement_time(
-            self
-    ) -> float:
+    def measurement_time(self) -> float:
         try:
             return self.fit.model.generic.t_exp
         except (AttributeError, KeyError):
@@ -289,9 +261,7 @@ class Corrections(FittingParameterGroup):
         self.fit.model.convolve.rep_rate = v
 
     @property
-    def dead_time(
-            self
-    ) -> float:
+    def dead_time(self) -> float:
         return self._dead_time.value
 
     @dead_time.setter
@@ -306,12 +276,6 @@ class Corrections(FittingParameterGroup):
             decay: np.array,
             **kwargs
     ):
-        """
-
-        :param decay:
-        :param kwargs:
-        :return:
-        """
         data = kwargs.get('data', self.fit.data.y)
         rep_rate = kwargs.get('rep_rate', self.rep_rate)
         dead_time = kwargs.get('dead_time', self.dead_time)
@@ -323,7 +287,7 @@ class Corrections(FittingParameterGroup):
                 rep_rate,
                 dead_time,
                 meas_time,
-                verbose=self.verbose
+                modify_inplace=True
             )
 
     def linearize(
@@ -364,150 +328,104 @@ class Corrections(FittingParameterGroup):
 
 
 class Convolve(FittingParameterGroup):
-    """
-
-    """
 
     @property
-    def dt(
-            self
-    ) -> float:
+    def dt(self) -> float:
         return self._dt.value
 
     @dt.setter
-    def dt(
-            self,
-            v: float
-    ):
+    def dt(self, v: float):
         self._dt.value = v
 
     @property
-    def lamp_background(
-            self
-    ) -> float:
-        return self._lb.value / self.n_photons_irf
+    def lamp_background(self) -> float:
+        return self._lb.value # / self.n_photons_irf
 
     @lamp_background.setter
-    def lamp_background(
-            self,
-            v: float
-    ):
+    def lamp_background(self, v: float):
         self._lb.value = v
 
     @property
-    def timeshift(
-            self
-    ) -> float:
+    def timeshift(self) -> float:
         return self._ts.value
 
     @timeshift.setter
-    def timeshift(
-            self,
-            v: float
-    ):
+    def timeshift(self, v: float):
         self._ts.value = v
 
     @property
-    def start(
-            self
-    ) -> int:
+    def start(self) -> int:
         return int(self._start.value // self.dt)
 
     @start.setter
-    def start(
-            self,
-            v: int
-    ):
+    def start(self, v: int):
         self._start.value = v
 
     @property
-    def stop(
-            self
-    ) -> int:
+    def stop(self) -> int:
         stop = int(self._stop.value // self.dt)
         return stop
 
     @stop.setter
-    def stop(
-            self,
-            v: int
-    ):
+    def stop(self, v: int):
         self._stop.value = v
 
     @property
-    def rep_rate(
-            self
-    ) -> float:
+    def rep_rate(self) -> float:
         return self._rep.value
 
     @rep_rate.setter
-    def rep_rate(
-            self,
-            v: float
-    ):
+    def rep_rate(self, v: float):
         self._rep.value = float(v)
 
     @property
-    def do_convolution(
-            self
-    ) -> bool:
+    def do_convolution(self) -> bool:
         return self._do_convolution
 
     @do_convolution.setter
-    def do_convolution(
-            self,
-            v: bool
-    ):
+    def do_convolution(self, v: bool):
         self._do_convolution = bool(v)
 
     @property
-    def n0(
-            self
-    ) -> float:
+    def n0(self) -> float:
         return self._n0.value
 
     @n0.setter
-    def n0(
-            self,
-            v: float
-    ):
+    def n0(self, v: float):
         self._n0.value = v
 
     @property
-    def irf(
-            self
-    ) -> chisurf.curve.Curve:
-        irf = self._irf
-        if isinstance(irf, Curve):
+    def irf(self) -> chisurf.curve.Curve:
+        if isinstance(self._irf, Curve):
             irf = self._irf
-            irf = (irf - self.lamp_background) << self.timeshift
-            irf.y = np.maximum(irf.y, 0)
-            return irf
+            irf -= self.lamp_background
+            irf.y = np.clip(irf.y, 0, None)
         else:
+            start_fraction = 0.1
             x = np.copy(self.data.x)
-            y = np.zeros_like(self.data.y)
-            y[0] = 1.0
-            curve = chisurf.curve.Curve(
-                x=x,
-                y=y
-            )
-            return curve
+            x_min = np.where(self.data.y > start_fraction * np.max(self.data.y))[0][0]
+            loc = self.data.x[x_min]
+            scale = self._iw.value
+            shape = self._ik.value
+            y = chisurf.math.functions.distributions.generalized_normal_distribution(x, loc, scale, shape, True)
+            y *= np.sum(self.data.y)
+            irf = chisurf.curve.Curve(x=x, y=y)
+            irf.y[irf.y < 1] = 0.0
+        irf = irf << float(self.timeshift)
+        return irf
 
     @property
-    def _irf(
-            self
-    ) -> chisurf.curve.Curve:
-        return self.__irf
+    def _irf(self) -> chisurf.curve.Curve:
+        re = self.__irf
+        # if re is None:
+        #     x = self.fit.data.x
+        #     y = np.zeros_like(self.fit.data.y)
+        #     re = chisurf.curve.Curve(x, y)
+        return re
 
     @_irf.setter
-    def _irf(
-            self,
-            v: chisurf.curve.Curve
-    ):
-        self.n_photons_irf = v.normalize(
-            mode="sum",
-            inplace=False
-        )
+    def _irf(self, v: chisurf.curve.Curve):
+        self.n_photons_irf = v.normalize(mode="sum", inplace=False)
         self.__irf = v
         try:
             # Approximate n0 the initial number of donor molecules in the
@@ -527,9 +445,7 @@ class Convolve(FittingParameterGroup):
             self.n0 = 1000.
 
     @property
-    def data(
-            self
-    ) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.data.DataCurve:
         if self._data is None:
             try:
                 return self.fit.data
@@ -539,10 +455,7 @@ class Convolve(FittingParameterGroup):
             return self._data
 
     @data.setter
-    def data(
-            self,
-            v: chisurf.data.DataCurve
-    ):
+    def data(self, v: chisurf.data.DataCurve):
         self._data = v
 
     def scale(
@@ -573,8 +486,7 @@ class Convolve(FittingParameterGroup):
                 start=start,
                 stop=stop
             )
-        else:
-            decay *= self.n0
+        decay *= self.n0
 
         return decay
 
@@ -611,15 +523,9 @@ class Convolve(FittingParameterGroup):
         if mode == "per":
             period = 1000. / rep_rate
             chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
-                decay,
-                data,
-                irf_y,
-                start,
-                stop,
-                n_points,
-                period,
-                dt,
-                n_points
+                decay, data, irf_y,
+                start, stop, n_points,
+                period, dt, n_points
             )
             # TODO: in future non linear time-axis (better suited for exponentially decaying data)
             # time = fit.data._x
@@ -635,11 +541,7 @@ class Convolve(FittingParameterGroup):
                 time_axis=t
             )
         elif mode == "full":
-            decay = np.convolve(
-                data,
-                irf_y,
-                mode="full"
-            )[:n_points]
+            decay = np.convolve(data, irf_y, mode="full")[:n_points]
         if verbose:
             print("------------")
             print("Convolution:")
@@ -660,11 +562,7 @@ class Convolve(FittingParameterGroup):
             irf: chisurf.curve.Curve = None,
             **kwargs
     ):
-        super().__init__(
-            fit=fit,
-            name=name,
-            **kwargs
-        )
+        super().__init__(fit=fit, name=name, **kwargs)
 
         self._data = None
         try:
@@ -683,8 +581,9 @@ class Convolve(FittingParameterGroup):
         self._n0 = FittingParameter(
             value=chisurf.settings.cs_settings['tcspc']['n0'],
             name='n0',
+            label_text="n<sub>0</sub>",
             fixed=chisurf.settings.cs_settings['tcspc']['autoscale'],
-            decimals=2
+            decimals=4
         )
         self._dt = FittingParameter(
             value=dt,
@@ -709,12 +608,27 @@ class Convolve(FittingParameterGroup):
         )
         self._lb = FittingParameter(
             value=0.0,
-            name='lb'
+            name='lb',
+            fixed=True
         )
         self._ts = FittingParameter(
             value=0.0,
             name='ts'
         )
+
+        self._iw = FittingParameter(
+            value=0.10,
+            name='iw',
+            fixed=True,
+            label_text='IRF<sub>w</sub>'
+        )
+        self._ik = FittingParameter(
+            value=-0.31,
+            name='ik',
+            fixed=True,
+            label_text='IRF<sub>k</sub>'
+        )
+
         self._do_convolution = chisurf.settings.cs_settings['tcspc']['convolution_on_by_default']
         self.mode = chisurf.settings.cs_settings['tcspc']['default_convolution_mode']
         self.n_photons_irf = 1.0
