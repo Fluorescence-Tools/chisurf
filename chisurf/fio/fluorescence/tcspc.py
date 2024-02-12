@@ -23,22 +23,6 @@ def read_tcspc_csv(
         *args,
         **kwargs
 ) -> chisurf.data.DataCurveGroup:
-    """
-
-    :param filename:
-    :param skiprows:
-    :param rebin:
-    :param dt:
-    :param matrix_columns:
-    :param use_header:
-    :param is_jordi:
-    :param polarization:
-    :param g_factor:
-    :param setup:
-    :param args:
-    :param kwargs:
-    :return:
-    """
 
     # Load data
     rebin_x, rebin_y = rebin
