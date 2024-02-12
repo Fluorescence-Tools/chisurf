@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 from scipy.stats import f as fdist
 
@@ -150,9 +150,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_2.blockSignals(False)
 
     @property
-    def n1(
-            self
-    ) -> int:
+    def n1(self) -> int:
         return int(self.spinBox.value())
 
     @n1.setter
@@ -163,9 +161,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox.setValue(v)
 
     @property
-    def n2(
-            self
-    ) -> int:
+    def n2(self) -> int:
         return int(self.spinBox_2.value())
 
     @n2.setter
@@ -176,9 +172,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox_2.setValue(v)
 
     @property
-    def conf_level(
-            self
-    ) -> float:
+    def conf_level(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @conf_level.setter
@@ -189,9 +183,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_2.setValue(c)
 
     @property
-    def chi2_1(
-            self
-    ) -> float:
+    def chi2_1(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @chi2_1.setter
@@ -202,9 +194,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox.setValue(v)
 
     @property
-    def chi2_2(
-            self
-    ) -> float:
+    def chi2_2(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @chi2_2.setter
@@ -215,9 +205,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_3.setValue(v)
 
     @property
-    def npars(
-            self
-    ) -> int:
+    def npars(self) -> int:
         return int(self.spinBox_4.value())
 
     @npars.setter
@@ -228,9 +216,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox_4.setValue(v)
 
     @property
-    def dof(
-            self
-    ) -> int:
+    def dof(self) -> int:
         return int(self.spinBox_3.value())
 
     @dof.setter
@@ -241,9 +227,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.spinBox_3.setValue(v)
 
     @property
-    def conf_level_2(
-            self
-    ) -> float:
+    def conf_level_2(self) -> float:
         return float(self.doubleSpinBox_4.value())
 
     @conf_level_2.setter
@@ -254,9 +238,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.doubleSpinBox_4.setValue(c)
 
     @property
-    def chi2_max(
-            self
-    ) -> float:
+    def chi2_max(self) -> float:
         return float(self.lineEdit.text())
 
     @chi2_max.setter
@@ -267,9 +249,7 @@ class FTestWidget(QtWidgets.QWidget):
         self.lineEdit.setText(str(c))
 
     @property
-    def chi2_min(
-            self
-    ) -> float:
+    def chi2_min(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @chi2_min.setter
