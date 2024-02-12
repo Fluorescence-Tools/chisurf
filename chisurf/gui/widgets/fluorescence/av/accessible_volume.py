@@ -20,9 +20,7 @@ class AVProperties(QtWidgets.QWidget):
         self.groupBox.hide()
 
     @property
-    def av_type(
-            self
-    ) -> str:
+    def av_type(self) -> str:
         return self._av_type
 
     @av_type.setter
@@ -46,9 +44,7 @@ class AVProperties(QtWidgets.QWidget):
             self.doubleSpinBox_5.setEnabled(True)
 
     @property
-    def linker_length(
-            self
-    ) -> float:
+    def linker_length(self) -> float:
         return float(self.doubleSpinBox.value())
 
     @linker_length.setter
@@ -59,9 +55,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox.setValue(v)
 
     @property
-    def linker_width(
-            self
-    ) -> float:
+    def linker_width(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @linker_width.setter
@@ -72,9 +66,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def radius_1(
-            self
-    ) -> float:
+    def radius_1(self) -> float:
         return float(self.doubleSpinBox_3.value())
 
     @radius_1.setter
@@ -96,9 +88,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox_4.setValue(v)
 
     @property
-    def radius_3(
-            self
-    ) -> float:
+    def radius_3(self) -> float:
         return float(self.doubleSpinBox_5.value())
 
     @radius_3.setter
@@ -109,9 +99,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox_5.setValue(v)
 
     @property
-    def resolution(
-            self
-    ) -> float:
+    def resolution(self) -> float:
         return float(self.doubleSpinBox_6.value())
 
     @resolution.setter
@@ -122,9 +110,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox_6.setValue(v)
 
     @property
-    def initial_linker_sphere(
-            self
-    ) -> float:
+    def initial_linker_sphere(self) -> float:
         return float(self.doubleSpinBox_7.value())
 
     @initial_linker_sphere.setter
@@ -135,9 +121,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox_7.setValue(v)
 
     @property
-    def initial_linker_sphere_min(
-            self
-    ) -> float:
+    def initial_linker_sphere_min(self) -> float:
         return float(self.doubleSpinBox_8.value())
 
     @initial_linker_sphere_min.setter
@@ -148,9 +132,7 @@ class AVProperties(QtWidgets.QWidget):
         self.doubleSpinBox_8.setValue(v)
 
     @property
-    def initial_linker_sphere_max(
-            self
-    ) -> float:
+    def initial_linker_sphere_max(self) -> float:
         return float(self.doubleSpinBox_9.value())
 
     @initial_linker_sphere_max.setter
