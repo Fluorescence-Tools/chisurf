@@ -60,9 +60,7 @@ class Model(object):
         self.series = self.res
         self.steps = steps
 
-    def getStats(
-            self
-    ) -> typing.Tuple[
+    def getStats(self) -> typing.Tuple[
         np.ndarray,
         np.ndarray,
         np.ndarray
