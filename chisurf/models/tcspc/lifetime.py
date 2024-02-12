@@ -108,10 +108,7 @@ class Lifetime(FittingParameterGroup):
         return self._link
 
     @link.setter
-    def link(
-            self,
-            v: chisurf.fitting.parameter.FittingParameter
-    ):
+    def link(self, v: chisurf.fitting.parameter.FittingParameter):
         if isinstance(v, Lifetime) or v is None:
             self._link = v
 
@@ -199,7 +196,7 @@ class Lifetime(FittingParameterGroup):
 
 class LifetimeModel(ModelCurve):
 
-    name = "Lifetime analysis"
+    name = "Lifetime "
 
     def __str__(self):
         s = super().__str__()
@@ -323,3 +320,73 @@ class LifetimeModel(ModelCurve):
         decay = self.corrections.linearize(decay)
         self.y = np.maximum(decay, 0)
 
+
+class LifetimeMixtureModel(LifetimeModel):
+
+    name = "Lifetime mixer"
+
+    @property
+    def lifetime_fits(self) -> typing.List[chisurf.fitting.fit.Fit]:
+        return [
+            s for s in chisurf.fits
+            if isinstance(s, chisurf.fitting.fit.Fit) and isinstance(s.model, LifetimeModel) and s.model is not self
+        ]
+
+    def __init__(
+            self,
+            fit: chisurf.fitting.fit.Fit,
+            **kwargs
+    ):
+        super().__init__(fit, **kwargs)
+        self.lifetime_model_instances: typing.List[LifetimeModel] = list()
+        self._fractions: typing.List[FittingParameter] = list()
+
+    def append_model(self, model_instance: LifetimeModel, name: str = None):
+        self.lifetime_model_instances.append(model_instance)
+        if name is None:
+            name = 'x(' + model_instance.fit.name + ')'
+        self._fractions.append(
+            FittingParameter(
+                value=1.0,
+                name=name,
+                bounds_on=True,
+                lb=0.0, ub=1.0
+            )
+        )
+
+    def pop_model(self, idx: int = None):
+        if idx is None:
+            m = self.lifetime_model_instances.pop()
+            f = self._fractions.pop()
+            return f, m
+        else:
+            m = self.lifetime_model_instances[idx]
+            f = self._fractions[idx]
+            self.lifetime_model_instances = self.lifetime_model_instances[:idx - 1] + self.lifetime_model_instances[idx + 1:]
+            self._fractions = self._fractions[:idx] + self._fractions[idx + 1:]
+            return f, m
+
+    @property
+    def n_model(self):
+        return len(self.lifetime_model_instances)
+
+    @property
+    def factions(self) -> np.ndarray:
+        if self.n_model > 0:
+            v = np.array([x.value for x in self._fractions])
+            v /= np.sum(v)
+            return v
+        else:
+            return np.array([1.0], dtype=np.float64)
+
+    @property
+    def lifetime_spectrum(self) -> np.array:
+        lts = list()
+        for model, fraction in zip(self.lifetime_model_instances, self.factions):
+            lt = np.copy(model.lifetime_spectrum)
+            lt[::2] *= fraction
+            lts.append(lt)
+        if len(lts) > 0:
+            return np.hstack(lts)
+        else:
+            return np.array([1., 4.], dtype=np.float64)
