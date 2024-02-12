@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+from functools import partial
+
 import os
+import pkgutil
+import importlib
+
 import pathlib
 import webbrowser
+
+import chisurf.gui
+import chisurf.macros.core_fit
 from chisurf import typing
 
 import numpy as np
-from qtpy import QtWidgets, QtGui, QtCore, uic
+from chisurf.gui import QtWidgets, QtGui, QtCore, uic
 
 import ndxplorer
 import clsmview.clsm_pixel_select
@@ -21,6 +29,7 @@ import chisurf.gui.tools
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.modelling
 import chisurf.models
+import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
 
@@ -62,9 +71,7 @@ class Main(QtWidgets.QMainWindow):
     experiment_names: typing.List[str] = list()
 
     @property
-    def current_dataset(
-            self
-    ) -> chisurf.base.Data:
+    def current_dataset(self) -> chisurf.base.Data:
         return self._current_dataset
 
     @current_dataset.setter
@@ -79,37 +86,25 @@ class Main(QtWidgets.QMainWindow):
         return self._current_model_class
 
     @property
-    def fit_idx(
-            self
-    ) -> int:
+    def fit_idx(self) -> int:
         return self._fit_idx
 
     @property
-    def current_experiment_idx(
-            self
-    ) -> int:
+    def current_experiment_idx(self) -> int:
         return self._current_experiment_idx
 
     @current_experiment_idx.setter
-    def current_experiment_idx(
-            self,
-            v: int
-    ):
+    def current_experiment_idx(self, v: int):
         self.set_current_experiment_idx(v)
 
     @property
-    def current_experiment(
-            self
-    ) -> chisurf.experiments.Experiment:
+    def current_experiment(self) -> chisurf.experiments.Experiment:
         return list(chisurf.experiment.values())[
             self.current_experiment_idx
         ]
 
     @current_experiment.setter
-    def current_experiment(
-            self,
-            name: str
-    ) -> None:
+    def current_experiment(self, name: str) -> None:
         p = self._current_experiment_idx
         n = p
         for n, e in enumerate(list(chisurf.experiment.values())):
@@ -119,16 +114,11 @@ class Main(QtWidgets.QMainWindow):
             self.current_experiment_idx = n
 
     @property
-    def current_setup_idx(
-            self
-    ) -> int:
+    def current_setup_idx(self) -> int:
         return self._current_setup_idx
 
     @current_setup_idx.setter
-    def current_setup_idx(
-            self,
-            v: int
-    ):
+    def current_setup_idx(self, v: int):
         self.set_current_experiment_idx(v)
 
     @property
@@ -136,19 +126,14 @@ class Main(QtWidgets.QMainWindow):
         return self.current_setup.name
 
     @property
-    def current_setup(
-            self
-    ) -> chisurf.experiments.reader.ExperimentReader:
+    def current_setup(self) -> chisurf.experiments.reader.ExperimentReader:
         current_setup = self.current_experiment.readers[
             self.current_setup_idx
         ]
         return current_setup
 
     @current_setup.setter
-    def current_setup(
-            self,
-            name: str
-    ) -> None:
+    def current_setup(self, name: str) -> None:
         i = self.current_setup_idx
         j = i
         for j, s in enumerate(
@@ -173,22 +158,15 @@ class Main(QtWidgets.QMainWindow):
             return self.current_setup.experiment_reader
 
     @property
-    def current_model_name(
-            self
-    ) -> str:
+    def current_model_name(self) -> str:
         return self.current_model_class.name
 
     @property
-    def current_fit(
-            self
-    ) -> chisurf.fitting.fit.FitGroup:
+    def current_fit(self) -> chisurf.fitting.fit.FitGroup:
         return self._current_fit
 
     @current_fit.setter
-    def current_fit(
-            self,
-            v: chisurf.fitting.fit.FitGroup
-    ) -> None:
+    def current_fit(self, v: chisurf.fitting.fit.FitGroup) -> None:
         self._current_fit = v
 
     def set_current_experiment_idx(self, v):
@@ -213,38 +191,52 @@ class Main(QtWidgets.QMainWindow):
     def subWindowActivated(self):
         sub_window = self.mdiarea.currentSubWindow()
         if sub_window is not None:
-            for f in chisurf.fits:
+            for fit_idx, f in enumerate(chisurf.fits):
                 if f == sub_window.fit:
-                    if self.current_fit is not chisurf.fits[self.fit_idx]:
-                        chisurf.run(
-                            "cs.current_fit = chisurf.fits[%s]" % self.fit_idx
-                        )
+                    if self.current_fit is not chisurf.fits[fit_idx]:
+                        chisurf.run(f"cs.current_fit = chisurf.fits[{fit_idx}]")
+                        self._fit_idx = fit_idx
                         break
 
             self.current_fit_widget = sub_window.fit_widget
-            window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + self.current_fit.name
 
+            window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + self.current_fit.name
             self.setWindowTitle(window_title)
 
             chisurf.gui.widgets.hide_items_in_layout(self.modelLayout)
             chisurf.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
-            self.current_fit.model.update()
+            # self.current_fit.model.update()
             self.current_fit.model.show()
             self.current_fit_widget.show()
             sub_window.current_plot_controller.show()
-        # update fit_idx
-        if sub_window is not None:
-            for fit_idx, f in enumerate(chisurf.fits):
-                if f == sub_window.fit:
-                    self._fit_idx = fit_idx
-                    break
 
-    def onRunMacro(self):
-        filename = chisurf.gui.widgets.get_filename(
-            "Python macros",
-            file_type="Python file (*.py)"
-        )
-        chisurf.run("chisurf.console.run_macro(filename='%s')" % filename)
+    def onRunMacro(
+            self,
+            filename: pathlib.Path = None,
+            executor: str = 'console',
+            globals=None, locals=None
+    ):
+        print("onRunMacro::filename:", filename)
+        if filename is None:
+            filename = chisurf.gui.widgets.get_filename(
+                "Python macros",
+                file_type="Python file (*.py)"
+            )
+        if executor == 'console':
+            filename_str = filename.as_posix()
+            chisurf.run(f"chisurf.console.run_macro(filename='{filename_str}')")
+        elif executor == 'exec':
+            if globals is None:
+                globals = {
+                    "__name__": "__main__"
+                }
+            globals.update(
+                {
+                    "__file__": filename
+                }
+            )
+            with open(filename, 'rb') as file:
+                exec(compile(file.read(), filename, 'exec'), globals, locals)
 
     def onTileWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
@@ -252,6 +244,8 @@ class Main(QtWidgets.QMainWindow):
 
     def onTabWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.TabbedView)
+        self.mdiarea.setTabsClosable(True)
+        self.mdiarea.setTabsMovable(True)
 
     def onCascadeWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
@@ -282,7 +276,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
-        chisurf.run("cs.current_experiment = '%s'" % experiment_name)
+        chisurf.run(f"cs.current_experiment = '{experiment_name}'")
         # Add setups for selected experiment
         self.comboBox_setupSelect.blockSignals(True)
         self.comboBox_setupSelect.clear()
@@ -293,21 +287,13 @@ class Main(QtWidgets.QMainWindow):
         self._current_experiment_idx = self.comboBox_experimentSelect.currentIndex()
         self.onSetupChanged()
 
-    def onLoadFitResults(
-            self,
-            **kwargs
-    ):
+    def onLoadFitResults(self, **kwargs):
         filename = chisurf.gui.widgets.get_filename(
             file_type="*.json",
             description="Load results into fit-models",
             **kwargs
         )
-        chisurf.run(
-            "chisurf.macros.load_fit_result(%s, %s)" % (
-                self.fit_idx,
-                filename
-            )
-        )
+        chisurf.run(f"chisurf.macros.load_fit_result({self.fit_idx}, {filename})")
     def set_current_setup_idx(self, v: int):
         self.comboBox_setupSelect.setCurrentIndex(v)
         self._current_setup_idx = v
@@ -315,9 +301,7 @@ class Main(QtWidgets.QMainWindow):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
         )
-        chisurf.run(
-            "cs.current_setup = '%s'" % self.current_setup_name
-        )
+        chisurf.run(f"cs.current_setup = '{self.current_setup_name}'")
         try:
             self.layout_experiment_reader.addWidget(
                 self.current_setup
@@ -331,33 +315,27 @@ class Main(QtWidgets.QMainWindow):
         self._current_setup_idx = self.comboBox_setupSelect.currentIndex()
 
     def onCloseAllFits(self):
-        for sub_window in chisurf.fit_windows:
+        for sub_window in chisurf.gui.fit_windows:
             sub_window.widget().close_confirm = False
             sub_window.close()
 
         chisurf.fits.clear()
-        chisurf.fit_windows.clear()
+        chisurf.gui.fit_windows.clear()
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
-        chisurf.run('chisurf.macros.add_dataset(filename="%s")' % str(filename))
+        filename_str = r"{}".format(filename.as_posix())
+        chisurf.run(f'chisurf.macros.add_dataset(filename="{filename_str}")')
 
-    def onSaveFits(
-            self,
-            event: QtCore.QEvent = None,
-    ):
-        path = chisurf.gui.widgets.get_directory()
+    def onSaveFits(self, event: QtCore.QEvent = None):
+        path, _ = chisurf.gui.widgets.get_directory()
         chisurf.working_path = path
-        chisurf.run('chisurf.macros.save_fits(target_path="%s")' % path)
+        chisurf.run(f'chisurf.macros.save_fits(target_path="{path.as_posix()}")')
 
-    def onSaveFit(
-            self,
-            event: QtCore.QEvent = None,
-            **kwargs
-    ):
-        path = chisurf.gui.widgets.get_directory(**kwargs)
+    def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
+        path, _ = chisurf.gui.widgets.get_directory(**kwargs)
         chisurf.working_path = path
-        chisurf.run('chisurf.macros.save_fit(target_path="%s")' % path)
+        chisurf.run(f'chisurf.macros.save_fit(target_path="{path.as_posix()}")')
 
     def onOpenHelp(self):
         webbrowser.open_new(chisurf.info.help_url)
@@ -378,36 +356,21 @@ class Main(QtWidgets.QMainWindow):
         chisurf.run(str(chisurf.settings.gui['console_init']))
 
     def init_setups(self):
-        ##########################################################
-        #       Structure                                        #
-        ##########################################################
-        structure = chisurf.experiments.Experiment('Modelling')
-        structure.add_readers(
-            [
-                (
-                    chisurf.experiments.modelling.StructureReader(
-                        experiment=structure
-                    ),
-                    chisurf.gui.widgets.experiments.modelling.StructureReaderController()
-                )
-            ]
-        )
-
-        structure.add_model_classes(
-            [
-                chisurf.models.tcspc.widgets.LifetimeModelWidget
-            ]
-        )
-        chisurf.experiment[structure.name] = structure
 
         ##########################################################
         #       TCSPC                                            #
         ##########################################################
-        tcspc = chisurf.experiments.Experiment('TCSPC')
+        # tcspc = chisurf.experiments.Experiment('TCSPC')
+        # fcs = chisurf.experiments.experiment.Experiment('FCS')
+        # structure = chisurf.experiments.Experiment('Modelling')
+        # locals().update(chisurf.experiments.experiments)
+
+        tcspc = chisurf.experiments.types['tcspc']
         tcspc.add_readers(
             [
                 (
                     chisurf.experiments.tcspc.TCSPCReader(
+                        name="TXT/CSV",
                         experiment=tcspc
                     ),
                     chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
@@ -416,16 +379,27 @@ class Main(QtWidgets.QMainWindow):
                     )
                 ),
                 (
+                    chisurf.experiments.tcspc.TCSPCTTTRReader(
+                        name="TTTR-file",
+                        experiment=tcspc
+                    ),
+                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
+                        **chisurf.settings.cs_settings['tcspc_csv'],
+                    )
+                ),
+                (
                     chisurf.gui.widgets.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
+                        name="Becker-SDT",
                         experiment=tcspc
                     ),
                     None
                 ),
                 (
-                    chisurf.experiments.tcspc.TCSPCSetupDummy(
+                    chisurf.experiments.tcspc.TCSPCSimulatorSetup(
+                        name="Simulator",
                         experiment=tcspc
                     ),
-                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCSetupDummyWidget()
+                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCSimulatorSetupWidget()
                 )
             ]
         )
@@ -435,7 +409,8 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.FRETrateModelWidget,
                 chisurf.models.tcspc.widgets.GaussianModelWidget,
                 chisurf.models.tcspc.widgets.PDDEMModelWidget,
-                chisurf.models.tcspc.widgets.WormLikeChainModelWidget
+                chisurf.models.tcspc.widgets.WormLikeChainModelWidget,
+                chisurf.models.tcspc.widgets.LifetimeMixtureModelWidget
             ]
         )
         chisurf.experiment[tcspc.name] = tcspc
@@ -443,19 +418,9 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       FCS                                              #
         ##########################################################
-        fcs = chisurf.experiments.experiment.Experiment('FCS')
+        fcs = chisurf.experiments.types['fcs']
         fcs.add_readers(
             [
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='FCS-CSV',
-                        experiment=fcs,
-                        experiment_reader='csv'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='All files (*.*)'
-                    )
-                ),
                 (
                     chisurf.experiments.fcs.FCS(
                         name='Seidel Kristine',
@@ -468,12 +433,12 @@ class Main(QtWidgets.QMainWindow):
                 ),
                 (
                     chisurf.experiments.fcs.FCS(
-                        name='China FCS',
+                        name='FCS-CSV',
                         experiment=fcs,
-                        experiment_reader='china-mat'
+                        experiment_reader='csv'
                     ),
                     chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='Kristine files (*.mat)'
+                        file_type='All files (*.*)'
                     )
                 ),
                 (
@@ -484,6 +449,16 @@ class Main(QtWidgets.QMainWindow):
                     ),
                     chisurf.gui.widgets.experiments.widgets.FCSController(
                         file_type='Confocor3 files (*.fcs)'
+                    )
+                ),
+                (
+                    chisurf.experiments.fcs.FCS(
+                        name='China FCS',
+                        experiment=fcs,
+                        experiment_reader='china-mat'
+                    ),
+                    chisurf.gui.widgets.experiments.widgets.FCSController(
+                        file_type='Kristine files (*.mat)'
                     )
                 ),
                 (
@@ -503,7 +478,7 @@ class Main(QtWidgets.QMainWindow):
                         experiment_reader='alv'
                     ),
                     chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='Kristine files (*.asc)'
+                        file_type='ALV-Correlator files (*.asc)'
                     )
                 )
             ]
@@ -514,6 +489,28 @@ class Main(QtWidgets.QMainWindow):
             ]
         )
         chisurf.experiment[fcs.name] = fcs
+
+        ##########################################################
+        #       Structure                                        #
+        ##########################################################
+        structure = chisurf.experiments.types['structure']
+        structure.add_readers(
+            [
+                (
+                    chisurf.experiments.modelling.StructureReader(
+                        experiment=structure
+                    ),
+                    chisurf.gui.widgets.experiments.modelling.StructureReaderController()
+                )
+            ]
+        )
+
+        structure.add_model_classes(
+            [
+                chisurf.models.tcspc.widgets.LifetimeModelWidget
+            ]
+        )
+        chisurf.experiment[structure.name] = structure
 
         ##########################################################
         #       Global datasets                                  #
@@ -546,15 +543,8 @@ class Main(QtWidgets.QMainWindow):
             self.experiment_names
         )
 
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(
@@ -577,14 +567,18 @@ class Main(QtWidgets.QMainWindow):
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,
-            drag_enabled=True
+            drag_enabled=True,
+            experiment=None
         )
         self.about = uic.loadUi(
             pathlib.Path(__file__).parent / "about.ui"
         )
 
+        self.status = chisurf.gui.widgets.QtWidgets.QStatusBar(self)
+        self.setStatusBar(self.status)
+
     def arrange_widgets(self):
-        self.setCentralWidget(self.mdiarea)
+        # self.setCentralWidget(self.mdiarea)
 
         ##########################################################
         #      Help and About widgets                            #
@@ -620,7 +614,7 @@ class Main(QtWidgets.QMainWindow):
 
     def define_actions(self):
         ##########################################################
-        # ACTIONS
+        # GUI ACTIONS
         ##########################################################
         self.actionTile_windows.triggered.connect(self.onTileWindows)
         self.actionTab_windows.triggered.connect(self.onTabWindows)
@@ -631,11 +625,35 @@ class Main(QtWidgets.QMainWindow):
         self.actionUpdate.triggered.connect(self.onOpenUpdate)
 
         ##########################################################
+        #      Populate plugins                                  #
+        ##########################################################
+        plugin_menu = self.menuBar.addMenu('Plugins')
+        plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+        for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
+            module_path = "chisurf.plugins." + module_name
+            module = importlib.import_module(str(module_path))
+            try:
+                name = module.name
+            except AttributeError as e:
+                print(f"Failed to find plugin name: {e}")
+                name = module_name
+            p = partial(
+                self.onRunMacro, plugin_path / module_name / "wizard.py",
+                executor='exec',
+                globals={'__name__': 'plugin'}
+            )
+            plugin_action = QtWidgets.QAction(f"{name}", self)
+            plugin_action.triggered.connect(p)
+            plugin_menu.addAction(plugin_action)
+
+        ##########################################################
         #      Record and run recorded macros                    #
         ##########################################################
         self.actionRecord.triggered.connect(chisurf.console.start_recording)
         self.actionStop.triggered.connect(chisurf.console.save_macro)
-        self.actionRun.triggered.connect(self.onRunMacro)
+        self.actionRun.triggered.connect(
+            lambda: self.onRunMacro(filename=None, executor='console')
+        )
 
         ##########################################################
         #    Connect changes in User-interface to actions like:  #
@@ -650,7 +668,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionAdd_fit.triggered.connect(self.onAddFit)
         self.actionSaveAllFits.triggered.connect(self.onSaveFits)
         self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
-        self.actionClose_Fit.triggered.connect(chisurf.macros.close_fit)
+        self.actionClose_Fit.triggered.connect(chisurf.macros.core_fit.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
@@ -665,8 +683,8 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
         # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
-        #self.fret_lines = chisurf.tools.fret_lines.FRETLineGeneratorWidget()
-        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.fret_lines.show)
+        #self.sm_FRETlines = chisurf.tools.sm_FRETlines.FRETLineGeneratorWidget()
+        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.sm_FRETlines.show)
         #self.decay_fret_generator = chisurf.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
@@ -680,8 +698,8 @@ class Main(QtWidgets.QMainWindow):
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         self.ndxplorer = ndxplorer.NDXplorer()
-        self.ndxplorer.hide()
         self.actionndXplorer.triggered.connect(self.ndxplorer.show)
+        self.ndxplorer.hide()
 
         ##########################################################
         #      TTTR-widgets                                      #
@@ -744,4 +762,7 @@ class Main(QtWidgets.QMainWindow):
         # Clear local settings, i.e., the settings file in the user folder
         self.actionClear_local_settings.triggered.connect(chisurf.settings.clear_settings_folder)
 
-
+        ##########################################################
+        #      Initialize                                        #
+        ##########################################################
+        self.onExperimentChanged()
