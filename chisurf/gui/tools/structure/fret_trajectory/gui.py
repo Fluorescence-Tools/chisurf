@@ -3,7 +3,7 @@ from __future__ import annotations
 import tempfile
 
 import mdtraj as md
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import chisurf.decorators
 import chisurf.gui.decorators
