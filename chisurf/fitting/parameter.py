@@ -1,7 +1,7 @@
-"""
-
-"""
 from __future__ import annotations
+
+import abc
+
 from chisurf import typing
 
 import numpy as np
@@ -16,9 +16,7 @@ import chisurf.models.model
 #parameter_settings = chisurf.settings.parameter
 
 
-class FittingParameter(
-    chisurf.parameter.Parameter
-):
+class FittingParameter(chisurf.parameter.Parameter):
 
     def __init__(
             self,
@@ -31,13 +29,6 @@ class FittingParameter(
             *args,
             **kwargs
     ):
-        """
-
-        :param model:
-        :param fixed:
-        :param args:
-        :param kwargs:
-        """
         super().__init__(
             *args,
             value=value,
@@ -53,25 +44,15 @@ class FittingParameter(
         self._values = None
 
     @property
-    def parameter_scan(
-            self
-    ) -> typing.Tuple[
-        np.array,
-        np.array
-    ]:
+    def parameter_scan(self) -> typing.Tuple[np.array, np.array]:
         return self._values, self._chi2s
 
     @parameter_scan.setter
-    def parameter_scan(
-            self,
-            v: typing.Tuple[np.array, np.array]
-    ):
+    def parameter_scan(self, v: typing.Tuple[np.array, np.array]):
         self._values, self._chi2s = v
 
     @property
-    def error_estimate(
-            self
-    ) -> float:
+    def error_estimate(self) -> float:
         if self.is_linked:
             return self._link.error_estimate
         else:
@@ -81,10 +62,7 @@ class FittingParameter(
                 return float('nan')
 
     @error_estimate.setter
-    def error_estimate(
-            self,
-            v: float
-    ):
+    def error_estimate(self, v: float):
         self._error_estimate = v
 
     def scan(
@@ -111,9 +89,7 @@ class FittingParameter(
         return s
 
 
-class GlobalFittingParameter(
-    FittingParameter
-):
+class GlobalFittingParameter(FittingParameter):
 
     @property
     def value(self) -> float:
@@ -123,10 +99,7 @@ class GlobalFittingParameter(
         return r.value
 
     @value.setter
-    def value(
-            self,
-            v: float
-    ):
+    def value(self, v: float):
         pass
 
     @property
@@ -147,43 +120,28 @@ class GlobalFittingParameter(
             formula,
             **kwargs
     ):
-        """
-
-        :param f:
-        :param g:
-        :param formula:
-        :param kwargs:
-        """
         args = [f, g, formula]
         super().__init__(*args, **kwargs)
         self.f, self.g = f, g
         self.formula = formula
 
 
-class FittingParameterGroup(
-    chisurf.parameter.ParameterGroup
-):
+class FittingParameterGroup(chisurf.parameter.ParameterGroup):
 
     @property
-    def parameter_bounds(
-            self
-    ) -> typing.List[
+    def parameter_bounds(self) -> typing.List[
         typing.Tuple[float, float]
     ]:
         return [pi.bounds for pi in self.parameters]
 
     @property
-    def parameters_all(
-            self
-    ) -> typing.List[
+    def parameters_all(self) -> typing.List[
         chisurf.fitting.parameter.FittingParameter
     ]:
         return self._parameters
 
     @property
-    def parameters(
-            self
-    ) -> typing.List[
+    def parameters(self) -> typing.List[
         chisurf.fitting.parameter.FittingParameter
     ]:
         return [
@@ -191,9 +149,7 @@ class FittingParameterGroup(
         ]
 
     @property
-    def parameters_all_dict(
-            self
-    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
+    def parameters_all_dict(self) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         return dict([(p.name, p) for p in self.parameters_all])
 
     @property
@@ -209,24 +165,18 @@ class FittingParameterGroup(
         return list(set(a))
 
     @property
-    def parameter_dict(
-            self
-    ) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
+    def parameter_dict(self) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
         re = dict()
         for p in self.parameters:
             re[p.name] = p
         return re
 
     @property
-    def parameter_names(
-            self
-    ) -> typing.List[str]:
+    def parameter_names(self) -> typing.List[str]:
         return [p.name for p in self.parameters]
 
     @property
-    def parameter_values(
-            self
-    ) -> typing.List[float]:
+    def parameter_values(self) -> typing.List[float]:
         return [p.value for p in self.parameters]
 
     @parameter_values.setter
@@ -310,6 +260,7 @@ class FittingParameterGroup(
     ):
         self._parameters.append(p)
 
+    @abc.abstractmethod
     def finalize(self):
         pass
 
@@ -340,7 +291,8 @@ class FittingParameterGroup(
             parameters: typing.List[
                 chisurf.fitting.parameter.FittingParameter
             ] = None,
-            *args, **kwargs):
+            *args, **kwargs
+    ):
         """
 
         :param fit: the fit to which the parameter group is associated to
