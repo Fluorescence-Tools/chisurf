@@ -41,9 +41,7 @@ class LifetimeMixModel(LifetimeModel):
             self._fractions[i].value = va
 
     @property
-    def lifetime_spectrum(
-            self
-    ) -> np.array:
+    def lifetime_spectrum(self) -> np.array:
         if len(self) > 0:
             fractions = self.fractions
             lifetime_spectra = [m.lifetime_spectrum for m in self.models]
