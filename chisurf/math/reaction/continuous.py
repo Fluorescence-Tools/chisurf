@@ -93,15 +93,11 @@ def stoichometry_matrix(
 class ChemicalSpecies(object):
 
     @property
-    def name(
-            self
-    ) -> str:
+    def name(self) -> str:
         return self._name
 
     @property
-    def description(
-            self
-    ) -> str:
+    def description(self) -> str:
         return self._description
 
     def __init__(
@@ -451,9 +447,7 @@ class ReactionSystem(object):
             p.show()
 
     @property
-    def species_brightness(
-            self
-    ) -> typing.List[float]:
+    def species_brightness(self) -> typing.List[float]:
         if isinstance(self._species_brightness, np.ndarray):
             return self._species_brightness
         else:
@@ -467,9 +461,7 @@ class ReactionSystem(object):
         self._species_brightness = v
 
     @property
-    def signal_intensity(
-            self
-    ) -> np.ndarray:
+    def signal_intensity(self) -> np.ndarray:
         sf = self.concentrations
         q = self.species_brightness
         return np.dot(sf, q)
