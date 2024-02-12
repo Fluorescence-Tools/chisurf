@@ -6,15 +6,19 @@ import re
 
 import numpy as np
 import pyqtgraph as pg
-from qtpy import QtWidgets
+
+from chisurf.gui import QtWidgets
 
 import chisurf.decorators
 import chisurf.curve
 import chisurf.data
+import chisurf.experiments
+import chisurf.fluorescence.tcspc
+
 import chisurf.gui.decorators
 import chisurf.gui.widgets.experiments.widgets
-import chisurf.fluorescence.tcspc
 import chisurf.gui.widgets.fio
+
 
 plot_settings = chisurf.settings.gui['plot']
 lw = plot_settings['line_width']
@@ -37,7 +41,8 @@ class HistogramTTTR(
         )
         self.curve_selector = chisurf.gui.widgets.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
-            click_close=False
+            click_close=False,
+            experiment=chisurf.experiments.types['tcspc']
         )
         self.verticalLayout_6.addWidget(self.curve_selector)
         self.plot = pg.PlotWidget()
@@ -87,8 +92,8 @@ class HistogramTTTR(
             l = lw * 0.5 if i != current_curve else 1.5 * lw
             color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
             plot.plot(x=curve.x, y=curve.y,
-                      pen=pg.mkPen(color, width=l),
-                      name=curve.name)
+                         pen=pg.mkPen(color, width=l),
+                         name=curve.name)
 
         plot.setLogMode(x=False, y=True)
         plot.showGrid(True, True, 1.0)
@@ -128,9 +133,7 @@ class TcspcTTTRWidget(
         self.spcFileWidget.actionDt_changed.triggered.connect(self.onTacDivChanged)
 
     @property
-    def nPh(
-            self
-    ) -> int:
+    def nPh(self) -> int:
         return int(self.lineEdit_5.text())
 
     @nPh.setter
@@ -138,9 +141,7 @@ class TcspcTTTRWidget(
         self.lineEdit_5.setText("%d" % v)
 
     @property
-    def div(
-            self
-    ) -> int:
+    def div(self) -> int:
         return int(
             self.comboBox.currentText()
         )
