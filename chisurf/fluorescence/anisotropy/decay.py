@@ -51,7 +51,7 @@ def vm_rt_to_vv_vh(
     >>> import chisurf.fluorescence.general
     >>> import chisurf.fluorescence.anisotropy
     >>> times = np.linspace(0, 50, 32)
-    >>> lifetime_spectrum = np.array([1., 4], dtype=np.float)
+    >>> lifetime_spectrum = np.array([1., 4], dtype=np.float64)
     >>> times, vm = chisurf.fluorescence.general.calculate_fluorescence_decay(
     ...     lifetime_spectrum=lifetime_spectrum,
     ...     time_axis=times
