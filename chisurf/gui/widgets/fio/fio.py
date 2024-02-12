@@ -58,9 +58,7 @@ class SpcFileWidget(
         self.lineEdit_7.setText("%.2f" % self.count_rate)
 
     @property
-    def measurement_time(
-            self
-    ) -> float:
+    def measurement_time(self) -> float:
         return float(self._photons.measurement_time)
 
     @measurement_time.setter
@@ -71,9 +69,7 @@ class SpcFileWidget(
         self.lineEdit_6.setText("%.1f" % v)
 
     @property
-    def number_of_photons(
-            self
-    ) -> int:
+    def number_of_photons(self) -> int:
         return int(self.lineEdit_5.value())
 
     @number_of_photons.setter
@@ -84,9 +80,7 @@ class SpcFileWidget(
         self.lineEdit_5.setText(str(v))
 
     @property
-    def rep_rate(
-            self
-    ) -> float:
+    def rep_rate(self) -> float:
         return float(self.doubleSpinBox_2.value())
 
     @rep_rate.setter
@@ -97,9 +91,7 @@ class SpcFileWidget(
         self.doubleSpinBox_2.setValue(v)
 
     @property
-    def nTAC(
-            self
-    ) -> int:
+    def nTAC(self) -> int:
         return int(self.lineEdit.text())
 
     @nTAC.setter
@@ -110,21 +102,15 @@ class SpcFileWidget(
         self.lineEdit.setText(str(v))
 
     @property
-    def count_rate(
-            self
-    ) -> float:
+    def count_rate(self) -> float:
         return self._photons.nPh / float(self._photons.measurement_time) / 1000.0
 
     @property
-    def file_type(
-            self
-    ) -> str:
+    def file_type(self) -> str:
         return "hdf"
 
     @property
-    def filename(
-            self
-    ) -> str:
+    def filename(self) -> str:
         try:
             return self.filenames[0]
         except:
@@ -159,18 +145,13 @@ class SpcFileWidget(
 
         self.lineEdit_2.setText(filenames[0])
         self.filenames = filenames
-        self._photons = chisurf.fio.fluorescence.photons.Photons(
-            filenames,
-            file_type
-        )
+        self._photons = chisurf.fio.fluorescence.photons.Photons(filenames, file_type)
         #self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
 
     @property
-    def photons(
-            self
-    ) -> chisurf.fio.fluorescence.photons.Photons:
+    def photons(self) -> chisurf.fio.fluorescence.photons.Photons:
         return self._photons
 
 
