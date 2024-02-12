@@ -1,6 +1,3 @@
-"""
-
-"""
 from __future__ import annotations
 from chisurf import typing
 
@@ -23,9 +20,7 @@ import chisurf.math.statistics
 import chisurf.math.optimization
 
 
-class Fit(
-    chisurf.base.Base
-):
+class Fit(chisurf.base.Base):
 
     def __init__(
             self,
@@ -36,13 +31,6 @@ class Fit(
             model_kw: typing.Dict = None,
             **kwargs
     ):
-        """
-
-        :param model_class:
-        :param xmin:
-        :param xmax:
-        :param kwargs:
-        """
         super().__init__(**kwargs)
         self._model = None
         self.results = None
@@ -73,51 +61,34 @@ class Fit(
         return s
 
     @property
-    def xmin(
-            self
-    ) -> int:
+    def xmin(self) -> int:
         return self._xmin
 
     @xmin.setter
-    def xmin(
-            self,
-            v: int
-    ):
+    def xmin(self, v: int):
         self._xmin = max(0, v)
 
     @property
-    def xmax(
-            self
-    ) -> int:
+    def xmax(self) -> int:
         return self._xmax
 
     @xmax.setter
-    def xmax(
-            self,
-            v: int
-    ):
+    def xmax(self, v: int):
         try:
             self._xmax = min(len(self.data.y) - 1, v)
         except AttributeError:
             self._xmax = v
 
     @property
-    def data(
-            self
-    ) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.data.DataCurve:
         return self._data
 
     @data.setter
-    def data(
-            self,
-            v: chisurf.data.DataCurve
-    ):
+    def data(self, v: chisurf.data.DataCurve):
         self._data = v
 
     @property
-    def model(
-            self
-    ) -> chisurf.models.ModelCurve:
+    def model(self) -> chisurf.models.ModelCurve:
         return self._model
 
     @model.setter
@@ -128,15 +99,10 @@ class Fit(
             ]
     ):
         if issubclass(model_class, chisurf.models.Model):
-            self._model = model_class(
-                self,
-                **self._model_kw
-            )
+            self._model = model_class(self, **self._model_kw)
 
     @property
-    def weighted_residuals(
-            self
-    ) -> chisurf.curve.Curve:
+    def weighted_residuals(self) -> chisurf.curve.Curve:
         wres_x, _ = self.model[self.xmin:self.xmax]
         wres_y = self.model.weighted_residuals
         return chisurf.curve.Curve(
@@ -155,11 +121,7 @@ class Fit(
         )
 
     @property
-    def chi2(
-            self
-    ) -> float:
-        """Unreduced Chi2
-        """
+    def chi2(self) -> float:
         return get_chi2(
             self.model.parameter_values,
             model=self.model,
@@ -167,42 +129,26 @@ class Fit(
         )
 
     @property
-    def chi2r(
-            self
-    ) -> float:
-        """Reduced Chi2
-        """
-        return get_chi2(
-            list(),
-            model=self.model
-        )
+    def chi2r(self) -> float:
+        return get_chi2(list(), model=self.model)
 
     @property
-    def name(
-            self
-    ) -> str:
+    def name(self) -> str:
         try:
-            return self.model.name + " - " + self._data.name
+            return self.model.__class__.name + " - " + self._data.name
         except AttributeError:
             return "no name"
 
     @property
-    def fit_range(
-            self
-    ) -> typing.Tuple[int, int]:
+    def fit_range(self) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(
-            self,
-            v: typing.Tuple[int, int]
-    ):
+    def fit_range(self, v: typing.Tuple[int, int]):
         self.xmin, self.xmax = v
 
     @property
-    def grad(
-            self
-    ) -> np.array:
+    def grad(self) -> np.array:
         """Get the approximate gradient at the current parameter values
         :return:
         """
@@ -214,9 +160,7 @@ class Fit(
         return grad
 
     @property
-    def covariance_matrix(
-            self
-    ) -> typing.Tuple[np.array, typing.typing.List[int]]:
+    def covariance_matrix(self) -> typing.Tuple[np.array, typing.typing.List[int]]:
         """Returns the covariance matrix of the fit given the current
         models parameter values and returns a list of the 'relevant' used
         parameters.
@@ -226,27 +170,18 @@ class Fit(
         return covariance_matrix(self)
 
     @property
-    def n_free(
-            self
-    ) -> int:
+    def n_free(self) -> int:
         """The number of free parameters of the models
         """
         return self.model.n_free
 
-    def get_curves(
-            self,
-            copy_curves: bool = False
-    ) -> typing.Dict[str, chisurf.curve.Curve]:
+    def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
         d = self.model.get_curves(
             copy_curves=copy_curves
         )
-        d.update(
-            {
-                'data': self.data,
-                'weighted residuals': self.weighted_residuals,
-                'autocorrelation': self.autocorrelation
-            }
-        )
+        d['data'] = self.data
+        d['weighted residuals'] = self.weighted_residuals
+        d['autocorrelation'] = self.autocorrelation
         return d
 
     def get_chi2(
@@ -311,11 +246,7 @@ class Fit(
                 file_type='yaml'
             )
 
-    def run(
-            self,
-            *args,
-            **kwargs
-    ) -> None:
+    def run(self, *args, **kwargs) -> None:
         fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
@@ -330,9 +261,7 @@ class Fit(
         self.model.finalize()
         self.update()
 
-    def update(
-            self
-    ) -> None:
+    def update(self) -> None:
         self.model.update()
         # Estimate errors based on gradient
         try:
@@ -358,7 +287,7 @@ class Fit(
         current value, e.g., for a value of 2.0 a rel_range of 0.5 scans
         from (2.0 - 2.0*0.5) to (2.0 + 2.0*0.5)
         :param kwargs:
-        :return: an list containing arrays of the chi2 and the parameter-values
+        :return: a list containing arrays of the chi2 and the parameter-values
         """
         parameter = self.model.parameters_all_dict[parameter_name]
         if rel_range is None:
@@ -377,33 +306,22 @@ class Fit(
         return parameter.parameter_scan
 
 
-class FitGroup(
-    Fit
-):
+class FitGroup(Fit):
 
     @property
-    def selected_fit(
-            self
-    ) -> Fit:
+    def selected_fit(self) -> Fit:
         return self.grouped_fits[self.selected_fit_index]
 
     @property
-    def selected_fit_index(
-            self
-    ) -> int:
+    def selected_fit_index(self) -> int:
         return self._selected_fit_index
 
     @selected_fit.setter
-    def selected_fit(
-            self,
-            v: int
-    ):
+    def selected_fit(self, v: int):
         self._selected_fit_index = v
 
     @property
-    def data(
-            self
-    ) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.data.DataCurve:
         return self.selected_fit.data
 
     @data.setter
@@ -414,42 +332,29 @@ class FitGroup(
         self.selected_fit.data = v
 
     @property
-    def model(
-            self
-    ) -> chisurf.models.Model:
+    def model(self) -> chisurf.models.Model:
         return self.selected_fit.model
 
     @model.setter
-    def model(
-            self,
-            v: typing.Type[chisurf.models.Model]
-    ):
+    def model(self, v: typing.Type[chisurf.models.Model]):
         self.selected_fit.model = v
 
     @property
-    def weighted_residuals(
-            self
-    ) -> chisurf.curve.Curve:
+    def weighted_residuals(self) -> chisurf.curve.Curve:
         return self.selected_fit.weighted_residuals
 
     @property
-    def chi2r(
-            self
-    ) -> float:
+    def chi2r(self) -> float:
         return self.selected_fit.chi2r
 
     @property
-    def durbin_watson(
-            self
-    ) -> float:
+    def durbin_watson(self) -> float:
         return chisurf.math.statistics.durbin_watson(
             self.weighted_residuals.y
         )
 
     @property
-    def fit_range(
-            self
-    ) -> typing.Tuple[int, int]:
+    def fit_range(self) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
@@ -462,9 +367,7 @@ class FitGroup(
         self.xmin, self.xmax = v
 
     @property
-    def xmin(
-            self
-    ) -> int:
+    def xmin(self) -> int:
         return self.selected_fit.xmin
 
     @xmin.setter
@@ -476,32 +379,29 @@ class FitGroup(
             f.xmin = v
 
     @property
-    def xmax(
-            self
-    ) -> int:
+    def xmax(self) -> int:
         return self.selected_fit.xmax
 
     @xmax.setter
-    def xmax(
-            self,
-            v: int
-    ):
+    def xmax(self, v: int):
         for f in self:
             f.xmax = v
 
-    def get_curves(
-            self,
-            copy_curves: bool = False
-    ) -> typing.Dict[str, chisurf.curve.Curve]:
-        all_curves = super().get_curves()
-        for i, f in enumerate(self.grouped_fits):
-            fit_curves = f.get_curves(
-                copy_curves=copy_curves
-            )
-            for curve_key in fit_curves:
-                new_curve_key = curve_key + "_%02d" % i
-                all_curves[new_curve_key] = fit_curves[curve_key]
-        return all_curves
+    def get_curves(self, copy_curves: bool = False, idx: int = None) -> typing.OrderedDict[str, chisurf.curve.Curve]:
+        curves = {}
+        if idx is None:
+            curves = super().get_curves()
+        else:
+            if idx >= 0:
+                fit = self.grouped_fits[idx]
+                curves = fit.get_curves()
+            else:
+                for i, f in enumerate(self.grouped_fits):
+                    fit_curves = f.get_curves(copy_curves)
+                    for curve_key in fit_curves:
+                        new_curve_key = curve_key + "_%02d" % i
+                        curves[new_curve_key] = fit_curves[curve_key]
+        return curves
 
     def save(
             self,
@@ -523,25 +423,11 @@ class FitGroup(
     def finalize(self):
         self._model.finalize()
 
-    def update(
-            self
-    ) -> None:
-        self._model.update()
+    def update(self) -> None:
         for f in self.grouped_fits:
             f.model.update()
 
-    def run(
-            self,
-            local_first: bool = None,
-            **kwargs
-    ):
-        """Optimizes the free parameters
-
-        :param local_first: if True the local parameters of a global-fit in a
-        fit group are optimized first
-        :param kwargs:
-        :return:
-        """
+    def run(self, local_first: bool = None, **kwargs):
         fit: FitGroup = self
         if local_first is None:
             local_first = chisurf.settings.optimization['global_optimize_local_first']
@@ -569,12 +455,6 @@ class FitGroup(
             model_class: typing.Type[chisurf.models.Model] = type,
             model_kw: typing.Dict = None
     ):
-        """
-
-        :param data:
-        :param model_class:
-        :param kwargs:
-        """
         self._selected_fit_index = 0
         self.grouped_fits = list()
 
@@ -630,10 +510,10 @@ class FitGroup(
             self._selected_fit_index += 1
             return self.grouped_fits[self._selected_fit_index - 1]
 
-    def __getitem__(
-            self,
-            key
-    ) -> typing.List[Fit]:
+    def __len__(self):
+        return len(self.grouped_fits)
+
+    def __getitem__(self, key) -> typing.List[Fit]:
         if isinstance(key, int):
             return self.grouped_fits.__getitem__(key)
         else:
