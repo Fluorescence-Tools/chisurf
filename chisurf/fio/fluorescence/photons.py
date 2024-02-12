@@ -249,9 +249,7 @@ class Photons(object):
         )
 
     @property
-    def photon_table(
-            self
-    ) -> tables.Table:
+    def photon_table(self) -> tables.Table:
         sample = self._h5.get_node('/' + self._sample_name_hdf_tp)
         return sample.photons
 
@@ -262,87 +260,67 @@ class Photons(object):
         return self._photon_array
 
     @property
-    def filenames(
-            self
-    ) -> typing.List[str]:
+    def filenames(self) -> typing.List[str]:
         """
         Original filename of the data
         """
         return self._filenames
 
     @property
-    def measurement_time(
-            self
-    ) -> float:
+    def measurement_time(self) -> float:
         """
         Total measurement time in seconds?
         """
         return self.macro_times[-1] * self.mt_clk
 
     @property
-    def dt(
-            self
-    ) -> float:
+    def dt(self) -> float:
         """
         The micro-time calibration
         """
         return self.mt_clk / self.n_tac
 
     @property
-    def shape(
-            self
-    ) -> typing.Tuple[int]:
+    def shape(self) -> typing.Tuple[int]:
         return self.routing_channels.shape
 
     @property
-    def nPh(
-            self
-    ) -> int:
+    def nPh(self) -> int:
         """
         Total number of photons
         """
         return self.routing_channels.shape[0]
 
     @property
-    def routing_channels(
-            self
-    ) -> np.array:
+    def routing_channels(self) -> np.array:
         """
         Array containing the routing channel of the photons
         """
         return self.photon_array['ROUT']
 
     @property
-    def micro_times(
-            self
-    ) -> np.array:
+    def micro_times(self) -> np.array:
         """
         Array containing the micro-time clock counts (TAC) of the photons
         """
         return self.photon_array['TAC']
 
     @property
-    def event_types(
-            self
-    ) -> np.array:
+    def event_types(self) -> np.array:
         """
         Array containing the event types
         """
         return self.photon_array['EVENT']
 
     @property
-    def macro_times(
-            self
-    ) -> np.array:
+    def macro_times(self) -> np.array:
         """
         Array containing the macros-time clock counts of the photons
         """
         return self.photon_array['MT']
 
     @property
-    def n_tac(
-            self
-    ) -> int:
+    def n_tac(self) -> int:
         """
         Number of TAC channels
         """
@@ -350,9 +328,7 @@ class Photons(object):
         return sample.header[0]['nTAC']
 
     @property
-    def mt_clk(
-            self
-    ) -> float:
+    def mt_clk(self) -> float:
         """
         Macro-time clock of the data (time between the macrotime events
         in milli-seconds)
