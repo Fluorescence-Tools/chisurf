@@ -177,17 +177,15 @@ class Base(object):
 
     @property
     def name(self) -> str:
-        try:
-            name = self.__dict__['name']
-            return name() if callable(name) else name
-        except (KeyError, AttributeError):
-            return self.__class__.__name__
+        # try:
+        name = self.__dict__.get('name', self.__class__.name)
+        name = name() if callable(name) else name
+        return name
+        # except (KeyError, AttributeError):
+        #     return self.__class__.__name__
 
     @name.setter
-    def name(
-            self,
-            v: str
-    ):
+    def name(self, v: str):
         self.__dict__['name'] = v
 
     @property
@@ -283,10 +281,13 @@ class Base(object):
             d = dict()
             for key in self.__dict__:
                 if key[0] != '_':
-                    if copy_values:
-                        d[key] = copy.copy(self.__dict__[key])
-                    else:
-                        d[key] = self.__dict__[key]
+                    try:
+                        if copy_values:
+                            d[key] = copy.copy(self.__dict__[key])
+                        else:
+                            d[key] = self.__dict__[key]
+                    except TypeError:
+                        chisurf.logging.warning(f"Skipping element {key}")
         else:
             if copy_values:
                 d = copy.copy(self.__dict__)
@@ -508,9 +509,7 @@ class Base(object):
         kwargs.update(d)
         self.__dict__.update(**kwargs)
 
-    def __copy__(
-            self
-    ) -> typing.Type[Base]:
+    def __copy__(self) -> typing.Type[Base]:
         c = self.__class__()
         c.from_dict(
             copy.copy(
@@ -534,7 +533,6 @@ class Base(object):
 
 
 class Data(Base):
-
     def __init__(
             self,
             filename: str = "None",
@@ -568,24 +566,17 @@ class Data(Base):
         self.filename = filename
 
     @property
-    def embed_data(
-            self
-    ) -> bool:
+    def embed_data(self) -> bool:
         return self._embed_data
 
     @embed_data.setter
-    def embed_data(
-            self,
-            v: bool
-    ) -> None:
+    def embed_data(self, v: bool) -> None:
         self._embed_data = v
         if v is False:
             self._data = None
 
     @property
-    def data(
-            self
-    ) -> bytes:
+    def data(self) -> bytes:
         return self._data
 
     @data.setter
@@ -603,10 +594,7 @@ class Data(Base):
             return self.filename
 
     @name.setter
-    def name(
-            self,
-            v: str
-    ):
+    def name(self, v: str):
         self.__dict__['name'] = v
 
     @property
