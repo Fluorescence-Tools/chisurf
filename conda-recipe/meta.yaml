@@ -52,6 +52,7 @@ requirements:
     - matplotlib
     - deprecation
     - scikit-fluorescence
+    - imp
     - typing_extensions 4.5.*
     - typing_utils 0.1.*
     - scipy 1.11.*
