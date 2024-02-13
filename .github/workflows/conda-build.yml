@@ -42,8 +42,9 @@ jobs:
           printenv | sort
 
       - name: Build Conda Package
-        uses: coactions/setup-xvfb@v1
+        uses: aganders3/headless-gui@v1
         with:
+          shell: bash -el {0}
           run: |
             conda config --add channels tpeulen
             mamba install conda-build boa
