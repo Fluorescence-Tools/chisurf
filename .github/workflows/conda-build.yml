@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - development
+  release:
+    types: ['released', 'prereleased']
   schedule:
     # Every Monday at 11PM UTC
     - cron: "0 11 * * 1"
@@ -55,4 +57,9 @@ jobs:
             # curl -sLO  https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/084b098a28a7a66e9a0967d156bc55b9ebfc6726/recipe/conda_build_config.yaml
             # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
             conda mambabuild .
-  
+
+      - name: Upload Conda Package
+        if: github.event_name == 'release' && github.event.action == 'created'
+        shell: bash -el {0}
+        run: |
+          anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
