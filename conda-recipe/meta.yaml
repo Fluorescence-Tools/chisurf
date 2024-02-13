@@ -46,7 +46,7 @@ requirements:
     - pyqt
   run:
     - python
-    - numpy <=1.23
+    - {{ pin_compatible('numpy') }}
     - pyyaml
     - pyqtgraph
     - matplotlib
