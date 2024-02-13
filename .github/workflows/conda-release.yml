@@ -45,6 +45,7 @@ jobs:
           printenv | sort
 
       - name: Build Conda Package
+        uses: coactions/setup-xvfb@v1
         shell: bash -el {0}
         run: |
           mamba install conda-build boa anaconda-client
