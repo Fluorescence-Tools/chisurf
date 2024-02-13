@@ -67,6 +67,8 @@ requirements:
     - pytools 2023.*
     - emcee 3.1.*
     - pyopengl 3.1.*
+    - pocl  >=0.14      # [linux or osx]
+    - oclgrind          # [win]
     - pymol-open-source 2.5.*
     - tttrconvert
     - qscintilla2
