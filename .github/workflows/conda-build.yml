@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - development
+  schedule:
+    # Every Monday at 11PM UTC
+    - cron: "0 11 * * 1"
 
 jobs:
   build-linux:
