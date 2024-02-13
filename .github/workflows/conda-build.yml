@@ -23,10 +23,6 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: build_tools/install_macos_sdk.sh
 
-      - name: Setup xvfb for screen 0
-        if: startsWith(matrix.os, 'ubuntu')
-        run: Xvfb :1 -screen 0 1600x1200x24 &
-
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -46,9 +42,8 @@ jobs:
           printenv | sort
 
       - name: Build Conda Package
+        uses: coactions/setup-xvfb@v1
         shell: bash -el {0}
-        env:
-          DISPLAY: :1
         run: |
           conda config --add channels tpeulen
           mamba install conda-build boa
@@ -57,6 +52,3 @@ jobs:
           # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
           conda mambabuild .
 
-      - name: Tear down xvfb
-        if: startsWith(matrix.os, 'ubuntu')
-        run: killall Xvfb
