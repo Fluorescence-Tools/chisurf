@@ -53,6 +53,7 @@ jobs:
             conda config --add channels tpeulen
             cd conda-recipe
             conda mambabuild . --output-folder ../conda-bld
+            cd ..
 
       - name: Upload Conda Package
         shell: bash -el {0}
