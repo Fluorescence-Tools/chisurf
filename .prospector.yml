@@ -9,7 +9,7 @@ pep8:
     disable:
       - N803 # argument name should be lowercase
       - N806 # variable in function should be lowercase
-      - N812 # lowercase imported as non lowercase
+      - N812 # lowercase imported as non-lowercase
 
 pylint:
     run: true
