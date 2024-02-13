@@ -76,6 +76,12 @@ requirements:
     - ndxplorer
     - clsmview
 
+test:
+  imports:
+    - chisurf
+  commands:
+    - chisurf
+
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
   license: {{ data.get('license') }}

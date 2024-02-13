@@ -22,6 +22,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: "Set SDK on MacOS (if needed)"
+        if: startsWith(matrix.os, 'macos')
+        run: build_tools/install_macos_sdk.sh
+
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
         with:
