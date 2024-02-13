@@ -60,7 +60,6 @@ jobs:
 
       - name: Upload Conda Package
         if: github.event_name == 'release' && github.event.action == 'created'
-        with:
-          shell: bash -el {0}
-          run: |
-            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
+        shell: bash -el {0}
+        run: |
+          anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
