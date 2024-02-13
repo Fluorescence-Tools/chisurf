@@ -79,11 +79,15 @@ requirements:
     - ndxplorer
     - clsmview
 
+app:
+  entry: chisurf
+  summary: ChiSurf analysis platform for fluorescence data
+
 test:
   imports:
     - chisurf
   commands:
-    - chisurf
+    - chisurf &
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
