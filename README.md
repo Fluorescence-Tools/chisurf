@@ -1,4 +1,3 @@
-[![Anaconda-Server Badge](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/fluorescence-tools/chisurf)
 ![conda build](https://github.com/fluorescence-tools/chisurf/actions/workflows/conda-build.yml/badge.svg)
 [![Anaconda-Server Version](https://anaconda.org/tpeulen/chisurf/badges/version.svg)](https://anaconda.org/tpeulen/chisurf)
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
