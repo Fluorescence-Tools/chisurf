@@ -46,15 +46,16 @@ jobs:
 
       - name: Build Conda Package
         uses: coactions/setup-xvfb@v1
-        shell: bash -el {0}
-        run: |
-          mamba install conda-build boa anaconda-client
-          conda config --add channels tpeulen
-          cd conda-recipe
-          # Use older conda_build_config -> boost-cpp 1.78
-          # curl -sLO  https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/084b098a28a7a66e9a0967d156bc55b9ebfc6726/recipe/conda_build_config.yaml
-          # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
-          conda mambabuild . --output-folder ../conda-bld
+        with:
+          shell: bash -el {0}
+          run: |
+            mamba install conda-build boa anaconda-client
+            conda config --add channels tpeulen
+            cd conda-recipe
+            # Use older conda_build_config -> boost-cpp 1.78
+            # curl -sLO  https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/084b098a28a7a66e9a0967d156bc55b9ebfc6726/recipe/conda_build_config.yaml
+            # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
+            conda mambabuild . --output-folder ../conda-bld
 
       - name: Upload Conda Package
         shell: bash -el {0}
