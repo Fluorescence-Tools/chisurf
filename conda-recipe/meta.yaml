@@ -52,6 +52,7 @@ requirements:
     - matplotlib
     - deprecation
     - scikit-fluorescence
+    - imp
     - typing_extensions 4.5.*
     - typing_utils 0.1.*
     - scipy 1.11.*
@@ -67,6 +68,8 @@ requirements:
     - pytools 2023.*
     - emcee 3.1.*
     - pyopengl 3.1.*
+    - pocl  >=0.14      # [linux or osx]
+    - oclgrind          # [win]
     - pymol-open-source 2.5.*
     - tttrconvert
     - qscintilla2
@@ -75,6 +78,16 @@ requirements:
     - qtconsole 5.*
     - ndxplorer
     - clsmview
+
+app:
+  entry: chisurf
+  summary: ChiSurf analysis platform for fluorescence data
+
+test:
+  imports:
+    - chisurf
+  commands:
+    - chisurf &        # [linux or osx]
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
