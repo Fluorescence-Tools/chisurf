@@ -1,18 +1,16 @@
-name: Conda Build
+
+name: Build and Upload Conda Packages
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - development
+#  push:
+#    branches:
+#      - develop
   release:
     types: ['released', 'prereleased']
-  schedule:
-    # Every Monday at 11PM UTC
-    - cron: "0 11 * * 1"
 
 jobs:
-  build-linux:
+  build:
     name: CondaBuild (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -51,9 +49,13 @@ jobs:
         with:
           shell: bash -el {0}
           run: |
+            mamba install conda-build boa anaconda-client
             conda config --add channels tpeulen
-            mamba install conda-build boa
             cd conda-recipe
-            # curl -sLO  https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/084b098a28a7a66e9a0967d156bc55b9ebfc6726/recipe/conda_build_config.yaml
-            # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
-            conda mambabuild .
+            conda mambabuild . --output-folder ../conda-bld
+
+      - name: Upload Conda Package
+        shell: bash -el {0}
+        run: |
+          anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
+
