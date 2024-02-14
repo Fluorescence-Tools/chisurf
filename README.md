@@ -80,7 +80,14 @@ install `chisurf` using `conda`/`mamba`:
 ```bash
 conda create -n chisurf
 conda activate chisurf
-conda install chisurf -c tpeulen
+mamba install chisurf -c tpeulen
+```
+
+To start using the software activate the `chisurf` environment and start the ChiSurf GUI:
+
+```bash
+conda activate chisurf
+chisurf
 ```
 
 ### Windows & macOS
