@@ -44,19 +44,13 @@ jobs:
           conda config --show
           printenv | sort
 
-      - name: Build Conda Package
+      - name: Build and Upload Conda Package
         uses: aganders3/headless-gui@v1
         with:
           shell: bash -el {0}
           run: |
             mamba install conda-build boa anaconda-client
-            conda config --add channels tpeulen
             cd conda-recipe
-            conda mambabuild . --output-folder ../conda-bld
-            cd ..
-
-      - name: Upload Conda Package
-        shell: bash -el {0}
-        run: |
-          anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
-
+            # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
+            conda mambabuild . --output-folder conda-bld -c tpeulen
+            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
