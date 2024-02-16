@@ -19,10 +19,7 @@ try:
     else:
         import typing_extensions as typing
 except ModuleNotFoundError:
-    print(
-        "WARNING typing_extensions not found",
-        file=sys.stderr
-    )
+    print("WARNING typing_extensions not found", file=sys.stderr)
     typing = None
 
 import chisurf.settings
