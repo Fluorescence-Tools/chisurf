@@ -239,11 +239,13 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         )
         tmeas_bg_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
-            label_text='t<sub>Bg</sub>'
+            label_text='t<sub>Bg</sub>',
+            suffix='s'
         )
         tmeas_exp_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
-            label_text='t<sub>Meas</sub>'
+            label_text='t<sub>Meas</sub>',
+            suffix='s'
         )
 
         layout = QtWidgets.QGridLayout()

@@ -345,7 +345,8 @@ class FittingParameterWidget(Controller):
             hide_bounds: bool = None,
             name: str = None,
             label_text: str = None,
-            hide_link: bool = None
+            hide_link: bool = None,
+            suffix: str = ""
     ):
         if hide_link is None:
             hide_link = parameter_settings['hide_link']
@@ -370,7 +371,8 @@ class FittingParameterWidget(Controller):
 
         self.widget_value = pg.SpinBox(
             dec=True,
-            decimals=decimals
+            decimals=decimals,
+            suffix=suffix
         )
         self.horizontalLayout.addWidget(self.widget_value)
 
@@ -570,7 +572,8 @@ def make_fitting_parameter_widget(
         fixable: bool = None,
         hide_bounds: bool = None,
         name: str = None,
-        hide_link: bool = None
+        hide_link: bool = None,
+        suffix: str = ""
 ) -> FittingParameterWidget:
     if label_text is None:
         if fitting_parameter.label_text is None:
@@ -587,7 +590,8 @@ def make_fitting_parameter_widget(
         hide_bounds=hide_bounds,
         name=name,
         hide_link=hide_link,
-        label_text=label_text
+        label_text=label_text,
+        suffix=suffix
     )
     fitting_parameter.controller = widget
     return widget
