@@ -311,11 +311,11 @@ class LifetimeModel(ModelCurve):
             decay *= self.generic.n_ph_fl
             decay += bg_y
 
+        self.corrections.pileup(decay)
         self.convolve.scale(
             decay,
             bg=self.generic.background
         )
-        self.corrections.pileup(decay)
         decay += background
         decay = self.corrections.linearize(decay)
         self.y = np.maximum(decay, 0)
