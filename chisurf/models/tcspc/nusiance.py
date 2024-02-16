@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import scipy.stats
 
 import chisurf.data
 import chisurf.experiments
@@ -113,7 +114,12 @@ class Generic(FittingParameterGroup):
             name: str = 'Nuisance',
             **kwargs
     ):
+        """
 
+        :param background_curve:
+        :param name:
+        :param kwargs:
+        """
         super().__init__(
             name=name,
             **kwargs
@@ -140,6 +146,9 @@ class Generic(FittingParameterGroup):
 
 
 class Corrections(FittingParameterGroup):
+    """
+
+    """
 
     @property
     def lintable(self) -> np.array:
@@ -172,7 +181,10 @@ class Corrections(FittingParameterGroup):
         return self._window_function
 
     @window_function.setter
-    def window_function(self, v: str):
+    def window_function(
+            self,
+            v: str
+    ):
         self._window_function = v
         self._lintable = self.calc_lintable(self._curve.y)
 
@@ -181,7 +193,10 @@ class Corrections(FittingParameterGroup):
         return self._reverse
 
     @reverse.setter
-    def reverse(self, v: bool):
+    def reverse(
+            self,
+            v: bool
+    ):
         self._reverse = v
 
     def calc_lintable(
@@ -192,6 +207,15 @@ class Corrections(FittingParameterGroup):
             window_function: str = None,
             window_length: int = None
     ):
+        """
+
+        :param y:
+        :param xmin:
+        :param xmax:
+        :param window_function:
+        :param window_length:
+        :return:
+        """
         if xmin is None:
             xmin = self.fit.xmin
         if xmax is None:
@@ -216,7 +240,10 @@ class Corrections(FittingParameterGroup):
             return 1.0
 
     @measurement_time.setter
-    def measurement_time(self, v: float):
+    def measurement_time(
+            self,
+            v: float
+    ):
         self.fit.model.generic.t_exp = v
 
     @property
@@ -227,7 +254,10 @@ class Corrections(FittingParameterGroup):
             return 1.0
 
     @rep_rate.setter
-    def rep_rate(self, v: float):
+    def rep_rate(
+            self,
+            v: float
+    ):
         self.fit.model.convolve.rep_rate = v
 
     @property
@@ -235,7 +265,10 @@ class Corrections(FittingParameterGroup):
         return self._dead_time.value
 
     @dead_time.setter
-    def dead_time(self, v: float):
+    def dead_time(
+            self,
+            v: float
+    ):
         self._dead_time.value = v
 
     def pileup(self, decay: np.array, **kwargs):
