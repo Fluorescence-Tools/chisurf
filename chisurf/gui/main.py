@@ -694,7 +694,7 @@ class Main(QtWidgets.QMainWindow):
         self.lifetime_calc = chisurf.gui.tools.fret.calculator.tau2r.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
+        self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.k2dgui.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         self.ndxplorer = ndxplorer.NDXplorer()
