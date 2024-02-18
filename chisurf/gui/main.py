@@ -16,9 +16,6 @@ from chisurf import typing
 import numpy as np
 from chisurf.gui import QtWidgets, QtGui, QtCore, uic
 
-import ndxplorer
-import clsmview.clsm_pixel_select
-
 import chisurf
 import chisurf.decorators
 import chisurf.base
@@ -32,6 +29,9 @@ import chisurf.models
 import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
+
+import ndxplorer
+import clsmview.gui
 
 
 class Main(QtWidgets.QMainWindow):
@@ -713,7 +713,7 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_histogram = chisurf.gui.tools.tttr.histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
-        self.clsm_pixel_select = clsmview.clsm_pixel_select.CLSMPixelSelect()
+        self.clsm_pixel_select = clsmview.gui.CLSMPixelSelect()
         self.actionTTTR_CLSM.triggered.connect(self.clsm_pixel_select.show)
 
         ##########################################################
