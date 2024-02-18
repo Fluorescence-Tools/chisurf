@@ -119,4 +119,4 @@ energy transfer: implications of dye linker length and rigidity. J Am Chem Soc. 
 4. Kalinin S, Peulen T, Sindbert S, et al. A toolkit and benchmark study for FRET-restrained high-precision structural
 modeling. Nat Methods. 2012;9(12):1218-1225.
 
-[1]: /docs/user_documentation/figures/chisurf/chisurf_gui.png "ChiSurf GUI"
+[1]: https://www.peulen.xyz/wp-content/uploads/2017/05/ChiSurf_Overview-768x451.png "ChiSurf GUI"
