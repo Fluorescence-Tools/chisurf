@@ -1,3 +1,4 @@
+import sys
 import json
 import os.path
 import pathlib
@@ -453,7 +454,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.actionRemove_Lifetime.triggered.connect(self.wizardPageComponents.completeChanged.emit)
         self.actionRemove_Rotation.triggered.connect(self.wizardPageComponents.completeChanged.emit)
 
-    @chisurf.gui.decorators.init_with_ui("anisotropy/tttr_photon_filter.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("anisotropy/wizard.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         self.irf_bg_range_plot = pg.PlotWidget()
         self.region = pg.LinearRegionItem()
@@ -475,6 +476,13 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.connect_actions()
 
 
-if __name__ == '__main__':
+if __name__ == "plugin":
     wizard = ChisurfWizard()
     wizard.show()
+
+if __name__ == '__main__':
+    app = QtWidgets.QApplication(sys.argv)
+    wizard = ChisurfWizard()
+    wizard.show()
+    sys.exit(app.exec_())
+
