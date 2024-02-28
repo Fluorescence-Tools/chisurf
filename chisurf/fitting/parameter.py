@@ -107,10 +107,7 @@ class GlobalFittingParameter(FittingParameter):
         return self.formula
 
     @name.setter
-    def name(
-            self,
-            v: str
-    ):
+    def name(self, v: str):
         pass
 
     def __init__(
