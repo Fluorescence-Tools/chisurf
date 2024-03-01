@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+import pathlib
+
 from chisurf import typing
 import os
 
@@ -24,15 +27,10 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             return "Untitled"
 
     def get_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
-        data_curves = self.get_data_sets(
-            curve_type=self.curve_type
-        )
+        data_curves = self.get_data_sets(curve_type=self.curve_type)
         if self.experiment is not None:
             dv = [
-                d for d in data_curves if isinstance(
-                    d.experiment,
-                    self.experiment
-                )
+                d for d in data_curves if isinstance(d.experiment, self.experiment)
             ]
             return dv
         else:
@@ -136,20 +134,22 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             self.setWindowTitle("")
         self.clear()
 
-        for d in self.datasets:
+        for nbr, d in enumerate(self.datasets):
             fn = d.name
-            widget_name = os.path.basename(fn)
-            item = QtWidgets.QTreeWidgetItem(self, [widget_name])
-            item.setToolTip(0, fn)
+            widget_name = pathlib.Path(fn).name
+            experiment_type = d.experiment.name
+            item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
+            item.setToolTip(1, fn)
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
             # If group of curves
             if isinstance(d, chisurf.data.ExperimentDataGroup):
                 for di in d:
                     fn = di.name
+                    experiment_type = d.experiment.name
                     widget_name = os.path.basename(fn)
-                    i2 = QtWidgets.QTreeWidgetItem(item, [widget_name])
-                    i2.setToolTip(0, fn)
+                    i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
+                    i2.setToolTip(1, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
         # update other instances
@@ -176,7 +176,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            command = "\n".join(["chisurf.macros.add_dataset(filename='%s')" % p for p in paths])
+            command = "\n".join([f"chisurf.macros.add_dataset(filename='{p}')" for p in paths])
             print(command)
             chisurf.run(command)
             event.acceptProposedAction()
@@ -187,7 +187,18 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     def onItemChanged(self):
         if self.selected_datasets:
             ds = self.selected_datasets[0]
-            ds.name = str(self.currentItem().text(0))
+
+            # Find the index of the selected dataset
+            index_of_ds = chisurf.imported_datasets.index(ds)
+
+            # Remove "c" from its current position
+            chisurf.imported_datasets.pop(index_of_ds)
+
+            # Insert "c" at position 1
+            idx_new = int(self.currentItem().text(0))
+            chisurf.imported_datasets.insert(idx_new, ds)
+
+            ds.name = str(self.currentItem().text(1))
             self.update(update_others=True)
 
     def change_event(self):
@@ -235,7 +246,6 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         super().__init__(parent)
         self.setWindowIcon(icon)
         self.setWordWrap(True)
-        self.setHeaderHidden(True)
         self.setAlternatingRowColors(True)
 
         if drag_enabled:
@@ -250,17 +260,23 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.clicked.connect(self.onCurveChanged)
         self.itemChanged.connect(self.onItemChanged)
 
+        self.setHeaderHidden(False)
+        self.setColumnCount(3)
+        self.setHeaderLabels(('#', 'Name', 'Data type'))
+        header = self.header()
 
-class FCSController(
-    reader.ExperimentReaderController,
-    QtWidgets.QWidget
-):
+        # Set resize mode for the first and third columns
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
 
-    def get_filename(self) -> str:
-        return chisurf.gui.widgets.get_filename(
-                'FCS-CSV files',
-                file_type=self.file_type
-            )
+        header.setSectionsClickable(True)
+
+
+class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
+
+    def get_filename(self) -> pathlib.Path:
+        return chisurf.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
 
     def __init__(
             self,
