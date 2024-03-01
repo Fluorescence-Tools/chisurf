@@ -22,9 +22,12 @@ import chisurf.base
 import chisurf.fio
 import chisurf.experiments
 import chisurf.macros
+
 import chisurf.gui.tools
 import chisurf.gui.widgets
+import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments.modelling
+
 import chisurf.models
 import chisurf.plugins
 import chisurf.fitting
@@ -262,14 +265,10 @@ class Main(QtWidgets.QMainWindow):
             model_idx
         ]
 
-    def onAddFit(self):
-        chisurf.run(
-            "chisurf.macros.add_fit(model_name='%s', dataset_indices=%s)" %
-            (
-                self.current_model_name,
-                [r.row() for r in self.dataset_selector.selectedIndexes()]
-            )
-        )
+    def onAddFit(self, *args, data_idx: typing.List[int] = None):
+        if data_idx is None:
+            data_idx = [r.row() for r in self.dataset_selector.selectedIndexes()[::3]]
+        chisurf.run(f"chisurf.macros.add_fit(model_name='{self.current_model_name}', dataset_indices={data_idx})")
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
@@ -559,6 +558,10 @@ class Main(QtWidgets.QMainWindow):
             drag_enabled=True,
             experiment=None
         )
+
+        # widget listing the existing fits
+        self.fit_list_widget = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
+
         self.about = uic.loadUi(pathlib.Path(__file__).parent / "about.ui")
 
         self.status = chisurf.gui.widgets.QtWidgets.QStatusBar(self)
@@ -592,7 +595,10 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
         self.editor = chisurf.gui.tools.code_editor.CodeEditor()
+
         self.verticalLayout_10.addWidget(self.editor)
+
+        # Add data selector widget
         self.verticalLayout_8.addWidget(self.dataset_selector)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
