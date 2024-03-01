@@ -75,10 +75,7 @@ class Main(QtWidgets.QMainWindow):
         return self._current_dataset
 
     @current_dataset.setter
-    def current_dataset(
-            self,
-            dataset_index: int
-    ):
+    def current_dataset(self, dataset_index: int):
         self.dataset_selector.selected_curve_index = dataset_index
 
     @property
@@ -545,15 +542,7 @@ class Main(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "gui.ui"
-            ),
-            self
-        )
+        uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
 
         self.current_fit_widget = None
         self._current_fit = None
@@ -570,9 +559,7 @@ class Main(QtWidgets.QMainWindow):
             drag_enabled=True,
             experiment=None
         )
-        self.about = uic.loadUi(
-            pathlib.Path(__file__).parent / "about.ui"
-        )
+        self.about = uic.loadUi(pathlib.Path(__file__).parent / "about.ui")
 
         self.status = chisurf.gui.widgets.QtWidgets.QStatusBar(self)
         self.setStatusBar(self.status)
