@@ -99,7 +99,7 @@ def rescale_w_bg(
     return scale
 
 
-@nb.jit(nopython=True, nogil=True)
+@nb.jit (nopython=True, nogil=True)
 def pddem(
         decayA: np.ndarray,
         decayB: np.ndarray,
@@ -132,9 +132,10 @@ def pddem(
     :return:
     """
     #return _tcspc.pddem(decayA, decayB, k, px, pm, pAB)
+    eps = 1e-9
 
-    nA = decayA.shape[0] / 2
-    nB = decayB.shape[0] / 2
+    nA = decayA.shape[0] // 2
+    nB = decayB.shape[0] // 2
 
     kAB, kBA = k[0], k[1]
     pxA, pxB = px[0], px[1]
@@ -177,13 +178,13 @@ def pddem(
             l2 = l1 - root
 
             ci = (pmA * (pxA * (-l2 - itauA - kAB) + pxB * kBA) + pmB * (pxA * kAB + pxB * (-l2 - itauB - kBA)))
-            ci *= piAB * cA * cB / (l1 - l2)
+            ci *= piAB * cA * cB / (l1 - l2 + eps)
             if abs(ci) > 1e-10:
                 c[n] = ci
                 tau[n] = -1 / l1
                 n += 1
             ci = (pmA * (pxA * (l1 + itauA + kAB) - pxB * kBA) + pmB * (-pxA * kAB + pxB * (l1 + itauB + kBA)))
-            ci *= piAB * cA * cB / (l1 - l2)
+            ci *= piAB * cA * cB / (l1 - l2 + eps)
             if abs(ci) > 1e-10:
                 c[n] = ci
                 tau[n] = -1 / l2
