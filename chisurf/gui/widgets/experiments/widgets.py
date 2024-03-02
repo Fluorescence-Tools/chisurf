@@ -73,6 +73,10 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         # select current curve and change its name
         pass
 
+    def selectedIndexes(self) -> typing.List[QtCore.QModelIndex]:
+        idx = super().selectedIndexes()[::3]
+        return idx
+
     def onRemoveDataset(self):
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
@@ -262,7 +266,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
         self.setHeaderHidden(False)
         self.setColumnCount(3)
-        self.setHeaderLabels(('#', 'Name', 'Data type'))
+        self.setHeaderLabels(('#', 'Data name', 'Data type'))
         header = self.header()
 
         # Set resize mode for the first and third columns

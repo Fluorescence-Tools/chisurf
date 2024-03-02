@@ -267,7 +267,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onAddFit(self, *args, data_idx: typing.List[int] = None):
         if data_idx is None:
-            data_idx = [r.row() for r in self.dataset_selector.selectedIndexes()[::3]]
+            data_idx = [r.row() for r in self.dataset_selector.selectedIndexes()]
         chisurf.run(f"chisurf.macros.add_fit(model_name='{self.current_model_name}', dataset_indices={data_idx})")
 
     def onExperimentChanged(self):
@@ -560,12 +560,17 @@ class Main(QtWidgets.QMainWindow):
         )
 
         # widget listing the existing fits
-        self.fit_list_widget = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
+        self.fit_selector = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
 
         self.about = uic.loadUi(pathlib.Path(__file__).parent / "about.ui")
 
         self.status = chisurf.gui.widgets.QtWidgets.QStatusBar(self)
         self.setStatusBar(self.status)
+
+    def update(self):
+        super().update()
+        self.fit_selector.update()
+        self.dataset_selector.update()
 
     def arrange_widgets(self):
         # self.setCentralWidget(self.mdiarea)
@@ -600,6 +605,9 @@ class Main(QtWidgets.QMainWindow):
 
         # Add data selector widget
         self.verticalLayout_8.addWidget(self.dataset_selector)
+
+        # Add fit selector widget
+        self.verticalLayout_5.addWidget(self.fit_selector)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
         self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
