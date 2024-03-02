@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import abc
+import pathlib
+
 from chisurf import typing
 
 import chisurf.base
@@ -72,5 +74,5 @@ class ExperimentReaderController(chisurf.base.Base):
         pass
 
     @abc.abstractmethod
-    def get_filename(self) -> str:
+    def get_filename(self) -> pathlib.Path:
         pass
