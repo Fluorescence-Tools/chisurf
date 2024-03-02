@@ -262,7 +262,8 @@ class Gaussians(FittingParameterGroup):
         )
         s = FittingParameter(
             name='s(%s,%i)' % (self.short, n + 1),
-            value=sigma
+            value=sigma,
+            fixed=True
         )
         shape = FittingParameter(
             name='k(%s,%i)' % (self.short, n + 1),
