@@ -998,6 +998,7 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
 
     def append(self, *args, **kwargs):
         super().append(50.0,6.0,1.0,)
+
         gb = QtWidgets.QGroupBox()
         n_gauss = len(self)
         gb.setTitle('G%i' % n_gauss)
@@ -1049,12 +1050,16 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         )
 
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setAlignment(QtCore.Qt.AlignTop)
 
         self.gb = QtWidgets.QGroupBox()
         self.layout.addWidget(self.gb)
         self.gb.setTitle("FRET-rates")
         self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setSpacing(0)
+        self.lh.setContentsMargins(0, 0, 0, 0)
         self.gb.setLayout(self.lh)
 
         self._gb = list()
@@ -1080,70 +1085,52 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         self.append(1.0, 50.0, False)
 
     def onAddFRETrate(self):
-        t = f"""for f in cs.current_fit:
-                f.model.{self.name}.append()
-        """
-        chisurf.run(t)
+        chisurf.run(
+            f"for f in cs.current_fit:\n"\
+            f"   f.model.{self.name}.append()\n"\
+            f"   f.model.update()"
+        )
 
     def onRemoveFRETrate(self):
-        t = f"""for f in cs.current_fit:
-                f.model.{self.name}.pop()
-            """
-        chisurf.run(t)
+        chisurf.run(
+            f"for f in cs.current_fit:\n"\
+            f"   f.model.{self.name}.pop()\n"\
+            f"   f.model.update()"
+        )
 
-    def append(self, x: float = None, distance: float = None, update: bool = True):
-        x = 1.0 if x is None else x
-        m = 50.0 if distance is None else distance
+    def append(self, *args, **kwargs):
+        super().append(50., 1.0)
+
         gb = QtWidgets.QGroupBox()
         n_rates = len(self)
-        gb.setTitle('G%i' % (n_rates + 1))
+        gb.setTitle('%i' % (n_rates + 1))
+
         layout = QtWidgets.QVBoxLayout()
-        pm = chisurf.fitting.parameter.FittingParameter(
-            name='R(%s,%i)' % (self.short, n_rates + 1),
-            value=m,
-            model=self.model,
-            decimals=1,
-            bounds_on=False,
-            lb=chisurf.settings.fret['rda_min'],
-            ub=chisurf.settings.fret['rda_max'],
-            text='R',
-            update_function=self.update
-        )
-        px = chisurf.fitting.parameter.FittingParameter(
-            name='x(%s,%i)' % (self.short, n_rates + 1),
-            value=x,
-            model=self.model,
-            decimals=3,
-            bounds_on=False,
-            text='x',
-            update_function=self.update
-        )
-        m = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            pm,
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._distances[-1],
             layout=layout
         )
-        x = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            px,
+        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._amplitudes[-1],
             layout=layout
         )
 
         gb.setLayout(layout)
-        row = n_rates // 2
-        col = n_rates % 2
+        row = (n_rates - 1) // 2 + 1
+        col = (n_rates - 1) % 2
         self.grid_layout.addWidget(gb, row, col)
         self._gb.append(gb)
-        self._distances.append(m)
-        self._amplitudes.append(x)
-        chisurf.run("cs.current_fit.update()")
 
     def pop(self):
-        self._distances.pop().close()
-        self._amplitudes.pop().close()
+        super().pop()
         self._gb.pop().close()
-        chisurf.run("cs.current_fit.update()")
 
 
-class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
+class GaussianModelWidget(
+    fret.GaussianModel, LifetimeModelWidgetBase):
 
     plot_classes = [
         (
@@ -1211,13 +1198,13 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
             fit: chisurf.fitting.fit.Fit,
             **kwargs
     ):
-        donor = LifetimeWidget(
+        self.donor = LifetimeWidget(
             parent=self,
             model=self,
             title='Donor(0)'
         )
-        fret_rates = DiscreteDistanceWidget(
-            donors=donor,
+        self.fret_rates = DiscreteDistanceWidget(
+            donors=self.donor,
             parent=self,
             model=self,
             short='G',
@@ -1225,18 +1212,18 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
         )
         super().__init__(
             fit=fit,
-            fret_rates=fret_rates,
-            donor=donor
+            fret_rates=self.fret_rates,
+            donor=self.donor
         )
 
-        self.layout.addWidget(donor)
+        self.layout.addWidget(self.donor)
         # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
         self.layout.addWidget(
             chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
                 self.fret_parameters
             )
         )
-        self.layout.addWidget(fret_rates)
+        self.layout.addWidget(self.fret_rates)
 
 
 class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase):
@@ -1479,8 +1466,6 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
     ):
         LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
         LifetimeMixModel.__init__(self, fit, **kwargs)
-
-        layout = QtWidgets.QVBoxLayout(self)
 
         layout = QtWidgets.QHBoxLayout()
 
