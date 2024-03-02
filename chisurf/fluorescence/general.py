@@ -286,8 +286,8 @@ stack_lifetime_spectra = combine_lifetime_spectra
 def distribution2rates(
         distribution,
         tau0: float,
-        kappa2,
-        forster_radius: float,
+        kappa2: float = 0.66667,
+        forster_radius: float = 50.0,
         remove_negative: bool = False
 ):
     """
@@ -303,7 +303,7 @@ def distribution2rates(
 
     :param distribution:
     :param tau0:
-    :param kappa2: a interleaved list of orientation factors (orientation factor spectrum)
+    :param kappa2: an interleaved list of orientation factors (orientation factor spectrum)
     :param forster_radius:
     """
 
@@ -317,7 +317,7 @@ def distribution2rates(
             rate_dist[i, 1],
             forster_radius,
             tau0,
-            0.66667
+            kappa2
         )
     return rate_dist
     #
