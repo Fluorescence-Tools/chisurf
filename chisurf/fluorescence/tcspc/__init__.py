@@ -3,6 +3,7 @@ from __future__ import annotations
 from chisurf import typing
 import numpy as np
 import deprecation
+from . tcspc import *
 
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.tcspc.corrections

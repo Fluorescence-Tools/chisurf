@@ -463,9 +463,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
 class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="pddem.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui("pddem.ui")
     def __init__(
             self,
             *args,
@@ -586,9 +584,17 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
             short='B',
             name='fb'
         )
+        self.donor = self.fa
 
         self.layout.addWidget(self.fa)
         self.layout.addWidget(self.fb)
+
+        self.layout.addWidget(
+            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+                self.fret_parameters
+            )
+        )
+
         self.layout.addWidget(self.gaussians)
         self.layout.addWidget(self.anisotropy)
         self.layout.addWidget(self.corrections)
@@ -1129,8 +1135,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         self._gb.pop().close()
 
 
-class GaussianModelWidget(
-    fret.GaussianModel, LifetimeModelWidgetBase):
+class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
     plot_classes = [
         (
