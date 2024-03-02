@@ -4,10 +4,10 @@ import numpy as np
 
 import chisurf.settings
 from chisurf.models.tcspc.fret import Gaussians
-from chisurf.fluorescence import tcspc
-from chisurf.fluorescence.general import distribution2rates
+import chisurf.fluorescence.tcspc
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
-from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
+from chisurf.models.tcspc.lifetime import Lifetime
+from chisurf.models.tcspc.fret import FRETModel
 
 
 class PDDEM(FittingParameterGroup):
@@ -126,7 +126,7 @@ class PDDEM(FittingParameterGroup):
         self._pmB = FittingParameter(value=0.98, name='mB', model=self.model, decimals=2, fixed=True)
 
 
-class PDDEMModel(LifetimeModel):
+class PDDEMModel(FRETModel):
     """
     Kalinin, S., and Johansson, L.B.
     Energy Migration and Transfer Rates are Invariant to Modeling the
@@ -138,11 +138,12 @@ class PDDEMModel(LifetimeModel):
     name = "FRET: PDDEM"
 
     def __init__(self, fit, **kwargs):
-        LifetimeModel.__init__(self, fit, **kwargs)
+        FRETModel.__init__(self, fit, **kwargs)
         self.pddem = PDDEM(name='pddem', **kwargs)
         self.gaussians = Gaussians(name='gaussians', **kwargs)
         self.fa = Lifetime(name='fa', **kwargs)
         self.fb = Lifetime(name='fb', **kwargs)
+        self.donor = self.fb
 
     @property
     def distance_distribution(self):
@@ -150,22 +151,21 @@ class PDDEMModel(LifetimeModel):
         return dist
 
     @property
-    def rate_spectrum(self):
-        gaussians = self.gaussians
-        rs = distribution2rates(gaussians.distribution, gaussians.tau0, gaussians.kappa2, gaussians.forster_radius)
-        return np.hstack(rs).ravel([-1])
-
-    @property
     def lifetime_spectrum(self):
         decayA = self.fa.lifetime_spectrum
         decayB = self.fb.lifetime_spectrum
-        rate_spectrum = self.rate_spectrum
+        rate_spectrum = self.fret_rate_spectrum
 
         p, rates = rate_spectrum[::2], rate_spectrum[1::2]
         decays = []
         for i, r in enumerate(rates):
-            tmp = tcspc.pddem(decayA, decayB, self.pddem.fABBA * r,
-                              self.pddem.px, self.pddem.pm, self.pddem.pureAB)
+            tmp = chisurf.fluorescence.tcspc.pddem(
+                decayA, decayB,
+                self.pddem.fABBA * r,
+                self.pddem.px,
+                self.pddem.pm,
+                self.pddem.pureAB
+            )
             tmp[0::2] *= p[i]
             decays.append(tmp)
         lt = np.concatenate(decays)
