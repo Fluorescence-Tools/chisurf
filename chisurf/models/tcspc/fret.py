@@ -354,11 +354,7 @@ class DiscreteDistance(FittingParameterGroup):
         for i, g in enumerate(self._amplitudes):
             g.value = a[i]
 
-    def append(
-            self,
-            mean: float,
-            x: float
-    ):
+    def append(self, mean: float, x: float):
         n = len(self)
         self._distances.append(
             FittingParameter(
@@ -386,7 +382,7 @@ class DiscreteDistance(FittingParameterGroup):
     def __init__(
             self,
             name: str = 'fret_rate',
-            short: str = 'G',
+            short: str = 'd',
             **kwargs
     ):
         super().__init__(**kwargs)
@@ -421,7 +417,8 @@ class FRETModel(LifetimeModel):
         tauD0 = self.fret_parameters.tauD0
         #kappa2 = self.fret_parameters.kappa2
         forster_radius = self.fret_parameters.forster_radius
-        kappa2s = self.orientation_parameter.orientation_spectrum
+        #kappa2s = self.orientation_parameter.orientation_spectrum
+        kappa2s = 0.6667
         rs = distribution2rates(
             self.distance_distribution,
             tauD0,
@@ -617,11 +614,7 @@ class FRETrateModel(FRETModel):
         dist = self.fret_rates.distribution
         return dist
 
-    def append(
-            self,
-            mean: float,
-            species_fraction: float
-    ):
+    def append(self, mean: float, species_fraction: float):
         self.fret_rates.append(mean, species_fraction)
 
     def pop(self):
