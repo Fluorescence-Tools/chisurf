@@ -12,8 +12,8 @@ from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
 
 rda_axis = np.logspace(
-    start=np.log(chisurf.settings.fret['rda_min']),
-    stop=np.log(chisurf.settings.fret['rda_max']),
+    start=np.log10(chisurf.settings.fret['rda_min']),
+    stop=np.log10(chisurf.settings.fret['rda_max']),
     num=chisurf.settings.fret['rda_resolution'],
     dtype=np.float64
 )
@@ -573,12 +573,7 @@ class GaussianModel(FRETModel):
         dist = self.gaussians.distribution
         return dist
 
-    def append(
-            self,
-            mean: float,
-            sigma: float,
-            species_fraction: float
-    ):
+    def append(self, mean: float, sigma: float, species_fraction: float):
         self.gaussians.append(mean, sigma, species_fraction)
 
     def pop(self):
@@ -682,7 +677,7 @@ class WormLikeChainModel(FRETModel):
             **kwargs
         )
         self._chain_length = FittingParameter(
-            name='length',
+            name='l',
             value=100.0,
             model=self,
             fixed=False,
@@ -690,14 +685,14 @@ class WormLikeChainModel(FRETModel):
         )
         self._use_dye_linker = use_dye_linker
         self._sigma_linker = FittingParameter(
-            name='link_width',
+            name='w',
             value=6.0,
             model=self,
             fixed=False,
             text='lw'
         )
         self._persistence_length = FittingParameter(
-            name='persistence',
+            name='lp',
             value=30.0,
             model=self,
             fixed=False,
@@ -748,10 +743,7 @@ class SingleDistanceModel(FRETModel):
             fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
-        super().__init__(
-            fit=fit,
-            **kwargs
-        )
+        super().__init__(fit=fit, **kwargs)
         self._rda = kwargs.get('rda', np.array([100.0]))
         self._prda = kwargs.get('prda', np.array([100.0]))
 
