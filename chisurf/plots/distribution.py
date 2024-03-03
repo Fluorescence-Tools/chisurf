@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pyqtgraph as pg
 from qtpy import QtWidgets
-from pyqtgraph.dockarea import DockArea, Dock
 
 import chisurf.fitting
 import chisurf.fluorescence
@@ -52,10 +51,7 @@ class DistributionPlot(plotbase.Plot):
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):
-        super().__init__(
-            fit=fit,
-            parent=parent
-        )
+        super().__init__(fit=fit, parent=parent)
         self.data_x, self.data_y = None, None
 
         self.plot_controller = DistributionPlotControl(
