@@ -83,12 +83,12 @@ fret:
   forster_radius: 52
   tau0: 4
   kappa2: 0.667
-  rda_resolution: 512
+  rda_resolution: 256
   rda_min: 1
-  rda_max: 512
+  rda_max: 256
   lifetime_bins: 101
   bin_lifetime: false
-  discriminate: true
+  discriminate: false
   discriminate_amplitude: 1.0e-10
   orientation_mode: slow_isotropic
 tcspc_csv:
