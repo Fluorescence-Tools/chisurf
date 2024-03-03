@@ -12,42 +12,44 @@ import chisurf.math
 import chisurf.math.datatools
 
 
-bin_lifetime_spectrum = skf.decay.rate_spectra.bin_lifetime_spectrum
-# def bin_lifetime_spectrum(
-#     lifetime_spectrum: np.array,
-#     n_lifetimes: int,
-#     discriminate: bool,
-#     discriminator=None
-# ) -> np.array:
-#     """Takes a interleaved lifetime spectrum
-#
-#     :param lifetime_spectrum: interleaved lifetime spectrum
-#     :param n_lifetimes:
-#     :param discriminate:
-#     :param discriminator:
-#     :return: lifetime_spectrum
-#     """
-#     amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
-#         lifetime_spectrum,
-#         sort=False
-#     )
-#     lt, am = chisurf.math.datatools.histogram1D(
-#         values=lifetimes,
-#         weights=amplitudes,
-#         n_bins=n_lifetimes
-#     )
-#     if discriminate and discriminator is not None:
-#         lt, am = chisurf.math.datatools.discriminate(
-#             values=lt,
-#             weights=am,
-#             discriminator=discriminator
-#         )
-#     binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
-#         x=am,
-#         t=lt
-#     )
-#     return binned_lifetime_spectrum
-#
+# bin_lifetime_spectrum = skf.decay.rate_spectra.bin_lifetime_spectrum
+def bin_lifetime_spectrum(
+    lifetime_spectrum: np.array,
+    n_lifetimes: int,
+    discriminate: bool,
+    discriminator=None
+) -> np.array:
+    """Takes a interleaved lifetime spectrum
+
+    :param lifetime_spectrum: interleaved lifetime spectrum
+    :param n_lifetimes:
+    :param discriminate:
+    :param discriminator:
+    :return: lifetime_spectrum
+    """
+    amplitudes, lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
+        lifetime_spectrum,
+        sort=False
+    )
+    print(lifetimes)
+    print(amplitudes)
+    lt, am = chisurf.math.datatools.histogram1D(
+        values=lifetimes,
+        weights=amplitudes,
+        n_bins=n_lifetimes
+    )
+    if discriminate and discriminator is not None:
+        lt, am = chisurf.math.datatools.discriminate(
+            values=lt,
+            weights=am,
+            discriminator=discriminator
+        )
+    binned_lifetime_spectrum = chisurf.math.datatools.two_column_to_interleaved(
+        x=am,
+        t=lt
+    )
+    return binned_lifetime_spectrum
+
 
 @deprecation.deprecated(
         deprecated_in="20.06.02",
