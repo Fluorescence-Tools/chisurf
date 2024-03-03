@@ -79,6 +79,7 @@ def add_fit(
             cs.current_fit = fit_group
             fit_control_widget.onAutoFitRange()
             fit_window.show()
+    cs.update()
 
 
 def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window=None):
@@ -215,7 +216,7 @@ def close_fit(idx: int = None):
     chisurf.gui.widgets.hide_items_in_layout(cs.modelLayout)
     chisurf.gui.widgets.hide_items_in_layout(cs.plotOptionsLayout)
     sub_window.close()
-
+    cs.update()
 
 
 def link_fit_group(
