@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import pathlib
 
 import chisurf
 
@@ -1198,11 +1198,7 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
 class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            **kwargs
-    ):
+    def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
         self.donor = LifetimeWidget(
             parent=self,
             model=self,
@@ -1233,6 +1229,25 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
 class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase):
 
+    plot_classes = [
+        (
+            chisurf.plots.LinePlot,
+            {
+                'd_scalex': 'lin',
+                'd_scaley': 'log',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+         ),
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.ParameterScanPlot, {}),
+        (chisurf.plots.ResidualPlot, {}),
+        (chisurf.plots.DistributionPlot, {})
+    ]
+
     @property
     def use_dye_linker(self) -> bool:
         return bool(self._use_dye_linker.isChecked())
@@ -1242,101 +1257,43 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         self._use_dye_linker.setChecked(v)
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
-        donors = LifetimeWidget(
+        self.donor = LifetimeWidget(
             parent=self,
             model=self,
-            title='Donor(0)',
-            name='donors'
-        )
-        fret.WormLikeChainModel.__init__(
-            self,
-            fit=fit,
-            lifetimes=donors,
-            **kwargs
+            title='Donor(0)'
         )
 
-        LifetimeModelWidgetBase.__init__(
-            self,
-            fit,
-            **kwargs
-        )
-        self.lifetimes = donors
+        super().__init__(fit, **kwargs)
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
+        self.layout.addLayout(layout)
+
         self._use_dye_linker = QtWidgets.QCheckBox()
         self._use_dye_linker.setText('Use linker')
         layout.addWidget(self._use_dye_linker)
 
-        #self._sigma_linker = self._sigma_linker.make_widget(layout=layout)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._sigma_linker,
-            layout=layout
-        )
+        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._sigma_linker)
+        layout.addWidget(pw)
 
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-            fitting_parameter_group=self.fret_parameters,
-            layout=self.layout_parameter
-        )
-        self.layout_parameter.addWidget(donors)
-        self.layout_parameter.addLayout(layout)
+        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.fret_parameters)
+        layout.addWidget(pw)
 
-        #self._chain_length = self._chain_length.make_widget(layout=self.layout_parameter)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._chain_length,
-            layout=layout
-        )
-        #self._persistence_length = self._persistence_length.make_widget(layout=self.layout_parameter)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self.layout.addWidget(self.donor)
+
+        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._chain_length)
+        self.layout.addWidget(pw)
+
+        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._persistence_length,
             layout=layout
         )
+        self.layout.addWidget(pw)
 
-        self.convolve = ConvolveWidget(fit=fit, model=self, **kwargs)
-        self.donors = LifetimeWidget(parent=self, model=self, title='Donor(0)')
-        self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
-        self.fitting_widget = QtWidgets.QLabel() if kwargs.get('disable_fit', False) else chisurf.gui.widgets.fitting.FittingControllerWidget(fit=fit, **kwargs)
-        self.corrections = CorrectionsWidget(fit, model=self, **kwargs)
-
-        ModelWidget.__init__(
-            self,
-            fit=fit,
-            icon=QtGui.QIcon(":/icons/icons/TCSPC.png"),
-            **kwargs
-        )
-
-        fret.SingleDistanceModel.__init__(
-            self,
-            fit=fit,
-            convolve=self.convolve,
-            corrections=self.corrections,
-            generic=self.generic,
-            lifetimes=self.donors,
-            anisotropy=self.anisotropy
-        )
-
-        donly = chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
-            fitting_parameter=self._donly,
-        )
-
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "load_distance_distibution.ui"
-            ),
-            self
-        )
+        uic.loadUi(pathlib.Path(__file__).parent / "load_distance_distibution.ui", self)
 
         self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
         self.actionOpen_distirbution.triggered.connect(self.load_distance_distribution)
-
-        self.verticalLayout.addWidget(self.fitting_widget)
-        self.verticalLayout.addWidget(self.convolve)
-        self.verticalLayout.addWidget(self.generic)
-        self.verticalLayout.addWidget(donly)
-        self.verticalLayout.addWidget(self.donors)
-        self.verticalLayout.addWidget(self.anisotropy)
-        self.verticalLayout.addWidget(self.corrections)
-        self.verticalLayout.addWidget(self.errors)
 
     def load_distance_distribution(self, **kwargs):
         #print "load_distance_distribution"
@@ -1381,9 +1338,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
             **kwargs
         )
 
-        fn = os.path.join(
-            chisurf.settings.package_directory, 'settings/tcspc.models.json'
-        )
+        fn = chisurf.settings.package_directory / 'settings/tcspc.models.json'
         pw = chisurf.models.parse.widget.ParseFormulaWidget(
             model=self,
             model_file=fn
