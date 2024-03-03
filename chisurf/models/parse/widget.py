@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import pathlib
 from chisurf import typing
 
@@ -30,7 +29,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
     def __init__(
             self,
             n_columns: int = None,
-            model_file: str = None,
+            model_file: pathlib.Path = None,
             model_name: str = None,
             model: chisurf.models.Model = None
     ):
