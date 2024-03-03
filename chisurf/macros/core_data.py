@@ -80,5 +80,5 @@ def add_dataset(
     else:
         chisurf.imported_datasets.append(dataset_group)
 
-    cs.dataset_selector.update()
+    cs.update()
 
