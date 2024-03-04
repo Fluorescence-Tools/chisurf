@@ -3,11 +3,10 @@ import os
 import unittest
 import numpy as np
 import scipy.stats
+import pathlib
 
+TOPDIR = pathlib.Path(__file__).parent.parent
 
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
 utils.set_search_paths(TOPDIR)
 
 import chisurf.fluorescence

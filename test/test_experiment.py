@@ -5,9 +5,9 @@ import numpy as np
 import tempfile
 import copy
 
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
+import pathlib
+
+TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 import chisurf.experiments
