@@ -195,10 +195,10 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             # Find the index of the selected dataset
             index_of_ds = chisurf.imported_datasets.index(ds)
 
-            # Remove "c" from its current position
+            # Remove item from its current position
             chisurf.imported_datasets.pop(index_of_ds)
 
-            # Insert "c" at position 1
+            # Insert item at position 1
             idx_new = int(self.currentItem().text(0))
             chisurf.imported_datasets.insert(idx_new, ds)
 
@@ -211,6 +211,14 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     def show(self):
         self.update()
         QtWidgets.QTreeWidget.show(self)
+
+    def handleSelectionChange(self, selected, deselected):
+        if not selected.indexes():
+            # If no items are selected, reselect the last selected item
+            self.setCurrentIndex(self.last_selected_index)
+
+        # Update the last selected index
+        self.last_selected_index = self.selectedIndexes()[0]
 
     def __init__(
             self,
@@ -260,6 +268,11 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.drag_item = None
         self.drag_row = None
+
+        # Handle selection - select last idx is none is selected (click outside)
+        # Connect the itemSelectionChanged signal to a custom slot
+        self.last_selected_index = 0
+        self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
 
         self.clicked.connect(self.onCurveChanged)
         self.itemChanged.connect(self.onItemChanged)
