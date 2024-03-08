@@ -79,13 +79,13 @@ class FittingParameter(chisurf.parameter.Parameter):
 
     def __str__(self):
         s = "\nVariable\n"
-        s += "name: %s\n" % self.name
-        s += "internal-value: %s\n" % self._port
+        s += f"name: {self.name}\n"
+        s += f"internal-value: {self._port}\n"
         if self.bounds_on:
-            s += "bounds: %s\n" % self.bounds
+            s += f"bounds: {self.bounds}\n"
         if self.is_linked:
-            s += "linked to: %s\n" % self.link.name
-            s += "link-value: %s\n" % self.value
+            s += f"linked to: {self.link.name}\n"
+            s += f"link-value: {self.value}\n"
         return s
 
 
