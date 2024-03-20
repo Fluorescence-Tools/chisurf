@@ -20,53 +20,30 @@ from chisurf.gui.widgets import Controller
 parameter_settings = chisurf.settings.parameter
 
 
-
 @chisurf.decorators.register
 class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
 
     @property
-    def curve_name(self) -> str:
-        try:
-            return self.selected_dataset.name
-        except AttributeError:
-            return "Untitled"
-
-    def get_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
-        data_curves = self.get_data_sets(curve_type=self.curve_type)
-        if self.experiment is not None:
-            dv = [
-                d for d in data_curves if isinstance(d.experiment, self.experiment)
-            ]
-            return dv
-        else:
-            return data_curves
-
-    @property
-    def datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
-        return self.get_datasets()
-
-    @property
-    def selected_curve_index(self) -> int:
+    def selected_fit_index(self) -> int:
         if self.currentIndex().parent().isValid():
             return self.currentIndex().parent().row()
         else:
             return self.currentIndex().row()
 
-    @selected_curve_index.setter
-    def selected_curve_index(self, v: int):
+    @selected_fit_index.setter
+    def selected_fit_index(self, v: int):
         self.setCurrentItem(self.topLevelItem(v))
 
     @property
-    def selected_dataset(self) -> chisurf.data.ExperimentalData:
-        return self.datasets[self.selected_curve_index]
+    def selected_fit(self) -> chisurf.fitting.fit.FitGroup:
+        return chisurf.fits[self.selected_fit_index]
 
     @property
-    def selected_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
-        data_sets_idx = self.selected_dataset_idx
-        return [self.datasets[i] for i in data_sets_idx]
+    def selected_fits(self) -> typing.List[chisurf.fitting.fit.FitGroup]:
+        return [chisurf.fits[i] for i in self.selected_fit_idx]
 
     @property
-    def selected_dataset_idx(self) -> typing.List[int]:
+    def selected_fit_idx(self) -> typing.List[int]:
         return [r.row() for r in self.selectedIndexes()]
 
     def selectedIndexes(self) -> typing.List[QtCore.QModelIndex]:
@@ -74,8 +51,10 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         return idx
 
     def onCurveChanged(self):
-        if self.click_close:
-            self.hide()
+        for fit_window in chisurf.cs.mdiarea.subWindowList():
+            if fit_window.fit == self.selected_fit:
+                chisurf.cs.mdiarea.setActiveSubWindow(fit_window)
+                break
         self.change_event()
 
     def onChangeCurveName(self):
@@ -83,15 +62,15 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         pass
 
     def onRemoveFit(self):
-        fit_idxs = [
-            selected_index.row() for selected_index in self.selectedIndexes()
-        ]
+        fit_idxs = [selected_index.row() for selected_index in self.selectedIndexes()]
         for fit_idx in fit_idxs:
             chisurf.run(f'chisurf.macros.close_fit({fit_idx})')
         self.update(update_others=True)
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
-        chisurf.cs.onSaveFit()
+        for fit_window in chisurf.cs.mdiarea.subWindowList():
+            chisurf.cs.mdiarea.setActiveSubWindow(fit_window)
+            chisurf.cs.onSaveFit()
 
     def contextMenuEvent(self, event):
         if self.context_menu_enabled:
@@ -99,7 +78,7 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
             menu.setTitle("Fits")
             menu.addAction("Save").triggered.connect(self.onSaveFit)
             menu.addAction("Close").triggered.connect(self.onRemoveFit)
-            menu.addAction("Refresh").triggered.connect(self.update)
+            menu.addAction("Update").triggered.connect(self.update)
             menu.exec_(event.globalPos())
 
     def update(self, *args, update_others=True, **kwargs):
@@ -112,32 +91,22 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
             item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, model_name])
             item.setToolTip(1, fit.name)
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-
-            # # If group of curves
-            # if isinstance(d, chisurf.data.ExperimentDataGroup):
-            #     for di in d:
-            #         fn = di.name
-            #         experiment_type = d.experiment.name
-            #         widget_name = os.path.basename(fn)
-            #         i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
-            #         i2.setToolTip(1, fn)
-            #         i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+            fit.update()
 
     def onItemChanged(self):
-        if self.selected_datasets:
-            ds = self.selected_datasets[0]
+        if self.selected_fits:
+            ds = self.selected_fits[0]
 
             # Find the index of the selected dataset
-            index_of_ds = chisurf.imported_datasets.index(ds)
+            index_of_ds = chisurf.fits.index(ds)
 
             # Remove "c" from its current position
-            chisurf.imported_datasets.pop(index_of_ds)
+            chisurf.fits.pop(index_of_ds)
 
             # Insert "c" at position 1
             idx_new = int(self.currentItem().text(0))
-            chisurf.imported_datasets.insert(idx_new, ds)
+            chisurf.fits.insert(idx_new, ds)
 
-            ds.name = str(self.currentItem().text(1))
             self.update(update_others=True)
 
     def change_event(self):
@@ -460,8 +429,10 @@ class FittingParameterWidget(Controller):
         def linkcall():
             self.blockSignals(True)
             tooltip = " linked to " + parameter_name
-            s = (f"cs.current_fit.model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
-                 f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']")
+            s = (
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
+                f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']"
+            )
             chisurf.run(s)
             # Adjust widget of parameter that is linker
             self.widget_link.setToolTip(tooltip)
@@ -511,9 +482,7 @@ class FittingParameterWidget(Controller):
                 for p in fs.model.parameters_all:
                     if p is not self:
                         Action = action_submenu.addAction(p.name)
-                        Action.triggered.connect(
-                            self.make_linkcall(fit_idx, p.name)
-                        )
+                        Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
                 submenu.addMenu(action_submenu)
 
                 menu.addMenu(submenu)
@@ -605,30 +574,30 @@ class FittingParameterWidget(Controller):
         # The variable value
         self.widget_value.editingFinished.connect(
             lambda: chisurf.run(
-                f"cs.current_fit.model.parameters_all_dict['{fitting_parameter.name}'].value = "
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].value = "
                 f"{self.widget_value.value()} \n"
-                f"cs.current_fit.update()"
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
             )
         )
 
         self.widget_fix.toggled.connect(
             lambda: chisurf.run(
-                f"cs.current_fit.model.parameters_all_dict['{fitting_parameter.name}'].fixed = "
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].fixed = "
                 f"{self.widget_fix.isChecked()} \n"
-                f"cs.current_fit.update()")
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()")
         )
 
         # Variable is bounded
         self.widget_bounds_on.toggled.connect(
             lambda: chisurf.run(
-                f"cs.current_fit.model.parameters_all_dict['{fitting_parameter.name}'].bounds_on = "
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].bounds_on = "
                 f"{self.widget_bounds_on.isChecked()}"
             )
         )
 
         self.widget_lower_bound.editingFinished.connect(
             lambda: chisurf.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
                     fitting_parameter.name,
                     self.widget_lower_bound.value(),
@@ -639,7 +608,7 @@ class FittingParameterWidget(Controller):
 
         self.widget_upper_bound.editingFinished.connect(
             lambda: chisurf.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
                     fitting_parameter.name,
                     self.widget_lower_bound.value(),
@@ -664,12 +633,7 @@ class FittingParameterWidget(Controller):
     def onLinkFitGroup(self):
         self.blockSignals(True)
         self.widget_value.setEnabled(True)
-        chisurf.run(
-            "chisurf.macros.link_fit_group('%s', %s)" % (
-                self.fitting_parameter.name,
-                self.widget_link.checkState()
-            )
-        )
+        chisurf.run(f"chisurf.macros.link_fit_group('{self.fitting_parameter.name}', {self.widget_link.checkState()})")
         self.blockSignals(False)
 
     def setValue(self, v):
@@ -689,11 +653,11 @@ class FittingParameterWidget(Controller):
         # Tooltip
         if self.fitting_parameter.bounds_on:
             lower, upper = self.fitting_parameter.bounds
-            s = "bound: (%s,%s)\n" % (lower, upper)
+            s = f"bound: ({lower}, {upper})\n"
         else:
             s = "bounds: off\n"
         if self.fitting_parameter.is_linked:
-            s += "linked to: %s" % self.fitting_parameter.link.name
+            s += f"linked to: {self.fitting_parameter.link.name}"
         self.widget_value.setToolTip(s)
 
         # Error-estimate
