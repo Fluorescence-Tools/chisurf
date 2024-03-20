@@ -68,7 +68,7 @@ class ParameterScanWidget(
         v_max = (1. + p_max) * v
         n_steps = int(self.spinBox.value())
         chisurf.run(
-            "cs.current_fit.model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
+            f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
                 self.parameter.name,
                 v_min,
                 v_max,
