@@ -7,6 +7,7 @@ import numpy as np
 import chinet
 
 import chisurf.base
+import chisurf.fitting
 import chisurf.decorators
 
 T = typing.TypeVar('T', bound='Parameter')
@@ -14,6 +15,14 @@ T = typing.TypeVar('T', bound='Parameter')
 
 @chisurf.decorators.register
 class Parameter(chisurf.base.Base):
+
+    @property
+    def fit_idx(self):
+        idxs = chisurf.fitting.find_fit_idx_of_parameter(self)
+        if len(idxs) > 1:
+            chisurf.logging.warning("Ambiguous link call. Fitting parameter used in multiple fits")
+        fit_idx_self = idxs[0]
+        return fit_idx_self
 
     @property
     def name(self) -> str:
