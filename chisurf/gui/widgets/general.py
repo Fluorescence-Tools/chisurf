@@ -26,9 +26,7 @@ def get_widgets_in_layout(
     return (layout.itemAt(i) for i in range(layout.count()))
 
 
-def clear_layout(
-        layout: QtWidgets.QLayout
-):
+def clear_layout(layout: QtWidgets.QLayout):
     """Clears all widgets within a layout
     """
     while layout.count():
