@@ -50,6 +50,11 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         idx = super().selectedIndexes()[::3]
         return idx
 
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.onRemoveFit()
+
     def onCurveChanged(self):
         for fit_window in chisurf.cs.mdiarea.subWindowList():
             if fit_window.fit == self.selected_fit:
