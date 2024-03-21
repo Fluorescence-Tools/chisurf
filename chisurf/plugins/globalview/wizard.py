@@ -6,6 +6,7 @@ import pyqtgraph as pg
 import chisurf
 import chisurf.gui.widgets
 import chisurf.fitting.fit
+import chisurf.models
 import chisurf.parameter
 
 from chisurf.gui import QtWidgets, QtCore, QtGui
@@ -163,22 +164,38 @@ class GraphWizard(QtWidgets.QWidget):
         self.recompute_graph()
 
     @staticmethod
+    def skip_fit(fit, omitted_models: list[chisurf.models.Model] = None):
+        # Skip fits with global models
+        if omitted_models is None:
+            omitted_models = [chisurf.models.global_model.GlobalFitModel]
+        for c in omitted_models:
+            if isinstance(fit.model, c):
+                print("Omit:", fit.name)
+                return True
+        return False
+
+    @staticmethod
     def build_graph(
             include_fixed: bool = True,
             fit_list: list[chisurf.fitting.FitGroup] = None,
-            connect_fits: bool = False
+            connect_fits: bool = False,
+            **kwargs
     ):
         if fit_list is None:
             fit_list = chisurf.fits
+
         node_objects = dict()
         G = nx.Graph()
 
         # Add fits as nodes
-        idx = 0
+        node_idx = 0
         for i, fit in enumerate(fit_list):
+            if GraphWizard.skip_fit(fit):
+                continue
+
             node_id = id(fit)
             G.add_node(node_id)
-            G.nodes[node_id]['node.idx'] = idx
+            G.nodes[node_id]['node.idx'] = node_idx
             G.nodes[node_id]['node.id'] = node_id
             G.nodes[node_id]['node.parent'] = 'None'
             G.nodes[node_id]['node.name'] = f"ID:{i}:{fit.name}"
@@ -193,10 +210,13 @@ class GraphWizard(QtWidgets.QWidget):
                 ]
             )
             node_objects[node_id] = fit
-            idx += 1
+            node_idx += 1
 
         # Add parameters of fit
         for i, fit in enumerate(fit_list):
+            if GraphWizard.skip_fit(fit):
+                continue
+
             for j, parameter in enumerate(fit.model.parameters_all):
                 if parameter.fixed:
                     if not include_fixed:
@@ -206,7 +226,7 @@ class GraphWizard(QtWidgets.QWidget):
                 parent_id = id(fit)
                 G.add_node(node_id)
                 G.nodes[node_id]['fit.idx'] = i
-                G.nodes[node_id]['node.idx'] = idx
+                G.nodes[node_id]['node.idx'] = node_idx
                 G.nodes[node_id]['node.id'] = node_id
                 G.nodes[node_id]['node.parent'] = parent_id
                 G.nodes[node_id]['node.type'] = 'parameter'
@@ -214,7 +234,7 @@ class GraphWizard(QtWidgets.QWidget):
                 G.nodes[node_id]['value'] = parameter.value
                 G.nodes[node_id]['fixed'] = parameter.fixed
                 G.add_edge(node_id, parent_id)
-                idx += 1
+                node_idx += 1
 
         # Add connections between parameters across fits
         for node in G.nodes:
@@ -362,14 +382,15 @@ class GraphWizard(QtWidgets.QWidget):
         # Update the graph
         pos = np.array([pos[i] for i in node_data['ids']], dtype=np.float64)
         adj = np.array(connections)
-        g.setData(
-            pos=pos,
-            adj=adj,
-            size=node_size,
-            pxMode=False,
-            text=node_data['names'],
-            symbolBrush=symbolBrush
-        )
+        if len(pos) > 0:
+            g.setData(
+                pos=pos,
+                adj=adj,
+                size=node_size,
+                pxMode=False,
+                text=node_data['names'],
+                symbolBrush=symbolBrush
+            )
         self.graph_widget = w
         return node_data
 
@@ -423,7 +444,7 @@ if __name__ == "plugin":
 
 if __name__ == '__main__':
     import sys
-    app = QtCore.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     app.aboutToQuit.connect(app.deleteLater)
     graph_wiz = GraphWizard()
     graph_wiz.setWindowTitle('ChiSurf Parameter Network')

@@ -127,7 +127,7 @@ class GraphPlotWidget(pg.GraphItem):
             self.arrows.append(arrow)
 
     def updateGraph(self):
-        print("def updateGraph(self):")
+        # print("def updateGraph(self):")
         if len(self.data) == 0:
             return
 
@@ -137,7 +137,7 @@ class GraphPlotWidget(pg.GraphItem):
             item.setPos(*self.data['pos'][i])
 
         # Update arrows (angles)
-        print("self.data['pos']:", self.data['pos'])
+        # print("self.data['pos']:", self.data['pos'])
         for i, item in enumerate(self.arrows):
             v0 = self.data['pos'][self.data['adj'][i][0]]
             v1 = self.data['pos'][self.data['adj'][i][1]]
@@ -212,6 +212,6 @@ class GraphPlotWidget(pg.GraphItem):
             self.selectedNodes.append(point)
         if self.update_callback is not None:
             self.update_callback()
-        print(self.selected_nodes_idx)
+        # print(self.selected_nodes_idx)
         # clicked_point_index = np.argmin(np.linalg.norm(self.scatter.data - pos, axis=1))
         # print(f"Clicked on point with index: {clicked_point_index}")
