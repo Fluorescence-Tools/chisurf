@@ -22,7 +22,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     @property
     def curve_name(self) -> str:
         try:
-            return self.selected_dataset.name
+            return self.selected_dataset.filename
         except AttributeError:
             return "Untitled"
 
@@ -128,6 +128,11 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
             menu.addAction("Refresh").triggered.connect(self.update)
             menu.exec_(event.globalPos())
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.onRemoveDataset()
 
     def update(self, *args, update_others=True, **kwargs):
         super().update()
