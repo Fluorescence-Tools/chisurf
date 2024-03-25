@@ -171,7 +171,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
         # Calculate elapsed time
         elapsed_time = end_time - start_time
-        print("Elapsed time: ", elapsed_time)
+        chisurf.logging.log(0, "Elapsed time: %s" % elapsed_time)
 
         return s.astype(dtype=np.uint8)
 
