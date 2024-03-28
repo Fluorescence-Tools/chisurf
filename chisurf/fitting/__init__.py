@@ -11,20 +11,6 @@ import chisurf.fitting.support_plane
 from chisurf.fitting.fit import Fit, FitGroup
 
 
-# def find_fit_idx_of_model(
-#         model: chisurf.models.Model,
-#         fits: List[chisurf.fitting.fit.Fit]
-# ) -> int:
-#     """Returns index of the fit of a model in chisurf.fits array
-#
-#     :param model:
-#     :param fits:
-#     :return:
-#     """
-#     for idx, f in enumerate(fits):
-#         if f.model is model:
-#             return idx
-
 def calculate_weighted_residuals(
         data: chisurf.data.DataCurve,
         model: chisurf.curve.Curve,
@@ -65,3 +51,19 @@ def find_fit_idx_of_parameter(
                 fit_idx.append(idx)
     return fit_idx
 
+
+def find_fit_idx_of_model(
+        model: chisurf.models.Model,
+        fits: list[chisurf.fitting.fit.Fit] = None
+) -> int:
+    """Returns index of the fit of a model in chisurf.fits array
+
+    :param model:
+    :param fits:
+    :return:
+    """
+    if fits is None:
+        fits = chisurf.fits
+    for idx, f in enumerate(fits):
+        if f.model is model:
+            return idx
