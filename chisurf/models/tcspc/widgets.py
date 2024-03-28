@@ -799,9 +799,7 @@ class LifetimeModelWidgetBase(LifetimeModel, ModelWidget):
             hide_curve_convolution=False,
             **kwargs
         )
-        super().__init__(
-            fit=fit
-        )
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
         layout.setSpacing(0)
@@ -828,15 +826,22 @@ class LifetimeModelWidgetBase(LifetimeModel, ModelWidget):
 
 class LifetimeModelWidget(LifetimeModelWidgetBase):
 
-    def __init__(self, fit: chisurf.fitting.fit.FitGroup, **kwargs):
+    def __init__(
+        self,
+        fit: chisurf.fitting.fit.FitGroup,
+        lifetimes: chisurf.fitting.parameter.FittingParameterGroup = None,
+        **kwargs
+     ):
         super().__init__(fit=fit, **kwargs)
-        self.lifetimes = LifetimeWidget(
-            name='lifetimes',
-            parent=self,
-            title='Lifetimes',
-            short='L',
-            fit=fit
-        )
+        if lifetimes is None:
+            lifetimes = LifetimeWidget(
+                name='lifetimes',
+                parent=self,
+                title='Lifetimes',
+                short='L',
+                fit=fit
+            )
+        self.lifetimes = lifetimes
         anisotropy = AnisotropyWidget(
             name='anisotropy',
             short='rL',
@@ -1195,6 +1200,14 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         )
         self.layout.addWidget(gaussians)
 
+        anisotropy = AnisotropyWidget(
+            name='anisotropy',
+            short='rL',
+            **kwargs
+        )
+        self.anisotropy = anisotropy
+        self.layout.addWidget(self.anisotropy)
+
 
 class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
@@ -1320,9 +1333,13 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
+            icon: QtGui.QIcon = None,
+            hide_nuisances: bool = False,
             **kwargs
     ):
-        ModelWidget.__init__(self, icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"))
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
+        super().__init__(fit=fit, icon=icon)
 
         self.convolve = chisurf.models.tcspc.widgets.ConvolveWidget(
             fit=fit,
@@ -1337,8 +1354,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
             model=self,
             **kwargs
         )
-
-        fn = chisurf.settings.package_directory / 'settings/tcspc.models.json'
+        fn = pathlib.Path(__file__).parent / 'tcspc.models.json'
         pw = chisurf.models.parse.widget.ParseFormulaWidget(
             model=self,
             model_file=fn
