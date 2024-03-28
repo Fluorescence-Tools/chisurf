@@ -21,16 +21,8 @@ class Model(FittingParameterGroup):
 
     name = "Model name not available"
 
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            model_number: int = 0,
-            **kwargs
-    ):
-        super().__init__(
-            model=self,
-            **kwargs
-        )
+    def __init__(self, fit: chisurf.fitting.fit.Fit, model_number: int = 0, **kwargs):
+        super().__init__(model=self, **kwargs)
         self.fit = fit
         self.flatten_weighted_residuals = True
         self.model_number = model_number
@@ -85,11 +77,9 @@ class Model(FittingParameterGroup):
         for k in keylist:
             p = pd[k]
             if isinstance(p, chisurf.fitting.parameter.FittingParameter):
-                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p.name, p.value, p.bounds, p.fixed, p.is_linked)
+                s += f"{p.name}\t{p.value:.4e}\t{p.bounds}\t{p.fixed}\t{p.is_linked}\n"
             else:
-                chisurf.logging.warning(
-                    "The object is of type %s and is not a FittingParameter" % p.__class__.__name__
-                )
+                chisurf.logging.warning("The object is of type %s and is not a FittingParameter" % p.__class__.__name__)
         return s
 
 
@@ -115,11 +105,7 @@ class ModelCurve(Model, chisurf.curve.Curve):
     def y(self, v: np.ndarray):
         self.__dict__['_y'] = v
 
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            *args, **kwargs
-    ):
+    def __init__(self, fit: chisurf.fitting.fit.Fit, *args, **kwargs):
         super().__init__(
             fit,
             *args,
