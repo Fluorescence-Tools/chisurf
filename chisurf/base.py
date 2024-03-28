@@ -141,7 +141,7 @@ def find_objects(
         searched_object_type: typing.Type,
         remove_doublets: bool = True
 ) -> typing.List[object]:
-    """Traverse a list recursively a an return all objects of type
+    """Traverse a list recursively to return all objects of type
     `searched_object_type` as a list
 
     :param search_iterable: list
