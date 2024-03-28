@@ -406,6 +406,7 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.GaussianModelWidget,
                 chisurf.models.tcspc.widgets.PDDEMModelWidget,
                 chisurf.models.tcspc.widgets.WormLikeChainModelWidget,
+                chisurf.models.tcspc.widgets.ParseDecayModelWidget,
                 chisurf.models.tcspc.widgets.LifetimeMixtureModelWidget
             ]
         )
