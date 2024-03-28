@@ -106,11 +106,7 @@ class ModelCurve(Model, chisurf.curve.Curve):
         self.__dict__['_y'] = v
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, *args, **kwargs):
-        super().__init__(
-            fit,
-            *args,
-            **kwargs
-        )
+        super().__init__(fit, *args, **kwargs)
         chisurf.curve.Curve.__init__(
             self,
             x=fit.data.x,
