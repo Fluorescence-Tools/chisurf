@@ -438,7 +438,7 @@ class ExperimentDataGroup(DataGroup):
 
     @property
     def experiment(self):
-        return self.setup.experiment
+        return self[self._current_dataset].experiment
 
     @experiment.setter
     def experiment(self, v):

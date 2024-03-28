@@ -144,22 +144,25 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.clear()
 
         for nbr, d in enumerate(self.datasets):
-            fn = d.name
-            widget_name = pathlib.Path(fn).name
-            experiment_type = d.experiment.name
-            item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
-            item.setToolTip(1, fn)
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-
             # If group of curves
             if isinstance(d, chisurf.data.ExperimentDataGroup):
+                experiment_type = d[0].experiment.name
+                widget_name = pathlib.Path(d[0].name).name
+                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
                 for di in d:
                     fn = di.name
-                    experiment_type = d.experiment.name
-                    widget_name = os.path.basename(fn)
+                    experiment_type = di.experiment.name
+                    widget_name = pathlib.Path(fn).name
                     i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
                     i2.setToolTip(1, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+            else:
+                fn = d.name
+                widget_name = pathlib.Path(fn).name
+                experiment_type = d.experiment.name
+                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
+                item.setToolTip(1, fn)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
         # update other instances
         if update_others:
