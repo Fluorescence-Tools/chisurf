@@ -219,13 +219,10 @@ class LinePlot(plotbase.Plot):
         }
     }
 
-    def get_bounds(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            region_selector: pg.LinearRegionItem,
-    ) -> typing.Tuple[int, int]:
+    def get_bounds(self, fit: chisurf.fitting.fit.Fit, region_selector: pg.LinearRegionItem) -> typing.Tuple[int, int]:
         lb, ub = region_selector.getRegion()
         data_x = fit.data.x
+        x_len = len(data_x) - 1
         if self.plot_controller.data_is_log_x:
             lb, ub = 10 ** lb, 10 ** ub
         lb -= self.plot_controller.x_shift
@@ -233,7 +230,8 @@ class LinePlot(plotbase.Plot):
 
         lb_i: int = np.searchsorted(data_x, lb, side='right')
         ub_i: int = np.searchsorted(data_x, ub, side='left')
-        return lb_i - 1, ub_i
+
+        return np.clip(lb_i - 1, 0, x_len), np.clip(ub_i, 0, x_len)
 
     def __init__(
             self,
