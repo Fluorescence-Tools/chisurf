@@ -81,7 +81,7 @@ class ParseModel(
             parameter_type=chisurf.parameter.Parameter
     ):
         # do nothing finding parameters of the
-        # model is handeled when the model function
+        # model is handled when the model function
         # is set.
         pass
 
