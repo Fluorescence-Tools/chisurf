@@ -33,7 +33,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             model_name: str = None,
             model: chisurf.models.Model = None
     ):
-        self.model = model
+        self.model: chisurf.models.parse.ParseModel = model
         if n_columns is None:
             n_columns = chisurf.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
@@ -46,8 +46,15 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
         if model_name is None:
             model_name = list(self._models)[0]
-
         self.model_name = model_name
+
+        function_str = self.models[self.model_name]['equation']
+        self.model.func = f"{function_str}"
+        self.set_default_parameter_values(model_name)
+        self.plainTextEdit.setPlainText(function_str)
+        self.create_parameter_widgets()
+        self.model.update_model()
+
         self.editor = chisurf.gui.tools.code_editor.CodeEditor(None, language='yaml', can_load=False)
         self.textEdit.setVisible(False)
         self.editor.hide()
@@ -55,8 +62,6 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.actionModelChanged.triggered.connect(self.onModelChanged)
         self.actionLoadModelFile.triggered.connect(self.onLoadModelFile)
         self.actionEdit_model_file.triggered.connect(self.onEdit_model_file)
-
-        self.onUpdateFunc()
 
     def load_model_file(self, filename: pathlib.Path):
         with skf.io.zipped.open_maybe_zipped(filename, 'r') as fp:
@@ -101,57 +106,43 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self._model_file = v
         self.load_model_file(v)
 
+    def set_default_parameter_values(self, model_name: str = None):
+        if model_name is None:
+            model_name = self.model_name
+        ivs = self.models[model_name]['initial']
+        for key in ivs.keys():
+            self.model.parameter_dict[key].value = ivs[key]
+
     def onUpdateFunc(self):
+        fit_idx = chisurf.fitting.find_fit_idx_of_model(model=self.model)
         function_str = str(self.plainTextEdit.toPlainText()).strip()
-        chisurf.run("chisurf.macros.model_parse.change_model('%s')" % function_str)
-        try:
-            ivs = self.models[self.model_name]['initial']
-            for key in ivs.keys():
-                self.model.parameter_dict[key].value = ivs[key]
-        except (AttributeError, KeyError):
-            print("No initial values")
+        chisurf.run(f"chisurf.macros.model_parse.change_model('{function_str}', {fit_idx})")
 
     def onModelChanged(self):
         func = self.models[self.model_name]['equation']
-        self.plainTextEdit.setPlainText(
-            func
-        )
-        self.textEdit.setHtml(
-            self.models[self.model_name]['description']
-        )
-        self.onUpdateFunc()
+        self.plainTextEdit.setPlainText(func)
+        self.textEdit.setHtml(self.models[self.model_name]['description'])
         self.onEquationChanged()
 
-    def onEquationChanged(self):
-        self.onUpdateFunc()
+    def create_parameter_widgets(self):
         layout = self.gridLayout_1
         chisurf.gui.widgets.clear_layout(layout)
         n_columns = self.n_columns
         row = 1
-
-        for i, k in enumerate(
-            sorted(
-                self.model.parameters_all_dict.keys()
-            )
-        ):
-            p = self.model.parameters_all_dict[k]
-            pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-                fitting_parameter=p
-            )
+        p_eq = self.model._parameters_equation
+        for i, p in enumerate(p_eq):
+            pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(p)
             column = i % n_columns
             if column == 0:
                 row += 1
             layout.addWidget(pw, row, column)
 
-    def onLoadModelFile(self, filename: str = None):
-        if filename is None:
-            filename = chisurf.gui.widgets.get_filename(
-                'Open models-file',
-                'link file (*.yaml)'
-            )
-        self.load_model_file(
-            filename=filename
-        )
+    def onEquationChanged(self):
+        self.onUpdateFunc()
+        self.set_default_parameter_values()
+        self.create_parameter_widgets()
+        self.model.update_model()
+
 
 
 class ParseModelWidget(ParseModel, ModelWidget):
@@ -171,15 +162,7 @@ class ParseModelWidget(ParseModel, ModelWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.setAlignment(QtCore.Qt.AlignTop)
-        layout.addWidget(
-            parse
-        )
-        self.setLayout(
-            layout
-        )
+        layout.addWidget(parse)
+        self.setLayout(layout)
         self.parse = parse
 
-    def update_model(self, **kwargs):
-        super().update_model(
-            **kwargs
-        )
