@@ -412,6 +412,8 @@ class GraphWizard(QtWidgets.QWidget):
         self.parent = parent
 
         self.G: nx.Graph = None
+        self.graph_widget = None
+
         # python objects of nodes
         self.node_objects: dict = dict()
 
