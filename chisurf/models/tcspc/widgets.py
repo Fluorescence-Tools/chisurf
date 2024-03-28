@@ -1330,16 +1330,38 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
 
 class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 
+    plot_classes = [
+        (
+            chisurf.plots.LinePlot,
+            {
+                'd_scalex': 'lin',
+                'd_scaley': 'log',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+         ),
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.ParameterScanPlot, {}),
+        (chisurf.plots.ResidualPlot, {})
+    ]
+
+    def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, chisurf.curve.Curve]:
+        d = super().get_curves(copy_curves)
+        d['IRF'] = self.convolve.irf
+        return d
+
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
-            hide_nuisances: bool = False,
             **kwargs
     ):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
-        super().__init__(fit=fit, icon=icon)
+        super(ModelWidget, self).__init__(fit=fit, icon=icon)
 
         self.convolve = chisurf.models.tcspc.widgets.ConvolveWidget(
             fit=fit,
@@ -1369,22 +1391,18 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         super().__init__(
             fit=fit,
             parse=pw,
+            icon=icon,
             convolve=self.convolve,
             generic=generic,
             corrections=corrections
         )
-        fitting_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
-            fit=fit,
-            **kwargs
-        )
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
-        layout.addWidget(fitting_widget)
         layout.addWidget(self.convolve)
         layout.addWidget(generic)
-        layout.addWidget(pw)
         layout.addWidget(corrections)
+        layout.addWidget(pw)
         self.setLayout(layout)
 
 
