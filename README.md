@@ -4,27 +4,24 @@
 
 # ChiSurf
 
-ChiSurf is a software package for the analysis of complex fluorescence data
-acquired in time-resolved single-molecule
-and ensemble fluorescence experiments. The main feature of ChiSurf is the
-joint (global) analysis of multiple datasets.
+ChiSurf is a software package for global analysis of fluorescence data. In
+ChiSurf variables of models for time-resolved single-molecule
+and ensemble fluorescence experiments can be interlinked and optimized 
+and sampled jointly to determine models that are consistent with multiple 
+data sources. By introducing dependencies across models more complex description 
+of multiple datasets can be constructed.
+
+![Parameter graph in ChiSurf
+
+][2]
+
+ChiSurf handles:
+
+* Fluorescence decays (single-molecule, ensemble, FLIM)
+* Fluorescence correlation spectroscopy data
+* Single-molecule counting histograms (Photon distribution analysis)
+
 ![ChiSurf GUI][1]
-
-## History
-
-The original of ChiSurfs was to estimate errors of model parameters of
-fluorescence intensity decays in
-Förster-resonance energy transfer (FRET) experiments for FRET-driven structural
-models of protein and other
-biological macromolecules. It started as a collection of python scripts. With
-time more features were added, e.g.,
-the analysis of correlation curves, correlation of time-tagged-time resolved
-(TTTR) data. A graphical user interface
-makes these scripts and tools available for users without programming experience.
-Overall, ChiSurf is highly experimental and its core is still heavily
-refactored. Consequently, features, which worked
-in old versions, may be not supported in newer versions, unless users
-explicitly demand these functions.
 
 ## Features
 
@@ -120,3 +117,4 @@ energy transfer: implications of dye linker length and rigidity. J Am Chem Soc. 
 modeling. Nat Methods. 2012;9(12):1218-1225.
 
 [1]: https://www.peulen.xyz/wp-content/uploads/2017/05/ChiSurf_Overview-768x451.png "ChiSurf GUI"
+[2]: https://www.peulen.xyz/wp-content/uploads/2024/04/ChiSurf_ParameterGraph.png "ChiSurf Parameter Network"
