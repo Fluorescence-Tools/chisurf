@@ -184,6 +184,12 @@ class Fit(chisurf.base.Base):
         d['autocorrelation'] = self.autocorrelation
         return d
 
+    def get_score(self, score_type: str = 'chi2'):
+        if score_type == 'chi2':
+            return self.chi2
+        elif score_type == 'chi2r':
+            return self.chi2r
+
     def get_chi2(
             self,
             parameter=None,
@@ -209,10 +215,7 @@ class Fit(chisurf.base.Base):
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
-        return model.get_wres(
-            self,
-            **kwargs
-        )
+        return model.get_wres(self, **kwargs)
 
     def save(
             self,
@@ -325,10 +328,7 @@ class FitGroup(Fit):
         return self.selected_fit.data
 
     @data.setter
-    def data(
-            self,
-            v: chisurf.base.Data
-    ):
+    def data(self, v: chisurf.base.Data):
         self.selected_fit.data = v
 
     @property
@@ -358,10 +358,7 @@ class FitGroup(Fit):
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(
-            self,
-            v: typing.Tuple[int, int]
-    ):
+    def fit_range(self, v: typing.Tuple[int, int]):
         for f in self:
             f.xmin, f.xmax = v
         self.xmin, self.xmax = v
@@ -371,10 +368,7 @@ class FitGroup(Fit):
         return self.selected_fit.xmin
 
     @xmin.setter
-    def xmin(
-            self,
-            v: int
-    ):
+    def xmin(self, v: int):
         for f in self:
             f.xmin = v
 
