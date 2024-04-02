@@ -203,6 +203,10 @@ class FittingControllerWidget(Controller):
     def current_fit_type(self) -> str:
         return str(self.comboBox.currentText())
 
+    @property
+    def local_first(self) -> bool:
+        return self.checkBox.isChecked()
+
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
@@ -280,8 +284,8 @@ class FittingControllerWidget(Controller):
         chisurf.run("cs.status.showMessage('Sampling done!')")
 
     def onRunFit(self):
-        chisurf.run(f"cs.status.showMessage('Fitting analysis: {self.fit.name}. Please wait...')")
-        chisurf.run("cs.current_fit.run()")
+        chisurf.run(f"cs.status.showMessage('Please wait fitting: {self.fit.name}')")
+        chisurf.run(f"cs.current_fit.run(local_first={self.local_first})")
         self.fit.model.finalize()
         for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
             try:
