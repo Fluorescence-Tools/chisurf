@@ -53,7 +53,6 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.set_default_parameter_values(model_name)
         self.plainTextEdit.setPlainText(function_str)
         self.create_parameter_widgets()
-        self.model.update_model()
 
         self.editor = chisurf.gui.tools.code_editor.CodeEditor(None, language='yaml', can_load=False)
         self.textEdit.setVisible(False)
