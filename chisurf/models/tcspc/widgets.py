@@ -1362,6 +1362,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         super(ModelWidget, self).__init__(fit=fit, icon=icon)
+        super(ParseDecayModel, self).__init__(fit=fit, icon=icon)
 
         self.convolve = chisurf.models.tcspc.widgets.ConvolveWidget(
             fit=fit,
