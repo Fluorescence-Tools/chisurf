@@ -223,24 +223,28 @@ class Parameter(chisurf.base.Base):
         """
         super().__init__(*args, **kwargs)
         name = kwargs.pop('name', '')
-        if callable(value):
-            self._callable = value
-            self._port = chinet.Port(
-                value=np.array([0.0], dtype=np.double),  # the value is not actually used
-                name=name,
-                lb=lb,
-                ub=ub,
-                is_bounded=bounds_on
-            )
+        port = kwargs.pop('port', None)
+        if port is not None:
+            self._port = port
         else:
-            self._callable = None
-            self._port = chinet.Port(
-                value=np.atleast_1d(value),
-                name=name,
-                lb=lb,
-                ub=ub,
-                is_bounded=bounds_on
-            )
+            if callable(value):
+                self._callable = value
+                self._port = chinet.Port(
+                    value=np.array([0.0], dtype=np.double),  # the value is not actually used
+                    name=name,
+                    lb=lb,
+                    ub=ub,
+                    is_bounded=bounds_on
+                )
+            else:
+                self._callable = None
+                self._port = chinet.Port(
+                    value=np.atleast_1d(value),
+                    name=name,
+                    lb=lb,
+                    ub=ub,
+                    is_bounded=bounds_on
+                )
         self._link = link
         if isinstance(link, Parameter):
             self._port.link = link._port
