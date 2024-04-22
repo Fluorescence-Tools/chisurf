@@ -203,8 +203,11 @@ class LifetimeModel(ModelCurve):
         s += "\nLifetimes"
         s += "\n------------------\n"
         s += "\nAverage Lifetimes:\n"
-        s += (f"<tau>x: {self.species_averaged_lifetime:.3f}\n"
-              f"<tau>F: {self.fluorescence_averaged_lifetime:.3f}\n")
+        s += (
+            f"<tau>x: {self.species_averaged_lifetime:.3f}\n"
+            f"<tau>F: {self.fluorescence_averaged_lifetime:.3f}\n"
+            f"Steady state anisotropy: {self.steady_state_anisotropy:.3f}\n"
+        )
         return s
 
     def __init__(
