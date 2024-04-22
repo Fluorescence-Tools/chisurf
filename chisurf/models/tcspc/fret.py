@@ -497,10 +497,7 @@ class FRETModel(LifetimeModel):
         return 1.0 - self.fret_species_averaged_lifetime / self.donor_species_averaged_lifetime
 
     @fret_efficiency.setter
-    def fret_efficiency(
-            self,
-            v: float
-    ):
+    def fret_efficiency(self, v: float):
         sdecay = self.fit.data.y.sum()
         tau0x = self.donor_species_averaged_lifetime
         n0 = sdecay/(tau0x*(1.-v))
@@ -511,16 +508,16 @@ class FRETModel(LifetimeModel):
         return self._donors
 
     @donors.setter
-    def donors(
-            self,
-            v: Lifetime
-    ):
+    def donors(self, v: Lifetime):
         self._donors = v
 
     @property
     def reference(self):
         self._reference.update_model()
-        return np.maximum(self._reference._y, 0)
+        ref = np.maximum(self._reference._y, 0)
+        scale = np.max(self.fit.data.y) / np.max(ref)
+        ref *= scale
+        return ref
 
     def calc_fret_efficiency(self) -> float:
         try:
