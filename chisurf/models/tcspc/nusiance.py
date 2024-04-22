@@ -23,7 +23,8 @@ class Generic(FittingParameterGroup):
         """Number of background photons
         """
         if isinstance(self.background_curve, Curve):
-            return self._background_curve.y.sum() / self.t_bg * self.t_exp
+            n_bg = self._background_curve.y.sum() / self.t_bg * self.t_exp
+            return n_bg
         else:
             return 0.0
 
@@ -40,7 +41,7 @@ class Generic(FittingParameterGroup):
     def n_ph_fl(self) -> float:
         """Number of fluorescence photons
         """
-        return self.n_ph_exp - self.n_ph_bg
+        return max(self.n_ph_exp - self.n_ph_bg, 1.0)
 
     @property
     def scatter(self) -> float:
@@ -48,10 +49,7 @@ class Generic(FittingParameterGroup):
         return self._sc.value
 
     @scatter.setter
-    def scatter(
-            self,
-            v: float
-    ):
+    def scatter(self, v: float):
         self._sc.value = v
 
     @property
@@ -60,25 +58,18 @@ class Generic(FittingParameterGroup):
         return self._bg.value
 
     @background.setter
-    def background(
-            self,
-            v: float
-    ):
+    def background(self, v: float):
         self._bg.value = v
 
     @property
     def background_curve(self) -> chisurf.curve.Curve:
-        # Background curve
         if isinstance(self._background_curve, Curve):
             return self._background_curve
         else:
             return None
 
     @background_curve.setter
-    def background_curve(
-            self,
-            v: float
-    ):
+    def background_curve(self, v: float):
         if isinstance(v, Curve):
             self._background_curve = v
 
@@ -89,10 +80,7 @@ class Generic(FittingParameterGroup):
         return self._tmeas_bg.value
 
     @t_bg.setter
-    def t_bg(
-            self,
-            v: float
-    ):
+    def t_bg(self, v: float):
         self._tmeas_bg.value = v
 
     @property
@@ -102,10 +90,7 @@ class Generic(FittingParameterGroup):
         return self._tmeas_exp.value
 
     @t_exp.setter
-    def t_exp(
-            self,
-            v: float
-    ):
+    def t_exp(self, v: float):
         self._tmeas_exp.value = v
 
     def __init__(
@@ -114,12 +99,7 @@ class Generic(FittingParameterGroup):
             name: str = 'Nuisance',
             **kwargs
     ):
-        """
 
-        :param background_curve:
-        :param name:
-        :param kwargs:
-        """
         super().__init__(
             name=name,
             **kwargs
@@ -136,19 +116,22 @@ class Generic(FittingParameterGroup):
         self._tmeas_bg = FittingParameter(
             value=1.0,
             name='tBg',
-            fixed=True
+            lb=1e-6,
+            ub=1e9,
+            fixed=True,
+            bounds_on=True
         )
         self._tmeas_exp = FittingParameter(
             value=1.0,
             name='tMeas',
-            fixed=True
+            fixed=True,
+            lb=1e-6,
+            ub=1e9,
+            bounds_on=True
         )
 
 
 class Corrections(FittingParameterGroup):
-    """
-
-    """
 
     @property
     def lintable(self) -> np.array:
