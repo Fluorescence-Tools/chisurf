@@ -61,6 +61,10 @@ class Fit(chisurf.base.Base):
         return s
 
     @property
+    def fit_idx(self):
+        chisurf.fitting.find_fit_idx(self)
+
+    @property
     def xmin(self) -> int:
         return self._xmin
 
