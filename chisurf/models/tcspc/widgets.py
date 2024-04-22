@@ -195,10 +195,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
 
 class GenericWidget(QtWidgets.QGroupBox, Generic):
 
-    def change_bg_curve(
-            self,
-            background_index: int = None
-    ):
+    def change_bg_curve(self, background_index: int = None):
         if isinstance(background_index, int):
             self.background_select.selected_curve_index = background_index
         self._background_curve = self.background_select.selected_dataset
@@ -206,7 +203,8 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         self.lineEdit.setText(self.background_select.curve_name)
         self.fit.model.update()
 
-    def update_widget(self):
+    def update(self):
+        super().update()
         self.lineedit_nphBg.setText("%i" % self.n_ph_bg)
         self.lineedit_nphFl.setText("%i" % self.n_ph_fl)
 
@@ -216,10 +214,7 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
             *args,
             **kwargs
     ):
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         if hide_generic:
             self.hide()
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -240,12 +235,14 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         tmeas_bg_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
             label_text='t<sub>Bg</sub>',
-            suffix='s'
+            callback=self.update,
+            hide_bounds = True
         )
         tmeas_exp_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
             label_text='t<sub>Meas</sub>',
-            suffix='s'
+            callback=self.update,
+            hide_bounds=True
         )
 
         layout = QtWidgets.QGridLayout()
@@ -523,14 +520,16 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 class PDDEMModelWidget(ModelWidget, PDDEMModel):
 
     plot_classes = [
-        (chisurf.plots.LinePlot, {
-            'd_scalex': 'lin',
-            'd_scaley': 'log',
-            'r_scalex': 'lin',
-            'r_scaley': 'lin',
-            'x_label': 'x',
-            'y_label': 'y',
-            'plot_irf': True}
+        (
+            chisurf.plots.LinePlot, {
+                'd_scalex': 'lin',
+                'd_scaley': 'log',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+                'x_label': 'time',
+                'y_label': 'counts',
+                'reference_curve': False
+            }
          ),
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.DistributionPlot, {}),
@@ -608,20 +607,25 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         for w, v in zip(self._amp_widgets, self.amplitudes):
             w.setValue(v)
 
+    @property
+    def parameter_widgets(self):
+        return self._amp_widgets + self._lifetime_widgets
+
     def read_values(self, target):
 
         def linkcall():
+            fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
-                v = target.parameters_all_dict[key].value
-                chisurf.run(
-                    "cs.current_fit.model.parameters_all_dict['%s'].value = %s" %
-                    (key, v)
-                )
+                p = target.parameters_all_dict[key]
+                chisurf.run(f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{key}'].value = {p.value}")
+                chisurf.run(f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{key}'].controller.finalize()")
             chisurf.run("cs.current_fit.update()")
+
         return linkcall
 
     def read_menu(self):
-        menu = QtWidgets.QMenu()
+        menu = self.readFrom_menu
+        menu.clear()
         for f in chisurf.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
@@ -631,16 +635,22 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                         Action = submenu.addAction(a.name)
                         Action.triggered.connect(self.read_values(a))
                 menu.addMenu(submenu)
-        self.readFrom.setMenu(menu)
 
     def link_values(self, target):
         def linkcall():
             self._link = target
-            self.setEnabled(False)
+            chisurf.run("cs.current_fit.update()")
+            self.gb.setChecked(False)
         return linkcall
 
+    def onLinkToggeled(self, checked):
+        if checked:
+            self._link = None
+            chisurf.run("cs.current_fit.update()")
+
     def link_menu(self):
-        menu = QtWidgets.QMenu()
+        menu = self.linkFrom_menu
+        menu.clear()
         for f in chisurf.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
@@ -650,7 +660,6 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                         Action = submenu.addAction(a.name)
                         Action.triggered.connect(self.link_values(a))
                 menu.addMenu(submenu)
-        self.linkFrom.setMenu(menu)
 
     def __init__(self, title: str = '', **kwargs):
         super().__init__(**kwargs)
@@ -660,6 +669,9 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.layout.setSpacing(0)
 
         self.gb = QtWidgets.QGroupBox()
+        self.gb.setCheckable(True)
+        self.gb.setChecked(True)
+        self.gb.toggled.connect(self.onLinkToggeled)
         self.gb.setTitle(title)
 
         self.lh = QtWidgets.QVBoxLayout()
@@ -687,31 +699,31 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
         readFrom = QtWidgets.QToolButton()
         readFrom.setText("read")
+        self.readFrom_menu = QtWidgets.QMenu(self.readFrom)
+        self.readFrom_menu.aboutToShow.connect(self.read_menu)
+        readFrom.setMenu(self.readFrom_menu)
         readFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
-        readFrom.clicked.connect(self.read_menu)
         lh.addWidget(readFrom)
         self.readFrom = readFrom
 
         linkFrom = QtWidgets.QToolButton()
         linkFrom.setText("link")
+        self.linkFrom_menu = QtWidgets.QMenu(self.linkFrom)
+        self.linkFrom_menu.aboutToShow.connect(self.link_menu)
+        linkFrom.setMenu(self.linkFrom_menu)
         linkFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
-        linkFrom.clicked.connect(self.link_menu)
         lh.addWidget(linkFrom)
         self.linkFrom = linkFrom
 
         normalize_amplitude = QtWidgets.QCheckBox("Norm.")
         normalize_amplitude.setChecked(True)
-        normalize_amplitude.setToolTip(
-            "Normalize amplitudes to unity.\nThe sum of all amplitudes equals one."
-        )
+        normalize_amplitude.setToolTip("Normalize amplitudes to unity.\nThe sum of all amplitudes equals one.")
         normalize_amplitude.clicked.connect(self.onNormalizeAmplitudes)
         self.normalize_amplitude = normalize_amplitude
 
         absolute_amplitude = QtWidgets.QCheckBox("Abs.")
         absolute_amplitude.setChecked(True)
-        absolute_amplitude.setToolTip(
-            "Take absolute value of amplitudes\nNo negative amplitudes"
-        )
+        absolute_amplitude.setToolTip("Take absolute value of amplitudes\nNo negative amplitudes")
         absolute_amplitude.clicked.connect(self.onAbsoluteAmplitudes)
         self.absolute_amplitude = absolute_amplitude
 
@@ -722,25 +734,16 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.append()
 
     def onNormalizeAmplitudes(self):
-        chisurf.run(
-            "chisurf.macros.model_tcspc.normalize_lifetime_amplitudes(%s)" %
-            self.normalize_amplitude.isChecked()
-        )
+        chisurf.run(f"chisurf.macros.model_tcspc.normalize_lifetime_amplitudes({self.normalize_amplitude.isChecked()})")
 
     def onAbsoluteAmplitudes(self):
-        chisurf.run(
-            "chisurf.macros.model_tcspc.absolute_amplitudes(%s)" %
-            self.absolute_amplitude.isChecked()
-        )
+        chisurf.run(f"chisurf.macros.model_tcspc.absolute_amplitudes({self.absolute_amplitude.isChecked()})")
 
     def onAddLifetime(self):
         chisurf.run(f"chisurf.macros.model_tcspc.add_lifetime('{self.name}')")
 
     def onRemoveLifetime(self):
-        chisurf.run(
-            "chisurf.macros.model_tcspc.remove_lifetime('%s')" %
-            self.name
-        )
+        chisurf.run(f"chisurf.macros.model_tcspc.remove_lifetime('{self.name}')")
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
@@ -771,7 +774,23 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self._lifetime_widgets.pop().close()
 
 
-class LifetimeModelWidgetBase(LifetimeModel, ModelWidget):
+class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
+
+    plot_classes = [
+        (
+            chisurf.plots.LinePlot, {
+                'scale_x': 'lin',
+                'd_scaley': 'log',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y'
+            }
+        ),
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.ParameterScanPlot, {}),
+        (chisurf.plots.DistributionPlot, {}),
+        (chisurf.plots.ResidualPlot, {})
+    ]
 
     def __init__(
             self,
@@ -1303,29 +1322,28 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         )
         self.layout.addWidget(pw)
 
-        uic.loadUi(pathlib.Path(__file__).parent / "load_distance_distibution.ui", self)
-
         self.icon = QtGui.QIcon(":/icons/icons/TCSPC.ico")
-        self.actionOpen_distirbution.triggered.connect(self.load_distance_distribution)
+        #uic.loadUi(pathlib.Path(__file__).parent / "load_distance_distibution.ui", self)
+        #self.actionOpen_distirbution.triggered.connect(self.load_distance_distribution)
 
-    def load_distance_distribution(self, **kwargs):
-        #print "load_distance_distribution"
-        verbose = kwargs.get('verbose', self.verbose)
-        #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
-        filename = chisurf.gui.widgets.get_filename(
-            description='Open distance distribution',
-            file_type='CSV-files (*.csv)'
-        )
-        self.lineEdit.setText(filename)
-        csv = chisurf.fio.ascii.Csv(filename)
-        ar = csv.data.T
-        if verbose:
-            print("Opening distribution")
-            print("Filename: %s" % filename)
-            print("Shape: %s" % ar.shape)
-        self.rda = ar[0]
-        self.prda = ar[1]
-        self.update_model()
+    # def load_distance_distribution(self, **kwargs):
+    #     #print "load_distance_distribution"
+    #     verbose = kwargs.get('verbose', self.verbose)
+    #     #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
+    #     filename = chisurf.gui.widgets.get_filename(
+    #         description='Open distance distribution',
+    #         file_type='CSV-files (*.csv)'
+    #     )
+    #     self.lineEdit.setText(filename)
+    #     csv = chisurf.fio.ascii.Csv(filename)
+    #     ar = csv.data.T
+    #     if verbose:
+    #         print("Opening distribution")
+    #         print("Filename: %s" % filename)
+    #         print("Shape: %s" % ar.shape)
+    #     self.rda = ar[0]
+    #     self.prda = ar[1]
+    #     self.update_model()
 
 
 class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
@@ -1410,19 +1428,18 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     plot_classes = [
-        (
-            chisurf.plots.LinePlot,
-            {
-                'd_scalex': 'lin',
-                'd_scaley': 'log',
-                'r_scalex': 'lin',
-                'r_scaley': 'lin',
-                'x_label': 'x',
-                'y_label': 'y',
-                'plot_irf': True
-            }
+        (chisurf.plots.LinePlot, {
+            'd_scalex': 'lin',
+            'd_scaley': 'log',
+            'r_scalex': 'lin',
+            'r_scaley': 'lin',
+            'x_label': 'x',
+            'y_label': 'y',
+            'plot_irf': True}
          ),
         (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.DistributionPlot, {}),
+        (chisurf.plots.ParameterScanPlot, {})
     ]
 
     @property
@@ -1430,10 +1447,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         return int(self._current_model.value())
 
     @current_model_idx.setter
-    def current_model_idx(
-            self,
-            v: int
-    ):
+    def current_model_idx(self, v: int):
         self._current_model.setValue(v)
 
     @property
@@ -1454,13 +1468,10 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         i = self.model_selector.currentIndex()
         return self.model_types[i]
 
-    def __init__(
-            self,
-            fit,
-            **kwargs
-    ):
-        LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
-        LifetimeMixModel.__init__(self, fit, **kwargs)
+    def __init__(self, fit, **kwargs):
+        super().__init__(self, fit, **kwargs)
+        # LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
+        # LifetimeMixModel.__init__(self, fit, **kwargs)
 
         layout = QtWidgets.QHBoxLayout()
 
@@ -1517,3 +1528,4 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
     def clear_models(self):
         LifetimeMixModel.clear_models(self)
         chisurf.gui.widgets.clear_layout(self.model_layout)
+
