@@ -18,7 +18,6 @@ import chisurf.fitting
 import chisurf.macros
 
 
-
 class ChisurfWizard(QtWidgets.QWizard):
 
     def page_actions(self):
