@@ -38,6 +38,23 @@ def calculate_weighted_residuals(
     return wr
 
 
+def find_fit_idx(
+        fit: chisurf.fitting.Fit,
+        fits: list[chisurf.fitting.fit.Fit] = None
+) -> int:
+    """Returns index of the fit of a model in chisurf.fits array
+
+    :param model:
+    :param fits:
+    :return:
+    """
+    if fits is None:
+        fits = chisurf.fits
+    for idx, f in enumerate(fits):
+        if f is fit:
+            return idx
+
+
 def find_fit_idx_of_parameter(
         parameter: chisurf.fitting.parameter.FittingParameter,
         fit_list: list[chisurf.fitting.Fit] = None
