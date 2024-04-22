@@ -256,6 +256,17 @@ class LifetimeModel(ModelCurve):
         )
 
     @property
+    def steady_state_anisotropy(self) -> float:
+        ls = self.lifetime_spectrum
+        rs = self.anisotropy.rotation_spectrum
+        lrs = chisurf.math.datatools.elte2(ls, rs)
+        lrx, lrt = chisurf.math.datatools.interleaved_to_two_columns(lrs)
+        lx, lt = chisurf.math.datatools.interleaved_to_two_columns(ls)
+        nom = lrx @ lrt
+        denom = lx @ lt
+        return nom / denom
+
+    @property
     def lifetime_spectrum(self) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
