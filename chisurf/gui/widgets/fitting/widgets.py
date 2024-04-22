@@ -513,7 +513,8 @@ class FittingParameterWidget(Controller):
             name: str = None,
             label_text: str = None,
             hide_link: bool = None,
-            suffix: str = ""
+            suffix: str = "",
+            callback: typing.Callable = None
     ):
         if hide_link is None:
             hide_link = parameter_settings['hide_link']
@@ -533,6 +534,7 @@ class FittingParameterWidget(Controller):
         if decimals is None:
             decimals = parameter_settings['decimals']
 
+        self.callback = callback
         self.name = fitting_parameter.name
         self.fitting_parameter = fitting_parameter
 
@@ -588,6 +590,8 @@ class FittingParameterWidget(Controller):
                 f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
             )
         )
+        if callback:
+            self.widget_value.valueChanged.connect(self.callback)
 
         self.widget_fix.toggled.connect(
             lambda: chisurf.run(
@@ -737,7 +741,8 @@ def make_fitting_parameter_widget(
         hide_bounds: bool = None,
         name: str = None,
         hide_link: bool = None,
-        suffix: str = ""
+        suffix: str = "",
+        callback: typing.Callable = None
 ) -> FittingParameterWidget:
     if label_text is None:
         if fitting_parameter.label_text is None:
@@ -755,7 +760,8 @@ def make_fitting_parameter_widget(
         name=name,
         hide_link=hide_link,
         label_text=label_text,
-        suffix=suffix
+        suffix=suffix,
+        callback=callback
     )
     fitting_parameter.controller = widget
     return widget
