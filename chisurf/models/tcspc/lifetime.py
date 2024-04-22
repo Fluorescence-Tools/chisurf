@@ -301,21 +301,18 @@ class LifetimeModel(ModelCurve):
 
         # Calculate background curve from reference measurement
         if isinstance(background_curve, chisurf.curve.Curve):
+
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
 
             bg_y = np.copy(background_curve.y)
-            bg_y /= bg_y.sum()
-            bg_y *= self.generic.n_ph_bg
+            bg_y *= self.generic.n_ph_bg / bg_y.sum()
+            decay *= self.generic.n_ph_fl / decay.sum()
 
-            decay *= self.generic.n_ph_fl
             decay += bg_y
 
         self.corrections.pileup(decay)
-        self.convolve.scale(
-            decay,
-            bg=self.generic.background
-        )
+        self.convolve.scale(decay, bg=self.generic.background)
         decay += background
         decay = self.corrections.linearize(decay)
         self.y = np.maximum(decay, 0)
