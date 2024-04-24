@@ -116,10 +116,11 @@ class ModelCurve(Model, chisurf.curve.Curve):
         )
 
     def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
-        xmin = self.fit.xmin
-        xmax = self.fit.xmax
+        #xmin = self.fit.xmin
+        #xmax = self.fit.xmax
         d = OrderedDict()
-        d['model'] = chisurf.curve.Curve(x=self.x[xmin:xmax], y=self.y[xmin:xmax], copy_array=copy_curves)
+        #d['model'] = chisurf.curve.Curve(x=self.x[xmin:xmax], y=self.y[xmin:xmax], copy_array=copy_curves)
+        d['model'] = chisurf.curve.Curve(x=self.x, y=self.y, copy_array=copy_curves)
         return d
 
     def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
