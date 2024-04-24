@@ -591,7 +591,7 @@ class FittingParameterWidget(Controller):
             )
         )
         if callback:
-            self.widget_value.valueChanged.connect(self.callback)
+            self.widget_value.editingFinished.connect(self.callback)
 
         self.widget_fix.toggled.connect(
             lambda: chisurf.run(
@@ -681,13 +681,13 @@ class FittingParameterWidget(Controller):
             rel_error = abs(
                 self.fitting_parameter.error_estimate / (value + 1e-12) * 100.0
             )
-            self.lineEdit.setText("%.0f%%" % rel_error)
+            self.lineEdit.setText(f"{rel_error:.0f}%%")
 
         # link
         if self.fitting_parameter.link is not None:
             tooltip = " linked to " + self.fitting_parameter.link.name
             self.widget_link.setToolTip(tooltip)
-            self.widget_link.setChecked(True)
+            # self.widget_link.setChecked(True)
             self.widget_value.setEnabled(False)
 
         self.blockSignals(False)
