@@ -32,37 +32,24 @@ class init_with_ui(object):
     def __call__(self, f: typing.Callable):
 
         def load_ui(target: QtWidgets.QWidget, ui_filename: str, path: str):
-            uic.loadUi(
-                os.path.join(
-                    path,
-                    ui_filename
-                ),
-                target
-            )
+            path = pathlib.Path(path) / ui_filename
+            uic.loadUi(path, target)
 
         def wrapped(cls: QtWidgets.QWidget, *args, **kwargs):
             if self.path is None:
-                path = os.path.dirname(
-                    inspect.getfile(
-                        cls.__class__
-                    )
-                )
+                path = pathlib.Path(inspect.getfile(cls.__class__)).parent
             else:
                 path = self.path
+
+            # Call superclass __init__ method if it exists
             try:
-                super(cls.__class__, cls).__init__(
-                    *args,
-                    **kwargs
-                )
+                super(cls.__class__, cls).__init__(*args, **kwargs)
             except TypeError:
                 super(cls.__class__, cls).__init__()
 
-            target = cls
-            load_ui(
-                target=target,
-                path=path,
-                ui_filename=self.ui_filename
-            )
+            super(QtWidgets.QWidget, cls).__init__()
+            load_ui(cls, self.ui_filename, path)
+
             f(cls, *args, **kwargs)
 
         return wrapped
