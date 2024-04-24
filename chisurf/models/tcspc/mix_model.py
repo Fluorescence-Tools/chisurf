@@ -18,10 +18,7 @@ class LifetimeMixModel(LifetimeModel):
         return self._current_model_idx
 
     @current_model_idx.setter
-    def current_model_idx(
-            self,
-            v: int
-    ):
+    def current_model_idx(self, v: int):
         self._current_model_idx = v
 
     @property
@@ -31,10 +28,7 @@ class LifetimeMixModel(LifetimeModel):
         return x
 
     @fractions.setter
-    def fractions(
-            self,
-            x: np.array
-    ):
+    def fractions(self, x: np.array):
         x = np.abs(x)
         x /= sum(x)
         for i, va in enumerate(x):
