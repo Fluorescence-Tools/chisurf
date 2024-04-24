@@ -5,7 +5,7 @@ import numpy as np
 
 from chisurf import typing
 
-from chisurf.gui import QtWidgets
+from chisurf.gui import QtWidgets, QtCore
 
 import pyqtgraph as pg
 import pyqtgraph.dockarea
@@ -25,6 +25,81 @@ colors = chisurf.settings.gui['plot']['colors']
 
 
 class LinePlotControl(QtWidgets.QWidget):
+
+    director = {
+        'data': {
+            'lw': 1.0,
+            'color': colors['data'],
+            'target': 'main_plot',
+            'allow_reference_curve': True,
+            'allow_shift': True,
+            'allow_density': True,
+            'plot_only_region': False
+        },
+        'IRF': {
+            'lw': 2.0,
+            'color': colors['irf'],
+            'target': 'main_plot',
+            'allow_reference_curve': False,
+            'allow_shift': True,
+            'allow_density': True,
+            'plot_only_region': False
+        },
+        'model': {
+            'lw': 2.0,
+            'target': 'main_plot',
+            'color': colors['model'],
+            'allow_reference_curve': True,
+            'allow_shift': True,
+            'allow_density': True,
+            'plot_only_region': True
+        },
+        'weighted residuals': {
+            'lw': 2.0,
+            'target': 'top_left_plot',
+            'label': 'w.res.',
+            'color': colors['residuals'],
+            'allow_reference_curve': False,
+            'allow_shift': True,
+            'allow_density': False,
+            'plot_only_region': False
+        },
+        'autocorrelation': {
+            'lw': 2.0,
+            'target': 'top_right_plot',
+            'color': colors['auto_corr'],
+            'label': 'a.cor.',
+            'allow_reference_curve': False,
+            'allow_shift': True,
+            'allow_density': False,
+            'plot_only_region': False
+        },
+        'default': {
+            'lw': 2.0,
+            'color': colors['data'],
+            'target': 'main_plot',
+            'allow_reference_curve': False,
+            'allow_shift': True,
+            'allow_density': False,
+            'allow_clipping': False,
+            'plot_only_region': False
+        }
+    }
+
+    def getCheckState(self, name):
+        for i in range(self.treeWidget.topLevelItemCount()):
+            item = self.treeWidget.topLevelItem(i)
+            if item.text(2) == name:
+                return item.checkState(1)
+        return True
+
+    def fill_line_widget(self):
+        self.treeWidget.blockSignals(True)
+        for nbr, key in enumerate(self.parent.lines):
+            item = QtWidgets.QTreeWidgetItem(self.treeWidget, [str(nbr), '', key])
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            item.setCheckState(1, QtCore.Qt.Checked)
+        self.treeWidget.blockSignals(False)
 
     @chisurf.gui.decorators.init_with_ui("linePlotWidget.ui")
     def __init__(
@@ -49,9 +124,9 @@ class LinePlotControl(QtWidgets.QWidget):
         self.actionUpdate_Plot.triggered.connect(parent.update)
         self.checkBox.stateChanged.connect(self.SetLog)
         self.checkBox_2.stateChanged.connect(self.SetLog)
+        self.checkBox_3.stateChanged.connect(self.SetDensity)
         self.checkBox_4.stateChanged.connect(self.SetLog)
         self.checkBox_5.stateChanged.connect(self.SetReference)
-        self.checkBox_3.stateChanged.connect(self.SetDensity)
 
     @property
     def plot_ftt(self) -> bool:
@@ -98,27 +173,6 @@ class LinePlotControl(QtWidgets.QWidget):
         return self.data_logy == 'log'
 
     @property
-    def res_is_log_y(self) -> bool:
-        return self.res_logy == 'log'
-
-    @property
-    def res_logy(self) -> str:
-        """
-        y-residuals is plotted logarithmically
-        """
-        return 'log' if self.checkBox_4.isChecked() else 'lin'
-
-    @res_logy.setter
-    def res_logy(
-            self,
-            v: str
-    ):
-        if v == 'lin':
-            self.checkBox_4.setCheckState(0)
-        else:
-            self.checkBox_4.setCheckState(2)
-
-    @property
     def use_reference(self) -> bool:
         """
         If true use a reference curve for plotting
@@ -134,19 +188,47 @@ class LinePlotControl(QtWidgets.QWidget):
 
     @property
     def ymin(self) -> float:
-        return self.doubleSpinBox_2.value()
+        if self.checkBox_7.isChecked():
+            return self.doubleSpinBox_2.value()
+        else:
+            return None
 
     @ymin.setter
     def ymin(self, v: float):
         self.doubleSpinBox_2.setValue(v)
 
     @property
+    def ymax(self) -> float:
+        if self.checkBox_8.isChecked():
+            return self.doubleSpinBox_4.value()
+        else:
+            return None
+
+    @ymax.setter
+    def ymax(self, v: float):
+        self.doubleSpinBox_4.setValue(v)
+
+    @property
     def xmin(self) -> float:
-        return self.doubleSpinBox.value()
+        if self.checkBox_4.isChecked():
+            return self.doubleSpinBox.value()
+        else:
+            return None
 
     @xmin.setter
     def xmin(self, v: float):
         self.doubleSpinBox.setValue(v)
+
+    @property
+    def xmax(self) -> float:
+        if self.checkBox_6.isChecked():
+            return self.doubleSpinBox_3.value()
+        else:
+            return None
+
+    @xmax.setter
+    def xmax(self, v: float):
+        self.doubleSpinBox_3.setValue(v)
 
     @property
     def x_shift(self) -> float:
@@ -189,44 +271,22 @@ class LinePlot(plotbase.Plot):
 
     name = "Fit"
 
-    director = {
-        'data': {
-            'lw': 1.0,
-            'color': colors['data'],
-            'target': 'main_plot'
-        },
-        'IRF': {
-            'lw': 2.0,
-            'color': colors['irf'],
-            'target': 'main_plot'
-        },
-        'model': {
-            'lw': 2.0,
-            'target': 'main_plot',
-            'color': colors['model'],
-        },
-        'weighted residuals': {
-            'lw': 2.0,
-            'target': 'top_left_plot',
-            'label': 'w.res.',
-            'color': colors['residuals']
-        },
-        'autocorrelation': {
-            'lw': 2.0,
-            'target': 'top_right_plot',
-            'color': colors['auto_corr'],
-            'label': 'a.cor.'
-        }
-    }
-
-    def get_bounds(self, fit: chisurf.fitting.fit.Fit, region_selector: pg.LinearRegionItem) -> typing.Tuple[int, int]:
+    def get_bounds(
+            self,
+            fit: chisurf.fitting.fit.Fit,
+            region_selector: pg.LinearRegionItem
+    ) -> typing.Tuple[int, int]:
         lb, ub = region_selector.getRegion()
+
+        x_shift = self.plot_controller.x_shift
+        lb -= x_shift
+        ub -= x_shift
+
         data_x = fit.data.x
         x_len = len(data_x) - 1
+
         if self.plot_controller.data_is_log_x:
-            lb, ub = 10 ** lb, 10 ** ub
-        lb -= self.plot_controller.x_shift
-        ub -= self.plot_controller.x_shift
+            lb, ub = 10.0 ** lb, 10.0 ** ub
 
         lb_i: int = np.searchsorted(data_x, lb, side='right')
         ub_i: int = np.searchsorted(data_x, ub, side='left')
@@ -305,7 +365,7 @@ class LinePlot(plotbase.Plot):
             anchor=(1, 1)
         )
         self.text.setParentItem(plots['main_plot'])
-        # self.text.setPos(100, 0)
+        self.text.setPos(100, 0)
 
         # Fitting-region selector
         if chisurf.settings.gui['plot']['enable_region_selector']:
@@ -314,18 +374,20 @@ class LinePlot(plotbase.Plot):
             region = pg.LinearRegionItem(brush=co)
             plots['main_plot'].addItem(region)
             self.region = region
+
             def onRegionUpdate(evt):
                 self.lb_i, self.ub_i = self.get_bounds(fit, region)
-                # Set values of region selector
                 lb, ub = fit.data.x[self.lb_i], fit.data.x[self.ub_i]
+                x_shift = self.plot_controller.x_shift
+                lb += x_shift
+                ub += x_shift
                 if self.plot_controller.data_is_log_x:
                     lb = np.log10(lb)
                     ub = np.log10(ub)
                 self.region.setRegion((lb, ub))
-                chisurf.run(f"cs.current_fit_widget.xmin = {self.lb_i}")
-                chisurf.run(f"cs.current_fit_widget.xmax = {self.ub_i}")
                 chisurf.run(f"cs.current_fit.fit_range = {self.lb_i}, {self.ub_i}")
                 self.update(only_fit_range=True)
+
             region.sigRegionChangeFinished.connect(onRegionUpdate)
 
         # Grid
@@ -355,6 +417,7 @@ class LinePlot(plotbase.Plot):
             )
         self.lines = lines
         self.plots = plots
+        self.plot_controller.fill_line_widget()
 
     def add_plot(
             self,
@@ -367,11 +430,12 @@ class LinePlot(plotbase.Plot):
         pen_color = chisurf.settings.colors[color_idx]['hex']
         lw = chisurf.settings.gui['plot']['line_width']
 
-        if curve_key in self.director.keys():
-            for ik in self.director.keys():
+        director = self.plot_controller.director
+        if curve_key in director.keys():
+            for ik in director.keys():
                 # if the curve name matches the template
                 if ik in curve_key:
-                    curve_options = self.director[ik]
+                    curve_options = director[ik]
                     target_plot = plot_dict[
                         curve_options.get('target', 'main_plot')
                     ]
@@ -390,7 +454,10 @@ class LinePlot(plotbase.Plot):
         else:
             curve = curves[curve_key]
             if isinstance(curve, chisurf.data.DataCurve):
-                target_plot = plot_dict['main_plot']
+                curve_options = director['default']
+                target_plot = plot_dict[
+                    curve_options.get('target', 'main_plot')
+                ]
                 return target_plot.plot(
                     x=[0.0], y=[0.0],
                     pen=pg.mkPen(pen_color, width=lw),
@@ -402,85 +469,112 @@ class LinePlot(plotbase.Plot):
     def update(self, only_fit_range: bool = False, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
 
-        # # Reference-function
-        # use_reference = self.plot_controller.use_reference
-        # if use_reference:
-        #     reference = self.fit.model.reference
-        #     if reference is None:
-        #         reference = np.ones_like(data_y)
-        #         print("WARNING: no reference curve provided by the model.")
-        #     model_y /= reference[self.fit.xmin:self.fit.xmax]
-        #     data_y /= reference
-        #     mm = max(model_y)
-        #     irf_y *= mm / max(irf_y)
+        fit = self.fit
+        data_log_y = self.plot_controller.data_is_log_y
+        data_log_x = self.plot_controller.data_is_log_x
+        director = self.plot_controller.director
+
+        curves = fit.get_curves()
+        data = curves['data']
 
         y_shift = self.plot_controller.y_shift
         x_shift = self.plot_controller.x_shift
 
-        curves = self.fit.get_curves()
-        curves_keys = list(curves.keys())[::-1]
-        for i, curve_key in enumerate(curves_keys):
-            curve = curves[curve_key]
-            y = curve.y + y_shift
-            x = curve.x + x_shift
-            if self.plot_controller.is_density:
-                y = curve.y / np.diff(curve.x)
-            # try:
-            self.lines[curve_key].setData(x=x, y=y)
-            # except AttributeError:
-            #     self.lines[curve_key] = self.add_plot(
-            #         curves=curves,
-            #         curve_key=curve_key,
-            #         plot_dict=self.plots,
-            #         index=i
-            #     )
-
-        data_log_y = self.plot_controller.data_is_log_y
-        data_log_x = self.plot_controller.data_is_log_x
-        res_log_y = self.plot_controller.res_is_log_y
-
-        # Set log-scales
-        self.plots['top_left_plot'].setLogMode(
-            x=data_log_x,
-            y=res_log_y
-        )
-        self.plots['top_right_plot'].setLogMode(
-            x=data_log_x,
-            y=res_log_y
-        )
-        self.plots['main_plot'].setLogMode(
-            x=data_log_x,
-            y=data_log_y
-        )
-
         # update region selector
-        data = curves['data']
+        self.region.blockSignals(True)
 
-        # Set bounds of region selector
         lb_min, ub_max = data.x[0], data.x[-1]
+        lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
+
+        lb_min += x_shift
+        ub_max += x_shift
+        lb += x_shift
+        ub += x_shift
+
         if data_log_x:
             lb_min = np.log10(lb_min)
             ub_max = np.log10(ub_max)
-        self.region.setBounds((lb_min, ub_max))
-
-        # Set values of region selector
-        lb, ub = data.x[self.fit.xmin], data.x[self.fit.xmax]
-        if data_log_x:
             lb = np.log10(lb)
             ub = np.log10(ub)
+
+        self.region.setBounds((lb_min, ub_max))
         self.region.setRegion((lb, ub))
 
-        # self.text.updateTextPos()
+        self.region.blockSignals(False)
+
+        curves_keys = list(curves.keys())[::-1]
+        for i, curve_key in enumerate(curves_keys):
+            curve_settings = director.get(curve_key, director['default'])
+            curve = curves[curve_key]
+
+            y = np.copy(curve.y)
+            x = np.copy(curve.x)
+
+            if curve_settings['allow_shift']:
+                y += y_shift
+                x += x_shift
+
+            # Reference-function
+            if self.plot_controller.use_reference and curve_settings['allow_reference_curve']:
+                reference = fit.model.reference
+                if reference is None:
+                    reference = np.ones_like(y)
+                    chisurf.logging.warning("No reference curve provided by the model.")
+                y /= reference
+
+            if self.plot_controller.is_density and curve_settings['allow_density']:
+                y[1:] = y[1:] / np.diff(x)
+
+            line: pg.PlotDataItem = self.lines[curve_key]
+            if curve_settings['plot_only_region']:
+                line.setData(x=x[fit.xmin:fit.xmax], y=y[fit.xmin:fit.xmax])
+            else:
+                line.setData(x=x, y=y)
+            if not self.plot_controller.getCheckState(curve_key):
+                line.hide()
+            else:
+                line.show()
+
+        # Set log-scales
+        self.plots['main_plot'].setLogMode(x=data_log_x, y=data_log_y)
+        self.plots['top_left_plot'].setLogMode(x=data_log_x)
+        self.plots['top_right_plot'].setLogMode(x=data_log_x)
+
+        # Set manual scale
+        xRange, yRange = None, None
+        a_min = self.plot_controller.xmin
+        a_max = self.plot_controller.xmax
+        c = data.x
+        lm = data_log_x
+        if a_min or a_max:
+            a_min = c[0] if not a_min else a_min
+            a_max = c[-1] if not a_max else a_max
+            if lm:
+                a_min = np.log10(a_min)
+                a_max = np.log10(a_max)
+            xRange = [a_min, a_max]
+
+        a_min = self.plot_controller.ymin
+        a_max = self.plot_controller.ymax
+        c = data.y
+        lm = data_log_y
+        if a_min or a_max:
+            a_min = c[0] if not a_min else a_min
+            a_max = c[-1] if not a_max else a_max
+            if lm:
+                a_min = np.log10(a_min)
+                a_max = np.log10(a_max)
+            yRange = [a_min, a_max]
+        if xRange or yRange:
+            self.plots['main_plot'].setRange(xRange=xRange, yRange=yRange)
+
+        self.text.updateTextPos()
         self.text.setHtml(
-            '<div style="name-align: center">'
-            '     <span style="color: #FF0; font-size: 10pt;">'
-            '         Fit-range: %s, %s <br />'
-            '         &Chi;<sup>2</sup>=%.4f <br />'
-            '         DW=%.4f'
-            '     </span>'
-            '</div>' % (
-                self.fit.xmin, self.fit.xmax,
-                self.fit.chi2r,
-                self.fit.durbin_watson
-            )
+            f'<div style="name-align: center">'
+            f'     <span style="color: #FF0; font-size: 10pt;">'
+            f'         Fit-range {fit.xmin}, {fit.xmax} <br />'
+            f'         &Chi;<sup>2</sup>={fit.chi2r:.4f} <br />'
+            f'         DW={fit.durbin_watson: .4f}'
+            f'     </span>'
+            f'</div>'
         )
