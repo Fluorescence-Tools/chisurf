@@ -9,5 +9,6 @@ from chisurf.experiments.experiment import Experiment
 types = {
     'tcspc': Experiment('TCSPC'),
     'fcs': Experiment('FCS'),
+    #'stopped_flow': Experiment('Stopped flow'),
     'structure': Experiment('Modelling')
 }

@@ -412,6 +412,41 @@ class Main(QtWidgets.QMainWindow):
         )
         chisurf.experiment[tcspc.name] = tcspc
 
+        # ##########################################################
+        # #       Stopped flow                                     #
+        # ##########################################################
+        # stopped_flow = chisurf.experiments.types['stopped_flow']
+        # stopped_flow.add_readers(
+        #     [
+        #         (
+        #             chisurf.experiments.tcspc.TCSPCReader(
+        #                 name="TXT/CSV",
+        #                 experiment=stopped_flow
+        #             ),
+        #             chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
+        #                 name='CSV/PQ/IBH',
+        #                 **chisurf.settings.cs_settings['tcspc_csv'],
+        #             )
+        #         ),
+        #         (
+        #             chisurf.experiments.tcspc.TCSPCTTTRReader(
+        #                 name="TTTR-file",
+        #                 experiment=stopped_flow
+        #             ),
+        #             chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
+        #                 **chisurf.settings.cs_settings['tcspc_csv'],
+        #             )
+        #         )
+        #     ]
+        # )
+        # stopped_flow.add_model_classes(
+        #     models=[
+        #         chisurf.models.stopped_flow.ParseStoppedFlowWidget,
+        #         chisurf.models.stopped_flow.ReactionWidget
+        #     ]
+        # )
+        # chisurf.experiment[stopped_flow.name] = stopped_flow
+
         ##########################################################
         #       FCS                                              #
         ##########################################################
@@ -522,7 +557,8 @@ class Main(QtWidgets.QMainWindow):
         )
         global_fit.add_model_classes(
             models=[
-                chisurf.models.global_model.GlobalFitModelWidget
+                chisurf.models.global_model.GlobalFitModelWidget,
+                chisurf.models.global_model.ParameterTransformWidget
             ]
         )
         global_fit.add_reader(global_setup)
