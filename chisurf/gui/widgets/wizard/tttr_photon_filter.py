@@ -365,7 +365,6 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.settings['delta_macro_time_filter']: DeltaMacroTimeFilterSettings = dict()
         self.filter_data_saved = False
 
-
         self.textEdit.setVisible(False)
         chisurf.gui.decorators.lineEdit_dragFile_injector(
             self.lineEdit,
