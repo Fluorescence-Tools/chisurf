@@ -251,10 +251,7 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
         )
         self._parameters = list(set(mp + ap))
 
-    def append_parameter(
-            self,
-            p: chisurf.parameter.Parameter
-    ):
+    def append_parameter(self, p: chisurf.parameter.Parameter):
         self._parameters.append(p)
 
     @abc.abstractmethod
