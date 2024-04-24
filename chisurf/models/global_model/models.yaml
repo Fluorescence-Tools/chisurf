@@ -1,0 +1,101 @@
+---
+3 state kinetics->(x,tR):
+  code: >
+    def g(
+      k12 = 2,
+      k13 = 0,
+      k21 = 2,
+      k23 = 0,
+      k31 = 0,
+      k32 = 0
+    ):
+      K = np.array(
+        [
+          [-(k12+k13), k21, k31],
+          [k12, -(k23+k21), k32],
+          [k13, k23, -(k31+k32)]
+        ]
+      )
+      
+      eigen_val, eigen_vec = np.linalg.eig(K)
+      idx = abs(eigen_val).argsort()[::]
+      eigen_val = eigen_val[idx]
+      eigen_vec = eigen_vec[:,idx].T
+      
+      v0 = eigen_vec[0]
+      x1, x2, x3 = v0 / v0.sum()
+      ie = - 1. / eigen_val
+      tR0, tR1, tR2 = ie[::-1]
+      
+      r = {
+        'x1': x1,
+        'x2': x2,
+        'x3': x3,
+        'tR0': tR0,
+        'tR1': tR1
+      }
+    
+      return r
+
+  initial:
+    k12:
+      value: 1.0
+      bounds: [0.0, 1e6]
+    k13:
+      value: 0.0
+      bounds: [0.0, 1e6]
+    k21:
+      value: 1.0
+      bounds: [0.0, 1e6]
+    k23:
+      value: 1.0
+      bounds: [0.0, 1e6]
+    k31:
+      value: 0.0
+      bounds: [0.0, 1e6]
+    k32:
+      value: 1.0
+      bounds: [0.0, 1e6]
+  description: "3-state kinetics -> relaxation times, population fractions"
+2 state kinetics->(x,tR):
+  code: >
+    def g(k12, k21):
+      return {
+        'tR': 1. / (k12 + k21),
+        'x1': k21 / (k12 + k21),
+        'x2': k12 / (k12 + k21)   
+      }
+  initial:
+    k12:
+      value: 1.0
+      bounds: [0.0, 1e6]
+    k21:
+      value: 0.5
+      bounds: [0.0, 1e6]
+  description: "2-state kinetics -> relaxation times, population fractions"
+Gauss->FRET efficiency:
+  code: >
+    def g(RDA, sDA, k, R0):
+        from chisurf.fluorescence.general import distance_to_fret_efficiency
+        from chisurf.math.functions.distributions import generalized_normal_distribution
+        x = np.linspace(0, 256, 256)
+        f = distance_to_fret_efficiency(x, R0)
+        y = generalized_normal_distribution(x, RDA, sDA, k)
+        fret_efficiency = f @ y / np.sum(y)
+        return {
+            'E': fret_efficiency
+        }
+  initial:
+    RDA:
+      value: 45.0
+      bounds: [0.0, 128]
+    sDA:
+      value: 6.0
+      bounds: [0.0, 20.0]
+    k:
+      value: 0.0
+      bounds: [-10.0, 10.0]
+    R0:
+      value: 52.0
+      bounds: [0.0, 100.0]
+  description: "Compute FRET efficiency for generalized Gaussian (with skew, k)"
