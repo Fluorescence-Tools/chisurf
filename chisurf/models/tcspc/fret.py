@@ -135,11 +135,7 @@ class OrientationParameter(FittingParameterGroup):
     def mode(self, v):
         self._mode = v
 
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         self._mode = kwargs.get('orientation_mode', 'fast_isotropic')
 
         # fast isotropic
