@@ -8,9 +8,7 @@ import chisurf.fio.fluorescence
 from . import reader
 
 
-class FCS(
-    reader.ExperimentReader
-):
+class FCS(reader.ExperimentReader):
 
     name: str = "FCS-CSV"
     skiprows: int = 0
