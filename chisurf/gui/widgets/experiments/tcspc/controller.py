@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import pathlib
-
-import numpy as np
 
 import chisurf.decorators
 import chisurf.gui.decorators
@@ -15,18 +13,10 @@ import chisurf.gui.widgets.fio
 import chisurf.gui.widgets.experiments.widgets
 
 
-class CsvTCSPCWidget(
-    QtWidgets.QWidget,
-):
+class CsvTCSPCWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="tcspc_csv.ui"
-    )
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    @chisurf.gui.decorators.init_with_ui("tcspc_csv.ui")
+    def __init__(self, *args, **kwargs):
         self.actionDtChanged.triggered.connect(self.onParametersChanged)
         self.actionRebinChanged.triggered.connect(self.onParametersChanged)
         self.actionRepratechange.triggered.connect(self.onParametersChanged)
