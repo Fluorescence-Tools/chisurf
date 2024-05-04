@@ -580,10 +580,7 @@ class Data(Base):
         return self._data
 
     @data.setter
-    def data(
-            self,
-            v: Data
-    ):
+    def data(self, v: Data):
         self._data = v
 
     @property
