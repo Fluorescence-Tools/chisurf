@@ -59,11 +59,15 @@ class DistributionPlotControl(QtWidgets.QWidget):
     def distribution_type(self):
         return str(self.selector.currentText())
 
-    def add_distribution_choices(self):
+    def add_distribution_choices(self, options: dict = None) -> None:
+        if options is None:
+            options = distribution_options
+
         model = self.parent().fit.model
         items = list()
-        for distribution_type in distribution_options.keys():
-            d = distribution_options[distribution_type]
+
+        for distribution_type in options.keys():
+            d = options[distribution_type]
             try:
                 attr = model.__getattribute__(d['attribute'])
                 items.append(distribution_type)
@@ -75,6 +79,7 @@ class DistributionPlotControl(QtWidgets.QWidget):
             self,
             *args,
             parent: QtWidgets.QWidget = None,
+            distribution_options: dict = None,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -83,7 +88,7 @@ class DistributionPlotControl(QtWidgets.QWidget):
         self.selector = QtWidgets.QComboBox(None)
         self.selector.blockSignals(True)
         self.layout.addWidget(self.selector)
-        self.add_distribution_choices()
+        self.add_distribution_choices(distribution_options)
         self.selector.currentIndexChanged[int].connect(parent.update)
         self.selector.blockSignals(False)
 
@@ -96,14 +101,16 @@ class DistributionPlot(plotbase.Plot):
             self,
             fit: chisurf.fitting.fit.FitGroup,
             parent: QtWidgets.QWidget = None,
+            distribution_options: dict = None,
             **kwargs
     ):
         super().__init__(fit=fit, parent=parent)
         self.data_x, self.data_y = None, None
-
+        self.distribution_options = distribution_options
         self.plot_controller = DistributionPlotControl(
             self,
             parent=self,
+            distribution_options=distribution_options,
             **kwargs
         )
 
@@ -122,6 +129,6 @@ class DistributionPlot(plotbase.Plot):
 
     def update(self, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
-        d = distribution_options[self.plot_controller.distribution_type]
+        d = self.distribution_options[self.plot_controller.distribution_type]
         y, x = d['accessor'](self.fit.model.__getattribute__(d['attribute']), **d['accessor_kwargs'])
         self.distribution_curve.setData(x, y, **d['plot_options'])
