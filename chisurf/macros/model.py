@@ -28,18 +28,32 @@ def set_linearization(
     fit.update()
 
 
-def normalize_lifetime_amplitudes(
+def normalize_amplitudes(
+        name: str,
         normalize: bool,
         fit: chisurf.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
         cs = chisurf.cs
         fit = cs.current_fit
-    fit.model.lifetimes.normalize_amplitudes = normalize
-    fit.update()
+    for f in fit:
+        exec(f"f.model.{name}.normalize_amplitudes = {normalize}")
+        f.model.update()
 
 
-def remove_lifetime(
+def absolute_amplitudes(
+        name: str,
+        use_absolute_amplitudes: bool,
+        fit: chisurf.fitting.fit.FitGroup = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+    for f in fit:
+        exec(f"f.model.{name}.absolute_amplitudes = {use_absolute_amplitudes}")
+        f.model.update()
+
+def remove_component(
         name: str,
         fit: chisurf.fitting.fit.FitGroup = None
 ) -> None:
@@ -68,7 +82,7 @@ def change_irf(
         f.model.convolve.lineEdit.setText(irf_name)
 
 
-def add_lifetime(
+def add_component(
         name: str,
         fit: chisurf.fitting.fit.FitGroup = None
 ) -> None:
@@ -80,12 +94,3 @@ def add_lifetime(
         f.model.update()
 
 
-def absolute_amplitudes(
-        use_absolute_amplitudes: bool,
-        fit: chisurf.fitting.fit.FitGroup = None
-) -> None:
-    if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
-    fit.model.lifetimes.absolute_amplitudes = use_absolute_amplitudes
-    fit.update()
