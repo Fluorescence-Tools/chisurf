@@ -291,8 +291,7 @@ class ParameterGroup(chisurf.base.Base):
             return v.value
         return v
 
-    def append(
-            self,
+    def append(self,
             parameter: Parameter,
             **kwargs
     ):
