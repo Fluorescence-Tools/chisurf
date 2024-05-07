@@ -64,9 +64,19 @@ def add_dataset(
         **kwargs
 ) -> None:
     cs = chisurf.cs
+
+    # Handle file name argument from prompt
+    # if multiple filenames (list) cleanup list else
+    # use only one filename (old behaviour)
+    filename = kwargs.get('filename', None)
+    if filename is not None:
+        filename = filename.split('|')
+        if len(filename) == 1:
+            filename = filename[0]
+    kwargs['filename'] = filename
+
     if expriment_reader is None:
         expriment_reader = cs.current_experiment_reader
-
     if dataset is None:
         dataset = expriment_reader.get_data(**kwargs)
 
