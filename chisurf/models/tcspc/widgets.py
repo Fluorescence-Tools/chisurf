@@ -114,7 +114,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
-        chisurf.run(f"chisurf.macros.model_tcspc.change_irf({idx}, '{name}')")
+        chisurf.run(f"chisurf.macros.model.change_irf({idx}, '{name}')")
         self.fwhm = self.irf.fwhm
 
 
@@ -188,7 +188,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
         chisurf.run(
-            "chisurf.macros.model_tcspc.set_linearization(%s, '%s')" %
+            "chisurf.macros.model.set_linearization(%s, '%s')" %
             (idx, lin_name)
         )
 
@@ -734,16 +734,16 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.append()
 
     def onNormalizeAmplitudes(self):
-        chisurf.run(f"chisurf.macros.model_tcspc.normalize_lifetime_amplitudes({self.normalize_amplitude.isChecked()})")
+        chisurf.run(f"chisurf.macros.model.normalize_amplitudes('{self.name}', {self.normalize_amplitude.isChecked()})")
 
     def onAbsoluteAmplitudes(self):
-        chisurf.run(f"chisurf.macros.model_tcspc.absolute_amplitudes({self.absolute_amplitude.isChecked()})")
+        chisurf.run(f"chisurf.macros.model.absolute_amplitudes('{self.name}', {self.absolute_amplitude.isChecked()})")
 
     def onAddLifetime(self):
-        chisurf.run(f"chisurf.macros.model_tcspc.add_lifetime('{self.name}')")
+        chisurf.run(f"chisurf.macros.model.add_component('{self.name}')")
 
     def onRemoveLifetime(self):
-        chisurf.run(f"chisurf.macros.model_tcspc.remove_lifetime('{self.name}')")
+        chisurf.run(f"chisurf.macros.model.remove_component('{self.name}')")
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)
@@ -778,7 +778,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
     plot_classes = [
         (
-            chisurf.plots.LinePlot, {
+            chisurf.plots.LinePlot,
+            {
                 'scale_x': 'lin',
                 'd_scaley': 'log',
                 'r_scaley': 'lin',
@@ -788,7 +789,23 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
         ),
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
-        (chisurf.plots.DistributionPlot, {}),
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                'distribution_options': {
+                    'Lifetime': {
+                        'attribute': 'lifetime_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,
+                            'connect': False,
+                            'symbol': "o"
+                        }
+                    }
+                }
+            }
+        ),
         (chisurf.plots.ResidualPlot, {})
     ]
 
@@ -877,6 +894,41 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
 
 
 class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
+
+    plot_classes = [
+        (
+            chisurf.plots.LinePlot,
+            {
+                'd_scalex': 'lin',
+                'd_scaley': 'log',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+         ),
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.ParameterScanPlot, {}),
+        (chisurf.plots.ResidualPlot, {}),
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                'distribution_options': {
+                    'Lifetime': {
+                        'attribute': 'lifetime_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,
+                            'connect': False,
+                            'symbol': "o"
+                        }
+                    }
+                }
+            }
+        )
+    ]
 
     def __init__(self, fit: chisurf.fitting.FitGroup, **kwargs):
         super().__init__(fit=fit, **kwargs)
@@ -1177,7 +1229,43 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {}),
-        (chisurf.plots.DistributionPlot, {})
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                'distribution_options': {
+                    'Distance distribution': {
+                        'attribute': 'distance_distribution',
+                        'accessor': lambda x: (x[0][0], x[0][1]),
+                        'accessor_kwargs': {},
+                        'curve_options': {
+                            'stepMode': False,  # 'right',
+                            'connect': False,  # 'all',
+                            'symbol': "o"
+                        }
+                    },
+                    'FRET-rate constants': {
+                        'attribute': 'fret_rate_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,  # 'right',
+                            'connect': False,  # 'all',
+                            'symbol': "o"
+                        }
+                    },
+                    'Lifetime': {
+                        'attribute': 'lifetime_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,
+                            'connect': False,
+                            'symbol': "o"
+                        }
+                    }
+                }
+            }
+        )
     ]
     
     def finalize(self):
@@ -1230,6 +1318,51 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
 class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
+    plot_classes = [
+        (
+            chisurf.plots.LinePlot,
+            {
+                'd_scalex': 'lin',
+                'd_scaley': 'log',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
+         ),
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.ParameterScanPlot, {}),
+        (chisurf.plots.ResidualPlot, {}),
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                'distribution_options': {
+                    'FRET-rate constants': {
+                        'attribute': 'fret_rate_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,  # 'right',
+                            'connect': False,  # 'all',
+                            'symbol': "o"
+                        }
+                    },
+                    'Lifetime': {
+                        'attribute': 'lifetime_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,
+                            'connect': False,
+                            'symbol': "o"
+                        }
+                    }
+                }
+            }
+        )
+    ]
+
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
         self.donor = LifetimeWidget(
             parent=self,
@@ -1277,7 +1410,43 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {}),
-        (chisurf.plots.DistributionPlot, {})
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                'distribution_options': {
+                    'Distance distribution': {
+                        'attribute': 'distance_distribution',
+                        'accessor': lambda x: (x[0][0], x[0][1]),
+                        'accessor_kwargs': {},
+                        'curve_options': {
+                            'stepMode': False,  # 'right',
+                            'connect': False,  # 'all',
+                            'symbol': "o"
+                        }
+                    },
+                    'FRET-rate constants': {
+                        'attribute': 'fret_rate_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,  # 'right',
+                            'connect': False,  # 'all',
+                            'symbol': "o"
+                        }
+                    },
+                    'Lifetime': {
+                        'attribute': 'lifetime_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,
+                            'connect': False,
+                            'symbol': "o"
+                        }
+                    }
+                }
+            }
+        )
     ]
 
     @property
@@ -1428,18 +1597,38 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     plot_classes = [
-        (chisurf.plots.LinePlot, {
-            'd_scalex': 'lin',
-            'd_scaley': 'log',
-            'r_scalex': 'lin',
-            'r_scaley': 'lin',
-            'x_label': 'x',
-            'y_label': 'y',
-            'plot_irf': True}
+        (
+            chisurf.plots.LinePlot,
+            {
+                'd_scalex': 'lin',
+                'd_scaley': 'log',
+                'r_scalex': 'lin',
+                'r_scaley': 'lin',
+                'x_label': 'x',
+                'y_label': 'y',
+                'plot_irf': True
+            }
          ),
         (chisurf.plots.FitInfo, {}),
-        (chisurf.plots.DistributionPlot, {}),
-        (chisurf.plots.ParameterScanPlot, {})
+        (chisurf.plots.ParameterScanPlot, {}),
+        (chisurf.plots.ResidualPlot, {}),
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                'distribution_options': {
+                    'Lifetime': {
+                        'attribute': 'lifetime_spectrum',
+                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                        'accessor_kwargs': {'sort': True},
+                        'curve_options': {
+                            'stepMode': False,
+                            'connect': False,
+                            'symbol': "o"
+                        }
+                    }
+                }
+            }
+        )
     ]
 
     @property
