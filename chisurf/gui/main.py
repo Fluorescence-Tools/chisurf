@@ -320,8 +320,14 @@ class Main(QtWidgets.QMainWindow):
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
-        filename_str = r"{}".format(filename.as_posix())
-        chisurf.run(f'chisurf.macros.add_dataset(filename="{filename_str}")')
+        if isinstance(filename, list):
+            l = [r"{}".format(pathlib.Path(f).as_posix()) for f in filename]
+            s = '|'.join(l)
+        elif isinstance(filename, pathlib.Path):
+            s = r"{}".format(filename.as_posix())
+        else:
+            s = r"{}".format(filename)
+        chisurf.run(f'chisurf.macros.add_dataset(filename="{s}")')
 
     def onSaveFits(self, event: QtCore.QEvent = None):
         path, _ = chisurf.gui.widgets.get_directory()
@@ -446,6 +452,32 @@ class Main(QtWidgets.QMainWindow):
         #     ]
         # )
         # chisurf.experiment[stopped_flow.name] = stopped_flow
+
+        ##########################################################
+        #       Photon distribution analysis                     #
+        ##########################################################
+        pda = chisurf.experiments.types['pda']
+        pda.add_readers(
+            [
+                (
+                    chisurf.experiments.pda.PdaReader(
+                        name="PTU/HT3/SPC",
+                        micro_time_ranges=[(0, 16000), (0, 16000)],
+                        channels=([0, 3], [1, 2]),
+                        experiment=pda
+                    ),
+                    chisurf.gui.widgets.experiments.pda.controller.PdaTTTRWidget(
+                        name="PTU/HT3/SPC"
+                    )
+                )
+            ]
+        )
+        pda.add_model_classes(
+            models=[
+                chisurf.models.pda.widgets.PdaSimpleModelWidget
+            ]
+        )
+        chisurf.experiment[pda.name] = pda
 
         ##########################################################
         #       FCS                                              #
