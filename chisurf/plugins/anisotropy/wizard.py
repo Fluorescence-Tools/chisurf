@@ -236,7 +236,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         table.setItem(rc, 1, QtWidgets.QTableWidgetItem(f"{a:.2f}"))
         table.resizeRowsToContents()
 
-    def remove_lifetime(self):
+    def remove_component(self):
         table = self.tableWidget
         rc = table.rowCount()
         idx = int(table.currentIndex().row())
@@ -418,7 +418,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.button(QtWidgets.QWizard.NextButton).clicked.connect(self.page_actions)
         self.actionAdd_Rotation.triggered.connect(self.add_rotation)
         self.actionAdd_Lifetime.triggered.connect(self.add_lifetime)
-        self.actionRemove_Lifetime.triggered.connect(self.remove_lifetime)
+        self.actionRemove_Lifetime.triggered.connect(self.remove_component)
         self.actionRemove_Rotation.triggered.connect(self.remove_rotation)
         self.actionRegionChanged.triggered.connect(self.onRegionChanged)
 
