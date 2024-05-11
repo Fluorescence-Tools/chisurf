@@ -32,6 +32,7 @@ requirements:
     - numpy
     # Needed for pyrcc5 (updated pyqt resource file)
     - pyqt
+    - pyqtwebengine
   host:
     - python
     - setuptools
@@ -78,6 +79,7 @@ requirements:
     - k2dist
     - ndxplorer
     - clsmview
+    - pyqtwebengine
 
 app:
   entry: chisurf

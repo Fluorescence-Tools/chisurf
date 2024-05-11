@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from PyQt5 import QtWebEngineWidgets
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
 import chisurf.settings
@@ -10,9 +11,12 @@ import chisurf.gui.decorators
 
 
 class SplashScreen(QtWidgets.QSplashScreen):
-
-    def __int__(self, *args, **kwargs):
-        super().__int__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        #self.color = QtCore.Qt.white  # Example color
+        #self.message = "Loading..."
+        #self.version = "0.1"
+        #self.release_date = "May 29, 2013"
 
     # TODO: Progress bar and updated version number
     # def drawContents(self, painter, QPainter=None):
