@@ -22,6 +22,7 @@ class GlobalFitSetup(ExperimentReader):
             **kwargs
     ):
         return chisurf.data.DataCurve(
+            x=[0], y=[0],
             setup=self,
             name=name
         )
