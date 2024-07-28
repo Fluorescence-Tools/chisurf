@@ -290,9 +290,11 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
         )
         chisurf.run(f"chisurf.macros.load_fit_result({self.fit_idx}, {filename})")
+
     def set_current_setup_idx(self, v: int):
         self.comboBox_setupSelect.setCurrentIndex(v)
         self._current_setup_idx = v
+
     def onSetupChanged(self):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
@@ -327,17 +329,18 @@ class Main(QtWidgets.QMainWindow):
             s = r"{}".format(filename.as_posix())
         else:
             s = r"{}".format(filename)
-        chisurf.run(f'chisurf.macros.add_dataset(filename="{s}")')
+        s = s.replace("\\", "/")
+        chisurf.run(f'chisurf.macros.add_dataset(filename=r"{s}")')
 
     def onSaveFits(self, event: QtCore.QEvent = None):
         path, _ = chisurf.gui.widgets.get_directory()
         chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.save_fits(target_path="{path.as_posix()}")')
+        chisurf.run(f'chisurf.macros.save_fits(target_path=r"{path.as_posix()}")')
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
         path, _ = chisurf.gui.widgets.get_directory(**kwargs)
         chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.save_fit(target_path="{path.as_posix()}")')
+        chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
 
     def onOpenHelp(self):
         webbrowser.open_new(chisurf.info.help_url)
