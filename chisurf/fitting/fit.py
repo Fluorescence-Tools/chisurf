@@ -224,7 +224,8 @@ class Fit(chisurf.base.Base):
     def save(
             self,
             filename: str,
-            file_type: str = 'txt',
+            file_type: str = 'csv',
+            save_curves: bool = False,
             verbose: bool = False,
             **kwargs
     ) -> None:
@@ -233,25 +234,17 @@ class Fit(chisurf.base.Base):
             file_type=file_type,
             verbose=verbose
         )
-        # Save fit as txt (for plotting)
-        curve_dict = self.get_curves()
-        with open(filename+'_info.txt', mode='w') as fp:
-            fp.write(str(self))
-        for curve_key in curve_dict:
-            curve = curve_dict[curve_key]
-            curve_file_root = filename + "_%s" % curve_key
-            curve.save(
-                filename=curve_file_root,
-                file_type='txt'
-            )
-            curve.save(
-                filename=curve_file_root,
-                file_type='json'
-            )
-            curve.save(
-                filename=curve_file_root,
-                file_type='yaml'
-            )
+        if save_curves:
+            curve_dict = self.get_curves()
+            with open(filename+'_info.txt', mode='w') as fp:
+                fp.write(str(self))
+            for curve_key in curve_dict:
+                curve = curve_dict[curve_key]
+                curve_file_root = filename + "_%s" % curve_key
+                curve.save(
+                    filename=curve_file_root + '.' + file_type,
+                    file_type=file_type
+                )
 
     def run(self, *args, **kwargs) -> None:
         fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
@@ -265,20 +258,17 @@ class Fit(chisurf.base.Base):
             bounds=self.model.parameter_bounds,
             **fitting_options
         )
-        self.model.finalize()
         self.update()
+        self.model.finalize()
 
     def update(self) -> None:
         self.model.update()
         # Estimate errors based on gradient
-        try:
-            fit = self
-            cov_m, used_parameters = fit.covariance_matrix
-            err = np.sqrt(np.diag(cov_m))
-            for p, e in zip(used_parameters, err):
-                fit.model.parameters[p].error_estimate = e
-        except ValueError:
-            chisurf.logging.warning("Problems calculating the covariances")
+        fit = self
+        cov_m, used_parameters = fit.covariance_matrix
+        err = np.sqrt(np.diag(cov_m))
+        for p, e in zip(used_parameters, err):
+            fit.model.parameters[p].error_estimate = e
 
     def chi2_scan(
             self,
@@ -423,7 +413,7 @@ class FitGroup(Fit):
 
     def update(self) -> None:
         for f in self.grouped_fits:
-            f.model.update()
+            f.update()
 
     def run(self, local_first: bool = None, **kwargs):
         fit: FitGroup = self
@@ -632,7 +622,7 @@ def approx_grad(
 
 def covariance_matrix(
         fit: chisurf.fitting.fit.Fit,
-        epsilon: float = chisurf.settings.eps,
+        epsilon: float = 1e-12, #chisurf.settings.eps,
         **kwargs
 ) -> typing.Tuple[np.array, typing.List[int]]:
     """Calculate the covariance matrix
@@ -644,11 +634,7 @@ def covariance_matrix(
     """
     model = fit.model
     xk = np.array(model.parameter_values)
-    fi_v, partial_derivatives = approx_grad(
-        xk,
-        fit,
-        epsilon
-    )
+    fi_v, partial_derivatives = approx_grad(xk, fit, epsilon)
 
     # find parameters which do not change the models
     # use only parameters which change the models
@@ -668,7 +654,7 @@ def covariance_matrix(
             m[i_alpha, i_beta] = ((da_alpha * da_beta)).sum()
     try:
         cov_m = scipy.linalg.pinvh(0.5 * m)
-    except ValueError:
+    except:
         cov_m = np.zeros_like(
             (n_important_parameters, n_important_parameters),
             dtype=float
