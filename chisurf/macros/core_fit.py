@@ -91,20 +91,22 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
     fit_control_widget = fit_window.fit_widget
     fit_group = fit_control_widget.fit
 
-    document = docx.Document()
-    document.add_heading(cs.current_fit.name, 0)
-
     if target_path is None:
         target_path = chisurf.working_path
+    if use_complex_name:
+        save_name = chisurf.base.clean_string(fit.name)
+    else:
+        save_name = os.path.basename(fit.data.name)
+    filename = os.path.join(target_path, save_name)
+    #fit.save(filename, 'json', save_curves=False)
+    fit.save(filename, 'csv', save_curves=True)
+
+    # Create word document
+    document = docx.Document()
+    document.add_heading(cs.current_fit.name, 0)
     if os.path.isdir(target_path):
         _ = document.add_heading('Fit-Results', level=1)
-        if use_complex_name:
-            save_name = chisurf.base.clean_string(fit.name)
-        else:
-            save_name = os.path.basename(fit.data.name)
 
-        filename = os.path.join(target_path, save_name)
-        fit.save(filename, save_name)
         for i, f in enumerate(fit):
             fit_control_widget.selected_fit = i
             fit_name = os.path.basename(fit.data.name)[0]
@@ -161,10 +163,10 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
 
         row_cells = table.add_row().cells
         row_cells[0].text = str("Chi2r")
+
         for i, fit in enumerate(fit_group):
             paragraph = row_cells[i + 1].paragraphs[0]
             run = paragraph.add_run('{:.4f}'.format(fit.chi2r))
-
         tr = save_name
         document.save(os.path.join(target_path, tr + '.docx'))
     else:
@@ -198,7 +200,7 @@ def save_fits(target_path: str, use_complex_name: bool = False):
                 save_name = os.path.basename(fit.data.name)
 
             fit_name = fit.name
-            p2 = target_path + '//' + save_name
+            p2 = target_path + '/' + save_name
             os.mkdir(p2)
             save_fit(target_path=p2, fit_window=fit_window)
 
