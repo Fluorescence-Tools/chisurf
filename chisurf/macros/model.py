@@ -53,6 +53,7 @@ def absolute_amplitudes(
         exec(f"f.model.{name}.absolute_amplitudes = {use_absolute_amplitudes}")
         f.model.update()
 
+
 def remove_component(
         name: str,
         fit: chisurf.fitting.fit.FitGroup = None
