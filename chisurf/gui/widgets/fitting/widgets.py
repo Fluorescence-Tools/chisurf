@@ -4,6 +4,7 @@ import os
 import typing
 import pathlib
 
+import numpy as np
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
@@ -347,10 +348,15 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             **kwargs
     ):
         super().__init__(*args,  **kwargs)
+
         self.fit = fit
         self.fit_widget = fit_widget
         w = QtWidgets.QWidget(None)
         self.setWidget(w)
+
+        # Set the focus policy of the subwindow
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        w.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         layout = QtWidgets.QVBoxLayout(w)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -543,6 +549,7 @@ class FittingParameterWidget(Controller):
             decimals=decimals,
             suffix=suffix
         )
+        self.widget_value.opts['compactHeight'] = False
         self.horizontalLayout.addWidget(self.widget_value)
 
         self.widget_lower_bound = pg.SpinBox(
@@ -658,36 +665,33 @@ class FittingParameterWidget(Controller):
 
         # Update value of widget
         self.widget_value.setValue(self.fitting_parameter.value)
-        if self.fitting_parameter.fixed:
-            self.widget_fix.setCheckState(QtCore.Qt.Checked)
-        else:
-            self.widget_fix.setCheckState(QtCore.Qt.Unchecked)
+        self.widget_fix.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.fixed else QtCore.Qt.Unchecked)
 
         # Tooltip
         if self.fitting_parameter.bounds_on:
             lower, upper = self.fitting_parameter.bounds
-            s = f"bound: ({lower}, {upper})\n"
+            tooltip_text = f"bound: ({lower}, {upper})\n"
         else:
-            s = "bounds: off\n"
+            tooltip_text = "bounds: off\n"
+
         if self.fitting_parameter.is_linked:
-            s += f"linked to: {self.fitting_parameter.link.name}"
-        self.widget_value.setToolTip(s)
+            tooltip_text += f"linked to: {self.fitting_parameter.link.name}"
+        self.widget_value.setToolTip(tooltip_text)
 
         # Error-estimate
         value = self.fitting_parameter.value
-        if self.fitting_parameter.fixed or not isinstance(self.fitting_parameter.error_estimate, float):
+        error_estimate = self.fitting_parameter.error_estimate
+
+        if self.fitting_parameter.fixed or not isinstance(error_estimate, float):
             self.lineEdit.setText("NA")
         else:
-            rel_error = abs(
-                self.fitting_parameter.error_estimate / (value + 1e-12) * 100.0
-            )
-            self.lineEdit.setText(f"{rel_error:.0f}%%")
+            rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
+            self.lineEdit.setText("NA" if np.isnan(rel_error) else f"{rel_error:.0f}%")
 
-        # link
+        # Link
         if self.fitting_parameter.link is not None:
-            tooltip = " linked to " + self.fitting_parameter.link.name
+            tooltip = "linked to " + self.fitting_parameter.link.name
             self.widget_link.setToolTip(tooltip)
-            # self.widget_link.setChecked(True)
             self.widget_value.setEnabled(False)
 
         self.blockSignals(False)
