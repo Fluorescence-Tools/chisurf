@@ -1233,17 +1233,7 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
             chisurf.plots.DistributionPlot,
             {
                 'distribution_options': {
-                    'Distance distribution': {
-                        'attribute': 'distance_distribution',
-                        'accessor': lambda x: (x[0][0], x[0][1]),
-                        'accessor_kwargs': {},
-                        'curve_options': {
-                            'stepMode': False,  # 'right',
-                            'connect': False,  # 'all',
-                            'symbol': "o"
-                        }
-                    },
-                    'FRET-rate constants': {
+                    'FRET-rate constant': {
                         'attribute': 'fret_rate_spectrum',
                         'accessor': chisurf.math.datatools.interleaved_to_two_columns,
                         'accessor_kwargs': {'sort': True},
@@ -1251,6 +1241,17 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
                             'stepMode': False,  # 'right',
                             'connect': False,  # 'all',
                             'symbol': "o"
+                        }
+                    },
+                    'Distance': {
+                        'attribute': 'distance_distribution',
+                        'accessor': lambda x, **kwargs: (x[0][0], x[0][1]),
+                        'accessor_kwargs': {'sort': False},
+                        'curve_options': {
+                            'stepMode': False,  # 'right'
+                            'connect': False,  # 'all'
+                            'symbol': "t",
+                            'multi_curve': False
                         }
                     },
                     'Lifetime': {
