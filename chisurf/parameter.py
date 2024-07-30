@@ -2,6 +2,7 @@ from __future__ import annotations
 from chisurf import typing
 
 import abc
+import json
 
 import numpy as np
 import chinet
@@ -87,6 +88,14 @@ class Parameter(chisurf.base.Base):
     def is_linked(self) -> bool:
         return self._port.is_linked
 
+    @property
+    def fixed(self):
+        return self._port.fixed
+
+    @fixed.setter
+    def fixed(self, v: bool):
+        self._port.fixed = bool(v)
+
     def __add__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
@@ -171,6 +180,16 @@ class Parameter(chisurf.base.Base):
             value=self.value.__abs__()
         )
 
+    def __getstate__(self):
+        d = json.loads(self._port.get_json())
+        return {
+            'port': d
+        }
+
+    def __setstate__(self, state):
+        s = json.dumps(state['port'])
+        self._port.read_json(s)
+
     def __round__(self, n=None):
         return self.__class__(
             value=self.value.__round__()
@@ -179,27 +198,6 @@ class Parameter(chisurf.base.Base):
     @abc.abstractmethod
     def update(self):
         pass
-
-    # def to_dict(self) -> typing.Dict:
-    #     d = super().to_dict()
-    #     if self.link is not None:
-    #         d['_link'] = self.link.unique_identifier
-    #     return d
-    #
-    # def from_dict(
-    #         self,
-    #         v: dict
-    # ) -> None:
-    #     if v['_link'] is not None:
-    #         unique_identifier = v['_link']
-    #         for o in self.get_instances():
-    #             if unique_identifier == o.unique_identifier:
-    #                 v['_link'] = o
-    #         super().from_dict(v)
-    #         if isinstance(v['_link'], str):
-    #             raise ValueError(
-    #                 "The linked parameter %s is not instantiated." % unique_identifier
-    #             )
 
     def __init__(
             self,
