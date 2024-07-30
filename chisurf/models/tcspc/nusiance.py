@@ -237,10 +237,7 @@ class Corrections(FittingParameterGroup):
             return 1.0
 
     @rep_rate.setter
-    def rep_rate(
-            self,
-            v: float
-    ):
+    def rep_rate(self, v: float):
         self.fit.model.convolve.rep_rate = v
 
     @property
@@ -248,10 +245,7 @@ class Corrections(FittingParameterGroup):
         return self._dead_time.value
 
     @dead_time.setter
-    def dead_time(
-            self,
-            v: float
-    ):
+    def dead_time(self, v: float):
         self._dead_time.value = v
 
     def pileup(self, decay: np.array, **kwargs):
@@ -375,7 +369,7 @@ class Convolve(FittingParameterGroup):
 
     @property
     def irf(self) -> chisurf.curve.Curve:
-        if isinstance(self._irf, Curve):
+        if isinstance(self._irf, chisurf.curve.Curve):
             irf = self._irf
             irf -= self.lamp_background
             irf.y = np.clip(irf.y, 0, None)
@@ -457,7 +451,7 @@ class Convolve(FittingParameterGroup):
 
         if autoscale:
             weights = 1.0 / data.ey
-            self.n0 = chisurf.fluorescence.tcspc.rescale_w_bg(
+            n0 = chisurf.fluorescence.tcspc.rescale_w_bg(
                 model_decay=decay,
                 experimental_decay=data.y,
                 experimental_weights=weights,
@@ -465,6 +459,9 @@ class Convolve(FittingParameterGroup):
                 start=start,
                 stop=stop
             )
+            self._n0.fixed = False
+            self._n0.value = n0
+            self._n0.fixed = True
         decay *= self.n0
 
         return decay
