@@ -91,26 +91,29 @@ class ModelCurve(Model, chisurf.curve.Curve):
 
     @property
     def x(self) -> np.ndarray:
-        return self.__dict__['_x']
+        return self.__dict__['d'][0]
 
     @x.setter
     def x(self,v: np.ndarray):
-        self.__dict__['_x'] = v
+        self.__dict__['d'][0] = v
 
     @property
     def y(self) -> np.array:
-        return self.__dict__['_y']
+        return self.__dict__['d'][1]
 
     @y.setter
     def y(self, v: np.ndarray):
-        self.__dict__['_y'] = v
+        self.__dict__['d'][1] = v
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, *args, **kwargs):
         super().__init__(fit, *args, **kwargs)
+        if fit.data.x is None:
+            x = np.array([], dtype=np.float64)
+        else:
+            x = fit.data.x
         chisurf.curve.Curve.__init__(
             self,
-            x=fit.data.x,
-            y=np.zeros_like(fit.data.y),
+            x=x, y=np.zeros_like(x),
             *args,
             **kwargs
         )
