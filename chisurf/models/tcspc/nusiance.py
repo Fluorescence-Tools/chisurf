@@ -22,15 +22,17 @@ class Generic(FittingParameterGroup):
     def n_ph_bg(self) -> float:
         """Number of background photons
         """
+        n_bg = 0.0
         if isinstance(self.background_curve, Curve):
-            n_bg = self._background_curve.y.sum() / self.t_bg * self.t_exp
-            return n_bg
-        else:
-            return 0.0
+            a = self._background_curve.y.sum() / self.t_bg * self.t_exp
+            if not np.isnan(a):
+                n_bg += a
+        n_bg += self._bg.value * len(self.fit.data.x)
+        return n_bg
 
     @property
     def n_ph_exp(self) -> int:
-        """Number of experimental photons
+        """Number of fluorescence photons
         """
         if isinstance(self.fit.data, Curve):
             return self.fit.data.y.sum()
@@ -140,10 +142,7 @@ class Corrections(FittingParameterGroup):
         return self._lintable[::-1] if self.reverse else self._lintable
 
     @lintable.setter
-    def lintable(
-            self,
-            v: np.array
-    ):
+    def lintable(self, v: np.array):
         self._curve = v
         self._lintable = self.calc_lintable(v.y)
 
@@ -152,10 +151,7 @@ class Corrections(FittingParameterGroup):
         return int(self._window_length.value)
 
     @window_length.setter
-    def window_length(
-            self,
-            v: int
-    ):
+    def window_length(self, v: int):
         self._window_length.value = v
         self._lintable = self.calc_lintable(self._curve.y)
 
@@ -164,10 +160,7 @@ class Corrections(FittingParameterGroup):
         return self._window_function
 
     @window_function.setter
-    def window_function(
-            self,
-            v: str
-    ):
+    def window_function(self, v: str):
         self._window_function = v
         self._lintable = self.calc_lintable(self._curve.y)
 
@@ -176,10 +169,7 @@ class Corrections(FittingParameterGroup):
         return self._reverse
 
     @reverse.setter
-    def reverse(
-            self,
-            v: bool
-    ):
+    def reverse(self, v: bool):
         self._reverse = v
 
     def calc_lintable(
