@@ -4,6 +4,7 @@ import pathlib
 
 from chisurf import typing
 import os
+import pickle
 
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -85,22 +86,24 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.update(update_others=True)
 
     def onSaveDataset(self):
+        base_name, extension = os.path.splitext(self.curve_name)
         filename = chisurf.gui.widgets.save_file(
-            working_path=self.curve_name,
-            file_type="*.*"
+            working_path=base_name,
+            file_type='Pickle file (*.p)',
         )
-        base_name, extension = os.path.splitext(filename)
-        if extension.lower() == '.csv':
-            self.selected_dataset.save(
-                filename=filename,
-                file_type='csv'
-            )
-        else:
-            filename = base_name + '.yaml'
-            self.selected_dataset.save(
-                filename=filename,
-                file_type='yaml'
-            )
+        self.selected_dataset.save(
+            filename=filename,
+            file_type='p'
+        )
+
+    def onLoadDataset(self):
+        filename: pathlib.Path = chisurf.gui.widgets.get_filename(
+            description='Pickled data ',
+            file_type='All files (*.p)'
+        )
+        obj = pickle.load(open(filename, 'rb'))
+        chisurf.imported_datasets.append(obj)
+        self.update()
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
@@ -123,6 +126,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             menu = QtWidgets.QMenu(self)
             menu.setTitle("Datasets")
             menu.addAction("Save").triggered.connect(self.onSaveDataset)
+            menu.addAction("Load").triggered.connect(self.onLoadDataset)
             menu.addAction("Remove").triggered.connect(self.onRemoveDataset)
             menu.addAction("Group").triggered.connect(self.onGroupDatasets)
             menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
