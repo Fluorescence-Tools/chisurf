@@ -157,7 +157,10 @@ class DistributionPlot(plotbase.Plot):
 
         # Get distribution
         ds = self.plot_controller.parameter_editor.dict
-        r = ds['accessor'](self.fit.model.__getattribute__(ds['attribute']), **ds['accessor_kwargs'])
+        r = ds['accessor'](
+            self.fit.model.__getattribute__(ds['attribute']),
+            **ds['accessor_kwargs']
+        )
 
         p = ds.get('curve_options', {})
         if p.get('multi_curve', False):
