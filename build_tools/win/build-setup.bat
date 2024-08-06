@@ -11,7 +11,7 @@ rem call conda build %CONDA_RECIPE_FOLDER%
 
 md %DIST_PATH%
 md %APP_PATH%
-call conda create -y --prefix %APP_PATH% chisurf python=3.7.3 -c local --force
+call mamba create -y --prefix %APP_PATH% chisurf -c local -c tpeulen --force
 rem call conda activate %APP_PATH%
 
 REM write setup.iss
