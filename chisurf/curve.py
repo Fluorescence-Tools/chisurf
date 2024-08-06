@@ -31,6 +31,10 @@ class NCurve(chisurf.base.Base):
             self.d = d
         super().__init__(*args, **kwargs)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
     def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
         y = self.d.flatten().__getitem__(key)
         x = np.arange(0, len(self.y))
