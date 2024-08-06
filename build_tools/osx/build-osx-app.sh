@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build an OSX Applicaiton (.app) for ChiSurf
+# Build an OSX Application (.app) for ChiSurf
 #
 # Example:
 #
@@ -22,11 +22,11 @@ function print_usage() {
     echo "build-osx-app.sh [-i] [--template] $APP_NAME.app
 Build python module as an $APP_NAME OSX application bundle ($APP_NAME.app).
 
-This expects that the python module can be launed by:
+This expects that the python module can be launched by:
 
 python -m module_name
 
-where module_name is the name of the module that is bundeled as an osx app.
+where module_name is the name of the module that is bundled as an osx app.
 
 The bundle will include the python module and a conda environment that is
 used to run the python module.
@@ -42,7 +42,7 @@ Options:
     -o --output_path       The path to which the .app is written
 
 Example:
-  ./build-osx-app.sh -f=../environment.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=.. -o=../dist
+  ./build-osx-app.sh -f=../../environment.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=../../ -o=../../dist
     "
     exit
 }
@@ -92,10 +92,10 @@ APP_FOLDER="$(cd "$(dirname "$APP_FOLDER")" && pwd)/$(basename "$APP_FOLDER")"
 echo "App folder: $APP_FOLDER"
 mkdir "$APP_FOLDER"
 
-source ~/miniconda/etc/profile.d/conda.sh
-conda env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
+source $CONDA_PREFIX/etc/profile.d/conda.sh
+mamba env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
 conda activate "$APP_FOLDER/Contents"
-conda install -y nomkl jinja2
+mamba install -y nomkl jinja2
 mkdir "$APP_FOLDER/Contents/MacOS"
 mkdir "$APP_FOLDER/Contents/Resources"
 
