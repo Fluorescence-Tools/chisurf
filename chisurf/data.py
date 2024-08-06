@@ -37,6 +37,10 @@ class ExperimentalData(chisurf.base.Data):
     ) -> None:
         self._experiment = v
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
     def __init__(
             self,
             data_reader: chisurf.experiments.reader.ExperimentReader = None,

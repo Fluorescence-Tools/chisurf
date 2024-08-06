@@ -21,12 +21,6 @@ class Model(FittingParameterGroup):
 
     name = "Model name not available"
 
-    def __init__(self, fit: chisurf.fitting.fit.Fit, model_number: int = 0, **kwargs):
-        super().__init__(model=self, **kwargs)
-        self.fit = fit
-        self.flatten_weighted_residuals = True
-        self.model_number = model_number
-
     @property
     def n_free(self) -> int:
         return len(self.parameters)
@@ -38,6 +32,28 @@ class Model(FittingParameterGroup):
             xmin=self.fit.xmin,
             xmax=self.fit.xmax
         )
+
+    @abc.abstractmethod
+    def update_model(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def update(self, **kwargs) -> None:
+        self.find_parameters()
+
+        # Update ParameterGroups
+        d = [v for v in self.__dict__.values() if v is not self]
+        pgs = chisurf.base.find_objects(
+            search_iterable=d,
+            searched_object_type=chisurf.fitting.parameter.FittingParameterGroup
+        )
+        for pg in pgs:
+            try:
+                pg.update()
+            except:
+                continue
+
+        self.update_model()
 
     def get_wres(
             self,
@@ -56,14 +72,11 @@ class Model(FittingParameterGroup):
             xmax=xmax
         )
 
-    @abc.abstractmethod
-    def update_model(self, **kwargs):
-        pass
-
-    @abc.abstractmethod
-    def update(self, **kwargs) -> None:
-        self.find_parameters()
-        self.update_model()
+    def __init__(self, fit: chisurf.fitting.fit.Fit, model_number: int = 0, **kwargs):
+        super().__init__(model=self, **kwargs)
+        self.fit = fit
+        self.flatten_weighted_residuals = True
+        self.model_number = model_number
 
     def __str__(self):
         s = ""
@@ -150,6 +163,11 @@ class ModelWidget(Model, QtWidgets.QWidget):
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {})
     ]
+
+    def __getstate__(self):
+        super().__getstate__()
+        state = dict()
+        return state
 
     def update_plots(self, *args, **kwargs) -> None:
         for p in self.fit.plots:

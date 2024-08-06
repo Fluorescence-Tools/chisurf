@@ -8,6 +8,8 @@ import os.path
 import zlib
 import copy
 import yaml
+import pickle
+
 import numpy as np
 
 from slugify import slugify
@@ -164,7 +166,7 @@ def find_objects(
 class Base(object):
 
     _verbose = chisurf.verbose
-    supported_save_file_types: typing.List[str] = ["yaml", "json"]
+    supported_save_file_types: typing.List[str] = ["yaml", "json", "p"]
     meta_data: typing.Dict = dict()
 
     @property
@@ -212,6 +214,7 @@ class Base(object):
         )
         if file_type in self.supported_save_file_types:
             txt = ""
+            mode = "w"
             # check for filename extension
             root, ext = os.path.splitext(filename)
             filename = root + "." + file_type
@@ -219,11 +222,13 @@ class Base(object):
                 txt = self.to_yaml()
             elif file_type == "json":
                 txt = self.to_json()
+            elif file_type == "p":
+                txt = pickle.dumps(self)
+                mode = 'wb'
             if verbose:
                 print(txt)
             with scikit_fluorescence.io.zipped.open_maybe_zipped(
-                    filename=filename,
-                    mode='w'
+                    filename, mode
             ) as fp:
                 fp.write(txt)
 
@@ -239,6 +244,11 @@ class Base(object):
                 filename=filename,
                 verbose=verbose
             )
+        elif file_type == "p":
+            with open(filename, 'rb') as file:
+                data = file.read()
+                obj = pickle.loads(data)
+                self.__dict__.update(obj.__dict__)
         else:
             self.from_yaml(
                 filename=filename,
@@ -296,9 +306,7 @@ class Base(object):
             else:
                 d = self.__dict__
         if convert_values_to_elementary:
-            return to_elementary(
-                obj=d
-            )
+            return to_elementary(d)
         else:
             return d
 
@@ -439,10 +447,13 @@ class Base(object):
         return propobj
 
     def __getstate__(self):
-        return self.__dict__
+        d = {
+            'meta_data': self.meta_data,
+            'name': self.name
+        }
+        return d
 
     def __setstate__(self, state):
-        self.__dict__.clear()
         self.__dict__.update(state)
 
     def __str__(self):
@@ -459,7 +470,7 @@ class Base(object):
             **kwargs
     ):
         """The class saves all passed keyword arguments in dictionary and makes
-        these keywords accessible as attributes. Moreover, this class may saves these
+        these keywords accessible as attributes. Moreover, this class saves these
         keywords in a JSON or YAML file. These files can be also loaded.
 
         :param name:
@@ -496,12 +507,12 @@ class Base(object):
         self.meta_data['unique_identifier'] = unique_identifier
         self.meta_data['verbose'] = verbose
 
-        # clean up the keys (no spaces etc)
+        # clean up the keys (no spaces etc.)
         d = dict()
         for key in kwargs:
             d[clean_string(key)] = kwargs[key]
 
-        # Assign the the names and set standard values
+        # Assign names and set standard values
         if name is None:
             name = self.__class__.__name__
 
