@@ -265,6 +265,13 @@ class FittingControllerWidget(Controller):
         self.actionSelectionChanged.triggered.connect(self.onDatasetChanged)
         self.actionErrorEstimate.triggered.connect(self.onErrorEstimate)
 
+        self.toolButton_3.clicked.connect(
+            lambda: chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].next_result()")
+        )
+        self.toolButton_5.clicked.connect(
+            lambda: chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].previous_result()")
+        )
+
         if hide_fit_button:
             self.pushButton_fit.hide()
         if hide_range:
