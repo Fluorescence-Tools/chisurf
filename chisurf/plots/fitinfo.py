@@ -21,9 +21,10 @@ class FitInfo(plotbase.Plot):
             parent=parent,
             **kwargs
         )
-        self.plot_controller = QtWidgets.QWidget()
+        self.plot_controller = QtWidgets.QWidget(self)
 
         self.textedit = QtWidgets.QPlainTextEdit()
+        self.textedit.setReadOnly(True)
         self.layout.addWidget(self.textedit)
 
     def update(self, *args, **kwargs) -> None:
