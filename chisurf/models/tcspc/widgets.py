@@ -114,9 +114,8 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
-        chisurf.run(f"chisurf.macros.model.change_irf({idx}, '{name}')")
+        chisurf.run(f"chisurf.macros.model.change_irf({idx}, r'{name}')")
         self.fwhm = self.irf.fwhm
-
 
 
 class CorrectionsWidget(Corrections, QtWidgets.QWidget):
@@ -126,9 +125,6 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
             self,
             fit: chisurf.fitting.fit.Fit = None,
             hide_corrections: bool = False,
-            threshold: float = 0.9,
-            reverse: bool = False,
-            enabled: bool = False,
             **kwargs
     ):
         self.groupBox.setChecked(False)
@@ -606,6 +602,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         QtWidgets.QWidget.update(self, *__args)
         for w, v in zip(self._amp_widgets, self.amplitudes):
             w.setValue(v)
+        for w, v in zip(self._lifetime_widgets, self.lifetimes):
+            w.setValue(v)
 
     @property
     def parameter_widgets(self):
@@ -824,11 +822,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             fit=fit,
             **kwargs
         )
-        generic = GenericWidget(
-            fit=fit,
-            parent=self,
-            **kwargs
-        )
+        generic = GenericWidget(fit=fit, parent=self, **kwargs)
         convolve = ConvolveWidget(
             name='convolve',
             fit=fit,
@@ -1238,8 +1232,8 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
                         'accessor': chisurf.math.datatools.interleaved_to_two_columns,
                         'accessor_kwargs': {'sort': True},
                         'curve_options': {
-                            'stepMode': False,  # 'right',
-                            'connect': False,  # 'all',
+                            # 'stepMode': 'right',
+                            # 'connect': 'all',
                             'symbol': "o"
                         }
                     },
@@ -1248,10 +1242,10 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
                         'accessor': lambda x, **kwargs: (x[0][0], x[0][1]),
                         'accessor_kwargs': {'sort': False},
                         'curve_options': {
-                            'stepMode': False,  # 'right'
-                            'connect': False,  # 'all'
+                            # 'stepMode': False,  # 'right'
+                            # 'connect': False,  # 'all'
                             'symbol': "t",
-                            'multi_curve': False
+                            # 'multi_curve': False
                         }
                     },
                     'Lifetime': {
@@ -1259,8 +1253,8 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
                         'accessor': chisurf.math.datatools.interleaved_to_two_columns,
                         'accessor_kwargs': {'sort': True},
                         'curve_options': {
-                            'stepMode': False,
-                            'connect': False,
+                            # 'stepMode': False,
+                            # 'connect': False,
                             'symbol': "o"
                         }
                     }
