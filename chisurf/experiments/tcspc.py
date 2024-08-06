@@ -7,6 +7,7 @@ import chisurf.fio.fluorescence.tcspc
 from chisurf import typing
 
 import numpy as np
+import tttrlib
 
 import chisurf.settings
 import chisurf.fluorescence.tcspc
@@ -184,9 +185,7 @@ class TCSPCSimulatorSetup(TCSPCReader):
 
 class TCSPCTTTRReader(TCSPCReader):
 
-    def read(self, filename: str = None, *args, **kwargs) \
-            -> chisurf.data.DataCurveGroup:
-        import tttrlib
+    def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
         if os.path.isfile(filename):
             tttr = tttrlib.TTTR(filename, self.reading_routine)
             tttr_selected = tttr.get_tttr_by_channel(self.channel_numbers)
