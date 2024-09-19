@@ -54,7 +54,7 @@ class Lifetime(FittingParameterGroup):
         if self.absolute_amplitudes:
             vs = np.sqrt(vs**2)
         if self.normalize_amplitudes:
-            vs /= vs.sum()
+            vs /= abs(vs.sum())
         return vs
 
     @amplitudes.setter
