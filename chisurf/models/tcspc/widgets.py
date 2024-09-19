@@ -30,6 +30,64 @@ from chisurf.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from chisurf.models.tcspc.pddem import PDDEM, PDDEMModel
 
 
+
+plot_cls_dist_default = [
+    (
+        chisurf.plots.LinePlot,
+        {
+            'd_scalex': 'lin',
+            'd_scaley': 'log',
+            'r_scalex': 'lin',
+            'r_scaley': 'lin',
+            'x_label': 'x',
+            'y_label': 'y',
+            'plot_irf': True
+        }
+     ),
+    (chisurf.plots.FitInfo, {}),
+    (chisurf.plots.ParameterScanPlot, {}),
+    (chisurf.plots.ResidualPlot, {}),
+    (
+        chisurf.plots.DistributionPlot,
+        {
+            'distribution_options': {
+                'FRET-rate constant': {
+                    'attribute': 'fret_rate_spectrum',
+                    'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                    'accessor_kwargs': {'sort': True},
+                    'curve_options': {
+                        # 'stepMode': 'right',
+                        # 'connect': 'all',
+                        'symbol': "o"
+                    }
+                },
+                'Distance': {
+                    'attribute': 'distance_distribution',
+                    'accessor': lambda x, **kwargs: (x[0][0], x[0][1]),
+                    'accessor_kwargs': {'sort': False},
+                    'curve_options': {
+                        # 'stepMode': False,  # 'right'
+                        # 'connect': False,  # 'all'
+                        'symbol': "t",
+                        # 'multi_curve': False
+                    }
+                },
+                'Lifetime': {
+                    'attribute': 'lifetime_spectrum',
+                    'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                    'accessor_kwargs': {'sort': True},
+                    'curve_options': {
+                        # 'stepMode': False,
+                        # 'connect': False,
+                        'symbol': "o"
+                    }
+                }
+            }
+        }
+    )
+]
+
+
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     @property
@@ -454,7 +512,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         self._b_widgets.pop().close()
 
 
-class PDDEMWidget(QtWidgets.QWidget, PDDEM):
+class PDDEMWidget(PDDEM, QtWidgets.QWidget):
 
     @chisurf.gui.decorators.init_with_ui("pddem.ui")
     def __init__(
@@ -515,22 +573,7 @@ class PDDEMWidget(QtWidgets.QWidget, PDDEM):
 
 class PDDEMModelWidget(ModelWidget, PDDEMModel):
 
-    plot_classes = [
-        (
-            chisurf.plots.LinePlot, {
-                'd_scalex': 'lin',
-                'd_scaley': 'log',
-                'r_scalex': 'lin',
-                'r_scaley': 'lin',
-                'x_label': 'time',
-                'y_label': 'counts',
-                'reference_curve': False
-            }
-         ),
-        (chisurf.plots.FitInfo, {}),
-        (chisurf.plots.DistributionPlot, {}),
-        (chisurf.plots.ParameterScanPlot, {})
-    ]
+    plot_classes = plot_cls_dist_default
 
     def __init__(self, fit, **kwargs):
         super().__init__(
@@ -730,6 +773,12 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.lh.addLayout(lh)
 
         self.append()
+        
+    def __setstate__(self, state):
+        n_lifetime = (len(state.keys()) - 2) // 2
+        for _ in range(n_lifetime):
+            self.onAddLifetime()
+        super().__setstate__(state)
 
     def onNormalizeAmplitudes(self):
         chisurf.run(f"chisurf.macros.model.normalize_amplitudes('{self.name}', {self.normalize_amplitude.isChecked()})")
@@ -1207,61 +1256,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
 
 class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
-    plot_classes = [
-        (
-            chisurf.plots.LinePlot,
-            {
-                'd_scalex': 'lin',
-                'd_scaley': 'log',
-                'r_scalex': 'lin',
-                'r_scaley': 'lin',
-                'x_label': 'x',
-                'y_label': 'y',
-                'plot_irf': True
-            }
-         ),
-        (chisurf.plots.FitInfo, {}),
-        (chisurf.plots.ParameterScanPlot, {}),
-        (chisurf.plots.ResidualPlot, {}),
-        (
-            chisurf.plots.DistributionPlot,
-            {
-                'distribution_options': {
-                    'FRET-rate constant': {
-                        'attribute': 'fret_rate_spectrum',
-                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                        'accessor_kwargs': {'sort': True},
-                        'curve_options': {
-                            # 'stepMode': 'right',
-                            # 'connect': 'all',
-                            'symbol': "o"
-                        }
-                    },
-                    'Distance': {
-                        'attribute': 'distance_distribution',
-                        'accessor': lambda x, **kwargs: (x[0][0], x[0][1]),
-                        'accessor_kwargs': {'sort': False},
-                        'curve_options': {
-                            # 'stepMode': False,  # 'right'
-                            # 'connect': False,  # 'all'
-                            'symbol': "t",
-                            # 'multi_curve': False
-                        }
-                    },
-                    'Lifetime': {
-                        'attribute': 'lifetime_spectrum',
-                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                        'accessor_kwargs': {'sort': True},
-                        'curve_options': {
-                            # 'stepMode': False,
-                            # 'connect': False,
-                            'symbol': "o"
-                        }
-                    }
-                }
-            }
-        )
-    ]
+    plot_classes = plot_cls_dist_default
     
     def finalize(self):
         super().finalize()
@@ -1313,50 +1308,7 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
 class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
-    plot_classes = [
-        (
-            chisurf.plots.LinePlot,
-            {
-                'd_scalex': 'lin',
-                'd_scaley': 'log',
-                'r_scalex': 'lin',
-                'r_scaley': 'lin',
-                'x_label': 'x',
-                'y_label': 'y',
-                'plot_irf': True
-            }
-         ),
-        (chisurf.plots.FitInfo, {}),
-        (chisurf.plots.ParameterScanPlot, {}),
-        (chisurf.plots.ResidualPlot, {}),
-        (
-            chisurf.plots.DistributionPlot,
-            {
-                'distribution_options': {
-                    'FRET-rate constants': {
-                        'attribute': 'fret_rate_spectrum',
-                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                        'accessor_kwargs': {'sort': True},
-                        'curve_options': {
-                            'stepMode': False,  # 'right',
-                            'connect': False,  # 'all',
-                            'symbol': "o"
-                        }
-                    },
-                    'Lifetime': {
-                        'attribute': 'lifetime_spectrum',
-                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                        'accessor_kwargs': {'sort': True},
-                        'curve_options': {
-                            'stepMode': False,
-                            'connect': False,
-                            'symbol': "o"
-                        }
-                    }
-                }
-            }
-        )
-    ]
+    plot_classes = plot_cls_dist_default
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
         self.donor = LifetimeWidget(
@@ -1389,60 +1341,7 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
 class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase):
 
-    plot_classes = [
-        (
-            chisurf.plots.LinePlot,
-            {
-                'd_scalex': 'lin',
-                'd_scaley': 'log',
-                'r_scalex': 'lin',
-                'r_scaley': 'lin',
-                'x_label': 'x',
-                'y_label': 'y',
-                'plot_irf': True
-            }
-         ),
-        (chisurf.plots.FitInfo, {}),
-        (chisurf.plots.ParameterScanPlot, {}),
-        (chisurf.plots.ResidualPlot, {}),
-        (
-            chisurf.plots.DistributionPlot,
-            {
-                'distribution_options': {
-                    'Distance distribution': {
-                        'attribute': 'distance_distribution',
-                        'accessor': lambda x: (x[0][0], x[0][1]),
-                        'accessor_kwargs': {},
-                        'curve_options': {
-                            'stepMode': False,  # 'right',
-                            'connect': False,  # 'all',
-                            'symbol': "o"
-                        }
-                    },
-                    'FRET-rate constants': {
-                        'attribute': 'fret_rate_spectrum',
-                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                        'accessor_kwargs': {'sort': True},
-                        'curve_options': {
-                            'stepMode': False,  # 'right',
-                            'connect': False,  # 'all',
-                            'symbol': "o"
-                        }
-                    },
-                    'Lifetime': {
-                        'attribute': 'lifetime_spectrum',
-                        'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                        'accessor_kwargs': {'sort': True},
-                        'curve_options': {
-                            'stepMode': False,
-                            'connect': False,
-                            'symbol': "o"
-                        }
-                    }
-                }
-            }
-        )
-    ]
+    plot_classes = plot_cls_dist_default
 
     @property
     def use_dye_linker(self) -> bool:
