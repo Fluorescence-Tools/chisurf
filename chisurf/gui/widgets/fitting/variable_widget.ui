@@ -45,7 +45,7 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>50</width>
+       <width>35</width>
        <height>0</height>
       </size>
      </property>
@@ -56,6 +56,19 @@
       <string>agg</string>
      </property>
     </widget>
+   </item>
+   <item row="0" column="4" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+    </layout>
    </item>
    <item row="0" column="1">
     <widget class="QCheckBox" name="widget_fix">
@@ -91,26 +104,6 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="2">
-    <widget class="QCheckBox" name="widget_link">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="toolTip">
-      <string>Link
-Right-click to link, uncheck to un-link</string>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="tristate">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
    <item row="0" column="3">
     <widget class="QCheckBox" name="widget_bounds_on">
      <property name="sizePolicy">
@@ -133,26 +126,13 @@ Right-click to link, uncheck to un-link</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="4">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
-     </property>
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-    </layout>
-   </item>
-   <item row="0" column="5">
+   <item row="0" column="7">
     <widget class="QLineEdit" name="lineEdit">
      <property name="enabled">
       <bool>true</bool>
      </property>
      <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -611,17 +591,14 @@ Right-click to link, uncheck to un-link</string>
        </disabled>
       </palette>
      </property>
-     <property name="font">
-      <font>
-       <weight>50</weight>
-       <bold>false</bold>
-      </font>
-     </property>
      <property name="toolTip">
       <string>estimated error of fit</string>
      </property>
      <property name="text">
       <string/>
+     </property>
+     <property name="frame">
+      <bool>true</bool>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -631,7 +608,27 @@ Right-click to link, uncheck to un-link</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="6">
+   <item row="0" column="2">
+    <widget class="QCheckBox" name="widget_link">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Link
+Right-click to link, uncheck to un-link</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="tristate">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="8">
     <widget class="QWidget" name="widget" native="true">
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="spacing">
