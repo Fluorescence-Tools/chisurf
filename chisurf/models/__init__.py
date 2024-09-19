@@ -2,6 +2,7 @@ import chisurf.models.model
 import chisurf.models.parse
 import chisurf.models.fcs
 import chisurf.models.tcspc
+import chisurf.models.pda
 import chisurf.models.global_model
 #import chisurf.models.stopped_flow
 from . model import *
