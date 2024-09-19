@@ -111,7 +111,7 @@ class PDDEM(FittingParameterGroup):
         return np.array([self.fAB, self.fBA], dtype=np.float64)
 
     def __init__(self, **kwargs):
-        FittingParameterGroup.__init__(self, **kwargs)
+        super().__init__(**kwargs)
 
         self._fAB = FittingParameter(name='AtB', value=1.0, model=self.model, decimals=2, fixed=True)
         self._fBA = FittingParameter(name='BtA', value=0.0, model=self.model, decimals=2, fixed=True)
