@@ -159,10 +159,7 @@ class Parameter(chisurf.base.Base):
             return self.value == other.value
         return NotImplemented
 
-    def __ne__(
-            self,
-            other: Parameter
-    ):
+    def __ne__(self, other: Parameter):
         result = self.__eq__(other)
         if result is NotImplemented:
             return result
@@ -189,6 +186,10 @@ class Parameter(chisurf.base.Base):
     def __setstate__(self, state):
         s = json.dumps(state['port'])
         self._port.read_json(s)
+        fixed = self._port.fixed
+        self._port.fixed = False
+        self._port.value = state['port']['value']
+        self._port.fixed = fixed
 
     def __round__(self, n=None):
         return self.__class__(
@@ -280,10 +281,7 @@ class ParameterGroup(chisurf.base.Base):
         except KeyError:
             super().__setattr__(k, v)
 
-    def __getattr__(
-            self,
-            key: str
-    ):
+    def __getattr__(self, key: str):
         v = super().__getattr__(key=key)
         if isinstance(v, chisurf.parameter.Parameter):
             return v.value
