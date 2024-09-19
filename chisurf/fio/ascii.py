@@ -5,7 +5,7 @@ import csv
 import os
 import numpy as np
 import scikit_fluorescence
-import scikit_fluorescence.io
+import scikit_fluorescence.io.ascii
 
 import chisurf
 
