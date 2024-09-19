@@ -89,7 +89,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         base_name, extension = os.path.splitext(self.curve_name)
         filename = chisurf.gui.widgets.save_file(
             working_path=base_name,
-            file_type='Pickle file (*.p)',
+            file_type='Pickle file (*.pkl)',
         )
         self.selected_dataset.save(
             filename=filename,
@@ -99,7 +99,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     def onLoadDataset(self):
         filename: pathlib.Path = chisurf.gui.widgets.get_filename(
             description='Pickled data ',
-            file_type='All files (*.p)'
+            file_type='All files (*.pkl)'
         )
         obj = pickle.load(open(filename, 'rb'))
         chisurf.imported_datasets.append(obj)

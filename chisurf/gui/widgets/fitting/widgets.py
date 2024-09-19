@@ -488,7 +488,7 @@ class FittingParameterWidget(Controller):
                 for a in fs.model.aggregated_parameters:
                     action_submenu = QtWidgets.QMenu(submenu)
                     action_submenu.setTitle(a.name)
-                    ut = a.parameters
+                    ut = a.parameters_all
                     ut.sort(key=lambda x: x.name, reverse=False)
                     for p in ut:
                         if p is not self.fitting_parameter:
@@ -501,7 +501,10 @@ class FittingParameterWidget(Controller):
 
                 # Simply all parameters
                 action_submenu.setTitle("All parameters")
-                for p in fs.model.parameters_all:
+                keys = list(fs.model.parameters_all_dict.keys())
+                sorted_keys = sorted(keys)
+                for key in sorted_keys:
+                    p = fs.model.parameters_all_dict[key]
                     if p is not self:
                         Action = action_submenu.addAction(p.name)
                         Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
@@ -599,8 +602,11 @@ class FittingParameterWidget(Controller):
         # The variable value
         self.widget_value.editingFinished.connect(
             lambda: chisurf.run(
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].value = "
-                f"{self.widget_value.value()} \n"
+                f"parameter = chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}']\n"
+                f"fixed = parameter.fixed \n"
+                f"parameter.fixed = False\n"
+                f"parameter.value = {self.widget_value.value()} \n"
+                f"parameter.fixed = fixed\n"
                 f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
             )
         )
