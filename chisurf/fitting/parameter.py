@@ -77,6 +77,13 @@ class FittingParameter(chisurf.parameter.Parameter):
             **kwargs
         )
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+
     def __str__(self):
         s = "\nVariable\n"
         s += f"name: {self.name}\n"
@@ -276,6 +283,15 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
 
     def __len__(self):
         return len(self.parameters_all)
+
+    def __getstate__(self) -> dict:
+        d = super().__getstate__()
+        for key, value in self.parameters_all_dict.items():
+            d[key] = value.__getstate__()
+        return d
+
+    def __setstate__(self, state: dict):
+        super().__setstate__(state)
 
     def __init__(
             self,
