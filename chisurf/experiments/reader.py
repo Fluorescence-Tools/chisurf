@@ -34,6 +34,13 @@ class ExperimentReader(chisurf.base.Base):
         else:
             return 0, 0
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        state.update(
+            chisurf.base.to_elementary(self.__dict__.copy())
+        )
+        return state
+
     @abc.abstractmethod
     def read(
             self,
