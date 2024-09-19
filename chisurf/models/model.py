@@ -78,6 +78,18 @@ class Model(FittingParameterGroup):
         self.flatten_weighted_residuals = True
         self.model_number = model_number
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        return state
+    
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        model = self
+        for key in state:
+            if key in model.parameters_all_dict.keys():
+                target = model.parameters_all_dict.get(key)
+                target.__setstate__(state[key])
+
     def __str__(self):
         s = ""
         s += "Model: %s\n" % str(self.name)
@@ -163,11 +175,6 @@ class ModelWidget(Model, QtWidgets.QWidget):
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {})
     ]
-
-    def __getstate__(self):
-        super().__getstate__()
-        state = dict()
-        return state
 
     def update_plots(self, *args, **kwargs) -> None:
         for p in self.fit.plots:
