@@ -57,6 +57,40 @@
       value: 1.0
       bounds: [0.0, 1e6]
   description: "3-state kinetics -> relaxation times, population fractions"
+FRET to PDA:
+  code: >
+    def g(
+      E = 0.5,
+      a = 0.02,
+      gp = 0.32,
+      phiA = 0.32,
+      phiD = 0.92
+    ):
+      e = 1. - 1. / (1 + phiA/phiD / gp * E / (1 - E) + a) 
+      
+      r = {
+        'p0': e
+      }
+    
+      return r
+
+  initial:
+    E:
+      value: 0.5
+      bounds: [0.0, 1.0]
+    a:
+      value: 0.02
+      bounds: [0.0, 1.0]
+    gp:
+      value: 0.32
+      bounds: [0.0, 100.0]
+    phiA:
+      value: 0.32
+      bounds: [0.0, 1.0]
+    phiD:
+      value: 0.92
+      bounds: [0.0, 1.0]
+  description: "FRET eff -> PDA p0"
 2 state kinetics->(x,tR):
   code: >
     def g(k12, k21):
