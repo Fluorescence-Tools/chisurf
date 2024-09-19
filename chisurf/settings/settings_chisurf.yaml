@@ -83,9 +83,9 @@ fret:
   forster_radius: 52
   tau0: 4
   kappa2: 0.667
-  rda_resolution: 256
+  rda_resolution: 96
   rda_min: 1
-  rda_max: 256
+  rda_max: 130
   lifetime_bins: 101
   bin_lifetime: false
   discriminate: false
@@ -145,7 +145,7 @@ gui:
     paper_color: "#747677"
     default_color: "#e1e1e1"
     font_size: 9
-    font_family: Helvetica
+    font_family: Sans-Serif
     language: Python
   style_sheet: dark.css
   RubberBandResize: true
