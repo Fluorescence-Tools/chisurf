@@ -212,12 +212,12 @@ def close_fit(idx: int = None):
         for i, w in enumerate(chisurf.gui.fit_windows):
             if w is sub_window:
                 idx = i
+    # chisurf.gui.widgets.clear_layout(cs.modelLayout)
+    # chisurf.gui.widgets.clear_layout(cs.plotOptionsLayout)
     chisurf.fits.pop(idx)
     sub_window = chisurf.gui.fit_windows.pop(idx)
-    sub_window.close_confirm = False
-    chisurf.gui.widgets.hide_items_in_layout(cs.modelLayout)
-    chisurf.gui.widgets.hide_items_in_layout(cs.plotOptionsLayout)
     sub_window.close()
+
     cs.update()
 
 
