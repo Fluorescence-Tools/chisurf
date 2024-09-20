@@ -24,7 +24,7 @@ requirements:
     - python
     - setuptools
     - pyopencl
-    - pocl  >=0.14      # [linux or osx]
+    - pocl >=0.14      # [linux or osx]
     - oclgrind          # [win]
     - typing_extensions <=4.5
     - cython
@@ -38,7 +38,7 @@ requirements:
     - setuptools
     - cython
     - pyopencl
-    - pocl  >=0.14      # [linux or osx]
+    - pocl >=0.14      # [linux or osx]
     - oclgrind          # [win]
     - typing_extensions <=4.5
     - pyyaml

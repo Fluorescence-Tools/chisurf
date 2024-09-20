@@ -4,45 +4,50 @@ import glob
 import jinja2
 import pathlib
 
+module_path = pathlib.Path("../../chisurf").absolute().resolve()
+setup_path = pathlib.Path("../..").absolute().resolve()
+sys.path.append(str(module_path.resolve()))
+sys.path.append(str(setup_path.resolve()))
+path = pathlib.Path(module_path)
+
+import info
+from setup import gui_scripts
 
 # append the relative location you want to import from
 # import your module stored in '../common'
-module_path = pathlib.Path("../../")
-source_dir = pathlib.Path("../../dist/win/").absolute()
-output_dir = pathlib.Path("../../dist/").absolute()
-license_file = str((module_path / "LICENSE").absolute())
+source_dir = pathlib.Path("../../").resolve()
+output_dir = pathlib.Path("../../dist/").resolve()
+license_file = str((source_dir / "LICENSE").resolve())
+icon_file = str(path) + info.setup_icon
+
+print("module_path:", module_path.resolve())
+print("source_dir:", source_dir.resolve())
+print("output_dir:", output_dir.resolve())
+print("license_file:", license_file)
+print("icon_file:", icon_file)
+
 vc_runtime_path = "VC++ runtimes/"
 vc_runtimes = [os.path.basename(f) for f in glob.glob(vc_runtime_path+"/*.exe")]
 
-sys.path.append(str(module_path.absolute()))
-path = pathlib.Path(module_path)
-print(sys.path)
-
-setup_file = module_path / "setup.py"
-ns = dict()
-with open(setup_file) as f:
-    lines = f.readlines()
-    # omit last line so that setup() is not called
-    s = "".join(lines[:-2])
-    code = compile(s, '<string>', 'exec')
-    exec(code)
 
 # the parameters come from the setup.py
 parameters = {
-    "AppId": __app_id__,
-    "AppName": __name__,
-    "AppVersion": __version__,
-    "AppPublisher": __author__,
-    "AppPublisherURL": __url__,
-    "AppSupportURL": __url__,
-    "AppUpdatesURL": __url__,
-    "DefaultGroupName": __name__,
+    "AppId": info.__app_id__,
+    "AppName": info.__name__,
+    "AppVersion": info.__version__,
+    "AppPublisher": info.__author__,
+    "AppURL": info.__url__,
+    "AppPublisherURL": info.__url__,
+    "AppSupportURL": info.__url__,
+    "AppUpdatesURL": info.__url__,
+    "DefaultGroupName": info.__name__,
     "SourceDir": source_dir,
     "Output_dir": output_dir,
-    "gui_entry_points": gui_scripts,
     "LicenseFile": license_file,
     "vc_runtime_path": vc_runtime_path,
-    "vc_runtimes": vc_runtimes
+    "vc_runtimes": vc_runtimes,
+    "SetupIconFile": icon_file,
+    "gui_entry_points": gui_scripts
 }
 
 
@@ -51,6 +56,7 @@ with open('setup_template.iss', 'r') as fp:
     inno_template += fp.read()
 t = jinja2.Template(inno_template)
 inno_script = t.render(**parameters)
+
 print("------ BEGIN INNO SETUP FILE ------")
 print(inno_script)
 print("------  END  INNO SETUP FILE ------")
