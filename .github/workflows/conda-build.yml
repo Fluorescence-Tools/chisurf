@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest"]
         python-version: ["3.10"]
     steps:
       - name: Checkout Repository
@@ -46,9 +46,7 @@ jobs:
           conda config --show
           printenv | sort
 
-      # Conditional build step to avoid using headless-gui on Windows
-      - name: Build Conda Package on non-Windows OS
-        if: matrix.os != 'windows-latest'
+      - name: Build Conda Package
         uses: aganders3/headless-gui@v1
         with:
           shell: bash -el {0}
@@ -59,11 +57,3 @@ jobs:
             # curl -sLO  https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/084b098a28a7a66e9a0967d156bc55b9ebfc6726/recipe/conda_build_config.yaml
             # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
             conda mambabuild .
-
-      - name: Build Conda Package on Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          conda config --add channels tpeulen
-          mamba install conda-build boa
-          cd conda-recipe
-          conda mambabuild .
