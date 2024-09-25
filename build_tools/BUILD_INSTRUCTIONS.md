@@ -19,6 +19,10 @@ for the ChiSurf.app. Unnecessary folders and file listed in `remove_list.txt`
 are stripped from the ChiSurf.app folder. Finally, the ChiSurf.app is bundeled 
 in a .dmg image that is placed in the ``dist`` folder. 
 
+```
+./osx/build-osx-app.sh -f=../env_osx.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=.. -o=../dist
+```
+
 ## Windows
 
 The Windows installation of ChiSurf is effectively a conda environment with

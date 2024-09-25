@@ -11,12 +11,12 @@ get_abs_filename() {
   echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 }
 
+
 export ICON_FILE=icon.png
-export CONDA_ENVIRONMENT_YAML=environment.yml
+export CONDA_ENVIRONMENT_YAML=env_osx.yml
+
 # The directory of the build-osx-app.sh script
-export SCRIPT_DIR="."
-SCRIPT_DIR=$("pwd")
-echo $SCRIPT_DIR
+export SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 function print_usage() {
     echo "build-osx-app.sh [-i] [--template] $APP_NAME.app
@@ -85,26 +85,47 @@ case $i in
     shift
 done
 
+
 # The target directory of the .app
 mkdir "$OUTPUT_PATH"
-export APP_FOLDER=${1:-$OUTPUT_PATH/$APP_NAME.app}
-APP_FOLDER="$(cd "$(dirname "$APP_FOLDER")" && pwd)/$(basename "$APP_FOLDER")"
-echo "App folder: $APP_FOLDER"
-mkdir "$APP_FOLDER"
+OUTPUT_PATH=$(cd "$OUTPUT_PATH" && pwd)
+PYTHON_MODULE_PATH=$(cd "$PYTHON_MODULE_PATH" && pwd)
 
-source $CONDA_PREFIX/etc/profile.d/conda.sh
+export APP_FOLDER=${1:-$OUTPUT_PATH/$APP_NAME.app}
+mkdir -p "$APP_FOLDER"
+APP_FOLDER=$(cd "$APP_FOLDER" && pwd)
+
 mamba env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
 conda activate "$APP_FOLDER/Contents"
 mamba install -y nomkl jinja2
-mkdir "$APP_FOLDER/Contents/MacOS"
-mkdir "$APP_FOLDER/Contents/Resources"
+mkdir -p "$APP_FOLDER/Contents/MacOS"
+mkdir -p "$APP_FOLDER/Contents/Resources"
 
 cd $PYTHON_MODULE_PATH
-cp -R $PYTHON_MODULE "$APP_FOLDER/Contents"
+export SITE_PACKAGE_PATH=`$APP_FOLDER/Contents/bin/python -c 'import site; print(site.getsitepackages()[0])'`
+cp -R $PYTHON_MODULE $SITE_PACKAGE_PATH
 
-# generate icns file
+function print_values() {
+    echo "Input values:"
+    echo "-----------------------"
+    echo "Conda Environment YAML: $CONDA_ENVIRONMENT_YAML"
+    echo "Icon File:              $ICON_FILE"
+    echo "Python Module:          $PYTHON_MODULE"
+    echo "App Name:               $APP_NAME"
+    echo "Output Path:            $OUTPUT_PATH"
+    echo "Python Module Path:     $PYTHON_MODULE_PATH"
+    echo "Site package Path:      $SITE_PACKAGE_PATH"
+    echo "App folder:             $APP_FOLDER"
+    echo "-----------------------"
+}
+print_values
+
+
+# generate icons file
 cd $SCRIPT_DIR
 python generate-iconset.py $SCRIPT_DIR/resources/AppIcon.png
+python generate-iconset.py resources/VolumeIcon.png
+
 # also update the icon with fileicon
 $SCRIPT_DIR/fileicon set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
 
@@ -117,26 +138,21 @@ $SCRIPT_DIR/create_app_plist.py \
   -i $SCRIPT_DIR/resources/AppIcon.icns \
   -p $SCRIPT_DIR/plist_template \
   -t $SCRIPT_DIR/launch_template
+cd $APP_FOLDER/Contents
+./bin/python -m compileall .
+
 cd $SCRIPT_DIR
-
-echo Remove files and folders from content folder: "$CONTENT_FOLDER"
-while read p; do
-  echo "removing: $APP_FOLDER/Contents/$p"
-  rm -rf $CONTENT_FOLDER$p
-done <"$SCRIPT_DIR/remove_list.txt"
-
-test -f ../dist/$APP_NAME-Installer.dmg && rm ../dist/$APP_NAME-Installer.dmg
-python generate-iconset.py resources/VolumeIcon.png
 ./create-dmg/create-dmg \
   --volname "$APP_NAME Installer" \
+  --volicon "./resources/VolumeIcon.icns" \
   --window-pos 200 120 \
   --window-size 800 400 \
   --icon-size 100 \
   --icon "$APP_NAME.app" 200 190 \
   --hide-extension "$APP_NAME.app" \
   --app-drop-link 600 185 \
-  --volicon resources/VolumeIcon.icns \
+  --skip-jenkins \
+  --sandbox-safe \
+  --no-internet-enable \
   "$OUTPUT_PATH/$APP_NAME-Installer.dmg" \
-  "$OUTPUT_PATH"
-./fileicon set "$OUTPUT_PATH/$APP_NAME-Installer.dmg" ./resources/VolumeIcon.icns
-rm -rf $OUTPUT_PATH/$APP_NAME.app
+  "$APP_FOLDER/.."
