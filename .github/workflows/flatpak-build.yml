@@ -13,7 +13,7 @@ jobs:
     name: Flatter
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/andyholmes/flatter/gnome:46
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-21.08
       options: --privileged
 
     strategy:
