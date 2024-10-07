@@ -1,0 +1,83 @@
+version: 1
+script:
+  # Remove any previous build
+  - rm -rf AppDir  | true
+  # Create necessary directories
+  - mkdir -p AppDir/usr/bin
+  - mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
+  - mkdir -p AppDir/usr/share/applications
+  # Install Miniconda
+  - curl -o miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py310_24.5.0-0-Linux-x86_64.sh
+  - echo "b3d73db6a05069fbdf20dc33fc9b6a29fa7198578f0d090c639f5ca0e84102bd  miniconda.sh" | sha256sum -c
+  - chmod +x miniconda.sh
+  - bash miniconda.sh -b -p AppDir/usr/miniconda
+  # Configure Conda and install ChiSurf
+  - AppDir/usr/miniconda/bin/conda config --add channels conda-forge
+  - AppDir/usr/miniconda/bin/conda config --add channels tpeulen
+  - AppDir/usr/miniconda/bin/conda install chisurf=24.10.05
+  # Clean up
+  - AppDir/usr/miniconda/bin/conda clean -a
+  # Link the application
+  - ln -s AppDir/usr/miniconda/bin/chisurf AppDir/usr/bin/chisurf
+  # Copy desktop and icon files
+  - cp chisurf-logo.svg AppDir/usr/share/icons/hicolor/scalable/apps/chisurf-logo.svg
+  - cp chisurf.desktop AppDir/usr/share/applications/chisurf.desktop
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: xyz.peulen.ChiSurf
+    name: ChiSurf
+    icon: chisurf-logo
+    version: 0.1.0
+    # Set the application main executable as entry point
+    exec: usr/bin/chisurf
+    # Forward CLI parameters
+    exec_args: "$@"
+
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic main restricted universe multiverse'
+        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3b4fe6acc0b21f32'
+
+    include:
+      - python3
+      - python3-pkg-resources
+      - python3-pyqt5
+    exclude: []
+
+  runtime:
+    env:
+      # Set Python home
+      PYTHONHOME: '${APPDIR}/usr/miniconda'
+      # Path to site-packages
+      PYTHONPATH: '${APPDIR}/usr/miniconda/lib/python3.10/site-packages'
+
+  test:
+    fedora:
+      image: appimagecrafters/tests-env:fedora-30
+      command: ./AppRun
+      use_host_x: true
+    debian:
+      image: appimagecrafters/tests-env:debian-stable
+      command: ./AppRun
+      use_host_x: true
+    arch:
+      image: appimagecrafters/tests-env:archlinux-latest
+      command: ./AppRun
+      use_host_x: true
+    centos:
+      image: appimagecrafters/tests-env:centos-7
+      command: ./AppRun
+      use_host_x: true
+    ubuntu:
+      image: appimagecrafters/tests-env:ubuntu-xenial
+      command: ./AppRun
+      use_host_x: true
+
+AppImage:
+  update-information: 'gh-releases-zsync|AppImageCrafters|ChiSurf|latest|ChiSurf-*x86_64.AppImage.zsync'
+  sign-key: None
+  arch: x86_64
