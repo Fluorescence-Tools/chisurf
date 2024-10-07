@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ChiSurf
+Comment=Software for analyzing fluorescence lifetime imaging
+Exec=chisurf
+Icon=chisurf-logo
+Terminal=false
+Type=Application
+Categories=Science;Education;
+

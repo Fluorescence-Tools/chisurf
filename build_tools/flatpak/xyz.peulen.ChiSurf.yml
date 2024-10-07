@@ -1,0 +1,58 @@
+app-id: xyz.peulen.ChiSurf
+runtime: org.freedesktop.Platform
+runtime-version: "21.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions : [ "org.freedesktop.Sdk.Extension.llvm14" ]
+command: chisurf
+finish-args:
+  - --share=network  # Allow network access for the final app if needed
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=dri
+  - --filesystem=host
+  - --filesystem=home
+  - --filesystem=/tmp
+
+modules:  
+  - name: miniconda
+    buildsystem: simple  # Simple build system that allows network access during build
+    build-options:
+        build-args: [ "--share=network" ]
+    sources:
+      - type: file
+        url: https://repo.anaconda.com/miniconda/Miniconda3-py310_24.5.0-0-Linux-x86_64.sh
+        dest-filename: miniconda.sh
+        sha256: b3d73db6a05069fbdf20dc33fc9b6a29fa7198578f0d090c639f5ca0e84102bd
+    build-commands:
+      - |
+        # Make the installer executable
+        chmod +x miniconda.sh
+        # Install Miniconda into /app/miniconda
+        bash miniconda.sh -b -p /app/miniconda
+        # Set Conda to avoid base activation and add channels
+        /app/miniconda/bin/conda config --add channels conda-forge
+        /app/miniconda/bin/conda config --add channels tpeulen
+        /app/miniconda/bin/conda install chisurf=24.10.05
+        # Clean Conda cache to reduce size
+        /app/miniconda/bin/conda clean -a
+
+  - name: chisurf
+    buildsystem: simple
+    build-options:
+        append-path: "/usr/lib/sdk/llvm14/bin"
+        prepend-ld-library-path: "/usr/lib/sdk/llvm14/lib"
+    build-commands:
+      - |
+        # Ensure /app/bin directory exists
+        mkdir -p /app/bin
+        # Link the Python interpreter from Conda environment to /app/bin/python
+        ln -s /app/miniconda/bin/chisurf /app/bin/chisurf
+
+    files:
+      - from: chisurf-logo.svg
+        to: /share/icons/hicolor/scalable/apps/chisurf-logo.svg
+      - from: chisurf.desktop
+        to: /share/applications/chisurf.desktop
+
