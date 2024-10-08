@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=ChiSurf
+Name[de]=ChiSurf
+Comment=Time-resolved fluorescence analysis
+Comment[de]=Zeitaufgeloeste Fluoreszenzanalyse
+Exec=chisurf %F
+Terminal=false
+Type=Application
+Icon=chisurf-logo
+Categories=Science;Engineering;
+StartupNotify=true
