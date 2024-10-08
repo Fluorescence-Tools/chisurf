@@ -222,7 +222,7 @@ class Base(object):
                 txt = self.to_yaml()
             elif file_type == "json":
                 txt = self.to_json()
-            elif file_type == "p":
+            elif file_type == "pkl":
                 txt = pickle.dumps(self)
                 mode = 'wb'
             if verbose:

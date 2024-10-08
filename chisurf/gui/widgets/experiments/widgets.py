@@ -93,13 +93,13 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         )
         self.selected_dataset.save(
             filename=filename,
-            file_type='p'
+            file_type='pkl'
         )
 
     def onLoadDataset(self):
         filename: pathlib.Path = chisurf.gui.widgets.get_filename(
             description='Pickled data ',
-            file_type='All files (*.pkl)'
+            file_type='Pickle files (*.pkl)'
         )
         obj = pickle.load(open(filename, 'rb'))
         chisurf.imported_datasets.append(obj)
@@ -192,8 +192,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            command = "\n".join([f"chisurf.macros.add_dataset(filename='{p}')" for p in paths])
-            print(command)
+            command = "\n".join([f"chisurf.macros.add_dataset(filename=r'{p}')" for p in paths])
             chisurf.run(command)
             event.acceptProposedAction()
         else:
