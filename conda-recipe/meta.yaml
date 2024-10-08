@@ -56,14 +56,13 @@ requirements:
     - deprecation
     - scikit-fluorescence
     - imp
+    - typing-extensions 4.5.*
     - typing_extensions 4.5.*
-    - typing_utils 0.1.*
     - scipy 1.11.*
     - numba 0.57.*
     - tttrlib
     - mdtraj
-    - pdb2pqr 3.2.*
-    - propka 3.4.*
+    - htmd-pdb2pqr
     - ipython 7.*.*
     - labellib
     - pyopencl 2023.*
