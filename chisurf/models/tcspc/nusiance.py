@@ -488,7 +488,7 @@ class Convolve(FittingParameterGroup):
 
         if mode == "per":
             period = 1000. / rep_rate
-            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
+            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic_nb(
                 decay, data, irf_y,
                 start, stop, n_points,
                 period, dt, n_points
@@ -499,7 +499,7 @@ class Convolve(FittingParameterGroup):
             # time)
         elif mode == "exp":
             t = self.data.x
-            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_nb(
                 output_decay=decay,
                 lifetime_spectrum=data,
                 instrument_response_function=irf_y,
