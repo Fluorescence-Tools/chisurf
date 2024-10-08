@@ -73,7 +73,8 @@ class Model(FittingParameterGroup):
         )
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, model_number: int = 0, **kwargs):
-        super().__init__(model=self, **kwargs)
+        # Set model to none otherwise will result in self reference
+        super().__init__(model=None, **kwargs)
         self.fit = fit
         self.flatten_weighted_residuals = True
         self.model_number = model_number
