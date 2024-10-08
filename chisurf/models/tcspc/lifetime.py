@@ -208,7 +208,6 @@ class LifetimeModel(ModelCurve):
             f"<tau>F: {self.fluorescence_averaged_lifetime:.3f}\n"
             f"Steady state anisotropy: {self.steady_state_anisotropy:.3f}\n"
         )
-
         s += "\nAnisotropy"
         s += "\n------------------\n"
         s += f"Steady state anisotropy: {self.steady_state_anisotropy:.3f}\n"
