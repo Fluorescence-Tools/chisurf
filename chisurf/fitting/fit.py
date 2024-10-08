@@ -171,9 +171,30 @@ class Fit(chisurf.base.Base):
 
     def __getstate__(self):
         d = super().__getstate__()
-        d['model'] = self.model.__getstate__()
+
+        # Try to pickle model; remove unpickleable attributes
+        model_state = self.model.__getstate__()
+        import pickle
+        # Attempt to pickle each attribute
+        for key in list(model_state.keys()):  # Use list to avoid modifying dict while iterating
+            try:
+                pickle.dumps(model_state[key])  # Try pickling the attribute
+            except (pickle.PicklingError, TypeError):
+                # Remove unpickleable attributes
+                del model_state[key]
+
         d['data'] = self.data.__getstate__()
+        d['model'] = model_state
         return d
+
+    def __setstate__(self, state):
+        m = state.pop('model')
+        d = state.pop('data')
+        self.model.__setstate__(m)
+        self.data.__setstate__(d)
+        super().__init__(**state)
+        self.model.finalize()
+        self.update()
 
     def __str__(self):
         s = "\nFitting:\n"
@@ -269,19 +290,13 @@ class Fit(chisurf.base.Base):
             **fitting_options
         )
         self.update()
-        self.results.append(
-            dict(zip(fit.model.parameter_names, fit.model.parameter_values))
-        )
+        self.results.append(self.model.__getstate__())
         self.model.finalize()
 
     def set_result_idx(self, idx: int):
         idx = np.clip(idx, 0, len(self.results) - 1)
         self._result_current = idx
-        for k in self.results[idx]:
-            try:
-                self.model.parameters_all_dict[k].value = self.results[idx][k]
-            except KeyError:
-                chisurf.logging.warning(f'Parameter {k} not updated.')
+        self.model.__setstate__(self.results[idx])
         self.update()
         self.model.finalize()
 
@@ -467,10 +482,8 @@ class FitGroup(Fit):
             bounds=bounds,
             **fitting_options
         )
-        self.results.append(
-            dict(zip(fit.model.parameter_names, fit.model.parameter_values))
-        )
         self.update()
+        self.results.append(self.model.__getstate__())
 
     def __init__(
             self,
