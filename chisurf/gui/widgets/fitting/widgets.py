@@ -208,6 +208,14 @@ class FittingControllerWidget(Controller):
     def local_first(self) -> bool:
         return self.checkBox.isChecked()
 
+    @property
+    def n_steps(self) -> int:
+        return int(self.doubleSpinBox.value() * 1000)
+
+    @property
+    def n_runs(self) -> int:
+        return self.spinBox_5.value()
+
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
@@ -265,12 +273,7 @@ class FittingControllerWidget(Controller):
         self.actionSelectionChanged.triggered.connect(self.onDatasetChanged)
         self.actionErrorEstimate.triggered.connect(self.onErrorEstimate)
 
-        self.toolButton_3.clicked.connect(
-            lambda: chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].next_result()")
-        )
-        self.toolButton_5.clicked.connect(
-            lambda: chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].previous_result()")
-        )
+        self.spinBox_3.valueChanged.connect(self._result_changed)
 
         if hide_fit_button:
             self.pushButton_fit.hide()
@@ -281,6 +284,10 @@ class FittingControllerWidget(Controller):
         if hide_fitting:
             self.hide()
 
+    def _result_changed(self):
+        result_idx = self.spinBox_3.value() - 1
+        chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].set_result_idx({result_idx})")
+
     def onDatasetChanged(self):
         chisurf.run(f"chisurf.macros.change_selected_fit_of_group({self.selected_fit})")
 
@@ -288,6 +295,8 @@ class FittingControllerWidget(Controller):
         chisurf.run(f"cs.status.showMessage('Sampling analysis: {self.fit.name}. Please wait...')")
         filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
         kw = chisurf.settings.cs_settings['optimization']['sampling']
+        kw['n_runs'] = self.n_runs
+        kw['steps'] = self.n_steps
         chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
         chisurf.run("cs.status.showMessage('Sampling done!')")
 
@@ -301,6 +310,10 @@ class FittingControllerWidget(Controller):
             except (AttributeError, RuntimeError):
                 chisurf.logging.warning(f"Fitting parameter {pa.name} does not have a controller to update.")
         chisurf.run("cs.status.showMessage('Fitting finished!')")
+        # Update fit result selector
+        self.spinBox_3.setMaximum(len(self.fit.results))
+        self.spinBox_3.setMinimum(1)
+        self.spinBox_3.setValue(1)
 
     @property
     def xmin(self):
