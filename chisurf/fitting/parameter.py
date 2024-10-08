@@ -231,11 +231,6 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             self,
             parameter_type=chisurf.parameter.Parameter
     ) -> None:
-        """
-
-        :param parameter_type:
-        :return:
-        """
         self._aggregated_parameters = None
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
@@ -261,9 +256,12 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
     def append_parameter(self, p: chisurf.parameter.Parameter):
         self._parameters.append(p)
 
-    @abc.abstractmethod
     def finalize(self):
-        pass
+        for p in self.parameters_all:
+            try:
+                p.controller.finalize()
+            except AttributeError:
+                chisurf.logging.warning("AttributeError:", p, " has no controller.")
 
     # def __getattribute__(
     #         self,
