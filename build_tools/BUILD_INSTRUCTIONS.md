@@ -4,9 +4,9 @@
 
 ### Creating a ChiSurf.app
 
-An distributable dmg file (including the .app) can be build using 
+A distributable dmg file (including the .app) can be build using 
 
-```
+```bash
 build-dmg
 ```
 
@@ -19,7 +19,7 @@ for the ChiSurf.app. Unnecessary folders and file listed in `remove_list.txt`
 are stripped from the ChiSurf.app folder. Finally, the ChiSurf.app is bundeled 
 in a .dmg image that is placed in the ``dist`` folder. 
 
-```
+```bash
 ./osx/build-osx-app.sh -f=../env_osx.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=.. -o=../dist
 ```
 
@@ -33,7 +33,7 @@ Windows versions are bundled in setup.exe files created using innosetup. The
 setup files will install a conda environment that is used to run the chisurf
 module. A setup file is created by calling
 
-```
+```cmd
 build-setup.bat
 ```
 
@@ -49,4 +49,25 @@ Finnaly, innosetup reads `setup.iss` and writes a installation file
 
 ## Linux
 
-### snap store
+### Flatpak
+
+Build with recipe with
+```bash
+flatpak-builder --force-clean --install-deps-from=flathub --repo=repo --user --install builddir xyz.peulen.ChiSurf.yml
+```
+
+build bundle with
+```bash
+flatpak-builder --force-clean --install-deps-from=flathub --repo=repo --user --install builddir xyz.peulen.ChiSurf.yml
+```
+
+TODOs: Check how to deploy on flatpak hub.
+
+### Appimage
+
+Uses linuxdeploy to build app image execute `build.sh` in linuxdeploy folder. 
+Maybe modify the `linuxdeploy-plugin-conda.sh` script (adjust python/conda version).
+Currently (24.10.08) build does not work on latest miniconda and default/unmodified  
+`linuxdeploy-plugin-conda.sh` script.
+
+TODOs:
