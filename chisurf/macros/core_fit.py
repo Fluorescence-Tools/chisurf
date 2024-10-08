@@ -79,6 +79,7 @@ def add_fit(
             cs.current_fit = fit_group
             fit_control_widget.onAutoFitRange()
             fit_window.show()
+
     cs.update()
 
 
@@ -111,10 +112,7 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
             fit_control_widget.selected_fit = i
             fit_name = os.path.basename(fit.data.name)[0]
             model = f.model
-            document.add_paragraph(
-                text=fit_name,
-                style='ListNumber'
-            )
+            document.add_paragraph(text=fit_name, style='ListNumber')
             for png_name, source in zip(
                     [save_name + '_screenshot_fit.png', save_name + '_screenshot_model.png'],
                     [fit_window, model]
@@ -126,10 +124,7 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
                     width=Inches(2.0)
                 )
 
-        document.add_heading(
-            text='Summary',
-            level=1
-        )
+        document.add_heading(text='Summary', level=1)
 
         p = document.add_paragraph(text='Parameters which are fitted are given in ')
         p.add_run('bold').bold = True
@@ -150,9 +145,7 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
                 row_cells[0].text = str(k)
                 for i, fit in enumerate(fit_group):
                     paragraph = row_cells[i + 1].paragraphs[0]
-                    run = paragraph.add_run(
-                        text='{:.3f}'.format(model.parameters_all_dict[k].value)
-                    )
+                    run = paragraph.add_run(text='{:.3f}'.format(model.parameters_all_dict[k].value))
                     if model.parameters_all_dict[k].fixed:
                         continue
                     else:
