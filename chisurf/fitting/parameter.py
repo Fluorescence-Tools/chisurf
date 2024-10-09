@@ -301,20 +301,7 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             ] = None,
             *args, **kwargs
     ):
-        """
-
-        :param fit: the fit to which the parameter group is associated to
-        :param model: the model to which the parameter group is associated to
-        :param short: a short name for the parameter group
-        :param parameters: a list of the fitting parameters that are grouped
-        by the fitting parameter group
-        :param args:
-        :param kwargs:
-        """
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         if chisurf.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)
