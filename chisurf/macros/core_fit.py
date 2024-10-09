@@ -79,7 +79,6 @@ def add_fit(
             cs.current_fit = fit_group
             fit_control_widget.onAutoFitRange()
             fit_window.show()
-
     cs.update()
 
 
@@ -98,9 +97,11 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
         save_name = chisurf.base.clean_string(fit.name)
     else:
         save_name = os.path.basename(fit.data.name)
+
     filename = os.path.join(target_path, save_name)
     #fit.save(filename, 'json', save_curves=False)
     fit.save(filename, 'csv', save_curves=True)
+    fit.data.save(filename + "_data", 'pkl')
 
     # Create word document
     document = docx.Document()
