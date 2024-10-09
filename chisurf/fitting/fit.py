@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from chisurf import typing
 from collections import deque
 
@@ -290,6 +291,7 @@ class Fit(chisurf.base.Base):
             **fitting_options
         )
         self.update()
+        self.update_error_estimates()
         self.results.append(self.model.__getstate__())
         self.model.finalize()
 
@@ -316,7 +318,6 @@ class Fit(chisurf.base.Base):
 
     def update(self) -> None:
         self.model.update()
-        self.update_error_estimates()
 
     def chi2_scan(
             self,
@@ -483,6 +484,7 @@ class FitGroup(Fit):
             **fitting_options
         )
         self.update()
+        self.update_error_estimates()
         self.results.append(self.model.__getstate__())
 
     def __init__(
@@ -607,6 +609,7 @@ def sample_fit(
                 nwalkers=n_walkers,
                 thin=thin,
                 chi2max=chi2max,
+                progress_bar=chisurf.cs.progress_bar,
                 **kwargs
             )
 
