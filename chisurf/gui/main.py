@@ -636,8 +636,35 @@ class Main(QtWidgets.QMainWindow):
 
         self.about = uic.loadUi(pathlib.Path(__file__).parent / "about.ui")
 
-        self.status = chisurf.gui.widgets.QtWidgets.QStatusBar(self)
+        # Setup status bar with progress bar and message
+        self.status = QtWidgets.QStatusBar(self)
         self.setStatusBar(self.status)
+
+        # Create a QWidget to hold the progress bar and message
+        status_widget = QtWidgets.QWidget()
+        status_layout = QtWidgets.QHBoxLayout(status_widget)
+
+        # Set spacing and margins to zero
+        status_layout.setSpacing(0)  # Set spacing between widgets to zero
+        status_layout.setContentsMargins(0, 0, 0, 0)  # Set margins to zero
+
+        # Create a progress bar
+        self.progress_bar = QtWidgets.QProgressBar(self.status)
+        self.progress_bar.setFixedWidth(150)  # Set a fixed width for the progress bar
+        self.progress_bar.setAlignment(QtCore.Qt.AlignCenter)
+        self.progress_bar.setFixedHeight(15)  # Adjust the height as needed
+
+        # Create a label for the status message
+        self.status_label = QtWidgets.QLabel("Ready")
+        self.status_label.setMaximumHeight(20)  # Set a maximum height for the status message
+
+        # Add the progress bar and status message to the status layout
+        status_layout.addWidget(self.status_label)
+        status_layout.addSpacerItem(QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.MinimumExpanding))
+        status_layout.addWidget(self.progress_bar)
+
+        # Add the status widget to the status bar, aligning to the left
+        self.status.addWidget(status_widget, 1)  # 1 gives the widget some stretch
 
     def update(self):
         super().update()
