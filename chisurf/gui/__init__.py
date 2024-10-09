@@ -9,22 +9,77 @@ import chisurf.settings
 import chisurf.gui.decorators
 
 
+class CustomProgressBar(QtWidgets.QProgressBar):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAlignment(QtCore.Qt.AlignCenter)  # Ensure the default text is centered
+        self.custom_text = ""  # Placeholder for custom text
+
+    def set_custom_text(self, text: str):
+        """Set custom text to display on the progress bar."""
+        self.custom_text = text
+        self.update()  # Request a repaint to update the display
+
+    def paintEvent(self, event):
+        """Custom paint event to render the progress bar and custom text on top."""
+        # Call the base class paint event to render the bar
+        super().paintEvent(event)
+
+        # Create a painter to draw the text on top of the progress bar
+        painter = QtGui.QPainter(self)
+
+        # Customize the text style and color
+        painter.setPen(QtCore.Qt.white)
+        font = painter.font()
+        font.setBold(True)
+        painter.setFont(font)
+
+        # Get the rectangle of the progress bar for text alignment
+        rect = self.rect()
+
+        # Draw the custom text on top of the progress bar
+        painter.drawText(rect, QtCore.Qt.AlignCenter, self.custom_text)
+
+        painter.end()
 
 class SplashScreen(QtWidgets.QSplashScreen):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self.color = QtCore.Qt.white  # Example color
-        #self.message = "Loading..."
-        #self.version = "0.1"
-        #self.release_date = "May 29, 2013"
 
-    # TODO: Progress bar and updated version number
-    # def drawContents(self, painter, QPainter=None):
-    #     textPix = QtWidgets.QSplashScreen.pixmap()
-    #     painter.setPen(self.color)
-    #     painter.drawText(self.rect, self.alignment, self.message)
-    #     painter.drawText(QtCore.QRect(75, 337, 400, 30), self.alignment, "0.1")
-    #     painter.drawText(QtCore.QRect(128, 372, 400, 30), self.alignment, "May 29, 2013")
+        # Use the CustomProgressBar to show text on top of the progress bar
+        self.progress_bar = CustomProgressBar(self)
+        self.progress_bar.setGeometry(130, self.height() - 40, self.width() - 300, 20)  # Adjust height for better visibility
+        self.progress_bar.setRange(0, 100)  # Progress bar range 0 to 100
+        self.progress_bar.setValue(0)  # Initial value
+
+        # Initialize message attributes
+        self.current_message = ""
+        self.message_color = QtCore.Qt.white  # Default text color is white
+
+    def update_progress(self, value):
+        """Update progress bar value."""
+        self.progress_bar.setValue(value)
+
+    def update_message(self, message: str):
+        """Update the message displayed on the splash screen."""
+        self.current_message = message
+        self.showMessage(
+            self.current_message,
+            QtCore.Qt.AlignBottom | QtCore.Qt.AlignHCenter,
+            self.message_color
+        )
+        self.repaint()  # Ensure the message is updated immediately
+
+    def drawContents(self, painter):
+        """Override the drawContents method to ensure text is drawn."""
+        painter.setPen(self.message_color)
+
+        # Adjust the vertical position for the message
+        # You can change the y-offset value to move the message upwards
+        y_offset = 5  # Adjust this value to move the message upwards or downwards
+        painter.drawText(self.rect().adjusted(0, -y_offset, 0, 0),
+                         QtCore.Qt.AlignBottom | QtCore.Qt.AlignHCenter,
+                         self.current_message)
 
 def setup_gui(
         app: QtWidgets.QApplication,
@@ -82,9 +137,7 @@ def setup_gui(
         gui_imports()
         setup_ipython()
         startup_interface()
-        setup_style(
-            app=app
-        )
+        setup_style(app=app)
     elif stage == "gui_imports":
         gui_imports()
     elif stage == "setup_ipython":
@@ -106,8 +159,6 @@ def setup_gui(
 
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
-    # import pyqtgraph at this stage to fix
-    # Warning: QApplication was created before pyqtgraph was imported;
     import pyqtgraph
     import chisurf.gui.resources
 
@@ -124,103 +175,30 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     splash.activateWindow()
 
     splash.setContentsMargins(0, 0, 0, 64)
-
     splash.show()
+    app.processEvents()
 
-    app.processEvents()
-    align = QtCore.Qt.AlignTop
-    offset = "\n" * 17 + " " * 0
-    splash.showMessage(
-        offset+"Loading modules",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        stage="gui_imports"
-    )
+    # Update progress as the setup progresses
+    stages = [
+        ("Loading modules", "gui_imports", 10),
+        ("Setup ipython", "setup_ipython", 30),
+        ("Starting interface", "startup_interface", 50),
+        ("Initialize setups", "init_setups", 60),
+        ("Defining actions", "define_actions", 70),
+        ("Arrange widgets", "arrange_widgets", 85),
+        ("Loading tools", "load_tools", 95),
+        ("Styling up", "setup_style", 100),
+    ]
 
-    splash.showMessage(
-        offset+"Setup ipython",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        stage="setup_ipython"
-    )
+    window = None
+    for message, stage, progress_value in stages:
+        splash.update_message(message)
+        splash.update_progress(progress_value)
+        app.processEvents()
+        w2 = setup_gui(app=app, stage=stage, window=window)
+        if w2 is not None:
+            window = w2
 
-    splash.showMessage(
-        offset+"Starting interface",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    window = setup_gui(
-        app=app,
-        stage="startup_interface"
-    )
-
-    splash.showMessage(
-        offset+"Initialize setups",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        window=window,
-        stage="init_setups"
-    )
-
-    splash.showMessage(
-        offset+"Defining actions",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        window=window,
-        stage="define_actions"
-    )
-
-    splash.showMessage(
-        offset+"Arrange widgets",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        window=window,
-        stage="arrange_widgets"
-    )
-
-    splash.showMessage(
-        offset+"Loading tools",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        window=window,
-        stage="load_tools"
-    )
-
-    splash.showMessage(
-        offset+"Styling up",
-        alignment=align,
-        color=QtCore.Qt.white
-    )
-    app.processEvents()
-    setup_gui(
-        app=app,
-        stage="setup_style"
-    )
     window.show()
     splash.hide()
     splash.finish(window)
