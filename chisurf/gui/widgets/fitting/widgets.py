@@ -292,16 +292,16 @@ class FittingControllerWidget(Controller):
         chisurf.run(f"chisurf.macros.change_selected_fit_of_group({self.selected_fit})")
 
     def onErrorEstimate(self):
-        chisurf.run(f"cs.status.showMessage('Sampling analysis: {self.fit.name}. Please wait...')")
+        chisurf.run(f"cs.status_label.setText('Sampling analysis: {self.fit.name}')")
         filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
         kw = chisurf.settings.cs_settings['optimization']['sampling']
         kw['n_runs'] = self.n_runs
         kw['steps'] = self.n_steps
         chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
-        chisurf.run("cs.status.showMessage('Sampling done!')")
+        chisurf.run("cs.status_label.setText('Sampling done!')")
 
     def onRunFit(self):
-        chisurf.run(f"cs.status.showMessage('Please wait fitting: {self.fit.name}')")
+        chisurf.run(f"cs.status_label.setText('Please wait fitting: {self.fit.name}')")
         chisurf.run(f"cs.current_fit.run(local_first={self.local_first})")
         self.fit.model.finalize()
         for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
@@ -309,7 +309,7 @@ class FittingControllerWidget(Controller):
                 pa.controller.finalize()
             except (AttributeError, RuntimeError):
                 chisurf.logging.warning(f"Fitting parameter {pa.name} does not have a controller to update.")
-        chisurf.run("cs.status.showMessage('Fitting finished!')")
+        chisurf.run("cs.status_label.setText('Fitting finished!')")
         # Update fit result selector
         self.spinBox_3.setMaximum(len(self.fit.results))
         self.spinBox_3.setMinimum(1)
