@@ -156,6 +156,9 @@
         <property name="decimals">
          <number>2</number>
         </property>
+        <property name="maximum">
+         <double>999.000000000000000</double>
+        </property>
         <property name="value">
          <double>1.000000000000000</double>
         </property>
