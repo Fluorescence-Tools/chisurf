@@ -42,6 +42,7 @@ class CustomProgressBar(QtWidgets.QProgressBar):
 
         painter.end()
 
+
 class SplashScreen(QtWidgets.QSplashScreen):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -54,7 +54,6 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish)
 
 
-
 if __name__ == "plugin":
     wizard = ChisurfWizard()
     wizard.show()
