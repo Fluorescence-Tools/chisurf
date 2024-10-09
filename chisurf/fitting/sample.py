@@ -84,8 +84,10 @@ def sample_emcee(
         steps: int,
         nwalkers: int,
         thin: int = 10,
-        std: float = 1e-4,
-        chi2max: float = np.inf
+        std: float = 1e-3,
+        chi2max: float = np.inf,
+        progress_bar = None,
+        substeps: int = 500
 ) -> Dict:
     """Sample the parameter space by emcee using a number of 'walkers'
 
@@ -111,14 +113,26 @@ def sample_emcee(
         kwargs=kw
     )
     std = np.array(fit.model.parameter_values) * std
-    pos = [
-        fit.model.parameter_values + std * np.random.randn(ndim) for i in range(nwalkers)
-    ]
-    sampler.run_mcmc(
-        pos,
-        steps,
-        thin=thin
-    )
+    if progress_bar is not None:
+        from qtpy import QtWidgets
+        progress_bar.setMaximum(steps)
+
+    previous_state = [fit.model.parameter_values + std * np.random.randn(ndim) for _ in range(nwalkers)]
+
+    from qtpy import QtWidgets
+    large_steps = steps // substeps
+    for i in range(large_steps):
+        previous_state = sampler.run_mcmc(
+            previous_state,
+            nsteps=substeps,
+            thin_by=thin,
+            skip_initial_state_check=True,
+            tune=True
+        )
+        if progress_bar is not None:
+            progress_bar.setValue(substeps * i + 1)
+            QtWidgets.QApplication.processEvents()
+
     chi2 = -2. * sampler.flatlnprobability / float(model.n_points - model.n_free - 1.0)
     return {
         'chi2r': chi2,
