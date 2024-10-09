@@ -23,7 +23,16 @@ class ParameterTransformModel(model.Model):
             p.controller.finalize()
 
     def update_model(self, **kwargs):
+        # Temporarily unlock outputs for evaluation
+        for output in self._model._node.outputs.values():
+            output.fixed = False
+
+        # Evaluate the model node
         self._model._node.evaluate()
+
+        # Lock the outputs again after evaluation
+        for output in self._model._node.outputs.values():
+            output.fixed = True
 
     @property
     def n_points(self):
