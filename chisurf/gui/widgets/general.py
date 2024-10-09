@@ -60,36 +60,51 @@ class MyMessageBox(QtWidgets.QMessageBox):
         super().__init__()
         self.setSizeGripEnabled(True)
         self.setIcon(QtWidgets.QMessageBox.Information)
+
+        # Set title and center the popup
         if label is not None:
             self.setWindowTitle(label)
-        if details is not None:
-            self.setDetailedText(details)
-        self.center()
+
+        # Use HTML for nicer formatting of info
+        formatted_info = f"<b>{info}</b>" if info else ""
+
+        # Add fortune message (if enabled) with a better look
         if show_fortune:
             fortune = chisurf.gui.widgets.fortune.get_fortune()
-            self.setInformativeText("\n".join([info, fortune]))
-            self.exec_()
+            fortune_html = f"<br><i>{fortune}</i><br><br>"  # Italicized fortune text, with spacing
+            self.setInformativeText(formatted_info + fortune_html)
         else:
-            self.close()
+            self.setInformativeText(formatted_info)
 
-        self.show()
+        # Set detailed text (e.g., error trace) if provided
+        if details is not None:
+            self.setDetailedText(details)
+
+        # Center the window
+        self.center()
+
+        # Adjust the look and feel
+        self.setStyleSheet("""
+            QMessageBox {
+                font-size: 14px;
+            }
+            QTextEdit {
+                font-family: "Courier New", Courier, monospace;
+                font-size: 12px;
+            }
+        """)
+
+        # Show the popup window
+        self.exec_()
 
     def event(self, e) -> bool:
-        result = QtWidgets.QMessageBox.event(self, e)
+        result = super().event(e)
 
-        self.setMinimumHeight(0)
-        self.setMaximumHeight(16777215)
-        self.setMaximumWidth(16777215)
-        self.setSizePolicy(
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Expanding
-        )
+        # Optimize the size and policy for the text edit (error trace) field
         text_edit = self.findChild(QtWidgets.QTextEdit)
         if text_edit is not None:
-            text_edit.setMinimumHeight(0)
-            text_edit.setMaximumHeight(16777215)
-            text_edit.setMinimumWidth(0)
-            text_edit.setMaximumWidth(16777215)
+            text_edit.setMinimumHeight(100)
+            text_edit.setMaximumHeight(500)
             text_edit.setSizePolicy(
                 QtWidgets.QSizePolicy.Expanding,
                 QtWidgets.QSizePolicy.Expanding
@@ -98,6 +113,7 @@ class MyMessageBox(QtWidgets.QMessageBox):
         return result
 
     def center(self):
+        # Center the popup on the current screen
         screen = QtGui.QGuiApplication.screenAt(QtGui.QCursor().pos())
         fg = self.frameGeometry()
         fg.moveCenter(screen.geometry().center())
