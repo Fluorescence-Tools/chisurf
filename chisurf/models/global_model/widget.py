@@ -340,7 +340,7 @@ class ParameterTransformWidget(ParameterTransformModel, model.ModelWidget):
         chisurf.gui.widgets.clear_layout(layout)
         n_columns = chisurf.settings.gui['fit_models']['n_columns']
         row = 1
-        p_dict = self.model.parameters_all_dict
+        p_dict = self.parameters_all_dict
         p_keys = list(p_dict.keys())
         p_keys.sort()
         self.set_default_parameter_values()
@@ -354,12 +354,12 @@ class ParameterTransformWidget(ParameterTransformModel, model.ModelWidget):
 
     def set_default_parameter_values(self):
         d = self.codes[self.code_name]['initial']
-        for k in self.model.parameters_all_dict.keys():
+        for k in self.parameters_all_dict.keys():
             initial = d.get(k, None)
             if initial is not None:
-                self.model.parameters_all_dict[k].value = initial['value']
-                self.model.parameters_all_dict[k].bounds = initial['bounds']
-                self.model.parameters_all_dict[k].bounds_on = True
+                self.parameters_all_dict[k].value = initial['value']
+                self.parameters_all_dict[k].bounds = initial['bounds']
+                self.parameters_all_dict[k].bounds_on = True
 
     @property
     def code_name(self):
