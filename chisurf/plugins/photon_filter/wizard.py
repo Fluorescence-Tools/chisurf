@@ -25,8 +25,13 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
 
         # File format
-        page = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter()
-        self.addPage(page)
+        self.filter = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter()
+        self.addPage(self.filter)
+        self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish)
+
+    def onFinish(self):
+        print("Saving photon selection")
+        self.filter.save_filter_data()
 
 
 if __name__ == "plugin":
