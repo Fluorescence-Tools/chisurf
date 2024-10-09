@@ -2,9 +2,6 @@ import pathlib
 from datetime import date
 today = date.today()
 
-
-
-
 __name__ = "chisurf"
 __author__ = "Thomas-Otavio Peulen"
 __version__ = str(today.strftime("%y.%m.%d"))
