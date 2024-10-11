@@ -21,12 +21,11 @@ import chisurf.fitting
 import chisurf.macros
 
 
-name = "Burst Analysis"
+name = "Burst Selection"
 
 
 class ChisurfWizard(QtWidgets.QWizard):
 
-    # @chisurf.gui.decorators.init_with_ui("burst_analysis/tttr_photon_filter.ui", chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
