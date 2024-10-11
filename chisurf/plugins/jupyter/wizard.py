@@ -21,7 +21,6 @@ class Browser(QMainWindow):
 
         self.browser = QWebEngineView()
 
-        # DROP SHADOW in PyDracula
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(17)
         shadow.setXOffset(0)
@@ -31,13 +30,14 @@ class Browser(QMainWindow):
         self.browser.setGraphicsEffect(shadow)
         self.browser.graphicsEffect().setEnabled(False)
 
-        # Original URL
-        #adr = str(chisurf.__jupyter_address__ + '/notebooks') + fn
-        #print(adr)
+        # adr is in global
+        self.setWindowTitle(adr)
         self.original_url = QUrl(adr)
 
         self.browser_layout = QVBoxLayout()
         self.browser_layout.addWidget(self.browser)
+        self.browser_layout.setSpacing(0)  # Set spacing for main layout to 0
+        self.browser_layout.setContentsMargins(0, 0, 0, 0)  # Set margins for the layout to 0
 
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.browser_layout)
