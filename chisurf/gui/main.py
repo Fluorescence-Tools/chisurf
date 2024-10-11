@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from functools import partial
-
 import os
-import pkgutil
-import importlib
 
 import pathlib
 import webbrowser
@@ -216,7 +212,7 @@ class Main(QtWidgets.QMainWindow):
             executor: str = 'console',
             globals=None, locals=None
     ):
-        print("onRunMacro::filename:", filename)
+        chisurf.logging.info(f"onRunMacro::filename:{filename}")
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(
                 "Python macros",
@@ -227,14 +223,8 @@ class Main(QtWidgets.QMainWindow):
             chisurf.run(f"chisurf.console.run_macro(filename='{filename_str}')")
         elif executor == 'exec':
             if globals is None:
-                globals = {
-                    "__name__": "__main__"
-                }
-            globals.update(
-                {
-                    "__file__": filename
-                }
-            )
+                globals = {"__name__": "__main__"}
+            globals.update({"__file__": filename})
             with open(filename, 'rb') as file:
                 exec(compile(file.read(), filename, 'exec'), globals, locals)
 
@@ -723,28 +713,6 @@ class Main(QtWidgets.QMainWindow):
         self.actionAbout.triggered.connect(self.about.show)
         self.actionHelp_2.triggered.connect(self.onOpenHelp)
         self.actionUpdate.triggered.connect(self.onOpenUpdate)
-
-        ##########################################################
-        #      Populate plugins                                  #
-        ##########################################################
-        plugin_menu = self.menuBar.addMenu('Plugins')
-        plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
-        for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
-            module_path = "chisurf.plugins." + module_name
-            module = importlib.import_module(str(module_path))
-            try:
-                name = module.name
-            except AttributeError as e:
-                print(f"Failed to find plugin name: {e}")
-                name = module_name
-            p = partial(
-                self.onRunMacro, plugin_path / module_name / "wizard.py",
-                executor='exec',
-                globals={'__name__': 'plugin'}
-            )
-            plugin_action = QtWidgets.QAction(f"{name}", self)
-            plugin_action.triggered.connect(p)
-            plugin_menu.addAction(plugin_action)
 
         ##########################################################
         #      Record and run recorded macros                    #

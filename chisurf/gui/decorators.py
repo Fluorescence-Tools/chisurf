@@ -59,34 +59,34 @@ class init_with_ui(object):
 # reference taken from : http://stackoverflow.com/questions/11872141/drag-a-file-into-qtgui-qlineedit-to-set-url-text
 # https://stackoverflow.com/questions/11872141/drag-a-file-into-qtgui-qlineedit-to-set-url-text
 class lineEdit_dragFile_injector():
-    def __init__(self, lineEdit, auto_inject=True, call=None, target: typing.List[pathlib.Path] = None):
+    def __init__(self, lineEdit, auto_inject=True, call=None, target: typing.List[pathlib.Path] = None, sorted: bool = True):
         self.lineEdit = lineEdit
         self.call = call
-        self.target = target
+        self.sorted = sorted
+        self.target = target if target is not None else []
         if auto_inject:
             self.inject_dragFile()
 
-    def inject_dragFile( self ):
+    def inject_dragFile(self):
         self.lineEdit.setDragEnabled(True)
         self.lineEdit.dragEnterEvent = self._dragEnterEvent
         self.lineEdit.dragMoveEvent = self._dragMoveEvent
         self.lineEdit.dropEvent = self._dropEvent
 
-    def _dragEnterEvent( self, event ):
+    def _dragEnterEvent(self, event):
         data = event.mimeData()
         urls = data.urls()
         if urls and urls[0].scheme() == 'file':
             event.acceptProposedAction()
 
-    def _dragMoveEvent( self, event ):
+    def _dragMoveEvent(self, event):
         data = event.mimeData()
         urls = data.urls()
         if urls and urls[0].scheme() == 'file':
             event.acceptProposedAction()
 
-    def _dropEvent( self, event):
+    def _dropEvent(self, event):
         data = event.mimeData()
-        url = data.urls()[0]
         if isinstance(self.target, list):
             for url in data.urls():
                 if url.scheme() == 'file':
@@ -94,9 +94,15 @@ class lineEdit_dragFile_injector():
                     filepath = pathlib.Path(filepath).as_posix()
                     chisurf.logging.log(0, f'lineEdit_dragFile_injector::_dropEvent: {filepath}')
                     self.target.append(filepath)
-        if url.scheme() == 'file':
-            filepath = str(url.toLocalFile())
+
+            # Sort the target list of file paths
+            if self.sorted:
+                self.target.sort()
+
+        if data.urls()[0].scheme() == 'file':
+            filepath = str(data.urls()[0].toLocalFile())
             filepath = pathlib.Path(filepath).as_posix()
             self.lineEdit.setText(filepath)
+
         if callable(self.call):
             self.call()

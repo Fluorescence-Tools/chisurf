@@ -1,4 +1,5 @@
 ---
+# notebook_path: /home/thomas # can be used to define a custom NB path
 n_threads: 4
 verbose: false
 fitting_message: true
