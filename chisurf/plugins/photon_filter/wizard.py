@@ -19,19 +19,24 @@ import chisurf.macros
 
 class ChisurfWizard(QtWidgets.QWizard):
 
-    # @chisurf.gui.decorators.init_with_ui("photon_filter/tttr_photon_filter.ui", chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
 
-        # File format
-        self.filter = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter()
+        self.channels = chisurf.gui.widgets.wizard.DetectorWizardPage()
+        self.addPage(self.channels)
+
+        self.filter = chisurf.gui.widgets.wizard.WizardTTTRBurstFinder(
+            windows=self.channels.windows,
+            detectors=self.channels.detectors
+        )
+
         self.addPage(self.filter)
         self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish)
 
     def onFinish(self):
         print("Saving photon selection")
-        self.filter.save_filter_data()
+        self.filter.save_selection()
 
 
 if __name__ == "plugin":

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1126</width>
-    <height>534</height>
+    <height>557</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -75,7 +75,7 @@ p, li { white-space: pre-wrap; }
         <number>0</number>
        </property>
        <property name="spacing">
-        <number>0</number>
+        <number>-1</number>
        </property>
        <item row="1" column="1">
         <widget class="QGroupBox" name="groupBox_2">
@@ -104,15 +104,25 @@ p, li { white-space: pre-wrap; }
           <property name="spacing">
            <number>0</number>
           </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>min dMT</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_7">
             <property name="text">
-             <string>max</string>
+             <string>max dMT</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+            <property name="toolTip">
+             <string>Maximum inter photon time</string>
+            </property>
             <property name="suffix">
              <string> ms</string>
             </property>
@@ -137,13 +147,6 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>min</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="2">
            <widget class="QCheckBox" name="checkBox_3">
             <property name="text">
@@ -162,6 +165,9 @@ p, li { white-space: pre-wrap; }
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Minimum interphoton time</string>
+            </property>
             <property name="suffix">
              <string> ms</string>
             </property>
@@ -179,6 +185,36 @@ p, li { white-space: pre-wrap; }
             </property>
             <property name="value">
              <double>0.001000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="spinBox_7">
+            <property name="toolTip">
+             <string>If two events are separated by less than specified number, events inbetween are selected. Used to fill gaps in photon trace.</string>
+            </property>
+            <property name="maximum">
+             <number>999</number>
+            </property>
+            <property name="value">
+             <number>3</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>gap fill</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QCheckBox" name="checkBox_5">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -206,6 +242,66 @@ p, li { white-space: pre-wrap; }
           <property name="spacing">
            <number>0</number>
           </property>
+          <item row="1" column="2">
+           <widget class="QSpinBox" name="spinBox_2">
+            <property name="maximum">
+             <number>99999999</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QSpinBox" name="spinBox_3">
+            <property name="maximum">
+             <number>9999999</number>
+            </property>
+            <property name="value">
+             <number>100000</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_5">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Range</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="label_4">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>MCS bin-width</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2" colspan="2">
+           <widget class="QSpinBox" name="spinBox_5">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="value">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLabel" name="label_9">
+            <property name="text">
+             <string>Decay bin</string>
+            </property>
+           </widget>
+          </item>
           <item row="2" column="2" colspan="2">
            <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
             <property name="sizePolicy">
@@ -228,63 +324,23 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QSpinBox" name="spinBox_2">
-            <property name="maximum">
-             <number>99999999</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QSpinBox" name="spinBox_3">
-            <property name="maximum">
-             <number>9999999</number>
-            </property>
-            <property name="value">
-             <number>100000</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLabel" name="label_4">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+          <item row="4" column="1">
+           <widget class="QLabel" name="label_6">
             <property name="text">
-             <string>MCS bin-width</string>
+             <string>#Burst bins</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_5">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Range</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2" colspan="2">
-           <widget class="QSpinBox" name="spinBox_5">
+          <item row="4" column="2" colspan="2">
+           <widget class="QSpinBox" name="spinBox_6">
             <property name="minimum">
-             <number>1</number>
+             <number>3</number>
+            </property>
+            <property name="maximum">
+             <number>999</number>
             </property>
             <property name="value">
-             <number>8</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Decay bin</string>
+             <number>51</number>
             </property>
            </widget>
           </item>
@@ -296,31 +352,85 @@ p, li { white-space: pre-wrap; }
          <property name="spacing">
           <number>0</number>
          </property>
-         <item row="0" column="7" rowspan="2">
+         <item row="0" column="3">
+          <widget class="QComboBox" name="comboBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <item>
+            <property name="text">
+             <string>PTU</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SPC-130</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>HT3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SPC-630</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="placeholderText">
+            <string>Drop TTTR files (ptu, spc, ht3) files here.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="9">
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLineEdit" name="lineEdit_2">
+             <property name="readOnly">
+              <bool>false</bool>
+             </property>
+             <property name="placeholderText">
+              <string>Output path for *.msg.gz files</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="0" column="4">
+          <widget class="QToolButton" name="toolButton_6">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>clear</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="10" rowspan="2">
           <layout class="QGridLayout" name="gridLayout_7">
            <property name="spacing">
             <number>0</number>
            </property>
-           <item row="1" column="2">
-            <widget class="QToolButton" name="toolButton_4">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>filter</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
+           <item row="0" column="2">
             <widget class="QToolButton" name="toolButton">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -339,7 +449,26 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
+           <item row="1" column="1">
+            <widget class="QToolButton" name="toolButton_7">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Burst</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
             <widget class="QToolButton" name="toolButton_2">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -358,7 +487,33 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="1" column="1">
+           <item row="1" column="2">
+            <widget class="QToolButton" name="toolButton_5">
+             <property name="text">
+              <string>save</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QToolButton" name="toolButton_4">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>filter</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
             <widget class="QToolButton" name="toolButton_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -377,17 +532,30 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="0">
-            <widget class="QToolButton" name="toolButton_6">
+           <item row="2" column="2">
+            <widget class="QCheckBox" name="checkBox_7">
              <property name="text">
-              <string>clear</string>
+              <string>bur</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QToolButton" name="toolButton_5">
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="checkBox_6">
              <property name="text">
-              <string>save</string>
+              <string>sl5</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_10">
+             <property name="text">
+              <string>Save:</string>
              </property>
             </widget>
            </item>
@@ -395,61 +563,6 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="2">
           <widget class="QSpinBox" name="spinBox_4"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="lineEdit">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="placeholderText">
-            <string>Drop TTTR files (ptu, spc, ht3) files here.</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0" colspan="6">
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QLineEdit" name="lineEdit_2">
-             <property name="readOnly">
-              <bool>false</bool>
-             </property>
-             <property name="placeholderText">
-              <string>Output path for *.msg.gz files</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="0" column="3" colspan="2">
-          <widget class="QComboBox" name="comboBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <item>
-            <property name="text">
-             <string>SPC-130</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>SPC-630</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>PTU</string>
-            </property>
-           </item>
-          </widget>
          </item>
         </layout>
        </item>
@@ -480,7 +593,23 @@ p, li { white-space: pre-wrap; }
           <property name="spacing">
            <number>0</number>
           </property>
-          <item row="0" column="0" colspan="2">
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="lineEdit_5">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Define tuple of micro time ranges separted by '-' and ';' (Example: 0-100;600-900)</string>
+            </property>
+            <property name="placeholderText">
+             <string>Micro time range</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
            <widget class="QLineEdit" name="lineEdit_4">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -496,21 +625,11 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="1" column="0" colspan="2">
-           <widget class="QLineEdit" name="lineEdit_5">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string>Define tuple of micro time ranges separted by '-' and ';' (Example: 0-100;600-900)</string>
-            </property>
-            <property name="placeholderText">
-             <string>Micro time range</string>
-            </property>
-           </widget>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="comboBox_2"/>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="comboBox_3"/>
           </item>
          </layout>
         </widget>
@@ -548,15 +667,25 @@ p, li { white-space: pre-wrap; }
           <property name="spacing">
            <number>0</number>
           </property>
-          <item row="0" column="0">
+          <item row="1" column="0">
            <widget class="QLabel" name="label_2">
             <property name="text">
-             <string>time window</string>
+             <string>TW</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
+          <item row="2" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Max #Ph</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
            <widget class="QSpinBox" name="spinBox">
+            <property name="toolTip">
+             <string>Maximum number of photon in time window</string>
+            </property>
             <property name="minimum">
              <number>2</number>
             </property>
@@ -568,15 +697,11 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Max nbr. photons</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
+          <item row="1" column="1">
            <widget class="QDoubleSpinBox" name="doubleSpinBox">
+            <property name="toolTip">
+             <string>Time window size</string>
+            </property>
             <property name="suffix">
              <string> ms</string>
             </property>
@@ -591,7 +716,7 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
+          <item row="0" column="0">
            <widget class="QCheckBox" name="checkBox_4">
             <property name="text">
              <string>enable</string>
@@ -601,7 +726,7 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
+          <item row="0" column="1">
            <widget class="QCheckBox" name="checkBox">
             <property name="text">
              <string>invert</string>
@@ -989,6 +1114,54 @@ p, li { white-space: pre-wrap; }
     <hint type="sourcelabel">
      <x>825</x>
      <y>287</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_6</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>actionUpdate_Values</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1041</x>
+     <y>146</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spinBox_7</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>actionUpdate_Values</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>591</x>
+     <y>141</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_5</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionUpdate_Values</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>646</x>
+     <y>141</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
