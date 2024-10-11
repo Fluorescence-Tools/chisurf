@@ -36,6 +36,10 @@ experiment: typing.Dict[str, chisurf.experiments.experiment.Experiment] = dict()
 working_path = pathlib.Path().home()
 verbose = chisurf.settings.verbose
 
+# Jupyter
+__jupyter_process__ = None
+__jupyter_address__ = None
+
 
 logging.basicConfig(
     filename=settings.session_log,

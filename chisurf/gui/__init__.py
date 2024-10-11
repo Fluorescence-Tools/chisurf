@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import sys
+import subprocess
+import pathlib
 
-from PyQt5 import QtWebEngineWidgets
+from functools import partial
+import pkgutil
+import importlib
+
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
 import chisurf.settings
@@ -134,6 +140,62 @@ def setup_gui(
             ).read()
         )
 
+    def start_jupyter(
+                      notebook_executable="jupyter-notebook",
+                      port=8888,
+                      directory=pathlib.Path().home()
+    ):
+        return subprocess.Popen([notebook_executable,
+                                 "--port=%s" % port,
+                                 "--browser=n",
+                                 "--NotebookApp.token=''",  # Disable token
+                                 "--NotebookApp.password=''",  # Disable password
+                                 "--NotebookApp.disable_check_xsrf=True",
+                                 # Disable cross-site request forgery protection (optional)
+                                 "--notebook-dir=%s" % directory],
+                                bufsize=1, stderr=subprocess.PIPE
+                            )
+
+    def populate_plugins():
+        plugin_menu = window.menuBar.addMenu('Plugins')
+        plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+        for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
+            module_path = "chisurf.plugins." + module_name
+            module = importlib.import_module(str(module_path))
+            try:
+                name = module.name
+            except AttributeError as e:
+                print(f"Failed to find plugin name: {e}")
+                name = module_name
+            p = partial(
+                window.onRunMacro, plugin_path / module_name / "wizard.py",
+                executor='exec',
+                globals={'__name__': 'plugin'}
+            )
+            plugin_action = QtWidgets.QAction(f"{name}", window)
+            plugin_action.triggered.connect(p)
+            plugin_menu.addAction(plugin_action)
+
+    def populate_notebooks():
+        notebook_menu = window.menuBar.addMenu('Notebooks')
+
+        home_dir = pathlib.Path.home()
+        chisurf_path = pathlib.Path(chisurf.__file__).parent
+        plugin_path = pathlib.Path(chisurf.plugins.jupyter.__file__).absolute().parent
+
+        notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
+        notebooks = notebook_path.glob("*.ipynb")
+        for notebook in notebooks:
+            adr = str(chisurf.__jupyter_address__ + '/notebooks/') + str(notebook.relative_to(home_dir))
+            p = partial(
+                window.onRunMacro, plugin_path / "wizard.py",
+                executor='exec',
+                globals={'__name__': 'plugin', 'adr': adr}
+            )
+            action = QtWidgets.QAction(f"{notebook.stem}", window)
+            action.triggered.connect(p)
+            notebook_menu.addAction(action)
+
     if stage is None:
         gui_imports()
         setup_ipython()
@@ -144,9 +206,9 @@ def setup_gui(
     elif stage == "setup_ipython":
         setup_ipython()
     elif stage == "setup_style":
-        setup_style(
-            app=app
-        )
+        setup_style(app=app)
+    elif stage == "populate_plugins":
+        populate_plugins()
     elif stage == "startup_interface":
         return startup_interface()
     elif stage == "define_actions":
@@ -157,7 +219,21 @@ def setup_gui(
         window.init_setups()
     elif stage == "load_tools":
         window.load_tools()
-
+    elif stage == "start_jupyter":
+        # start jupyter notebook and wait for line with the web address
+        chisurf.logging.info("Starting Jupyter notebook process")
+        chisurf.__jupyter_process__ = start_jupyter()
+        while chisurf.__jupyter_address__ is None:
+            line = str(chisurf.__jupyter_process__.stderr.readline())
+            chisurf.logging.info(line)
+            if "http://" in line:
+                start = line.find("http://")
+                end = line.find("/", start + len("http://"))
+                chisurf.__jupyter_address__  = line[start:end]
+        chisurf.logging.info("Server found at %s, migrating monitoring to listener thread" % chisurf.__jupyter_address__)
+    elif stage == "populate_notebooks":
+        chisurf.logging.info("Looking for ipynb in home folder")
+        populate_notebooks()
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     import pyqtgraph
@@ -183,11 +259,14 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     stages = [
         ("Loading modules", "gui_imports", 10),
         ("Setup ipython", "setup_ipython", 30),
-        ("Starting interface", "startup_interface", 50),
-        ("Initialize setups", "init_setups", 60),
-        ("Defining actions", "define_actions", 70),
-        ("Arrange widgets", "arrange_widgets", 85),
-        ("Loading tools", "load_tools", 95),
+        ("Starting interface", "startup_interface", 40),
+        ("Initialize setups", "init_setups", 50),
+        ("Defining actions", "define_actions", 55),
+        ("Arrange widgets", "arrange_widgets", 65),
+        ("Loading tools", "load_tools", 70),
+        ("Initializing Jupyter", "start_jupyter", 85),
+        ("Populate plugins", "populate_plugins", 90),
+        ("Populate notebook", "populate_notebooks", 95),
         ("Styling up", "setup_style", 100),
     ]
 
