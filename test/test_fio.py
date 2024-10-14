@@ -3,8 +3,8 @@ import pathlib
 import unittest
 import tempfile
 import numpy as np
-import scikit_fluorescence.io.zipped
 
+import chisurf.fio as io
 import chisurf.fio.fluorescence.fcs
 import chisurf.fio.fluorescence.tcspc
 
@@ -219,7 +219,7 @@ class Tests(unittest.TestCase):
         _, filename = tempfile.mkstemp(
             suffix='.pdb'
         )
-        with scikit_fluorescence.io.zipped.open_maybe_zipped(
+        with io.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:
@@ -485,7 +485,7 @@ class Tests(unittest.TestCase):
     #     filename = "./test/data/atomic_coordinates/mmcif/1ffk.cif.gz"
     #
     #     data = []
-    #     with scikit_fluorescence.io.zipped.open_maybe_zipped(
+    #     with io.zipped.open_maybe_zipped(
     #             filename=filename,
     #             mode='r'
     #     ) as fp:

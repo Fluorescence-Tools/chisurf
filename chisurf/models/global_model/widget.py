@@ -6,8 +6,7 @@ import yaml
 
 import typing
 
-import scikit_fluorescence as skf
-import scikit_fluorescence.io
+import chisurf.fio as io
 
 from chisurf.gui import QtCore, QtWidgets
 import chisurf.fitting
@@ -391,7 +390,7 @@ class ParameterTransformWidget(ParameterTransformModel, model.ModelWidget):
         self.create_parameter_widgets()
 
     def load_model_file(self, filename: pathlib.Path):
-        with skf.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+        with io.open_maybe_zipped(filename, 'r') as fp:
             self._code_file = filename
             self.codes = yaml.safe_load(fp)
             self.w.lineEdit.setText(str(filename.as_posix()))

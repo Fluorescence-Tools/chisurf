@@ -1,6 +1,3 @@
-"""
-
-"""
 from chisurf import typing
 
 import numba as nb

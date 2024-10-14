@@ -8,7 +8,7 @@ import chisurf.base
 import chisurf.data
 import chisurf.fio
 import chisurf.fio.ascii
-import scikit_fluorescence.io.zipped
+import chisurf.fio as io
 import chisurf.fio.fluorescence.fcs.definitions
 import chisurf.fio.fluorescence.fcs.asc_alv
 import chisurf.fio.fluorescence.fcs.china
@@ -205,7 +205,7 @@ def write_fcs(
                 remove_protected=True,
                 convert_values_to_elementary=True
             )
-            with scikit_fluorescence.io.zipped.open_maybe_zipped(
+            with io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode=mode
             ) as fp:

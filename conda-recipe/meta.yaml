@@ -54,7 +54,6 @@ requirements:
     - pyqtgraph >=0.13
     - matplotlib
     - deprecation
-    - scikit-fluorescence
     - imp
     - typing-extensions 4.5.*
     - typing_extensions 4.5.*

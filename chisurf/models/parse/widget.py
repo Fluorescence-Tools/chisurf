@@ -6,12 +6,10 @@ from chisurf import typing
 import yaml
 from qtpy import QtWidgets, QtCore
 
-import scikit_fluorescence as skf
-import scikit_fluorescence.io
 
 import chisurf
 import chisurf.decorators
-import chisurf.fio
+import chisurf.fio as io
 import chisurf.fitting
 import chisurf.gui.decorators
 import chisurf.models
@@ -63,7 +61,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.actionEdit_model_file.triggered.connect(self.onEdit_model_file)
 
     def load_model_file(self, filename: pathlib.Path):
-        with skf.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+        with io.open_maybe_zipped(filename, 'r') as fp:
             self._model_file = filename
             self.models = yaml.safe_load(fp)
             self.lineEdit.setText(str(filename.as_posix()))
