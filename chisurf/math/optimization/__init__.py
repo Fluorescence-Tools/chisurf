@@ -1,12 +1,12 @@
 import numpy as np
 
-import scikit_fluorescence as skf
-import scikit_fluorescence.math.optimize
 import chisurf.math.linalg
 from .mem import maxent
 
 
-leastsqbound = skf.math.optimize.leastsqbound.leastsqbound
+#leastsqbound = skf.math.optimize.leastsqbound.leastsqbound
+from chisurf.math.optimization.leastsqbound import leastsqbound
+
 
 
 def solve_richardson_lucy(
