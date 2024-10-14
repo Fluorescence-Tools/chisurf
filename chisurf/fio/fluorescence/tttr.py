@@ -11,8 +11,7 @@ import numpy as np
 import tables
 
 import chisurf
-import scikit_fluorescence as skf
-import scikit_fluorescence.io
+import chisurf.fio as io
 
 
 class Photon(tables.IsDescription):
@@ -630,7 +629,7 @@ def spc2hdf(
     for i, spc_file in enumerate(
             fnmatch.filter(spc_files, "*" + fn_ending)
     ):
-        with skf.io.zipped.open_maybe_zipped(
+        with io.zipped.open_maybe_zipped(
                 filename=spc_file, mode='r'
         ) as fp:
             b = np.fromfile(fp, dtype=np.uint8)

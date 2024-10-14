@@ -3,7 +3,8 @@ from __future__ import annotations
 import numpy as np
 
 import chisurf.fluorescence.tcspc
-import scikit_fluorescence.modeling.kappa2
+import chisurf.fluorescence.anisotropy.kappa2 as kapp2
+
 import chisurf.math
 import chisurf.math.datatools
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
@@ -143,7 +144,7 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        pk2 = scikit_fluorescence.modeling.kappa2.p_isotropic_orientation_factor(
+        pk2 = kapp2.p_isotropic_orientation_factor(
             k2s
         )
         self._k2_slow_iso = chisurf.math.datatools.two_column_to_interleaved(

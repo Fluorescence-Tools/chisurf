@@ -5,8 +5,6 @@ from math import sqrt
 import numba as nb
 import numpy as np
 import deprecation
-import scikit_fluorescence as skf
-import scikit_fluorescence.decay
 
 import chisurf.math
 import chisurf.math.datatools

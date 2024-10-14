@@ -16,9 +16,8 @@ except ImportError:
 from qtpy import QtGui
 from qtpy import QtWidgets
 
-import scikit_fluorescence.io
 import chisurf
-import chisurf.fio
+import chisurf.fio as io
 from chisurf import logging
 import chisurf.gui.widgets
 import chisurf.settings
@@ -166,7 +165,7 @@ class CodeEditor(QtWidgets.QWidget):
     def save_text(self):
         if self.filename is None or self.filename == '':
             self.filename = chisurf.gui.widgets.save_file(file_type='Python script (*.py)')
-        with scikit_fluorescence.io.zipped.open_maybe_zipped(self.filename, 'w') as fp:
+        with io.zipped.open_maybe_zipped(self.filename, 'w') as fp:
             text = str(self.editor.text())
             fp.write(text)
             self.line_edit.setText(str(self.filename.as_posix))
@@ -210,7 +209,7 @@ class CodeEditor(QtWidgets.QWidget):
         run_button.clicked.connect(self.run_macro)
 
         # Load the file
-        if filename is not None and filename is not '':
+        if filename is not None and filename != '':
             self.load_file(filename=filename)
         if language != 'Python':
             run_button.hide()

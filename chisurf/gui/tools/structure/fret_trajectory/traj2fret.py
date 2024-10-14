@@ -6,7 +6,7 @@ import numba as nb
 import numpy as np
 
 import chisurf.fluorescence
-import chisurf.fio
+import chisurf.fio as io
 
 
 def convert_chain_id_to_numbers(chain_id):
@@ -263,7 +263,7 @@ class CalculateTransfer(object):
             print("-------------------------")
 
         # Write header
-        scikit_fluorescence.io.zipped.open_maybe_zipped(
+        io.zipped.open_maybe_zipped(
             filename=output_file,
             mode='w'
         ).write(b'Frame\ttime[ns]\tRDA[Ang]\tkappa\tkappa2\tFRETrate[1/ns]\n')

@@ -16,10 +16,8 @@ import pyqtgraph.parametertree
 import pyqtgraph.parametertree.parameterTypes
 
 import json
-import re
 
-import scikit_fluorescence as skf
-import scikit_fluorescence.io
+import chisurf.fio as io
 
 
 
@@ -195,7 +193,7 @@ class ParameterEditor(QtWidgets.QWidget):
 
     @json_file.setter
     def json_file(self, v: str):
-        with skf.io.zipped.open_maybe_zipped(v, mode='r') as fp:
+        with io.open_maybe_zipped(v, mode='r') as fp:
             self._dict = json.load(fp)
         self._json_file = v
 

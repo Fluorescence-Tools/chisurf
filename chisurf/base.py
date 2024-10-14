@@ -16,7 +16,7 @@ from slugify import slugify
 from collections.abc import Iterable
 
 import chisurf
-import scikit_fluorescence.io.zipped
+import chisurf.fio as io
 
 
 def to_elementary(
@@ -227,9 +227,7 @@ class Base(object):
                 mode = 'wb'
             if verbose:
                 print(txt)
-            with scikit_fluorescence.io.zipped.open_maybe_zipped(
-                    filename, mode
-            ) as fp:
+            with io.open_maybe_zipped(filename, mode) as fp:
                 fp.write(txt)
 
     def load(
@@ -371,7 +369,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with scikit_fluorescence.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+                with io.open_maybe_zipped(filename, 'r') as fp:
                     j = yaml.safe_load(fp)
         if isinstance(yaml_string, str):
             j = yaml.safe_load(
@@ -413,7 +411,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with scikit_fluorescence.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+                with io.open_maybe_zipped(filename, 'r') as fp:
                     j = json.load(fp)
         if isinstance(json_string, str):
             j = json.loads(json_string)

@@ -8,7 +8,8 @@ import numpy as np
 import chisurf.structure
 import chisurf.settings
 import chisurf.base
-import scikit_fluorescence.io.density
+import chisurf.fio as io
+import chisurf.fio.structure
 
 from . import dynamic
 from . import static
@@ -172,7 +173,7 @@ class BasicAV(object):
         --------
 
         >>> import chisurf
-        >>> structure = chisurf.structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         >>> av = chisurf.structure.av.BasicAV(structure, residue_seq_number=18, atom_name='CB')
         >>> av.save('c:/temp/test', reading_routine='xyz')
         >>> av.save('c:/temp/test', reading_routine='dx')
@@ -184,7 +185,7 @@ class BasicAV(object):
             ng = self.ng
             dg = self.dg
             offset = (ng - 1) / 2 * dg
-            scikit_fluorescence.io.density.write_open_dx(
+            io.structure.density.write_open_dx(
                 filename,
                 d,
                 self.x0 - offset,
@@ -196,7 +197,7 @@ class BasicAV(object):
             d = p[:, [3]].flatten()
             d /= max(d) * 50.0
             xyz = p[:, [0, 1, 2]]
-            scikit_fluorescence.io.structure.write_points(
+            io.structure.write_points(
                 filename=filename + '.' + mode,
                 points=xyz,
                 mode=mode,

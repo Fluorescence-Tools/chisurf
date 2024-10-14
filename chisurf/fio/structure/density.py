@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 import os
-import scikit_fluorescence.io.zipped
+
+import chisurf.fio as io
 
 
 def save_bvox(
@@ -19,7 +20,7 @@ def save_bvox(
     nx, ny, nz = data.shape
     header = np.array([nx, ny, nz, 1])
     filename = "".join(os.path.abspath(filename).split(".")[:-1]) + ".bvox"
-    with scikit_fluorescence.io.zipped.open_maybe_zipped(filename, 'wb') as binfile:
+    with io.zipped.open_maybe_zipped(filename, 'wb') as binfile:
         header.astype('<i4').tofile(binfile)
         data.astype('<f4').tofile(binfile)
 
@@ -50,7 +51,7 @@ def write_open_dx(
 
     :return:
     """
-    with scikit_fluorescence.io.zipped.open_maybe_zipped(
+    with io.zipped.open_maybe_zipped(
             filename=filename + '.dx',
             mode='w'
     ) as fp:
