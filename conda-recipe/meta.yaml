@@ -80,6 +80,7 @@ requirements:
     - ndxplorer
     - clsmview
     - pyqtwebengine
+    - ipyfilechooser
 
 app:
   entry: chisurf
