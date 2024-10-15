@@ -1,4 +1,4 @@
-from .general import *
+from chisurf.gui.widgets.general import *
 import chisurf.gui.widgets.general
 import chisurf.gui.widgets.experiments
 import chisurf.gui.widgets.fio
