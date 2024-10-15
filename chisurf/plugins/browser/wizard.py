@@ -1,28 +1,106 @@
 import sys
-import json
-import os.path
-import pathlib
-import typing
-import numpy as np
+
+import chisurf
+
+name = "Browser"
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import *
 
-name = "Browser"
+from PyQt5.QtCore import pyqtSlot, QSettings, QTimer, QUrl, Qt
+from PyQt5.QtGui import QCloseEvent
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QDockWidget, QPlainTextEdit, QTabWidget
+from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView, QWebEnginePage as QWebPage
+from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
+from PyQt5.QtWebEngineWidgets import QWebEngineProfile
+
+log = chisurf.logging.info
+
+SETTING_GEOMETRY = "net.fishandwhistle/JupyterQt/geometry"
+
+
+class LoggerDock(QDockWidget):
+
+    def __init__(self, *args):
+        super(LoggerDock, self).__init__(*args)
+        self.textview = QPlainTextEdit(self)
+        self.textview.setReadOnly(True)
+        self.setWidget(self.textview)
+
+    @pyqtSlot(str)
+    def log(self, message):
+        self.textview.appendPlainText(message)
+
+
+class CustomWebView(QWebView):
+
+    def __init__(self, mainwindow, main=False):
+        super(CustomWebView, self).__init__(None)
+        self.parent = mainwindow
+        self.tabIndex = -1
+        self.main = main
+        self.loadedPage = None
+        self.loadFinished.connect(self.onpagechange)
+
+    @pyqtSlot(bool)
+    def onpagechange(self, ok):
+        self.loadedPage = self.page()
+        interceptor = MyUrlRequestInterceptor()
+        profile = QWebEngineProfile.defaultProfile()
+        profile.setUrlRequestInterceptor(interceptor)
+        self.loadedPage.windowCloseRequested.connect(self.close)
+        self.loadedPage.urlChanged.connect(self.handlelink)
+        self.setWindowTitle(self.title())
+        if not ok:
+            QMessageBox.information(self, "Error", "Error loading page!", QMessageBox.Ok)
+
+    @pyqtSlot(QUrl)
+    def handlelink(self, url):
+        urlstr = url.toString()
+        log("handling link : %s" % urlstr)
+        # check if url is for the current page
+        if url.matches(self.url(), QUrl.RemoveFragment):
+            # do nothing, probably a JS link
+            return True
+
+        if "/files/" in urlstr:
+            # save, don't load new page
+            self.parent.savefile(url)
+        else:
+            self.load(url)
+
+        return True
+
+    def createWindow(self, windowtype):
+        return self
+
+    def closeEvent(self, event):
+        if self.loadedPage is not None:
+            log("disconnecting on close and linkClicked signals")
+            self.loadedPage.windowCloseRequested.disconnect(self.close)
+
+
+class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
+    def interceptRequest(self, info):
+        url = info.requestUrl()
+        if url.scheme() != 'file':
+            info.block(True)
+
 
 class Browser(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.browser = QWebEngineView()
+        self.browser = CustomWebView(self)
 
         # Original URL
-        # html_path = pathlib.Path(__file__).parent.absolute() / "p5js_example.html"
-        html_path = pathlib.Path(__file__).parent.absolute() / "pr_example.html"
-        self.original_url = QUrl().fromLocalFile(html_path.absolute().as_posix())
+        # adr is in global
+        url = globals().get('adr', None)
+        self.setWindowTitle(url)
+        self.original_url = QUrl(url)
 
         self.url_bar = QLineEdit()
         self.url_bar.setText(self.original_url.toString())
@@ -46,6 +124,8 @@ class Browser(QMainWindow):
         self.browser_layout = QVBoxLayout()
         self.browser_layout.addLayout(self.toolbar)
         self.browser_layout.addWidget(self.browser)
+        self.browser_layout.setSpacing(0)  # Set spacing for main layout to 0
+        self.browser_layout.setContentsMargins(0, 0, 0, 0)  # Set margins for the layout to 0
 
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.browser_layout)
@@ -60,7 +140,7 @@ class Browser(QMainWindow):
 
     def navigate_to_url(self):
         url = self.url_bar.text()
-        self.browser.setUrl(QUrl(url))
+        self.browser.handlelink(QUrl(url))
 
     def reload_page(self):
         self.browser.reload()
