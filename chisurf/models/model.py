@@ -10,7 +10,6 @@ import numpy as np
 
 import chisurf.parameter
 import chisurf.curve
-import chisurf.gui.widgets.fitting.widgets
 import chisurf.plots
 
 from qtpy import QtWidgets, QtGui
