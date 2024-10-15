@@ -5,7 +5,6 @@ import os
 import numpy as np
 
 import chisurf.base
-import chisurf.data
 import chisurf.fio
 import chisurf.fio.ascii
 import chisurf.fio as io
