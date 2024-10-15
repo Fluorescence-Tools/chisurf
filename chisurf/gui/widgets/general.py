@@ -398,10 +398,7 @@ def get_all_items(tree_widget):
     return all_items
 
 
-class Controller(
-    QtWidgets.QWidget,
-    chisurf.base.Base
-):
+class Controller(QtWidgets.QWidget, chisurf.base.Base):
     """
     Used by FittingControllerWidget
     """
