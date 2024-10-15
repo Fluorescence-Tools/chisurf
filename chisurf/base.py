@@ -11,12 +11,10 @@ import yaml
 import pickle
 
 import numpy as np
+import chisurf
 
 from slugify import slugify
 from collections.abc import Iterable
-
-import chisurf
-import chisurf.fio as io
 
 
 def to_elementary(
@@ -638,3 +636,5 @@ class Data(Base):
         s += "\nfilename: %s" % self.filename
         return s
 
+
+import chisurf.fio as io
