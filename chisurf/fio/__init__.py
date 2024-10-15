@@ -15,6 +15,9 @@ import numpy as np
 
 from . zipped import *
 
+import chisurf.fio.fluorescence
+
+
 def compress_numpy_array(array):
     """
     Compresses a NumPy array and returns a dictionary containing the compressed data,
