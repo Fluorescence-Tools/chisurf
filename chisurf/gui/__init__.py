@@ -55,7 +55,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         # Use the CustomProgressBar to show text on top of the progress bar
         self.progress_bar = CustomProgressBar(self)
-        self.progress_bar.setGeometry(130, self.height() - 40, self.width() - 300, 20)  # Adjust height for better visibility
+        self.progress_bar.setGeometry(130, self.height() - 50, self.width() - 300, 20)  # Adjust height for better visibility
         self.progress_bar.setRange(0, 100)  # Progress bar range 0 to 100
         self.progress_bar.setValue(0)  # Initial value
 
@@ -72,7 +72,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.current_message = message
         self.showMessage(
             self.current_message,
-            QtCore.Qt.AlignBottom | QtCore.Qt.AlignHCenter,
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter,
             self.message_color
         )
         self.repaint()  # Ensure the message is updated immediately
@@ -81,12 +81,18 @@ class SplashScreen(QtWidgets.QSplashScreen):
         """Override the drawContents method to ensure text is drawn."""
         painter.setPen(self.message_color)
 
-        # Adjust the vertical position for the message
-        # You can change the y-offset value to move the message upwards
-        y_offset = 5  # Adjust this value to move the message upwards or downwards
-        painter.drawText(self.rect().adjusted(0, -y_offset, 0, 0),
-                         QtCore.Qt.AlignBottom | QtCore.Qt.AlignHCenter,
+        # Get the geometry of the progress bar
+        progress_bar_rect = self.progress_bar.geometry()
+
+        # Calculate the position to draw the message above the progress bar
+        message_y = progress_bar_rect.top() + 15  # Adjust as necessary to move up from the progress bar
+        message_rect = self.rect().adjusted(0, 0, 0, 0)  # Full rect for alignment
+
+        # Draw the message centered above the progress bar
+        painter.drawText(message_rect.adjusted(0, message_y, 0, 0),
+                         QtCore.Qt.AlignHCenter,
                          self.current_message)
+
 
 def setup_gui(
         app: QtWidgets.QApplication,
@@ -95,8 +101,6 @@ def setup_gui(
 ):
     def gui_imports():
         import chisurf.settings
-        import chisurf.gui.widgets.ipython
-        import chisurf.gui.decorators
         import chisurf.base
         import chisurf.common
         import chisurf.curve
@@ -106,6 +110,8 @@ def setup_gui(
         import chisurf.fio
         import chisurf.fitting
         import chisurf.fluorescence
+        import chisurf.gui.decorators
+        import chisurf.gui.widgets.ipython
         import chisurf.gui.tools
         import chisurf.gui.widgets
         import chisurf.macros
@@ -181,20 +187,33 @@ def setup_gui(
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
-        plugin_path = pathlib.Path(chisurf.plugins.jupyter.__file__).absolute().parent
+        plugin_path = pathlib.Path(chisurf.plugins.browser.__file__).absolute().parent
 
-        notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
-        notebooks = notebook_path.glob("*.ipynb")
-        for notebook in notebooks:
-            adr = str(chisurf.__jupyter_address__ + '/notebooks/') + str(notebook.relative_to(home_dir))
+        def add_notebook(notebook_file, base_addr='/notebooks/'):
+            adr = str(chisurf.__jupyter_address__ + base_addr) + str(notebook_file.relative_to(home_dir))
             p = partial(
                 window.onRunMacro, plugin_path / "wizard.py",
                 executor='exec',
                 globals={'__name__': 'plugin', 'adr': adr}
             )
-            action = QtWidgets.QAction(f"{notebook.stem}", window)
+            try:
+                if notebook_file.exists():
+                    menu_text = notebook_file.stem
+                    action = QtWidgets.QAction(f"{menu_text}", window)
+                else:
+                    return
+            except AttributeError as e:
+                action = QtWidgets.QAction(f"{notebook_file}", window)
             action.triggered.connect(p)
             notebook_menu.addAction(action)
+
+        # http://localhost:8888/tree
+        add_notebook(pathlib.Path.home(), '/tree')
+
+        notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
+        for notebook_file in notebook_path.glob("*.ipynb"):
+            add_notebook(notebook_file)
+
 
     if stage is None:
         gui_imports()
