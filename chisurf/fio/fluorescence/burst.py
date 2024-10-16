@@ -192,7 +192,6 @@ def read_burst_analysis(
         paris_path: pathlib.Path,
         tttr_file_type: str,
         pattern: str = 'b*4*',
-        exclude=None,
         row_stride: int = 1
 ) -> (pd.DataFrame, Dict[str, tttrlib.TTTR]):
     """
@@ -241,9 +240,6 @@ def read_burst_analysis(
     >>> print(tttrs.keys())
     """
 
-    if exclude is None:
-        exclude = ['.ipynb']
-
     def update_tttr_dict(data_path, tttrs: Dict[str, tttrlib.TTTR] = dict()):
         for ff, fl in zip(df['First File'], df['Last File']):
             try:
@@ -262,13 +258,12 @@ def read_burst_analysis(
     for path in paris_path.glob(pattern):
         frames = list()
         for fn in sorted(path.glob('*')):
-            if fn.suffix not in exclude:
-                with open(fn) as f:
-                    t = f.readlines()
-                    t = [line.rstrip('\n') for line in t]  # Remove trailing newlines
-                    h = t[0].split('\t')
-                    d = [[x for x in l.split('\t')] for l in t[2::row_stride]]
-                    frames.append(pd.DataFrame(d, columns=h))
+            with open(fn) as f:
+                t = f.readlines()
+                t = [line.rstrip('\n') for line in t]  # Remove trailing newlines
+                h = t[0].split('\t')
+                d = [[x for x in l.split('\t')] for l in t[2::row_stride]]
+                frames.append(pd.DataFrame(d, columns=h))
         dfs.append(pd.concat(frames))
     df = pd.concat(dfs, axis=1)
 
