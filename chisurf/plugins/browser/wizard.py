@@ -1,6 +1,7 @@
 import sys
 
 import chisurf
+import urllib
 
 name = "Browser"
 
@@ -92,13 +93,14 @@ class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
 class Browser(QMainWindow):
 
     def __init__(self, *args, **kwargs):
+        # adr is in global
+        url = kwargs.pop('url', globals().get('adr', None))
+        url = urllib.parse.quote(url, safe=":/?&=")
         super().__init__(*args, **kwargs)
 
         self.browser = CustomWebView(self)
 
         # Original URL
-        # adr is in global
-        url = globals().get('adr', None)
         self.setWindowTitle(url)
         self.original_url = QUrl(url)
 
