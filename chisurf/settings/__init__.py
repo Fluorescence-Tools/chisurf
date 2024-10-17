@@ -66,6 +66,7 @@ def clear_settings_folder():
 chisurf_settings_path = get_path('settings')
 macro_path = get_path('chisurf') / "macros"
 plugin_path = get_path('chisurf') / "plugins"
+notebook_path = get_path('chisurf') / "notebooks"
 
 # Open chisurf settings file
 chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
