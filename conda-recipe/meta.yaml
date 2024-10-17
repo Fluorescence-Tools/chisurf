@@ -59,7 +59,7 @@ requirements:
     - typing_extensions 4.5.*
     - scipy 1.11.*
     - numba 0.57.*
-    - tttrlib
+    - tttrlib >= 0.25
     - mdtraj
     - htmd-pdb2pqr
     - ipython 7.*.*
