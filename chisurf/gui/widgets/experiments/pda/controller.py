@@ -1,4 +1,5 @@
 import pathlib
+import tttrlib
 
 import chisurf.gui
 from chisurf.experiments import reader
@@ -16,6 +17,8 @@ class PdaTTTRWidget(
         # super().__init__(parent=parent)
         self.actionParametersChanged.triggered.connect(self.onParametersChanged)
         self.onParametersChanged()
+        self.comboBox.clear()
+        self.comboBox.insertItems(0, tttrlib.TTTR.get_supported_container_names())
 
     def onParametersChanged(self):
         ch0 = [int(k) for k in self.lineEdit.text().split(',')]
