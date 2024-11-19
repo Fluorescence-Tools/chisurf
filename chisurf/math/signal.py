@@ -161,13 +161,6 @@ def xcorr_fft(
         normalize: bool = True
 ) -> np.ndarray:
     """Computes the cross-correlation function of two arrays using fast fourier transforms.
-
-    If the ccf could not be computed a numpy array filled with ones is returned.
-
-    :param in_1: a numpy array that is cross-correlated with signal_b
-    :param in_2: a numpy array that is cross-correlated with signal_a
-    :param normalize: if normalize is True a normalized cross correlation function is returned
-    :return: a cross-correlation of the two input signals
     """
     if len(in_1) > 0 and len(in_2) > 0:
         c = in_1
