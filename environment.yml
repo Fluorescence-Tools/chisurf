@@ -23,6 +23,7 @@ dependencies:
   - propka 3.4.*
   - ipython 7.*.*
   - chinet >=0.0.8
+  - notebook
   - labellib
   - pyopencl 2023.*
   - pytools 2023.*
