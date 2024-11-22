@@ -59,11 +59,12 @@ requirements:
     - typing_extensions 4.5.*
     - scipy 1.11.*
     - numba 0.57.*
-    - tttrlib >= 0.25
+    - tttrlib >=0.25
     - mdtraj
     - htmd-pdb2pqr
     - ipython 7.*.*
     - labellib
+    - jupyter-notebook
     - pyopencl 2023.*
     - pytools 2023.*
     - emcee 3.1.*
