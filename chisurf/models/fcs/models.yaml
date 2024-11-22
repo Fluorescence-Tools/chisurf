@@ -91,6 +91,34 @@
     bt7: 0.1
     ba7: 0.1
   description: No description!
+3D Gauss, 1 bunching + 1 anti-bunching:
+  equation:
+      b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba)+abs(ba)*exp(-x/abs(bt)))*(1-abs(aba)*exp(-x/abs(abt)))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt: 0.002
+    ba: 0.05
+    aba: 0.1
+    abt: 0.1
+  description: No description!
+3D Gauss, 2 bunching + 1 anti-bunching:
+  equation:
+      b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1))-ba2+ba2*exp(-x/bt2))*(1-abs(aba)*exp(-x/abs(abt)))
+  initial:
+    N: 1
+    s: 3.5
+    td: 0.5
+    b: 1
+    bt1: 0.002
+    ba1: 0.05
+    bt2: 0.02
+    ba2: 0.05
+    aba: 0.1
+    abt: 0.1
+  description: No description!
 3D Gauss, 1 bunching + 1+5 anti-bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba1)+abs(ba1)*exp(-x/abs(bt1)))*(1-abs(aba)*exp(-x/abs(abt)))*(1-
     abs(abf)*(abs(aba1)*exp(-x/abs(abt1))+abs(aba2)*exp(-x/abs(abt2))+abs(aba3)*exp(-x/abs(abt3))+abs(aba4)*exp(-x/abs(abt4))+abs(1-abs(aba1)-abs(aba2)-abs(aba3)-abs(aba4))*exp(-x/abs(abt5))))
