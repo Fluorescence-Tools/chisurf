@@ -85,7 +85,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
         progress_bar_rect = self.progress_bar.geometry()
 
         # Calculate the position to draw the message above the progress bar
-        message_y = progress_bar_rect.top() + 15  # Adjust as necessary to move up from the progress bar
+        message_y = progress_bar_rect.top() + 10  # Adjust as necessary to move up from the progress bar
         message_rect = self.rect().adjusted(0, 0, 0, 0)  # Full rect for alignment
 
         # Draw the message centered above the progress bar
