@@ -64,7 +64,7 @@ requirements:
     - htmd-pdb2pqr
     - ipython 7.*.*
     - labellib
-    - jupyter-notebook
+    - notebook
     - pyopencl 2023.*
     - pytools 2023.*
     - emcee 3.1.*
