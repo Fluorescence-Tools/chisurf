@@ -9,7 +9,8 @@ source:
 
 build:
   number: 0
-  skip: true  # [py310]
+  binary_relocation: True  # Relocate binaries correctly (for shared libraries, etc.).
+  detect_binary_files_with_prefix: True  # [not win]
   entry_points:
     {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
     {% for entry_point in entry_points -%}
@@ -19,69 +20,77 @@ build:
 
 requirements:
   build:
-    - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - python
-    - setuptools
-    - pyopencl
-    - pocl >=0.14      # [linux or osx]
-    - oclgrind          # [win]
-    - typing_extensions <=4.5
-    - cython
-    - pyyaml
-    - numpy
-    # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt
-    - pyqtwebengine
   host:
-    - {{ compiler('c') }}
-    - {{ compiler('cxx') }}
+    - swig <4.3.0
+    - cmake-build-extension
+    - pkg-config   # [not win]
+    - llvm-openmp  # [osx]
+    - libgomp      # [linux]
+    - pip
+    - cmake
+    - make         # [linux]
+    - ninja
+    - swig <4.3.0
+    - tttrlib
+    - pkg-config   # [not win]
+    - llvm-openmp  # [osx]
+    - libgomp      # [linux]
     - python
-    - setuptools
-    - cython
+    - typing_extensions <=4.5
+    - pip
+    - cython <3.0
     - pyopencl
     - pocl >=0.14      # [linux or osx]
     - oclgrind          # [win]
-    - typing_extensions <=4.5
+    - guidata
+    - guiqwt
     - pyyaml
     - numpy
-    # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt
+    - pyqt           # Needed for pyrcc5 (updating PyQt resource files)
+    # Needed for chinet
+    - libmongoc
+    - doxygen
+    - boost-cpp 1.84.*
+    - numpy
   run:
     - python
-    - {{ pin_compatible('numpy', max_pin='x.x') }}
+    - numpy
     - pyyaml
+    - python-slugify
     - pyqtgraph >=0.13
     - matplotlib
     - deprecation
     - imp
+    - pandas <=2.1
     - typing-extensions 4.5.*
     - typing_extensions 4.5.*
     - scipy 1.11.*
     - numba 0.57.*
+    - boost-cpp 1.84.*
     - tttrlib >=0.25
     - mdtraj
     - htmd-pdb2pqr
     - ipython 7.*.*
-    - labellib
     - notebook
     - pyopencl 2023.*
     - pytools 2023.*
     - emcee 3.1.*
     - pyopengl 3.1.*
+    - pytables 3.8.*
     - pocl  >=0.14      # [linux or osx]
     - oclgrind          # [win]
     - pymol-open-source 2.5.*
     - qscintilla2
+    - guidata
+    - guiqwt
+    - qscintilla2
     - python-docx 1.0.*
     - qtconsole 5.*
-    - chinet >=0.0.8
-    - tttrconvert
-    - k2dist
-    - ndxplorer
-    - clsmview
     - pyqtwebengine
     - ipyfilechooser
+    - libcxx
+    - joblib
 
 app:
   entry: chisurf
