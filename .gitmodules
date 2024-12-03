@@ -15,7 +15,7 @@
 	url = https://github.com/fluorescence-tools/tttrconvert
 [submodule "modules/chinet"]
 	path = modules/chinet
-	url = https://github.com/fluorescence-tools/chinet
+	url = https://github.com/tpeulen/chinet
 [submodule "modules/k2dist"]
 	path = modules/k2dist
 	url = https://github.com/fluorescence-tools/k2dist
