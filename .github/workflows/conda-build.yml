@@ -31,10 +31,8 @@ jobs:
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          mamba-version: "*"
-          channels: conda-forge,bioconda,defaults
+          miniconda-version: "latest"
+          channels: conda-forge,defaults
           channel-priority: true
 
       - name: Display Conda Settings
