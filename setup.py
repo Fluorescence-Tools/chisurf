@@ -118,12 +118,12 @@ metadata = dict(
             '*.ui', '*.css', '*.qss',
             '*.png', '*.svg',
             '*.csv', '*.npy', '*.dat',
-            '*.dll', '*.so', '*.pyd'
+            '*.dll', '*.so', '*.pyd', '*.ipynb'
         ]
     },
     install_requires=[
         'PyQt5', 'qtpy', 'sip', 'pyqtgraph', 'qtconsole',
-        'numba', 'numpy', 'numexpr', 'scipy', 'pyopencl',
+        'numba', 'numpy', 'numexpr', 'scipy',
         'cython', 'python-slugify', 'deprecation',
         'emcee',
         'PyYAML', 'typing-extensions',
