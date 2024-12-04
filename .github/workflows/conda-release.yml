@@ -29,7 +29,7 @@ jobs:
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
         with:
-          miniconda-version: "latest"
+          miniforge-version: latest
           channels: conda-forge,defaults
           channel-priority: true
 
@@ -47,8 +47,7 @@ jobs:
         with:
           shell: bash -el {0}
           run: |
-            mamba install conda-build boa anaconda-client
+            conda install mamba conda-build boa anaconda-client
             cd conda-recipe
-            # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
-            conda mambabuild . --output-folder conda-bld -c tpeulen
+            conda mambabuild . --output-folder conda-bld
             anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
