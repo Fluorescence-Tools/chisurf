@@ -32,7 +32,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          channels: conda-forge,defaults
+          channels: conda-forge,bioconda,tpeulen,defaults
           channel-priority: true
 
       - name: Display Conda Settings
