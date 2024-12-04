@@ -8,7 +8,8 @@ pyrcc5 chisurf/gui/resources/resource.qrc -o chisurf/gui/resources/resource.py
 # Install modules
 #################
 # Update submodules
-git submodule update --recursive --init --remote
+git submodule sync --recursive
+git submodule update --recursive --remote
 
 # Install python modules
 pip install modules/scikit-fluorescence --no-deps --prefix="$PREFIX"

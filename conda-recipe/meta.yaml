@@ -21,6 +21,7 @@ build:
 requirements:
   build:
     - {{ compiler('cxx') }}
+    - git
   host:
     - swig <4.3.0
     - cmake-build-extension
