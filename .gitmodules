@@ -1,6 +1,3 @@
-[submodule "tools"]
-	path = tools
-	url = https://gitlab.peulen.xyz/build/tools
 [submodule "modules/labellib"]
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
@@ -13,9 +10,6 @@
 [submodule "modules/tttrconvert"]
 	path = modules/tttrconvert
 	url = https://github.com/fluorescence-tools/tttrconvert
-[submodule "modules/chinet"]
-	path = modules/chinet
-	url = https://github.com/tpeulen/chinet
 [submodule "modules/k2dist"]
 	path = modules/k2dist
 	url = https://github.com/fluorescence-tools/k2dist
@@ -25,3 +19,9 @@
 [submodule "modules/fit2x"]
 	path = modules/fit2x
 	url = https://gitlab.peulen.xyz/skf/fit2x
+[submodule "modules/chinet"]
+	path = modules/chinet
+	url = https://github.com/tpeulen/chinet.git
+[submodule "tools"]
+	path = tools
+	url = https://gitlab.peulen.xyz/build/tools
