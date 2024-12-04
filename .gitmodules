@@ -13,9 +13,6 @@
 [submodule "modules/k2dist"]
 	path = modules/k2dist
 	url = https://github.com/fluorescence-tools/k2dist
-[submodule "modules/scikit-fluorescence"]
-	path = modules/scikit-fluorescence
-	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
 [submodule "modules/fit2x"]
 	path = modules/fit2x
 	url = https://gitlab.peulen.xyz/skf/fit2x
