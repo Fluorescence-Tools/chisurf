@@ -22,3 +22,6 @@
 [submodule "tools"]
 	path = tools
 	url = https://gitlab.peulen.xyz/build/tools
+[submodule "modules/scikit-fluorescence"]
+	path = modules/scikit-fluorescence
+	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
