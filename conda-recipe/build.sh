@@ -9,11 +9,16 @@ pyrcc5 chisurf/gui/resources/resource.qrc -o chisurf/gui/resources/resource.py
 #################
 # Update submodules
 git submodule sync --recursive
-git submodule update --recursive --remote
+git submodule update --init --recursive --force
 
 # Install python modules
-pip install modules/scikit-fluorescence --no-deps --prefix="$PREFIX"
+########################
+
+# Labellib
+cd modules/labellib && git fetch --tags && git checkout tags/2020.10.05 && cd ../../
 pip install modules/labellib --no-deps --prefix="$PREFIX"
+
+pip install modules/scikit-fluorescence --no-deps --prefix="$PREFIX"
 pip install modules/clsmview --no-deps --prefix="$PREFIX"
 pip install modules/k2dist --no-deps --prefix="$PREFIX"
 pip install modules/ndxplorer --no-deps --prefix="$PREFIX"
