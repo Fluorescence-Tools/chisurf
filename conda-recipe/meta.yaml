@@ -52,7 +52,7 @@ requirements:
     # Needed for chinet
     - libmongoc
     - doxygen
-    - boost-cpp 1.84.*
+    - boost-cpp
     - numpy
   run:
     - python
@@ -90,7 +90,6 @@ requirements:
     - qtconsole 5.*
     - pyqtwebengine
     - ipyfilechooser
-    - libcxx
     - joblib
 
 app:
