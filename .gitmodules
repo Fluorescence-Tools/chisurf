@@ -1,7 +1,7 @@
 [submodule "modules/labellib"]
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
-	branch = main
+	branch = master
 [submodule "modules/ndxplorer"]
 	path = modules/ndxplorer
 	url = https://github.com/fluorescence-tools/ndxplorer
