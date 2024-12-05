@@ -30,3 +30,7 @@
 	path = modules/scikit-fluorescence
 	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
 	branch = master
+[submodule "modules/labellib"]
+	path = modules/labellib
+	url = https://github.com/fluorescence-tools/labellib
+	branch = master
