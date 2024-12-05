@@ -1,18 +1,23 @@
 [submodule "modules/labellib"]
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
+	branch = main
 [submodule "modules/ndxplorer"]
 	path = modules/ndxplorer
 	url = https://github.com/fluorescence-tools/ndxplorer
+	branch = main
 [submodule "modules/clsmview"]
 	path = modules/clsmview
 	url = https://github.com/fluorescence-tools/clsmview
+	branch = main
 [submodule "modules/tttrconvert"]
 	path = modules/tttrconvert
 	url = https://github.com/fluorescence-tools/tttrconvert
+	branch = main
 [submodule "modules/k2dist"]
 	path = modules/k2dist
 	url = https://github.com/fluorescence-tools/k2dist
+	branch = main
 [submodule "modules/fit2x"]
 	path = modules/fit2x
 	url = https://gitlab.peulen.xyz/skf/fit2x
@@ -24,6 +29,8 @@
 [submodule "tools"]
 	path = tools
 	url = https://gitlab.peulen.xyz/build/tools
+	branch = master
 [submodule "modules/scikit-fluorescence"]
 	path = modules/scikit-fluorescence
 	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
+	branch = master
