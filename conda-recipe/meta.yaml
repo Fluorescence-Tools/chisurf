@@ -22,17 +22,16 @@ requirements:
   build:
     - {{ compiler('cxx') }}
     - git
+A    - cmake
+    - make         # [not win]
+    - ninja
   host:
     - python
     - swig <4.3.0
-    - cmake-build-extension
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
     - pip
-    - cmake
-    - make         # [linux]
-    - ninja
     - swig <4.3.0
     - tttrlib
     - pkg-config   # [not win]
@@ -54,6 +53,7 @@ requirements:
     - doxygen
     - boost-cpp
     - numpy
+    - libcxx  # [osx]
   run:
     - python
     - numpy
@@ -91,6 +91,7 @@ requirements:
     - pyqtwebengine
     - ipyfilechooser
     - joblib
+    - libcxx  # [osx]
 
 app:
   entry: chisurf
