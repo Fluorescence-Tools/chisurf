@@ -19,11 +19,8 @@ build:
     {% endfor %}
 
 requirements:
-  build:
-    - {{ compiler('cxx') }}
-    - python
-    - numpy
   host:
+    - {{ compiler('cxx') }}
     - git
     - cmake
     - make         # [not win]
