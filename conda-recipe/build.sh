@@ -18,7 +18,8 @@ git submodule update --init --recursive --force
 cd modules/labellib
 git fetch --tags && git checkout tags/2020.10.05
 cd thirdparty/pybind11
-git checkout v2.13 && git pull
+git checkout v2.13 && git pull && cd ..
+cd eigen && git checkout 3.3 && git pull && cd ..
 cd ../../../..
 pip install modules/labellib --no-deps --prefix="$PREFIX"
 
