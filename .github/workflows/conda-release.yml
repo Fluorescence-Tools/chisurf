@@ -35,7 +35,7 @@ jobs:
           channels: conda-forge,bioconda,tpeulen,defaults
           channel-priority: true
         env:
-          CONDA_SUBDIR: ${{ matrix.os == 'macos-latest' && 'osx-64' || '' }}
+          CONDA_SUBDIR: ${{ matrix.os == 'macos-latest' && 'osx-64' }}
 
       - name: Display Conda Settings
         shell: bash -el {0}
