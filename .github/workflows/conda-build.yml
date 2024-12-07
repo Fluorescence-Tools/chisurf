@@ -46,17 +46,25 @@ jobs:
           conda config --show
           printenv | sort
 
-      - name: Build Conda Package
+      - name: Build and Upload Conda Package
         uses: aganders3/headless-gui@v1
         with:
           shell: bash -el {0}
           run: |
-            if [[ $RUNNER_OS == "macOS" ]]; then
+            # Check if RUNNER_OS is macOS and set CONDA_SUBDIR accordingly
+            if [[ "$RUNNER_OS" == "macOS" ]]; then
               echo "Running on macOS, exporting CONDA_SUBDIR=osx-amd64"
               export CONDA_SUBDIR=osx-amd64
             fi
+      
+            # Create and activate the build environment
             echo "Creating build environment..."
             conda create -y -n build-env python=${{ matrix.python-version }}
-            source activate build-env
+            conda activate build-env
+      
+            # Install necessary build tools
             conda install -y mamba conda-build boa anaconda-client
-            conda mambabuild conda-recipe
+      
+            # Change to the conda-recipe directory and build the package
+            cd conda-recipe
+            conda mambabuild . --output-folder conda-bld
