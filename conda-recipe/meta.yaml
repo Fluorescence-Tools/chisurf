@@ -21,6 +21,8 @@ build:
 requirements:
   build:
     - {{ compiler('cxx') }}
+    - python
+    - numpy
   host:
     - git
     - cmake
@@ -32,6 +34,8 @@ requirements:
     - libgomp      # [linux]
     - pip
     - swig <4.3.0
+    - python
+    - numpy
     - tttrlib
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
