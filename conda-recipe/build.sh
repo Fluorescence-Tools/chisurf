@@ -15,7 +15,11 @@ git submodule update --init --recursive --force
 ########################
 
 # Labellib
-cd modules/labellib && git fetch --tags && git checkout tags/2020.10.05 && cd ../../
+cd modules/labellib
+git fetch --tags && git checkout tags/2020.10.05
+cd thirdparty/pybind11
+git checkout v2.13 && git pull
+cd ../../../..
 pip install modules/labellib --no-deps --prefix="$PREFIX"
 
 pip install modules/scikit-fluorescence --no-deps --prefix="$PREFIX"
@@ -44,6 +48,7 @@ cd ../../..
 
 # Build fit2x
 cd modules/fit2x
+git switch master
 rm -rf build && mkdir build && cd build
 cmake \
  -DCMAKE_INSTALL_PREFIX="$PREFIX" \
