@@ -49,22 +49,7 @@ jobs:
         with:
           shell: bash -el {0}
           run: |
-            # Create and activate the build environment
-            echo "Creating build environment..."
-            conda create -y -n build-env python=${{ matrix.python-version }}
-            conda activate build-env
-      
-            # Install necessary build tools
-            conda install -y mamba conda-build boa anaconda-client
-      
-            # Change to the conda-recipe directory and build the package
+            conda install mamba conda-build boa anaconda-client
             cd conda-recipe
             conda mambabuild . --output-folder conda-bld
-      
-            # Upload the built package to Anaconda Cloud
-            if command -v anaconda &> /dev/null; then
-              anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
-            else
-              echo "anaconda-client not found, skipping upload."
-              exit 1
-            fi
+            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
