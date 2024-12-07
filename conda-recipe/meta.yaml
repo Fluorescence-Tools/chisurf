@@ -22,7 +22,7 @@ requirements:
   build:
     - {{ compiler('cxx') }}
     - git
-A    - cmake
+    - cmake
     - make         # [not win]
     - ninja
   host:
