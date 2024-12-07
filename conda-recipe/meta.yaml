@@ -21,12 +21,11 @@ build:
 requirements:
   build:
     - {{ compiler('cxx') }}
+  host:
     - git
     - cmake
     - make         # [not win]
     - ninja
-  host:
-    - python
     - swig <4.3.0
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
