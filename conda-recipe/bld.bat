@@ -1,19 +1,32 @@
 @echo off
+
 :: Generate Python resources
 call pyrcc5 chisurf\gui\resources\resource.qrc -o chisurf\gui\resources\resource.py
 
 :: Update submodules
-git submodule update --recursive --init --remote
+git submodule sync --recursive
+git submodule update --init --recursive --force
 
 :: Install Python modules
+
+:: Labellib Module
+cd modules\labellib
+git fetch --tags
+git checkout tags/2020.10.05
+cd thirdparty\pybind11
+git checkout v2.13
+git pull
+cd ..\..\..
+pip install modules\labellib --no-deps --prefix=%PREFIX%
+
+:: Install other Python modules (same as build.sh)
 pip install modules/scikit-fluorescence --no-deps --prefix=%PREFIX%
-pip install modules/labellib --no-deps --prefix=%PREFIX%
 pip install modules/clsmview --no-deps --prefix=%PREFIX%
 pip install modules/k2dist --no-deps --prefix=%PREFIX%
 pip install modules/ndxplorer --no-deps --prefix=%PREFIX%
 pip install modules/tttrconvert --no-deps --prefix=%PREFIX%
 
-:: Build chinet module
+:: Build chinet module (same as build.sh)
 cd modules\chinet
 if exist build rmdir /s /q build
 mkdir build
@@ -33,8 +46,9 @@ cmake -S .. -B . ^
 ninja install -j %CPU_COUNT%
 cd ..\..\..
 
-:: Build fit2x module
+:: Build fit2x module (same as build.sh)
 cd modules\fit2x
+git switch master
 if exist build rmdir /s /q build
 mkdir build
 cd build

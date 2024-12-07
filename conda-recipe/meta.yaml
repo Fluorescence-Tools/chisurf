@@ -23,6 +23,7 @@ requirements:
     - {{ compiler('cxx') }}
     - git
   host:
+    - python
     - swig <4.3.0
     - cmake-build-extension
     - pkg-config   # [not win]
@@ -37,7 +38,6 @@ requirements:
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
-    - python
     - typing_extensions <=4.5
     - pip
     - cython <3.0
@@ -63,30 +63,30 @@ requirements:
     - matplotlib
     - deprecation
     - imp
-    - pandas <=2.1
+    - pandas
     - typing-extensions 4.5.*
     - typing_extensions 4.5.*
-    - scipy 1.11.*
-    - numba 0.57.*
-    - boost-cpp 1.84.*
+    - scipy
+    - numba
+    - boost-cpp
     - tttrlib >=0.25
     - mdtraj
     - htmd-pdb2pqr
-    - ipython 7.*.*
+    - ipython <8.0
     - notebook
-    - pyopencl 2023.*
-    - pytools 2023.*
+    - pyopencl
+    - pytools
     - emcee 3.1.*
-    - pyopengl 3.1.*
-    - pytables 3.8.*
+    - pyopengl
+    - pytables <3.10
     - pocl  >=0.14      # [linux or osx]
     - oclgrind          # [win]
-    - pymol-open-source 2.5.*
+    - pymol-open-source
     - qscintilla2
     - guidata
     - guiqwt
     - qscintilla2
-    - python-docx 1.0.*
+    - python-docx
     - qtconsole 5.*
     - pyqtwebengine
     - ipyfilechooser
