@@ -51,9 +51,6 @@ jobs:
         with:
           shell: bash -el {0}
           run: |
-            # Check if RUNNER_OS is macOS and set CONDA_SUBDIR accordingly
-            if [[ "${{ matrix.os }}" == "macos-latest" ]]; then export CONDA_SUBDIR=osx-64; fi
-      
             # Create and activate the build environment
             echo "Creating build environment..."
             conda create -y -n build-env python=${{ matrix.python-version }}
