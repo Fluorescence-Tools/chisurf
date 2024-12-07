@@ -50,10 +50,7 @@ jobs:
           shell: bash -el {0}
           run: |
             # Check if RUNNER_OS is macOS and set CONDA_SUBDIR accordingly
-            if [[ "$RUNNER_OS" == "macOS" ]]; then
-              echo "Running on macOS, exporting CONDA_SUBDIR=osx-amd64"
-              export CONDA_SUBDIR=osx-amd64
-            fi
+            if [[ "$RUNNER_OS" == "macOS" ]]; then export CONDA_SUBDIR=osx-amd64; fi
       
             # Create and activate the build environment
             echo "Creating build environment..."
