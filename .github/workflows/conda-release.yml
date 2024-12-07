@@ -34,8 +34,6 @@ jobs:
           miniforge-version: latest
           channels: conda-forge,bioconda,tpeulen,defaults
           channel-priority: true
-        env:
-          CONDA_SUBDIR: ${{ matrix.os == 'macos-latest' && 'osx-64' || null }}
 
       - name: Display Conda Settings
         shell: bash -el {0}
@@ -51,7 +49,14 @@ jobs:
         with:
           shell: bash -el {0}
           run: |
-            conda install mamba conda-build boa anaconda-client
+            if [[ $RUNNER_OS == "macOS" ]]; then
+              echo "Running on macOS, exporting CONDA_SUBDIR=osx-amd64"
+              export CONDA_SUBDIR=osx-amd64
+            fi
+            echo "Creating build environment..."
+            conda create -y -n build-env python=${{ matrix.python-version }}
+            source activate build-env
+            conda install -y mamba conda-build boa anaconda-client
             cd conda-recipe
             conda mambabuild . --output-folder conda-bld
             anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
