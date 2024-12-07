@@ -52,17 +52,20 @@ cd ../../..
 cd modules/fit2x
 git switch master
 rm -rf build && mkdir build && cd build
-cmake \
- -DCMAKE_INSTALL_PREFIX="$PREFIX" \
- -DCMAKE_PREFIX_PATH="$PREFIX" \
- -DBUILD_PYTHON_INTERFACE=ON \
- -DCMAKE_BUILD_TYPE=Release \
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SP_DIR" \
- -DCMAKE_SWIG_OUTDIR="$SP_DIR" \
- -DPython_ROOT_DIR="${PREFIX}/bin" \
- ..
-make && make install
+cmake -S .. -B . \
+  -DCMAKE_CXX_COMPILER="${CXX}" \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+  -DCMAKE_PREFIX_PATH="$PREFIX" \
+  -DBUILD_PYTHON_INTERFACE=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SP_DIR" \
+  -DCMAKE_SWIG_OUTDIR="$SP_DIR" \
+  -DPYTHON_EXECUTABLE="${PYTHON}" \
+  -DPython_ROOT_DIR="${PREFIX}/bin" \
+  -G Ninja
+ninja install -j ${CPU_COUNT}
 cd ../../..
+
 
 # Install main module
 #####################
