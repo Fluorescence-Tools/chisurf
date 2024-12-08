@@ -61,7 +61,7 @@ cmake -S .. -B . \
   -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SP_DIR" \
   -DCMAKE_SWIG_OUTDIR="$SP_DIR" \
   -DPython_ROOT_DIR="${PREFIX}/bin" \
-  -DPYTHON_EXECUTABLE="${PYTHON}"
+  -DPython_EXECUTABLE="${PYTHON}"
   -G Ninja
 ninja install -j ${CPU_COUNT}
 cd ../../..

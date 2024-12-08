@@ -19,8 +19,9 @@ build:
     {% endfor %}
 
 requirements:
+  build:
+    - { { compiler('cxx') } }
   host:
-    - {{ compiler('cxx') }}
     - git
     - cmake
     - make         # [not win]
