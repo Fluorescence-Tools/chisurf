@@ -50,8 +50,7 @@ cd ../../..
 
 # Build fit2x
 cd modules/fit2x
-git pull
-git switch master
+git switch master && git pull origin master
 rm -rf build && mkdir build && cd build
 cmake -S .. -B . \
   -DCMAKE_CXX_COMPILER="${CXX}" \
