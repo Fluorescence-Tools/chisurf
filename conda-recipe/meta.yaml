@@ -20,7 +20,7 @@ build:
 
 requirements:
   build:
-    - { { compiler('cxx') } }
+    - {{ compiler('cxx') }}
   host:
     - git
     - cmake
