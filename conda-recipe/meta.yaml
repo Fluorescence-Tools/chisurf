@@ -90,7 +90,6 @@ requirements:
     - python-docx
     - qtconsole 5.*
     - pyqtwebengine
-    - ipyfilechooser
     - joblib
     - libcxx  # [osx]
 
