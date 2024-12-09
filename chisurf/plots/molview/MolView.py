@@ -55,7 +55,7 @@ class MolQtWidget(QGLWidget):
         self.pymol.cmd.set("internal_feedback", "0")
         if sequence:
             self.pymol.cmd.set("seq_view", "1")
-        if File is not "":
+        if File != "":
             self.nFrames += 1
             self.pymol.cmd.load(File, 'p', self.nFrames)
 
