@@ -59,12 +59,14 @@ requirements:
     - python
     - numpy
     - pyyaml
+    - click <8.0 # Conflicts with papermill
     - python-slugify
     - pyqtgraph >=0.13
     - matplotlib
     - deprecation
     - imp
     - pandas
+    - papermill
     - typing-extensions 4.5.*
     - typing_extensions 4.5.*
     - scipy
