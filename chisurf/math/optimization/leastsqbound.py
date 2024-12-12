@@ -350,8 +350,8 @@ References
         retval[1]['fjac'] = (retval[1]['fjac'].T / take(grad, retval[1]['ipvt'] - 1)).T
         cov_x = None
         if info in [1, 2, 3, 4]:
-            from numpy.dual import pinv
-            from numpy.linalg import LinAlgError
+            # from numpy.dual import pinv
+            from numpy.linalg import LinAlgError, pinv
 
             perm = take(eye(n), retval[1]['ipvt'] - 1, 0)
             r = triu(transpose(retval[1]['fjac'])[:n, :])
