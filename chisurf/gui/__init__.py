@@ -28,20 +28,25 @@ class CustomProgressBar(QtWidgets.QProgressBar):
 
     def paintEvent(self, event):
         """Custom paint event to render the progress bar and custom text on top."""
-        # Call the base class paint event to render the bar
-        super().paintEvent(event)
-
-        # Create a painter to draw the text on top of the progress bar
+        # Do not call the default paint event to avoid drawing the percentage text
         painter = QtGui.QPainter(self)
+
+        # Customize the progress bar appearance if needed (e.g., color, border, etc.)
+        # painter.setPen(QtCore.Qt.green)  # Example for setting color
+        # painter.setBrush(QtCore.Qt.blue)  # Example for setting fill color
+
+        # Draw the progress bar manually
+        rect = self.rect()
+        progress = self.value() / self.maximum()  # Calculate the progress percentage
+        progress_width = int(rect.width() * progress)  # Width based on progress
+        progress_rect = QtCore.QRect(rect.x(), rect.y(), progress_width, rect.height())
+        painter.fillRect(progress_rect, QtCore.Qt.green)  # Fill with desired color
 
         # Customize the text style and color
         painter.setPen(QtCore.Qt.white)
         font = painter.font()
         font.setBold(True)
         painter.setFont(font)
-
-        # Get the rectangle of the progress bar for text alignment
-        rect = self.rect()
 
         # Draw the custom text on top of the progress bar
         painter.drawText(rect, QtCore.Qt.AlignCenter, self.custom_text)
@@ -55,7 +60,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         # Use the CustomProgressBar to show text on top of the progress bar
         self.progress_bar = CustomProgressBar(self)
-        self.progress_bar.setGeometry(130, self.height() - 50, self.width() - 300, 20)  # Adjust height for better visibility
+        self.progress_bar.setGeometry(130, self.height() - 40, self.width() - 300, 5)
         self.progress_bar.setRange(0, 100)  # Progress bar range 0 to 100
         self.progress_bar.setValue(0)  # Initial value
 
