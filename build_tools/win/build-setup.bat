@@ -1,5 +1,4 @@
 @echo off
-set "CONDA_ENVIRONMENT_YAML=..\..\environment.yml"
 set "DIST_PATH=..\..\dist"
 set "SCRIPT_PATH=%~dp0"
 set "APP_PATH=..\..\dist\win"
