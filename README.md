@@ -4,98 +4,86 @@
 
 # ChiSurf
 
-ChiSurf is a software package for global analysis of fluorescence data. In
-ChiSurf variables of models for time-resolved single-molecule
-and ensemble fluorescence experiments can be interlinked and optimized 
-and sampled jointly to determine models that are consistent with multiple 
-data sources. By introducing dependencies across models more complex description 
-of multiple datasets can be constructed.
+ChiSurf is a software package for the global analysis of fluorescence data. It enables users to interlink, optimize, and jointly sample variables of models for time-resolved single-molecule and ensemble fluorescence experiments. By introducing dependencies across models, ChiSurf allows for the construction of complex descriptions across multiple datasets.
+For a detailed explanation of the methods and implementation, please refer to the [ChiSurf Preprint](https://www.preprints.org/manuscript/202501.1615/v1).
 
-![Parameter graph in ChiSurf
-
-][2]
-
-ChiSurf handles:
-
-* Fluorescence decays (single-molecule, ensemble, FLIM)
-* Fluorescence correlation spectroscopy data
-* Single-molecule counting histograms (Photon distribution analysis)
-
+![Parameter graph in ChiSurf][2]
 ![ChiSurf GUI][1]
-
 ## Features
 
-### General features
+### General Features
 
-* Scripting interface and open API
-* Interactive analysis of multiple datasets
-* Combined analysis of different experimental techniques
+- **Scripting Interface & Open API:** Flexible integration into existing workflows.
+- **Interactive Analysis:** Simultaneously analyze multiple datasets.
+- **Combined Analysis:** Joint analysis of different experimental techniques.
 
-### Global analysis
+### Global Analysis
 
-* Analysis of multiple data sets by joint model function freely defined by
-   the user
-* Freely definable models for FCS analysis & adaptable models for
-   fluorescence decays analysis
-* Fluorescence decay analysis
-* Global analysis of multiple fluorescence decays
-* Generation of fluorescence decay histograms based on TTTR data
-* Analysis of time-resolved anisotropy decays
-* Analysis of FRET quenched fluorescence decays by physical model functions
+- Analysis of multiple datasets with user-defined joint model functions.
+- Freely definable models for fluorescence correlation spectroscopy (FCS) and fluorescence decay analysis.
+- Global analysis of multiple fluorescence decays.
+- Generation of fluorescence decay histograms based on TTTR data.
+- Analysis of time-resolved anisotropy decays.
+- FRET-quenched fluorescence decay analysis using physical model functions.
 
-[![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1021/acs.jpcb.7b03441.2222-blue.svg)](http://pubs.acs.org/doi/abs/10.1021/acs.jpcb.7b03441)
+### Fluorescence Correlation Spectroscopy (FCS)
 
-### Fluorescence correlation spectroscopy
+- Analysis of FCS curves.
+- Efficient correlation algorithms for TTTR data.
 
-* Analysis of FCS curves
-* Correlation of TTTR-data by efficient correlation algorithms
-[![DOI for citing FPS](https://img.shields.io/badge/DOI-10.1364/OE.11.003583.2222-blue.svg)](https://doi.org/10.1364/OE.11.003583)
+### Simulation of Fluorescence Observables
 
-### Simulation of fluorescence observables
+- Simulation of kappa² distributions based on residual anisotropies.
+- Simulation of fluorescence quenching in proteins by aromatic amino acids.
+- Simulation of FRET rate constant distributions based on accessible volumes.
 
-* Kappa2 distributions based on residual anisotropies
-* Simulation of fluorescence quenching in protein by aromatic amino acids
-* Simulation of FRET rate constant distributions based on accessible volumes
+---
 
 ## Download
 
-ChiSurf is available as a compiled Windows installation file. By downloading
-and using ChiSurf, you agree with the following terms:
+ChiSurf is available as a compiled Windows installation file. By downloading and using ChiSurf, you agree to the following terms:
 
-ChiSurf is provided “as is” without warranty of any kind, express or
-implied. The authors of ChiSurf shall not be, in
-any event, be held liable for any claim, damages or other liability arising
-from the use of ChiSurf. As the user, you
-are not allowed to redistribute any or all of the code, in any manner to other
-parties. The downloaded code is for your use only. ChiSurf is provided free
-of charge to both academic and commercial users.
+> ChiSurf is provided “as is” without warranty of any kind, express or implied. The authors of ChiSurf shall not be held liable for any claim, damages, or other liability arising from its use. Redistribution of the code is not permitted, and it is provided free of charge for both academic and commercial users.
 
-### Conda
-Either clone the repository and install dependencies using the provided `environemnt.yml` file. Or 
-install `chisurf` using `conda`/`mamba`:
+### Installation Instructions
+
+#### Conda
+
+Install `chisurf` using `conda` or `mamba`:
 
 ```bash
-conda create -n chisurf
+conda create -n chisurf chisurf -c conda-forge -c tpeulen
 conda activate chisurf
-mamba install chisurf -c tpeulen
 ```
 
-To start using the software activate the `chisurf` environment and start the ChiSurf GUI:
+3. Launch ChiSurf GUI:
 
 ```bash
-conda activate chisurf
 chisurf
 ```
 
-### Windows & macOS
+#### Windows
 
-All past and current release can be downloaded from [https://www.peulen.xyz/downloads/](https://www.peulen.xyz/downloads/)
+Download the latest releases from [https://www.peulen.xyz/downloads/](https://www.peulen.xyz/downloads/).
 
-### Linux
+---
 
-Linux users with snap scan simply install ChiSurf using snap.
+## Tutorials
 
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/chisurf)
+Learn how to use ChiSurf through the following video tutorials:
+
+### General Introduction  
+[![General Introduction](https://img.youtube.com/vi/qa4UQnhO-8M/0.jpg)](https://www.youtube.com/watch?v=qa4UQnhO-8M)
+
+### Fluorescence Decay Analysis  
+[![Fluorescence Decay Analysis](https://img.youtube.com/vi/rtllur-jUag/0.jpg)](https://www.youtube.com/watch?v=rtllur-jUag)
+
+### Fluorescence Decay Analysis  
+[![Fluorescence Decay Analysis](https://img.youtube.com/vi/rtllur-jUag/0.jpg)](https://www.youtube.com/watch?v=rtllur-jUag)
+
+### Fluorescence Correlation Spectroscopy (FCS)  
+[![FCS](https://img.youtube.com/vi/k9NgYbyLyXk/0.jpg)](https://www.youtube.com/watch?v=k9NgYbyLyXk)
+
 
 ## Support
 
@@ -118,3 +106,4 @@ modeling. Nat Methods. 2012;9(12):1218-1225.
 
 [1]: https://www.peulen.xyz/wp-content/uploads/2017/05/ChiSurf_Overview-768x451.png "ChiSurf GUI"
 [2]: https://www.peulen.xyz/wp-content/uploads/2024/04/ChiSurf_ParameterGraph.png "ChiSurf Parameter Network"
+
