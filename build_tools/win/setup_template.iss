@@ -22,7 +22,6 @@ UninstallLogMode=overwrite
 DirExistsWarning=yes
 UninstallDisplayIcon="{app}\{{ AppName }}"
 DisableProgramGroupPage=no
-ArchitecturesAllowed=x64 and not arm64
 
 ;DiskSliceSize=1073741824
 ;DiskSpanning=true
