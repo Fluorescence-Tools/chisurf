@@ -37,7 +37,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Icon files must be explicitely included
 Source: ".\icons\*.ico"; DestDir: "{app}\icons"
 ;Source: "chisurf.exe"; DestDir: "{app}"
-Source: "{{ SourceDir }}\dist\win\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{{ SourceDir }}\dist\win\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "Library\share\doc\*"
 
 ;uncomment below to add VC Runtimes
 ;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
