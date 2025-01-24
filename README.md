@@ -7,8 +7,11 @@
 ChiSurf is a software package for the global analysis of fluorescence data. It enables users to interlink, optimize, and jointly sample variables of models for time-resolved single-molecule and ensemble fluorescence experiments. By introducing dependencies across models, ChiSurf allows for the construction of complex descriptions across multiple datasets.
 For a detailed explanation of the methods and implementation, please refer to the [ChiSurf Preprint](https://www.preprints.org/manuscript/202501.1615/v1).
 
-![Parameter graph in ChiSurf][2]
-![ChiSurf GUI][1]
+<p align="center">
+  <img src="https://www.peulen.xyz/wp-content/uploads/2017/05/ChiSurf_Overview-768x451.png" alt="ChiSurf GUI" width="50%">
+  <img src="https://www.peulen.xyz/wp-content/uploads/2024/04/ChiSurf_ParameterGraph.png" alt="ChiSurf Parameter Network" width="40%">
+</p>
+
 ## Features
 
 ### General Features
@@ -106,4 +109,3 @@ modeling. Nat Methods. 2012;9(12):1218-1225.
 
 [1]: https://www.peulen.xyz/wp-content/uploads/2017/05/ChiSurf_Overview-768x451.png "ChiSurf GUI"
 [2]: https://www.peulen.xyz/wp-content/uploads/2024/04/ChiSurf_ParameterGraph.png "ChiSurf Parameter Network"
-
