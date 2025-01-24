@@ -39,7 +39,7 @@ rem Create an installer with Inno Setup
 "C:\Program Files (x86)\Inno Setup 6\Compil32.exe" /cc setup.iss
 
 rem Cleaning step: Purge the APP_PATH folder
-echo Cleaning up APP_PATH: %APP_PATH%...
+:: echo Cleaning up APP_PATH: %APP_PATH%...
 rmdir /s /q %APP_PATH%
 
 echo Script finished.
