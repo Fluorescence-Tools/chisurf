@@ -12,10 +12,7 @@ from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 from chisurf.models.model import ModelCurve
 
 
-class ParseModel(
-    ModelCurve,
-    FittingParameterGroup
-):
+class ParseModel(ModelCurve, FittingParameterGroup):
 
     name = "Parse-Model"
 
@@ -30,10 +27,7 @@ class ParseModel(
 
     def parse_code(self):
 
-        def var_found(
-                scanner,
-                name: str
-        ):
+        def var_found(scanner, name: str):
             if 'scipy' in name:
                 return name
             elif 'numpy' in name:
@@ -71,19 +65,11 @@ class ParseModel(
         self.code = parsed
 
         # Define parameters
-        self._parameters = list()
+        self._parameters_equation.clear()
         for key in self._keys:
             p = FittingParameter(name=key, value=1.0)
-            self._parameters.append(p)
-
-    def find_parameters(
-            self,
-            parameter_type=chisurf.parameter.Parameter
-    ):
-        # do nothing finding parameters of the
-        # model is handeled when the model function
-        # is set.
-        pass
+            self._parameters_equation.append(p)
+        self.find_parameters()
 
     def __init__(
             self,
@@ -91,22 +77,17 @@ class ParseModel(
             *args,
             **kwargs,
     ):
-        super().__init__(
-            fit,
-            *args,
-            **kwargs
-        )
+        super().__init__(fit,*args, **kwargs)
         self._keys = list()
         self._models = dict()
         self._count = 0
         self._func = "x*0"
+        self._parameters_equation = list()
         self.code = self._func
 
     def update_model(self, **kwargs):
-        super().update_model(
-            **kwargs
-        )
-        a = [p.value for p in self.parameters_all]
+        super().update_model(**kwargs)
+        a = [p.value for p in self._parameters_equation]
         x = self.fit.data.x
         # TODO: better evaluate when the func is set
         y = eval(self.code)

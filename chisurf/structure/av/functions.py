@@ -1,6 +1,7 @@
 from __future__ import annotations
 from chisurf import typing
 
+import chisurf.fio as io
 import chisurf.fluorescence
 import chisurf.structure.av.fps_
 import chisurf.settings
@@ -342,7 +343,7 @@ class DiffusionIterator:
             # define NG %s
             # define NG2 %s
             ''' % (idg2, ng, ng ** 2)
-        with scikit_fluorescence.io.zipped.open_maybe_zipped(
+        with io.zipped.open_maybe_zipped(
             filename, 'r'
         ) as f:
             kernel = defines + "".join(f.readlines())

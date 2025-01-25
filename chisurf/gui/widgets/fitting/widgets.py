@@ -1,21 +1,190 @@
-"""
-
-"""
 from __future__ import annotations
-import os
 
+import os
+import typing
+import pathlib
+
+import numpy as np
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 
+import chisurf.data
 import chisurf.fitting
 import chisurf.decorators
 import chisurf.gui.decorators
 import chisurf.settings
+
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets import Controller
 
 parameter_settings = chisurf.settings.parameter
+
+
+@chisurf.decorators.register
+class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
+
+    @property
+    def selected_fit_index(self) -> int:
+        if self.currentIndex().parent().isValid():
+            return self.currentIndex().parent().row()
+        else:
+            return self.currentIndex().row()
+
+    @selected_fit_index.setter
+    def selected_fit_index(self, v: int):
+        self.setCurrentItem(self.topLevelItem(v))
+
+    @property
+    def selected_fit(self) -> chisurf.fitting.fit.FitGroup:
+        return chisurf.fits[self.selected_fit_index]
+
+    @property
+    def selected_fits(self) -> typing.List[chisurf.fitting.fit.FitGroup]:
+        return [chisurf.fits[i] for i in self.selected_fit_idx]
+
+    @property
+    def selected_fit_idx(self) -> typing.List[int]:
+        return [r.row() for r in self.selectedIndexes()]
+
+    def selectedIndexes(self) -> typing.List[QtCore.QModelIndex]:
+        idx = super().selectedIndexes()[::3]
+        return idx
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.onRemoveFit()
+
+    def onCurveChanged(self):
+        for fit_window in chisurf.cs.mdiarea.subWindowList():
+            if fit_window.fit == self.selected_fit:
+                chisurf.cs.mdiarea.setActiveSubWindow(fit_window)
+                break
+        self.change_event()
+
+    def onChangeCurveName(self):
+        # select current curve and change its name
+        pass
+
+    def onRemoveFit(self):
+        fit_idxs = [selected_index.row() for selected_index in self.selectedIndexes()]
+        for fit_idx in fit_idxs:
+            chisurf.run(f'chisurf.macros.close_fit({fit_idx})')
+        self.update(update_others=True)
+
+    def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
+        for fit_window in chisurf.cs.mdiarea.subWindowList():
+            chisurf.cs.mdiarea.setActiveSubWindow(fit_window)
+            chisurf.cs.onSaveFit()
+
+    def contextMenuEvent(self, event):
+        if self.context_menu_enabled:
+            menu = QtWidgets.QMenu(self)
+            menu.setTitle("Fits")
+            menu.addAction("Save").triggered.connect(self.onSaveFit)
+            menu.addAction("Close").triggered.connect(self.onRemoveFit)
+            menu.addAction("Update").triggered.connect(self.update)
+            menu.exec_(event.globalPos())
+
+    def update(self, *args, update_others=True, **kwargs):
+        super().update()
+        self.clear()
+
+        for nbr, fit in enumerate(chisurf.fits):
+            widget_name = pathlib.Path(fit.data.name).name
+            model_name = fit.model.__class__.name
+            item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, model_name])
+            item.setToolTip(1, fit.name)
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+            fit.update()
+
+    def onItemChanged(self):
+        if self.selected_fits:
+            ds = self.selected_fits[0]
+
+            # Find the index of the selected dataset
+            index_of_ds = chisurf.fits.index(ds)
+
+            # Remove "c" from its current position
+            chisurf.fits.pop(index_of_ds)
+
+            # Insert "c" at position 1
+            idx_new = int(self.currentItem().text(0))
+            chisurf.fits.insert(idx_new, ds)
+
+            self.update(update_others=True)
+
+    def change_event(self):
+        pass
+
+    def show(self):
+        self.update()
+        QtWidgets.QTreeWidget.show(self)
+
+    def __init__(
+            self,
+            fit: chisurf.fitting.fit.Fit = None,
+            experiment=None,
+            drag_enabled: bool = False,
+            click_close: bool = False,
+            change_event: typing.Callable = None,
+            curve_types: str = 'experiment',
+            get_data_sets: typing.Callable = None,
+            parent: QtWidgets.QWidget = None,
+            icon: QtGui.QIcon = None,
+            context_menu_enabled: bool = True
+    ):
+        if get_data_sets is None:
+            def get_data_sets(**kwargs):
+                return chisurf.data.get_data(
+                    data_set=chisurf.imported_datasets,
+                    **kwargs
+                )
+            self.get_data_sets = get_data_sets
+        else:
+            self.get_data_sets = get_data_sets
+
+        if change_event is not None:
+            self.change_event = change_event
+
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/list-add.png")
+
+        self.curve_type = curve_types
+        self.click_close = click_close
+        self.fit = fit
+        self.experiment = experiment
+        self.context_menu_enabled = context_menu_enabled
+
+        super().__init__(parent)
+        self.setWindowIcon(icon)
+        self.setWordWrap(True)
+        self.setAlternatingRowColors(True)
+
+        if drag_enabled:
+            self.setAcceptDrops(True)
+            self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+
+        # http://python.6.x6.nabble.com/Drag-and-drop-editing-in-QListWidget-or-QListView-td1792540.html
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.drag_item = None
+        self.drag_row = None
+
+        self.clicked.connect(self.onCurveChanged)
+        self.itemChanged.connect(self.onItemChanged)
+
+        self.setHeaderHidden(False)
+        self.setColumnCount(3)
+        self.setHeaderLabels(('#', 'Data name', 'Model type'))
+        header = self.header()
+
+        # Set resize mode for the first and third columns
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+
+        header.setSectionsClickable(True)
 
 
 class FittingControllerWidget(Controller):
@@ -34,6 +203,18 @@ class FittingControllerWidget(Controller):
     @property
     def current_fit_type(self) -> str:
         return str(self.comboBox.currentText())
+
+    @property
+    def local_first(self) -> bool:
+        return self.checkBox.isChecked()
+
+    @property
+    def n_steps(self) -> int:
+        return int(self.doubleSpinBox.value() * 1000)
+
+    @property
+    def n_runs(self) -> int:
+        return self.spinBox_5.value()
 
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
@@ -66,13 +247,8 @@ class FittingControllerWidget(Controller):
             change_event=self.change_dataset,
             experiment=fit.data.experiment.__class__
         )
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "fittingWidget.ui"
-            ),
-            self
-        )
+
+        uic.loadUi(pathlib.Path(__file__).parent / "fittingWidget.ui", self)
 
         self.curve_select.hide()
         fit_names = [os.path.basename(f.data.name) for f in fit]
@@ -97,6 +273,8 @@ class FittingControllerWidget(Controller):
         self.actionSelectionChanged.triggered.connect(self.onDatasetChanged)
         self.actionErrorEstimate.triggered.connect(self.onErrorEstimate)
 
+        self.spinBox_3.valueChanged.connect(self._result_changed)
+
         if hide_fit_button:
             self.pushButton_fit.hide()
         if hide_range:
@@ -106,26 +284,36 @@ class FittingControllerWidget(Controller):
         if hide_fitting:
             self.hide()
 
+    def _result_changed(self):
+        result_idx = self.spinBox_3.value() - 1
+        chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].set_result_idx({result_idx})")
+
     def onDatasetChanged(self):
         chisurf.run(f"chisurf.macros.change_selected_fit_of_group({self.selected_fit})")
 
     def onErrorEstimate(self):
-        chisurf.run(f"cs.status.showMessage('Sampling analysis: {self.fit.name}. Please wait...')")
+        chisurf.run(f"cs.status_label.setText('Sampling analysis: {self.fit.name}')")
         filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
         kw = chisurf.settings.cs_settings['optimization']['sampling']
+        kw['n_runs'] = self.n_runs
+        kw['steps'] = self.n_steps
         chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
-        chisurf.run("cs.status.showMessage('Sampling done!')")
+        chisurf.run("cs.status_label.setText('Sampling done!')")
 
     def onRunFit(self):
-        chisurf.run(f"cs.status.showMessage('Fitting analysis: {self.fit.name}. Please wait...')")
-        chisurf.run("cs.current_fit.run()")
+        chisurf.run(f"cs.status_label.setText('Please wait fitting: {self.fit.name}')")
+        chisurf.run(f"cs.current_fit.run(local_first={self.local_first})")
         self.fit.model.finalize()
         for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
             try:
                 pa.controller.finalize()
             except (AttributeError, RuntimeError):
                 chisurf.logging.warning(f"Fitting parameter {pa.name} does not have a controller to update.")
-        chisurf.run("cs.status.showMessage('Fitting finished!')")
+        chisurf.run("cs.status_label.setText('Fitting finished!')")
+        # Update fit result selector
+        self.spinBox_3.setMaximum(len(self.fit.results))
+        self.spinBox_3.setMinimum(1)
+        self.spinBox_3.setValue(1)
 
     @property
     def xmin(self):
@@ -180,10 +368,15 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             **kwargs
     ):
         super().__init__(*args,  **kwargs)
+
         self.fit = fit
         self.fit_widget = fit_widget
         w = QtWidgets.QWidget(None)
         self.setWidget(w)
+
+        # Set the focus policy of the subwindow
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+        w.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         layout = QtWidgets.QVBoxLayout(w)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -271,8 +464,10 @@ class FittingParameterWidget(Controller):
         def linkcall():
             self.blockSignals(True)
             tooltip = " linked to " + parameter_name
-            s = (f"cs.current_fit.model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
-                 f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']")
+            s = (
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
+                f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']"
+            )
             chisurf.run(s)
             # Adjust widget of parameter that is linker
             self.widget_link.setToolTip(tooltip)
@@ -306,7 +501,7 @@ class FittingParameterWidget(Controller):
                 for a in fs.model.aggregated_parameters:
                     action_submenu = QtWidgets.QMenu(submenu)
                     action_submenu.setTitle(a.name)
-                    ut = a.parameters
+                    ut = a.parameters_all
                     ut.sort(key=lambda x: x.name, reverse=False)
                     for p in ut:
                         if p is not self.fitting_parameter:
@@ -319,12 +514,13 @@ class FittingParameterWidget(Controller):
 
                 # Simply all parameters
                 action_submenu.setTitle("All parameters")
-                for p in fs.model.parameters_all:
+                keys = list(fs.model.parameters_all_dict.keys())
+                sorted_keys = sorted(keys)
+                for key in sorted_keys:
+                    p = fs.model.parameters_all_dict[key]
                     if p is not self:
                         Action = action_submenu.addAction(p.name)
-                        Action.triggered.connect(
-                            self.make_linkcall(fit_idx, p.name)
-                        )
+                        Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
                 submenu.addMenu(action_submenu)
 
                 menu.addMenu(submenu)
@@ -345,7 +541,9 @@ class FittingParameterWidget(Controller):
             hide_bounds: bool = None,
             name: str = None,
             label_text: str = None,
-            hide_link: bool = None
+            hide_link: bool = None,
+            suffix: str = "",
+            callback: typing.Callable = None
     ):
         if hide_link is None:
             hide_link = parameter_settings['hide_link']
@@ -365,13 +563,16 @@ class FittingParameterWidget(Controller):
         if decimals is None:
             decimals = parameter_settings['decimals']
 
+        self.callback = callback
         self.name = fitting_parameter.name
         self.fitting_parameter = fitting_parameter
 
         self.widget_value = pg.SpinBox(
             dec=True,
-            decimals=decimals
+            decimals=decimals,
+            suffix=suffix
         )
+        self.widget_value.opts['compactHeight'] = False
         self.horizontalLayout.addWidget(self.widget_value)
 
         self.widget_lower_bound = pg.SpinBox(
@@ -414,30 +615,35 @@ class FittingParameterWidget(Controller):
         # The variable value
         self.widget_value.editingFinished.connect(
             lambda: chisurf.run(
-                f"cs.current_fit.model.parameters_all_dict['{fitting_parameter.name}'].value = "
-                f"{self.widget_value.value()} \n"
-                f"cs.current_fit.update()"
+                f"parameter = chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}']\n"
+                f"fixed = parameter.fixed \n"
+                f"parameter.fixed = False\n"
+                f"parameter.value = {self.widget_value.value()} \n"
+                f"parameter.fixed = fixed\n"
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
             )
         )
+        if callback:
+            self.widget_value.editingFinished.connect(self.callback)
 
         self.widget_fix.toggled.connect(
             lambda: chisurf.run(
-                f"cs.current_fit.model.parameters_all_dict['{fitting_parameter.name}'].fixed = "
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].fixed = "
                 f"{self.widget_fix.isChecked()} \n"
-                f"cs.current_fit.update()")
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()")
         )
 
         # Variable is bounded
         self.widget_bounds_on.toggled.connect(
             lambda: chisurf.run(
-                f"cs.current_fit.model.parameters_all_dict['{fitting_parameter.name}'].bounds_on = "
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].bounds_on = "
                 f"{self.widget_bounds_on.isChecked()}"
             )
         )
 
         self.widget_lower_bound.editingFinished.connect(
             lambda: chisurf.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
                     fitting_parameter.name,
                     self.widget_lower_bound.value(),
@@ -448,7 +654,7 @@ class FittingParameterWidget(Controller):
 
         self.widget_upper_bound.editingFinished.connect(
             lambda: chisurf.run(
-                "cs.current_fit.model.parameters_all_dict['%s'].bounds = (%s, %s)" %
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['%s'].bounds = (%s, %s)" %
                 (
                     fitting_parameter.name,
                     self.widget_lower_bound.value(),
@@ -473,12 +679,7 @@ class FittingParameterWidget(Controller):
     def onLinkFitGroup(self):
         self.blockSignals(True)
         self.widget_value.setEnabled(True)
-        chisurf.run(
-            "chisurf.macros.link_fit_group('%s', %s)" % (
-                self.fitting_parameter.name,
-                self.widget_link.checkState()
-            )
-        )
+        chisurf.run(f"chisurf.macros.link_fit_group('{self.fitting_parameter.name}', {self.widget_link.checkState()})")
         self.blockSignals(False)
 
     def setValue(self, v):
@@ -490,36 +691,33 @@ class FittingParameterWidget(Controller):
 
         # Update value of widget
         self.widget_value.setValue(self.fitting_parameter.value)
-        if self.fitting_parameter.fixed:
-            self.widget_fix.setCheckState(QtCore.Qt.Checked)
-        else:
-            self.widget_fix.setCheckState(QtCore.Qt.Unchecked)
+        self.widget_fix.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.fixed else QtCore.Qt.Unchecked)
 
         # Tooltip
         if self.fitting_parameter.bounds_on:
             lower, upper = self.fitting_parameter.bounds
-            s = "bound: (%s,%s)\n" % (lower, upper)
+            tooltip_text = f"bound: ({lower}, {upper})\n"
         else:
-            s = "bounds: off\n"
+            tooltip_text = "bounds: off\n"
+
         if self.fitting_parameter.is_linked:
-            s += "linked to: %s" % self.fitting_parameter.link.name
-        self.widget_value.setToolTip(s)
+            tooltip_text += f"linked to: {self.fitting_parameter.link.name}"
+        self.widget_value.setToolTip(tooltip_text)
 
         # Error-estimate
         value = self.fitting_parameter.value
-        if self.fitting_parameter.fixed or not isinstance(self.fitting_parameter.error_estimate, float):
+        error_estimate = self.fitting_parameter.error_estimate
+
+        if self.fitting_parameter.fixed or not isinstance(error_estimate, float):
             self.lineEdit.setText("NA")
         else:
-            rel_error = abs(
-                self.fitting_parameter.error_estimate / (value + 1e-12) * 100.0
-            )
-            self.lineEdit.setText("%.0f%%" % rel_error)
+            rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
+            self.lineEdit.setText("NA" if np.isnan(rel_error) else f"{rel_error:.0f}%")
 
-        # link
+        # Link
         if self.fitting_parameter.link is not None:
-            tooltip = " linked to " + self.fitting_parameter.link.name
+            tooltip = "linked to " + self.fitting_parameter.link.name
             self.widget_link.setToolTip(tooltip)
-            self.widget_link.setChecked(True)
             self.widget_value.setEnabled(False)
 
         self.blockSignals(False)
@@ -531,6 +729,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
             self,
             parameter_group: chisurf.fitting.parameter.FittingParameterGroup,
             n_col: int = None,
+            layout: QtWidgets.QVBoxLayout = None,
             *args,
             **kwargs
     ):
@@ -544,7 +743,8 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         self.n_row = 0
 
         self.setTitle(parameter_group.name)
-        layout = QtWidgets.QGridLayout()
+        if layout is None:
+            layout = QtWidgets.QGridLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -570,7 +770,9 @@ def make_fitting_parameter_widget(
         fixable: bool = None,
         hide_bounds: bool = None,
         name: str = None,
-        hide_link: bool = None
+        hide_link: bool = None,
+        suffix: str = "",
+        callback: typing.Callable = None
 ) -> FittingParameterWidget:
     if label_text is None:
         if fitting_parameter.label_text is None:
@@ -587,7 +789,9 @@ def make_fitting_parameter_widget(
         hide_bounds=hide_bounds,
         name=name,
         hide_link=hide_link,
-        label_text=label_text
+        label_text=label_text,
+        suffix=suffix,
+        callback=callback
     )
     fitting_parameter.controller = widget
     return widget

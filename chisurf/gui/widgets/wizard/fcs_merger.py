@@ -7,7 +7,7 @@ import numpy as np
 
 import pyqtgraph as pg
 
-import chisurf.fio
+import chisurf.fio as io
 import chisurf.data
 import chisurf.fluorescence.fcs
 import chisurf.gui.decorators
@@ -122,7 +122,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         selected_files = sorted(list(folder.glob('*.json.gz')))
         self.correlations.clear()
         for file in selected_files:
-            with chisurf.fio.open_maybe_zipped(file) as fp:
+            with io.open_maybe_zipped(file) as fp:
                 d = json.load(fp)
                 self.append_correlation(file, d)
         chisurf.logging.log(0, 'Opening analysis folder')

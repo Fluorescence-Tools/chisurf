@@ -1,9 +1,3 @@
-"""
-This module contains all time-resolved fluorescence models (TCSPC)
-
-.. automodule:: models.tcspc
-   :members:
-"""
 import chisurf.models.tcspc.lifetime
 import chisurf.models.tcspc.fret
 import chisurf.models.tcspc.pddem

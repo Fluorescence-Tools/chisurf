@@ -10,23 +10,24 @@ import shutil
 
 
 def get_path(path_type: str = 'settings') -> pathlib.Path:
-    """Get the path of the chisurf settings file
+    """Get the path of the chisurf settings file.
 
     This function returns the path of the chisurf settings files in the
     user folder. The default path is '~/.chisurf'. If the path does not
-    exist this function creates the folder.
+    exist, this function creates the folder.
 
     :return: pathlib.Path object pointing to the chisurf setting folder
     """
     if path_type == 'settings':
-        home = pathlib.Path().home()
-        path = home / '.chisurf'
-        if not path.exists():
-            os.makedirs(str(path.absolute()))
-        if not path.exists():
-            os.makedirs(str(chisurf_settings_path))
-    elif 'chisurf':
+        path = pathlib.Path.home() / '.chisurf'  # Define the settings path
+
+        # Creates the directory if it doesn't exist
+        path.mkdir(parents=True, exist_ok=True)
+
+    elif path_type == 'chisurf':
+        # Adjust to the chisurf directory
         path = pathlib.Path(__file__).parent.parent
+
     return path
 
 
@@ -65,6 +66,7 @@ def clear_settings_folder():
 chisurf_settings_path = get_path('settings')
 macro_path = get_path('chisurf') / "macros"
 plugin_path = get_path('chisurf') / "plugins"
+notebook_path = get_path('chisurf') / "notebooks"
 
 # Open chisurf settings file
 chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'

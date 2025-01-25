@@ -4,8 +4,8 @@ from chisurf import typing
 import csv
 import os
 import numpy as np
-import scikit_fluorescence
-import scikit_fluorescence.io
+
+import chisurf.fio as io
 
 import chisurf
 
@@ -31,7 +31,7 @@ def save_xy(
     """
     if verbose:
         print("Writing histogram to file: %s" % filename)
-    with scikit_fluorescence.io.zipped.open_maybe_zipped(
+    with io.open_maybe_zipped(
             filename=filename,
             mode='w'
     ) as fp:
@@ -209,7 +209,7 @@ class Csv(object):
         # process header
         header = 'infer' if use_header else None
         if use_header:
-            with scikit_fluorescence.io.zipped.open_maybe_zipped(
+            with io.zipped.open_maybe_zipped(
                     filename=filename,
                     mode='r'
             ) as fp:
@@ -227,7 +227,7 @@ class Csv(object):
                 print("Reading: {}".format(filename))
                 print("Skip rows: {}".format(skiprows))
                 print("Use header: {}".format(use_header))
-                with scikit_fluorescence.io.zipped.open_maybe_zipped(
+                with io.zipped.open_maybe_zipped(
                         filename=filename,
                         mode='r'
                 ) as csvfile:
@@ -235,7 +235,7 @@ class Csv(object):
 
             if file_type == 'csv':
                 if (delimiter is None) and infer_delimiter:
-                    with scikit_fluorescence.io.zipped.open_maybe_zipped(
+                    with io.zipped.open_maybe_zipped(
                             filename=filename,
                             mode='r'
                     ) as csvfile:

@@ -3,10 +3,11 @@ from __future__ import annotations
 from math import exp, ceil
 import numba as nb
 import numpy as np
+import tttrlib
 
 
 @nb.jit(nopython=True, nogil=True)
-def convolve_lifetime_spectrum(
+def convolve_lifetime_spectrum_nb(
         output_decay: np.array,
         lifetime_spectrum: np.array,
         instrument_response_function: np.array,
@@ -15,7 +16,7 @@ def convolve_lifetime_spectrum(
         amplitude_threshold: float = 0,
         use_amplitude_threshold: bool = False
 ) -> None:
-    """Compute the fluorescence decay for a lifetime spectrum and a instrument
+    """Compute the fluorescence decay for a lifetime spectrum and am instrument
     response function.
 
     Fills the pre-allocated output array `output_decay` with a fluorescence
@@ -93,7 +94,7 @@ def convolve_lifetime_spectrum(
 
 
 @nb.jit(nopython=True, nogil=True)
-def convolve_lifetime_spectrum_periodic(
+def convolve_lifetime_spectrum_periodic_nb(
         decay: np.ndarray,
         lifetime_spectrum: np.ndarray,
         irf: np.ndarray,
@@ -178,6 +179,28 @@ def convolve_lifetime_spectrum_periodic(
         for i in range(stop):
             fit_curr *= exp_curr
             decay[i] += fit_curr * x_curr * tail_a
+
+
+def convolve_lifetime_spectrum_periodic(
+        decay: np.ndarray,
+        lifetime_spectrum: np.ndarray,
+        irf: np.ndarray,
+        start: int,
+        stop: int,
+        n_points: int,
+        period: float,
+        dt: float,
+        conv_stop: int
+):
+    tttrlib.fconv_per_cs(
+        decay,
+        irf,
+        lifetime_spectrum,
+        period,
+        conv_stop,
+        stop,
+        dt
+    )
 
 #
 # @nb.jit(nopython=True, nogil=True)
@@ -280,7 +303,7 @@ def convolve_lifetime_spectrum_periodic(
 
 
 @nb.jit(nopython=True, nogil=True)
-def convolve_decay(
+def convolve_decay_nb(
         decay_curve: np.ndarray,
         irf: np.ndarray,
         start: int,
@@ -334,3 +357,22 @@ def convolve_decay(
     decay_out[0] = 0
     return decay_out
 
+
+def convolve_lifetime_spectrum(
+        output_decay: np.array,
+        lifetime_spectrum: np.array,
+        instrument_response_function: np.array,
+        convolution_stop: int = -1,
+        time_axis: np.array = None,
+        amplitude_threshold: float = 0,
+        use_amplitude_threshold: bool = False
+) -> None:
+    dt = (time_axis[1] - time_axis[0])
+    tttrlib.fconv(
+        output_decay,
+        instrument_response_function,
+        lifetime_spectrum,
+        0,
+        convolution_stop,
+        dt
+    )

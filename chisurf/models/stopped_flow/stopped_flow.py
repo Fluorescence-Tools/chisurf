@@ -16,6 +16,7 @@ from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
+
     plot_classes = [
         (
             plots.LinePlot, {

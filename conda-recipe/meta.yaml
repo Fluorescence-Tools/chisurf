@@ -9,7 +9,8 @@ source:
 
 build:
   number: 0
-  skip: true  # [py310]
+  binary_relocation: True  # Relocate binaries correctly (for shared libraries, etc.).
+  detect_binary_files_with_prefix: True  # [not win]
   entry_points:
     {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
     {% for entry_point in entry_points -%}
@@ -19,65 +20,80 @@ build:
 
 requirements:
   build:
-    - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - python
-    - setuptools
-    - pyopencl
-    - pocl  >=0.14      # [linux or osx]
-    - oclgrind          # [win]
-    - typing_extensions <=4.5
-    - cython
-    - pyyaml
-    - numpy
-    # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt
   host:
+    - git
+    - cmake
+    - make         # [not win]
+    - ninja
+    - swig <4.3.0
+    - pkg-config   # [not win]
+    - llvm-openmp  # [osx]
+    - libgomp      # [linux]
+    - pip
+    - swig <4.3.0
     - python
-    - setuptools
-    - cython
-    - pyopencl
-    - pocl  >=0.14      # [linux or osx]
-    - oclgrind          # [win]
+    - numpy
+    - tttrlib
+    - pkg-config   # [not win]
+    - llvm-openmp  # [osx]
+    - libgomp      # [linux]
     - typing_extensions <=4.5
+    - pip
+    - cython <3.0
+    - pyopencl
+    - pocl >=0.14      # [linux or osx]
+    - oclgrind          # [win]
+    - guidata
+    - guiqwt
     - pyyaml
     - numpy
-    # Needed for pyrcc5 (updated pyqt resource file)
-    - pyqt
+    - pyqt           # Needed for pyrcc5 (updating PyQt resource files)
+    # Needed for chinet
+    - libmongoc
+    - doxygen
+    - boost-cpp
+    - numpy
+    - libcxx  # [osx]
   run:
     - python
-    - {{ pin_compatible('numpy', max_pin='x.x') }}
+    - numpy
     - pyyaml
-    - pyqtgraph
+    - click <8.0 # Conflicts with papermill
+    - python-slugify
+    - pyqtgraph >=0.13
     - matplotlib
     - deprecation
-    - scikit-fluorescence
     - imp
+    - pandas
+    - papermill
+    - typing-extensions 4.5.*
     - typing_extensions 4.5.*
-    - typing_utils 0.1.*
-    - scipy 1.11.*
-    - numba 0.57.*
-    - tttrlib
+    - scipy
+    - numba
+    - boost-cpp
+    - tttrlib >=0.25
     - mdtraj
-    - pdb2pqr 3.2.*
-    - propka 3.4.*
-    - ipython 7.*.*
-    - chinet >=0.0.8
-    - labellib
-    - pyopencl 2023.*
-    - pytools 2023.*
+    - htmd-pdb2pqr
+    - ipython <8.0
+    - notebook
+    - pyopencl
+    - pytools
     - emcee 3.1.*
-    - pyopengl 3.1.*
+    - pyopengl
+    - pytables <3.10
     - pocl  >=0.14      # [linux or osx]
     - oclgrind          # [win]
-    - pymol-open-source 2.5.*
-    - tttrconvert
+    - pymol-open-source
     - qscintilla2
-    - k2dist
-    - python-docx 1.0.*
+    - guidata
+    - guiqwt
+    - qscintilla2
+    - python-docx
     - qtconsole 5.*
-    - ndxplorer
-    - clsmview
+    - pyqtwebengine
+    - joblib
+    - libcxx  # [osx]
 
 app:
   entry: chisurf

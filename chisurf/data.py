@@ -37,6 +37,10 @@ class ExperimentalData(chisurf.base.Data):
     ) -> None:
         self._experiment = v
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
     def __init__(
             self,
             data_reader: chisurf.experiments.reader.ExperimentReader = None,
@@ -50,13 +54,6 @@ class ExperimentalData(chisurf.base.Data):
             unique_identifier: str = None,
             **kwargs
     ):
-        """
-
-        :param args:
-        :param data_reader:
-        :param experiment:
-        :param kwargs:
-        """
         super().__init__(
             filename=filename,
             data=data,
@@ -299,7 +296,6 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
     ) -> None:
         self.x = x
         self.y = y
-
         if ex is None:
             ex = np.ones_like(x)
         if ey is None:
@@ -307,16 +303,10 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         self.ex = ex
         self.ey = ey
 
-    def set_weights(
-            self,
-            w: np.array
-    ):
+    def set_weights(self, w: np.array):
         self.ey = 1. / w
 
-    def __getitem__(
-            self,
-            key: str
-    ) -> typing.Tuple[
+    def __getitem__(self, key: str) -> typing.Tuple[
         np.ndarray,
         np.ndarray,
         np.ndarray,
@@ -438,7 +428,7 @@ class ExperimentDataGroup(DataGroup):
 
     @property
     def experiment(self):
-        return self.setup.experiment
+        return self[self._current_dataset].experiment
 
     @experiment.setter
     def experiment(self, v):

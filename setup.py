@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import platform
+import pathlib
 from setuptools import setup, find_packages, Extension
 try:
     from Cython.Distutils import build_ext
@@ -17,6 +18,19 @@ DESCRIPTION = info.__description__
 LONG_DESCRIPTION = info.LONG_DESCRIPTION
 URL = info.__url__
 EMAIL = info.__email__
+
+def dict_from_txt(fn):
+    d = {}
+    with open(fn) as f:
+        for line in f:
+            (key, val) = line.split()
+            d[str(key)] = val
+    return d
+
+
+script_directory = pathlib.Path(__file__).parent.absolute()
+gui_scripts = dict_from_txt(script_directory / "chisurf/entry_points/gui.txt")
+console_scripts = dict_from_txt(script_directory / "chisurf/entry_points/cmd.txt")
 
 
 def get_extensions():
@@ -72,19 +86,6 @@ def get_extensions():
         return list()
 
 
-def dict_from_txt(fn):
-    d = {}
-    with open(fn) as f:
-        for line in f:
-            (key, val) = line.split()
-            d[str(key)] = val
-    return d
-
-
-gui_scripts = dict_from_txt("./chisurf/entry_points/gui.txt")
-console_scripts = dict_from_txt("./chisurf/entry_points/cmd.txt")
-
-
 metadata = dict(
     name=NAME,
     version=VERSION,
@@ -117,12 +118,12 @@ metadata = dict(
             '*.ui', '*.css', '*.qss',
             '*.png', '*.svg',
             '*.csv', '*.npy', '*.dat',
-            '*.dll', '*.so', '*.pyd'
+            '*.dll', '*.so', '*.pyd', '*.ipynb'
         ]
     },
     install_requires=[
         'PyQt5', 'qtpy', 'sip', 'pyqtgraph', 'qtconsole',
-        'numba', 'numpy', 'numexpr', 'scipy', 'pyopencl',
+        'numba', 'numpy', 'numexpr', 'scipy',
         'cython', 'python-slugify', 'deprecation',
         'emcee',
         'PyYAML', 'typing-extensions',
@@ -143,12 +144,13 @@ metadata = dict(
     },
     entry_points={
         "console_scripts": [
-            "%s=%s" % (key, console_scripts[key]) for key in console_scripts
+            f"{key}={console_scripts[key]}" for key in console_scripts
         ],
         "gui_scripts": [
-            "%s=%s" % (key, gui_scripts[key]) for key in gui_scripts
+            f"{key}={gui_scripts[key]}" for key in gui_scripts
         ]
     }
 )
 
-setup(**metadata)
+if __name__ == "__main__":
+    setup(**metadata)

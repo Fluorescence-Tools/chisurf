@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import abc
+import pathlib
+
 from chisurf import typing
 
 import chisurf.base
@@ -31,6 +33,13 @@ class ExperimentReader(chisurf.base.Base):
             return 0, len(data)
         else:
             return 0, 0
+
+    def __getstate__(self):
+        state = super().__getstate__()
+        state.update(
+            chisurf.base.to_elementary(self.__dict__.copy())
+        )
+        return state
 
     @abc.abstractmethod
     def read(
@@ -72,5 +81,5 @@ class ExperimentReaderController(chisurf.base.Base):
         pass
 
     @abc.abstractmethod
-    def get_filename(self) -> str:
+    def get_filename(self) -> pathlib.Path:
         pass

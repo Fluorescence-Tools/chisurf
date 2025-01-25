@@ -3,7 +3,8 @@ from __future__ import annotations
 import numpy as np
 
 import chisurf.fluorescence.tcspc
-import scikit_fluorescence.modeling.kappa2
+import chisurf.fluorescence.anisotropy.kappa2 as kapp2
+
 import chisurf.math
 import chisurf.math.datatools
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
@@ -12,8 +13,8 @@ from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
 
 
 rda_axis = np.logspace(
-    start=np.log(chisurf.settings.fret['rda_min']),
-    stop=np.log(chisurf.settings.fret['rda_max']),
+    start=np.log10(chisurf.settings.fret['rda_min']),
+    stop=np.log10(chisurf.settings.fret['rda_max']),
     num=chisurf.settings.fret['rda_resolution'],
     dtype=np.float64
 )
@@ -135,11 +136,7 @@ class OrientationParameter(FittingParameterGroup):
     def mode(self, v):
         self._mode = v
 
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         self._mode = kwargs.get('orientation_mode', 'fast_isotropic')
 
         # fast isotropic
@@ -147,7 +144,7 @@ class OrientationParameter(FittingParameterGroup):
 
         # slow isotropic
         k2s = np.linspace(0.01, 4, 50)
-        pk2 = scikit_fluorescence.modeling.kappa2.p_isotropic_orientation_factor(
+        pk2 = kapp2.p_isotropic_orientation_factor(
             k2s
         )
         self._k2_slow_iso = chisurf.math.datatools.two_column_to_interleaved(
@@ -262,7 +259,8 @@ class Gaussians(FittingParameterGroup):
         )
         s = FittingParameter(
             name='s(%s,%i)' % (self.short, n + 1),
-            value=sigma
+            value=sigma,
+            fixed=True
         )
         shape = FittingParameter(
             name='k(%s,%i)' % (self.short, n + 1),
@@ -354,11 +352,7 @@ class DiscreteDistance(FittingParameterGroup):
         for i, g in enumerate(self._amplitudes):
             g.value = a[i]
 
-    def append(
-            self,
-            mean: float,
-            x: float
-    ):
+    def append(self, mean: float, x: float):
         n = len(self)
         self._distances.append(
             FittingParameter(
@@ -386,7 +380,7 @@ class DiscreteDistance(FittingParameterGroup):
     def __init__(
             self,
             name: str = 'fret_rate',
-            short: str = 'G',
+            short: str = 'd',
             **kwargs
     ):
         super().__init__(**kwargs)
@@ -421,7 +415,8 @@ class FRETModel(LifetimeModel):
         tauD0 = self.fret_parameters.tauD0
         #kappa2 = self.fret_parameters.kappa2
         forster_radius = self.fret_parameters.forster_radius
-        kappa2s = self.orientation_parameter.orientation_spectrum
+        #kappa2s = self.orientation_parameter.orientation_spectrum
+        kappa2s = 0.6667
         rs = distribution2rates(
             self.distance_distribution,
             tauD0,
@@ -499,10 +494,7 @@ class FRETModel(LifetimeModel):
         return 1.0 - self.fret_species_averaged_lifetime / self.donor_species_averaged_lifetime
 
     @fret_efficiency.setter
-    def fret_efficiency(
-            self,
-            v: float
-    ):
+    def fret_efficiency(self, v: float):
         sdecay = self.fit.data.y.sum()
         tau0x = self.donor_species_averaged_lifetime
         n0 = sdecay/(tau0x*(1.-v))
@@ -513,16 +505,16 @@ class FRETModel(LifetimeModel):
         return self._donors
 
     @donors.setter
-    def donors(
-            self,
-            v: Lifetime
-    ):
+    def donors(self, v: Lifetime):
         self._donors = v
 
     @property
     def reference(self):
         self._reference.update_model()
-        return np.maximum(self._reference._y, 0)
+        ref = np.maximum(self._reference._y, 0)
+        scale = np.max(self.fit.data.y) / np.max(ref)
+        ref *= scale
+        return ref
 
     def calc_fret_efficiency(self) -> float:
         try:
@@ -575,12 +567,7 @@ class GaussianModel(FRETModel):
         dist = self.gaussians.distribution
         return dist
 
-    def append(
-            self,
-            mean: float,
-            sigma: float,
-            species_fraction: float
-    ):
+    def append(self, mean: float, sigma: float, species_fraction: float):
         self.gaussians.append(mean, sigma, species_fraction)
 
     def pop(self):
@@ -617,11 +604,7 @@ class FRETrateModel(FRETModel):
         dist = self.fret_rates.distribution
         return dist
 
-    def append(
-            self,
-            mean: float,
-            species_fraction: float
-    ):
+    def append(self, mean: float, species_fraction: float):
         self.fret_rates.append(mean, species_fraction)
 
     def pop(self):
@@ -688,7 +671,7 @@ class WormLikeChainModel(FRETModel):
             **kwargs
         )
         self._chain_length = FittingParameter(
-            name='length',
+            name='l',
             value=100.0,
             model=self,
             fixed=False,
@@ -696,14 +679,14 @@ class WormLikeChainModel(FRETModel):
         )
         self._use_dye_linker = use_dye_linker
         self._sigma_linker = FittingParameter(
-            name='link_width',
+            name='w',
             value=6.0,
             model=self,
             fixed=False,
             text='lw'
         )
         self._persistence_length = FittingParameter(
-            name='persistence',
+            name='lp',
             value=30.0,
             model=self,
             fixed=False,
@@ -754,10 +737,7 @@ class SingleDistanceModel(FRETModel):
             fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
-        super().__init__(
-            fit=fit,
-            **kwargs
-        )
+        super().__init__(fit=fit, **kwargs)
         self._rda = kwargs.get('rda', np.array([100.0]))
         self._prda = kwargs.get('prda', np.array([100.0]))
 

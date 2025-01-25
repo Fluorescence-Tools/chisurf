@@ -13,12 +13,11 @@ from chisurf.gui import QtGui, QtWidgets
 
 import pyqtgraph as pg
 import pyqtgraph.parametertree
+import pyqtgraph.parametertree.parameterTypes
 
 import json
-import re
 
-import scikit_fluorescence as skf
-import scikit_fluorescence.io
+import chisurf.fio as io
 
 
 
@@ -29,25 +28,26 @@ def dict_to_parameter_tree(origin) -> typing.List:
     """
     target = list()
     for key in origin.keys():
-        if key.endswith('_options'):
-            target[-1]['values'] = origin[key]
-            target[-1]['type'] = 'list'
-            continue
         d = dict()
         d['name'] = key
         if isinstance(origin[key], dict):
             d['type'] = 'group'
             d['children'] = dict_to_parameter_tree(origin[key])
+        elif callable(origin[key]):
+            d['type'] = 'str'
+            d['value'] = origin[key].__name__
+            d['call'] = origin[key]
+            d['expanded'] = False
+        elif isinstance(origin[key], list):
+            d['type'] = 'list'
+            d['expanded'] = True
+            d['values'] = origin[key]
         else:
             value = origin[key]
-            type = value.__class__.__name__
-            if type == 'unicode':
-                type = 'str'
-            iscolor = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', str(value))
-            if iscolor:
-                type = 'color'
-            # {'name': 'List', 'type': 'list', 'values': [1,2,3], 'value': 2},
-            d['type'] = type
+            t = value.__class__.__name__
+            if t == 'unicode':
+                t = 'str'
+            d['type'] = t
             d['value'] = value
             d['expanded'] = False
         target.append(d)
@@ -65,13 +65,20 @@ def parameter_tree_to_dict(parameter_tree) -> typing.Dict:
         if child.type() == "action":
             continue
         if not child.children():
-            value = child.opts['value']
             name = child.name()
-            if isinstance(value, QtGui.QColor):
-                value = str(value.name())
-            if isinstance(child, pg.parametertree.parameterTypes.ListParameter):
-                target[name + '_options'] = child.opts['values']
-            target[name] = value
+            if child.opts.get('call', None):
+                target[name] = child.opts['call']
+            elif isinstance(child, pg.parametertree.parameterTypes.ListParameter):
+                values = child.opts['values']
+                values = [None if value == 'None' else value for value in values]
+                target[name] = values
+            elif isinstance(child.opts['value'], QtGui.QColor):
+                target[name] = str(child.opts['value'].name())
+            else:
+                value = child.opts['value']
+                if value == 'None':
+                    value = None
+                target[name] = value
         else:
             target[child.name()] = parameter_tree_to_dict(child)
     return target
@@ -84,6 +91,7 @@ class ParameterEditor(QtWidgets.QWidget):
             target: typing.Dict = None,
             json_file: pathlib.Path = None,
             windows_title: str = None,
+            callback: typing.Callable = None,
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -95,19 +103,19 @@ class ParameterEditor(QtWidgets.QWidget):
         if windows_title is None:
             windows_title = "Configuration: %s" % json_file
 
+        self.callback = callback
         self._json_file = json_file
         self._dict = dict()
         self._target = target
-        self.json_file = json_file
+
+        if pathlib.Path(json_file).is_file():
+            self.json_file = json_file
+        else:
+            self._dict = target
+
         self._p = None
 
-        self._p = pg.parametertree.Parameter.create(
-            name='params',
-            type='group',
-            children=self.parameter_dict,
-            expanded=True
-        )
-        self._p.param('Save').sigActivated.connect(self.save)
+        self.create_parameter()
 
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -117,7 +125,39 @@ class ParameterEditor(QtWidgets.QWidget):
 
         t = pg.parametertree.ParameterTree()
         t.setParameters(self._p, showTop=False)
+        self.t = t
         layout.addWidget(t, 1, 0, 1, 1)
+
+        if self._p is not None and self.callback is not None:
+            self.connect_value_changed(self._p, self.callback)
+
+    def create_parameter(self):
+        self._p = pg.parametertree.Parameter.create(
+            name='Parameter',
+            type='group',
+            children=self.parameter_dict,
+            expanded=True
+        )
+        if pathlib.Path(self._json_file).is_file():
+            self._p.param('Save').sigActivated.connect(self.save)
+
+    def connect_value_changed(self, param, value_changed):
+        if isinstance(param, pg.parametertree.Parameter):
+            param.sigValueChanged.connect(value_changed)
+            if isinstance(param, pg.parametertree.parameterTypes.GroupParameter):
+                for child in param:
+                    self.connect_value_changed(child, self.callback)
+
+    def update(self):
+        self.clear()
+        self.create_parameter()
+        self.t.setParameters(self._p)
+        if self.callback is not None:
+            self.connect_value_changed(self._p, self.callback)
+
+    def clear(self):
+        self._p = None
+        self.t.clear()
 
     def save(self, event: QtWidgets.QAction = None, filename: str = None):
         if filename is None:
@@ -138,12 +178,13 @@ class ParameterEditor(QtWidgets.QWidget):
     def parameter_dict(self) -> typing.List:
         od = dict(self.dict)
         params = dict_to_parameter_tree(od)
-        params.append(
-            {
-                'name': 'Save',
-                'type': 'action'
-            }
-        )
+        if pathlib.Path(self.json_file).is_file():
+            params.append(
+                {
+                    'name': 'Save',
+                    'type': 'action'
+                }
+            )
         return params
 
     @property
@@ -152,7 +193,7 @@ class ParameterEditor(QtWidgets.QWidget):
 
     @json_file.setter
     def json_file(self, v: str):
-        with skf.io.zipped.open_maybe_zipped(v, mode='r') as fp:
+        with io.open_maybe_zipped(v, mode='r') as fp:
             self._dict = json.load(fp)
         self._json_file = v
 

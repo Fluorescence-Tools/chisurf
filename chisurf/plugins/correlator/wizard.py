@@ -18,7 +18,6 @@ import chisurf.fitting
 import chisurf.macros
 
 
-
 class ChisurfWizard(QtWidgets.QWizard):
 
     def page_actions(self):
@@ -53,7 +52,6 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         self.button(QtWidgets.QWizard.NextButton).clicked.connect(self.page_actions)
         self.button(QtWidgets.QWizard.FinishButton).clicked.connect(self.onFinish)
-
 
 
 if __name__ == "plugin":

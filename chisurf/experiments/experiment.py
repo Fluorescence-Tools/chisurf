@@ -100,6 +100,14 @@ class Experiment(chisurf.base.Base):
             names.append(str(s.name))
         return names
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        state['_model_classes'] = self._model_classes
+        state['_readers'] = self._readers
+        state['name'] = self.__dict__['name']
+        state['hidden'] = self.hidden
+        return state
+
     def __str__(self):
         return self.__class__.__name__ + "(" + self.name + ")"
 

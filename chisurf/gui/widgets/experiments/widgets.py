@@ -1,6 +1,10 @@
 from __future__ import annotations
+
+import pathlib
+
 from chisurf import typing
 import os
+import pickle
 
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -19,20 +23,15 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     @property
     def curve_name(self) -> str:
         try:
-            return self.selected_dataset.name
+            return self.selected_dataset.filename
         except AttributeError:
             return "Untitled"
 
     def get_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
-        data_curves = self.get_data_sets(
-            curve_type=self.curve_type
-        )
+        data_curves = self.get_data_sets(curve_type=self.curve_type)
         if self.experiment is not None:
             dv = [
-                d for d in data_curves if isinstance(
-                    d.experiment,
-                    self.experiment
-                )
+                d for d in data_curves if isinstance(d.experiment, self.experiment)
             ]
             return dv
         else:
@@ -75,6 +74,10 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         # select current curve and change its name
         pass
 
+    def selectedIndexes(self) -> typing.List[QtCore.QModelIndex]:
+        idx = super().selectedIndexes()[::3]
+        return idx
+
     def onRemoveDataset(self):
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
@@ -83,22 +86,24 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.update(update_others=True)
 
     def onSaveDataset(self):
+        base_name, extension = os.path.splitext(self.curve_name)
         filename = chisurf.gui.widgets.save_file(
-            working_path=self.curve_name,
-            file_type="*.*"
+            working_path=base_name,
+            file_type='Pickle file (*.pkl)',
         )
-        base_name, extension = os.path.splitext(filename)
-        if extension.lower() == '.csv':
-            self.selected_dataset.save(
-                filename=filename,
-                file_type='csv'
-            )
-        else:
-            filename = base_name + '.yaml'
-            self.selected_dataset.save(
-                filename=filename,
-                file_type='yaml'
-            )
+        self.selected_dataset.save(
+            filename=filename,
+            file_type='pkl'
+        )
+
+    def onLoadDataset(self):
+        filename: pathlib.Path = chisurf.gui.widgets.get_filename(
+            description='Pickled data ',
+            file_type='Pickle files (*.pkl)'
+        )
+        obj = pickle.load(open(filename, 'rb'))
+        chisurf.imported_datasets.append(obj)
+        self.update()
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
@@ -121,11 +126,17 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             menu = QtWidgets.QMenu(self)
             menu.setTitle("Datasets")
             menu.addAction("Save").triggered.connect(self.onSaveDataset)
+            menu.addAction("Load").triggered.connect(self.onLoadDataset)
             menu.addAction("Remove").triggered.connect(self.onRemoveDataset)
             menu.addAction("Group").triggered.connect(self.onGroupDatasets)
             menu.addAction("Ungroup").triggered.connect(self.onUnGroupDatasets)
             menu.addAction("Refresh").triggered.connect(self.update)
             menu.exec_(event.globalPos())
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete):
+            self.onRemoveDataset()
 
     def update(self, *args, update_others=True, **kwargs):
         super().update()
@@ -136,21 +147,26 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             self.setWindowTitle("")
         self.clear()
 
-        for d in self.datasets:
-            fn = d.name
-            widget_name = os.path.basename(fn)
-            item = QtWidgets.QTreeWidgetItem(self, [widget_name])
-            item.setToolTip(0, fn)
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-
+        for nbr, d in enumerate(self.datasets):
             # If group of curves
             if isinstance(d, chisurf.data.ExperimentDataGroup):
+                experiment_type = d[0].experiment.name
+                widget_name = pathlib.Path(d[0].name).name
+                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
                 for di in d:
                     fn = di.name
-                    widget_name = os.path.basename(fn)
-                    i2 = QtWidgets.QTreeWidgetItem(item, [widget_name])
-                    i2.setToolTip(0, fn)
+                    experiment_type = di.experiment.name
+                    widget_name = pathlib.Path(fn).name
+                    i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
+                    i2.setToolTip(1, fn)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+            else:
+                fn = d.name
+                widget_name = pathlib.Path(fn).name
+                experiment_type = d.experiment.name
+                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
+                item.setToolTip(1, fn)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
         # update other instances
         if update_others:
@@ -176,8 +192,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            command = "\n".join(["chisurf.macros.add_dataset(filename='%s')" % p for p in paths])
-            print(command)
+            command = "\n".join([f"chisurf.macros.add_dataset(filename=r'{p}')" for p in paths])
             chisurf.run(command)
             event.acceptProposedAction()
         else:
@@ -187,7 +202,18 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     def onItemChanged(self):
         if self.selected_datasets:
             ds = self.selected_datasets[0]
-            ds.name = str(self.currentItem().text(0))
+
+            # Find the index of the selected dataset
+            index_of_ds = chisurf.imported_datasets.index(ds)
+
+            # Remove item from its current position
+            chisurf.imported_datasets.pop(index_of_ds)
+
+            # Insert item at position 1
+            idx_new = int(self.currentItem().text(0))
+            chisurf.imported_datasets.insert(idx_new, ds)
+
+            ds.name = str(self.currentItem().text(1))
             self.update(update_others=True)
 
     def change_event(self):
@@ -196,6 +222,14 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     def show(self):
         self.update()
         QtWidgets.QTreeWidget.show(self)
+
+    def handleSelectionChange(self, selected, deselected):
+        if not selected.indexes():
+            # If no items are selected, reselect the last selected item
+            self.setCurrentIndex(self.last_selected_index)
+
+        # Update the last selected index
+        self.last_selected_index = self.selectedIndexes()[0]
 
     def __init__(
             self,
@@ -235,7 +269,6 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         super().__init__(parent)
         self.setWindowIcon(icon)
         self.setWordWrap(True)
-        self.setHeaderHidden(True)
         self.setAlternatingRowColors(True)
 
         if drag_enabled:
@@ -247,20 +280,31 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.drag_item = None
         self.drag_row = None
 
+        # Handle selection - select last idx is none is selected (click outside)
+        # Connect the itemSelectionChanged signal to a custom slot
+        self.last_selected_index = 0
+        self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
+
         self.clicked.connect(self.onCurveChanged)
         self.itemChanged.connect(self.onItemChanged)
 
+        self.setHeaderHidden(False)
+        self.setColumnCount(3)
+        self.setHeaderLabels(('#', 'Data name', 'Data type'))
+        header = self.header()
 
-class FCSController(
-    reader.ExperimentReaderController,
-    QtWidgets.QWidget
-):
+        # Set resize mode for the first and third columns
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
 
-    def get_filename(self) -> str:
-        return chisurf.gui.widgets.get_filename(
-                'FCS-CSV files',
-                file_type=self.file_type
-            )
+        header.setSectionsClickable(True)
+
+
+class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
+
+    def get_filename(self) -> pathlib.Path:
+        return chisurf.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
 
     def __init__(
             self,

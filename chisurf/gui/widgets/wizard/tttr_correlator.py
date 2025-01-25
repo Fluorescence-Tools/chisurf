@@ -8,7 +8,7 @@ import numpy as np
 
 import pyqtgraph as pg
 
-import chisurf.fio
+import chisurf.fio as io
 import chisurf.gui.decorators
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 
@@ -178,7 +178,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         output_folder.mkdir(parents=True, exist_ok=True)
         for i, cor in enumerate(self.correlations):
             json_path = output_folder / f'chnk-{i:04}.json.gz'
-            with chisurf.fio.open_maybe_zipped(json_path, 'w') as fp:
+            with io.open_maybe_zipped(json_path, 'w') as fp:
                 json.dump(cor, fp)
 
     def correlate_data(self):
@@ -261,7 +261,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
     def open_sl5(self, filename: str) -> tttrlib.TTTR:
         chisurf.logging.log(0, 'WizardTTTRCorrelator::open_sl5:', filename)
         data = dict()
-        with chisurf.fio.open_maybe_zipped(filename) as fp:
+        with io.open_maybe_zipped(filename) as fp:
             data.update(json.load(fp))
         tttr_filename = self.analysis_folder / pathlib.Path(data['filename'])
         tttr_filetype = data['filetype']

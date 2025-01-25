@@ -1,4 +1,5 @@
 ---
+# notebook_path: /home/thomas # can be used to define a custom NB path
 n_threads: 4
 verbose: false
 fitting_message: true
@@ -83,12 +84,12 @@ fret:
   forster_radius: 52
   tau0: 4
   kappa2: 0.667
-  rda_resolution: 512
+  rda_resolution: 96
   rda_min: 1
-  rda_max: 512
+  rda_max: 130
   lifetime_bins: 101
   bin_lifetime: false
-  discriminate: true
+  discriminate: false
   discriminate_amplitude: 1.0e-10
   orientation_mode: slow_isotropic
 tcspc_csv:
@@ -145,7 +146,7 @@ gui:
     paper_color: "#747677"
     default_color: "#e1e1e1"
     font_size: 9
-    font_family: Helvetica
+    font_family: Sans-Serif
     language: Python
   style_sheet: dark.css
   RubberBandResize: true

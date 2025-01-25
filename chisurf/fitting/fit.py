@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from chisurf import typing
+from collections import deque
 
 import os
 import numpy as np
@@ -22,43 +24,9 @@ import chisurf.math.optimization
 
 class Fit(chisurf.base.Base):
 
-    def __init__(
-            self,
-            model_class: typing.Type[chisurf.models.Model] = type,
-            data: chisurf.data.DataCurve = None,
-            xmin: int = 0,
-            xmax: int = 0,
-            model_kw: typing.Dict = None,
-            **kwargs
-    ):
-        super().__init__(**kwargs)
-        self._model = None
-        self.results = None
-        if data is None:
-            data = chisurf.data.DataCurve(
-                x=np.arange(10),
-                y=np.arange(10)
-            )
-        self._data = data
-        self.plots = list()
-        self._xmin, self._xmax = xmin, xmax
-        if model_kw is None:
-            model_kw = {}
-        self._model_kw = model_kw
-        self.model = model_class
-
-    def __str__(self):
-        s = "\nFitting:\n"
-        s += "Dataset:\n"
-        s += "--------\n"
-        s += str(self.data)
-        s += "\n\nFit-result: \n"
-        s += "----------\n"
-        s += "fitrange: %i..%i\n" % (self.xmin, self.xmax)
-        s += "chi2:\t%.4f \n" % self.chi2r
-        s += "----------\n"
-        s += str(self.model)
-        return s
+    @property
+    def fit_idx(self) -> int:
+        return chisurf.fitting.find_fit_idx(self)
 
     @property
     def xmin(self) -> int:
@@ -175,6 +143,73 @@ class Fit(chisurf.base.Base):
         """
         return self.model.n_free
 
+
+    def __init__(
+            self,
+            model_class: typing.Type[chisurf.models.Model] = type,
+            data: chisurf.data.DataCurve = None,
+            xmin: int = 0,
+            xmax: int = 0,
+            model_kw: typing.Dict = None,
+            **kwargs
+    ):
+        super().__init__(**kwargs)
+        self._model: chisurf.models.Model = None
+        self._result_current = 0
+        self.results = deque(maxlen=500)
+        if data is None:
+            data = chisurf.data.DataCurve(
+                x=np.arange(10),
+                y=np.arange(10)
+            )
+        self._data = data
+        self.plots = list()
+        self._xmin, self._xmax = xmin, xmax
+        if model_kw is None:
+            model_kw = {}
+        self._model_kw = model_kw
+        self.model = model_class
+
+    def __getstate__(self):
+        d = super().__getstate__()
+
+        # Try to pickle model; remove unpickleable attributes
+        model_state = self.model.__getstate__()
+        import pickle
+        # Attempt to pickle each attribute
+        for key in list(model_state.keys()):  # Use list to avoid modifying dict while iterating
+            try:
+                pickle.dumps(model_state[key])  # Try pickling the attribute
+            except (pickle.PicklingError, TypeError):
+                # Remove unpickleable attributes
+                del model_state[key]
+
+        d['data'] = self.data.__getstate__()
+        d['model'] = model_state
+        return d
+
+    def __setstate__(self, state):
+        m = state.pop('model')
+        d = state.pop('data')
+        self.model.__setstate__(m)
+        self.data.__setstate__(d)
+        super().__init__(**state)
+        self.model.finalize()
+        self.update()
+
+    def __str__(self):
+        s = "\nFitting:\n"
+        s += "Dataset:\n"
+        s += "--------\n"
+        s += str(self.data)
+        s += "\n\nFit-result: \n"
+        s += "----------\n"
+        s += "fitrange: %i..%i\n" % (self.xmin, self.xmax)
+        s += "chi2:\t%.4f \n" % self.chi2r
+        s += "----------\n"
+        s += str(self.model)
+        return s
+
     def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
         d = self.model.get_curves(
             copy_curves=copy_curves
@@ -183,6 +218,12 @@ class Fit(chisurf.base.Base):
         d['weighted residuals'] = self.weighted_residuals
         d['autocorrelation'] = self.autocorrelation
         return d
+
+    def get_score(self, score_type: str = 'chi2'):
+        if score_type == 'chi2':
+            return self.chi2
+        elif score_type == 'chi2r':
+            return self.chi2r
 
     def get_chi2(
             self,
@@ -209,15 +250,13 @@ class Fit(chisurf.base.Base):
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
-        return model.get_wres(
-            self,
-            **kwargs
-        )
+        return model.get_wres(self, **kwargs)
 
     def save(
             self,
             filename: str,
-            file_type: str = 'txt',
+            file_type: str = 'csv',
+            save_curves: bool = False,
             verbose: bool = False,
             **kwargs
     ) -> None:
@@ -226,52 +265,59 @@ class Fit(chisurf.base.Base):
             file_type=file_type,
             verbose=verbose
         )
-        # Save fit as txt (for plotting)
-        curve_dict = self.get_curves()
-        with open(filename+'_info.txt', mode='w') as fp:
-            fp.write(str(self))
-        for curve_key in curve_dict:
-            curve = curve_dict[curve_key]
-            curve_file_root = filename + "_%s" % curve_key
-            curve.save(
-                filename=curve_file_root,
-                file_type='txt'
-            )
-            curve.save(
-                filename=curve_file_root,
-                file_type='json'
-            )
-            curve.save(
-                filename=curve_file_root,
-                file_type='yaml'
-            )
+        if save_curves:
+            curve_dict = self.get_curves()
+            with open(filename+'_info.txt', mode='w') as fp:
+                fp.write(str(self))
+            for curve_key in curve_dict:
+                curve = curve_dict[curve_key]
+                curve_file_root = filename + "_%s" % curve_key
+                curve.save(
+                    filename=curve_file_root + '.' + file_type,
+                    file_type=file_type
+                )
 
     def run(self, *args, **kwargs) -> None:
+        fit = self
         fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
-        self.results = chisurf.math.optimization.leastsqbound(
+        chisurf.math.optimization.leastsqbound(
             get_wres,
             self.model.parameter_values,
             args=(self.model,),
             bounds=self.model.parameter_bounds,
             **fitting_options
         )
-        self.model.finalize()
         self.update()
+        self.update_error_estimates()
+        self.results.append(self.model.__getstate__())
+        self.model.finalize()
+
+    def set_result_idx(self, idx: int):
+        idx = np.clip(idx, 0, len(self.results) - 1)
+        self._result_current = idx
+        self.model.__setstate__(self.results[idx])
+        self.update()
+        self.model.finalize()
+
+    def next_result(self):
+        self.set_result_idx(self._result_current + 1)
+
+    def previous_result(self):
+        self.set_result_idx(self._result_current - 1)
+
+    def update_error_estimates(self):
+        # Estimate errors based on gradient
+        fit = self
+        cov_m, used_parameters = fit.covariance_matrix
+        err = np.sqrt(np.diag(cov_m))
+        for p, e in zip(used_parameters, err):
+            fit.model.parameters[p].error_estimate = e
 
     def update(self) -> None:
         self.model.update()
-        # Estimate errors based on gradient
-        try:
-            fit = self
-            cov_m, used_parameters = fit.covariance_matrix
-            err = np.sqrt(np.diag(cov_m))
-            for p, e in zip(used_parameters, err):
-                fit.model.parameters[p].error_estimate = e
-        except ValueError:
-            chisurf.logging.warning("Problems calculating the covariances")
 
     def chi2_scan(
             self,
@@ -325,10 +371,7 @@ class FitGroup(Fit):
         return self.selected_fit.data
 
     @data.setter
-    def data(
-            self,
-            v: chisurf.base.Data
-    ):
+    def data(self, v: chisurf.base.Data):
         self.selected_fit.data = v
 
     @property
@@ -358,10 +401,7 @@ class FitGroup(Fit):
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(
-            self,
-            v: typing.Tuple[int, int]
-    ):
+    def fit_range(self, v: typing.Tuple[int, int]):
         for f in self:
             f.xmin, f.xmax = v
         self.xmin, self.xmax = v
@@ -371,10 +411,7 @@ class FitGroup(Fit):
         return self.selected_fit.xmin
 
     @xmin.setter
-    def xmin(
-            self,
-            v: int
-    ):
+    def xmin(self, v: int):
         for f in self:
             f.xmin = v
 
@@ -425,7 +462,7 @@ class FitGroup(Fit):
 
     def update(self) -> None:
         for f in self.grouped_fits:
-            f.model.update()
+            f.update()
 
     def run(self, local_first: bool = None, **kwargs):
         fit: FitGroup = self
@@ -439,15 +476,16 @@ class FitGroup(Fit):
         fit._model.find_parameters()
         fitting_options = chisurf.settings.optimization['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
-        results = chisurf.math.optimization.leastsqbound(
+        chisurf.math.optimization.leastsqbound(
             func=get_wres,
             x0=fit._model.parameter_values,
             args=(fit._model,),
             bounds=bounds,
             **fitting_options
         )
-        self.results = results
         self.update()
+        self.update_error_estimates()
+        self.results.append(self.model.__getstate__())
 
     def __init__(
             self,
@@ -571,6 +609,7 @@ def sample_fit(
                 nwalkers=n_walkers,
                 thin=thin,
                 chi2max=chi2max,
+                progress_bar=chisurf.cs.progress_bar,
                 **kwargs
             )
 
@@ -634,7 +673,7 @@ def approx_grad(
 
 def covariance_matrix(
         fit: chisurf.fitting.fit.Fit,
-        epsilon: float = chisurf.settings.eps,
+        epsilon: float = 1e-12, #chisurf.settings.eps,
         **kwargs
 ) -> typing.Tuple[np.array, typing.List[int]]:
     """Calculate the covariance matrix
@@ -646,11 +685,7 @@ def covariance_matrix(
     """
     model = fit.model
     xk = np.array(model.parameter_values)
-    fi_v, partial_derivatives = approx_grad(
-        xk,
-        fit,
-        epsilon
-    )
+    fi_v, partial_derivatives = approx_grad(xk, fit, epsilon)
 
     # find parameters which do not change the models
     # use only parameters which change the models
@@ -670,7 +705,7 @@ def covariance_matrix(
             m[i_alpha, i_beta] = ((da_alpha * da_beta)).sum()
     try:
         cov_m = scipy.linalg.pinvh(0.5 * m)
-    except ValueError:
+    except:
         cov_m = np.zeros_like(
             (n_important_parameters, n_important_parameters),
             dtype=float

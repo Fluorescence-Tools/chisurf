@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        os: ["ubuntu-latest"] #, "windows-latest"] # "macos-latest"] #,
         python-version: ["3.10"]
     steps:
       - name: Checkout Repository
@@ -33,8 +33,8 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-          mamba-version: "*"
-          channels: conda-forge,defaults
+          miniforge-version: latest
+          channels: conda-forge,bioconda,tpeulen,defaults
           channel-priority: true
 
       - name: Display Conda Settings
@@ -51,9 +51,5 @@ jobs:
         with:
           shell: bash -el {0}
           run: |
-            conda config --add channels tpeulen
-            mamba install conda-build boa
-            cd conda-recipe
-            # curl -sLO  https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/084b098a28a7a66e9a0967d156bc55b9ebfc6726/recipe/conda_build_config.yaml
-            # curl -sLO https://github.com/conda-forge/conda-forge-pinning-feedstock/raw/main/recipe/conda_build_config.yaml
-            conda mambabuild .
+            conda install mamba conda-build boa anaconda-client
+            conda mambabuild conda-recipe

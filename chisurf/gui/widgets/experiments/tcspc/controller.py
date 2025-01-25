@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from qtpy import QtWidgets
+from chisurf.gui import QtWidgets
 
 import pathlib
-
-import numpy as np
 
 import chisurf.decorators
 import chisurf.gui.decorators
@@ -15,18 +13,10 @@ import chisurf.gui.widgets.fio
 import chisurf.gui.widgets.experiments.widgets
 
 
-class CsvTCSPCWidget(
-    QtWidgets.QWidget,
-):
+class CsvTCSPCWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="tcspc_csv.ui"
-    )
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    @chisurf.gui.decorators.init_with_ui("tcspc_csv.ui")
+    def __init__(self, *args, **kwargs):
         self.actionDtChanged.triggered.connect(self.onParametersChanged)
         self.actionRebinChanged.triggered.connect(self.onParametersChanged)
         self.actionRepratechange.triggered.connect(self.onParametersChanged)
@@ -61,14 +51,14 @@ class CsvTCSPCWidget(
         chisurf.run(
             "\n".join(
                 [
-                    "cs.current_setup.is_jordi = %s" % is_jordi,
-                    "cs.current_setup.use_header = %s" % (not is_jordi),
-                    "cs.current_setup.matrix_columns = %s" % matrix_columns,
-                    "cs.current_setup.g_factor = %f" % gfactor,
-                    "cs.current_setup.polarization = '%s'" % pol,
-                    "cs.current_setup.rep_rate = %s" % rep_rate,
-                    "cs.current_setup.rebin = (%s, %s)" % (rebin_x, rebin_y),
-                    "cs.current_setup.dt = %s" % dt
+                    f"cs.current_setup.is_jordi = {is_jordi}",
+                    f"cs.current_setup.use_header = {(not is_jordi)}",
+                    f"cs.current_setup.matrix_columns = {matrix_columns}",
+                    f"cs.current_setup.g_factor = {gfactor:f}",
+                    f"cs.current_setup.polarization = '{pol}'",
+                    f"cs.current_setup.rep_rate = {rep_rate}",
+                    f"cs.current_setup.rebin = ({rebin_x}, {rebin_y})",
+                    f"cs.current_setup.dt = {dt}"
                 ]
             )
         )
@@ -121,9 +111,9 @@ class TCSPCTTTRReaderControlWidget(
         chisurf.run(
             "\n".join(
                 [
-                    "cs.current_setup.channel_numbers = np.array([%s], dtype=np.int8)" % channel_numbers,
-                    "cs.current_setup.reading_routine = '%s'" % reading_routine,
-                    "cs.current_setup.micro_time_coarsening = %s" % micro_time_coarsening
+                    f"cs.current_setup.channel_numbers = np.array([{channel_numbers}], dtype=np.int8)",
+                    f"cs.current_setup.reading_routine = '{reading_routine}'",
+                    f"cs.current_setup.micro_time_coarsening = {micro_time_coarsening}"
                 ]
             )
         )
@@ -154,11 +144,11 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
         chisurf.run(
             "\n".join(
                 [
-                    "cs.current_setup.sample_name = '%s'" % sample_name,
-                    "cs.current_setup.dt = %s" % dt,
-                    "cs.current_setup.lifetime_spectrum = np.array([%s], dtype=np.float64)" % lt_text,
-                    "cs.current_setup.n_tac = %s" % n_tac,
-                    "cs.current_setup.p0 = %s" % p0
+                    f"cs.current_setup.sample_name = '{sample_name}'",
+                    f"cs.current_setup.dt = {dt}",
+                    f"cs.current_setup.lifetime_spectrum = np.array([{lt_text}], dtype=np.float64)",
+                    f"cs.current_setup.n_tac = {n_tac}",
+                    f"cs.current_setup.p0 = {p0}"
                 ]
             )
         )

@@ -9,7 +9,7 @@ import traceback
 
 from chisurf.gui import QtWidgets, QtCore
 
-import chisurf.fio
+import chisurf.fio as io
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.gui.widgets.pdb
@@ -91,7 +91,7 @@ class LabelStructure(
         try:
             self.json_file = filename
             p = json.load(
-                scikit_fluorescence.io.zipped.open_maybe_zipped(
+                io.zipped.open_maybe_zipped(
                     filename=self.json_file,
                     mode='r'
                 )

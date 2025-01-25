@@ -22,14 +22,17 @@ class Generic(FittingParameterGroup):
     def n_ph_bg(self) -> float:
         """Number of background photons
         """
+        n_bg = 0.0
         if isinstance(self.background_curve, Curve):
-            return self._background_curve.y.sum() / self.t_bg * self.t_exp
-        else:
-            return 0.0
+            a = self._background_curve.y.sum() / self.t_bg * self.t_exp
+            if not np.isnan(a):
+                n_bg += a
+        n_bg += self._bg.value * len(self.fit.data.x)
+        return n_bg
 
     @property
     def n_ph_exp(self) -> int:
-        """Number of experimental photons
+        """Number of fluorescence photons
         """
         if isinstance(self.fit.data, Curve):
             return self.fit.data.y.sum()
@@ -40,7 +43,7 @@ class Generic(FittingParameterGroup):
     def n_ph_fl(self) -> float:
         """Number of fluorescence photons
         """
-        return self.n_ph_exp - self.n_ph_bg
+        return max(self.n_ph_exp - self.n_ph_bg, 1.0)
 
     @property
     def scatter(self) -> float:
@@ -48,10 +51,7 @@ class Generic(FittingParameterGroup):
         return self._sc.value
 
     @scatter.setter
-    def scatter(
-            self,
-            v: float
-    ):
+    def scatter(self, v: float):
         self._sc.value = v
 
     @property
@@ -60,25 +60,18 @@ class Generic(FittingParameterGroup):
         return self._bg.value
 
     @background.setter
-    def background(
-            self,
-            v: float
-    ):
+    def background(self, v: float):
         self._bg.value = v
 
     @property
     def background_curve(self) -> chisurf.curve.Curve:
-        # Background curve
         if isinstance(self._background_curve, Curve):
             return self._background_curve
         else:
             return None
 
     @background_curve.setter
-    def background_curve(
-            self,
-            v: float
-    ):
+    def background_curve(self, v: float):
         if isinstance(v, Curve):
             self._background_curve = v
 
@@ -89,10 +82,7 @@ class Generic(FittingParameterGroup):
         return self._tmeas_bg.value
 
     @t_bg.setter
-    def t_bg(
-            self,
-            v: float
-    ):
+    def t_bg(self, v: float):
         self._tmeas_bg.value = v
 
     @property
@@ -102,10 +92,7 @@ class Generic(FittingParameterGroup):
         return self._tmeas_exp.value
 
     @t_exp.setter
-    def t_exp(
-            self,
-            v: float
-    ):
+    def t_exp(self, v: float):
         self._tmeas_exp.value = v
 
     def __init__(
@@ -114,12 +101,7 @@ class Generic(FittingParameterGroup):
             name: str = 'Nuisance',
             **kwargs
     ):
-        """
 
-        :param background_curve:
-        :param name:
-        :param kwargs:
-        """
         super().__init__(
             name=name,
             **kwargs
@@ -136,19 +118,22 @@ class Generic(FittingParameterGroup):
         self._tmeas_bg = FittingParameter(
             value=1.0,
             name='tBg',
-            fixed=True
+            lb=1e-6,
+            ub=1e9,
+            fixed=True,
+            bounds_on=True
         )
         self._tmeas_exp = FittingParameter(
             value=1.0,
             name='tMeas',
-            fixed=True
+            fixed=True,
+            lb=1e-6,
+            ub=1e9,
+            bounds_on=True
         )
 
 
 class Corrections(FittingParameterGroup):
-    """
-
-    """
 
     @property
     def lintable(self) -> np.array:
@@ -157,10 +142,7 @@ class Corrections(FittingParameterGroup):
         return self._lintable[::-1] if self.reverse else self._lintable
 
     @lintable.setter
-    def lintable(
-            self,
-            v: np.array
-    ):
+    def lintable(self, v: np.array):
         self._curve = v
         self._lintable = self.calc_lintable(v.y)
 
@@ -169,10 +151,7 @@ class Corrections(FittingParameterGroup):
         return int(self._window_length.value)
 
     @window_length.setter
-    def window_length(
-            self,
-            v: int
-    ):
+    def window_length(self, v: int):
         self._window_length.value = v
         self._lintable = self.calc_lintable(self._curve.y)
 
@@ -181,10 +160,7 @@ class Corrections(FittingParameterGroup):
         return self._window_function
 
     @window_function.setter
-    def window_function(
-            self,
-            v: str
-    ):
+    def window_function(self, v: str):
         self._window_function = v
         self._lintable = self.calc_lintable(self._curve.y)
 
@@ -193,10 +169,7 @@ class Corrections(FittingParameterGroup):
         return self._reverse
 
     @reverse.setter
-    def reverse(
-            self,
-            v: bool
-    ):
+    def reverse(self, v: bool):
         self._reverse = v
 
     def calc_lintable(
@@ -254,10 +227,7 @@ class Corrections(FittingParameterGroup):
             return 1.0
 
     @rep_rate.setter
-    def rep_rate(
-            self,
-            v: float
-    ):
+    def rep_rate(self, v: float):
         self.fit.model.convolve.rep_rate = v
 
     @property
@@ -265,17 +235,10 @@ class Corrections(FittingParameterGroup):
         return self._dead_time.value
 
     @dead_time.setter
-    def dead_time(
-            self,
-            v: float
-    ):
+    def dead_time(self, v: float):
         self._dead_time.value = v
 
-    def pileup(
-            self,
-            decay: np.array,
-            **kwargs
-    ):
+    def pileup(self, decay: np.array, **kwargs):
         data = kwargs.get('data', self.fit.data.y)
         rep_rate = kwargs.get('rep_rate', self.rep_rate)
         dead_time = kwargs.get('dead_time', self.dead_time)
@@ -396,7 +359,7 @@ class Convolve(FittingParameterGroup):
 
     @property
     def irf(self) -> chisurf.curve.Curve:
-        if isinstance(self._irf, Curve):
+        if isinstance(self._irf, chisurf.curve.Curve):
             irf = self._irf
             irf -= self.lamp_background
             irf.y = np.clip(irf.y, 0, None)
@@ -478,7 +441,7 @@ class Convolve(FittingParameterGroup):
 
         if autoscale:
             weights = 1.0 / data.ey
-            self.n0 = chisurf.fluorescence.tcspc.rescale_w_bg(
+            n0 = chisurf.fluorescence.tcspc.rescale_w_bg(
                 model_decay=decay,
                 experimental_decay=data.y,
                 experimental_weights=weights,
@@ -486,6 +449,9 @@ class Convolve(FittingParameterGroup):
                 start=start,
                 stop=stop
             )
+            self._n0.fixed = False
+            self._n0.value = n0
+            self._n0.fixed = True
         decay *= self.n0
 
         return decay
@@ -522,7 +488,7 @@ class Convolve(FittingParameterGroup):
 
         if mode == "per":
             period = 1000. / rep_rate
-            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic(
+            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_periodic_nb(
                 decay, data, irf_y,
                 start, stop, n_points,
                 period, dt, n_points
@@ -533,7 +499,7 @@ class Convolve(FittingParameterGroup):
             # time)
         elif mode == "exp":
             t = self.data.x
-            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+            chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum_nb(
                 output_decay=decay,
                 lifetime_spectrum=data,
                 instrument_response_function=irf_y,

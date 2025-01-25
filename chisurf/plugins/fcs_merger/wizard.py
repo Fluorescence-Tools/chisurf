@@ -19,7 +19,6 @@ import chisurf.macros
 
 class ChisurfWizard(QtWidgets.QWizard):
 
-    # @chisurf.gui.decorators.init_with_ui("photon_filter/tttr_photon_filter.ui", chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)

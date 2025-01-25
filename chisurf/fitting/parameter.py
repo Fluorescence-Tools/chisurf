@@ -77,15 +77,22 @@ class FittingParameter(chisurf.parameter.Parameter):
             **kwargs
         )
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+
     def __str__(self):
         s = "\nVariable\n"
-        s += "name: %s\n" % self.name
-        s += "internal-value: %s\n" % self._port
+        s += f"name: {self.name}\n"
+        s += f"internal-value: {self._port}\n"
         if self.bounds_on:
-            s += "bounds: %s\n" % self.bounds
+            s += f"bounds: {self.bounds}\n"
         if self.is_linked:
-            s += "linked to: %s\n" % self.link.name
-            s += "link-value: %s\n" % self.value
+            s += f"linked to: {self.link.name}\n"
+            s += f"link-value: {self.value}\n"
         return s
 
 
@@ -107,10 +114,7 @@ class GlobalFittingParameter(FittingParameter):
         return self.formula
 
     @name.setter
-    def name(
-            self,
-            v: str
-    ):
+    def name(self, v: str):
         pass
 
     def __init__(
@@ -227,11 +231,6 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             self,
             parameter_type=chisurf.parameter.Parameter
     ) -> None:
-        """
-
-        :param parameter_type:
-        :return:
-        """
         self._aggregated_parameters = None
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
@@ -254,15 +253,15 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
         )
         self._parameters = list(set(mp + ap))
 
-    def append_parameter(
-            self,
-            p: chisurf.parameter.Parameter
-    ):
+    def append_parameter(self, p: chisurf.parameter.Parameter):
         self._parameters.append(p)
 
-    @abc.abstractmethod
     def finalize(self):
-        pass
+        for p in self.parameters_all:
+            try:
+                p.controller.finalize()
+            except AttributeError:
+                chisurf.logging.warning("AttributeError:", p, " has no controller.")
 
     # def __getattribute__(
     #         self,
@@ -283,6 +282,15 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
     def __len__(self):
         return len(self.parameters_all)
 
+    def __getstate__(self) -> dict:
+        d = super().__getstate__()
+        for key, value in self.parameters_all_dict.items():
+            d[key] = value.__getstate__()
+        return d
+
+    def __setstate__(self, state: dict):
+        super().__setstate__(state)
+
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit = None,
@@ -293,20 +301,7 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             ] = None,
             *args, **kwargs
     ):
-        """
-
-        :param fit: the fit to which the parameter group is associated to
-        :param model: the model to which the parameter group is associated to
-        :param short: a short name for the parameter group
-        :param parameters: a list of the fitting parameters that are grouped
-        by the fitting parameter group
-        :param args:
-        :param kwargs:
-        """
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
         if chisurf.verbose:
             print("---------------")
             print("Class: %s" % self.__class__.name)

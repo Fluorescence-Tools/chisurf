@@ -9,10 +9,7 @@ import qtconsole.inprocess
 import qtconsole.styles
 import qtconsole.manager
 
-import scikit_fluorescence as skf
-import scikit_fluorescence.io
-
-import chisurf.fio
+import chisurf.fio as io
 import chisurf.gui
 import chisurf.settings
 
@@ -35,7 +32,7 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        with skf.io.zipped.open_maybe_zipped(
+        with io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='r'
         ) as fp:
@@ -49,7 +46,7 @@ class QIPythonWidget(
                 "Python macros",
                 file_type="Python file (*.cm.py)"
             )
-        with skf.io.zipped.open_maybe_zipped(
+        with io.zipped.open_maybe_zipped(
                 filename=filename,
                 mode='w'
         ) as fp:

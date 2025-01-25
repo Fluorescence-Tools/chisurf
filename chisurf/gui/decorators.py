@@ -32,37 +32,24 @@ class init_with_ui(object):
     def __call__(self, f: typing.Callable):
 
         def load_ui(target: QtWidgets.QWidget, ui_filename: str, path: str):
-            uic.loadUi(
-                os.path.join(
-                    path,
-                    ui_filename
-                ),
-                target
-            )
+            path = pathlib.Path(path) / ui_filename
+            uic.loadUi(path, target)
 
         def wrapped(cls: QtWidgets.QWidget, *args, **kwargs):
             if self.path is None:
-                path = os.path.dirname(
-                    inspect.getfile(
-                        cls.__class__
-                    )
-                )
+                path = pathlib.Path(inspect.getfile(cls.__class__)).parent
             else:
                 path = self.path
+
+            # Call superclass __init__ method if it exists
             try:
-                super(cls.__class__, cls).__init__(
-                    *args,
-                    **kwargs
-                )
+                super(cls.__class__, cls).__init__(*args, **kwargs)
             except TypeError:
                 super(cls.__class__, cls).__init__()
 
-            target = cls
-            load_ui(
-                target=target,
-                path=path,
-                ui_filename=self.ui_filename
-            )
+            super(QtWidgets.QWidget, cls).__init__()
+            load_ui(cls, self.ui_filename, path)
+
             f(cls, *args, **kwargs)
 
         return wrapped
@@ -72,34 +59,34 @@ class init_with_ui(object):
 # reference taken from : http://stackoverflow.com/questions/11872141/drag-a-file-into-qtgui-qlineedit-to-set-url-text
 # https://stackoverflow.com/questions/11872141/drag-a-file-into-qtgui-qlineedit-to-set-url-text
 class lineEdit_dragFile_injector():
-    def __init__(self, lineEdit, auto_inject=True, call=None, target: typing.List[pathlib.Path] = None):
+    def __init__(self, lineEdit, auto_inject=True, call=None, target: typing.List[pathlib.Path] = None, sorted: bool = True):
         self.lineEdit = lineEdit
         self.call = call
-        self.target = target
+        self.sorted = sorted
+        self.target = target if target is not None else []
         if auto_inject:
             self.inject_dragFile()
 
-    def inject_dragFile( self ):
+    def inject_dragFile(self):
         self.lineEdit.setDragEnabled(True)
         self.lineEdit.dragEnterEvent = self._dragEnterEvent
         self.lineEdit.dragMoveEvent = self._dragMoveEvent
         self.lineEdit.dropEvent = self._dropEvent
 
-    def _dragEnterEvent( self, event ):
+    def _dragEnterEvent(self, event):
         data = event.mimeData()
         urls = data.urls()
         if urls and urls[0].scheme() == 'file':
             event.acceptProposedAction()
 
-    def _dragMoveEvent( self, event ):
+    def _dragMoveEvent(self, event):
         data = event.mimeData()
         urls = data.urls()
         if urls and urls[0].scheme() == 'file':
             event.acceptProposedAction()
 
-    def _dropEvent( self, event):
+    def _dropEvent(self, event):
         data = event.mimeData()
-        url = data.urls()[0]
         if isinstance(self.target, list):
             for url in data.urls():
                 if url.scheme() == 'file':
@@ -107,9 +94,15 @@ class lineEdit_dragFile_injector():
                     filepath = pathlib.Path(filepath).as_posix()
                     chisurf.logging.log(0, f'lineEdit_dragFile_injector::_dropEvent: {filepath}')
                     self.target.append(filepath)
-        if url.scheme() == 'file':
-            filepath = str(url.toLocalFile())
+
+            # Sort the target list of file paths
+            if self.sorted:
+                self.target.sort()
+
+        if data.urls()[0].scheme() == 'file':
+            filepath = str(data.urls()[0].toLocalFile())
             filepath = pathlib.Path(filepath).as_posix()
             self.lineEdit.setText(filepath)
+
         if callable(self.call):
             self.call()

@@ -14,10 +14,34 @@ import chisurf.math
 T = typing.TypeVar('T', bound='Curve')
 
 
-class Curve(chisurf.base.Base):
+class NCurve(chisurf.base.Base):
 
-    x: np.ndarray = None
-    y: np.ndarray = None
+    def __init__(
+            self,
+            d: np.ndarray = None,
+            copy_array: bool = True,
+            *args,
+            **kwargs
+    ):
+        if d is None:
+            self.d = np.array(list(), dtype=np.float64)
+        if copy_array:
+            self.d = np.atleast_1d(np.copy(d))
+        else:
+            self.d = d
+        super().__init__(*args, **kwargs)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        return state
+
+    def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
+        y = self.d.flatten().__getitem__(key)
+        x = np.arange(0, len(self.y))
+        return x, y
+
+
+class Curve(NCurve):
 
     @property
     def fwhm(self) -> float:
@@ -37,10 +61,23 @@ class Curve(chisurf.base.Base):
         )
 
     @property
+    def x(self) -> np.ndarray:
+        return self.d[0]
+
+    @x.setter
+    def x(self, v):
+        self.d[0] = v
+
+    @property
+    def y(self) -> np.ndarray:
+        return self.d[1]
+
+    @y.setter
+    def y(self, v):
+        self.d[1] = v
+
+    @property
     def dx(self) -> np.ndarray:
-        """
-        The derivative of the x-axis
-        """
         return np.diff(self.x)
 
     def save(
@@ -113,40 +150,22 @@ class Curve(chisurf.base.Base):
                 d['y'] = self.y
         return d
 
-    def from_dict(
-            self,
-            v: dict
-    ):
+    def from_dict(self, v: dict):
         super().from_dict(v)
-        self.__dict__['y'] = np.array(v['y'], dtype=np.float64)
-        self.__dict__['x'] = np.array(v['x'], dtype=np.float64)
+        y = np.array(v['y'], dtype=np.float64)
+        x = np.array(v['x'], dtype=np.float64)
+        d = np.vstack([x, y])
+        self.d = d
 
     def __init__(
             self,
             x: np.ndarray = None,
             y: np.ndarray = None,
-            copy_array: bool = True,
             *args,
             **kwargs
     ):
-        if x is None:
-            x = np.array(list(), dtype=np.float64)
-        if y is None:
-            y = np.array(list(), dtype=np.float64)
-        if len(y) != len(x):
-            raise ValueError(
-                "length of x (%s) and y (%s) differ" % (len(x), len(y))
-            )
-        if copy_array:
-            self.x = np.atleast_1d(np.copy(x))
-            self.y = np.atleast_1d(np.copy(y))
-        else:
-            self.x = np.atleast_1d(x)
-            self.y = np.atleast_1d(y)
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        d = np.vstack([x, y])
+        super().__init__(*args, d=d, **kwargs)
 
     def normalize(
             self,

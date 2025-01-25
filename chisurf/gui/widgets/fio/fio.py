@@ -20,11 +20,7 @@ class SpcFileWidget(
     @chisurf.gui.decorators.init_with_ui(
         ui_filename="spcSampleSelectWidget.ui"
     )
-    def __init__(
-            self,
-            *args,
-            **kwargs,
-    ):
+    def __init__(self, *args, **kwargs):
         self._photons = None
         self.filenames = list()
         self.filetypes = tttr.filetypes
@@ -44,10 +40,7 @@ class SpcFileWidget(
         return float(self.doubleSpinBox.value())
 
     @dt.setter
-    def dt(
-            self,
-            v: float
-    ):
+    def dt(self, v: float):
         self.doubleSpinBox.setValue(v)
 
     def onSampleChanged(self):

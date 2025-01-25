@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1040</width>
-    <height>643</height>
+    <width>1000</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="focusPolicy">
@@ -138,7 +138,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>126</height>
+          <height>112</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -251,7 +251,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1275</width>
+     <width>1000</width>
      <height>24</height>
     </rect>
    </property>
@@ -591,13 +591,6 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="0" column="0" colspan="2">
-      <layout class="QVBoxLayout" name="verticalLayout_8">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-      </layout>
-     </item>
      <item row="1" column="0">
       <widget class="QComboBox" name="comboBox_Model">
        <property name="sizePolicy">
@@ -623,6 +616,23 @@
        <property name="toolButtonStyle">
         <enum>Qt::ToolButtonTextBesideIcon</enum>
        </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QWidget" name="layoutWidget">
+        <layout class="QVBoxLayout" name="verticalLayout_8">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="verticalLayoutWidget">
+        <layout class="QVBoxLayout" name="verticalLayout_5"/>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -1257,7 +1267,7 @@
   <action name="actionClose_all">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
+     <normaloff>../../../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
    </property>
    <property name="text">
     <string>Close all</string>

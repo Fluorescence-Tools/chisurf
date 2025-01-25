@@ -10,9 +10,13 @@ In particular three kinds of file-types are handled:
 6. SDT-files containing time-resolved fluorescence decays :py:mod:`chisurf.fio.sdtfile`
 
 """
-from . zipped import *
 import lzma
 import numpy as np
+
+from . zipped import *
+
+import chisurf.fio.fluorescence
+
 
 def compress_numpy_array(array):
     """

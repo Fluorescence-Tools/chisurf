@@ -4,15 +4,13 @@ import unittest
 import tempfile
 import copy
 import numpy as np
+import pathlib
 
-TOPDIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')
-)
+TOPDIR = pathlib.Path(__file__).parent.parent
+
 utils.set_search_paths(TOPDIR)
 
 import chisurf.structure
-import scikit_fluorescence.io.zipped
-
 
 class Tests(unittest.TestCase):
 

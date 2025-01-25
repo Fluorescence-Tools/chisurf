@@ -2,6 +2,7 @@ from __future__ import annotations
 from chisurf import typing
 
 import abc
+import json
 
 import numpy as np
 import chinet
@@ -14,6 +15,15 @@ T = typing.TypeVar('T', bound='Parameter')
 
 @chisurf.decorators.register
 class Parameter(chisurf.base.Base):
+
+    @property
+    def fit_idx(self):
+        import chisurf.fitting
+        idxs = chisurf.fitting.find_fit_idx_of_parameter(self)
+        if len(idxs) > 1:
+            chisurf.logging.warning("Ambiguous link call. Fitting parameter used in multiple fits")
+        fit_idx_self = idxs[0]
+        return fit_idx_self
 
     @property
     def name(self) -> str:
@@ -78,6 +88,14 @@ class Parameter(chisurf.base.Base):
     def is_linked(self) -> bool:
         return self._port.is_linked
 
+    @property
+    def fixed(self):
+        return self._port.fixed
+
+    @fixed.setter
+    def fixed(self, v: bool):
+        self._port.fixed = bool(v)
+
     def __add__(self, other: T) -> T:
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
@@ -141,10 +159,7 @@ class Parameter(chisurf.base.Base):
             return self.value == other.value
         return NotImplemented
 
-    def __ne__(
-            self,
-            other: Parameter
-    ):
+    def __ne__(self, other: Parameter):
         result = self.__eq__(other)
         if result is NotImplemented:
             return result
@@ -162,6 +177,20 @@ class Parameter(chisurf.base.Base):
             value=self.value.__abs__()
         )
 
+    def __getstate__(self):
+        d = json.loads(self._port.get_json())
+        return {
+            'port': d
+        }
+
+    def __setstate__(self, state):
+        s = json.dumps(state['port'])
+        self._port.read_json(s)
+        fixed = self._port.fixed
+        self._port.fixed = False
+        self._port.value = state['port']['value']
+        self._port.fixed = fixed
+
     def __round__(self, n=None):
         return self.__class__(
             value=self.value.__round__()
@@ -170,27 +199,6 @@ class Parameter(chisurf.base.Base):
     @abc.abstractmethod
     def update(self):
         pass
-
-    # def to_dict(self) -> typing.Dict:
-    #     d = super().to_dict()
-    #     if self.link is not None:
-    #         d['_link'] = self.link.unique_identifier
-    #     return d
-    #
-    # def from_dict(
-    #         self,
-    #         v: dict
-    # ) -> None:
-    #     if v['_link'] is not None:
-    #         unique_identifier = v['_link']
-    #         for o in self.get_instances():
-    #             if unique_identifier == o.unique_identifier:
-    #                 v['_link'] = o
-    #         super().from_dict(v)
-    #         if isinstance(v['_link'], str):
-    #             raise ValueError(
-    #                 "The linked parameter %s is not instantiated." % unique_identifier
-    #             )
 
     def __init__(
             self,
@@ -214,24 +222,28 @@ class Parameter(chisurf.base.Base):
         """
         super().__init__(*args, **kwargs)
         name = kwargs.pop('name', '')
-        if callable(value):
-            self._callable = value
-            self._port = chinet.Port(
-                value=np.array([0.0], dtype=np.double),  # the value is not actually used
-                name=name,
-                lb=lb,
-                ub=ub,
-                is_bounded=bounds_on
-            )
+        port = kwargs.pop('port', None)
+        if port is not None:
+            self._port = port
         else:
-            self._callable = None
-            self._port = chinet.Port(
-                value=np.atleast_1d(value),
-                name=name,
-                lb=lb,
-                ub=ub,
-                is_bounded=bounds_on
-            )
+            if callable(value):
+                self._callable = value
+                self._port = chinet.Port(
+                    value=np.array([0.0], dtype=np.double),  # the value is not actually used
+                    name=name,
+                    lb=lb,
+                    ub=ub,
+                    is_bounded=bounds_on
+                )
+            else:
+                self._callable = None
+                self._port = chinet.Port(
+                    value=np.atleast_1d(value),
+                    name=name,
+                    lb=lb,
+                    ub=ub,
+                    is_bounded=bounds_on
+                )
         self._link = link
         if isinstance(link, Parameter):
             self._port.link = link._port
@@ -269,17 +281,13 @@ class ParameterGroup(chisurf.base.Base):
         except KeyError:
             super().__setattr__(k, v)
 
-    def __getattr__(
-            self,
-            key: str
-    ):
+    def __getattr__(self, key: str):
         v = super().__getattr__(key=key)
         if isinstance(v, chisurf.parameter.Parameter):
             return v.value
         return v
 
-    def append(
-            self,
+    def append(self,
             parameter: Parameter,
             **kwargs
     ):

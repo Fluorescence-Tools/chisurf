@@ -54,7 +54,7 @@ class Lifetime(FittingParameterGroup):
         if self.absolute_amplitudes:
             vs = np.sqrt(vs**2)
         if self.normalize_amplitudes:
-            vs /= vs.sum()
+            vs /= abs(vs.sum())
         return vs
 
     @amplitudes.setter
@@ -203,8 +203,14 @@ class LifetimeModel(ModelCurve):
         s += "\nLifetimes"
         s += "\n------------------\n"
         s += "\nAverage Lifetimes:\n"
-        s += (f"<tau>x: {self.species_averaged_lifetime:.3f}\n"
-              f"<tau>F: {self.fluorescence_averaged_lifetime:.3f}\n")
+        s += (
+            f"<tau>x: {self.species_averaged_lifetime:.3f}\n"
+            f"<tau>F: {self.fluorescence_averaged_lifetime:.3f}\n"
+            f"Steady state anisotropy: {self.steady_state_anisotropy:.3f}\n"
+        )
+        s += "\nAnisotropy"
+        s += "\n------------------\n"
+        s += f"Steady state anisotropy: {self.steady_state_anisotropy:.3f}\n"
         return s
 
     def __init__(
@@ -256,6 +262,17 @@ class LifetimeModel(ModelCurve):
         )
 
     @property
+    def steady_state_anisotropy(self) -> float:
+        ls = self.lifetime_spectrum
+        rs = self.anisotropy.rotation_spectrum
+        lrs = chisurf.math.datatools.elte2(ls, rs)
+        lrx, lrt = chisurf.math.datatools.interleaved_to_two_columns(lrs)
+        lx, lt = chisurf.math.datatools.interleaved_to_two_columns(ls)
+        nom = lrx @ lrt
+        denom = lx @ lt
+        return nom / denom
+
+    @property
     def lifetime_spectrum(self) -> np.array:
         return self.lifetimes.lifetime_spectrum
 
@@ -301,21 +318,18 @@ class LifetimeModel(ModelCurve):
 
         # Calculate background curve from reference measurement
         if isinstance(background_curve, chisurf.curve.Curve):
+
             if shift_bg_with_irf:
                 background_curve = background_curve << self.convolve.timeshift
 
             bg_y = np.copy(background_curve.y)
-            bg_y /= bg_y.sum()
-            bg_y *= self.generic.n_ph_bg
+            bg_y *= self.generic.n_ph_bg / bg_y.sum()
+            decay *= self.generic.n_ph_fl / decay.sum()
 
-            decay *= self.generic.n_ph_fl
             decay += bg_y
 
-        self.convolve.scale(
-            decay,
-            bg=self.generic.background
-        )
         self.corrections.pileup(decay)
+        self.convolve.scale(decay, bg=self.generic.background)
         decay += background
         decay = self.corrections.linearize(decay)
         self.y = np.maximum(decay, 0)

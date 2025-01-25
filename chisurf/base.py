@@ -8,13 +8,13 @@ import os.path
 import zlib
 import copy
 import yaml
+import pickle
+
 import numpy as np
+import chisurf
 
 from slugify import slugify
 from collections.abc import Iterable
-
-import chisurf
-import scikit_fluorescence.io.zipped
 
 
 def to_elementary(
@@ -141,7 +141,7 @@ def find_objects(
         searched_object_type: typing.Type,
         remove_doublets: bool = True
 ) -> typing.List[object]:
-    """Traverse a list recursively a an return all objects of type
+    """Traverse a list recursively to return all objects of type
     `searched_object_type` as a list
 
     :param search_iterable: list
@@ -164,7 +164,7 @@ def find_objects(
 class Base(object):
 
     _verbose = chisurf.verbose
-    supported_save_file_types: typing.List[str] = ["yaml", "json"]
+    supported_save_file_types: typing.List[str] = ["yaml", "json", "pkl"]
     meta_data: typing.Dict = dict()
 
     @property
@@ -212,6 +212,7 @@ class Base(object):
         )
         if file_type in self.supported_save_file_types:
             txt = ""
+            mode = "w"
             # check for filename extension
             root, ext = os.path.splitext(filename)
             filename = root + "." + file_type
@@ -219,12 +220,12 @@ class Base(object):
                 txt = self.to_yaml()
             elif file_type == "json":
                 txt = self.to_json()
+            elif file_type == "pkl":
+                txt = pickle.dumps(self)
+                mode = 'wb'
             if verbose:
                 print(txt)
-            with scikit_fluorescence.io.zipped.open_maybe_zipped(
-                    filename=filename,
-                    mode='w'
-            ) as fp:
+            with io.open_maybe_zipped(filename, mode) as fp:
                 fp.write(txt)
 
     def load(
@@ -239,6 +240,11 @@ class Base(object):
                 filename=filename,
                 verbose=verbose
             )
+        elif file_type == "p":
+            with open(filename, 'rb') as file:
+                data = file.read()
+                obj = pickle.loads(data)
+                self.__dict__.update(obj.__dict__)
         else:
             self.from_yaml(
                 filename=filename,
@@ -296,9 +302,7 @@ class Base(object):
             else:
                 d = self.__dict__
         if convert_values_to_elementary:
-            return to_elementary(
-                obj=d
-            )
+            return to_elementary(d)
         else:
             return d
 
@@ -363,7 +367,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with scikit_fluorescence.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+                with io.open_maybe_zipped(filename, 'r') as fp:
                     j = yaml.safe_load(fp)
         if isinstance(yaml_string, str):
             j = yaml.safe_load(
@@ -405,7 +409,7 @@ class Base(object):
         j = dict()
         if isinstance(filename, str):
             if os.path.isfile(filename):
-                with scikit_fluorescence.io.zipped.open_maybe_zipped(filename, 'r') as fp:
+                with io.open_maybe_zipped(filename, 'r') as fp:
                     j = json.load(fp)
         if isinstance(json_string, str):
             j = json.loads(json_string)
@@ -439,10 +443,13 @@ class Base(object):
         return propobj
 
     def __getstate__(self):
-        return self.__dict__
+        d = {
+            'meta_data': self.meta_data,
+            'name': self.name
+        }
+        return d
 
     def __setstate__(self, state):
-        self.__dict__.clear()
         self.__dict__.update(state)
 
     def __str__(self):
@@ -459,7 +466,7 @@ class Base(object):
             **kwargs
     ):
         """The class saves all passed keyword arguments in dictionary and makes
-        these keywords accessible as attributes. Moreover, this class may saves these
+        these keywords accessible as attributes. Moreover, this class saves these
         keywords in a JSON or YAML file. These files can be also loaded.
 
         :param name:
@@ -496,12 +503,12 @@ class Base(object):
         self.meta_data['unique_identifier'] = unique_identifier
         self.meta_data['verbose'] = verbose
 
-        # clean up the keys (no spaces etc)
+        # clean up the keys (no spaces etc.)
         d = dict()
         for key in kwargs:
             d[clean_string(key)] = kwargs[key]
 
-        # Assign the the names and set standard values
+        # Assign names and set standard values
         if name is None:
             name = self.__class__.__name__
 
@@ -580,10 +587,7 @@ class Data(Base):
         return self._data
 
     @data.setter
-    def data(
-            self,
-            v: Data
-    ):
+    def data(self, v: Data):
         self._data = v
 
     @property
@@ -632,3 +636,5 @@ class Data(Base):
         s += "\nfilename: %s" % self.filename
         return s
 
+
+import chisurf.fio as io

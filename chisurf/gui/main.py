@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from functools import partial
-
 import os
-import pkgutil
-import importlib
 
 import pathlib
 import webbrowser
@@ -16,22 +12,25 @@ from chisurf import typing
 import numpy as np
 from chisurf.gui import QtWidgets, QtGui, QtCore, uic
 
-import ndxplorer
-import clsmview.clsm_pixel_select
-
 import chisurf
 import chisurf.decorators
 import chisurf.base
 import chisurf.fio
 import chisurf.experiments
 import chisurf.macros
+
 import chisurf.gui.tools
 import chisurf.gui.widgets
+import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments.modelling
+
 import chisurf.models
 import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
+
+import ndxplorer
+import clsmview.gui
 
 
 class Main(QtWidgets.QMainWindow):
@@ -75,10 +74,7 @@ class Main(QtWidgets.QMainWindow):
         return self._current_dataset
 
     @current_dataset.setter
-    def current_dataset(
-            self,
-            dataset_index: int
-    ):
+    def current_dataset(self, dataset_index: int):
         self.dataset_selector.selected_curve_index = dataset_index
 
     @property
@@ -216,7 +212,7 @@ class Main(QtWidgets.QMainWindow):
             executor: str = 'console',
             globals=None, locals=None
     ):
-        print("onRunMacro::filename:", filename)
+        chisurf.logging.info(f"onRunMacro::filename:{filename}")
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(
                 "Python macros",
@@ -227,14 +223,8 @@ class Main(QtWidgets.QMainWindow):
             chisurf.run(f"chisurf.console.run_macro(filename='{filename_str}')")
         elif executor == 'exec':
             if globals is None:
-                globals = {
-                    "__name__": "__main__"
-                }
-            globals.update(
-                {
-                    "__file__": filename
-                }
-            )
+                globals = {"__name__": "__main__"}
+            globals.update({"__file__": filename})
             with open(filename, 'rb') as file:
                 exec(compile(file.read(), filename, 'exec'), globals, locals)
 
@@ -265,14 +255,10 @@ class Main(QtWidgets.QMainWindow):
             model_idx
         ]
 
-    def onAddFit(self):
-        chisurf.run(
-            "chisurf.macros.add_fit(model_name='%s', dataset_indices=%s)" %
-            (
-                self.current_model_name,
-                [r.row() for r in self.dataset_selector.selectedIndexes()]
-            )
-        )
+    def onAddFit(self, *args, data_idx: typing.List[int] = None):
+        if data_idx is None:
+            data_idx = [r.row() for r in self.dataset_selector.selectedIndexes()]
+        chisurf.run(f"chisurf.macros.add_fit(model_name='{self.current_model_name}', dataset_indices={data_idx})")
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
@@ -294,9 +280,11 @@ class Main(QtWidgets.QMainWindow):
             **kwargs
         )
         chisurf.run(f"chisurf.macros.load_fit_result({self.fit_idx}, {filename})")
+
     def set_current_setup_idx(self, v: int):
         self.comboBox_setupSelect.setCurrentIndex(v)
         self._current_setup_idx = v
+
     def onSetupChanged(self):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
@@ -324,18 +312,25 @@ class Main(QtWidgets.QMainWindow):
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
-        filename_str = r"{}".format(filename.as_posix())
-        chisurf.run(f'chisurf.macros.add_dataset(filename="{filename_str}")')
+        if isinstance(filename, list):
+            l = [r"{}".format(pathlib.Path(f).as_posix()) for f in filename]
+            s = '|'.join(l)
+        elif isinstance(filename, pathlib.Path):
+            s = r"{}".format(filename.as_posix())
+        else:
+            s = r"{}".format(filename)
+        s = s.replace("\\", "/")
+        chisurf.run(f'chisurf.macros.add_dataset(filename=r"{s}")')
 
     def onSaveFits(self, event: QtCore.QEvent = None):
         path, _ = chisurf.gui.widgets.get_directory()
         chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.save_fits(target_path="{path.as_posix()}")')
+        chisurf.run(f'chisurf.macros.save_fits(target_path=r"{path.as_posix()}")')
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
         path, _ = chisurf.gui.widgets.get_directory(**kwargs)
         chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.save_fit(target_path="{path.as_posix()}")')
+        chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
 
     def onOpenHelp(self):
         webbrowser.open_new(chisurf.info.help_url)
@@ -410,10 +405,72 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.models.tcspc.widgets.GaussianModelWidget,
                 chisurf.models.tcspc.widgets.PDDEMModelWidget,
                 chisurf.models.tcspc.widgets.WormLikeChainModelWidget,
+                chisurf.models.tcspc.widgets.ParseDecayModelWidget,
                 chisurf.models.tcspc.widgets.LifetimeMixtureModelWidget
             ]
         )
         chisurf.experiment[tcspc.name] = tcspc
+
+        # ##########################################################
+        # #       Stopped flow                                     #
+        # ##########################################################
+        # stopped_flow = chisurf.experiments.types['stopped_flow']
+        # stopped_flow.add_readers(
+        #     [
+        #         (
+        #             chisurf.experiments.tcspc.TCSPCReader(
+        #                 name="TXT/CSV",
+        #                 experiment=stopped_flow
+        #             ),
+        #             chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
+        #                 name='CSV/PQ/IBH',
+        #                 **chisurf.settings.cs_settings['tcspc_csv'],
+        #             )
+        #         ),
+        #         (
+        #             chisurf.experiments.tcspc.TCSPCTTTRReader(
+        #                 name="TTTR-file",
+        #                 experiment=stopped_flow
+        #             ),
+        #             chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
+        #                 **chisurf.settings.cs_settings['tcspc_csv'],
+        #             )
+        #         )
+        #     ]
+        # )
+        # stopped_flow.add_model_classes(
+        #     models=[
+        #         chisurf.models.stopped_flow.ParseStoppedFlowWidget,
+        #         chisurf.models.stopped_flow.ReactionWidget
+        #     ]
+        # )
+        # chisurf.experiment[stopped_flow.name] = stopped_flow
+
+        ##########################################################
+        #       Photon distribution analysis                     #
+        ##########################################################
+        pda = chisurf.experiments.types['pda']
+        pda.add_readers(
+            [
+                (
+                    chisurf.experiments.pda.PdaReader(
+                        name="PTU/HT3/SPC",
+                        micro_time_ranges=[(0, 16000), (0, 16000)],
+                        channels=([0, 3], [1, 2]),
+                        experiment=pda
+                    ),
+                    chisurf.gui.widgets.experiments.pda.controller.PdaTTTRWidget(
+                        name="PTU/HT3/SPC"
+                    )
+                )
+            ]
+        )
+        pda.add_model_classes(
+            models=[
+                chisurf.models.pda.widgets.PdaSimpleModelWidget
+            ]
+        )
+        chisurf.experiment[pda.name] = pda
 
         ##########################################################
         #       FCS                                              #
@@ -525,7 +582,8 @@ class Main(QtWidgets.QMainWindow):
         )
         global_fit.add_model_classes(
             models=[
-                chisurf.models.global_model.GlobalFitModelWidget
+                chisurf.models.global_model.GlobalFitModelWidget,
+                chisurf.models.global_model.ParameterTransformWidget
             ]
         )
         global_fit.add_reader(global_setup)
@@ -545,15 +603,7 @@ class Main(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi(
-            os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)
-                ),
-                "gui.ui"
-            ),
-            self
-        )
+        uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
 
         self.current_fit_widget = None
         self._current_fit = None
@@ -570,12 +620,46 @@ class Main(QtWidgets.QMainWindow):
             drag_enabled=True,
             experiment=None
         )
-        self.about = uic.loadUi(
-            pathlib.Path(__file__).parent / "about.ui"
-        )
 
-        self.status = chisurf.gui.widgets.QtWidgets.QStatusBar(self)
+        # widget listing the existing fits
+        self.fit_selector = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
+
+        self.about = uic.loadUi(pathlib.Path(__file__).parent / "about.ui")
+
+        # Setup status bar with progress bar and message
+        self.status = QtWidgets.QStatusBar(self)
         self.setStatusBar(self.status)
+
+        # Create a QWidget to hold the progress bar and message
+        status_widget = QtWidgets.QWidget()
+        status_layout = QtWidgets.QHBoxLayout(status_widget)
+
+        # Set spacing and margins to zero
+        status_layout.setSpacing(0)  # Set spacing between widgets to zero
+        status_layout.setContentsMargins(0, 0, 0, 0)  # Set margins to zero
+
+        # Create a progress bar
+        self.progress_bar = QtWidgets.QProgressBar(self.status)
+        self.progress_bar.setFixedWidth(150)  # Set a fixed width for the progress bar
+        self.progress_bar.setAlignment(QtCore.Qt.AlignCenter)
+        self.progress_bar.setFixedHeight(15)  # Adjust the height as needed
+
+        # Create a label for the status message
+        self.status_label = QtWidgets.QLabel("Ready")
+        self.status_label.setMaximumHeight(20)  # Set a maximum height for the status message
+
+        # Add the progress bar and status message to the status layout
+        status_layout.addWidget(self.status_label)
+        status_layout.addSpacerItem(QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.MinimumExpanding))
+        status_layout.addWidget(self.progress_bar)
+
+        # Add the status widget to the status bar, aligning to the left
+        self.status.addWidget(status_widget, 1)  # 1 gives the widget some stretch
+
+    def update(self):
+        super().update()
+        self.fit_selector.update()
+        self.dataset_selector.update()
 
     def arrange_widgets(self):
         # self.setCentralWidget(self.mdiarea)
@@ -605,8 +689,14 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
         self.editor = chisurf.gui.tools.code_editor.CodeEditor()
+
         self.verticalLayout_10.addWidget(self.editor)
+
+        # Add data selector widget
         self.verticalLayout_8.addWidget(self.dataset_selector)
+
+        # Add fit selector widget
+        self.verticalLayout_5.addWidget(self.fit_selector)
 
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
         self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -623,28 +713,6 @@ class Main(QtWidgets.QMainWindow):
         self.actionAbout.triggered.connect(self.about.show)
         self.actionHelp_2.triggered.connect(self.onOpenHelp)
         self.actionUpdate.triggered.connect(self.onOpenUpdate)
-
-        ##########################################################
-        #      Populate plugins                                  #
-        ##########################################################
-        plugin_menu = self.menuBar.addMenu('Plugins')
-        plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
-        for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
-            module_path = "chisurf.plugins." + module_name
-            module = importlib.import_module(str(module_path))
-            try:
-                name = module.name
-            except AttributeError as e:
-                print(f"Failed to find plugin name: {e}")
-                name = module_name
-            p = partial(
-                self.onRunMacro, plugin_path / module_name / "wizard.py",
-                executor='exec',
-                globals={'__name__': 'plugin'}
-            )
-            plugin_action = QtWidgets.QAction(f"{name}", self)
-            plugin_action.triggered.connect(p)
-            plugin_menu.addAction(plugin_action)
 
         ##########################################################
         #      Record and run recorded macros                    #
@@ -694,7 +762,7 @@ class Main(QtWidgets.QMainWindow):
         self.lifetime_calc = chisurf.gui.tools.fret.calculator.tau2r.FRETCalculator()
         self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
+        self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.k2dgui.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         self.ndxplorer = ndxplorer.NDXplorer()
@@ -713,7 +781,7 @@ class Main(QtWidgets.QMainWindow):
         self.tttr_histogram = chisurf.gui.tools.tttr.histogram.HistogramTTTR()
         self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
 
-        self.clsm_pixel_select = clsmview.clsm_pixel_select.CLSMPixelSelect()
+        self.clsm_pixel_select = clsmview.gui.CLSMPixelSelect()
         self.actionTTTR_CLSM.triggered.connect(self.clsm_pixel_select.show)
 
         ##########################################################

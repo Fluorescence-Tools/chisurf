@@ -505,9 +505,7 @@ class CorrelateTTTR(
         self.cs.update()
         self.plot_curves()
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="tttr_correlate.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui("tttr_correlate.ui")
     def __init__(self):
         self._curves = list()
 

@@ -6,7 +6,7 @@ from qtpy import QtCore, QtWidgets
 
 import mdtraj
 
-import chisurf.fio
+import chisurf.fio as io
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.decorators
@@ -66,7 +66,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
         for p in self.universe.potentials:
             s += '%s\t' % p.name
         s += '\n'
-        scikit_fluorescence.io.zipped.open_maybe_zipped(
+        io.zipped.open_maybe_zipped(
             filename=energy_file,
             mode='w'
         ).write(s)

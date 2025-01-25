@@ -10,7 +10,6 @@ import numpy as np
 
 import chisurf.parameter
 import chisurf.curve
-import chisurf.gui.widgets.fitting.widgets
 import chisurf.plots
 
 from qtpy import QtWidgets, QtGui
@@ -20,20 +19,6 @@ from chisurf.fitting.parameter import FittingParameterGroup
 class Model(FittingParameterGroup):
 
     name = "Model name not available"
-
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            model_number: int = 0,
-            **kwargs
-    ):
-        super().__init__(
-            model=self,
-            **kwargs
-        )
-        self.fit = fit
-        self.flatten_weighted_residuals = True
-        self.model_number = model_number
 
     @property
     def n_free(self) -> int:
@@ -46,6 +31,28 @@ class Model(FittingParameterGroup):
             xmin=self.fit.xmin,
             xmax=self.fit.xmax
         )
+
+    @abc.abstractmethod
+    def update_model(self, **kwargs):
+        pass
+
+    @abc.abstractmethod
+    def update(self, **kwargs) -> None:
+        self.find_parameters()
+
+        # Update ParameterGroups
+        d = [v for v in self.__dict__.values() if v is not self]
+        pgs = chisurf.base.find_objects(
+            search_iterable=d,
+            searched_object_type=chisurf.fitting.parameter.FittingParameterGroup
+        )
+        for pg in pgs:
+            try:
+                pg.update()
+            except:
+                continue
+
+        self.update_model()
 
     def get_wres(
             self,
@@ -64,14 +71,24 @@ class Model(FittingParameterGroup):
             xmax=xmax
         )
 
-    @abc.abstractmethod
-    def update_model(self, **kwargs):
-        pass
+    def __init__(self, fit: chisurf.fitting.fit.Fit, model_number: int = 0, **kwargs):
+        # Set model to none otherwise will result in self reference
+        super().__init__(model=None, **kwargs)
+        self.fit = fit
+        self.flatten_weighted_residuals = True
+        self.model_number = model_number
 
-    @abc.abstractmethod
-    def update(self, **kwargs) -> None:
-        self.find_parameters()
-        self.update_model()
+    def __getstate__(self):
+        state = super().__getstate__()
+        return state
+    
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        model = self
+        for key in state:
+            if key in model.parameters_all_dict.keys():
+                target = model.parameters_all_dict.get(key)
+                target.__setstate__(state[key])
 
     def __str__(self):
         s = ""
@@ -85,11 +102,9 @@ class Model(FittingParameterGroup):
         for k in keylist:
             p = pd[k]
             if isinstance(p, chisurf.fitting.parameter.FittingParameter):
-                s += "%s\t%.4e\t%s\t%s\t%s\n" % (p.name, p.value, p.bounds, p.fixed, p.is_linked)
+                s += f"{p.name}\t{p.value:.4e}\t{p.bounds}\t{p.fixed}\t{p.is_linked}\n"
             else:
-                chisurf.logging.warning(
-                    "The object is of type %s and is not a FittingParameter" % p.__class__.__name__
-                )
+                chisurf.logging.warning("The object is of type %s and is not a FittingParameter" % p.__class__.__name__)
         return s
 
 
@@ -101,43 +116,39 @@ class ModelCurve(Model, chisurf.curve.Curve):
 
     @property
     def x(self) -> np.ndarray:
-        return self.__dict__['_x']
+        return self.__dict__['d'][0]
 
     @x.setter
     def x(self,v: np.ndarray):
-        self.__dict__['_x'] = v
+        self.__dict__['d'][0] = v
 
     @property
     def y(self) -> np.array:
-        return self.__dict__['_y']
+        return self.__dict__['d'][1]
 
     @y.setter
     def y(self, v: np.ndarray):
-        self.__dict__['_y'] = v
+        self.__dict__['d'][1] = v
 
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            *args, **kwargs
-    ):
-        super().__init__(
-            fit,
-            *args,
-            **kwargs
-        )
+    def __init__(self, fit: chisurf.fitting.fit.Fit, *args, **kwargs):
+        super().__init__(fit, *args, **kwargs)
+        if fit.data.x is None:
+            x = np.array([], dtype=np.float64)
+        else:
+            x = fit.data.x
         chisurf.curve.Curve.__init__(
             self,
-            x=fit.data.x,
-            y=np.zeros_like(fit.data.y),
+            x=x, y=np.zeros_like(x),
             *args,
             **kwargs
         )
 
     def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
-        xmin = self.fit.xmin
-        xmax = self.fit.xmax
+        #xmin = self.fit.xmin
+        #xmax = self.fit.xmax
         d = OrderedDict()
-        d['model'] = chisurf.curve.Curve(x=self.x[xmin:xmax], y=self.y[xmin:xmax], copy_array=copy_curves)
+        #d['model'] = chisurf.curve.Curve(x=self.x[xmin:xmax], y=self.y[xmin:xmax], copy_array=copy_curves)
+        d['model'] = chisurf.curve.Curve(x=self.x, y=self.y, copy_array=copy_curves)
         return d
 
     def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
