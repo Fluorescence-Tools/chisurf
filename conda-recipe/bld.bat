@@ -22,15 +22,13 @@ cmake -S . -B build -G "Visual Studio 17 2022" -A x64 ^
     -DPYTHON_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
     -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
     -DCMAKE_BUILD_TYPE=Release
-
 :: Build the project
 cmake --build build --config Release --parallel
-
 :: Install the built library
 cmake --install build --prefix %PREFIX%
 cd ..
-echo %CD%
 
+echo %CD%
 pip install .\scikit-fluorescence --no-deps --prefix=%PREFIX%
 pip install .\clsmview --no-deps --prefix=%PREFIX%
 pip install .\k2dist --no-deps --prefix=%PREFIX%
@@ -49,7 +47,7 @@ cmake .. -G "Visual Studio 17 2022" ^
  -DCMAKE_PREFIX_PATH="%PREFIX%" ^
  -DBUILD_PYTHON_INTERFACE=ON ^
  -DCMAKE_BUILD_TYPE=Release ^
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
+ -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
  -DCMAKE_SWIG_OUTDIR="%SP_DIR%" ^
  -DPython_ROOT_DIR="%PREFIX%\bin" ^
  -DBUILD_LIBRARY=OFF ^
@@ -57,9 +55,7 @@ cmake .. -G "Visual Studio 17 2022" ^
  -DWITH_AVX=OFF ^
  -Wno-dev ^
  -DBoost_USE_STATIC_LIBS=OFF
-REM Set compilation to use multiple processes
-set CL=/MP
-REM Build and install the project
+:: Build and install the project
 cmake --build . --config Release --target install
 cd ..\..\..
 
@@ -75,18 +71,16 @@ for /f "tokens=2 delims= " %%v in ('%PYTHON% --version 2^>^&1') do set PYTHON_VE
 :: Extract only the numeric part of the version
 for /f "tokens=1-3 delims=." %%a in ("%PYTHON_VERSION%") do set PYTHON_VERSION_NUMERIC=%%a.%%b.%%c
 
-cmake .. -G "NMake Makefiles" ^
+cmake .. -G "Visual Studio 17 2022" ^
  -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" ^
  -DCMAKE_PREFIX_PATH="%PREFIX%" ^
  -DBUILD_PYTHON_INTERFACE=ON ^
  -DCMAKE_BUILD_TYPE=Release ^
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
+ -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
  -DPYTHON_VERSION="%PYTHON_VERSION_NUMERIC%" ^
  -DCMAKE_SWIG_OUTDIR="%SP_DIR%"
-
-nmake
-nmake install
-
+:: Build and install the project
+cmake --build . --config Release --target install
 cd ..\..\..
 
 :: Install main module
