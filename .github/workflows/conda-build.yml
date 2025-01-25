@@ -12,7 +12,7 @@ on:
     - cron: "0 11 * * 1"
 
 jobs:
-  build-linux:
+  build:
     name: CondaBuild (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -28,6 +28,13 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: build_tools/install_macos_sdk.sh
 
+      - name: Install Visual Studio 2017 (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install visualstudio2017buildtools --version=15.9.54 -y
+          choco install visualstudio2017-workload-vctools -y
+          setx PATH "%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build"
+
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -36,6 +43,8 @@ jobs:
           miniforge-version: latest
           channels: conda-forge,bioconda,tpeulen,defaults
           channel-priority: true
+
+
 
       - name: Display Conda Settings
         shell: bash -el {0}
