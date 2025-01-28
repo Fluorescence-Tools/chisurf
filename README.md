@@ -55,11 +55,11 @@ ChiSurf is available as a compiled Windows installation file. By downloading and
 Install `chisurf` using `conda` or `mamba`:
 
 ```bash
-conda create -n chisurf chisurf -c conda-forge -c tpeulen
+mamba create -n chisurf chisurf -c conda-forge -c bioconda -c tpeulen
 conda activate chisurf
 ```
 
-3. Launch ChiSurf GUI:
+Launch ChiSurf GUI:
 
 ```bash
 chisurf
