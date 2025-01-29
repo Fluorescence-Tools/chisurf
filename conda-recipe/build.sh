@@ -29,6 +29,7 @@ pip install modules/clsmview --no-deps --prefix="$PREFIX"
 pip install modules/k2dist --no-deps --prefix="$PREFIX"
 pip install modules/ndxplorer --no-deps --prefix="$PREFIX"
 pip install modules/tttrconvert --no-deps --prefix="$PREFIX"
+pip install modules/quest --no-deps --prefix="$PREFIX"
 
 # Build chinet
 cd modules/chinet
