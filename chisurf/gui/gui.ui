@@ -398,6 +398,7 @@
      <addaction name="actionPDB2Label"/>
      <addaction name="separator"/>
      <addaction name="actionCalculate_Potential"/>
+     <addaction name="actionQuEst"/>
     </widget>
     <widget class="QMenu" name="menuTTTR">
      <property name="title">
@@ -1526,6 +1527,15 @@
    </property>
    <property name="toolTip">
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A Bayesian FRET TCSPC analysis that converts &lt;/p&gt;&lt;p&gt;fluorescence decays into posterior model &lt;/p&gt;&lt;p&gt;densities of distance distributions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionQuEst">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
+   </property>
+   <property name="text">
+    <string>Quenching Estimator</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>
