@@ -15,3 +15,4 @@ csg_traj_energy_calculator chisurf.gui.tools.structure.potential_energy.__main__
 csg_traj_remove_clashed_frames chisurf.gui.tools.structure.remove_clashed_frames.__main__:main
 csg_traj_rotate_translate chisurf.gui.tools.structure.rotate_translate_trajectory.__main__:main
 csg_traj_save_topology chisurf.gui.tools.structure.save_topology.__main__:main
+csg_quest quest.quest_gui:start_gui
