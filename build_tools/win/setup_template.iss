@@ -17,12 +17,11 @@ Compression=lzma2/ultra64
 ;Compression=lzma2/fast
 ;Compression=none
 SolidCompression=yes
-CompressionThreads=8
+CompressionThreads=auto
 UninstallLogMode=overwrite
 DirExistsWarning=yes
 UninstallDisplayIcon="{app}\{{ AppName }}"
 DisableProgramGroupPage=no
-ArchitecturesAllowed=x64 and not arm64
 
 ;DiskSliceSize=1073741824
 ;DiskSpanning=true
@@ -38,8 +37,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Icon files must be explicitely included
 Source: ".\icons\*.ico"; DestDir: "{app}\icons"
 ;Source: "chisurf.exe"; DestDir: "{app}"
-Source: "{{ SourceDir }}\dist\win\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-
+Source: "{{ SourceDir }}\dist\win\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs;
 ;uncomment below to add VC Runtimes
 ;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "fix_shebangs.py"; DestDir: "{app}";

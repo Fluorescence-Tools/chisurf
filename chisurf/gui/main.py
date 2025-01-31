@@ -30,6 +30,7 @@ import chisurf.fitting
 import chisurf.gui.resources
 
 import ndxplorer
+from quest.lib.tools.dye_diffusion import TransientDecayGenerator
 import clsmview.gui
 
 
@@ -768,6 +769,10 @@ class Main(QtWidgets.QMainWindow):
         self.ndxplorer = ndxplorer.NDXplorer()
         self.actionndXplorer.triggered.connect(self.ndxplorer.show)
         self.ndxplorer.hide()
+
+        self.quest = TransientDecayGenerator()
+        self.actionQuEst.triggered.connect(self.quest.show)
+        self.quest.hide()
 
         ##########################################################
         #      TTTR-widgets                                      #

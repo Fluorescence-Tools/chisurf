@@ -34,3 +34,6 @@
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
 	branch = master
+[submodule "modules/quest"]
+	path = modules/quest
+	url = https://github.com/fluorescence-tools/quest

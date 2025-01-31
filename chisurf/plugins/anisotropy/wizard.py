@@ -465,9 +465,11 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.fit_vh: chisurf.fitting.fit.Fit = None
         self.global_fit: chisurf.fitting.fit.Fit = None
 
+        fn = chisurf.settings.chisurf_settings_path / "anisotropy_corrections.json"
+        print("anisotropy_corrections:", fn)
         self.conf_edit = chisurf.gui.tools.parameter_editor.ParameterEditor(
             target=self.correction_factors,
-            json_file=pathlib.Path(chisurf.settings.__file__).parent / "anisotropy_corrections.json"
+            json_file=fn
         )
 
         self.verticalLayout_2.addWidget(self.conf_edit)

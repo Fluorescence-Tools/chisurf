@@ -20,21 +20,13 @@ def get_path(path_type: str = 'settings') -> pathlib.Path:
     """
     if path_type == 'settings':
         path = pathlib.Path.home() / '.chisurf'  # Define the settings path
-
-        # Creates the directory if it doesn't exist
         path.mkdir(parents=True, exist_ok=True)
-
     elif path_type == 'chisurf':
-        # Adjust to the chisurf directory
         path = pathlib.Path(__file__).parent.parent
-
     return path
 
 
-def get_chisurf_settings(
-    setting_file: pathlib.Path,
-    use_source: bool = False
-) -> dict:
+def get_chisurf_settings(setting_file: pathlib.Path, use_source: bool = False) -> dict:
     """This function returns the content of a settings file in the user
     settings path. If the settings file does not exist it is copied from
     the package folder to the user settings path.
@@ -43,8 +35,6 @@ def get_chisurf_settings(
     :param use_source: if true use settings file in source code folder
     :return:
     """
-    # If settings file does not exist in user folder
-    # copy settings file from program directory
     package_path = pathlib.Path(__file__).parent
     original_settings = package_path / setting_file.parts[-1]
     if use_source:
@@ -54,6 +44,20 @@ def get_chisurf_settings(
             shutil.copyfile(original_settings, setting_file)
     with open(str(setting_file), 'r') as fp:
         return yaml.safe_load(fp)
+
+
+def copy_settings_to_user_folder():
+    """Copies all settings files from the package directory to the user folder,
+    ensuring that existing files are not overwritten."""
+    package_path = pathlib.Path(__file__).parent
+    user_settings_path = get_path('settings')
+    user_settings_path.mkdir(parents=True, exist_ok=True)
+
+    for file in package_path.iterdir():
+        if file.is_file():
+            destination_file = user_settings_path / file.name
+            if not destination_file.exists():  # Avoid overwriting existing files
+                shutil.copyfile(file, destination_file)
 
 
 def clear_settings_folder():
@@ -67,6 +71,9 @@ chisurf_settings_path = get_path('settings')
 macro_path = get_path('chisurf') / "macros"
 plugin_path = get_path('chisurf') / "plugins"
 notebook_path = get_path('chisurf') / "notebooks"
+
+# Copy settings files if not already present
+copy_settings_to_user_folder()
 
 # Open chisurf settings file
 chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
