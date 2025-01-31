@@ -1,20 +1,25 @@
 @echo off
-set "CONDA_ENVIRONMENT_YAML=..\..\environment.yml"
-set "DIST_PATH=..\..\dist"
+set "DIST_PATH=%CD%\..\..\dist"
 set "SCRIPT_PATH=%~dp0"
-set "APP_PATH=..\..\dist\win"
-set "SOURCE_PATH=..\.."
-set "CONDA_RECIPE_FOLDER=..\..\conda-recipe"
+set "APP_PATH=%CD%\..\..\dist\win"
+set "SOURCE_PATH=%CD%\..\.."
+set "CONDA_RECIPE_FOLDER=%CD%\..\..\conda-recipe"
 
-rem Default behavior: Do not build conda package
+:: Normalize paths to absolute paths
+for %%I in ("%DIST_PATH%") do set "DIST_PATH=%%~fI"
+for %%I in ("%APP_PATH%") do set "APP_PATH=%%~fI"
+for %%I in ("%SOURCE_PATH%") do set "SOURCE_PATH=%%~fI"
+for %%I in ("%CONDA_RECIPE_FOLDER%") do set "CONDA_RECIPE_FOLDER=%%~fI"
+
+:: Default behavior: Do not build conda package
 set "BUILD_CONDA_PACKAGE=0"
 
-rem Check for command-line arguments
+:: Check for command-line arguments
 if /I "%1"=="/build" (
     set "BUILD_CONDA_PACKAGE=1"
 )
 
-rem If /build flag is passed, build the Conda package
+:: If /build flag is passed, build the Conda package
 if %BUILD_CONDA_PACKAGE%==1 (
     echo Building Conda package...
     call conda mambabuild %CONDA_RECIPE_FOLDER%
@@ -22,26 +27,36 @@ if %BUILD_CONDA_PACKAGE%==1 (
     echo Skipping Conda package build...
 )
 
-rem Create necessary directories
+:: Create necessary directories
 md %DIST_PATH%
 md %APP_PATH%
 
-rem Create the conda environment
+:: Create the conda environment
 call mamba create -y --prefix %APP_PATH% chisurf -c local -c tpeulen --force
 
-rem Generate Inno Setup script
+:: Compile all Python source files into .pyc
+python -m compileall -q %APP_PATH%
+
+:: Remove unused files/directories
+rmdir /s /q %APP_PATH%\include
+rmdir /s /q %APP_PATH%\Library\share\doc
+rmdir /s /q %APP_PATH%\Library\share\IMP
+rmdir /s /q %APP_PATH%\Library\include
+rmdir /s /q %APP_PATH%\etc\conda\test-files
+
+:: Delete all .lib files from the Conda environment
+echo Deleting all .lib files in %APP_PATH%...
+for /r "%APP_PATH%\Library\lib" %%F in (*.lib) do del "%%F"
+
+:: Generate Inno Setup script
 python make_inno_setup.py
 
-rem Optionally deactivate conda environment
-rem call conda deactivate
-rem call conda activate base
-
-rem Create an installer with Inno Setup
+:: Create an installer with Inno Setup
 "C:\Program Files (x86)\Inno Setup 6\Compil32.exe" /cc setup.iss
 
-rem Cleaning step: Purge the APP_PATH folder
-echo Cleaning up APP_PATH: %APP_PATH%...
-rmdir /s /q %APP_PATH%
+:: Cleaning step: Purge the APP_PATH folder
+:: echo Cleaning up APP_PATH: %APP_PATH%...
+:: rmdir /s /q %APP_PATH%
 
 echo Script finished.
 
