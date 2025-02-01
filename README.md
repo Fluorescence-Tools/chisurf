@@ -65,7 +65,7 @@ Launch ChiSurf GUI:
 chisurf
 ```
 
-#### Windows
+#### Windows & macOS
 
 Download the latest releases from [https://www.peulen.xyz/downloads/](https://www.peulen.xyz/downloads/).
 
