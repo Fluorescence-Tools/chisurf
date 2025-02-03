@@ -140,13 +140,13 @@ parameter:
   hide_label: false
 gui:
   editor:
-    margins_background_color: "#a1a1a1"
-    marker_background_color: "#d6d6d6"
-    caret_line_background_color: "#747677"
-    paper_color: "#747677"
-    default_color: "#e1e1e1"
+    margins_background_color: "#808080"
+    marker_background_color: "#f0f0f0"
+    caret_line_background_color: "#afafaf"
+    paper_color: "#cfcfcf"
+    default_color: "#000006"
     font_size: 9
-    font_family: Sans-Serif
+    font_family: Courier New
     language: Python
   style_sheet: dark.css
   RubberBandResize: true
