@@ -311,8 +311,6 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         # Link VH parameters to VV
         #######################################
-        print("self.conf_edit.dict:", self.conf_edit.dict)
-
         # number of photons
         self.fit_vh.model.parameters_all_dict['n0'].link = self.fit_vv.model.parameters_all_dict['n0']
         self.fit_vv.model.parameters_all_dict['n0'].fixed = False
