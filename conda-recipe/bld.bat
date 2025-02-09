@@ -17,7 +17,7 @@ git pull
 cd ..\..\
 
 :: Configure the build using CMake
-cmake -S . -B build -G "Visual Studio 15 2017" -A x64 ^
+cmake -S . -B build -A x64 ^
     -DPYTHON_EXECUTABLE="%PYTHON%" ^
     -DPYTHON_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
     -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
@@ -58,6 +58,35 @@ cmake .. -G "Visual Studio 17 2022" -A x64 ^
  -DBoost_USE_STATIC_LIBS=OFF
 :: Build and install the project
 cmake --build . --config Release --target install
+cd ..\..\..
+
+:: Build tttrlib module
+cd modules\tttrlib
+
+git fetch --all
+git checkout development
+git pull origin development
+git submodule update --init --recursive
+
+rmdir b2 /s /q
+mkdir b2
+cd b2
+
+cmake .. -G "NMake Makefiles" ^
+ -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" ^
+ -DCMAKE_PREFIX_PATH="%PREFIX%" ^
+ -DBUILD_PYTHON_INTERFACE=ON ^
+ -DCMAKE_BUILD_TYPE=Release ^
+ -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
+ -DCMAKE_SWIG_OUTDIR="%SP_DIR%" ^
+ -DPython_ROOT_DIR="%PREFIX%\bin" ^
+ -DBUILD_LIBRARY=OFF ^
+ -DBUILD_PYTHON_DOCS=ON ^
+ -DWITH_AVX=OFF ^
+ -DBoost_USE_STATIC_LIBS=OFF
+
+nmake install
+
 cd ..\..\..
 
 :: Build fit2x module
