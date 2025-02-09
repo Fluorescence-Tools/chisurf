@@ -20,21 +20,22 @@ build:
 
 requirements:
   build:
+    - {{ compiler('c') }}
     - {{ compiler('cxx') }}
+    - cmake
+    - ninja
+    - make # [not win]
   host:
     - git
-    - cmake
-    - make         # [not win]
-    - ninja
     - swig <4.3.0
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
     - pip
-    - swig <4.3.0
     - python =3.10
     - numpy
-    - tttrlib
+    - tttrlib      # [not win]
+    - hdf5         # [win]
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
@@ -63,6 +64,7 @@ requirements:
     - python-slugify
     - pyqtgraph >=0.13
     - matplotlib
+    - scikit-image
     - deprecation
     - imp
     - pandas
@@ -72,7 +74,8 @@ requirements:
     - scipy
     - numba
     - boost-cpp
-    - tttrlib >=0.25
+    - tttrlib >=0.25      # [not win]
+    - hdf5                # [win]
     - mdtraj
     - htmd-pdb2pqr
     - ipython <8.0

@@ -37,3 +37,7 @@
 [submodule "modules/quest"]
 	path = modules/quest
 	url = https://github.com/fluorescence-tools/quest
+[submodule "modules/tttrlib"]
+	path = modules/tttrlib
+	url = https://github.com/fluorescence-tools/tttrlib
+	branch = development
