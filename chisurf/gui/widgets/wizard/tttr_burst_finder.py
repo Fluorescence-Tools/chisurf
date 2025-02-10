@@ -478,8 +478,8 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.plot_select.setData(x=x, y=y)
 
     def update_dt_plot(self):
-        if isinstance(self.dT, np.ndarray):
-            dT = self.dT
+        dT = self.dT
+        if isinstance(dT, np.ndarray):
             n_min = self.plot_min
             n_max = self.plot_max
 
@@ -495,6 +495,9 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
             mx = np.ma.masked_array(x, mask=mask)
             my = np.ma.masked_array(y, mask=mask)
             self.plot_unselected.setData(x=mx.compressed(), y=my.compressed())
+        else:
+            print("Issue with dT:", dT)
+
 
     def update_mcs_plot(self):
         if self.toolButton_2.isChecked():
@@ -549,22 +552,29 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
             if isinstance(self.tttr, tttrlib.TTTR):
                 idx = np.where(self.selected)[0]
                 y, x = self.tttr[idx].get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1]
-                x = x[:idx_max]
-                y = y[:idx_max]
-                x *= 1e9  # units in nano seconds
-                self.plot_decay_selected.setData(x=x, y=y)
-                y, x = self.tttr.get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1]
-                x = x[:idx_max]
-                y = y[:idx_max]
-                x *= 1e9
-                self.plot_decay_all.setData(x=x, y=y)
+                if len(x) > 0:
+                    idx_max = np.where(y > 0)[0][-1]
+                    x = x[:idx_max]
+                    y = y[:idx_max]
+                    x *= 1e9  # units in nano seconds
+                    self.plot_decay_selected.setData(x=x, y=y)
+                    y, x = self.tttr.get_microtime_histogram(self.decay_coarse)
+                    idx_max = np.where(y > 0)[0][-1]
+                    x = x[:idx_max]
+                    y = y[:idx_max]
+                    x *= 1e9
+                    self.plot_decay_all.setData(x=x, y=y)
         else:
             self.plot_decay_all.setData(x=[1.0], y=[1.0])
             self.plot_decay_selected.setData(x=[1.0], y=[1.0])
 
     def update_plots(self, selection: str = "all"):
+        print("updating plots:", selection)
+        try:
+            if callable(self.callback_function):
+                self.callback_function()
+        except AttributeError:
+            pass
         if 'mcs' in selection:
             self.update_mcs_plot()
         if 'decay' in selection:
@@ -587,7 +597,10 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
                 n = len(self.settings['tttr_filenames'])
                 self.spinBox_4.setMaximum(n - 1)
                 self.comboBox.setEnabled(False)
-                self.tttr = tttrlib.TTTR(fn, self.filetype)
+                if isinstance(self.filetype, str):
+                    self.tttr = tttrlib.TTTR(fn, self.filetype)
+                else:
+                    self.tttr = tttrlib.TTTR(fn)
                 header = self.tttr.get_header()
                 s = header.json
                 d = json.loads(s)
@@ -606,7 +619,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         lb, ub = self.region_selector.getRegion()
         self.settings['count_rate_filter_active'] = self.checkBox_4.isChecked()
         self.settings['count_rate_filter']['n_ph_max'] = int(self.spinBox.value())
-        self.settings['count_rate_filter']['time_window'] = float(self.doubleSpinBox.value()) * 1e-3
+        self.settings['count_rate_filter']['time_window'] = max(0.05, float(self.doubleSpinBox.value())) * 1e-3
         self.settings['count_rate_filter']['invert'] = bool(self.checkBox.isChecked())
 
         self.settings['delta_macro_time_filter']['dT_min'] = 10.0**lb
@@ -729,13 +742,18 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.update_parameter()
 
     @chisurf.gui.decorators.init_with_ui("tttr_burst_finder.ui")
-    def __init__(self, *args, windows, detectors, **kwargs):
+    def __init__(self, *args, windows, detectors, callback_function=None, **kwargs):
         self.setTitle("Photon filter / burst finder")
 
         self.windows = windows
         self.detectors = detectors
         self.fill_detectors(detectors)
         self.fill_pie_windows(windows)
+        self.callback_function = callback_function
+
+        self.comboBox.clear()
+        self.comboBox.insertItem(0, "Auto")  # Insert "Auto" at index 0
+        self.comboBox.insertItems(1, list(tttrlib.TTTR.get_supported_container_names()))
 
         self.settings: dict = dict()
         tttr_filenames: typing.List[pathlib.Path] = list()
