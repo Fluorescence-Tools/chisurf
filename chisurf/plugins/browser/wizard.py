@@ -94,8 +94,13 @@ class Browser(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         # adr is in global
-        url = kwargs.pop('url', globals().get('adr', None))
-        url = urllib.parse.quote(url, safe=":/?&=")
+
+        url = kwargs.pop('url', globals().get('adr', "https://github.com/fluorescence-tools/chisurf"))  # Default fallback
+        if isinstance(url, str):  # Ensure it's a string
+            url = urllib.parse.quote(url, safe=":/?&=")
+        else:
+            raise ValueError("Invalid URL: Expected a string, got {}".format(type(url)))
+
         super().__init__(*args, **kwargs)
 
         self.browser = CustomWebView(self)
