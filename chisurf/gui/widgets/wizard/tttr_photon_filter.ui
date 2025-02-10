@@ -51,13 +51,13 @@
        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Compute photon stream filters&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Select the file format of matching your TTTR files and drop files to the filename line. The buttons to the right (Help, MCS, Decay, and Filter) enable/disable plots. The line next to 'Path' defines the output path of the filters. The boxes 'Channel selection', 'Macro time interval', and 'Count rate filter' define parameters for filters. The box 'Plot settings' gathers plot parameters.&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Channel selection:&lt;/span&gt; Channels are identified by ineger channel numbers and separated by commas (Example: 0,1,3). Micro time ranges are separated by '-'. Multiple micro time ranges are combined by ':' (Example: 0-300:500-3000).&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Macro time interval:&lt;/span&gt; defines minimum / maximum thresholds for times between macro time events. The limits are enabled by the checkbox. Macro time ranges can be adjusted by a region selector in a plot.&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Count rate filter:&lt;/span&gt; defines parameters for a sliding window over the photon stream. If more than the maximum defined number of photons are found in a time windows the photon is filtered. Invert inverts the filter.&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:600; text-decoration: underline;&quot;&gt;Compute photon stream filters&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt;Select the file format of matching your TTTR files and drop files to the filename line. The buttons to the right (Help, MCS, Decay, and Filter) enable/disable plots. The line next to 'Path' defines the output path of the filters. The boxes 'Channel selection', 'Macro time interval', and 'Count rate filter' define parameters for filters. The box 'Plot settings' gathers plot parameters.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; text-decoration: underline;&quot;&gt;Channel selection:&lt;/span&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt; Channels are identified by ineger channel numbers and separated by commas (Example: 0,1,3). Micro time ranges are separated by '-'. Multiple micro time ranges are combined by ':' (Example: 0-300:500-3000).&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; text-decoration: underline;&quot;&gt;Macro time interval:&lt;/span&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt; defines minimum / maximum thresholds for times between macro time events. The limits are enabled by the checkbox. Macro time ranges can be adjusted by a region selector in a plot.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; text-decoration: underline;&quot;&gt;Count rate filter:&lt;/span&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt; defines parameters for a sliding window over the photon stream. If more than the maximum defined number of photons are found in a time windows the photon is filtered. Invert inverts the filter.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
      <widget class="QWidget" name="widget" native="true">
@@ -75,7 +75,7 @@ p, li { white-space: pre-wrap; }
         <number>0</number>
        </property>
        <property name="spacing">
-        <number>-1</number>
+        <number>6</number>
        </property>
        <item row="1" column="1">
         <widget class="QGroupBox" name="groupBox_2">
@@ -722,11 +722,14 @@ p, li { white-space: pre-wrap; }
             <property name="toolTip">
              <string>Time window size (either for count rate computation, coun rate option) or burst seach (Burst option). In the burst option photons that are separated by TW are not within a burst.</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
             <property name="suffix">
              <string> ms</string>
             </property>
             <property name="minimum">
-             <double>0.100000000000000</double>
+             <double>0.050000000000000</double>
             </property>
             <property name="maximum">
              <double>500000.000000000000000</double>
@@ -891,7 +894,7 @@ p, li { white-space: pre-wrap; }
   </connection>
   <connection>
    <sender>doubleSpinBox</sender>
-   <signal>valueChanged(double)</signal>
+   <signal>editingFinished()</signal>
    <receiver>actionUpdate_Values</receiver>
    <slot>trigger()</slot>
    <hints>
@@ -939,7 +942,7 @@ p, li { white-space: pre-wrap; }
   </connection>
   <connection>
    <sender>doubleSpinBox_3</sender>
-   <signal>valueChanged(double)</signal>
+   <signal>editingFinished()</signal>
    <receiver>actionUpdate_Values</receiver>
    <slot>trigger()</slot>
    <hints>
@@ -1067,7 +1070,7 @@ p, li { white-space: pre-wrap; }
   </connection>
   <connection>
    <sender>doubleSpinBox_3</sender>
-   <signal>editingFinished()</signal>
+   <signal>valueChanged(double)</signal>
    <receiver>actionRegionUpdate</receiver>
    <slot>trigger()</slot>
    <hints>

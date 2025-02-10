@@ -562,7 +562,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.fill_pie_windows(windows)
 
         self.comboBox.clear()
-        self.comboBox.insertItems(0, tttrlib.TTTR.get_supported_container_names())
+        self.comboBox.insertItem(0, "Auto")  # Insert "Auto" at index 0
+        self.comboBox.insertItems(1, list(tttrlib.TTTR.get_supported_container_names()))
 
         self.settings: dict = dict()
         tttr_filenames: typing.List[pathlib.Path] = list()
