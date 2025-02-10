@@ -216,7 +216,7 @@ def setup_gui(
         add_notebook(pathlib.Path.home(), '/tree')
 
         notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
-        for notebook_file in notebook_path.glob("*.ipynb"):
+        for notebook_file in sorted(notebook_path.glob("*.ipynb")):
             add_notebook(notebook_file)
 
 

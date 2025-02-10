@@ -6,6 +6,8 @@ import numpy as np
 import numba as nb
 
 
+
+
 @nb.jit(nopython=True, nogil=True)
 def poisson_0toN(
         lam: float,
@@ -178,3 +180,132 @@ def sum_distribution(
         y_values /= y_values.sum()
     return y_values
 
+
+def combine_distributions(
+        x_axis,
+        dist_function,
+        dist_args,
+        weights: typing.List[float] = None,
+        accumulate: bool = True,
+        normalize: bool = False
+):
+    """Generates a sum of distribution functions, e.g. the sum of two normal distributions
+    evaluated for a given x_axis. The arguments dist_args should be a list of lists, which
+    is passed to the dist_function.
+
+    :param x_axis:
+    :param dist_function: function to be evaluated
+    :param dist_args: arguments for the dist_function
+    :param accumulate: If True the distributions are summed up and only a single joint distribution is returned
+    :return:
+
+    Example
+    -------
+    >>> import scikit_fluorescence.math
+    >>> import pylab as p
+    >>> pdf = scikit_fluorescence.math.functions.distributions.normal_distribution
+    >>> x_axis = np.linspace(0, 10, 100)
+    >>> dist_args = [[3, 2], [5, 1]]
+    >>> y_values = combine_distributions(x_axis, pdf, dist_args)
+    >>> p.plot(x_axis, y_values)
+    """
+    if weights is None:
+        weights = [1.] * len(dist_args)
+    if accumulate:
+        y_values = np.zeros_like(x_axis)
+        for i, arg in enumerate(dist_args):
+            y_values += weights[i] * dist_function(x_axis, *arg)
+    else:
+        y_values = list()
+        for i, arg in enumerate(dist_args):
+            y_values.append(weights[i] * dist_function(x_axis, *arg))
+    if normalize:
+        y_values /= y_values.sum()
+    return y_values
+
+
+def combine_distributions(
+        x_axis,
+        dist_function,
+        dist_args,
+        weights: typing.List[float] = None,
+        accumulate: bool = True,
+        normalize: bool = False
+):
+    """Generates a sum of distribution functions, e.g. the sum of two normal distributions
+    evaluated for a given x_axis. The arguments dist_args should be a list of lists, which
+    is passed to the dist_function.
+
+    :param x_axis:
+    :param dist_function: function to be evaluated
+    :param dist_args: arguments for the dist_function
+    :param accumulate: If True the distributions are summed up and only a single joint distribution is returned
+    :return:
+
+    Example
+    -------
+    >>> import scikit_fluorescence.math
+    >>> import pylab as p
+    >>> pdf = scikit_fluorescence.math.functions.distributions.normal_distribution
+    >>> x_axis = np.linspace(0, 10, 100)
+    >>> dist_args = [[3, 2], [5, 1]]
+    >>> y_values = combine_distributions(x_axis, pdf, dist_args)
+    >>> p.plot(x_axis, y_values)
+    """
+    if weights is None:
+        weights = [1.] * len(dist_args)
+    if accumulate:
+        y_values = np.zeros_like(x_axis)
+        for i, arg in enumerate(dist_args):
+            y_values += weights[i] * dist_function(x_axis, *arg)
+    else:
+        y_values = list()
+        for i, arg in enumerate(dist_args):
+            y_values.append(weights[i] * dist_function(x_axis, *arg))
+    if normalize:
+        y_values /= y_values.sum()
+    return y_values
+
+
+@nb.jit(nopython=True)
+def distance_between_gaussian(
+        distances: np.array,
+        separation_distance: float,
+        sigma: float,
+        normalize: bool = False
+) -> np.array:
+    """Calculates the distance distribution between two Gaussians
+
+    :param distances:
+    :param separation_distance:
+    :param sigma:
+    :param normalize:
+    :return:
+    """
+    if separation_distance > 0:
+        pr = distances / separation_distance * (
+                normal_distribution(
+                    x=distances,
+                    loc=separation_distance,
+                    scale=sigma,
+                    norm=False
+                ) -
+                normal_distribution(
+                    x=distances,
+                    loc=-separation_distance,
+                    scale=sigma,
+                    norm=False
+                )
+        )
+    else:
+        pr = 2. * distances ** 2 / sigma ** 2 * normal_distribution(
+            x=distances,
+            loc=0.0,
+            scale=sigma,
+            norm=False
+        )
+    if normalize:
+        s = pr.sum()
+        if s > 0:
+            pr /= s
+    return pr
