@@ -1,2 +1,2 @@
 #!/bin/sh
-./build-osx-app.sh -f=../../environment.yml -i=../../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=../../ -o=../../dist/osx
+./build-osx-app.sh -i=../../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=../../ -o=../../dist/osx

@@ -1,158 +1,178 @@
 #!/usr/bin/env bash
 # Build an OSX Application (.app) for ChiSurf
-#
-# Example:
-#
-#     $ build-osx-app.sh $HOME/Applications/ChiSurf.app
-#
 
+set -e  # Exit on error
+set -u  # Treat unset variables as errors
+set -o pipefail  # Catch errors in pipelines
+
+# Ensure script runs from its own directory
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Default Values
+ICON_FILE="icon.png"
+PYTHON_VERSION="3.10"
+PYTHON_MODULE=""
+APP_NAME="ChiSurf"
+OUTPUT_PATH="$SCRIPT_DIR/dist"
+PYTHON_MODULE_PATH=""
+
+# Function to get absolute filename
 get_abs_filename() {
-  # $1 : relative filename
-  echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+  realpath "$1"
 }
 
-
-export ICON_FILE=icon.png
-export CONDA_ENVIRONMENT_YAML=env_osx.yml
-
-# The directory of the build-osx-app.sh script
-export SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
-function print_usage() {
-    echo "build-osx-app.sh [-i] [--template] $APP_NAME.app
-Build python module as an $APP_NAME OSX application bundle ($APP_NAME.app).
-
-This expects that the python module can be launched by:
-
-python -m module_name
-
-where module_name is the name of the module that is bundled as an osx app.
-
-The bundle will include the python module and a conda environment that is
-used to run the python module.
-
-NOTE: this script should be run from build_tools in source root directory.
-Options:
-    -f --environment_file  Path to conda environment file (default: environment.yml)
-    -i --icon              Path to the icon file (default: icon.png)
-    -n --name              Name of .app file
-    -m --module            Python module
-    -p --module_path       Path to the parent of the python module
-    -h --help              Display help
-    -o --output_path       The path to which the .app is written
-
-Example:
-  ./build-osx-app.sh -f=../../environment.yml -i=../chisurf/gui/resources/icons/cs_logo.png -n=ChiSurf -m=chisurf -p=../../ -o=../../dist
-    "
-    exit
+# Function to print usage
+print_usage() {
+    echo "Usage: build-osx-app.sh [options]"
+    echo "Options:"
+    echo "    -i, --icon          Path to the icon file (default: icon.png)"
+    echo "    -n, --name          Name of the .app file (default: ChiSurf)"
+    echo "    -t, --python        Python version (default: 3.10)"
+    echo "    -m, --module        Python module to bundle"
+    echo "    -p, --module_path   Path to the module’s parent directory"
+    echo "    -o, --output_path   Output directory for the .app (default: ./dist)"
+    echo "    -h, --help          Display this help message"
+    exit 0
 }
 
-for i in "$@"
-do
-case $i in
-    -f=*|--environment_file=*)
-    CONDA_ENVIRONMENT_YAML="${i#*=}"
-    shift # past argument=value
-    ;;
-    -i=*|--icon=*)
-    ICON_FILE=$(get_abs_filename "${i#*=}")
-    shift # past argument=value
-    ;;
-    -m=*|--module=*)
-    PYTHON_MODULE="${i#*=}"
-    shift # past argument=value
-    ;;
-    -n=*|--name=*)
-    APP_NAME="${i#*=}"
-    shift # past argument=value
-    ;;
-    -o=*|--output_path=*)
-    OUTPUT_PATH="${i#*=}"
-    shift # past argument=value
-    ;;
-    -p=*|--module_path=*)
-    PYTHON_MODULE_PATH="${i#*=}"
-    shift # past argument=value
-    ;;
-    -h|--help)
-    print_usage
-    ;;
-    *)
-    print_usage
-    exit
-    ;;
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+        -i=*|--icon=*) ICON_FILE=$(get_abs_filename "${1#*=}") ;;
+        -m=*|--module=*) PYTHON_MODULE="${1#*=}" ;;
+        -n=*|--name=*) APP_NAME="${1#*=}" ;;
+        -o=*|--output_path=*) OUTPUT_PATH=$(get_abs_filename "${1#*=}") ;;
+        -p=*|--module_path=*) PYTHON_MODULE_PATH=$(get_abs_filename "${1#*=}") ;;
+        -t=*|--python=*) PYTHON_VERSION="${1#*=}" ;;
+        -h|--help) print_usage ;;
+        *) echo "Unknown option: $1"; print_usage ;;
     esac
     shift
 done
 
+# Validate required arguments
+if [[ -z "$PYTHON_MODULE" || -z "$PYTHON_MODULE_PATH" ]]; then
+    echo "Error: Python module and module path must be specified."
+    print_usage
+fi
 
-# The target directory of the .app
-mkdir "$OUTPUT_PATH"
+# Resolve paths
+mkdir -p "$OUTPUT_PATH"
 OUTPUT_PATH=$(cd "$OUTPUT_PATH" && pwd)
 PYTHON_MODULE_PATH=$(cd "$PYTHON_MODULE_PATH" && pwd)
 
-export APP_FOLDER=${1:-$OUTPUT_PATH/$APP_NAME.app}
-mkdir -p "$APP_FOLDER"
-APP_FOLDER=$(cd "$APP_FOLDER" && pwd)
+APP_FOLDER="$OUTPUT_PATH/$APP_NAME.app"
+mkdir -p "$APP_FOLDER/Contents"
 
-mamba env create -f $CONDA_ENVIRONMENT_YAML --prefix "$APP_FOLDER/Contents" --force
+# Create Conda environment inside the bundle
+echo "Creating Conda environment in $APP_FOLDER/Contents..."
+mamba create --prefix "$APP_FOLDER/Contents" --force -y python="$PYTHON_VERSION"
+source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "$APP_FOLDER/Contents"
-mamba install -y nomkl jinja2
+
+# Install Python module
+echo "Installing module $PYTHON_MODULE..."
+mamba install -y "$PYTHON_MODULE" --use-local
+
+# Create necessary directories
 mkdir -p "$APP_FOLDER/Contents/MacOS"
 mkdir -p "$APP_FOLDER/Contents/Resources"
 
-cd $PYTHON_MODULE_PATH
-export SITE_PACKAGE_PATH=`$APP_FOLDER/Contents/bin/python -c 'import site; print(site.getsitepackages()[0])'`
-cp -R $PYTHON_MODULE $SITE_PACKAGE_PATH
+# Copy Python module
+cd "$PYTHON_MODULE_PATH"
+SITE_PACKAGE_PATH=$("$APP_FOLDER/Contents/bin/python" -c 'import site; print(site.getsitepackages()[0])')
+cp -R "$PYTHON_MODULE" "$SITE_PACKAGE_PATH"
 
+# Print values
 function print_values() {
-    echo "Input values:"
-    echo "-----------------------"
-    echo "Conda Environment YAML: $CONDA_ENVIRONMENT_YAML"
-    echo "Icon File:              $ICON_FILE"
-    echo "Python Module:          $PYTHON_MODULE"
-    echo "App Name:               $APP_NAME"
-    echo "Output Path:            $OUTPUT_PATH"
-    echo "Python Module Path:     $PYTHON_MODULE_PATH"
-    echo "Site package Path:      $SITE_PACKAGE_PATH"
-    echo "App folder:             $APP_FOLDER"
-    echo "-----------------------"
+    echo "============================="
+    echo " App Build Configuration"
+    echo "-----------------------------"
+    echo " App Name:           $APP_NAME"
+    echo " Icon File:          $ICON_FILE"
+    echo " Python Version:     $PYTHON_VERSION"
+    echo " Python Module:      $PYTHON_MODULE"
+    echo " Module Path:        $PYTHON_MODULE_PATH"
+    echo " Output Path:        $OUTPUT_PATH"
+    echo " Site Packages Path: $SITE_PACKAGE_PATH"
+    echo " App Folder:         $APP_FOLDER"
+    echo "============================="
 }
 print_values
 
+# Generate icons
+cd "$SCRIPT_DIR"
+python generate-iconset.py "$SCRIPT_DIR/resources/AppIcon.png"
+python generate-iconset.py "$SCRIPT_DIR/resources/VolumeIcon.png"
 
-# generate icons file
-cd $SCRIPT_DIR
-python generate-iconset.py $SCRIPT_DIR/resources/AppIcon.png
-python generate-iconset.py resources/VolumeIcon.png
+# Set app icon
+"$SCRIPT_DIR/fileicon" set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
 
-# also update the icon with fileicon
-$SCRIPT_DIR/fileicon set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
+# Generate Info.plist and executable
+cd "$PYTHON_MODULE_PATH"
+"$SCRIPT_DIR/create_app_plist.py" \
+  --module "$PYTHON_MODULE" \
+  --output "$APP_FOLDER/Contents/Info.plist" \
+  --executable "$APP_NAME" \
+  -i "$SCRIPT_DIR/resources/AppIcon.icns" \
+  -p "$SCRIPT_DIR/plist_template" \
+  -t "$SCRIPT_DIR/launch_template"
 
-# update the Info.plist file and create a entry point
-cd $PYTHON_MODULE_PATH
-$SCRIPT_DIR/create_app_plist.py \
-  --module $PYTHON_MODULE \
-  --output $APP_FOLDER/Contents/Info.plist \
-  --executable $APP_NAME \
-  -i $SCRIPT_DIR/resources/AppIcon.icns \
-  -p $SCRIPT_DIR/plist_template \
-  -t $SCRIPT_DIR/launch_template
-cd $APP_FOLDER/Contents
-./bin/python -m compileall .
+# Compile Python files
+#cd "$APP_FOLDER/Contents"
+#./bin/python -m compileall .
 
-cd $SCRIPT_DIR
-./create-dmg/create-dmg \
-  --volname "$APP_NAME Installer" \
-  --volicon "./resources/VolumeIcon.icns" \
-  --window-pos 200 120 \
-  --window-size 800 400 \
-  --icon-size 100 \
-  --icon "$APP_NAME.app" 200 190 \
-  --hide-extension "$APP_NAME.app" \
-  --app-drop-link 600 185 \
-  --skip-jenkins \
-  --sandbox-safe \
-  --no-internet-enable \
-  "$OUTPUT_PATH/$APP_NAME-Installer.dmg" \
-  "$APP_FOLDER/.."
+# --- Create DMG with Drag-and-Drop Installation ---
+# Instead of creating a temporary folder in /tmp, we now create the staging folder in the output directory.
+
+STAGING_DIR="$OUTPUT_PATH/${APP_NAME}-dmg"
+rm -rf "$STAGING_DIR"         # Remove any previous staging folder
+mkdir -p "$STAGING_DIR"
+echo "Staging DMG content in: $STAGING_DIR"
+
+# Move the .app bundle into the staging folder
+mv "$APP_FOLDER" "$STAGING_DIR/"
+echo "Moved app bundle to staging folder."
+
+# Create a symlink to the /Applications folder for drag-and-drop installation
+ln -s /Applications "$STAGING_DIR/Applications"
+echo "Created symlink to /Applications in staging folder."
+
+# Optionally, add a custom background image if available.
+if [[ -f "$SCRIPT_DIR/resources/dmg-background.png" ]]; then
+    mkdir -p "$STAGING_DIR/.background"
+    cp "$SCRIPT_DIR/resources/dmg-background.png" "$STAGING_DIR/.background/"
+    echo "Custom background image added."
+else
+    echo "No custom background image found. Skipping background image."
+fi
+
+# Debug: List staging folder contents
+echo "Staging folder contents:"
+ls -la "$STAGING_DIR"
+
+# Define DMG parameters
+DMG_NAME="$OUTPUT_PATH/$APP_NAME-Installer.dmg"
+VOL_NAME="$APP_NAME Installer"
+echo "Creating DMG file: $DMG_NAME with volume name: $VOL_NAME"
+
+# Remove existing DMG if present
+rm -f "$DMG_NAME"
+
+# Increase size to 5 GB (adjust if needed)
+DMG_SIZE="4.5g"
+
+# Create a read/write DMG from the staging folder.
+hdiutil create -volname "$VOL_NAME" -srcfolder "$STAGING_DIR" -ov -format UDRW -size "$DMG_SIZE" "$DMG_NAME"
+
+# Convert the read/write DMG to a compressed, read-only DMG for distribution
+hdiutil convert "$DMG_NAME" -format UDZO -o "${DMG_NAME%.dmg}-final.dmg"
+
+# Replace the original DMG with the final version
+mv "${DMG_NAME%.dmg}-final.dmg" "$DMG_NAME"
+
+# Clean up the staging folder
+rm -rf "$STAGING_DIR"
+echo "Cleaned up staging folder."
+
+echo "DMG created successfully at: $DMG_NAME"
