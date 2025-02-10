@@ -26,7 +26,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.channels = chisurf.gui.widgets.wizard.DetectorWizardPage()
         self.addPage(self.channels)
 
-        self.filter = chisurf.gui.widgets.wizard.WizardTTTRBurstFinder(
+        self.filter = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
             windows=self.channels.windows,
             detectors=self.channels.detectors
         )
