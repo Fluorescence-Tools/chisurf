@@ -104,6 +104,12 @@ class TCSPCTTTRReaderControlWidget(
         self.actionParametersChanged.triggered.connect(self.onParametersChanged)
         self.onParametersChanged()
 
+    def show(self):
+        super().show()
+        # Call onParametersChanged on show to make sure that the
+        # settings match the UI
+        self.onParametersChanged()
+
     def onParametersChanged(self):
         micro_time_coarsening = self.comboBox_2.currentText()
         channel_numbers = self.lineEdit.text()

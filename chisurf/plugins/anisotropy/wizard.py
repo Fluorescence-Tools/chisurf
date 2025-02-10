@@ -311,19 +311,24 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         # Link VH parameters to VV
         #######################################
-
         # number of photons
         self.fit_vh.model.parameters_all_dict['n0'].link = self.fit_vv.model.parameters_all_dict['n0']
         self.fit_vv.model.parameters_all_dict['n0'].fixed = False
         self.fit_vh.model.parameters_all_dict['n0'].fixed = False
 
+        self.fit_vv.model.parameters_all_dict['l1'].fixed = False
         self.fit_vv.model.parameters_all_dict['l1'].value = self.conf_edit.dict['l1']
+        self.fit_vv.model.parameters_all_dict['l1'].fixed = True
         self.fit_vv.model.parameters_all_dict['l1'].controller.finalize()
 
+        self.fit_vv.model.parameters_all_dict['l2'].fixed = False
         self.fit_vv.model.parameters_all_dict['l2'].value = self.conf_edit.dict['l2']
+        self.fit_vv.model.parameters_all_dict['l2'].fixed = True
         self.fit_vv.model.parameters_all_dict['l2'].controller.finalize()
 
+        self.fit_vv.model.parameters_all_dict['g'].fixed = False
         self.fit_vv.model.parameters_all_dict['g'].value = self.conf_edit.dict['g_factor']
+        self.fit_vv.model.parameters_all_dict['g'].fixed = True
         self.fit_vv.model.parameters_all_dict['g'].controller.finalize()
 
         # rotation

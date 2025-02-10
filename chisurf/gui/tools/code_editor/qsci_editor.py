@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pathlib
 import sys
 
 from PyQt5.Qsci import QsciScintilla
@@ -70,7 +71,6 @@ class SimpleCodeEditor(QsciScintilla):
         # Set the default font
         font = QtGui.QFont()
         font.setFamily(font_family)
-        font.setFixedPitch(True)
         font.setPointSize(int(font_point_size))
 
         self.setFont(font)
@@ -104,7 +104,7 @@ class SimpleCodeEditor(QsciScintilla):
         # Set Python lexer
         # Set style for Python comments (style number 1) to a fixed-width
         # courier.
-        if lexers_available:
+        if lexers_available and isinstance(language, str):
             if language.lower() == "python":
                 lexer = QsciLexerPython()
             elif language.lower() == "json":
@@ -142,43 +142,53 @@ class SimpleCodeEditor(QsciScintilla):
 
 class CodeEditor(QtWidgets.QWidget):
 
+    def load_file_event(self, event, filename: str = None, **kwargs):
+        self.load_file(filename)
+
     def load_file(self, filename: str = None, **kwargs):
-        if filename is None:
-            filename = chisurf.gui.widgets.get_filename()
-        self.filename = filename
+        """Load a file into the editor."""
+        filename = filename or chisurf.gui.widgets.get_filename()
+        if not filename:
+            return
         try:
             logging.log(0, f"Loading file: {filename}")
-            text = ""
-            with open(filename) as fp:
-                text = fp.read()
-            self.editor.setText(text)
-            self.line_edit.setText(
-                str(filename)
-            )
-        except IOError:
-            logging.log(1, f"CodeEditor, not a valid filename: {filename}")
+            with open(filename, encoding="utf-8") as file:
+                self.editor.setText(file.read())
+            self.line_edit.setText(str(filename))
+            self.filename = filename
+        except IOError as e:
+            logging.log(1, f"Error loading file {filename}: {e}")
 
-    def run_macro(self):
+    def run_macro(self, event):
+        """Execute the currently loaded Python script."""
+        if not self.filename:
+            logging.log(1, "No file to run.")
+            return
         self.save_text()
         chisurf.console.run_macro(filename=self.filename)
 
-    def save_text(self):
-        if self.filename is None or self.filename == '':
-            self.filename = chisurf.gui.widgets.save_file(file_type='Python script (*.py)')
-        with io.zipped.open_maybe_zipped(self.filename, 'w') as fp:
-            text = str(self.editor.text())
-            fp.write(text)
-            self.line_edit.setText(str(self.filename.as_posix))
+    def save_text(self, event = None):
+        """Save the current text to a file."""
+        if not self.filename:
+            self.filename = chisurf.gui.widgets.save_file(file_type="Python script (*.py)")
+            if not self.filename:
+                return
+        try:
+            with io.zipped.open_maybe_zipped(self.filename, "w") as file:
+                file.write(self.editor.text())
+            self.line_edit.setText(str(pathlib.Path(self.filename).as_posix()))
+        except IOError as e:
+            logging.log(1, f"Error saving file {self.filename}: {e}")
 
     def __init__(
-            self,
-            *args,
-            filename: str = None,
-            language: str = 'Python',
-            can_load: bool = True,
-            **kwargs
+        self,
+        *args,
+        filename: str = None,
+        language: str = "Python",
+        can_load: bool = True,
+        **kwargs
     ):
-        super(CodeEditor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -192,29 +202,33 @@ class CodeEditor(QtWidgets.QWidget):
             language=language
         )
         layout.addWidget(self.editor)
-        h_layout = QtWidgets.QHBoxLayout()
 
-        load_button = QtWidgets.QPushButton('load')
-        save_button = QtWidgets.QPushButton('save')
-        run_button = QtWidgets.QPushButton('run')
+        # Button layout
+        button_layout = QtWidgets.QHBoxLayout()
+        self.load_button = QtWidgets.QPushButton("Load")
+        self.save_button = QtWidgets.QPushButton("Save")
+        self.run_button = QtWidgets.QPushButton("Run")
 
-        h_layout.addWidget(self.line_edit)
-        h_layout.addWidget(load_button)
-        h_layout.addWidget(save_button)
-        h_layout.addWidget(run_button)
-        layout.addLayout(h_layout)
+        button_layout.addWidget(self.line_edit)
+        button_layout.addWidget(self.load_button)
+        button_layout.addWidget(self.save_button)
+        button_layout.addWidget(self.run_button)
+        layout.addLayout(button_layout)
 
-        save_button.clicked.connect(self.save_text)
-        load_button.clicked.connect(self.load_file)
-        run_button.clicked.connect(self.run_macro)
+        # Connect buttons to actions
+        self.save_button.clicked.connect(self.save_text)
+        self.load_button.clicked.connect(self.load_file_event)
+        self.run_button.clicked.connect(self.run_macro)
 
-        # Load the file
-        if filename is not None and filename != '':
+        # Handle initial file loading
+        if isinstance(filename, str) and pathlib.Path(filename).is_file():
             self.load_file(filename=filename)
-        if language != 'Python':
-            run_button.hide()
+
+        if isinstance(language, str) and language.lower() != "python":
+            self.run_button.hide()
+
         if not can_load:
-            load_button.hide()
+            self.load_button.hide()
 
 
 if __name__ == "__main__":
