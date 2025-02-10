@@ -194,31 +194,57 @@ def setup_gui(
         chisurf_path = pathlib.Path(chisurf.__file__).parent
         plugin_path = pathlib.Path(chisurf.plugins.browser.__file__).absolute().parent
 
-        def add_notebook(notebook_file, base_addr='/notebooks/'):
-            adr = str(chisurf.__jupyter_address__ + base_addr) + str(notebook_file.relative_to(home_dir))
-            p = partial(
-                window.onRunMacro, plugin_path / "wizard.py",
-                executor='exec',
-                globals={'__name__': 'plugin', 'adr': adr}
-            )
+        # Define the target directory inside the home directory
+        chisurf_notebooks_dir = home_dir / "notebooks"
+        chisurf_notebooks_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
+
+        def copy_notebook(src, dest_dir):
+            """Copy a notebook file using pathlib only."""
+            dest_file = dest_dir / src.name
+            dest_file.write_bytes(src.read_bytes())  # Read and write in binary mode
+            return dest_file
+
+        def add_notebook(notebook_file):
+            if not notebook_file.exists():
+                return
+
             try:
-                if notebook_file.exists():
-                    menu_text = notebook_file.stem
-                    action = QtWidgets.QAction(f"{menu_text}", window)
-                else:
-                    return
-            except AttributeError as e:
+                notebook_file = notebook_file.resolve()  # Ensure absolute path
+
+                # If the file is not inside home_dir, copy it to ~/notebooks/
+                if not notebook_file.is_relative_to(home_dir):
+                    notebook_file = copy_notebook(notebook_file, chisurf_notebooks_dir)
+
+                # Convert path to POSIX format (to avoid Windows `\` issues in URL)
+                notebook_path_str = notebook_file.relative_to(home_dir).as_posix()
+
+                # Correct Jupyter notebook URL with `/tree/`
+                # http://localhost:8932/notebooks/Links/smFRET_01_Burst_Search_ALEX.
+                adr = f"{chisurf.__jupyter_address__}/notebooks/{notebook_path_str}"
+
+                p = partial(
+                    window.onRunMacro, plugin_path / "wizard.py",
+                    executor='exec',
+                    globals={'__name__': 'plugin', 'adr': adr}
+                )
+
+                menu_text = notebook_file.stem
+                action = QtWidgets.QAction(f"{menu_text}", window)
+                action.triggered.connect(p)
+                notebook_menu.addAction(action)
+
+            except AttributeError:
                 action = QtWidgets.QAction(f"{notebook_file}", window)
-            action.triggered.connect(p)
-            notebook_menu.addAction(action)
+                action.triggered.connect(p)
+                notebook_menu.addAction(action)
 
-        # http://localhost:8888/tree
-        add_notebook(pathlib.Path.home(), '/tree')
+        # Add the Jupyter root directory with `/tree/`
+        add_notebook(home_dir)
 
+        # Load notebooks from settings
         notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
         for notebook_file in sorted(notebook_path.glob("*.ipynb")):
             add_notebook(notebook_file)
-
 
     if stage is None:
         gui_imports()
