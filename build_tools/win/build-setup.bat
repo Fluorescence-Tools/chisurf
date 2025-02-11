@@ -11,12 +11,12 @@ for %%I in ("%APP_PATH%") do set "APP_PATH=%%~fI"
 for %%I in ("%SOURCE_PATH%") do set "SOURCE_PATH=%%~fI"
 for %%I in ("%CONDA_RECIPE_FOLDER%") do set "CONDA_RECIPE_FOLDER=%%~fI"
 
-:: Default behavior: Do not build conda package
-set "BUILD_CONDA_PACKAGE=0"
+:: Default behavior: Build the Conda package
+set "BUILD_CONDA_PACKAGE=1"
 
-:: Check for command-line arguments
-if /I "%1"=="/build" (
-    set "BUILD_CONDA_PACKAGE=1"
+:: Check for command-line arguments: If /nobuild is passed, skip building the Conda package
+if /I "%1"=="/nobuild" (
+    set "BUILD_CONDA_PACKAGE=0"
 )
 
 :: If /build flag is passed, build the Conda package
