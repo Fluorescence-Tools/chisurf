@@ -67,7 +67,10 @@ class Parameter(chisurf.base.Base):
 
     @value.setter
     def value(self, value: float):
+        f = self._port.fixed
+        self._port.fixed = False
         self._port.value = np.array([value], dtype=np.double)
+        self._port.fixed = f
 
     @property
     def link(self) -> chisurf.parameter.Parameter:
