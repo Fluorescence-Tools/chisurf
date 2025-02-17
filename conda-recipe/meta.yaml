@@ -57,7 +57,7 @@ requirements:
     - numpy
     - libcxx  # [osx]
   run:
-    - python
+    - python =3.10
     - numpy
     - pyyaml
     - click <8.0 # Conflicts with papermill
