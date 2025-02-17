@@ -41,10 +41,8 @@ jobs:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
-          channels: conda-forge,bioconda,tpeulen,defaults
+          channels: conda-forge,bioconda,tpeulen
           channel-priority: true
-
-
 
       - name: Display Conda Settings
         shell: bash -el {0}
