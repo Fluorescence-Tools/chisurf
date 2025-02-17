@@ -348,7 +348,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         # Place the final text in the clipboard
         QtWidgets.QApplication.clipboard().setText(clipboard_text)
 
-    @chisurf.gui.decorators.init_with_ui("gui.ui", path='chisurf/plugins/brick-mic')
+    @chisurf.gui.decorators.init_with_ui("brick-mic/gui.ui", path=chisurf.settings.plugin_path)
     def __init__(
             self,
             *args,
