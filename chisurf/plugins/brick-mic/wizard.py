@@ -38,7 +38,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         saves the result to a .bst file (using the same filename as fn except for its ending)
         in an analysis folder, populates the table, and updates the histogram.
         """
-        print("update_bursts(self)")
         # Get the original filename from your burst finder.
         fn = self.burst_finder.filename
 
@@ -78,7 +77,8 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         # Use pathlib to create an analysis folder and derive the bursts filename.
         file_path = Path(fn)
-        analysis_folder = file_path.parent / "analysis"
+        fn = self.burst_finder.lineEdit_2.text()
+        analysis_folder = file_path.parent / fn
         analysis_folder.mkdir(parents=True, exist_ok=True)
         bst_filename = analysis_folder / f"{file_path.stem}.bst"
         df_subset.to_csv(bst_filename, sep="\t", index=False)
@@ -96,6 +96,104 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         # Update the histogram (using the feature currently selected in comboBox).
         self.update_histogram()
+
+    def process_all_files(self) -> None:
+        """
+        Iterates over all TTTR files registered in the burst finder by setting the
+        burst finder’s spinBox_4 to each valid index. For each file, it reads the TTTR file,
+        generates its burst summary DataFrame (using chisurf.gui.widgets.wizard.create_bur_summary),
+        reduces the results to a subset of desired columns, calculates FRET Efficiency, and writes
+        the burst data to a separate .bst file in an analysis folder. After all files are processed,
+        the accumulated results are concatenated and the UI (table and histogram) is updated.
+        """
+        # Retrieve the list of TTTR filenames from the burst finder settings.
+        tttr_files = self.burst_finder.settings.get('tttr_filenames', [])
+        num_files = len(tttr_files)
+        if num_files == 0:
+            print("No TTTR files to process.")
+            return
+
+        # Initialize the progress bar.
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(num_files)
+        self.progressBar.setValue(0)
+
+        accumulated_results = []
+
+        # Desired columns for the burst summary.
+        desired_columns = [
+            "First Photon",
+            "Last Photon",
+            "Duration (ms)",
+            "Number of Photons (red)",
+            "Number of Photons (green)"
+        ]
+
+        for index in range(num_files):
+            # Set the current file index in the burst finder.
+            self.burst_finder.spinBox_4.setValue(index)
+            QtWidgets.QApplication.processEvents()
+
+            # Create the burst summary DataFrame using the module function.
+            fn = self.burst_finder.filename  # Original filename for the current file.
+            df = chisurf.gui.widgets.wizard.create_bur_summary(
+                start_stop=self.burst_finder.burst_start_stop,
+                tttr=self.burst_finder.tttr,
+                filename=fn,
+                windows=self.burst_finder.windows,
+                detectors=self.burst_finder.detectors
+            )
+
+            # Ensure the desired columns exist.
+            missing_cols = [col for col in desired_columns if col not in df.columns]
+            if missing_cols:
+                print("Warning: The following expected columns are missing:", missing_cols)
+                for col in missing_cols:
+                    df[col] = 0
+
+            # Create a subset DataFrame and calculate FRET Efficiency.
+            df_subset = df[desired_columns].copy()
+            df_subset["FRET Efficiency"] = df_subset.apply(
+                lambda row: row["Number of Photons (red)"] /
+                            (row["Number of Photons (red)"] + row["Number of Photons (green)"])
+                if (row["Number of Photons (red)"] + row["Number of Photons (green)"]) > 0 else 0,
+                axis=1
+            )
+
+            # Write the burst data to a separate file.
+            file_path = Path(fn)
+            # Retrieve the folder name from the burst finder's lineEdit_2.
+            analysis_folder_name = self.burst_finder.lineEdit_2.text()
+            analysis_folder = file_path.parent / analysis_folder_name
+            analysis_folder.mkdir(parents=True, exist_ok=True)
+            bst_filename = analysis_folder / f"{file_path.stem}.bst"
+            df_subset.to_csv(bst_filename, sep="\t", index=False)
+            print("Saved bursts to", bst_filename)
+
+            # Accumulate this file's results.
+            accumulated_results.append(df_subset)
+
+            # Update progress bar.
+            self.progressBar.setValue(index + 1)
+            QtWidgets.QApplication.processEvents()
+            print(f"Processed file {index + 1} of {num_files}")
+
+        if accumulated_results:
+            # Concatenate all individual DataFrames.
+            final_df = pd.concat(accumulated_results, ignore_index=True)
+            self.current_df = final_df
+            # Update the table widget.
+            self.tableWidget.setUpdatesEnabled(False)
+            self.tableWidget.setSortingEnabled(False)
+            self.populate_table(final_df)
+            self.tableWidget.setUpdatesEnabled(True)
+            self.tableWidget.setSortingEnabled(True)
+            # Update the histogram.
+            self.update_histogram()
+        else:
+            print("No burst data was accumulated.")
+
+        print("All files processed.")
 
     def update_histogram(self):
         """
@@ -138,58 +236,53 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         ax.set_xlabel(selected_feature)
         ax.set_ylabel("Frequency")
 
-        # If the Gaussian fit option is enabled, perform a mixture fit.
-        if self.checkBox_Gauss.isChecked():
-            # Get the number of Gaussians to fit.
-            k = int(self.spinBox.value())  # self.spinBox gives the number of Gaussians.
-            if k > 0:
-                try:
-                    # Compute bin centers from the histogram bins.
-                    bin_centers = (bins[:-1] + bins[1:]) / 2.0
-                    # Build an initial guess: for each Gaussian, we guess:
-                    #   Amplitude: max(n)/k,
-                    #   Mean: equally spaced between min_val and max_val,
-                    #   Sigma: (max_val - min_val)/(2*k)
-                    initial_guess = []
-                    for i in range(k):
-                        A_guess = max(n) / k
-                        mu_guess = min_val + (max_val - min_val) * (i + 0.5) / k
-                        sigma_guess = (max_val - min_val) / (2 * k)
-                        initial_guess.extend([A_guess, mu_guess, sigma_guess])
-                    # Fit the mixture model.
-                    popt, pcov = curve_fit(multi_gaussian, bin_centers, n, p0=initial_guess)
-                    # Generate x values for the fitted curve.
-                    x_fit = np.linspace(min_val, max_val, 100)
-                    y_fit = multi_gaussian(x_fit, *popt)
-                    ax.plot(x_fit, y_fit, 'r-', label='Gaussian Mixture Fit')
-                    ax.legend()
+        # Get the number of Gaussians to fit.
+        k = int(self.spinBox.value())
+        if k > 0:
+            try:
+                # Compute bin centers from the histogram bins.
+                bin_centers = (bins[:-1] + bins[1:]) / 2.0
+                # Build an initial guess: for each Gaussian, we guess:
+                #   Amplitude: max(n)/k,
+                #   Mean: equally spaced between min_val and max_val,
+                #   Sigma: (max_val - min_val)/(2*k)
+                initial_guess = []
+                for i in range(k):
+                    A_guess = max(n) / k
+                    mu_guess = min_val + (max_val - min_val) * (i + 0.5) / k
+                    sigma_guess = (max_val - min_val) / (2 * k)
+                    initial_guess.extend([A_guess, mu_guess, sigma_guess])
+                # Fit the mixture model.
+                popt, pcov = curve_fit(multi_gaussian, bin_centers, n, p0=initial_guess)
+                # Generate x values for the fitted curve.
+                x_fit = np.linspace(min_val, max_val, 100)
+                y_fit = multi_gaussian(x_fit, *popt)
+                ax.plot(x_fit, y_fit, 'r-', label='Gaussian Mixture Fit')
+                ax.legend()
 
-                    # Write the fit results to self.plainTextEdit.
-                    results = []
-                    for i in range(k):
-                        A = popt[3 * i]
-                        mu = popt[3 * i + 1]
-                        sigma = popt[3 * i + 2]
-                        try:
-                            errorA = np.sqrt(pcov[3 * i, 3 * i])
-                            errorMu = np.sqrt(pcov[3 * i + 1, 3 * i + 1])
-                            errorSigma = np.sqrt(pcov[3 * i + 2, 3 * i + 2])
-                        except Exception as err:
-                            errorA, errorMu, errorSigma = None, None, None
-                        if errorA is not None:
-                            results.append(f"Gaussian {i+1}:\n  Amplitude = {A:.3f} ± {errorA:.3f}\n  Mean = {mu:.3f} ± {errorMu:.3f}\n  Sigma = {sigma:.3f} ± {errorSigma:.3f}")
-                        else:
-                            results.append(f"Gaussian {i+1}:\n  Amplitude = {A:.3f}\n  Mean = {mu:.3f}\n  Sigma = {sigma:.3f}")
-                    result_str = "\n\n".join(results)
-                    self.plainTextEdit.setPlainText(result_str)
-                except Exception as e:
-                    err_msg = "Gaussian mixture fit failed: " + str(e)
-                    print(err_msg)
-                    self.plainTextEdit.setPlainText(err_msg)
-            else:
-                self.plainTextEdit.clear()
+                # Write the fit results to self.plainTextEdit.
+                results = []
+                for i in range(k):
+                    A = popt[3 * i]
+                    mu = popt[3 * i + 1]
+                    sigma = popt[3 * i + 2]
+                    try:
+                        errorA = np.sqrt(pcov[3 * i, 3 * i])
+                        errorMu = np.sqrt(pcov[3 * i + 1, 3 * i + 1])
+                        errorSigma = np.sqrt(pcov[3 * i + 2, 3 * i + 2])
+                    except Exception as err:
+                        errorA, errorMu, errorSigma = None, None, None
+                    if errorA is not None:
+                        results.append(f"Gaussian {i+1}:\n  Amplitude = {A:.3f} ± {errorA:.3f}\n  Mean = {mu:.3f} ± {errorMu:.3f}\n  Sigma = {sigma:.3f} ± {errorSigma:.3f}")
+                    else:
+                        results.append(f"Gaussian {i+1}:\n  Amplitude = {A:.3f}\n  Mean = {mu:.3f}\n  Sigma = {sigma:.3f}")
+                result_str = "\n\n".join(results)
+                self.plainTextEdit.setPlainText(result_str)
+            except Exception as e:
+                err_msg = "Gaussian mixture fit failed: " + str(e)
+                print(err_msg)
+                self.plainTextEdit.setPlainText(err_msg)
         else:
-            # Clear the plainTextEdit if Gaussian fit is not enabled.
             self.plainTextEdit.clear()
 
         self.canvas.draw()
@@ -258,28 +351,23 @@ class BrickMicWizard(QtWidgets.QMainWindow):
     @chisurf.gui.decorators.init_with_ui("gui.ui", path='chisurf/plugins/brick-mic')
     def __init__(
             self,
-            fit_list: list[chisurf.fitting.FitGroup] = None,
-            parent=None,
-            connect_fits: bool = False,
-            include_fixed: bool = False,
-            filename_ending: str = '.h5',
             *args,
             **kwargs
     ):
-        #super(GraphWizard, self).__init__(*args, **kwargs)
-        if fit_list is None:
-            fit_list = chisurf.fits
-        self.fit_list = fit_list
+        #super().__init__(*args, **kwargs)
 
-        self.parent = parent
-
-        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
+        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(
+            parent=self,
+            json_file=None #'chisurf/plugins/brick-mic/channel_settings.json'
+        )
         self.verticalLayout_7.addWidget(self.channel_definer)
 
         self.burst_finder = chisurf.gui.widgets.wizard.WizardTTTRBurstFinder(
             windows=self.channel_definer.windows,
             detectors=self.channel_definer.detectors,
-            callback_function=self.update_bursts
+            #callback_function=self.update_bursts,
+            show_dT=True, show_burst_histogram=False, show_mcs=True,
+            show_decay=False, show_filter=False
         )
         self.verticalLayout_2.addWidget(self.burst_finder)
 
@@ -312,11 +400,15 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.spinBox_3.valueChanged.connect(self.update_histogram)
         self.doubleSpinBox_3.valueChanged.connect(self.update_histogram)
         self.doubleSpinBox_4.valueChanged.connect(self.update_histogram)
-        self.checkBox_Gauss.toggled.connect(self.update_histogram)
         self.spinBox.valueChanged.connect(self.update_histogram)
+        self.pushButton.clicked.connect(self.process_all_files)
 
         # Store the current DataFrame for histogram updates.
         self.current_df = None
+
+        self.burst_finder.groupBox_3.hide()
+        self.burst_finder.toolButton_3.hide()
+        self.burst_finder.toolButton_4.hide()
 
 
 if __name__ == "plugin":
