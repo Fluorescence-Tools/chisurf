@@ -40,7 +40,10 @@ class ChisurfWizard(QtWidgets.QWizard):
         super().__init__(*args, **kwargs)
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
 
-        self.photon_select = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter()
+        self.photon_select = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
+            windows={},
+            detectors={}
+        )
         self.photon_select.toolButton_5.clicked.connect(self.photon_select.completeChanged.emit)
 
         self.correlator_page = chisurf.gui.widgets.wizard.WizardTTTRCorrelator()
