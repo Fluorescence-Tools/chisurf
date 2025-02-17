@@ -183,7 +183,7 @@ class CodeEditor(QtWidgets.QWidget):
     def __init__(
         self,
         *args,
-        filename: str = None,
+        filename: str = 'None',
         language: str = "Python",
         can_load: bool = True,
         **kwargs
@@ -194,7 +194,7 @@ class CodeEditor(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.filename = None
+        self.filename = filename
         self.setLayout(layout)
         self.line_edit = QtWidgets.QLineEdit()
         self.editor = SimpleCodeEditor(
@@ -221,7 +221,7 @@ class CodeEditor(QtWidgets.QWidget):
         self.run_button.clicked.connect(self.run_macro)
 
         # Handle initial file loading
-        if isinstance(filename, str) and pathlib.Path(filename).is_file():
+        if pathlib.Path(filename).is_file():
             self.load_file(filename=filename)
 
         if isinstance(language, str) and language.lower() != "python":
