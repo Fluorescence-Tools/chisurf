@@ -51,7 +51,7 @@ class JsonEditorDialog(QDialog):
 
 class DetectorWizardPage(QWizardPage):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, json_file=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.setTitle("Detectors and PIE-window definition")
@@ -164,6 +164,11 @@ class DetectorWizardPage(QWizardPage):
         self.windows_form.itemChanged.connect(self.update_window_name)
         self.detectors_form.itemChanged.connect(self.update_detector_name)
 
+        if json_file:
+            with open(json_file, 'r') as f:
+                data = json.load(f)
+            self.load_data_into_tables(data)
+
     # Define the function to show/hide the help text
     def toggle_help(self, checked):
         if checked:
@@ -216,6 +221,7 @@ class DetectorWizardPage(QWizardPage):
             # Load PIE-Windows
             self.windows_dict.clear()
             self.windows_form.setRowCount(0)
+            print(windows_data)
             for window_name, (start, end) in windows_data.items():
                 self.add_pie_window_from_data(window_name, start, end)
 
@@ -338,7 +344,7 @@ class DetectorWizardPage(QWizardPage):
 
         self.windows_dict[new_window_name] = (QLineEdit(), QLineEdit())
         self.windows_widgets[new_window_name] = (
-        self.windows_dict[new_window_name][0], self.windows_dict[new_window_name][1])  # Store the widgets
+            self.windows_dict[new_window_name][0], self.windows_dict[new_window_name][1])  # Store the widgets
 
         # Initialize new fields
         self.windows_widgets[new_window_name][0].setText("0")  # Default Start
@@ -376,19 +382,22 @@ class DetectorWizardPage(QWizardPage):
     def windows(self):
         # Gather the data for windows and detectors to be edited
         return {
-                name: [(int(self.windows_widgets[name][0].text()), int(self.windows_widgets[name][1].text()))]
-                for name in self.windows_dict
-            }
+            name: [(int(self.windows_widgets[name][0].text()), int(self.windows_widgets[name][1].text()))]
+            for name in self.windows_dict
+        }
 
     @property
     def detectors(self):
+        print('self.detectors_dict:', self.detectors_dict)
         return {
-                name: {
-                    "chs": list(map(int, self.detectors_dict[name][0].text().split(','))),
-                    "micro_time_ranges": [tuple(map(int, r.split('-'))) for r in
-                                          self.detectors_dict[name][1].text().split(',')]
-                } for name in self.detectors_dict
+            name: {
+                "chs": list(map(int, self.detectors_dict[name][0].text().split(','))),
+                "micro_time_ranges": [
+                    tuple(map(int, r.split('-'))) for r in self.detectors_dict[name][1].text().split(',')
+                ]
             }
+            for name in self.detectors_dict
+        }
 
     @property
     def channels(self):
@@ -496,10 +505,10 @@ class DetectorWizardPage(QWizardPage):
 
 
 class DetectorWizard(QWizard):
-    def __init__(self):
+    def __init__(self, json_file=None):
         super().__init__()
 
-        self.addPage(DetectorWizardPage())
+        self.addPage(DetectorWizardPage(json_file=json_file))
         self.setWindowTitle("Detector Configuration Wizard")
 
 
@@ -525,7 +534,10 @@ detectors = {
 }
 
 if __name__ == "__main__":
+    # Optionally pass a JSON file from the command line:
+    json_file_arg = sys.argv[1] if len(sys.argv) > 1 else None
+
     app = QApplication(sys.argv)
-    wizard = DetectorWizard()
+    wizard = DetectorWizard(json_file=json_file_arg)
     wizard.show()
     sys.exit(app.exec_())

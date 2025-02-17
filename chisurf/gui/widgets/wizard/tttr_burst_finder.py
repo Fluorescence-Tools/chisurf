@@ -168,6 +168,7 @@ def create_bur_summary(start_stop, filename, tttr, windows, detectors):
 
 
 class CommaSeparatedIntegersValidator(QValidator):
+
     def validate(self, input_str, pos):
         # Allow empty input
         if not input_str:
@@ -742,9 +743,27 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.update_parameter()
 
     @chisurf.gui.decorators.init_with_ui("tttr_burst_finder.ui")
-    def __init__(self, *args, windows, detectors, callback_function=None, **kwargs):
+    def __init__(self, *args,
+                 windows,
+                 detectors,
+                 callback_function=None,
+                 show_dT=True,
+                 show_burst_histogram=True,
+                 show_mcs=True,
+                 show_decay=True,
+                 show_filter=True,
+                 initial_trace_bin_width: float = 1.0,
+                 initial_photon_threshold: int = 100,
+                 initial_tw_size: float = 1.0,
+                 initial_max_gap: int = 6,
+                 initial_decay_coarse: int = 16,
+                 initial_number_of_burst_bins: int = 50,
+                 initial_dT_min: float = 0.0001,
+                 initial_dT_max: float = 0.15,
+                 **kwargs):
         self.setTitle("Photon filter / burst finder")
 
+        # Store the windows and detectors dictionaries and update corresponding UI elements.
         self.windows = windows
         self.detectors = detectors
         self.fill_detectors(detectors)
@@ -777,41 +796,52 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.setSizePolicy(sizePolicy)
 
         self.tttr = None
+
+        # Set default dT values (which will later be overridden by any passed initial_dT_min/max)
         self._dT_min = 0.0001
         self._dT_max = 0.15
 
-        # Plot widget: Burst size histogram
-        self.pw_burst_histogram = pg.plot()
-        self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
-        # self.pw_burst_histogram.setLabel('left', 'Counts')
-        # self.pw_burst_histogram.setLabel('bottom', 'Burst Length (time)')
-        self.pw_burst_histogram.resize(100, 80)
-
+        # Define common pens for the plots.
         color_all = QtGui.QColor(255, 255, 0, 64)
         color_selected = QtGui.QColor(0, 255, 255, 255)
         pen2 = pg.mkPen(color_all, width=1, style=QtCore.Qt.SolidLine)
         pen1 = pg.mkPen(color_selected, width=1, style=QtCore.Qt.SolidLine)
 
-        # Plot widget: delta macro time plot
+        # Plot widget: Burst size histogram
+        self.pw_burst_histogram = pg.plot()
+        self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
+        self.pw_burst_histogram.resize(100, 80)
+        self.pw_burst_histogram.setVisible(show_burst_histogram)
+
+        # Plot widget: Delta macro time plot
         self.pw_dT = pg.plot()
         self.plot_item_dt = self.pw_dT.getPlotItem()
         self.plot_unselected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_selected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_dT.resize(200, 40)
+        self.pw_dT.setVisible(show_dT)
 
         # Plot widget: MCS trace
         self.pw_mcs = pg.plot()
         self.plot_item_mcs = self.pw_mcs.getPlotItem()
+        # Set axis labels for MCS trace plot
+        self.plot_item_mcs.setLabel('bottom', 'Time (s)')
+        self.plot_item_mcs.setLabel('left', 'Intensity')
         self.plot_mcs_all = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_mcs_selected = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_mcs.resize(200, 80)
+        self.pw_mcs.setVisible(show_mcs)
 
         # Plot widget: Fluorescence decay
         self.pw_decay = pg.plot()
         self.plot_item_decay = self.pw_decay.getPlotItem()
+        # Set axis labels for decay plot
+        self.plot_item_decay.setLabel('bottom', 'Time (ns)')
+        self.plot_item_decay.setLabel('left', 'Counts')
         self.plot_decay_all = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_decay_selected = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_decay.resize(200, 80)
+        self.pw_decay.setVisible(show_decay)
 
         # Plot widget: Filtered photons
         self.pw_filter = pg.plot()
@@ -821,6 +851,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.plot_item_sel = self.pw_filter.getPlotItem()
         self.plot_select = self.plot_item_sel.plot(x=[1.0], y=[1.0])
         self.pw_filter.resize(200, 20)
+        self.pw_filter.setVisible(show_filter)
 
         self.plot_item_dt.setLogMode(False, True)
         self.plot_item_decay.setLogMode(False, True)
@@ -851,13 +882,34 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
 
         self.region_selector.sigRegionChangeFinished.connect(onRegionUpdate)
 
-        self.gridLayout_6.addWidget(self.pw_dT,              0, 0, 1, 3)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_filter,          1, 0, 1, 3)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_mcs,             2, 0, 1, 1)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_decay,           2, 1, 1, 1)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)  # (widget, row, column, rowSpan, columnSpan)
+        # --- Add new initial settings for burst selection parameters ---
+        # Set the initial trace bin width (time window) for the MCS trace.
+        self.doubleSpinBox_4.setValue(initial_trace_bin_width)
+        # Set the photon number threshold.
+        self.spinBox.setValue(initial_photon_threshold)
+        # Set the maximum gap (for gap filling in burst selection).
+        self.spinBox_7.setValue(initial_max_gap)
+        # Set the decay coarse binning.
+        self.spinBox_5.setValue(initial_decay_coarse)
+        # Set the number of burst bins for the histogram.
+        self.spinBox_6.setValue(initial_number_of_burst_bins)
+        # Set the lower and upper limits for dT (delta macro time) filtering.
+        self._dT_min = initial_dT_min
+        self._dT_max = initial_dT_max
+        self.doubleSpinBox_2.setValue(initial_dT_min)
+        self.doubleSpinBox_3.setValue(initial_dT_max)
+        # Update the region selector to match the new dT limits.
+        self.doubleSpinBox.setValue(initial_tw_size)
+        self.region_selector.setRegion((np.log10(initial_dT_min), np.log10(initial_dT_max)))
 
-        # Connect actions
+        # Add widgets to layout.
+        self.gridLayout_6.addWidget(self.pw_dT, 0, 0, 1, 3)
+        self.gridLayout_6.addWidget(self.pw_filter, 1, 0, 1, 3)
+        self.gridLayout_6.addWidget(self.pw_mcs, 2, 0, 1, 1)
+        self.gridLayout_6.addWidget(self.pw_decay, 2, 1, 1, 1)
+        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)
+
+        # Connect actions.
         self.actionUpdate_Values.triggered.connect(self.update_parameter)
         self.actionUpdateUI.triggered.connect(self.updateUI)
         self.actionFile_changed.triggered.connect(self.read_tttr)
@@ -873,9 +925,8 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.comboBox_2.currentTextChanged.connect(self.update_detectors)
         self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
 
-        # Set the custom validator
+        # Set the custom validator.
         validator = CommaSeparatedIntegersValidator()
         self.lineEdit_4.setValidator(validator)
 
         self.update_parameter()
-
