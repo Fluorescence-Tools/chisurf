@@ -1,1 +1,1 @@
-name = "FCS merger"
+name = "FCS-Merger"
