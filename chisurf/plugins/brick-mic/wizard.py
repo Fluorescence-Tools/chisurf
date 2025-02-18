@@ -29,19 +29,16 @@ def multi_gaussian(x, *params):
     return result
 
 
-
 class BrickMicWizard(QtWidgets.QMainWindow):
 
     def update_bursts(self):
         """
-        Generates the bursts summary DataFrame, calculates FRET efficiency,
-        saves the result to a .bst file (using the same filename as fn except for its ending)
-        in an analysis folder, populates the table, and updates the histogram.
+        Generates the bursts summary DataFrame, calculates the proximity ratio,
+        saves the result to a .bst file in an analysis folder, populates the table,
+        and updates the histogram.
         """
-        # Get the original filename from your burst finder.
         fn = self.burst_finder.filename
 
-        # Create the full summary DataFrame.
         df = chisurf.gui.widgets.wizard.create_bur_summary(
             start_stop=self.burst_finder.burst_start_stop,
             tttr=self.burst_finder.tttr,
@@ -66,14 +63,16 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             for col in missing_cols:
                 df[col] = 0
 
-        # Create a subset DataFrame and calculate FRET Efficiency.
+        # Create a subset DataFrame and calculate Proximity Ratio.
         df_subset = df[desired_columns].copy()
-        df_subset["FRET Efficiency"] = df_subset.apply(
+        df_subset["Proximity Ratio"] = df_subset.apply(
             lambda row: row["Number of Photons (red)"] /
                         (row["Number of Photons (red)"] + row["Number of Photons (green)"])
                         if (row["Number of Photons (red)"] + row["Number of Photons (green)"]) > 0 else 0,
             axis=1
         )
+        # Round to 3 digits
+        df_subset["Proximity Ratio"] = df_subset["Proximity Ratio"].round(3)
 
         # Use pathlib to create an analysis folder and derive the bursts filename.
         file_path = Path(fn)
@@ -102,7 +101,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         Iterates over all TTTR files registered in the burst finder by setting the
         burst finder’s spinBox_4 to each valid index. For each file, it reads the TTTR file,
         generates its burst summary DataFrame (using chisurf.gui.widgets.wizard.create_bur_summary),
-        reduces the results to a subset of desired columns, calculates FRET Efficiency, and writes
+        reduces the results to a subset of desired columns, calculates the proximity ratio, and writes
         the burst data to a separate .bst file in an analysis folder. After all files are processed,
         the accumulated results are concatenated and the UI (table and histogram) is updated.
         """
@@ -151,14 +150,16 @@ class BrickMicWizard(QtWidgets.QMainWindow):
                 for col in missing_cols:
                     df[col] = 0
 
-            # Create a subset DataFrame and calculate FRET Efficiency.
+            # Create a subset DataFrame and calculate Proximity Ratio.
             df_subset = df[desired_columns].copy()
-            df_subset["FRET Efficiency"] = df_subset.apply(
+            df_subset["Proximity Ratio"] = df_subset.apply(
                 lambda row: row["Number of Photons (red)"] /
                             (row["Number of Photons (red)"] + row["Number of Photons (green)"])
                 if (row["Number of Photons (red)"] + row["Number of Photons (green)"]) > 0 else 0,
                 axis=1
             )
+            # Round to 3 digits
+            df_subset["Proximity Ratio"] = df_subset["Proximity Ratio"].round(3)
 
             # Write the burst data to a separate file.
             file_path = Path(fn)
@@ -272,10 +273,18 @@ class BrickMicWizard(QtWidgets.QMainWindow):
                         errorSigma = np.sqrt(pcov[3 * i + 2, 3 * i + 2])
                     except Exception as err:
                         errorA, errorMu, errorSigma = None, None, None
+
                     if errorA is not None:
-                        results.append(f"Gaussian {i+1}:\n  Amplitude = {A:.3f} ± {errorA:.3f}\n  Mean = {mu:.3f} ± {errorMu:.3f}\n  Sigma = {sigma:.3f} ± {errorSigma:.3f}")
+                        results.append(
+                            f"Gaussian {i+1}:\n  Amplitude = {A:.3f} ± {errorA:.3f}\n"
+                            f"  Mean = {mu:.3f} ± {errorMu:.3f}\n"
+                            f"  Sigma = {sigma:.3f} ± {errorSigma:.3f}")
                     else:
-                        results.append(f"Gaussian {i+1}:\n  Amplitude = {A:.3f}\n  Mean = {mu:.3f}\n  Sigma = {sigma:.3f}")
+                        results.append(
+                            f"Gaussian {i+1}:\n  Amplitude = {A:.3f}\n"
+                            f"  Mean = {mu:.3f}\n"
+                            f"  Sigma = {sigma:.3f}")
+
                 result_str = "\n\n".join(results)
                 self.plainTextEdit.setPlainText(result_str)
             except Exception as e:
@@ -292,7 +301,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         Populates self.tableWidget with data from the DataFrame and fills self.comboBox
         with the column names only if the content is new.
         Only every 10th burst (row) from the DataFrame is added to the table as a preview.
-        Also, if 'FRET Efficiency' is one of the columns, it is set as the default selected feature.
+        Also, if 'Proximity Ratio' is one of the columns, it is set as the default selected feature.
         """
         # Use a preview: only every 10th row.
         df_preview = df.iloc[::10]
@@ -306,7 +315,11 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         for row_index, row in enumerate(df_preview.itertuples(index=False)):
             for col_index, value in enumerate(row):
-                item = QtWidgets.QTableWidgetItem(str(value))
+                if isinstance(value, float):
+                    item_text = f"{value:.3f}"
+                else:
+                    item_text = str(value)
+                item = QtWidgets.QTableWidgetItem(item_text)
                 self.tableWidget.setItem(row_index, col_index, item)
 
         # Update the comboBox only if its content is different.
@@ -314,8 +327,8 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         if current_items != final_columns:
             self.comboBox.clear()
             self.comboBox.addItems(final_columns)
-        # Set default selected feature to 'FRET Efficiency' if it exists.
-        index = self.comboBox.findText("FRET Efficiency")
+        # Set default selected feature to 'Proximity Ratio' if it exists.
+        index = self.comboBox.findText("Proximity Ratio")
         if index != -1:
             self.comboBox.setCurrentIndex(index)
 
@@ -348,12 +361,32 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         # Place the final text in the clipboard
         QtWidgets.QApplication.clipboard().setText(clipboard_text)
 
+    def clear_data(self):
+        """
+        Clears all current data from the table, histogram, text fields, and resets the data frame.
+        """
+        self.current_df = None
+
+        # Clear the table
+        self.tableWidget.clear()
+        self.tableWidget.setRowCount(0)
+        self.tableWidget.setColumnCount(0)
+
+        # Clear the figure and redraw an empty canvas
+        self.figure.clear()
+        self.canvas.draw()
+
+        # Clear the plain text area
+        self.plainTextEdit.clear()
+
+        # Optionally reset the progress bar if desired
+        self.progressBar.setValue(0)
+
+        print("Data cleared.")
+
+
     @chisurf.gui.decorators.init_with_ui("brick-mic/gui.ui", path=chisurf.settings.plugin_path)
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, *args, **kwargs):
         #super().__init__(*args, **kwargs)
 
         self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(
@@ -362,12 +395,15 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         )
         self.verticalLayout_7.addWidget(self.channel_definer)
 
-        self.burst_finder = chisurf.gui.widgets.wizard.WizardTTTRBurstFinder(
+        self.burst_finder = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
             windows=self.channel_definer.windows,
             detectors=self.channel_definer.detectors,
             #callback_function=self.update_bursts,
-            show_dT=True, show_burst_histogram=False, show_mcs=True,
-            show_decay=False, show_filter=False
+            show_dT=True,
+            show_burst=False,
+            show_mcs=True,
+            show_decay=False,
+            show_filter=False
         )
         self.verticalLayout_2.addWidget(self.burst_finder)
 
@@ -401,7 +437,12 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.doubleSpinBox_3.valueChanged.connect(self.update_histogram)
         self.doubleSpinBox_4.valueChanged.connect(self.update_histogram)
         self.spinBox.valueChanged.connect(self.update_histogram)
+
+        # Connect pushButton to process files
         self.pushButton.clicked.connect(self.process_all_files)
+
+        # Connect pushButton_2 to clear the data
+        self.pushButton_2.clicked.connect(self.clear_data)
 
         # Store the current DataFrame for histogram updates.
         self.current_df = None
@@ -424,4 +465,3 @@ if __name__ == '__main__':
     brick_mic_wiz.setWindowTitle('BRICK-Mic')
     brick_mic_wiz.show()
     sys.exit(app.exec_())
-
