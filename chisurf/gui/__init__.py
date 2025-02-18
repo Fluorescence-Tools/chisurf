@@ -8,6 +8,9 @@ from functools import partial
 import pkgutil
 import importlib
 
+import os
+os.environ['QT_OPENGL'] = 'software'  # Use software rendering
+
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
@@ -286,7 +289,9 @@ def setup_gui(
         populate_notebooks()
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
-    import pyqtgraph
+    import pyqtgraph as pg
+    pg.setConfigOptions(useOpenGL=False)  # Disable OpenGL in PyQtGraph
+
     import chisurf.gui.resources
 
     pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
