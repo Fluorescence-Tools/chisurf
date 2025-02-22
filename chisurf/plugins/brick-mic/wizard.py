@@ -1,7 +1,9 @@
 from pathlib import Path
 from qtpy import QtWidgets, QtCore, QtGui
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 import pandas as pd
 import numpy as np
@@ -13,7 +15,16 @@ import chisurf.gui.widgets.wizard
 from scipy.optimize import curve_fit
 
 
-# Define a function for a mixture of Gaussians.
+def single_gaussian(x, A, mu, sigma):
+    """
+    Single Gaussian function:
+      A: Amplitude
+      mu: Mean
+      sigma: Std. deviation
+    """
+    return A * np.exp(-(x - mu)**2 / (2.0 * sigma**2))
+
+
 def multi_gaussian(x, *params):
     """
     Returns the sum of k Gaussians.
@@ -30,71 +41,6 @@ def multi_gaussian(x, *params):
 
 
 class BrickMicWizard(QtWidgets.QMainWindow):
-
-    def update_bursts(self):
-        """
-        Generates the bursts summary DataFrame, calculates the proximity ratio,
-        saves the result to a .bst file in an analysis folder, populates the table,
-        and updates the histogram.
-        """
-        fn = self.burst_finder.filename
-
-        df = chisurf.gui.widgets.wizard.create_bur_summary(
-            start_stop=self.burst_finder.burst_start_stop,
-            tttr=self.burst_finder.tttr,
-            filename=fn,
-            windows=self.burst_finder.windows,
-            detectors=self.burst_finder.detectors
-        )
-
-        # Define the desired columns.
-        desired_columns = [
-            "First Photon",
-            "Last Photon",
-            "Duration (ms)",
-            "Number of Photons (red)",
-            "Number of Photons (green)"
-        ]
-
-        # Ensure any missing columns are added with a default value.
-        missing_cols = [col for col in desired_columns if col not in df.columns]
-        if missing_cols:
-            print("Warning: The following expected columns are missing:", missing_cols)
-            for col in missing_cols:
-                df[col] = 0
-
-        # Create a subset DataFrame and calculate Proximity Ratio.
-        df_subset = df[desired_columns].copy()
-        df_subset["Proximity Ratio"] = df_subset.apply(
-            lambda row: row["Number of Photons (red)"] /
-                        (row["Number of Photons (red)"] + row["Number of Photons (green)"])
-                        if (row["Number of Photons (red)"] + row["Number of Photons (green)"]) > 0 else 0,
-            axis=1
-        )
-        # Round to 3 digits
-        df_subset["Proximity Ratio"] = df_subset["Proximity Ratio"].round(3)
-
-        # Use pathlib to create an analysis folder and derive the bursts filename.
-        file_path = Path(fn)
-        fn = self.burst_finder.lineEdit_2.text()
-        analysis_folder = file_path.parent / fn
-        analysis_folder.mkdir(parents=True, exist_ok=True)
-        bst_filename = analysis_folder / f"{file_path.stem}.bst"
-        df_subset.to_csv(bst_filename, sep="\t", index=False)
-        print("Saved bursts to", bst_filename)
-
-        # Update the table widget.
-        self.tableWidget.setUpdatesEnabled(False)
-        self.tableWidget.setSortingEnabled(False)
-        self.populate_table(df_subset)
-        self.tableWidget.setUpdatesEnabled(True)
-        self.tableWidget.setSortingEnabled(True)
-
-        # Store the DataFrame for histogram use.
-        self.current_df = df_subset
-
-        # Update the histogram (using the feature currently selected in comboBox).
-        self.update_histogram()
 
     def process_all_files(self) -> None:
         """
@@ -128,6 +74,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             "Number of Photons (green)"
         ]
 
+        self.centralwidget.setEnabled(False)
         for index in range(num_files):
             # Set the current file index in the burst finder.
             self.burst_finder.spinBox_4.setValue(index)
@@ -165,7 +112,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             file_path = Path(fn)
             # Retrieve the folder name from the burst finder's lineEdit_2.
             analysis_folder_name = self.burst_finder.lineEdit_2.text()
-            analysis_folder = file_path.parent / analysis_folder_name
+            analysis_folder = file_path.parent / analysis_folder_name / Path('bur')
             analysis_folder.mkdir(parents=True, exist_ok=True)
             bst_filename = analysis_folder / f"{file_path.stem}.bst"
             df_subset.to_csv(bst_filename, sep="\t", index=False)
@@ -195,16 +142,9 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             print("No burst data was accumulated.")
 
         print("All files processed.")
+        self.centralwidget.setEnabled(True)
 
     def update_histogram(self):
-        """
-        Updates the histogram in self.verticalLayout_4 based on the feature selected
-        in self.comboBox, using the number of bins and range specified by
-        self.spinBox_3 (bins), self.doubleSpinBox_3 (min value), and self.doubleSpinBox_4 (max value).
-        If the Gaussian fit option is enabled (self.checkBox_Gauss is checked),
-        a Gaussian mixture (with the number of components given by self.spinBox) is fitted to the histogram,
-        the resulting fitted curve is overlaid on the plot, and the fit results are written to self.plainTextEdit.
-        """
         if self.current_df is None:
             return
 
@@ -212,81 +152,129 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         if not selected_feature:
             return
 
-        # Retrieve the data for the selected feature.
+        # Retrieve data for the selected feature.
         data = self.current_df[selected_feature]
-
-        # Try converting the data to numeric; if conversion fails, skip updating the histogram.
         try:
             data = pd.to_numeric(data)
         except Exception as e:
             print(f"Could not convert data in column {selected_feature} to numeric: {e}")
             return
 
-        # Retrieve histogram parameters from the widgets.
         num_bins = int(self.spinBox_3.value())
         min_val = float(self.doubleSpinBox_3.value())
         max_val = float(self.doubleSpinBox_4.value())
 
-        # Clear the current figure and add a new subplot.
+        # Clear figure and add a new subplot.
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        # Plot the histogram and retrieve the bin counts and edges.
-        n, bins, patches = ax.hist(data.dropna(), bins=num_bins, range=(min_val, max_val),
-                                   color='blue', edgecolor='black', alpha=0.7)
+
+        # Plot histogram.
+        n, bins, patches = ax.hist(
+            data.dropna(),
+            bins=num_bins,
+            range=(min_val, max_val),
+            color='blue',
+            edgecolor='black',
+            alpha=0.7
+        )
         ax.set_title(f"Histogram of {selected_feature}")
         ax.set_xlabel(selected_feature)
         ax.set_ylabel("Frequency")
 
-        # Get the number of Gaussians to fit.
+        # Number of Gaussians to fit.
         k = int(self.spinBox.value())
         if k > 0:
             try:
-                # Compute bin centers from the histogram bins.
+                # Bin centers from histogram.
                 bin_centers = (bins[:-1] + bins[1:]) / 2.0
-                # Build an initial guess: for each Gaussian, we guess:
-                #   Amplitude: max(n)/k,
-                #   Mean: equally spaced between min_val and max_val,
-                #   Sigma: (max_val - min_val)/(2*k)
+
+                # Initial guess for popt.
                 initial_guess = []
                 for i in range(k):
                     A_guess = max(n) / k
                     mu_guess = min_val + (max_val - min_val) * (i + 0.5) / k
                     sigma_guess = (max_val - min_val) / (2 * k)
                     initial_guess.extend([A_guess, mu_guess, sigma_guess])
-                # Fit the mixture model.
-                popt, pcov = curve_fit(multi_gaussian, bin_centers, n, p0=initial_guess)
-                # Generate x values for the fitted curve.
-                x_fit = np.linspace(min_val, max_val, 100)
-                y_fit = multi_gaussian(x_fit, *popt)
-                ax.plot(x_fit, y_fit, 'r-', label='Gaussian Mixture Fit')
-                ax.legend()
 
-                # Write the fit results to self.plainTextEdit.
-                results = []
+                # Fit mixture model.
+                popt, pcov = curve_fit(multi_gaussian, bin_centers, n, p0=initial_guess)
+
+                # Generate x values for the fitted curve.
+                x_fit = np.linspace(min_val, max_val, 200)
+                # Sum of all Gaussians
+                y_fit = multi_gaussian(x_fit, *popt)
+
+                # --- Plot Gaussians below ---
+                # We can use a colormap to differentiate each individual Gaussian.
+                colors = plt.cm.viridis(np.linspace(0, 1, k))
+
                 for i in range(k):
                     A = popt[3 * i]
                     mu = popt[3 * i + 1]
                     sigma = popt[3 * i + 2]
+
+                    # Compute individual Gaussian
+                    y_gauss_i = single_gaussian(x_fit, A, mu, sigma)
+                    ax.plot(
+                        x_fit,
+                        y_gauss_i,
+                        '--',
+                        color=colors[i],
+                        label=f'Gaussian {i + 1}'
+                    )
+
+                # Finally, plot the overall fit (sum) in red on top.
+                ax.plot(x_fit, y_fit, 'r-', label='Sum of all Gaussians')
+                ax.legend()
+
+                # Build table for results (same as previous approach)
+                header = ["Gaussian #", "Amplitude", "Mean", "Sigma"]
+                rows = []
+                col_widths = [len(h) for h in header]
+
+                for i in range(k):
+                    A = popt[3 * i]
+                    mu = popt[3 * i + 1]
+                    sigma = popt[3 * i + 2]
+
                     try:
                         errorA = np.sqrt(pcov[3 * i, 3 * i])
                         errorMu = np.sqrt(pcov[3 * i + 1, 3 * i + 1])
                         errorSigma = np.sqrt(pcov[3 * i + 2, 3 * i + 2])
-                    except Exception as err:
+                    except Exception:
                         errorA, errorMu, errorSigma = None, None, None
 
                     if errorA is not None:
-                        results.append(
-                            f"Gaussian {i+1}:\n  Amplitude = {A:.3f} ± {errorA:.3f}\n"
-                            f"  Mean = {mu:.3f} ± {errorMu:.3f}\n"
-                            f"  Sigma = {sigma:.3f} ± {errorSigma:.3f}")
+                        amp_str = f"{A:.3f} ± {errorA:.3f}"
+                        mu_str = f"{mu:.3f} ± {errorMu:.3f}"
+                        sigma_str = f"{sigma:.3f} ± {errorSigma:.3f}"
                     else:
-                        results.append(
-                            f"Gaussian {i+1}:\n  Amplitude = {A:.3f}\n"
-                            f"  Mean = {mu:.3f}\n"
-                            f"  Sigma = {sigma:.3f}")
+                        amp_str = f"{A:.3f}"
+                        mu_str = f"{mu:.3f}"
+                        sigma_str = f"{sigma:.3f}"
 
-                result_str = "\n\n".join(results)
-                self.plainTextEdit.setPlainText(result_str)
+                    row = [f"{i + 1}", amp_str, mu_str, sigma_str]
+                    rows.append(row)
+                    # Adjust column widths if needed
+                    for j, item in enumerate(row):
+                        col_widths[j] = max(col_widths[j], len(item))
+
+                def build_format_string(widths):
+                    return "  ".join(f"{{:<{w}}}" for w in widths)
+
+                fmt = build_format_string(col_widths)
+                table_lines = []
+                table_lines.append(fmt.format(*header))
+                total_width = sum(col_widths) + 2 * (len(col_widths) - 1)
+                table_lines.append("-" * total_width)
+                for row in rows:
+                    table_lines.append(fmt.format(*row))
+
+                table_str = "\n".join(table_lines)
+
+                # Display table
+                self.plainTextEdit.setPlainText(table_str)
+
             except Exception as e:
                 err_msg = "Gaussian mixture fit failed: " + str(e)
                 print(err_msg)
@@ -366,6 +354,8 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         Clears all current data from the table, histogram, text fields, and resets the data frame.
         """
         self.current_df = None
+        # clear data reader
+        self.burst_finder.toolButton_6.click()
 
         # Clear the table
         self.tableWidget.clear()
@@ -448,9 +438,9 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.current_df = None
 
         self.burst_finder.groupBox_3.hide()
+        self.burst_finder.toolButton_6.hide()
         self.burst_finder.toolButton_3.hide()
         self.burst_finder.toolButton_4.hide()
-
 
 if __name__ == "plugin":
     brick_mic_wiz = BrickMicWizard()
