@@ -347,6 +347,23 @@ def get_app():
     win.raise_()
     win.activateWindow()
     win.setFocus()
+
+    def shutdown_jupyter():
+        """Ensure the Jupyter notebook server is terminated when the application closes."""
+        import chisurf
+        jupyter_proc = getattr(chisurf, '__jupyter_process__', None)
+        # Only terminate if it's still running.
+        if jupyter_proc is not None and jupyter_proc.poll() is None:
+            jupyter_proc.terminate()
+            try:
+                jupyter_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                # If it doesn't stop in time, force-kill it.
+                jupyter_proc.kill()
+
+    # Connect our shutdown function to the application's aboutToQuit signal.
+    app.aboutToQuit.connect(shutdown_jupyter)
+
     return app
 
 
