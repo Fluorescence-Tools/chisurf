@@ -690,6 +690,18 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.lineEdit.clear()
         self.tttr = None
 
+        # Clear each plot item
+        self.plot_unselected.setData([], [])
+        self.plot_selected.setData([], [])
+        self.plot_mcs_all.setData([], [])
+        self.plot_mcs_selected.setData([], [])
+        self.plot_decay_all.setData([], [])
+        self.plot_decay_selected.setData([], [])
+        self.plot_select.setData([], [])
+
+        # Clear the burst histogram entirely (removes bars/text)
+        self.pw_burst_histogram.clear()
+
     def updateUI(self):
         self.lineEdit.setText(self.current_tttr_filename)
 
