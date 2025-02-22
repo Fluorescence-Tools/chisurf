@@ -6,82 +6,118 @@ import tttrlib
 import json
 import time
 import numpy as np
-import numba as nb
 
-import matplotlib
 import pyqtgraph as pg
+import matplotlib
 
 import chisurf.fio as io
 import chisurf.fio.fluorescence
 import chisurf.math
 import chisurf.gui.decorators
-
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.math.signal import fill_small_gaps_in_array
 
 QValidator = QtGui.QValidator
-
 colors = chisurf.settings.gui['plot']['colors']
 
+
 def create_array_with_ones(start_stop_pairs, length):
-    arr = np.zeros(length, dtype=bool)  # Create an array of zeros with the specified length
+    """
+    Create a boolean array of the given length, set to True (1)
+    in the intervals [start, stop) defined by start_stop_pairs.
+    """
+    arr = np.zeros(length, dtype=bool)
     for start, stop in start_stop_pairs:
-        arr[start:stop] = 1  # Set values between start and stop to one
+        arr[start:stop] = 1
     return arr
 
 
 class CommaSeparatedIntegersValidator(QValidator):
+
+    """
+    QValidator to ensure input is a comma-separated list of valid
+    integers between 0 and 255.
+    """
     def validate(self, input_str, pos):
-        # Allow empty input
         if not input_str:
             return QValidator.Intermediate, input_str, pos
 
-        # Split the input by commas
         parts = input_str.split(',')
-
         for part in parts:
             part = part.strip()
-
-            # Allow empty parts (for intermediate states like entering a comma)
             if part == '':
                 continue
-
-            # Check if the part is a digit
             if not part.isdigit():
                 return QValidator.Intermediate, input_str, pos
-
-            # Convert to integer and check range
             num = int(part)
             if num < 0 or num > 255:
                 return QValidator.Invalid, input_str, pos
 
-        # If the input ends with a comma, allow it as intermediate input
         if input_str.endswith(','):
             return QValidator.Intermediate, input_str, pos
 
-        # If all parts are valid, return Acceptable
         return QValidator.Acceptable, input_str, pos
 
     def fixup(self, input_str):
-        # Remove trailing commas
         input_str = input_str.rstrip(',')
-
-        # Optionally, fix invalid parts (in case there are out-of-range numbers)
         parts = input_str.split(',')
         valid_parts = []
-
         for part in parts:
             part = part.strip()
             if part.isdigit():
                 num = int(part)
                 if 0 <= num <= 255:
                     valid_parts.append(str(num))
-
         return ', '.join(valid_parts)
 
 
 class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
-#class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
+    """
+    WizardTTTRPhotonFilter loads TTTR files and applies photon filtering
+    based on count-rate or burst-search criteria, channel selection,
+    microtime ranges, and optional gap-filling.
+
+    Parameters
+    ----------
+    windows : dict
+        Dictionary of predefined PIE windows. Passed to the relevant UI comboBox.
+    detectors : dict
+        Dictionary of predefined detectors. Passed to the relevant UI comboBox.
+    show_dT : bool, default=True
+        Whether to show the dT plot (between consecutive photons).
+    show_filter : bool, default=True
+        Whether to show the filter/selection plot.
+    show_mcs : bool, default=True
+        Whether to show the intensity trace (MCS) plot.
+    show_decay : bool, default=True
+        Whether to show the decay plot (microtime histogram).
+    show_burst : bool, default=True
+        Whether to show the burst histogram plot.
+    default_dT_min : float, default=0.0001
+        Initial lower bound for delta macro-time filter (in ms).
+    default_dT_max : float, default=0.15
+        Initial upper bound for delta macro-time filter (in ms).
+    use_dT_min : bool, default=True
+        Whether the lower bound of delta macro-time filter is active initially.
+    use_dT_max : bool, default=True
+        Whether the upper bound of delta macro-time filter is active initially.
+    default_photon_threshold : int, default=160
+        Initial threshold for count rate or burst search.
+    default_count_rate_window_ms : float, default=1.0
+        Initial time window (ms) for count-rate based filtering.
+    invert_count_rate_filter : bool, default=False
+        Whether to invert the count-rate filter initially.
+    default_filter_mode : str, default='count_rate'
+        Selects which radio button filter mode is active at initialization.
+        Valid options: 'count_rate' or 'burst'.
+        - If 'count_rate', the `radioButton` (count-rate filter) is checked.
+        - If 'burst', the `radioButton_2` (burst-search filter) is checked.
+
+    Notes
+    -----
+    The filter mode can also be changed by the user at runtime. The
+    current mode can be queried from the `used_filter` property.
+    """
 
     @property
     def photon_number_threshold(self):
@@ -96,7 +132,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         return pathlib.Path(self.lineEdit.text())
 
     @property
-    def filetype(self) -> str:
+    def filetype(self) -> str | None:
         txt = self.comboBox.currentText()
         if txt == 'Auto':
             return None
@@ -160,6 +196,36 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         return []
 
     @property
+    def min_ph(self):
+        """
+        The minimum number of photons for burst detection (or any other usage).
+        This property gets the current spinBox value.
+        """
+        return self.spinBox.value()
+
+    @min_ph.setter
+    def min_ph(self, value):
+        """
+        Sets the spinBox value to the specified integer/float.
+        """
+        self.spinBox.setValue(value)
+
+    @property
+    def ph_window(self):
+        """
+        The photon window size for burst detection (or other usage).
+        This property gets the current spinBox_8 value.
+        """
+        return self.spinBox_8.value()
+
+    @ph_window.setter
+    def ph_window(self, value):
+        """
+        Sets the spinBox_8 value to the specified integer/float.
+        """
+        self.spinBox_8.setValue(value)
+
+    @property
     def microtime_ranges(self) -> typing.Optional[typing.List[typing.Tuple[int, int]]]:
         s = self.lineEdit_5.text()
 
@@ -201,6 +267,11 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     @property
     def used_filter(self):
+        """
+        Returns the currently active filter mode:
+        - 'count_rate' if `radioButton` is checked
+        - 'burst' if `radioButton_2` is checked
+        """
         if self.radioButton.isChecked():
             return 'count_rate'
         elif self.radioButton_2.isChecked():
@@ -208,23 +279,29 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     @property
     def selected(self):
+        """
+        Returns a boolean mask (as np.uint8 array) of selected photons
+        based on all applied filters: channel/microtime filter,
+        dT thresholding, count-rate filter (if active),
+        or burst filter (if active), plus optional gap-filling.
+        """
         start_time = time.time()
-
         dT = self.dT
+        tttr = self.tttr
         if dT is None:
             return list()
-        s = np.ones_like(dT, dtype=bool)
 
+        s = np.ones_like(dT, dtype=bool)
         chs = self.channels
         if len(chs) > 0:
             mask = tttrlib.TTTRMask()
-            mask.select_channels(self.tttr, chs, mask=True)
+            mask.select_channels(tttr, chs, mask=True)
             m = mask.get_mask()
             s = np.logical_and(s, m)
 
         if self.microtime_ranges:
             mask = tttrlib.TTTRMask()
-            mask.select_microtime_ranges(self.tttr, self.microtime_ranges)
+            mask.select_microtime_ranges(tttr, self.microtime_ranges)
             mask.flip()
             m = mask.get_mask()
             s = np.logical_and(s, m)
@@ -234,21 +311,22 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         if self.use_upper:
             s = np.logical_and(s, dT <= self.dT_max)
 
+        # Apply either count_rate or burst filter depending on radio button
         if self.used_filter == 'count_rate':
-
             if self.settings['count_rate_filter_active']:
                 filter_options = self.settings['count_rate_filter']
-                selection_idx = self.tttr.get_selection_by_count_rate(**filter_options, make_mask=True)
-                s = np.logical_and(s[:-1], selection_idx >= 0)
+                selection_idx = self.tttr.get_selection_by_count_rate(
+                    **filter_options, make_mask=True
+                )
+                s = np.logical_and(s, selection_idx >= 0)
 
         elif self.used_filter == 'burst':
-            min_ph = self.spinBox.value()
-            ph_window = self.spinBox_8.value()
-            tw = self.doubleSpinBox.value() / 1000.0
-            start_stop = self.tttr.burst_search(min_ph, ph_window, tw)
-            start_stop = np.array(start_stop)
-            start_stop = start_stop.reshape((len(start_stop) // 2, 2))
-            n = len(self.tttr)
+            min_ph = self.min_ph
+            ph_window = self.ph_window
+            tw = self.dT_max / 1000.0
+            start_stop = tttr.burst_search(min_ph, ph_window, tw)
+            start_stop = np.array(start_stop).reshape((-1, 2))
+            n = len(tttr)
             sel = create_array_with_ones(start_stop, n)
             s = np.logical_and(s, sel)
 
@@ -256,17 +334,17 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             s = fill_small_gaps_in_array(s, max_gap=self.max_gap)
 
         end_time = time.time()
-
-        # Calculate elapsed time
-        elapsed_time = end_time - start_time
-        chisurf.logging.log(0, "Elapsed time: %s" % elapsed_time)
-
+        chisurf.logging.log(0, f"Elapsed time: {end_time - start_time}")
         return s.astype(dtype=np.uint8)
 
     @property
     def burst_start_stop(self):
+        """
+        Returns the start-stop indices of bursts in the selected mask,
+        allowing for small gaps with max_gap=4 by default.
+        """
         selected = self.selected
-        max_gap = 4
+        max_gap = self.max_gap
         if len(selected) > max_gap:
             return chisurf.math.signal.find_bursts(selected, max_gap=max_gap)
         else:
@@ -290,22 +368,24 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         return self.checkBox_7.isChecked()
 
     def update_filter_plot(self):
+        """
+        Update the plot showing which photons are selected (1) vs unselected (0).
+        """
         n_min = self.plot_min
         n_max = self.plot_max
-
         x = np.arange(n_min, n_max)
         y = self.selected[n_min:n_max]
-
         self.plot_select.setData(x=x, y=y)
 
     def update_dt_plot(self):
+        """
+        Update the plot of dT vs photon index, highlighting selected vs unselected points.
+        """
         if isinstance(self.dT, np.ndarray):
             dT = self.dT
             n_min = self.plot_min
             n_max = self.plot_max
-
-            mask = self.selected[n_min:n_max]
-            mask = mask.astype(bool)
+            mask = self.selected[n_min:n_max].astype(bool)
             y = dT[n_min:n_max]
             x = np.arange(n_min, n_max)
 
@@ -317,66 +397,106 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             my = np.ma.masked_array(y, mask=mask)
             self.plot_unselected.setData(x=mx.compressed(), y=my.compressed())
 
+    @property
+    def do_mcs_plot(self) -> bool:
+        return self.toolButton_2.isChecked()
+
+    @do_mcs_plot.setter
+    def do_mcs_plot(self, v):
+        self.toolButton_2.setChecked(v)
+
+    @property
+    def do_burst_photon_plot(self) -> bool:
+        return self.toolButton_7.isChecked()
+
+    @do_burst_photon_plot.setter
+    def do_burst_photon_plot(self, v):
+        self.toolButton_7.setChecked(v)
+
+    @property
+    def do_microtime_plot(self) -> bool:
+        return self.toolButton_3.isChecked()
+
+    @do_microtime_plot.setter
+    def do_microtime_plot(self, v):
+        self.toolButton_3.setChecked(v)
+
     def update_mcs_plot(self):
-        if self.toolButton_2.isChecked():
-            if isinstance(self.tttr, tttrlib.TTTR):
+        """
+        Update the intensity trace plot (MCS) for both all photons and the selected subset.
+        """
+        if self.do_mcs_plot:
+            tttr = self.tttr
+            if isinstance(tttr, tttrlib.TTTR):
                 idx = np.where(self.selected)[0]
                 tw = self.trace_bin_width / 1000.0
+                trace_selected = tttr[idx].get_intensity_trace(time_window_length=tw)
+                x1 = np.arange(len(trace_selected)) * tw
+                self.plot_mcs_selected.setData(x1, trace_selected)
 
-                trace_selected = self.tttr[idx].get_intensity_trace(time_window_length=tw)
-                y1 = np.copy(trace_selected)
-                x1 = np.arange(len(trace_selected), dtype=np.float64) * tw
-                self.plot_mcs_selected.setData(x1, y1)
-
-                trace_all = self.tttr.get_intensity_trace(time_window_length=tw)
-                y2 = np.copy(trace_all)
-                x2 = np.arange(len(trace_all), dtype=np.float64) * tw
-                self.plot_mcs_all.setData(x2, y2)
+                trace_all = tttr.get_intensity_trace(time_window_length=tw)
+                x2 = np.arange(len(trace_all)) * tw
+                self.plot_mcs_all.setData(x2, trace_all)
         else:
             self.plot_mcs_all.setData(x=[1.0], y=[1.0])
             self.plot_mcs_selected.setData(x=[1.0], y=[1.0])
 
     def update_burst_histogram(self):
-        if self.toolButton_7.isChecked():
+        """
+        Update the histogram of burst lengths (only relevant if burst mode is active).
+        """
+        if self.do_burst_photon_plot:
             burst_lengths = self.burst_lengths
-            # Create a histogram of burst lengths
             num_bins = self.number_of_burst_bins
             hist, bin_edges = np.histogram(burst_lengths, bins=num_bins)
 
-            # Clear the previous plot
             self.pw_burst_histogram.clear()
+            self.pw_burst_histogram.addItem(
+                pg.BarGraphItem(
+                    x0=bin_edges[:-1],
+                    x1=bin_edges[1:],
+                    y0=0,
+                    y1=hist,
+                    brush='b',
+                    pen='w'
+                )
+            )
+            self.plot_burst_histogram = self.pw_burst_histogram.plot(
+                bin_edges,
+                hist,
+                pen='b',
+                stepMode=True
+            )
 
-            # Fill area under the histogram
-            self.pw_burst_histogram.addItem(pg.BarGraphItem(x0=bin_edges[:-1], x1=bin_edges[1:],
-                                                            y0=0, y1=hist, brush='b', pen='w'))
-
-            # Plot with steps
-            self.plot_burst_histogram = self.pw_burst_histogram.plot(bin_edges, hist, pen='b', stepMode=True)
-
-            # Add total number of bursts as a label directly on the plot
             total_bursts = np.sum(hist)
-            pos_x = 0.5 * (bin_edges[0] + bin_edges[-1])  # x position for the text
-            pos_y = hist.max() * 0.9  # y position for the text, slightly below max height
-            self.total_bursts_label = pg.TextItem(f"Total bursts: {total_bursts}", anchor=(0, 0), color='w')
+            pos_x = 0.5 * (bin_edges[0] + bin_edges[-1]) if bin_edges.size > 1 else 0
+            pos_y = (hist.max() * 0.9) if hist.size > 0 else 1.0
+            self.total_bursts_label = pg.TextItem(
+                f"Total bursts: {total_bursts}",
+                anchor=(0, 0),
+                color='w'
+            )
             self.total_bursts_label.setPos(pos_x, pos_y)
             self.pw_burst_histogram.addItem(self.total_bursts_label)
-
-            # Set the y-axis to logarithmic scale if needed
-            self.pw_burst_histogram.setYRange(0.0, max(hist))
-            self.pw_burst_histogram.setXRange(0.0, max(bin_edges))
+            self.pw_burst_histogram.setYRange(0.0, max(hist) if hist.size > 0 else 1.0)
+            self.pw_burst_histogram.setXRange(0.0, max(bin_edges) if bin_edges.size > 0 else 1.0)
 
     def update_decay_plot(self):
-        if self.toolButton_3.isChecked():
+        """
+        Update the microtime decay plot (histogram), comparing all photons vs selected photons.
+        """
+        if self.do_microtime_plot:
             if isinstance(self.tttr, tttrlib.TTTR):
                 idx = np.where(self.selected)[0]
                 y, x = self.tttr[idx].get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1]
+                idx_max = np.where(y > 0)[0][-1] if np.any(y > 0) else 1
                 x = x[:idx_max]
                 y = y[:idx_max]
-                x *= 1e9  # units in nano seconds
+                x *= 1e9
                 self.plot_decay_selected.setData(x=x, y=y)
+
                 y, x = self.tttr.get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1]
+                idx_max = np.where(y > 0)[0][-1] if np.any(y > 0) else 1
                 x = x[:idx_max]
                 y = y[:idx_max]
                 x *= 1e9
@@ -386,6 +506,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             self.plot_decay_selected.setData(x=[1.0], y=[1.0])
 
     def update_plots(self, selection: str = "all"):
+        """
+        Convenience method to update different sets of plots
+        ('mcs', 'decay', 'dT', 'filter', 'burst').
+        """
         if 'mcs' in selection:
             self.update_mcs_plot()
         if 'decay' in selection:
@@ -402,21 +526,33 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             self.update_burst_histogram()
 
     def read_tttr(self):
+        """
+        Called when the user changes the active file.
+        Looks up the preloaded TTTR object in self.tttr_objects.
+        """
         fn = self.current_tttr_filename
-        if fn:
-            if pathlib.Path(fn).exists():
-                n = len(self.settings['tttr_filenames'])
-                self.spinBox_4.setMaximum(n - 1)
-                self.comboBox.setEnabled(False)
-                self.tttr = tttrlib.TTTR(fn, self.filetype)
-                self.plot_max = len(self.tttr) - 1
-                header = self.tttr.get_header()
-                s = header.json
-                d = json.loads(s)
-                self.settings['header'] = d
-                self.update_plots()
+        if not fn:
+            return
+
+        p = pathlib.Path(fn).resolve()
+        p_str = str(p)
+
+        if p_str in self.tttr_objects:
+            self.tttr = self.tttr_objects[p_str]
+            self.plot_max = len(self.tttr) - 1
+            header = self.tttr.get_header()
+            s = header.json
+            d = json.loads(s)
+            self.settings['header'] = d
+            self.update_plots()
+        else:
+            # Possibly fallback logic or a message
+            chisurf.logging.log(1, f"Path not in dictionary: {p_str}")
 
     def update_output_path(self):
+        """
+        Update the suggested output path (lineEdit_2) based on the current settings.
+        """
         if len(self.channels) > 0:
             chs = ','.join([str(x) for x in self.channels])
         else:
@@ -425,14 +561,17 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.lineEdit_2.setText(s)
 
     def update_parameter(self):
+        """
+        Update internal settings whenever the user changes filters or region selectors.
+        """
         lb, ub = self.region_selector.getRegion()
         self.settings['count_rate_filter_active'] = self.checkBox_4.isChecked()
         self.settings['count_rate_filter']['n_ph_max'] = int(self.spinBox.value())
         self.settings['count_rate_filter']['time_window'] = float(self.doubleSpinBox.value()) * 1e-3
         self.settings['count_rate_filter']['invert'] = bool(self.checkBox.isChecked())
 
-        self.settings['delta_macro_time_filter']['dT_min'] = 10.0**lb
-        self.settings['delta_macro_time_filter']['dT_max'] = 10.0**ub
+        self.settings['delta_macro_time_filter']['dT_min'] = 10.0 ** lb if self.pw_dT.getAxis('left').logMode else lb
+        self.settings['delta_macro_time_filter']['dT_max'] = 10.0 ** ub if self.pw_dT.getAxis('left').logMode else ub
         self.settings['delta_macro_time_filter']['dT_min_active'] = self.checkBox_2.isChecked()
         self.settings['delta_macro_time_filter']['dT_max_active'] = self.checkBox_3.isChecked()
 
@@ -440,15 +579,38 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.update_output_path()
 
     def onClearFiles(self):
+        """
+        Clears the list of filenames, resets the spinBox, clears the lineEdit,
+        unsets the current TTTR object, and also clears all plots.
+        """
         self.settings['tttr_filenames'].clear()
+        self.spinBox_4.setMaximum(0)
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
         self.tttr = None
 
+        # Clear each plot item
+        self.plot_unselected.setData([], [])
+        self.plot_selected.setData([], [])
+        self.plot_mcs_all.setData([], [])
+        self.plot_mcs_selected.setData([], [])
+        self.plot_decay_all.setData([], [])
+        self.plot_decay_selected.setData([], [])
+        self.plot_select.setData([], [])
+
+        # Clear the burst histogram entirely (removes bars/text)
+        self.pw_burst_histogram.clear()
+
     def updateUI(self):
+        """
+        Updates the lineEdit with the currently active file name.
+        """
         self.lineEdit.setText(self.current_tttr_filename)
 
     def onRegionUpdate(self):
+        """
+        Sync the numeric spinBoxes (doubleSpinBox_2/3) with the region item in the dT plot.
+        """
         lb, ub = self.doubleSpinBox_2.value(), self.doubleSpinBox_3.value()
         if self.pw_dT.getAxis('left').logMode:
             lb, ub = np.log10(lb), np.log10(ub)
@@ -456,29 +618,33 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     @property
     def parent_directories(self) -> typing.List[pathlib.Path]:
-        r = list()
+        """
+        For each TTTR filename, get the parent directory with the configured target path.
+        """
+        r = []
         for filename in self.settings['tttr_filenames']:
-            # Remove null characters from the filename
             filename = filename.replace('\x00', '')
-
-            fn: pathlib.Path = pathlib.Path(filename).absolute()
+            fn = pathlib.Path(filename).absolute()
             t = fn.parent / self.target_path
             r.append(t)
         return r
 
     def save_bi4_bur_first_last(self):
+        """
+        Example method to write .bur files based on the current
+        burst selection and also write an MTI summary.
+        """
         for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
-            fn: pathlib.Path = pathlib.Path(filename)
-            self.tttr = tttrlib.TTTR(fn.as_posix(), self.filetype)
 
-            # Use basename to get the base name of the file
+            fn = pathlib.Path(filename)
+            resolved_path = str(fn.resolve())
+            self.tttr = self.tttr_objects[resolved_path]
+
             base_name = fn.stem
-
             bur_directory = t / 'bi4_bur'
             bur_directory.mkdir(exist_ok=True, parents=True)
             bur_filename = bur_directory / f"{base_name}.bur"
             start_stop = self.burst_start_stop
-            print(self.windows)
             io.fluorescence.burst.write_bur_file(
                 bur_filename,
                 start_stop=start_stop,
@@ -487,7 +653,6 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 windows=self.windows,
                 detectors=self.detectors
             )
-
             mt = self.tttr.macro_times[-1] * self.tttr.header.macro_time_resolution
             io.fluorescence.burst.write_mti_summary(
                 filename=fn,
@@ -497,12 +662,17 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             )
 
     def save_filter_data(self):
+        """
+        Example method to store the selected photons array as a JSON (possibly gzipped).
+        """
         for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
             parent_directory = t / 'sl5'
             parent_directory.mkdir(exist_ok=True, parents=True)
             parent_directory = parent_directory.absolute()
-            fn: pathlib.Path = pathlib.Path(filename).absolute()
-            self.tttr = tttrlib.TTTR(fn.as_posix(), self.filetype)
+
+            fn = pathlib.Path(filename)
+            resolved_path = str(fn.resolve())
+            self.tttr = self.tttr_objects[resolved_path]
 
             d = {
                 'filename': os.path.relpath(fn, t),
@@ -511,11 +681,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 'delta_macro_time_filter': self.settings['delta_macro_time_filter'],
                 'filter': chisurf.fio.compress_numpy_array(self.selected)
             }
-
-            # Use basename to get the base name of the file
             base_name = fn.stem
-
-            # Modify the output file name to use the base name in the same folder
             output_filename = parent_directory / f"{base_name}.json.gz"
 
             with io.open_maybe_zipped(output_filename, "w") as outfile:
@@ -525,6 +691,9 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.filter_data_saved = True
 
     def save_selection(self):
+        """
+        Save the selection data in .bur or .json.gz, depending on user checkboxes.
+        """
         if self.save_bur:
             self.save_bi4_bur_first_last()
         if self.save_sl5:
@@ -539,62 +708,157 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.comboBox_2.addItems(k.keys())
 
     def update_detectors(self):
+        """
+        Sync the comboBox_2 selection to the channel lineEdit_4.
+        """
         key = self.comboBox_2.currentText()
         s = ", ".join([str(i) for i in self.detectors[key]["chs"]])
         self.lineEdit_4.setText(s)
         self.update_parameter()
 
     def update_pie_windows(self):
+        """
+        Sync the comboBox_3 selection to the lineEdit_5 for microtime ranges.
+        """
         key = self.comboBox_3.currentText()
         pie_win = self.windows[key]
-        print(pie_win)
         s = ";".join([f"{i[0]}-{i[1]}" for i in pie_win])
         self.lineEdit_5.setText(s)
         self.update_parameter()
 
     @chisurf.gui.decorators.init_with_ui("tttr_photon_filter.ui")
-    def __init__(self, *args, windows, detectors, **kwargs):
-        self.setTitle("Photon filter")
+    def __init__(
+            self,
+            *args,
+            windows,
+            detectors,
+            show_dT: bool = True,
+            show_filter: bool = True,
+            show_mcs: bool = True,
+            show_decay: bool = True,
+            show_burst: bool = True,
+            default_dT_min: float = 0.0001,
+            default_dT_max: float = 0.15,
+            use_dT_min: bool = False,
+            use_dT_max: bool = True,
+            default_photon_threshold: int = 60,
+            default_count_rate_window_ms: float = 1.0,
+            invert_count_rate_filter: bool = True,
+            default_filter_mode: str = 'burst',
+            use_gap_fill: bool = False,
+            default_max_gap: int = 3,
+            **kwargs
+    ):
+        """
+        Initialize the photon-filter wizard.
 
+        Parameters
+        ----------
+        windows : dict
+            Dictionary of predefined PIE windows. Passed to the relevant UI comboBox.
+        detectors : dict
+            Dictionary of predefined detectors. Passed to the relevant UI comboBox.
+        show_dT : bool, default=True
+            Whether to show the dT plot (between consecutive photons).
+        show_filter : bool, default=True
+            Whether to show the filter/selection plot.
+        show_mcs : bool, default=True
+            Whether to show the intensity trace (MCS) plot.
+        show_decay : bool, default=True
+            Whether to show the microtime histogram (decay plot).
+        show_burst : bool, default=True
+            Whether to show the burst histogram.
+        default_dT_min : float, default=0.0001
+            Initial lower bound for delta macro-time filter (in ms).
+        default_dT_max : float, default=0.15
+            Initial upper bound for delta macro-time filter (in ms).
+        use_dT_min : bool, default=False
+            Whether the lower bound of delta macro-time filter is active initially.
+        use_dT_max : bool, default=True
+            Whether the upper bound of delta macro-time filter is active initially.
+        default_photon_threshold : int, default=60
+            Initial threshold for count rate or burst search.
+        default_count_rate_window_ms : float, default=1.0
+            Initial time window (ms) for count-rate based filtering.
+        invert_count_rate_filter : bool, default=True
+            Whether to invert the count-rate filter initially.
+        default_filter_mode : str, default='burst'
+            Which filter mode radio button is selected by default.
+            Valid: 'count_rate' or 'burst'.
+        use_gap_fill : bool, default=False
+            Whether gap-filling is enabled by default.
+        default_max_gap : int, default=3
+            Maximum number of consecutive unselected photons that can be 'filled'
+            when gap-filling is applied.
+
+        Returns
+        -------
+        None. Initializes the UI and sets default widget states.
+        """
+        self.setTitle("Photon filter")
         self.windows = windows
         self.detectors = detectors
         self.fill_detectors(detectors)
         self.fill_pie_windows(windows)
 
+        # Dictionary to store all TTTR objects
+        self.tttr_objects = dict()
+
+        # Filetype combos
         self.comboBox.clear()
-        self.comboBox.insertItem(0, "Auto")  # Insert "Auto" at index 0
+        self.comboBox.insertItem(0, "Auto")
         self.comboBox.insertItems(1, list(tttrlib.TTTR.get_supported_container_names()))
 
-        self.settings: dict = dict()
-        tttr_filenames: typing.List[pathlib.Path] = list()
-        self.settings['tttr_filenames'] = tttr_filenames
-        self.settings['count_rate_filter'] = dict()
-        self.settings['delta_macro_time_filter'] = dict()
+        # Main settings
+        self.settings: dict = {}
+        self.settings['tttr_filenames'] = []
+        self.settings['count_rate_filter'] = {}
+        self.settings['delta_macro_time_filter'] = {}
         self.filter_data_saved = False
 
-        def cc():
-            self.spinBox_4.setMaximum(len(self.settings['tttr_filenames']) - 1)
-            self.spinBox_4.setValue(len(self.settings['tttr_filenames']) - 1)
+        def after_file_drop():
+            """
+            Callback to load *all* TTTR files after they're dropped or specified.
+            """
+            for fn in self.settings['tttr_filenames']:
+                p = pathlib.Path(fn).resolve()
+                p_str = str(p)
+                if p_str not in self.tttr_objects:
+                    if p.exists() and p.is_file():
+                        if isinstance(self.filetype, str):
+                            self.tttr_objects[p_str] = tttrlib.TTTR(p_str, self.filetype)
+                        else:
+                            self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
+            n_files = len(self.settings['tttr_filenames'])
+            self.spinBox_4.setMaximum(n_files - 1)
+            if n_files > 0:
+                self.spinBox_4.setValue(n_files - 1)
             self.read_tttr()
 
+        # Inject file-drop logic
         self.textEdit.setVisible(False)
         chisurf.gui.decorators.lineEdit_dragFile_injector(
-            self.lineEdit,
-            call=cc,
-            target=self.settings['tttr_filenames']
+            self.lineEdit, call=after_file_drop, target=self.settings['tttr_filenames']
         )
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
+        )
         self.setSizePolicy(sizePolicy)
 
+        # Internal TTTR reference
         self.tttr = None
-        self._dT_min = 0.0001
-        self._dT_max = 0.15
 
-        # Plot widget: Burst size histogram
+        # Initialize dT_min/dT_max
+        self._dT_min = default_dT_min
+        self._dT_max = default_dT_max
+
+        # Create & configure plots
         self.pw_burst_histogram = pg.plot()
         self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
-        # self.pw_burst_histogram.setLabel('left', 'Counts')
-        # self.pw_burst_histogram.setLabel('bottom', 'Burst Length (time)')
+        self.pw_burst_histogram.setLabel('left', 'Counts')
+        self.pw_burst_histogram.setLabel('bottom', 'Burst size (Nbr. Photons)')
         self.pw_burst_histogram.resize(100, 80)
 
         color_all = QtGui.QColor(255, 255, 0, 64)
@@ -602,29 +866,33 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         pen2 = pg.mkPen(color_all, width=1, style=QtCore.Qt.SolidLine)
         pen1 = pg.mkPen(color_selected, width=1, style=QtCore.Qt.SolidLine)
 
-        # Plot widget: delta macro time plot
         self.pw_dT = pg.plot()
+        self.pw_dT.setLabel('left', 'dT (ms)')
+        self.pw_dT.setLabel('bottom', 'Photon Index')
         self.plot_item_dt = self.pw_dT.getPlotItem()
         self.plot_unselected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_selected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_dT.resize(200, 40)
 
-        # Plot widget: MCS trace
         self.pw_mcs = pg.plot()
+        self.pw_mcs.setLabel('left', 'Intensity (kHz)')
+        self.pw_mcs.setLabel('bottom', 'Time (s)')
         self.plot_item_mcs = self.pw_mcs.getPlotItem()
         self.plot_mcs_all = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_mcs_selected = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_mcs.resize(200, 80)
 
-        # Plot widget: Fluorescence decay
         self.pw_decay = pg.plot()
+        self.pw_decay.setLabel('left', 'Counts')
+        self.pw_decay.setLabel('bottom', 'Microtime (ns)')
         self.plot_item_decay = self.pw_decay.getPlotItem()
         self.plot_decay_all = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_decay_selected = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_decay.resize(200, 80)
 
-        # Plot widget: Filtered photons
         self.pw_filter = pg.plot()
+        self.pw_filter.setLabel('left', 'Selected (1) / Unselected (0)')
+        self.pw_filter.setLabel('bottom', 'Photon Index')
         self.pw_filter.setXLink(self.pw_dT)
         self.pw_dT.setMouseEnabled(x=False, y=False)
         self.pw_filter.setMouseEnabled(x=False, y=False)
@@ -638,8 +906,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
         ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
         co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
-        self.region_selector = pg.LinearRegionItem(brush=co, orientation='horizontal',
-                                                   values=(np.log10(0.001), np.log10(0.15)))
+        self.region_selector = pg.LinearRegionItem(
+            brush=co, orientation='horizontal',
+            values=(np.log10(self._dT_min), np.log10(self._dT_max))
+        )
         self.pw_dT.addItem(self.region_selector)
 
         def onRegionUpdate(evt):
@@ -648,26 +918,24 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 lb, ub = 10 ** lb, 10 ** ub
             self._dT_min = lb
             self._dT_max = ub
-
             self.doubleSpinBox_2.blockSignals(True)
             self.doubleSpinBox_3.blockSignals(True)
             self.doubleSpinBox_2.setValue(lb)
             self.doubleSpinBox_3.setValue(ub)
             self.doubleSpinBox_2.blockSignals(False)
             self.doubleSpinBox_3.blockSignals(False)
-
             self.update_plots()
             self.update_output_path()
 
         self.region_selector.sigRegionChangeFinished.connect(onRegionUpdate)
 
-        self.gridLayout_6.addWidget(self.pw_dT,              0, 0, 1, 3)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_filter,          1, 0, 1, 3)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_mcs,             2, 0, 1, 1)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_decay,           2, 1, 1, 1)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)  # (widget, row, column, rowSpan, columnSpan)
+        # Place plots in layout
+        self.gridLayout_6.addWidget(self.pw_dT, 0, 0, 1, 3)
+        self.gridLayout_6.addWidget(self.pw_filter, 1, 0, 1, 3)
+        self.gridLayout_6.addWidget(self.pw_mcs, 2, 0, 1, 1)
+        self.gridLayout_6.addWidget(self.pw_decay, 2, 1, 1, 1)
+        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)
 
-        # Connect actions
         self.actionUpdate_Values.triggered.connect(self.update_parameter)
         self.actionUpdateUI.triggered.connect(self.updateUI)
         self.actionFile_changed.triggered.connect(self.read_tttr)
@@ -677,15 +945,42 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.toolButton_3.toggled.connect(self.pw_decay.setVisible)
         self.toolButton_4.toggled.connect(self.pw_filter.setVisible)
         self.toolButton_7.toggled.connect(self.pw_burst_histogram.setVisible)
+
         self.toolButton_5.clicked.connect(self.save_selection)
         self.toolButton_6.clicked.connect(self.onClearFiles)
 
         self.comboBox_2.currentTextChanged.connect(self.update_detectors)
         self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
 
-        # Set the custom validator
+        # Custom validator
         validator = CommaSeparatedIntegersValidator()
         self.lineEdit_4.setValidator(validator)
 
-        self.update_parameter()
+        # Initialize defaults
+        self.spinBox.setValue(default_photon_threshold)
+        self.doubleSpinBox.setValue(default_count_rate_window_ms)
+        self.checkBox.setChecked(invert_count_rate_filter)
+        self.checkBox_2.setChecked(use_dT_min)
+        self.checkBox_3.setChecked(use_dT_max)
 
+        # -- NEW: set default gap-fill checkbox/spinbox --
+        self.checkBox_5.setChecked(use_gap_fill)  # <--- gap-fill checkbox
+        self.spinBox_7.setValue(default_max_gap)  # <--- max-gap spinbox
+
+        # Control initial plot visibility
+        self.pw_dT.setVisible(show_dT)
+        self.toolButton_4.setChecked(show_filter)
+        self.toolButton_2.setChecked(show_mcs)
+        self.toolButton_3.setChecked(show_decay)
+        self.toolButton_7.setChecked(show_burst)
+
+        # -- Set the default filter mode (radio buttons) --
+        # radioButton = count_rate; radioButton_2 = burst
+        if default_filter_mode == 'burst':
+            self.radioButton_2.setChecked(True)
+        else:
+            # Fallback or default to 'count_rate'
+            self.radioButton.setChecked(True)
+
+        # Final initial update
+        self.update_parameter()
