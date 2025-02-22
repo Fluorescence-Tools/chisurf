@@ -106,87 +106,141 @@ def get_indices_in_ranges(rout, mt, chs, micro_time_ranges):
 
 
 def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors):
-    # Initialize a list to store each row of summary data
-    summary_data = []
+    """
+    Write burst summary information to a TSV file (tab-separated),
+    using a vectorized approach for efficiency.
 
-    # Read the TTTR file
+    :param bur_filename: Output filename for the TSV summary.
+    :param start_stop: List of tuples (start_index, stop_index) defining bursts.
+    :param filename: String representing the file name.
+    :param tttr: A TTTR-like object with:
+                 - macro_times
+                 - micro_times
+                 - routing_channel
+                 - header.macro_time_resolution
+    :param windows: Dictionary {window_name: [(r_start, r_stop), ...]}
+    :param detectors: Dictionary {det_name: {"chs": [...], "micro_time_ranges": [(mt_start, mt_stop), ...]}}
+    """
+
+    n_ph = len(tttr)
+    macro_times = tttr.macro_times
+    micro_times = tttr.micro_times
+    routing_channels = tttr.routing_channel
     res = tttr.header.macro_time_resolution
 
-    # Iterate through the list of (start, stop) tuples
-    for start_index, stop_index in start_stop:
-        burst = tttr[start_index:stop_index]
-        duration = (tttr.macro_times[stop_index] - tttr.macro_times[start_index]) * res
-        mean_macro_time = (tttr.macro_times[stop_index] + tttr.macro_times[start_index]) / 2.0 * res
-        n_photons = abs(stop_index - start_index)
-        count_rate = n_photons / duration
+    summary_data = []
 
-        # Create the initial OrderedDict
+    # Iterate over each (start_index, stop_index) pair
+    for start_idx, stop_idx in start_stop:
+        if stop_idx > n_ph or stop_idx < 0:
+            continue
+
+        # Slice arrays for this burst only once
+        burst_macro = macro_times[start_idx:stop_idx]
+        burst_micro = micro_times[start_idx:stop_idx]
+        burst_rout = routing_channels[start_idx:stop_idx]
+
+        # Handle corner cases
+        if stop_idx <= start_idx:
+            duration = 0.0
+            mean_macro_time = 0.0
+            n_photons = 0
+        else:
+            duration = (macro_times[stop_idx] - macro_times[start_idx]) * res
+            mean_macro_time = ((macro_times[stop_idx] + macro_times[start_idx]) / 2.0) * res
+            n_photons = stop_idx - start_idx
+
+        count_rate = (n_photons / duration) if duration > 0 else np.nan
+
+        # Initialize the row_data as an OrderedDict (for stable column order)
         row_data = OrderedDict([
-            ("First Photon", start_index),
-            ("Last Photon", stop_index),
-            ("Duration (ms)", duration * 1000.0),
-            ("Mean Macro Time (ms)", mean_macro_time * 1000.0),
+            ("First Photon", start_idx),
+            ("Last Photon", stop_idx),
+            ("Duration (ms)", duration * 1e3),
+            ("Mean Macro Time (ms)", mean_macro_time * 1e3),
             ("Number of Photons", n_photons),
-            ("Count Rate (KHz)", count_rate / 1000.0),
+            ("Count Rate (KHz)", count_rate / 1e3),
             ("First File", filename),
             ("Last File", filename),
         ])
 
-        for window in windows:
-            r_start, r_stop = windows[window][0]
-            for det in detectors:
-                # Create selection mask
-                chs = detectors[det]["chs"]
-                micro_time_ranges = detectors[det]["micro_time_ranges"]
+        # ---------------------------------------------------------
+        # Precompute boolean masks for each detector in this burst
+        # ---------------------------------------------------------
+        detector_masks = {}
+        for det_name, det_info in detectors.items():
+            chs = det_info["chs"]
+            micro_time_ranges = det_info["micro_time_ranges"]
 
-                mt = burst.micro_times
-                mT = burst.macro_times
-                rout = burst.routing_channel
+            # (1) Channel mask
+            ch_mask = np.isin(burst_rout, chs)
 
-                # Signal in Detector
-                idx = get_indices_in_ranges(rout, mt, chs, micro_time_ranges)
-                nbr_ph_color = len(idx)
-                if nbr_ph_color == 0:
-                    first, last = -1, -1
-                    duration_color = -1
-                    mean_macro_time_color = -1
-                    count_rate_color = -1
+            # (2) Union of all micro-time ranges for this detector
+            mt_mask = np.zeros(len(burst_micro), dtype=bool)
+            for (mt_start, mt_stop) in micro_time_ranges:
+                mt_mask |= (burst_micro >= mt_start) & (burst_micro < mt_stop)
+
+            detector_masks[det_name] = (ch_mask & mt_mask)
+
+        # ---------------------------------------------------------
+        # Per-detector stats (for the entire burst)
+        # ---------------------------------------------------------
+        for det_name, det_mask in detector_masks.items():
+            idx = np.nonzero(det_mask)[0]  # indices within the burst slice
+            if len(idx) == 0:
+                row_data[f"First Photon ({det_name})"] = -1
+                row_data[f"Last Photon ({det_name})"] = -1
+                row_data[f"Duration ({det_name}) (ms)"] = -1.0
+                row_data[f"Mean Macrotime ({det_name}) (ms)"] = -1.0
+                row_data[f"Number of Photons ({det_name})"] = 0
+                row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = -1.0
+            else:
+                first_idx = idx[0]
+                last_idx = idx[-1]
+                num_ph = len(idx)
+
+                # Compute times based on the *burst* arrays
+                dur_ms = (burst_macro[last_idx] - burst_macro[first_idx]) * res * 1e3
+                mean_mt_ms = ((burst_macro[last_idx] + burst_macro[first_idx]) / 2.0) * res * 1e3
+                rate_khz = (num_ph / dur_ms) if dur_ms > 0 else np.nan
+
+                # Convert local indices back to global indices by adding start_idx
+                row_data[f"First Photon ({det_name})"] = start_idx + first_idx
+                row_data[f"Last Photon ({det_name})"] = start_idx + last_idx
+                row_data[f"Duration ({det_name}) (ms)"] = dur_ms
+                row_data[f"Mean Macrotime ({det_name}) (ms)"] = mean_mt_ms
+                row_data[f"Number of Photons ({det_name})"] = num_ph
+                row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = rate_khz
+
+        # ---------------------------------------------------------
+        # Per-detector, per-window stats
+        # ---------------------------------------------------------
+        for window_name, w_ranges in windows.items():
+            # If your code only uses the first (r_start, r_stop):
+            (r_start, r_stop) = w_ranges[0]
+
+            # Build a mask for the window in micro_time
+            w_mask = (burst_micro >= r_start) & (burst_micro < r_stop)
+
+            for det_name in detectors:
+                # Combine the window mask with the detector mask
+                combined_mask = detector_masks[det_name] & w_mask
+                idx = np.nonzero(combined_mask)[0]
+
+                if len(idx) == 0:
+                    row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = -1.0
                 else:
-                    first, last = idx[0], idx[-1]
-                    nbr_ph_color = len(idx)
-                    duration_color = (mT[idx[-1]] - mT[idx[0]]) * res * 1000.0
-                    mean_macro_time_color = (mT[last] + mT[first]) / 2.0 * res  * 1000.0
-                    count_rate_color = nbr_ph_color / duration_color
+                    num_ph = len(idx)
+                    dur_window_ms = (burst_macro[idx[-1]] - burst_macro[idx[0]]) * res * 1e3
+                    rate_window_khz = num_ph / dur_window_ms if dur_window_ms > 0 else np.nan
+                    row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = rate_window_khz
 
-                # Signal in Window
-                idx_window = get_indices_in_ranges(rout, mt, chs, [(r_start, r_stop)])
-                nbr_ph_window = len(idx_window)
-                if nbr_ph_window == 0:
-                    count_rate_window = -1.0
-                else:
-                    nbr_ph_window = len(idx_window)
-                    duration_window = (mT[idx_window[-1]] - mT[idx_window[0]]) * res * 1000.0
-                    count_rate_window = nbr_ph_window / duration_window
+        # Append the row data
+        summary_data.append(row_data)
 
-                # Create the update dict as an OrderedDict
-                c = OrderedDict([
-                    (f"First Photon ({det})", first + start_index),
-                    (f"Last Photon ({det})", last + start_index),
-                    (f"Duration ({det}) (ms)", duration_color),
-                    (f"Mean Macrotime ({det}) (ms)", mean_macro_time_color),
-                    (f"Number of Photons ({det})", nbr_ph_color),
-                    (f"{det}".capitalize() + " Count Rate (KHz)", count_rate_color),
-                    (f'S {window} {det} (kHz) | {r_start}-{r_stop}', count_rate_window)
-                ])
-
-                # Update row_data with c
-                row_data.update(c)
-
-        summary_data.append(row_data)  # Add the row data to the summary list
-
+    # Convert to DataFrame and write to a TSV
     summary_df = pd.DataFrame(summary_data)
     summary_df.to_csv(bur_filename, sep='\t', index=False)
-
 
 def read_burst_analysis(
         paris_path: pathlib.Path,
