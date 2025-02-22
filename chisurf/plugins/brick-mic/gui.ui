@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1423</width>
+    <width>1078</width>
     <height>678</height>
    </rect>
   </property>
@@ -34,6 +34,9 @@
      <widget class="QTabWidget" name="tabWidget">
       <property name="enabled">
        <bool>true</bool>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::South</enum>
       </property>
       <property name="currentIndex">
        <number>0</number>
@@ -338,7 +341,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1423</width>
+     <width>1078</width>
      <height>21</height>
     </rect>
    </property>
