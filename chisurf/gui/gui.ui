@@ -401,6 +401,9 @@
      <addaction name="actionQuEst"/>
     </widget>
     <widget class="QMenu" name="menuTTTR">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>TTTR</string>
      </property>
@@ -411,14 +414,14 @@
      <addaction name="actionConvert"/>
      <addaction name="actionGenerate_decay"/>
      <addaction name="actionCorrelate"/>
-     <addaction name="actionTTTR_CLSM"/>
     </widget>
     <addaction name="menuFRET"/>
     <addaction name="menuAnisotropy"/>
     <addaction name="menuModelling"/>
     <addaction name="menuTTTR"/>
-    <addaction name="actionF_Test"/>
+    <addaction name="actionTTTR_CLSM"/>
     <addaction name="actionndXplorer"/>
+    <addaction name="actionF_Test"/>
    </widget>
    <widget class="QMenu" name="menuMacro">
     <property name="title">
@@ -1268,7 +1271,7 @@
   <action name="actionClose_all">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
+     <normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
    </property>
    <property name="text">
     <string>Close all</string>
@@ -1355,6 +1358,9 @@
    </property>
   </action>
   <action name="actionConvert">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
@@ -1364,6 +1370,9 @@
    </property>
   </action>
   <action name="actionGenerate_decay">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
@@ -1470,7 +1479,7 @@
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
    </property>
    <property name="text">
-    <string>TTTR CLSM</string>
+    <string>CLSM</string>
    </property>
   </action>
   <action name="actionClear_local_settings">
