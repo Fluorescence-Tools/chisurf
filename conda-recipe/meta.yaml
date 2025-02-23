@@ -89,8 +89,8 @@ requirements:
     - oclgrind          # [win]
     - pymol-open-source
     - qscintilla2
-    - guidata
-    - guiqwt
+    - guidata 3.0.*
+    - guiqwt 4.4.*
     - qscintilla2
     - python-docx
     - qtconsole 5.*
