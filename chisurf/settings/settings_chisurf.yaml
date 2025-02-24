@@ -148,7 +148,7 @@ gui:
     font_size: 9
     font_family: Courier New
     language: Python
-  style_sheet: dark.css
+  style_sheet: dark.qss
   RubberBandResize: true
   RubberBandMove: true
   show_console: true
