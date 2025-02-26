@@ -227,6 +227,9 @@ class PTUSplitter(QtWidgets.QWidget):
                 f"Created {total_files} files in:\n{output_subfolder}"
             )
 
+        if not self.keep_original:
+            input_file.unlink()
+
         # Re-enable UI elements
         self._set_user_input_enabled(True)
 
@@ -247,6 +250,11 @@ class PTUSplitter(QtWidgets.QWidget):
     # --------------------------------------------------------------------------
     # Properties
     # --------------------------------------------------------------------------
+    @property
+    def keep_original(self) -> bool:
+        """Return True to keep the original file unchanged. Otherwise original file is deleted"""
+        return bool(self.checkBox.isChecked())
+
     @property
     def photons_per_file(self) -> int:
         """Returns the current value from the spinBox as the chunk size."""
