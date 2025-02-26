@@ -42,31 +42,119 @@ def multi_gaussian(x, *params):
 
 class BrickMicWizard(QtWidgets.QMainWindow):
 
+    @chisurf.gui.decorators.init_with_ui("brick-mic/gui.ui", path=chisurf.settings.plugin_path)
+    def __init__(self, *args, **kwargs):
+        # ---------------------------------------------------------
+        # Initialization
+        # ---------------------------------------------------------
+        # base class init is called by decorator
+        # super().__init__(*args, **kwargs)
+
+        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(
+            parent=self,
+            json_file=None
+        )
+        self.verticalLayout_7.addWidget(self.channel_definer)
+
+        self.burst_finder = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
+            windows=self.channel_definer.windows,
+            detectors=self.channel_definer.detectors,
+            show_dT=True,
+            show_burst=False,
+            show_mcs=True,
+            show_decay=False,
+            show_filter=False
+        )
+        self.verticalLayout_2.addWidget(self.burst_finder)
+
+        # Create a matplotlib Figure and Canvas for the histogram.
+        self.figure = Figure(figsize=(5, 4))
+        self.canvas = FigureCanvas(self.figure)
+        while self.verticalLayout_4.count():
+            child = self.verticalLayout_4.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+        self.verticalLayout_4.addWidget(self.canvas)
+
+        # Store references to data and UI elements.
+        self.node_objects: dict = {}
+        self.node_data: dict = {}
+        self.connections: list[(int, int)] = []
+        self.current_df = None  # We'll keep the final, concatenated DataFrame here
+
+        # Setup table copy behavior
+        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        self.copyShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+C"), self.tableWidget)
+        self.copyShortcut.activated.connect(self.copy_entire_table)
+
+        # Connect signals to update the histogram
+        self.comboBox.currentTextChanged.connect(self.update_histogram)
+        self.spinBox_3.valueChanged.connect(self.update_histogram)
+        self.doubleSpinBox_3.valueChanged.connect(self.update_histogram)
+        self.doubleSpinBox_4.valueChanged.connect(self.update_histogram)
+        self.spinBox.valueChanged.connect(self.update_histogram)
+
+        # Connect buttons
+        self.pushButton.clicked.connect(self.process_all_files)
+        self.pushButton_2.clicked.connect(self.clear_data)
+
+        # Hide some unused UI elements in burst_finder
+        self.burst_finder.groupBox_3.hide()
+        self.burst_finder.toolButton_6.hide()
+        self.burst_finder.toolButton_3.hide()
+        self.burst_finder.toolButton_4.hide()
+
+    # --------------------------------------------------------------------------
+    # Drag & Drop Events
+    # --------------------------------------------------------------------------
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        """Accept only file URLs being dragged into the main window."""
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        """
+        Extract file paths from the dropped URLs and process them as needed.
+        For example, you might want to store these paths in burst_finder.settings
+        and then call process_all_files, or simply parse them here.
+        """
+        file_paths = []
+        for url in event.mimeData().urls():
+            # Convert to local file path (handles local files, not necessarily remote)
+            local_path = url.toLocalFile()
+            if local_path:
+                file_paths.append(local_path)
+
+        event.acceptProposedAction()
+
+        # For demonstration, print the dropped files:
+        print("Dropped files:", file_paths)
+
+        # Optionally, store these in your burst_finder.settings
+        # and auto-process them:
+        self.burst_finder.settings['tttr_filenames'] = file_paths
+        self.process_all_files()
+
+    # --------------------------------------------------------------------------
+    # Processing
+    # --------------------------------------------------------------------------
     def process_all_files(self) -> None:
         """
-        Iterates over all TTTR files registered in the burst finder by setting the
-        burst finder’s spinBox_4 to each valid index. For each file, it reads the TTTR file,
-        generates its burst summary DataFrame (using chisurf.gui.widgets.wizard.create_bur_summary),
-        reduces the results to a subset of desired columns, calculates the proximity ratio, and writes
-        the burst data to a separate .bst file in an analysis folder. After all files are processed,
-        the accumulated results are concatenated and the UI (table and histogram) is updated.
+        Calls save_selection first to store burst selections,
+        then loads and processes the saved burst files for display.
         """
-        # Retrieve the list of TTTR filenames from the burst finder settings.
         tttr_files = self.burst_finder.settings.get('tttr_filenames', [])
-        num_files = len(tttr_files)
-        if num_files == 0:
+        if not tttr_files:
             print("No TTTR files to process.")
             return
 
-        # Initialize the progress bar.
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(num_files)
-        self.progressBar.setValue(0)
+        # First, save the selection (ensures all bursts are processed)
+        self.burst_finder.save_selection()
+        print("Photon selection saved. Now loading burst files.")
 
         accumulated_results = []
-
-        # Desired columns for the burst summary.
-        desired_columns = [
+        ui_columns = [
             "First Photon",
             "Last Photon",
             "Duration (ms)",
@@ -74,74 +162,51 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             "Number of Photons (green)"
         ]
 
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(len(tttr_files))
+        self.progressBar.setValue(0)
         self.centralwidget.setEnabled(False)
-        for index in range(num_files):
-            # Set the current file index in the burst finder.
-            self.burst_finder.spinBox_4.setValue(index)
-            QtWidgets.QApplication.processEvents()
 
-            # Create the burst summary DataFrame using the module function.
-            fn = self.burst_finder.filename  # Original filename for the current file.
-            df = chisurf.gui.widgets.wizard.create_bur_summary(
-                start_stop=self.burst_finder.burst_start_stop,
-                tttr=self.burst_finder.tttr,
-                filename=fn,
-                windows=self.burst_finder.windows,
-                detectors=self.burst_finder.detectors
-            )
+        for index, fn in enumerate(tttr_files):
+            file_path = Path(fn)
+            analysis_folder_name = self.burst_finder.lineEdit_2.text()
+            bur_file_path = file_path.parent / analysis_folder_name / 'bi4_bur' / f"{file_path.stem}.bur"
 
-            # Ensure the desired columns exist.
-            missing_cols = [col for col in desired_columns if col not in df.columns]
-            if missing_cols:
-                print("Warning: The following expected columns are missing:", missing_cols)
-                for col in missing_cols:
-                    df[col] = 0
+            if not bur_file_path.exists():
+                print(f"Warning: Expected .bur file not found: {bur_file_path}")
+                continue
 
-            # Create a subset DataFrame and calculate Proximity Ratio.
-            df_subset = df[desired_columns].copy()
-            df_subset["Proximity Ratio"] = df_subset.apply(
+            # Load the pre-saved burst file
+            df = pd.read_csv(bur_file_path, sep="\t")
+
+            # Ensure all expected columns exist
+            missing_cols = [col for col in ui_columns if col not in df.columns]
+            for col in missing_cols:
+                df[col] = 0
+
+            # Create a limited subset DataFrame for UI
+            df_ui = df[ui_columns].copy()
+
+            # Compute Proximity Ratio for UI
+            df_ui["Proximity Ratio"] = df_ui.apply(
                 lambda row: row["Number of Photons (red)"] /
                             (row["Number of Photons (red)"] + row["Number of Photons (green)"])
                 if (row["Number of Photons (red)"] + row["Number of Photons (green)"]) > 0 else 0,
                 axis=1
-            )
-            # Round to 3 digits
-            df_subset["Proximity Ratio"] = df_subset["Proximity Ratio"].round(3)
+            ).round(3)
 
-            # Write the burst data to a separate file.
-            file_path = Path(fn)
-            # Retrieve the folder name from the burst finder's lineEdit_2.
-            analysis_folder_name = self.burst_finder.lineEdit_2.text()
-            analysis_folder = file_path.parent / analysis_folder_name / Path('bur')
-            analysis_folder.mkdir(parents=True, exist_ok=True)
-            bst_filename = analysis_folder / f"{file_path.stem}.bst"
-            df_subset.to_csv(bst_filename, sep="\t", index=False)
-            print("Saved bursts to", bst_filename)
-
-            # Accumulate this file's results.
-            accumulated_results.append(df_subset)
-
-            # Update progress bar.
+            accumulated_results.append(df_ui)
             self.progressBar.setValue(index + 1)
             QtWidgets.QApplication.processEvents()
-            print(f"Processed file {index + 1} of {num_files}")
 
+        # Combine all loaded data and update UI
         if accumulated_results:
-            # Concatenate all individual DataFrames.
             final_df = pd.concat(accumulated_results, ignore_index=True)
             self.current_df = final_df
-            # Update the table widget.
-            self.tableWidget.setUpdatesEnabled(False)
-            self.tableWidget.setSortingEnabled(False)
             self.populate_table(final_df)
-            self.tableWidget.setUpdatesEnabled(True)
-            self.tableWidget.setSortingEnabled(True)
-            # Update the histogram.
             self.update_histogram()
-        else:
-            print("No burst data was accumulated.")
 
-        print("All files processed.")
+        print("All burst files loaded successfully.")
         self.centralwidget.setEnabled(True)
 
     def update_histogram(self):
@@ -152,7 +217,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         if not selected_feature:
             return
 
-        # Retrieve data for the selected feature.
         data = self.current_df[selected_feature]
         try:
             data = pd.to_numeric(data)
@@ -164,7 +228,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         min_val = float(self.doubleSpinBox_3.value())
         max_val = float(self.doubleSpinBox_4.value())
 
-        # Clear figure and add a new subplot.
         self.figure.clear()
         ax = self.figure.add_subplot(111)
 
@@ -188,7 +251,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
                 # Bin centers from histogram.
                 bin_centers = (bins[:-1] + bins[1:]) / 2.0
 
-                # Initial guess for popt.
+                # Initial guess
                 initial_guess = []
                 for i in range(k):
                     A_guess = max(n) / k
@@ -196,7 +259,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
                     sigma_guess = (max_val - min_val) / (2 * k)
                     initial_guess.extend([A_guess, mu_guess, sigma_guess])
 
-                # Fit mixture model.
+                # Fit mixture model
                 popt, pcov = curve_fit(multi_gaussian, bin_centers, n, p0=initial_guess)
 
                 # Generate x values for the fitted curve.
@@ -204,16 +267,11 @@ class BrickMicWizard(QtWidgets.QMainWindow):
                 # Sum of all Gaussians
                 y_fit = multi_gaussian(x_fit, *popt)
 
-                # --- Plot Gaussians below ---
-                # We can use a colormap to differentiate each individual Gaussian.
                 colors = plt.cm.viridis(np.linspace(0, 1, k))
-
                 for i in range(k):
-                    A = popt[3 * i]
-                    mu = popt[3 * i + 1]
-                    sigma = popt[3 * i + 2]
-
-                    # Compute individual Gaussian
+                    A = popt[3*i]
+                    mu = popt[3*i + 1]
+                    sigma = popt[3*i + 2]
                     y_gauss_i = single_gaussian(x_fit, A, mu, sigma)
                     ax.plot(
                         x_fit,
@@ -223,24 +281,22 @@ class BrickMicWizard(QtWidgets.QMainWindow):
                         label=f'Gaussian {i + 1}'
                     )
 
-                # Finally, plot the overall fit (sum) in red on top.
                 ax.plot(x_fit, y_fit, 'r-', label='Sum of all Gaussians')
                 ax.legend()
 
-                # Build table for results (same as previous approach)
+                # Build a results table
                 header = ["Gaussian #", "Amplitude", "Mean", "Sigma"]
                 rows = []
                 col_widths = [len(h) for h in header]
 
                 for i in range(k):
-                    A = popt[3 * i]
-                    mu = popt[3 * i + 1]
-                    sigma = popt[3 * i + 2]
-
+                    A = popt[3*i]
+                    mu = popt[3*i + 1]
+                    sigma = popt[3*i + 2]
                     try:
-                        errorA = np.sqrt(pcov[3 * i, 3 * i])
-                        errorMu = np.sqrt(pcov[3 * i + 1, 3 * i + 1])
-                        errorSigma = np.sqrt(pcov[3 * i + 2, 3 * i + 2])
+                        errorA = np.sqrt(pcov[3*i, 3*i])
+                        errorMu = np.sqrt(pcov[3*i + 1, 3*i + 1])
+                        errorSigma = np.sqrt(pcov[3*i + 2, 3*i + 2])
                     except Exception:
                         errorA, errorMu, errorSigma = None, None, None
 
@@ -255,7 +311,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
                     row = [f"{i + 1}", amp_str, mu_str, sigma_str]
                     rows.append(row)
-                    # Adjust column widths if needed
                     for j, item in enumerate(row):
                         col_widths[j] = max(col_widths[j], len(item))
 
@@ -286,16 +341,13 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
     def populate_table(self, df):
         """
-        Populates self.tableWidget with data from the DataFrame and fills self.comboBox
-        with the column names only if the content is new.
+        Populates self.tableWidget with data from the DataFrame and
+        updates self.comboBox with the column names if the content is new.
         Only every 10th burst (row) from the DataFrame is added to the table as a preview.
-        Also, if 'Proximity Ratio' is one of the columns, it is set as the default selected feature.
         """
-        # Use a preview: only every 10th row.
         df_preview = df.iloc[::10]
         final_columns = df.columns.tolist()
 
-        # Update the table widget.
         self.tableWidget.clear()
         self.tableWidget.setRowCount(len(df_preview))
         self.tableWidget.setColumnCount(len(final_columns))
@@ -303,22 +355,20 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         for row_index, row in enumerate(df_preview.itertuples(index=False)):
             for col_index, value in enumerate(row):
-                if isinstance(value, float):
-                    item_text = f"{value:.3f}"
-                else:
-                    item_text = str(value)
+                item_text = f"{value:.3f}" if isinstance(value, float) else str(value)
                 item = QtWidgets.QTableWidgetItem(item_text)
                 self.tableWidget.setItem(row_index, col_index, item)
 
-        # Update the comboBox only if its content is different.
+        # Update comboBox if columns differ
         current_items = [self.comboBox.itemText(i) for i in range(self.comboBox.count())]
         if current_items != final_columns:
             self.comboBox.clear()
             self.comboBox.addItems(final_columns)
-        # Set default selected feature to 'Proximity Ratio' if it exists.
-        index = self.comboBox.findText("Proximity Ratio")
-        if index != -1:
-            self.comboBox.setCurrentIndex(index)
+
+        # Set default to 'Proximity Ratio' if present
+        idx = self.comboBox.findText("Proximity Ratio")
+        if idx != -1:
+            self.comboBox.setCurrentIndex(idx)
 
     def copy_entire_table(self):
         """
@@ -328,21 +378,20 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         row_count = self.tableWidget.rowCount()
         col_count = self.tableWidget.columnCount()
 
-        # Get header labels for all columns
+        # Collect column headers
         header_items = []
         for col in range(col_count):
             header_item = self.tableWidget.horizontalHeaderItem(col)
-            header_text = header_item.text() if header_item is not None else ""
+            header_text = header_item.text() if header_item else ""
             header_items.append(header_text)
-        # Join headers with a tab delimiter and end with a newline
         clipboard_text = "\t".join(header_items) + "\n"
 
-        # Iterate over all rows and columns to gather cell text
+        # Collect cell data
         for row in range(row_count):
             row_data = []
             for col in range(col_count):
                 item = self.tableWidget.item(row, col)
-                cell_text = item.text() if item is not None else ""
+                cell_text = item.text() if item else ""
                 row_data.append(cell_text)
             clipboard_text += "\t".join(row_data) + "\n"
 
@@ -351,7 +400,8 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
     def clear_data(self):
         """
-        Clears all current data from the table, histogram, text fields, and resets the data frame.
+        Clears all current data from the table, histogram, text fields,
+        and resets the data frame.
         """
         self.current_df = None
         # clear data reader
@@ -374,73 +424,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         print("Data cleared.")
 
-
-    @chisurf.gui.decorators.init_with_ui("brick-mic/gui.ui", path=chisurf.settings.plugin_path)
-    def __init__(self, *args, **kwargs):
-        #super().__init__(*args, **kwargs)
-
-        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(
-            parent=self,
-            json_file=None #'chisurf/plugins/brick-mic/channel_settings.json'
-        )
-        self.verticalLayout_7.addWidget(self.channel_definer)
-
-        self.burst_finder = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
-            windows=self.channel_definer.windows,
-            detectors=self.channel_definer.detectors,
-            #callback_function=self.update_bursts,
-            show_dT=True,
-            show_burst=False,
-            show_mcs=True,
-            show_decay=False,
-            show_filter=False
-        )
-        self.verticalLayout_2.addWidget(self.burst_finder)
-
-        # Create a matplotlib Figure and Canvas for the histogram.
-        self.figure = Figure(figsize=(5, 4))
-        self.canvas = FigureCanvas(self.figure)
-        # Clear any existing items from verticalLayout_4 and add the canvas.
-        while self.verticalLayout_4.count():
-            child = self.verticalLayout_4.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-        self.verticalLayout_4.addWidget(self.canvas)
-
-        # python objects of nodes
-        self.node_objects: dict = dict()
-
-        self.node_data: dict = dict()
-        self.connections: list[(int, int)] = list()
-
-        # Set the selection mode as desired (the copy function will always copy the entire table)
-        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
-
-        # Install a QShortcut for Ctrl+C on the table widget.
-        self.copyShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+C"), self.tableWidget)
-        self.copyShortcut.activated.connect(self.copy_entire_table)
-
-        # Connect signals to update the histogram.
-        self.comboBox.currentTextChanged.connect(self.update_histogram)
-        self.spinBox_3.valueChanged.connect(self.update_histogram)
-        self.doubleSpinBox_3.valueChanged.connect(self.update_histogram)
-        self.doubleSpinBox_4.valueChanged.connect(self.update_histogram)
-        self.spinBox.valueChanged.connect(self.update_histogram)
-
-        # Connect pushButton to process files
-        self.pushButton.clicked.connect(self.process_all_files)
-
-        # Connect pushButton_2 to clear the data
-        self.pushButton_2.clicked.connect(self.clear_data)
-
-        # Store the current DataFrame for histogram updates.
-        self.current_df = None
-
-        self.burst_finder.groupBox_3.hide()
-        self.burst_finder.toolButton_6.hide()
-        self.burst_finder.toolButton_3.hide()
-        self.burst_finder.toolButton_4.hide()
 
 if __name__ == "plugin":
     brick_mic_wiz = BrickMicWizard()
