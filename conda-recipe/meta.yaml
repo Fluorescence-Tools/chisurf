@@ -74,7 +74,7 @@ requirements:
     - scipy
     - numba
     - boost-cpp
-    - tttrlib >=0.25      # [not win]
+    - tttrlib >=0.26      # [not win]
     - hdf5                # [win]
     - mdtraj
     - htmd-pdb2pqr
