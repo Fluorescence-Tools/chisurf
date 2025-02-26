@@ -357,10 +357,16 @@ def find_bursts(arr, max_gap=0):
     >>> find_bursts(arr, max_gap=1)
     array([[1, 7]])
     """
+    if len(arr) == 0 or np.all(arr == 0):  # Handle empty or all-zero input
+        return np.empty((0, 2), dtype=int)
+
     # Find where the array changes from 0 to 1 (start of burst) and 1 to 0 (end of burst)
     is_burst = np.diff(arr, prepend=0, append=0)
     starts = np.where(is_burst == 1)[0]
     stops = np.where(is_burst == -1)[0]
+
+    if len(starts) == 0 or len(stops) == 0:  # If no bursts are found
+        return np.empty((0, 2), dtype=int)
 
     # If max_gap is greater than 0, merge small gaps
     if max_gap > 0:
