@@ -40,6 +40,10 @@ class ChisurfWizard(QtWidgets.QWizard):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Set window size
+        self.resize(800, 600)
+
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
 
         self.photon_select = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
