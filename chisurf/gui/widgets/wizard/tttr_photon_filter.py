@@ -134,8 +134,6 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     @property
     def filetype(self) -> str | None:
         txt = self.comboBox.currentText()
-        if txt == 'Auto':
-            return None
         return txt
 
     @property
@@ -629,75 +627,87 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             r.append(t)
         return r
 
-    def save_bi4_bur_first_last(self):
-        """
-        Example method to write .bur files based on the current
-        burst selection and also write an MTI summary.
-        """
-        for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
-
-            fn = pathlib.Path(filename)
-            resolved_path = str(fn.resolve())
-            self.tttr = self.tttr_objects[resolved_path]
-
-            base_name = fn.stem
-            bur_directory = t / 'bi4_bur'
-            bur_directory.mkdir(exist_ok=True, parents=True)
-            bur_filename = bur_directory / f"{base_name}.bur"
-            start_stop = self.burst_start_stop
-            io.fluorescence.burst.write_bur_file(
-                bur_filename,
-                start_stop=start_stop,
-                tttr=self.tttr,
-                filename=fn,
-                windows=self.windows,
-                detectors=self.detectors
-            )
-            mt = self.tttr.macro_times[-1] * self.tttr.header.macro_time_resolution
-            io.fluorescence.burst.write_mti_summary(
-                filename=fn,
-                analysis_dir=t,
-                max_macro_time=mt,
-                append=True
-            )
-
-    def save_filter_data(self):
-        """
-        Example method to store the selected photons array as a JSON (possibly gzipped).
-        """
-        for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
-            parent_directory = t / 'sl5'
-            parent_directory.mkdir(exist_ok=True, parents=True)
-            parent_directory = parent_directory.absolute()
-
-            fn = pathlib.Path(filename)
-            resolved_path = str(fn.resolve())
-            self.tttr = self.tttr_objects[resolved_path]
-
-            d = {
-                'filename': os.path.relpath(fn, t),
-                'filetype': self.filetype,
-                'count_rate_filter': self.settings['count_rate_filter'],
-                'delta_macro_time_filter': self.settings['delta_macro_time_filter'],
-                'filter': chisurf.fio.compress_numpy_array(self.selected)
-            }
-            base_name = fn.stem
-            output_filename = parent_directory / f"{base_name}.json.gz"
-
-            with io.open_maybe_zipped(output_filename, "w") as outfile:
-                packed = json.dumps(d)
-                outfile.write(packed)
-
-        self.filter_data_saved = True
-
     def save_selection(self):
         """
-        Save the selection data in .bur or .json.gz, depending on user checkboxes.
+        Save the selection data in .bur or .json.gz, depending on user checkboxes,
+        and display a progress bar while saving.
         """
+        total_files = len(self.settings['tttr_filenames'])
+        total_tasks = 0
         if self.save_bur:
-            self.save_bi4_bur_first_last()
+            total_tasks += total_files
         if self.save_sl5:
-            self.save_filter_data()
+            total_tasks += total_files
+
+        progress = QtWidgets.QProgressDialog("Saving selection...", "Cancel", 0, total_tasks, self)
+        progress.setWindowTitle("Saving selection")
+        progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.show()
+
+        current_task = 0
+
+        if self.save_bur:
+            for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
+                fn = pathlib.Path(filename)
+                resolved_path = str(fn.resolve())
+                self.tttr = self.tttr_objects[resolved_path]
+
+                base_name = fn.stem
+                bur_directory = t / 'bi4_bur'
+                bur_directory.mkdir(exist_ok=True, parents=True)
+                bur_filename = bur_directory / f"{base_name}.bur"
+
+                start_stop = self.burst_start_stop
+                io.fluorescence.burst.write_bur_file(
+                    bur_filename,
+                    start_stop=start_stop,
+                    tttr=self.tttr,
+                    filename=fn,
+                    windows=self.windows,
+                    detectors=self.detectors
+                )
+                mt = self.tttr.macro_times[-1] * self.tttr.header.macro_time_resolution
+                io.fluorescence.burst.write_mti_summary(
+                    filename=fn,
+                    analysis_dir=t,
+                    max_macro_time=mt,
+                    append=True
+                )
+                current_task += 1
+                progress.setValue(current_task)
+                QtWidgets.QApplication.processEvents()
+                if progress.wasCanceled():
+                    break
+
+        if self.save_sl5:
+            for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
+                parent_directory = t / 'sl5'
+                parent_directory.mkdir(exist_ok=True, parents=True)
+                parent_directory = parent_directory.absolute()
+                fn = pathlib.Path(filename)
+                resolved_path = str(fn.resolve())
+                self.tttr = self.tttr_objects[resolved_path]
+
+                d = {
+                    'filename': os.path.relpath(fn, t),
+                    'filetype': self.filetype,
+                    'count_rate_filter': self.settings['count_rate_filter'],
+                    'delta_macro_time_filter': self.settings['delta_macro_time_filter'],
+                    'filter': chisurf.fio.compress_numpy_array(self.selected)
+                }
+                base_name = fn.stem
+                output_filename = parent_directory / f"{base_name}.json.gz"
+                with io.open_maybe_zipped(output_filename, "w") as outfile:
+                    packed = json.dumps(d)
+                    outfile.write(packed)
+                current_task += 1
+                progress.setValue(current_task)
+                QtWidgets.QApplication.processEvents()
+                if progress.wasCanceled():
+                    break
+
+        progress.close()
+        self.filter_data_saved = True
 
     def fill_pie_windows(self, k):
         self.windows = k
@@ -737,6 +747,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             show_mcs: bool = True,
             show_decay: bool = True,
             show_burst: bool = True,
+            default_mcs_dT: float = 1.0,
             default_dT_min: float = 0.0001,
             default_dT_max: float = 0.15,
             use_dT_min: bool = False,
@@ -772,6 +783,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             Initial lower bound for delta macro-time filter (in ms).
         default_dT_max : float, default=0.15
             Initial upper bound for delta macro-time filter (in ms).
+        default_mcs_dT : float, default=1.0
+            Default / initial bin width value of intensity trace (in ms).
         use_dT_min : bool, default=False
             Whether the lower bound of delta macro-time filter is active initially.
         use_dT_max : bool, default=True
@@ -962,6 +975,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.checkBox.setChecked(invert_count_rate_filter)
         self.checkBox_2.setChecked(use_dT_min)
         self.checkBox_3.setChecked(use_dT_max)
+        self.doubleSpinBox_4.setValue(default_mcs_dT)
 
         # -- NEW: set default gap-fill checkbox/spinbox --
         self.checkBox_5.setChecked(use_gap_fill)  # <--- gap-fill checkbox
