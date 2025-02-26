@@ -555,7 +555,14 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             chs = ','.join([str(x) for x in self.channels])
         else:
             chs = 'All'
-        s = f'burstwise_{chs} {self.dT_max:.4f}#{self.photon_number_threshold}'
+
+        # Determine path format based on filter mode
+        if self.used_filter == "count_rate":
+            path_prefix = f"countrate"
+        else:
+            path_prefix = "burstwise"
+
+        s = f"{path_prefix}_{chs} {self.dT_max:.4f}#{self.photon_number_threshold}"
         self.lineEdit_2.setText(s)
 
     def update_parameter(self):
