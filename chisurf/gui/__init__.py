@@ -15,7 +15,35 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
 import chisurf.settings
+from chisurf import logging
 import chisurf.gui.decorators
+
+
+class QTextEditLogger(logging.Handler):
+    def __init__(self, widget):
+        super().__init__()
+        self.widget = widget
+        self.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+
+    def emit(self, record):
+        print("Logger emit", self.format(record))
+        msg = self.format(record)
+        self.widget.setText(msg)
+
+
+def setup_status_bar_logging(window):
+    print("Setting up status bar")
+    log_handler = QTextEditLogger(window.status_label)
+    log_handler.setLevel(logging.INFO)
+    window.log_handler = log_handler
+
+    # Attach logging to the root logger
+    logging.getLogger().addHandler(log_handler)
+    logging.getLogger().setLevel(logging.INFO)
+
+    # Example logging message
+    logging.info("Status bar logging initialized successfully.")
+
 
 
 class CustomProgressBar(QtWidgets.QProgressBar):
@@ -252,7 +280,7 @@ def setup_gui(
     if stage is None:
         gui_imports()
         setup_ipython()
-        startup_interface()
+        window = startup_interface()
         setup_style(app=app)
     elif stage == "gui_imports":
         gui_imports()
@@ -284,6 +312,8 @@ def setup_gui(
                 end = line.find("/", start + len("http://"))
                 chisurf.__jupyter_address__  = line[start:end]
         chisurf.logging.info("Server found at %s, migrating monitoring to listener thread" % chisurf.__jupyter_address__)
+    elif stage == "setup_logging":
+        setup_status_bar_logging(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
         chisurf.logging.info("Looking for ipynb in home folder")
         populate_notebooks()
@@ -322,6 +352,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Initializing Jupyter", "start_jupyter", 85),
         ("Populate plugins", "populate_plugins", 90),
         ("Populate notebook", "populate_notebooks", 95),
+        ("Setup logging", "setup_logging", 98),
         ("Styling up", "setup_style", 100),
     ]
 
