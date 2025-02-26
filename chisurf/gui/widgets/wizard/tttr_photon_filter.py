@@ -839,16 +839,49 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         def after_file_drop():
             """
             Callback to load *all* TTTR files after they're dropped or specified.
+            Ensures that files with restricted extensions require explicit file type selection.
+            If such files are found and file type is 'Auto', files will not be loaded.
             """
+
+            # List of restricted extensions requiring manual selection
+            RESTRICTED_EXTENSIONS = [".spc"]  # Extend as needed
+            requires_filetype_selection = False
+            restricted_files = []
+
             for fn in self.settings['tttr_filenames']:
                 p = pathlib.Path(fn).resolve()
                 p_str = str(p)
+                file_extension = p.suffix.lower()
+
+                # Check if the file extension requires explicit selection
+                if file_extension in RESTRICTED_EXTENSIONS:
+                    if self.filetype == "Auto":  # Only warn if no file type is preselected
+                        requires_filetype_selection = True
+                        restricted_files.append(p.name)
+
+            # If a restricted file requires a file type selection, do not load any files
+            if requires_filetype_selection:
+                QtWidgets.QMessageBox.warning(
+                    self, "File Type Required",
+                    "The following files require an explicit file type selection before loading:\n\n"
+                    + "\n".join(restricted_files)
+                    + "\n\nPlease select the correct file type from the dropdown menu."
+                )
+                self.onClearFiles()
+                return  # Prevent loading any files
+
+            # Load only if no restricted files or file type was preselected
+            for fn in self.settings['tttr_filenames']:
+                p = pathlib.Path(fn).resolve()
+                p_str = str(p)
+
                 if p_str not in self.tttr_objects:
                     if p.exists() and p.is_file():
-                        if isinstance(self.filetype, str):
+                        if isinstance(self.filetype, str) and self.filetype != "Auto":
                             self.tttr_objects[p_str] = tttrlib.TTTR(p_str, self.filetype)
-                        else:
+                        elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:  # Auto-detect only if not restricted
                             self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
+
             n_files = len(self.settings['tttr_filenames'])
             self.spinBox_4.setMaximum(n_files - 1)
             if n_files > 0:
