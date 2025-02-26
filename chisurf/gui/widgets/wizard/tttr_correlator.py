@@ -195,6 +195,20 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         chisurf.logging.log(0, "n_chunks", n_chunks)
         chisurf.logging.log(0, "self.tttr:", self.tttr)
 
+        # **Handle empty tttr case**
+        if self.tttr is None or len(self.tttr) == 0:
+            chisurf.logging.log(1, "Warning: No TTTR data available for correlation.")
+
+            # **Display a message box to the user**
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+            msg_box.setWindowTitle("No Photons Selected")
+            msg_box.setText("No photons selected for correlation. Please load data before continuing.")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+
+            return  # Stop execution
+
         correlation_settings = self.get_correlation_settings()
         self.correlations.clear()
 
@@ -208,6 +222,11 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             if progress.wasCanceled():
                 chisurf.logging.log(1, "Correlation process was canceled by the user.")
                 break
+
+            # **Handle empty chunk case**
+            if tttr is None or len(tttr.macro_times) == 0:
+                chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to empty TTTR data.")
+                continue
 
             t = tttr.macro_times
 
@@ -235,7 +254,12 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             w2 = np.array(m_b, dtype=np.float64)
             sw1, sw2 = sum(w1), sum(w2)
             dT = tttr.header.macro_time_resolution
-            dur = tttr.macro_times[-1] * dT  # seconds
+
+            # **Handle empty macro_times to prevent IndexError**
+            if len(t) == 0:
+                chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to missing macro_times.")
+                continue
+            dur = t[-1] * dT  # seconds
 
             if sw1 > 0.0 and sw2 > 0.0:
                 correlator = tttrlib.Correlator(**correlation_settings)
@@ -267,7 +291,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 }
                 self.correlations.append(d)
             else:
-                chisurf.logging.log(1, "Warning: no photons to correlate with.")
+                chisurf.logging.log(1, "Warning: No photons to correlate with.")
 
             # Update progress bar
             progress.setValue(i + 1)
