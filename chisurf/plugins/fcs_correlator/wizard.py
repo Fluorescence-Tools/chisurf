@@ -22,11 +22,13 @@ class ChisurfWizard(QtWidgets.QWizard):
 
     def page_actions(self):
         if self.currentPage().title() == "Correlator":
-            self.photon_select.save_filter_data()
+            self.photon_select.save_selection()
             p = self.photon_select.parent_directories[0]
             self.correlator_page.lineEdit_3.setText(p.as_posix())
             self.correlator_page.open_analysis_folder()
         elif self.currentPage().title() == "Correlation merging":
+            if not self.correlator_page.is_correlated:
+                self.correlator_page.correlate_data()
             correlation_folder = self.correlator_page.analysis_folder / self.correlator_page.output_path
             self.fcs_merger.lineEdit.setText(correlation_folder.as_posix())
             self.fcs_merger.open_correlation_folder()
@@ -42,7 +44,12 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         self.photon_select = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
             windows={},
-            detectors={}
+            detectors={},
+            show_dT=True,
+            show_burst=False,
+            show_mcs=True,
+            show_decay=False,
+            show_filter=False
         )
         self.photon_select.toolButton_5.clicked.connect(self.photon_select.completeChanged.emit)
 
