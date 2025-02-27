@@ -71,10 +71,10 @@ class Correlator(QtCore.QThread):
         :return: numpy-array with same length as photon-stream, each photon
         is associated to one weight.
         """
-        chisurf.logging.info("Correlator:getWeightStream")
+        chisurf.logging.info(f"Correlator::getWeightStream({tacWeighting}, {max_number_of_routing_channels})")
         photons = self.p.photon_source.photons
         if isinstance(tacWeighting, list):
-            print("channel-wise selection")
+            chisurf.logging.info("channel-wise selection")
             #print("Max-Rout: %s" % photons.n_rout)
             wt = np.zeros(
                 [max_number_of_routing_channels, photons.n_tac],
@@ -82,7 +82,7 @@ class Correlator(QtCore.QThread):
             )
             wt[tacWeighting] = 1.0
         elif isinstance(tacWeighting, np.ndarray):
-            print("TAC-weighted")
+            chisurf.logging.info("TAC-weighted")
             wt = tacWeighting
         w = chisurf.fluorescence.fcs.correlate.get_weights(
             routing_channels=photons.routing_channels,
@@ -99,10 +99,10 @@ class Correlator(QtCore.QThread):
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)
-        print("Correlation running...")
-        print("Correlation method: %s" % self.p.method)
-        print("Fine-correlation: %s" % self.p.fine)
-        print("Data stream split into %s correlations." % self.p.split)
+        chisurf.logging.info("Correlation running...")
+        chisurf.logging.info("Correlation method: %s" % self.p.method)
+        chisurf.logging.info("Fine-correlation: %s" % self.p.fine)
+        chisurf.logging.info("Data stream split into %s correlations." % self.p.split)
         photons = self.p.photon_source.photons
 
         if use_tttrlib:
@@ -199,7 +199,7 @@ class Correlator(QtCore.QThread):
             y=cor.mean(axis=0)[1:],
             ey=1. / w.mean(axis=0)[1:]
         )
-        chisurf.logging.info("correlation done")
+        chisurf.logging.info("Correlation finished!")
 
         self._data_curve = data_curve
         self.procDone.emit(True)
@@ -230,9 +230,7 @@ class Correlator(QtCore.QThread):
 
 class CorrelatorWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="correlatorWidget.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui(ui_filename="correlatorWidget.ui")
     def __init__(
             self,
             photon_source,
@@ -417,12 +415,12 @@ class CrFilterWidget(QtWidgets.QWidget):
             tw = int(self.time_window / dt)
             n_ph_max = int(self.max_count_rate * self.time_window)
             if self.verbose:
-                print("Using count-rate filter:")
-                print("Window-size [ms]: %s" % self.time_window)
-                print("max_count_rate [kHz]: %s" % self.max_count_rate)
-                print("n_ph_max in window [#]: %s" % n_ph_max)
-                print("Window-size [n(MTCLK)]: %s" % tw)
-                print("---------------------------------")
+                chisurf.logging.info("Using count-rate filter:")
+                chisurf.logging.info("Window-size [ms]: %s" % self.time_window)
+                chisurf.logging.info("max_count_rate [kHz]: %s" % self.max_count_rate)
+                chisurf.logging.info("n_ph_max in window [#]: %s" % n_ph_max)
+                chisurf.logging.info("Window-size [n(MTCLK)]: %s" % tw)
+                chisurf.logging.info("---------------------------------")
 
             mt = photons.macro_times
             n_ph = mt.shape[0]
