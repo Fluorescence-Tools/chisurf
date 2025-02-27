@@ -253,7 +253,8 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             w1 = np.array(m_a, dtype=np.float64)
             w2 = np.array(m_b, dtype=np.float64)
             sw1, sw2 = sum(w1), sum(w2)
-            dT = tttr.header.macro_time_resolution
+            # Multiply x values by 1000 to convert from s to ms
+            dT = tttr.header.macro_time_resolution * 1000.0
 
             # **Handle empty macro_times to prevent IndexError**
             if len(t) == 0:
@@ -404,8 +405,11 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         # Create plots
         self.pw_fcs = pg.plot()
         self.pw_fcs.resize(150, 150)
+
         self.plot_item_fcs = self.pw_fcs.getPlotItem()
         self.plot_item_fcs.setLogMode(True, False)
+        self.plot_item_fcs.setLabel('bottom', 'Correlation time, t_c (ms)')
+        self.plot_item_fcs.setLabel('left', 'Correlation amplitude, G')
         self.verticalLayout_2.addWidget(self.pw_fcs)
 
         # Connect actions
