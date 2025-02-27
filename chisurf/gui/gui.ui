@@ -1505,8 +1505,12 @@
    </property>
   </action>
   <action name="actionndXplorer">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icon.svg</normaloff>:/icons/icon.svg</iconset>
+   </property>
    <property name="text">
-    <string>ndXplorer</string>
+    <string>NDXplorer</string>
    </property>
   </action>
   <action name="actionAnisotropy">
