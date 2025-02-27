@@ -12,6 +12,8 @@ import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.gui.widgets.wizard
 
+from chisurf import logging
+
 from scipy.optimize import curve_fit
 
 
@@ -129,7 +131,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         event.acceptProposedAction()
 
         # For demonstration, print the dropped files:
-        print("Dropped files:", file_paths)
+        logging.info(f"Dropped files: {file_paths}")
 
         # Optionally, store these in your burst_finder.settings
         # and auto-process them:
@@ -146,12 +148,12 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         """
         tttr_files = self.burst_finder.settings.get('tttr_filenames', [])
         if not tttr_files:
-            print("No TTTR files to process.")
+            logging.info("No TTTR files to process.")
             return
 
         # First, save the selection (ensures all bursts are processed)
         self.burst_finder.save_selection()
-        print("Photon selection saved. Now loading burst files.")
+        logging.info("Photon selection saved. Now loading burst files.")
 
         accumulated_results = []
         ui_columns = [
@@ -173,7 +175,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             bur_file_path = file_path.parent / analysis_folder_name / 'bi4_bur' / f"{file_path.stem}.bur"
 
             if not bur_file_path.exists():
-                print(f"Warning: Expected .bur file not found: {bur_file_path}")
+                logging.info(f"Warning: Expected .bur file not found: {bur_file_path}")
                 continue
 
             # Load the pre-saved burst file
@@ -206,7 +208,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             self.populate_table(final_df)
             self.update_histogram()
 
-        print("All burst files loaded successfully.")
+        logging.info("All burst files loaded successfully.")
         self.centralwidget.setEnabled(True)
 
     def update_histogram(self):
@@ -221,7 +223,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         try:
             data = pd.to_numeric(data)
         except Exception as e:
-            print(f"Could not convert data in column {selected_feature} to numeric: {e}")
+            logging.info(f"Could not convert data in column {selected_feature} to numeric: {e}")
             return
 
         num_bins = int(self.spinBox_3.value())
@@ -332,7 +334,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
             except Exception as e:
                 err_msg = "Gaussian mixture fit failed: " + str(e)
-                print(err_msg)
+                logging.info(err_msg)
                 self.plainTextEdit.setPlainText(err_msg)
         else:
             self.plainTextEdit.clear()
@@ -422,7 +424,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         # Optionally reset the progress bar if desired
         self.progressBar.setValue(0)
 
-        print("Data cleared.")
+        logging.info("Data cleared.")
 
 
 if __name__ == "plugin":

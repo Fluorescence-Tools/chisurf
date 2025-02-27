@@ -20,30 +20,55 @@ import chisurf.gui.decorators
 
 
 class QTextEditLogger(logging.Handler):
-    def __init__(self, widget):
+
+    def __init__(
+            self,
+            widget,
+            mode='set',
+            log_string = "%(asctime)s - %(levelname)s - %(message)s"
+    ):
         super().__init__()
         self.widget = widget
-        self.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+        self.mode = mode
+        self.setFormatter(
+            logging.Formatter(log_string)
+        )
 
     def emit(self, record):
         print("Logger emit", self.format(record))
         msg = self.format(record)
-        self.widget.setText(msg)
+        if self.mode == "set":
+            self.widget.setText(msg)
+        elif self.mode == "append":
+            self.widget.appendPlainText(msg)
 
 
 def setup_status_bar_logging(window):
-    print("Setting up status bar")
-    log_handler = QTextEditLogger(window.status_label)
+    # Create logger for status bar
+    log_handler = QTextEditLogger(
+        window.status_label,
+        'set',
+        log_string = "%(message)s"
+    )
     log_handler.setLevel(logging.INFO)
-    window.log_handler = log_handler
+    window.status_log_handler = log_handler
+
+    # Attach logging to the root logger
+    logging.getLogger().addHandler(log_handler)
+    logging.getLogger().setLevel(logging.INFO)
+
+    # Create logger for text log field
+    log_handler = QTextEditLogger(window.plainTextEditLog, 'append')
+    log_handler.setLevel(logging.DEBUG)
+    window.status_log_handler = log_handler
+    window.log_history_handler = log_handler
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
     logging.getLogger().setLevel(logging.INFO)
 
     # Example logging message
-    logging.info("Status bar logging initialized successfully.")
-
+    logging.info("ChiSurf started.")
 
 
 class CustomProgressBar(QtWidgets.QProgressBar):

@@ -681,7 +681,7 @@
   </widget>
   <widget class="QDockWidget" name="dockWidgetHistory">
    <property name="windowTitle">
-    <string>History</string>
+    <string>History / Log</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -703,6 +703,23 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Logging</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPlainTextEdit" name="plainTextEditLog"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>History</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPlainTextEdit" name="plainTextEditHistory">
        <property name="font">
