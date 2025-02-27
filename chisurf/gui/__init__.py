@@ -8,8 +8,8 @@ from functools import partial
 import pkgutil
 import importlib
 
-import os
-os.environ['QT_OPENGL'] = 'software'  # Use software rendering
+#import os
+#os.environ['QT_OPENGL'] = 'software'  # Use software rendering
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
@@ -65,7 +65,7 @@ def setup_status_bar_logging(window):
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.DEBUG)
 
     # Example logging message
     logging.info("ChiSurf started.")
