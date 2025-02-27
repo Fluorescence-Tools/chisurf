@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icons">
+    <file>icon.svg</file>
     <file>icons/splashscreen.png</file>
     <file>icons/printer-3-xxl.png</file>
     <file>icons/available-updates-xxl.png</file>
