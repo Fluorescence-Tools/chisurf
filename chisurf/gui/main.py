@@ -213,7 +213,7 @@ class Main(QtWidgets.QMainWindow):
             executor: str = 'console',
             globals=None, locals=None
     ):
-        chisurf.logging.info(f"Running macro:{filename}")
+        chisurf.logging.info(f"Running macro: {filename}")
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(
                 "Python macros",
