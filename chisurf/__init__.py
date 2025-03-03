@@ -43,7 +43,7 @@ __jupyter_address__ = None
 
 logging.basicConfig(
     filename=settings.session_log,
-    level=logging.DEBUG
+    level=logging.WARNING
 )
 
 
