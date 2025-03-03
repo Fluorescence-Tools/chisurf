@@ -21,7 +21,7 @@
 [submodule "modules/chinet"]
 	path = modules/chinet
 	url = https://github.com/tpeulen/chinet.git
-	branch = main
+	branch = development
 [submodule "tools"]
 	path = tools
 	url = https://gitlab.peulen.xyz/build/tools
