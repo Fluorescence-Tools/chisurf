@@ -65,7 +65,7 @@ def setup_status_bar_logging(window):
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.WARNING)
 
     # Example logging message
     logging.info("ChiSurf started.")
