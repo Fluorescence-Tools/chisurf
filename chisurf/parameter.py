@@ -16,6 +16,14 @@ T = typing.TypeVar('T', bound='Parameter')
 @chisurf.decorators.register
 class Parameter(chisurf.base.Base):
 
+    @staticmethod
+    def check_recursive_link(current, target):
+        if current == target:
+            return True
+        if current.link is not None:
+            return Parameter.check_recursive_link(current.link, target)
+        return False
+
     @property
     def fit_idx(self):
         import chisurf.fitting
@@ -69,7 +77,7 @@ class Parameter(chisurf.base.Base):
     def value(self, value: float):
         f = self._port.fixed
         self._port.fixed = False
-        self._port.value = np.array([value], dtype=np.double)
+        self._port.set_value_d(np.array([value], dtype=np.float64))
         self._port.fixed = f
 
     @property
@@ -79,6 +87,8 @@ class Parameter(chisurf.base.Base):
     @link.setter
     def link(self, link: Parameter):
         if isinstance(link, Parameter):
+            if Parameter.check_recursive_link(link, self):
+                raise ValueError("Cannot create a recursive link between parameters.")
             self._link = link
             if self.controller is not None:
                 self.controller.set_linked(link is not None)
@@ -232,7 +242,7 @@ class Parameter(chisurf.base.Base):
             if callable(value):
                 self._callable = value
                 self._port = chinet.Port(
-                    value=np.array([0.0], dtype=np.double),  # the value is not actually used
+                    value=np.atleast_1d(0.0).astype(dtype=np.float64),
                     name=name,
                     lb=lb,
                     ub=ub,
@@ -241,7 +251,7 @@ class Parameter(chisurf.base.Base):
             else:
                 self._callable = None
                 self._port = chinet.Port(
-                    value=np.atleast_1d(value),
+                    value=np.atleast_1d(value).astype(dtype=np.float64),
                     name=name,
                     lb=lb,
                     ub=ub,
