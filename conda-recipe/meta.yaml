@@ -93,7 +93,8 @@ requirements:
     - guiqwt 4.4.*
     - qscintilla2
     - python-docx
-    - qtconsole 5.*
+    - qtconsole 5.2
+    - ipython 7.*.*
     - pyqtwebengine
     - joblib
     - libcxx  # [osx]

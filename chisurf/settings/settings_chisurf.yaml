@@ -160,6 +160,7 @@ gui:
   console_style: 'linux' # options are linux, lightbg, or nocolor
   console_init: |
     %matplotlib inline
+    %config Completer.use_jedi = False
     get_ipython().cache_size = 0
     import pylab as p
   console_width: 80
