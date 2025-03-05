@@ -110,6 +110,9 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
     Write burst summary information to a TSV file (tab-separated),
     using a vectorized approach for efficiency.
 
+    Modified to match a format where zero rows are interleaved between
+    the computed rows and an extra (empty) column is added at the end.
+
     :param bur_filename: Output filename for the TSV summary.
     :param start_stop: List of tuples (start_index, stop_index) defining bursts.
     :param filename: String representing the file name.
@@ -121,6 +124,9 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
     :param windows: Dictionary {window_name: [(r_start, r_stop), ...]}
     :param detectors: Dictionary {det_name: {"chs": [...], "micro_time_ranges": [(mt_start, mt_stop), ...]}}
     """
+    import numpy as np
+    import pandas as pd
+    from collections import OrderedDict
 
     n_ph = len(tttr)
     macro_times = tttr.macro_times
@@ -128,19 +134,31 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
     routing_channels = tttr.routing_channel
     res = tttr.header.macro_time_resolution
 
-    summary_data = []
+    # This list will store all rows, including interleaved zero rows.
+    summary_rows = []
 
-    # Iterate over each (start_index, stop_index) pair
+    # Helper function: create a zero row with the same columns as keys.
+    def create_zero_row(keys):
+        row = OrderedDict()
+        for key in keys:
+            # For the extra (empty) column, keep it empty.
+            if key == "":
+                row[key] = ""
+            else:
+                row[key] = 0
+        return row
+
+    # Iterate over each (start_index, stop_index) pair.
     for start_idx, stop_idx in start_stop:
         if stop_idx > n_ph or stop_idx < 0:
             continue
 
-        # Slice arrays for this burst only once
+        # Slice arrays for this burst.
         burst_macro = macro_times[start_idx:stop_idx]
         burst_micro = micro_times[start_idx:stop_idx]
         burst_rout = routing_channels[start_idx:stop_idx]
 
-        # Handle corner cases
+        # Handle corner cases.
         if stop_idx <= start_idx:
             duration = 0.0
             mean_macro_time = 0.0
@@ -152,7 +170,7 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
 
         count_rate = (n_photons / duration) if duration > 0 else np.nan
 
-        # Initialize the row_data as an OrderedDict (for stable column order)
+        # Initialize the row_data as an OrderedDict (for stable column order).
         row_data = OrderedDict([
             ("First Photon", start_idx),
             ("Last Photon", stop_idx),
@@ -165,17 +183,17 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
         ])
 
         # ---------------------------------------------------------
-        # Precompute boolean masks for each detector in this burst
+        # Precompute boolean masks for each detector in this burst.
         # ---------------------------------------------------------
         detector_masks = {}
         for det_name, det_info in detectors.items():
             chs = det_info["chs"]
             micro_time_ranges = det_info["micro_time_ranges"]
 
-            # (1) Channel mask
+            # (1) Channel mask.
             ch_mask = np.isin(burst_rout, chs)
 
-            # (2) Union of all micro-time ranges for this detector
+            # (2) Union of all micro-time ranges for this detector.
             mt_mask = np.zeros(len(burst_micro), dtype=bool)
             for (mt_start, mt_stop) in micro_time_ranges:
                 mt_mask |= (burst_micro >= mt_start) & (burst_micro < mt_stop)
@@ -183,10 +201,10 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
             detector_masks[det_name] = (ch_mask & mt_mask)
 
         # ---------------------------------------------------------
-        # Per-detector stats (for the entire burst)
+        # Per-detector stats (for the entire burst).
         # ---------------------------------------------------------
         for det_name, det_mask in detector_masks.items():
-            idx = np.nonzero(det_mask)[0]  # indices within the burst slice
+            idx = np.nonzero(det_mask)[0]  # indices within the burst slice.
             if len(idx) == 0:
                 row_data[f"First Photon ({det_name})"] = -1
                 row_data[f"Last Photon ({det_name})"] = -1
@@ -199,12 +217,12 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
                 last_idx = idx[-1]
                 num_ph = len(idx)
 
-                # Compute times based on the *burst* arrays
+                # Compute times based on the *burst* arrays.
                 dur_ms = (burst_macro[last_idx] - burst_macro[first_idx]) * res * 1e3
                 mean_mt_ms = ((burst_macro[last_idx] + burst_macro[first_idx]) / 2.0) * res * 1e3
                 rate_khz = (num_ph / dur_ms) if dur_ms > 0 else np.nan
 
-                # Convert local indices back to global indices by adding start_idx
+                # Convert local indices back to global indices by adding start_idx.
                 row_data[f"First Photon ({det_name})"] = start_idx + first_idx
                 row_data[f"Last Photon ({det_name})"] = start_idx + last_idx
                 row_data[f"Duration ({det_name}) (ms)"] = dur_ms
@@ -213,17 +231,17 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
                 row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = rate_khz
 
         # ---------------------------------------------------------
-        # Per-detector, per-window stats
+        # Per-detector, per-window stats.
         # ---------------------------------------------------------
         for window_name, w_ranges in windows.items():
-            # If your code only uses the first (r_start, r_stop):
+            # If your code only uses the first (r_start, r_stop).
             (r_start, r_stop) = w_ranges[0]
 
-            # Build a mask for the window in micro_time
+            # Build a mask for the window in micro_time.
             w_mask = (burst_micro >= r_start) & (burst_micro < r_stop)
 
             for det_name in detectors:
-                # Combine the window mask with the detector mask
+                # Combine the window mask with the detector mask.
                 combined_mask = detector_masks[det_name] & w_mask
                 idx = np.nonzero(combined_mask)[0]
 
@@ -235,12 +253,28 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
                     rate_window_khz = num_ph / dur_window_ms if dur_window_ms > 0 else np.nan
                     row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = rate_window_khz
 
-        # Append the row data
-        summary_data.append(row_data)
+        # ---------------------------------------------------------
+        # Add the extra (empty) column.
+        # ---------------------------------------------------------
+        row_data[""] = ""
 
-    # Convert to DataFrame and write to a TSV
-    summary_df = pd.DataFrame(summary_data)
+        # ---------------------------------------------------------
+        # Interleave zero rows.
+        # ---------------------------------------------------------
+        # For the first computed row, prepend a zero row.
+        if not summary_rows:
+            zero_row = create_zero_row(row_data.keys())
+            summary_rows.append(zero_row)
+        # Append the computed row.
+        summary_rows.append(row_data)
+        # Append a zero row after the computed row.
+        zero_row = create_zero_row(row_data.keys())
+        summary_rows.append(zero_row)
+
+    # Convert to DataFrame and write to a TSV (columns will be tab-separated).
+    summary_df = pd.DataFrame(summary_rows)
     summary_df.to_csv(bur_filename, sep='\t', index=False)
+
 
 def read_burst_analysis(
         paris_path: pathlib.Path,
