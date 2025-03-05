@@ -1,1 +1,0 @@
-name = "BICK-Mic"
