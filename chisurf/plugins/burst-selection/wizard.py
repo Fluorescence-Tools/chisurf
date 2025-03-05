@@ -44,7 +44,7 @@ def multi_gaussian(x, *params):
 
 class BrickMicWizard(QtWidgets.QMainWindow):
 
-    @chisurf.gui.decorators.init_with_ui("brick-mic/gui.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("burst-selection/gui.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         # ---------------------------------------------------------
         # Initialization
