@@ -32,6 +32,24 @@ def create_array_with_ones(start_stop_pairs, length):
     return arr
 
 
+class ProgressWindow(QtWidgets.QDialog):
+    def __init__(self, title="Processing Files", message="Loading files...", max_value=100, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setWindowModality(QtCore.Qt.WindowModal)
+        self.layout = QtWidgets.QVBoxLayout()
+        self.label = QtWidgets.QLabel(message)
+        self.progress_bar = QtWidgets.QProgressBar()
+        self.progress_bar.setRange(0, max_value)
+        self.layout.addWidget(self.label)
+        self.layout.addWidget(self.progress_bar)
+        self.setLayout(self.layout)
+
+    def set_value(self, value: int):
+        self.progress_bar.setValue(value)
+        QtWidgets.QApplication.processEvents()
+
+
 class CommaSeparatedIntegersValidator(QValidator):
 
     """
@@ -871,7 +889,12 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 return  # Prevent loading any files
 
             # Load only if no restricted files or file type was preselected
-            for fn in self.settings['tttr_filenames']:
+            total_files = len(self.settings['tttr_filenames'])
+            progress_window = ProgressWindow(title="Loading Files", message="Processing files...",
+                                             max_value=total_files, parent=self)
+            progress_window.show()
+
+            for i, fn in enumerate(self.settings['tttr_filenames'], start=1):
                 p = pathlib.Path(fn).resolve()
                 p_str = str(p)
 
@@ -881,6 +904,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                             self.tttr_objects[p_str] = tttrlib.TTTR(p_str, self.filetype)
                         elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:  # Auto-detect only if not restricted
                             self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
+
+                progress_window.set_value(i)
+
+            progress_window.close()
 
             n_files = len(self.settings['tttr_filenames'])
             self.spinBox_4.setMaximum(n_files - 1)
