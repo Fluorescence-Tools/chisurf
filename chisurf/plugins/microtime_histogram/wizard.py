@@ -33,6 +33,7 @@ class FileListWidget(QtWidgets.QListWidget):
 
     def dropEvent(self, event: QtGui.QDropEvent):
         file_type = self.parent.tttr_filetype
+
         if event.mimeData().hasUrls():
             file_paths = []
             special_files = []
@@ -40,7 +41,12 @@ class FileListWidget(QtWidgets.QListWidget):
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
                 if Path(file_path).is_file():
-                    if Path(file_path).suffix.lower() in SPECIAL_FILETYPES and file_type == "Auto":
+                    if file_path.endswith(".bst"):
+                        suffix = Path(file_path).stem.rsplit('.', 1)[0]
+                    else:
+                        suffix = Path(file_path).suffix.lower()
+
+                    if suffix.lower() in SPECIAL_FILETYPES and file_type == "Auto":
                         special_files.append(file_path)
                     else:
                         file_paths.append(file_path)
@@ -76,8 +82,8 @@ class FileListWidget(QtWidgets.QListWidget):
         if self.file_added_callback:
             self.file_added_callback()
 
-    def get_selected_files(self):
-        return [self.item(i).text() for i in range(self.count()) if self.item(i).checkState() == QtCore.Qt.Checked]
+    def get_selected_files(self) -> list[Path]:
+        return [Path(self.item(i).text()) for i in range(self.count()) if self.item(i).checkState() == QtCore.Qt.Checked]
 
 
 class MicrotimeHistogram(QtWidgets.QWidget):
@@ -121,6 +127,9 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         self.listWidget = FileListWidget(parent=self, file_added_callback=self.update_micro_time_resolution)
         self.verticalLayout_3.addWidget(self.listWidget)
 
+        self.listWidget_BID = FileListWidget(parent=self, file_added_callback=self.load_corresponding_tttr_files)
+        self.verticalLayout_5.addWidget(self.listWidget_BID)
+
         self.plotWidget = pg.PlotWidget()
         self.verticalLayout.addWidget(self.plotWidget)
         self.plotWidget.setLabel('bottom', 'Counts')
@@ -136,6 +145,31 @@ class MicrotimeHistogram(QtWidgets.QWidget):
 
         self.lineEdit_2.textChanged.connect(self.update_output_filename)  # Parallel channels
         self.lineEdit.textChanged.connect(self.update_output_filename)  # Perpendicular channels
+
+    def load_corresponding_tttr_files(self, n_parent=3):
+        """Search for TTTR files in the folder structure above the selected BID files up to n_parent levels."""
+        bid_files = self.listWidget_BID.get_selected_files()
+        tttr_files = set()
+
+        for bid_file in bid_files:
+            bid_stem = bid_file.stem  # Extract filename without .bst
+            parent_folder = bid_file.parent
+            level = 0
+
+            while parent_folder != parent_folder.root and level < n_parent:
+                matching_tttr_files = list(parent_folder.glob(f"{bid_stem}"))
+                if matching_tttr_files:
+                    tttr_files.add(matching_tttr_files[0])
+                    break  # Stop searching once a match is found
+                parent_folder = parent_folder.parent
+                level += 1
+
+        # Clear existing TTTR list and add found files
+        self.listWidget.clear()
+        for tttr_file in sorted(tttr_files):
+            self.listWidget.add_file(tttr_file.as_posix())
+
+        chisurf.logging.info(f"Loaded TTTR files: {[f.as_posix() for f in tttr_files]}")
 
     def save_cumulative_histogram(self, file_path):
         """Save the cumulative histogram to a text file as a single-column integer list.
@@ -191,6 +225,7 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         chisurf.logging.info("Clearing files and plot")
         self.listWidget.clear()  # Clear file list
         self.plotWidget.clear()  # Clear plot
+        self.listWidget_BID.clear() # Clear bid files
 
     def update_output_filename(self):
         """Update the output filename in based on selected files and channel numbers."""
@@ -223,18 +258,51 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         # Also update the output filename
         self.update_output_filename()
 
+    @staticmethod
+    def load_bid_ranges(bid_file):
+        """Load photon start-stop pairs from BID files."""
+        bid_ranges = []
+        with open(bid_file, 'r') as f:
+            for line in f:
+                parts = line.strip().split('\t')  # Expect tab-separated values
+                if len(parts) == 2:
+                    start, stop = map(int, parts)
+                    bid_ranges.append((start, stop))
+        return bid_ranges
+
     def compute_microtime_histogram(self):
         chisurf.logging.info("Computing microtime histogram...")
         self.plotWidget.clear()  # Clear plot before drawing new data
         self.cumulative_ps = None  # Reset cumulative_ps before computation
 
+        chisurf.logging.info(f"channels parallel: {self.parallel_channels}")
+        chisurf.logging.info(f"channels perpendicular: {self.perpendicular_channels}")
+
+        # Check for the presence of BID files
+        bid_files = self.listWidget_BID.get_selected_files()
+        if len(bid_files) > 0:
+            bid_ranges = dict([(f.stem, self.load_bid_ranges(f)) for f in bid_files])
+        else:
+            bid_ranges = None
+
         for filename in self.selected_files:
             path = Path(filename)
+            file_stem = path.name
             if path.is_file():
-                t = tttrlib.TTTR(path.as_posix(), self.tttr_filetype)
-
-                print(f"channels parallel: {self.parallel_channels}")
-                print(f"channels perpendicular: {self.perpendicular_channels}")
+                d = tttrlib.TTTR(path.as_posix(), self.tttr_filetype)
+                if bid_ranges and file_stem in bid_ranges:
+                    bid_range = bid_ranges[file_stem]
+                    if len(bid_range) < 1:
+                        continue
+                    start, stop = bid_range[0]
+                    t = d[start:stop]
+                    for start, stop in bid_range[1:]:
+                        t += d[start:stop]
+                elif bid_ranges:
+                    chisurf.logging.info(f"Skipping {file_stem} because BID range not found.")
+                    continue  # Skip file if BID range exists but file stem not found
+                else:
+                    t = d
 
                 y_parallel, _ = t.get_microtime_histogram(self.binning_factor, self.parallel_channels)
                 y_perpendicular, _ = t.get_microtime_histogram(self.binning_factor, self.perpendicular_channels)
