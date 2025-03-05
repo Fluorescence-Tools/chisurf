@@ -417,11 +417,7 @@ class Base(object):
             print(j)
         self.from_dict(j)
 
-    def __setattr__(
-            self,
-            key: str,
-            value: object
-    ):
+    def __setattr__(self, key: str, value: object):
         propobj = getattr(self.__class__, key, None)
         if isinstance(propobj, property):
             if propobj.fset is None:
@@ -430,10 +426,7 @@ class Base(object):
         else:
             super().__setattr__(key, value)
 
-    def __getattr__(
-            self,
-            key: str
-    ):
+    def __getattr__(self, key: str):
         propobj = getattr(self.__class__, key, None)
         # the key refers to a property
         if isinstance(propobj, property):
@@ -497,6 +490,10 @@ class Base(object):
         if meta_data is None:
             meta_data = dict()
         self.meta_data = meta_data
+
+        self.verbose = verbose
+        if len(args) > 0 and isinstance(args[0], dict):
+            kwargs = args[0]
 
         if unique_identifier is None:
             unique_identifier = str(uuid.uuid4())
