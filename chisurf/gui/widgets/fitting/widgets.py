@@ -292,16 +292,16 @@ class FittingControllerWidget(Controller):
         chisurf.run(f"chisurf.macros.change_selected_fit_of_group({self.selected_fit})")
 
     def onErrorEstimate(self):
-        chisurf.run(f"cs.status_label.setText('Sampling analysis: {self.fit.name}')")
+        chisurf.logging.info(f"Sampling analysis: {self.fit.name}")
         filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
         kw = chisurf.settings.cs_settings['optimization']['sampling']
         kw['n_runs'] = self.n_runs
         kw['steps'] = self.n_steps
         chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
-        chisurf.run("cs.status_label.setText('Sampling done!')")
+        chisurf.logging.info("Sampling done!")
 
     def onRunFit(self):
-        chisurf.run(f"cs.status_label.setText('Please wait fitting: {self.fit.name}')")
+        chisurf.logging.info(f"Please wait fitting: {self.fit.name}")
         chisurf.run(f"cs.current_fit.run(local_first={self.local_first})")
         self.fit.model.finalize()
         for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
@@ -309,7 +309,7 @@ class FittingControllerWidget(Controller):
                 pa.controller.finalize()
             except (AttributeError, RuntimeError):
                 chisurf.logging.warning(f"Fitting parameter {pa.name} does not have a controller to update.")
-        chisurf.run("cs.status_label.setText('Fitting finished!')")
+        chisurf.logging.info("Fitting finished!")
         # Update fit result selector
         self.spinBox_3.setMaximum(len(self.fit.results))
         self.spinBox_3.setMinimum(1)
@@ -460,28 +460,41 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
 class FittingParameterWidget(Controller):
 
     def make_linkcall(self, fit_idx: int, parameter_name: str):
-
         def linkcall():
-            self.blockSignals(True)
-            tooltip = " linked to " + parameter_name
-            s = (
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
-                f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']"
-            )
-            chisurf.run(s)
-            # Adjust widget of parameter that is linker
-            self.widget_link.setToolTip(tooltip)
-            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
-            self.widget_value.setEnabled(False)
-
             try:
-                # Adjust widget of parameter that is linked to
-                p = chisurf.fits[fit_idx].model.parameters_all_dict[parameter_name]
-                p.controller.widget_link.setCheckState(QtCore.Qt.Checked)
-            except AttributeError:
-                print("Could not set widget properties of controller")
+                self.blockSignals(True)
 
-            self.blockSignals(False)
+                # Fetch current and target parameters
+                param_self = chisurf.fits[self.fitting_parameter.fit_idx].model.parameters_all_dict[self.fitting_parameter.name]
+                param_other = chisurf.fits[fit_idx].model.parameters_all_dict[parameter_name]
+
+                # Check for recursion using the Parameter class method
+                if param_self.check_recursive_link(param_other, param_self):
+                    QtWidgets.QMessageBox.warning(
+                        self,  # Parent widget
+                        "Linking Error",
+                        "Recursion detected: Cannot link a parameter to itself or create a cyclic dependency.",
+                        QtWidgets.QMessageBox.Ok
+                    )
+                else:
+                    tooltip = " linked to " + parameter_name
+                    s = (
+                        f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
+                        f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']"
+                    )
+                    chisurf.run(s)
+
+                    # Adjust widget of parameter that is linker
+                    self.widget_link.setToolTip(tooltip)
+                    self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
+                    self.widget_value.setEnabled(False)
+                    try:
+                        param_other.controller.widget_link.setCheckState(QtCore.Qt.Checked)
+                    except AttributeError:
+                        chisurf.logging.warning("Could not set widget properties of controller")
+
+            finally:
+                self.blockSignals(False)
 
         return linkcall
 
