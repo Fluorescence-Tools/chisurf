@@ -35,11 +35,12 @@ class Parameter(chisurf.base.Base):
 
     @property
     def name(self) -> str:
-        return self._port.name
+        return self._name
 
     @name.setter
     def name(self, v: str):
         self._port.name = v
+        self._name = v
 
     @property
     def bounds(self) -> typing.Tuple[float, float]:
@@ -71,13 +72,13 @@ class Parameter(chisurf.base.Base):
 
         :return:
         """
-        return self._port.value.item(0)
+        return self._port.value[0]
 
     @value.setter
     def value(self, value: float):
         f = self._port.fixed
         self._port.fixed = False
-        self._port.set_value_d(np.array([value], dtype=np.float64))
+        self._port.value = value
         self._port.fixed = f
 
     @property
@@ -234,7 +235,7 @@ class Parameter(chisurf.base.Base):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        name = kwargs.pop('name', '')
+        self._name = kwargs.pop('name', '')
         port = kwargs.pop('port', None)
         if port is not None:
             self._port = port
@@ -243,7 +244,7 @@ class Parameter(chisurf.base.Base):
                 self._callable = value
                 self._port = chinet.Port(
                     value=np.atleast_1d(0.0).astype(dtype=np.float64),
-                    name=name,
+                    name=self._name,
                     lb=lb,
                     ub=ub,
                     is_bounded=bounds_on
@@ -252,7 +253,7 @@ class Parameter(chisurf.base.Base):
                 self._callable = None
                 self._port = chinet.Port(
                     value=np.atleast_1d(value).astype(dtype=np.float64),
-                    name=name,
+                    name=self._name,
                     lb=lb,
                     ub=ub,
                     is_bounded=bounds_on
