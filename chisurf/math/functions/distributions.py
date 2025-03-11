@@ -83,9 +83,12 @@ def generalized_normal_distribution(
     if shape == 0.0:
         z = (x - loc) / scale
     else:
-        t = 1.0 - shape * (x - loc) / scale
-        t[t < 0.] = np.spacing(1)
-        z = -1.0 / shape * np.log(t)
+        if scale == 0.0:
+            return np.zeros_like(x)
+        else:
+            t = 1.0 - shape * (x - loc) / scale
+            t[t < 0.] = np.spacing(1)
+            z = -1.0 / shape * np.log(t)
 
     y = normal_distribution(z, norm=False)
 
