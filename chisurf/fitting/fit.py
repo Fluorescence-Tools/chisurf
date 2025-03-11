@@ -278,7 +278,6 @@ class Fit(chisurf.base.Base):
                 )
 
     def run(self, *args, **kwargs) -> None:
-        fit = self
         fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
