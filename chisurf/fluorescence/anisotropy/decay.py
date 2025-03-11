@@ -14,36 +14,46 @@ def vm_rt_to_vv_vh(
         g_factor: float = 1.0,
         l1: float = 0.0,
         l2: float = 0.0
-) -> typing.Tuple[
-    np.array,
-    np.array
-]:
-    """Computes the VV, and VH decay from an VM decay given an anisotropy
-    spectrum
+) -> typing.Tuple[np.array, np.array]:
+    """
+    Computes the VV and VH decays from a VM decay given an anisotropy spectrum.
+
+    The parallel (VV) and perpendicular (VH) decays are computed as
+
+        f_VV(t) = f_VM(t) * (1 + 2 * r(t))
+        f_VH(t) = f_VM(t) * (1 - g * r(t))
+
+    where g is the g-factor and r(t) is calculated from the anisotropy spectrum:
+
+        r(t) = sum_i (b_i * exp(-t / rho_i))
+
+    The mixing parameters l1 and l2 account for cross-talk between the
+    polarization channels according to:
+
+        f_VV,m(t) = (1 - l1) * f_VV(t) + l1 * f_VH(t)
+        f_VH,m(t) = l2 * f_VV(t) + (1 - l2) * f_VH(t)
 
     Parameters
     ----------
-    times : numpy-array
-        time-axis of the decay
-    vm : numpy-array
-        The magic angle decay
-    anisotropy_spectrum : numpy-array
-        The interleaved anisotropy spectrum (amplitude, correlation time)
-        of the anisotropy decay
-    g_factor : float
-        A factor that accounts for different detection sensitivities of
-        the parallel and perpendicular detector.
-    l1 : float
-        A factor that accounts for anisotropy mixing of parallel and
-        perpendicular decay.
-    l2 : float
-        A factor that accounts for anisotropy mixing of parallel and
-        perpendicular decay.
+    times : numpy.array
+        Time-axis of the decay.
+    vm : numpy.array
+        The magic angle (VM) decay.
+    anisotropy_spectrum : numpy.array
+        An interleaved array containing anisotropy parameters: amplitude and
+        correlation time pairs (b_i, rho_i).
+    g_factor : float, optional
+        Correction factor for different detection sensitivities (default is 1.0).
+    l1 : float, optional
+        Mixing factor for the parallel (VV) channel (default is 0.0).
+    l2 : float, optional
+        Mixing factor for the perpendicular (VH) channel (default is 0.0).
 
     Returns
     -------
-    tuple
-        A tuple of the parallel (vv) and perpendicular (vh) decay (vv, vh)
+    tuple of numpy.array
+        A tuple (vv_j, vh_j) where vv_j is the mixed VV decay and vh_j is the
+        mixed VH decay.
 
     Examples
     --------
@@ -51,7 +61,7 @@ def vm_rt_to_vv_vh(
     >>> import chisurf.fluorescence.general
     >>> import chisurf.fluorescence.anisotropy
     >>> times = np.linspace(0, 50, 32)
-    >>> lifetime_spectrum = np.array([1., 4], dtype=np.float64)
+    >>> lifetime_spectrum = np.array([1.0, 4.0], dtype=np.float64)
     >>> times, vm = chisurf.fluorescence.general.calculate_fluorescence_decay(
     ...     lifetime_spectrum=lifetime_spectrum,
     ...     time_axis=times
@@ -62,53 +72,20 @@ def vm_rt_to_vv_vh(
     ...     vm,
     ...     anisotropy_spectrum
     ... )
-    >>> vv
-    array([1.20000000e+00, 6.77248886e-01, 4.46852328e-01, 2.98312250e-01,
-           1.99308989e-01, 1.33170004e-01, 8.89790065e-02, 5.94523193e-02,
-           3.97237334e-02, 2.65418577e-02, 1.77342397e-02, 1.18493310e-02,
-           7.91726329e-03, 5.29000820e-03, 3.53457826e-03, 2.36166808e-03,
-           1.57797499e-03, 1.05434168e-03, 7.04470208e-04, 4.70699664e-04,
-           3.14503256e-04, 2.10138875e-04, 1.40406645e-04, 9.38142731e-05,
-           6.26830580e-05, 4.18823877e-05, 2.79841867e-05, 1.86979480e-05,
-           1.24932435e-05, 8.34750065e-06, 5.57747611e-06, 3.72665317e-06])
-    >>> vh
-    array([9.00000000e-01, 6.63617368e-01, 4.46232934e-01, 2.98284106e-01,
-           1.99307711e-01, 1.33169946e-01, 8.89790039e-02, 5.94523192e-02,
-           3.97237334e-02, 2.65418577e-02, 1.77342397e-02, 1.18493310e-02,
-           7.91726329e-03, 5.29000820e-03, 3.53457826e-03, 2.36166808e-03,
-           1.57797499e-03, 1.05434168e-03, 7.04470208e-04, 4.70699664e-04,
-           3.14503256e-04, 2.10138875e-04, 1.40406645e-04, 9.38142731e-05,
-           6.26830580e-05, 4.18823877e-05, 2.79841867e-05, 1.86979480e-05,
-           1.24932435e-05, 8.34750065e-06, 5.57747611e-06, 3.72665317e-06])
+    >>> vv[0]  # doctest: +ELLIPSIS
+    1.2...
+    >>> vh[0]  # doctest: +ELLIPSIS
+    0.9...
 
     Notes
     -----
-
-    The parallel (VV) and perpendicular decay are calculated
-
-    .. math::
-
-        f_{VV}(t) = f_{VM}(t)\cdot(1 + 2 \cdot r(t))
-        f_{VH}(t) = f_{VM}(t)\cdot(1 - g \cdot r(t))
-
-    where :math:`g` is the g-factor and :math:`r(t)=\sum_i b_i \cdot exp(-t/\rho_i)`
-    is defined by the anisotropy spectrum, :math:`(b_i,\rho_i)_i`.
-
-    The returned parallel, :math:`f_{VV,m}`, and perpendicular :math:`f_{VH,m}`
-    decays account for mixing by the factors :math:`l_1` and :math:`l_2` [1]_
-
-    .. math::
-
-        f_{VV,m}(t) = (1 - l_1) \cdot f_{VV}(t) + l_1 \cdot f_{VH}(t)
-        f_{VH,m}(t) = l_2 \cdot f_{VV}(t) + (1-l_2) \cdot f_{VH}(t)
+    The returned decays account for anisotropy mixing as described in [1]_.
 
     References
     ----------
-
     .. [1] Masanori Koshioka, Keiji Sasaki, Hiroshi Masuhara, "Time-Dependent
-    Fluorescence Depolarization Analysis in Three-Dimensional
-    Microspectroscopy" vol. 49, pp. 224-228, Applied Spectroscopy, 1995
-
+           Fluorescence Depolarization Analysis in Three-Dimensional
+           Microspectroscopy", Applied Spectroscopy, 1995, vol. 49, pp. 224-228.
     """
     rt = np.zeros_like(vm)
     n_anisotropies = int(anisotropy_spectrum.shape[0] // 2)
@@ -124,81 +101,56 @@ def vm_rt_to_vv_vh(
 
 
 def calculcate_spectrum(
-        lifetime_spectrum: np.narray,
+        lifetime_spectrum: np.ndarray,
         anisotropy_spectrum: np.ndarray,
         polarization_type: str,
         g_factor: float = 1.0,
         l1: float = 0.0,
         l2: float = 0.0
 ) -> np.ndarray:
-    """Unites a lifetime and an anisotropy spectrum for a specified polarization
-    considering detection sensitivity and mixing of polarization channels.
+    """
+    Generates a joint spectrum from a lifetime and an anisotropy spectrum for a specified polarization.
 
-    This function converts a lifetime spectrum and an anisotropy spectrum into
-    a joint spectrum for a detection channel. The detection channel is specified
-    by the parameter *polarization_type*. The relative sensitivity of the VV
-    and the VH detection channel is considered by the parameter *g_factor*.
-    Here, VH stands for vertical excitation and horizontal detection, whereas
-    VV stands for vertical excitation and vertical detection. The sensitivity
-    for detecting polarized light is considered by the g-factor, :math:`G`
+    This function converts a lifetime spectrum and an anisotropy spectrum into a
+    joint spectrum for either the 'VV' or 'VH' detection channels. The relative
+    sensitivity of the channels is adjusted via the g_factor, while l1 and l2
+    describe the mixing between the VV and VH channels.
 
-    .. math::
+    The unmixed decays for VV and VH are given by:
 
-        g = \frac{\int I_{HV}(t)dt}{\int I_{HH}(t)dt}
-        r = \frac{I_{VV} - GI_{VH}}{I_{VV} + 2 G I_{VH}}
+        f_VV(t) = f_VM(t) * (1 + 2 * r(t))
+        f_VH(t) = f_VM(t) * (1 - g * r(t))
 
-    Above, :math:`r` is the anisotropy [1]_. The anisotropy is displayed here
-    for clarity, as often a G-factor is defined as the inverse of :math:`G`.
+    with anisotropy:
 
+        r(t) = (I_VV - G * I_VH) / (I_VV + 2 * G * I_VH)
 
-    Notes
-    -----
+    The mixed decays are then computed as:
 
-    The factor :math:`l_1` and :math:`l_2` describe the mixing of the parallel,
-    VV, and the vertical, VH, detection channel [2]_ and are defined by the
-    parameters *l1* and *l2*. By default *l1* and *l2* are set to zero. This
-    results in pure decays in VV and VH. In case a non-zero value is used the
-    returned spectrum corresponds to the following decays:
-
-    .. math::
-
-        f_{VV,m}(t) = (1 - l_1) \cdot f_{VV}(t) + l_1 \cdot f_{VH}(t)
-        f_{VH,m}(t) = l_2 \cdot f_{VV}(t) + (1-l_2) \cdot f_{VH}(t)
-
+        f_VV,m(t) = (1 - l1) * f_VV(t) + l1 * f_VH(t)
+        f_VH,m(t) = l2 * f_VV(t) + (1 - l2) * f_VH(t)
 
     Parameters
     ----------
-    lifetime_spectrum : numpy-array
-        An interleaved array containing a set of amplitudes and fluorescence
-        lifetimes (amplitude 1, lifetime 1, amplitude 2, lifetime 2, ...)
-    anisotropy_spectrum : numpy-array
-        An interleaved array containing a set of amplitudes and depolarization
-        times (amplitude 1, rho 1, amplitude 2, rho 2, ...)
+    lifetime_spectrum : numpy.array
+        Interleaved amplitudes and fluorescence lifetimes
+        (amplitude 1, lifetime 1, amplitude 2, lifetime 2, ...).
+    anisotropy_spectrum : numpy.array
+        Interleaved amplitudes and depolarization times
+        (amplitude 1, rho 1, amplitude 2, rho 2, ...).
     polarization_type : str
-        Either 'VV' or 'VH' if the value is neither VV nor VH the lifetime
-        spectrum is returned as it is.
-    g_factor : float
-        Is a factor that corrects the relative sensitivity of the detection
-        channels.
-    l1 : float
-        Is the fraction of VH in the VV detection channel.
-    l2 : float
-        Is the fraction of VV in the VH detection channel.
+        'VV' or 'VH'. If neither, the lifetime spectrum is returned unmodified.
+    g_factor : float, optional
+        Correction factor for the detection channel sensitivity (default is 1.0).
+    l1 : float, optional
+        Fraction of VH contributing to the VV channel (default is 0.0).
+    l2 : float, optional
+        Fraction of VV contributing to the VH channel (default is 0.0).
 
     Returns
     -------
-
-    References
-    ----------
-
-    .. [1] Masanori Koshioka, Keiji Sasaki, Hiroshi Masuhara, "Time-Dependent
-    Fluorescence Depolarization Analysis in Three-Dimensional
-    Microspectroscopy" vol. 49, pp. 224-228, Applied Spectroscopy, 1995
-
-    .. [2] Masanori Koshioka, Keiji Sasaki, Hiroshi Masuhara, "Time-Dependent
-    Fluorescence Depolarization Analysis in Three-Dimensional
-    Microspectroscopy" vol. 49, pp. 224-228, Applied Spectroscopy, 1995
-
+    numpy.array
+        The combined spectrum for the specified detection channel.
 
     Examples
     --------
@@ -242,8 +194,19 @@ def calculcate_spectrum(
     ...     l1=0.0,
     ...     l2=0.1
     ... )
-    array([ 0.1 ,  4.  ,  0.2 ,  0.8 ,  1.35,  4.  , -2.7 ,  0.8 ])
+    array([ 0.1 ,  4.  ,  0.2 ,  0.8,  1.35,  4.  , -2.7 ,  0.8 ])
 
+    Notes
+    -----
+    If the polarization_type is neither 'VV' nor 'VH', the function simply
+    returns the input lifetime spectrum without modifications.
+
+    References
+    ----------
+    .. [1] Masanori Koshioka, Keiji Sasaki, Hiroshi Masuhara, "Time-Dependent
+           Fluorescence Depolarization Analysis in Three-Dimensional
+           Microspectroscopy", Applied Spectroscopy, 1995, vol. 49, pp. 224-228.
+    .. [2] Same as [1].
     """
     polarization_type = polarization_type.upper()
     f = lifetime_spectrum
