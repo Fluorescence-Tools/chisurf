@@ -15,24 +15,26 @@ def histogram_rebin(
         counts: np.ndarray,
         new_bin_edges: np.ndarray
 ):
-    """Interpolates a histogram to a new x-axis. Here the parameter x can be any
-    numpy array as return value another array is obtained containing the values
-    of the histogram at the given x-values. This function may be useful if the spacing
-    of a histogram has to be changed.
+    """Interpolates a histogram to a new set of bin edges.
 
-    :param new_bin_edges: array
-    :param counts: array
-        Histogram values
+    This function returns the histogram values corresponding to a new set of bin edges.
+    If a new bin edge is outside the range of the original histogram's bin edges, the value
+    is set to 0. This is useful for changing the bin spacing of a histogram.
+
     :param bin_edges: array
-        The bin edges of the histogram
-    :return: A list of the same size as the parameter x
+        The bin edges of the original histogram.
+    :param counts: array
+        Histogram values corresponding to the bins defined by bin_edges.
+    :param new_bin_edges: array
+        The new bin edges for which to interpolate the histogram.
+    :return: list or float
+        A list of histogram values corresponding to new_bin_edges if its length > 1,
+        otherwise a single value.
 
     Examples
     --------
-
-    >>> counts = np.array([0,2,1])
-    >>> bin_edges = np.array([0,5,10,15])
-
+    >>> counts = np.array([0, 2, 1])
+    >>> bin_edges = np.array([0, 5, 10, 15])
     >>> new_bin_edges = np.linspace(-5, 20, 17)
     >>> histogram_rebin(bin_edges, counts, new_bin_edges)
     [0.0, 0.0, 0.0, 0.0, 0, 0, 0, 2, 2, 2, 1, 1, 1, 0.0, 0.0, 0.0, 0.0]
@@ -54,19 +56,22 @@ def overlapping_region(
         dataset1,
         dataset2
 ):
-    """
+    """Find the overlapping region between two datasets based on their x-values.
+
+    Each dataset is a tuple of (x, y) arrays. This function computes the common x-range
+    where both datasets overlap and masks out data points outside this range. The resulting
+    overlapping segments of the datasets are returned.
 
     :param dataset1: tuple
-        The tuple should consist of the x and y values. Whereas the x and
-        y values have to be a numpy array.
+        A tuple containing two numpy arrays (x and y values) for the first dataset.
     :param dataset2: tuple
-        The tuple should consist of the x and y values. Whereas the x and
-        y values have to be a numpy array.
-    :return: Two tuples
+        A tuple containing two numpy arrays (x and y values) for the second dataset.
+    :return: tuple of tuples
+        Two tuples corresponding to the overlapping regions of dataset1 and dataset2.
+        Each tuple contains the x and y values within the overlapping range.
 
     Examples
     --------
-
     >>> import matplotlib.pylab as p
     >>> x1 = np.linspace(-1, 12, 10)
     >>> y1 = np.cos(x1)
@@ -74,30 +79,12 @@ def overlapping_region(
     >>> x2 = np.linspace(-1, 12, 11)
     >>> y2 = np.sin(x2)
     >>> a2 = (x2, y2)
-    >>> (rx1, ry1), (rx2, ry2) = align_x_spacing(a1, a2)
-
-    p.plot(x1, y1, 'r')
-    p.plot(rx1, ry1, 'k')
-    p.plot(x2, y2, 'g')
-    p.plot(rx2, ry2, 'b')
-    p.show()
-
-    Test overlay
-
-    >>> x1 = np.linspace(-5, 5, 10)
-    >>> y1 = np.sin(x1)
-    >>> a1 = (x1, y1)
-    >>> x2 = np.linspace(0, 10, 10)
-    >>> y2 = np.sin(x2)
-    >>> a2 = (x2, y2)
     >>> (rx1, ry1), (rx2, ry2) = overlapping_region(a1, a2)
-
-    p.plot(x1, y1, 'r')
-    p.plot(rx1, ry1, 'k')
-    p.plot(x2, y2, 'g')
-    p.plot(rx2, ry2, 'b')
-    p.show()
-
+    >>> p.plot(x1, y1, 'r')
+    >>> p.plot(rx1, ry1, 'k')
+    >>> p.plot(x2, y2, 'g')
+    >>> p.plot(rx2, ry2, 'b')
+    >>> p.show()
     """
     x1, y1 = dataset1
     x2, y2 = dataset2
@@ -122,7 +109,7 @@ def overlapping_region(
     # Calculate range for adjustment of spacing
     rng = (max(min(x1), min(x2)), min(max(x1), max(x2)))
 
-    # mask the irrelevant parts
+    # Mask the irrelevant parts
     m1l = x1.data < rng[0]
     m1u = x1.data > rng[1]
     m1 = m1l + m1u
@@ -135,8 +122,7 @@ def overlapping_region(
     x2.mask = m2
     y2.mask = m2
 
-    # create new lists: overlap - o and rest -r
-    # overlap
+    # Create new lists for the overlapping regions
     ox1 = x1.compressed()
     oy1 = y1.compressed()
     ox2 = x2.compressed()
@@ -153,16 +139,35 @@ def align_x_spacing(
     typing.Tuple[np.ndarray, np.ndarray],
     typing.Tuple[np.ndarray, np.ndarray]
 ]:
-    """
+    """Align the x-spacing of two datasets using a template and rescaling method.
 
-    :param dataset1:
-    :param dataset2:
-    :param method:
-    :return:
+    This function takes two datasets (each a tuple of (x, y) arrays) and aligns the x-values of the dataset
+    with more points to match the x-spacing of the dataset with fewer points. The default method ('linear-close')
+    uses linear interpolation between nearby data points.
+
+    :param dataset1: tuple of np.ndarray
+        The first dataset as a tuple (x, y).
+    :param dataset2: tuple of np.ndarray
+        The second dataset as a tuple (x, y).
+    :param method: str, optional
+        The method used for alignment. Currently supports 'linear-close'.
+    :return: tuple of tuples
+        Two tuples corresponding to the aligned datasets (x, y) for dataset1 and dataset2.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x1 = np.linspace(-5, 5, 10)
+    >>> y1 = np.sin(x1)
+    >>> a1 = (x1, y1)
+    >>> x2 = np.linspace(0, 10, 10)
+    >>> y2 = np.sin(x2)
+    >>> a2 = (x2, y2)
+    >>> (rx1, ry1), (rx2, ry2) = align_x_spacing(a1, a2)
     """
     (ox1, oy1), (ox2, oy2) = dataset1, dataset2
-    # Assume that data is more or less equaliy spaced
-    # t- template array, r - rescale array
+    # Assume that data is more or less equally spaced
+    # t - template array, r - rescale array
     if len(ox1) < len(ox2):
         tx = ox1
         ty = oy1
@@ -176,12 +181,12 @@ def align_x_spacing(
         ry = oy1
         cm = "r1"
 
-    # Create of template-arrays as new arrays - n
+    # Create template arrays as new arrays - n
     nx = copy.deepcopy(tx)
     ny = copy.deepcopy(ty)
 
     if method == 'linear-close':
-        j = 0  # counter for tx
+        j = 0  # counter for template array
         ry1 = ry[0]
         rx1 = rx[0]
         for i, rxi in enumerate(rx):
@@ -223,14 +228,22 @@ def bin_count(
         bin_max: int = 4095
 ):
     """
-    Count number of occurrences of each value in array of non-negative ints.
+    Count the number of occurrences of each value in an array of non-negative integers.
+
+    The data is binned into intervals of width bin_width, starting from bin_min up to bin_max.
+    The function returns the bin values and the counts for each bin.
 
     :param data: array_like
-        1-dimensional input array
-    :param bin_width: the width of the bins
-    :param bin_min: The value of the smallest bin
-    :param bin_max: The value of the largest bin
-    :return: As return values a numpy array with the bins and a array containing the counts is obtained.
+        1-dimensional input array of non-negative integers.
+    :param bin_width: int, optional
+        The width of each bin. Default is 16.
+    :param bin_min: int, optional
+        The minimum value to consider for binning. Default is 0.
+    :param bin_max: int, optional
+        The maximum value to consider for binning. Default is 4095.
+    :return: tuple (bins, count)
+        bins: numpy array of bin starting values.
+        count: numpy array of counts for each bin.
     """
     n_min = np.rint(bin_min / bin_width)
     n_max = np.rint(bin_max / bin_width)
@@ -250,10 +263,16 @@ def minmax(
         x: np.ndarray,
         ignore_zero: bool = False
 ):
-    """Minimum and maximum value of an array
+    """Compute the minimum and maximum values of an array.
+
+    If ignore_zero is True, zeros in the array will be ignored when computing the minimum value.
 
     :param x: array or list
-    :return: minimum and maximum value
+        The input array.
+    :param ignore_zero: bool, optional
+        Whether to ignore zero values when computing the minimum. Default is False.
+    :return: tuple (min, max)
+        The minimum and maximum values in the array.
     """
     max_v = -np.inf
     min_v = np.inf
@@ -275,13 +294,24 @@ def histogram1D(
         tth_max: float = -1e12,
         tth_min: float = 1e12
 ):
-    """ Compute a histogram of the values the histogram is linear between the
-    minium and the maximum value
+    """Compute a 1D histogram with linear binning between specified limits.
 
-    :param values: the values to be binned
-    :param weights: the weights of the values
-    :param n_bins: number of bins
-    :return:
+    The histogram is computed by linearly binning the input values between tth_min and tth_max
+    into n_bins bins. The weights associated with each value are summed in the corresponding bin.
+
+    :param values: array_like
+        The values to be binned.
+    :param weights: array_like
+        The weights for each value.
+    :param n_bins: int, optional
+        Number of bins in the histogram. Default is 101.
+    :param tth_max: float, optional
+        The maximum value for binning. Default is -1e12.
+    :param tth_min: float, optional
+        The minimum value for binning. Default is 1e12.
+    :return: tuple (axis, hist)
+        axis: numpy array representing the bin centers.
+        hist: numpy array containing the weighted counts for each bin.
     """
     n_values = values.size
 
@@ -306,12 +336,19 @@ def discriminate(
         weights: np.ndarray,
         discriminator: float
 ):
-    """Discriminates values where the weights are below a certain threshold
+    """Filter values and weights based on a discriminator threshold.
 
-    :param values: array
-    :param weights: array
+    This function selects elements from the input arrays where the corresponding weight is greater than
+    the given discriminator value.
+
+    :param values: array_like
+        Array of values.
+    :param weights: array_like
+        Array of weights corresponding to the values.
     :param discriminator: float
-    :return: two arrays of discriminated values and weights
+        The threshold value for weights.
+    :return: tuple (filtered_values, filtered_weights)
+        Arrays containing the values and weights that passed the discriminator threshold.
     """
     v_r = np.zeros_like(values)
     w_r = np.zeros_like(weights)
@@ -326,6 +363,24 @@ def discriminate(
 
 
 def smooth(x, l, m):
+    """Smooth an array using a moving average filter.
+
+    This function applies a simple moving average smoothing to the input array `x`. The smoothing is performed
+    over a window of size (2*m + 1) for the first (l - m) elements of the array.
+
+    Note: The implementation divides by (2*m + 1) inside the inner loop, which may not produce the intended
+    averaging effect if multiple accumulations occur before division. Ensure that the parameters `l` and `m`
+    are chosen appropriately relative to the size of `x`.
+
+    :param x: numpy array
+        Input array to be smoothed.
+    :param l: int
+        Number of elements from `x` to process.
+    :param m: int
+        Half-window size for the moving average. The full window size is (2*m + 1).
+    :return: numpy array
+        The smoothed array.
+    """
     xz = np.empty(x.shape[0], dtype=np.float64)
     for i in range(l - m):
         xz[i] = 0
@@ -340,20 +395,23 @@ def interleaved_to_two_columns(
         sort: bool = False
 ) -> typing.Tuple[np.ndarray, np.ndarray]:
     """
-    Converts an interleaved spectrum to two column-data
+    Convert an interleaved spectrum into two-column data.
+
+    The interleaved spectrum is assumed to alternate between amplitude and lifetime values.
+    Optionally, the resulting data can be sorted by the lifetime values.
+
     :param ls: numpy array
-        The interleaved spectrum (amplitude, lifetime)
-    :param sort: bool
-        if True sort by the size of the lifetimes
-    :return: two arrays (amplitudes), (lifetimes)
+        The interleaved spectrum (alternating amplitude and lifetime values).
+    :param sort: bool, optional
+        If True, the resulting columns are sorted by lifetime values. Default is False.
+    :return: tuple (amplitudes, lifetimes)
+        Two numpy arrays representing amplitudes and lifetimes respectively.
 
     Examples
     --------
-
     >>> import numpy as np
     >>> lifetime_spectrum = np.array([0.25, 1, 0.75, 4])
     >>> amplitudes, lifetimes = interleaved_to_two_columns(lifetime_spectrum)
-
     """
     lt = ls.reshape((ls.shape[0] // 2, 2))
     if sort:
@@ -369,11 +427,16 @@ def two_column_to_interleaved(
         x: np.ndarray,
         t: np.ndarray
 ) -> np.ndarray:
-    """Converts two column lifetime spectra to interleaved lifetime spectra
+    """Convert two-column lifetime spectra into an interleaved format.
 
-    :param x: amplitudes
-    :param t: lifetimes, rate constants, etc.
-    :return:
+    The two input arrays (amplitudes and lifetimes) are interleaved to form a single array.
+
+    :param x: numpy array
+        Array of amplitudes.
+    :param t: numpy array
+        Array of lifetimes (or rate constants).
+    :return: numpy array
+        Interleaved array containing amplitude and lifetime values.
     """
     c = np.vstack((x, t)).reshape(-1, order='F')
     return c
@@ -385,23 +448,24 @@ def elte2(
         e2: np.array
 ) -> np.array:
     """
-    Takes two interleaved spectrum of lifetimes (a11, l11, a12, l12,...) and
-    (a21, l21, a22, l22,...) and return a new spectrum of lifetimes of the
-    form (a11*a21, 1/(1/l11+1/l21), a12*a22, 1/(1/l22+1/l22), ...)
+    Combine two interleaved lifetime spectra into a new spectrum.
 
-    :param e1: array-like
-        Lifetime spectrum 1
-    :param e2: array-like
-        Lifetime spectrum 2
-    :return: array-like
-        Lifetime-spectrum
+    For each pair of corresponding elements in the two spectra, the resulting amplitude is the product
+    of the amplitudes, and the resulting lifetime is computed as the harmonic mean:
+    1 / (1/l1 + 1/l2).
+
+    :param e1: array_like
+        First interleaved lifetime spectrum in the format (a1, l1, a2, l2, ...).
+    :param e2: array_like
+        Second interleaved lifetime spectrum in the same format as e1.
+    :return: numpy array
+        A new interleaved lifetime spectrum of the form (a1*a1, harmonic_mean(l1, l2), ...).
 
     Examples
     --------
-
     >>> import numpy as np
-    >>> e1 = np.array([1,2,3,4])
-    >>> e2 = np.array([5,6,7,8])
+    >>> e1 = np.array([1, 2, 3, 4])
+    >>> e2 = np.array([5, 6, 7, 8])
     >>> elte2(e1, e2)
     array([ 5.        ,  1.5       ,  7.        ,  1.6       , 15.        ,
             2.4       , 21.        ,  2.66666667])
@@ -425,22 +489,23 @@ def ere2(
         e2: np.ndarray
 ) -> np.array:
     """
-    Takes two interleaved spectrum of rates (a11, r11, a12, r12,...) and
-    (a21, r21, a22, r22,...) and return a new spectrum of lifetimes of the
-    form (a11*a21, r11+r21), a12*a22, r22+r22), ...)
+    Combine two interleaved rate spectra into a new spectrum.
 
-    :param e1: array-like
-        Lifetime spectrum 1
-    :param e2: array-like
-        Lifetime spectrum 2
-    :return: array-like
-        Lifetime-spectrum
+    For each pair of corresponding elements in the two spectra, the resulting amplitude is the product
+    of the amplitudes, and the resulting rate is the sum of the rates.
+
+    :param e1: array_like
+        First interleaved rate spectrum in the format (a1, r1, a2, r2, ...).
+    :param e2: array_like
+        Second interleaved rate spectrum in the same format as e1.
+    :return: numpy array
+        A new interleaved rate spectrum of the form (a1*a1, r1+r1, ...).
 
     Examples
     --------
     >>> import numpy as np
-    >>> e1 = np.array([0.5,1,0.5,2])
-    >>> e2 = np.array([0.5,3,0.5,4])
+    >>> e1 = np.array([0.5, 1, 0.5, 2])
+    >>> e2 = np.array([0.5, 3, 0.5, 4])
     >>> ere2(e1, e2)
     array([0.25, 4.  , 0.25, 5.  , 0.25, 5.  , 0.25, 6.  ])
     """
@@ -460,14 +525,18 @@ def ere2(
 def invert_interleaved(
         interleaved_spectrum: np.ndarray
 ) -> np.ndarray:
-    """Converts interleaved lifetime to rate spectra and vice versa
+    """Convert an interleaved lifetime spectrum to a rate spectrum and vice versa.
 
-    :param interleaved_spectrum: array-like
-        Lifetime/rate spectrum
+    For each pair in the interleaved spectrum, the amplitude remains unchanged while the second value
+    (lifetime or rate) is inverted (i.e., replaced by its reciprocal).
+
+    :param interleaved_spectrum: array_like
+        Interleaved lifetime or rate spectrum.
+    :return: numpy array
+        The spectrum with each second component inverted.
 
     Examples
     --------
-
     >>> import numpy as np
     >>> e1 = np.array([1, 2, 3, 4])
     >>> invert_interleaved(e1)
@@ -488,16 +557,21 @@ def e1tn(
         n: float
 ) -> np.array:
     """
-    Multiply amplitudes of interleaved rate/lifetime spectrum by float
+    Multiply the amplitude components of an interleaved spectrum by a constant factor.
 
-    :param e1: array-like
-        Rate spectrum
+    Only the amplitude values (every other element starting from the first) are multiplied by the factor n.
+    The rate or lifetime values remain unchanged.
+
+    :param e1: array_like
+        An interleaved spectrum in the format (amplitude, value, amplitude, value, ...).
     :param n: float
+        The multiplication factor for the amplitude components.
+    :return: numpy array
+        The interleaved spectrum with scaled amplitude values.
 
     Examples
     --------
-
-    >>> e1 = np.array([1,2,3,4])
+    >>> e1 = np.array([1, 2, 3, 4])
     >>> e1tn(e1, 2.0)
     array([2, 2, 6, 4])
     """
@@ -512,6 +586,29 @@ def e1ti2(
         e1: np.array,
         e2: np.array
 ) -> np.array:
+    """
+    Combine two interleaved spectra by multiplying corresponding amplitude and rate/lifetime components.
+
+    This function takes two interleaved spectra (each formatted as alternating amplitude and rate/lifetime values)
+    and computes a new interleaved spectrum. For each combination of a pair from the first spectrum and a pair from
+    the second spectrum, the resulting amplitude is the product of the amplitude values, and the resulting rate/lifetime
+    is the product of the corresponding second values.
+
+    :param e1: array_like
+        First interleaved spectrum.
+    :param e2: array_like
+        Second interleaved spectrum.
+    :return: numpy array
+        A new interleaved spectrum resulting from the element-wise multiplications.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> e1 = np.array([1, 2, 3, 4])
+    >>> e2 = np.array([5, 6, 7, 8])
+    >>> e1ti2(e1, e2)
+    array([ 5., 12.,  7., 16., 15., 24., 21., 32.])
+    """
     n1 = e1.shape[0] // 2
     n2 = e2.shape[0] // 2
     r = np.zeros(n1 * n2 * 2, dtype=np.float64)
@@ -519,21 +616,22 @@ def e1ti2(
     k = 0
     for i in range(n1):
         for j in range(n2):
-            r[k * 2 + 0] = e1[i] * e2[j]
-            r[k * 2 + 1] = e1[i + 1] * e2[j + 1]
+            r[k * 2 + 0] = e1[i * 2 + 0] * e2[j * 2 + 0]
+            r[k * 2 + 1] = e1[i * 2 + 1] * e2[j * 2 + 1]
             k += 1
     return r
 
 
 def pairwise(iterable):
-    """Iterate in pairs of 2 over iterable
+    """Generate successive overlapping pairs from an iterable.
 
-    :param iterable:
-    :return:
+    Example: s -> (s0, s1), (s1, s2), (s2, s3), ...
+
+    :param iterable: iterable
+        An iterable sequence.
+    :return: iterator
+        An iterator over pairs of consecutive elements.
     """
-    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
-
-

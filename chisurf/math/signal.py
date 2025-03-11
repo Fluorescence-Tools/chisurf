@@ -15,30 +15,38 @@ def window(
         window_function_type: str = 'bartlett'
 ) -> np.array:
     """
-    smooth the data using a window with requested size.
+    Smooth the data using a window with the requested size.
 
     This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal
-    (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
+    The signal is prepared by introducing reflected copies of the signal (with the
+    window size) at both ends so that transient parts are minimized in the beginning
+    and end of the output signal.
 
-    see also:
+    See also: numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve,
+              scipy.signal.lfilter
 
-    numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
-    scipy.signal.lfilter
+    Parameters
+    ----------
+    data : 1D numpy-array
+        Input data to be smoothed.
+    window_len : int
+        The dimension of the smoothing window; should be an odd integer.
+    window_function_type : str, optional
+        The type of window to use from the following options:
+        'flat', 'hanning', 'hamming', 'bartlett', 'blackman'. A 'flat' window will produce a moving
+        average smoothing. Default is 'bartlett'.
 
-    :param data: 1D numpy-array (data)
-    :param window_len: the dimension of the smoothing window; should be an odd
-    integer
-    :param window_function_type: the type of window from 'flat', 'hanning',
-    'hamming', 'bartlett', 'blackman' flat window will produce a moving average
-    smoothing.
-    :return: 1D numpy-array (smoothed data)
+    Returns
+    -------
+    1D numpy-array
+        The smoothed data.
 
     Examples
     --------
-
-
+    >>> import numpy as np
+    >>> x = np.linspace(0, 2*np.pi, 100)
+    >>> data = np.sin(x) + 0.1 * np.random.randn(100)
+    >>> smoothed = window(data, window_len=11, window_function_type='hanning')
     """
     if data.ndim != 1:
         raise ValueError("smooth only accepts 1 dimension arrays.")
@@ -46,16 +54,13 @@ def window(
         raise ValueError("Input vector needs to be bigger than window size.")
     if window_len < 3:
         return data
-    if not window_function_type in [
-        'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-    ]:
+    if window_function_type not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError(
-            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+            "Window must be one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
         )
-    s = np.r_[
-        2 * data[0] - data[window_len:1:-1], data, 2 * data[-1] - data[-1:-window_len:-1]
-    ]
-    if window_function_type == 'flat': # moving average
+    s = np.r_[2 * data[0] - data[window_len:1:-1], data,
+              2 * data[-1] - data[-1:-window_len:-1]]
+    if window_function_type == 'flat':  # moving average
         w = np.ones(window_len, 'd')
     else:
         w = eval('np.' + window_function_type + '(window_len)')
@@ -69,28 +74,28 @@ def shift_array(
         set_outside: bool = True,
         outside_value: float = 0.0
 ) -> np.array:
-    """Calculates an array that is shifted by a float. For non-integer shifts
-    the shifted array is interpolated.
+    """
+    Calculate a shifted version of the input array using linear interpolation for non-integer shifts.
+
+    For non-integer shifts, the shifted array is computed as a weighted combination of a rolled
+    version of the array and a one-step further roll. Optionally, the parts of the shifted array
+    that extend beyond the original boundaries are set to a fixed outside value.
 
     Parameters
     ----------
     v : 1D numpy-array
-        The input numpy array that is shifted
+        The input array to be shifted.
     shift : float
-        A floating point number by which the array is shifted
-    set_outside : bool
-        If True (default) the values outside of the array are set
-        to the value defined by the parameter `outside_value`
-    outside_value : float
-        The value assigned to the vector that are outside. The
-        values on the borders are assigned to this value (default
-        set to zero).
+        The floating point number by which the array is shifted.
+    set_outside : bool, optional
+        If True (default), values outside the original array bounds are set to `outside_value`.
+    outside_value : float, optional
+        The value assigned to array elements outside the original boundaries (default is 0.0).
 
     Returns
     -------
     numpy-array
-        The shifted numpy array
-
+        The shifted array.
     """
     ts = shift
     ts_i = int(ts)
@@ -114,35 +119,24 @@ def autocorr(
     """
     Estimate the autocorrelation function of a time series using the FFT.
 
-    :param x:
-        The time series. If multidimensional, set the time axis using the
-        ``axis`` keyword argument and the function will be computed for every
-        other axis.
+    If the input array is non-empty, the function computes the autocorrelation via cross-correlation
+    (using FFT) by calling `xcorr_fft`. For an empty array, an empty array is returned.
 
-    :param axis: (optional)
-        The time axis of ``x``. Assumed to be the first axis if not specified.
+    Parameters
+    ----------
+    x : numpy-array
+        The time series data. For multidimensional arrays, set the time axis using the ``axis``
+        parameter.
+    axis : int, optional
+        The axis corresponding to time in `x`. Default is 0.
+    normalize : bool, optional
+        If True, the autocorrelation is normalized by the zero-lag value. Default is True.
 
-    :param fast: (optional)
-        If ``True``, only use the largest ``2^n`` entries for efficiency.
-        (default: False)
-
+    Returns
+    -------
+    numpy-array
+        The autocorrelation function of the input time series.
     """
-    # if fast:
-    #     # For computational efficiency, crop the chain to the largest power of two.
-    #     x = np.atleast_1d(x)
-    #     m = [slice(None), ] * len(x.shape)
-    #     n = int(2**np.floor(np.log2(x.shape[axis])))
-    #     m[axis] = slice(0, n)
-    #     # Compute the FFT and then (from that) the auto-correlation function.
-    #     f = np.fft.fft(x-np.mean(x, axis=axis), n=2*n, axis=axis)
-    #     m[axis] = slice(0, n)
-    #     acf = np.fft.ifft(f * np.conjugate(f), axis=axis)[m].real
-    #     m[axis] = 0
-    #     if normalize:
-    #         return acf / acf[m]
-    #     else:
-    #         return acf
-    # else:
     if len(x) > 0:
         return xcorr_fft(
             in_1=x,
@@ -160,17 +154,38 @@ def xcorr_fft(
         axis: int = 0,
         normalize: bool = True
 ) -> np.ndarray:
-    """Computes the cross-correlation function of two arrays using fast fourier transforms.
+    """
+    Compute the cross-correlation function of two arrays using fast Fourier transforms.
+
+    The function computes the FFT of both input arrays (after subtracting their mean), then computes
+    the inverse FFT of the product of one FFT with the complex conjugate of the other to obtain the
+    cross-correlation.
+
+    Parameters
+    ----------
+    in_1 : numpy-array
+        The first input array.
+    in_2 : numpy-array
+        The second input array.
+    axis : int, optional
+        The axis along which to compute the FFT. Default is 0.
+    normalize : bool, optional
+        If True, the result is normalized by the zero-lag value. Default is True.
+
+    Returns
+    -------
+    numpy-array
+        The cross-correlation function.
     """
     if len(in_1) > 0 and len(in_2) > 0:
         c = in_1
         d = in_2
         n = c.shape[axis]
-        m = [slice(None), ] * len(c.shape)
+        m = [slice(None)] * len(c.shape)
 
-        # Compute the FFT and then (from that) the auto-correlation function.
-        f1 = np.fft.fft(c-np.mean(c, axis=axis), n=2*n, axis=axis)
-        f2 = np.fft.fft(d-np.mean(d, axis=axis), n=2*n, axis=axis)
+        # Compute the FFT (after mean subtraction) for both arrays.
+        f1 = np.fft.fft(c - np.mean(c, axis=axis), n=2 * n, axis=axis)
+        f2 = np.fft.fft(d - np.mean(d, axis=axis), n=2 * n, axis=axis)
 
         m[axis] = slice(0, n)
         acf = np.fft.ifft(f1 * np.conjugate(f2), axis=axis)[m[axis]].real
@@ -188,22 +203,42 @@ def calculate_fwhm(
         y_values: np.ndarray,
         background: float = 0.0,
         verbose: bool = False
-) -> typing.Tuple[
-    float, typing.Tuple[int, int],
-    typing.Tuple[float, float]
-]:
-    """Calculates the full-width-half-maximum (FWHM) using a linear-search from
-    both sides of the curve
+) -> typing.Tuple[float, typing.Tuple[int, int], typing.Tuple[float, float]]:
+    """
+    Calculate the full-width at half-maximum (FWHM) of a peak in a 1D curve.
 
-    :param curve:
-    :param background:
-    :param verbose:
-    :return: Tuple containing the FWHM, the indices and the x-values of the
-    used positions
+    The function subtracts the given background from the y-values, determines the half-maximum level,
+    and finds the first and last indices where the y-values exceed this level. The FWHM is computed
+    as the difference between the corresponding x-values.
+
+    Parameters
+    ----------
+    x_values : numpy-array
+        The x-values corresponding to the data points.
+    y_values : numpy-array
+        The y-values (intensity or similar) of the curve.
+    background : float, optional
+        The background level to subtract from y-values. Default is 0.0.
+    verbose : bool, optional
+        If True, prints details about the computed FWHM, including boundary indices and x-values. Default is False.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+          - fwhm (float): The full-width at half-maximum.
+          - indices (tuple of int): The start and end indices (lb_i, ub_i) where the curve is above half maximum.
+          - x_positions (tuple of float): The corresponding x-values (x_left, x_right).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.linspace(0, 10, 100)
+    >>> y = np.exp(-((x-5)**2)/0.5)  # a narrow peak
+    >>> fwhm, (lb, ub), (x_left, x_right) = calculate_fwhm(x, y)
+    >>> print(f"FWHM = {fwhm}")
     """
     y_values_bg = y_values - background
-    x_values = x_values
-
     half_maximum = max(y_values_bg) / 2.0
     smaller = np.where(y_values_bg > half_maximum)[0]
     lb_i = smaller[0]
@@ -224,53 +259,63 @@ def gaussian_kernel(
         kernel_size: int = 21,
         nsig: float = 3
 ):
-    """Returns a 2D Gaussian kernel array.
+    """
+    Generate a 2D Gaussian kernel array.
 
-    :param kernel_size: the size of the 2D array
-    :param nsig: the width of the gaussian in the 2D array.
-    :return:
+    The kernel is constructed by calculating the 1D Gaussian distribution using the cumulative
+    distribution function of the normal distribution and then taking the outer product to form a 2D kernel.
+    The resulting kernel is normalized so that its sum equals 1.
+
+    Parameters
+    ----------
+    kernel_size : int, optional
+        The size (number of rows and columns) of the 2D kernel. Default is 21.
+    nsig : float, optional
+        The number of standard deviations to include in the kernel; determines the width of the Gaussian. Default is 3.
+
+    Returns
+    -------
+    numpy-array
+        The normalized 2D Gaussian kernel.
     """
     interval = (2.0 * nsig + 1.) / kernel_size
-    x = np.linspace(-nsig-interval/2., nsig+interval/2., kernel_size+1)
+    x = np.linspace(-nsig - interval / 2., nsig + interval / 2., kernel_size + 1)
     kern1d = np.diff(st.norm.cdf(x))
     kernel_raw = np.sqrt(np.outer(kern1d, kern1d))
-    kernel = kernel_raw/kernel_raw.sum()
+    kernel = kernel_raw / kernel_raw.sum()
     return kernel
 
 
 @nb.jit(nopython=True)
 def _frc_histogram(lx, rx, ly, ry, f1f2, f12, f22, n_bins, bin_width):
-    """Auxiliary function only intented to be used by compute_frc
+    """
+    Auxiliary function to compute the Fourier Ring Correlation (FRC) histogram.
 
     Parameters
     ----------
     lx : int
-        left boundary of the x axis. For an image with 512 pixel this
-        would be -256
+        Left boundary of the x-axis in Fourier space (e.g., for an image of 512 pixels, this would be -256).
     rx : int
-        right boundary of the x axis. For 512 pixel 255
+        Right boundary of the x-axis in Fourier space (e.g., for an image of 512 pixels, this would be 255).
     ly : int
-        left boundary of the x axis. For an image with 512 pixel this
-        would be -256
+        Left boundary of the y-axis in Fourier space.
     ry : int
-        right boundary of the x axis. For 512 pixel 255
-    f1f2 : numpy.array
-        The product of the Fourier transformed images F(1)F(2)',
-        where F(2)' is the complex conjugate of F2
-    f12 : numpy.array
-        The squared absolute value of the F(1) Fourier transform, abs(F(1))**2
-    f22 : numpy.array
-        The squared absolute value of the F(2) Fourier transform, abs(F(2))**2
+        Right boundary of the y-axis in Fourier space.
+    f1f2 : numpy-array
+        The product of the Fourier transformed images F(1) and the complex conjugate of F(2).
+    f12 : numpy-array
+        The squared absolute values of the F(1) Fourier transform.
+    f22 : numpy-array
+        The squared absolute values of the F(2) Fourier transform.
     n_bins : int
-        The number of bins in the FRC
+        The number of bins (rings) in the FRC histogram.
     bin_width : float
-        The width of the Rings in the FRC
+        The width of each ring (bin) in Fourier space.
 
     Returns
     -------
-    numpy-array:
-        The FRC value
-
+    numpy-array
+        The FRC values computed for each bin.
     """
     wf1f2 = np.zeros(n_bins, np.float64)
     wf1 = np.zeros(n_bins, np.float64)
@@ -290,28 +335,28 @@ def compute_frc(
         image_2: np.ndarray,
         bin_width: int = 2.0
 ):
-    """Computes the Fourier Ring Correlation (FRC) between two images.
+    """
+    Compute the Fourier Ring Correlation (FRC) between two images.
 
-    The FRC measures the correlation between two images by the overlap of the
-    Fourier transforms. The FRC is the normalised cross-correlation coefficient
-    between two images over corresponding shells in Fourier space transform.
+    The FRC quantifies the similarity between two images by comparing their Fourier transforms
+    over concentric rings (shells) in Fourier space. The result is a normalized correlation
+    coefficient computed for each ring.
 
     Parameters
     ----------
-    image_1 : numpy.array
-        The first image
-    image_2 : numpy.array
-        The second image
-    bin_width : float
-        The bin width used in the computation of the FRC histogram
+    image_1 : numpy-array
+        The first input image.
+    image_2 : numpy-array
+        The second input image.
+    bin_width : float, optional
+        The bin width used for constructing the FRC histogram (i.e., the width of the rings in Fourier space). Default is 2.0.
 
     Returns
     -------
-    Numpy array:
-        density of the FRC histogram
-    Numpy array:
-        bins of the FRC histogram
-
+    tuple
+        A tuple containing:
+          - density (numpy-array): The FRC values for each ring.
+          - bins (numpy-array): The bin edges corresponding to the rings in Fourier space.
     """
     f1 = np.fft.fft2(image_1)
     f2 = np.fft.fft2(image_2)
@@ -334,26 +379,31 @@ def compute_frc(
 
 def find_bursts(arr, max_gap=0):
     """
-    Identifies sequences (bursts) of consecutive ones in a binary array and optionally merges small gaps between them.
+    Identify sequences (bursts) of consecutive ones in a binary array and merge small gaps if requested.
 
-    The function detects where the array changes from 0 to 1 (indicating the start of a burst) and 1 to 0
-    (indicating the end of a burst). If `max_gap` is greater than 0, gaps smaller than or equal to `max_gap`
-    between consecutive bursts are merged.
+    The function detects transitions from 0 to 1 (start of a burst) and from 1 to 0 (end of a burst).
+    If `max_gap` is greater than 0, consecutive bursts separated by a gap smaller than or equal to `max_gap`
+    are merged into a single burst.
 
-    Parameters:
-    arr (numpy array): A binary array (containing 0s and 1s) where the function will identify bursts of ones.
-    max_gap (int, optional): The maximum gap size between bursts that can be merged. Default is 0 (no merging).
+    Parameters
+    ----------
+    arr : numpy-array
+        A binary array containing 0s and 1s.
+    max_gap : int, optional
+        The maximum gap size between bursts that can be merged. Default is 0 (no merging).
 
-    Returns:
-    numpy array: A 2D array where each row contains the start and end indices (inclusive) of each burst.
+    Returns
+    -------
+    numpy-array
+        A 2D array where each row contains the start and end indices (inclusive) of each burst.
 
-    Example:
+    Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([0, 1, 1, 0, 0, 1, 1, 1, 0])
     >>> find_bursts(arr)
     array([[1, 2],
            [5, 7]])
-
     >>> find_bursts(arr, max_gap=1)
     array([[1, 7]])
     """
@@ -370,7 +420,7 @@ def find_bursts(arr, max_gap=0):
 
     # If max_gap is greater than 0, merge small gaps
     if max_gap > 0:
-        merged_starts = [starts[0]]  # Initialize with the first start
+        merged_starts = [starts[0]]
         merged_stops = []
 
         for i in range(1, len(starts)):
@@ -388,32 +438,35 @@ def find_bursts(arr, max_gap=0):
         starts = np.array(merged_starts)
         stops = np.array(merged_stops)
 
-    # Stack the starts and stops into a 2D array
-    bursts = np.column_stack((starts, stops - 1))  # stop is exclusive, so subtract 1
-
+    # Stack the starts and stops into a 2D array (stop is exclusive, so subtract 1)
+    bursts = np.column_stack((starts, stops - 1))
     return bursts
 
 
 def fill_small_gaps_in_array(arr, max_gap):
     """
-    Fills small gaps (i.e., sequences of zeros) between consecutive bursts of ones in a binary array.
+    Fill small gaps (sequences of zeros) between bursts of ones in a binary array.
 
-    The function identifies changes in the array where the value switches from 1 to 0 and vice versa,
-    then calculates the size of the gaps between consecutive sequences of ones (bursts). If a gap is
-    smaller than or equal to `max_gap`, it is filled by setting the values within the gap to 1.
+    The function detects gaps between sequences of ones. If a gap's size is less than or equal to
+    `max_gap`, the gap is filled (set to 1).
 
-    Parameters:
-    arr (numpy array): A binary array (containing 0s and 1s) where the function will look for gaps.
-    max_gap (int): The maximum size of the gap to be filled. Gaps larger than this size will not be filled.
+    Parameters
+    ----------
+    arr : numpy-array
+        A binary array containing 0s and 1s.
+    max_gap : int
+        The maximum size of the gap that will be filled. Gaps larger than this value will remain unchanged.
 
-    Returns:
-    numpy array: The modified array with small gaps filled with 1s.
+    Returns
+    -------
+    numpy-array
+        The modified array with small gaps filled.
 
-    Example:
+    Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([1, 1, 0, 0, 1, 0, 0, 0, 1])
-    >>> max_gap = 2
-    >>> fill_small_gaps_in_array(arr, max_gap)
+    >>> fill_small_gaps_in_array(arr.copy(), max_gap=2)
     array([1, 1, 1, 1, 1, 0, 0, 0, 1])
     """
     # Identify where the array changes from 1 to 0 and 0 to 1
@@ -432,4 +485,3 @@ def fill_small_gaps_in_array(arr, max_gap):
         arr[stops[idx]:starts[idx + 1]] = 1
 
     return arr
-
