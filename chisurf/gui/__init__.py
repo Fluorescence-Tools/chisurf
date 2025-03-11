@@ -25,14 +25,14 @@ class QTextEditLogger(logging.Handler):
             self,
             widget,
             mode='set',
-            log_string = "%(asctime)s - %(levelname)s - %(message)s"
+            log_string = "%(asctime)s - %(levelname)s - %(message)s",
+            level=logging.INFO
     ):
         super().__init__()
         self.widget = widget
         self.mode = mode
-        self.setFormatter(
-            logging.Formatter(log_string)
-        )
+        self.setFormatter(logging.Formatter(log_string))
+        self.setLevel(level=level)
 
     def emit(self, record):
         print("Logger emit", self.format(record))
@@ -43,29 +43,35 @@ class QTextEditLogger(logging.Handler):
             self.widget.appendPlainText(msg)
 
 
-def setup_status_bar_logging(window):
+
+def setup_logging_widgets(window):
+
     # Create logger for status bar
+    ##############################
     log_handler = QTextEditLogger(
         window.status_label,
         'set',
-        log_string = "%(message)s"
+        log_string = "%(message)s",
+        level = logging.INFO
     )
-    log_handler.setLevel(logging.INFO)
     window.status_log_handler = log_handler
+
+    log_level = chisurf.settings.cs_settings.get('log_level', logging.INFO)
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
-    logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(log_level)
+
+    ###########################
 
     # Create logger for text log field
-    log_handler = QTextEditLogger(window.plainTextEditLog, 'append')
-    log_handler.setLevel(logging.DEBUG)
-    window.status_log_handler = log_handler
+    ##################################
+    log_handler = QTextEditLogger(window.plainTextEditLog, 'append', level = logging.DEBUG)
     window.log_history_handler = log_handler
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
-    logging.getLogger().setLevel(logging.WARNING)
+    logging.getLogger().setLevel(log_level)
 
     # Example logging message
     logging.info("ChiSurf started.")
@@ -338,7 +344,7 @@ def setup_gui(
                 chisurf.__jupyter_address__  = line[start:end]
         chisurf.logging.info("Server found at %s, migrating monitoring to listener thread" % chisurf.__jupyter_address__)
     elif stage == "setup_logging":
-        setup_status_bar_logging(window)  # Attach logging to status bar
+        setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
         chisurf.logging.info("Looking for ipynb in home folder")
         populate_notebooks()
