@@ -210,6 +210,8 @@ class DetectorWizardPage(QWizardPage):
                 QMessageBox.critical(self, "Error", f"Failed to load JSON file: {e}")
 
     def load_data_into_tables(self, data):
+        # Disable updates to optimize performance
+        self.detectors_form.setUpdatesEnabled(False)
         try:
             windows_data = data.get('windows', {})
             detectors_data = data.get('detectors', {})
@@ -238,6 +240,8 @@ class DetectorWizardPage(QWizardPage):
             # Re-enable signals after the update
             self.windows_form.blockSignals(False)
             self.detectors_form.blockSignals(False)
+            # Re-enable updates once changes are complete
+            self.detectors_form.setUpdatesEnabled(True)
 
     def add_pie_window_from_data(self, window_name, start, end):
         # Add PIE window to the table based on data
