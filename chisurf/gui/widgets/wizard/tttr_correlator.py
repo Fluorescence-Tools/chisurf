@@ -29,7 +29,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
     def channel_a(self) -> list[int]:
         s: str = str(self.lineEdit.text())
         if s:
-            return [int(x) for x in s.split(',')]
+            return [int(x) for x in s.replace(',', ' ').split()]
         elif isinstance(self.tttr, tttrlib.TTTR):
             return list(map(int, self.tttr.get_used_routing_channels()))
         return []
@@ -38,7 +38,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
     def channel_b(self) -> list[int]:
         s: str = str(self.lineEdit_2.text())
         if s:
-            return [int(x) for x in s.split(',')]
+            return [int(x) for x in s.replace(',', ' ').split()]
         elif isinstance(self.tttr, tttrlib.TTTR):
             return list(map(int, self.tttr.get_used_routing_channels()))
         return []
@@ -271,14 +271,14 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                     n_microtime_channels = tttr.get_number_of_micro_time_channels()
                     mt = tttr.micro_times
                     correlator.set_microtimes(mt, mt, n_microtime_channels)
-                    x *= tttr.header.micro_time_resolution
+                    x /= (tttr.header.micro_time_resolution / 1000.0)
                 d = {
                     'x': x.tolist(),
                     'y': correlator.correlation.tolist(),
                     'correlation_settings': correlation_settings,
                     'analysis_folder': self.analysis_folder.as_posix(),
                     'chunk': i,
-                    'duration': dur,
+                    'duration': dur / 1000.0, # duration in seconds
                     'channel_a': {
                         'channels': ch1,
                         'microtime_range': self.microtime_range_a,
@@ -299,10 +299,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             QtWidgets.QApplication.processEvents()  # Keeps UI responsive
 
         progress.close()
+        self.is_correlated = True
         self.update_plots()
         self.save_correlations()
-        # Set flag to indicate correlation is done
-        self.is_correlated = True
 
     def open_sl5(self, filename: str) -> tttrlib.TTTR:
         chisurf.logging.log(0, 'WizardTTTRCorrelator::open_sl5:', filename)
