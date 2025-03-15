@@ -858,17 +858,36 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             """
             Callback to load *all* TTTR files after they're dropped or specified.
             Ensures that files with restricted extensions require explicit file type selection.
-            If such files are found and file type is 'Auto', files will not be loaded.
+            If a folder is dropped, all files with supported extensions (found directly in that folder)
+            are added.
             """
+            # Generate allowed extensions dynamically from tttrlib
+            allowed_extensions = {
+                f".{ext.lower()}" if not ext.startswith('.') else ext.lower()
+                for ext in tttrlib.TTTR.get_supported_container_names()
+            }
 
-            # List of restricted extensions requiring manual selection
-            RESTRICTED_EXTENSIONS = [".spc"]  # Extend as needed
+            # Expand directories: if an entry in tttr_filenames is a folder,
+            # replace it with all files (in that folder only) with allowed extensions.
+            expanded_files = []
+            for path_str in self.settings['tttr_filenames']:
+                p = pathlib.Path(path_str).resolve()
+                if p.is_dir():
+                    for child in p.iterdir():
+                        if child.is_file() and child.suffix.lower() in allowed_extensions:
+                            expanded_files.append(str(child.resolve()))
+                else:
+                    expanded_files.append(str(p))
+            self.settings['tttr_filenames'] = expanded_files
+
+            # List of restricted extensions requiring manual selection (if needed)
+            RESTRICTED_EXTENSIONS = [".spc"]  # Extend or modify as required
+
             requires_filetype_selection = False
             restricted_files = []
 
             for fn in self.settings['tttr_filenames']:
                 p = pathlib.Path(fn).resolve()
-                p_str = str(p)
                 file_extension = p.suffix.lower()
 
                 # Check if the file extension requires explicit selection
@@ -877,7 +896,6 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                         requires_filetype_selection = True
                         restricted_files.append(p.name)
 
-            # If a restricted file requires a file type selection, do not load any files
             if requires_filetype_selection:
                 QtWidgets.QMessageBox.warning(
                     self, "File Type Required",
@@ -888,7 +906,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 self.onClearFiles()
                 return  # Prevent loading any files
 
-            # Load only if no restricted files or file type was preselected
+            # Proceed with loading the files and showing progress
             total_files = len(self.settings['tttr_filenames'])
             progress_window = ProgressWindow(title="Loading Files", message="Processing files...",
                                              max_value=total_files, parent=self)
