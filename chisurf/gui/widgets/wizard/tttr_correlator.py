@@ -403,7 +403,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit_3, call=self.open_analysis_folder)
 
         # Create plots
-        self.pw_fcs = pg.plot()
+        self.pw_fcs = pg.PlotWidget()
         self.pw_fcs.resize(150, 150)
 
         self.plot_item_fcs = self.pw_fcs.getPlotItem()
