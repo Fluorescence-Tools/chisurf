@@ -171,13 +171,13 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit, call=self.open_correlation_folder)
 
         # Create plots
-        self.pw_fcs = pg.plot()
+        self.pw_fcs = pg.PlotWidget(parent=self, title='FCS')
         self.pw_fcs.resize(100, 150)
         self.plot_item_fcs = self.pw_fcs.getPlotItem()
         self.plot_item_fcs.setLogMode(True, False)
         self.horizontalLayout_3.addWidget(self.pw_fcs)
 
-        self.pw_fcs_mean = pg.plot()
+        self.pw_fcs_mean = pg.PlotWidget(parent=self, title='FCS Merged')
         self.pw_fcs_mean.resize(100, 150)
         self.plot_item_fcs_mean = self.pw_fcs_mean.getPlotItem()
         self.plot_item_fcs_mean.setLogMode(True, False)

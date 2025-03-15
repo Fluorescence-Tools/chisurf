@@ -935,7 +935,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self._dT_max = default_dT_max
 
         # Create & configure plots
-        self.pw_burst_histogram = pg.plot()
+        self.pw_burst_histogram = pg.PlotWidget(parent=self, title="Burst histogram")
         self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
         self.pw_burst_histogram.setLabel('left', 'Counts')
         self.pw_burst_histogram.setLabel('bottom', 'Burst size (Nbr. Photons)')
@@ -946,7 +946,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         pen2 = pg.mkPen(color_all, width=1, style=QtCore.Qt.SolidLine)
         pen1 = pg.mkPen(color_selected, width=1, style=QtCore.Qt.SolidLine)
 
-        self.pw_dT = pg.plot()
+        self.pw_dT = pg.PlotWidget(parent=self, title="Delta macro-time")
         self.pw_dT.setLabel('left', 'dT (ms)')
         self.pw_dT.setLabel('bottom', 'Photon Index')
         self.plot_item_dt = self.pw_dT.getPlotItem()
@@ -954,7 +954,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.plot_selected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_dT.resize(200, 40)
 
-        self.pw_mcs = pg.plot()
+        self.pw_mcs = pg.PlotWidget(parent=self, title="Count rate display")
         self.pw_mcs.setLabel('left', 'Intensity (kHz)')
         self.pw_mcs.setLabel('bottom', 'Time (s)')
         self.plot_item_mcs = self.pw_mcs.getPlotItem()
@@ -962,7 +962,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.plot_mcs_selected = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_mcs.resize(200, 80)
 
-        self.pw_decay = pg.plot()
+        self.pw_decay = pg.PlotWidget(parent=self, title="Microtime histogram")
         self.pw_decay.setLabel('left', 'Counts')
         self.pw_decay.setLabel('bottom', 'Microtime (ns)')
         self.plot_item_decay = self.pw_decay.getPlotItem()
@@ -970,7 +970,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.plot_decay_selected = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_decay.resize(200, 80)
 
-        self.pw_filter = pg.plot()
+        self.pw_filter = pg.PlotWidget(parent=self, title="Filter/selection")
         self.pw_filter.setLabel('left', 'Selected (1) / Unselected (0)')
         self.pw_filter.setLabel('bottom', 'Photon Index')
         self.pw_filter.setXLink(self.pw_dT)

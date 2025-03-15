@@ -873,13 +873,13 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         pen1 = pg.mkPen(color_selected, width=1, style=QtCore.Qt.SolidLine)
 
         # Plot widget: Burst size histogram
-        self.pw_burst_histogram = pg.plot()
+        self.pw_burst_histogram = pg.PlotWidget(parent=self, title='Burst size distribution')
         self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
         self.pw_burst_histogram.resize(100, 80)
         self.pw_burst_histogram.setVisible(show_burst_histogram)
 
         # Plot widget: Delta macro time plot
-        self.pw_dT = pg.plot()
+        self.pw_dT = pg.PlotWidget(parent=self, title='Delta macrotime')
         self.plot_item_dt = self.pw_dT.getPlotItem()
         self.plot_unselected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_selected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen1)
@@ -887,7 +887,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.pw_dT.setVisible(show_dT)
 
         # Plot widget: MCS trace
-        self.pw_mcs = pg.plot()
+        self.pw_mcs = pg.PlotWidget(parent=self, title='Count-rate display')
         self.plot_item_mcs = self.pw_mcs.getPlotItem()
         # Set axis labels for MCS trace plot
         self.plot_item_mcs.setLabel('bottom', 'Time (s)')
@@ -898,7 +898,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.pw_mcs.setVisible(show_mcs)
 
         # Plot widget: Fluorescence decay
-        self.pw_decay = pg.plot()
+        self.pw_decay = pg.PlotWidget(parent=self, title='Microtime histogram')
         self.plot_item_decay = self.pw_decay.getPlotItem()
         # Set axis labels for decay plot
         self.plot_item_decay.setLabel('bottom', 'Time (ns)')
@@ -909,7 +909,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.pw_decay.setVisible(show_decay)
 
         # Plot widget: Filtered photons
-        self.pw_filter = pg.plot()
+        self.pw_filter = pg.PlotWidget(parent=self, title='Filered/Photons')
         self.pw_filter.setXLink(self.pw_dT)
         self.pw_dT.setMouseEnabled(x=False, y=False)
         self.pw_filter.setMouseEnabled(x=False, y=False)
