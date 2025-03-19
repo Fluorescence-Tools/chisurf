@@ -2,7 +2,7 @@
 # notebook_path: /home/thomas # can be used to define a custom NB path
 n_threads: 4
 verbose: false
-log_level: 10 # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
+log_level: 20 # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
 fitting_message: true
 enable_experimental: false
 hidden_execute: true
