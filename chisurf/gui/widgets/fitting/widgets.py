@@ -294,11 +294,15 @@ class FittingControllerWidget(Controller):
     def onErrorEstimate(self):
         chisurf.logging.info(f"Sampling analysis: {self.fit.name}")
         filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
-        kw = chisurf.settings.cs_settings['optimization']['sampling']
-        kw['n_runs'] = self.n_runs
-        kw['steps'] = self.n_steps
-        chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
-        chisurf.logging.info("Sampling done!")
+        if filename is None:
+            chisurf.logging.info("Sampling canceled!")
+            return
+        else:
+            kw = chisurf.settings.cs_settings['optimization']['sampling']
+            kw['n_runs'] = self.n_runs
+            kw['steps'] = self.n_steps
+            chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
+            chisurf.logging.info("Sampling done!")
 
     def onRunFit(self):
         chisurf.logging.info(f"Please wait fitting: {self.fit.name}")

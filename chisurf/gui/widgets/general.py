@@ -242,29 +242,34 @@ def save_file(
         file_type: str = 'All files (*.*)',
         working_path: pathlib.Path = None
 ) -> str:
-    """Same as open see above a file within a working path. If no path is
-    specified the last path is used. After using this function the current
-    working path of the running program (ChiSurf) is updated according to the
-    folder of the opened
-    file.
+    """Opens a file save dialog. If cancel is clicked, returns None.
 
-    :param working_path:
-    :param description:
-    :param file_type:
-    :return:
+    Updates the current working path of the program (ChiSurf) based on the folder
+    of the saved file.
+
+    :param description: Dialog title or description.
+    :param file_type: File filter to display.
+    :param working_path: Base path to open the dialog in.
+    :return: The selected filename, or None if cancel is clicked.
     """
     if isinstance(working_path, str):
         working_path = chisurf.working_path / working_path
     if working_path is None:
         working_path = chisurf.working_path
+
     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            None,
-                caption=description,
-                dir=str(working_path.absolute()),
-                filter=file_type
+        None,
+        caption=description,
+        dir=str(working_path.absolute()),
+        filter=file_type
     )
-    # Move working path to path of file
-    chisurf.working_path = pathlib.Path(filename).home()
+
+    # If cancel is clicked, filename will be an empty string.
+    if not filename:
+        return None
+
+    # Update the working path to the directory containing the saved file.
+    chisurf.working_path = pathlib.Path(filename).parent
     return filename
 
 
