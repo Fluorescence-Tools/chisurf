@@ -108,7 +108,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             model_name = self.model_name
         ivs = self.models[model_name]['initial']
         for key in ivs.keys():
-            self.model.parameter_dict[key].value = ivs[key]
+            self.model.parameter_dict[key].value = float(ivs[key])
 
     def onUpdateFunc(self):
         fit_idx = chisurf.fitting.find_fit_idx_of_model(model=self.model)
