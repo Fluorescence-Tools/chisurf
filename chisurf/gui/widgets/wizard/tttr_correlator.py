@@ -260,7 +260,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             if len(t) == 0:
                 chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to missing macro_times.")
                 continue
-            dur = t[-1] * dT  # seconds
+            dur = (t[-1] - t[0]) * dT  # seconds
 
             if sw1 > 0.0 and sw2 > 0.0:
                 correlator = tttrlib.Correlator(**correlation_settings)
