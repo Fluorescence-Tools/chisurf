@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>374</width>
+    <width>338</width>
     <height>98</height>
    </rect>
   </property>
@@ -36,38 +36,31 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="5">
+   <item row="0" column="6">
     <widget class="QToolButton" name="toolButton">
      <property name="text">
       <string>...</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
+   <item row="1" column="6">
+    <widget class="QToolButton" name="toolButton_2">
      <property name="text">
-      <string>File</string>
+      <string>...</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="4">
-    <widget class="QComboBox" name="comboBox"/>
-   </item>
-   <item row="1" column="1" colspan="4">
-    <widget class="QLineEdit" name="lineEdit_2">
-     <property name="placeholderText">
-      <string>Output folder name</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_3">
+   <item row="3" column="5" colspan="2">
+    <widget class="QCheckBox" name="checkBox">
      <property name="text">
-      <string>Photons per file</string>
+      <string>Keep original</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="2" column="1" colspan="5">
+   <item row="2" column="1" colspan="6">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="spacing">
       <number>0</number>
@@ -106,6 +99,20 @@
      </item>
     </layout>
    </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Photons per file</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Type</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="1">
     <widget class="QLineEdit" name="lineEdit">
      <property name="placeholderText">
@@ -120,17 +127,17 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="5">
-    <widget class="QToolButton" name="toolButton_2">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
      <property name="text">
-      <string>...</string>
+      <string>File</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="3">
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>Type</string>
+   <item row="1" column="1" colspan="5">
+    <widget class="QLineEdit" name="lineEdit_2">
+     <property name="placeholderText">
+      <string>Output folder name</string>
      </property>
     </widget>
    </item>
@@ -141,15 +148,21 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="4" colspan="2">
-    <widget class="QCheckBox" name="checkBox">
+   <item row="3" column="4">
+    <widget class="QCheckBox" name="checkBox_2">
+     <property name="toolTip">
+      <string>Reset the macro time of the splitted files. When enabeled macro times of files begin at zero.</string>
+     </property>
      <property name="text">
-      <string>Keep original</string>
+      <string>RST MT</string>
      </property>
      <property name="checked">
       <bool>true</bool>
      </property>
     </widget>
+   </item>
+   <item row="0" column="4" colspan="2">
+    <widget class="QComboBox" name="comboBox"/>
    </item>
   </layout>
  </widget>
