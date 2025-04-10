@@ -459,7 +459,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.actionRemove_Lifetime.triggered.connect(self.wizardPageComponents.completeChanged.emit)
         self.actionRemove_Rotation.triggered.connect(self.wizardPageComponents.completeChanged.emit)
 
-    @chisurf.gui.decorators.init_with_ui("anisotropy/wizard.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("tr_anisotropy/wizard.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         self.irf_bg_range_plot = pg.PlotWidget()
         self.region = pg.LinearRegionItem()
