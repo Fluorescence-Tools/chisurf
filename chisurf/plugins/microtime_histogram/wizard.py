@@ -32,12 +32,13 @@ class FileListWidget(QtWidgets.QListWidget):
             event.ignore()
 
     def dropEvent(self, event: QtGui.QDropEvent):
-        file_type = self.parent.tttr_filetype
+        # Clear the list when new files are dropped
+        self.clear()
 
+        file_type = self.parent.tttr_filetype
         if event.mimeData().hasUrls():
             file_paths = []
             special_files = []
-
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
                 if Path(file_path).is_file():
@@ -45,29 +46,23 @@ class FileListWidget(QtWidgets.QListWidget):
                         suffix = Path(file_path).stem.rsplit('.', 1)[0]
                     else:
                         suffix = Path(file_path).suffix.lower()
-
                     if suffix.lower() in SPECIAL_FILETYPES and file_type == "Auto":
                         special_files.append(file_path)
                     else:
                         file_paths.append(file_path)
-
             # Sort files lexically before adding them
             file_paths.sort()
-
             # Add sorted files
             for file_path in file_paths:
                 self.add_file(file_path)
-
             if special_files:
                 QtWidgets.QMessageBox.warning(
                     self, "File Type Requires Selection",
                     "The following files require manual file type selection:\n" + "\n".join(special_files)
                 )
-
             # Call the callback function after dropping files
             if self.file_added_callback:
                 self.file_added_callback()
-
             event.acceptProposedAction()
         else:
             event.ignore()
@@ -314,7 +309,10 @@ class MicrotimeHistogram(QtWidgets.QWidget):
                 if self.cumulative_ps is None:
                     self.cumulative_ps = np.array(ps)
                 else:
-                    self.cumulative_ps += np.array(ps)
+                    try:
+                        self.cumulative_ps += np.array(ps)
+                    except ValueError:
+                        chisurf.logging.error(f"Failed to add cumulative histogram for {file_stem}")
 
         if self.cumulative_ps is not None:
             x = np.arange(len(self.cumulative_ps))
