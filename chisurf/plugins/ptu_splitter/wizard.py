@@ -102,6 +102,9 @@ class PTUSplitter(QtWidgets.QWidget):
         Loads the specified file into the TTTR object.
         Also updates lineEdit (input path) and lineEdit_2 (default output folder).
         """
+        # Reset progress bar on file load
+        self.progressBar.setValue(0)
+
         p = Path(file_path)
         if not p.is_file():
             QtWidgets.QMessageBox.warning(self, "Invalid File",
@@ -194,13 +197,15 @@ class PTUSplitter(QtWidgets.QWidget):
 
         # Create sub-folder "filename_stem_chunkSize"
         input_file = self.tttr_input_filename
-        output_subfolder = out_folder / f"{input_file.stem}_{chunk_size // 1000}k"
+        output_subfolder = out_folder / f"{input_file.stem}"
         output_subfolder.mkdir(parents=True, exist_ok=True)
 
         # Retrieve header
         header = t.header
 
         # Loop over each chunk (including remainder if present)
+        rst_mt = self.reset_macro_times
+        chisurf.logging.info(f"Reset macro times: {rst_mt}")
         for i in range(total_files):
             # progress 0..100
             progress = int((i / total_files) * 100)
@@ -213,9 +218,20 @@ class PTUSplitter(QtWidgets.QWidget):
                 stop = total_photons  # leftover chunk
 
             c = t[start:stop]
+            if rst_mt:
+                n = tttrlib.TTTR()
+                macro_times = c.macro_times
+                micro_times = c.micro_times
+                routing_channels = c.routing_channels
+                event_types = c.event_types
+                mt0 = macro_times[0]
+                macro_times -= mt0
+                n.append_events(macro_times, micro_times, routing_channels, event_types, False, mt0)
+            else:
+                n = c
             out_name = f"{input_file.stem}_{i:05d}.ptu"
             fn = output_subfolder / out_name
-            c.write(fn.as_posix(), header)
+            n.write(fn.as_posix(), header)
 
         # Finalize progress
         self.progressBar.setValue(100)
@@ -295,6 +311,10 @@ class PTUSplitter(QtWidgets.QWidget):
                 print(f"Failed to create folder '{p}': {e}")
                 return None
         return p
+
+    @property
+    def reset_macro_times(self) -> bool:
+        return self.checkBox_2.isChecked()
 
 
 
