@@ -18,7 +18,7 @@ class Parameter(chisurf.base.Base):
 
     @staticmethod
     def check_recursive_link(current, target):
-        if current == target:
+        if id(current) == id(target):
             return True
         if current.link is not None:
             return Parameter.check_recursive_link(current.link, target)
