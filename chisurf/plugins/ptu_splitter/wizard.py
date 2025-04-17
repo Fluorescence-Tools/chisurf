@@ -224,9 +224,8 @@ class PTUSplitter(QtWidgets.QWidget):
                 micro_times = c.micro_times
                 routing_channels = c.routing_channels
                 event_types = c.event_types
-                mt0 = macro_times[0]
-                macro_times -= mt0
-                n.append_events(macro_times, micro_times, routing_channels, event_types, False, mt0)
+                mt0 = int(-1 * macro_times[0])
+                n.append_events(macro_times, micro_times, routing_channels, event_types, True, mt0)
             else:
                 n = c
             out_name = f"{input_file.stem}_{i:05d}.ptu"
