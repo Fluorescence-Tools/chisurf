@@ -1,1 +1,1 @@
-name = "Burst Variance Analysis"
+name = "Burst:Variance Analysis"

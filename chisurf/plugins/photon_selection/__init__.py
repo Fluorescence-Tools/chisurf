@@ -1,1 +1,1 @@
-name = "Photon/Burst selection"
+name = "Selection:Photon/Burst"

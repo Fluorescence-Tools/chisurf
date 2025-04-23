@@ -1,1 +1,1 @@
-name = "PTU Splitter"
+name = "PTU:Splitter"
