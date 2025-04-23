@@ -8,6 +8,18 @@ import chisurf.settings
 
 VERBOSE = False
 
+# Unified mapping: container name → (file‐extension stem, default record type id)
+_CONTAINER_INFO = {
+    'PTU':              ('ptu', 4,  0),   # PQ_PTU_CONTAINER → PQ_RECORD_TYPE_HHT3v2
+    'HT3':              ('ht3', 4,  1),   # PQ_HT3_CONTAINER → PQ_RECORD_TYPE_HHT3v2
+    'SPC-130':          ('spc', 7,  2),   # BH_SPC130_CONTAINER → BH_RECORD_TYPE_SPC130
+    'SPC-600_256':      ('spc', 8,  3),   # BH_SPC600_256_CONTAINER → BH_RECORD_TYPE_SPC600_256
+    'SPC-600_4096':     ('spc', 9,  4),   # BH_SPC600_4096_CONTAINER → BH_RECORD_TYPE_SPC600_4096
+    'PHOTON-HDF5':      ('hdf', 4,  5),   # PHOTON_HDF_CONTAINER → PQ_RECORD_TYPE_PHT3
+    'CZ-RAW':           ('raw', 10, 6),  # CZ_CONFOCOR3_CONTAINER → CZ_RECORD_TYPE_CONFOCOR3
+    'SM':               ('sm',  11, 7),  # SM_CONTAINER → SM_RECORD_TYPE
+}
+
 def enable_file_drop_for_open(line_edit: QtWidgets.QLineEdit, open_func):
     """
     Enable dropping a *single file* onto a QLineEdit.
@@ -70,7 +82,6 @@ def enable_folder_drop(line_edit: QtWidgets.QLineEdit):
     line_edit.dropEvent = dropEvent
 
 
-
 class PTUSplitter(QtWidgets.QWidget):
 
     @chisurf.gui.decorators.init_with_ui("ptu_splitter/wizard.ui",
@@ -85,11 +96,17 @@ class PTUSplitter(QtWidgets.QWidget):
 
         # Fill combo box with supported types + "Auto"
         self.populate_supported_types()
+        # Fill comboBox_2 with supported output container types (default PTU)
+        self.populate_output_container_types()
 
         # Connect your UI elements (change names if different in .ui)
         self.toolButton.clicked.connect(self.browse_and_open_input_file)
         self.toolButton_2.clicked.connect(self.browse_output_folder)
         self.pushButton.clicked.connect(self.split_file)
+
+        # whenever the user forces a different input type,
+        # update the binning UI to match SPC defaults or re‐enable
+        self.comboBox_2.currentIndexChanged.connect(self._update_binning_ui)
 
         # Initialize progress bar to 0
         self.progressBar.setValue(0)
@@ -139,13 +156,11 @@ class PTUSplitter(QtWidgets.QWidget):
         """File dialog for selecting a PTU file, then open it."""
         dialog = QtWidgets.QFileDialog(self, "Select PTU File")
         dialog.setFileMode(QtWidgets.QFileDialog.ExistingFile)
-        # Optionally: dialog.setNameFilter("PTU Files (*.ptu)")
 
         if dialog.exec_():
             selected_files = dialog.selectedFiles()
             if selected_files:
                 self._open_input_file(selected_files[0])
-
 
     def browse_output_folder(self):
         """Open a File Dialog to select an output folder."""
@@ -156,104 +171,157 @@ class PTUSplitter(QtWidgets.QWidget):
             if selected_dirs:
                 self.lineEdit_2.setText(selected_dirs[0])
 
+    def populate_supported_types(self):
+        """Populates self.comboBox (input detection) …"""
+        self.comboBox.clear()
+        self.comboBox.insertItem(0, "Auto")
+        self.comboBox.insertItems(1, tttrlib.TTTR.get_supported_container_names())
+
+    def populate_output_container_types(self):
+        """Populate self.comboBox_2 with all supported container names, default PTU."""
+        names = tttrlib.TTTR.get_supported_container_names()
+        self.comboBox_2.clear()
+        self.comboBox_2.addItems(names)
+        # select PTU if present
+        if "PTU" in names:
+            self.comboBox_2.setCurrentText("PTU")
+
+    def _update_binning_ui(self):
+        """
+        Whenever a new file is loaded, if it’s an SPC file
+        we force the comboBox_3 to at least 8 (and visually set it).
+        Otherwise we re‑enable the box so the user can pick freely.
+        """
+        spc_types = {'SPC-130', 'SPC-600_256', 'SPC-600_4096'}
+        output_type = self.output_container
+
+        default_bin = 8 if output_type in spc_types else None
+
+        if default_bin is not None:
+            # set to 8 if below, then disable to show it’s fixed
+            try:
+                current = int(self.comboBox_3.currentText())
+            except ValueError:
+                current = 0
+            if current < default_bin:
+                self.comboBox_3.setCurrentText(str(default_bin))
+            self.comboBox_3.setEnabled(False)
+        else:
+            # non‑SPC: allow full user control
+            self.comboBox_3.setEnabled(True)
+
     def split_file(self):
         """
-        Split the loaded TTTR file into multiple .ptu files.
-        Each file will contain `photons_per_file` photons.
-        Updates self.progressBar and disables user input during splitting.
+        Either split into multiple files or write all photons into a single file,
+        based on self.split_files.
         """
-        # Ensure we have TTTR data:
         if self._tttr is None:
-            QtWidgets.QMessageBox.warning(
-                self, "No Data Loaded",
-                "Please choose and load a PTU file before splitting."
-            )
+            QtWidgets.QMessageBox.warning(self, "No Data Loaded",
+                                          "Please load a TTTR file first.")
             return
-
-        # Ensure valid output folder
-        out_folder = self.output_folder
-        if out_folder is None:
-            QtWidgets.QMessageBox.warning(
-                self, "Invalid Output Folder",
-                "Please specify a valid output folder."
-            )
-            return
-
-        # Disable UI elements while splitting
-        self._set_user_input_enabled(False)
 
         t = self._tttr
-        total_photons = len(t)
-        chunk_size = self.photons_per_file
-
-        if total_photons == 0:
+        total = len(t)
+        if total == 0:
             QtWidgets.QMessageBox.warning(self, "Empty File", "No photons to split!")
-            self._set_user_input_enabled(True)
             return
 
-        n_full_chunks = total_photons // chunk_size
-        remainder = total_photons % chunk_size
-        total_files = n_full_chunks + (1 if remainder else 0)
+        out_folder = self.output_folder
+        if out_folder is None:
+            QtWidgets.QMessageBox.warning(self, "Invalid Output Folder",
+                                          "Please specify a valid output folder.")
+            return
 
-        # Create sub-folder "filename_stem_chunkSize"
-        input_file = self.tttr_input_filename
-        output_subfolder = out_folder / f"{input_file.stem}"
-        output_subfolder.mkdir(parents=True, exist_ok=True)
+        self._set_user_input_enabled(False)
 
-        # Retrieve header
-        header = t.header
+        # build ranges
+        if self.split_files:
+            chunk = self.photons_per_file
+            full, rem = divmod(total, chunk)
+            n = full + (1 if rem else 0)
+            ranges = [(i * chunk, min((i + 1) * chunk, total)) for i in range(n)]
+        else:
+            ranges = [(0, total)]
+            n = 1
 
-        # Loop over each chunk (including remainder if present)
-        rst_mt = self.reset_macro_times
-        chisurf.logging.info(f"Reset macro times: {rst_mt}")
-        for i in range(total_files):
-            # progress 0..100
-            progress = int((i / total_files) * 100)
-            self.progressBar.setValue(progress)
+        in_path = self.tttr_input_filename
+        subfolder = out_folder / in_path.stem
+        subfolder.mkdir(parents=True, exist_ok=True)
+
+        # prepare header
+        input_header = t.header
+        names = tttrlib.TTTR.get_supported_container_names()
+        out_name = self.output_container
+        out_idx = names.index(out_name)
+        ext, rec, cont = _CONTAINER_INFO[out_name]
+
+        if input_header.tttr_container_type == out_idx:
+            header = input_header
+            print("Split")
+        else:
+            header = input_header  # reuse the existing header object
+            header.tttr_container_type = cont
+            header.tttr_record_type = rec
+
+            if out_name == "PTU":
+                # PTU via HydraHarp wants the special tag group 0x00010304
+                header.set_tag("TTResultFormat_TTTRRecType", 0x00010304, 268435464)
+                header.set_tag("TTResultFormat_BitsPerRecord", 32, 268435464)
+                header.set_tag("MeasDesc_RecordType", rec, 268435464)
+            else:
+                # default behaviour for other containers
+                header.set_tag("TTResultFormat_TTTRRecType", rec)
+                header.set_tag("MeasDesc_RecordType", rec)
+
+            print(f"Transcode {in_path} > {self.tttr_type} -> {out_name}")
+            print(f"out_name: {out_name}")
+            print(f"out_idx:  {out_idx}")
+            print(f"ext:      {ext}")
+            print(f"rec:      {rec}")
+            print(f"cont:     {cont}")
+
+        # write each range
+        for i, (start, stop) in enumerate(ranges):
+            self.progressBar.setValue(int((i / n) * 100))
             QtWidgets.QApplication.processEvents()
 
-            start = i * chunk_size
-            stop = start + chunk_size
-            if stop > total_photons:
-                stop = total_photons  # leftover chunk
+            chunk_tttr = t[start:stop]
+            if self.reset_macro_times or self.tttr_type != out_name:
+                mt, µt = chunk_tttr.macro_times, chunk_tttr.micro_times
+                rc, et = chunk_tttr.routing_channels, chunk_tttr.event_types
+                if self.reset_macro_times:
+                    mt0 = int(-1 * mt[0])
+                else:
+                    mt0 = 0
+                new_tttr = tttrlib.TTTR()
+                new_tttr.append_events(mt, µt, rc, et, True, mt0)
+                chunk_tttr = new_tttr
 
-            c = t[start:stop]
-            if rst_mt:
-                n = tttrlib.TTTR()
-                macro_times = c.macro_times
-                micro_times = c.micro_times
-                routing_channels = c.routing_channels
-                event_types = c.event_types
-                mt0 = int(-1 * macro_times[0])
-                n.append_events(macro_times, micro_times, routing_channels, event_types, True, mt0)
+            if self.split_files:
+                fname = f"{in_path.stem}_{i:05d}.{ext}"
             else:
-                n = c
-            out_name = f"{input_file.stem}_{i:05d}.ptu"
-            fn = output_subfolder / out_name
-            n.write(fn.as_posix(), header)
+                fname = f"{in_path.stem}_all.{ext}"
 
-        # Finalize progress
+            out_fp = subfolder / fname
+            chunk_tttr.write(str(out_fp), header)
+
         self.progressBar.setValue(100)
-
         if VERBOSE:
+            mode = "multiple" if self.split_files else "one"
             QtWidgets.QMessageBox.information(
-                self,
-                "Splitting Complete",
-                f"Created {total_files} files in:\n{output_subfolder}"
+                self, "Done",
+                f"Wrote {mode} file(s) into:\n{subfolder}"
             )
 
         if not self.keep_original:
-            input_file.unlink()
+            in_path.unlink()
 
-        # Re-enable UI elements
         self._set_user_input_enabled(True)
 
     def _set_user_input_enabled(self, enabled: bool):
         """
         Enable/Disable the user input widgets to prevent interaction during splitting.
         """
-        pass
-        # Adjust to your specific widget names:
         self.lineEdit.setEnabled(enabled)
         self.lineEdit_2.setEnabled(enabled)
         self.comboBox.setEnabled(enabled)
@@ -302,7 +370,6 @@ class PTUSplitter(QtWidgets.QWidget):
         if not folder_str:
             return None
         p = Path(folder_str)
-        # If the user typed a new folder path, we can decide to create it:
         if not p.exists():
             try:
                 p.mkdir(parents=True, exist_ok=True)
@@ -315,6 +382,44 @@ class PTUSplitter(QtWidgets.QWidget):
     def reset_macro_times(self) -> bool:
         return self.checkBox_2.isChecked()
 
+    @property
+    def output_container(self) -> str:
+        """The desired output container type, e.g. 'PTU', 'HT3', …"""
+        return self.comboBox_2.currentText()
+
+    @property
+    def micro_time_binning(self) -> int:
+        """
+        Returns the integer binning factor for micro‑times:
+          • Default is 8 for any SPC container (SPC‑130, SPC‑600_256, SPC‑600_4096), 1 otherwise.
+          • If the user’s choice in comboBox_3 is larger than that default, use the user’s value.
+        """
+        spc_types = {'SPC-130', 'SPC-600_256', 'SPC-600_4096'}
+        default_bin = 1
+        try:
+            names = tttrlib.TTTR.get_supported_container_names()
+            idx = self._tttr.header.tttr_container_type
+            container = names[idx]
+            if container in spc_types:
+                default_bin = 8
+        except Exception:
+            if self.tttr_type in spc_types:
+                default_bin = 8
+
+        try:
+            user_bin = int(self.comboBox_3.currentText())
+        except (ValueError, TypeError):
+            user_bin = default_bin
+
+        return max(default_bin, user_bin)
+
+    @property
+    def split_files(self) -> bool:
+        """
+        If True (checkBox_3 checked), split into chunks.
+        If False, write all photons into a single file.
+        """
+        return bool(self.checkBox_3.isChecked())
 
 
 if __name__ == "plugin":
