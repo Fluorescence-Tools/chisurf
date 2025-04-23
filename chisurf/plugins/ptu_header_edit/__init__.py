@@ -1,1 +1,1 @@
-name = "PTU Header editor"
+name = "PTU:Header editor"

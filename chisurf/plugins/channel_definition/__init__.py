@@ -1,1 +1,1 @@
-name = "Channel Definition"
+name = "Setup:Channel Definition"

@@ -232,6 +232,9 @@ def setup_gui(
     def populate_plugins():
         plugin_menu = window.menuBar.addMenu('Plugins')
         plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+        # Dictionary to store submenus
+        submenus = {}
+
         for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
             module_path = "chisurf.plugins." + module_name
             module = importlib.import_module(str(module_path))
@@ -240,14 +243,31 @@ def setup_gui(
             except AttributeError as e:
                 print(f"Failed to find plugin name: {e}")
                 name = module_name
+
             p = partial(
                 window.onRunMacro, plugin_path / module_name / "wizard.py",
                 executor='exec',
                 globals={'__name__': 'plugin'}
             )
-            plugin_action = QtWidgets.QAction(f"{name}", window)
-            plugin_action.triggered.connect(p)
-            plugin_menu.addAction(plugin_action)
+
+            # Check if the name contains a colon to determine if it should go in a submenu
+            if ":" in name:
+                # Split the name into submenu name and plugin name
+                submenu_name, plugin_name = name.split(":", 1)
+
+                # Create submenu if it doesn't exist
+                if submenu_name not in submenus:
+                    submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
+
+                # Add the plugin to the submenu
+                plugin_action = QtWidgets.QAction(f"{plugin_name.strip()}", window)
+                plugin_action.triggered.connect(p)
+                submenus[submenu_name].addAction(plugin_action)
+            else:
+                # Add the plugin directly to the main menu
+                plugin_action = QtWidgets.QAction(f"{name}", window)
+                plugin_action.triggered.connect(p)
+                plugin_menu.addAction(plugin_action)
 
     def populate_notebooks():
         notebook_menu = window.menuBar.addMenu('Notebooks')

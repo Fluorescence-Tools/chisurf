@@ -1,1 +1,1 @@
-name = "FCS-Correlator"
+name = "FCS:Correlator"

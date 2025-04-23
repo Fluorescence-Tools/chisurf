@@ -1,1 +1,1 @@
-name = "Global view"
+name = "View:Global"

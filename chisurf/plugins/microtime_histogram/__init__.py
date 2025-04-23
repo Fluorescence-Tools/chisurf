@@ -1,1 +1,1 @@
-name = "Microtime Histogram"
+name = "Histogram:Microtime"
