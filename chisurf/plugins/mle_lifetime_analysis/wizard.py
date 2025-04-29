@@ -828,13 +828,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         # get the list of photon‐indices for *all* bursts in this file
         indices = self.get_burst_indices_for_current_file()
-        print('Indexes:', indices)
         if not indices:
             print('No indices found')
             return
         indices = np.array(indices)
-        print('Indices:', indices.shape)
-        print('Indexes:', indices)
 
         # slice the TTTR down to just burst photons
         burst_tttr = tttr[indices]
@@ -847,7 +844,6 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             mt_bin,
             normalize_counts=-1
         )
-        print('jordis:', jordis)
 
         return jordis
 
