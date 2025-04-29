@@ -161,7 +161,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         suren_column = np.zeros_like(correlation['x'])
         suren_column[0] = correlation['duration']
         suren_column[1] = correlation['count_rate']
-        c = np.vstack([correlation['x'] * 1000.0, correlation['y'], suren_column, correlation['ey']])
+        c = np.vstack([correlation['x'], correlation['y'], suren_column, correlation['ey']])
         np.savetxt(filename.as_posix(), c.T, delimiter='\t')
 
     def onRemoveRow(self):
