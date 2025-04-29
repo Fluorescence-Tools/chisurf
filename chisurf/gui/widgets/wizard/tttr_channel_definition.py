@@ -223,7 +223,6 @@ class DetectorWizardPage(QWizardPage):
             # Load PIE-Windows
             self.windows_dict.clear()
             self.windows_form.setRowCount(0)
-            print(windows_data)
             for window_name, (start, end) in windows_data.items():
                 self.add_pie_window_from_data(window_name, start, end)
 
@@ -392,7 +391,6 @@ class DetectorWizardPage(QWizardPage):
 
     @property
     def detectors(self):
-        print('self.detectors_dict:', self.detectors_dict)
         return {
             name: {
                 "chs": list(map(int, self.detectors_dict[name][0].text().split(','))),
@@ -524,15 +522,15 @@ windows = {
 
 detectors = {
     "green": {
-        "chs": [0, 8],
+        "chs": [8, 0],
         "micro_time_ranges": [(0, 4095)]
     },
     "red": {
-        "chs": [1, 9],
+        "chs": [9, 1],
         "micro_time_ranges": [(0, 2048)]
     },
     "yellow": {
-        "chs": [1, 9],
+        "chs": [9, 1],
         "micro_time_ranges": [(2048, 4095)]
     },
 }
