@@ -250,12 +250,16 @@ class PTUSplitter(QtWidgets.QWidget):
 
         # prepare header
         input_header = t.header
-        names = tttrlib.TTTR.get_supported_container_names()
         out_name = self.output_container
-        out_idx = names.index(out_name)
+        tttr_type_id_output = _CONTAINER_INFO[out_name][2]
+        tttr_type_id_input = self.input_tttr_type_id
         ext, rec, cont = _CONTAINER_INFO[out_name]
 
-        if input_header.tttr_container_type == out_idx:
+        print(f"Input file: {self.tttr_input_filename}")
+        print(f"Input file type: {tttr_type_id_input}")
+        print(f"Output file type: {tttr_type_id_output}")
+
+        if tttr_type_id_input == tttr_type_id_output:
             header = input_header
             print("Split")
         else:
@@ -275,7 +279,7 @@ class PTUSplitter(QtWidgets.QWidget):
 
             print(f"Transcode {in_path} > {self.tttr_type} -> {out_name}")
             print(f"out_name: {out_name}")
-            print(f"out_idx:  {out_idx}")
+            print(f"out_idx:  {tttr_type_id_output}")
             print(f"ext:      {ext}")
             print(f"rec:      {rec}")
             print(f"cont:     {cont}")
@@ -350,6 +354,14 @@ class PTUSplitter(QtWidgets.QWidget):
         """
         tp = self.comboBox.currentText()
         return None if tp == "Auto" else tp
+
+    @property
+    def input_tttr_type_id(self) -> int:
+        if self.tttr_type is None:
+            r = tttrlib.inferTTTRFileType(self.tttr_input_filename.as_posix())
+        else:
+            r = self.comboBox.currentIndex() - 1
+        return r
 
     @property
     def tttr_input_filename(self) -> Path | None:
