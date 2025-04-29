@@ -69,7 +69,7 @@ def write_bv4_analysis(df: pd.DataFrame, analysis_folder: str = "analysis", prog
         mini_df = group[['Proximity Ratio Mean', 'Proximity Ratio Std']].copy()
         n = len(mini_df)
         columns_list = list(mini_df.columns) + [""]
-        new_df = pd.DataFrame(np.zeros((2 * n, len(columns_list))), columns=columns_list)
+        new_df = pd.DataFrame(np.zeros((2 * n + 1, len(columns_list))), columns=columns_list)
         new_df[""] = ""
         new_df.loc[1::2, mini_df.columns] = mini_df.values
 
