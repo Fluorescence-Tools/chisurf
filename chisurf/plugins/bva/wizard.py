@@ -109,9 +109,12 @@ def read_burst_analysis(
         frames = []
         for fn in sorted(path.glob('*')):
             with open(fn) as f:
-                t = f.read().splitlines()  # faster than readlines() + rstrip
-                h = t[0].split('\t')[:-1]
-                d = [line.split('\t') for line in t[2::row_stride]]
+                t = f.read().splitlines()
+                # build header (drop trailing empty field)
+                h = t[0].rstrip('\t').split('\t')
+                # build rows, stripping any trailing tabs
+                d = [line.rstrip('\t').split('\t') for line in t[2::row_stride]]
+                # now each row has exactly len(h) entries
                 frames.append(pd.DataFrame(d, columns=h))
         dfs.append(pd.concat(frames, ignore_index=True))
     df = pd.concat(dfs, axis=1)
@@ -604,7 +607,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("smFRET BVA Analysis")
-        self.resize(900, 800)
+        self.resize(900, 600)
         self.data_folder = None
         self.analysis_folder = None
         self.file_type = DEFAULT_FILE_TYPE
