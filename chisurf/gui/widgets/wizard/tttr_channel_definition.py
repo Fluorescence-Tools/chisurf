@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
     QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton
 )
-
+from PyQt5.QtCore import pyqtSignal
 
 help_text = """You can either load an existing detector Pulsed-Interleaved Excitation (PIE) 
 window definition by clicking on the '...' button to define channels, or define your own PIE 
@@ -50,6 +50,9 @@ class JsonEditorDialog(QDialog):
 
 
 class DetectorWizardPage(QWizardPage):
+
+    # signal to let the outside world know that .detectors has changed
+    detectorsChanged = pyqtSignal()
 
     def __init__(self, json_file=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -210,6 +213,10 @@ class DetectorWizardPage(QWizardPage):
                 QMessageBox.critical(self, "Error", f"Failed to load JSON file: {e}")
 
     def load_data_into_tables(self, data):
+        # notify that detectors (and windows) have been reloaded
+        self.detectors_form.setUpdatesEnabled(True)
+        self.detectorsChanged.emit()
+
         # Disable updates to optimize performance
         self.detectors_form.setUpdatesEnabled(False)
         try:
@@ -270,31 +277,39 @@ class DetectorWizardPage(QWizardPage):
 
     def add_detector(self):
         new_detector_name = self.new_detector_name_input.text().strip()
+        if not new_detector_name:
+            QMessageBox.warning(self, "Warning", "Please enter a detector name.")
+            return
         if new_detector_name in self.detectors_dict:
             QMessageBox.warning(self, "Warning", "This detector name already exists.")
             return
 
-        # Create new rows for channels and micro time ranges with default values
-        channels = "0, 1"  # Default channels
-        micro_time_ranges = "0-2048"  # Default micro time ranges
+        # Prepare default widgets for channels and time ranges
+        chs_le = QLineEdit("0, 1")  # default channels
+        micro_le = QLineEdit("0-2048")  # default micro‐time ranges
 
-        # Add the new detector to the table
-        row_position = self.detectors_form.rowCount()
-        self.detectors_form.insertRow(row_position)
+        # Emit detectorsChanged when either field is edited
+        chs_le.editingFinished.connect(self.detectorsChanged.emit)
+        micro_le.editingFinished.connect(self.detectorsChanged.emit)
 
-        # Set new detector name, channels, and micro time ranges
-        self.detectors_form.setItem(row_position, 0, QTableWidgetItem(new_detector_name))
-        self.detectors_form.setItem(row_position, 1, QTableWidgetItem(channels))
-        self.detectors_form.setItem(row_position, 2, QTableWidgetItem(micro_time_ranges))
+        # Insert into the table
+        row = self.detectors_form.rowCount()
+        self.detectors_form.insertRow(row)
+        self.detectors_form.setItem(row, 0, QTableWidgetItem(new_detector_name))
+        self.detectors_form.setCellWidget(row, 1, chs_le)
+        self.detectors_form.setCellWidget(row, 2, micro_le)
 
-        # Store the new detector in the dictionary
+        # Store in internal structures
+        self.detectors_widgets[new_detector_name] = (chs_le, micro_le)
         self.detectors_dict[new_detector_name] = {
-            "chs": list(map(int, channels.split(','))),
-            "micro_time_ranges": [tuple(map(int, r.split('-'))) for r in micro_time_ranges.split(',')]
+            "chs": list(map(int, chs_le.text().split(','))),
+            "micro_time_ranges": [
+                tuple(map(int, r.split('-'))) for r in micro_le.text().split(',')]
         }
 
-        # Clear the name input field
+        # Clear input and notify
         self.new_detector_name_input.clear()
+        self.detectorsChanged.emit()
 
     def remove_pie_window(self, item):
         row = item.row()  # Get the row of the double-clicked item
@@ -302,6 +317,7 @@ class DetectorWizardPage(QWizardPage):
         if window_name in self.windows_dict:
             del self.windows_dict[window_name]  # Remove from the dictionary
             self.windows_form.removeRow(row)  # Remove from the table
+        self.detectorsChanged.emit()
 
     def remove_detector(self, item):
         row = item.row()  # Get the row of the double-clicked item
@@ -309,6 +325,7 @@ class DetectorWizardPage(QWizardPage):
         if detector_name in self.detectors_dict:
             del self.detectors_dict[detector_name]  # Remove from the dictionary
             self.detectors_form.removeRow(row)  # Remove from the table
+        self.detectorsChanged.emit()
 
     def create_windows_fields(self):
         # Populate the table with existing windows
@@ -316,6 +333,10 @@ class DetectorWizardPage(QWizardPage):
         for row, (window_name, (start, end)) in enumerate(windows.items()):
             start_input = QLineEdit(str(start))
             end_input = QLineEdit(str(end))
+
+            start_input.editingFinished.connect(self.detectorsChanged.emit)
+            end_input.editingFinished.connect(self.detectorsChanged.emit)
+
             self.windows_dict[window_name] = (start_input, end_input)
             self.windows_widgets[window_name] = (start_input, end_input)  # Store the widgets
 
@@ -334,31 +355,45 @@ class DetectorWizardPage(QWizardPage):
             self.detectors_dict[detector_name] = (chs_input, micro_time_input)
             self.detectors_widgets[detector_name] = (chs_input, micro_time_input)  # Store the widgets
 
+            chs_input.editingFinished.connect(self.detectorsChanged.emit)
+            micro_time_input.editingFinished.connect(self.detectorsChanged.emit)
+
             # Add data to table
             self.detectors_form.setItem(row, 0, QTableWidgetItem(detector_name))  # Detector Name
             self.detectors_form.setCellWidget(row, 1, chs_input)  # Channels Input
             self.detectors_form.setCellWidget(row, 2, micro_time_input)  # Micro Time Ranges Input
 
     def add_pie_window(self):
-        new_window_name = self.new_window_name_input.text().strip() or f"PIE-Window {len(self.windows_dict) + 1}"
+        # Determine a unique window name
+        new_window_name = self.new_window_name_input.text().strip() \
+                          or f"PIE-Window {len(self.windows_dict) + 1}"
         if new_window_name in self.windows_dict:
             QMessageBox.warning(self, "Warning", "This PIE-Window name already exists.")
             return
 
-        self.windows_dict[new_window_name] = (QLineEdit(), QLineEdit())
-        self.windows_widgets[new_window_name] = (
-            self.windows_dict[new_window_name][0], self.windows_dict[new_window_name][1])  # Store the widgets
+        # Create and initialize the start/end QLineEdits
+        start_le = QLineEdit()
+        end_le = QLineEdit()
+        start_le.setText("0")  # Default Start
+        end_le.setText("2048")  # Default End
 
-        # Initialize new fields
-        self.windows_widgets[new_window_name][0].setText("0")  # Default Start
-        self.windows_widgets[new_window_name][1].setText("2048")  # Default End
+        # Emit detectorsChanged whenever the user finishes editing either one
+        start_le.editingFinished.connect(self.detectorsChanged.emit)
+        end_le.editingFinished.connect(self.detectorsChanged.emit)
 
-        # Add new fields to the table
+        # Store in your internal dicts
+        self.windows_dict[new_window_name] = (start_le, end_le)
+        self.windows_widgets[new_window_name] = (start_le, end_le)
+
+        # Insert a new row in the table
         row = self.windows_form.rowCount()
-        self.windows_form.insertRow(row)  # Insert new row for the new window
-        self.windows_form.setItem(row, 0, QTableWidgetItem(new_window_name))  # Window Name
-        self.windows_form.setCellWidget(row, 1, self.windows_widgets[new_window_name][0])  # Start Input
-        self.windows_form.setCellWidget(row, 2, self.windows_widgets[new_window_name][1])  # End Input
+        self.windows_form.insertRow(row)
+        self.windows_form.setItem(row, 0, QTableWidgetItem(new_window_name))
+        self.windows_form.setCellWidget(row, 1, start_le)
+        self.windows_form.setCellWidget(row, 2, end_le)
+
+        # Notify listeners that detectors/windows have changed
+        self.detectorsChanged.emit()
 
     def update_window_name(self, item):
         if item.column() == 0:  # Only update for the Name column
@@ -370,6 +405,8 @@ class DetectorWizardPage(QWizardPage):
                 self.windows_widgets[new_name] = self.windows_widgets.pop(old_name)  # Update widgets too
                 self.windows_form.setItem(item.row(), 0, QTableWidgetItem(new_name))  # Update table entry
 
+        self.detectorsChanged.emit()
+
     def update_detector_name(self, item):
         if item.column() == 0:  # Only update for the Name column
             old_name = list(self.detectors_dict.keys())[item.row()]
@@ -379,7 +416,7 @@ class DetectorWizardPage(QWizardPage):
                 self.detectors_dict[new_name] = self.detectors_dict.pop(old_name)
                 self.detectors_widgets[new_name] = self.detectors_widgets.pop(old_name)  # Update widgets too
                 self.detectors_form.setItem(item.row(), 0, QTableWidgetItem(new_name))  # Update table entry
-
+        self.detectorsChanged.emit()
 
     @property
     def windows(self):
@@ -467,6 +504,7 @@ class DetectorWizardPage(QWizardPage):
             self.detectors_form.setCellWidget(row, 1, QLineEdit(', '.join(map(str, properties["chs"]))))
             self.detectors_form.setCellWidget(row, 2, QLineEdit(
                 ', '.join([f"{start}-{end}" for start, end in properties["micro_time_ranges"]])))
+        self.detectorsChanged.emit()
 
     def save_settings(self, filename=None):
         # Prepare window data
@@ -522,15 +560,15 @@ windows = {
 
 detectors = {
     "green": {
-        "chs": [8, 0],
+        "chs": [8, 0, 3],
         "micro_time_ranges": [(0, 4095)]
     },
     "red": {
-        "chs": [9, 1],
+        "chs": [9, 1, 2],
         "micro_time_ranges": [(0, 2048)]
     },
     "yellow": {
-        "chs": [9, 1],
+        "chs": [9, 1, 2],
         "micro_time_ranges": [(2048, 4095)]
     },
 }
