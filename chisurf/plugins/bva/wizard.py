@@ -523,7 +523,7 @@ def make_2d_plot_on_canvas(
         log_y: bool = False,
         vmin: float = None,
         vmax: float = None,
-        cmap: str = 'Greys',
+        cmap: str = 'jet',
         overlays: list = None
 ):
     canvas.fig.clear()
@@ -607,7 +607,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("smFRET BVA Analysis")
-        self.resize(900, 600)
+        self.resize(400, 800)
         self.data_folder = None
         self.analysis_folder = None
         self.file_type = DEFAULT_FILE_TYPE
