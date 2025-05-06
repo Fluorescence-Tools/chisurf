@@ -37,8 +37,14 @@ pip install .\tttrconvert --no-deps --prefix=%PREFIX%
 pip install .\quest --no-deps --prefix=%PREFIX%
 cd ..
 
-:: Build chinet module (same as build.sh)
+:: Build chinet module
 cd modules\chinet
+
+git fetch --all
+git checkout development
+git pull origin development
+git submodule update --init --recursive
+
 if exist build rmdir /s /q build
 mkdir build
 cd build
