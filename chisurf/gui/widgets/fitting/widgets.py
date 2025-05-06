@@ -484,9 +484,11 @@ class FittingParameterWidget(Controller):
                     tooltip = " linked to " + parameter_name
                     s = (
                         f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
-                        f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}']"
+                        f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}'] \n"
+                        f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
                     )
                     chisurf.run(s)
+                    self.finalize()
 
                     # Adjust widget of parameter that is linker
                     self.widget_link.setToolTip(tooltip)
