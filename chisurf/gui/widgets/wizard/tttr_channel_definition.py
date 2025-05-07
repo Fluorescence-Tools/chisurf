@@ -3,8 +3,9 @@ import json
 from PyQt5.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
-    QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton
+    QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton, QWidget
 )
+
 from PyQt5.QtCore import pyqtSignal
 
 help_text = """You can either load an existing detector Pulsed-Interleaved Excitation (PIE) 
@@ -15,569 +16,330 @@ displays a JSON file representing the data, and the "Save" button allows you to 
 channel configuration.
 """
 
+# Initial PIE-Windows and Detectors
+_initial_windows = {
+    "prompt": (0, 2048),
+    "delayed": (2048, 4095)
+}
+
+_initial_detectors = {
+    "green":  {"chs": [8, 0, 3], "micro_time_ranges": [(0, 4095)]},
+    "red":    {"chs": [9, 1, 2], "micro_time_ranges": [(0, 2048)]},
+    "yellow": {"chs": [9, 1, 2], "micro_time_ranges": [(2048, 4095)]},
+}
+
+
 class JsonEditorDialog(QDialog):
     def __init__(self, data, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Edit JSON Settings")
         self.setGeometry(100, 100, 400, 300)
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        layout = QVBoxLayout(self)
 
-        # JSON editor text area
         self.json_editor = QTextEdit(self)
-        self.layout.addWidget(self.json_editor)
-
-        # Populate text area with JSON string
         self.json_editor.setText(json.dumps(data, indent=4))
+        layout.addWidget(self.json_editor)
 
-        # Save button
-        self.save_button = QPushButton("Save JSON")
-        self.save_button.clicked.connect(self.save_json)
-        self.layout.addWidget(self.save_button)
+        self.save_button = QPushButton("Save JSON", self)
+        self.save_button.clicked.connect(self._on_save)
+        layout.addWidget(self.save_button)
 
-    def save_json(self):
+    def _on_save(self):
         try:
-            # Load JSON from text area
-            edited_data = json.loads(self.json_editor.toPlainText())
-            self.done(1)  # Accept the dialog and set a return code
-            self.edited_data = edited_data  # Store the edited data
+            self.edited_data = json.loads(self.json_editor.toPlainText())
+            self.accept()
         except json.JSONDecodeError:
             QMessageBox.critical(self, "Error", "Invalid JSON format.")
 
     def get_edited_data(self):
-        return getattr(self, 'edited_data', None)  # Return edited data if available
+        return getattr(self, "edited_data", None)
 
 
 class DetectorWizardPage(QWizardPage):
-
-    # signal to let the outside world know that .detectors has changed
     detectorsChanged = pyqtSignal()
 
     def __init__(self, json_file=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.setTitle("Detectors and PIE-window definition")
 
-        # Create main vertical layout
-        layout = QVBoxLayout()
-        layout.setSpacing(0)  # Set spacing for main layout to 0
-        layout.setContentsMargins(0, 0, 0, 0)  # Set margins for the layout to 0
-        self.setLayout(layout)
+        # Main layout
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0,0,0,0)
+        main_layout.setSpacing(0)
 
-        # JSON file loading section (LineEdit + ToolButton)
-        file_help_layout = QHBoxLayout()
-        self.file_path_line_edit = QLineEdit(self)
-        self.file_path_line_edit.setPlaceholderText("Select JSON file...")
-        file_help_layout.addWidget(self.file_path_line_edit)
+        # --- File load + Help ---
+        file_layout = QHBoxLayout()
+        self.file_path_le = QLineEdit(self)
+        self.file_path_le.setPlaceholderText("Select JSON file…")
+        file_layout.addWidget(self.file_path_le)
+        # **alias the old name for compatibility**
+        self.file_path_line_edit = self.file_path_le
 
-        # Create a QTextEdit for displaying help text (hidden by default)
-        self.help_text = QTextEdit()
-        self.help_text.setText(help_text)
-        self.help_text.setVisible(False)  # Hide by default
-        layout.addWidget(self.help_text)
+        self.load_button = QToolButton(self)
+        self.load_button.setText("…")
+        self.load_button.clicked.connect(self._on_load_file)
+        file_layout.addWidget(self.load_button)
 
-        # Create a QToolButton
-        self.help_button = QToolButton()
-        self.help_button.setText("Help")
-        self.help_button.setCheckable(True)  # Make the tool button checkable
-        self.help_button.toggled.connect(self.toggle_help)  # Connect toggle signal to function
+        self.help_button = QToolButton(self)
+        self.help_button.setText("Show Help")
+        self.help_button.setCheckable(True)
+        self.help_button.toggled.connect(self._toggle_help)
+        file_layout.addWidget(self.help_button)
 
-        self.file_load_button = QToolButton(self)
-        self.file_load_button.setText("...")
-        self.file_load_button.clicked.connect(self.load_json_file)
-        file_help_layout.addWidget(self.file_load_button)
-        file_help_layout.addWidget(self.help_button)
+        main_layout.addLayout(file_layout)
 
-        layout.addLayout(file_help_layout)
+        self.help_text = QTextEdit(help_text, self)
+        self.help_text.setReadOnly(True)
+        self.help_text.setVisible(False)
+        main_layout.addWidget(self.help_text)
 
-        # Create horizontal layout for PIE-Windows and detectors
-        h_layout = QHBoxLayout()
-        h_layout.setSpacing(0)  # Set spacing for horizontal layout to 0
-        layout.addLayout(h_layout)
+        # --- Tables ---
+        tables_layout = QHBoxLayout()
+        tables_layout.setSpacing(0)
+        main_layout.addLayout(tables_layout)
 
-        # Windows Table
-        self.windows_form = QTableWidget()
-        self.windows_form.setColumnCount(3)  # Three columns: Name, Start, End
+        # Windows table
+        self.windows_form = QTableWidget(0, 3, self)
         self.windows_form.setHorizontalHeaderLabels(["Window Name", "Start", "End"])
-        self.windows_form.itemDoubleClicked.connect(self.remove_pie_window)  # Connect double-click
-        self.windows_dict = {}
-        self.windows_widgets = {}
-        self.create_windows_fields()
+        self.windows_form.itemDoubleClicked.connect(self._remove_window)
+        tables_layout.addWidget(self._with_label("PIE-Windows", self.windows_form))
 
-        # Detectors Table
-        self.detectors_form = QTableWidget()
-        self.detectors_form.setColumnCount(3)  # Three columns: Name, Channels, Micro Time Ranges
+        # Detectors table
+        self.detectors_form = QTableWidget(0, 3, self)
         self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges"])
-        self.detectors_form.itemDoubleClicked.connect(self.remove_detector)  # Connect double-click
-        self.detectors_dict = {}
-        self.detectors_widgets = {}
-        self.create_detectors_fields()
+        self.detectors_form.itemDoubleClicked.connect(self._remove_detector)
+        tables_layout.addWidget(self._with_label("Detectors", self.detectors_form))
 
-        # Continue with rest of the layout setup...
-        # Add PIE-Windows and detectors forms to horizontal layout
-        windows_layout = QVBoxLayout()
-        windows_layout.setSpacing(0)  # Set spacing for PIE-Windows layout to 0
-        windows_layout.addWidget(QLabel("PIE-Windows:"))
-        windows_layout.addWidget(self.windows_form)  # Add table
-        h_layout.addLayout(windows_layout)
+        # --- Add inputs + Save/Edit JSON ---
+        controls = QGridLayout()
+        controls.setSpacing(4)
 
-        detectors_layout = QVBoxLayout()
-        detectors_layout.setSpacing(0)  # Set spacing for Detectors layout to 0
-        detectors_layout.addWidget(QLabel("Detectors:"))
-        detectors_layout.addWidget(self.detectors_form)  # Add table
-        h_layout.addLayout(detectors_layout)
+        # Add window
+        self.new_window_le = QLineEdit(self)
+        self.new_window_le.setPlaceholderText("New PIE-Window name")
+        controls.addWidget(self.new_window_le, 0, 0)
+        btn = QPushButton("Add", self)
+        btn.clicked.connect(self._add_window)
+        controls.addWidget(btn, 0, 1)
 
-        # Create a single grid layout for new PIE-Window and Detector inputs
-        input_grid = QGridLayout()
-        input_grid.setSpacing(0)  # Set spacing for the grid layout to 0
+        # Add detector
+        self.new_detector_le = QLineEdit(self)
+        self.new_detector_le.setPlaceholderText("New Detector name")
+        controls.addWidget(self.new_detector_le, 1, 0)
+        btn = QPushButton("Add", self)
+        btn.clicked.connect(self._add_detector)
+        controls.addWidget(btn, 1, 1)
 
-        # New PIE-Window name input and button
-        self.new_window_name_input = QLineEdit()
-        self.new_window_name_input.setPlaceholderText("Enter new PIE-Window name")
-        input_grid.addWidget(self.new_window_name_input, 0, 0)  # Row 0, Column 0
+        # JSON editor
+        btn = QPushButton("Edit JSON", self)
+        btn.clicked.connect(self._edit_json)
+        controls.addWidget(btn, 0, 2)
 
-        self.add_window_button = QPushButton("Add")
-        self.add_window_button.clicked.connect(self.add_pie_window)
-        input_grid.addWidget(self.add_window_button, 0, 1)  # Row 0, Column 1
+        # Save button
+        self.save_button = QPushButton("Save", self)
+        self.save_button.clicked.connect(self._on_save)
+        controls.addWidget(self.save_button, 1, 2)
 
-        # New Detector name input and button
-        self.new_detector_name_input = QLineEdit()
-        self.new_detector_name_input.setPlaceholderText("Enter new Detector name")
-        input_grid.addWidget(self.new_detector_name_input, 1, 0)  # Row 1, Column 0
+        main_layout.addLayout(controls)
 
-        self.add_detector_button = QPushButton("Add")
-        self.add_detector_button.clicked.connect(self.add_detector)
-        input_grid.addWidget(self.add_detector_button, 1, 1)  # Row 1, Column 1
-
-        # JSON button
-        self.json_editor_button = QPushButton("Edit")  # Relabeled to JSON
-        self.json_editor_button.clicked.connect(self.open_json_editor)
-        input_grid.addWidget(self.json_editor_button, 0, 2, 1, 1)  # Row 2, spans 2 columns
-
-        # Add the grid layout to the main layout
-        layout.addLayout(input_grid)  # Add grid layout to main layout
-
-        # Button to save inputs
-        self.save_button = QPushButton("Save")
-        self.save_button.clicked.connect(self.save_settings)
-        input_grid.addWidget(self.save_button, 1, 2, 1, 1)  # Row 2, spans 2 columns
-
-        # Connect signals for editing name changes
-        self.windows_form.itemChanged.connect(self.update_window_name)
-        self.detectors_form.itemChanged.connect(self.update_detector_name)
-
+        # Load initial or file
         if json_file:
-            with open(json_file, 'r') as f:
+            with open(json_file, "r") as f:
                 data = json.load(f)
-            self.load_data_into_tables(data)
-
-    # Define the function to show/hide the help text
-    def toggle_help(self, checked):
-        if checked:
-            self.help_text.setVisible(True)
-            self.help_button.setText("Hide Help")
         else:
-            self.help_text.setVisible(False)
-            self.help_button.setText("Show Help")
+            data = {"windows": _initial_windows, "detectors": _initial_detectors}
+        self._load_data(data)
 
-    def dragEnterEvent(self, event):
-        """Enable drag-enter event to allow file drop."""
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
+    def _with_label(self, text, widget):
+        """Helper to wrap a widget with a label above."""
+        v = QVBoxLayout()
+        v.addWidget(QLabel(text))
+        v.addWidget(widget)
+        container = QVBoxLayout()  # dummy widget
+        w = QWidget()
+        w.setLayout(v)
+        return w
 
-    def dropEvent(self, event):
-        """Handle the file drop event."""
-        for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
-            if file_path.endswith('.json'):
-                self.filepath_input.setText(file_path)
-                self.load_json_file()  # Automatically load the JSON after dropping the file
+    def _toggle_help(self, on):
+        self.help_text.setVisible(on)
+        self.help_button.setText("Hide Help" if on else "Show Help")
 
-    def browse_file(self):
-        """Open file dialog to browse for JSON files."""
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open JSON File", "", "JSON Files (*.json);;All Files (*)")
-        if file_name:
-            self.filepath_input.setText(file_name)
-            self.load_json_file()  # Load the JSON when a file is selected
+    def _on_load_file(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Open JSON", "", "JSON Files (*.json)")
+        if not path:
+            return
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            self._load_data(data)
+            self.file_path_le.setText(path)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load JSON: {e}")
 
-    def load_json_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open JSON File", "", "JSON Files (*.json);;All Files (*)")
-        if file_name:
-            self.file_path_line_edit.setText(file_name)
-            try:
-                with open(file_name, 'r') as file:
-                    data = json.load(file)
-                    self.load_data_into_tables(data)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to load JSON file: {e}")
+    def _load_data(self, data):
+        # block updates/signals
+        self.windows_form.setUpdatesEnabled(False)
+        self.detectors_form.setUpdatesEnabled(False)
+        self.windows_form.blockSignals(True)
+        self.detectors_form.blockSignals(True)
 
-    def load_data_into_tables(self, data):
-        # notify that detectors (and windows) have been reloaded
+        # clear
+        self.windows_form.setRowCount(0)
+        self.detectors_form.setRowCount(0)
+
+        # populate windows
+        for name, (start, end) in data.get("windows", {}).items():
+            self._add_window_row(name, str(start), str(end))
+
+        # populate detectors
+        for name, props in data.get("detectors", {}).items():
+            chs = ", ".join(map(str, props["chs"]))
+            mtr = ", ".join(f"{s}-{e}" for s, e in props["micro_time_ranges"])
+            self._add_detector_row(name, chs, mtr)
+
+        # re-enable
+        self.windows_form.blockSignals(False)
+        self.detectors_form.blockSignals(False)
+        self.windows_form.setUpdatesEnabled(True)
         self.detectors_form.setUpdatesEnabled(True)
         self.detectorsChanged.emit()
 
-        # Disable updates to optimize performance
-        self.detectors_form.setUpdatesEnabled(False)
+    def _add_window_row(self, name, start, end):
+        row = self.windows_form.rowCount()
+        self.windows_form.insertRow(row)
+        self.windows_form.setItem(row, 0, QTableWidgetItem(name))
+        self.windows_form.setCellWidget(row, 1, QLineEdit(start))
+        self.windows_form.setCellWidget(row, 2, QLineEdit(end))
+
+    def _add_detector_row(self, name, ch_text, mtr_text):
+        row = self.detectors_form.rowCount()
+        self.detectors_form.insertRow(row)
+        self.detectors_form.setItem(row, 0, QTableWidgetItem(name))
+        self.detectors_form.setCellWidget(row, 1, QLineEdit(ch_text))
+        self.detectors_form.setCellWidget(row, 2, QLineEdit(mtr_text))
+
+    def _add_window(self):
+        name = self.new_window_le.text().strip() or f"PIE-Window {self.windows_form.rowCount()+1}"
+        if any(self.windows_form.item(r,0).text()==name for r in range(self.windows_form.rowCount())):
+            QMessageBox.warning(self, "Warning", "Window name exists.")
+            return
+        self._add_window_row(name, "0", "2048")
+        self.new_window_le.clear()
+        self.detectorsChanged.emit()
+
+    def _add_detector(self):
+        name = self.new_detector_le.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Warning", "Enter a detector name.")
+            return
+        if any(self.detectors_form.item(r,0).text()==name for r in range(self.detectors_form.rowCount())):
+            QMessageBox.warning(self, "Warning", "Detector name exists.")
+            return
+        self._add_detector_row(name, "0, 1", "0-2048")
+        self.new_detector_le.clear()
+        self.detectorsChanged.emit()
+
+    def _remove_window(self, item):
+        self.windows_form.removeRow(item.row())
+        self.detectorsChanged.emit()
+
+    def _remove_detector(self, item):
+        self.detectors_form.removeRow(item.row())
+        self.detectorsChanged.emit()
+
+    def _edit_json(self):
+        data = self.get_settings()
+        dlg = JsonEditorDialog(data, self)
+        if dlg.exec_():
+            edited = dlg.get_edited_data()
+            if edited:
+                self._load_data(edited)
+
+    def get_settings(self):
+        # windows
+        wins = {}
+        for r in range(self.windows_form.rowCount()):
+            name = self.windows_form.item(r,0).text().strip()
+            start = int(self.windows_form.cellWidget(r,1).text())
+            end   = int(self.windows_form.cellWidget(r,2).text())
+            wins[name] = (start, end)
+
+        # detectors
+        dets = {}
+        for r in range(self.detectors_form.rowCount()):
+            name = self.detectors_form.item(r,0).text().strip()
+            chs = list(map(int, self.detectors_form.cellWidget(r,1).text().split(',')))
+            mtr = [
+                tuple(map(int, seg.split('-')))
+                for seg in self.detectors_form.cellWidget(r,2).text().split(',')
+            ]
+            dets[name] = {"chs": chs, "micro_time_ranges": mtr}
+
+        return {"windows": wins, "detectors": dets}
+
+    def channels(self):
+        chs = {}
+        settings = self.get_settings()
+        for wname, wrange in settings["windows"].items():
+            for dname, dinfo in settings["detectors"].items():
+                cname = f"{wname}_{dname}"
+                chs[cname] = []
+                for mtr in dinfo["micro_time_ranges"]:
+                    chs[cname].append({
+                        "window_range": wrange,
+                        "detector_chs": dinfo["chs"],
+                        "micro_time_range": mtr
+                    })
+        return chs
+
+    def _on_save(self):
+        data = self.get_settings()
+        path, _ = QFileDialog.getSaveFileName(self, "Save Settings", "", "JSON Files (*.json)")
+        if not path:
+            return
         try:
-            windows_data = data.get('windows', {})
-            detectors_data = data.get('detectors', {})
+            with open(path, "w") as f:
+                json.dump(data, f, indent=4)
+            QMessageBox.information(self, "Success", f"Settings saved to {path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Save failed: {e}")
 
-            # Block signals for both tables before updating them
-            self.windows_form.blockSignals(True)
-            self.detectors_form.blockSignals(True)
-
-            # Load PIE-Windows
-            self.windows_dict.clear()
-            self.windows_form.setRowCount(0)
-            for window_name, (start, end) in windows_data.items():
-                self.add_pie_window_from_data(window_name, start, end)
-
-            # Load Detectors
-            self.detectors_dict.clear()
-            self.detectors_form.setRowCount(0)
-            for detector_name, properties in detectors_data.items():
-                self.add_detector_from_data(detector_name, properties["chs"], properties["micro_time_ranges"])
-
-        except KeyError as e:
-            QMessageBox.critical(self, "Error", f"Failed to load data: {e}")
-
-        finally:
-            # Re-enable signals after the update
-            self.windows_form.blockSignals(False)
-            self.detectors_form.blockSignals(False)
-            # Re-enable updates once changes are complete
-            self.detectors_form.setUpdatesEnabled(True)
-
-    def add_pie_window_from_data(self, window_name, start, end):
-        # Add PIE window to the table based on data
-        row = self.windows_form.rowCount()
-        self.windows_form.insertRow(row)
-        self.windows_form.setItem(row, 0, QTableWidgetItem(window_name))
-        self.windows_form.setItem(row, 1, QTableWidgetItem(str(start)))
-        self.windows_form.setItem(row, 2, QTableWidgetItem(str(end)))
-
-        # Store the window data in the internal dictionary
-        self.windows_dict[window_name] = (QLineEdit(str(start)), QLineEdit(str(end)))
-
-    def add_detector_from_data(self, detector_name, channels, micro_time_ranges):
-        # Add detector to the table based on data
-        row = self.detectors_form.rowCount()
-        self.detectors_form.insertRow(row)
-        self.detectors_form.setItem(row, 0, QTableWidgetItem(detector_name))
-        self.detectors_form.setItem(row, 1, QTableWidgetItem(', '.join(map(str, channels))))
-        micro_time_ranges_str = ', '.join([f"{start}-{end}" for start, end in micro_time_ranges])
-        self.detectors_form.setItem(row, 2, QTableWidgetItem(micro_time_ranges_str))
-
-        # Store the detector data in the internal dictionary
-        self.detectors_dict[detector_name] = {
-            "chs": channels,
-            "micro_time_ranges": micro_time_ranges
-        }
-
-    def add_detector(self):
-        new_detector_name = self.new_detector_name_input.text().strip()
-        if not new_detector_name:
-            QMessageBox.warning(self, "Warning", "Please enter a detector name.")
-            return
-        if new_detector_name in self.detectors_dict:
-            QMessageBox.warning(self, "Warning", "This detector name already exists.")
-            return
-
-        # Prepare default widgets for channels and time ranges
-        chs_le = QLineEdit("0, 1")  # default channels
-        micro_le = QLineEdit("0-2048")  # default micro‐time ranges
-
-        # Emit detectorsChanged when either field is edited
-        chs_le.editingFinished.connect(self.detectorsChanged.emit)
-        micro_le.editingFinished.connect(self.detectorsChanged.emit)
-
-        # Insert into the table
-        row = self.detectors_form.rowCount()
-        self.detectors_form.insertRow(row)
-        self.detectors_form.setItem(row, 0, QTableWidgetItem(new_detector_name))
-        self.detectors_form.setCellWidget(row, 1, chs_le)
-        self.detectors_form.setCellWidget(row, 2, micro_le)
-
-        # Store in internal structures
-        self.detectors_widgets[new_detector_name] = (chs_le, micro_le)
-        self.detectors_dict[new_detector_name] = {
-            "chs": list(map(int, chs_le.text().split(','))),
-            "micro_time_ranges": [
-                tuple(map(int, r.split('-'))) for r in micro_le.text().split(',')]
-        }
-
-        # Clear input and notify
-        self.new_detector_name_input.clear()
-        self.detectorsChanged.emit()
-
-    def remove_pie_window(self, item):
-        row = item.row()  # Get the row of the double-clicked item
-        window_name = self.windows_form.item(row, 0).text()  # Get the window name
-        if window_name in self.windows_dict:
-            del self.windows_dict[window_name]  # Remove from the dictionary
-            self.windows_form.removeRow(row)  # Remove from the table
-        self.detectorsChanged.emit()
-
-    def remove_detector(self, item):
-        row = item.row()  # Get the row of the double-clicked item
-        detector_name = self.detectors_form.item(row, 0).text()  # Get the detector name
-        if detector_name in self.detectors_dict:
-            del self.detectors_dict[detector_name]  # Remove from the dictionary
-            self.detectors_form.removeRow(row)  # Remove from the table
-        self.detectorsChanged.emit()
-
-    def create_windows_fields(self):
-        # Populate the table with existing windows
-        self.windows_form.setRowCount(len(windows))  # Set number of rows based on existing windows
-        for row, (window_name, (start, end)) in enumerate(windows.items()):
-            start_input = QLineEdit(str(start))
-            end_input = QLineEdit(str(end))
-
-            start_input.editingFinished.connect(self.detectorsChanged.emit)
-            end_input.editingFinished.connect(self.detectorsChanged.emit)
-
-            self.windows_dict[window_name] = (start_input, end_input)
-            self.windows_widgets[window_name] = (start_input, end_input)  # Store the widgets
-
-            # Add data to table
-            self.windows_form.setItem(row, 0, QTableWidgetItem(window_name))  # Window Name
-            self.windows_form.setCellWidget(row, 1, start_input)  # Start Input
-            self.windows_form.setCellWidget(row, 2, end_input)  # End Input
-
-    def create_detectors_fields(self):
-        # Populate the table with existing detectors
-        self.detectors_form.setRowCount(len(detectors))  # Set number of rows based on existing detectors
-        for row, (detector_name, properties) in enumerate(detectors.items()):
-            chs_input = QLineEdit(', '.join(map(str, properties["chs"])))
-            micro_time_input = QLineEdit(
-                ', '.join([f"{start}-{end}" for start, end in properties["micro_time_ranges"]]))
-            self.detectors_dict[detector_name] = (chs_input, micro_time_input)
-            self.detectors_widgets[detector_name] = (chs_input, micro_time_input)  # Store the widgets
-
-            chs_input.editingFinished.connect(self.detectorsChanged.emit)
-            micro_time_input.editingFinished.connect(self.detectorsChanged.emit)
-
-            # Add data to table
-            self.detectors_form.setItem(row, 0, QTableWidgetItem(detector_name))  # Detector Name
-            self.detectors_form.setCellWidget(row, 1, chs_input)  # Channels Input
-            self.detectors_form.setCellWidget(row, 2, micro_time_input)  # Micro Time Ranges Input
-
-    def add_pie_window(self):
-        # Determine a unique window name
-        new_window_name = self.new_window_name_input.text().strip() \
-                          or f"PIE-Window {len(self.windows_dict) + 1}"
-        if new_window_name in self.windows_dict:
-            QMessageBox.warning(self, "Warning", "This PIE-Window name already exists.")
-            return
-
-        # Create and initialize the start/end QLineEdits
-        start_le = QLineEdit()
-        end_le = QLineEdit()
-        start_le.setText("0")  # Default Start
-        end_le.setText("2048")  # Default End
-
-        # Emit detectorsChanged whenever the user finishes editing either one
-        start_le.editingFinished.connect(self.detectorsChanged.emit)
-        end_le.editingFinished.connect(self.detectorsChanged.emit)
-
-        # Store in your internal dicts
-        self.windows_dict[new_window_name] = (start_le, end_le)
-        self.windows_widgets[new_window_name] = (start_le, end_le)
-
-        # Insert a new row in the table
-        row = self.windows_form.rowCount()
-        self.windows_form.insertRow(row)
-        self.windows_form.setItem(row, 0, QTableWidgetItem(new_window_name))
-        self.windows_form.setCellWidget(row, 1, start_le)
-        self.windows_form.setCellWidget(row, 2, end_le)
-
-        # Notify listeners that detectors/windows have changed
-        self.detectorsChanged.emit()
-
-    def update_window_name(self, item):
-        if item.column() == 0:  # Only update for the Name column
-            old_name = list(self.windows_dict.keys())[item.row()]
-            new_name = item.text().strip()
-
-            if new_name and new_name != old_name:
-                self.windows_dict[new_name] = self.windows_dict.pop(old_name)
-                self.windows_widgets[new_name] = self.windows_widgets.pop(old_name)  # Update widgets too
-                self.windows_form.setItem(item.row(), 0, QTableWidgetItem(new_name))  # Update table entry
-
-        self.detectorsChanged.emit()
-
-    def update_detector_name(self, item):
-        if item.column() == 0:  # Only update for the Name column
-            old_name = list(self.detectors_dict.keys())[item.row()]
-            new_name = item.text().strip()
-
-            if new_name and new_name != old_name:
-                self.detectors_dict[new_name] = self.detectors_dict.pop(old_name)
-                self.detectors_widgets[new_name] = self.detectors_widgets.pop(old_name)  # Update widgets too
-                self.detectors_form.setItem(item.row(), 0, QTableWidgetItem(new_name))  # Update table entry
-        self.detectorsChanged.emit()
-
-    @property
-    def windows(self):
-        # Gather the data for windows and detectors to be edited
-        return {
-            name: [(int(self.windows_widgets[name][0].text()), int(self.windows_widgets[name][1].text()))]
-            for name in self.windows_dict
-        }
 
     @property
     def detectors(self):
-        return {
-            name: {
-                "chs": list(map(int, self.detectors_dict[name][0].text().split(','))),
-                "micro_time_ranges": [
-                    tuple(map(int, r.split('-'))) for r in self.detectors_dict[name][1].text().split(',')
-                ]
-            }
-            for name in self.detectors_dict
-        }
+        """
+        Legacy accessor for external code:
+        returns the same dict you’re saving as JSON.
+        """
+        return self.get_settings()['detectors']
 
     @property
-    def channels(self):
-        channels = {}
-        w = self.windows
-        d = self.detectors
+    def windows(self):
+        """
+        Legacy accessor for external code: returns the same dict
+        you're saving as JSON under "windows".
+        """
+        return self.get_settings()['windows']
 
-        # Iterate through each window
-        for window_name, window_ranges in w.items():
-            # Iterate through each detector
-            for detector_name, detector_info in d.items():
-                for window_range in window_ranges:
-                    for micro_time_range in detector_info["micro_time_ranges"]:
-                        # Create a unique channel name
-                        channel_name = f"{window_name}_{detector_name}"
-
-                        # Store the channel info in the dictionary
-                        if channel_name not in channels:
-                            channels[channel_name] = []
-
-                        channels[channel_name].append({
-                            "window_range": window_range,
-                            "detector_chs": detector_info["chs"],
-                            "micro_time_range": micro_time_range
-                        })
-
-        return channels
-
-    @property
-    def settings(self):
-        # Gather the data for windows and detectors to be edited
-        return {
-            "windows": self.windows,
-            "detectors": self.detectors,
-            "channels": self.channels
-        }
-
-    def open_json_editor(self):
-        # Prepare data to edit
-        try:
-            # Open JSON editor dialog with data_to_edit property
-            dialog = JsonEditorDialog(self.settings, self)
-            if dialog.exec_() == 1:  # Check if the dialog was accepted
-                # Update the internal data structure with edited JSON
-                edited_data = dialog.get_edited_data()
-                if edited_data:
-                    self.windows_dict = edited_data['windows']
-                    self.detectors_dict = edited_data['detectors']
-                    self.update_tables()  # Update the tables with new data
-        except KeyError as e:
-            QMessageBox.critical(self, "Error", f"Missing data: {e}")
-
-    def update_tables(self):
-        # Update the windows table
-        self.windows_form.setRowCount(len(self.windows_dict))  # Adjust row count
-        for row, (name, (start, end)) in enumerate(self.windows_dict.items()):
-            self.windows_form.setItem(row, 0, QTableWidgetItem(name))
-            self.windows_form.setCellWidget(row, 1, QLineEdit(str(start)))
-            self.windows_form.setCellWidget(row, 2, QLineEdit(str(end)))
-
-        # Update the detectors table
-        self.detectors_form.setRowCount(len(self.detectors_dict))  # Adjust row count
-        for row, (name, properties) in enumerate(self.detectors_dict.items()):
-            self.detectors_form.setItem(row, 0, QTableWidgetItem(name))
-            self.detectors_form.setCellWidget(row, 1, QLineEdit(', '.join(map(str, properties["chs"]))))
-            self.detectors_form.setCellWidget(row, 2, QLineEdit(
-                ', '.join([f"{start}-{end}" for start, end in properties["micro_time_ranges"]])))
-        self.detectorsChanged.emit()
-
-    def save_settings(self, filename=None):
-        # Prepare window data
-        window_data = {}
-        for window_name, (start, end) in self.windows_dict.items():
-            window_data[window_name] = (int(start.text()), int(end.text()))
-
-        # Prepare detector data
-        detector_data = {}
-        for detector_name in self.detectors_dict.keys():
-            chs, micro_time_ranges = self.detectors_dict[detector_name]
-            chs = list(map(int, chs.text().split(',')))
-            micro_time_ranges = [tuple(map(int, r.split('-'))) for r in micro_time_ranges.text().split(',')]
-            detector_data[detector_name] = {
-                "chs": chs,
-                "micro_time_ranges": micro_time_ranges
-            }
-
-        # Consolidate data into one dictionary
-        data = {
-            "windows": window_data,
-            "detectors": detector_data
-        }
-
-        # If no filename is provided, open a file dialog to get the filename
-        if not filename:
-            filename, _ = QFileDialog.getSaveFileName(self, "Save Settings", "", "JSON Files (*.json);;All Files (*)")
-            if not filename:  # If user cancels the file dialog
-                return
-
-        # Save the settings to the file
-        try:
-            with open(filename, 'w') as file:
-                json.dump(data, file, indent=4)
-            QMessageBox.information(self, "Success", f"Settings saved to {filename}")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to save settings: {e}")
+    def load_data_into_tables(self, data):
+        """
+        Legacy alias for external callers.
+        """
+        # reuse our internal loader
+        self._load_data(data)
 
 
 class DetectorWizard(QWizard):
     def __init__(self, json_file=None):
         super().__init__()
-
         self.addPage(DetectorWizardPage(json_file=json_file))
         self.setWindowTitle("Detector Configuration Wizard")
 
 
-# Initial PIE-Windows and Detectors
-windows = {
-    "prompt": (0, 2048),
-    "delayed": (2048, 4095)
-}
-
-detectors = {
-    "green": {
-        "chs": [8, 0, 3],
-        "micro_time_ranges": [(0, 4095)]
-    },
-    "red": {
-        "chs": [9, 1, 2],
-        "micro_time_ranges": [(0, 2048)]
-    },
-    "yellow": {
-        "chs": [9, 1, 2],
-        "micro_time_ranges": [(2048, 4095)]
-    },
-}
-
 if __name__ == "__main__":
-    # Optionally pass a JSON file from the command line:
-    json_file_arg = sys.argv[1] if len(sys.argv) > 1 else None
-
+    json_arg = sys.argv[1] if len(sys.argv) > 1 else None
     app = QApplication(sys.argv)
-    wizard = DetectorWizard(json_file=json_file_arg)
-    wizard.show()
+    wiz = DetectorWizard(json_file=json_arg)
+    wiz.show()
     sys.exit(app.exec_())
