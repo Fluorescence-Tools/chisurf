@@ -138,7 +138,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>112</height>
+          <height>69</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -252,7 +252,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -345,27 +345,6 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <widget class="QMenu" name="menuFRET">
-     <property name="title">
-      <string>FRET</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/FRET.png</normaloff>:/icons/icons/FRET.png</iconset>
-     </property>
-     <addaction name="actionCalculator"/>
-    </widget>
-    <widget class="QMenu" name="menuAnisotropy">
-     <property name="title">
-      <string>Anisotropy</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
-     </property>
-     <addaction name="actionAnisotropy_Lines"/>
-     <addaction name="actionKappa2_Distribution"/>
-    </widget>
     <widget class="QMenu" name="menuModelling">
      <property name="title">
       <string>Modelling</string>
@@ -415,13 +394,9 @@
      <addaction name="actionGenerate_decay"/>
      <addaction name="actionCorrelate"/>
     </widget>
-    <addaction name="menuFRET"/>
-    <addaction name="menuAnisotropy"/>
     <addaction name="menuModelling"/>
     <addaction name="menuTTTR"/>
     <addaction name="actionTTTR_CLSM"/>
-    <addaction name="actionndXplorer"/>
-    <addaction name="actionF_Test"/>
    </widget>
    <widget class="QMenu" name="menuMacro">
     <property name="title">
@@ -481,6 +456,10 @@
    <addaction name="actionRun"/>
    <addaction name="actionStop"/>
    <addaction name="actionRecord"/>
+   <addaction name="separator"/>
+   <addaction name="actionF_Test"/>
+   <addaction name="actionCalculator"/>
+   <addaction name="actionKappa2_Distribution"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_console">
    <property name="enabled">
