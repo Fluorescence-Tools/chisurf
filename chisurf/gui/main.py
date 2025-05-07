@@ -29,8 +29,6 @@ import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
 
-import ndxplorer
-from quest.lib.tools.dye_diffusion import TransientDecayGenerator
 import clsmview.gui
 
 
@@ -754,7 +752,6 @@ class Main(QtWidgets.QMainWindow):
         # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
         #self.sm_FRETlines = chisurf.tools.sm_FRETlines.FRETLineGeneratorWidget()
         #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.sm_FRETlines.show)
-        #self.decay_fret_generator = chisurf.fluorescence.dye_diffusion.TransientFRETDecayGenerator()
 
         ##########################################################
         #      Fluorescence widgets                              #
@@ -766,13 +763,6 @@ class Main(QtWidgets.QMainWindow):
         self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.k2dgui.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
-        self.ndxplorer = ndxplorer.NDXplorer()
-        self.actionndXplorer.triggered.connect(self.ndxplorer.show)
-        self.ndxplorer.hide()
-
-        self.quest = TransientDecayGenerator()
-        self.actionQuEst.triggered.connect(self.quest.show)
-        self.quest.hide()
 
         ##########################################################
         #      TTTR-widgets                                      #
