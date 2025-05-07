@@ -231,21 +231,25 @@ def setup_gui(
 
     def populate_plugins():
         plugin_menu = window.menuBar.addMenu('Plugins')
-        plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+        plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+
         # Dictionary to store submenus
         submenus = {}
 
         for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
-            module_path = "chisurf.plugins." + module_name
-            module = importlib.import_module(str(module_path))
-            try:
-                name = module.name
-            except AttributeError as e:
-                print(f"Failed to find plugin name: {e}")
-                name = module_name
+            module_path = f"chisurf.plugins.{module_name}"
+            module = importlib.import_module(module_path)
+            name = getattr(module, 'name', module_name)
 
-            p = partial(
-                window.onRunMacro, plugin_path / module_name / "wizard.py",
+            # Determine which file to run: wizard.py if it exists, else __init__.py
+            plugin_dir = plugin_root / module_name
+            wizard_file = plugin_dir / "wizard.py"
+            script_file = wizard_file if wizard_file.is_file() else (plugin_dir / "__init__.py")
+
+            # Build the callback
+            callback = partial(
+                window.onRunMacro,
+                str(script_file),
                 executor='exec',
                 globals={'__name__': 'plugin'}
             )
@@ -261,12 +265,12 @@ def setup_gui(
 
                 # Add the plugin to the submenu
                 plugin_action = QtWidgets.QAction(f"{plugin_name.strip()}", window)
-                plugin_action.triggered.connect(p)
+                plugin_action.triggered.connect(callback)
                 submenus[submenu_name].addAction(plugin_action)
             else:
                 # Add the plugin directly to the main menu
                 plugin_action = QtWidgets.QAction(f"{name}", window)
-                plugin_action.triggered.connect(p)
+                plugin_action.triggered.connect(callback)
                 plugin_menu.addAction(plugin_action)
 
     def populate_notebooks():
