@@ -255,14 +255,15 @@ class PTUSplitter(QtWidgets.QWidget):
         tttr_type_id_input = self.input_tttr_type_id
         ext, rec, cont = _CONTAINER_INFO[out_name]
 
-        print(f"Input file: {self.tttr_input_filename}")
-        print(f"Input file type: {tttr_type_id_input}")
-        print(f"Output file type: {tttr_type_id_output}")
+        chisurf.logging.info(f"Input file: {self.tttr_input_filename}")
+        chisurf.logging.info(f"Input file type: {tttr_type_id_input}")
+        chisurf.logging.info(f"Output file type: {tttr_type_id_output}")
 
         if tttr_type_id_input == tttr_type_id_output:
             header = input_header
-            print("Split")
+            chisurf.logging.info("Splitting file")
         else:
+            chisurf.logging.info("Transcoding file")
             header = input_header  # reuse the existing header object
             header.tttr_container_type = cont
             header.tttr_record_type = rec
@@ -277,12 +278,12 @@ class PTUSplitter(QtWidgets.QWidget):
                 header.set_tag("TTResultFormat_TTTRRecType", rec)
                 header.set_tag("MeasDesc_RecordType", rec)
 
-            print(f"Transcode {in_path} > {self.tttr_type} -> {out_name}")
-            print(f"out_name: {out_name}")
-            print(f"out_idx:  {tttr_type_id_output}")
-            print(f"ext:      {ext}")
-            print(f"rec:      {rec}")
-            print(f"cont:     {cont}")
+            chisurf.logging.info(f"Transcode {in_path} > {self.tttr_type} -> {out_name}")
+            chisurf.logging.info(f"out_name: {out_name}")
+            chisurf.logging.info(f"out_idx:  {tttr_type_id_output}")
+            chisurf.logging.info(f"ext:      {ext}")
+            chisurf.logging.info(f"rec:      {rec}")
+            chisurf.logging.info(f"cont:     {cont}")
 
         # write each range
         for i, (start, stop) in enumerate(ranges):
@@ -386,7 +387,7 @@ class PTUSplitter(QtWidgets.QWidget):
             try:
                 p.mkdir(parents=True, exist_ok=True)
             except Exception as e:
-                print(f"Failed to create folder '{p}': {e}")
+                chisurf.logging.warning(f"Failed to create folder '{p}': {e}")
                 return None
         return p
 
