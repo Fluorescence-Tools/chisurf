@@ -70,7 +70,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             self.update_histogram()
 
 
-    @chisurf.gui.decorators.init_with_ui("burst-selection/gui.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("burst_selection/gui.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         # ---------------------------------------------------------
         # Initialization
