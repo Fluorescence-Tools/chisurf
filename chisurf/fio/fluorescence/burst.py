@@ -112,6 +112,8 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
 
     Modified to match a format where zero rows are interleaved between
     the computed rows and an extra (empty) column is added at the end.
+    Ensures that even if there are no bursts, the output file contains
+    a header row with the expected columns.
 
     :param bur_filename: Output filename for the TSV summary.
     :param start_stop: List of tuples (start_index, stop_index) defining bursts.
@@ -121,56 +123,72 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
                  - micro_times
                  - routing_channel
                  - header.macro_time_resolution
-    :param windows: Dictionary {window_name: [(r_start, r_stop), ...]}
+    :param windows: Dictionary {window_name: (r_start, r_stop)}
     :param detectors: Dictionary {det_name: {"chs": [...], "micro_time_ranges": [(mt_start, mt_stop), ...]}}
     """
     import numpy as np
     import pandas as pd
     from collections import OrderedDict
 
+    # Unpack arrays and resolution
     n_ph = len(tttr)
     macro_times = tttr.macro_times
     micro_times = tttr.micro_times
     routing_channels = tttr.routing_channel
     res = tttr.header.macro_time_resolution
 
-    # This list will store all rows, including interleaved zero rows.
+    # ---------------------------------------------------------
+    # Precompute the full list of column headers
+    # ---------------------------------------------------------
+    static_cols = [
+        "First Photon", "Last Photon", "Duration (ms)", "Mean Macro Time (ms)",
+        "Number of Photons", "Count Rate (KHz)", "First File", "Last File"
+    ]
+    det_cols = []
+    for det_name in detectors:
+        det_cols += [
+            f"First Photon ({det_name})", f"Last Photon ({det_name})",
+            f"Duration ({det_name}) (ms)", f"Mean Macrotime ({det_name}) (ms)",
+            f"Number of Photons ({det_name})", f"{det_name.capitalize()} Count Rate (KHz)"
+        ]
+    window_cols = []
+    for window_name, (r_start, r_stop) in windows.items():
+        for det_name in detectors:
+            window_cols.append(
+                f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"
+            )
+    # extra empty column
+    header_keys = static_cols + det_cols + window_cols + [""]
+
     summary_rows = []
 
-    # Helper function: create a zero row with the same columns as keys.
+    # Helper: create a zero row dict
     def create_zero_row(keys):
         row = OrderedDict()
         for key in keys:
-            # For the extra (empty) column, keep it empty.
-            if key == "":
-                row[key] = ""
-            else:
-                row[key] = 0
+            row[key] = "" if key == "" else 0
         return row
 
-    # Iterate over each (start_index, stop_index) pair.
+    # ---------------------------------------------------------
+    # Iterate and build rows
+    # ---------------------------------------------------------
     for start_idx, stop_idx in start_stop:
         if stop_idx > n_ph or stop_idx < 0:
             continue
 
-        # Slice arrays for this burst.
         burst_macro = macro_times[start_idx:stop_idx]
         burst_micro = micro_times[start_idx:stop_idx]
         burst_rout = routing_channels[start_idx:stop_idx]
 
-        # Handle corner cases.
         if stop_idx <= start_idx:
-            duration = 0.0
-            mean_macro_time = 0.0
-            n_photons = 0
+            duration = mean_macro_time = n_photons = 0
         else:
             duration = (macro_times[stop_idx] - macro_times[start_idx]) * res
             mean_macro_time = ((macro_times[stop_idx] + macro_times[start_idx]) / 2.0) * res
             n_photons = stop_idx - start_idx
-
         count_rate = (n_photons / duration) if duration > 0 else np.nan
 
-        # Initialize the row_data as an OrderedDict (for stable column order).
+        # base row data
         row_data = OrderedDict([
             ("First Photon", start_idx),
             ("Last Photon", stop_idx),
@@ -182,97 +200,69 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
             ("Last File", filename),
         ])
 
-        # ---------------------------------------------------------
-        # Precompute boolean masks for each detector in this burst.
-        # ---------------------------------------------------------
+        # detector masks and per-detector stats
         detector_masks = {}
         for det_name, det_info in detectors.items():
-            chs = det_info["chs"]
-            micro_time_ranges = det_info["micro_time_ranges"]
-
-            # (1) Channel mask.
-            ch_mask = np.isin(burst_rout, chs)
-
-            # (2) Union of all micro-time ranges for this detector.
-            mt_mask = np.zeros(len(burst_micro), dtype=bool)
-            for (mt_start, mt_stop) in micro_time_ranges:
+            ch_mask = np.isin(burst_rout, det_info["chs"])
+            mt_mask = np.zeros(len(burst_micro), bool)
+            for mt_start, mt_stop in det_info["micro_time_ranges"]:
                 mt_mask |= (burst_micro >= mt_start) & (burst_micro < mt_stop)
+            detector_masks[det_name] = ch_mask & mt_mask
 
-            detector_masks[det_name] = (ch_mask & mt_mask)
-
-        # ---------------------------------------------------------
-        # Per-detector stats (for the entire burst).
-        # ---------------------------------------------------------
-        for det_name, det_mask in detector_masks.items():
-            idx = np.nonzero(det_mask)[0]  # indices within the burst slice.
-            if len(idx) == 0:
-                row_data[f"First Photon ({det_name})"] = -1
-                row_data[f"Last Photon ({det_name})"] = -1
-                row_data[f"Duration ({det_name}) (ms)"] = -1.0
-                row_data[f"Mean Macrotime ({det_name}) (ms)"] = -1.0
-                row_data[f"Number of Photons ({det_name})"] = 0
-                row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = -1.0
+        for det_name, mask in detector_masks.items():
+            idxs = np.nonzero(mask)[0]
+            if len(idxs) == 0:
+                row_data.update({
+                    f"First Photon ({det_name})": -1,
+                    f"Last Photon ({det_name})": -1,
+                    f"Duration ({det_name}) (ms)": -1.0,
+                    f"Mean Macrotime ({det_name}) (ms)": -1.0,
+                    f"Number of Photons ({det_name})": 0,
+                    f"{det_name.capitalize()} Count Rate (KHz)": -1.0,
+                })
             else:
-                first_idx = idx[0]
-                last_idx = idx[-1]
-                num_ph = len(idx)
+                first_i, last_i = idxs[0], idxs[-1]
+                dur_ms = (burst_macro[last_i] - burst_macro[first_i]) * res * 1e3
+                mean_mt_ms = ((burst_macro[last_i] + burst_macro[first_i]) / 2.0) * res * 1e3
+                rate_khz = (len(idxs) / dur_ms) if dur_ms > 0 else np.nan
+                row_data.update({
+                    f"First Photon ({det_name})": start_idx + first_i,
+                    f"Last Photon ({det_name})": start_idx + last_i,
+                    f"Duration ({det_name}) (ms)": dur_ms,
+                    f"Mean Macrotime ({det_name}) (ms)": mean_mt_ms,
+                    f"Number of Photons ({det_name})": len(idxs),
+                    f"{det_name.capitalize()} Count Rate (KHz)": rate_khz,
+                })
 
-                # Compute times based on the *burst* arrays.
-                dur_ms = (burst_macro[last_idx] - burst_macro[first_idx]) * res * 1e3
-                mean_mt_ms = ((burst_macro[last_idx] + burst_macro[first_idx]) / 2.0) * res * 1e3
-                rate_khz = (num_ph / dur_ms) if dur_ms > 0 else np.nan
-
-                # Convert local indices back to global indices by adding start_idx.
-                row_data[f"First Photon ({det_name})"] = start_idx + first_idx
-                row_data[f"Last Photon ({det_name})"] = start_idx + last_idx
-                row_data[f"Duration ({det_name}) (ms)"] = dur_ms
-                row_data[f"Mean Macrotime ({det_name}) (ms)"] = mean_mt_ms
-                row_data[f"Number of Photons ({det_name})"] = num_ph
-                row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = rate_khz
-
-        # ---------------------------------------------------------
-        # Per-detector, per-window stats.
-        # ---------------------------------------------------------
-        for window_name, w_ranges in windows.items():
-            # If your code only uses the first (r_start, r_stop).
-            (r_start, r_stop) = w_ranges[0]
-
-            # Build a mask for the window in micro_time.
+        # per-window, per-detector stats
+        for window_name, (r_start, r_stop) in windows.items():
             w_mask = (burst_micro >= r_start) & (burst_micro < r_stop)
-
             for det_name in detectors:
-                # Combine the window mask with the detector mask.
-                combined_mask = detector_masks[det_name] & w_mask
-                idx = np.nonzero(combined_mask)[0]
-
-                if len(idx) == 0:
-                    row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = -1.0
+                combined = detector_masks[det_name] & w_mask
+                idxs = np.nonzero(combined)[0]
+                key = f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"
+                if len(idxs) == 0:
+                    row_data[key] = -1.0
                 else:
-                    num_ph = len(idx)
-                    dur_window_ms = (burst_macro[idx[-1]] - burst_macro[idx[0]]) * res * 1e3
-                    rate_window_khz = num_ph / dur_window_ms if dur_window_ms > 0 else np.nan
-                    row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = rate_window_khz
+                    dur_win_ms = (burst_macro[idxs[-1]] - burst_macro[idxs[0]]) * res * 1e3
+                    row_data[key] = (len(idxs) / dur_win_ms) if dur_win_ms > 0 else np.nan
 
-        # ---------------------------------------------------------
-        # Add the extra (empty) column.
-        # ---------------------------------------------------------
+        # append empty column
         row_data[""] = ""
 
-        # ---------------------------------------------------------
-        # Interleave zero rows.
-        # ---------------------------------------------------------
-        # For the first computed row, prepend a zero row.
+        # interleave zero rows
         if not summary_rows:
-            zero_row = create_zero_row(row_data.keys())
-            summary_rows.append(zero_row)
-        # Append the computed row.
+            summary_rows.append(create_zero_row(header_keys))
         summary_rows.append(row_data)
-        # Append a zero row after the computed row.
-        zero_row = create_zero_row(row_data.keys())
-        summary_rows.append(zero_row)
+        summary_rows.append(create_zero_row(header_keys))
 
-    # Convert to DataFrame and write to a TSV (columns will be tab-separated).
-    summary_df = pd.DataFrame(summary_rows)
+    # ---------------------------------------------------------
+    # Build DataFrame and write TSV, ensuring header is always present
+    # ---------------------------------------------------------
+    if summary_rows:
+        summary_df = pd.DataFrame(summary_rows)
+    else:
+        summary_df = pd.DataFrame(columns=header_keys)
     summary_df.to_csv(bur_filename, sep='\t', index=False)
 
 
