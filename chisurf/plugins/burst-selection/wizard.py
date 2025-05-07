@@ -4,6 +4,8 @@ from qtpy import QtWidgets, QtCore, QtGui
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
+from guidata.widgets.dataframeeditor import DataFrameEditor
+
 
 import pandas as pd
 import numpy as np
@@ -43,6 +45,30 @@ def multi_gaussian(x, *params):
 
 
 class BrickMicWizard(QtWidgets.QMainWindow):
+
+    def show_dataframe_editor(self):
+        """
+        Pop up a spreadsheet-style editor for the full current_df.
+        If the user accepts, replace current_df and refresh the UI.
+        """
+        if self.current_df is None:
+            QtWidgets.QMessageBox.warning(
+                self, "No Data", "No burst data loaded—nothing to show."
+            )
+            return
+
+        dlg = DataFrameEditor(self)
+        # set up the editor on the current DataFrame
+        if not dlg.setup_and_check(self.current_df, title="Burst Results"):
+            return
+
+        if dlg.exec_() == QtWidgets.QDialog.Accepted:
+            # user hit OK: grab the possibly-modified DataFrame back
+            self.current_df = dlg.get_value()
+            # refresh the preview and histogram
+            self.populate_table(self.current_df)
+            self.update_histogram()
+
 
     @chisurf.gui.decorators.init_with_ui("burst-selection/gui.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
@@ -84,12 +110,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.connections: list[(int, int)] = []
         self.current_df = None  # We'll keep the final, concatenated DataFrame here
 
-        # Setup table copy behavior
-        self.tableWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.tableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
-        self.copyShortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+C"), self.tableWidget)
-        self.copyShortcut.activated.connect(self.copy_entire_table)
-
         # Connect signals to update the histogram
         self.comboBox.currentTextChanged.connect(self.update_histogram)
         self.spinBox_3.valueChanged.connect(self.update_histogram)
@@ -100,6 +120,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         # Connect buttons
         self.pushButton.clicked.connect(self.process_all_files)
         self.pushButton_2.clicked.connect(self.clear_data)
+        self.pushButton_show_df.clicked.connect(self.show_dataframe_editor)
 
         # Hide some unused UI elements in burst_finder
         self.burst_finder.groupBox_3.hide()
@@ -205,7 +226,18 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         if accumulated_results:
             final_df = pd.concat(accumulated_results, ignore_index=True)
             self.current_df = final_df
-            self.populate_table(final_df)
+            # self.populate_table(final_df)
+            new_columns = final_df.columns.tolist()
+            # only refresh if it’s different
+            existing = [self.comboBox.itemText(i) for i in range(self.comboBox.count())]
+            if existing != new_columns:
+                self.comboBox.clear()
+                self.comboBox.addItems(new_columns)
+            # default to “Proximity Ratio” if present
+            idx = self.comboBox.findText("Proximity Ratio")
+            if idx != -1:
+                self.comboBox.setCurrentIndex(idx)
+            # now draw the histogram
             self.update_histogram()
 
         logging.info("All burst files loaded successfully.")
@@ -235,7 +267,7 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         # Plot histogram.
         n, bins, patches = ax.hist(
-            data.dropna(),
+            data.dropna()[1::2],
             bins=num_bins,
             range=(min_val, max_val),
             color='blue',
@@ -341,65 +373,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         self.canvas.draw()
 
-    def populate_table(self, df):
-        """
-        Populates self.tableWidget with data from the DataFrame and
-        updates self.comboBox with the column names if the content is new.
-        Only every 10th burst (row) from the DataFrame is added to the table as a preview.
-        """
-        df_preview = df.iloc[::10]
-        final_columns = df.columns.tolist()
-
-        self.tableWidget.clear()
-        self.tableWidget.setRowCount(len(df_preview))
-        self.tableWidget.setColumnCount(len(final_columns))
-        self.tableWidget.setHorizontalHeaderLabels(final_columns)
-
-        for row_index, row in enumerate(df_preview.itertuples(index=False)):
-            for col_index, value in enumerate(row):
-                item_text = f"{value:.3f}" if isinstance(value, float) else str(value)
-                item = QtWidgets.QTableWidgetItem(item_text)
-                self.tableWidget.setItem(row_index, col_index, item)
-
-        # Update comboBox if columns differ
-        current_items = [self.comboBox.itemText(i) for i in range(self.comboBox.count())]
-        if current_items != final_columns:
-            self.comboBox.clear()
-            self.comboBox.addItems(final_columns)
-
-        # Set default to 'Proximity Ratio' if present
-        idx = self.comboBox.findText("Proximity Ratio")
-        if idx != -1:
-            self.comboBox.setCurrentIndex(idx)
-
-    def copy_entire_table(self):
-        """
-        Copies the entire table content, including header labels,
-        to the clipboard as tab-delimited text.
-        """
-        row_count = self.tableWidget.rowCount()
-        col_count = self.tableWidget.columnCount()
-
-        # Collect column headers
-        header_items = []
-        for col in range(col_count):
-            header_item = self.tableWidget.horizontalHeaderItem(col)
-            header_text = header_item.text() if header_item else ""
-            header_items.append(header_text)
-        clipboard_text = "\t".join(header_items) + "\n"
-
-        # Collect cell data
-        for row in range(row_count):
-            row_data = []
-            for col in range(col_count):
-                item = self.tableWidget.item(row, col)
-                cell_text = item.text() if item else ""
-                row_data.append(cell_text)
-            clipboard_text += "\t".join(row_data) + "\n"
-
-        # Place the final text in the clipboard
-        QtWidgets.QApplication.clipboard().setText(clipboard_text)
-
     def clear_data(self):
         """
         Clears all current data from the table, histogram, text fields,
@@ -408,11 +381,6 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.current_df = None
         # clear data reader
         self.burst_finder.toolButton_6.click()
-
-        # Clear the table
-        self.tableWidget.clear()
-        self.tableWidget.setRowCount(0)
-        self.tableWidget.setColumnCount(0)
 
         # Clear the figure and redraw an empty canvas
         self.figure.clear()
