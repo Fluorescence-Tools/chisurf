@@ -396,7 +396,6 @@
     </widget>
     <addaction name="menuModelling"/>
     <addaction name="menuTTTR"/>
-    <addaction name="actionTTTR_CLSM"/>
    </widget>
    <widget class="QMenu" name="menuMacro">
     <property name="title">
