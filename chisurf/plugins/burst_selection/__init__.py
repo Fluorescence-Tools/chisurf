@@ -1,1 +1,1 @@
-name = "Burst:Selection"
+name = "Single-Molecule:Burst-Selection"

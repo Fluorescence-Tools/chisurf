@@ -1,1 +1,1 @@
-name = "Burst:Variance Analysis"
+name = "Single-Molecule:Burst-Variance Analysis"
