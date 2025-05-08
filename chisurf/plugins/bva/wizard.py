@@ -607,7 +607,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("smFRET BVA Analysis")
-        self.resize(400, 800)
+        self.resize(400, 500)
         self.data_folder = None
         self.analysis_folder = None
         self.file_type = DEFAULT_FILE_TYPE
