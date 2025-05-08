@@ -105,7 +105,7 @@ def get_indices_in_ranges(rout, mt, chs, micro_time_ranges):
     return indices.tolist()
 
 
-def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors):
+def write_bur_file_old(bur_filename, start_stop, filename, tttr, windows, detectors):
     """
     Write burst summary information to a TSV file (tab-separated),
     using a vectorized approach for efficiency.
@@ -265,6 +265,145 @@ def write_bur_file(bur_filename, start_stop, filename, tttr, windows, detectors)
         summary_df = pd.DataFrame(columns=header_keys)
     summary_df.to_csv(bur_filename, sep='\t', index=False)
 
+
+def write_bur_file_fast(bur_filename, start_stop, filename, tttr, windows, detectors):
+    """Much faster burst summary writer by:
+       1) precomputing global detector/window masks,
+       2) building fixed-length lists instead of OrderedDict,
+       3) appending to a list of lists and dumping to pandas once."""
+    file_name_only = pathlib.Path(filename).name
+
+    # unpack
+    macro = tttr.macro_times
+    micro = tttr.micro_times
+    rout  = tttr.routing_channel
+    res   = tttr.header.macro_time_resolution
+    n_ph  = len(tttr)
+
+    # build column list
+    static_cols = [
+        "First Photon", "Last Photon", "Duration (ms)", "Mean Macro Time (ms)",
+        "Number of Photons", "Count Rate (KHz)", "First File", "Last File",
+    ]
+    det_cols = []
+    for d in detectors:
+        det_cols += [
+            f"First Photon ({d})", f"Last Photon ({d})",
+            f"Duration ({d}) (ms)", f"Mean Macrotime ({d}) (ms)",
+            f"Number of Photons ({d})", f"{d.capitalize()} Count Rate (KHz)",
+        ]
+    win_cols = []
+    for w,(r0,r1) in windows.items():
+        for d in detectors:
+            win_cols.append(f"S {w} {d} (kHz) | {r0}-{r1}")
+    # extra blank column
+    cols = static_cols + det_cols + win_cols + [""]
+
+    # map col→index for fast assignment
+    idx = {c:i for i,c in enumerate(cols)}
+    n_cols = len(cols)
+
+    # precompute global masks so we don't remake them per-burst
+    det_global = {}
+    for d,info in detectors.items():
+        chm = np.isin(rout, info["chs"])
+        mtm = np.zeros(n_ph, bool)
+        for r0,r1 in info["micro_time_ranges"]:
+            mtm |= (micro >= r0) & (micro < r1)
+        det_global[d] = chm & mtm
+
+    win_global = {
+        w: (micro >= r0) & (micro < r1)
+        for w,(r0,r1) in windows.items()
+    }
+
+    # helper zero-row
+    zero_row = [0]*n_cols
+    zero_row[-1] = ""  # last col blank string
+
+    out = []
+    # only add the leading zero‐row when there's at least one burst
+    try:
+        has_bursts = len(start_stop) > 0
+    except TypeError:
+        # fallback if start_stop isn’t sized like a sequence
+        has_bursts = bool(start_stop)
+    if has_bursts:
+        out.append(zero_row.copy())
+
+    for start, stop in start_stop:
+        if stop <= start or stop>n_ph or start<0:
+            continue
+
+        # allocate a fresh row
+        row = zero_row.copy()
+
+        # static stats
+        dur   = (macro[stop] - macro[start]) * res * 1e3
+        meanm = ((macro[stop] + macro[start]) / 2) * res * 1e3
+        npix  = stop - start
+        crate = (npix / dur)/1e3 if dur>0 else np.nan
+
+        row[idx["First Photon"]]          = start
+        row[idx["Last Photon"]]           = stop
+        row[idx["Duration (ms)"]]         = dur
+        row[idx["Mean Macro Time (ms)"]]  = meanm
+        row[idx["Number of Photons"]]     = npix
+        row[idx["Count Rate (KHz)"]]      = crate
+        row[idx["First File"]]            = file_name_only
+        row[idx["Last File"]]             = file_name_only
+
+        # slice views
+        sl = slice(start, stop)
+        for d in detectors:
+            mask = det_global[d][sl]
+            idxs = np.nonzero(mask)[0]
+            col0 = f"First Photon ({d})"
+            if idxs.size == 0:
+                # these get -1 or 0 per your original logic
+                row[idx[col0]]                             = -1
+                row[idx[f"Last Photon ({d})"]]            = -1
+                row[idx[f"Duration ({d}) (ms)"]]           = -1.0
+                row[idx[f"Mean Macrotime ({d}) (ms)"]]     = -1.0
+                row[idx[f"Number of Photons ({d})"]]       = 0
+                row[idx[f"{d.capitalize()} Count Rate (KHz)"]] = -1.0
+            else:
+                i0, i1 = idxs[0], idxs[-1]
+                abs0, abs1 = start + i0, start + i1
+                d_ms = (macro[abs1] - macro[abs0]) * res * 1e3
+                m_ms = ((macro[abs1] + macro[abs0]) / 2) * res * 1e3
+                rate = (idxs.size / d_ms) if d_ms>0 else np.nan
+
+                row[idx[col0]]                             = abs0
+                row[idx[f"Last Photon ({d})"]]            = abs1
+                row[idx[f"Duration ({d}) (ms)"]]           = d_ms
+                row[idx[f"Mean Macrotime ({d}) (ms)"]]     = m_ms
+                row[idx[f"Number of Photons ({d})"]]       = idxs.size
+                row[idx[f"{d.capitalize()} Count Rate (KHz)"]] = rate
+
+        # now per-window, per-detector
+        for w in windows:
+            wmask = win_global[w][sl]
+            for d in detectors:
+                combined = det_global[d][sl] & wmask
+                idxs = np.nonzero(combined)[0]
+                key = f"S {w} {d} (kHz) | {windows[w][0]}-{windows[w][1]}"
+                if idxs.size == 0:
+                    row[idx[key]] = -1.0
+                else:
+                    abs0, abs1 = start+idxs[0], start+idxs[-1]
+                    d_ms = (macro[abs1] - macro[abs0]) * res * 1e3
+                    row[idx[key]] = (idxs.size / d_ms) if d_ms>0 else np.nan
+
+        # blank column already set to ""
+        out.append(row)
+        out.append(zero_row.copy())
+
+    # build and write
+    df = pd.DataFrame(out, columns=cols)
+    df.to_csv(bur_filename, sep="\t", index=False)
+
+write_bur_file = write_bur_file_fast
 
 def read_burst_analysis(
         paris_path: pathlib.Path,
