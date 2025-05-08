@@ -1,1 +1,1 @@
-name = "Batch:Analysis"
+name = "Tools:Batch-Analysis"
