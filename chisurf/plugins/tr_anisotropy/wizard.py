@@ -26,7 +26,7 @@ import pyqtgraph as pg
 
 colors = ['b', 'r']
 
-name = "Anisotropy:Wizard"
+name = "Tools:Anisotropy-Wizard"
 
 
 class ChisurfWizard(QtWidgets.QWizard):

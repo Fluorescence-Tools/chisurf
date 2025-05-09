@@ -1,1 +1,1 @@
-name = "Burst:MLE Lifetime Analysis"
+name = "Single-Molecule:Burst MLE Lifetime Analysis"
