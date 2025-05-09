@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Processing Sketch in HTML</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.4.8/processing.min.js"></script>
+</head>
+<body>
+  <canvas id="mycanvas"></canvas>
+  <script type="application/javascript">
+    window.onload = function() {
+      var canvas = document.getElementById('mycanvas');
+      Processing.loadSketchFromSources(canvas, ['sketch.pde']);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+To add an icon to this plugin:
+
+1. Create a 64x64 pixel PNG image with a transparent background
+2. Save it as "icon.png" in this directory (E:\dev\chisurf\chisurf\plugins\pch)
+3. The icon will be automatically loaded when the plugin menu is populated
+
+The icon should represent the functionality of the plugin, such as a histogram 
+visualization for this Photon Counting Histogram plugin.
+
+Once the icon is added, make sure the "icons_enabled" setting is set to true in 
+settings_chisurf.yaml under the "plugins" section.
