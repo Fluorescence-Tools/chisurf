@@ -1,1 +1,1 @@
-name = "Selection:Photon/Burst"
+name = "TTTR:Photon/Burst Selection"
