@@ -236,10 +236,28 @@ def setup_gui(
         # Dictionary to store submenus
         submenus = {}
 
+        # Get plugin settings
+        plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+        disabled_plugins = plugin_settings.get('disabled_plugins', [])
+        hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
+        icons_enabled = plugin_settings.get('icons_enabled', True)
+
+        # Check if we're in experimental mode
+        experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+
         for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
             module_path = f"chisurf.plugins.{module_name}"
             module = importlib.import_module(module_path)
             name = getattr(module, 'name', module_name)
+
+            # Check if this plugin is marked as broken
+            # Handle broken plugins only by their name not location in menu
+            clean_name = name.split(":")[-1]
+            is_broken = name in disabled_plugins or module_name in disabled_plugins or clean_name in disabled_plugins
+
+            # Skip broken plugins if they should be hidden and we're not in experimental mode
+            if is_broken and hide_disabled_plugins and not experimental_mode:
+                continue
 
             # Determine which file to run: wizard.py if it exists, else __init__.py
             plugin_dir = plugin_root / module_name
@@ -254,6 +272,19 @@ def setup_gui(
                 globals={'__name__': 'plugin'}
             )
 
+            # Check for icon if enabled
+            icon = None
+            if icons_enabled:
+                # Look for icon in module or in plugin directory
+                icon_path = plugin_dir / "icon.png"
+                if hasattr(module, 'icon'):
+                    icon = module.icon
+                elif icon_path.exists():
+                    icon = QtGui.QIcon(str(icon_path))
+
+            # Get plugin description if available
+            description = getattr(module, '__doc__', "No description available.")
+
             # Check if the name contains a colon to determine if it should go in a submenu
             if ":" in name:
                 # Split the name into submenu name and plugin name
@@ -265,12 +296,26 @@ def setup_gui(
 
                 # Add the plugin to the submenu
                 plugin_action = QtWidgets.QAction(f"{plugin_name.strip()}", window)
+                if icon:
+                    plugin_action.setIcon(icon)
                 plugin_action.triggered.connect(callback)
+                # Set tooltip with plugin description
+                plugin_action.setToolTip(description)
+                # Add a visual indicator for broken plugins in experimental mode
+                if is_broken and experimental_mode:
+                    plugin_action.setText(f"{plugin_name.strip()} [BROKEN]")
                 submenus[submenu_name].addAction(plugin_action)
             else:
                 # Add the plugin directly to the main menu
                 plugin_action = QtWidgets.QAction(f"{name}", window)
+                if icon:
+                    plugin_action.setIcon(icon)
                 plugin_action.triggered.connect(callback)
+                # Set tooltip with plugin description
+                plugin_action.setToolTip(description)
+                # Add a visual indicator for broken plugins in experimental mode
+                if is_broken and experimental_mode:
+                    plugin_action.setText(f"{name} [BROKEN]")
                 plugin_menu.addAction(plugin_action)
 
     def populate_notebooks():
