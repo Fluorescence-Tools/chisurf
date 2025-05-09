@@ -1,1 +1,1 @@
-name = "PTU:Microtime Shifter"
+name = "TTTR:PTU Microtime Shifter"
