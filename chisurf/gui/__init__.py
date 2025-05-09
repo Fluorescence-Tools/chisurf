@@ -3,6 +3,11 @@ from __future__ import annotations
 import sys
 import subprocess
 import pathlib
+import os
+import signal
+import threading
+import time
+import atexit
 
 from functools import partial
 import pkgutil
@@ -17,6 +22,73 @@ from qtpy import QtWidgets, QtGui, QtCore, uic
 import chisurf.settings
 from chisurf import logging
 import chisurf.gui.decorators
+
+
+def launch_jupyter_process(
+    notebook_executable="jupyter-notebook",
+    port=8888,
+    directory: pathlib.Path = pathlib.Path().home()
+):
+    """
+    Launch Jupyter Notebook with a watchdog that kills it when this process dies.
+    Cross-platform: uses os.killpg on Unix, CREATE_NEW_PROCESS_GROUP on Windows.
+    """
+    jupyter_cmd = [
+        sys.executable, "-m", "notebook",
+        f"--port={port}",
+        "--no-browser",
+        "--NotebookApp.token=''",
+        "--NotebookApp.password=''",
+        "--NotebookApp.disable_check_xsrf=True",
+        f"--notebook-dir={directory}"
+    ]
+
+    # On Windows, put Jupyter into its own process group
+    creationflags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
+    start_new_session = (sys.platform != "win32")
+
+    # Capture stdout (URL) and merge stderr
+    jupyter_proc = subprocess.Popen(
+        jupyter_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        creationflags=creationflags,
+        start_new_session=start_new_session
+    )
+
+    def terminate_jupyter():
+        """Cleanly kill the notebook process (and its group)."""
+        try:
+            if sys.platform == "win32":
+                # send CTRL_BREAK to the group, then kill if still alive
+                jupyter_proc.send_signal(signal.CTRL_BREAK_EVENT)
+                jupyter_proc.kill()
+            else:
+                os.killpg(jupyter_proc.pid, signal.SIGKILL)
+        except Exception:
+            pass
+
+    def watchdog_unix():
+        """Only on Unix: if parent vanishes, kill the notebook group."""
+        parent_pid = os.getpid()
+        while True:
+            time.sleep(2)
+            try:
+                os.kill(parent_pid, 0)
+            except OSError:
+                terminate_jupyter()
+                break
+
+    # Register for normal shutdown
+    atexit.register(terminate_jupyter)
+
+    # Start a watcher **only on Unix**, since on Windows os.kill(pid,0) will terminate PID=0
+    if sys.platform != "win32":
+        thread = threading.Thread(target=watchdog_unix, daemon=True)
+        thread.start()
+
+    return jupyter_proc
 
 
 class QTextEditLogger(logging.Handler):
@@ -41,7 +113,6 @@ class QTextEditLogger(logging.Handler):
             self.widget.setText(msg)
         elif self.mode == "append":
             self.widget.appendPlainText(msg)
-
 
 
 def setup_logging_widgets(window):
@@ -212,22 +283,6 @@ def setup_gui(
                 mode='r'
             ).read()
         )
-
-    def start_jupyter(
-                      notebook_executable="jupyter-notebook",
-                      port=8888,
-                      directory=pathlib.Path().home()
-    ):
-        return subprocess.Popen([notebook_executable,
-                                 "--port=%s" % port,
-                                 "--browser=n",
-                                 "--NotebookApp.token=''",  # Disable token
-                                 "--NotebookApp.password=''",  # Disable password
-                                 "--NotebookApp.disable_check_xsrf=True",
-                                 # Disable cross-site request forgery protection (optional)
-                                 "--notebook-dir=%s" % directory],
-                                bufsize=1, stderr=subprocess.PIPE
-                            )
 
     def populate_plugins():
         plugin_menu = window.menuBar.addMenu('Plugins')
@@ -400,23 +455,35 @@ def setup_gui(
         window.init_setups()
     elif stage == "load_tools":
         window.load_tools()
+        # In your setup_gui function:
     elif stage == "start_jupyter":
-        # start jupyter notebook and wait for line with the web address
         chisurf.logging.info("Starting Jupyter notebook process")
-        chisurf.__jupyter_process__ = start_jupyter()
+        # Start the notebook and capture the process
+        chisurf.__jupyter_process__ = launch_jupyter_process()
+        proc = chisurf.__jupyter_process__
+
+        # Read lines until we see the HTTP address (or the process exits)
         while chisurf.__jupyter_address__ is None:
-            line = str(chisurf.__jupyter_process__.stderr.readline())
-            chisurf.logging.info(line)
+            line = proc.stdout.readline()
+            if not line:
+                # The process died or closed its output
+                raise RuntimeError("Jupyter process exited before printing URL")
+            chisurf.logging.info(line.strip())
             if "http://" in line:
                 start = line.find("http://")
                 end = line.find("/", start + len("http://"))
-                chisurf.__jupyter_address__  = line[start:end]
-        chisurf.logging.info("Server found at %s, migrating monitoring to listener thread" % chisurf.__jupyter_address__)
+                chisurf.__jupyter_address__ = line[start:end]
+
+        chisurf.logging.info(
+            "Server found at %s, migrating monitoring to listener thread",
+            chisurf.__jupyter_address__
+        )
     elif stage == "setup_logging":
         setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
         chisurf.logging.info("Looking for ipynb in home folder")
         populate_notebooks()
+    return None
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     import pyqtgraph as pg

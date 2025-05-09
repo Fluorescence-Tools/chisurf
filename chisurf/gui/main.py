@@ -29,8 +29,6 @@ import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
 
-import clsmview.gui
-
 
 class Main(QtWidgets.QMainWindow):
     """
@@ -336,6 +334,7 @@ class Main(QtWidgets.QMainWindow):
 
     def onOpenUpdate(self):
         webbrowser.open_new(chisurf.info.help_url)
+
 
     def init_console(self):
         self.verticalLayout_4.addWidget(chisurf.console)
@@ -746,14 +745,6 @@ class Main(QtWidgets.QMainWindow):
         import chisurf.gui.tools
 
         ##########################################################
-        #      Init widgets                                      #
-        ##########################################################
-        # self.decay_generator = chisurf.tools.decay_generator.TransientDecayGenerator()
-        # self.connect(self.actionDye_Diffusion, QtCore.SIGNAL('triggered()'), self.decay_generator.show)
-        #self.sm_FRETlines = chisurf.tools.sm_FRETlines.FRETLineGeneratorWidget()
-        #self.connect(self.actionFRET_Lines, QtCore.SIGNAL('triggered()'), self.sm_FRETlines.show)
-
-        ##########################################################
         #      Fluorescence widgets                              #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
@@ -763,51 +754,8 @@ class Main(QtWidgets.QMainWindow):
         self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.k2dgui.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
-
-        ##########################################################
-        #      TTTR-widgets                                      #
-        ##########################################################
-        self.tttr_convert = chisurf.gui.tools.tttr.convert.TTTRConvert()
-        self.actionConvert.triggered.connect(self.tttr_convert.show)
-
-        self.tttr_correlate = chisurf.gui.tools.tttr.correlate.CorrelateTTTR()
-        self.actionCorrelate.triggered.connect(self.tttr_correlate.show)
-
-        self.tttr_histogram = chisurf.gui.tools.tttr.histogram.HistogramTTTR()
-        self.actionGenerate_decay.triggered.connect(self.tttr_histogram.show)
-
-        self.clsm_pixel_select = clsmview.gui.CLSMPixelSelect()
-        self.actionTTTR_CLSM.triggered.connect(self.clsm_pixel_select.show)
-
-        ##########################################################
-        #      TTTR-widgets                                      #
-        ##########################################################
-        self.hdf2pdb = chisurf.gui.tools.structure.convert_trajectory.MDConverter()
-        self.actionTrajectory_converter.triggered.connect(self.hdf2pdb.show)
-
-        self.trajectory_rot_trans = chisurf.gui.tools.structure.rotate_translate_trajectory.RotateTranslateTrajectoryWidget()
-        self.actionRotate_Translate_trajectory.triggered.connect(self.trajectory_rot_trans.show)
-
         self.calculate_potential = chisurf.gui.tools.structure.potential_energy.PotentialEnergyWidget()
         self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
-
-        self.pdb2label = chisurf.gui.tools.structure.create_av_json.LabelStructure()
-        self.actionPDB2Label.triggered.connect(self.pdb2label.show)
-
-        self.structure2transfer = chisurf.gui.tools.structure.fret_trajectory.Structure2Transfer()
-        self.actionStructure2Transfer.triggered.connect(self.structure2transfer.show)
-
-        self.join_trajectories = chisurf.gui.tools.structure.join_trajectories.JoinTrajectoriesWidget()
-        self.actionJoin_trajectories.triggered.connect(self.join_trajectories.show)
-
-        self.traj_save_topol = chisurf.gui.tools.structure.save_topology.SaveTopology()
-        self.actionSave_topology.triggered.connect(self.traj_save_topol.show)
-
-        self.remove_clashes = chisurf.gui.tools.structure.remove_clashed_frames.RemoveClashedFrames()
-        self.actionRemove_clashes.triggered.connect(self.remove_clashes.show)
-
-        self.align_trajectory = chisurf.gui.tools.structure.align_trajectory.AlignTrajectoryWidget()
-        self.actionAlign_trajectory.triggered.connect(self.align_trajectory.show)
 
         self.f_test = chisurf.gui.tools.f_test.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
