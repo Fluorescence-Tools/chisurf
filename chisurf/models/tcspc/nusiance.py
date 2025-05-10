@@ -146,6 +146,12 @@ class Corrections(FittingParameterGroup):
         self._curve = v
         self._lintable = self.calc_lintable(v.y)
 
+    def unload_lintable(self):
+        """Unload the linearization table and reset it to default (array of ones)
+        """
+        self._curve = None
+        self._lintable = None
+
     @property
     def window_length(self) -> int:
         return int(self._window_length.value)
@@ -456,6 +462,11 @@ class Convolve(FittingParameterGroup):
 
         return decay
 
+    def unload_irf(self):
+        """Unload the IRF and reset it to default (None)
+        """
+        self.__irf = None
+
     def convolve(
             self,
             data: chisurf.data.DataCurve,
@@ -602,4 +613,3 @@ class Convolve(FittingParameterGroup):
         self.__irf = irf
         if self.__irf is not None:
             self._irf = self.__irf
-
