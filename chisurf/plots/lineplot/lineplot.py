@@ -362,7 +362,7 @@ class LinePlot(plotbase.Plot):
             text='',
             border='w',
             fill=(0, 0, 255, 100),
-            anchor=(1, 1)
+            anchor=(0, 0)
         )
         self.text.setParentItem(plots['main_plot'])
         self.text.setPos(100, 0)
