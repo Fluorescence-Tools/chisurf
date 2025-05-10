@@ -754,9 +754,6 @@ class Main(QtWidgets.QMainWindow):
         self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.k2dgui.Kappa2Dist()
         self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
-        self.calculate_potential = chisurf.gui.tools.structure.potential_energy.PotentialEnergyWidget()
-        self.actionCalculate_Potential.triggered.connect(self.calculate_potential.show)
-
         self.f_test = chisurf.gui.tools.f_test.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
 
