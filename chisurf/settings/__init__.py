@@ -9,6 +9,7 @@ import json
 import shutil
 
 
+
 def get_path(path_type: str = 'settings') -> pathlib.Path:
     """Get the path of the chisurf settings file.
 
@@ -61,7 +62,53 @@ def copy_settings_to_user_folder():
 
 
 def clear_settings_folder():
-    shutil.rmtree(get_path())
+    """
+    Remove all files and subdirectories inside the settings folder.
+
+    This function walks through the directory returned by `get_path()` and:
+      - Recursively deletes each subdirectory (skipping over any files it cannot remove),
+      - Deletes each file at the top level,
+      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
+        for any file or directory that cannot be deleted.
+
+    The root settings folder itself is left intact, even if not empty.
+
+    Raises:
+        None. All deletion errors are caught and logged.
+    """
+    import chisurf
+
+    root = get_path()
+
+    # Helper to warn on failed removals inside rmtree()
+    def _handle_remove_error(func, path, exc_info):
+        ex = exc_info[1]
+        # Only skip PermissionErrors (file-in-use, etc.)
+        if isinstance(ex, PermissionError):
+            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
+            return
+        # Propagate everything else
+        raise ex
+
+    # If the root doesn’t even exist, nothing to do
+    if not os.path.isdir(root):
+        return
+
+    # Iterate through *direct* children of root
+    for entry in os.scandir(root):
+        path = entry.path
+        try:
+            if entry.is_dir(follow_symlinks=False):
+                # Recursively remove this subfolder entirely (with our onerror)
+                shutil.rmtree(path, onerror=_handle_remove_error)
+            else:
+                # Remove a single file
+                os.unlink(path)
+        except PermissionError as e:
+            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
+        except OSError as e:
+            # e.errno==ENOTEMPTY can happen if subdir isn't empty (due to skips)
+            chisurf.logging.warning(f"Couldn’t remove {path}")
 
 
 #######################################################
