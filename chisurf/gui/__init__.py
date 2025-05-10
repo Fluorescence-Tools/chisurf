@@ -285,7 +285,20 @@ def setup_gui(
         )
 
     def populate_plugins():
-        plugin_menu = window.menuBar.addMenu('Plugins')
+        # Find the Help menu to insert the Plugins menu before it
+        help_menu = None
+        for action in window.menuBar.actions():
+            if action.text() == 'Help':
+                help_menu = action
+                break
+
+        # Insert the Plugins menu before the Help menu
+        plugin_menu = QtWidgets.QMenu('Plugins', window)
+        window.menuBar.insertMenu(help_menu, plugin_menu)
+
+        # Store the plugin menu in a global variable so it can be accessed by populate_notebooks
+        global plugin_menu_action
+        plugin_menu_action = plugin_menu.menuAction()
         plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
 
         # Dictionary to store submenus
@@ -374,7 +387,28 @@ def setup_gui(
                 plugin_menu.addAction(plugin_action)
 
     def populate_notebooks():
-        notebook_menu = window.menuBar.addMenu('Notebooks')
+        # Find the Help menu to insert the Notebooks menu before it
+        help_menu = None
+        for action in window.menuBar.actions():
+            if action.text() == 'Help':
+                help_menu = action
+                break
+
+        # Create the Notebooks menu
+        notebook_menu = QtWidgets.QMenu('Notebooks', window)
+
+        # Get the next action after the Plugins menu
+        next_action = None
+        found_plugins = False
+        for action in window.menuBar.actions():
+            if found_plugins:
+                next_action = action
+                break
+            if action == plugin_menu_action:
+                found_plugins = True
+
+        # Insert the Notebooks menu after the Plugins menu
+        window.menuBar.insertMenu(next_action, notebook_menu)
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
