@@ -43,7 +43,6 @@ class FCS(reader.ExperimentReader):
             reader_name=self.experiment_reader,
             experiment=self.experiment
         )
-        r.current_dataset.data_reader
+        r.current_dataset.data_reader = self
+        r.data_reader = self
         return r
-
-
