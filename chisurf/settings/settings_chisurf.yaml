@@ -193,3 +193,13 @@ gui:
       inactive_transparency: 0.2
       active_transparency: 1
 exceptions_on_gui: true # if True exceptions are displayed on the GUI a MessageBox
+plugins:
+  disabled_plugins: # list of plugin names that are disabled
+    - Fluorescence Intensity Distribution Analysis (FIDA)
+    - FIDA2D
+    - TTTR:Convert
+    - TTTR:Correlate
+    - TTTR:Generate Decay
+    - Tools:Dye Diffusion
+  hide_disabled_plugins: true # if True, disabled plugins will be hidden unless in experimental mode
+  icons_enabled: true # if True, plugins can have icons
