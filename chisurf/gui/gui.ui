@@ -341,62 +341,6 @@
     <addaction name="actionCascade"/>
     <addaction name="menuType_Here"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
-    <property name="title">
-     <string>Tools</string>
-    </property>
-    <widget class="QMenu" name="menuModelling">
-     <property name="title">
-      <string>Modelling</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
-     </property>
-     <widget class="QMenu" name="menuTrajectory_tools">
-      <property name="title">
-       <string>Trajectory tools</string>
-      </property>
-      <property name="icon">
-       <iconset resource="resources/resource.qrc">
-        <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
-      </property>
-      <addaction name="actionTrajectory_converter"/>
-      <addaction name="actionSave_topology"/>
-      <addaction name="separator"/>
-      <addaction name="actionAlign_trajectory"/>
-      <addaction name="actionRotate_Translate_trajectory"/>
-      <addaction name="separator"/>
-      <addaction name="actionJoin_trajectories"/>
-      <addaction name="actionRemove_clashes"/>
-     </widget>
-     <addaction name="menuTrajectory_tools"/>
-     <addaction name="separator"/>
-     <addaction name="actionStructure2Transfer"/>
-     <addaction name="separator"/>
-     <addaction name="actionPDB2Label"/>
-     <addaction name="separator"/>
-     <addaction name="actionCalculate_Potential"/>
-     <addaction name="actionQuEst"/>
-    </widget>
-    <widget class="QMenu" name="menuTTTR">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="title">
-      <string>TTTR</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
-     </property>
-     <addaction name="actionConvert"/>
-     <addaction name="actionGenerate_decay"/>
-     <addaction name="actionCorrelate"/>
-    </widget>
-    <addaction name="menuModelling"/>
-    <addaction name="menuTTTR"/>
-   </widget>
    <widget class="QMenu" name="menuMacro">
     <property name="title">
      <string>Macro</string>
@@ -416,7 +360,6 @@
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
-   <addaction name="menuTools"/>
    <addaction name="menuMacro"/>
    <addaction name="menuSettings"/>
    <addaction name="menuHelp"/>
