@@ -144,6 +144,10 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             label_text='r[MHz]'
         )
 
+        # Button to unload IRF
+        self.unload_button.setToolTip("Unload IRF")
+        self.unload_button.clicked.connect(self.onUnloadIRF)
+
         self.irf_select = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.change_irf,
@@ -174,6 +178,13 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         name = self.irf_select.curve_name
         chisurf.run(f"chisurf.macros.model.change_irf({idx}, r'{name}')")
         self.fwhm = self.irf.fwhm
+
+    def onUnloadIRF(self):
+        """Unload the IRF and reset it to default (None)
+        """
+        chisurf.run("cs.current_fit.model.convolve.unload_irf()")
+        self.lineEdit.setText("")
+        chisurf.run("cs.current_fit.model.update()")
 
 
 class CorrectionsWidget(Corrections, QtWidgets.QWidget):
@@ -207,6 +218,12 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
             fit=fit,
             experiment=fit.data.experiment.__class__
         )
+
+        # Add button to unload linearization table
+        self.unload_button = QtWidgets.QPushButton("Unload")
+        self.unload_button.setToolTip("Unload linearization table")
+        self.unload_button.clicked.connect(self.onUnloadLin)
+        self.horizontalLayout.addWidget(self.unload_button)
 
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
@@ -245,6 +262,13 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
             "chisurf.macros.model.set_linearization(%s, '%s')" %
             (idx, lin_name)
         )
+
+    def onUnloadLin(self):
+        """Unload the linearization table and reset it to default (array of ones)
+        """
+        chisurf.run("cs.current_fit.model.corrections.unload_lintable()")
+        self.lineEdit.setText("")
+        chisurf.run("cs.current_fit.model.update()")
 
 
 class GenericWidget(QtWidgets.QGroupBox, Generic):
@@ -773,7 +797,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.lh.addLayout(lh)
 
         self.append()
-        
+
     def __setstate__(self, state):
         n_lifetime = (len(state.keys()) - 2) // 2
         for _ in range(n_lifetime):
@@ -1257,7 +1281,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
 class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
     plot_classes = plot_cls_dist_default
-    
+
     def finalize(self):
         super().finalize()
         self.donor.update()
@@ -1611,4 +1635,3 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
     def clear_models(self):
         LifetimeMixModel.clear_models(self)
         chisurf.gui.widgets.clear_layout(self.model_layout)
-
