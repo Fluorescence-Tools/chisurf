@@ -11,6 +11,6 @@ types = {
     'tcspc': Experiment('TCSPC'),
     'fcs': Experiment('FCS'),
     'pda': Experiment('PDA'),
-    #'stopped_flow': Experiment('Stopped flow'),
+    'stopped_flow': Experiment('Stopped flow'),
     'structure': Experiment('Modelling')
 }
