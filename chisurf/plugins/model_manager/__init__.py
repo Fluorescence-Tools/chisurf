@@ -436,7 +436,13 @@ class ModelManagerWidget(QMainWindow):
         try:
             with open(settings_file, 'w') as f:
                 yaml.dump(chisurf.settings.cs_settings, f, default_flow_style=False)
-            QMessageBox.information(self, "Settings Saved", f"Model and experiment settings have been saved successfully to:\n{settings_file}\n\nA restart of the software is required for the changes to take effect.")
+            QMessageBox.information(
+                self,
+                "Settings Saved",
+                f"Model and experiment settings have been "
+                f"saved successfully to:\n{settings_file}\n\nA restart "
+                f"of the software is required for the changes to take effect."
+            )
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save settings to {settings_file}: {e}")
 
