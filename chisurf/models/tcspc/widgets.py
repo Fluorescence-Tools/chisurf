@@ -928,6 +928,15 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
 
 class LifetimeModelWidget(LifetimeModelWidgetBase):
+    """
+    A widget for displaying and manipulating fluorescence lifetime models.
+
+    This widget extends LifetimeModelWidgetBase by adding specific components
+    for working with fluorescence lifetime data, including lifetime parameters
+    and anisotropy settings. It provides a graphical interface for configuring
+    and visualizing fluorescence lifetime models used in time-correlated single
+    photon counting (TCSPC) experiments.
+    """
 
     def __init__(
         self,
