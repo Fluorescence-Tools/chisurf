@@ -39,7 +39,7 @@ requirements:
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
-    - typing_extensions <=4.5
+    - typing_extensions 4.5.*
     - pip
     - cython <3.0
     - pyopencl
@@ -56,13 +56,16 @@ requirements:
     - boost-cpp
     - numpy
     - libcxx  # [osx]
+    - icu >=75
   run:
     - python =3.10
     - numpy
+    - icu >=75
+    - pyqt
     - pyyaml
     - click <8.0 # Conflicts with papermill
     - python-slugify
-    - pyqtgraph >=0.13
+    - pyqtgraph
     - matplotlib
     - scikit-image
     - deprecation
@@ -71,6 +74,8 @@ requirements:
     - papermill
     - typing-extensions 4.5.*
     - typing_extensions 4.5.*
+    - pytools 2023.*
+    - pytables <3.10
     - scipy
     - numba
     - boost-cpp
@@ -79,25 +84,21 @@ requirements:
     - mdtraj
     - htmd-pdb2pqr
     - ipython <8.0
+    - qtconsole 5.*
     - notebook
     - pyopencl
-    - pytools
     - emcee 3.1.*
     - pyopengl
-    - pytables <3.10
     - pocl  >=0.14      # [linux or osx]
-    - oclgrind          # [win]
     - pymol-open-source
     - qscintilla2
-    - guidata 3.0.*
-    - guiqwt 4.4.*
-    - qscintilla2
+    - guidata
+    - guiqwt
     - python-docx
-    - qtconsole 5.2
-    - ipython 7.*.*
     - pyqtwebengine
     - joblib
     - libcxx  # [osx]
+    - hmmlearn
 
 app:
   entry: chisurf
