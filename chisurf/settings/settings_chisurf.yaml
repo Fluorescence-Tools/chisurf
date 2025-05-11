@@ -197,7 +197,7 @@ plugins:
   disabled_experiments:
   - Stopped flow
   disabled_models:
-  - 'FD(A): Worm-like chain'
+  - #'FD(A): Worm-like chain'
   disabled_plugins:
   - Fluorescence Intensity Distribution Analysis (FIDA)
   - FIDA2D
