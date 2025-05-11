@@ -92,19 +92,19 @@ class Main(QtWidgets.QMainWindow):
 
     @property
     def current_experiment(self) -> chisurf.experiments.Experiment:
-        return list(chisurf.experiment.values())[
-            self.current_experiment_idx
-        ]
+        return chisurf.experiment[self.comboBox_experimentSelect.currentText()]
 
     @current_experiment.setter
     def current_experiment(self, name: str) -> None:
-        p = self._current_experiment_idx
-        n = p
-        for n, e in enumerate(list(chisurf.experiment.values())):
-            if e.name == name:
-                break
-        if p != n:
-            self.current_experiment_idx = n
+        combo = self.comboBox_experimentSelect
+        # find the row in the combo whose text matches your experiment name
+        idx = combo.findText(name)
+        if idx == -1:
+            raise ValueError(f"Experiment “{name}” not found in comboBox")
+        # if it’s different from the current index, update both the combo and your internal idx
+        if combo.currentIndex() != idx:
+            combo.setCurrentIndex(idx)
+            self._current_experiment_idx = idx
 
     @property
     def current_setup_idx(self) -> int:
@@ -198,7 +198,6 @@ class Main(QtWidgets.QMainWindow):
 
             chisurf.gui.widgets.hide_items_in_layout(self.modelLayout)
             chisurf.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
-            # self.current_fit.model.update()
             self.current_fit.model.show()
             self.current_fit_widget.show()
             sub_window.current_plot_controller.show()
@@ -243,14 +242,29 @@ class Main(QtWidgets.QMainWindow):
         self.comboBox_Model.clear()
         ds = self.current_dataset
         if chisurf.imported_datasets:
-            model_names = ds.experiment.get_model_names()
+            # Get all model names from the experiment
+            all_model_names = ds.experiment.get_model_names()
+
+            # Get the list of disabled models from settings
+            disabled_models = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_models', [])
+
+            # Filter out disabled models
+            model_names = [name for name in all_model_names if name not in disabled_models]
+
+            # Add only enabled models to the combobox
             self.comboBox_Model.addItems(model_names)
 
     def onCurrentModelChanged(self):
         model_idx = self.comboBox_Model.currentIndex()
-        self._current_model_class = self.current_dataset.experiment.model_classes[
-            model_idx
-        ]
+        if model_idx >= 0:  # Make sure a valid model is selected
+            # Get the selected model name from the combobox
+            selected_model_name = self.comboBox_Model.currentText()
+
+            # Find the corresponding model class in the experiment's model classes
+            for model_class in self.current_dataset.experiment.model_classes:
+                if model_class.name == selected_model_name:
+                    self._current_model_class = model_class
+                    break
 
     def onAddFit(self, *args, data_idx: typing.List[int] = None):
         if data_idx is None:
@@ -260,6 +274,7 @@ class Main(QtWidgets.QMainWindow):
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
         chisurf.run(f"cs.current_experiment = '{experiment_name}'")
+
         # Add setups for selected experiment
         self.comboBox_setupSelect.blockSignals(True)
         self.comboBox_setupSelect.clear()
@@ -358,19 +373,23 @@ class Main(QtWidgets.QMainWindow):
         # structure = chisurf.experiments.Experiment('Modelling')
         # locals().update(chisurf.experiments.experiments)
 
+        # Get disabled experiments list (for reference only, we'll load all experiments)
+        disabled_experiments = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_experiments', [])
+
         tcspc = chisurf.experiments.types['tcspc']
+        # Always initialize the experiment, even if it's disabled
         tcspc.add_readers(
-            [
-                (
-                    chisurf.experiments.tcspc.TCSPCReader(
-                        name="TXT/CSV",
-                        experiment=tcspc
+                [
+                    (
+                        chisurf.experiments.tcspc.TCSPCReader(
+                            name="TXT/CSV",
+                            experiment=tcspc
+                        ),
+                        chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
+                            name='CSV/PQ/IBH',
+                            **chisurf.settings.cs_settings['tcspc_csv'],
+                        )
                     ),
-                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
-                        name='CSV/PQ/IBH',
-                        **chisurf.settings.cs_settings['tcspc_csv'],
-                    )
-                ),
                 (
                     chisurf.experiments.tcspc.TCSPCTTTRReader(
                         name="TTTR-file",
@@ -409,45 +428,47 @@ class Main(QtWidgets.QMainWindow):
         )
         chisurf.experiment[tcspc.name] = tcspc
 
-        # ##########################################################
-        # #       Stopped flow                                     #
-        # ##########################################################
-        # stopped_flow = chisurf.experiments.types['stopped_flow']
-        # stopped_flow.add_readers(
-        #     [
-        #         (
-        #             chisurf.experiments.tcspc.TCSPCReader(
-        #                 name="TXT/CSV",
-        #                 experiment=stopped_flow
-        #             ),
-        #             chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
-        #                 name='CSV/PQ/IBH',
-        #                 **chisurf.settings.cs_settings['tcspc_csv'],
-        #             )
-        #         ),
-        #         (
-        #             chisurf.experiments.tcspc.TCSPCTTTRReader(
-        #                 name="TTTR-file",
-        #                 experiment=stopped_flow
-        #             ),
-        #             chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
-        #                 **chisurf.settings.cs_settings['tcspc_csv'],
-        #             )
-        #         )
-        #     ]
-        # )
-        # stopped_flow.add_model_classes(
-        #     models=[
-        #         chisurf.models.stopped_flow.ParseStoppedFlowWidget,
-        #         chisurf.models.stopped_flow.ReactionWidget
-        #     ]
-        # )
-        # chisurf.experiment[stopped_flow.name] = stopped_flow
+        ##########################################################
+        #       Stopped flow                                     #
+        ##########################################################
+        stopped_flow = chisurf.experiments.types['stopped_flow']
+        # Always initialize the experiment, even if it's disabled
+        stopped_flow.add_readers(
+            [
+                (
+                    chisurf.experiments.tcspc.TCSPCReader(
+                        name="TXT/CSV",
+                        experiment=stopped_flow
+                    ),
+                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
+                        name='CSV/PQ/IBH',
+                        **chisurf.settings.cs_settings['tcspc_csv'],
+                    )
+                ),
+                (
+                    chisurf.experiments.tcspc.TCSPCTTTRReader(
+                        name="TTTR-file",
+                        experiment=stopped_flow
+                    ),
+                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
+                        **chisurf.settings.cs_settings['tcspc_csv'],
+                    )
+                )
+            ]
+        )
+        stopped_flow.add_model_classes(
+            models=[
+                chisurf.models.stopped_flow.ParseStoppedFlowWidget,
+                chisurf.models.stopped_flow.ReactionWidget
+            ]
+        )
+        chisurf.experiment[stopped_flow.name] = stopped_flow
 
         ##########################################################
         #       Photon distribution analysis                     #
         ##########################################################
         pda = chisurf.experiments.types['pda']
+        # Always initialize the experiment, even if it's disabled
         pda.add_readers(
             [
                 (
@@ -474,6 +495,7 @@ class Main(QtWidgets.QMainWindow):
         #       FCS                                              #
         ##########################################################
         fcs = chisurf.experiments.types['fcs']
+        # Always initialize the experiment, even if it's disabled
         fcs.add_readers(
             [
                 (
@@ -549,6 +571,7 @@ class Main(QtWidgets.QMainWindow):
         #       Structure                                        #
         ##########################################################
         structure = chisurf.experiments.types['structure']
+        # Always initialize the experiment, even if it's disabled
         structure.add_readers(
             [
                 (
@@ -574,6 +597,7 @@ class Main(QtWidgets.QMainWindow):
             name='Global',
             hidden=True
         )
+        # Always initialize the experiment, even if it's disabled
         global_setup = chisurf.experiments.globalfit.GlobalFitSetup(
             name='Global-Fit',
             experiment=global_fit
@@ -592,8 +616,13 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #       Update UI                                        #
         ##########################################################
+        # Get the list of disabled experiments from settings
+        disabled_experiments = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_experiments', [])
+
+        # Filter out hidden and disabled experiments
         self.experiment_names = [
-            b.name for b in list(chisurf.experiment.values()) if not b.hidden
+            b.name for b in list(chisurf.experiment.values()) 
+            if not b.hidden and b.name not in disabled_experiments
         ]
         self.comboBox_experimentSelect.addItems(
             self.experiment_names
