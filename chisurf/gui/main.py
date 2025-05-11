@@ -363,259 +363,158 @@ class Main(QtWidgets.QMainWindow):
         chisurf.run = chisurf.console.execute
         chisurf.run(str(chisurf.settings.gui['console_init']))
 
-    def init_setups(self):
+    def _setup_experiment(self, exp_type, config):
+        """
+        Set up an experiment based on its configuration.
 
-        ##########################################################
-        #       TCSPC                                            #
-        ##########################################################
-        # tcspc = chisurf.experiments.Experiment('TCSPC')
-        # fcs = chisurf.experiments.experiment.Experiment('FCS')
-        # structure = chisurf.experiments.Experiment('Modelling')
-        # locals().update(chisurf.experiments.experiments)
+        Args:
+            exp_type (str): The experiment type key in chisurf.experiments.types
+            config (dict): Configuration for the experiment with readers and models
+        """
+        # Get the experiment instance
+        experiment = chisurf.experiments.types[exp_type]
+
+        # Set up readers if defined
+        if 'readers' in config:
+            readers_list = []
+            for reader_config in config['readers']:
+                reader_class = self._resolve_class(reader_config['reader_class'])
+                controller_class = self._resolve_class(reader_config.get('controller_class'))
+
+                # Create reader instance with parameters
+                reader_params = reader_config.get('reader_params', {})
+                reader_params['experiment'] = experiment
+                reader = reader_class(**reader_params)
+
+                # Create controller instance if specified
+                controller = None
+                if controller_class:
+                    controller_params = reader_config.get('controller_params', {})
+                    # Add settings from cs_settings if specified
+                    if 'settings_key' in reader_config:
+                        settings_key = reader_config['settings_key']
+                        if settings_key in chisurf.settings.cs_settings:
+                            controller_params.update(chisurf.settings.cs_settings[settings_key])
+                    controller = controller_class(**controller_params)
+
+                readers_list.append((reader, controller))
+
+            experiment.add_readers(readers_list)
+
+        # Set up models if defined
+        if 'models' in config:
+            model_classes = [self._resolve_class(model_class) for model_class in config['models']]
+            experiment.add_model_classes(models=model_classes)
+
+        # Register the experiment
+        chisurf.experiment[experiment.name] = experiment
+
+        return experiment
+
+    def _resolve_class(self, class_path):
+        """
+        Resolve a class from its string path.
+
+        Args:
+            class_path (str): The full path to the class
+
+        Returns:
+            class: The resolved class
+        """
+        if not class_path:
+            return None
+
+        if not isinstance(class_path, str):
+            return class_path
+
+        parts = class_path.split('.')
+        module_path = '.'.join(parts[:-1])
+        class_name = parts[-1]
+
+        module = __import__(module_path, fromlist=[class_name])
+        return getattr(module, class_name)
+
+    def init_setups(self):
+        """
+        Initialize experiment setups based on configuration from YAML file.
+        """
+        import yaml
+        import pathlib
+        import shutil
+
+        # Define paths for experiment configuration file
+        source_config_file = pathlib.Path(chisurf.settings.get_path('chisurf')) / "settings/experiment_configs.yaml"
+        user_config_file = pathlib.Path(chisurf.settings.get_path('settings')) / "experiment_configs.yaml"
+
+        # Ensure the user config file exists
+        if not user_config_file.exists():
+            # If user config doesn't exist but source does, copy it
+            if source_config_file.exists():
+                shutil.copyfile(source_config_file, user_config_file)
+            else:
+                # If neither exists, we'll use default configurations later
+                chisurf.logging.warning(f"Experiment configuration file not found: {source_config_file}")
+                experiment_configs = {}
+
+        # Load experiment configurations from YAML file if it exists
+        if user_config_file.exists():
+            try:
+                with open(user_config_file, 'r') as f:
+                    experiment_configs = yaml.safe_load(f)
+            except Exception as e:
+                chisurf.logging.error(f"Error loading experiment configurations: {e}")
+                experiment_configs = {}
 
         # Get disabled experiments list (for reference only, we'll load all experiments)
         disabled_experiments = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_experiments', [])
 
-        tcspc = chisurf.experiments.types['tcspc']
-        # Always initialize the experiment, even if it's disabled
-        tcspc.add_readers(
-                [
-                    (
-                        chisurf.experiments.tcspc.TCSPCReader(
-                            name="TXT/CSV",
-                            experiment=tcspc
-                        ),
-                        chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
-                            name='CSV/PQ/IBH',
-                            **chisurf.settings.cs_settings['tcspc_csv'],
-                        )
-                    ),
-                (
-                    chisurf.experiments.tcspc.TCSPCTTTRReader(
-                        name="TTTR-file",
-                        experiment=tcspc
-                    ),
-                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
-                        **chisurf.settings.cs_settings['tcspc_csv'],
-                    )
-                ),
-                (
-                    chisurf.gui.widgets.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget(
-                        name="Becker-SDT",
-                        experiment=tcspc
-                    ),
-                    None
-                ),
-                (
-                    chisurf.experiments.tcspc.TCSPCSimulatorSetup(
-                        name="Simulator",
-                        experiment=tcspc
-                    ),
-                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCSimulatorSetupWidget()
-                )
-            ]
-        )
-        tcspc.add_model_classes(
-            models=[
-                chisurf.models.tcspc.widgets.LifetimeModelWidget,
-                chisurf.models.tcspc.widgets.FRETrateModelWidget,
-                chisurf.models.tcspc.widgets.GaussianModelWidget,
-                chisurf.models.tcspc.widgets.PDDEMModelWidget,
-                chisurf.models.tcspc.widgets.WormLikeChainModelWidget,
-                chisurf.models.tcspc.widgets.ParseDecayModelWidget,
-                chisurf.models.tcspc.widgets.LifetimeMixtureModelWidget
-            ]
-        )
-        chisurf.experiment[tcspc.name] = tcspc
+        # Set up each standard experiment based on its configuration
+        if experiment_configs:
+            for exp_type, config in experiment_configs.items():
+                # Skip the global experiment, it's handled separately
+                if exp_type == 'global':
+                    continue
+                self._setup_experiment(exp_type, config)
+        else:
+            # Fallback to default setup if no configurations are available
+            chisurf.logging.warning("Using default experiment configurations")
+            # Set up each experiment type with minimal configuration
+            for exp_type, experiment in chisurf.experiments.types.items():
+                chisurf.experiment[experiment.name] = experiment
 
-        ##########################################################
-        #       Stopped flow                                     #
-        ##########################################################
-        stopped_flow = chisurf.experiments.types['stopped_flow']
-        # Always initialize the experiment, even if it's disabled
-        stopped_flow.add_readers(
-            [
-                (
-                    chisurf.experiments.tcspc.TCSPCReader(
-                        name="TXT/CSV",
-                        experiment=stopped_flow
-                    ),
-                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget(
-                        name='CSV/PQ/IBH',
-                        **chisurf.settings.cs_settings['tcspc_csv'],
-                    )
-                ),
-                (
-                    chisurf.experiments.tcspc.TCSPCTTTRReader(
-                        name="TTTR-file",
-                        experiment=stopped_flow
-                    ),
-                    chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget(
-                        **chisurf.settings.cs_settings['tcspc_csv'],
-                    )
-                )
-            ]
-        )
-        stopped_flow.add_model_classes(
-            models=[
-                chisurf.models.stopped_flow.ParseStoppedFlowWidget,
-                chisurf.models.stopped_flow.ReactionWidget
-            ]
-        )
-        chisurf.experiment[stopped_flow.name] = stopped_flow
-
-        ##########################################################
-        #       Photon distribution analysis                     #
-        ##########################################################
-        pda = chisurf.experiments.types['pda']
-        # Always initialize the experiment, even if it's disabled
-        pda.add_readers(
-            [
-                (
-                    chisurf.experiments.pda.PdaReader(
-                        name="PTU/HT3/SPC",
-                        micro_time_ranges=[(0, 16000), (0, 16000)],
-                        channels=([0, 3], [1, 2]),
-                        experiment=pda
-                    ),
-                    chisurf.gui.widgets.experiments.pda.controller.PdaTTTRWidget(
-                        name="PTU/HT3/SPC"
-                    )
-                )
-            ]
-        )
-        pda.add_model_classes(
-            models=[
-                chisurf.models.pda.widgets.PdaSimpleModelWidget
-            ]
-        )
-        chisurf.experiment[pda.name] = pda
-
-        ##########################################################
-        #       FCS                                              #
-        ##########################################################
-        fcs = chisurf.experiments.types['fcs']
-        # Always initialize the experiment, even if it's disabled
-        fcs.add_readers(
-            [
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='Seidel Kristine',
-                        experiment=fcs,
-                        experiment_reader='kristine'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='Kristine files (*.cor)'
-                    )
-                ),
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='FCS-CSV',
-                        experiment=fcs,
-                        experiment_reader='csv'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='All files (*.*)'
-                    )
-                ),
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='Zeiss Confocor3',
-                        experiment=fcs,
-                        experiment_reader='confocor3'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='Confocor3 files (*.fcs)'
-                    )
-                ),
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='China FCS',
-                        experiment=fcs,
-                        experiment_reader='china-mat'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='Kristine files (*.mat)'
-                    )
-                ),
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='PyCorrFit',
-                        experiment=fcs,
-                        experiment_reader='pycorrfit'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='PyCorrFit csv files (*.csv)'
-                    )
-                ),
-                (
-                    chisurf.experiments.fcs.FCS(
-                        name='ALV-Correlator',
-                        experiment=fcs,
-                        experiment_reader='alv'
-                    ),
-                    chisurf.gui.widgets.experiments.widgets.FCSController(
-                        file_type='ALV-Correlator files (*.asc)'
-                    )
-                )
-            ]
-        )
-        fcs.add_model_classes(
-            models=[
-                chisurf.models.fcs.fcs.ParseFCSWidget
-            ]
-        )
-        chisurf.experiment[fcs.name] = fcs
-
-        ##########################################################
-        #       Structure                                        #
-        ##########################################################
-        structure = chisurf.experiments.types['structure']
-        # Always initialize the experiment, even if it's disabled
-        structure.add_readers(
-            [
-                (
-                    chisurf.experiments.modelling.StructureReader(
-                        experiment=structure
-                    ),
-                    chisurf.gui.widgets.experiments.modelling.StructureReaderController()
-                )
-            ]
-        )
-
-        structure.add_model_classes(
-            [
-                chisurf.models.tcspc.widgets.LifetimeModelWidget
-            ]
-        )
-        chisurf.experiment[structure.name] = structure
-
-        ##########################################################
-        #       Global datasets                                  #
-        ##########################################################
+        # Set up global dataset using configuration from YAML
+        global_config = experiment_configs.get('global', {})
         global_fit = chisurf.experiments.experiment.Experiment(
-            name='Global',
-            hidden=True
+            name=global_config.get('name', 'Global'),
+            hidden=global_config.get('hidden', True)
         )
-        # Always initialize the experiment, even if it's disabled
-        global_setup = chisurf.experiments.globalfit.GlobalFitSetup(
-            name='Global-Fit',
-            experiment=global_fit
-        )
-        global_fit.add_model_classes(
-            models=[
-                chisurf.models.global_model.GlobalFitModelWidget,
-                chisurf.models.global_model.ParameterTransformWidget
-            ]
-        )
-        global_fit.add_reader(global_setup)
+
+        # Set up global reader
+        if 'readers' in global_config and global_config['readers']:
+            reader_config = global_config['readers'][0]
+            reader_class = self._resolve_class(reader_config['reader_class'])
+            reader_params = reader_config.get('reader_params', {})
+            reader_params['experiment'] = global_fit
+            global_setup = reader_class(**reader_params)
+            global_fit.add_reader(global_setup)
+        else:
+            # Fallback to default if not configured
+            global_setup = chisurf.experiments.globalfit.GlobalFitSetup(
+                name='Global-Fit',
+                experiment=global_fit
+            )
+            global_fit.add_reader(global_setup)
+
+        # Set up global models
+        if 'models' in global_config:
+            model_classes = [self._resolve_class(model_class) for model_class in global_config['models']]
+            global_fit.add_model_classes(models=model_classes)
+
         chisurf.experiment[global_fit.name] = global_fit
 
         chisurf.macros.add_dataset(global_setup, name="Global Dataset")
 
-        ##########################################################
-        #       Update UI                                        #
-        ##########################################################
+        # Update UI
         # Get the list of disabled experiments from settings
         disabled_experiments = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_experiments', [])
 
