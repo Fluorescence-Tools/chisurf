@@ -201,6 +201,13 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.current_message = ""
         self.message_color = QtCore.Qt.white  # Default text color is white
 
+        # Initialize copyright, license, and contributors information
+        import datetime
+        current_year = datetime.datetime.now().year
+        self.copyright_text = f"© 2015-{current_year} ChiSurf Team"
+        self.license_text = "Licensed under GPL2.1"
+        self.contributors_text = "Developers & Contributors: \nThomas-Otavio Peulen, Katherina Hemmen, Jakub Kubiak"
+
     def update_progress(self, value):
         """Update progress bar value."""
         self.progress_bar.setValue(value)
@@ -230,6 +237,23 @@ class SplashScreen(QtWidgets.QSplashScreen):
         painter.drawText(message_rect.adjusted(0, message_y, 0, 0),
                          QtCore.Qt.AlignHCenter,
                          self.current_message)
+
+        # Set font for additional text boxes
+        font = painter.font()
+        font.setPointSize(8)
+        painter.setFont(font)
+
+        # Draw copyright text at the bottom left
+        copyright_rect = QtCore.QRect(10, self.height() - 95, self.width() - 20, 20)
+        painter.drawText(copyright_rect, QtCore.Qt.AlignLeft, self.copyright_text)
+
+        # Draw license text at the bottom center
+        license_rect = QtCore.QRect(10, self.height() - 85, self.width() - 20, 20)
+        painter.drawText(license_rect, QtCore.Qt.AlignLeft, self.license_text)
+
+        # Draw contributors text at the bottom right
+        contributors_rect = QtCore.QRect(240, self.height() - 80, self.width() - 20, 100)
+        painter.drawText(contributors_rect, QtCore.Qt.AlignLeft, self.contributors_text)
 
 
 def setup_gui(
@@ -524,8 +548,11 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     pg.setConfigOptions(useOpenGL=False)  # Disable OpenGL in PyQtGraph
 
     import chisurf.gui.resources
+    import pathlib
 
-    pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
+    # Load splash screen from file path instead of resource
+    splash_path = pathlib.Path(chisurf.__file__).parent / "gui" / "resources" / "icons" / "splashscreen.png"
+    pixmap = QtGui.QPixmap(str(splash_path))
     splash = SplashScreen(pixmap)
 
     # move splashscreen to center of active window
@@ -537,7 +564,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     getattr(splash, "raise")()
     splash.activateWindow()
 
-    splash.setContentsMargins(0, 0, 0, 64)
+    splash.setContentsMargins(0, 0, 0, 100)
     splash.show()
     app.processEvents()
 
