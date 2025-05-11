@@ -27,18 +27,18 @@ def get_path(path_type: str = 'settings') -> pathlib.Path:
     return path
 
 
-def get_chisurf_settings(setting_file: pathlib.Path, use_source: bool = False) -> dict:
+def get_chisurf_settings(setting_file: pathlib.Path, use_source_folder: bool = False) -> dict:
     """This function returns the content of a settings file in the user
     settings path. If the settings file does not exist it is copied from
     the package folder to the user settings path.
 
     :param setting_file: path to settings file
-    :param use_source: if true use settings file in source code folder
+    :param use_source_folder: if true use settings file in source code folder
     :return:
     """
     package_path = pathlib.Path(__file__).parent
     original_settings = package_path / setting_file.parts[-1]
-    if use_source:
+    if use_source_folder:
         setting_file = package_path / setting_file.parts[-1]
     else:
         if not setting_file.is_file():
@@ -124,7 +124,9 @@ copy_settings_to_user_folder()
 
 # Open chisurf settings file
 chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
-cs_settings = get_chisurf_settings(chisurf_settings_file, True)
+# To use the settings in the home folder set to false
+# if set to true uses settings in source folder.
+cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=True)
 
 anisotropy = dict()
 with open(get_path('chisurf') / "settings/anisotropy_corrections.json") as fp:
