@@ -1,0 +1,10 @@
+{
+    "plugin_name": "my_plugin",
+    "plugin_display_name": "My Plugin",
+    "plugin_category": "Tools",
+    "plugin_description": "A brief description of what your plugin does",
+    "author_name": "Your Name",
+    "author_email": "your.email@example.com",
+    "widget_class_name": "MyPluginWidget",
+    "year": "{% now 'utc', '%Y' %}"
+}
