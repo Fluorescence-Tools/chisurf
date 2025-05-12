@@ -8,8 +8,10 @@ import numpy as np
 
 import pyqtgraph as pg
 
+import chisurf
 import chisurf.fio as io
 import chisurf.gui.decorators
+import chisurf.settings
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 
 colors = chisurf.settings.gui['plot']['colors']
@@ -338,10 +340,10 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
     @chisurf.gui.decorators.init_with_ui("tttr_correlator.ui")
     def __init__(
             self,
-            ncasc: int = 20,
-            nbins: int = 9,
-            nsplits: int = 6,
-            is_fine: bool = False,
+            ncasc: int = None,
+            nbins: int = None,
+            nsplits: int = None,
+            is_fine: bool = None,
             channel_a: str = "",
             channel_b: str = "",
             filter_file: str = "",
@@ -358,13 +360,17 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         Parameters:
         ----------
         ncasc : int, optional
-            Number of cascades in correlation, default is 21.
+            Number of cascades in correlation. If None, the value is taken from 
+            cs_settings['correlator']['number_of_cascades'] at runtime.
         nbins : int, optional
-            Number of bins for correlation, default is 7.
+            Number of bins for correlation. If None, the value is taken from 
+            cs_settings['correlator']['B'] at runtime.
         nsplits : int, optional
-            Number of data splits for correlation, default is 6.
+            Number of data splits for correlation. If None, the value is taken from 
+            cs_settings['correlator']['split'] at runtime.
         is_fine : bool, optional
-            Whether to use fine correlation, default is False.
+            Whether to use fine correlation. If None, the value is taken from 
+            cs_settings['correlator']['fine'] at runtime.
         channel_a : str, optional
             Comma-separated list of channels for detector A, default is "" (empty).
         channel_b : str, optional
@@ -384,6 +390,8 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         ------
         - UI elements are set based on the provided arguments.
         - The correlation flag (`self.is_correlated`) is invalidated when any parameter is modified.
+        - Default values for correlation parameters are taken from chisurf.settings.cs_settings at runtime,
+          allowing them to reflect any changes to settings that occur during runtime.
         """
 
         self.setTitle("Correlator")
@@ -422,6 +430,13 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             filter_file, analysis_folder, output_path, microtime_range_a, microtime_range_b
         )
 
+        # Force update of UI elements with values from settings
+        # This ensures that any default values from the UI file are overridden
+        self.spinBox_2.setValue(int(chisurf.settings.cs_settings['correlator']['B']))
+        self.spinBox_3.setValue(int(chisurf.settings.cs_settings['correlator']['number_of_cascades']))
+        self.spinBox.setValue(int(chisurf.settings.cs_settings['correlator']['split']))
+        self.checkBox_2.setChecked(bool(chisurf.settings.cs_settings['correlator']['fine']))
+
         # Ensure parameters are updated after setting them
         self.update_parameter()
 
@@ -432,9 +447,28 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         """
         Sets initial values of UI elements based on provided parameters.
         This method ensures that the correlation flag (`self.is_correlated`) is invalidated.
+
+        If any of the correlation parameters (ncasc, nbins, nsplits, is_fine) are None,
+        their values are taken from chisurf.settings.cs_settings at runtime.
         """
 
         chisurf.logging.log(0, "Setting initial parameters for UI elements")
+
+        # Always get the latest values from settings
+        settings_ncasc = chisurf.settings.cs_settings['correlator']['number_of_cascades']
+        settings_nbins = chisurf.settings.cs_settings['correlator']['B']
+        settings_nsplits = chisurf.settings.cs_settings['correlator']['split']
+        settings_is_fine = bool(chisurf.settings.cs_settings['correlator']['fine'])
+
+        # Use provided parameters if not None, otherwise use settings
+        if ncasc is None:
+            ncasc = settings_ncasc
+        if nbins is None:
+            nbins = settings_nbins
+        if nsplits is None:
+            nsplits = settings_nsplits
+        if is_fine is None:
+            is_fine = settings_is_fine
 
         # Map each parameter to its corresponding UI widget
         ui_elements = {
