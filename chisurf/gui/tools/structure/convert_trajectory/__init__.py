@@ -29,7 +29,7 @@ class MDConverter(
         self.toolButton_2.clicked.connect(self.onSelecteTargetDir)
         self.pushButton_3.clicked.connect(self.onConvert)
         self.actionOpen_Topology.triggered.connect(self.onOpenTopology)
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
 
     def onOpenTopology(self):
         #self.topology_file = str(QtGui.QFileDialog.getOpenFileName(self, 'Open PDB-File', '.', 'PDB-File (*.pdb)'))

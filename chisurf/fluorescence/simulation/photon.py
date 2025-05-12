@@ -49,7 +49,7 @@ def simulate_photon_trace_rate(
         The first element contains the waiting times of the unquenched dye
         The second element contains an array if actually a photon was emitted of the type np.unit8
     """
-    verbose = kwargs.get('verbose', chisurf.verbose)
+    verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
     ravel_traj = kwargs.get('ravel_traj', True)
 
     n_ph /= n_traj

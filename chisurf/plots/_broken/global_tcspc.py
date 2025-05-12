@@ -25,7 +25,7 @@ class LinePlotWidget(QtWidgets.QWidget):
             *args,
             **kwargs
     ):
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.checkBox.stateChanged[int].connect(self.SetLog)
         self.checkBox_2.stateChanged[int].connect(self.SetLog)
         self.checkBox_3.stateChanged[int].connect(self.SetLog)
@@ -104,7 +104,7 @@ class GlobalAnisotropy(Plot):
             fit=fit,
             **kwargs
         )
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.layout = QtWidgets.QVBoxLayout(self)
         self.fit = fit
 

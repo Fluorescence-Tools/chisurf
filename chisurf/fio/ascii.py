@@ -14,7 +14,7 @@ def save_xy(
         filename: str,
         x: np.ndarray,
         y: np.ndarray,
-        verbose: bool = chisurf.verbose,
+        verbose: bool = chisurf.settings.cs_settings['verbose'],
         fmt: str = "%.3f\t%.3f",
         header_string: str = None
 ) -> None:
@@ -43,7 +43,7 @@ def save_xy(
 
 def load_xy(
         filename: str,
-        verbose: bool = chisurf.verbose,
+        verbose: bool = chisurf.settings.cs_settings['verbose'],
         usecols: typing.Tuple[int, int] = None,
         skiprows: int = 0,
         delimiter: str = "\t"
@@ -118,7 +118,7 @@ class Csv(object):
             error_x_on: bool = False,
             directory: str = '.',
             skiprows: int = 9,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = chisurf.settings.cs_settings['verbose'],
             file_type: str = 'csv',
             **kwargs
     ):
@@ -181,7 +181,7 @@ class Csv(object):
             filename: str,
             skiprows: int = None,
             use_header: bool = None,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = chisurf.settings.cs_settings['verbose'],
             delimiter: str = None,
             file_type: str = None,
             infer_delimiter: bool = True,
@@ -345,5 +345,3 @@ class Csv(object):
         :py:attribute`.CSV.n_rows`
         """
         return self.n_rows
-
-

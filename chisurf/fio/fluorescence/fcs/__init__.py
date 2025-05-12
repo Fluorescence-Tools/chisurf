@@ -109,7 +109,7 @@ def read_fcs(
         csv = chisurf.fio.ascii.Csv()
         csv.load(
             filename=filename,
-            verbose=chisurf.verbose,
+            verbose=chisurf.settings.cs_settings['verbose'],
             **kwargs
         )
         x, y = csv.data[0], csv.data[1]
@@ -211,5 +211,3 @@ def write_fcs(
                 fp.write(
                     txt
                 )
-
-

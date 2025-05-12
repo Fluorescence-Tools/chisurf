@@ -302,7 +302,7 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
-        if chisurf.verbose:
+        if chisurf.settings.cs_settings['verbose']:
             print("---------------")
             print("Class: %s" % self.__class__.name)
             print(kwargs)
@@ -322,4 +322,3 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             p0 = args[0]
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
-

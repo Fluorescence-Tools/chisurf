@@ -353,7 +353,7 @@ def iss_32(
 
 def iss_photons(
         data,
-        verbose: bool = chisurf.verbose
+        verbose: bool = chisurf.settings.cs_settings['verbose']
 ) -> typing.Tuple[
     np.array,
     np.array,
@@ -455,7 +455,7 @@ def ht3_header(
 def make_hdf(
         title: str = None,
         filename: str = None,
-        verbose: bool = chisurf.verbose,
+        verbose: bool = chisurf.settings.cs_settings['verbose'],
         complib: str = chisurf.settings.cs_settings['photons']['complib'],
         driver: str = "H5FD_CORE",
         **kwargs
@@ -576,7 +576,7 @@ def spc2hdf(
         spc_files: typing.List[str],
         routine_name: str = "bh132",
         title: str = "spc",
-        verbose: bool = chisurf.verbose,
+        verbose: bool = chisurf.settings.cs_settings['verbose'],
         filename: str = None,
         **kwargs
 ):
@@ -982,10 +982,10 @@ def read_ptu(
         filename: str
 ) -> typing.Dict:
     """Reads a PicoQuant PTU-file
-    
+
     :param filename:
     :return: 
-    
+
     Example
     -------
     >>> import pylab as p
@@ -995,7 +995,7 @@ def read_ptu(
     >>> y, x = np.histogram(r['micro_time'], bins=range(0, 4096))
     >>> p.semilogy(x[1:], y+1)
     >>> p.show()
-    
+
     """
     with open(filename, 'rb') as fp:
         magic = fp.read(8).strip("\x00")
@@ -1041,4 +1041,3 @@ def read_ptu(
         else:
             raise ValueError("No PTU file")
     raise ValueError("File not found.")
-

@@ -292,11 +292,13 @@ class LifetimeModel(ModelCurve):
             shift_bg_with_irf: bool = None,
             lifetime_spectrum: np.array = None,
             scatter: float = None,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             background: float = None,
             background_curve: chisurf.curve.Curve = None,
             **kwargs
     ):
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         if lifetime_spectrum is None:
             lifetime_spectrum = self.lifetime_spectrum
         if scatter is None:

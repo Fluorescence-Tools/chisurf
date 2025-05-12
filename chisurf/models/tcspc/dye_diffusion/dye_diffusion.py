@@ -720,7 +720,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         generic = chisurf.models.tcspc.widgets.GenericWidget(
             fit=fit,
             parent=self,
@@ -906,5 +906,3 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
     def onSaveTrajectory(self):
         filename = str(QtWidgets.QFileDialog.getSaveFileName(None, 'Open PDB-File', '', 'H5-FRET-files (*.fret.h5)'))[0]
         self.diffusion.save_simulation_results(filename)
-
-

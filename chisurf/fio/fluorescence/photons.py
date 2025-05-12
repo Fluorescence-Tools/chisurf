@@ -167,8 +167,10 @@ class Photons(object):
             self,
             p_object,
             reading_routine: str = None,
-            verbose: bool = chisurf.verbose
+            verbose: bool = None
     ):
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         self._tttrs = None
         self._h5 = None
         self._sample_name_hdf_tp = 'spc'
@@ -416,4 +418,3 @@ class Photons(object):
             step = 1 if key.step is None else key.step
             key = np.arange(start, stop, step)
         return self.take(keys=key)
-
