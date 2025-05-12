@@ -222,7 +222,7 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
-        verbose: bool = chisurf.verbose
+        verbose: bool = chisurf.settings.cs_settings['verbose']
 ):
     """
 
@@ -276,7 +276,7 @@ def parse_string_pdb(
 
 def parse_string_pqr(
         string: str,
-        verbose: bool = chisurf.verbose
+        verbose: bool = chisurf.settings.cs_settings['verbose']
 ):
     rows = string.splitlines()
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
@@ -396,9 +396,11 @@ def read_coordinates(
 def read(
         filename: str,
         assign_charge: bool = False,
-        verbose: bool = chisurf.verbose,
+        verbose: bool = None,
         **kwargs
 ) -> np.ndarray:
+    if verbose is None:
+        verbose = chisurf.settings.cs_settings['verbose']
     """ Open pdb_file and read each line into pdb (a list of lines)
 
     :param filename:

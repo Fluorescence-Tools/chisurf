@@ -242,7 +242,7 @@ class EtModelFree(
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             **kwargs
     ):
         Model.__init__(self, fit=fit)
@@ -250,6 +250,8 @@ class EtModelFree(
         LCurve.__init__(self, **kwargs)
         DistanceDistribution.__init__(self)
 
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         self.verbose = verbose
 
         self.fd0_index = 0
@@ -787,4 +789,3 @@ class EtModelFreeWidget(
         self.comboBox_2.addItems(fit_names)
         #self.onUpdatePhasor()
         # phasor update
-

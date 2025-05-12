@@ -195,7 +195,7 @@ class DyeDecay(Curve):
             **kwargs
     ):
         n_photons = kwargs.get('n_photons', self.decay_parameter.n_photons)
-        verbose = kwargs.get('verbose', chisurf.verbose)
+        verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         tau0 = kwargs.get('tau0', self.diffusion.dye.tauD0)
         kq_array = kwargs.get('quenching', self.diffusion.quenching_trajectory)
         t_step = kwargs.get('t_step', self.diffusion.simulation_parameter.t_step)
@@ -318,7 +318,7 @@ class FRETDecay(
             donor_diffusion,
             **kwargs
         )
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
 
         self.donor_diffusion = donor_diffusion
         self.acceptor_diffusion = acceptor_diffusion

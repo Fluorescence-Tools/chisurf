@@ -169,7 +169,7 @@ class CsvWidget(
         self.actionColumnsChanged.triggered.connect(
             self.changeCsvParameter
         )
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
 
     def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())
@@ -260,4 +260,3 @@ class CsvWidget(
 #
 #     def get_data(self, *args, **kwargs):
 #         return self.load_data(*args, **kwargs)
-

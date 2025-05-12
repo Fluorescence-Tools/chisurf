@@ -163,7 +163,7 @@ def find_objects(
 
 class Base(object):
 
-    _verbose = chisurf.verbose
+    _verbose = chisurf.settings.cs_settings['verbose']
     supported_save_file_types: typing.List[str] = ["yaml", "json", "pkl"]
     meta_data: typing.Dict = dict()
 

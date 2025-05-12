@@ -77,7 +77,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     @chisurf.gui.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 

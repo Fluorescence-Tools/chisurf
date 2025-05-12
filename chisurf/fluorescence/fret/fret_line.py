@@ -98,7 +98,7 @@ class FRETLineGenerator(object):
             n_points: int = 100,
             parameter_range: typing.Tuple[float, float] = (0.1, 100.0),
             fluorescence_decay_range: typing.Tuple[float, float] = (0, 500.0),
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             **kwargs
     ):
         """
@@ -114,6 +114,8 @@ class FRETLineGenerator(object):
         :param verbose:
         :param kwargs:
         """
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         self.polynomial_degree = polynomial_degree
         self.quantum_yield_donor = quantum_yield_donor
         self.quantum_yield_acceptor = quantum_yield_acceptor
@@ -456,7 +458,7 @@ class DynamicFRETLine(FRETLineGenerator):
             n_points: int = 100,
             parameter_range: typing.Tuple[float, float] = (0.1, 100.0),
             fluorescence_decay_range: typing.Tuple[float, float] = (0, 500.0),
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             **kwargs
 
         :param args:

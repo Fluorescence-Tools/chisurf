@@ -92,7 +92,7 @@ class TCSPCReader(reader.ExperimentReader):
             self.fit_count_threshold,
             self.fit_area,
             start_fraction=self.fit_start_fraction,
-            verbose=chisurf.verbose
+            verbose=chisurf.settings.cs_settings['verbose']
         )
 
     def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
@@ -229,4 +229,3 @@ class TCSPCTTTRReader(TCSPCReader):
         self.reading_routine = reading_routine
         self.channel_numbers = channel_numbers
         self.micro_time_coarsening = micro_time_coarsening
-
