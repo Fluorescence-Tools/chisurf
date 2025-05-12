@@ -357,6 +357,7 @@
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionClear_local_settings"/>
+    <addaction name="actionClear_logging_files"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -1423,6 +1424,11 @@
   <action name="actionClear_local_settings">
    <property name="text">
     <string>Clear local settings</string>
+   </property>
+  </action>
+  <action name="actionClear_logging_files">
+   <property name="text">
+    <string>Clear logging files</string>
    </property>
   </action>
   <action name="actionndXplorer">

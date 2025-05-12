@@ -701,6 +701,8 @@ class Main(QtWidgets.QMainWindow):
         self.actionSettings.triggered.connect(self.configuration.show)
         # Clear local settings, i.e., the settings file in the user folder
         self.actionClear_local_settings.triggered.connect(chisurf.settings.clear_settings_folder)
+        # Clear logging files, i.e., the log files in the user folder
+        self.actionClear_logging_files.triggered.connect(chisurf.settings.clear_logging_files)
 
         ##########################################################
         #      Initialize                                        #

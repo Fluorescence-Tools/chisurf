@@ -63,11 +63,11 @@ def copy_settings_to_user_folder():
 
 def clear_settings_folder():
     """
-    Remove all files and subdirectories inside the settings folder.
+    Remove settings files and subdirectories inside the settings folder, but preserve log files.
 
     This function walks through the directory returned by `get_path()` and:
       - Recursively deletes each subdirectory (skipping over any files it cannot remove),
-      - Deletes each file at the top level,
+      - Deletes each settings file at the top level (skipping log files),
       - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
         for any file or directory that cannot be deleted.
 
@@ -90,7 +90,7 @@ def clear_settings_folder():
         # Propagate everything else
         raise ex
 
-    # If the root doesn’t even exist, nothing to do
+    # If the root doesn't even exist, nothing to do
     if not os.path.isdir(root):
         return
 
@@ -102,13 +102,51 @@ def clear_settings_folder():
                 # Recursively remove this subfolder entirely (with our onerror)
                 shutil.rmtree(path, onerror=_handle_remove_error)
             else:
-                # Remove a single file
-                os.unlink(path)
+                # Skip log files (files ending with .log)
+                if not str(path).endswith('.log'):
+                    # Remove a single file
+                    os.unlink(path)
         except PermissionError as e:
             chisurf.logging.warning(f"Skipping locked file or folder: {path}")
         except OSError as e:
             # e.errno==ENOTEMPTY can happen if subdir isn't empty (due to skips)
-            chisurf.logging.warning(f"Couldn’t remove {path}")
+            chisurf.logging.warning(f"Couldn't remove {path}")
+
+
+def clear_logging_files():
+    """
+    Remove only log files inside the settings folder.
+
+    This function walks through the directory returned by `get_path()` and:
+      - Deletes each log file at the top level (files ending with .log),
+      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
+        for any file that cannot be deleted.
+
+    The root settings folder itself is left intact, even if not empty.
+
+    Raises:
+        None. All deletion errors are caught and logged.
+    """
+    import chisurf
+
+    root = get_path()
+
+    # If the root doesn't even exist, nothing to do
+    if not os.path.isdir(root):
+        return
+
+    # Iterate through *direct* children of root
+    for entry in os.scandir(root):
+        path = entry.path
+        try:
+            if not entry.is_dir(follow_symlinks=False):
+                # Only remove log files (files ending with .log)
+                if str(path).endswith('.log'):
+                    os.unlink(path)
+        except PermissionError as e:
+            chisurf.logging.warning(f"Skipping locked log file: {path}")
+        except OSError as e:
+            chisurf.logging.warning(f"Couldn't remove log file: {path}")
 
 
 #######################################################
@@ -126,7 +164,7 @@ copy_settings_to_user_folder()
 chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 # To use the settings in the home folder set to false
 # if set to true uses settings in source folder.
-cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=True)
+cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
 
 anisotropy = dict()
 with open(get_path('chisurf') / "settings/anisotropy_corrections.json") as fp:
