@@ -37,6 +37,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         print("Correlation Wizard Finished")
         print("saving merged correlation")
         self.fcs_merger.save_mean_correlation()
+        self.fcs_merger.add_to_chisurf()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -77,4 +78,3 @@ if __name__ == '__main__':
     wizard = ChisurfWizard()
     wizard.show()
     sys.exit(app.exec_())
-

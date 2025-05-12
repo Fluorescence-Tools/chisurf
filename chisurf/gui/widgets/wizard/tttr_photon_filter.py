@@ -152,6 +152,19 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     @property
     def filetype(self) -> str | None:
         txt = self.comboBox.currentText()
+        if txt == 'Auto':
+            # Try to infer file type from the current file
+            current_file = self.current_tttr_filename
+            if current_file and pathlib.Path(current_file).exists():
+                file_type_int = tttrlib.inferTTTRFileType(current_file)
+                # Update comboBox if a file type is recognized
+                if file_type_int is not None and file_type_int >= 0:
+                    container_names = tttrlib.TTTR.get_supported_container_names()
+                    if 0 <= file_type_int < len(container_names):
+                        # Return the inferred file type name
+                        return container_names[file_type_int]
+            # If we can't infer, return None to let tttrlib try auto-detection
+            return None
         return txt
 
     @property
@@ -860,6 +873,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             Ensures that files with restricted extensions require explicit file type selection.
             If a folder is dropped, all files with supported extensions (found directly in that folder)
             are added.
+            Uses tttrlib.inferTTTRFileType to automatically detect file types when possible.
             """
             # Generate allowed extensions dynamically from tttrlib
             allowed_extensions = {
@@ -906,6 +920,20 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 self.onClearFiles()
                 return  # Prevent loading any files
 
+            # Try to infer file type from the first file if set to Auto
+            if self.filetype == "Auto" and self.settings['tttr_filenames']:
+                first_file = self.settings['tttr_filenames'][0]
+                file_type_int = tttrlib.inferTTTRFileType(first_file)
+
+                # Update comboBox if a file type is recognized
+                if file_type_int is not None and file_type_int >= 0:
+                    container_names = tttrlib.TTTR.get_supported_container_names()
+                    if 0 <= file_type_int < len(container_names):
+                        # Add 1 to account for 'Auto' at index 0
+                        idx = file_type_int + 1
+                        if 0 <= idx < self.comboBox.count():
+                            self.comboBox.setCurrentIndex(idx)
+
             # Proceed with loading the files and showing progress
             total_files = len(self.settings['tttr_filenames'])
             progress_window = ProgressWindow(title="Loading Files", message="Processing files...",
@@ -920,8 +948,14 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                     if p.exists() and p.is_file():
                         if isinstance(self.filetype, str) and self.filetype != "Auto":
                             self.tttr_objects[p_str] = tttrlib.TTTR(p_str, self.filetype)
-                        elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:  # Auto-detect only if not restricted
-                            self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
+                        elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:
+                            # Use inferTTTRFileType for better auto-detection
+                            file_type = tttrlib.inferTTTRFileType(p_str)
+                            if file_type is not None and file_type >= 0:
+                                self.tttr_objects[p_str] = tttrlib.TTTR(p_str, file_type)
+                            else:
+                                # Fall back to default auto-detection if inference fails
+                                self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
 
                 progress_window.set_value(i)
 
