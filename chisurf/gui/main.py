@@ -20,6 +20,7 @@ import chisurf.experiments
 import chisurf.macros
 
 import chisurf.gui.tools
+import chisurf.gui.tools.settings_editor
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments.modelling
@@ -219,7 +220,16 @@ class Main(QtWidgets.QMainWindow):
             chisurf.run(f"chisurf.console.run_macro(filename='{filename_str}')")
         elif executor == 'exec':
             if globals is None:
-                globals = {"__name__": "__main__"}
+                # Create a globals dictionary with essential modules and variables
+                globals = {
+                    "__name__": "__main__",
+                    "chisurf": chisurf,
+                    "np": np,
+                    "os": os,
+                    "QtCore": QtCore,
+                    "QtGui": QtGui,
+                    "cs": self  # Add the main window as 'cs'
+                }
             globals.update({"__file__": filename})
             with open(filename, 'rb') as file:
                 exec(compile(file.read(), filename, 'exec'), globals, locals)
@@ -350,7 +360,6 @@ class Main(QtWidgets.QMainWindow):
     def onOpenUpdate(self):
         webbrowser.open_new(chisurf.info.help_url)
 
-
     def init_console(self):
         self.verticalLayout_4.addWidget(chisurf.console)
         chisurf.console.pushVariables({'cs': self})
@@ -464,9 +473,6 @@ class Main(QtWidgets.QMainWindow):
             except Exception as e:
                 chisurf.logging.error(f"Error loading experiment configurations: {e}")
                 experiment_configs = {}
-
-        # Get disabled experiments list (for reference only, we'll load all experiments)
-        disabled_experiments = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_experiments', [])
 
         # Set up each standard experiment based on its configuration
         if experiment_configs:
@@ -689,10 +695,8 @@ class Main(QtWidgets.QMainWindow):
         #      Settings                                          #
         ##########################################################
         # Configuration editor
-        self.configuration = chisurf.gui.tools.code_editor.CodeEditor(
-            filename=chisurf.settings.chisurf_settings_file,
-            language='YAML',
-            can_load=False
+        self.configuration = chisurf.gui.tools.settings_editor.SettingsEditor(
+            filename=chisurf.settings.chisurf_settings_file
         )
         self.actionSettings.triggered.connect(self.configuration.show)
         # Clear local settings, i.e., the settings file in the user folder
