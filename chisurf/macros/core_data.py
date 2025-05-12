@@ -62,7 +62,7 @@ def remove_datasets(dataset_indices: typing.List[int]) -> None:
 
 
 def add_dataset(
-        expriment_reader: chisurf.experiments.reader.ExperimentReader = None,
+        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
         dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
@@ -76,10 +76,10 @@ def add_dataset(
                 filename = filename[0]
         kwargs['filename'] = filename
 
-        if expriment_reader is None:
-            expriment_reader = cs.current_experiment_reader
+        if experiment_reader is None:
+            experiment_reader = cs.current_experiment_reader
         if dataset is None:
-            dataset = expriment_reader.get_data(**kwargs)
+            dataset = experiment_reader.get_data(**kwargs)
 
         if isinstance(dataset, chisurf.data.ExperimentDataGroup):
             dataset_group = dataset
