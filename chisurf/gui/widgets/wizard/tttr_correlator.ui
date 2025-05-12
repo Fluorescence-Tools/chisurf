@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1069</width>
+    <width>882</width>
     <height>528</height>
    </rect>
   </property>
@@ -45,10 +45,10 @@
        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The correlator computes the cross-correlation G&lt;span style=&quot; vertical-align:sub;&quot;&gt;AB&lt;/span&gt; between the photons in the correlation channel A and B. The correlation channels are defined in 'A' and 'B' (number of detector / routing channel).&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;The correlation settings define the used correlation algorithm, the number of correlation bins (# bin), and the number of correlation cascades (# casc). If the option 'fine' is checked the micro time is used to compute a full correlation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt;The correlator computes the cross-correlation G&lt;/span&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; vertical-align:sub;&quot;&gt;AB&lt;/span&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt; between the photons in the correlation channel A and B. The correlation channels are defined in 'A' and 'B' (number of detector / routing channel).&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt;&quot;&gt;The correlation settings define the used correlation algorithm, the number of correlation bins (# bin), and the number of correlation cascades (# casc). If the option 'fine' is checked the micro time is used to compute a full correlation.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
      </widget>
      <widget class="QWidget" name="widget" native="true">
@@ -278,7 +278,7 @@ p, li { white-space: pre-wrap; }
              <string> bins</string>
             </property>
             <property name="minimum">
-             <number>7</number>
+             <number>1</number>
             </property>
             <property name="maximum">
              <number>9999</number>
