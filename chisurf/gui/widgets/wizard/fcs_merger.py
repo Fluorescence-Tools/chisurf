@@ -5,6 +5,7 @@ import json
 import numpy as np
 import pyqtgraph as pg
 
+import chisurf
 import chisurf.fio as io
 import chisurf.data
 import chisurf.fluorescence.fcs
@@ -132,7 +133,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         correlation_dict['use_curve'] = True
 
     def open_correlation_folder(self, folder: pathlib.Path = None):
-        chisurf.logging.log(0, "WizardFcsMerger::open_correlation_folder")
+        chisurf.logging.info( "WizardFcsMerger::open_correlation_folder")
         self.tableWidget.setRowCount(0)
         if folder is None:
             folder = self.correlation_folder
@@ -142,7 +143,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
             with io.open_maybe_zipped(file) as fp:
                 d = json.load(fp)
                 self.append_correlation(file, d)
-        chisurf.logging.log(0, 'Opening analysis folder...')
+        chisurf.logging.info( 'Opening analysis folder...')
         self.lineEdit_2.setText(self.target_filepath.as_posix())
         self.update_plots()
 
@@ -153,11 +154,11 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         return filename
 
     def save_mean_correlation(self, evt=None, filename: pathlib.Path = None):
-        chisurf.logging.log(0, "WizardFcsMerger::save_mean_correlation")
+        chisurf.logging.info( "WizardFcsMerger::save_mean_correlation")
         correlation = self.mean_correlation
         if filename is None:
             filename = self.target_filepath
-        chisurf.logging.log(0, 'Saving:', filename)
+        chisurf.logging.info(f'Saving: {filename}')
         suren_column = np.zeros_like(correlation['x'])
         suren_column[0] = correlation['duration']
         suren_column[1] = correlation['count_rate']
@@ -186,6 +187,43 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
             # Update the correlation dictionary if needed
             self.correlations[row]['use_curve'] = (new_state == QtCore.Qt.Checked)
             self.update_plots()
+
+    def add_to_chisurf(self):
+        """
+        Add the generated correlation curve to chisurf as a dataset using FCS Kristine correlation.
+        This method uses the already generated .cor file instead of creating a new one.
+        """
+        print("Adding correlation to ChiSurf...")
+        chisurf.logging.info("WizardFcsMerger::adding correlation to chisurf")
+
+        # Ensure the correlation file exists
+        cor_file = self.target_filepath
+        if not cor_file.exists():
+            # Save the correlation file if it doesn't exist
+            print("Saving correlation file...")
+            print("Filename: ", cor_file.as_posix(), "\n")
+            self.save_mean_correlation(filename=cor_file)
+
+        if not cor_file.exists():
+            # Display a message box to the user if file still doesn't exist
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+            msg_box.setWindowTitle("No Correlation File")
+            msg_box.setText("No correlation file available. Please save correlation data before adding to ChiSurf.")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+            return
+
+        # Use the standard approach as specified in the issue description
+        # Set the current experiment and setup using the global cs instance
+        chisurf.cs.current_experiment = 'FCS'
+        chisurf.cs.current_setup = 'Seidel Kristine'
+
+        # Add dataset to chisurf using the standard approach
+        chisurf.macros.add_dataset(filename=cor_file.as_posix())
+
+        # Show success message
+        chisurf.logging.info(f"Added correlation to ChiSurf: {cor_file.name}")
 
     @chisurf.gui.decorators.init_with_ui("fcs_merger.ui")
     def __init__(self, *args, **kwargs):
@@ -220,3 +258,4 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         self.tableWidget.itemDoubleClicked.connect(self.onRowDoubleClicked)
         self.actionRowSingleClick.triggered.connect(self.update_plots)
         self.toolButton_3.clicked.connect(self.save_mean_correlation)
+        self.toolButton_add_to_chisurf.clicked.connect(self.add_to_chisurf)
