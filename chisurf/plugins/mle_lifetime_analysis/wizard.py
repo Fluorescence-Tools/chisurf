@@ -46,14 +46,28 @@ class LazyTTTRDict(collections.abc.MutableMapping):
         self._paths = path_map
         self._cache: Dict[str, tttrlib.TTTR] = {}
         self._file_type_getter = file_type_getter
+        self._warning_shown = False
 
     def __getitem__(self, key: str) -> tttrlib.TTTR:
         if key not in self._paths:
             raise KeyError(f"No TTTR path for key {key!r}")
         if key not in self._cache:
             path = self._paths[key]
+            # Check if _file_type_getter is None
+            if self._file_type_getter is None:
+                if not self._warning_shown:
+                    QMessageBox.warning(
+                        None,
+                        "Warning",
+                        "The file type getter is None. This may cause issues with TTTR file loading."
+                    )
+                    self._warning_shown = True
+                # Use a default file type or try to infer it
+                file_type = tttrlib.inferTTTRFileType(str(path))
+            else:
+                file_type = self._file_type_getter()
             # instantiate on first use
-            self._cache[key] = tttrlib.TTTR(str(path), self._file_type_getter())
+            self._cache[key] = tttrlib.TTTR(str(path), file_type)
         return self._cache[key]
 
     def __setitem__(self, key: str, value: tttrlib.TTTR):
@@ -193,7 +207,7 @@ class FileListWidget(QtWidgets.QListWidget):
 
 
 
-class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
+class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     def _init_channels_from_wizard(self):
         """
@@ -478,13 +492,14 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
 
             # register every file so that LazyTTTRDict knows where to find it,
             # then grab the TTTR object (loading on first access).
-            tttr_inputs = []
+            tttr_inputs = list()
             for fp in files:
-                key = fp.stem
-                print("fp:", fp)
-                print("fp.stem:", key)
+                # Extract just the filename part (without folder information) before getting the stem
+                key = Path(fp.name).stem
                 self._tttr_paths[key] = fp  # tell the lazy dict where the file lives
-                tttr_inputs.append(self.tttrs[key])  # loads/caches on first use
+                tttr = self.tttrs.get(key)  # loads/caches on first use
+                if tttr is not None:
+                    tttr_inputs.append(tttr)
 
             # keep other file widgets in sync if one-for-all is checked
             if one_for_all and det == self.current_detector:
@@ -529,7 +544,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
 
         row = self.df_bursts.iloc[idx]
         key = Path(row['First File']).stem
-        tttr = self.tttrs[key]
+        tttr = self.tttrs.get(key)
+        if tttr is None:
+            chisurf.logging.info(f"TTTR with key {key} not found.")
+            return
         burst = tttr[int(row['First Photon']):int(row['Last Photon'])]
 
         # clear any existing plots
@@ -816,8 +834,12 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
             for key, value in list_widget.items():
                 value.clear()
         if list_widget == self.burst_files_list:
-            self.df_bursts, self.tttrs = None, {}
+            self.df_bursts = None
+            self.tttrs.clear()  # Properly clear the LazyTTTRDict
+            self._tttr_paths.clear()  # Clear the paths dictionary
             self.burst_files_list.clear()
+            # Reset the comboBox_tttr_file_type to Auto (first index)
+            self.comboBox_tttr_file_type.setCurrentIndex(0)
         elif list_widget == self.irf_file_widgets:
             self.irf_np.clear()
         else:
@@ -874,7 +896,9 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
     def load_burst_data(self):
         files = self.burst_files_list.get_selected_files()
         if not files:
-            self.df_bursts, self.tttrs = None, {}
+            self.df_bursts = None
+            self.tttrs.clear()  # Properly clear the LazyTTTRDict
+            self._tttr_paths.clear()  # Clear the paths dictionary
         else:
             paris = files[0].parent
             if self.df_bursts is None:
@@ -882,6 +906,23 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
             df, tttrs = self.read_burst_analysis(paris.parent)
             self.tttrs = tttrs
             self.df_bursts = pd.concat([self.df_bursts, df], ignore_index=True, sort=False)
+
+            # Update excitation period from TTTR header if available
+            if self.tttrs:
+                # Get the first TTTR in our dict
+                tttr = next(iter(self.tttrs.values()))
+                try:
+                    # Use macro_time_resolution directly (in seconds)
+                    # Convert to repetition rate in MHz (1/seconds * 1e-6)
+                    repetition_rate = 1.0 / tttr.header.macro_time_resolution * 1e-6
+
+                    if repetition_rate > 0:
+                        # Convert repetition rate (MHz) to excitation period (ns)
+                        excitation_period = 1000.0 / repetition_rate
+                        self.doubleSpinBox_excitation_period.setValue(excitation_period)
+                        chisurf.logging.info(f"Updated excitation period to {excitation_period} ns based on repetition rate {repetition_rate} MHz")
+                except (AttributeError, ValueError) as e:
+                    chisurf.logging.info(f"Could not extract repetition rate from header: {e}")
 
         if self.n_bursts == 0:
             # no bursts: lock at 0
@@ -941,12 +982,14 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
 
         # 3) Now grab the TTTR filename from the first row of that subset
         tttr_name = df_this.loc[df_this.index[0], "First File"]
-        paris_dir = Path(curr_bur).parent  # your “paris” folder
-        tttr_path = paris_dir.parent / tttr_name
 
         # 4) Load or retrieve the TTTR
-        key = tttr_path.stem
-        tttr = self.tttrs[key]
+        key = Path(tttr_name).stem
+        chisurf.logging.info(f"Looking for TTTR with key: {key}")
+        tttr = self.tttrs.get(key)
+        if tttr is None:
+            chisurf.logging.info(f"TTTR with key {key} not found.")
+            return
 
         # get the list of photon‐indices for *all* bursts in this file
         indices = self.get_burst_indices_for_current_file()
@@ -1099,7 +1142,40 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
     @property
     def tttr_file_type(self):
         txt = self.comboBox_tttr_file_type.currentText()
-        return None if txt == 'Auto' else txt
+        if txt == 'Auto':
+            # Try to use the first tttr path from the LazyTTTRDict
+            if self._tttr_paths:
+                # Get the first tttr path from the LazyTTTRDict
+                first_path = next(iter(self._tttr_paths.values()))
+                if first_path:
+                    file_type_int = tttrlib.inferTTTRFileType(str(first_path))
+                    # Update comboBox_tttr_file_type if a file type is recognized
+                    if file_type_int is not None and file_type_int >= 0:
+                        # Get the list of supported container names
+                        container_names = tttrlib.TTTR.get_supported_container_names()
+                        if 0 <= file_type_int < len(container_names):
+                            # Add 1 to the index to account for 'Auto' at index 0
+                            idx = file_type_int + 1
+                            if 0 <= idx < self.comboBox_tttr_file_type.count():
+                                self.comboBox_tttr_file_type.setCurrentIndex(idx)
+                    return file_type_int
+
+            # Fall back to current_filename if no tttr paths are available
+            filename = self.current_filename
+            if filename:
+                file_type_int = tttrlib.inferTTTRFileType(filename)
+                # Update comboBox_tttr_file_type if a file type is recognized
+                if file_type_int is not None and file_type_int >= 0:
+                    # Get the list of supported container names
+                    container_names = tttrlib.TTTR.get_supported_container_names()
+                    if 0 <= file_type_int < len(container_names):
+                        # Add 1 to the index to account for 'Auto' at index 0
+                        idx = file_type_int + 1
+                        if 0 <= idx < self.comboBox_tttr_file_type.count():
+                            self.comboBox_tttr_file_type.setCurrentIndex(idx)
+                return file_type_int
+            return None
+        return txt
 
     @property
     def fit_parameters(self):
@@ -1475,7 +1551,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
             first_ph = int(row['First Photon'])
             last_ph  = int(row['Last Photon'])
             key      = Path(fname).stem
-            tttr     = self.tttrs[key]
+            tttr     = self.tttrs.get(key)
 
             bad_index = first_ph < 0 or last_ph < 0 or tttr is None
 
@@ -1992,8 +2068,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QWidget):
         # clear any old registrations
         print("self._tttr_paths:", self._tttr_paths)
         for fn in raw_files:
-            stem = Path(fn).stem
-            self._tttr_paths[stem] = base_dir / fn
+            # Extract just the filename part from the "First File" column
+            filename = Path(fn).name
+            stem = Path(filename).stem
+            # The TTTR file should be in the parent directory of the burst file
+            self._tttr_paths[stem] = base_dir / filename
 
         # now self.tttrs is set up, but no TTTR objects created yet
         return df, self.tttrs
