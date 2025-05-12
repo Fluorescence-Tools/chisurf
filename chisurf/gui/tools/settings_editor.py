@@ -142,6 +142,10 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
                 value_type = type(value)
                 value_item.setData(value_type, QtCore.Qt.UserRole)
 
+                # For lists, store the string representation in a way that can be parsed back
+                if isinstance(value, list):
+                    value_item.setText(str(value))
+
                 if parent is None:
                     self.appendRow([setting_item, value_item])
                 else:
@@ -180,6 +184,36 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
                         value = float(value_str)
                     elif data_type == type(None):
                         value = None
+                    elif data_type == list:
+                        # Handle arrays by parsing the string representation
+                        try:
+                            # Try to evaluate the string as a Python expression
+                            # This handles cases like "[1, 2, 3]" or "['a', 'b', 'c']"
+                            import ast
+                            value = ast.literal_eval(value_str)
+                            if not isinstance(value, list):
+                                # If it's not a list after evaluation, convert it to a list
+                                value = [value]
+                        except (SyntaxError, ValueError):
+                            # If evaluation fails, try to parse it as a comma-separated list
+                            # This handles cases like "1, 2, 3" or "a, b, c"
+                            value_str = value_str.strip('[]')
+                            if value_str:
+                                parts = [part.strip() for part in value_str.split(',')]
+                                # Try to convert each part to a number if possible
+                                value = []
+                                for part in parts:
+                                    try:
+                                        # Try to convert to int or float
+                                        if '.' in part:
+                                            value.append(float(part))
+                                        else:
+                                            value.append(int(part))
+                                    except ValueError:
+                                        # If conversion fails, keep as string
+                                        value.append(part.strip('"\''))
+                            else:
+                                value = []
                     else:
                         # For other types (like strings), keep as is
                         value = value_str
