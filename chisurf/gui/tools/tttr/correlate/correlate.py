@@ -24,9 +24,6 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments
 import chisurf.gui.widgets.fio
 
-correlator_settings = chisurf.settings.cs_settings['correlator']
-plot_settings = chisurf.settings.gui['plot']
-
 
 class Correlator(QtCore.QThread):
 
@@ -236,12 +233,27 @@ class CorrelatorWidget(QtWidgets.QWidget):
             photon_source,
             ch1: int = '0',
             ch2: int = '8',
-            number_of_cascades: int = correlator_settings['number_of_cascades'],
-            B: int = correlator_settings['B'],
-            split: int = correlator_settings['split'],
-            weighting: str = correlator_settings['weighting'],
-            fine: bool = correlator_settings['fine']
+            number_of_cascades: int = None,
+            B: int = None,
+            split: int = None,
+            weighting: str = None,
+            fine: bool = None
     ):
+        # Import settings here to make them dynamic
+        from chisurf.settings import cs_settings
+        correlator_settings = cs_settings['correlator']
+
+        # Use default settings if parameters are None
+        if number_of_cascades is None:
+            number_of_cascades = correlator_settings['number_of_cascades']
+        if B is None:
+            B = correlator_settings['B']
+        if split is None:
+            split = correlator_settings['split']
+        if weighting is None:
+            weighting = correlator_settings['weighting']
+        if fine is None:
+            fine = correlator_settings['fine']
         self.number_of_cascades = number_of_cascades
         self.B = B
         self.split = split
@@ -371,10 +383,22 @@ class CrFilterWidget(QtWidgets.QWidget):
     def __init__(
             self,
             photon_source,
-            verbose: bool = chisurf.verbose,
-            time_window = correlator_settings['time_window'],
-            max_count_rate = correlator_settings['max_count_rate']
+            verbose: bool = None,
+            time_window = None,
+            max_count_rate = None
     ):
+        # Import settings here to make them dynamic
+        import chisurf
+        from chisurf.settings import cs_settings
+        correlator_settings = cs_settings['correlator']
+
+        # Use default settings if parameters are None
+        if verbose is None:
+            verbose = cs_settings['verbose']
+        if time_window is None:
+            time_window = correlator_settings['time_window']
+        if max_count_rate is None:
+            max_count_rate = correlator_settings['max_count_rate']
         self.photon_source = photon_source
         self.verbose = verbose
         self.time_window = time_window
@@ -485,6 +509,10 @@ class CorrelateTTTR(
         plot.setLogMode(x=True, y=False)
         plot.showGrid(True, True, 1.0)
 
+        # Import settings here to make them dynamic
+        from chisurf.settings import cs_settings, colors
+        plot_settings = cs_settings['gui']['plot']
+
         current_curve = self.cs.selected_curve_index
         lw = plot_settings['line_width']
         for i, curve in enumerate(self._curves):
@@ -492,7 +520,7 @@ class CorrelateTTTR(
             plot.plot(
                 x=curve.x, y=curve.y,
                 pen=pg.mkPen(
-                    chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'],
+                    colors[i % len(colors)]['hex'],
                     width=w
                 ),
                 name=curve.name
@@ -518,8 +546,15 @@ class CorrelateTTTR(
         #    photon_source=self.countrateFilterWidget
         #)
 
+        # Import settings here to make them dynamic
+        from chisurf.settings import cs_settings
+        correlator_settings = cs_settings['correlator']
+
         self.correlator = CorrelatorWidget(
-            photon_source=self.fileWidget
+            photon_source=self.fileWidget,
+            number_of_cascades=correlator_settings['number_of_cascades'],
+            B=correlator_settings['B'],
+            split=correlator_settings['split']
         )
         self.verticalLayout.addWidget(self.correlator)
 
