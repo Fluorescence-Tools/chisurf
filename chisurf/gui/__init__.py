@@ -333,11 +333,35 @@ def setup_gui(
         disabled_plugins = plugin_settings.get('disabled_plugins', [])
         hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
         icons_enabled = plugin_settings.get('icons_enabled', True)
+        plugin_order = plugin_settings.get('plugin_order', {})
 
         # Check if we're in experimental mode
         experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
 
-        for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
+        # Get all module names
+        module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
+        module_names = [name for _, name, _ in module_infos]
+
+        # Create a list of (module_name, order) tuples
+        module_order_pairs = []
+        for module_name in module_names:
+            # Try to load the module to get its name
+            try:
+                module_path = f"chisurf.plugins.{module_name}"
+                module = importlib.import_module(module_path)
+                name = getattr(module, 'name', module_name)
+                # Get the order from plugin_order, default to 0 if not set
+                order = plugin_order.get(name, 0)
+                module_order_pairs.append((module_name, order))
+            except Exception:
+                # If module can't be loaded, use default order
+                module_order_pairs.append((module_name, 0))
+
+        # Sort by order (ascending) and then by module_name (alphabetically)
+        module_order_pairs.sort(key=lambda x: (x[1], x[0]))
+
+        # Process modules in the sorted order
+        for module_name, _ in module_order_pairs:
             module_path = f"chisurf.plugins.{module_name}"
             module = importlib.import_module(module_path)
             name = getattr(module, 'name', module_name)
