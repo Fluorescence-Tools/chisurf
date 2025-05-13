@@ -15,7 +15,8 @@ class SurfacePlotWidget(QtWidgets.QWidget):
         self.ymax = FittingParameterWidget(name='', value=0.0, model=parent, hide_fix_checkbox=True, hide_link=True)
 
         QtWidgets.QWidget.__init__(self)
-        uic.loadUi('mfm/ui/plots/chi2Hist.ui', self)
+        import os
+        uic.loadUi(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chi2Hist.ui'), self)
         self.horizontalLayout.addWidget(self.xmin)
         self.horizontalLayout.addWidget(self.xmax)
         self.horizontalLayout_2.addWidget(self.ymin)
@@ -214,12 +215,17 @@ class SurfacePlotWidget(QtWidgets.QWidget):
         table = self.tableWidget
         mask = np.ma.make_mask_none(data.shape)
         for r in range(table.rowCount()):
-            idx = table.item(r, 0).data(1).toInt()[0]
-            lower = table.item(r, 1).data(0).toFloat()[0]
-            upper = table.item(r, 2).data(0).toFloat()[0]
+            idx = table.item(r, 0).data(1)
+            if hasattr(idx, 'toInt'):  # Qt4
+                idx = idx.toInt()[0]
+            lower = table.item(r, 1).data(0)
+            if hasattr(lower, 'toFloat'):  # Qt4
+                lower = lower.toFloat()[0]
+            upper = table.item(r, 2).data(0)
+            if hasattr(upper, 'toFloat'):  # Qt4
+                upper = upper.toFloat()[0]
             enabled = bool(table.cellWidget(r, 3).checkState())
             invert = bool(table.cellWidget(r, 4).checkState())
-            print("idx: %s l: %s u: %s e: %s i: %s" % (idx, lower, upper, enabled, invert))
             if enabled:
                 if invert:
                     mask[:, :] |= np.logical_and(data[idx, :] > lower, data[idx, :] < upper)
@@ -322,7 +328,7 @@ class SurfacePlot(Plot):
         oCol, oRow = x.shape
         re = np.ma.compressed(x)
         nD = re.shape[0]
-        re = re.reshape((oCol, nD/oCol))
+        re = re.reshape((oCol, nD//oCol))  # Updated division for Python 3
         return re
 
     @property
@@ -423,7 +429,6 @@ class SurfacePlot(Plot):
         self.g_yplot.do_autoscale()
 
         self.g_hist2d_m.set_bins(self.plot_controller.bins2X, self.plot_controller.bins2Y)
-        self.plot_controller.bins2Y
         try:
             pass
             #self.g_hist2d_m.set_data(m1, m2)
@@ -431,4 +436,3 @@ class SurfacePlot(Plot):
             #self.g_xyplot.do_autoscale()
         except ValueError:
             pass
-
