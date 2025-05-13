@@ -360,6 +360,47 @@ class Main(QtWidgets.QMainWindow):
     def onOpenUpdate(self):
         webbrowser.open_new(chisurf.info.help_url)
 
+    def onClearLocalSettings(self):
+        """Reset local settings and show a confirmation popup."""
+        # Clear the settings folder
+        chisurf.settings.clear_settings_folder()
+
+        # Show a confirmation popup
+        chisurf.gui.widgets.general.MyMessageBox(
+            label="Settings Reset",
+            info="Local settings have been reset successfully.",
+            show_fortune=False
+        )
+
+    def onClearUserStyles(self):
+        """Clear user style files (QSS) and show a confirmation popup."""
+        # Get the path to the user styles folder
+        user_styles_path = chisurf.settings.get_path('settings') / 'styles'
+
+        # Check if the folder exists
+        if user_styles_path.exists() and user_styles_path.is_dir():
+            # Delete all QSS files in the folder
+            for file in user_styles_path.glob('*.qss'):
+                try:
+                    file.unlink()
+                except Exception as e:
+                    chisurf.logging.warning(f"Could not delete style file {file}: {e}")
+
+            # Show a confirmation popup
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="Styles Reset",
+                info="User style files have been cleared successfully. Restart the application to apply default styles.",
+                show_fortune=False
+            )
+        else:
+            # Show a message if the folder doesn't exist
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="Styles Reset",
+                info="No user style files found.",
+                show_fortune=False
+            )
+
+
     def init_console(self):
         self.verticalLayout_4.addWidget(chisurf.console)
         chisurf.console.pushVariables({'cs': self})
@@ -450,9 +491,10 @@ class Main(QtWidgets.QMainWindow):
         import yaml
         import pathlib
         import shutil
+        import chisurf.experiments
 
         # Define paths for experiment configuration file
-        source_config_file = pathlib.Path(chisurf.settings.get_path('chisurf')) / "settings/experiment_configs.yaml"
+        source_config_file = pathlib.Path(chisurf.settings.get_path('chisurf')) / "settings" / "experiment_configs.yaml"
         user_config_file = pathlib.Path(chisurf.settings.get_path('settings')) / "experiment_configs.yaml"
 
         # Ensure the user config file exists
@@ -477,8 +519,8 @@ class Main(QtWidgets.QMainWindow):
         # Set up each standard experiment based on its configuration
         if experiment_configs:
             for exp_type, config in experiment_configs.items():
-                # Skip the global experiment, it's handled separately
-                if exp_type == 'global':
+                # Skip the global experiment and experiment_types, they're handled separately
+                if exp_type == 'global' or exp_type == 'experiment_types':
                     continue
                 self._setup_experiment(exp_type, config)
         else:
@@ -521,13 +563,10 @@ class Main(QtWidgets.QMainWindow):
         chisurf.macros.add_dataset(global_setup, name="Global Dataset")
 
         # Update UI
-        # Get the list of disabled experiments from settings
-        disabled_experiments = chisurf.settings.cs_settings.get('plugins', {}).get('disabled_experiments', [])
-
-        # Filter out hidden and disabled experiments
+        # Filter out hidden experiments
         self.experiment_names = [
             b.name for b in list(chisurf.experiment.values()) 
-            if not b.hidden and b.name not in disabled_experiments
+            if not b.hidden
         ]
         self.comboBox_experimentSelect.addItems(
             self.experiment_names
@@ -699,10 +738,15 @@ class Main(QtWidgets.QMainWindow):
             filename=chisurf.settings.chisurf_settings_file
         )
         self.actionSettings.triggered.connect(self.configuration.show)
-        # Clear local settings, i.e., the settings file in the user folder
-        self.actionClear_local_settings.triggered.connect(chisurf.settings.clear_settings_folder)
+        # Reset local settings, i.e., the settings file in the user folder
+        self.actionClear_local_settings.triggered.connect(self.onClearLocalSettings)
         # Clear logging files, i.e., the log files in the user folder
         self.actionClear_logging_files.triggered.connect(chisurf.settings.clear_logging_files)
+        # Clear user styles, i.e., the QSS files in the user folder
+        self.actionClear_user_styles = QtWidgets.QAction("Clear user styles", self)
+        self.actionClear_user_styles.triggered.connect(self.onClearUserStyles)
+        self.menuSettings.addAction(self.actionClear_user_styles)
+
 
         ##########################################################
         #      Initialize                                        #
