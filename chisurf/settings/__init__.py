@@ -60,6 +60,23 @@ def copy_settings_to_user_folder():
             if not destination_file.exists():  # Avoid overwriting existing files
                 shutil.copyfile(file, destination_file)
 
+    # Also copy style files
+    copy_styles_to_user_folder()
+
+
+def copy_styles_to_user_folder():
+    """Copies all style files from the gui/styles directory to the user folder,
+    ensuring that existing files are not overwritten."""
+    package_path = pathlib.Path(__file__).parent.parent / 'gui' / 'styles'
+    user_settings_path = get_path('settings') / 'styles'
+    user_settings_path.mkdir(parents=True, exist_ok=True)
+
+    for file in package_path.iterdir():
+        if file.is_file() and file.suffix == '.qss':
+            destination_file = user_settings_path / file.name
+            if not destination_file.exists():  # Avoid overwriting existing files
+                shutil.copyfile(file, destination_file)
+
 
 def clear_settings_folder():
     """
@@ -149,6 +166,8 @@ def clear_logging_files():
             chisurf.logging.warning(f"Couldn't remove log file: {path}")
 
 
+
+
 #######################################################
 #        SETTINGS  & CONSTANTS                        #
 #######################################################
@@ -167,7 +186,7 @@ chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
 
 anisotropy = dict()
-with open(get_path('chisurf') / "settings/anisotropy_corrections.json") as fp:
+with open(get_path('chisurf') / "settings" / "anisotropy_corrections.json") as fp:
     anisotropy.update(json.load(fp))
 
 verbose = False
@@ -184,9 +203,9 @@ color_settings_file = chisurf_settings_path / 'settings_colors.yaml'
 colors = get_chisurf_settings(color_settings_file)
 
 package_directory = pathlib.Path(__file__).parent
-style_sheet_file = package_directory / '../gui/styles/' / gui['style_sheet']
+style_sheet_file = package_directory / '..' / 'gui' / 'styles' / gui['style_sheet']
 style_sheet = open(style_sheet_file, 'r').read()
-with open(package_directory / './constants/structure.json') as fp:
+with open(package_directory / 'constants' / 'structure.json') as fp:
     structure_data = json.load(fp)
 
 eps = sys.float_info.epsilon
