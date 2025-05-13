@@ -282,6 +282,13 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         self.lineEdit.setText(self.background_select.curve_name)
         self.fit.model.update()
 
+    def onUnloadBackground(self):
+        """Unload the background curve and reset it to default (None)
+        """
+        chisurf.run("cs.current_fit.model.generic.unload_background_curve()")
+        self.lineEdit.setText("")
+        chisurf.run("cs.current_fit.model.update()")
+
     def update(self):
         super().update()
         self.lineedit_nphBg.setText("%i" % self.n_ph_bg)
@@ -342,6 +349,12 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         open_bg = QtWidgets.QPushButton()
         open_bg.setText('...')
         ly.addWidget(open_bg)
+
+        unload_bg = QtWidgets.QPushButton()
+        unload_bg.setText('X')
+        unload_bg.setToolTip('Unload background file')
+        ly.addWidget(unload_bg)
+        unload_bg.clicked.connect(self.onUnloadBackground)
 
         self.background_select = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
             parent=None,

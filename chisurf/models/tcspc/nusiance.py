@@ -75,6 +75,11 @@ class Generic(FittingParameterGroup):
         if isinstance(v, Curve):
             self._background_curve = v
 
+    def unload_background_curve(self):
+        """Unload the background curve and reset it to default (None)
+        """
+        self._background_curve = None
+
     @property
     def t_bg(self) -> float:
         """Measurement time of background-measurement
@@ -109,7 +114,10 @@ class Generic(FittingParameterGroup):
         self._background_curve = background_curve
         self._sc = FittingParameter(
             value=0.0,
-            name='sc'
+            name='sc',
+            lb=0.0,
+            ub=100.0,
+            bounds_on=True
         )
         self._bg = FittingParameter(
             value=0.0,
@@ -410,6 +418,14 @@ class Convolve(FittingParameterGroup):
             # number of molecules in the excited state
             tau0 = np.dot(x, y).sum() / y.sum()
             self.n0 = y.sum() / tau0
+
+            # Update the upper bound of the lamp background parameter to half the lamp height
+            if hasattr(v, 'y') and len(v.y) > 0:
+                lamp_height = np.max(v.y)
+                if lamp_height > 0:
+                    # Get current bounds and update only the upper bound
+                    current_bounds = self._lb.bounds
+                    self._lb.bounds = current_bounds[0], lamp_height / 2
         except AttributeError:
             self.n0 = 1000.
 
@@ -583,14 +599,30 @@ class Convolve(FittingParameterGroup):
             name='stop',
             fixed=True
         )
+        # Set bounds for lamp background to be between 0 and half the lamp height
+        # Default upper bound will be updated when IRF is set
         self._lb = FittingParameter(
             value=0.0,
             name='lb',
-            fixed=True
+            fixed=True,
+            bounds_on=True,
+            lb=0.0,
+            ub=1.0  # Default upper bound, will be updated when IRF is set
         )
+        # Set bounds for timeshift to +/- half the number of decay channels
+        n_channels = 0
+        try:
+            if data is not None and hasattr(data, 'y'):
+                n_channels = len(data.y)
+        except (AttributeError, TypeError):
+            pass
+        half_channels = n_channels / 2 if n_channels > 0 else 0
         self._ts = FittingParameter(
             value=0.0,
-            name='ts'
+            name='ts',
+            bounds_on=True,
+            lb=-half_channels,
+            ub=half_channels
         )
 
         self._iw = FittingParameter(
