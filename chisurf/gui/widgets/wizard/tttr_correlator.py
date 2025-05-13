@@ -132,7 +132,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             chs = cha + '-' + chb
         else:
             chs = 'All'
-        s = pathlib.Path('cr5/') / f'{chs}'
+        s = pathlib.Path('cr5') / f'{chs}'
         self.lineEdit_5.setText(s.as_posix())
 
     def update_parameter(self):
