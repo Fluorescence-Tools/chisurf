@@ -535,6 +535,7 @@ class EtModelFreeWidget(
 ):
 
     model_update = QtCore.pyqtSignal()
+    add_fit = QtCore.pyqtSignal()
 
     plot_classes = [
         (plots.global_tcspc.GlobalEt,

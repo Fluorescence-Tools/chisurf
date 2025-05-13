@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import pathlib
 import typing
 
 import gc
@@ -12,7 +14,7 @@ from qtpy import QtWidgets, uic
 import chisurf.fio.structure.coordinates
 from chisurf.structure.av.dynamic import DiffusionSimulation, Dye, Sticking, \
     ProteinQuenching
-from chisurf.gui.widgets.fluorescence import ProteinQuenchingWidget, DyeWidget, StickingWidget
+from chisurf.gui.widgets.fluorescence.av import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import chisurf.settings
 import chisurf.fitting.fit
@@ -31,6 +33,7 @@ from chisurf.structure.av import ACV
 from chisurf.fluorescence.simulation import photon
 from chisurf.structure import Structure, get_coordinates_of_residues
 from chisurf.gui.widgets.pdb import PDBSelector
+from modules.tttrlib.examples.fluorescence_decay.plot_fit23_usage_2 import corrections
 
 
 class DyeDecay(Model, Curve):
@@ -268,8 +271,23 @@ class DyeDecay(Model, Curve):
         Curve.__init__(self)
         Model.__init__(self, fit=self.fit)
 
+        # Initialize structure first
+        self._structure = chisurf.structure.Structure()
+
+        # Create sticking_parameter first since Dye requires it
+        self.sticking_parameter = Sticking(
+            fit=self.fit,
+            structure=self._structure,
+            slow_radius=slow_radius,
+            slow_fact=slow_fact,
+            sticky_mode='surface'
+        )
+
+        # Now create dye_parameter with sticking parameter
         self.dye_parameter = Dye(
-            tau0=tau0, diffusion_coefficient=diffusion_coefficient,
+            sticking=self.sticking_parameter,
+            tau0=tau0, 
+            diffusion_coefficient=diffusion_coefficient,
             critical_distance=critical_distance,
             av_length=av_parameter['linker_length'],
             av_width=av_parameter['linker_width'],
@@ -279,13 +297,8 @@ class DyeDecay(Model, Curve):
             attachment_chain=attachment_chain
         )
 
-        self.sticking_parameter = Sticking(
-            slow_radius=slow_radius,
-            slow_fact=slow_fact,
-            sticky_mode='surface'
-        )
-
         self.protein_quenching = ProteinQuenching(
+            structure=self._structure,
             k_quench_protein=k_quench_protein,
             quenching_amino_acids=quencher
         )
@@ -293,14 +306,17 @@ class DyeDecay(Model, Curve):
         self.av_parameter = av_parameter
         self.convolve = kwargs.get('convolve', chisurf.models.tcspc.nusiance.Convolve(self.fit))
         self.generic = kwargs.get('generic', chisurf.models.tcspc.nusiance.Generic())
-        self.corrections = kwargs.get('corrections', chisurf.models.tcspc.nusiance.Corrections(model=self, **kwargs))
+
+        corrections = kwargs.get('corrections', None)
+        if corrections is None:
+            corrections = chisurf.models.tcspc.nusiance.Corrections(fit=self.fit, model=self, **kwargs)
+        self.corrections = corrections
 
         self.quencher = quencher
         self._n_curves = n_curves
         self._decay_mode = decay_mode
         self._diffusion = None
         self._av = None
-        self._structure = chisurf.structure.Structure()
         self.tau0 = tau0
         self._n_photons = n_photons
         self._photon_trace = None
@@ -593,14 +609,14 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     @property
     def settings_file(self) -> str:
-        return str(self.lineEdit_2.text())
+        return pathlib.Path(self.lineEdit_2.text())
 
     @settings_file.setter
     def settings_file(
             self,
             v: str
     ):
-        return self.lineEdit_2.setText(v)
+        return self.lineEdit_2.setText(v.as_posix())
 
     @property
     def all_quencher_atoms(self) -> bool:
@@ -720,7 +736,16 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             fit: chisurf.fitting.fit.FitGroup,
             **kwargs
     ):
+        # Initialize parent classes first
+        QtWidgets.QWidget.__init__(self)
+
         self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
+
+        fn = pathlib.Path(__file__).parent / 'dye_diffusion.json'
+        settings_file = kwargs.get('dye_diffusion_settings_file', fn)
+        settings = json.load(open(settings_file))
+
+        # Create widgets after QWidget initialization
         generic = chisurf.models.tcspc.widgets.GenericWidget(
             fit=fit,
             parent=self,
@@ -734,16 +759,12 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             **kwargs
         )
         corrections = chisurf.models.tcspc.widgets.CorrectionsWidget(
-            fit,
+            fit=fit,
             model=self,
             **kwargs
         )
 
-        fn = os.path.join(
-            chisurf.settings.package_directory, 'settings/sample.json'
-        )
-        settings_file = kwargs.get('dye_diffusion_settings_file', fn)
-        settings = json.load(open(settings_file))
+        # Initialize DyeDecay after creating widgets
         DyeDecay.__init__(
             self,
             fit=fit,
@@ -753,16 +774,8 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
             **settings
         )
 
-        if not kwargs.get('disable_fit', False):
-            fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingControllerWidget(fit, **kwargs)
-        else:
-            fitting_widget = QtWidgets.QLabel()
-
         self.generic = generic
         self.convolve = convolve
-        self.fitting_widget = fitting_widget
-
-        QtWidgets.QWidget.__init__(self)
         uic.loadUi(
             os.path.join(
                 os.path.dirname(os.path.abspath(__file__)),
@@ -775,20 +788,30 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.verticalLayout_10.addWidget(self.pdb_selector)
         self.settings_file = settings_file
 
+        # Initialize sticking_parameter first since Dye requires it
+        self.sticking_parameter = StickingWidget(
+            fit=self.fit,
+            structure=self._structure
+        )
+        self.verticalLayout_13.addWidget(self.sticking_parameter)
+
+        # Now initialize dye_parameter with sticking_parameter
+        self.dye_parameter = DyeWidget(
+            sticking=self.sticking_parameter,
+            **kwargs
+        )
+        self.verticalLayout_14.addWidget(self.dye_parameter)
+
+        # Initialize protein_quenching after sticking and dye
         self.protein_quenching = ProteinQuenchingWidget(
+            structure=self._structure,
             k_quench_protein=kwargs.get('k_quench_protein', 5.0),
         )
         self.verticalLayout_11.addWidget(self.protein_quenching)
-        self.dye_parameter = DyeWidget(**kwargs)
-        self.verticalLayout_14.addWidget(self.dye_parameter)
 
-        self.verticalLayout.addWidget(fitting_widget)
         self.verticalLayout.addWidget(convolve)
         self.verticalLayout.addWidget(generic)
         self.verticalLayout.addWidget(corrections)
-
-        self.sticking_parameter = StickingWidget()
-        self.verticalLayout_13.addWidget(self.sticking_parameter)
 
         # # User-interface
         self.actionLoad_PDB.triggered.connect(self.onLoadPDB)
@@ -806,7 +829,6 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
         self.diff_file = None
         self.av_slow_file = None
         self.av_fast_file = None
-        self.fitting_widget = chisurf.gui.widgets.fitting.widgets.FittingWidget(fit=self.fit)
 
         self.hide()
 

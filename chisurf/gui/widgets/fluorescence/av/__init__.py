@@ -56,9 +56,17 @@ class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
                 'PRO': ['CB']
             }
         )
-        self._k_quench_scale = FittingParameterWidget(
-            value=kwargs.get('k_quench_protein', 5.0),
-            name='kQ', model=self.model
+        kq = kwargs.get('k_quench_protein', 5.0)
+        print(f"kq: {kq}")
+        # Create a FittingParameter from the k_quench_scale parameter
+        k_quench_param = chisurf.fitting.parameter.FittingParameter(
+            value=kq,
+            name='kQ'
+        )
+        # Create the GUI widget using make_fitting_parameter_widget
+        self._k_quench_scale = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            k_quench_param,
+            label_text='kQ'
         )
 
         self.groupBox = QtWidgets.QGroupBox()
