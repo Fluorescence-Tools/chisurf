@@ -28,6 +28,7 @@ from chisurf.models.tcspc.mix_model import LifetimeMixModel
 from chisurf.models.tcspc.nusiance import Convolve, Corrections, Generic
 from chisurf.models.parse.tcspc.tcspc_parse import ParseDecayModel
 from chisurf.models.tcspc.pddem import PDDEM, PDDEMModel
+from chisurf.models.tcspc.et import EtModelFreeWidget
 
 
 
