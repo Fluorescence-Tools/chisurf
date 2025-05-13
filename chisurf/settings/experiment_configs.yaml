@@ -1,6 +1,24 @@
 # Experiment configurations for ChiSurf
 # This file defines the configuration for each experiment type, including readers and models
 
+# Basic experiment type definitions
+experiment_types:
+  tcspc:
+    name: TCSPC
+    hidden: false
+  fcs:
+    name: FCS
+    hidden: false
+  pda:
+    name: PDA
+    hidden: false
+  stopped_flow:
+    name: Stopped flow
+    hidden: true
+  structure:
+    name: Modelling
+    hidden: true
+
 tcspc:
   readers:
     - reader_class: chisurf.experiments.tcspc.TCSPCReader
@@ -31,6 +49,8 @@ tcspc:
     - chisurf.models.tcspc.widgets.WormLikeChainModelWidget
     - chisurf.models.tcspc.widgets.ParseDecayModelWidget
     - chisurf.models.tcspc.widgets.LifetimeMixtureModelWidget
+    - chisurf.models.tcspc.widgets.EtModelFreeWidget
+    - chisurf.models.tcspc.dye_diffusion.dye_diffusion.TransientDecayGenerator
 
 stopped_flow:
   readers:
