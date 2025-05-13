@@ -32,7 +32,7 @@ requirements:
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
     - pip
-    - python =3.10
+    - python
     - numpy
     - tttrlib      # [not win]
     - hdf5         # [win]
@@ -56,11 +56,9 @@ requirements:
     - boost-cpp
     - numpy
     - libcxx  # [osx]
-    - icu >=75
   run:
-    - python =3.10
+    - python
     - numpy
-    - icu >=75
     - pyqt
     - pyyaml
     - click <8.0 # Conflicts with papermill
@@ -99,6 +97,7 @@ requirements:
     - joblib
     - libcxx  # [osx]
     - hmmlearn
+    - sympy
 
 app:
   entry: chisurf
