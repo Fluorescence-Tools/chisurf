@@ -41,3 +41,6 @@
 	path = modules/tttrlib
 	url = https://github.com/fluorescence-tools/tttrlib
 	branch = development
+[submodule "modules/ucfret"]
+	path = modules/ucfret
+	url = https://gitlab.peulen.xyz/imp/ucfret.git
