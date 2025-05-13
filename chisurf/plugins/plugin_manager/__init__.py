@@ -64,6 +64,7 @@ class PluginManagerWidget(QMainWindow):
         self.disabled_plugins = self.plugin_settings.get('disabled_plugins', [])  # Keep the key for backward compatibility
         self.hide_disabled_plugins = self.plugin_settings.get('hide_disabled_plugins', True)  # Keep the key for backward compatibility
         self.icons_enabled = self.plugin_settings.get('icons_enabled', True)
+        self.plugin_order = self.plugin_settings.get('plugin_order', {})
 
         # Create central widget and layout
         central_widget = QWidget()
@@ -101,6 +102,22 @@ class PluginManagerWidget(QMainWindow):
         status_layout.addWidget(self.disabled_checkbox)
         status_layout.addStretch()
         details_layout.addLayout(status_layout)
+
+        # Plugin ordering
+        order_layout = QHBoxLayout()
+        order_label = QLabel("Plugin Order:")
+        order_layout.addWidget(order_label)
+
+        self.move_up_button = QPushButton("Move Up")
+        self.move_up_button.clicked.connect(self.on_move_up)
+        order_layout.addWidget(self.move_up_button)
+
+        self.move_down_button = QPushButton("Move Down")
+        self.move_down_button.clicked.connect(self.on_move_down)
+        order_layout.addWidget(self.move_down_button)
+
+        order_layout.addStretch()
+        details_layout.addLayout(order_layout)
 
         # Plugin path
         path_layout = QHBoxLayout()
@@ -155,7 +172,7 @@ class PluginManagerWidget(QMainWindow):
         self.current_plugin = None
 
     def load_plugins(self):
-        """Load all available plugins, sorted by module name, and display them in the list."""
+        """Load all available plugins, sorted by custom order or module name, and display them in the list."""
         self.plugin_list.clear()
         self.plugins = {}
 
@@ -164,7 +181,28 @@ class PluginManagerWidget(QMainWindow):
 
         # Find all module names
         module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
-        module_names = sorted([name for _, name, _ in module_infos])
+        module_names = [name for _, name, _ in module_infos]
+
+        # Create a list of (module_name, order) tuples
+        module_order_pairs = []
+        for module_name in module_names:
+            # Try to load the module to get its name
+            try:
+                module_path = f"chisurf.plugins.{module_name}"
+                module = importlib.import_module(module_path)
+                name = getattr(module, 'name', module_name)
+                # Get the order from plugin_order, default to 0 if not set
+                order = self.plugin_order.get(name, 0)
+                module_order_pairs.append((module_name, order))
+            except Exception:
+                # If module can't be loaded, use default order
+                module_order_pairs.append((module_name, 0))
+
+        # Sort by order (ascending) and then by module_name (alphabetically)
+        module_order_pairs.sort(key=lambda x: (x[1], x[0]))
+
+        # Extract just the module names in the sorted order
+        module_names = [pair[0] for pair in module_order_pairs]
 
         for module_name in module_names:
             module_path = f"chisurf.plugins.{module_name}"
@@ -277,12 +315,85 @@ class PluginManagerWidget(QMainWindow):
         self.icons_enabled = (state == Qt.Checked)
         self.load_plugins()  # Reload plugins to update icons
 
+    def on_move_up(self):
+        """Move the selected plugin up in the order."""
+        if self.current_plugin is None:
+            return
+
+        # Get the current item and its index
+        current_row = self.plugin_list.currentRow()
+        if current_row <= 0:
+            return  # Already at the top
+
+        # Get the plugin name
+        plugin_info = self.plugins[self.current_plugin]
+        plugin_name = plugin_info['name']
+
+        # Update the order value
+        current_order = self.plugin_order.get(plugin_name, 0)
+        # Find the plugin above this one
+        above_item = self.plugin_list.item(current_row - 1)
+        above_module_name = above_item.data(Qt.UserRole)
+        above_plugin_info = self.plugins[above_module_name]
+        above_plugin_name = above_plugin_info['name']
+        above_order = self.plugin_order.get(above_plugin_name, 0)
+
+        # Swap the order values
+        self.plugin_order[plugin_name] = above_order - 1
+
+        # Reload the plugins to reflect the new order
+        self.load_plugins()
+
+        # Reselect the plugin
+        for i in range(self.plugin_list.count()):
+            item = self.plugin_list.item(i)
+            if item.data(Qt.UserRole) == self.current_plugin:
+                self.plugin_list.setCurrentItem(item)
+                break
+
+    def on_move_down(self):
+        """Move the selected plugin down in the order."""
+        if self.current_plugin is None:
+            return
+
+        # Get the current item and its index
+        current_row = self.plugin_list.currentRow()
+        if current_row >= self.plugin_list.count() - 1:
+            return  # Already at the bottom
+
+        # Get the plugin name
+        plugin_info = self.plugins[self.current_plugin]
+        plugin_name = plugin_info['name']
+
+        # Update the order value
+        current_order = self.plugin_order.get(plugin_name, 0)
+        # Find the plugin below this one
+        below_item = self.plugin_list.item(current_row + 1)
+        below_module_name = below_item.data(Qt.UserRole)
+        below_plugin_info = self.plugins[below_module_name]
+        below_plugin_name = below_plugin_info['name']
+        below_order = self.plugin_order.get(below_plugin_name, 0)
+
+        # Swap the order values
+        self.plugin_order[plugin_name] = below_order + 1
+
+        # Reload the plugins to reflect the new order
+        self.load_plugins()
+
+        # Reselect the plugin
+        for i in range(self.plugin_list.count()):
+            item = self.plugin_list.item(i)
+            if item.data(Qt.UserRole) == self.current_plugin:
+                self.plugin_list.setCurrentItem(item)
+                break
+
     def save_settings(self):
         """Save plugin settings to the settings file."""
         # Update plugin settings
         self.plugin_settings['disabled_plugins'] = self.disabled_plugins  # Keep the key for backward compatibility
         self.plugin_settings['hide_disabled_plugins'] = self.hide_disabled_plugins  # Keep the key for backward compatibility
         self.plugin_settings['icons_enabled'] = self.icons_enabled
+        self.plugin_settings['plugin_order'] = self.plugin_order
 
         # Update settings in chisurf
         chisurf.settings.cs_settings['plugins'] = self.plugin_settings
