@@ -32,7 +32,7 @@ class ParseStoppedFlowWidget(ParseModelWidget):
     def __init__(self, fit):
         fn = os.path.join(
             chisurf.settings.package_directory,
-            'settings/stopped_flow.models.json'
+            'settings', 'stopped_flow.models.json'
         )
         ParseModelWidget.__init__(self, fit, model_file=fn)
 
