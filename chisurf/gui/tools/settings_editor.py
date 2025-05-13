@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import yaml
+import re
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -15,6 +16,44 @@ from chisurf.settings import cs_settings
 class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
     """A delegate for editing settings with appropriate widgets based on data type."""
 
+    def is_hex_color(self, value):
+        """Check if a value is a hex color code."""
+        if not isinstance(value, str):
+            return False
+        # Match standard hex color format: #RRGGBB
+        return bool(re.match(r'^#[0-9A-Fa-f]{6}$', value))
+
+    def paint(self, painter, option, index):
+        """Custom painting for color values."""
+        if index.column() == 1:  # Value column
+            value = index.data(QtCore.Qt.DisplayRole)
+            if isinstance(value, str) and self.is_hex_color(value):
+                # Draw the color swatch
+                rect = option.rect
+                color_rect = QtCore.QRect(rect.left() + 5, rect.top() + 5, 20, rect.height() - 10)
+
+                # Draw selection background if selected
+                if option.state & QtWidgets.QStyle.State_Selected:
+                    painter.fillRect(rect, option.palette.highlight())
+                    text_color = option.palette.highlightedText().color()
+                else:
+                    painter.fillRect(rect, option.palette.base())
+                    text_color = option.palette.text().color()
+
+                # Draw color swatch
+                painter.setPen(QtGui.QPen(QtCore.Qt.black, 1))
+                painter.setBrush(QtGui.QBrush(QtGui.QColor(value)))
+                painter.drawRect(color_rect)
+
+                # Draw text
+                text_rect = QtCore.QRect(rect.left() + 30, rect.top(), rect.width() - 35, rect.height())
+                painter.setPen(text_color)
+                painter.drawText(text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, value)
+                return
+
+        # For other items, use default painting
+        super().paint(painter, option, index)
+
     def createEditor(self, parent, option, index):
         """Create an appropriate editor widget based on the data type."""
         if not index.isValid() or index.column() != 1:
@@ -22,8 +61,38 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
 
         # Get the data type from the model
         data_type = index.data(QtCore.Qt.UserRole)
+        value = index.data(QtCore.Qt.DisplayRole)
 
-        if data_type == bool:
+        # Check if this is a hex color value
+        if isinstance(value, str) and self.is_hex_color(value):
+            # Create a color dialog for color values
+            color = QtGui.QColor(value)
+            initial_color = color if color.isValid() else QtGui.QColor("white")
+
+            # Create a button that will open a color dialog
+            editor = QtWidgets.QPushButton(parent)
+            editor.setAutoFillBackground(True)
+            editor.setText("Choose Color")
+
+            # Set the button's background color
+            palette = editor.palette()
+            palette.setColor(QtGui.QPalette.Button, color)
+
+            # Set contrasting text color for better readability
+            brightness = color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114
+            text_color = QtGui.QColor("black") if brightness > 128 else QtGui.QColor("white")
+            palette.setColor(QtGui.QPalette.ButtonText, text_color)
+
+            editor.setPalette(palette)
+
+            # Store the index in the button's properties for later use
+            editor.setProperty("model_index", index)
+
+            # Connect button click to color dialog
+            editor.clicked.connect(self._open_color_dialog)
+
+            return editor
+        elif data_type == bool:
             # Create a combobox for boolean values
             editor = QtWidgets.QComboBox(parent)
             editor.addItems(["true", "false"])
@@ -44,6 +113,35 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
             # Default editor for other types
             return super().createEditor(parent, option, index)
 
+    def _open_color_dialog(self):
+        """Open a color dialog when the color button is clicked."""
+        # Get the button that triggered this slot
+        button = self.sender()
+        if not button:
+            return
+
+        # Get all necessary data from the button BEFORE opening the color dialog
+        current_color = button.palette().color(QtGui.QPalette.Button)
+        parent_widget = button.parent()
+
+        # Capture the model index before opening the dialog
+        model_index = button.property("model_index")
+        if not model_index or not model_index.isValid():
+            return
+
+        # Get the model reference before opening the dialog
+        model = model_index.model()
+        if not model:
+            return
+
+        # Open color dialog - after this point, the button might be deleted
+        color = QtWidgets.QColorDialog.getColor(current_color, parent_widget)
+
+        if color.isValid():
+            # Update the model directly with the new color
+            # We're using the captured model_index, not accessing the button anymore
+            model.setData(model_index, color.name(), QtCore.Qt.EditRole)
+
     def setEditorData(self, editor, index):
         """Set the editor data based on the model data."""
         if not index.isValid() or index.column() != 1:
@@ -53,7 +151,22 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
         data_type = index.data(QtCore.Qt.UserRole)
         value = index.data(QtCore.Qt.DisplayRole)
 
-        if data_type == bool and isinstance(editor, QtWidgets.QComboBox):
+        if isinstance(value, str) and self.is_hex_color(value) and isinstance(editor, QtWidgets.QPushButton):
+            # Set the button's color for hex color values
+            color = QtGui.QColor(value)
+            if color.isValid():
+                palette = editor.palette()
+                palette.setColor(QtGui.QPalette.Button, color)
+
+                # Set contrasting text color for better readability
+                brightness = color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114
+                text_color = QtGui.QColor("black") if brightness > 128 else QtGui.QColor("white")
+                palette.setColor(QtGui.QPalette.ButtonText, text_color)
+
+                editor.setPalette(palette)
+                # Store the original color value
+                editor.setProperty("color_value", value)
+        elif data_type == bool and isinstance(editor, QtWidgets.QComboBox):
             # Set the combobox to the current boolean value
             if value.lower() == "true":
                 editor.setCurrentIndex(0)
@@ -70,8 +183,14 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
             return
 
         data_type = index.data(QtCore.Qt.UserRole)
+        value = index.data(QtCore.Qt.DisplayRole)
 
-        if data_type == bool and isinstance(editor, QtWidgets.QComboBox):
+        if isinstance(value, str) and self.is_hex_color(value) and isinstance(editor, QtWidgets.QPushButton):
+            # Get the color value from the button's property
+            color_value = editor.property("color_value")
+            if color_value:
+                model.setData(index, color_value, QtCore.Qt.EditRole)
+        elif data_type == bool and isinstance(editor, QtWidgets.QComboBox):
             # Get the boolean value from the combobox
             value = editor.currentText()
             model.setData(index, value, QtCore.Qt.EditRole)
