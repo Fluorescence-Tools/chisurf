@@ -1423,7 +1423,7 @@
   </action>
   <action name="actionClear_local_settings">
    <property name="text">
-    <string>Clear local settings</string>
+    <string>Reset local settings</string>
    </property>
   </action>
   <action name="actionClear_logging_files">
