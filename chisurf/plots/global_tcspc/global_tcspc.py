@@ -265,7 +265,7 @@ class GlobalEt(Plot):
     @chisurf.gui.decorators.init_with_ui(ui_filename="et_plot_layout.ui")
     def __init__(
             self,
-            fit: fitting.fit.FitGroup,
+            fit: chisurf.fitting.fit.FitGroup,
             f_scalex: str = 'log',
             f_scaley: str = 'lin',
             e_scalex: str = 'log',
