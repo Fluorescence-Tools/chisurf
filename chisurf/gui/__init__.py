@@ -8,6 +8,7 @@ import signal
 import threading
 import time
 import atexit
+import ast
 
 from functools import partial
 import pkgutil
@@ -308,6 +309,61 @@ def setup_gui(
             ).read()
         )
 
+    def read_module_docstring(package_path):
+        """
+        Given a path to a package directory, reads its __init__.py
+        and returns the module docstring (or None if there isn't one).
+        """
+        init_py = package_path / "__init__.py"
+        if not init_py.exists():
+            return None
+
+        # Read the source
+        source = init_py.read_text(encoding="utf-8")
+
+        # Parse into an AST and extract the docstring
+        tree = ast.parse(source, filename=str(init_py))
+        return ast.get_docstring(tree)
+
+    def get_plugin_metadata(plugin_dir, module_name):
+        """
+        Extract plugin metadata without importing the module.
+        Returns a tuple of (name, description)
+        """
+        # Default values
+        name = module_name
+        description = "No description available."
+
+        # Path to the __init__.py file
+        init_py = plugin_dir / module_name / "__init__.py"
+        if not init_py.exists():
+            return name, description
+
+        try:
+            # Read the source
+            source = init_py.read_text(encoding="utf-8")
+
+            # Parse into an AST
+            tree = ast.parse(source, filename=str(init_py))
+
+            # Extract the docstring
+            description = ast.get_docstring(tree) or description
+
+            # Look for a name assignment
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and target.id == 'name':
+                            if isinstance(node.value, ast.Str):
+                                name = node.value.s
+                            elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                name = node.value.value
+
+            return name, description
+        except Exception as e:
+            chisurf.logging.warning(f"Error extracting metadata from {init_py}: {e}")
+            return name, description
+
     def populate_plugins():
         # Find the Help menu to insert the Plugins menu before it
         help_menu = None
@@ -332,7 +388,6 @@ def setup_gui(
         plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
         disabled_plugins = plugin_settings.get('disabled_plugins', [])
         hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
-        icons_enabled = plugin_settings.get('icons_enabled', True)
         plugin_order = plugin_settings.get('plugin_order', {})
 
         # Check if we're in experimental mode
@@ -345,27 +400,17 @@ def setup_gui(
         # Create a list of (module_name, order) tuples
         module_order_pairs = []
         for module_name in module_names:
-            # Try to load the module to get its name
-            try:
-                module_path = f"chisurf.plugins.{module_name}"
-                module = importlib.import_module(module_path)
-                name = getattr(module, 'name', module_name)
-                # Get the order from plugin_order, default to 0 if not set
-                order = plugin_order.get(name, 0)
-                module_order_pairs.append((module_name, order))
-            except Exception:
-                # If module can't be loaded, use default order
-                module_order_pairs.append((module_name, 0))
+            # Get plugin metadata without importing
+            name, _ = get_plugin_metadata(plugin_root, module_name)
+            # Get the order from plugin_order, default to 0 if not set
+            order = plugin_order.get(name, 0)
+            module_order_pairs.append((module_name, order, name))
 
         # Sort by order (ascending) and then by module_name (alphabetically)
         module_order_pairs.sort(key=lambda x: (x[1], x[0]))
 
         # Process modules in the sorted order
-        for module_name, _ in module_order_pairs:
-            module_path = f"chisurf.plugins.{module_name}"
-            module = importlib.import_module(module_path)
-            name = getattr(module, 'name', module_name)
-
+        for module_name, _, name in module_order_pairs:
             # Check if this plugin is marked as broken
             # Handle broken plugins only by their name not location in menu
             clean_name = name.split(":")[-1]
@@ -388,18 +433,15 @@ def setup_gui(
                 globals={'__name__': 'plugin'}
             )
 
-            # Check for icon if enabled
+            # Check for icon
             icon = None
-            if icons_enabled:
-                # Look for icon in module or in plugin directory
-                icon_path = plugin_dir / "icon.png"
-                if hasattr(module, 'icon'):
-                    icon = module.icon
-                elif icon_path.exists():
-                    icon = QtGui.QIcon(str(icon_path))
+            # Look for icon in plugin directory
+            icon_path = plugin_dir / "icon.png"
+            if icon_path.exists():
+                icon = QtGui.QIcon(str(icon_path))
 
-            # Get plugin description if available
-            description = getattr(module, '__doc__', "No description available.")
+            # Get plugin description
+            _, description = get_plugin_metadata(plugin_root, module_name)
 
             # Check if the name contains a colon to determine if it should go in a submenu
             if ":" in name:
@@ -460,7 +502,7 @@ def setup_gui(
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
-        plugin_path = pathlib.Path(chisurf.plugins.browser.__file__).absolute().parent
+        plugin_path = pathlib.Path(chisurf.plugins.__file__) / "browser"
 
         # Define the target directory inside the home directory
         chisurf_notebooks_dir = home_dir / "notebooks"

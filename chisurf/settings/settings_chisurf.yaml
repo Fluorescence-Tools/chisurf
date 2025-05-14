@@ -1,210 +1,221 @@
----
-# notebook_path: /home/thomas # can be used to define a custom NB path
-n_threads: 4
-verbose: false
-log_level: 20 # NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, CRITICAL=50
-fitting_message: true
+correlator:
+  B: 9
+  count_rate_filter: false
+  fine: 0
+  max_count_rate: 120
+  number_of_cascades: 25
+  split: 6
+  time_window: 500
+  weighting: 0
+database:
+  compression_data_limit: 102400
+  embed_data: false
+  embed_data_limit: 3145728
+  read_file_size_limit: 104857600
 enable_experimental: false
-hidden_execute: true
+exceptions_on_gui: true
+fcs:
+  weight_type: suren
+fitting_message: true
+fortune:
+  attempts: 1000
+  enabled: true
+  max_length: 300
+  min_length: 0
 fps:
-  vdw_max: 2
-  simulation_grid_resolution: 1
-  linknodes: 3
   allowed_sphere_radius: 2
   distance_samples: 100000
   dynamic:
     exponential: false
-correlator:
-  max_count_rate: 120
-  time_window: 500
-  count_rate_filter: false
-  number_of_cascades: 25
-  B: 9
-  split: 6
-  weighting: 0
-  fine: 0
-photons:
-  complib: blosc
-  complevel: 9
-  title: spc
-mc_settings:
-  number_of_moving_aa: 1
-  pPsi: 0.3
-  pPhi: 0.7
-  pOmega: 0
-  pChi: 0.01
-  pdbOut: 500
-  ktAv: 1
-  kt: 1.5
-  scale: 0.0025
-  av_number_protein_mc: 100
-  update_rmsd: false
-  do_av_steepest_descent: false
-  cluster_structures: false
-  av_filename: out.xyz
-  append_new_structures: false
-  move_map: 
-  mc_mode: simple
-  n_out: 500
-  n_iter: 10000
-  potentials:
-  - weight: 2
-    name: H-Potential
-  - weight: 1
-    name: Iso-UNRES
-fortune:
-  min_length: 0
-  max_length: 300
-  attempts: 1000
-  enabled: true
-optimization:
-  global_threaded_model_update: false
-  global_optimize_local_first: false
-  leastsq:
-    ftol: 1.49012e-08
-    xtol: 1.49012e-08
-    gtol: 0
-    maxfev: 0
-    epsfcn: 0
-    factor: 100
-    full_output: true
-  mem:
-    lower_bound: 1.0e-08
-    upper_bound: 10000000
-    maxiter: 150000
-    maxfun: 1500000
-    factr: 10
-    reg_scale: 1
-  sampling:
-    method: emcee
-    steps: 1000
-    thin: 1
-    chi2max: 1000000000
-    n_runs: 10
+  linknodes: 3
+  simulation_grid_resolution: 1
+  vdw_max: 2
 fret:
-  forster_radius: 52
-  tau0: 4
-  kappa2: 0.667
-  rda_resolution: 96
-  rda_min: 1
-  rda_max: 130
-  lifetime_bins: 101
   bin_lifetime: false
   discriminate: false
   discriminate_amplitude: 1.0e-10
+  forster_radius: 52
+  kappa2: 0.667
+  lifetime_bins: 101
   orientation_mode: slow_isotropic
-tcspc_csv:
-  rep_rate: 10
-  dt: 1
-  g_factor: 1
-  polarization: vm
-  is_jordi: false
-  rebin: [1, 1]
-  skiprows: 11
-  use_header: true
+  rda_max: 130
+  rda_min: 1
+  rda_resolution: 96
+  tau0: 4
+gui:
+  RubberBandMove: true
+  RubberBandResize: true
+  confirm_close_fit: true
+  confirm_close_program: true
+  console_init: '%matplotlib inline
+
+    %config Completer.use_jedi = False
+
+    get_ipython().cache_size = 0
+
+    import pylab as p
+
+    '
+  console_style: linux
+  console_width: 80
+  console_height: 100
+  editor:
+    caret_line_background_color: '#afafaf'
+    default_color: '#000006'
+    font_family: Courier New
+    font_size: 9
+    language: Python
+    margins_background_color: '#808080'
+    marker_background_color: '#f0f0f0'
+    paper_color: '#cfcfcf'
+  fit_models:
+    n_columns: 2
+  fit_window_style: 'border: 2px solid rgba(0, 0, 0, 0.10);background-color: gray;'
+  fit_windows_size:
+  - 350
+  - 350
+  plot:
+    colors:
+      active_transparency: 1
+      auto_corr: '#ff00ff'
+      data: '#ffa629'
+      inactive_transparency: 0.2
+      irf: '#4284f5'
+      model: '#d400cd'
+      region_selector: '#26a298'
+      region_selector_alpha: 100
+      residuals: '#df0101'
+    enable_grid: true
+    enable_region_selector: true
+    hideTitle: true
+    label_axis: false
+    line_width: 2.0
+    pyqtgraph_config:
+      antialias: false
+      background: k
+      foreground: d
+      leftButtonPan: true
+    show_acorr_grid: true
+    show_data_grid: true
+    show_legend: false
+    show_residual_grid: true
+  show_console: true
+  show_macro_edit: true
+  style_sheet: dark.qss
+hidden_execute: true
+log_level: 20
+mc_settings:
+  append_new_structures: false
+  av_filename: out.xyz
+  av_number_protein_mc: 100
+  cluster_structures: false
+  do_av_steepest_descent: false
+  kt: 1.5
+  ktAv: 1
+  mc_mode: simple
+  move_map: null
+  n_iter: 10000
+  n_out: 500
+  number_of_moving_aa: 1
+  pChi: 0.01
+  pOmega: 0
+  pPhi: 0.7
+  pPsi: 0.3
+  pdbOut: 500
+  potentials:
+  - name: H-Potential
+    weight: 2
+  - name: Iso-UNRES
+    weight: 1
+  scale: 0.0025
+  update_rmsd: false
+n_threads: 4
+optimization:
+  global_optimize_local_first: false
+  global_threaded_model_update: false
+  leastsq:
+    epsfcn: 0
+    factor: 100
+    ftol: 1.49012e-08
+    full_output: true
+    gtol: 0
+    maxfev: 0
+    xtol: 1.49012e-08
+  mem:
+    factr: 10
+    lower_bound: 1.0e-08
+    maxfun: 1500000
+    maxiter: 150000
+    reg_scale: 1
+    upper_bound: 10000000
+  sampling:
+    chi2max: 1000000000
+    method: emcee
+    n_runs: 10
+    steps: 1000
+    thin: 1
+parameter:
+  bounds_on: false
+  decimals: 3
+  fixable: false
+  fixed: false
+  hide_bounds: false
+  hide_error: false
+  hide_fix_checkbox: false
+  hide_label: false
+  hide_link: false
+photons:
+  complevel: 9
+  complib: blosc
+  title: spc
+plugins:
+  disabled_models:
+  - Et-Model free
+  - Dye-diffusion
+  disabled_plugins:
+  - TTTR:Convert
+  - TTTR:Correlate
+  - TTTR:Generate Decay
+  - Tools:Bayesian FRET Analysis
+  - Single-Molecule:FIDA-2D
+  - Single-Molecule:FIDA
+  hide_disabled_models: true
+  hide_disabled_plugins: true
+  icons_enabled: true
+  plugin_order: {}
+  toolbar_plugins:
+  - Tools:Histogram-Microtime
 tcspc:
-  shift_bg_with_irf: true
-  default_convolution_mode: per
-  convolution_on_by_default: true
   autoscale: true
-  n0: 2000000
-  ts: 0
-  rep_rate: 10
+  convolution_on_by_default: true
+  default_convolution_mode: per
   dt: 1
+  fit_area: 0.9
+  fit_count_threshold: 8
+  fit_start_fraction: 0.5
   g_factor: 1
+  is_jordi: false
+  n0: 2000000
   polarization: vm
   polarization_options:
   - vm
   - vv
   - vh
-  fit_area: 0.90
-  fit_count_threshold: 8
-  fit_start_fraction: 0.5
+  rebin:
+  - 1
+  - 1
+  rep_rate: 10
+  shift_bg_with_irf: true
+  ts: 0
+tcspc_csv:
+  dt: 1
+  g_factor: 1
   is_jordi: false
-  rebin: [1, 1]
-fcs:
-  weight_type: suren
-database:
-  read_file_size_limit: 104857600
-  compression_data_limit: 102400
-  embed_data_limit: 3145728
-  embed_data: false
-parameter:
-  hide_bounds: false
-  hide_link: false
-  fixable: false
-  hide_fix_checkbox: false
-  hide_error: false
-  fixed: false
-  decimals: 3
-  bounds_on: false
-  hide_label: false
-gui:
-  editor:
-    margins_background_color: "#808080"
-    marker_background_color: "#f0f0f0"
-    caret_line_background_color: "#afafaf"
-    paper_color: "#cfcfcf"
-    default_color: "#000006"
-    font_size: 9
-    font_family: Courier New
-    language: Python
-  style_sheet: dark.qss
-  RubberBandResize: true
-  RubberBandMove: true
-  show_console: true
-  show_macro_edit: true
-  confirm_close_fit: true
-  confirm_close_program: true
-  fit_windows_size: [350, 350]
-  fit_window_style: 'border: 2px solid rgba(0, 0, 0, 0.10);background-color: gray;'
-  console_style: 'linux' # options are linux, lightbg, or nocolor
-  console_init: |
-    %matplotlib inline
-    %config Completer.use_jedi = False
-    get_ipython().cache_size = 0
-    import pylab as p
-  console_width: 80
-  fit_models:
-    n_columns: 2
-  plot:
-    enable_grid: true
-    show_data_grid: true
-    show_residual_grid: true
-    show_acorr_grid: true
-    line_width: 2.0
-    hideTitle: true
-    enable_region_selector: true
-    show_legend: false
-    label_axis: false
-    pyqtgraph_config:
-      background: k
-      foreground: d
-      antialias: false
-      leftButtonPan: true
-    colors:
-      region_selector: "#26a298"
-      region_selector_alpha: 100
-      data: "#ffa629"
-      model: "#d400cd"
-      irf: "#4284f5"
-      residuals: "#df0101"
-      auto_corr: "#ff00ff"
-      inactive_transparency: 0.2
-      active_transparency: 1
-exceptions_on_gui: true # if True exceptions are displayed on the GUI a MessageBox
-plugins:
-  disabled_experiments:
-  - Stopped flow
-  disabled_models:
-  - #'FD(A): Worm-like chain'
-  disabled_plugins:
-  - Fluorescence Intensity Distribution Analysis (FIDA)
-  - FIDA2D
-  - TTTR:Convert
-  - TTTR:Correlate
-  - TTTR:Generate Decay
-  - Tools:Dye Diffusion
-  hide_disabled_models: true
-  hide_disabled_plugins: true
-  icons_enabled: true
+  polarization: vm
+  rebin:
+  - 1
+  - 1
+  rep_rate: 10
+  skiprows: 11
+  use_header: true
+verbose: false

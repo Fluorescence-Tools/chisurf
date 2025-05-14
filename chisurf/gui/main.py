@@ -231,8 +231,43 @@ class Main(QtWidgets.QMainWindow):
                     "cs": self  # Add the main window as 'cs'
                 }
             globals.update({"__file__": filename})
-            with open(filename, 'rb') as file:
-                exec(compile(file.read(), filename, 'exec'), globals, locals)
+
+            # Get the directory of the macro file
+            import sys
+            import importlib
+            macro_dir = str(pathlib.Path(filename).parent)
+
+            # Temporarily add the macro directory to sys.path for relative imports
+            original_sys_path = sys.path.copy()
+            if macro_dir not in sys.path:
+                sys.path.insert(0, macro_dir)
+
+            try:
+                # Determine if this is part of a package
+                if str(filename).find('\\plugins\\') > -1:
+                    parts = str(filename).split('\\plugins\\')
+                    if len(parts) > 1:
+                        plugin_path = parts[1].split('\\')
+                        if len(plugin_path) > 0:
+                            package_name = plugin_path[0]
+                            # Set __package__ for relative imports to work
+                            globals.update({"__package__": f"chisurf.plugins.{package_name}"})
+
+                            # Reload all modules related to this plugin to ensure full recompilation
+                            plugin_module_prefix = f"chisurf.plugins.{package_name}"
+                            for module_name in list(sys.modules.keys()):
+                                if module_name.startswith(plugin_module_prefix):
+                                    try:
+                                        chisurf.logging.info(f"Reloading module: {module_name}")
+                                        importlib.reload(sys.modules[module_name])
+                                    except Exception as e:
+                                        chisurf.logging.warning(f"Failed to reload module {module_name}: {e}")
+
+                with open(filename, 'rb') as file:
+                    exec(compile(file.read(), filename, 'exec'), globals, locals)
+            finally:
+                # Restore the original sys.path
+                sys.path = original_sys_path
 
     def onTileWindows(self):
         self.mdiarea.setViewMode(QtWidgets.QMdiArea.SubWindowView)
@@ -399,6 +434,171 @@ class Main(QtWidgets.QMainWindow):
                 info="No user style files found.",
                 show_fortune=False
             )
+
+    def load_toolbar_plugins(self):
+        """Load plugins into the toolbar based on toolbar_plugins setting."""
+        import pathlib
+        import pkgutil
+        import ast
+
+        # Get the list of toolbar plugins from settings
+        toolbar_plugins = chisurf.settings.cs_settings.get('plugins', {}).get('toolbar_plugins', [])
+
+        if not toolbar_plugins:
+            return
+
+        # Create a toolbar for plugins if it doesn't exist
+        if not hasattr(self, 'plugins_toolbar'):
+            self.plugins_toolbar = self.addToolBar("Plugins")
+            self.plugins_toolbar.setObjectName("pluginsToolBar")
+            # Set icon size to match standard toolbar (16x16)
+            self.plugins_toolbar.setIconSize(QtCore.QSize(16, 16))
+
+        # Determine plugin directory
+        plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+
+        # Helper function to read module docstring
+        def read_module_docstring(package_path):
+            init_py = package_path / "__init__.py"
+            if not init_py.exists():
+                return None
+
+            # Read the source
+            source = init_py.read_text(encoding="utf-8")
+
+            # Parse into an AST and extract the docstring
+            tree = ast.parse(source, filename=str(init_py))
+            return ast.get_docstring(tree)
+
+        # Helper function to get plugin name from module without importing
+        def get_plugin_name(plugin_dir, module_name):
+            """Extract plugin name without importing the module."""
+            # Default value
+            name = module_name
+
+            # Path to the __init__.py file
+            init_py = plugin_dir / module_name / "__init__.py"
+            if not init_py.exists():
+                return name
+
+            try:
+                # Read the source
+                source = init_py.read_text(encoding="utf-8")
+
+                # Parse into an AST
+                tree = ast.parse(source, filename=str(init_py))
+
+                # Look for a name assignment
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Assign):
+                        for target in node.targets:
+                            if isinstance(target, ast.Name) and target.id == 'name':
+                                if isinstance(node.value, ast.Str):
+                                    name = node.value.s
+                                elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                    name = node.value.value
+
+                return name
+            except Exception as e:
+                chisurf.logging.warning(f"Error extracting name from {init_py}: {e}")
+                return name
+
+        # Load each toolbar plugin
+        for plugin_name in toolbar_plugins:
+            try:
+                # Find the module name for this plugin
+                module_name = None
+                for module_info in chisurf.plugins.__path__:
+                    for _, name, _ in pkgutil.iter_modules([module_info]):
+                        # Get the plugin name without importing
+                        extracted_name = get_plugin_name(plugin_root, name)
+                        if extracted_name == plugin_name:
+                            module_name = name
+                            break
+                    if module_name:
+                        break
+
+                if not module_name:
+                    chisurf.logging.warning(f"Could not find module for plugin: {plugin_name}")
+                    continue
+
+                # Build the module path for later use with onRunMacro
+                module_path = f"chisurf.plugins.{module_name}"
+
+                # Get the clean plugin name (without sorting prefix)
+                clean_name = plugin_name.split(':')[-1]
+
+                # Create an action for the plugin with empty text (icon only)
+                action = QtWidgets.QAction("", self)
+
+                # Set icon if available
+                icon_path = plugin_root / module_name / 'icon.png'
+                if icon_path.exists():
+                    action.setIcon(QtGui.QIcon(str(icon_path)))
+
+                # Get plugin description from docstring
+                plugin_path = plugin_root / module_name
+                description = read_module_docstring(plugin_path)
+                if description is None:
+                    description = "No description available."
+
+                # Set tooltip to show plugin name followed by description
+                action.setToolTip(f"{clean_name}: {description}")
+
+                # Connect the action to a function that will load and show the plugin
+                action.triggered.connect(lambda checked=False, m=module_path: self.load_and_show_plugin(m))
+
+                # Add the action to the toolbar
+                self.plugins_toolbar.addAction(action)
+
+            except Exception as e:
+                chisurf.logging.error(f"Error loading toolbar plugin {plugin_name}: {e}")
+
+    def load_and_show_plugin(self, module_path):
+        """Load and show a plugin from its module path."""
+        try:
+            import pathlib
+            from functools import partial
+
+            # Extract the module name from the module path
+            module_name = module_path.split('.')[-1]
+
+            # Determine the plugin directory
+            plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+            plugin_dir = plugin_root / module_name
+
+            # Check if the plugin directory exists
+            if not plugin_dir.exists():
+                chisurf.logging.warning(f"Plugin directory not found: {plugin_dir}")
+                return
+
+            # Determine which file to run: wizard.py if it exists, else __init__.py
+            wizard_path = plugin_dir / "wizard.py"
+            init_path = plugin_dir / "__init__.py"
+
+            # Check if wizard.py exists
+            if wizard_path.exists():
+                # Run the wizard.py with specific parameters
+                adr = "https://github.com/fluorescence-tools/chisurf"  # Default value
+                p = partial(
+                    self.onRunMacro, wizard_path,
+                    executor='exec',
+                    globals={'__name__': 'plugin', 'adr': adr}
+                )
+                p()
+            # If no wizard.py, run the plugin's __init__.py using onRunMacro
+            elif init_path.exists():
+                # Run the __init__.py with specific parameters
+                self.onRunMacro(
+                    init_path,
+                    executor='exec',
+                    globals={'__name__': 'plugin'}
+                )
+            else:
+                chisurf.logging.warning(f"No wizard.py or __init__.py found for plugin: {module_path}")
+
+        except Exception as e:
+            chisurf.logging.error(f"Error loading plugin {module_path}: {e}")
 
 
     def init_console(self):
@@ -648,6 +848,9 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         self.dockWidgetScriptEdit.setVisible(chisurf.settings.gui['show_macro_edit'])
         self.dockWidget_console.setVisible(chisurf.settings.gui['show_console'])
+        # Set the height of the console dock widget
+        if 'console_height' in chisurf.settings.gui:
+            self.dockWidget_console.setFixedHeight(chisurf.settings.gui['console_height'])
         self.init_console()
 
         ##########################################################
@@ -721,14 +924,15 @@ class Main(QtWidgets.QMainWindow):
         #      Fluorescence widgets                              #
         #      (Commented widgets don't work at the moment       #
         ##########################################################
-        self.lifetime_calc = chisurf.gui.tools.fret.calculator.tau2r.FRETCalculator()
-        self.actionCalculator.triggered.connect(self.lifetime_calc.show)
 
-        self.kappa2_dist = chisurf.gui.tools.kappa2_distribution.k2dgui.Kappa2Dist()
-        self.actionKappa2_Distribution.triggered.connect(self.kappa2_dist.show)
 
         self.f_test = chisurf.gui.tools.f_test.FTestWidget()
         self.actionF_Test.triggered.connect(self.f_test.show)
+
+        ##########################################################
+        #      Load toolbar plugins                              #
+        ##########################################################
+        self.load_toolbar_plugins()
 
         ##########################################################
         #      Settings                                          #
