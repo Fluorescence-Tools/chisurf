@@ -15,6 +15,9 @@ import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.general
 import chisurf.fio as io
 
+# Import scikit_fluorescence for TCSPC data handling
+import scikit_fluorescence as skf
+
 # Import ucfret module
 import ucfret
 import ucfret.sampling
@@ -91,7 +94,9 @@ class UCFRETWizard(QtWidgets.QMainWindow):
 
         # Load data and display information
         try:
-            data = io.tcspc.read_tcspc_yaml(data_file)
+            # Convert string path to Path object
+            data_file_path = pathlib.Path(data_file)
+            data = skf.io.tcspc.read_tcspc_yaml(data_file_path)
             self.textEdit_info.setText(f"Loaded data from {data_file}")
 
             # Display data structure
