@@ -1,9 +1,3 @@
-import sys
-from chisurf.gui.tools.tttr.correlate import CorrelateTTTR
-
-# Define the plugin name - this will appear in the Plugins menu
-name = "TTTR:Correlate"
-
 """
 TTTR Correlate
 
@@ -19,6 +13,14 @@ Features:
 The correlator is essential for analyzing dynamic processes in fluorescence
 correlation spectroscopy (FCS) and related techniques.
 """
+
+import sys
+from chisurf.gui.tools.tttr.correlate import CorrelateTTTR
+
+# Define the plugin name - this will appear in the Plugins menu
+name = "TTTR:Correlate"
+
+
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed

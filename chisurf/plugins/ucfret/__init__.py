@@ -1,8 +1,16 @@
+"""
+
+Ucfret Plugin
+
+This plugin is part of the ChiSurf application.
+
+"""
+
 import sys
 from chisurf.gui.widgets.ucfret.wizard import UCFRETWizard
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "UCFRET: Bayesian FRET Analysis"
+name = "Tools:Bayesian FRET Analysis"
 
 """
 UCFRET: Bayesian FRET Analysis

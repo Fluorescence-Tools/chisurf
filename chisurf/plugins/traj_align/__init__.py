@@ -1,13 +1,7 @@
-import sys
-from chisurf.gui.tools.structure.align_trajectory import AlignTrajectoryWidget
-
-# Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory Alignment"
-
 """
 Trajectory Alignment Tool
 
-This plugin provides tools for aligning molecular dynamics trajectories to 
+This plugin provides tools for aligning molecular dynamics trajectories to
 reference structures or to specific frames within the trajectory.
 
 Features:
@@ -18,9 +12,17 @@ Features:
 - Visualize alignment quality through RMSD plots
 - Save aligned trajectories for further analysis
 
-Proper alignment is essential for analyzing conformational changes, 
+Proper alignment is essential for analyzing conformational changes,
 calculating order parameters, and comparing different simulations.
 """
+
+import sys
+from chisurf.gui.tools.structure.align_trajectory import AlignTrajectoryWidget
+
+# Define the plugin name - this will appear in the Plugins menu
+name = "Structure:Trajectory Alignment"
+
+
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed

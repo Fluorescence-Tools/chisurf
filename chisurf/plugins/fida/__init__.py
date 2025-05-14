@@ -1,3 +1,21 @@
+"""
+Fluorescence Intensity Distribution Analysis (FIDA) [CURRENTLY BROKEN]
+
+NOTE: This plugin is currently broken and may not function properly.
+
+This plugin provides a graphical interface for analyzing the distribution of
+fluorescence intensities in single-molecule experiments. Features include:
+
+- Loading and processing of photon data from TTTR files
+- Calculation of photon count histograms
+- Fitting of theoretical models to experimental data
+- Determination of concentrations and specific brightnesses of fluorescent species
+- Visualization of results with interactive plots
+
+FIDA is a powerful method for characterizing heterogeneous samples and resolving
+different molecular species based on their brightness.
+"""
+
 import sys
 import numpy as np
 import tttrlib
@@ -15,22 +33,6 @@ from PyQt5.QtWidgets import (
 import pyqtgraph as pg
 
 name = "Single-Molecule:FIDA"
-
-"""
-Fluorescence Intensity Distribution Analysis (FIDA)
-
-This plugin provides a graphical interface for analyzing the distribution of 
-fluorescence intensities in single-molecule experiments. Features include:
-
-- Loading and processing of photon data from TTTR files
-- Calculation of photon count histograms
-- Fitting of theoretical models to experimental data
-- Determination of concentrations and specific brightnesses of fluorescent species
-- Visualization of results with interactive plots
-
-FIDA is a powerful method for characterizing heterogeneous samples and resolving 
-different molecular species based on their brightness.
-"""
 
 
 # --- FIDA Core Functions ---

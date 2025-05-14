@@ -1,13 +1,9 @@
-import sys
-import numpy as np
-import tttrlib
-
-name = "Single-Molecule:FIDA2D"
-
 """
-2D Fluorescence Intensity Distribution Analysis (FIDA2D)
+2D Fluorescence Intensity Distribution Analysis (FIDA2D) [CURRENTLY BROKEN]
 
-This plugin provides a graphical interface for analyzing the joint distribution of 
+NOTE: This plugin is currently broken and may not function properly.
+
+This plugin provides a graphical interface for analyzing the joint distribution of
 fluorescence intensities in two detection channels. Features include:
 
 - Loading and processing of photon data from TTTR files
@@ -16,10 +12,17 @@ fluorescence intensities in two detection channels. Features include:
 - Determination of concentrations and specific brightnesses of fluorescent species
 - Visualization of results with interactive 2D plots
 
-FIDA2D extends the capabilities of standard FIDA by analyzing correlations between 
-different detection channels, making it powerful for studying species with different 
+FIDA2D extends the capabilities of standard FIDA by analyzing correlations between
+different detection channels, making it powerful for studying species with different
 brightness characteristics in multiple channels, such as FRET-labeled molecules.
 """
+
+import sys
+import numpy as np
+import tttrlib
+
+name = "Single-Molecule:FIDA2D"
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QGridLayout, QVBoxLayout,
     QFormLayout, QScrollArea, QLineEdit, QTextEdit, QLabel, QPushButton,
