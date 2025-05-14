@@ -1,9 +1,3 @@
-import sys
-from chisurf.gui.tools.tttr.convert import TTTRConvert
-
-# Define the plugin name - this will appear in the Plugins menu
-name = "TTTR:Convert"
-
 """
 TTTR Convert
 
@@ -18,6 +12,14 @@ Features:
 
 The converter is useful for preparing TTTR data for analysis in different software packages.
 """
+
+import sys
+from chisurf.gui.tools.tttr.convert import TTTRConvert
+
+# Define the plugin name - this will appear in the Plugins menu
+name = "TTTR:Convert"
+
+
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed
