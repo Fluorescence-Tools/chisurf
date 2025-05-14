@@ -15,40 +15,18 @@ def main():
         class ClearSettingsDialog(QtWidgets.QDialog):
             def __init__(self, exception_text, parent=None):
                 super().__init__(parent)
-                self.setWindowTitle("ChiSurf Error")
-                self.setMinimumWidth(500)
 
-                layout = QtWidgets.QVBoxLayout()
+                # Load the UI file
+                import pathlib
+                from PyQt5 import uic
+                uic.loadUi(pathlib.Path(__file__).parent / "gui" / "clear_settings_dialog.ui", self)
 
-                # Error message
-                error_label = QtWidgets.QLabel("ChiSurf failed to start due to an error:")
-                layout.addWidget(error_label)
+                # Set the exception text
+                self.exception_text_box.setText(exception_text)
 
-                # Exception details in a text box
-                exception_text_box = QtWidgets.QTextEdit()
-                exception_text_box.setReadOnly(True)
-                exception_text_box.setText(exception_text)
-                exception_text_box.setMinimumHeight(200)
-                layout.addWidget(exception_text_box)
-
-                # Question about clearing settings
-                question_label = QtWidgets.QLabel("Would you like to clear user settings? This might resolve the issue.")
-                layout.addWidget(question_label)
-
-                # Buttons
-                button_box = QtWidgets.QHBoxLayout()
-
-                clear_button = QtWidgets.QPushButton("Clear Settings")
-                clear_button.clicked.connect(self.clear_settings)
-
-                cancel_button = QtWidgets.QPushButton("Cancel")
-                cancel_button.clicked.connect(self.reject)
-
-                button_box.addWidget(clear_button)
-                button_box.addWidget(cancel_button)
-
-                layout.addLayout(button_box)
-                self.setLayout(layout)
+                # Connect signals
+                self.clear_button.clicked.connect(self.clear_settings)
+                self.cancel_button.clicked.connect(self.reject)
 
             def clear_settings(self):
                 try:
@@ -88,40 +66,18 @@ def main():
             class SimpleErrorDialog(QtWidgets.QDialog):
                 def __init__(self, exception_text, parent=None):
                     super().__init__(parent)
-                    self.setWindowTitle("ChiSurf Error")
-                    self.setMinimumWidth(500)
 
-                    layout = QtWidgets.QVBoxLayout()
+                    # Load the UI file
+                    import pathlib
+                    from PyQt5 import uic
+                    uic.loadUi(pathlib.Path(__file__).parent / "gui" / "simple_error_dialog.ui", self)
 
-                    # Error message
-                    error_label = QtWidgets.QLabel("ChiSurf failed to start due to an error:")
-                    layout.addWidget(error_label)
+                    # Set the exception text
+                    self.exception_text_box.setText(exception_text)
 
-                    # Exception details in a text box
-                    exception_text_box = QtWidgets.QTextEdit()
-                    exception_text_box.setReadOnly(True)
-                    exception_text_box.setText(exception_text)
-                    exception_text_box.setMinimumHeight(200)
-                    layout.addWidget(exception_text_box)
-
-                    # Question about clearing settings
-                    question_label = QtWidgets.QLabel("Would you like to clear user settings? This might resolve the issue.")
-                    layout.addWidget(question_label)
-
-                    # Buttons
-                    button_box = QtWidgets.QHBoxLayout()
-
-                    clear_button = QtWidgets.QPushButton("Clear Settings")
-                    clear_button.clicked.connect(self.clear_settings)
-
-                    cancel_button = QtWidgets.QPushButton("Cancel")
-                    cancel_button.clicked.connect(self.reject)
-
-                    button_box.addWidget(clear_button)
-                    button_box.addWidget(cancel_button)
-
-                    layout.addLayout(button_box)
-                    self.setLayout(layout)
+                    # Connect signals
+                    self.clear_button.clicked.connect(self.clear_settings)
+                    self.cancel_button.clicked.connect(self.reject)
 
                 def clear_settings(self):
                     try:
