@@ -3,7 +3,6 @@ import sys
 import chisurf
 import urllib
 
-name = "Miscellaneous:Browser"
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
