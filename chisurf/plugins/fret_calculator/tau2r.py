@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import sys
-
 from chisurf.gui import QtWidgets
 
 import chisurf.gui.decorators
@@ -14,7 +12,7 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
-    @chisurf.gui.decorators.init_with_ui("calc_tau2r.ui")
+    @chisurf.gui.decorators.init_with_ui("fret_calculator/calc_tau2r.ui", path=chisurf.settings.plugin_path)
     def __init__(self, kappa2=0.667, *args, **kwargs):
         self.kappa2 = kappa2
 
@@ -26,7 +24,6 @@ class FRETCalculator(QtWidgets.QWidget):
         self.doubleSpinBox_4.editingFinished.connect(self.onEChanged)
         self.doubleSpinBox_5.editingFinished.connect(self.onkFRETChanged)
         self.onkFRETChanged()
-        self.hide()
 
     def onRChanged(self):
         self.blockSignals(True)
@@ -178,9 +175,3 @@ class FRETCalculator(QtWidgets.QWidget):
     def E(self, v: float):
         self.doubleSpinBox_4.setValue(v)
 
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    win = FRETCalculator()
-    win.show()
-    sys.exit(app.exec_())
