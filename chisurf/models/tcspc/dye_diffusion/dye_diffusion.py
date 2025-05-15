@@ -33,7 +33,6 @@ from chisurf.structure.av import ACV
 from chisurf.fluorescence.simulation import photon
 from chisurf.structure import Structure, get_coordinates_of_residues
 from chisurf.gui.widgets.pdb import PDBSelector
-from modules.tttrlib.examples.fluorescence_decay.plot_fit23_usage_2 import corrections
 
 
 class DyeDecay(Model, Curve):
