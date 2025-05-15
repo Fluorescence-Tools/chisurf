@@ -26,27 +26,23 @@ requirements:
     - ninja
     - make # [not win]
   host:
+    - python
     - git
     - swig <4.3.0
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
     - pip
-    - python
     - numpy
     - tttrlib      # [not win]
-    - hdf5         # [win]
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
+    - libcxx  # [osx]
     - libgomp      # [linux]
-    - typing_extensions 4.5.*
+    - typing-extensions 4.5.*
+    - pytools 2024
     - pip
     - cython <3.0
-    - pyopencl
-    - pocl >=0.14      # [linux or osx]
-    - oclgrind          # [win]
-    - guidata
-    - guiqwt
     - pyyaml
     - numpy
     - pyqt           # Needed for pyrcc5 (updating PyQt resource files)
@@ -55,13 +51,14 @@ requirements:
     - doxygen
     - boost-cpp
     - numpy
-    - libcxx  # [osx]
   run:
     - python
+    - typing-extensions 4.5.*
+    - pytools 2024
     - numpy
     - pyqt
     - pyyaml
-    - click <8.0 # Conflicts with papermill
+    - click
     - python-slugify
     - pyqtgraph
     - matplotlib
@@ -69,35 +66,28 @@ requirements:
     - deprecation
     - imp
     - pandas
-    - papermill
-    - typing-extensions 4.5.*
-    - typing_extensions 4.5.*
-    - pytools 2023.*
-    - pytables <3.10
     - scipy
     - numba
     - boost-cpp
     - tttrlib >=0.26      # [not win]
-    - hdf5                # [win]
     - mdtraj
     - htmd-pdb2pqr
-    - ipython <8.0
-    - qtconsole 5.*
+    - ipython
     - notebook
-    - pyopencl
     - emcee 3.1.*
     - pyopengl
-    - pocl  >=0.14      # [linux or osx]
+    - pytables
     - pymol-open-source
-    - qscintilla2
     - guidata
     - guiqwt
     - python-docx
+    - qtconsole
+    - ipython
     - pyqtwebengine
-    - joblib
     - libcxx  # [osx]
     - hmmlearn
     - sympy
+    - zeus-mcmc
 
 app:
   entry: chisurf

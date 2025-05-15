@@ -8,8 +8,14 @@ import chisurf.settings
 import numpy as np
 import numba as nb
 import math
-import pyopencl as cl
-from pyopencl import array as cl_array
+
+# Try to import pyopencl, but make it optional
+try:
+    import pyopencl as cl
+    from pyopencl import array as cl_array
+    HAS_OPENCL = True
+except ImportError:
+    HAS_OPENCL = False
 fps_settings = chisurf.settings.cs_settings['fps']
 
 
@@ -309,6 +315,44 @@ def assign_diffusion_to_grid_3(
 assign_diffusion_to_grid = assign_diffusion_to_grid_1
 
 
+@nb.jit(nopython=True, nogil=True)
+def iterate_cpu(n, p, d, k, b, ng):
+    """CPU implementation of the iterate kernel"""
+    for ix in range(1, ng-1):
+        for iy in range(1, ng-1):
+            for iz in range(1, ng-1):
+                i = ix + ng * iy + ng * ng * iz
+                if b[i] > 0:
+                    ixl = (ix - 1) + ng * iy + ng * ng * iz
+                    ixr = (ix + 1) + ng * iy + ng * ng * iz
+                    iyl = ix + ng * (iy - 1) + ng * ng * iz
+                    iyr = ix + ng * (iy + 1) + ng * ng * iz
+                    izl = ix + ng * iy + ng * ng * (iz - 1)
+                    izr = ix + ng * iy + ng * ng * (iz + 1)
+
+                    dp = d[i] * p[i]
+                    xl = (dp - d[ixl] * p[ixl]) * b[ixl]
+                    xr = (dp - d[ixr] * p[ixr]) * b[ixr]
+                    yl = (dp - d[iyl] * p[iyl]) * b[iyl]
+                    yr = (dp - d[iyr] * p[iyr]) * b[iyr]
+                    zl = (dp - d[izl] * p[izl]) * b[izl]
+                    zr = (dp - d[izr] * p[izr]) * b[izr]
+
+                    ts = k[i] * p[i]
+
+                    n[i] = p[i] - (xl + xr + yl + yr + zl + zr + ts)
+    return n
+
+@nb.jit(nopython=True, nogil=True)
+def reduce_decay_cpu(p, k, time_i, ng):
+    """CPU implementation of the reduce_decay kernel"""
+    decay_sum = 0.0
+    population_sum = 0.0
+    for i in range(ng*ng*ng):
+        decay_sum += p[i] * math.exp(-time_i * k[i])
+        population_sum += p[i]
+    return decay_sum, population_sum
+
 class DiffusionIterator:
 
     def __init__(self, d, b, p, **kwargs):
@@ -323,19 +367,28 @@ class DiffusionIterator:
         self.idg2 = 1. / (self.dg**2)
         self.it = 0  # number of performed iterations
 
+        if HAS_OPENCL:
+            # This is for OpenCL and defines the global and local workgroup sizes
+            self.global_size = (ng**3, )
+            self.global_size_3d = (ng, ng, ng,)  # the edges are omitted
+            self.local_size = None
 
-        # This is for OpenCL and defines the global and local workgroup sizes
-        self.global_size = (ng**3, )#, ng - 2, ng - 2,)
-        self.global_size_3d = (ng, ng, ng,) ## the edges are omitted
-        #sd = int(mfm.cl_device.max_compute_units / 3)
-        self.local_size = None #(8, 8, 1)
-
-        # This is for OpenCL and creates a OpenCL context, a command queue and builds the program (kernel)
-        self.ctx = cl.create_some_context()
-        self.queue = cl.CommandQueue(self.ctx)
-        self.program = self.build_program()
+            # This is for OpenCL and creates a OpenCL context, a command queue and builds the program (kernel)
+            self.ctx = cl.create_some_context()
+            self.queue = cl.CommandQueue(self.ctx)
+            self.program = self.build_program()
+        else:
+            # For CPU implementation
+            self.p_np = None
+            self.n_np = None
+            self.d_np = None
+            self.k_np = None
+            self.b_np = None
 
     def build_program(self, filename='iterated.c'):
+        if not HAS_OPENCL:
+            return None
+
         ng = self.ng
         idg2 = self.idg2
         defines = '''
@@ -364,24 +417,22 @@ class DiffusionIterator:
         self.d_np = (d * self.idg2 * t_step).astype(np.float32).flatten('C')
         self.k_np = (k * t_step).astype(np.float32).flatten('C')
 
-        # create OpenCL buffers
-        mf = cl.mem_flags
-        self.p_gp = cl.Buffer(self.ctx, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=self.p_np) # cl_array.to_device(queue, p_np)
-        self.n_gp = cl.Buffer(self.ctx, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=self.p_np)  # cl_array.to_device(queue, p_np)
-        self.d_gp = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.d_np)
-        self.k_gp = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.k_np)
-        self.b_gp = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.b_np)
+        if HAS_OPENCL:
+            # create OpenCL buffers
+            mf = cl.mem_flags
+            self.p_gp = cl.Buffer(self.ctx, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=self.p_np)
+            self.n_gp = cl.Buffer(self.ctx, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=self.p_np)
+            self.d_gp = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.d_np)
+            self.k_gp = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.k_np)
+            self.b_gp = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.b_np)
+        else:
+            # For CPU implementation, we'll just use the numpy arrays directly
+            self.n_np = self.p_np.copy()
 
     def execute(self, n_it=1, **kwargs):
-
         # this defines how often the calculations are copied back from the compute unit (GPU)
         # e.g. 10 means that every 10th iteration is copied from the computing unit (GPU) to "python"
         n_out = kwargs.get('n_out', 10)
-
-        queue = self.queue
-        prg = self.program
-        local_size = self.local_size #(n_local,) #self.local_size
-        n_local = 512
         ng = self.ng
 
         # initialize the next step
@@ -391,44 +442,73 @@ class DiffusionIterator:
         n_excited = np.zeros(total_out, dtype=np.float32)
         n_excited[0] = 1.0
 
-        tmp_1 = cl_array.zeros(queue, (n_local * total_out,), dtype=np.float32)
-        tmp_2 = cl_array.zeros(queue, (n_local * total_out,), dtype=np.float32)
+        if HAS_OPENCL:
+            queue = self.queue
+            prg = self.program
+            local_size = self.local_size
+            n_local = 512
 
-        p = self.p_gp
-        n = self.n_gp
+            tmp_1 = cl_array.zeros(queue, (n_local * total_out,), dtype=np.float32)
+            tmp_2 = cl_array.zeros(queue, (n_local * total_out,), dtype=np.float32)
 
-        b = self.b_gp
-        d = self.d_gp
-        k = self.k_gp
+            p = self.p_gp
+            n = self.n_gp
+            b = self.b_gp
+            d = self.d_gp
+            k = self.k_gp
 
-        #prg.copy3d(queue, self.global_size, None,
-        #           n.data, p.data, b).wait()
-        for time_i in range(n_it):
-            if time_i % 2 > 0:
-                p, n = n, p
-            prg.iterate(queue, self.global_size_3d, local_size,
-                        n, p, d, k, b
-                        )
-            if time_i % n_out == 0:
-                prg.reduce_decay(queue, self.global_size, self.local_size,
-                                 p, k,
-                                 cl.LocalMemory(n_local * 32),
-                                 cl.LocalMemory(n_local * 32),
-                                 np.int32(self.global_size[0]),
-                                 np.int32(n_local),
-                                 np.int32(i_out),
-                                 np.float32(time_i),
-                                 tmp_1.data,
-                                 tmp_2.data
-                                 )
-                i_out += 1
-            self.it += 1
+            for time_i in range(n_it):
+                if time_i % 2 > 0:
+                    p, n = n, p
+                prg.iterate(queue, self.global_size_3d, local_size,
+                            n, p, d, k, b
+                            )
+                if time_i % n_out == 0:
+                    prg.reduce_decay(queue, self.global_size, self.local_size,
+                                    p, k,
+                                    cl.LocalMemory(n_local * 32),
+                                    cl.LocalMemory(n_local * 32),
+                                    np.int32(self.global_size[0]),
+                                    np.int32(n_local),
+                                    np.int32(i_out),
+                                    np.float32(time_i),
+                                    tmp_1.data,
+                                    tmp_2.data
+                                    )
+                    i_out += 1
+                self.it += 1
 
-        dc = (tmp_1.map_to_host()).reshape((total_out, n_local)).sum(axis=1)
-        ds = (tmp_2.map_to_host()).reshape((total_out, n_local)).sum(axis=1)
-        n_ex = dc / ds
-        cl.enqueue_copy(queue, self.p_np, self.p_gp)
-        self.p = self.p_np.reshape((ng, ng, ng), order='C')
+            dc = (tmp_1.map_to_host()).reshape((total_out, n_local)).sum(axis=1)
+            ds = (tmp_2.map_to_host()).reshape((total_out, n_local)).sum(axis=1)
+            n_ex = dc / ds
+            cl.enqueue_copy(queue, self.p_np, self.p_gp)
+            self.p = self.p_np.reshape((ng, ng, ng), order='C')
+        else:
+            # CPU implementation
+            dc = np.zeros(total_out, dtype=np.float32)
+            ds = np.zeros(total_out, dtype=np.float32)
+
+            p_np = self.p_np
+            n_np = self.n_np
+
+            for time_i in range(n_it):
+                if time_i % 2 > 0:
+                    p_np, n_np = n_np, p_np
+
+                # Call the CPU implementation of iterate
+                n_np = iterate_cpu(n_np, p_np, self.d_np, self.k_np, self.b_np, ng)
+
+                if time_i % n_out == 0:
+                    # Call the CPU implementation of reduce_decay
+                    decay_sum, population_sum = reduce_decay_cpu(p_np, self.k_np, time_i, ng)
+                    dc[i_out] = decay_sum
+                    ds[i_out] = population_sum
+                    i_out += 1
+                self.it += 1
+
+            n_ex = dc / ds
+            self.p = p_np.reshape((ng, ng, ng), order='C')
+
         return time_axis, n_ex, self.p
 
 
