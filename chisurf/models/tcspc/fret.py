@@ -7,6 +7,7 @@ import chisurf.fluorescence.anisotropy.kappa2 as kapp2
 
 import chisurf.math
 import chisurf.math.datatools
+import chisurf.gui.widgets.fitting.widgets
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
@@ -425,7 +426,6 @@ class FRETModel(LifetimeModel):
         )
         #rs = distribution2rates(self.distance_distribution, tauD0, 2./3., forster_radius)
         r = np.hstack(rs).reshape(-1, order='F')
-        #r = np.hstack(rs).ravel([-1])
         return r
 
     @property
@@ -556,6 +556,26 @@ class FRETModel(LifetimeModel):
         self._reference = LifetimeModel(fit, **kwargs)
         self._reference.lifetimes = self.donor
         self._reference.convolve = self.convolve
+
+        # Create parameter widgets
+        self._orientation_widget = self.orientation_parameter.create_widgets()
+        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.fret_parameters
+        )
+
+    def get_parameter_widgets(self):
+        """
+        Get all parameter widgets for this model.
+
+        Returns
+        -------
+        list
+            List of parameter widgets.
+        """
+        widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
+        widgets.append(self._orientation_widget)
+        widgets.append(self._fret_parameters_widget)
+        return widgets
 
 
 class GaussianModel(FRETModel):
@@ -740,5 +760,3 @@ class SingleDistanceModel(FRETModel):
         super().__init__(fit=fit, **kwargs)
         self._rda = kwargs.get('rda', np.array([100.0]))
         self._prda = kwargs.get('prda', np.array([100.0]))
-
-

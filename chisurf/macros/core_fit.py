@@ -206,8 +206,8 @@ def close_fit(idx: int = None):
         for i, w in enumerate(chisurf.gui.fit_windows):
             if w is sub_window:
                 idx = i
-    # chisurf.gui.widgets.clear_layout(cs.modelLayout)
-    # chisurf.gui.widgets.clear_layout(cs.plotOptionsLayout)
+    chisurf.gui.widgets.clear_layout(cs.modelLayout)
+    chisurf.gui.widgets.clear_layout(cs.plotOptionsLayout)
     chisurf.fits.pop(idx)
     sub_window = chisurf.gui.fit_windows.pop(idx)
     sub_window.close()
@@ -262,4 +262,3 @@ def change_selected_fit_of_group(
     cs.current_fit.selected_fit = selected_fit
     cs.current_fit.update()
     cs.current_fit.model.show()
-
