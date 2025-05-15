@@ -233,6 +233,7 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         forster_group = QtWidgets.QGroupBox("Förster Radius Calculation")
         forster_layout = QtWidgets.QVBoxLayout(forster_group)
         left_layout.addWidget(forster_group)
+        forster_group.setEnabled(False)
 
         # Donor and acceptor selection
         donor_layout = QtWidgets.QHBoxLayout()
@@ -785,11 +786,6 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         # Create Database submenu
         database_menu = tools_menu.addMenu('Database')
 
-        # Add "Migrate Data" action
-        migrate_action = QtWidgets.QAction('Migrate Data to Database', self)
-        migrate_action.triggered.connect(self.run_migration_script)
-        database_menu.addAction(migrate_action)
-
         # Add "Add Custom Dye" action
         add_dye_action = QtWidgets.QAction('Add Custom Dye', self)
         add_dye_action.triggered.connect(self.add_custom_dye)
@@ -892,79 +888,6 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Failed to run {os.path.basename(script_path)}: {str(e)}")
 
-    def run_migration_script(self):
-        """Run the migration script to move data from files to the database."""
-        try:
-            # Create a dialog to show the output
-            output_dialog = QtWidgets.QDialog(self)
-            output_dialog.setWindowTitle("Data Migration Output")
-            output_dialog.resize(800, 600)
-
-            # Create a text edit to display the output
-            output_text = QtWidgets.QTextEdit()
-            output_text.setReadOnly(True)
-            output_text.setFont(QtGui.QFont("Courier New", 10))
-
-            # Create a layout for the dialog
-            layout = QtWidgets.QVBoxLayout(output_dialog)
-            layout.addWidget(output_text)
-
-            # Add a close button
-            close_button = QtWidgets.QPushButton("Close")
-            close_button.clicked.connect(output_dialog.accept)
-            layout.addWidget(close_button)
-
-            # Show the dialog
-            output_dialog.show()
-
-            # Update the text edit to show that the script is running
-            output_text.append("Running migration script...\n")
-            QtWidgets.QApplication.processEvents()
-
-            # Get the path to the migration script
-            migration_script = self.plugin_dir / "migrate_data.py"
-
-            # Run the migration script
-            process = subprocess.Popen(
-                [sys.executable, str(migration_script)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                cwd=str(self.plugin_dir)
-            )
-
-            # Read and display the output in real-time
-            while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    output_text.append(output.strip())
-                    QtWidgets.QApplication.processEvents()
-
-            # Get the return code
-            return_code = process.poll()
-
-            # Display any errors
-            if return_code != 0:
-                error_output = process.stderr.read()
-                output_text.append(f"\nError (return code {return_code}):\n{error_output}")
-            else:
-                output_text.append("\nMigration completed successfully.")
-
-                # Show a message to restart the application
-                QtWidgets.QMessageBox.information(
-                    self, 
-                    "Migration Complete",
-                    "Data migration completed successfully. Please restart the application to use the new database."
-                )
-
-            # Refresh the item types and item list
-            self.populate_item_types()
-            self.populate_item_list()
-
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to run migration script: {str(e)}")
 
 
     def on_spectra_selection_changed(self):
