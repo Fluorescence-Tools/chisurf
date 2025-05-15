@@ -700,3 +700,69 @@ def calculate_fluorescence_decay(
         decay += np.exp(-time_axis / lifetime) * amplitude
     return time_axis, decay
 
+
+def compute_mean_fret(
+        lifetime_spectrum: np.ndarray,
+        lifetime_spectrum_donor_only: np.ndarray,
+        forster_radius: float,
+        fluorescence_lifetime_donor: float,
+        use_longest_donor_lifetime: bool = True,
+        verbose: bool = False
+) -> typing.Tuple[float, float]:
+    """Compute mean FRET efficiency and standard deviation from lifetime spectra
+
+    Parameters
+    ----------
+    lifetime_spectrum : np.ndarray
+        Interleaved lifetime spectrum of the donor in the presence of FRET
+    lifetime_spectrum_donor_only : np.ndarray
+        Interleaved lifetime spectrum of the donor in the absence of FRET
+    forster_radius : float
+        Forster radius
+    fluorescence_lifetime_donor : float
+        Fluorescence lifetime of the donor in the absence of FRET
+    use_longest_donor_lifetime : bool
+        If True, use the longest lifetime in the donor-only spectrum as the reference lifetime
+    verbose : bool
+        If True, print debug information
+
+    Returns
+    -------
+    mean_distance : float
+        Mean distance
+    std_distance : float
+        Standard deviation of the distance
+    """
+    # Extract amplitudes and lifetimes from the interleaved spectra
+    da_amplitudes, da_lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
+        lifetime_spectrum
+    )
+    d0_amplitudes, d0_lifetimes = chisurf.math.datatools.interleaved_to_two_columns(
+        lifetime_spectrum_donor_only
+    )
+
+    # Normalize amplitudes
+    da_amplitudes = da_amplitudes / np.sum(da_amplitudes)
+    d0_amplitudes = d0_amplitudes / np.sum(d0_amplitudes)
+
+    # Determine reference lifetime
+    if use_longest_donor_lifetime:
+        tau0 = d0_lifetimes[np.argmax(d0_lifetimes)]
+    else:
+        tau0 = fluorescence_lifetime_donor
+
+    # Calculate FRET efficiencies
+    fret_efficiencies = 1.0 - da_lifetimes / tau0
+
+    # Calculate distances
+    distances = forster_radius * (1.0 / fret_efficiencies - 1.0) ** (1.0 / 6.0)
+
+    # Calculate mean and standard deviation
+    mean_distance = np.sum(da_amplitudes * distances)
+    std_distance = np.sqrt(np.sum(da_amplitudes * (distances - mean_distance) ** 2))
+
+    if verbose:
+        print("-- Mean distance: {:.1f}".format(mean_distance))
+        print("-- Std distance: {:.1f}".format(std_distance))
+
+    return mean_distance, std_distance
