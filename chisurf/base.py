@@ -433,6 +433,8 @@ class Base(object):
             if propobj.fget is None:
                 raise AttributeError("can't get attribute")
             return propobj.fget(self)
+        if propobj is None:
+            raise AttributeError(f"{self.__class__.__name__} object has no attribute '{key}'")
         return propobj
 
     def __getstate__(self):
