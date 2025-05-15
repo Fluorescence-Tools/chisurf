@@ -129,6 +129,12 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._stop, layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
+        # Add IRF start and stop parameters
+        layout = QtWidgets.QHBoxLayout()
+        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._irf_start, layout=layout)
+        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._irf_stop, layout=layout)
+        self.verticalLayout_2.addLayout(layout)
+
         layout = QtWidgets.QHBoxLayout()
         chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._lb, layout=layout)
         chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._ts, layout=layout)
@@ -778,21 +784,21 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
         readFrom = QtWidgets.QToolButton()
         readFrom.setText("read")
+        self.readFrom = readFrom
         self.readFrom_menu = QtWidgets.QMenu(self.readFrom)
         self.readFrom_menu.aboutToShow.connect(self.read_menu)
         readFrom.setMenu(self.readFrom_menu)
         readFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         lh.addWidget(readFrom)
-        self.readFrom = readFrom
 
         linkFrom = QtWidgets.QToolButton()
         linkFrom.setText("link")
+        self.linkFrom = linkFrom
         self.linkFrom_menu = QtWidgets.QMenu(self.linkFrom)
         self.linkFrom_menu.aboutToShow.connect(self.link_menu)
         linkFrom.setMenu(self.linkFrom_menu)
         linkFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         lh.addWidget(linkFrom)
-        self.linkFrom = linkFrom
 
         normalize_amplitude = QtWidgets.QCheckBox("Norm.")
         normalize_amplitude.setChecked(True)
