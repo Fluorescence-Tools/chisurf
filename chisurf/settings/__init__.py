@@ -80,10 +80,10 @@ def copy_styles_to_user_folder():
 
 def clear_settings_folder():
     """
-    Remove settings files and subdirectories inside the settings folder, but preserve log files.
+    Remove settings files and subdirectories inside the settings folder, but preserve log files and plugins folder.
 
     This function walks through the directory returned by `get_path()` and:
-      - Recursively deletes each subdirectory (skipping over any files it cannot remove),
+      - Recursively deletes each subdirectory (skipping over any files it cannot remove and the plugins folder),
       - Deletes each settings file at the top level (skipping log files),
       - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
         for any file or directory that cannot be deleted.
@@ -116,6 +116,10 @@ def clear_settings_folder():
         path = entry.path
         try:
             if entry.is_dir(follow_symlinks=False):
+                # Skip the plugins folder
+                if os.path.basename(path) == 'plugins':
+                    chisurf.logging.info(f"Preserving plugins folder: {path}")
+                    continue
                 # Recursively remove this subfolder entirely (with our onerror)
                 shutil.rmtree(path, onerror=_handle_remove_error)
             else:
@@ -166,6 +170,54 @@ def clear_logging_files():
             chisurf.logging.warning(f"Couldn't remove log file: {path}")
 
 
+def clear_user_plugins_folder():
+    """
+    Remove all files and subdirectories inside the user plugins folder.
+
+    This function walks through the user plugins directory at '~/.chisurf/plugins' and:
+      - Recursively deletes each subdirectory (skipping over any files it cannot remove),
+      - Deletes each file at the top level,
+      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
+        for any file or directory that cannot be deleted.
+
+    The root plugins folder itself is left intact, even if empty.
+
+    Raises:
+        None. All deletion errors are caught and logged.
+    """
+    import chisurf
+
+    # Get the user plugins folder path
+    root = pathlib.Path.home() / '.chisurf' / 'plugins'
+
+    # Helper to warn on failed removals inside rmtree()
+    def _handle_remove_error(func, path, exc_info):
+        ex = exc_info[1]
+        # Only skip PermissionErrors (file-in-use, etc.)
+        if isinstance(ex, PermissionError):
+            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
+            return
+        # Propagate everything else
+        raise ex
+
+    # If the root doesn't even exist, nothing to do
+    if not os.path.isdir(root):
+        return
+
+    # Iterate through *direct* children of root
+    for entry in os.scandir(root):
+        path = entry.path
+        try:
+            if entry.is_dir(follow_symlinks=False):
+                # Recursively remove this subfolder entirely (with our onerror)
+                shutil.rmtree(path, onerror=_handle_remove_error)
+            else:
+                # Remove a single file
+                os.unlink(path)
+        except PermissionError as e:
+            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
+        except OSError as e:
+            chisurf.logging.warning(f"Couldn't remove {path}")
 
 
 #######################################################
