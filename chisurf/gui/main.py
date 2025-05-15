@@ -850,7 +850,8 @@ class Main(QtWidgets.QMainWindow):
         self.dockWidget_console.setVisible(chisurf.settings.gui['show_console'])
         # Set the height of the console dock widget
         if 'console_height' in chisurf.settings.gui:
-            self.dockWidget_console.setFixedHeight(chisurf.settings.gui['console_height'])
+            from qtpy.QtCore import Qt
+            self.resizeDocks([self.dockWidget_console], [chisurf.settings.gui['console_height']], Qt.Vertical)
         self.init_console()
 
         ##########################################################
