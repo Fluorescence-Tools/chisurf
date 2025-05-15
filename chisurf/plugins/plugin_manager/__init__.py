@@ -549,7 +549,21 @@ class PluginManagerWidget(QMainWindow):
         try:
             with open(chisurf.settings.chisurf_settings_file, 'w') as f:
                 yaml.dump(chisurf.settings.cs_settings, f, default_flow_style=False)
-            QMessageBox.information(self, "Settings Saved", "Plugin settings have been saved successfully.\nA restart of ChiSurf may be required for some settings to take effect.")
+
+            # Update the toolbar in the main window
+            app = QApplication.instance()
+            for widget in app.topLevelWidgets():
+                if widget.__class__.__name__ == 'Main':
+                    # Found the main window, update the toolbar
+                    if hasattr(widget, 'load_toolbar_plugins'):
+                        # Clear existing toolbar first
+                        if hasattr(widget, 'plugins_toolbar'):
+                            widget.plugins_toolbar.clear()
+                        # Reload toolbar plugins
+                        widget.load_toolbar_plugins()
+                        break
+
+            QMessageBox.information(self, "Settings Saved", "Plugin settings have been saved successfully.")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save settings: {e}")
 
