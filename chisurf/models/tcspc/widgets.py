@@ -419,6 +419,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
                 "cs.current_fit.model.anisotropy.polarization_type = 'vv'"
             )
         )
+        self.radioButtonVV.clicked.connect(self.hide_roation_parameters)
 
         self.radioButtonVH = QtWidgets.QRadioButton("VH")
         self.radioButtonVH.setToolTip(
@@ -429,6 +430,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
                 "cs.current_fit.model.anisotropy.polarization_type = 'vh'"
             )
         )
+        self.radioButtonVH.clicked.connect(self.hide_roation_parameters)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -499,11 +501,11 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         self.hide_roation_parameters()
 
     def hide_roation_parameters(self):
-        self.rot_vis = not self.rot_vis
-        if self.rot_vis:
-            self.gb.show()
-        else:
+        # Hide rotation parameters when VM is selected, show otherwise
+        if self.radioButtonVM.isChecked():
             self.gb.hide()
+        else:
+            self.gb.show()
 
     def onAddRotation(self):
         chisurf.run(
