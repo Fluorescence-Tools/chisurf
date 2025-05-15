@@ -14,11 +14,12 @@ The calculator automatically updates all values when any parameter is changed,
 making it easy to explore the relationships between different FRET parameters.
 """
 
-from chisurf.gui.tools.fret.calculator.tau2r import FRETCalculator
+import sys
+from qtpy import QtWidgets
+from .tau2r import FRETCalculator
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Tools:FRET Calculator"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
@@ -26,5 +27,11 @@ name = "Tools:FRET Calculator"
 if __name__ == "plugin":
     # Create an instance of the FRETCalculator class
     window = FRETCalculator()
-    # Show the window
     window.show()
+
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    win = FRETCalculator()
+    win.show()
+    sys.exit(app.exec_())
