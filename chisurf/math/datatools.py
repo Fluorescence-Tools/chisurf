@@ -10,6 +10,37 @@ import numba as nb
 import numpy as np
 
 
+@nb.jit(nopython=True)
+def distance_between_gaussian(
+        distances: np.ndarray,
+        separation_distance: float,
+        sigma: float,
+        normalize: bool = False
+) -> np.ndarray:
+    """Calculates a Gaussian distribution of distances
+
+    Parameters
+    ----------
+    distances : np.ndarray
+        Array of distances for which to calculate the Gaussian distribution
+    separation_distance : float
+        Mean of the Gaussian distribution
+    sigma : float
+        Standard deviation of the Gaussian distribution
+    normalize : bool
+        If True, normalize the distribution to sum to 1
+
+    Returns
+    -------
+    np.ndarray
+        Gaussian distribution of distances
+    """
+    result = np.exp(-(distances - separation_distance) ** 2 / (2 * sigma ** 2))
+    if normalize and np.sum(result) > 0:
+        result /= np.sum(result)
+    return result
+
+
 def histogram_rebin(
         bin_edges: np.ndarray,
         counts: np.ndarray,
