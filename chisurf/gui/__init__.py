@@ -336,8 +336,17 @@ def setup_gui(
 
         # Path to the __init__.py file
         init_py = plugin_dir / module_name / "__init__.py"
+
+        # Check if the file exists in the built-in directory
         if not init_py.exists():
-            return name, description
+            # Try to find it in the user plugins directory
+            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+            user_init_py = user_plugin_root / module_name / "__init__.py"
+            if user_init_py.exists():
+                init_py = user_init_py
+                chisurf.logging.info(f"Found user plugin: {module_name} at {init_py}")
+            else:
+                return name, description
 
         try:
             # Read the source
@@ -393,15 +402,56 @@ def setup_gui(
         # Check if we're in experimental mode
         experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
 
-        # Get all module names
+        # Get all module names from built-in plugins
         module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
         module_names = [name for _, name, _ in module_infos]
+
+        # Add user plugins
+        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+        if user_plugin_root.exists() and user_plugin_root.is_dir():
+            # Get all directories in the user plugin root
+            for item in user_plugin_root.iterdir():
+                if item.is_dir() and (item / "__init__.py").exists():
+                    # Add the directory name to the list of module names
+                    module_names.append(item.name)
 
         # Create a list of (module_name, order) tuples
         module_order_pairs = []
         for module_name in module_names:
             # Get plugin metadata without importing
             name, _ = get_plugin_metadata(plugin_root, module_name)
+
+            # Check if this is a user plugin
+            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+            user_plugin_dir = user_plugin_root / module_name
+            is_user_plugin = user_plugin_dir.exists() and (user_plugin_dir / "__init__.py").exists()
+
+            # If it's a user plugin, get the name from the user plugin directory
+            if is_user_plugin:
+                # Try to get the name from the user plugin directory
+                try:
+                    # Read the source
+                    source = (user_plugin_dir / "__init__.py").read_text(encoding="utf-8")
+
+                    # Parse into an AST
+                    tree = ast.parse(source, filename=str(user_plugin_dir / "__init__.py"))
+
+                    # Look for a name assignment
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Assign):
+                            for target in node.targets:
+                                if isinstance(target, ast.Name) and target.id == 'name':
+                                    if isinstance(node.value, ast.Str):
+                                        user_name = node.value.s
+                                        chisurf.logging.info(f"User plugin name: {user_name} (module: {module_name})")
+                                        name = user_name
+                                    elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                        user_name = node.value.value
+                                        chisurf.logging.info(f"User plugin name: {user_name} (module: {module_name})")
+                                        name = user_name
+                except Exception as e:
+                    chisurf.logging.warning(f"Error extracting name from {user_plugin_dir / '__init__.py'}: {e}")
+
             # Get the order from plugin_order, default to 0 if not set
             order = plugin_order.get(name, 0)
             module_order_pairs.append((module_name, order, name))
