@@ -210,12 +210,18 @@ class PluginManagerWidget(QMainWindow):
         # Store current filter text
         current_filter = self.filter_line_edit.text() if hasattr(self, 'filter_line_edit') else ""
 
-        # Determine plugin directory
+        # Determine built-in plugin directory
         plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
 
-        # Find all module names
+        # Determine user plugin directory
+        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+
+        # Find all module names from both built-in and user plugin directories
         module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
         module_names = [name for _, name, _ in module_infos]
+
+        # Add a label to indicate the source of each plugin (built-in or user)
+        module_sources = {name: 'built-in' for name in module_names}
 
         # Create a list of (module_name, order, is_disabled) tuples
         module_order_pairs = []
@@ -302,20 +308,31 @@ class PluginManagerWidget(QMainWindow):
                 )
 
                 # Create list item
-                item = QListWidgetItem(name)
+                # Add source indicator to the display name
+                source = module_sources.get(module_name, 'built-in')
+                display_name = f"{name} [{source}]"
+                item = QListWidgetItem(display_name)
                 item.setData(Qt.UserRole, module_name)
+                item.setData(Qt.UserRole + 1, source)  # Store the source for later use
 
                 # Set icon if available
+                # Check both built-in and user plugin directories for icons
                 icon_path = plugin_root / module_name / 'icon.png'
+                user_icon_path = user_plugin_root / module_name / 'icon.png'
+
                 if hasattr(module, 'icon'):
                     item.setIcon(module.icon)
                 elif icon_path.exists():
                     item.setIcon(QIcon(str(icon_path)))
+                elif user_icon_path.exists():
+                    item.setIcon(QIcon(str(user_icon_path)))
 
                 # Mark plugins based on status
                 if is_disabled:
                     item.setForeground(Qt.gray)
-                    item.setText(f"{name} [DISABLED]")
+                    # Preserve the source indicator in the display name
+                    source = module_sources.get(module_name, 'built-in')
+                    item.setText(f"{name} [DISABLED] [{source}]")
 
                 # Add to list widget
                 self.plugin_list.addItem(item)
