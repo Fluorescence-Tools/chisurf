@@ -1,65 +1,62 @@
 """
 Create an icon for the UCFRET plugin.
 
-This script creates a simple icon for the UCFRET plugin.
+This script creates a Bayesian-themed icon for the UCFRET plugin,
+featuring overlapping probability distributions to represent
+Bayesian inference in FRET analysis.
 """
 
 import os
 import sys
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-# Create a new image with a white background
+# Create a new image with a transparent background
 width, height = 128, 128
 image = Image.new("RGBA", (width, height), (255, 255, 255, 0))
 draw = ImageDraw.Draw(image)
 
-# Define colors
-blue = (41, 128, 185, 255)  # Donor color
-red = (231, 76, 60, 255)    # Acceptor color
-green = (46, 204, 113, 255) # Energy transfer color
+# Define colors with some transparency for overlapping
+blue = (41, 128, 185, 180)  # Prior distribution
+red = (231, 76, 60, 180)    # Likelihood distribution
+purple = (155, 89, 182, 180)  # Posterior distribution
 
-# Draw a circle for the donor
-donor_center = (width // 3, height // 3)
-donor_radius = 25
-draw.ellipse(
-    (
-        donor_center[0] - donor_radius,
-        donor_center[1] - donor_radius,
-        donor_center[0] + donor_radius,
-        donor_center[1] + donor_radius
-    ),
-    fill=blue
-)
+# Function to draw a Gaussian distribution curve
+def draw_gaussian(x_center, y_center, sigma, amplitude, color, fill=False):
+    points = []
+    x_range = np.linspace(0, width, 100)
 
-# Draw a circle for the acceptor
-acceptor_center = (2 * width // 3, 2 * height // 3)
-acceptor_radius = 25
-draw.ellipse(
-    (
-        acceptor_center[0] - acceptor_radius,
-        acceptor_center[1] - acceptor_radius,
-        acceptor_center[0] + acceptor_radius,
-        acceptor_center[1] + acceptor_radius
-    ),
-    fill=red
-)
+    for x in x_range:
+        y = amplitude * np.exp(-0.5 * ((x - x_center) / sigma)**2)
+        points.append((x, y_center - y))
 
-# Draw an arrow for energy transfer
-arrow_width = 8
-arrow_points = [
-    (donor_center[0] + donor_radius - 5, donor_center[1] + donor_radius - 5),  # Start
-    (acceptor_center[0] - acceptor_radius + 5, acceptor_center[1] - acceptor_radius + 5)  # End
-]
-draw.line(arrow_points, fill=green, width=arrow_width)
+    if fill:
+        # Create a closed polygon by adding points at the bottom
+        bottom_points = [(x, y_center) for x, _ in reversed(points)]
+        all_points = points + bottom_points
+        draw.polygon(all_points, fill=color)
+    else:
+        # Just draw the curve
+        for i in range(len(points) - 1):
+            draw.line([points[i], points[i+1]], fill=color, width=2)
 
-# Draw arrowhead
-arrowhead_size = 12
-arrowhead_points = [
-    (arrow_points[1][0], arrow_points[1][1]),
-    (arrow_points[1][0] - arrowhead_size, arrow_points[1][1] - arrowhead_size // 2),
-    (arrow_points[1][0] - arrowhead_size // 2, arrow_points[1][1] - arrowhead_size)
-]
-draw.polygon(arrowhead_points, fill=green)
+# Draw the prior distribution (blue)
+prior_center = width * 0.35
+prior_sigma = width * 0.15
+prior_amplitude = height * 0.3
+draw_gaussian(prior_center, height * 0.6, prior_sigma, prior_amplitude, blue, fill=True)
+
+# Draw the likelihood distribution (red)
+likelihood_center = width * 0.65
+likelihood_sigma = width * 0.12
+likelihood_amplitude = height * 0.25
+draw_gaussian(likelihood_center, height * 0.6, likelihood_sigma, likelihood_amplitude, red, fill=True)
+
+# Draw the posterior distribution (purple, where they overlap)
+posterior_center = width * 0.5
+posterior_sigma = width * 0.1
+posterior_amplitude = height * 0.35
+draw_gaussian(posterior_center, height * 0.6, posterior_sigma, posterior_amplitude, purple, fill=False)
 
 # Add "FRET" text
 try:
@@ -67,8 +64,10 @@ try:
 except IOError:
     font = ImageFont.load_default()
 
-text = "FRET"
-text_width, text_height = draw.textsize(text, font=font)
+text = "B-FRET"
+bbox = draw.textbbox((0, 0), text, font=font)
+text_width = bbox[2] - bbox[0]
+text_height = bbox[3] - bbox[1]
 text_position = ((width - text_width) // 2, height - text_height - 10)
 draw.text(text_position, text, fill=(0, 0, 0, 255), font=font)
 
