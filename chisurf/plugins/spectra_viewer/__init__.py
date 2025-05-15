@@ -38,6 +38,9 @@ import chisurf
 from chisurf.fio.ascii import Csv, load_xy
 from chisurf.math.datatools import overlapping_region, align_x_spacing, minmax
 
+# Import the database module
+from .database import SpectraDatabase
+
 # Define the plugin name - this will appear in the Plugins menu
 name = "Tools:Spectra Viewer"
 
@@ -49,9 +52,15 @@ else:
     # If icon doesn't exist, try to create it
     try:
         import icon
-        icon = QtGui.QIcon(icon_path)
-    except:
-        icon = None
+        if os.path.exists(icon_path):
+            icon = QtGui.QIcon(icon_path)
+        else:
+            # Create a default icon if the icon file doesn't exist
+            icon = QtGui.QIcon()
+    except Exception as e:
+        print(f"Error loading icon for spectra_viewer: {e}")
+        # Create a default icon if there's an error
+        icon = QtGui.QIcon()
 
 class SpectraViewerWidget(QtWidgets.QMainWindow):
     """Main widget for the Spectra Viewer plugin."""
@@ -63,22 +72,28 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
 
         # Initialize data structures
         self.plugin_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+
+        # Initialize database
+        self.db = SpectraDatabase()
+
+        # Create database tables if they don't exist
+        with self.db:
+            self.db.create_tables()
+
+        # Define paths for backward compatibility (but don't create them)
         self.spectra_dir = self.plugin_dir / "spectra"
         self.fluorophores_dir = self.spectra_dir / "fluorophores"
         self.filters_dir = self.spectra_dir / "filters"
 
-        # Create directories if they don't exist
-        self.fluorophores_dir.mkdir(exist_ok=True)
-        self.spectra_dir.mkdir(exist_ok=True)
-        self.filters_dir.mkdir(exist_ok=True)
-
-        # Ensure the download directory exists
+        # Ensure only the download directory exists (needed for scripts)
         download_dir = self.plugin_dir / "download"
-        download_dir.mkdir(exist_ok=True)
+        download_dir.mkdir(exist_ok=True, parents=True)
 
         # Initialize data containers
         self.current_item = None
         self.current_item_data = None
+        self.current_item_id = None
+        self.current_type_id = None
         self.absorption_spectrum = None
         self.emission_spectrum = None
         self.item_image = None
@@ -350,57 +365,101 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         # Clear the combobox first
         self.item_combo.clear()
 
-        # Get the selected type display name
-        item_type_display = self.item_type_combo.currentText()
-
-        # Skip if no item type is selected or if it's the placeholder
-        if not item_type_display or item_type_display == "No item types found":
+        # Get the selected item type
+        item_type_index = self.item_type_combo.currentIndex()
+        if item_type_index < 0:
             self.item_combo.addItem("No items found")
             return
 
-        # Convert display name to directory name (e.g., "Atto Dyes" -> "atto_dyes")
-        item_type_dir = item_type_display.lower().replace(' ', '_')
+        item_type_display = self.item_type_combo.currentText()
+        item_type_id = self.item_type_combo.itemData(item_type_index)
 
-        # Look for items in the corresponding directory
-        type_dir = self.fluorophores_dir / item_type_dir
-        if type_dir.exists():
-            # Get all subdirectories (each is an item)
-            items = [d.name for d in type_dir.iterdir() if d.is_dir()]
-            items.sort()
-            self.item_combo.addItems(items)
+        # Skip if no item type is selected or if it's a placeholder
+        if not item_type_display or item_type_display == "No item types found" or item_type_id == -1:
+            self.item_combo.addItem("No items found")
+            return
 
-        # If no items were found, add a placeholder
-        if self.item_combo.count() == 0:
-            self.item_combo.addItem(f"No {item_type_display} found - use Download from menu")
+        # Get items from the database
+        with self.db:
+            items = self.db.get_items_by_type(item_type_id)
+
+        # Add items to the combo box
+        if items:
+            for item_id, item_name, _ in items:
+                # Store the item_id as user data
+                self.item_combo.addItem(item_name, item_id)
+        else:
+            # Check if we have any data in the old format
+            old_format_items = []
+
+            # Convert display name to directory name (e.g., "Atto Dyes" -> "atto_dyes")
+            item_type_dir = item_type_display.lower().replace(' ', '_')
+
+            # Get the directory for this item type
+            type_dir = self.fluorophores_dir / item_type_dir
+
+            # Check if the directory exists
+            if type_dir.exists():
+                # Get all subdirectories (each is an item)
+                old_format_items = [d.name for d in type_dir.iterdir() if d.is_dir()]
+                old_format_items.sort()
+
+            if old_format_items:
+                # We have old format data but no database entries
+                # Suggest running the migration script
+                QtWidgets.QMessageBox.information(
+                    self, 
+                    "Database Migration Required",
+                    f"Found {item_type_display} data in the old file format. Please run the migration script to convert it to the new database format."
+                )
+
+                # Add the old format items to the combo box
+                self.item_combo.addItems(old_format_items)
+            else:
+                self.item_combo.addItem(f"No {item_type_display} found - use Download from menu")
 
     def populate_item_types(self):
-        """Dynamically populate the item type combo box based on available directories."""
+        """Dynamically populate the item type combo box based on available item types in the database."""
         # Clear the combo box
         self.item_type_combo.clear()
 
-        # Check if the fluorophores directory exists
-        if not self.fluorophores_dir.exists():
-            self.fluorophores_dir.mkdir(exist_ok=True)
-            self.item_type_combo.addItem("No item types found")
-            return
+        # Get available item types from the database
+        with self.db:
+            item_types = self.db.get_item_types()
 
-        # Get all subdirectories in the fluorophores directory
-        item_types = []
-        for d in self.fluorophores_dir.iterdir():
-            if d.is_dir():
-                # Convert directory name to a display name (e.g., "atto_dyes" -> "Atto Dyes")
-                display_name = d.name.replace('_', ' ').title()
-                item_types.append((display_name, d.name))
-
-        # Sort item types alphabetically
-        item_types.sort()
-
-        # Add item types to the combo box
+        # Add to combo box
         if item_types:
-            for display_name, _ in item_types:
-                self.item_type_combo.addItem(display_name)
+            for type_id, name, display_name in item_types:
+                # Store the type_id as user data
+                self.item_type_combo.addItem(display_name, type_id)
         else:
-            self.item_type_combo.addItem("No item types found")
+            # Check if we have any data in the old format
+            old_format_types = []
+
+            # Check if the fluorophores directory exists
+            if self.fluorophores_dir.exists():
+                for d in self.fluorophores_dir.iterdir():
+                    if d.is_dir():
+                        # Convert directory name to a display name (e.g., "atto_dyes" -> "Atto Dyes")
+                        display_name = d.name.replace('_', ' ').title()
+                        old_format_types.append((display_name, d.name))
+
+            if old_format_types:
+                # We have old format data but no database entries
+                # Suggest running the migration script
+                QtWidgets.QMessageBox.information(
+                    self, 
+                    "Database Migration Required",
+                    "Found spectra data in the old file format. Please run the migration script to convert it to the new database format."
+                )
+
+                # Sort item types alphabetically
+                old_format_types.sort()
+
+                for display_name, name in old_format_types:
+                    self.item_type_combo.addItem(display_name, name)
+            else:
+                self.item_type_combo.addItem("No item types found", -1)
 
     def on_item_type_changed(self):
         """Handle changes to the item type selection."""
@@ -408,15 +467,96 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
 
     def on_item_changed(self):
         """Handle changes to the item selection."""
+        item_index = self.item_combo.currentIndex()
+        if item_index < 0:
+            return
+
         item_name = self.item_combo.currentText()
 
         # Skip if the item is a placeholder
         if item_name.startswith("No "):
             return
 
+        # Get the item ID from the combo box
+        item_id = self.item_combo.itemData(item_index)
+
+        # If item_id is None, this might be old format data
+        if item_id is None:
+            # Show a message about migration
+            QtWidgets.QMessageBox.information(
+                self, 
+                "Database Migration Required",
+                f"Found item {item_name} in the old file format. Please run the migration script to convert it to the new database format."
+            )
+
+            # Try to load from the old format
+            self.load_item_from_files(item_name)
+            return
+
         # Store the current item
         self.current_item = item_name
+        self.current_item_id = item_id
 
+        # Get the item type
+        type_index = self.item_type_combo.currentIndex()
+        self.current_type_id = self.item_type_combo.itemData(type_index)
+
+        # Load the item data from the database
+        with self.db:
+            # Get the item description
+            item_data = self.db.get_item_by_name_and_type(item_name, self.current_type_id)
+            if item_data:
+                _, _, description = item_data
+                self.item_description.setText(description)
+
+                # Get optical properties
+                optical_props = self.db.get_optical_properties(item_id)
+                self.optical_properties.setRowCount(len(optical_props))
+                for i, (prop, value) in enumerate(optical_props.items()):
+                    self.optical_properties.setItem(i, 0, QtWidgets.QTableWidgetItem(prop))
+                    self.optical_properties.setItem(i, 1, QtWidgets.QTableWidgetItem(str(value)))
+
+                # Create a metadata dictionary for compatibility with existing code
+                self.item_metadata = {
+                    "name": item_name,
+                    "description": description,
+                    "optical_properties": optical_props
+                }
+
+                # Get absorption spectrum
+                abs_data = self.db.get_spectrum(item_id, "absorption")
+                if abs_data:
+                    self.absorption_spectrum = abs_data
+                else:
+                    self.absorption_spectrum = None
+
+                # Get emission spectrum
+                em_data = self.db.get_spectrum(item_id, "emission")
+                if em_data:
+                    self.emission_spectrum = em_data
+                else:
+                    self.emission_spectrum = None
+
+                # Get images
+                self.clear_structure_images()
+                images = self.db.get_images(item_id)
+                for image_name, image_data, image_format in images:
+                    self.add_structure_image_from_data(image_name, image_data, image_format)
+
+                # Update the plots
+                self.update_plots()
+
+                # Highlight missing fields for Förster radius calculation
+                self.highlight_missing_fields()
+
+                # Show the item information section if the checkbox is checked
+                self.info_group.setVisible(self.show_info_checkbox.isChecked())
+            else:
+                QtWidgets.QMessageBox.warning(self, "Missing Data", 
+                                             f"No data found for {item_name} in the database.")
+
+    def load_item_from_files(self, item_name):
+        """Load item data from files (old format)."""
         # Get the item directory
         item_type_display = self.item_type_combo.currentText()
 
@@ -503,18 +643,37 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
             if widget:
                 widget.deleteLater()
 
-        # Clear the image paths list
-        self.image_paths = []
+        # Clear the image data list
+        self.image_data_list = []
 
         # Disable the show images button
         self.show_images_button.setEnabled(False)
 
     def add_structure_image(self, image_path):
-        """Add a structure image to the structure tab."""
+        """Add a structure image to the structure tab from a file path."""
+        try:
+            # Read the image file
+            with open(image_path, 'rb') as f:
+                image_data = f.read()
+
+            # Get the image name and format
+            image_name = os.path.basename(image_path)
+            image_format = os.path.splitext(image_name)[1].lstrip('.')
+
+            # Add the image using the data
+            self.add_structure_image_from_data(image_name, image_data, image_format)
+        except Exception as e:
+            print(f"Error adding structure image from path: {e}")
+
+    def add_structure_image_from_data(self, image_name, image_data, image_format):
+        """Add a structure image to the structure tab from image data."""
         try:
             # Create a label for the image
             label = QtWidgets.QLabel()
-            pixmap = QtGui.QPixmap(image_path)
+
+            # Create a QPixmap from the image data
+            pixmap = QtGui.QPixmap()
+            pixmap.loadFromData(image_data)
 
             # Scale the pixmap to a reasonable size while maintaining aspect ratio
             max_height = 200  # Maximum height for the images
@@ -527,21 +686,21 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
             # Add the label to the structure layout
             self.structure_layout.addWidget(label)
 
-            # Store the image path for later use
-            if not hasattr(self, 'image_paths'):
-                self.image_paths = []
-            self.image_paths.append(image_path)
+            # Store the image data for later use
+            if not hasattr(self, 'image_data_list'):
+                self.image_data_list = []
+            self.image_data_list.append((image_name, image_data, image_format))
 
             # Enable the show images button
             self.show_images_button.setEnabled(True)
         except Exception as e:
-            print(f"Error adding structure image: {e}")
+            print(f"Error adding structure image from data: {e}")
 
     def show_images_in_window(self):
         """Show images in a separate window."""
-        # Check if there are any loaded spectra
-        if not self.loaded_spectra:
-            QtWidgets.QMessageBox.information(self, "No Images", "No dyes loaded. Please load some dyes first.")
+        # Check if we have any image data
+        if not hasattr(self, 'image_data_list') or not self.image_data_list:
+            QtWidgets.QMessageBox.information(self, "No Images", "No images loaded. Please load some items with images first.")
             return
 
         # Create a dialog to show the images
@@ -555,83 +714,38 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         content = QtWidgets.QWidget()
         layout = QtWidgets.QVBoxLayout(content)
 
-        # Track dyes we've already processed to avoid duplicates
-        processed_dyes = set()
+        # Add each image to the layout
+        for image_name, image_data, image_format in self.image_data_list:
+            try:
+                # Add the image name as a header
+                header = QtWidgets.QLabel(image_name)
+                header.setAlignment(QtCore.Qt.AlignCenter)
+                header.setStyleSheet("font-size: 14px; font-weight: bold; margin-top: 10px;")
+                layout.addWidget(header)
 
-        # For each loaded spectrum, get the metadata and extract the structure images
-        for spectrum_id, spectrum in self.loaded_spectra.items():
-            dye_name = spectrum['name']
+                # Create a label for the image
+                label = QtWidgets.QLabel()
+                pixmap = QtGui.QPixmap()
+                pixmap.loadFromData(image_data)
 
-            # Skip if we've already processed this dye
-            if dye_name in processed_dyes:
-                continue
+                # Scale the pixmap to a reasonable size while maintaining aspect ratio
+                max_width = 700  # Maximum width for the images
+                scaled_pixmap = pixmap.scaledToWidth(max_width, QtCore.Qt.SmoothTransformation)
 
-            processed_dyes.add(dye_name)
-            metadata = spectrum.get('metadata')
+                label.setPixmap(scaled_pixmap)
+                label.setAlignment(QtCore.Qt.AlignCenter)
 
-            if not metadata or 'structure_images' not in metadata:
-                continue
+                # Add the label to the layout
+                layout.addWidget(label)
 
-            # Add a header for this dye
-            dye_header = QtWidgets.QLabel(f"Dye: {dye_name}")
-            dye_header.setAlignment(QtCore.Qt.AlignCenter)
-            dye_header.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 20px;")
-            layout.addWidget(dye_header)
+                # Add some spacing
+                layout.addSpacing(20)
+            except Exception as e:
+                print(f"Error adding image to dialog: {e}")
 
-            # Get the item directory
-            item_type_dir = None
-            for dir_name in os.listdir(str(self.fluorophores_dir)):
-                dir_path = self.fluorophores_dir / dir_name
-                if dir_path.is_dir() and (dir_path / dye_name).exists():
-                    item_type_dir = dir_name
-                    break
-
-            if not item_type_dir:
-                continue
-
-            item_dir = self.fluorophores_dir / item_type_dir / dye_name
-
-            # Add each image to the layout
-            for img_file in metadata.get("structure_images", []):
-                try:
-                    img_path = item_dir / img_file
-                    if not img_path.exists():
-                        continue
-
-                    # Create a label for the image
-                    label = QtWidgets.QLabel()
-                    pixmap = QtGui.QPixmap(str(img_path))
-
-                    # Scale the pixmap to a reasonable size while maintaining aspect ratio
-                    max_width = 700  # Maximum width for the images
-                    scaled_pixmap = pixmap.scaledToWidth(max_width, QtCore.Qt.SmoothTransformation)
-
-                    label.setPixmap(scaled_pixmap)
-                    label.setAlignment(QtCore.Qt.AlignCenter)
-
-                    # Add the label to the layout
-                    layout.addWidget(label)
-
-                    # Add the image filename as a label
-                    filename_label = QtWidgets.QLabel(os.path.basename(str(img_path)))
-                    filename_label.setAlignment(QtCore.Qt.AlignCenter)
-                    layout.addWidget(filename_label)
-
-                    # Add some spacing
-                    layout.addSpacing(10)
-                except Exception as e:
-                    print(f"Error adding image to dialog: {e}")
-
-            # Add a separator between dyes
-            separator = QtWidgets.QFrame()
-            separator.setFrameShape(QtWidgets.QFrame.HLine)
-            separator.setFrameShadow(QtWidgets.QFrame.Sunken)
-            layout.addWidget(separator)
-            layout.addSpacing(20)
-
-        # If no images were found
-        if not processed_dyes:
-            layout.addWidget(QtWidgets.QLabel("No images available for any loaded dyes."))
+        # If no images were successfully added
+        if layout.count() == 0:
+            layout.addWidget(QtWidgets.QLabel("No images could be displayed."))
 
         scroll.setWidget(content)
 
@@ -668,6 +782,14 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
             download_action.triggered.connect(self.run_download_script)
             download_menu.addAction(download_action)
 
+        # Create Database submenu
+        database_menu = tools_menu.addMenu('Database')
+
+        # Add "Migrate Data" action
+        migrate_action = QtWidgets.QAction('Migrate Data to Database', self)
+        migrate_action.triggered.connect(self.run_migration_script)
+        database_menu.addAction(migrate_action)
+
         # Add "Add Custom Dye" action
         add_dye_action = QtWidgets.QAction('Add Custom Dye', self)
         add_dye_action.triggered.connect(self.add_custom_dye)
@@ -697,13 +819,6 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         script_name = action.text().replace("Download ", "")
 
         try:
-            # Use a directory named after the script for all downloads
-            # This creates a consistent naming convention for all data types
-            output_dir = self.fluorophores_dir / script_name.lower().replace(" ", "_")
-
-            # Create the output directory if it doesn't exist
-            output_dir.mkdir(exist_ok=True)
-
             # Create a dialog to show the output
             output_dialog = QtWidgets.QDialog(self)
             output_dialog.setWindowTitle(f"Download {script_name} Output")
@@ -730,9 +845,9 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
             output_text.append(f"Running {os.path.basename(script_path)} script...\n")
             QtWidgets.QApplication.processEvents()
 
-            # Run the script with the output directory as an argument
+            # Run the script (no need to create directories since we're using the database)
             process = subprocess.Popen(
-                [sys.executable, script_path, "--output", str(output_dir)],
+                [sys.executable, script_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
@@ -758,11 +873,98 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
             else:
                 output_text.append("\nScript completed successfully.")
 
-            # Refresh the item list
-            self.populate_item_list()
+            # Reload the database and refresh the UI
+            with self.db:
+                # Refresh the item types and item list
+                self.populate_item_types()
+                self.populate_item_list()
+
+                # Update the download combo
+                self.populate_download_combo()
+
+                # Show a success message
+                QtWidgets.QMessageBox.information(
+                    self, 
+                    "Download Complete",
+                    f"{script_name} data has been downloaded and stored in the database."
+                )
 
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Failed to run {os.path.basename(script_path)}: {str(e)}")
+
+    def run_migration_script(self):
+        """Run the migration script to move data from files to the database."""
+        try:
+            # Create a dialog to show the output
+            output_dialog = QtWidgets.QDialog(self)
+            output_dialog.setWindowTitle("Data Migration Output")
+            output_dialog.resize(800, 600)
+
+            # Create a text edit to display the output
+            output_text = QtWidgets.QTextEdit()
+            output_text.setReadOnly(True)
+            output_text.setFont(QtGui.QFont("Courier New", 10))
+
+            # Create a layout for the dialog
+            layout = QtWidgets.QVBoxLayout(output_dialog)
+            layout.addWidget(output_text)
+
+            # Add a close button
+            close_button = QtWidgets.QPushButton("Close")
+            close_button.clicked.connect(output_dialog.accept)
+            layout.addWidget(close_button)
+
+            # Show the dialog
+            output_dialog.show()
+
+            # Update the text edit to show that the script is running
+            output_text.append("Running migration script...\n")
+            QtWidgets.QApplication.processEvents()
+
+            # Get the path to the migration script
+            migration_script = self.plugin_dir / "migrate_data.py"
+
+            # Run the migration script
+            process = subprocess.Popen(
+                [sys.executable, str(migration_script)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                cwd=str(self.plugin_dir)
+            )
+
+            # Read and display the output in real-time
+            while True:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    output_text.append(output.strip())
+                    QtWidgets.QApplication.processEvents()
+
+            # Get the return code
+            return_code = process.poll()
+
+            # Display any errors
+            if return_code != 0:
+                error_output = process.stderr.read()
+                output_text.append(f"\nError (return code {return_code}):\n{error_output}")
+            else:
+                output_text.append("\nMigration completed successfully.")
+
+                # Show a message to restart the application
+                QtWidgets.QMessageBox.information(
+                    self, 
+                    "Migration Complete",
+                    "Data migration completed successfully. Please restart the application to use the new database."
+                )
+
+            # Refresh the item types and item list
+            self.populate_item_types()
+            self.populate_item_list()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to run migration script: {str(e)}")
 
 
     def on_spectra_selection_changed(self):
@@ -945,7 +1147,6 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         # Get acceptor extinction coefficient (max value)
         acceptor_spectrum = self.loaded_spectra[acceptor_id]
         acceptor_x, acceptor_y = acceptor_spectrum['data']
-        max_extinction_coef = np.max(acceptor_y)
 
         # Try to get parameters from metadata if available
         donor_metadata = self.loaded_spectra[donor_id]['metadata']
@@ -1276,71 +1477,65 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
                 QtWidgets.QMessageBox.warning(self, "Warning", "Please provide at least one spectrum file.")
                 return
 
-            # Create the dye directory
-            dye_dir = self.fluorophores_dir / dye_type_dir / dye_name
-            spectra_dir = dye_dir / "spectra"
-
             try:
-                # Create directories
-                dye_dir.mkdir(parents=True, exist_ok=True)
-                spectra_dir.mkdir(exist_ok=True)
+                # Store data in the database
+                with self.db:
+                    # Add or get the item type
+                    type_id = self.db.add_item_type(dye_type_dir, dye_type_display)
 
-                # Copy spectra files
-                abs_spectrum_filename = None
-                if abs_spectrum_file:
-                    abs_spectrum_filename = f"{dye_name}_abs.txt"
-                    abs_spectrum_dest = spectra_dir / abs_spectrum_filename
-                    with open(abs_spectrum_file, 'r') as src_file:
-                        with open(abs_spectrum_dest, 'w') as dest_file:
-                            dest_file.write(src_file.read())
+                    # Add the item
+                    description = description_edit.toPlainText()
+                    item_id = self.db.add_item(dye_name, type_id, description)
 
-                em_spectrum_filename = None
-                if em_spectrum_file:
-                    em_spectrum_filename = f"{dye_name}_ems.txt"
-                    em_spectrum_dest = spectra_dir / em_spectrum_filename
-                    with open(em_spectrum_file, 'r') as src_file:
-                        with open(em_spectrum_dest, 'w') as dest_file:
-                            dest_file.write(src_file.read())
-
-                # Copy image files
-                image_filenames = []
-                for image_file in image_files:
-                    image_filename = os.path.basename(image_file)
-                    image_dest = dye_dir / image_filename
-                    with open(image_file, 'rb') as src_file:
-                        with open(image_dest, 'wb') as dest_file:
-                            dest_file.write(src_file.read())
-                    image_filenames.append(image_filename)
-
-                # Create metadata
-                metadata = {
-                    "name": dye_name,
-                    "description": description_edit.toPlainText(),
-                    "optical_properties": {
+                    # Add optical properties
+                    optical_properties = {
                         "λabs": abs_wavelength_edit.text(),
                         "εmax": ext_coef_edit.text(),
                         "λfl": em_wavelength_edit.text(),
                         "ηfl": qy_edit.text(),
                         "τfl": lifetime_edit.text()
-                    },
-                    "structure_images": image_filenames
-                }
+                    }
 
-                if abs_spectrum_filename:
-                    metadata["absorption_spectrum"] = abs_spectrum_filename
+                    for prop_name, prop_value in optical_properties.items():
+                        if prop_value:  # Only add non-empty properties
+                            self.db.add_optical_property(item_id, prop_name, prop_value)
 
-                if em_spectrum_filename:
-                    metadata["emission_spectrum"] = em_spectrum_filename
+                    # Add absorption spectrum if provided
+                    if abs_spectrum_file:
+                        try:
+                            # Load the spectrum data
+                            from chisurf.fio.ascii import load_xy
+                            x, y = load_xy(abs_spectrum_file, delimiter="\t", skiprows=2)
+                            # Add to database
+                            self.db.add_spectrum(item_id, "absorption", np.array(x), np.array(y))
+                        except Exception as e:
+                            print(f"Error loading absorption spectrum: {e}")
 
-                # Save metadata
-                with open(dye_dir / "metadata.json", 'w') as f:
-                    json.dump(metadata, f, indent=4)
+                    # Add emission spectrum if provided
+                    if em_spectrum_file:
+                        try:
+                            # Load the spectrum data
+                            from chisurf.fio.ascii import load_xy
+                            x, y = load_xy(em_spectrum_file, delimiter="\t", skiprows=2)
+                            # Add to database
+                            self.db.add_spectrum(item_id, "emission", np.array(x), np.array(y))
+                        except Exception as e:
+                            print(f"Error loading emission spectrum: {e}")
 
-                # Refresh the item list
+                    # Add images if provided
+                    for image_file in image_files:
+                        try:
+                            image_filename = os.path.basename(image_file)
+                            # The add_image method reads the file and stores it as a BLOB
+                            self.db.add_image(item_id, image_filename)
+                        except Exception as e:
+                            print(f"Error adding image: {e}")
+
+                # Refresh the UI
                 self.populate_item_types()
                 self.populate_item_list()
 
-                QtWidgets.QMessageBox.information(self, "Success", f"Custom dye '{dye_name}' added successfully.")
+                QtWidgets.QMessageBox.information(self, "Success", f"Custom dye '{dye_name}' added successfully to the database.")
 
             except Exception as e:
                 QtWidgets.QMessageBox.critical(self, "Error", f"Failed to add custom dye: {str(e)}")
