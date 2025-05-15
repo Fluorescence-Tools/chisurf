@@ -405,10 +405,12 @@ class ProteinCentroid(
             *args,
             **kwargs
     ):
+        # Protonation is now optional and defaults to False since the protonate method is a no-op
+        protonate_param = kwargs.pop('protonate', False)
         super().__init__(
             p_object,
             *args,
-            protonate=True,
+            protonate=protonate_param,
             **kwargs
         )
 
