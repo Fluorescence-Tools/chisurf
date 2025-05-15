@@ -14,10 +14,9 @@ QToolBar::handle {
 
 QToolTip {
     border: 1px solid black;
-    background-color: #ffa02f;
+    background-color: rgba(255, 160, 47, 0.8);
     color: #000000;
     border-radius: 3px;
-    opacity: 100;
 }
 
 /* Slightly lighten the default QWidget background and text */
