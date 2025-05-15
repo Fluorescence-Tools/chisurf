@@ -348,6 +348,27 @@ class Convolve(FittingParameterGroup):
         self._stop.value = v
 
     @property
+    def irf_start(self) -> int:
+        return int(self._irf_start.value // self.dt)
+
+    @irf_start.setter
+    def irf_start(self, v: int):
+        # Convert to numpy array of long integers
+        v_array = np.array([v], dtype=np.int64)
+        self._irf_start.value = v_array
+
+    @property
+    def irf_stop(self) -> int:
+        stop = int(self._irf_stop.value // self.dt)
+        return stop
+
+    @irf_stop.setter
+    def irf_stop(self, v: int):
+        # Convert to numpy array of long integers
+        v_array = np.array([v], dtype=np.int64)
+        self._irf_stop.value = v_array
+
+    @property
     def rep_rate(self) -> float:
         return self._rep.value
 
@@ -388,6 +409,22 @@ class Convolve(FittingParameterGroup):
             y *= np.sum(self.data.y)
             irf = chisurf.curve.Curve(x=x, y=y)
             irf.y[irf.y < 1] = 0.0
+
+        # Zero out the IRF outside the specified range
+        irf_start_idx = self.irf_start
+        irf_stop_idx = self.irf_stop
+        if irf_start_idx > 0 or irf_stop_idx < len(irf.y):
+            # Create a copy to avoid modifying the original
+            irf_y = np.copy(irf.y)
+            # Zero out before irf_start
+            if irf_start_idx > 0:
+                irf_y[:irf_start_idx] = 0.0
+            # Zero out after irf_stop
+            if irf_stop_idx < len(irf_y):
+                irf_y[irf_stop_idx:] = 0.0
+            # Create a new curve with the modified y values
+            irf = chisurf.curve.Curve(x=irf.x, y=irf_y)
+
         irf = irf << float(self.timeshift)
         return irf
 
@@ -597,6 +634,18 @@ class Convolve(FittingParameterGroup):
         self._stop = FittingParameter(
             value=stop,
             name='stop',
+            fixed=True
+        )
+        self._irf_start = FittingParameter(
+            value=0.0,
+            name='irf_start',
+            label_text="IRF Start",
+            fixed=True
+        )
+        self._irf_stop = FittingParameter(
+            value=stop,
+            name='irf_stop',
+            label_text="IRF Stop",
             fixed=True
         )
         # Set bounds for lamp background to be between 0 and half the lamp height
