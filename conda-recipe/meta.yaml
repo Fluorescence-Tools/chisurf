@@ -51,6 +51,8 @@ requirements:
     - doxygen
     - boost-cpp
     - numpy
+    # Needed to build tttrlib
+    - hdf5                # [win]
   run:
     - python
     - typing-extensions 4.5.*
@@ -59,7 +61,6 @@ requirements:
     - pyqt
     - pyyaml
     - click
-    - python-slugify
     - pyqtgraph
     - matplotlib
     - scikit-image
@@ -71,7 +72,6 @@ requirements:
     - boost-cpp
     - tttrlib >=0.26      # [not win]
     - mdtraj
-    - htmd-pdb2pqr
     - ipython
     - notebook
     - emcee 3.1.*
