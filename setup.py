@@ -39,7 +39,7 @@ def get_extensions():
         """generate an Extension object from its dotted name
         """
         import numpy as np
-        
+
         name = (ext[0])[2:-4]
         name = name.replace("/", ".")
         name = name.replace("\\", ".")
@@ -124,7 +124,7 @@ metadata = dict(
     install_requires=[
         'PyQt5', 'qtpy', 'sip', 'pyqtgraph', 'qtconsole',
         'numba', 'numpy', 'numexpr', 'scipy',
-        'cython', 'python-slugify', 'deprecation',
+        'cython', 'deprecation',
         'emcee',
         'PyYAML', 'typing-extensions',
         'tables',
