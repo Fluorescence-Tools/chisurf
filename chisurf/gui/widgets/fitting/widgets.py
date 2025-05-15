@@ -794,10 +794,8 @@ def make_fitting_parameter_widget(
         callback: typing.Callable = None
 ) -> FittingParameterWidget:
     if label_text is None:
-        if fitting_parameter.label_text is None:
-            label_text = fitting_parameter.name
-        else:
-            label_text = fitting_parameter.label_text
+        # Safely get label_text from parameter's __dict__ or use name as fallback
+        label_text = fitting_parameter.__dict__.get('label_text', fitting_parameter.name)
     widget = FittingParameterWidget(
         fitting_parameter,
         hide_label=hide_label,
@@ -826,4 +824,3 @@ def make_fitting_parameter_group_widget(
         *args,
         **kwargs
     )
-
