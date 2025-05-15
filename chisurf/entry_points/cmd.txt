@@ -1,4 +1,5 @@
 csc_tttr_decay_histogram chisurf.cmd_tools.tttr_decay_histogram:main
 csc_tttr_correlate chisurf.cmd_tools.tttr_correlate:main
 csc_fcs_convert chisurf.cmd_tools.fcs_convert:main
-csc_protein_mc_fret csc_protein_mc_fret.cmd_tools.fcs_convert:main
+csc_mrc2bvox chisurf.cmd_tools.mrc2bvox:main
+csc_protein_mc_fret chisurf.cmd_tools.protein_mc_fret:main
