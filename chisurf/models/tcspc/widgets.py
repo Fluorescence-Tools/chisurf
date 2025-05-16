@@ -1291,7 +1291,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
 
         gb = QtWidgets.QGroupBox()
         n_rates = len(self)
-        gb.setTitle('%i' % (n_rates + 1))
+        gb.setTitle(f'k{n_rates}')
 
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing(0)
@@ -1320,6 +1320,20 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
 class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
     plot_classes = plot_cls_dist_default
+
+    def get_parameter_widgets(self):
+        """
+        Get all parameter widgets for this model.
+
+        Returns
+        -------
+        list
+            List of parameter widgets.
+        """
+        widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
+        widgets.append(self._orientation_widget)
+        widgets.append(self._fret_parameters_widget)
+        return widgets
 
     def finalize(self):
         super().finalize()
@@ -1353,11 +1367,18 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         )
 
         self.layout.addWidget(self.donor)
-        self.layout.addWidget(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-                self.fret_parameters
-            )
+
+        # Create parameter widgets
+        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.fret_parameters
         )
+        self.layout.addWidget(self._fret_parameters_widget)
+
+        self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.orientation_parameter
+        )
+        self.layout.addWidget(self._orientation_widget)
+
         self.layout.addWidget(gaussians)
 
         anisotropy = AnisotropyWidget(
@@ -1372,6 +1393,20 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
     plot_classes = plot_cls_dist_default
+
+    def get_parameter_widgets(self):
+        """
+        Get all parameter widgets for this model.
+
+        Returns
+        -------
+        list
+            List of parameter widgets.
+        """
+        widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
+        widgets.append(self._orientation_widget)
+        widgets.append(self._fret_parameters_widget)
+        return widgets
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
         self.donor = LifetimeWidget(
@@ -1394,17 +1429,38 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
 
         self.layout.addWidget(self.donor)
         # self.layout_parameter.addWidget(self.fret_parameters.to_widget())
-        self.layout.addWidget(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-                self.fret_parameters
-            )
+
+        # Create parameter widgets
+        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.fret_parameters
         )
+        self.layout.addWidget(self._fret_parameters_widget)
+
+        self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.orientation_parameter
+        )
+        self.layout.addWidget(self._orientation_widget)
+
         self.layout.addWidget(self.fret_rates)
 
 
 class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase):
 
     plot_classes = plot_cls_dist_default
+
+    def get_parameter_widgets(self):
+        """
+        Get all parameter widgets for this model.
+
+        Returns
+        -------
+        list
+            List of parameter widgets.
+        """
+        widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
+        widgets.append(self._orientation_widget)
+        widgets.append(self._fret_parameters_widget)
+        return widgets
 
     @property
     def use_dye_linker(self) -> bool:
@@ -1433,9 +1489,15 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._sigma_linker)
         layout.addWidget(pw)
 
-        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        # Create parameter widgets
+        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters)
-        layout.addWidget(pw)
+        layout.addWidget(self._fret_parameters_widget)
+
+        self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.orientation_parameter
+        )
+        layout.addWidget(self._orientation_widget)
 
         self.layout.addWidget(self.donor)
 
