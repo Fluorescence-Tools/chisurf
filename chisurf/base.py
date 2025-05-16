@@ -192,7 +192,7 @@ def find_objects(
         if isinstance(value, searched_object_type):
             re.append(value)
         elif isinstance(value, list):
-            re += find_objects(value, searched_object_type)
+            re += find_objects(value, searched_object_type, remove_doublets)
     if remove_doublets:
         return list(set(re))
     else:
@@ -319,7 +319,7 @@ class Base(object):
             the attribute *__dict__*.
 
         """
-        if to_elementary:
+        if convert_values_to_elementary:
             copy_values = True
         if remove_protected:
             d = dict()
