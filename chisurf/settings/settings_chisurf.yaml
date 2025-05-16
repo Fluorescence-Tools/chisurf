@@ -185,7 +185,10 @@ plugins:
   plugin_order: {}
   toolbar_plugins:
   - Tools:Histogram-Microtime
-  - Tools:FRET Calculator
+  - FCS:Correlator
+  - Single-Molecule:Burst-Selection
+  - Single-Molecule:Burst MLE Lifetime Analysis
+  - Tools:ndXplorer
 tcspc:
   autoscale: true
   convolution_on_by_default: true
