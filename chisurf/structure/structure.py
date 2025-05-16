@@ -6,7 +6,7 @@ import os
 import tempfile
 
 import mdtraj
-import pdb2pqr.main
+import warnings
 import numpy as np
 
 import chisurf.fio
@@ -326,36 +326,13 @@ class Structure(chisurf.base.Base):
         )
 
     def protonate(self) -> None:
-        """Saves the current structure as a PDB file, uses PDB2PQR
-        to protonate the structure.
+        """This method previously used PDB2PQR to protonate the structure.
+        It is now a no-op as the htmd-pdb2pqr dependency has been removed.
         """
-        _, filename_pdb = tempfile.mkstemp(suffix='.pdb')
-        self.write(
-            filename=filename_pdb
-        )
-        _, filename_pqr = tempfile.mkstemp(suffix='.pqr')
-        with open(filename_pdb, 'r') as pdb_file:
-            pdblist, _ = pdb2pqr.main.readPDB(
-                pdb_file
-            )
-            pqr = pdb2pqr.main.runPDB2PQR(
-                pdblist=pdblist,
-                outname=filename_pqr,
-                ff='PARSE',
-                drop_water=True
-            )
-            header, lines = pqr['header'], pqr['lines']
-
-        with open(filename_pqr, 'w') as outfile:
-            outfile.write(header)
-            # Adding whitespaces if --whitespace is in the options
-            for line in lines:
-                outfile.write(line)
-            outfile.close()
-
-        self._atoms = chisurf.fio.structure.coordinates.read(
-            filename_pqr,
-            assign_charge=False,
+        warnings.warn(
+            "The protonate method is no longer functional as the htmd-pdb2pqr dependency has been removed. "
+            "No protonation will be performed.",
+            UserWarning
         )
 
     def update(
@@ -741,4 +718,3 @@ def average(
         avg.filename = filename
         avg.write()
     return avg
-
