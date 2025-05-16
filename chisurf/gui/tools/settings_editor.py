@@ -566,12 +566,25 @@ class SettingsEditor(QtWidgets.QWidget):
 
             logging.log(0, f"Settings saved to {self.filename} and cs_settings updated")
 
-            # Show info popup about potential restart requirement
+            # Update the toolbar in the main window if plugin settings were changed
+            if 'plugins' in settings_dict:
+                app = QtWidgets.QApplication.instance()
+                for widget in app.topLevelWidgets():
+                    if widget.__class__.__name__ == 'Main':
+                        # Found the main window, update the toolbar
+                        if hasattr(widget, 'load_toolbar_plugins'):
+                            # Clear existing toolbar first
+                            if hasattr(widget, 'plugins_toolbar'):
+                                widget.plugins_toolbar.clear()
+                            # Reload toolbar plugins
+                            widget.load_toolbar_plugins()
+                            break
+
+            # Show info popup about settings being updated
             QtWidgets.QMessageBox.information(
                 self,
                 "Settings Updated",
-                "Settings have been updated successfully.\n\n"
-                "ChiSurf may need to be restarted to ensure all settings are properly applied throughout the software."
+                "Settings have been updated successfully."
             )
 
         except Exception as e:

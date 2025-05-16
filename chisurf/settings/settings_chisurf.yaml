@@ -185,6 +185,7 @@ plugins:
   plugin_order: {}
   toolbar_plugins:
   - Tools:Histogram-Microtime
+  - Tools:FRET Calculator
 tcspc:
   autoscale: true
   convolution_on_by_default: true

@@ -200,12 +200,12 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         # Initialize message attributes
         self.current_message = ""
-        self.message_color = QtCore.Qt.white  # Default text color is white
+        self.message_color = QtCore.Qt.lightGray  # Light gray text color
 
         # Initialize copyright, license, and contributors information
         import datetime
         current_year = datetime.datetime.now().year
-        self.copyright_text = f"© 2015-{current_year} ChiSurf Team"
+        self.copyright_text = f"© 2014-{current_year} ChiSurf Team"
         self.license_text = "Licensed under GPL2.1"
         self.contributors_text = "Developers & Contributors: \nThomas-Otavio Peulen, Katherina Hemmen, Jakub Kubiak"
 
@@ -412,8 +412,9 @@ def setup_gui(
             # Get all directories in the user plugin root
             for item in user_plugin_root.iterdir():
                 if item.is_dir() and (item / "__init__.py").exists():
-                    # Add the directory name to the list of module names
-                    module_names.append(item.name)
+                    # Add the directory name to the list of module names if it's not already there
+                    if item.name not in module_names:
+                        module_names.append(item.name)
 
         # Create a list of (module_name, order) tuples
         module_order_pairs = []
