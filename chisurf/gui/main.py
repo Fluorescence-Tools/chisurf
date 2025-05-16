@@ -1125,15 +1125,17 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        # Add actions for saving and loading projects
+        # Add actions for saving and loading projects (disabled)
         self.actionSaveProject = QtWidgets.QAction("Save Project...", self)
         self.actionSaveProject.setShortcut("Ctrl+Shift+S")
         self.actionSaveProject.triggered.connect(self.onSaveProject)
+        self.actionSaveProject.setEnabled(False)
         self.menuFile.addAction(self.actionSaveProject)
 
         self.actionLoadProject = QtWidgets.QAction("Load Project...", self)
         self.actionLoadProject.setShortcut("Ctrl+Shift+O")
         self.actionLoadProject.triggered.connect(self.onLoadProject)
+        self.actionLoadProject.setEnabled(False)
         self.menuFile.addAction(self.actionLoadProject)
 
     def load_tools(self):
