@@ -279,7 +279,7 @@ class Gaussians(FittingParameterGroup):
     def __init__(
             self,
             short: str = 'G',
-            is_distance_between_gaussians: bool = True,
+            is_distance_between_gaussians: bool = False,
             name: str = 'gaussians',
             **kwargs
     ):
