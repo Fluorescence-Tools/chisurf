@@ -250,21 +250,79 @@ class Main(QtWidgets.QMainWindow):
                         plugin_path = parts[1].split('\\')
                         if len(plugin_path) > 0:
                             package_name = plugin_path[0]
-                            # Set __package__ for relative imports to work
-                            globals.update({"__package__": f"chisurf.plugins.{package_name}"})
 
-                            # Reload all modules related to this plugin to ensure full recompilation
-                            plugin_module_prefix = f"chisurf.plugins.{package_name}"
-                            for module_name in list(sys.modules.keys()):
-                                if module_name.startswith(plugin_module_prefix):
+                            # Check if this is a user plugin (in home directory) or a built-in plugin
+                            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                            is_user_plugin = str(filename).startswith(str(user_plugin_root))
+
+                            if is_user_plugin:
+                                # For user plugins, we don't set a package name as they're not part of the chisurf package
+                                globals.update({"__package__": None})
+                                chisurf.logging.info(f"Running user plugin: {package_name}")
+
+                                # Check if the user plugin has a name defined in its __init__.py
+                                user_plugin_path = user_plugin_root / package_name / "__init__.py"
+                                if user_plugin_path.exists():
                                     try:
-                                        chisurf.logging.info(f"Reloading module: {module_name}")
-                                        importlib.reload(sys.modules[module_name])
-                                    except Exception as e:
-                                        chisurf.logging.warning(f"Failed to reload module {module_name}: {e}")
+                                        # Read the source
+                                        source = user_plugin_path.read_text(encoding="utf-8")
 
-                with open(filename, 'rb') as file:
-                    exec(compile(file.read(), filename, 'exec'), globals, locals)
+                                        # Parse into an AST
+                                        tree = ast.parse(source, filename=str(user_plugin_path))
+
+                                        # Look for a name assignment
+                                        for node in ast.walk(tree):
+                                            if isinstance(node, ast.Assign):
+                                                for target in node.targets:
+                                                    if isinstance(target, ast.Name) and target.id == 'name':
+                                                        if isinstance(node.value, ast.Str):
+                                                            plugin_name = node.value.s
+                                                            chisurf.logging.info(f"User plugin name: {plugin_name}")
+                                                        elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                                            plugin_name = node.value.value
+                                                            chisurf.logging.info(f"User plugin name: {plugin_name}")
+                                    except Exception as e:
+                                        chisurf.logging.warning(f"Error extracting name from {user_plugin_path}: {e}")
+                            else:
+                                # For built-in plugins, set the package name as before
+                                globals.update({"__package__": f"chisurf.plugins.{package_name}"})
+
+                                # Reload all modules related to this plugin to ensure full recompilation
+                                plugin_module_prefix = f"chisurf.plugins.{package_name}"
+                                for module_name in list(sys.modules.keys()):
+                                    if module_name.startswith(plugin_module_prefix):
+                                        try:
+                                            chisurf.logging.info(f"Reloading module: {module_name}")
+                                            importlib.reload(sys.modules[module_name])
+                                        except Exception as e:
+                                            chisurf.logging.warning(f"Failed to reload module {module_name}: {e}")
+
+                try:
+                    # Check if the file exists
+                    if not pathlib.Path(filename).exists():
+                        # Try to find the file in the user plugins directory
+                        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                        if '\\plugins\\' in str(filename):
+                            parts = str(filename).split('\\plugins\\')
+                            if len(parts) > 1:
+                                plugin_path = parts[1]
+                                user_plugin_path = user_plugin_root / plugin_path
+                                if user_plugin_path.exists():
+                                    filename = user_plugin_path
+                                    chisurf.logging.info(f"Found file in user plugins directory: {filename}")
+                                else:
+                                    chisurf.logging.error(f"File not found: {filename}")
+                                    chisurf.logging.error(f"Also checked user plugin path: {user_plugin_path}")
+                                    raise FileNotFoundError(f"File not found: {filename}")
+                        else:
+                            chisurf.logging.error(f"File not found: {filename}")
+                            raise FileNotFoundError(f"File not found: {filename}")
+
+                    with open(filename, 'rb') as file:
+                        exec(compile(file.read(), filename, 'exec'), globals, locals)
+                except Exception as e:
+                    chisurf.logging.error(f"Error executing macro: {e}")
+                    raise
             finally:
                 # Restore the original sys.path
                 sys.path = original_sys_path
@@ -338,6 +396,61 @@ class Main(QtWidgets.QMainWindow):
         )
         chisurf.run(f"chisurf.macros.load_fit_result({self.fit_idx}, {filename})")
 
+    def onSaveProject(self, event: QtCore.QEvent = None):
+        """
+        Save the current state of the application as a project.
+
+        This method prompts the user for a directory and project name, then calls
+        the save_project function to save the project.
+        """
+        # Get directory to save project
+        path, _ = chisurf.gui.widgets.get_directory()
+        if not path:
+            return
+
+        # Get project name
+        project_name, ok = QtWidgets.QInputDialog.getText(
+            self,
+            "Save Project",
+            "Project name:",
+            QtWidgets.QLineEdit.Normal,
+            "chisurf_project"
+        )
+        if not ok or not project_name:
+            return
+
+        # Save project
+        chisurf.working_path = path
+        chisurf.run(f'chisurf.macros.core_fit.save_project(target_path=r"{path.as_posix()}", project_name="{project_name}")')
+
+    def onLoadProject(self, event: QtCore.QEvent = None):
+        """
+        Load a project from a project folder.
+
+        This method prompts the user for a project folder, then calls
+        the load_project function to load the project.
+        """
+        # Get project directory
+        path, _ = chisurf.gui.widgets.get_directory(
+            caption="Select Project Folder"
+        )
+        if not path:
+            return
+
+        # Check if this is a valid project folder
+        project_file = path / "project.yaml"
+        if not project_file.exists():
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Invalid Project",
+                f"The selected folder does not contain a valid project file (project.yaml)."
+            )
+            return
+
+        # Load project
+        chisurf.working_path = path
+        chisurf.run(f'chisurf.macros.core_fit.load_project(project_path=r"{path.as_posix()}")')
+
     def set_current_setup_idx(self, v: int):
         self.comboBox_setupSelect.setCurrentIndex(v)
         self._current_setup_idx = v
@@ -366,6 +479,10 @@ class Main(QtWidgets.QMainWindow):
 
         chisurf.fits.clear()
         chisurf.gui.fit_windows.clear()
+
+        # Clear the analysis dock layouts
+        chisurf.gui.widgets.clear_layout(self.modelLayout)
+        chisurf.gui.widgets.clear_layout(self.plotOptionsLayout)
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
@@ -435,6 +552,18 @@ class Main(QtWidgets.QMainWindow):
                 show_fortune=False
             )
 
+    def onClearUserPlugins(self):
+        """Clear user plugin folder and show a confirmation popup."""
+        # Clear the user plugins folder
+        chisurf.settings.clear_user_plugins_folder()
+
+        # Show a confirmation popup
+        chisurf.gui.widgets.general.MyMessageBox(
+            label="User Plugins Reset",
+            info="User plugins folder has been cleared successfully. Restart the application to apply changes.",
+            show_fortune=False
+        )
+
     def load_toolbar_plugins(self):
         """Load plugins into the toolbar based on toolbar_plugins setting."""
         import pathlib
@@ -454,8 +583,11 @@ class Main(QtWidgets.QMainWindow):
             # Set icon size to match standard toolbar (16x16)
             self.plugins_toolbar.setIconSize(QtCore.QSize(16, 16))
 
-        # Determine plugin directory
+        # Determine built-in plugin directory
         plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+
+        # Determine user plugin directory
+        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
 
         # Helper function to read module docstring
         def read_module_docstring(package_path):
@@ -471,14 +603,24 @@ class Main(QtWidgets.QMainWindow):
             return ast.get_docstring(tree)
 
         # Helper function to get plugin name from module without importing
-        def get_plugin_name(plugin_dir, module_name):
+        def get_plugin_name(plugin_dir, module_name, check_user_dir=True):
             """Extract plugin name without importing the module."""
             # Default value
             name = module_name
 
             # Path to the __init__.py file
             init_py = plugin_dir / module_name / "__init__.py"
-            if not init_py.exists():
+
+            # Check if the file exists in the built-in directory
+            if not init_py.exists() and check_user_dir:
+                # Try to find it in the user plugins directory
+                user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                user_init_py = user_plugin_root / module_name / "__init__.py"
+                if user_init_py.exists():
+                    init_py = user_init_py
+                else:
+                    return name
+            elif not init_py.exists():
                 return name
 
             try:
@@ -512,11 +654,38 @@ class Main(QtWidgets.QMainWindow):
                     for _, name, _ in pkgutil.iter_modules([module_info]):
                         # Get the plugin name without importing
                         extracted_name = get_plugin_name(plugin_root, name)
+                        # Check if the extracted name matches the plugin name
+                        # For user plugins, we need to check both with and without category prefix
                         if extracted_name == plugin_name:
+                            module_name = name
+                            break
+                        # Also check if the clean name (without category) matches
+                        # This is for backward compatibility with plugins that don't use category prefix
+                        clean_extracted = extracted_name.split(':')[-1]
+                        clean_plugin = plugin_name.split(':')[-1]
+                        if clean_extracted == clean_plugin:
                             module_name = name
                             break
                     if module_name:
                         break
+
+                if not module_name:
+                    # Try to find the module in the user plugins directory
+                    user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                    for name in os.listdir(user_plugin_root) if os.path.isdir(user_plugin_root) else []:
+                        if os.path.isdir(user_plugin_root / name):
+                            # Get the plugin name from the user directory
+                            extracted_name = get_plugin_name(user_plugin_root, name, check_user_dir=False)
+                            # Check if the extracted name matches the plugin name
+                            if extracted_name == plugin_name:
+                                module_name = name
+                                break
+                            # Also check if the clean name (without category) matches
+                            clean_extracted = extracted_name.split(':')[-1]
+                            clean_plugin = plugin_name.split(':')[-1]
+                            if clean_extracted == clean_plugin:
+                                module_name = name
+                                break
 
                 if not module_name:
                     chisurf.logging.warning(f"Could not find module for plugin: {plugin_name}")
@@ -525,6 +694,19 @@ class Main(QtWidgets.QMainWindow):
                 # Build the module path for later use with onRunMacro
                 module_path = f"chisurf.plugins.{module_name}"
 
+                # Check if this is a user plugin
+                user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                user_plugin_dir = user_plugin_root / module_name
+                is_user_plugin = user_plugin_dir.exists()
+
+                # If it's a user plugin, get the name from the user plugin directory
+                if is_user_plugin:
+                    user_plugin_name = get_plugin_name(user_plugin_root, module_name, check_user_dir=False)
+                    if ":" in user_plugin_name:
+                        # Use the user plugin name if it has a category prefix
+                        plugin_name = user_plugin_name
+                        chisurf.logging.info(f"Using user plugin name: {plugin_name}")
+
                 # Get the clean plugin name (without sorting prefix)
                 clean_name = plugin_name.split(':')[-1]
 
@@ -532,15 +714,26 @@ class Main(QtWidgets.QMainWindow):
                 action = QtWidgets.QAction("", self)
 
                 # Set icon if available
+                # Check both built-in and user plugin directories for icons
                 icon_path = plugin_root / module_name / 'icon.png'
+                user_icon_path = user_plugin_root / module_name / 'icon.png'
+
                 if icon_path.exists():
                     action.setIcon(QtGui.QIcon(str(icon_path)))
+                elif user_icon_path.exists():
+                    action.setIcon(QtGui.QIcon(str(user_icon_path)))
 
                 # Get plugin description from docstring
+                # Check both built-in and user plugin directories for docstrings
                 plugin_path = plugin_root / module_name
+                user_plugin_path = user_plugin_root / module_name
+
                 description = read_module_docstring(plugin_path)
                 if description is None:
-                    description = "No description available."
+                    # Try user plugin path
+                    description = read_module_docstring(user_plugin_path)
+                    if description is None:
+                        description = "No description available."
 
                 # Set tooltip to show plugin name followed by description
                 action.setToolTip(f"{clean_name}: {description}")
@@ -550,6 +743,9 @@ class Main(QtWidgets.QMainWindow):
 
                 # Add the action to the toolbar
                 self.plugins_toolbar.addAction(action)
+
+                # Log the plugin name for debugging
+                chisurf.logging.info(f"Added plugin to toolbar: {plugin_name} (module: {module_name})")
 
             except Exception as e:
                 chisurf.logging.error(f"Error loading toolbar plugin {plugin_name}: {e}")
@@ -563,18 +759,31 @@ class Main(QtWidgets.QMainWindow):
             # Extract the module name from the module path
             module_name = module_path.split('.')[-1]
 
-            # Determine the plugin directory
+            # Determine the built-in plugin directory
             plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
             plugin_dir = plugin_root / module_name
 
-            # Check if the plugin directory exists
-            if not plugin_dir.exists():
-                chisurf.logging.warning(f"Plugin directory not found: {plugin_dir}")
+            # Determine the user plugin directory
+            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+            user_plugin_dir = user_plugin_root / module_name
+
+            # Check if the plugin exists in the built-in directory
+            if plugin_dir.exists():
+                # Use the built-in plugin
+                plugin_dir_to_use = plugin_dir
+                is_user_plugin = False
+            # Check if the plugin exists in the user directory
+            elif user_plugin_dir.exists():
+                # Use the user plugin
+                plugin_dir_to_use = user_plugin_dir
+                is_user_plugin = True
+            else:
+                chisurf.logging.warning(f"Plugin directory not found in either built-in or user locations: {module_name}")
                 return
 
             # Determine which file to run: wizard.py if it exists, else __init__.py
-            wizard_path = plugin_dir / "wizard.py"
-            init_path = plugin_dir / "__init__.py"
+            wizard_path = plugin_dir_to_use / "wizard.py"
+            init_path = plugin_dir_to_use / "__init__.py"
 
             # Check if wizard.py exists
             if wizard_path.exists():
@@ -916,6 +1125,17 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
+        # Add actions for saving and loading projects
+        self.actionSaveProject = QtWidgets.QAction("Save Project...", self)
+        self.actionSaveProject.setShortcut("Ctrl+Shift+S")
+        self.actionSaveProject.triggered.connect(self.onSaveProject)
+        self.menuFile.addAction(self.actionSaveProject)
+
+        self.actionLoadProject = QtWidgets.QAction("Load Project...", self)
+        self.actionLoadProject.setShortcut("Ctrl+Shift+O")
+        self.actionLoadProject.triggered.connect(self.onLoadProject)
+        self.menuFile.addAction(self.actionLoadProject)
+
     def load_tools(self):
         import chisurf
         import chisurf.gui
@@ -951,6 +1171,11 @@ class Main(QtWidgets.QMainWindow):
         self.actionClear_user_styles = QtWidgets.QAction("Clear user styles", self)
         self.actionClear_user_styles.triggered.connect(self.onClearUserStyles)
         self.menuSettings.addAction(self.actionClear_user_styles)
+
+        # Clear user plugins, i.e., the plugins in the user folder
+        self.actionClear_user_plugins = QtWidgets.QAction("Clear user plugins", self)
+        self.actionClear_user_plugins.triggered.connect(self.onClearUserPlugins)
+        self.menuSettings.addAction(self.actionClear_user_plugins)
 
 
         ##########################################################

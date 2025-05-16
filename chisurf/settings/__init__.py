@@ -1,228 +1,21 @@
 from __future__ import annotations
 
-import os
-import pathlib
 import datetime
-import sys
-import yaml
 import json
-import shutil
+import pathlib
+import sys
 
+# Import utility functions
+from .file_utils import safe_open_file
+from .path_utils import get_path
+from .settings_utils import (
+    get_chisurf_settings,
+    copy_settings_to_user_folder,
+    copy_styles_to_user_folder
+)
+from .cleanup import clear_settings_folder, clear_logging_files
 
-
-def get_path(path_type: str = 'settings') -> pathlib.Path:
-    """Get the path of the chisurf settings file.
-
-    This function returns the path of the chisurf settings files in the
-    user folder. The default path is '~/.chisurf'. If the path does not
-    exist, this function creates the folder.
-
-    :return: pathlib.Path object pointing to the chisurf setting folder
-    """
-    if path_type == 'settings':
-        path = pathlib.Path.home() / '.chisurf'  # Define the settings path
-        path.mkdir(parents=True, exist_ok=True)
-    elif path_type == 'chisurf':
-        path = pathlib.Path(__file__).parent.parent
-    return path
-
-
-def get_chisurf_settings(setting_file: pathlib.Path, use_source_folder: bool = False) -> dict:
-    """This function returns the content of a settings file in the user
-    settings path. If the settings file does not exist it is copied from
-    the package folder to the user settings path.
-
-    :param setting_file: path to settings file
-    :param use_source_folder: if true use settings file in source code folder
-    :return:
-    """
-    package_path = pathlib.Path(__file__).parent
-    original_settings = package_path / setting_file.parts[-1]
-    if use_source_folder:
-        setting_file = package_path / setting_file.parts[-1]
-    else:
-        if not setting_file.is_file():
-            shutil.copyfile(original_settings, setting_file)
-    with open(str(setting_file), 'r') as fp:
-        return yaml.safe_load(fp)
-
-
-def copy_settings_to_user_folder():
-    """Copies all settings files from the package directory to the user folder,
-    ensuring that existing files are not overwritten."""
-    package_path = pathlib.Path(__file__).parent
-    user_settings_path = get_path('settings')
-    user_settings_path.mkdir(parents=True, exist_ok=True)
-
-    for file in package_path.iterdir():
-        if file.is_file():
-            destination_file = user_settings_path / file.name
-            if not destination_file.exists():  # Avoid overwriting existing files
-                shutil.copyfile(file, destination_file)
-
-    # Also copy style files
-    copy_styles_to_user_folder()
-
-
-def copy_styles_to_user_folder():
-    """Copies all style files from the gui/styles directory to the user folder,
-    ensuring that existing files are not overwritten."""
-    package_path = pathlib.Path(__file__).parent.parent / 'gui' / 'styles'
-    user_settings_path = get_path('settings') / 'styles'
-    user_settings_path.mkdir(parents=True, exist_ok=True)
-
-    for file in package_path.iterdir():
-        if file.is_file() and file.suffix == '.qss':
-            destination_file = user_settings_path / file.name
-            if not destination_file.exists():  # Avoid overwriting existing files
-                shutil.copyfile(file, destination_file)
-
-
-def clear_settings_folder():
-    """
-    Remove settings files and subdirectories inside the settings folder, but preserve log files and plugins folder.
-
-    This function walks through the directory returned by `get_path()` and:
-      - Recursively deletes each subdirectory (skipping over any files it cannot remove and the plugins folder),
-      - Deletes each settings file at the top level (skipping log files),
-      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
-        for any file or directory that cannot be deleted.
-
-    The root settings folder itself is left intact, even if not empty.
-
-    Raises:
-        None. All deletion errors are caught and logged.
-    """
-    import chisurf
-
-    root = get_path()
-
-    # Helper to warn on failed removals inside rmtree()
-    def _handle_remove_error(func, path, exc_info):
-        ex = exc_info[1]
-        # Only skip PermissionErrors (file-in-use, etc.)
-        if isinstance(ex, PermissionError):
-            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
-            return
-        # Propagate everything else
-        raise ex
-
-    # If the root doesn't even exist, nothing to do
-    if not os.path.isdir(root):
-        return
-
-    # Iterate through *direct* children of root
-    for entry in os.scandir(root):
-        path = entry.path
-        try:
-            if entry.is_dir(follow_symlinks=False):
-                # Skip the plugins folder
-                if os.path.basename(path) == 'plugins':
-                    chisurf.logging.info(f"Preserving plugins folder: {path}")
-                    continue
-                # Recursively remove this subfolder entirely (with our onerror)
-                shutil.rmtree(path, onerror=_handle_remove_error)
-            else:
-                # Skip log files (files ending with .log)
-                if not str(path).endswith('.log'):
-                    # Remove a single file
-                    os.unlink(path)
-        except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
-        except OSError as e:
-            # e.errno==ENOTEMPTY can happen if subdir isn't empty (due to skips)
-            chisurf.logging.warning(f"Couldn't remove {path}")
-
-
-def clear_logging_files():
-    """
-    Remove only log files inside the settings folder.
-
-    This function walks through the directory returned by `get_path()` and:
-      - Deletes each log file at the top level (files ending with .log),
-      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
-        for any file that cannot be deleted.
-
-    The root settings folder itself is left intact, even if not empty.
-
-    Raises:
-        None. All deletion errors are caught and logged.
-    """
-    import chisurf
-
-    root = get_path()
-
-    # If the root doesn't even exist, nothing to do
-    if not os.path.isdir(root):
-        return
-
-    # Iterate through *direct* children of root
-    for entry in os.scandir(root):
-        path = entry.path
-        try:
-            if not entry.is_dir(follow_symlinks=False):
-                # Only remove log files (files ending with .log)
-                if str(path).endswith('.log'):
-                    os.unlink(path)
-        except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked log file: {path}")
-        except OSError as e:
-            chisurf.logging.warning(f"Couldn't remove log file: {path}")
-
-
-def clear_user_plugins_folder():
-    """
-    Remove all files and subdirectories inside the user plugins folder.
-
-    This function walks through the user plugins directory at '~/.chisurf/plugins' and:
-      - Recursively deletes each subdirectory (skipping over any files it cannot remove),
-      - Deletes each file at the top level,
-      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
-        for any file or directory that cannot be deleted.
-
-    The root plugins folder itself is left intact, even if empty.
-
-    Raises:
-        None. All deletion errors are caught and logged.
-    """
-    import chisurf
-
-    # Get the user plugins folder path
-    root = pathlib.Path.home() / '.chisurf' / 'plugins'
-
-    # Helper to warn on failed removals inside rmtree()
-    def _handle_remove_error(func, path, exc_info):
-        ex = exc_info[1]
-        # Only skip PermissionErrors (file-in-use, etc.)
-        if isinstance(ex, PermissionError):
-            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
-            return
-        # Propagate everything else
-        raise ex
-
-    # If the root doesn't even exist, nothing to do
-    if not os.path.isdir(root):
-        return
-
-    # Iterate through *direct* children of root
-    for entry in os.scandir(root):
-        path = entry.path
-        try:
-            if entry.is_dir(follow_symlinks=False):
-                # Recursively remove this subfolder entirely (with our onerror)
-                shutil.rmtree(path, onerror=_handle_remove_error)
-            else:
-                # Remove a single file
-                os.unlink(path)
-        except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
-        except OSError as e:
-            chisurf.logging.warning(f"Couldn't remove {path}")
-
-
-#######################################################
-#        SETTINGS  & CONSTANTS                        #
-#######################################################
+# Path constants
 chisurf_settings_path = get_path('settings')
 macro_path = get_path('chisurf') / "macros"
 plugin_path = get_path('chisurf') / "plugins"
@@ -238,8 +31,13 @@ chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
 
 anisotropy = dict()
-with open(get_path('chisurf') / "settings" / "anisotropy_corrections.json") as fp:
-    anisotropy.update(json.load(fp))
+anisotropy_data = safe_open_file(
+    file_path=get_path('chisurf') / "settings" / "anisotropy_corrections.json",
+    processor=json.load,
+    default_value={},
+    error_message="Error opening anisotropy corrections file"
+)
+anisotropy.update(anisotropy_data)
 
 verbose = False
 gui = dict()
@@ -256,9 +54,17 @@ colors = get_chisurf_settings(color_settings_file)
 
 package_directory = pathlib.Path(__file__).parent
 style_sheet_file = package_directory / '..' / 'gui' / 'styles' / gui['style_sheet']
-style_sheet = open(style_sheet_file, 'r').read()
-with open(package_directory / 'constants' / 'structure.json') as fp:
-    structure_data = json.load(fp)
+style_sheet = safe_open_file(
+    file_path=style_sheet_file,
+    default_value="",
+    error_message=f"Error opening style sheet file {style_sheet_file}"
+)
+structure_data = safe_open_file(
+    file_path=package_directory / 'constants' / 'structure.json',
+    processor=json.load,
+    default_value={},
+    error_message="Error opening structure.json file"
+)
 
 eps = sys.float_info.epsilon
 working_path = ''
