@@ -622,11 +622,33 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
     plot_classes = plot_cls_dist_default
 
     def __init__(self, fit, **kwargs):
+        # First call super().__init__ to initialize PDDEMModel
         super().__init__(
             fit,
             icon=QtGui.QIcon(":/icons/icons/TCSPC.ico"),
             **kwargs
         )
+
+        # Store references to the model's Lifetime objects
+        model_fa = self.fa
+        model_fb = self.fb
+        model_donor = self.donor
+
+        # Create LifetimeWidget objects to replace the Lifetime objects
+        self.fa = LifetimeWidget(
+            title='Lifetimes-A',
+            model=self.model,
+            short='A',
+            name='fa'
+        )
+        self.fb = LifetimeWidget(
+            title='Lifetimes-B',
+            model=self.model,
+            short='B',
+            name='fb'
+        )
+        # Set donor to fa for the widget (PDDEMModel sets it to fb)
+        self.donor = self.fa
 
         self.convolve = ConvolveWidget(
             name='convolve',
@@ -655,20 +677,6 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
         self.layout.addWidget(self.convolve)
         self.layout.addWidget(self.generic)
         self.layout.addWidget(self.pddem)
-
-        self.fa = LifetimeWidget(
-            title='Lifetimes-A',
-            model=self.model,
-            short='A',
-            name='fa'
-        )
-        self.fb = LifetimeWidget(
-            title='Lifetimes-B',
-            model=self.model,
-            short='B',
-            name='fb'
-        )
-        self.donor = self.fa
 
         self.layout.addWidget(self.fa)
         self.layout.addWidget(self.fb)
