@@ -11,40 +11,6 @@ def main():
         from chisurf.settings import clear_settings_folder, clear_logging_files
         from chisurf.gui import get_app
 
-        # Define the dialog class inside the try block to ensure Qt is available
-        class ClearSettingsDialog(QtWidgets.QDialog):
-            def __init__(self, exception_text, parent=None):
-                super().__init__(parent)
-
-                # Load the UI file
-                import pathlib
-                from PyQt5 import uic
-                uic.loadUi(pathlib.Path(__file__).parent / "gui" / "clear_settings_dialog.ui", self)
-
-                # Set the exception text
-                self.exception_text_box.setText(exception_text)
-
-                # Connect signals
-                self.clear_button.clicked.connect(self.clear_settings)
-                self.cancel_button.clicked.connect(self.reject)
-
-            def clear_settings(self):
-                try:
-                    clear_settings_folder()
-                    clear_logging_files()
-                    QtWidgets.QMessageBox.information(
-                        self, 
-                        "Settings Cleared", 
-                        "User settings have been cleared. Please restart ChiSurf."
-                    )
-                    self.accept()
-                except Exception as e:
-                    QtWidgets.QMessageBox.critical(
-                        self, 
-                        "Error", 
-                        f"Failed to clear settings: {str(e)}"
-                    )
-
         # Start the application
         app = get_app()
         sys.exit(app.exec_())
