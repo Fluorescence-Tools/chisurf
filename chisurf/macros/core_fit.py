@@ -262,3 +262,232 @@ def change_selected_fit_of_group(
     cs.current_fit.selected_fit = selected_fit
     cs.current_fit.update()
     cs.current_fit.model.show()
+
+
+def save_project(target_path: str, project_name: str = "chisurf_project"):
+    """
+    Save the current state of the application as a project.
+
+    This function saves all fits, their parameters, dependencies (links across fits),
+    and the UI state to a project folder.
+
+    Parameters
+    ----------
+    target_path : str
+        The directory where the project folder will be created
+    project_name : str
+        The name of the project folder (default: "chisurf_project")
+    """
+    import os
+    import pathlib
+    import yaml
+    import datetime
+
+    cs = chisurf.cs
+
+    # Create project directory
+    project_dir = os.path.join(target_path, project_name)
+    if not os.path.exists(project_dir):
+        os.makedirs(project_dir)
+
+    # Create fits directory
+    fits_dir = os.path.join(project_dir, "fits")
+    if not os.path.exists(fits_dir):
+        os.makedirs(fits_dir)
+
+    # Save project metadata
+    metadata = {
+        "project_name": project_name,
+        "created_date": datetime.datetime.now().isoformat(),
+        "chisurf_version": chisurf.info.__version__,
+        "fits": []
+    }
+
+    # Save all fits
+    for i, fit_window in enumerate(chisurf.gui.fit_windows):
+        fit = fit_window.fit
+
+        # Create a unique name for the fit
+        fit_name = f"fit_{i:03d}"
+        if hasattr(fit, 'name') and fit.name:
+            fit_name = f"{fit_name}_{chisurf.base.clean_string(fit.name)}"
+
+        # Create fit directory
+        fit_dir = os.path.join(fits_dir, fit_name)
+        if not os.path.exists(fit_dir):
+            os.makedirs(fit_dir)
+
+        # Save fit
+        save_fit(target_path=fit_dir, fit_window=fit_window)
+
+        # Add fit metadata
+        fit_metadata = {
+            "fit_name": fit_name,
+            "original_name": fit.name if hasattr(fit, 'name') else "",
+            "fit_index": i,
+            "parameters": {}
+        }
+
+        # Save parameter links
+        if hasattr(fit, 'model') and hasattr(fit.model, 'parameters_all_dict'):
+            for param_name, param in fit.model.parameters_all_dict.items():
+                param_data = {
+                    "value": param.value,
+                    "fixed": param.fixed,
+                    "bounds": param.bounds,
+                    "bounds_on": param.bounds_on,
+                    "linked": param.is_linked
+                }
+
+                # Save link information
+                if param.is_linked and param.link is not None:
+                    # Find the fit and parameter that this parameter is linked to
+                    for j, other_fit_window in enumerate(chisurf.gui.fit_windows):
+                        other_fit = other_fit_window.fit
+                        if hasattr(other_fit, 'model') and hasattr(other_fit.model, 'parameters_all_dict'):
+                            for other_param_name, other_param in other_fit.model.parameters_all_dict.items():
+                                if other_param is param.link:
+                                    param_data["linked_to_fit"] = j
+                                    param_data["linked_to_param"] = other_param_name
+                                    break
+
+                fit_metadata["parameters"][param_name] = param_data
+
+        metadata["fits"].append(fit_metadata)
+
+    # Save UI state
+    ui_state = {
+        "current_fit_index": cs.fit_idx,
+        "current_experiment_idx": cs.current_experiment_idx,
+        "current_setup_idx": cs.current_setup_idx
+    }
+    metadata["ui_state"] = ui_state
+
+    # Save metadata to file
+    with open(os.path.join(project_dir, "project.yaml"), "w") as f:
+        yaml.dump(metadata, f)
+
+    chisurf.logging.info(f"Project saved to {project_dir}")
+
+
+def load_project(project_path: str):
+    """
+    Load a project from a project folder.
+
+    This function loads all fits, their parameters, dependencies (links across fits),
+    and the UI state from a project folder.
+
+    Parameters
+    ----------
+    project_path : str
+        The path to the project folder
+    """
+    import os
+    import yaml
+
+    cs = chisurf.cs
+
+    # Check if project path exists
+    if not os.path.exists(project_path):
+        chisurf.logging.error(f"Project path {project_path} does not exist")
+        return
+
+    # Load project metadata
+    project_file = os.path.join(project_path, "project.yaml")
+    if not os.path.exists(project_file):
+        chisurf.logging.error(f"Project file {project_file} does not exist")
+        return
+
+    with open(project_file, "r") as f:
+        metadata = yaml.safe_load(f)
+
+    # Close all existing fits
+    cs.onCloseAllFits()
+
+    # Load all fits
+    fits_dir = os.path.join(project_path, "fits")
+    if not os.path.exists(fits_dir):
+        chisurf.logging.error(f"Fits directory {fits_dir} does not exist")
+        return
+
+    # First pass: load all fits
+    for fit_metadata in metadata["fits"]:
+        fit_name = fit_metadata["fit_name"]
+        fit_dir = os.path.join(fits_dir, fit_name)
+
+        # Find the data file
+        data_files = [f for f in os.listdir(fit_dir) if f.endswith("_data.pkl")]
+        if not data_files:
+            chisurf.logging.warning(f"No data file found for fit {fit_name}")
+            continue
+
+        data_file = os.path.join(fit_dir, data_files[0])
+
+        # Load the data and create a fit
+        chisurf.macros.add_dataset(filename=data_file)
+
+        # Find the fit file
+        fit_files = [f for f in os.listdir(fit_dir) if f.endswith(".csv") and not f.endswith("_data.csv")]
+        if not fit_files:
+            chisurf.logging.warning(f"No fit file found for fit {fit_name}")
+            continue
+
+        fit_file = os.path.join(fit_dir, fit_files[0])
+
+        # Load the fit
+        fit_index = len(chisurf.fits) - 1
+        load_fit_result(fit_index, fit_file)
+
+    # Second pass: restore parameter links
+    for i, fit_metadata in enumerate(metadata["fits"]):
+        if i >= len(chisurf.fits):
+            chisurf.logging.warning(f"Fit index {i} out of range")
+            continue
+
+        fit = chisurf.fits[i]
+
+        # Restore parameter links
+        for param_name, param_data in fit_metadata.get("parameters", {}).items():
+            if param_name not in fit.model.parameters_all_dict:
+                chisurf.logging.warning(f"Parameter {param_name} not found in fit {i}")
+                continue
+
+            param = fit.model.parameters_all_dict[param_name]
+
+            # Restore fixed state
+            param.fixed = param_data.get("fixed", False)
+
+            # Restore bounds
+            param.bounds = param_data.get("bounds", (float("-inf"), float("inf")))
+            param.bounds_on = param_data.get("bounds_on", False)
+
+            # Restore links
+            if param_data.get("linked", False) and "linked_to_fit" in param_data and "linked_to_param" in param_data:
+                linked_fit_idx = param_data["linked_to_fit"]
+                linked_param_name = param_data["linked_to_param"]
+
+                if linked_fit_idx < len(chisurf.fits):
+                    linked_fit = chisurf.fits[linked_fit_idx]
+                    if linked_param_name in linked_fit.model.parameters_all_dict:
+                        linked_param = linked_fit.model.parameters_all_dict[linked_param_name]
+                        param.link = linked_param
+
+    # Restore UI state
+    ui_state = metadata.get("ui_state", {})
+
+    # Set current fit
+    current_fit_idx = ui_state.get("current_fit_index", 0)
+    if current_fit_idx < len(chisurf.fits):
+        cs.current_fit = chisurf.fits[current_fit_idx]
+
+    # Set current experiment
+    current_experiment_idx = ui_state.get("current_experiment_idx", 0)
+    if current_experiment_idx < len(cs.experimentComboBox):
+        cs.current_experiment_idx = current_experiment_idx
+
+    # Set current setup
+    current_setup_idx = ui_state.get("current_setup_idx", 0)
+    if current_setup_idx < len(cs.setupComboBox):
+        cs.current_setup_idx = current_setup_idx
+
+    chisurf.logging.info(f"Project loaded from {project_path}")
