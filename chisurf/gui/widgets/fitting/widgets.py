@@ -455,6 +455,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             )
             if reply == QtWidgets.QMessageBox.Yes:
                 chisurf.console.execute('chisurf.macros.close_fit()')
+                chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.modelLayout)
+                chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.plotOptionsLayout)
             else:
                 event.ignore()
         else:
