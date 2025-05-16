@@ -72,16 +72,16 @@ requirements:
     - boost-cpp
     - tttrlib >=0.26      # [not win]
     - mdtraj
-    - ipython
+    - ipython 7.33.*
     - notebook
     - emcee 3.1.*
     - pyopengl
-    - pytables
+    - pytables 3.9.*
     - pymol-open-source
     - guidata
     - guiqwt
     - python-docx
-    - qtconsole
+    - qtconsole 5.2.*
     - ipython
     - pyqtwebengine
     - libcxx  # [osx]
