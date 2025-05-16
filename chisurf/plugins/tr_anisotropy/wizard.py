@@ -281,7 +281,9 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         # add rotations
         self.fit_vv.model.anisotropy.radioButtonVV.setChecked(True)
+        self.fit_vv.model.anisotropy.hide_roation_parameters()
         self.fit_vh.model.anisotropy.radioButtonVH.setChecked(True)
+        self.fit_vh.model.anisotropy.hide_roation_parameters()
 
         self.fit_vv.model.anisotropy.remove_rotation()
         self.fit_vh.model.anisotropy.remove_rotation()
