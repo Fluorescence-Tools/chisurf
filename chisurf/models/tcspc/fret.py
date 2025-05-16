@@ -557,12 +557,6 @@ class FRETModel(LifetimeModel):
         self._reference.lifetimes = self.donor
         self._reference.convolve = self.convolve
 
-        # Create parameter widgets
-        self._orientation_widget = self.orientation_parameter.create_widgets()
-        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-            self.fret_parameters
-        )
-
     def get_parameter_widgets(self):
         """
         Get all parameter widgets for this model.
@@ -573,8 +567,6 @@ class FRETModel(LifetimeModel):
             List of parameter widgets.
         """
         widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
-        widgets.append(self._orientation_widget)
-        widgets.append(self._fret_parameters_widget)
         return widgets
 
 
