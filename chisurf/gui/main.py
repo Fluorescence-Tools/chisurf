@@ -24,6 +24,7 @@ import chisurf.gui.tools.settings_editor
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments.modelling
+import chisurf.gui.widgets.general
 
 import chisurf.models
 import chisurf.plugins
@@ -403,6 +404,13 @@ class Main(QtWidgets.QMainWindow):
         This method prompts the user for a directory and project name, then calls
         the save_project function to save the project.
         """
+        # Show warning that this function is not yet working properly
+        chisurf.gui.widgets.general.MyMessageBox(
+            label="Warning",
+            info="The save project function is not yet working properly. Proceed with caution.",
+            show_fortune=False
+        )
+
         # Get directory to save project
         path, _ = chisurf.gui.widgets.get_directory()
         if not path:
@@ -430,6 +438,13 @@ class Main(QtWidgets.QMainWindow):
         This method prompts the user for a project folder, then calls
         the load_project function to load the project.
         """
+        # Show warning that this function is not yet working properly
+        chisurf.gui.widgets.general.MyMessageBox(
+            label="Warning",
+            info="The load project function is not yet working properly. Proceed with caution.",
+            show_fortune=False
+        )
+
         # Get project directory
         path, _ = chisurf.gui.widgets.get_directory(
             caption="Select Project Folder"
@@ -1129,13 +1144,11 @@ class Main(QtWidgets.QMainWindow):
         self.actionSaveProject = QtWidgets.QAction("Save Project...", self)
         self.actionSaveProject.setShortcut("Ctrl+Shift+S")
         self.actionSaveProject.triggered.connect(self.onSaveProject)
-        self.actionSaveProject.setEnabled(False)
         self.menuFile.addAction(self.actionSaveProject)
 
         self.actionLoadProject = QtWidgets.QAction("Load Project...", self)
         self.actionLoadProject.setShortcut("Ctrl+Shift+O")
         self.actionLoadProject.triggered.connect(self.onLoadProject)
-        self.actionLoadProject.setEnabled(False)
         self.menuFile.addAction(self.actionLoadProject)
 
     def load_tools(self):
