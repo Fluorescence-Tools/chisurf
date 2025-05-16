@@ -1149,6 +1149,20 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         self.grid_layout.setSpacing(0)
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
 
+        # Add checkbox for is_distance_between_gaussians
+        checkbox_layout = QtWidgets.QHBoxLayout()
+        checkbox_layout.setSpacing(0)
+        checkbox_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.distance_checkbox = QtWidgets.QCheckBox("Enable distance between gaussians")
+        self.distance_checkbox.setChecked(self.is_distance_between_gaussians)
+        self.distance_checkbox.toggled.connect(
+            lambda checked: self.update_distance_between_gaussians(checked)
+        )
+
+        checkbox_layout.addWidget(self.distance_checkbox)
+        self.lh.addLayout(checkbox_layout)
+
         layout = QtWidgets.QHBoxLayout()
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1189,7 +1203,7 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
 
         gb = QtWidgets.QGroupBox()
         n_gauss = len(self)
-        gb.setTitle('G%i' % n_gauss)
+        gb.setTitle(f'G{n_gauss}')
 
         layout = QtWidgets.QVBoxLayout()
         layout.setSpacing(0)
@@ -1217,6 +1231,22 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         col = (n_gauss - 1) % 2
         self.grid_layout.addWidget(gb, row, col)
         self._gb.append(gb)
+
+    def update_distance_between_gaussians(self, checked: bool):
+        """
+        Update the is_distance_between_gaussians property and update the model
+
+        Parameters
+        ----------
+        checked : bool
+            Whether the checkbox is checked
+        """
+        setattr(self, 'is_distance_between_gaussians', checked)
+        # Update the model
+        chisurf.run(
+            f"for f in cs.current_fit:\n"
+            f"   f.model.update()"
+        )
 
     def pop(self) -> None:
         super().pop()
@@ -1374,10 +1404,10 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         )
         self.layout.addWidget(self._fret_parameters_widget)
 
-        self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-            self.orientation_parameter
-        )
-        self.layout.addWidget(self._orientation_widget)
+        # self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        #     self.orientation_parameter
+        # )
+        # self.layout.addWidget(self._orientation_widget)
 
         self.layout.addWidget(gaussians)
 
