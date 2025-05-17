@@ -658,20 +658,10 @@ class Convolve(FittingParameterGroup):
             lb=0.0,
             ub=1.0  # Default upper bound, will be updated when IRF is set
         )
-        # Set bounds for timeshift to +/- half the number of decay channels
-        n_channels = 0
-        try:
-            if data is not None and hasattr(data, 'y'):
-                n_channels = len(data.y)
-        except (AttributeError, TypeError):
-            pass
-        half_channels = n_channels / 2 if n_channels > 0 else 0
         self._ts = FittingParameter(
             value=0.0,
             name='ts',
-            bounds_on=True,
-            lb=-half_channels,
-            ub=half_channels
+            bounds_on=False
         )
 
         self._iw = FittingParameter(

@@ -52,16 +52,6 @@ plot_cls_dist_default = [
         chisurf.plots.DistributionPlot,
         {
             'distribution_options': {
-                'FRET-rate constant': {
-                    'attribute': 'fret_rate_spectrum',
-                    'accessor': chisurf.math.datatools.interleaved_to_two_columns,
-                    'accessor_kwargs': {'sort': True},
-                    'curve_options': {
-                        # 'stepMode': 'right',
-                        # 'connect': 'all',
-                        'symbol': "o"
-                    }
-                },
                 'Distance': {
                     'attribute': 'distance_distribution',
                     'accessor': lambda x, **kwargs: (x[0][0], x[0][1]),
@@ -71,6 +61,16 @@ plot_cls_dist_default = [
                         # 'connect': False,  # 'all'
                         'symbol': "t",
                         # 'multi_curve': False
+                    }
+                },
+                'FRET-rate constant': {
+                    'attribute': 'fret_rate_spectrum',
+                    'accessor': chisurf.math.datatools.interleaved_to_two_columns,
+                    'accessor_kwargs': {'sort': True},
+                    'curve_options': {
+                        # 'stepMode': 'right',
+                        # 'connect': 'all',
+                        'symbol': "o"
                     }
                 },
                 'Lifetime': {
@@ -226,8 +226,9 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
             experiment=fit.data.experiment.__class__
         )
 
-        # Add button to unload linearization table
-        self.unload_button = QtWidgets.QPushButton("Unload")
+        # Add toolbutton to unload linearization table
+        self.unload_button = QtWidgets.QToolButton()
+        self.unload_button.setText("x")
         self.unload_button.setToolTip("Unload linearization table")
         self.unload_button.clicked.connect(self.onUnloadLin)
         self.horizontalLayout.addWidget(self.unload_button)
