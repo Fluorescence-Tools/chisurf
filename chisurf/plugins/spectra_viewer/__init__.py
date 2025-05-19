@@ -27,6 +27,7 @@ providing accurate R₀ values for FRET experimental design.
 import os
 import sys
 import json
+import csv
 import numpy as np
 import subprocess
 from pathlib import Path
@@ -210,6 +211,11 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         self.remove_spectrum_button = QtWidgets.QPushButton("Remove Selected")
         self.remove_spectrum_button.clicked.connect(self.remove_selected_spectra)
         spectra_buttons_layout.addWidget(self.remove_spectrum_button)
+
+        # Export to CSV button
+        self.export_csv_button = QtWidgets.QPushButton("Export to CSV")
+        self.export_csv_button.clicked.connect(self.export_selected_spectra_to_csv)
+        spectra_buttons_layout.addWidget(self.export_csv_button)
 
         # Display options group
         display_group = QtWidgets.QGroupBox("Display Options")
@@ -1570,6 +1576,99 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
                 for i, (prop, value) in enumerate(optical_props.items()):
                     self.optical_properties.setItem(i, 0, QtWidgets.QTableWidgetItem(prop))
                     self.optical_properties.setItem(i, 1, QtWidgets.QTableWidgetItem(str(value)))
+
+    def export_selected_spectra_to_csv(self):
+        """Export the selected spectra to a CSV file."""
+        # Get selected items
+        selected_items = self.spectra_list.selectedItems()
+
+        # If no items are selected, show a message and return
+        if not selected_items:
+            QtWidgets.QMessageBox.warning(
+                self, 
+                "No Spectra Selected", 
+                "Please select one or more spectra to export."
+            )
+            return
+
+        # Get the selected spectrum IDs
+        selected_spectrum_ids = [item.data(QtCore.Qt.UserRole) for item in selected_items]
+
+        # Open file dialog to get save location
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            "Save Spectra as CSV",
+            "",
+            "CSV Files (*.csv);;All Files (*)"
+        )
+
+        # If user cancels, return
+        if not file_path:
+            return
+
+        # Ensure file has .csv extension
+        if not file_path.lower().endswith('.csv'):
+            file_path += '.csv'
+
+        try:
+            # Open the file for writing
+            with open(file_path, 'w', newline='') as csvfile:
+                # Create CSV writer
+                writer = csv.writer(csvfile)
+
+                # Write header row with spectrum names
+                header = ['Wavelength (nm)']
+                for spectrum_id in selected_spectrum_ids:
+                    spectrum = self.loaded_spectra.get(spectrum_id)
+                    if spectrum:
+                        header.append(f"{spectrum['name']} ({spectrum['type']})")
+                writer.writerow(header)
+
+                # Find common wavelength range or interpolate to a common grid
+                # For simplicity, we'll use the first spectrum's wavelengths as reference
+                if selected_spectrum_ids:
+                    reference_spectrum = self.loaded_spectra.get(selected_spectrum_ids[0])
+                    if reference_spectrum:
+                        wavelengths = reference_spectrum['data'][0]  # x values
+
+                        # Prepare data rows
+                        rows = []
+                        for wavelength in wavelengths:
+                            row = [wavelength]
+                            for spectrum_id in selected_spectrum_ids:
+                                spectrum = self.loaded_spectra.get(spectrum_id)
+                                if spectrum:
+                                    x, y = spectrum['data']
+                                    # Interpolate to get y value at this wavelength
+                                    # (or find nearest value if exact match)
+                                    if wavelength in x:
+                                        # Exact match
+                                        idx = np.where(x == wavelength)[0][0]
+                                        row.append(y[idx])
+                                    else:
+                                        # Interpolate
+                                        row.append(np.interp(wavelength, x, y))
+                                else:
+                                    row.append('')
+                            rows.append(row)
+
+                        # Write all rows
+                        writer.writerows(rows)
+
+            # Show success message
+            QtWidgets.QMessageBox.information(
+                self,
+                "Export Successful",
+                f"Selected spectra have been exported to {file_path}"
+            )
+
+        except Exception as e:
+            # Show error message if export fails
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Export Failed",
+                f"An error occurred while exporting: {str(e)}"
+            )
 
     def update_plots(self):
         """Update the plots with current data."""
