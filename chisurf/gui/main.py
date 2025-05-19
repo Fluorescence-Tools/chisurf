@@ -20,7 +20,7 @@ import chisurf.experiments
 import chisurf.macros
 
 import chisurf.gui.tools
-import chisurf.gui.tools.settings_editor
+import chisurf.gui.widgets.settings_editor
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments.modelling
@@ -1174,8 +1174,9 @@ class Main(QtWidgets.QMainWindow):
         #      Settings                                          #
         ##########################################################
         # Configuration editor
-        self.configuration = chisurf.gui.tools.settings_editor.SettingsEditor(
-            filename=chisurf.settings.chisurf_settings_file
+        self.configuration = chisurf.gui.widgets.settings_editor.SettingsEditor(
+            filename=chisurf.settings.chisurf_settings_file,
+            window_title="ChiSurf Settings"
         )
         self.actionSettings.triggered.connect(self.configuration.show)
         # Reset local settings, i.e., the settings file in the user folder
