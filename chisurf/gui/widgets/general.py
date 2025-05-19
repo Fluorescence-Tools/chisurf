@@ -220,10 +220,10 @@ def open_files(
     running program (ChiSurf) is updated according to the folder of the opened
     file.
 
-    :param working_path:
-    :param description:
-    :param file_type:
-    :return:
+    :param working_path: Base path to open the dialog in. If None, uses the current working path.
+    :param description: Dialog title or description.
+    :param file_type: File filter to display.
+    :return: List of selected filenames, or empty list if cancel is clicked or an error occurs.
     """
     if working_path is None:
         working_path = chisurf.working_path
@@ -233,9 +233,17 @@ def open_files(
         str(working_path.absolute()),
         file_type
     )[0]
-    chisurf.working_path = pathlib.Path(filenames[0]).home()
-    return filenames
+    try:
+        # Only update the working path if at least one file was selected
+        if filenames:
+            # Use parent() to get the directory containing the file
+            chisurf.working_path = pathlib.Path(filenames[0]).parent
+    except Exception as e:
+        # Log the error but don't show it to the user
+        import logging
+        logging.error(f"Error in open_files: {e}")
 
+    return filenames
 
 def save_file(
         description: str = '',
