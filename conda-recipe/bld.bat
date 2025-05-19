@@ -35,6 +35,7 @@ pip install .\k2dist --no-deps --prefix=%PREFIX%
 pip install .\ndxplorer --no-deps --prefix=%PREFIX%
 pip install .\tttrconvert --no-deps --prefix=%PREFIX%
 pip install .\quest --no-deps --prefix=%PREFIX%
+pip install .\lltf --no-deps --prefix=%PREFIX%
 cd ..
 
 :: Build chinet module
