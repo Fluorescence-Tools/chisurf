@@ -132,6 +132,9 @@ metadata = dict(
         'mdtraj',
         'ipython'
     ],
+    extras_require={
+        'ml': ['scikit-learn>=1.0.0'],  # Optional machine learning dependencies
+    },
     setup_requires=[
         "cython",
         'numpy',
