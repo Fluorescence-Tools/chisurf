@@ -26,7 +26,7 @@ requirements:
     - ninja
     - make # [not win]
   host:
-    - python =3.10
+    - python
     - git
     - swig <4.3.0
     - pkg-config   # [not win]
