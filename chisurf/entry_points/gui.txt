@@ -1,5 +1,5 @@
 chisurf chisurf.__main__:main
-csg_kappa2distribution chisurf.gui.tools.kappa2_distribution.__main__:main
+csg_kappa2distribution chisurf.plugins.kappa2_dist.__main__:main
 csg_fps_json_edit chisurf.gui.tools.structure.create_av_json.__main__:main
 csg_calculator chisurf.gui.tools.fret.calculator.__main__:main
 csg_f_test chisurf.gui.tools.f_test.__main__:main
