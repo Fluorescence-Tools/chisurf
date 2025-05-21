@@ -26,7 +26,7 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = chisurf.gui.tools.kappa2_distribution.kappa2dist.Kappa2Dist()
+        self.form = chisurf.plugins.kappa2_dist.k2dgui.Kappa2Dist()
 
     def test_defaults(self):
         self.assertEqual(self.form.doubleSpinBox_2.value(), 0.380)
