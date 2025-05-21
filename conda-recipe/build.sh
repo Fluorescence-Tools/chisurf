@@ -65,6 +65,30 @@ cmake \
 make && make install
 cd ../../..
 
+# Build tttrlib
+cd modules/tttrlib
+git fetch --all
+git checkout development
+git pull origin development
+git submodule update --init --recursive
+
+rm -rf build && mkdir build && cd build
+cmake -S .. -B . \
+  -DCMAKE_CXX_COMPILER="${CXX}" \
+  -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+  -DBUILD_PYTHON_INTERFACE=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SP_DIR" \
+  -DCMAKE_SWIG_OUTDIR="$SP_DIR" \
+  -DPython_ROOT_DIR="${PREFIX}/bin" \
+  -DBUILD_LIBRARY=OFF \
+  -DBUILD_PYTHON_DOCS=ON \
+  -DWITH_AVX=OFF \
+  -DBUILD_PHOTON_HDF=OFF \
+  -DBoost_USE_STATIC_LIBS=OFF
+make install -j ${CPU_COUNT}
+cd ../../..
+
 
 # Install main module
 #####################

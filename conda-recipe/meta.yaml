@@ -26,7 +26,7 @@ requirements:
     - ninja
     - make # [not win]
   host:
-    - python
+    - python =3.10
     - git
     - swig <4.3.0
     - pkg-config   # [not win]
@@ -34,7 +34,6 @@ requirements:
     - libgomp      # [linux]
     - pip
     - numpy
-    - tttrlib      # [not win]
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
     - libcxx  # [osx]
@@ -54,7 +53,7 @@ requirements:
     # Needed to build tttrlib
     - hdf5                # [win]
   run:
-    - python
+    - python =3.10
     - typing-extensions 4.5.*
     - pytools 2024
     - numpy
@@ -70,7 +69,6 @@ requirements:
     - scipy
     - numba
     - boost-cpp
-    - tttrlib >=0.26      # [not win]
     - mdtraj
     - ipython 7.33.*
     - notebook
