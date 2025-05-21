@@ -1,6 +1,7 @@
 # ChiSurf Plugins
 
-This directory contains plugins for ChiSurf. Plugins extend the functionality of ChiSurf with additional tools, visualizations, and analysis capabilities.
+This directory contains plugins for ChiSurf. Plugins extend the functionality of ChiSurf with additional tools, 
+visualizations, and analysis capabilities.
 
 ## Plugin Structure
 
@@ -50,13 +51,17 @@ cookiecutter path/to/chisurf/plugins/cookiecutter-chisurf-plugin
 
 4. Customize your plugin by editing the generated files.
 
-5. Install your plugin by copying the generated directory to the ChiSurf plugins directory.
+5. Install your plugin by copying the generated directory to one of these locations:
+   - The ChiSurf built-in plugins directory (requires admin/root access)
+   - The user plugins directory: `~/.chisurf/plugins/` (recommended for custom plugins)
 
 ### Manual Creation
 
 If you prefer to create a plugin manually:
 
-1. Create a new directory in the `chisurf/plugins` directory with your plugin's name.
+1. Create a new directory with your plugin's name in one of these locations:
+   - The ChiSurf built-in plugins directory: `chisurf/plugins/` (requires admin/root access)
+   - The user plugins directory: `~/.chisurf/plugins/` (recommended for custom plugins)
 
 2. Create an `__init__.py` file with the following structure:
 
@@ -81,14 +86,14 @@ class MyPluginWidget(QMainWindow):
         super().__init__()
         self.setWindowTitle("Plugin Name")
         self.resize(800, 600)
-        
+
         # Create central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
-        
+
         # Add your plugin UI components here
-        
+
     # Add your plugin methods here
 
 # When the plugin is loaded as a module with __name__ == "plugin",
@@ -118,6 +123,22 @@ Plugins are organized into categories in the ChiSurf menu. Common categories inc
 - Import/Export
 
 Choose an appropriate category for your plugin based on its functionality.
+
+## Custom User Plugins
+
+ChiSurf supports loading plugins from a user-specific directory located at `~/.chisurf/plugins/`. This allows you to:
+
+1. Create and use your own plugins without modifying the main ChiSurf installation
+2. Keep your custom plugins when updating ChiSurf
+3. Share plugins with other users without requiring them to modify their ChiSurf installation
+
+To use custom user plugins:
+
+1. Create the directory `~/.chisurf/plugins/` if it doesn't exist already (ChiSurf will create it automatically on startup)
+2. Place your plugin directories in this location, following the same structure as built-in plugins
+3. Restart ChiSurf to load the new plugins
+
+Custom user plugins will appear in the Plugin Manager with a "[user]" indicator to distinguish them from built-in plugins.
 
 ## Plugin Manager
 
