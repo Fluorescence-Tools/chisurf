@@ -18,7 +18,7 @@ python -m chisurf.gui.tools.code_editor
 python -m chisurf.gui.tools.configuration_editor
 python -m chisurf.gui.tools.f_test
 python -m chisurf.gui.tools.fret.calculator
-python -m chisurf.gui.tools.kappa2_distribution
+python -m chisurf.plugins.kappa2_dist
 
 python -m chisurf.gui.tools.tttr.convert
 python -m chisurf.gui.tools.tttr.correlate
