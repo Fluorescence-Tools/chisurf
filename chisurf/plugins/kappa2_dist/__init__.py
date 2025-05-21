@@ -26,7 +26,7 @@ standard assumptions about fluorophore mobility may not apply.
 """
 
 import sys
-from k2dist.k2dgui import Kappa2Dist
+from .k2dgui import Kappa2Dist
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Tools:Kappa2 Distribution"
