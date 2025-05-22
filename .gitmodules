@@ -33,10 +33,10 @@
 [submodule "modules/quest"]
 	path = modules/quest
 	url = https://github.com/fluorescence-tools/quest
+[submodule "modules/ucfret"]
+	path = modules/ucfret
+	url = https://gitlab.peulen.xyz/imp/ucfret.git
 [submodule "modules/tttrlib"]
 	path = modules/tttrlib
 	url = https://github.com/fluorescence-tools/tttrlib
 	branch = development
-[submodule "modules/ucfret"]
-	path = modules/ucfret
-	url = https://gitlab.peulen.xyz/imp/ucfret.git
