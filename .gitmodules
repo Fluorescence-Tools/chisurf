@@ -22,10 +22,6 @@
 	path = modules/chinet
 	url = https://github.com/tpeulen/chinet.git
 	branch = development
-[submodule "tools"]
-	path = tools
-	url = https://gitlab.peulen.xyz/build/tools
-	branch = master
 [submodule "modules/scikit-fluorescence"]
 	path = modules/scikit-fluorescence
 	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
