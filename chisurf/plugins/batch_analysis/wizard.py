@@ -133,10 +133,9 @@ class WelcomePage(QWizardPage):
         info_label = QLabel(
             "This wizard helps you process files in batch.\n\n"
             "Follow these steps:\n"
-            "1. Select the files you want to process (drag and drop supported).\n"
-            "2. Choose a fit method which will serve as a template for the batch.\n"
-            "3. Specify where to save the results.\n"
-            "4. Run the fits and review the detailed results.\n\n"
+            "1. Load the data that you want to process in ChiSurf.\n"
+            "2. Create a fit in ChiSurf for one of the loaded data sets.\n"
+            "3. Open / reopen the batch processing wizard.\n"
             "IMPORTANT:\n"
             "The initial parameter values are taken from the template fit. "
             "Before batch processing, you should manually optimize the parameters of "
