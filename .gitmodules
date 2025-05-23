@@ -1,7 +1,3 @@
-[submodule "modules/ndxplorer"]
-	path = modules/ndxplorer
-	url = https://github.com/fluorescence-tools/ndxplorer
-	branch = development
 [submodule "modules/clsmview"]
 	path = modules/clsmview
 	url = https://github.com/fluorescence-tools/clsmview
@@ -40,3 +36,7 @@
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
 	branch = master
+[submodule "modules/ndxplorer"]
+	path = modules/ndxplorer
+	url = https://github.com/fluorescence-tools/ndxplorer
+	branch = development
