@@ -24,7 +24,6 @@ cd eigen && git switch 3.4
 cd ../../../..
 pip install modules/labellib --no-deps --prefix="$PREFIX"
 
-pip install modules/scikit-fluorescence --no-deps --prefix="$PREFIX"
 pip install modules/clsmview --no-deps --prefix="$PREFIX"
 pip install modules/ndxplorer --no-deps --prefix="$PREFIX"
 pip install modules/tttrconvert --no-deps --prefix="$PREFIX"
@@ -78,14 +77,13 @@ cmake -S .. -B . \
   -DCMAKE_INSTALL_PREFIX="$PREFIX" \
   -DBUILD_PYTHON_INTERFACE=ON \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SP_DIR" \
-  -DCMAKE_SWIG_OUTDIR="$SP_DIR" \
-  -DPython_ROOT_DIR="${PREFIX}/bin" \
   -DBUILD_LIBRARY=OFF \
-  -DBUILD_PYTHON_DOCS=ON \
   -DWITH_AVX=OFF \
-  -DBUILD_PHOTON_HDF=OFF \
-  -DBoost_USE_STATIC_LIBS=OFF
+  -DBoost_USE_STATIC_LIBS=OFF \
+  -DPython_ROOT_DIR="${PREFIX}/bin" \
+  -DBUILD_PYTHON_DOCS=ON \
+  -G Ninja \
+  ${CONFIG_ARGS}
 make install -j ${CPU_COUNT}
 cd ../../..
 
