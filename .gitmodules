@@ -18,10 +18,6 @@
 	path = modules/chinet
 	url = https://github.com/tpeulen/chinet
 	branch = development
-[submodule "modules/scikit-fluorescence"]
-	path = modules/scikit-fluorescence
-	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
-	branch = master
 [submodule "modules/ucfret"]
 	path = modules/ucfret
 	url = https://gitlab.peulen.xyz/imp/ucfret

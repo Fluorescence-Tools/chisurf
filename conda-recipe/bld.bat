@@ -29,7 +29,6 @@ cmake --install build --prefix %PREFIX%
 cd ..
 
 echo %CD%
-pip install .\scikit-fluorescence --no-deps --prefix=%PREFIX%
 pip install .\clsmview --no-deps --prefix=%PREFIX%
 pip install .\ndxplorer --no-deps --prefix=%PREFIX%
 pip install .\tttrconvert --no-deps --prefix=%PREFIX%
