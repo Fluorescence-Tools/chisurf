@@ -1443,7 +1443,8 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
         self.donor = LifetimeWidget(
             parent=self,
             model=self,
-            title='Donor(0)'
+            title='Donor(0)',
+            name='donor'
         )
         self.fret_rates = DiscreteDistanceWidget(
             donors=self.donor,
@@ -1505,10 +1506,14 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         self.donor = LifetimeWidget(
             parent=self,
             model=self,
-            title='Donor(0)'
+            title='Donor(0)',
+            name='donor'
         )
 
         super().__init__(fit, **kwargs)
+
+        # The donor widget is already set as an attribute of self at the beginning of the method
+        # No need to set it again
 
         layout = QtWidgets.QVBoxLayout()
         self.layout.addLayout(layout)
