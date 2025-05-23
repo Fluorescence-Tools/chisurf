@@ -16,7 +16,7 @@
 	branch = master
 [submodule "modules/chinet"]
 	path = modules/chinet
-	url = https://github.com/tpeulen/chinet.git
+	url = https://github.com/tpeulen/chinet
 	branch = development
 [submodule "modules/scikit-fluorescence"]
 	path = modules/scikit-fluorescence
@@ -27,7 +27,7 @@
 	url = https://github.com/fluorescence-tools/quest
 [submodule "modules/ucfret"]
 	path = modules/ucfret
-	url = https://gitlab.peulen.xyz/imp/ucfret.git
+	url = https://gitlab.peulen.xyz/imp/ucfret
 [submodule "modules/tttrlib"]
 	path = modules/tttrlib
 	url = https://github.com/fluorescence-tools/tttrlib
