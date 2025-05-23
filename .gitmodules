@@ -22,9 +22,6 @@
 	path = modules/scikit-fluorescence
 	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
 	branch = master
-[submodule "modules/quest"]
-	path = modules/quest
-	url = https://github.com/fluorescence-tools/quest
 [submodule "modules/ucfret"]
 	path = modules/ucfret
 	url = https://gitlab.peulen.xyz/imp/ucfret
@@ -40,3 +37,7 @@
 	path = modules/ndxplorer
 	url = https://github.com/fluorescence-tools/ndxplorer
 	branch = development
+[submodule "modules/quest"]
+	path = modules/quest
+	url = https://github.com/fluorescence-tools/quest
+	branch = master
