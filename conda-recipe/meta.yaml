@@ -29,10 +29,6 @@ requirements:
     - python
     - git
     - swig <4.3.0
-    - pkg-config   # [not win]
-    - llvm-openmp  # [osx]
-    - libgomp      # [linux]
-    - pip
     - numpy
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
@@ -46,12 +42,10 @@ requirements:
     - numpy
     - pyqt           # Needed for pyrcc5 (updating PyQt resource files)
     # Needed for chinet
-    - libmongoc
     - doxygen
     - boost-cpp
-    - numpy
     # Needed to build tttrlib
-    - hdf5                # [win]
+    - hdf5
   run:
     - python =3.10
     - typing-extensions 4.5.*
@@ -80,7 +74,6 @@ requirements:
     - guiqwt
     - python-docx
     - qtconsole 5.2.*
-    - ipython
     - pyqtwebengine
     - libcxx  # [osx]
     - hmmlearn

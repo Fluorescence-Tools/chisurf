@@ -44,6 +44,7 @@ cmake -S .. -B . \
   -DBUILD_PYTHON_DOCS=ON \
   -DPython_ROOT_DIR="${PREFIX}/bin" \
   -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="${PREFIX}" \
+  -DWITH_MONGODB=OFF \
   -G Ninja
 ninja install -j ${CPU_COUNT}
 cd ../../..
