@@ -59,6 +59,7 @@ cmake .. -G "Visual Studio 17 2022" -A x64 ^
  -DBUILD_LIBRARY=OFF ^
  -DBUILD_PYTHON_DOCS=ON ^
  -DWITH_AVX=OFF ^
+ -DWITH_MONGODB=OFF ^
  -Wno-dev ^
  -DBoost_USE_STATIC_LIBS=OFF
 :: Build and install the project

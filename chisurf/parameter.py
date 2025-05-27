@@ -72,7 +72,7 @@ class Parameter(chisurf.base.Base):
 
         :return:
         """
-        return self._port.value[0]
+        return self._port.value
 
     @value.setter
     def value(self, value: float):
