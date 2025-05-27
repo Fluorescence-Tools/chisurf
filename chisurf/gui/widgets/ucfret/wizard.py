@@ -16,7 +16,7 @@ import chisurf.fluorescence.general
 import chisurf.fio as io
 
 # Import scikit_fluorescence for TCSPC data handling
-import scikit_fluorescence as skf
+import ucfret.skf as skf
 
 # Import ucfret module
 import ucfret
