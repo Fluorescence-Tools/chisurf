@@ -17,7 +17,7 @@ def bin_lifetime_spectrum(
     discriminate: bool,
     discriminator=None
 ) -> np.array:
-    """Takes a interleaved lifetime spectrum
+    """Takes an interleaved lifetime spectrum
 
     :param lifetime_spectrum: interleaved lifetime spectrum
     :param n_lifetimes:
@@ -49,11 +49,6 @@ def bin_lifetime_spectrum(
     return binned_lifetime_spectrum
 
 
-@deprecation.deprecated(
-        deprecated_in="20.06.02",
-        current_version="19.08.23",
-        details="Moved to scikit-fluorescence"
-    )
 @nb.jit(nopython=True, nogil=True)
 def rescale_w_bg(
         model_decay: np.array,
