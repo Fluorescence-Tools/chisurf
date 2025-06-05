@@ -210,15 +210,15 @@ class Main(QtWidgets.QMainWindow):
             executor: str = 'console',
             globals=None, locals=None
     ):
-        chisurf.logging.info(f"Running macro: {filename}")
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(
                 "Python macros",
                 file_type="Python file (*.py)"
             )
+        chisurf.logging.info(f"Running macro: {filename.as_posix()}")
         if executor == 'console':
             filename_str = filename.as_posix()
-            chisurf.run(f"chisurf.console.run_macro(filename='{filename_str}')")
+            chisurf.console.run_macro(filename=filename.as_posix())
         elif executor == 'exec':
             if globals is None:
                 # Create a globals dictionary with essential modules and variables
