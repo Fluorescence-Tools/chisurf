@@ -25,6 +25,52 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         self.actionIsjordiChanged.triggered.connect(self.onParametersChanged)
         self.actionMatrixColumnsChanged.triggered.connect(self.onParametersChanged)
 
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        import chisurf
+        # Get the current setup
+        setup = chisurf.cs.current_setup
+
+        # Update is_jordi checkbox
+        self.checkBox_3.setChecked(setup.is_jordi)
+
+        # Update matrix_columns line edit
+        self.lineEdit.setText(' '.join(map(str, setup.matrix_columns)) if setup.matrix_columns else '')
+
+        # Update g_factor spin box
+        self.doubleSpinBox_3.setValue(setup.g_factor)
+
+        # Update polarization radio buttons
+        pol = setup.polarization
+        if pol == 'vv':
+            self.radioButton_3.setChecked(True)
+        elif pol == 'vh':
+            self.radioButton_2.setChecked(True)
+        else:  # 'vm'
+            self.radioButton.setChecked(True)
+
+        # Update rep_rate spin box
+        self.doubleSpinBox.setValue(setup.rep_rate)
+
+        # Update rebin combo boxes
+        rebin_x, rebin_y = setup.rebin
+        # Find and set the index for rebin_y
+        index_y = self.comboBox.findText(str(rebin_y))
+        if index_y >= 0:
+            self.comboBox.setCurrentIndex(index_y)
+
+        # Find and set the index for rebin_x
+        index_x = self.comboBox_2.findText(str(rebin_x))
+        if index_x >= 0:
+            self.comboBox_2.setCurrentIndex(index_x)
+
+        # Update dt spin box
+        # Note: We need to handle the case where dt is scaled by rebin
+        if self.checkBox_2.isChecked():
+            self.doubleSpinBox_2.setValue(setup.dt / rebin_y)
+        else:
+            self.doubleSpinBox_2.setValue(setup.dt)
+
     def onParametersChanged(self):
         is_jordi = bool(self.checkBox_3.isChecked())
         try:
@@ -83,8 +129,13 @@ class TCSPCReaderControlWidget(
         self.layout = layout
         csv_widget = chisurf.gui.widgets.fio.CsvWidget()
         self.layout.addWidget(csv_widget)
-        csv_tcspc_widget = CsvTCSPCWidget()
-        self.layout.addWidget(csv_tcspc_widget)
+        self.csv_tcspc_widget = CsvTCSPCWidget()
+        self.layout.addWidget(self.csv_tcspc_widget)
+
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        # Call updateUI on the CsvTCSPCWidget
+        self.csv_tcspc_widget.updateUI()
 
 
 class TCSPCTTTRReaderControlWidget(
@@ -109,6 +160,27 @@ class TCSPCTTTRReaderControlWidget(
         # Call onParametersChanged on show to make sure that the
         # settings match the UI
         self.onParametersChanged()
+
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        import chisurf
+        # Get the current setup
+        setup = chisurf.cs.current_setup
+
+        # Update channel_numbers line edit
+        self.lineEdit.setText(', '.join(map(str, setup.channel_numbers)) if hasattr(setup, 'channel_numbers') else '')
+
+        # Update reading_routine combo box
+        if hasattr(setup, 'reading_routine'):
+            index = self.comboBox.findText(setup.reading_routine)
+            if index >= 0:
+                self.comboBox.setCurrentIndex(index)
+
+        # Update micro_time_coarsening combo box
+        if hasattr(setup, 'micro_time_coarsening'):
+            index = self.comboBox_2.findText(str(setup.micro_time_coarsening))
+            if index >= 0:
+                self.comboBox_2.setCurrentIndex(index)
 
     def onParametersChanged(self):
         micro_time_coarsening = self.comboBox_2.currentText()
@@ -140,6 +212,32 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
     def get_filename(self) -> pathlib.Path:
         return pathlib.Path(self.lineEdit.text())
+
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        import chisurf
+        # Get the current setup
+        setup = chisurf.cs.current_setup
+
+        # Update sample_name line edit
+        if hasattr(setup, 'sample_name'):
+            self.lineEdit.setText(setup.sample_name)
+
+        # Update dt spin box
+        if hasattr(setup, 'dt'):
+            self.doubleSpinBox.setValue(setup.dt)
+
+        # Update n_tac spin box
+        if hasattr(setup, 'n_tac'):
+            self.spinBox.setValue(setup.n_tac)
+
+        # Update p0 spin box
+        if hasattr(setup, 'p0'):
+            self.spinBox_2.setValue(setup.p0)
+
+        # Update lifetime_spectrum line edit
+        if hasattr(setup, 'lifetime_spectrum'):
+            self.lineEdit_2.setText(', '.join(map(str, setup.lifetime_spectrum)) if setup.lifetime_spectrum.size > 0 else '')
 
     def onParametersChanged(self):
         dt = self.doubleSpinBox.value()
