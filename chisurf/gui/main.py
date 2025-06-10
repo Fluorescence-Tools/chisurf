@@ -107,6 +107,8 @@ class Main(QtWidgets.QMainWindow):
         if combo.currentIndex() != idx:
             combo.setCurrentIndex(idx)
             self._current_experiment_idx = idx
+            # Call onExperimentChanged to update the GUI
+            self.onExperimentChanged()
 
     @property
     def current_setup_idx(self) -> int:
@@ -131,13 +133,25 @@ class Main(QtWidgets.QMainWindow):
     def current_setup(self, name: str) -> None:
         i = self.current_setup_idx
         j = i
+        setup_found = False
         for j, s in enumerate(
                 self.current_experiment.readers
         ):
             if s.name == name:
+                setup_found = True
                 break
+        if not setup_found:
+            # Display a popup message if the setup name doesn't exist
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="Setup Not Found",
+                info=f"Setup '{name}' does not exist in the current experiment.",
+                show_fortune=False
+            )
+            return
         if j != i:
             self.current_setup_idx = j
+            # Call onSetupChanged to update the GUI
+            self.onSetupChanged()
 
     @property
     def current_experiment_reader(self):
@@ -215,7 +229,7 @@ class Main(QtWidgets.QMainWindow):
                 "Python macros",
                 file_type="Python file (*.py)"
             )
-        chisurf.logging.info(f"Running macro: {filename.as_posix()}")
+        chisurf.logging.info(f"Running script: {filename}")
         if executor == 'console':
             filename_str = filename.as_posix()
             chisurf.console.run_macro(filename=filename.as_posix())
@@ -476,15 +490,19 @@ class Main(QtWidgets.QMainWindow):
         )
         chisurf.run(f"cs.current_setup = '{self.current_setup_name}'")
         try:
-            self.layout_experiment_reader.addWidget(
-                self.current_setup
-            )
-            self.current_setup.show()
+            widget = self.current_setup
+            self.layout_experiment_reader.addWidget(widget)
+            widget.show()
+            # Update UI elements if the widget has an updateUI method
+            if hasattr(widget, 'updateUI') and callable(widget.updateUI):
+                widget.updateUI()
         except TypeError:
-            self.layout_experiment_reader.addWidget(
-                self.current_setup.controller
-            )
-            self.current_setup.controller.show()
+            widget = self.current_setup.controller
+            self.layout_experiment_reader.addWidget(widget)
+            widget.show()
+            # Update UI elements if the controller has an updateUI method
+            if hasattr(widget, 'updateUI') and callable(widget.updateUI):
+                widget.updateUI()
         self._current_setup_idx = self.comboBox_setupSelect.currentIndex()
 
     def onCloseAllFits(self):
@@ -1055,6 +1073,11 @@ class Main(QtWidgets.QMainWindow):
         super().update()
         self.fit_selector.update()
         self.dataset_selector.update()
+
+    def update_setup_ui(self):
+        """Update the UI to reflect changes in current_setup properties."""
+        # Call onSetupChanged to update the UI
+        self.onSetupChanged()
 
     def arrange_widgets(self):
         # self.setCentralWidget(self.mdiarea)
