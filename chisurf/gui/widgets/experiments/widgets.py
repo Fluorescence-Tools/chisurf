@@ -158,14 +158,26 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
                     experiment_type = di.experiment.name
                     widget_name = pathlib.Path(fn).name
                     i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
-                    i2.setToolTip(1, fn)
+                    tooltip = di.filename
+                    if tooltip == "None" or tooltip == "No file":
+                        tooltip = fn
+                    # Check if meta_data contains a filename
+                    if hasattr(di, 'meta_data') and di.meta_data and 'filename' in di.meta_data:
+                        tooltip = di.meta_data['filename']
+                    i2.setToolTip(1, tooltip)
                     i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
             else:
                 fn = d.name
                 widget_name = pathlib.Path(fn).name
                 experiment_type = d.experiment.name
                 item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
-                item.setToolTip(1, fn)
+                tooltip = d.filename
+                if tooltip == "None" or tooltip == "No file":
+                    tooltip = fn
+                # Check if meta_data contains a filename
+                if hasattr(d, 'meta_data') and d.meta_data and 'filename' in d.meta_data:
+                    tooltip = d.meta_data['filename']
+                item.setToolTip(1, tooltip)
                 item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
         # update other instances
@@ -318,6 +330,16 @@ class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.layout = layout
-        self.layout.addWidget(
-            chisurf.gui.widgets.fio.CsvWidget()
-        )
+        self.csv_widget = chisurf.gui.widgets.fio.CsvWidget()
+        self.layout.addWidget(self.csv_widget)
+
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        import chisurf
+        # Get the current setup
+        setup = chisurf.cs.current_setup
+
+        # Update any UI elements based on setup properties
+        # For now, this is a placeholder implementation
+        # If there are specific properties that need to be updated,
+        # they can be added here in the future
