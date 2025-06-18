@@ -118,7 +118,8 @@ metadata = dict(
             '*.ui', '*.css', '*.qss',
             '*.png', '*.svg',
             '*.csv', '*.npy', '*.dat',
-            '*.dll', '*.so', '*.pyd', '*.ipynb'
+            '*.dll', '*.so', '*.pyd', '*.ipynb',
+            '*.db'
         ]
     },
     install_requires=[
