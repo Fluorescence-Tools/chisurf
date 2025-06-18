@@ -394,7 +394,7 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         self.listWidget.clear()  # Clear file list
         self.plotWidget.clear()  # Clear plot
         self.listWidget_BID.clear() # Clear bid files
-        self.comboBox.setCurrentIndex(0)  # Reset combobox to "Auto"
+        # Removed: self.comboBox.setCurrentIndex(0)  # Reset combobox to "Auto"
 
     def update_output_filename(self):
         """Update the output filename in based on selected files and channel numbers."""
