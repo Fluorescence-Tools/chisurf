@@ -54,6 +54,7 @@ requirements:
     - pyqt
     - pyyaml
     - click
+    - click-didyoumean
     - pyqtgraph
     - matplotlib
     - scikit-image
