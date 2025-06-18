@@ -157,6 +157,10 @@ optimization:
 parameter:
   bounds_on: false
   decimals: 3
+  error_color_small: green
+  error_color_large: magenta
+  error_threshold_small: 20
+  error_threshold_large: 100
   fixable: false
   fixed: false
   hide_bounds: false
