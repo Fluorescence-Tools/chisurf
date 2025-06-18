@@ -159,6 +159,10 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
 
         item_select_layout.addWidget(QtWidgets.QLabel("Item:"))
         self.item_combo = QtWidgets.QComboBox()
+        self.item_combo.setEditable(True)
+        self.item_combo.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+        self.item_combo.completer().setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.item_combo.completer().setFilterMode(QtCore.Qt.MatchContains)
         self.item_combo.currentIndexChanged.connect(self.on_item_changed)
         item_select_layout.addWidget(self.item_combo)
 
