@@ -7,6 +7,7 @@ import pathlib
 import numpy as np
 import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
+import matplotlib.colors as mcolors
 
 import chisurf.data
 import chisurf.fitting
@@ -707,7 +708,8 @@ class FittingParameterWidget(Controller):
         self.widget_value.setValue(v)
 
     def finalize(self, *args):
-        super().update(*args)
+        print("Finalizing FittingParameterWidget: ", self.fitting_parameter.name, " ...")
+        #super().update(*args)
         self.blockSignals(True)
 
         # Update value of widget
@@ -731,9 +733,44 @@ class FittingParameterWidget(Controller):
 
         if self.fitting_parameter.fixed or not isinstance(error_estimate, float):
             self.lineEdit.setText("NA")
+            # Reset background color to default
+            self.lineEdit.setStyleSheet("")
         else:
             rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
             self.lineEdit.setText("NA" if np.isnan(rel_error) else f"{rel_error:.0f}%")
+
+            # Set background color based on relative error
+            if not np.isnan(rel_error):
+                # Create a colormap from error_color_small to error_color_large
+                # Use default values if settings are not found
+                error_color_small = parameter_settings.get('error_color_small', 'green')
+                error_color_large = parameter_settings.get('error_color_large', 'magenta')
+                error_threshold_small = parameter_settings.get('error_threshold_small', 20)
+                error_threshold_large = parameter_settings.get('error_threshold_large', 100)
+
+                cmap = mcolors.LinearSegmentedColormap.from_list(
+                    'error_color_gradient', 
+                    [(0, error_color_small), (1, error_color_large)]
+                )
+
+                # Normalize error value: error_threshold_small -> error_color_small, error_threshold_large -> error_color_large
+                error_range = error_threshold_large - error_threshold_small
+                norm_error = min(1.0, max(0.0, (rel_error - error_threshold_small) / error_range))
+
+                # Get RGB color from colormap
+                rgb_color = cmap(norm_error)
+
+                # Convert RGB to hex for stylesheet
+                hex_color = mcolors.rgb2hex(rgb_color)
+
+                # Set background color and ensure text is readable
+                # Use white text for darker backgrounds, black for lighter ones
+                r, g, b = rgb_color[:3]
+                brightness = 0.299 * r + 0.587 * g + 0.114 * b
+                text_color = "white" if brightness < 0.5 else "black"
+
+                # Set background color and text color
+                self.lineEdit.setStyleSheet(f"background-color: {hex_color}; color: {text_color};")
 
         # Link
         if self.fitting_parameter.link is not None:
