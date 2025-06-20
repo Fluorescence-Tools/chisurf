@@ -553,7 +553,7 @@ def setup_gui(
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
-        plugin_path = pathlib.Path(chisurf.plugins.__file__) / "browser"
+        plugin_path = pathlib.Path(chisurf.plugins.__file__).parent / "browser"
 
         # Define the target directory inside the home directory
         chisurf_notebooks_dir = home_dir / "notebooks"
@@ -562,7 +562,9 @@ def setup_gui(
         def copy_notebook(src, dest_dir):
             """Copy a notebook file using pathlib only."""
             dest_file = dest_dir / src.name
-            dest_file.write_bytes(src.read_bytes())  # Read and write in binary mode
+            if not dest_file.exists():  # Only copy if the file doesn't exist
+                dest_file.write_bytes(src.read_bytes())  # Read and write in binary mode
+                chisurf.logging.info(f"Copied notebook: {src.name} to {dest_file}")
             return dest_file
 
         def add_notebook(notebook_file):
@@ -599,12 +601,18 @@ def setup_gui(
                 action.triggered.connect(p)
                 notebook_menu.addAction(action)
 
+        # Copy all notebooks from the package to the user's home directory
+        # This ensures that all shipped notebooks are available to the user
+        notebook_path = chisurf_path / 'notebooks'
+        chisurf.logging.info(f"Checking for notebooks in: {notebook_path}")
+        for notebook_file in sorted(notebook_path.glob("*.ipynb")):
+            copy_notebook(notebook_file, chisurf_notebooks_dir)
+
         # Add the Jupyter root directory with `/tree/`
         add_notebook(home_dir)
 
-        # Load notebooks from settings
-        notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
-        for notebook_file in sorted(notebook_path.glob("*.ipynb")):
+        # Load notebooks from user's home directory for the menu
+        for notebook_file in sorted(chisurf_notebooks_dir.glob("*.ipynb")):
             add_notebook(notebook_file)
 
     if stage is None:
