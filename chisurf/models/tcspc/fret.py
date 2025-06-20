@@ -640,7 +640,7 @@ class FRETrateModel(FRETModel):
 
 class WormLikeChainModel(FRETModel):
 
-    name = "FD(A): Worm-like chain"
+    name = "FRET: FD (Worm-like chain)"
 
     @property
     def distance_distribution(self):
