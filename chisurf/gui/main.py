@@ -488,7 +488,6 @@ class Main(QtWidgets.QMainWindow):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
         )
-        chisurf.run(f"cs.current_setup = '{self.current_setup_name}'")
         try:
             widget = self.current_setup
             self.layout_experiment_reader.addWidget(widget)
@@ -841,7 +840,6 @@ class Main(QtWidgets.QMainWindow):
 
         except Exception as e:
             chisurf.logging.error(f"Error loading plugin {module_path}: {e}")
-
 
     def init_console(self):
         self.verticalLayout_4.addWidget(chisurf.console)
