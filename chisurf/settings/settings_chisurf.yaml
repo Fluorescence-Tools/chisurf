@@ -216,14 +216,6 @@ tcspc:
   shift_bg_with_irf: true
   ts: 0
 tcspc_csv:
-  dt: 1
-  g_factor: 1
-  is_jordi: false
-  polarization: vm
-  rebin:
-  - 1
-  - 1
-  rep_rate: 10
   skiprows: 11
   use_header: true
 verbose: false

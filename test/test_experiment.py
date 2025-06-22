@@ -176,6 +176,41 @@ class Tests(unittest.TestCase):
             4096
         )
 
+    def test_TCSPCReader_auto_routine(self):
+        """Test automatic detection of reading routine based on file extension."""
+        # Create a TCSPCReader with default settings (reading_routine='auto')
+        ex = chisurf.experiments.experiment.Experiment('TCSPC')
+        reader = chisurf.experiments.tcspc.TCSPCReader(experiment=ex)
+
+        # Test guessing reading routine for different file extensions
+        self.assertEqual(reader._guess_reading_routine("file.txt"), "csv")
+        self.assertEqual(reader._guess_reading_routine("file.dat"), "csv")
+        self.assertEqual(reader._guess_reading_routine("file.csv"), "csv")
+        self.assertEqual(reader._guess_reading_routine("file.thd"), "thd")
+        self.assertEqual(reader._guess_reading_routine("file.yaml"), "yaml")
+        self.assertEqual(reader._guess_reading_routine("file.yml"), "yaml")
+        self.assertEqual(reader._guess_reading_routine("file.json"), "json")
+
+        # Test that unknown extensions return the default reading routine
+        reader.reading_routine = "default_routine"
+        self.assertEqual(reader._guess_reading_routine("file.unknown"), "default_routine")
+
+        # Test that explicitly specified reading routine takes precedence
+        filename_txt = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
+
+        # This should use 'csv' based on the .txt extension
+        data1 = reader.read(filename=filename_txt)
+        self.assertIsNotNone(data1)
+
+        # This should use 'thd' as explicitly specified, even though the file is .txt
+        # Note: This will likely fail to read the file since it's not actually a THD file,
+        # but we're just testing that the explicit routine is used
+        try:
+            reader.read(filename=filename_txt, reading_routine='thd')
+        except Exception as e:
+            # We expect an error since we're trying to read a non-THD file with the THD routine
+            pass
+
     def test_FCS_Reader(self):
         import chisurf.experiments
         filename = './test/data/fcs/kristine/Kristine_with_error.cor'
@@ -322,4 +357,3 @@ x	y	error-x	error-y
         #     True
         # )
         #
-

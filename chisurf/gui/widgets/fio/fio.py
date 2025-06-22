@@ -177,7 +177,10 @@ class CsvWidget(
         colspecs = str(self.lineEdit.text())
         use_header = bool(self.checkBox_2.isChecked())
         n_skip = int(self.spinBox.value())
-        if self.radioButton_2.isChecked():
+        # If "Auto" is selected, the reading routine will be automatically determined based on the file extension
+        if self.radioButton_4.isChecked():
+            mode = 'auto'
+        elif self.radioButton_2.isChecked():
             mode = 'csv'
         elif self.radioButton.isChecked():
             mode = 'fwf'
