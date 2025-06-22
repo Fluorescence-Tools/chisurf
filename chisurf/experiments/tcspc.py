@@ -37,11 +37,47 @@ class TCSPCReader(reader.ExperimentReader):
             fit_area: float = None,
             fit_start_fraction: float = None,
             fit_count_threshold: float = None,
-            reading_routine: str = 'csv',
+            reading_routine: str = 'auto',
             *args,
             **kwargs
     ):
-        """
+        """Initialize a TCSPCReader instance.
+
+        Parameters
+        ----------
+        dt : float, optional
+            Time resolution in nanoseconds
+        rep_rate : float, optional
+            Repetition rate in MHz
+        is_jordi : bool, optional
+            Whether the file is in Jordi format
+        mode : str, optional
+            Polarization mode
+        g_factor : float, optional
+            G-factor for anisotropy calculations
+        rebin : tuple of int, optional
+            Rebinning factors for x and y axes
+        matrix_columns : tuple of int, optional
+            Columns to use from the data matrix
+        skiprows : int, optional
+            Number of rows to skip at the beginning of the file
+        polarization : str, optional
+            Polarization mode
+        use_header : bool, optional
+            Whether to use the header in the file
+        fit_area : float, optional
+            Area to fit
+        fit_start_fraction : float, optional
+            Fraction of the data to use for fitting
+        fit_count_threshold : float, optional
+            Threshold for counts in fitting
+        reading_routine : str, optional
+            Reading routine to use. If set to 'auto' (default), the routine will be
+            guessed based on the file extension:
+            - '.thd' -> 'thd' (PicoQuant THD files)
+            - '.txt', '.dat', '.csv' -> 'csv' (CSV files)
+            - '.yaml', '.yml' -> 'yaml' (YAML files)
+            - '.json' -> 'json' (JSON files)
 
         Example
         -------
@@ -51,7 +87,7 @@ class TCSPCReader(reader.ExperimentReader):
         >>> ex = chisurf.experiments.experiment.Experiment('TCSPC')
         >>> dt = 0.0141
         >>> g1 = chisurf.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)
-        >>> data = g1.read(filename=filename)
+        >>> data = g1.read(filename=filename)  # reading_routine will be guessed as 'csv' based on the .txt extension
         >>> x = data.x
         >>> y = data.y
         >>> p.plot(x, y)
@@ -95,8 +131,63 @@ class TCSPCReader(reader.ExperimentReader):
             verbose=chisurf.settings.cs_settings['verbose']
         )
 
+    def _guess_reading_routine(self, filename: str) -> str:
+        """Guess the reading routine based on the filename extension.
+
+        This method extracts the file extension from the filename and maps it to
+        the appropriate reading routine. If the extension is not recognized, it
+        returns the default reading routine specified in the class instance.
+
+        The current mapping is:
+        - '.thd' -> 'thd' (PicoQuant THD files)
+        - '.txt', '.dat', '.csv' -> 'csv' (CSV files)
+        - '.yaml', '.yml' -> 'yaml' (YAML files)
+        - '.json' -> 'json' (JSON files)
+
+        Parameters
+        ----------
+        filename : str
+            The filename to guess the reading routine for
+
+        Returns
+        -------
+        str
+            The guessed reading routine, or the default reading routine if the
+            extension is not recognized or the filename is None
+        """
+        if filename is None:
+            return self.reading_routine
+
+        # Get the file extension
+        _, ext = os.path.splitext(filename)
+        ext = ext.lower()
+
+        # Map file extensions to reading routines
+        extension_map = {
+            '.thd': 'thd',
+            '.txt': 'csv',
+            '.dat': 'csv',
+            '.csv': 'csv',
+            '.yaml': 'yaml',
+            '.yml': 'yaml',
+            '.json': 'json'
+        }
+
+        # Return the reading routine for the extension, or the default if not found
+        return extension_map.get(ext, self.reading_routine)
+
     def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
-        if self.reading_routine == 'csv':
+        import chisurf.fio.fluorescence.thdfile
+        import chisurf.data
+
+        # Guess the reading routine if not explicitly overridden in kwargs
+        reading_routine = kwargs.get('reading_routine', self.reading_routine)
+
+        # If the reading routine is not explicitly set, guess it from the filename
+        if reading_routine == 'auto' or (reading_routine == self.reading_routine and self.reading_routine == 'auto'):
+            reading_routine = self._guess_reading_routine(filename)
+
+        if reading_routine == 'csv':
             data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
                 filename=filename,
                 skiprows=self.skiprows,
@@ -110,8 +201,16 @@ class TCSPCReader(reader.ExperimentReader):
                 experiment=self.experiment,
                 data_reader=self
             )
+        elif reading_routine == 'thd':
+            data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.thdfile.read_tcspc_thd(
+                filename=filename,
+                rebin=self.rebin,
+                dt=self.dt,
+                experiment=self.experiment,
+                data_reader=self
+            )
         else:
-            if self.reading_routine == 'yaml':
+            if reading_routine == 'yaml':
                 file_type = 'yaml'
                 data_set = chisurf.data.DataCurve()
                 data_set.load(
@@ -123,7 +222,7 @@ class TCSPCReader(reader.ExperimentReader):
             else:
                 chisurf.logging.warning(
                     "Reading routine '%s' not supported. "
-                    "Created empty DataGroup" % self.reading_routine
+                    "Created empty DataGroup" % reading_routine
                 )
                 data_group = chisurf.data.DataGroup([])
         data_group.data_reader = self
