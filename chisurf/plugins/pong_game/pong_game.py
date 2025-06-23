@@ -25,16 +25,23 @@ class PongBoard(QFrame):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFixedSize(WindowWidth, WindowHeight)
 
-        # Paddle movement state
+        # Game mode (True = 1 player vs CPU, False = 2 players)
+        self.vsComputer = True
+
+        # Paddle movement state for player 1 (left)
         self.upPressed = False
         self.downPressed = False
+
+        # Paddle movement state for player 2 (right)
+        self.wPressed = False
+        self.sPressed = False
 
         self.timer = QBasicTimer()
         self.isStarted = False
 
-        # Player paddle (left)
+        # Player 1 paddle (left)
         self.playerY = (WindowHeight - PaddleHeight) / 2
-        # CPU paddle (right)
+        # Player 2 or CPU paddle (right)
         self.cpuY = (WindowHeight - PaddleHeight) / 2
 
         # Ball
@@ -71,33 +78,64 @@ class PongBoard(QFrame):
                 self.timer.start(16, self)
             self.isStarted = not self.isStarted
 
+        elif event.key() == Qt.Key_M:
+            # Toggle between 1 player vs CPU and 2 players mode
+            self.vsComputer = not self.vsComputer
+            self.resetBall()
+            # Update window title based on game mode
+            self.parent().setWindowTitle('Pong with CPU Opponent' if self.vsComputer else 'Pong - 2 Players')
+
+        # Player 1 controls (left paddle)
         elif event.key() == Qt.Key_Up:
             self.upPressed = True
-
         elif event.key() == Qt.Key_Down:
             self.downPressed = True
+
+        # Player 2 controls (right paddle, only in 2 player mode)
+        elif event.key() == Qt.Key_W:
+            self.wPressed = True
+        elif event.key() == Qt.Key_S:
+            self.sPressed = True
 
         super(PongBoard, self).keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
+        # Player 1 controls (left paddle)
         if event.key() == Qt.Key_Up:
             self.upPressed = False
         elif event.key() == Qt.Key_Down:
             self.downPressed = False
+
+        # Player 2 controls (right paddle)
+        elif event.key() == Qt.Key_W:
+            self.wPressed = False
+        elif event.key() == Qt.Key_S:
+            self.sPressed = False
+
         super(PongBoard, self).keyReleaseEvent(event)
 
     def timerEvent(self, event):
         if event.timerId() != self.timer.timerId():
             return
 
-        # Smooth paddle movement
+        # Player 1 paddle movement (left)
         if self.upPressed:
             self.playerY = max(self.playerY - PaddleSpeed, 0)
         if self.downPressed:
             self.playerY = min(self.playerY + PaddleSpeed, WindowHeight - PaddleHeight)
 
+        # Handle right paddle movement based on game mode
+        if self.vsComputer:
+            # CPU controls the right paddle
+            self.moveCPUPaddle()
+        else:
+            # Player 2 controls the right paddle
+            if self.wPressed:
+                self.cpuY = max(self.cpuY - PaddleSpeed, 0)
+            if self.sPressed:
+                self.cpuY = min(self.cpuY + PaddleSpeed, WindowHeight - PaddleHeight)
+
         self.moveBall()
-        self.moveCPUPaddle()
         self.update()
 
     def moveBall(self):
@@ -175,7 +213,7 @@ class Pong(QMainWindow):
         self.board = PongBoard(self)
         self.setCentralWidget(self.board)
         self.board.setFocus()
-        self.statusBar().showMessage('Use ↑ ↓ to move — Press P to pause')
+        self.statusBar().showMessage('Player 1: ↑ ↓ to move | Player 2: W S to move | M to toggle mode | P to pause')
         self.resize(WindowWidth, WindowHeight)
         self.setWindowTitle('Pong with CPU Opponent')
         self.show()
