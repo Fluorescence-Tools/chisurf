@@ -539,10 +539,58 @@ class Main(QtWidgets.QMainWindow):
         chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
 
     def onOpenHelp(self):
-        webbrowser.open_new(chisurf.info.help_url)
+        """Open the help plugin."""
+        # Import the help plugin
+        import importlib
+        try:
+            help_plugin = importlib.import_module("chisurf.plugins.help")
+            # Create an instance of the HelpWidget class
+            window = help_plugin.HelpWidget()
+            # Show the window
+            window.show()
+        except Exception as e:
+            # Show error message if plugin can't be loaded
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="Help Plugin Error",
+                info=f"Error loading help plugin: {str(e)}",
+                show_fortune=False
+            )
 
     def onOpenUpdate(self):
-        webbrowser.open_new(chisurf.info.help_url)
+        """Open the updater plugin."""
+        # Import the updater plugin
+        import importlib
+        try:
+            updater_plugin = importlib.import_module("chisurf.plugins.updater")
+            # Create an instance of the UpdaterWidget class
+            window = updater_plugin.UpdaterWidget()
+            # Show the window
+            window.show()
+        except Exception as e:
+            # Show error message if plugin can't be loaded
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="Updater Plugin Error",
+                info=f"Error loading updater plugin: {str(e)}",
+                show_fortune=False
+            )
+
+    def onOpenAbout(self):
+        """Open the about plugin."""
+        # Import the about plugin
+        import importlib
+        try:
+            about_plugin = importlib.import_module("chisurf.plugins.about")
+            # Create an instance of the AboutDialog class
+            window = about_plugin.AboutDialog()
+            # Show the window
+            window.show()
+        except Exception as e:
+            # Show error message if plugin can't be loaded
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="About Plugin Error",
+                info=f"Error loading about plugin: {str(e)}",
+                show_fortune=False
+            )
 
     def onClearLocalSettings(self):
         """Reset local settings and show a confirmation popup."""
@@ -1035,8 +1083,6 @@ class Main(QtWidgets.QMainWindow):
         # widget listing the existing fits
         self.fit_selector = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
 
-        self.about = uic.loadUi(pathlib.Path(__file__).parent / "about.ui")
-
         # Setup status bar with progress bar and message
         self.status = QtWidgets.QStatusBar(self)
         self.setStatusBar(self.status)
@@ -1083,8 +1129,6 @@ class Main(QtWidgets.QMainWindow):
         ##########################################################
         #      Help and About widgets                            #
         ##########################################################
-        self.about.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        self.about.hide()
 
         ##########################################################
         #      IPython console                                   #
@@ -1130,7 +1174,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionTab_windows.triggered.connect(self.onTabWindows)
         self.actionCascade.triggered.connect(self.onCascadeWindows)
         self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
-        self.actionAbout.triggered.connect(self.about.show)
+        self.actionAbout.triggered.connect(self.onOpenAbout)
         self.actionHelp_2.triggered.connect(self.onOpenHelp)
         self.actionUpdate.triggered.connect(self.onOpenUpdate)
 
