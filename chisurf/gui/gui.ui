@@ -138,7 +138,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>80</height>
+          <height>71</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -309,15 +309,6 @@
     <addaction name="separator"/>
     <addaction name="actionExit_2"/>
    </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionHelp_2"/>
-    <addaction name="separator"/>
-    <addaction name="actionAbout"/>
-    <addaction name="actionUpdate"/>
-   </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
@@ -363,7 +354,6 @@
    <addaction name="menuView"/>
    <addaction name="menuMacro"/>
    <addaction name="menuSettings"/>
-   <addaction name="menuHelp"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_console">
    <property name="enabled">
@@ -377,8 +367,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>10</width>
-     <height>10</height>
+     <width>80</width>
+     <height>38</height>
     </size>
    </property>
    <property name="maximumSize">
