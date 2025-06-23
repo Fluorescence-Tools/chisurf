@@ -202,6 +202,10 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.current_message = ""
         self.message_color = QtCore.Qt.lightGray  # Light gray text color
 
+        # Get version information
+        from chisurf.info import __version__
+        self.version_text = f"Version: {__version__}"
+
         # Initialize copyright, license, and contributors information
         import datetime
         current_year = datetime.datetime.now().year
@@ -245,11 +249,15 @@ class SplashScreen(QtWidgets.QSplashScreen):
         painter.setFont(font)
 
         # Draw copyright text at the bottom left
-        copyright_rect = QtCore.QRect(10, self.height() - 95, self.width() - 20, 20)
+        copyright_rect = QtCore.QRect(10, self.height() - 100, self.width() - 20, 20)
         painter.drawText(copyright_rect, QtCore.Qt.AlignLeft, self.copyright_text)
 
-        # Draw license text at the bottom center
-        license_rect = QtCore.QRect(10, self.height() - 85, self.width() - 20, 20)
+        # Draw version text below copyright
+        version_rect = QtCore.QRect(10, self.height() - 90, self.width() - 20, 20)
+        painter.drawText(version_rect, QtCore.Qt.AlignLeft, self.version_text)
+
+        # Draw license text below version
+        license_rect = QtCore.QRect(10, self.height() - 80, self.width() - 20, 20)
         painter.drawText(license_rect, QtCore.Qt.AlignLeft, self.license_text)
 
         # Draw contributors text at the bottom right
