@@ -128,5 +128,10 @@ cmake --build . --config Release --target install
 cd ..\..\..
 
 :: Install main module
+:: Note: Version handling is now managed by the CustomBuildPy class in setup.py
+:: This ensures consistent version handling across both pip and conda builds
+:: The CustomBuildPy class will:
+:: 1. Replace the dynamic version with a hardcoded version (current date) during build
+:: 2. Restore the original dynamic version in the source code after the build
 %PYTHON% setup.py build_ext --force --inplace
 %PYTHON% setup.py install --single-version-externally-managed --record=record.txt
