@@ -51,7 +51,8 @@ class UpdaterWidget(QWidget):
         self.cs_settings = cs_settings
 
         # Get update URL from settings or fall back to the one from info.py
-        update_url = cs_settings.get('update_url', '') or info.update_url
+        hardcoded_url = "https://www.peulen.xyz/downloads/chisurf/conda"
+        update_url = cs_settings.get('update_url', hardcoded_url)
 
         # Initialize updater with the update URL
         self.updater = ChiSurfUpdater(update_url=update_url)

@@ -67,20 +67,15 @@ class ChiSurfUpdater:
         Initialize the updater.
 
         Args:
-            update_url: URL to check for updates. If None, uses the default from settings or info.py
+            update_url: This parameter is ignored. The updater always uses the hardcoded URL
+                        "https://www.peulen.xyz/downloads/chisurf/conda"
             channel: Conda channel to use for updates
         """
-        # Import here to avoid circular imports
-        from chisurf.settings import cs_settings
-
         # Initialize system attribute first
         self.system = platform.system().lower()
 
-        # Get update_url from settings if available
-        settings_update_url = cs_settings.get('update_url', None)
-
-        # Use the provided URL, or the one from settings, or fall back to info.py
-        url = update_url or settings_update_url or info.update_url
+        # Define the hardcoded URL - this is the only URL that will be used
+        url = "https://www.peulen.xyz/downloads/chisurf/conda"
 
         # Check if the URL is a local folder using the improved logic
         is_local_folder = False
@@ -117,11 +112,11 @@ class ChiSurfUpdater:
             # Append '/conda'
             url += '/conda'
 
+        print(f"Update URL: {url}")
         self.update_url = url
         self.channel = channel
         self.current_version = info.__version__
         self.settings_path = get_path('settings')
-        self.update_info_file = self.settings_path / 'update_info.json'
 
     def check_for_updates(self) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -139,14 +134,7 @@ class ChiSurfUpdater:
             update_info = self._get_update_info()
 
             if not update_info:
-                # If no update info exists, create a default one
-                update_info = {
-                    "latest_version": self.current_version,
-                    "package_url": f"https://example.com/chisurf/{self.current_version}/chisurf-{self.current_version}.tar.bz2",
-                    "release_notes": "Initial version",
-                    "channels": ["conda-forge", "defaults"]
-                }
-                self._save_update_info(update_info)
+                # If no update info exists, return no update available
                 return False, None, None
 
             # Compare versions (in a real implementation, this would be more sophisticated)
@@ -603,20 +591,13 @@ class ChiSurfUpdater:
 
     def _get_update_info(self) -> Optional[Dict[str, Any]]:
         """
-        Get update information from the local cache or remote server.
+        Get update information from the remote server.
+
+        Always uses the hardcoded URL "https://www.peulen.xyz/downloads/chisurf/conda".
 
         Returns:
             Dictionary containing update information, or None if not available
         """
-        # First try to get from local cache
-        if self.update_info_file.exists():
-            update_info = safe_open_file(
-                self.update_info_file,
-                processor=json.load,
-                default_value=None
-            )
-            if update_info:
-                return update_info
 
         # Check if the update URL is a local folder
         if self._is_local_folder():
@@ -638,9 +619,6 @@ class ChiSurfUpdater:
                 "available_versions": versions
             }
 
-            # Save to cache
-            self._save_update_info(update_info)
-
             return update_info
         else:
             # For remote URLs, try to fetch available versions
@@ -659,43 +637,12 @@ class ChiSurfUpdater:
                     "available_versions": versions
                 }
 
-                # Save to cache
-                self._save_update_info(update_info)
-
                 return update_info
 
-            # If we couldn't get versions from the remote URL, fall back to a dummy update info
-            try:
-                # In a real implementation, this would fetch from a server
-                # For demonstration, we'll create a dummy update info
-                # This should be replaced with actual server communication
-                update_info = {
-                    "latest_version": "99.99.99",  # A future version
-                    "package_url": "https://example.com/chisurf/latest/chisurf-latest.tar.bz2",
-                    "release_notes": "This is a newer version with many improvements",
-                    "channels": ["conda-forge", "defaults"]
-                }
+            # If we couldn't get versions from the remote URL, return None
+            print("No versions found at the update URL")
+            return None
 
-                # Save to cache
-                self._save_update_info(update_info)
-
-                return update_info
-            except Exception as e:
-                print(f"Error fetching update information: {str(e)}")
-                return None
-
-    def _save_update_info(self, update_info: Dict[str, Any]) -> None:
-        """
-        Save update information to the local cache.
-
-        Args:
-            update_info: Dictionary containing update information
-        """
-        try:
-            with open(self.update_info_file, 'w') as f:
-                json.dump(update_info, f, indent=2)
-        except Exception as e:
-            print(f"Error saving update information: {str(e)}")
 
     def _needs_elevation(self) -> bool:
         """
