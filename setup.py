@@ -1,11 +1,15 @@
 #!/usr/bin/python
 import platform
 import pathlib
+import os
+import datetime
+import re
 from setuptools import setup, find_packages, Extension
 try:
     from Cython.Distutils import build_ext
 except ImportError:
     from setuptools.command.build_ext import build_ext
+from setuptools.command.build_py import build_py
 
 from chisurf import info
 
@@ -86,6 +90,64 @@ def get_extensions():
         return list()
 
 
+class CustomBuildPy(build_py):
+    """Custom build command that replaces the dynamic version with a hardcoded version.
+
+    This command is used during pip builds to ensure that the version number in the
+    installed package is a fixed string representing the date at build time, rather
+    than a dynamic value that changes each time the module is imported.
+
+    The command:
+    1. Replaces the dynamic version in info.py with a hardcoded version (current date)
+    2. Runs the standard build_py command to build the package
+    3. Restores the original dynamic version in the source code after the build
+
+    This approach ensures that:
+    - The installed package has a fixed version number (the date at build time)
+    - The source code remains unchanged after the build process
+    - The behavior is consistent with the conda build process
+    """
+
+    def run(self):
+        # Get the path to the info.py file
+        info_file = os.path.join(os.path.dirname(__file__), 'chisurf', 'info.py')
+
+        # Get the current date and format it as yy.mm.dd
+        today = datetime.datetime.now()
+        version = today.strftime('%y.%m.%d')
+
+        # Read the current content of info.py
+        with open(info_file, 'r') as f:
+            content = f.read()
+
+        # Replace the dynamic version with the hardcoded version
+        # This ensures that the installed package has a fixed version number
+        pattern = r'__version__ = str\(today\.strftime\("%y\.%m\.%d"\)\)'
+        replacement = f'__version__ = "{version}"'
+        content = re.sub(pattern, replacement, content)
+
+        # Write the modified content back to info.py
+        with open(info_file, 'w') as f:
+            f.write(content)
+
+        # Call the original build_py run method to perform the actual build
+        build_py.run(self)
+
+        # After the build is complete, restore the original dynamic version
+        # This ensures that the source code remains unchanged
+        with open(info_file, 'r') as f:
+            content = f.read()
+
+        # Replace the hardcoded version with the dynamic version
+        pattern = f'__version__ = "{version}"'
+        replacement = '__version__ = str(today.strftime("%y.%m.%d"))'
+        content = re.sub(pattern, replacement, content)
+
+        # Write the restored content back to info.py
+        with open(info_file, 'w') as f:
+            f.write(content)
+
+
 metadata = dict(
     name=NAME,
     version=VERSION,
@@ -143,8 +205,12 @@ metadata = dict(
         'setuptools'
     ],
     ext_modules=get_extensions(),
+    # Register custom build commands
+    # - build_ext: The standard Cython build command for building extensions
+    # - build_py: Our custom command that handles version replacement during pip builds
     cmdclass={
-        'build_ext': build_ext
+        'build_ext': build_ext,
+        'build_py': CustomBuildPy
     },
     entry_points={
         "console_scripts": [

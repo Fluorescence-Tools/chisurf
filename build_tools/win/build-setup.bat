@@ -42,7 +42,7 @@ if not exist "%APP_PATH%" mkdir "%APP_PATH%"
 
 :: Create the conda environment
 echo Creating Conda environment at %APP_PATH%...
-call mamba create -y --prefix "%APP_PATH%" chisurf -c local --force
+call mamba create -y --prefix "%APP_PATH%" chisurf conda -c local --force
 
 :: Verify chisurf installation
 echo Checking chisurf installation...
@@ -50,6 +50,14 @@ echo Checking chisurf installation...
     echo ERROR: chisurf is not installed properly.
     exit /b 1
 )
+
+:: Create a conda configuration file to ensure it works properly
+echo Creating conda configuration...
+mkdir "%APP_PATH%\.condarc" 2>nul
+echo channels:> "%APP_PATH%\.condarc\config"
+echo   - conda-forge>> "%APP_PATH%\.condarc\config"
+echo   - defaults>> "%APP_PATH%\.condarc\config"
+echo ssl_verify: true>> "%APP_PATH%\.condarc\config"
 
 :: Compile all Python source files into .pyc
 echo Compiling Python files...
