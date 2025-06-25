@@ -9,7 +9,7 @@ __copyright__ = "Copyright (C) " + str(today.strftime('%y')) + " Thomas-Otavio P
 __credits__ = ["Thomas-Otavio Peulen"]
 __maintainer__ = "Thomas-Otavio Peulen"
 __email__ = "thomas@peulen.xyz"
-__url__ = "https://gitlab.peulen.xyz/chisurf/"
+__url__ = "https://www.peulen.xyz/downloads/chisurf"
 __license__ = 'GPL2.1'
 __status__ = "Dev"
 __description__ = """ChiSurf: an interactive global analysis platform for fluorescence data."""
@@ -18,4 +18,3 @@ LONG_DESCRIPTION = """ChiSurf: an interactive global analysis platform for fluor
 help_url = 'https://github.com/Fluorescence-Tools/chisurf/wiki'
 update_url = 'https://github.com/Fluorescence-Tools/chisurf/releases'
 setup_icon = "/gui/resources/icons/cs_logo.ico"
-
