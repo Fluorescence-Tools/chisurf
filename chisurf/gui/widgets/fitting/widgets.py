@@ -312,7 +312,7 @@ class FittingControllerWidget(Controller):
         for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
             try:
                 pa.controller.finalize()
-            except (AttributeError, RuntimeError):
+            except (AttributeError, RuntimeError, TypeError):
                 chisurf.logging.warning(f"Fitting parameter {pa.name} does not have a controller to update.")
         chisurf.logging.info("Fitting finished!")
         # Update fit result selector
