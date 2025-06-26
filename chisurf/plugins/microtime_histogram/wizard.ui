@@ -73,7 +73,79 @@
          </property>
         </widget>
        </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="label_timeshift_vv">
+         <property name="text">
+          <string>VV Timeshift (channels)</string>
+         </property>
+        </widget>
+       </item>
        <item row="8" column="1">
+        <widget class="QSpinBox" name="spinBox_timeshift_vv">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimum">
+          <number>-1000</number>
+         </property>
+         <property name="maximum">
+          <number>1000</number>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QLabel" name="label_timeshift_vh">
+         <property name="text">
+          <string>VH Timeshift (channels)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QSpinBox" name="spinBox_timeshift_vh">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimum">
+          <number>-1000</number>
+         </property>
+         <property name="maximum">
+          <number>1000</number>
+         </property>
+         <property name="value">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_fwhm">
+         <property name="text">
+          <string>FWHM (VV + 2G*VH)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QLineEdit" name="lineEdit_fwhm">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <spacer name="horizontalSpacer">
@@ -127,7 +199,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="label_8">
          <property name="text">
           <string>Drop BID files below:</string>
@@ -150,10 +222,10 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="0" colspan="2">
+       <item row="14" column="0" colspan="2">
         <layout class="QVBoxLayout" name="verticalLayout_5"/>
        </item>
-       <item row="8" column="0">
+       <item row="11" column="0">
         <widget class="QPushButton" name="pushButton">
          <property name="text">
           <string>Compute</string>
@@ -274,7 +346,7 @@
          </item>
         </widget>
        </item>
-       <item row="9" column="0">
+       <item row="12" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
           <string>Drop TTTR files below:</string>
@@ -308,7 +380,7 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <layout class="QVBoxLayout" name="verticalLayout_3"/>
        </item>
       </layout>
@@ -356,6 +428,9 @@
   <tabstop>lineEdit</tabstop>
   <tabstop>comboBox_polarization</tabstop>
   <tabstop>lineEdit_gfactor</tabstop>
+  <tabstop>spinBox_timeshift_vv</tabstop>
+  <tabstop>spinBox_timeshift_vh</tabstop>
+  <tabstop>lineEdit_fwhm</tabstop>
   <tabstop>pushButton</tabstop>
   <tabstop>pushButton_2</tabstop>
   <tabstop>checkBox</tabstop>

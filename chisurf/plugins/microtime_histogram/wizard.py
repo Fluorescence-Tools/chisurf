@@ -156,6 +156,14 @@ class MicrotimeHistogram(QtWidgets.QWidget):
             return []
 
     @property
+    def timeshift_vv(self) -> int:
+        return self.spinBox_timeshift_vv.value()
+
+    @property
+    def timeshift_vh(self) -> int:
+        return self.spinBox_timeshift_vh.value()
+
+    @property
     def selected_files(self):
         return self.listWidget.get_selected_files()
 
@@ -165,6 +173,10 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         self.comboBox.clear()
         self.comboBox.addItems(['Auto'] + list(tttrlib.TTTR.get_supported_container_names()))
 
+        # Initialize storage for original histograms
+        self.original_histograms = {}
+        self.time_resolution = 1.0
+
         self.listWidget = FileListWidget(parent=self, file_added_callback=self.update_micro_time_resolution)
         self.verticalLayout_3.addWidget(self.listWidget)
 
@@ -173,8 +185,8 @@ class MicrotimeHistogram(QtWidgets.QWidget):
 
         self.plotWidget = pg.PlotWidget()
         self.verticalLayout.addWidget(self.plotWidget)
-        self.plotWidget.setLabel('bottom', 'Counts')
-        self.plotWidget.setLabel('left', 'Micro Time (ns)')
+        self.plotWidget.setLabel('bottom', 'Micro Time (ns)')
+        self.plotWidget.setLabel('left', 'Counts')
         self.plotWidget.setLogMode(y=True)
 
         self.populate_supported_types()
@@ -188,6 +200,13 @@ class MicrotimeHistogram(QtWidgets.QWidget):
 
         self.lineEdit_2.textChanged.connect(self.update_output_filename)  # Parallel channels
         self.lineEdit.textChanged.connect(self.update_output_filename)  # Perpendicular channels
+
+        # Connect timeshift input fields to update method
+        self.spinBox_timeshift_vv.valueChanged.connect(self.update_timeshifts)
+        self.spinBox_timeshift_vh.valueChanged.connect(self.update_timeshifts)
+
+        # Connect G-factor input field to update method
+        self.lineEdit_gfactor.textChanged.connect(self.update_timeshifts)
 
     def load_corresponding_tttr_files(self, n_parent=3):
         """
@@ -243,8 +262,11 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         """Save the cumulative histogram to a text file as a single-column integer list.
         If no histogram exists, compute it first.
         """
-        # If cumulative_ps is not available, compute histogram
-        if not hasattr(self, "cumulative_ps") or self.cumulative_ps is None:
+        # If cumulative_ps is not available but we have original histograms, update timeshifts
+        if (not hasattr(self, "cumulative_ps") or self.cumulative_ps is None) and self.original_histograms:
+            self.update_timeshifts()  # Update timeshifts to generate cumulative_ps
+        # If we still don't have cumulative_ps, compute the full histogram
+        elif not hasattr(self, "cumulative_ps") or self.cumulative_ps is None:
             self.compute_microtime_histogram()  # Compute histogram first
 
         # Check again after computation
@@ -278,8 +300,11 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         """
         chisurf.logging.info("MicrotimeHistogram::adding histogram to chisurf")
 
-        # If cumulative_ps is not available, compute histogram
-        if not hasattr(self, "cumulative_ps") or self.cumulative_ps is None:
+        # If cumulative_ps is not available but we have original histograms, update timeshifts
+        if (not hasattr(self, "cumulative_ps") or self.cumulative_ps is None) and self.original_histograms:
+            self.update_timeshifts()  # Update timeshifts to generate cumulative_ps
+        # If we still don't have cumulative_ps, compute the full histogram
+        elif not hasattr(self, "cumulative_ps") or self.cumulative_ps is None:
             self.compute_microtime_histogram()  # Compute histogram first
 
         # Check again after computation
@@ -526,10 +551,184 @@ class MicrotimeHistogram(QtWidgets.QWidget):
 
         return coverage
 
+    def calculate_fwhm(self, histogram):
+        """
+        Calculate the Full Width at Half Maximum (FWHM) of a histogram.
+
+        Parameters:
+        -----------
+        histogram : numpy.ndarray
+            The histogram data
+
+        Returns:
+        --------
+        float
+            The FWHM value in channel units
+        """
+        if histogram is None or len(histogram) == 0:
+            return 0.0
+
+        # Find the maximum value and its position
+        max_value = np.max(histogram)
+        max_pos = np.argmax(histogram)
+
+        # Find the half maximum value
+        half_max = max_value / 2.0
+
+        # Find the left and right positions where the histogram crosses half_max
+        left_idx = np.where(histogram[:max_pos] <= half_max)[0]
+        left_pos = left_idx[-1] if len(left_idx) > 0 else 0
+
+        right_idx = np.where(histogram[max_pos:] <= half_max)[0]
+        right_pos = max_pos + right_idx[0] if len(right_idx) > 0 else len(histogram) - 1
+
+        # Calculate FWHM
+        fwhm = right_pos - left_pos
+
+        return fwhm
+
+    def update_timeshifts(self):
+        """
+        Update the histograms with the current timeshift values without recomputing the entire histogram.
+        This method is called when the timeshift values are changed.
+        """
+        # Skip if no original histograms are available
+        if not self.original_histograms:
+            return
+
+        chisurf.logging.info("Updating timeshifts...")
+        self.plotWidget.clear()  # Clear plot before drawing new data
+
+        # Get the current timeshift values
+        vv_shift = self.timeshift_vv
+        vh_shift = self.timeshift_vh
+
+        # Apply timeshifts to the original histograms
+        shifted_histograms = {}
+        for key, histograms in self.original_histograms.items():
+            y_parallel_orig = histograms['parallel']
+            y_perpendicular_orig = histograms['perpendicular']
+
+            # Apply timeshift to parallel channel (VV) if needed
+            if vv_shift != 0:
+                if vv_shift > 0:
+                    # Shift right (positive timeshift)
+                    y_parallel = np.pad(y_parallel_orig, (vv_shift, 0), 'constant')[:-vv_shift]
+                else:
+                    # Shift left (negative timeshift)
+                    y_parallel = np.pad(y_parallel_orig, (0, abs(vv_shift)), 'constant')[abs(vv_shift):]
+            else:
+                y_parallel = y_parallel_orig.copy()
+
+            # Apply timeshift to perpendicular channel (VH) if needed
+            if vh_shift != 0:
+                if vh_shift > 0:
+                    # Shift right (positive timeshift)
+                    y_perpendicular = np.pad(y_perpendicular_orig, (vh_shift, 0), 'constant')[:-vh_shift]
+                else:
+                    # Shift left (negative timeshift)
+                    y_perpendicular = np.pad(y_perpendicular_orig, (0, abs(vh_shift)), 'constant')[abs(vh_shift):]
+            else:
+                y_perpendicular = y_perpendicular_orig.copy()
+
+            shifted_histograms[key] = {
+                'parallel': y_parallel,
+                'perpendicular': y_perpendicular
+            }
+
+            # Create x-axis arrays for both channels
+            x_parallel = np.arange(len(y_parallel)) * self.time_resolution
+            x_perpendicular = np.arange(len(y_perpendicular)) * self.time_resolution
+
+            # Plot both channels separately with different colors
+            self.plotWidget.plot(x_parallel, y_parallel, pen='r', name=f"Parallel (VV) - {key}")
+            self.plotWidget.plot(x_perpendicular, y_perpendicular, pen='g', name=f"Perpendicular (VH) - {key}")
+
+        # Compute cumulative histogram from shifted histograms
+        self.cumulative_ps = None
+        for key, histograms in shifted_histograms.items():
+            y_parallel = histograms['parallel']
+            y_perpendicular = histograms['perpendicular']
+
+            # Make sure both arrays have the same length for hstack
+            max_len = max(len(y_parallel), len(y_perpendicular))
+            y_parallel_padded = np.pad(y_parallel, (0, max(0, max_len - len(y_parallel))), 'constant')
+            y_perpendicular_padded = np.pad(y_perpendicular, (0, max(0, max_len - len(y_perpendicular))), 'constant')
+            ps = np.hstack((y_parallel_padded, y_perpendicular_padded))
+
+            if self.cumulative_ps is None:
+                self.cumulative_ps = np.array(ps)
+            else:
+                try:
+                    # Ensure arrays have the same shape
+                    if len(self.cumulative_ps) != len(ps):
+                        # Resize the smaller array to match the larger one
+                        if len(self.cumulative_ps) < len(ps):
+                            self.cumulative_ps = np.pad(self.cumulative_ps, (0, len(ps) - len(self.cumulative_ps)), 'constant')
+                        else:
+                            ps = np.pad(ps, (0, len(self.cumulative_ps) - len(ps)), 'constant')
+                    self.cumulative_ps += np.array(ps)
+                except ValueError as e:
+                    chisurf.logging.error(f"Failed to add cumulative histogram: {str(e)}")
+
+        # Plot cumulative data if available
+        if self.cumulative_ps is not None:
+            # Create x-axis with proper time units
+            x_cumulative = np.arange(len(self.cumulative_ps)) * self.time_resolution
+
+            # Plot cumulative data
+            self.plotWidget.plot(x_cumulative, self.cumulative_ps, pen='b', name="Cumulative PS")
+
+            # Calculate and display FWHM of VV + 2G*VH
+            try:
+                # Get the G-factor
+                g_factor = float(self.lineEdit_gfactor.text())
+
+                # Create combined histogram VV + 2G*VH
+                combined_histogram = None
+                for key, histograms in shifted_histograms.items():
+                    y_parallel = histograms['parallel']
+                    y_perpendicular = histograms['perpendicular']
+
+                    # Make sure both arrays have the same length
+                    max_len = max(len(y_parallel), len(y_perpendicular))
+                    y_parallel_padded = np.pad(y_parallel, (0, max(0, max_len - len(y_parallel))), 'constant')
+                    y_perpendicular_padded = np.pad(y_perpendicular, (0, max(0, max_len - len(y_perpendicular))), 'constant')
+
+                    # Apply formula VV + 2G*VH
+                    combined = y_parallel_padded + 2 * g_factor * y_perpendicular_padded
+
+                    if combined_histogram is None:
+                        combined_histogram = combined
+                    else:
+                        # Ensure arrays have the same shape
+                        if len(combined_histogram) != len(combined):
+                            if len(combined_histogram) < len(combined):
+                                combined_histogram = np.pad(combined_histogram, (0, len(combined) - len(combined_histogram)), 'constant')
+                            else:
+                                combined = np.pad(combined, (0, len(combined_histogram) - len(combined)), 'constant')
+                        combined_histogram += combined
+
+                # Calculate FWHM
+                fwhm_channels = self.calculate_fwhm(combined_histogram)
+                fwhm_ns = fwhm_channels * self.time_resolution
+
+                # Display FWHM in the UI
+                self.lineEdit_fwhm.setText(f"{fwhm_ns:.2f} ns ({fwhm_channels:.1f} channels)")
+
+                # Plot the combined histogram
+                x_combined = np.arange(len(combined_histogram)) * self.time_resolution
+                self.plotWidget.plot(x_combined, combined_histogram, pen='y', name="VV + 2G*VH")
+
+            except Exception as e:
+                chisurf.logging.error(f"Failed to calculate FWHM: {str(e)}")
+                self.lineEdit_fwhm.setText("Error")
+
     def compute_microtime_histogram(self):
         chisurf.logging.info("Computing microtime histogram...")
         self.plotWidget.clear()  # Clear plot before drawing new data
         self.cumulative_ps = None  # Reset cumulative_ps before computation
+        self.original_histograms = {}  # Reset original histograms
 
         chisurf.logging.info(f"channels parallel: {self.parallel_channels}")
         chisurf.logging.info(f"channels perpendicular: {self.perpendicular_channels}")
@@ -619,39 +818,36 @@ class MicrotimeHistogram(QtWidgets.QWidget):
                 else:
                     t = d
 
+                # Get the original histograms without any timeshift
                 y_parallel, _ = t.get_microtime_histogram(self.binning_factor, self.parallel_channels)
                 y_perpendicular, _ = t.get_microtime_histogram(self.binning_factor, self.perpendicular_channels)
-                ps = np.hstack((y_parallel, y_perpendicular))
 
-                x = np.arange(len(ps))
-                self.plotWidget.plot(x, ps, pen='r', name="Parallel, Perpendicular")
+                # Get time resolution in nanoseconds
+                self.time_resolution = float(self.lineEdit_4.text()) if self.lineEdit_4.text() else 1.0
 
-                if self.cumulative_ps is None:
-                    self.cumulative_ps = np.array(ps)
-                else:
-                    try:
-                        self.cumulative_ps += np.array(ps)
-                    except ValueError:
-                        chisurf.logging.error(f"Failed to add cumulative histogram for {file_stem}")
+                # Store the original histograms for later use
+                self.original_histograms[path.name] = {
+                    'parallel': y_parallel.copy(),
+                    'perpendicular': y_perpendicular.copy()
+                }
 
-        if self.cumulative_ps is not None:
-            x = np.arange(len(self.cumulative_ps))
-            self.plotWidget.plot(x, self.cumulative_ps, pen='b', name="Cumulative PS")
+        # Apply timeshifts to the original histograms
+        self.update_timeshifts()
 
-            # First auto-save the histogram
-            if self.selected_files:
-                # Get the directory of the first selected file
-                first_file_path = Path(self.selected_files[0])
-                save_directory = first_file_path.parent
+        # Auto-save the histogram
+        if self.cumulative_ps is not None and self.selected_files:
+            # Get the directory of the first selected file
+            first_file_path = Path(self.selected_files[0])
+            save_directory = first_file_path.parent
 
-                # Get the output filename from lineEdit_5
-                filename = self.lineEdit_5.text()
+            # Get the output filename from lineEdit_5
+            filename = self.lineEdit_5.text()
 
-                # Create full save path
-                save_path = save_directory / filename
+            # Create full save path
+            save_path = save_directory / filename
 
-                # Save the histogram
-                self.save_cumulative_histogram(str(save_path))
+            # Save the histogram
+            self.save_cumulative_histogram(str(save_path))
 
             # Then, if the "Transfer to ChiSurf" checkbox is checked, add the histogram to ChiSurf
             if self.checkBox.isChecked():
