@@ -45,6 +45,7 @@ import urllib.request
 import urllib.error
 import re
 import shutil
+import logging
 from typing import Optional, Dict, Any, Tuple, List, Callable
 
 from chisurf.settings.file_utils import safe_open_file
@@ -112,7 +113,7 @@ class ChiSurfUpdater:
             # Append '/conda'
             url += '/conda'
 
-        print(f"Update URL: {url}")
+        logging.info(f"Update URL: {url}")
         self.update_url = url
         self.channel = channel
         self.current_version = info.__version__
@@ -128,24 +129,34 @@ class ChiSurfUpdater:
             - Latest version string if update is available, None otherwise
             - Error message if an error occurred, None otherwise
         """
+        logging.info(f"Checking for updates (current version: {self.current_version})")
         try:
             # In a real implementation, this would fetch version info from a server
             # For now, we'll simulate by checking a local file or creating one if it doesn't exist
+            logging.debug("Getting update information")
             update_info = self._get_update_info()
 
             if not update_info:
                 # If no update info exists, return no update available
+                logging.info("No update information available")
                 return False, None, None
 
             # Compare versions (in a real implementation, this would be more sophisticated)
             # For now, we'll just compare the version strings
-            if update_info["latest_version"] > self.current_version:
-                return True, update_info["latest_version"], None
+            latest_version = update_info["latest_version"]
+            logging.info(f"Latest version available: {latest_version}")
 
+            if latest_version > self.current_version:
+                logging.info(f"Update available: {self.current_version} -> {latest_version}")
+                return True, latest_version, None
+
+            logging.info(f"Already up to date (version {self.current_version})")
             return False, None, None
 
         except Exception as e:
-            return False, None, f"Error checking for updates: {str(e)}"
+            error_msg = f"Error checking for updates: {str(e)}"
+            logging.error(error_msg)
+            return False, None, error_msg
 
     def update_to_version(self, file_path: str, callback=None, auto_restart=True) -> Tuple[bool, Optional[str]]:
         """
@@ -165,10 +176,13 @@ class ChiSurfUpdater:
             The update process will close all ChiSurf windows and continue in a separate window.
             After the update completes, the user will need to restart ChiSurf manually.
         """
+        logging.info(f"Starting update to version from file: {file_path}")
         try:
             # Report progress
+            message = f"Preparing to update from file: {file_path}"
+            logging.info(message)
             if callback:
-                callback(f"Preparing to update from file: {file_path}")
+                callback(message)
 
             # Check if it's a remote URL
             is_remote_url = bool(re.match(r'^(https?|ftp)://', file_path))
@@ -176,78 +190,118 @@ class ChiSurfUpdater:
 
             # If it's a remote URL, download it to a temporary file first
             if is_remote_url:
+                message = f"Downloading update file from: {file_path}"
+                logging.info(message)
                 if callback:
-                    callback(f"Downloading update file from: {file_path}")
+                    callback(message)
 
                 try:
                     # Create a temporary directory to store the downloaded file
                     temp_dir = tempfile.mkdtemp(prefix="chisurf_update_")
+                    logging.debug(f"Created temporary directory: {temp_dir}")
 
                     # Extract the filename from the URL
                     file_name = os.path.basename(file_path)
                     if not file_name:
                         file_name = "chisurf_update.tar.bz2"
+                    logging.debug(f"Using filename: {file_name}")
 
                     # Create the local file path
                     local_file_path = os.path.join(temp_dir, file_name)
+                    logging.debug(f"Local file path: {local_file_path}")
+
+                    # Define a download progress hook that logs and calls the callback
+                    def download_progress_hook(count, block_size, total_size):
+                        if total_size > 0:
+                            downloaded = count * block_size
+                            percent = 100.0 * downloaded / total_size
+                            mb_downloaded = downloaded / (1024 * 1024)
+                            mb_total = total_size / (1024 * 1024)
+
+                            progress_msg = f"Downloading: {mb_downloaded:.1f} MB of {mb_total:.1f} MB ({percent:.1f}%)"
+                            logging.debug(progress_msg)
+
+                            if callback:
+                                callback(progress_msg)
 
                     # Download the file
+                    logging.debug(f"Starting download from {file_path} to {local_file_path}")
                     urllib.request.urlretrieve(
                         file_path, 
                         local_file_path,
-                        reporthook=lambda count, block_size, total_size: callback(
-                            f"Downloading: {count * block_size / (1024 * 1024):.1f} MB of {total_size / (1024 * 1024):.1f} MB"
-                        ) if callback and total_size > 0 else None
+                        reporthook=download_progress_hook
                     )
 
+                    message = f"Download complete. Saved to: {local_file_path}"
+                    logging.info(message)
                     if callback:
-                        callback(f"Download complete. Saved to: {local_file_path}")
+                        callback(message)
                 except Exception as e:
-                    return False, f"Failed to download update file: {str(e)}"
+                    error_msg = f"Failed to download update file: {str(e)}"
+                    logging.error(error_msg)
+                    return False, error_msg
 
             # Check if the file exists
             if not os.path.exists(local_file_path):
-                return False, f"Update file not found: {local_file_path}"
+                error_msg = f"Update file not found: {local_file_path}"
+                logging.error(error_msg)
+                return False, error_msg
 
             # Determine if we need elevated privileges
             needs_elevation = self._needs_elevation()
+            logging.debug(f"Needs elevation: {needs_elevation}")
 
             # Prepare the update command based on the file type
             file_ext = os.path.splitext(local_file_path)[1].lower()
+            logging.debug(f"File extension: {file_ext}")
 
             if file_ext == '.exe':
                 # For Windows installers
                 cmd = [local_file_path, '/S']  # Silent install
+                logging.info("Using Windows installer (.exe)")
             elif file_ext in ['.msi', '.msix']:
                 # For Windows MSI packages
                 cmd = ['msiexec', '/i', local_file_path, '/quiet', '/norestart']
+                logging.info("Using Windows MSI package")
             elif file_ext in ['.tar.bz2', '.tar.gz', '.bz2', '.gz', '.conda']:
                 # For conda packages
                 conda_exe = self._get_conda_executable()
+                logging.info(f"Using conda package with conda executable: {conda_exe}")
+
                 # Get the environment path (where chisurf is installed)
                 env_path = sys.prefix
+                logging.debug(f"Environment path: {env_path}")
+
                 cmd = [conda_exe, 'install', '--yes', '--force-reinstall', '--prefix', env_path, local_file_path]
             else:
                 # Unknown file type
-                return False, f"Unsupported update file type: {file_ext}"
+                error_msg = f"Unsupported update file type: {file_ext}"
+                logging.error(error_msg)
+                return False, error_msg
 
             # Create a string representation of the command for display
             cmd_str = " ".join(cmd)
+            logging.info(f"Update command: {cmd_str}")
 
             # Show the command to the user
             if callback:
                 callback(f"Command: {cmd_str}")
 
             # Display a warning that all ChiSurf windows will be closed
+            warning_msg = "WARNING: All ChiSurf windows will be closed before starting the update."
+            logging.warning(warning_msg)
             if callback:
-                callback("WARNING: All ChiSurf windows will be closed before starting the update.")
+                callback(warning_msg)
                 callback("The update will continue in a separate window.")
 
             # Run the update in a separate process
+            logging.info("Starting update in separate process")
             return self._run_update_in_separate_process(cmd, callback)
 
         except Exception as e:
-            return False, f"Error during update: {str(e)}"
+            error_msg = f"Error during update: {str(e)}"
+            logging.error(error_msg)
+            return False, error_msg
 
     def update(self, callback=None, auto_restart=True) -> Tuple[bool, Optional[str]]:
         """
@@ -266,52 +320,73 @@ class ChiSurfUpdater:
             The update process will close all ChiSurf windows and continue in a separate window.
             After the update completes, the user will need to restart ChiSurf manually.
         """
+        logging.info("Starting update to latest version")
         try:
             # Check if an update is available
+            logging.debug("Checking if an update is available")
             update_available, latest_version, error = self.check_for_updates()
 
             if error:
+                logging.error(f"Error checking for updates: {error}")
                 return False, error
 
             if not update_available:
-                return True, "Already up to date"
+                message = "Already up to date"
+                logging.info(message)
+                return True, message
 
             # Get update information
+            logging.debug("Getting update information")
             update_info = self._get_update_info()
             if not update_info:
-                return False, "Update information not available"
+                error_msg = "Update information not available"
+                logging.error(error_msg)
+                return False, error_msg
 
             # Report progress
+            message = "Preparing to update..."
+            logging.info(message)
             if callback:
-                callback("Preparing to update...")
+                callback(message)
 
             # If the update URL is a local folder and we have available versions,
             # use the first (latest) version
             if self._is_local_folder() and "available_versions" in update_info and update_info["available_versions"]:
                 latest_version_info = update_info["available_versions"][0]
+                logging.info(f"Using local version: {latest_version_info['version']} from {latest_version_info['file_path']}")
                 return self.update_to_version(latest_version_info["file_path"], callback)
 
             # Otherwise, use the standard update mechanism
+            logging.info("Using standard conda update mechanism")
+
             # Determine if we need elevated privileges
             needs_elevation = self._needs_elevation()
+            logging.debug(f"Needs elevation: {needs_elevation}")
 
             # Prepare the update command
+            logging.debug("Preparing update command")
             cmd, cmd_str = self._prepare_update_command(update_info)
+            logging.info(f"Update command: {cmd_str}")
 
             # Show the command to the user
             if callback:
                 callback(f"Command: {cmd_str}")
 
             # Display a warning that all ChiSurf windows will be closed
+            warning_msg = "WARNING: All ChiSurf windows will be closed before starting the update."
+            logging.warning(warning_msg)
             if callback:
-                callback("WARNING: All ChiSurf windows will be closed before starting the update.")
+                callback(warning_msg)
                 callback("The update will continue in a separate window.")
 
             # Run the update in a separate process
+            logging.info("Starting update in separate process")
             return self._run_update_in_separate_process(cmd, callback)
 
         except Exception as e:
-            return False, f"Error during update: {str(e)}"
+            error_msg = f"Error during update: {str(e)}"
+            logging.error(error_msg)
+            return False, error_msg
 
     def _is_local_folder(self) -> bool:
         """
@@ -460,7 +535,7 @@ class ChiSurfUpdater:
             return versions
 
         except Exception as e:
-            print(f"Error listing available versions: {str(e)}")
+            logging.error(f"Error listing available versions: {str(e)}")
             return []
 
     def _list_remote_versions(self) -> List[Dict[str, Any]]:
@@ -547,7 +622,7 @@ class ChiSurfUpdater:
                     links = re.findall(r'href=[\'"]?([^\'" >]+)', html)
                     return links
                 except urllib.error.URLError as e:
-                    print(f"Error fetching directory listing from {url}: {e}")
+                    logging.error(f"Error fetching directory listing from {url}: {e}")
                     return []
 
             # List to store all versions
@@ -586,7 +661,7 @@ class ChiSurfUpdater:
             return versions
 
         except Exception as e:
-            print(f"Error listing remote versions: {str(e)}")
+            logging.error(f"Error listing remote versions: {str(e)}")
             return []
 
     def _get_update_info(self) -> Optional[Dict[str, Any]]:
@@ -640,7 +715,7 @@ class ChiSurfUpdater:
                 return update_info
 
             # If we couldn't get versions from the remote URL, return None
-            print("No versions found at the update URL")
+            logging.warning("No versions found at the update URL")
             return None
 
 
@@ -759,6 +834,9 @@ class ChiSurfUpdater:
             - Error message if the command failed, None otherwise
         """
         try:
+            # Log the command being executed
+            logging.debug(f"Executing command: {' '.join(cmd)}")
+
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -767,12 +845,20 @@ class ChiSurfUpdater:
             )
             stdout, stderr = process.communicate()
 
+            # Log command output at debug level instead of displaying it
+            if stdout:
+                logging.debug(f"Command stdout:\n{stdout}")
+
             if process.returncode != 0:
-                return False, f"Command failed with exit code {process.returncode}: {stderr}"
+                error_msg = f"Command failed with exit code {process.returncode}: {stderr}"
+                logging.error(error_msg)
+                return False, error_msg
 
             return True, None
         except Exception as e:
-            return False, str(e)
+            error_msg = f"Exception while executing command: {str(e)}"
+            logging.error(error_msg)
+            return False, error_msg
 
     def _run_with_elevation(self, cmd: List[str]) -> Tuple[bool, Optional[str]]:
         """
@@ -841,62 +927,93 @@ class ChiSurfUpdater:
             - Boolean indicating if the update was started successfully
             - Error message if an error occurred, None otherwise
         """
+        logging.info("Preparing to run update in a separate process")
         try:
             # Report progress
+            message = "Preparing to run update in a separate process..."
+            logging.info(message)
             if callback:
-                callback("Preparing to run update in a separate process...")
+                callback(message)
                 callback("WARNING: All ChiSurf windows will be closed before starting the update.")
 
             # Check if we need elevated privileges
             needs_elevation = self._needs_elevation()
-            if needs_elevation and callback:
-                callback("Administrator privileges will be required for this update.")
+            logging.debug(f"Needs elevation: {needs_elevation}")
+            if needs_elevation:
+                message = "Administrator privileges will be required for this update."
+                logging.info(message)
+                if callback:
+                    callback(message)
 
             # Create a temporary directory to store the update script
             temp_dir = tempfile.mkdtemp(prefix="chisurf_update_")
+            logging.debug(f"Created temporary directory: {temp_dir}")
 
             # Create a string representation of the command for display
             cmd_str = " ".join(cmd)
+            logging.debug(f"Command string: {cmd_str}")
 
             # Create the update script
             if self.system == "windows":
+                logging.info("Creating Windows update scripts")
                 # Create a properly quoted command string for Windows batch file execution
                 # This ensures paths with spaces are handled correctly
                 win_cmd_str = " ".join([f'"{arg}"' if ' ' in arg else arg for arg in cmd])
+                logging.debug(f"Windows command string: {win_cmd_str}")
 
                 # On Windows, use a batch file
                 update_script_path = os.path.join(temp_dir, "update_chisurf.bat")
+                logging.debug(f"Update script path: {update_script_path}")
+
+                # Create the update script with logging redirected to a file
+                log_file = os.path.join(temp_dir, "update_log.txt")
+                logging.debug(f"Log file path: {log_file}")
+
                 with open(update_script_path, 'w') as f:
                     f.write('@echo off\n')
                     f.write('title ChiSurf Update\n')
-                    f.write('echo ChiSurf Update Process\n')
-                    f.write('echo =====================\n')
-                    f.write('echo.\n')
-                    f.write('echo Starting update process...\n')
-                    f.write('echo Script: ' + update_script_path + '\n')
-                    f.write('echo Command: ' + cmd_str + '\n')
-                    f.write('echo.\n')
+                    f.write('echo ChiSurf Update Process > "' + log_file + '"\n')
+                    f.write('echo ===================== >> "' + log_file + '"\n')
+                    f.write('echo. >> "' + log_file + '"\n')
+                    f.write('echo Starting update process... >> "' + log_file + '"\n')
+                    f.write('echo Script: ' + update_script_path + ' >> "' + log_file + '"\n')
+                    f.write('echo Command: ' + cmd_str + ' >> "' + log_file + '"\n')
+                    f.write('echo. >> "' + log_file + '"\n')
                     f.write('echo Update in progress. Please wait...\n')
-                    f.write('echo.\n')
-                    f.write(win_cmd_str + '\n')
+                    f.write('echo Update in progress. Please wait... >> "' + log_file + '"\n')
+                    f.write('echo. >> "' + log_file + '"\n')
+
+                    # Execute the command and redirect output to log file
+                    f.write(win_cmd_str + ' >> "' + log_file + '" 2>&1\n')
+
                     f.write('if %ERRORLEVEL% NEQ 0 (\n')
+                    f.write('  echo. >> "' + log_file + '"\n')
+                    f.write('  echo Update failed with error code %ERRORLEVEL% >> "' + log_file + '"\n')
                     f.write('  echo.\n')
                     f.write('  echo Update failed with error code %ERRORLEVEL%\n')
+                    f.write('  echo See log file for details: ' + log_file + '\n')
                     f.write('  echo.\n')
                     f.write('  echo Press any key to close this window...\n')
                     f.write('  pause > nul\n')
                     f.write('  exit /b %ERRORLEVEL%\n')
                     f.write(')\n')
+                    f.write('echo. >> "' + log_file + '"\n')
+                    f.write('echo Update successful! >> "' + log_file + '"\n')
                     f.write('echo.\n')
                     f.write('echo Update successful!\n')
                     f.write('echo.\n')
                     f.write('echo Please restart ChiSurf manually to complete the update.\n')
+                    f.write('echo Please restart ChiSurf manually to complete the update. >> "' + log_file + '"\n')
+                    f.write('echo.\n')
+                    f.write('echo Log file: ' + log_file + '\n')
                     f.write('echo.\n')
                     f.write('echo Press any key to close this window...\n')
                     f.write('pause > nul\n')
 
                 # Create a launcher script that will be executed to start the update process
                 launcher_script_path = os.path.join(temp_dir, "start_update.bat")
+                logging.debug(f"Launcher script path: {launcher_script_path}")
+
                 with open(launcher_script_path, 'w') as f:
                     f.write('@echo off\n')
                     f.write('timeout /t 1 /nobreak >nul\n')  # Wait a bit for the current process to exit
@@ -914,47 +1031,70 @@ class ChiSurfUpdater:
                 # Make the script executable
                 os.chmod(update_script_path, 0o755)
                 os.chmod(launcher_script_path, 0o755)
+                logging.debug("Made scripts executable")
 
                 # Run the launcher script
+                logging.info("Starting launcher script")
                 subprocess.Popen(['cmd', '/c', launcher_script_path], shell=True)
             else:
+                logging.info("Creating Unix update scripts")
                 # On Unix-like systems, use a shell script
                 update_script_path = os.path.join(temp_dir, "update_chisurf.sh")
+                logging.debug(f"Update script path: {update_script_path}")
 
                 # Create a properly quoted command string for shell script execution
                 # This ensures paths with spaces are handled correctly
                 shell_cmd_str = " ".join([f"'{arg}'" if ' ' in arg else arg for arg in cmd])
+                logging.debug(f"Shell command string: {shell_cmd_str}")
+
+                # Create the update script with logging redirected to a file
+                log_file = os.path.join(temp_dir, "update_log.txt")
+                logging.debug(f"Log file path: {log_file}")
 
                 with open(update_script_path, 'w') as f:
                     f.write('#!/bin/sh\n')
-                    f.write('echo "ChiSurf Update Process"\n')
-                    f.write('echo "====================="\n')
-                    f.write('echo\n')
-                    f.write('echo "Starting update process..."\n')
-                    f.write('echo "Script: ' + update_script_path + '"\n')
-                    f.write('echo "Command: ' + cmd_str + '"\n')
-                    f.write('echo\n')
+                    f.write('echo "ChiSurf Update Process" > "' + log_file + '"\n')
+                    f.write('echo "=====================" >> "' + log_file + '"\n')
+                    f.write('echo >> "' + log_file + '"\n')
+                    f.write('echo "Starting update process..." >> "' + log_file + '"\n')
+                    f.write('echo "Script: ' + update_script_path + '" >> "' + log_file + '"\n')
+                    f.write('echo "Command: ' + cmd_str + '" >> "' + log_file + '"\n')
+                    f.write('echo >> "' + log_file + '"\n')
                     f.write('echo "Update in progress. Please wait..."\n')
-                    f.write('echo\n')
-                    f.write(shell_cmd_str + '\n')
+                    f.write('echo "Update in progress. Please wait..." >> "' + log_file + '"\n')
+                    f.write('echo >> "' + log_file + '"\n')
+
+                    # Execute the command and redirect output to log file
+                    f.write(shell_cmd_str + ' >> "' + log_file + '" 2>&1\n')
+
                     f.write('if [ $? -ne 0 ]; then\n')
+                    f.write('  echo >> "' + log_file + '"\n')
+                    f.write('  echo "Update failed with error code $?" >> "' + log_file + '"\n')
                     f.write('  echo\n')
                     f.write('  echo "Update failed with error code $?"\n')
+                    f.write('  echo "See log file for details: ' + log_file + '"\n')
                     f.write('  echo\n')
                     f.write('  echo "Press Enter to close this window..."\n')
                     f.write('  read\n')
                     f.write('  exit $?\n')
                     f.write('fi\n')
+                    f.write('echo >> "' + log_file + '"\n')
+                    f.write('echo "Update successful!" >> "' + log_file + '"\n')
                     f.write('echo\n')
                     f.write('echo "Update successful!"\n')
                     f.write('echo\n')
                     f.write('echo "Please restart ChiSurf manually to complete the update."\n')
+                    f.write('echo "Please restart ChiSurf manually to complete the update." >> "' + log_file + '"\n')
+                    f.write('echo\n')
+                    f.write('echo "Log file: ' + log_file + '"\n')
                     f.write('echo\n')
                     f.write('echo "Press Enter to close this window..."\n')
                     f.write('read\n')
 
                 # Create a launcher script that will be executed to start the update process
                 launcher_script_path = os.path.join(temp_dir, "start_update.sh")
+                logging.debug(f"Launcher script path: {launcher_script_path}")
+
                 with open(launcher_script_path, 'w') as f:
                     f.write('#!/bin/sh\n')
                     f.write('sleep 1\n')  # Wait a bit for the current process to exit
@@ -980,21 +1120,30 @@ class ChiSurfUpdater:
                 # Make the scripts executable
                 os.chmod(update_script_path, 0o755)
                 os.chmod(launcher_script_path, 0o755)
+                logging.debug("Made scripts executable")
 
                 # Run the launcher script
+                logging.info("Starting launcher script")
                 subprocess.Popen(['/bin/sh', launcher_script_path])
 
             # Report progress
+            message = "Update process started in a separate window."
+            logging.info(message)
             if callback:
-                callback("Update process started in a separate window.")
+                callback(message)
                 callback("ChiSurf will now close.")
+
+            # Log that we're exiting
+            logging.info("Exiting ChiSurf to complete the update")
 
             # Exit the current process
             sys.exit(0)
 
             return True, None
         except Exception as e:
-            return False, f"Error starting update process: {str(e)}"
+            error_msg = f"Error starting update process: {str(e)}"
+            logging.error(error_msg)
+            return False, error_msg
 
     def _schedule_restart(self) -> None:
         """
