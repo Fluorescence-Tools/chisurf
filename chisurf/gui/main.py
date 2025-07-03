@@ -644,6 +644,19 @@ class Main(QtWidgets.QMainWindow):
             show_fortune=False
         )
 
+    def onDockWidgetPlotVisibilityChanged(self, visible):
+        """Update the Plot Controller when the dockWidgetPlot becomes visible.
+
+        Args:
+            visible (bool): Whether the dock widget is visible
+        """
+        if visible and self.mdiarea.currentSubWindow() is not None:
+            # Get the current subwindow
+            sub_window = self.mdiarea.currentSubWindow()
+            # Update the current plot controller
+            if hasattr(sub_window, 'current_plot_controller') and hasattr(sub_window.current_plot_controller, 'update'):
+                sub_window.current_plot_controller.update()
+
     def load_toolbar_plugins(self):
         """Load plugins into the toolbar based on toolbar_plugins setting."""
         import pathlib
@@ -1174,6 +1187,7 @@ class Main(QtWidgets.QMainWindow):
         self.actionTab_windows.triggered.connect(self.onTabWindows)
         self.actionCascade.triggered.connect(self.onCascadeWindows)
         self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
+        self.dockWidgetPlot.visibilityChanged.connect(self.onDockWidgetPlotVisibilityChanged)
         self.actionAbout.triggered.connect(self.onOpenAbout)
         self.actionHelp_2.triggered.connect(self.onOpenHelp)
         self.actionUpdate.triggered.connect(self.onOpenUpdate)
