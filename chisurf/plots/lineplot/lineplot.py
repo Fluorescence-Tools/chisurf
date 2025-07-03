@@ -5,7 +5,7 @@ import numpy as np
 
 from chisurf import typing
 
-from chisurf.gui import QtWidgets, QtCore
+from chisurf.gui import QtWidgets, QtCore, QtGui
 
 import pyqtgraph as pg
 import pyqtgraph.dockarea
@@ -20,6 +20,45 @@ import chisurf.fitting
 import chisurf.settings
 import chisurf.math.statistics
 from chisurf.plots import plotbase
+
+
+class DraggableTextItem(pg.TextItem):
+    """A TextItem that can be dragged with the mouse."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setAcceptHoverEvents(True)
+        self.setCursor(QtCore.Qt.OpenHandCursor)
+        self._dragging = False
+        self._dragOffset = QtCore.QPointF(0, 0)
+
+    def hoverEnterEvent(self, event):
+        self.setCursor(QtCore.Qt.OpenHandCursor)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging = True
+            self.setCursor(QtCore.Qt.ClosedHandCursor)
+            self._dragOffset = event.pos()
+            event.accept()
+        else:
+            event.ignore()
+
+    def mouseMoveEvent(self, event):
+        if self._dragging and event.buttons() & QtCore.Qt.LeftButton:
+            new_pos = self.mapToParent(event.pos() - self._dragOffset)
+            self.setPos(new_pos)
+            event.accept()
+        else:
+            event.ignore()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging = False
+            self.setCursor(QtCore.Qt.OpenHandCursor)
+            event.accept()
+        else:
+            event.ignore()
 
 colors = chisurf.settings.gui['plot']['colors']
 
@@ -357,8 +396,8 @@ class LinePlot(plotbase.Plot):
         area.addDock(d3, 'bottom', d1)
         self.layout.addWidget(area)
 
-        # Labels
-        self.text = pg.TextItem(
+        # Labels - using draggable text item for quality parameters
+        self.text = DraggableTextItem(
             text='',
             border='w',
             fill=(0, 0, 255, 100),
