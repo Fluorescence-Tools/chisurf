@@ -6,296 +6,217 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>837</width>
+    <height>465</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>BICMic select</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <property name="spacing">
-     <number>0</number>
-    </property>
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>0</number>
-    </property>
-    <item>
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="tabPosition">
-       <enum>QTabWidget::South</enum>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Burst selection</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout">
-        <property name="leftMargin">
-         <number>0</number>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string># Bins</string>
         </property>
-        <property name="topMargin">
-         <number>0</number>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="comboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-        <property name="rightMargin">
-         <number>0</number>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>#Gauss</string>
         </property>
-        <property name="bottomMargin">
-         <number>0</number>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+        <property name="maximum">
+         <double>9999.000000000000000</double>
         </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Max</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Min</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QSpinBox" name="spinBox_3">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>999</number>
+        </property>
+        <property name="value">
+         <number>61</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="7">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
+        <property name="maximum">
+         <double>9999.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>1.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Feature</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5" colspan="3">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
         <property name="spacing">
-         <number>6</number>
-        </property>
-        <item row="1" column="3" rowspan="4" colspan="8">
-         <widget class="QWidget" name="widget" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_2"/>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="3" column="0" colspan="2">
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QPlainTextEdit" name="plainTextEdit">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>150</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>200</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="2" column="0" colspan="2">
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="2">
-           <widget class="QLabel" name="label_10">
-            <property name="text">
-             <string># Bins</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="comboBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>#Gauss</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-            <property name="maximum">
-             <double>9999.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="6">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Max</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="4">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Min</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QSpinBox" name="spinBox_3">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>999</number>
-            </property>
-            <property name="value">
-             <number>61</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="7">
-           <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
-            <property name="maximum">
-             <double>9999.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Feature</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="5" colspan="3">
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QPushButton" name="pushButton_2">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(170, 170, 127);</string>
-              </property>
-              <property name="text">
-               <string>Clear</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(147, 199, 255);</string>
-              </property>
-              <property name="text">
-               <string>Process</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item row="1" column="3" colspan="2">
-           <widget class="QProgressBar" name="progressBar">
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QSpinBox" name="spinBox">
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>10</number>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QPushButton" name="pushButton_show_df">
-            <property name="text">
-             <string>Show Data</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item row="4" column="0" colspan="2">
-         <layout class="QVBoxLayout" name="verticalLayout_4"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Channel settings</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_8">
-        <property name="spacing">
-         <number>0</number>
-        </property>
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <property name="spacing">
-           <number>0</number>
+         <widget class="QPushButton" name="pushButton_2">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
           </property>
-         </layout>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(170, 170, 127);</string>
+          </property>
+          <property name="text">
+           <string>Clear</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(147, 199, 255);</string>
+          </property>
+          <property name="text">
+           <string>Process</string>
+          </property>
+         </widget>
         </item>
        </layout>
-      </widget>
+      </item>
+      <item row="1" column="3" colspan="2">
+       <widget class="QProgressBar" name="progressBar">
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spinBox">
+        <property name="minimum">
+         <number>0</number>
+        </property>
+        <property name="maximum">
+         <number>10</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QPushButton" name="pushButton_show_df">
+        <property name="text">
+         <string>Show Data</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout_4"/>
+    </item>
+    <item row="1" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPlainTextEdit" name="plainTextEdit">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>150</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>200</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1" rowspan="3">
+     <widget class="QWidget" name="widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2"/>
+       </item>
+      </layout>
      </widget>
     </item>
    </layout>
@@ -305,7 +226,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>868</width>
+     <width>837</width>
      <height>21</height>
     </rect>
    </property>
