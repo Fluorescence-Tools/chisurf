@@ -43,7 +43,5 @@ __jupyter_address__ = None
 
 logging.basicConfig(
     filename=settings.session_log,
-    level=logging.WARNING
+    level=settings.log_level if hasattr(settings, 'log_level') else logging.WARNING
 )
-
-
