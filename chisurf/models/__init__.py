@@ -5,12 +5,14 @@ import chisurf.models.tcspc
 import chisurf.models.pda
 import chisurf.models.global_model
 import chisurf.models.stopped_flow
+import chisurf.models.parameter_transform
 from . model import *
 
 
 def function_to_model_decorator(**kws):
 
     def decorator(func):
+
         class ModelDecorator(chisurf.models.Model):
             def __init__(self, *args, **kwargs):
                 kwargs.update(kws)
@@ -19,15 +21,13 @@ def function_to_model_decorator(**kws):
                 self._node = cn.Node()
                 self._node.set_python_callback_function(func)
                 self.node_parameters = list()
-                for p in self.node_parameters:
-                    p.reactive = True
                 self.make_parameters()
 
             def make_parameters(self):
                 ports = self._node.get_ports()
                 for port_key in ports:
                     port = ports[port_key]
-                    p = chisurf.fitting.parameter.FittingParameter(port=port)
+                    p = chisurf.fitting.parameter.FittingParameter(port=port, name=port_key)
                     self.node_parameters.append(p)
                 self.find_parameters()
                 # output ports act as fixed parameters
@@ -44,4 +44,3 @@ def function_to_model_decorator(**kws):
         return ModelDecorator
 
     return decorator
-
