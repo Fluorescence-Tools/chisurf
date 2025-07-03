@@ -440,6 +440,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
     def on_change_plot(self):
         idx = self.plot_tab_widget.currentIndex()
         self.current_plot_controller.hide()
+        # Check if plots list is empty to avoid IndexError
+        if not self.fit.plots:
+            return
         self.current_plot_controller = self.fit.plots[idx].plot_controller
         self.current_plot_controller.show()
 
