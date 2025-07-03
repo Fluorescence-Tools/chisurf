@@ -9,6 +9,7 @@ import zlib
 import copy
 import yaml
 import pickle
+import logging
 
 import numpy as np
 import chisurf
@@ -84,15 +85,19 @@ def to_elementary(
         Dictionary that only contains objects of the type stings,
         floats, int, or boolean.
     """
+    logging.debug(f"to_elementary: type={type(obj)}")
     if verbose:
         print(type(obj))
     if isinstance(obj, dict):
+        logging.debug("to_elementary: Converting elements of dict.")
         if verbose:
             print("Converting elements of dict.")
         re = dict()
         for k in obj:
             if (k[0] == "_") and remove_protected:
+                logging.debug(f"to_elementary: Skipping protected key: {k}")
                 continue
+            logging.debug(f"to_elementary: Converting key: {k}")
             if verbose:
                 print("Converting key:", k)
             re[k] = to_elementary(
@@ -103,16 +108,20 @@ def to_elementary(
         return re
     # Check numpy types first, as np.float also is a python float instance
     elif isinstance(obj, np.floating):
+        logging.debug("to_elementary: Converting numpy float to python.")
         if verbose:
             print("Converting numpy float to python.")
         return float(obj)
     elif isinstance(obj, (str, float, int, bool)) or obj is None:
+        logging.debug(f"to_elementary: Passing through elementary type: {type(obj)}")
         return obj
     elif isinstance(obj, np.ndarray):
+        logging.debug(f"to_elementary: Converting np.ndarray to list. Shape: {obj.shape}")
         if verbose:
             print("Converting np.ndarray to list.")
         return obj.tolist()
     elif isinstance(obj, Iterable):
+        logging.debug("to_elementary: Converting Iterable to list.")
         if verbose:
             print("Converting Iterable list.")
         return [
@@ -123,10 +132,12 @@ def to_elementary(
             ) for e in obj
         ]
     elif isinstance(obj, np.integer):
+        logging.debug("to_elementary: Converting numpy integer to python.")
         if verbose:
             print("Converting numpy integer to python.")
         return int(obj)
     elif isinstance(obj, chisurf.base.Base):
+        logging.debug(f"to_elementary: Converting chisurf.base.Base of type {obj.__class__.__name__}.")
         if verbose:
             print("Converting chisurf.base.Base.")
         return to_elementary(
@@ -137,6 +148,7 @@ def to_elementary(
             )
         )
     else:
+        logging.warning(f"to_elementary: Object of type {type(obj)} was not converted to basic type")
         print("WARNING object was not converted to basic type")
         return str(obj)
 
