@@ -70,5 +70,8 @@ eps = sys.float_info.epsilon
 working_path = ''
 
 session_str = datetime.datetime.now().strftime('session_%H_%M_%d_%m_%Y')
-session_file = chisurf_settings_path / str(session_str + ".py")
-session_log = chisurf_settings_path / str(session_str + ".log")
+# Create logs subfolder
+logs_folder = chisurf_settings_path / "logs"
+logs_folder.mkdir(exist_ok=True)
+session_file = logs_folder / str(session_str + ".py")
+session_log = logs_folder / str(session_str + ".log")
