@@ -19,6 +19,7 @@ The update URL is configured in the settings or defaults to the one specified in
 """
 
 import sys
+import logging
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
     QProgressDialog, QApplication, QComboBox, QTextEdit,
@@ -82,21 +83,6 @@ class UpdaterWidget(QWidget):
         version_layout.addWidget(self.version_dropdown)
         layout.addLayout(version_layout)
 
-        # Command display text widget
-        layout.addWidget(QLabel("Conda Commands:"))
-        self.command_display = QTextEdit()
-        self.command_display.setReadOnly(True)
-        self.command_display.setVisible(False)  # Hidden until commands are available
-
-        # Set monospaced font
-        font = QFont("Courier New")
-        font.setStyleHint(QFont.Monospace)
-        self.command_display.setFont(font)
-
-        # Set minimum height
-        self.command_display.setMinimumHeight(100)
-        layout.addWidget(self.command_display)
-
         # Buttons
         button_layout = QHBoxLayout()
         self.check_button = QPushButton("Check for Updates")
@@ -115,61 +101,84 @@ class UpdaterWidget(QWidget):
 
     def check_for_updates(self):
         """Check for available updates."""
-        self.status_label.setText("Checking for updates...")
+        logging.info("Checking for updates via UI")
+
+        status_message = "Checking for updates..."
+        self.status_label.setText(status_message)
+        logging.info(status_message)
+
         self.check_button.setEnabled(False)
         self.update_button.setEnabled(False)
         self.version_dropdown.setEnabled(False)
         self.version_dropdown.clear()
 
         # Get update information directly from the updater
+        logging.debug("Getting update information from updater")
         update_info = self.updater._get_update_info()
 
         if not update_info:
-            self.status_label.setText("Error checking for updates: No update information available")
+            error_message = "Error checking for updates: No update information available"
+            logging.error(error_message)
+            self.status_label.setText(error_message)
             self.check_button.setEnabled(True)
             return
 
         # Check if there are available versions
         self.available_versions = update_info.get("available_versions", [])
+        logging.debug(f"Found {len(self.available_versions)} available versions in update info")
 
         if not self.available_versions and self.updater._is_local_folder():
             # If the update URL is a local folder but no versions were found,
             # try to get them directly
+            logging.debug("No versions found in update info but using local folder, trying direct listing")
             self.available_versions = self.updater._list_available_versions()
+            logging.debug(f"Found {len(self.available_versions)} available versions from direct listing")
 
         # If we have available versions, populate the dropdown
         if self.available_versions:
+            logging.info(f"Found {len(self.available_versions)} available versions")
             for version_info in self.available_versions:
+                version = version_info['version']
+                logging.debug(f"Adding version {version} to dropdown")
                 self.version_dropdown.addItem(
-                    f"Version {version_info['version']}",
+                    f"Version {version}",
                     version_info
                 )
 
             self.version_dropdown.setEnabled(True)
             self.update_button.setEnabled(True)
-            self.status_label.setText(f"Found {len(self.available_versions)} available versions.")
+            status_message = f"Found {len(self.available_versions)} available versions."
+            self.status_label.setText(status_message)
+            logging.info(status_message)
         else:
             # Fall back to the standard update check
+            logging.info("No versions found, falling back to standard update check")
             update_available, latest_version, error = check_for_updates()
 
             if error:
-                self.status_label.setText(f"Error checking for updates: {error}")
+                error_message = f"Error checking for updates: {error}"
+                logging.error(error_message)
+                self.status_label.setText(error_message)
             elif update_available:
-                self.status_label.setText(f"Update available: version {latest_version}")
+                status_message = f"Update available: version {latest_version}"
+                logging.info(status_message)
+                self.status_label.setText(status_message)
                 self.update_button.setEnabled(True)
             else:
-                self.status_label.setText(f"ChiSurf is already up to date (version {info.__version__}).")
+                status_message = f"ChiSurf is already up to date (version {info.__version__})."
+                logging.info(status_message)
+                self.status_label.setText(status_message)
 
         self.check_button.setEnabled(True)
+        logging.debug("Update check completed")
 
     def update_chisurf(self):
         """Update ChiSurf to the selected version."""
+        logging.info("Starting ChiSurf update via UI")
+
         # Get the selected version
         selected_index = self.version_dropdown.currentIndex()
-
-        # Clear and show the command display
-        self.command_display.clear()
-        self.command_display.setVisible(True)
+        logging.debug(f"Selected version index: {selected_index}")
 
         # Create progress dialog
         progress_dialog = QProgressDialog("Updating ChiSurf...", "Cancel", 0, 0, self)
@@ -178,27 +187,18 @@ class UpdaterWidget(QWidget):
         progress_dialog.setMinimumDuration(0)
         progress_dialog.setValue(0)
         progress_dialog.show()
+        logging.debug("Created and showed progress dialog")
 
         # Define callback to update progress dialog and command display
         def update_callback(message):
+            # Update the progress dialog
             progress_dialog.setLabelText(message)
 
-            # If the message is a command, display it in the command display
-            if message.startswith("Command:"):
-                self.command_display.append(message)
-                self.command_display.append("")  # Add a blank line for readability
-            elif message.startswith("WARNING:"):
-                # For warnings, make them stand out
-                self.command_display.append("")
-                self.command_display.append(message)
-                self.command_display.append("")
-            else:
-                # For other messages, add them to both the progress dialog and command display
-                self.command_display.append(message)
-
+            # Process UI events to keep the interface responsive
             QApplication.processEvents()
 
         # Show a warning message before starting the update
+        logging.info("Showing update warning dialog")
         warning_result = QMessageBox.warning(
             self,
             "Update Warning",
@@ -211,6 +211,7 @@ class UpdaterWidget(QWidget):
 
         if warning_result != QMessageBox.Yes:
             # User cancelled the update
+            logging.info("Update cancelled by user")
             progress_dialog.close()
             self.status_label.setText("Update cancelled by user.")
             return
@@ -218,16 +219,26 @@ class UpdaterWidget(QWidget):
         # If we have available versions and one is selected, use it
         if self.available_versions and selected_index >= 0:
             selected_version = self.version_dropdown.itemData(selected_index)
+            logging.debug(f"Selected version data: {selected_version}")
 
             if selected_version:
+                version = selected_version['version']
+                file_path = selected_version['file_path']
+
                 # Update the status
-                self.status_label.setText(f"Updating to version {selected_version['version']}...")
-                update_callback(f"Updating to version {selected_version['version']}...")
+                status_message = f"Updating to version {version}..."
+                logging.info(status_message)
+                self.status_label.setText(status_message)
+                update_callback(status_message)
+
+                # Log the update file path
+                logging.info(f"Update file path: {file_path}")
 
                 # Perform the update using the selected version
                 # Note: auto_restart is ignored as the application will be closed
+                logging.info(f"Starting update to version {version}")
                 self.updater.update_to_version(
-                    selected_version['file_path'], 
+                    file_path, 
                     callback=update_callback,
                     auto_restart=False
                 )
@@ -236,10 +247,12 @@ class UpdaterWidget(QWidget):
                 return
 
         # If no version is selected or available, fall back to the standard update
+        logging.info("No specific version selected, using standard update")
         # Note: auto_restart is ignored as the application will be closed
         update_chisurf(callback=update_callback, auto_restart=False)
 
         # The application will exit during the update process, so this code won't be reached
+        logging.debug("This code should not be reached as the application will exit during update")
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed
