@@ -43,8 +43,12 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ndx = ndxplorer.NDXplorer()
     ndx.show()
+    ndx.raise_()
+    ndx.activateWindow()
     sys.exit(app.exec_())
 
 if __name__ == "plugin":
     ndx = ndxplorer.NDXplorer()
     ndx.show()
+    ndx.raise_()
+    ndx.activateWindow()
