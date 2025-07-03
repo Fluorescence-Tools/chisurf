@@ -23,10 +23,25 @@
       eigen_vec = eigen_vec[:,idx].T
 
       v0 = eigen_vec[0]
-      x1, x2, x3 = v0 / v0.sum()
-      ie = - 1. / eigen_val
-      tR0, tR1, tR2 = ie[::-1]
 
+      # Prevent division by zero when calculating population fractions
+      v0_sum = v0.sum()
+      if abs(v0_sum) < 1e-10:
+        # If sum is too close to zero, use equal populations
+        x1, x2, x3 = 1/3, 1/3, 1/3
+      else:
+        x1, x2, x3 = v0 / v0_sum
+
+      # Prevent division by zero when calculating relaxation times
+      ie = np.zeros_like(eigen_val)
+      for i, val in enumerate(eigen_val):
+        if abs(val) < 1e-10:
+          ie[i] = float('inf')  # Infinite relaxation time for zero eigenvalue
+        else:
+          ie[i] = -1.0 / val
+
+      tR0, tR1, tR2 = ie[::-1]
+      
       r = {
         'x1': x1,
         'x2': x2,
@@ -34,7 +49,7 @@
         'tR0': tR0,
         'tR1': tR1
       }
-
+    
       return r
 
   initial:
@@ -66,14 +81,23 @@ FRET to PDA:
       phiA = 0.32,
       phiD = 0.92
     ):
-      # Add a small epsilon to prevent division by zero when E is close to 1
+      # Add a small epsilon to prevent division by zero
       epsilon = 1e-10
-      e = 1. - 1. / (1 + phiA/phiD / gp * E / (max(1 - E, epsilon)) + a) 
+
+      # Prevent division by zero for phiD and gp
+      safe_phiD = max(phiD, epsilon)
+      safe_gp = max(gp, epsilon)
+
+      # Prevent division by zero when E is close to 1
+      safe_term = phiA/safe_phiD / safe_gp * E / (max(1 - E, epsilon))
+
+      # Calculate the result
+      e = 1. - 1. / (1 + safe_term + a) 
 
       r = {
         'p0': e
       }
-
+    
       return r
 
   initial:
@@ -96,10 +120,20 @@ FRET to PDA:
 2 state kinetics->(x,tR):
   code: >
     def g(k12, k21):
+      # Prevent division by zero
+      denominator = k12 + k21
+      if abs(denominator) < 1e-10:
+        # If denominator is too close to zero, return default values
+        return {
+          'tR': 1e9,  # "Infinite" relaxation time
+          'x1': 0.5,  # Equal populations
+          'x2': 0.5
+        }
+
       return {
-        'tR': 1. / (k12 + k21),
-        'x1': k21 / (k12 + k21),
-        'x2': k12 / (k12 + k21)   
+        'tR': 1. / denominator,
+        'x1': k21 / denominator,
+        'x2': k12 / denominator   
       }
   initial:
     k12:
@@ -117,7 +151,15 @@ Gauss->FRET efficiency:
         x = np.linspace(0, 256, 256)
         f = distance_to_fret_efficiency(x, R0)
         y = generalized_normal_distribution(x, RDA, sDA, k)
-        fret_efficiency = f @ y / np.sum(y)
+
+        # Prevent division by zero
+        y_sum = np.sum(y)
+        if abs(y_sum) < 1e-10:
+            # If sum is too close to zero, return default value
+            fret_efficiency = 0.5  # Default FRET efficiency
+        else:
+            fret_efficiency = f @ y / y_sum
+
         return {
             'E': fret_efficiency
         }
