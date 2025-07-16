@@ -50,7 +50,7 @@ ChiSurf is available as a compiled Windows installation file. By downloading and
 
 ### Installation Instructions
 
-#### Conda
+#### Linux & macOS
 
 Install `chisurf` using `conda` or `mamba`:
 
