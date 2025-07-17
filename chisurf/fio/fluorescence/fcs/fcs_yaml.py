@@ -31,7 +31,8 @@ def write_yaml(
         print("Writing yaml .yaml to file: ", filename)
     txt = yaml.dump(
         data=chisurf.base.to_elementary(
-            obj=data
+            obj=data,
+            skip_qt_widgets=True
         )
     )
     with io.zipped.open_maybe_zipped(
