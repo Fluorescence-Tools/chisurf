@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
+from chisurf.gui import QtCore, QtGui, QtWidgets
 
 import chisurf.decorators
 import chisurf.fluorescence
@@ -534,8 +534,8 @@ class EtModelFreeWidget(
     QtWidgets.QWidget
 ):
 
-    model_update = QtCore.pyqtSignal()
-    add_fit = QtCore.pyqtSignal()
+    model_update = QtCore.Signal()
+    add_fit = QtCore.Signal()
 
     plot_classes = [
         (plots.global_tcspc.GlobalEt,
