@@ -5,7 +5,7 @@ This module serves as the entry point for the burst selection plugin.
 It imports the necessary classes from the refactored modules.
 """
 
-from .brick_mic_wizard import BrickMicWizard
+from .burst_selector import BrickMicWizard
 
 
 if __name__ == "plugin":
