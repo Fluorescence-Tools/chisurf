@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import datetime
 import json
 import pathlib
@@ -14,6 +15,17 @@ from .settings_utils import (
     copy_styles_to_user_folder
 )
 from .cleanup import clear_settings_folder, clear_logging_files
+from .path_utils import get_path  # Needed early
+
+# Define Chisurf cache path inside user settings folder
+_chisurf_user_cache_dir = get_path('settings') / "cache"
+
+# Set environment variables for Numba and Python bytecode cache
+os.environ["NUMBA_CACHE_DIR"] = str(_chisurf_user_cache_dir)
+os.environ["PYTHONPYCACHEPREFIX"] = str(_chisurf_user_cache_dir)
+
+# Ensure the cache directory exists
+_chisurf_user_cache_dir.mkdir(parents=True, exist_ok=True)
 
 # Path constants
 chisurf_settings_path = get_path('settings')
