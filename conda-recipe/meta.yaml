@@ -80,6 +80,8 @@ requirements:
     - hmmlearn
     - sympy
     - zeus-mcmc
+    - hdbscan
+    - umap-learn
 
 app:
   entry: chisurf
