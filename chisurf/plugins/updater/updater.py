@@ -272,7 +272,9 @@ class ChiSurfUpdater:
                 env_path = sys.prefix
                 logging.debug(f"Environment path: {env_path}")
 
-                cmd = [conda_exe, 'install', '--yes', '--force-reinstall', '--prefix', env_path, local_file_path]
+                # Use conda install with --update-deps to handle dependencies automatically
+                cmd = [conda_exe, 'install', '--yes', '--update-deps', '--force-reinstall', '--prefix', env_path, local_file_path]
+                logging.info("Using conda install with --update-deps to handle dependencies automatically")
             else:
                 # Unknown file type
                 error_msg = f"Unsupported update file type: {file_ext}"
@@ -739,6 +741,17 @@ class ChiSurfUpdater:
         conda_prefix = os.environ.get('CONDA_PREFIX', '')
         return conda_prefix.startswith('/usr') and not conda_prefix.startswith('/usr/local')
 
+    def _check_missing_dependencies(self) -> List[str]:
+        """
+        This method is kept for backward compatibility but now returns an empty list.
+        Conda will handle dependency resolution automatically when installing or updating packages.
+
+        Returns:
+            Empty list (no missing dependencies to manually install)
+        """
+        logging.info("Dependency checking is now handled by conda automatically")
+        return []
+
     def _prepare_update_command(self, update_info: Dict[str, Any]) -> Tuple[List[str], str]:
         """
         Prepare the command to update ChiSurf.
@@ -763,11 +776,12 @@ class ChiSurfUpdater:
         # Get the environment path (where chisurf is installed)
         env_path = sys.prefix
 
-        # Prepare the command with the environment path
+        # Always use conda install with --update-deps to ensure all dependencies are installed/updated
         cmd = [
-            conda_exe, "update", "-y", "--prefix", env_path, "chisurf",
+            conda_exe, "install", "-y", "--update-deps", "--prefix", env_path, "chisurf",
             *channel_args
         ]
+        logging.info("Using conda install with --update-deps to handle dependencies automatically")
 
         # Create a string representation for display
         cmd_str = " ".join(cmd)
@@ -921,6 +935,7 @@ class ChiSurfUpdater:
         Args:
             cmd: Command to run as a list of arguments
             callback: Optional callback function to report progress
+            missing_dependencies: Optional list of missing dependencies to install after the update
 
         Returns:
             Tuple containing:
@@ -985,6 +1000,8 @@ class ChiSurfUpdater:
 
                     # Execute the command and redirect output to log file
                     f.write(win_cmd_str + ' >> "' + log_file + '" 2>&1\n')
+
+                    # Dependencies are handled automatically by conda with --update-deps
 
                     f.write('if %ERRORLEVEL% NEQ 0 (\n')
                     f.write('  echo. >> "' + log_file + '"\n')
@@ -1067,7 +1084,12 @@ class ChiSurfUpdater:
                     # Execute the command and redirect output to log file
                     f.write(shell_cmd_str + ' >> "' + log_file + '" 2>&1\n')
 
-                    f.write('if [ $? -ne 0 ]; then\n')
+                    # Store the exit code
+                    f.write('UPDATE_EXIT_CODE=$?\n')
+
+                    # Dependencies are handled automatically by conda with --update-deps
+
+                    f.write('if [ $UPDATE_EXIT_CODE -ne 0 ]; then\n')
                     f.write('  echo >> "' + log_file + '"\n')
                     f.write('  echo "Update failed with error code $?" >> "' + log_file + '"\n')
                     f.write('  echo\n')
