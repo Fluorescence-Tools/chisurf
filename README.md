@@ -63,7 +63,7 @@ ChiSurf is available as a compiled Windows installation file. By downloading and
 
 ### Installation Instructions
 
-#### Conda
+#### Linux & macOS
 
 Install `chisurf` using `conda` or `mamba`:
 
@@ -78,7 +78,7 @@ Launch ChiSurf GUI:
 chisurf
 ```
 
-#### Windows & macOS
+#### Windows
 
 Download the latest releases from [https://www.peulen.xyz/downloads/](https://www.peulen.xyz/downloads/).
 
