@@ -8,3 +8,4 @@ import chisurf.gui.widgets.pdb
 import chisurf.gui.widgets.structure
 import chisurf.gui.widgets.ipython
 import chisurf.gui.widgets.fortune
+import chisurf.gui.widgets.progress
