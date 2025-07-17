@@ -60,14 +60,14 @@ def clear_settings_folder():
 
 def clear_logging_files():
     """
-    Remove only log files inside the settings folder.
+    Remove only log files inside the logs subfolder of the settings folder.
 
-    This function walks through the directory returned by `get_path()` and:
-      - Deletes each log file at the top level (files ending with .log),
+    This function walks through the logs directory inside the settings folder and:
+      - Deletes each log file (files ending with .log or .py),
       - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
         for any file that cannot be deleted.
 
-    The root settings folder itself is left intact, even if not empty.
+    The logs folder itself is left intact, even if not empty.
 
     Raises:
         None. All deletion errors are caught and logged.
@@ -75,20 +75,21 @@ def clear_logging_files():
     import chisurf
 
     root = get_path()
+    logs_folder = root / "logs"
 
-    # If the root doesn't even exist, nothing to do
-    if not os.path.isdir(root):
+    # If the logs folder doesn't exist, nothing to do
+    if not os.path.isdir(logs_folder):
         return
 
-    # Iterate through *direct* children of root
-    for entry in os.scandir(root):
+    # Iterate through *direct* children of logs folder
+    for entry in os.scandir(logs_folder):
         path = entry.path
         try:
             if not entry.is_dir(follow_symlinks=False):
-                # Only remove log files (files ending with .log)
-                if str(path).endswith('.log'):
+                # Remove log files (files ending with .log) and session files (.py)
+                if str(path).endswith('.log') or str(path).endswith('.py'):
                     os.unlink(path)
         except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked log file: {path}")
+            chisurf.logging.warning(f"Skipping locked file: {path}")
         except OSError as e:
-            chisurf.logging.warning(f"Couldn't remove log file: {path}")
+            chisurf.logging.warning(f"Couldn't remove file: {path}")
