@@ -170,7 +170,8 @@ class TCSPCReader(reader.ExperimentReader):
             '.csv': 'csv',
             '.yaml': 'yaml',
             '.yml': 'yaml',
-            '.json': 'json'
+            '.json': 'json',
+            '.pqres': 'pqres'
         }
 
         # Return the reading routine for the extension, or the default if not found
@@ -178,6 +179,7 @@ class TCSPCReader(reader.ExperimentReader):
 
     def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
         import chisurf.fio.fluorescence.thdfile
+        import chisurf.fio.fluorescence.pqres
         import chisurf.data
 
         # Guess the reading routine if not explicitly overridden in kwargs
@@ -203,6 +205,14 @@ class TCSPCReader(reader.ExperimentReader):
             )
         elif reading_routine == 'thd':
             data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.thdfile.read_tcspc_thd(
+                filename=filename,
+                rebin=self.rebin,
+                dt=self.dt,
+                experiment=self.experiment,
+                data_reader=self
+            )
+        elif reading_routine == 'pqres':
+            data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.pqres.read_pqres_tcspc(
                 filename=filename,
                 rebin=self.rebin,
                 dt=self.dt,
