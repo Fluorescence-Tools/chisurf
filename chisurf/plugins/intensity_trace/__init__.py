@@ -56,6 +56,46 @@ from hmmlearn.hmm import GaussianHMM
 from pyqtgraph import ImageItem, colormap
 
 
+def save_burst_ids(hmm_states, time_axis, time_window_s, tttr_obj, output_dir="."):
+    burst_ids = {}
+
+    for state in np.unique(hmm_states):
+        mask = hmm_states == state
+        indices = np.where(mask)[0]
+        if len(indices) == 0:
+            continue
+
+        # Calculate burst intervals
+        bursts = []
+        start_idx = indices[0]
+
+        for i in range(1, len(indices)):
+            if indices[i] != indices[i - 1] + 1:
+                stop_idx = indices[i - 1]
+                bursts.append((start_idx, stop_idx))
+                start_idx = indices[i]
+
+        # Append the last burst
+        bursts.append((start_idx, indices[-1]))
+
+        burst_ids[state] = bursts
+
+        # Optionally save burst IDs to file
+        output_file = pathlib.Path(output_dir) / f"burst_ids_state_{state}.bst"
+        with open(output_file, 'w') as f:
+            for start_bin, stop_bin in bursts:
+                # Convert bin indices back to TTTR indices
+                start_time = time_axis[start_bin]
+                stop_time = time_axis[stop_bin] + time_window_s
+
+                macro_time_resolution = tttr_obj.header.macro_time_resolution
+                start_tttr_idx = np.searchsorted(tttr_obj.macro_times, start_time / macro_time_resolution)
+                stop_tttr_idx = np.searchsorted(tttr_obj.macro_times, stop_time / macro_time_resolution)
+
+                f.write(f"{start_tttr_idx}\t{stop_tttr_idx}\n")
+
+    return burst_ids
+
 
 def compute_bic_curve(data, max_states=10):
     bics = []
@@ -692,6 +732,15 @@ class IntensityTrace(QWidget):
         hmm_states, transmat = self.apply_hmm(traces, n_components=n_comp)
         self.current_data['hmm_states'] = hmm_states
         self.current_data['transmat'] = transmat
+
+        # Save burst IDs
+        output_dir = QFileDialog.getExistingDirectory(self, "Select Directory for Burst IDs")
+        if output_dir:
+            save_burst_ids(hmm_states, self.current_data['time_axis'],
+                           self.current_data['window_ms'] / 1000.0,
+                           tttrlib.TTTR(self.file_label.text().replace("Selected file: ", "")),
+                           output_dir=output_dir)
+
         self.update_plot()
 
     def save_output(self):
