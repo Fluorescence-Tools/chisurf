@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 import os
-
+import gc
 import docx
 from docx.shared import Inches
+from PyQt5.QtWidgets import QApplication
 
-from chisurf import typing
-from chisurf import logging
-
+import chisurf
 import chisurf.base
 import chisurf.data
 import chisurf.fitting
 import chisurf.gui
 import chisurf.gui.widgets
+
+from chisurf import typing
+from chisurf import logging
 
 
 def add_fit(
@@ -82,89 +84,129 @@ def add_fit(
     cs.update()
 
 
-def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window=None):
+def save_fit(target_path: str = None,
+             use_complex_name: bool = False,
+             fit_window=None):
+    log = chisurf.logging
+    log.debug("save_fit: start (target_path=%r, use_complex_name=%r)",
+              target_path, use_complex_name)
+
     cs = chisurf.cs
     if fit_window is None:
+        log.debug("No fit_window passed—taking current MDI subwindow")
         fit_window = cs.mdiarea.currentSubWindow()
 
-    fit = fit_window.fit
-    fit_control_widget = fit_window.fit_widget
-    fit_group = fit_control_widget.fit
+    fit       = fit_window.fit
+    widget    = fit_window.fit_widget
+    fit_group = widget.fit
 
+    # decide on save directory & base name
     if target_path is None:
         target_path = chisurf.working_path
+        log.debug("No target_path passed—using working_path=%r", target_path)
+
     if use_complex_name:
         save_name = chisurf.base.clean_string(fit.name)
+        log.debug("Using complex fit.name → %r", save_name)
     else:
         save_name = os.path.basename(fit.data.name)
+        log.debug("Using simple data name → %r", save_name)
 
-    filename = os.path.join(target_path, save_name)
-    #fit.save(filename, 'json', save_curves=False)
-    fit.save(filename, 'csv', save_curves=True)
-    fit.data.save(filename + "_data", 'pkl')
+    basename = os.path.join(target_path, save_name)
+    log.info("Will write files with base %r", basename)
 
-    # Create word document
+    # 1) dump numeric data
+    log.debug("Saving fit CSV and curves to %r.csv", basename)
+    fit.save(basename, 'csv', save_curves=True)
+    #log.debug("Saving fit data object to %r_data.pkl", basename)
+    #fit.data.save(basename + "_data", 'pkl')
+
+    # 2) build the Word report
+    log.debug("Building Word document")
     document = docx.Document()
     document.add_heading(cs.current_fit.name, 0)
-    if os.path.isdir(target_path):
-        _ = document.add_heading('Fit-Results', level=1)
 
-        for i, f in enumerate(fit):
-            fit_control_widget.selected_fit = i
-            fit_name = os.path.basename(fit.data.name)[0]
-            model = f.model
-            document.add_paragraph(text=fit_name, style='ListNumber')
-            for png_name, source in zip(
-                    [save_name + '_screenshot_fit.png', save_name + '_screenshot_model.png'],
-                    [fit_window, model]
-            ):
-                png_filename = os.path.join(target_path, png_name)
-                source.grab().save(png_filename)
-                document.add_picture(
-                    os.path.join(target_path, png_filename),
-                    width=Inches(2.0)
-                )
+    if not os.path.isdir(target_path):
+        log.warning("Target folder %r does not exist, aborting report", target_path)
+        return
 
-        document.add_heading(text='Summary', level=1)
+    document.add_heading('Fit‑Results', level=1)
+    for i, f in enumerate(fit):
+        widget.selected_fit = i
+        log.debug("Adding screenshots for fit #%d", i+1)
+        document.add_paragraph(f"Fit #{i+1}", style='ListNumber')
 
-        p = document.add_paragraph(text='Parameters which are fitted are given in ')
-        p.add_run('bold').bold = True
-        p.add_run(', linked parameters in ')
-        p.add_run('italic.').italic = True
-        p.add_run(' fixed parameters are plain name. ')
-        n_fits = len(fit_group.grouped_fits)
-        table = document.add_table(rows=1, cols=n_fits + 1)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = "Fit-Nbr"
-        for i, fit in enumerate(fit_group):
-            hdr_cells[i + 1].text = str(i + 1)
-            model = fit.model
-            pk = list(model.parameters_all_dict.keys())
-            pk.sort()
-            for k in pk:
-                row_cells = table.add_row().cells
-                row_cells[0].text = str(k)
-                for i, fit in enumerate(fit_group):
-                    paragraph = row_cells[i + 1].paragraphs[0]
-                    run = paragraph.add_run(text='{:.3f}'.format(model.parameters_all_dict[k].value))
-                    if model.parameters_all_dict[k].fixed:
-                        continue
-                    else:
-                        if model.parameters_all_dict[k].link is not None:
-                            run.italic = True
-                        else:
-                            run.bold = True
+        for suffix, source in (
+            ("_screenshot_fit.png",   fit_window),
+            ("_screenshot_model.png", f.model),
+        ):
+            png_path = basename + suffix
+            log.debug(" Grabbing %r → %r", source, png_path)
 
-        row_cells = table.add_row().cells
-        row_cells[0].text = str("Chi2r")
+            pix = source.grab()
+            pix.save(png_path)
+            del pix
+            log.debug("  Saved and deleted QPixmap")
 
-        for i, fit in enumerate(fit_group):
-            paragraph = row_cells[i + 1].paragraphs[0]
-            run = paragraph.add_run('{:.4f}'.format(fit.chi2r))
-        tr = save_name
-        document.save(os.path.join(target_path, tr + '.docx'))
-    else:
-        chisurf.logging.warning('The target folder %s does not exist', target_path)
+            document.add_picture(png_path, width=Inches(2.0))
+            log.debug("  Embedded picture %r", png_path)
+
+    # 3) summary table
+    log.debug("Adding summary table for %d grouped fits", len(fit_group.grouped_fits))
+    document.add_heading('Summary', level=1)
+    p = document.add_paragraph("Parameters which are fitted are given in ")
+    p.add_run('bold').bold = True
+    p.add_run(', linked parameters in ')
+    p.add_run('italic.').italic = True
+    p.add_run(' Fixed parameters are plain name.')
+
+    n = len(fit_group.grouped_fits)
+    table = document.add_table(rows=1, cols=n+1)
+    hdr = table.rows[0].cells
+    hdr[0].text = "Param"
+    for col in range(n):
+        hdr[col+1].text = str(col+1)
+
+    parameters = sorted(fit.model.parameters_all_dict.keys())
+    for k in parameters:
+        row = table.add_row().cells
+        row[0].text = k
+        for col, f in enumerate(fit_group):
+            val = f.model.parameters_all_dict[k]
+            run = row[col+1].paragraphs[0].add_run(f"{val.value:.3f}")
+            if val.fixed:
+                style = "fixed"
+            elif val.link is not None:
+                run.italic = True
+                style = "linked"
+            else:
+                run.bold = True
+                style = "fitted"
+            log.debug(" Table cell [%r, fit #%d] = %.3f (%s)", k, col+1, val.value, style)
+
+    # chi² row
+    chi_row = table.add_row().cells
+    chi_row[0].text = "Chi2r"
+    for col, f in enumerate(fit_group):
+        val = f.chi2r
+        chi_row[col+1].paragraphs[0].add_run(f"{val:.4f}")
+        log.debug(" Table cell [Chi2r, fit #%d] = %.4f", col+1, val)
+
+    # finally save the document
+    docx_path = basename + '.docx'
+    log.info("Saving report document to %r", docx_path)
+    document.save(docx_path)
+
+    # ——— force Qt cleanup —————
+    log.debug("Processing pending Qt events and cleaning up")
+    QApplication.processEvents()
+
+    # drop Qt references and run GC
+    fit_window = widget = fit_group = document = None
+    gc.collect()
+    log.debug("save_fit: done")
+
+
 
 
 def load_fit_result(
