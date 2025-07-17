@@ -40,7 +40,7 @@ def kappasq_dwt(
 
     # Binning of the kappa2 distribution
     k2_step = (k2_max - k2_min) / (n_bins - 1)
-    k2_scale = np.arange(k2_min, k2_max + 1e-14, k2_step, dtype=np.float64)
+    k2_scale = np.arange(k2_min, k2_max + 1e-14, k2_step)
 
     # Generate random orientations for the TDM vectors
     donor_vec = np.random.randn(n_samples, 3)
@@ -49,7 +49,7 @@ def kappasq_dwt(
     # x = (R_DA/R_0)^6; relative DA distance
     x = 1 / fret_efficiency - 1
 
-    k2s = np.zeros(n_samples, dtype=np.float64)
+    k2s = np.zeros(n_samples)
     for i in range(n_samples):
         donor = donor_vec[i]
         acceptor = acceptor_vec[i]
@@ -125,7 +125,7 @@ def kappasq_all_delta_new(
 
     # histogram bin edges
     k2_step = (k2_max - k2_min) / (n_bins - 1)
-    k2scale = np.arange(k2_min, k2_max + 1e-14, k2_step, dtype=np.float64)
+    k2scale = np.arange(k2_min, k2_max + 1e-14, k2_step)
 
     k2hist, x = np.histogram(ks, bins=k2scale, weights=weights)
     return k2scale, k2hist, ks
@@ -230,7 +230,7 @@ def kappasq_all_delta(
     phi = np.arange(0.001, 2.0 * np.pi, step * np.pi / 180.0, dtype=np.float64)
     n = beta1.shape[0]
     m = phi.shape[0]
-    rda_vec = np.array([1, 0, 0], dtype=np.float64)
+    rda_vec = np.array([1.0, 0.0, 0.0], dtype=np.float64)
 
     # kappa-square values for allowed betas
     k2 = np.zeros((n, m), dtype=np.float64)
@@ -240,9 +240,9 @@ def kappasq_all_delta(
     k2_step = (k2_max - k2_min) / (n_bins - 1)
     k2scale = np.arange(k2_min, k2_max + 1e-14, k2_step, dtype=np.float64)
     for i in range(n):
-        d1 = np.array([np.cos(beta1[i]),  0, np.sin(beta1[i])])
-        n1 = np.array([-np.sin(beta1[i]), 0, np.cos(beta1[i])])
-        n2 = np.array([0, 1, 0])
+        d1 = np.array([np.cos(beta1[i]),  0.0, np.sin(beta1[i])], dtype=np.float64)
+        n1 = np.array([-np.sin(beta1[i]), 0.0, np.cos(beta1[i])], dtype=np.float64)
+        n2 = np.array([0.0, 1.0, 0.0], dtype=np.float64)
         for j in range(m):
             d2 = (n1*np.cos(phi[j])+n2*np.sin(phi[j]))*np.sin(delta)+d1*np.cos(delta)
             beta2 = np.arccos(np.abs(d2.dot(rda_vec)))
@@ -335,7 +335,7 @@ def kappasq_all(
     vol. 133, pp. 2463-2480, J. Am. Chem. Soc., 2011
 
     """
-    k2 = np.zeros(n_samples, dtype=np.float64)
+    k2 = np.zeros(int(n_samples), dtype=np.float64)
     step = (k2_max - k2_min) / (n_bins - 1)
     k2scale = np.arange(k2_min, k2_max + 1e-14, step, dtype=np.float64)
     k2hist = np.zeros(k2scale.shape[0] - 1, dtype=np.float64)
@@ -344,6 +344,12 @@ def kappasq_all(
         d2 = np.random.random(3)
         n1 = np.linalg.norm(d1)
         n2 = np.linalg.norm(d2)
+
+        # Prevent division by zero
+        if n1 < 1e-10 or n2 < 1e-10:
+            # Skip this iteration if either vector is too close to zero
+            continue
+
         # Assumption here: connecting vector R_DA is along the x-axis (R_DA=[1,0,0])
         delta = np.arccos(np.dot(d1, d2) / (n1 * n2))
         beta1 = np.arccos(d1[0] / n1)
@@ -601,8 +607,19 @@ def s2delta(
     vol. 133, pp. 2463-2480, J. Am. Chem. Soc., 2011
 
     """
-    s2_delta = r_inf_AD/(r_0 * s2_donor * s2_acceptor)
-    delta = np.arccos(np.sqrt((2.0 * s2_delta + 1.0) / 3.0))
+    # Prevent division by zero
+    denominator = r_0 * s2_donor * s2_acceptor
+    if abs(denominator) < 1e-10:
+        # If denominator is too close to zero, return default values
+        return 0.0, np.pi/2  # 90 degrees is a reasonable default
+
+    s2_delta = r_inf_AD / denominator
+
+    # Ensure the value inside sqrt is non-negative
+    # The expression (2.0 * s2_delta + 1.0) / 3.0 must be >= 0 for sqrt to work
+    # This means s2_delta must be >= -0.5
+    sqrt_arg = max(0.0, (2.0 * s2_delta + 1.0) / 3.0)
+    delta = np.arccos(np.sqrt(sqrt_arg))
     return s2_delta, delta
 
 
@@ -750,7 +767,7 @@ def p_isotropic_orientation_factor(
     s3 = np.sqrt(3.)
     r = np.zeros_like(k2)
     for i, k in enumerate(ks):
-        if 0 <= k <= 1:
+        if 0 < k <= 1:  # Avoid division by zero when k is 0
             r[i] = 0.5 / (s3 * k) * np.log(2 + s3)
         elif 1 <= k <= 2:
             r[i] = 0.5 / (s3 * k) * np.log((2 + s3) / (k + np.sqrt(k**2 - 1.0)))
