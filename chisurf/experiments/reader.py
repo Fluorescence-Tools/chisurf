@@ -37,7 +37,7 @@ class ExperimentReader(chisurf.base.Base):
     def __getstate__(self):
         state = super().__getstate__()
         state.update(
-            chisurf.base.to_elementary(self.__dict__.copy())
+            chisurf.base.to_elementary(self.__dict__.copy(), skip_qt_widgets=True)
         )
         return state
 
