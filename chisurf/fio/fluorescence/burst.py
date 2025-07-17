@@ -266,11 +266,38 @@ def write_bur_file_old(bur_filename, start_stop, filename, tttr, windows, detect
     summary_df.to_csv(bur_filename, sep='\t', index=False)
 
 
-def write_bur_file_fast(bur_filename, start_stop, filename, tttr, windows, detectors):
-    """Much faster burst summary writer by:
-       1) precomputing global detector/window masks,
-       2) building fixed-length lists instead of OrderedDict,
-       3) appending to a list of lists and dumping to pandas once."""
+def generate_burst_dataframe(start_stop, filename, tttr, windows, detectors, include_interleaved_zeros=True):
+    """
+    Generate a DataFrame with burst summary information.
+    
+    This function processes burst data and returns a DataFrame with various statistics for each burst.
+    It is optimized for speed by:
+    1) precomputing global detector/window masks,
+    2) building fixed-length lists instead of OrderedDict,
+    3) appending to a list of lists and dumping to pandas once.
+    
+    Parameters:
+    -----------
+    start_stop : list of tuples
+        List of (start_index, stop_index) tuples defining bursts.
+    filename : str or pathlib.Path
+        Path to the TTTR file.
+    tttr : object
+        TTTR object with macro_times, micro_times, routing_channel, and header.macro_time_resolution.
+    windows : dict
+        Dictionary {window_name: (r_start, r_stop)}.
+    detectors : dict
+        Dictionary {det_name: {"chs": [...], "micro_time_ranges": [(mt_start, mt_stop), ...]}}.
+    include_interleaved_zeros : bool, optional
+        Whether to include interleaved zero rows in the output DataFrame.
+        Default is True for backward compatibility with BUR format.
+        Set to False when saving to HDF5 format where interleaved zeros are not necessary.
+        
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame containing burst summary information.
+    """
     file_name_only = pathlib.Path(filename).name
 
     # unpack
@@ -322,13 +349,13 @@ def write_bur_file_fast(bur_filename, start_stop, filename, tttr, windows, detec
     zero_row[-1] = ""  # last col blank string
 
     out = []
-    # only add the leading zero‐row when there's at least one burst
+    # only add the leading zero‐row when there's at least one burst and interleaved zeros are requested
     try:
         has_bursts = len(start_stop) > 0
     except TypeError:
         # fallback if start_stop isn’t sized like a sequence
         has_bursts = bool(start_stop)
-    if has_bursts:
+    if has_bursts and include_interleaved_zeros:
         out.append(zero_row.copy())
 
     for start, stop in start_stop:
@@ -397,11 +424,52 @@ def write_bur_file_fast(bur_filename, start_stop, filename, tttr, windows, detec
 
         # blank column already set to ""
         out.append(row)
-        out.append(zero_row.copy())
+        # Only add trailing zero row if interleaved zeros are requested
+        if include_interleaved_zeros:
+            out.append(zero_row.copy())
 
-    # build and write
-    df = pd.DataFrame(out, columns=cols)
+    # build DataFrame
+    return pd.DataFrame(out, columns=cols)
+
+
+def write_dataframe_to_bur(df, bur_filename):
+    """
+    Write a DataFrame to a .bur file (tab-separated values).
+    
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing burst summary information.
+    bur_filename : str or pathlib.Path
+        Path to the output .bur file.
+    """
     df.to_csv(bur_filename, sep="\t", index=False)
+
+
+def write_bur_file_fast(bur_filename, start_stop, filename, tttr, windows, detectors):
+    """
+    Write burst summary information to a TSV file (tab-separated).
+    
+    This is a wrapper function that calls generate_burst_dataframe and write_dataframe_to_bur.
+    
+    Parameters:
+    -----------
+    bur_filename : str or pathlib.Path
+        Path to the output .bur file.
+    start_stop : list of tuples
+        List of (start_index, stop_index) tuples defining bursts.
+    filename : str or pathlib.Path
+        Path to the TTTR file.
+    tttr : object
+        TTTR object with macro_times, micro_times, routing_channel, and header.macro_time_resolution.
+    windows : dict
+        Dictionary {window_name: (r_start, r_stop)}.
+    detectors : dict
+        Dictionary {det_name: {"chs": [...], "micro_time_ranges": [(mt_start, mt_stop), ...]}}.
+    """
+    df = generate_burst_dataframe(start_stop, filename, tttr, windows, detectors)
+    write_dataframe_to_bur(df, bur_filename)
+
 
 write_bur_file = write_bur_file_fast
 
