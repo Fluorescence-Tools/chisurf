@@ -711,7 +711,6 @@ class FittingParameterWidget(Controller):
         self.widget_value.setValue(v)
 
     def finalize(self, *args):
-        print("Finalizing FittingParameterWidget: ", self.fitting_parameter.name, " ...")
         #super().update(*args)
         self.blockSignals(True)
 
