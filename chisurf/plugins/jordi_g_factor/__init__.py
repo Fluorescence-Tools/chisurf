@@ -24,7 +24,7 @@ background signal.
 This plugin can run independently of ChiSurf or as a ChiSurf plugin.
 """
 
-name = "Analysis:Jordi G-Factor Calculator"
+name = "Fluorescence decay:Jordi G-Factor Calculator"
 
 import sys
 import numpy as np
