@@ -7,6 +7,9 @@ fluorescence bursts in TTTR data.
 
 from pathlib import Path
 from qtpy import QtWidgets, QtCore, QtGui
+import zipfile
+import tempfile
+import io
 
 import pyqtgraph as pg
 from guidata.widgets.dataframeeditor import DataFrameEditor
@@ -187,6 +190,10 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.pushButton.clicked.connect(self.process_all_files)
         self.pushButton_2.clicked.connect(self.clear_data)
         self.pushButton_show_df.clicked.connect(self.show_dataframe_editor)
+        
+        # Connect checkBox_FileCSV and checkBox_FileMFDHDF to their respective handlers
+        self.checkBox_FileCSV.stateChanged.connect(self.on_file_format_toggled)
+        self.checkBox_FileMFDHDF.stateChanged.connect(self.on_mfd_hdf_toggled)
 
         # Setup menubar
         self.setup_menubar()
@@ -246,7 +253,20 @@ class BrickMicWizard(QtWidgets.QMainWindow):
             return
 
         # First, save the selection (ensures all bursts are processed)
-        self.burst_finder.save_selection()
+        # Determine which output types to use based on the state of both checkboxes
+        output_types = set()
+        if self.checkBox_FileMFDHDF.isChecked():
+            output_types.add("hdf5")
+        if self.checkBox_FileCSV.isChecked():
+            output_types.add("bur")
+            
+        # Check if zip output is requested
+        zip_output = self.checkBox_ZipOutput.isChecked()
+        
+        # Check if folder removal is requested
+        remove_folder = self.checkBox_RemoveFolder.isChecked()
+
+        self.burst_finder.save_selection(output_types=output_types, zip_output=zip_output, remove_folder=remove_folder)
         logging.info("Photon selection saved. Now loading burst files.")
 
         accumulated_results = []
@@ -265,15 +285,97 @@ class BrickMicWizard(QtWidgets.QMainWindow):
 
         for index, fn in enumerate(tttr_files):
             file_path = Path(fn)
-            analysis_folder_name = self.burst_finder.lineEdit_2.text()
+            analysis_folder_name = self.burst_finder.target_path
             bur_file_path = file_path.parent / analysis_folder_name / 'bi4_bur' / f"{file_path.stem}.bur"
 
-            if not bur_file_path.exists():
-                logging.info(f"Warning: Expected .bur file not found: {bur_file_path}")
+            # Check if the .bur file exists directly
+            try:
+                # Log the exact path we're checking to help with debugging
+                logging.info(f"Checking for .bur file at: {bur_file_path}")
+                
+                if bur_file_path.exists():
+                    # Load the pre-saved burst file
+                    logging.info(f"Found .bur file directly: {bur_file_path}")
+                    df = pd.read_csv(bur_file_path, sep="\t")
+                else:
+                    # Try multiple possible zip file locations
+                    zip_found = False
+                    
+                    # Standard zip location: analysis_folder_name/analysis_folder_name.zip
+                    zip_file_path = file_path.parent / analysis_folder_name / f"{analysis_folder_name}.zip"
+                    
+                    # Alternative zip locations to try if the standard one doesn't exist
+                    alt_zip_paths = [
+                        file_path.parent / f"{analysis_folder_name}.zip",  # analysis_folder_name.zip in parent directory
+                        file_path.parent / analysis_folder_name / "output.zip",  # output.zip in analysis folder
+                        file_path.parent / "output.zip"  # output.zip in parent directory
+                    ]
+                    
+                    # Try the standard zip location first
+                    if zip_file_path.exists():
+                        zip_found = True
+                    else:
+                        # Try alternative zip locations
+                        for alt_path in alt_zip_paths:
+                            if alt_path.exists():
+                                zip_file_path = alt_path
+                                zip_found = True
+                                break
+                    
+                    if zip_found:
+                        logging.info(f"Trying to load .bur file from zip: {zip_file_path}")
+                        try:
+                            with zipfile.ZipFile(str(zip_file_path), 'r') as zip_file:
+                                # Get all files in the zip to help with debugging
+                                all_files = zip_file.namelist()
+                                
+                                # Try multiple possible paths for the .bur file in the zip
+                                bur_filenames = [
+                                    f"bi4_bur/{file_path.stem}.bur",
+                                    f"bur/{file_path.stem}.bur",
+                                    f"{file_path.stem}.bur",
+                                    f"{analysis_folder_name}/bi4_bur/{file_path.stem}.bur",
+                                    f"{analysis_folder_name}/bur/{file_path.stem}.bur"
+                                ]
+                                
+                                # Try each possible path
+                                bur_found = False
+                                for bur_filename in bur_filenames:
+                                    try:
+                                        # Try to extract and read the file
+                                        with zip_file.open(bur_filename) as bur_file:
+                                            df = pd.read_csv(io.TextIOWrapper(bur_file), sep="\t")
+                                        logging.info(f"Successfully loaded .bur file from zip: {bur_filename}")
+                                        bur_found = True
+                                        break
+                                    except KeyError:
+                                        # This path doesn't exist, try the next one
+                                        continue
+                                
+                                # If none of the predefined paths worked, try to find a matching .bur file
+                                if not bur_found:
+                                    stem = file_path.stem
+                                    matching_files = [f for f in all_files if f.endswith(f"{stem}.bur")]
+                                    if matching_files:
+                                        bur_filename = matching_files[0]
+                                        with zip_file.open(bur_filename) as bur_file:
+                                            df = pd.read_csv(io.TextIOWrapper(bur_file), sep="\t")
+                                        logging.info(f"Successfully loaded .bur file from zip using filename search: {bur_filename}")
+                                        bur_found = True
+                                
+                                if not bur_found:
+                                    logging.info(f"Warning: .bur file not found in zip. Available files: {all_files}")
+                                    continue
+                                    
+                        except Exception as e:
+                            logging.info(f"Error loading from zip: {str(e)}")
+                            continue
+                    else:
+                        logging.info(f"Warning: Neither .bur file nor zip found: {bur_file_path}")
+                        continue
+            except Exception as e:
+                logging.info(f"Unexpected error processing file {file_path}: {str(e)}")
                 continue
-
-            # Load the pre-saved burst file
-            df = pd.read_csv(bur_file_path, sep="\t")
 
             # Ensure all expected columns exist
             missing_cols = [col for col in ui_columns if col not in df.columns]
@@ -643,3 +745,19 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.progressBar.setValue(0)
 
         logging.info("Data cleared.")
+        
+    def on_file_format_toggled(self, state):
+        """
+        Handle state changes of the checkBox_FileCSV checkbox.
+        This method is kept for backward compatibility but no longer enforces mutual exclusivity.
+        """
+        # No longer enforcing mutual exclusivity
+        pass
+            
+    def on_mfd_hdf_toggled(self, state):
+        """
+        Handle state changes of the checkBox_FileMFDHDF checkbox.
+        This method is kept for backward compatibility but no longer enforces mutual exclusivity.
+        """
+        # No longer enforcing mutual exclusivity
+        pass
