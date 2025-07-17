@@ -24,7 +24,7 @@ import sys
 from chisurf.plugins.lltf.lltf_gui import LLTFGUIWizard
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Tools:Lazy Lifetime Analysis"
+name = "Fluorescence decay:Lazy Lifetime Analysis"
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed
