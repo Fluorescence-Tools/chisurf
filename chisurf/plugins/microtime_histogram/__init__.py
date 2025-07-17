@@ -23,4 +23,4 @@ temporal information about photon arrival is critical for understanding molecula
 properties and dynamics.
 """
 
-name = "Tools:Histogram-Microtime"
+name = "Fluorescence decay:Histogram-Microtime"
