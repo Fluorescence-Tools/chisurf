@@ -67,19 +67,8 @@ class FileListWidget(QtWidgets.QListWidget):
                     else:
                         file_paths.append(file_path)
 
-            # Try to infer file type from the first file if set to Auto
-            if file_type == "Auto" and first_file_path:
-                file_type_int = tttrlib.inferTTTRFileType(first_file_path)
-
-                # Update comboBox if a file type is recognized
-                if file_type_int is not None and file_type_int >= 0:
-                    container_names = tttrlib.TTTR.get_supported_container_names()
-                    if 0 <= file_type_int < len(container_names):
-                        # Find the index in the comboBox
-                        file_type_name = container_names[file_type_int]
-                        index = self.parent.comboBox.findText(file_type_name)
-                        if index >= 0:
-                            self.parent.comboBox.setCurrentIndex(index)
+            # Do not infer file type from the first file
+            # Container type must be set by user
 
             # Sort files lexically before adding them
             file_paths.sort()
@@ -122,18 +111,8 @@ class MicrotimeHistogram(QtWidgets.QWidget):
     def tttr_filetype(self) -> str | None:
         txt = self.comboBox.currentText()
         if txt == 'Auto':
-            # Try to infer file type from the current file
-            if self.selected_files:
-                current_file = self.selected_files[0]
-                if current_file and Path(current_file).exists():
-                    file_type_int = tttrlib.inferTTTRFileType(current_file.as_posix())
-                    # Update comboBox if a file type is recognized
-                    if file_type_int is not None and file_type_int >= 0:
-                        container_names = tttrlib.TTTR.get_supported_container_names()
-                        if 0 <= file_type_int < len(container_names):
-                            # Return the inferred file type name
-                            return container_names[file_type_int]
-            # If we can't infer, return None to let tttrlib try auto-detection
+            # Container type must be set by user, but we still need to handle 'Auto' option
+            # Return None to let tttrlib try auto-detection
             return None
         return txt
 
