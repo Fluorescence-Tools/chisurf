@@ -25,6 +25,7 @@ from pathlib import Path
 import tttrlib
 from typing import Callable, Dict, Iterator
 
+
 class LazyTTTRDict(collections.abc.MutableMapping):
     """
     A dict-like that maps a key (file‐stem) → TTTR object,
