@@ -436,6 +436,15 @@ def process_ptu_file(
         png_path = image_folder / png_name
         skio.imsave(str(png_path), rgb, check_contrast=False)
 
+        # Count photons per channel group
+        ch_group0 = detector_chs[0::2] if len(detector_chs) >= 2 else detector_chs
+        ch_group1 = detector_chs[1::2] if len(detector_chs) >= 2 else detector_chs
+
+        ch_arr = sub_tttr.routing_channels
+        n_photons_total = ch_arr.size
+        n_photons_sp = np.sum(np.isin(ch_arr, ch_group0))
+        n_photons_ss = np.sum(np.isin(ch_arr, ch_group1))
+
         records.append({
             'source_ptu': fn,
             'label': lab,
@@ -447,6 +456,9 @@ def process_ptu_file(
             'max_col': maxc,
             'pixel_count': coords_arr.shape[0],
             'area': area,
+            'n_photons_total': n_photons_total,
+            'n_photons_sp': n_photons_sp,
+            'n_photons_ss': n_photons_ss,
             'perimeter': perimeter,
             'circularity': circularity,
             'eccentricity': eccentricity,
