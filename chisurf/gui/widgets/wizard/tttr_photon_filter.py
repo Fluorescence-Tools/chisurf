@@ -1,11 +1,15 @@
 import os
 import pathlib
 import typing
+import zipfile
+import shutil
+from datetime import datetime
 
 import tttrlib
 import json
 import time
 import numpy as np
+import pandas as pd
 
 import pyqtgraph as pg
 import matplotlib
@@ -16,6 +20,25 @@ import chisurf.math
 import chisurf.gui.decorators
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.math.signal import fill_small_gaps_in_array
+from chisurf.settings.path_utils import get_path
+from chisurf.settings.file_utils import safe_open_file
+from chisurf.gui.widgets.wizard.tttr_channel_definition import save_detector_setups
+from chisurf.gui.widgets.progress import EnhancedProgressDialog
+
+# Path to the central detector setups file
+DETECTOR_SETUPS_FILE = get_path('settings') / 'detector_setups.json'
+
+def load_detector_setups(file_path=None):
+    """Load detector setups from the central settings file or a custom file.
+
+    Args:
+        file_path: Optional custom path to load from. If None, uses DETECTOR_SETUPS_FILE.
+    """
+    return safe_open_file(
+        file_path=file_path or DETECTOR_SETUPS_FILE,
+        processor=json.load,
+        default_value={"setups": {}}
+    )
 
 QValidator = QtGui.QValidator
 colors = chisurf.settings.gui['plot']['colors']
@@ -151,21 +174,45 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     @property
     def filetype(self) -> str | None:
-        txt = self.comboBox.currentText()
-        if txt == 'Auto':
-            # Try to infer file type from the current file
-            current_file = self.current_tttr_filename
-            if current_file and pathlib.Path(current_file).exists():
-                file_type_int = tttrlib.inferTTTRFileType(current_file)
-                # Update comboBox if a file type is recognized
-                if file_type_int is not None and file_type_int >= 0:
-                    container_names = tttrlib.TTTR.get_supported_container_names()
-                    if 0 <= file_type_int < len(container_names):
-                        # Return the inferred file type name
-                        return container_names[file_type_int]
-            # If we can't infer, return None to let tttrlib try auto-detection
+        setup_name = self.comboBox.currentText()
+        if not setup_name or setup_name == "No setups available":
+            # Display warning message if no setup is selected
+            QtWidgets.QMessageBox.warning(
+                self, 
+                "No Setup Selected", 
+                "Please define a setup first in the Detector Configuration page."
+            )
             return None
-        return txt
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+
+        # Check if the selected setup exists
+        if setup_name in setups.get("setups", {}):
+            # Get the file type from the setup's tttr_reading section
+            setup_data = setups["setups"][setup_name]
+            if "tttr_reading" in setup_data and "file_type" in setup_data["tttr_reading"]:
+                file_type = setup_data["tttr_reading"]["file_type"]
+
+                # If file type is Auto, try to infer from current file
+                if file_type == 'Auto':
+                    current_file = self.current_tttr_filename
+                    if current_file and pathlib.Path(current_file).exists():
+                        file_type_int = tttrlib.inferTTTRFileType(current_file)
+                        if file_type_int is not None and file_type_int >= 0:
+                            container_names = tttrlib.TTTR.get_supported_container_names()
+                            if 0 <= file_type_int < len(container_names):
+                                return container_names[file_type_int]
+                    return None
+                return file_type
+
+        # If setup doesn't exist or doesn't have file type, show warning
+        QtWidgets.QMessageBox.warning(
+            self, 
+            "Invalid Setup", 
+            f"The selected setup '{setup_name}' is not properly defined. Please check your setup configuration."
+        )
+        return None
 
     @property
     def trace_bin_width(self) -> float:
@@ -395,36 +442,60 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     @property
     def save_bur(self):
         return self.checkBox_7.isChecked()
+        
+    @property
+    def save_hdf5(self):
+        # For testing purposes, return True
+        # In a production environment, this would check a checkbox or configuration setting
+        return True  # Change to False to disable HDF5 output
 
     def update_filter_plot(self):
         """
         Update the plot showing which photons are selected (1) vs unselected (0).
         """
-        n_min = self.plot_min
-        n_max = self.plot_max
-        x = np.arange(n_min, n_max)
-        y = self.selected[n_min:n_max]
-        self.plot_select.setData(x=x, y=y)
+        try:
+            selected = self.selected
+            if isinstance(selected, (np.ndarray, list)) and len(selected) > 0:
+                n_min = self.plot_min
+                n_max = self.plot_max
+                x = np.arange(n_min, n_max)
+                y = selected[n_min:n_max]
+                self.plot_select.setData(x=x, y=y)
+            else:
+                # If selected is not available, clear the plot
+                self.plot_select.setData([], [])
+        except (AttributeError, IndexError, TypeError):
+            # Handle the case when self.selected is not available or returns an error
+            self.plot_select.setData([], [])
 
     def update_dt_plot(self):
         """
         Update the plot of dT vs photon index, highlighting selected vs unselected points.
         """
-        if isinstance(self.dT, np.ndarray):
+        try:
             dT = self.dT
-            n_min = self.plot_min
-            n_max = self.plot_max
-            mask = self.selected[n_min:n_max].astype(bool)
-            y = dT[n_min:n_max]
-            x = np.arange(n_min, n_max)
+            if isinstance(dT, np.ndarray):
+                n_min = self.plot_min
+                n_max = self.plot_max
+                mask = self.selected[n_min:n_max].astype(bool)
+                y = dT[n_min:n_max]
+                x = np.arange(n_min, n_max)
 
-            mx = np.ma.masked_array(x, mask=~mask)
-            my = np.ma.masked_array(y, mask=~mask)
-            self.plot_selected.setData(x=mx.compressed(), y=my.compressed())
+                mx = np.ma.masked_array(x, mask=~mask)
+                my = np.ma.masked_array(y, mask=~mask)
+                self.plot_selected.setData(x=mx.compressed(), y=my.compressed())
 
-            mx = np.ma.masked_array(x, mask=mask)
-            my = np.ma.masked_array(y, mask=mask)
-            self.plot_unselected.setData(x=mx.compressed(), y=my.compressed())
+                mx = np.ma.masked_array(x, mask=mask)
+                my = np.ma.masked_array(y, mask=mask)
+                self.plot_unselected.setData(x=mx.compressed(), y=my.compressed())
+            else:
+                # If dT is not available, clear the plots
+                self.plot_selected.setData([], [])
+                self.plot_unselected.setData([], [])
+        except AttributeError:
+            # Handle the case when self.dT is not available
+            self.plot_selected.setData([], [])
+            self.plot_unselected.setData([], [])
 
     @property
     def do_mcs_plot(self) -> bool:
@@ -455,17 +526,31 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         Update the intensity trace plot (MCS) for both all photons and the selected subset.
         """
         if self.do_mcs_plot:
-            tttr = self.tttr
-            if isinstance(tttr, tttrlib.TTTR):
-                idx = np.where(self.selected)[0]
-                tw = self.trace_bin_width / 1000.0
-                trace_selected = tttr[idx].get_intensity_trace(time_window_length=tw)
-                x1 = np.arange(len(trace_selected)) * tw
-                self.plot_mcs_selected.setData(x1, trace_selected)
+            try:
+                tttr = self.tttr
+                if isinstance(tttr, tttrlib.TTTR):
+                    try:
+                        selected = self.selected
+                        if isinstance(selected, (np.ndarray, list)) and len(selected) > 0:
+                            idx = np.where(selected)[0]
+                            tw = self.trace_bin_width / 1000.0
+                            trace_selected = tttr[idx].get_intensity_trace(time_window_length=tw)
+                            x1 = np.arange(len(trace_selected)) * tw
+                            self.plot_mcs_selected.setData(x1, trace_selected)
+                        else:
+                            self.plot_mcs_selected.setData([], [])
+                    except (AttributeError, IndexError, TypeError):
+                        self.plot_mcs_selected.setData([], [])
 
-                trace_all = tttr.get_intensity_trace(time_window_length=tw)
-                x2 = np.arange(len(trace_all)) * tw
-                self.plot_mcs_all.setData(x2, trace_all)
+                    trace_all = tttr.get_intensity_trace(time_window_length=self.trace_bin_width / 1000.0)
+                    x2 = np.arange(len(trace_all)) * (self.trace_bin_width / 1000.0)
+                    self.plot_mcs_all.setData(x2, trace_all)
+                else:
+                    self.plot_mcs_all.setData([], [])
+                    self.plot_mcs_selected.setData([], [])
+            except (AttributeError, IndexError, TypeError):
+                self.plot_mcs_all.setData([], [])
+                self.plot_mcs_selected.setData([], [])
         else:
             self.plot_mcs_all.setData(x=[1.0], y=[1.0])
             self.plot_mcs_selected.setData(x=[1.0], y=[1.0])
@@ -475,61 +560,102 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         Update the histogram of burst lengths (only relevant if burst mode is active).
         """
         if self.do_burst_photon_plot:
-            burst_lengths = self.burst_lengths
-            num_bins = self.number_of_burst_bins
-            hist, bin_edges = np.histogram(burst_lengths, bins=num_bins)
+            try:
+                burst_lengths = self.burst_lengths
+                if isinstance(burst_lengths, np.ndarray) and len(burst_lengths) > 0:
+                    num_bins = self.number_of_burst_bins
+                    hist, bin_edges = np.histogram(burst_lengths, bins=num_bins)
 
-            self.pw_burst_histogram.clear()
-            self.pw_burst_histogram.addItem(
-                pg.BarGraphItem(
-                    x0=bin_edges[:-1],
-                    x1=bin_edges[1:],
-                    y0=0,
-                    y1=hist,
-                    brush='b',
-                    pen='w'
+                    self.pw_burst_histogram.clear()
+                    self.pw_burst_histogram.addItem(
+                        pg.BarGraphItem(
+                            x0=bin_edges[:-1],
+                            x1=bin_edges[1:],
+                            y0=0,
+                            y1=hist,
+                            brush='b',
+                            pen='w'
+                        )
+                    )
+                    self.plot_burst_histogram = self.pw_burst_histogram.plot(
+                        bin_edges,
+                        hist,
+                        pen='b',
+                        stepMode=True
+                    )
+
+                    total_bursts = np.sum(hist)
+                    pos_x = 0.5 * (bin_edges[0] + bin_edges[-1]) if bin_edges.size > 1 else 0
+                    pos_y = (hist.max() * 0.9) if hist.size > 0 else 1.0
+                    self.total_bursts_label = pg.TextItem(
+                        f"Total bursts: {total_bursts}",
+                        anchor=(0, 0),
+                        color='w'
+                    )
+                    self.total_bursts_label.setPos(pos_x, pos_y)
+                    self.pw_burst_histogram.addItem(self.total_bursts_label)
+                    self.pw_burst_histogram.setYRange(0.0, max(hist) if hist.size > 0 else 1.0)
+                    self.pw_burst_histogram.setXRange(0.0, max(bin_edges) if bin_edges.size > 0 else 1.0)
+                else:
+                    self.pw_burst_histogram.clear()
+                    self.pw_burst_histogram.addItem(
+                        pg.TextItem(
+                            "No burst data available",
+                            anchor=(0.5, 0.5),
+                            color='w'
+                        )
+                    )
+            except (AttributeError, IndexError, TypeError, ValueError):
+                self.pw_burst_histogram.clear()
+                self.pw_burst_histogram.addItem(
+                    pg.TextItem(
+                        "Error processing burst data",
+                        anchor=(0.5, 0.5),
+                        color='w'
+                    )
                 )
-            )
-            self.plot_burst_histogram = self.pw_burst_histogram.plot(
-                bin_edges,
-                hist,
-                pen='b',
-                stepMode=True
-            )
-
-            total_bursts = np.sum(hist)
-            pos_x = 0.5 * (bin_edges[0] + bin_edges[-1]) if bin_edges.size > 1 else 0
-            pos_y = (hist.max() * 0.9) if hist.size > 0 else 1.0
-            self.total_bursts_label = pg.TextItem(
-                f"Total bursts: {total_bursts}",
-                anchor=(0, 0),
-                color='w'
-            )
-            self.total_bursts_label.setPos(pos_x, pos_y)
-            self.pw_burst_histogram.addItem(self.total_bursts_label)
-            self.pw_burst_histogram.setYRange(0.0, max(hist) if hist.size > 0 else 1.0)
-            self.pw_burst_histogram.setXRange(0.0, max(bin_edges) if bin_edges.size > 0 else 1.0)
 
     def update_decay_plot(self):
         """
         Update the microtime decay plot (histogram), comparing all photons vs selected photons.
         """
         if self.do_microtime_plot:
-            if isinstance(self.tttr, tttrlib.TTTR):
-                idx = np.where(self.selected)[0]
-                y, x = self.tttr[idx].get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1] if np.any(y > 0) else 1
-                x = x[:idx_max]
-                y = y[:idx_max]
-                x *= 1e9
-                self.plot_decay_selected.setData(x=x, y=y)
+            try:
+                tttr = self.tttr
+                if isinstance(tttr, tttrlib.TTTR):
+                    try:
+                        selected = self.selected
+                        if isinstance(selected, (np.ndarray, list)) and len(selected) > 0:
+                            idx = np.where(selected)[0]
+                            y, x = tttr[idx].get_microtime_histogram(self.decay_coarse)
+                            if np.any(y > 0):
+                                idx_max = np.where(y > 0)[0][-1]
+                                x = x[:idx_max]
+                                y = y[:idx_max]
+                                x *= 1e9
+                                self.plot_decay_selected.setData(x=x, y=y)
+                            else:
+                                self.plot_decay_selected.setData([], [])
+                        else:
+                            self.plot_decay_selected.setData([], [])
+                    except (AttributeError, IndexError, TypeError):
+                        self.plot_decay_selected.setData([], [])
 
-                y, x = self.tttr.get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1] if np.any(y > 0) else 1
-                x = x[:idx_max]
-                y = y[:idx_max]
-                x *= 1e9
-                self.plot_decay_all.setData(x=x, y=y)
+                    y, x = tttr.get_microtime_histogram(self.decay_coarse)
+                    if np.any(y > 0):
+                        idx_max = np.where(y > 0)[0][-1]
+                        x = x[:idx_max]
+                        y = y[:idx_max]
+                        x *= 1e9
+                        self.plot_decay_all.setData(x=x, y=y)
+                    else:
+                        self.plot_decay_all.setData([], [])
+                else:
+                    self.plot_decay_all.setData([], [])
+                    self.plot_decay_selected.setData([], [])
+            except (AttributeError, IndexError, TypeError):
+                self.plot_decay_all.setData([], [])
+                self.plot_decay_selected.setData([], [])
         else:
             self.plot_decay_all.setData(x=[1.0], y=[1.0])
             self.plot_decay_selected.setData(x=[1.0], y=[1.0])
@@ -567,16 +693,30 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         p_str = str(p)
 
         if p_str in self.tttr_objects:
-            self.tttr = self.tttr_objects[p_str]
-            self.plot_max = len(self.tttr) - 1
-            header = self.tttr.get_header()
-            s = header.json
-            d = json.loads(s)
-            self.settings['header'] = d
-            self.update_plots()
-        else:
-            # Possibly fallback logic or a message
-            chisurf.logging.log(1, f"Path not in dictionary: {p_str}")
+            try:
+                self.tttr = self.tttr_objects[p_str]
+                self.plot_max = len(self.tttr) - 1
+                header = self.tttr.get_header()
+                s = header.json
+                d = json.loads(s)
+                self.settings['header'] = d
+                self.update_plots()
+            except Exception as e:
+                # If there's an error accessing the TTTR object's properties,
+                # display an error message and exit early
+                QtWidgets.QMessageBox.critical(
+                    self, 
+                    "Error Reading File", 
+                    f"Failed to read file '{p.name}' with the selected setup.\n\n"
+                    f"Error: {str(e)}\n\n"
+                    f"Please check that you have selected the correct setup for this file type."
+                )
+                # Remove the problematic TTTR object from the dictionary
+                if p_str in self.tttr_objects:
+                    del self.tttr_objects[p_str]
+                self.tttr_objects = dict()
+                self.onClearFiles()
+                return  # Exit early to prevent undefined state
 
     def update_output_path(self):
         """
@@ -665,45 +805,92 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             r.append(t)
         return r
 
-    def save_selection(self):
+    def save_selection(self, output_types = None, zip_output = False, remove_folder = False):
         """
-        Save the selection data in .bur or .json.gz, depending on user checkboxes,
-        and display a progress bar while saving.
+        Save the selection data in .bur or .json.gz, depending on user checkboxes or specified output_types,
+        and display a progress bar while saving. Optionally zip the output folder after saving and remove
+        the original folder if requested.
+        
+        Parameters:
+        -----------
+        output_types : set, optional
+            Set of output types to save. If provided, this overrides the checkbox settings.
+            Possible values: "bur", "sl5", "hdf5"
+        zip_output : bool, optional
+            Whether to zip the output folder after saving. Default is False.
+        remove_folder : bool, optional
+            Whether to remove the original folder after zipping. Default is False.
+            This parameter is only used if zip_output is True.
         """
         total_files = len(self.settings['tttr_filenames'])
         total_tasks = 0
-        if self.save_bur:
+        
+        # If output_types is provided, use it; otherwise, use checkbox settings
+        if output_types is None:
+            output_types = set()
+            if self.save_bur:
+                output_types.add("bur")
+            if self.save_sl5:
+                output_types.add("sl5")
+            if self.save_hdf5:
+                output_types.add("hdf5")
+        
+        # Calculate total tasks based on output_types
+        if "bur" in output_types:
             total_tasks += total_files
-        if self.save_sl5:
+        if "sl5" in output_types:
             total_tasks += total_files
+        if "hdf5" in output_types:
+            total_tasks += 1  # Only one task for HDF5 as we create a single file
+        
+        # Add additional tasks for zipping if needed
+        if zip_output:
+            total_tasks += 2  # Add tasks for zipping and potential folder removal
 
-        progress = QtWidgets.QProgressDialog("Saving selection...", "Cancel", 0, total_tasks, self)
-        progress.setWindowTitle("Saving selection")
-        progress.setWindowModality(QtCore.Qt.WindowModal)
+        # Create enhanced progress dialog
+        progress = EnhancedProgressDialog("Saving Selection", "Initializing...", 0, total_tasks, self)
         progress.show()
 
         current_task = 0
+        
+        # For HDF5 output, we'll collect DataFrames from all files
+        all_dfs = []
+        
+        # Process each file
+        for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
+            fn = pathlib.Path(filename)
+            resolved_path = str(fn.resolve())
+            self.tttr = self.tttr_objects[resolved_path]
+            start_stop = self.burst_start_stop
 
-        if self.save_bur:
-            for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
-                fn = pathlib.Path(filename)
-                resolved_path = str(fn.resolve())
-                self.tttr = self.tttr_objects[resolved_path]
+            # Generate DataFrame with or without interleaved zeros based on needs
+            # If only HDF5 is needed, skip interleaved zeros
+            # If both are needed, include interleaved zeros for BUR compatibility
+            include_zeros = "bur" in output_types
 
+            df = io.fluorescence.burst.generate_burst_dataframe(
+                start_stop=start_stop,
+                filename=fn,
+                tttr=self.tttr,
+                windows=self.windows,
+                detectors=self.detectors,
+                include_interleaved_zeros=include_zeros
+            )
+            
+            # Handle BUR output
+            if "bur" in output_types:
                 base_name = fn.stem
                 bur_directory = t / 'bi4_bur'
                 bur_directory.mkdir(exist_ok=True, parents=True)
                 bur_filename = bur_directory / f"{base_name}.bur"
-
-                start_stop = self.burst_start_stop
-                io.fluorescence.burst.write_bur_file(
-                    bur_filename,
-                    start_stop=start_stop,
-                    tttr=self.tttr,
-                    filename=fn,
-                    windows=self.windows,
-                    detectors=self.detectors
-                )
+                
+                # Update progress with current file info
+                progress.update_text(f"Saving BUR file: {base_name}.bur")
+                
+                # Write the DataFrame to BUR file
+                io.fluorescence.burst.write_dataframe_to_bur(df, bur_filename)
+                
+                # Write MTI summary
                 mt = self.tttr.macro_times[-1] * self.tttr.header.macro_time_resolution
                 io.fluorescence.burst.write_mti_summary(
                     filename=fn,
@@ -711,18 +898,82 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                     max_macro_time=mt,
                     append=True
                 )
+                
                 current_task += 1
-                progress.setValue(current_task)
-                QtWidgets.QApplication.processEvents()
+                progress.update_progress(current_task)
                 if progress.wasCanceled():
                     break
+            
+            # Collect DataFrame for HDF5 if needed
+            if "hdf5" in output_types:
+                # If we're only using HDF5 (not BUR), we need to filter out interleaved zeros
+                if not "bur" in output_types and df is not None and include_zeros:
+                    # Filter out rows where all numeric columns are zero
+                    # This removes the interleaved zero rows
+                    numeric_cols = df.select_dtypes(include=['number']).columns
+                    if len(numeric_cols) > 0:
+                        df = df[~(df[numeric_cols] == 0).all(axis=1)]
+                
+                if df is not None:
+                    # Add a column to identify the source file
+                    df_copy = df.copy()
+                    df_copy['Source File'] = str(fn)
+                    all_dfs.append(df_copy)
+        
+        # Write HDF5 file if needed
+        if "hdf5" in output_types and all_dfs:
+            # Update progress
+            progress.update_text("Creating combined HDF5 file...")
+            
+            # Combine all DataFrames into a single DataFrame
+            combined_df = pd.concat(all_dfs, ignore_index=True)
+            
+            # Create the HDF5 directory
+            hdf5_directory = self.parent_directories[0] / 'hdf5'
+            hdf5_directory.mkdir(exist_ok=True, parents=True)
+            
+            # Create a single HDF5 file with a timestamp
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            hdf5_filename = hdf5_directory / f"burst_data_{timestamp}.h5"
+            
+            # Convert problematic columns to string type to avoid serialization issues
+            # The 'First File' and 'Last File' columns may contain mixed types
+            if 'First File' in combined_df.columns:
+                combined_df['First File'] = combined_df['First File'].astype(str)
+            if 'Last File' in combined_df.columns:
+                combined_df['Last File'] = combined_df['Last File'].astype(str)
+            
+            # Update progress with file info
+            progress.update_text(f"Writing HDF5 file: {hdf5_filename.name}")
+            
+            # Write the combined DataFrame to the HDF5 file
+            # Using 'results' as the key for compatibility with mfd-hdf format expected by ndxplorer
+            combined_df.to_hdf(
+                hdf5_filename, 
+                key='results',
+                mode='w',
+                complevel=9,
+                complib='blosc',
+                format='table'
+            )
+        
+            # Update progress
+            current_task += 1
+            progress.update_progress(current_task, "HDF5 file created successfully")
+            if progress.wasCanceled():
+                return
 
-        if self.save_sl5:
+        if "sl5" in output_types:
             for t, filename in zip(self.parent_directories, self.settings['tttr_filenames']):
                 parent_directory = t / 'sl5'
                 parent_directory.mkdir(exist_ok=True, parents=True)
                 parent_directory = parent_directory.absolute()
                 fn = pathlib.Path(filename)
+                base_name = fn.stem
+                
+                # Update progress with current file info
+                progress.update_text(f"Saving SL5 file: {base_name}.json.gz")
+                
                 resolved_path = str(fn.resolve())
                 self.tttr = self.tttr_objects[resolved_path]
 
@@ -733,35 +984,185 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                     'delta_macro_time_filter': self.settings['delta_macro_time_filter'],
                     'filter': chisurf.fio.compress_numpy_array(self.selected)
                 }
-                base_name = fn.stem
                 output_filename = parent_directory / f"{base_name}.json.gz"
                 with io.open_maybe_zipped(output_filename, "w") as outfile:
                     packed = json.dumps(d)
                     outfile.write(packed)
                 current_task += 1
-                progress.setValue(current_task)
-                QtWidgets.QApplication.processEvents()
+                progress.update_progress(current_task)
                 if progress.wasCanceled():
                     break
 
-        progress.close()
+        # If we're not zipping, finish and close the dialog
+        # Otherwise just mark data as saved and continue with the same dialog
+        if not zip_output:
+            progress.finish("Selection saved successfully")
+        else:
+            # Just hide the dialog temporarily if we're going to zip
+            progress.setValue(progress.maximum())
+            
         self.filter_data_saved = True
+        
+        # Zip the output folder if requested
+        if zip_output and self.parent_directories:
+            # Get the first output directory (they should all be in the same parent directory)
+            output_folder = self.parent_directories[0]
+            if output_folder.exists():
+                # Update progress dialog for zipping
+                progress.update_text(f"Creating ZIP archive of: {output_folder}")
+                current_task += 1
+                progress.update_progress(current_task)
+                if progress.wasCanceled():
+                    return
+                
+                # Zip the output folder
+                zip_file = self.zip_output_folder(output_folder, progress)
+                
+                if zip_file and zip_file.exists():
+                    if remove_folder:
+                        # Remove the original folder after successful zipping if requested
+                        try:
+                            progress.update_text(f"Removing original folder: {output_folder}")
+                            shutil.rmtree(output_folder)
+                            progress.update_text(f"ZIP archive created: {zip_file}\nOriginal folder removed")
+                        except Exception as e:
+                            progress.update_text(f"ZIP archive created: {zip_file}\nFailed to remove folder: {str(e)}")
+                    else:
+                        progress.update_text(f"ZIP archive created: {zip_file}")
+                    
+                    # Give user a moment to see the final status and then finish
+                    progress.finish(auto_close=True)
 
     def fill_pie_windows(self, k):
         self.windows = k
         self.comboBox_3.addItems(k.keys())
 
+    def zip_output_folder(self, output_folder, existing_progress=None, add_timestamp=False):
+        """
+        Zip the output folder and its contents.
+        
+        Parameters:
+        -----------
+        output_folder : pathlib.Path
+            Path to the folder to be zipped.
+        existing_progress : QtWidgets.QProgressDialog, optional
+            An existing progress dialog to use instead of creating a new one.
+        add_timestamp : bool, optional
+            Whether to add a timestamp to the zip filename. Default is False.
+        
+        Returns:
+        --------
+        pathlib.Path
+            Path to the created zip file.
+        """
+        if not output_folder.exists() or not output_folder.is_dir():
+            return None
+        
+        if add_timestamp:
+            # Create a timestamp for the zip filename
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            zip_filename = output_folder.parent / f"{output_folder.name}_{timestamp}.zip"
+        else:
+            zip_filename = output_folder.parent / f"{output_folder.name}.zip"
+        
+        # Use existing progress dialog if provided, otherwise create a new one
+        using_existing_progress = existing_progress is not None
+        if not using_existing_progress:
+            progress = EnhancedProgressDialog("Creating ZIP Archive", "Zipping output folder...", 0, 100, self)
+            progress.show()
+        else:
+            progress = existing_progress
+            progress.update_text("Zipping output folder...")
+        
+        progress.setValue(10)  # Show some initial progress
+        QtWidgets.QApplication.processEvents()
+        
+        try:
+            # Create the zip file
+            with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                # Get total number of files for better progress tracking
+                total_files = sum([len(files) for _, _, files in os.walk(output_folder)])
+                processed_files = 0
+                
+                # Walk through all files and subdirectories in the output folder
+                for root, dirs, files in os.walk(output_folder):
+                    # Convert root path to a pathlib.Path for easier manipulation
+                    root_path = pathlib.Path(root)
+                    
+                    # Add each file to the zip
+                    for file in files:
+                        file_path = root_path / file
+                        # Calculate the relative path for the file in the zip
+                        rel_path = file_path.relative_to(output_folder)
+                        # Add the file to the zip
+                        zipf.write(file_path, rel_path)
+                        
+                        # Update progress based on files processed
+                        processed_files += 1
+                        progress_value = 10 + int(80 * processed_files / total_files) if total_files > 0 else 90
+                        if isinstance(progress, EnhancedProgressDialog):
+                            progress.update_progress(progress_value, f"Zipping: {rel_path}")
+                        else:
+                            progress.setValue(progress_value)
+                            progress.setLabelText(f"Zipping: {rel_path}")
+                            QtWidgets.QApplication.processEvents()
+                        
+                        if progress.wasCanceled():
+                            return None
+            
+            # Final progress update
+            if isinstance(progress, EnhancedProgressDialog):
+                progress.update_progress(100, "ZIP archive completed")
+            else:
+                progress.setValue(100)
+                progress.setLabelText("ZIP archive completed")
+                QtWidgets.QApplication.processEvents()
+            
+            return zip_filename
+            
+        except Exception as e:
+            # Update progress dialog instead of showing a message box
+            error_message = f"Error creating ZIP: {str(e)}"
+            if isinstance(progress, EnhancedProgressDialog):
+                progress.update_text(error_message)
+                QtWidgets.QApplication.processEvents()
+                time.sleep(2)  # Give user time to see the error
+            elif using_existing_progress:
+                progress.setLabelText(error_message)
+                QtWidgets.QApplication.processEvents()
+                time.sleep(2)  # Give user time to see the error
+            else:
+                # Only show message box if we created our own progress dialog and it's not enhanced
+                QtWidgets.QMessageBox.critical(
+                    self,
+                    "Error Creating ZIP",
+                    f"Failed to create ZIP archive: {str(e)}"
+                )
+            return None
+        finally:
+            # Close the progress dialog only if we created it
+            if not using_existing_progress:
+                progress.finish("ZIP operation completed")
+    
     def fill_detectors(self, k):
         self.detectors = k
+        # Add "All" option at the beginning
+        self.comboBox_2.addItem("All")
         self.comboBox_2.addItems(k.keys())
 
     def update_detectors(self):
         """
         Sync the comboBox_2 selection to the channel lineEdit_4.
+        If "All" is selected, empty the channel numbers line widget.
         """
         key = self.comboBox_2.currentText()
-        s = ", ".join([str(i) for i in self.detectors[key]["chs"]])
-        self.lineEdit_4.setText(s)
+        if key == "All":
+            # Empty the channel numbers line widget
+            self.lineEdit_4.setText("")
+        else:
+            # Set the channel numbers from the selected detector
+            s = ", ".join([str(i) for i in self.detectors[key]["chs"]])
+            self.lineEdit_4.setText(s)
         self.update_parameter()
 
     def update_pie_windows(self):
@@ -770,9 +1171,319 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         """
         key = self.comboBox_3.currentText()
         pie_win = self.windows[key]
-        s = ";".join([f"{i[0]}-{i[1]}" for i in pie_win])
+
+        # Check if pie_win is a list/tuple or a single integer
+        if isinstance(pie_win, (list, tuple)):
+            # Handle list/tuple of windows
+            formatted_windows = []
+            # If pie_win is a list with exactly 2 elements and both are integers,
+            # it's likely a single window definition [start, end]
+            if len(pie_win) == 2 and all(isinstance(x, int) for x in pie_win):
+                formatted_windows.append(f"{pie_win[0]}-{pie_win[1]}")
+            else:
+                # Otherwise, process each item in the list
+                for i in pie_win:
+                    if isinstance(i, (list, tuple)) and len(i) >= 2:
+                        # Normal case: i is a tuple/list with at least two elements
+                        formatted_windows.append(f"{i[0]}-{i[1]}")
+                    elif isinstance(i, int):
+                        # Handle case where i is a single integer
+                        formatted_windows.append(f"{i}-{i}")
+                    else:
+                        # Skip invalid entries
+                        continue
+            s = ";".join(formatted_windows)
+        elif isinstance(pie_win, int):
+            # Handle case where pie_win is a single integer
+            s = f"{pie_win}-{pie_win}"
+        else:
+            # Default to empty string for unexpected types
+            s = ""
+
         self.lineEdit_5.setText(s)
         self.update_parameter()
+
+    def load_available_setups(self):
+        """
+        Load available setups from the detector setups file and populate the comboBox.
+        If no setups are available, display a message in the comboBox.
+        """
+        self.comboBox.clear()
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+        setup_names = list(setups.get("setups", {}).keys())
+
+        if not setup_names:
+            # If no setups are available, add a placeholder item
+            self.comboBox.addItem("No setups available")
+        else:
+            # Add all available setups to the comboBox
+            self.comboBox.addItems(setup_names)
+
+            # If there's a last used setup, select it
+            if setups.get("last_used") and setups["last_used"] in setup_names:
+                index = self.comboBox.findText(setups["last_used"])
+                if index >= 0:
+                    self.comboBox.setCurrentIndex(index)
+
+    def get_burst_selection_parameters(self):
+        """
+        Collect all burst selection parameters from the UI.
+
+        Returns:
+            dict: A dictionary containing all burst selection parameters.
+        """
+        # Get the region selector values
+        lb, ub = self.region_selector.getRegion()
+        dT_min = 10.0 ** lb if self.pw_dT.getAxis('left').logMode else lb
+        dT_max = 10.0 ** ub if self.pw_dT.getAxis('left').logMode else ub
+
+        # Collect all parameters
+        return {
+            "dT_min": dT_min,
+            "dT_max": dT_max,
+            "use_dT_min": self.checkBox_2.isChecked(),
+            "use_dT_max": self.checkBox_3.isChecked(),
+            "photon_threshold": self.spinBox.value(),
+            "count_rate_window_ms": self.doubleSpinBox.value(),
+            "invert_count_rate_filter": self.checkBox.isChecked(),
+            "filter_mode": self.used_filter,
+            "use_gap_fill": self.checkBox_5.isChecked(),
+            "max_gap": self.spinBox_7.value(),
+            "trace_bin_width": self.doubleSpinBox_4.value(),
+            "number_of_burst_bins": self.spinBox_6.value()
+        }
+
+    def save_burst_selection_parameters(self):
+        """
+        Save the burst selection parameters to the current setup.
+        """
+        setup_name = self.comboBox.currentText()
+        if not setup_name or setup_name == "No setups available":
+            QtWidgets.QMessageBox.warning(
+                self, 
+                "No Setup Selected", 
+                "Please select a setup first to save burst selection parameters."
+            )
+            return False
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+
+        # Check if the selected setup exists
+        if setup_name in setups.get("setups", {}):
+            # Get the burst selection parameters
+            burst_params = self.get_burst_selection_parameters()
+
+            # Add the burst selection parameters to the setup
+            setup_data = setups["setups"][setup_name]
+            setup_data["burst_selection"] = burst_params
+
+            # Save the updated setups
+            if save_detector_setups(setups, DETECTOR_SETUPS_FILE):
+                QtWidgets.QMessageBox.information(
+                    self, 
+                    "Success", 
+                    f"Burst selection parameters saved to setup '{setup_name}' successfully."
+                )
+                return True
+            else:
+                QtWidgets.QMessageBox.critical(
+                    self, 
+                    "Error", 
+                    f"Failed to save burst selection parameters to setup '{setup_name}'."
+                )
+                return False
+        else:
+            QtWidgets.QMessageBox.warning(
+                self, 
+                "Invalid Setup", 
+                f"The selected setup '{setup_name}' does not exist."
+            )
+            return False
+
+    def update_micro_time_binning(self, setup_name=None):
+        """
+        Update the micro time binning (Decay bin) from the selected setup.
+
+        Args:
+            setup_name (str, optional): The name of the setup to use. If None, uses the currently selected setup.
+        """
+        if setup_name is None:
+            setup_name = self.comboBox.currentText()
+
+        if not setup_name or setup_name == "No setups available":
+            return
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+
+        # Check if the selected setup exists
+        if setup_name in setups.get("setups", {}):
+            # Get the micro time binning from the setup's tttr_reading section
+            setup_data = setups["setups"][setup_name]
+            if "tttr_reading" in setup_data and "micro_time_binning" in setup_data["tttr_reading"]:
+                micro_time_binning = setup_data["tttr_reading"]["micro_time_binning"]
+                # Update the spinBox_5 value (decay_coarse)
+                self.spinBox_5.setValue(micro_time_binning)
+                # Update the plots
+                self.update_plots()
+
+    def update_channel_routing(self, setup_name=None):
+        """
+        Update the channel routing (detectors) from the selected setup.
+
+        Args:
+            setup_name (str, optional): The name of the setup to use. If None, uses the currently selected setup.
+        """
+        if setup_name is None:
+            setup_name = self.comboBox.currentText()
+
+        if not setup_name or setup_name == "No setups available":
+            return
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+
+        # Check if the selected setup exists
+        if setup_name in setups.get("setups", {}):
+            # Get the detectors from the setup
+            setup_data = setups["setups"][setup_name]
+            if "detectors" in setup_data:
+                # Update the detectors attribute
+                self.detectors = setup_data["detectors"]
+
+                # Clear and repopulate comboBox_2
+                self.comboBox_2.blockSignals(True)
+                self.comboBox_2.clear()
+
+                # Add "All" option at the beginning
+                self.comboBox_2.addItem("All")
+
+                # Add detector names
+                self.comboBox_2.addItems(self.detectors.keys())
+
+                # Select the first detector by default (or "All" if no detectors)
+                if self.comboBox_2.count() > 0:
+                    self.comboBox_2.setCurrentIndex(0)
+
+                self.comboBox_2.blockSignals(False)
+
+                # Update the channel numbers in lineEdit_4
+                self.update_detectors()
+
+    def update_pie_windows_from_setup(self, setup_name=None):
+        """
+        Update the PIE windows from the selected setup.
+
+        Args:
+            setup_name (str, optional): The name of the setup to use. If None, uses the currently selected setup.
+        """
+        if setup_name is None:
+            setup_name = self.comboBox.currentText()
+
+        if not setup_name or setup_name == "No setups available":
+            return
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+
+        # Check if the selected setup exists
+        if setup_name in setups.get("setups", {}):
+            # Get the windows from the setup
+            setup_data = setups["setups"][setup_name]
+            if "windows" in setup_data:
+                # Update the windows attribute
+                self.windows = setup_data["windows"]
+
+                # Clear and repopulate comboBox_3
+                self.comboBox_3.blockSignals(True)
+                self.comboBox_3.clear()
+
+                # Add window names
+                self.comboBox_3.addItems(self.windows.keys())
+
+                # Select the first window by default
+                if self.comboBox_3.count() > 0:
+                    self.comboBox_3.setCurrentIndex(0)
+
+                self.comboBox_3.blockSignals(False)
+
+                # Update the microtime ranges in lineEdit_5
+                self.update_pie_windows()
+
+    def update_burst_selection_parameters(self, setup_name=None):
+        """
+        Update the burst selection parameters from the selected setup.
+
+        Args:
+            setup_name (str, optional): The name of the setup to use. If None, uses the currently selected setup.
+        """
+        if setup_name is None:
+            setup_name = self.comboBox.currentText()
+
+        if not setup_name or setup_name == "No setups available":
+            return
+
+        # Load setups from the detector setups file
+        setups = load_detector_setups()
+
+        # Check if the selected setup exists
+        if setup_name in setups.get("setups", {}):
+            # Get the burst selection parameters from the setup
+            setup_data = setups["setups"][setup_name]
+            if "burst_selection" in setup_data:
+                burst_params = setup_data["burst_selection"]
+
+                # Update the UI with the burst selection parameters
+                if "dT_min" in burst_params and "dT_max" in burst_params:
+                    dT_min = burst_params["dT_min"]
+                    dT_max = burst_params["dT_max"]
+                    if self.pw_dT.getAxis('left').logMode:
+                        dT_min = np.log10(dT_min) if dT_min > 0 else -4  # Default to -4 if dT_min is 0 or negative
+                        dT_max = np.log10(dT_max) if dT_max > 0 else 0   # Default to 0 if dT_max is 0 or negative
+                    self.region_selector.setRegion((dT_min, dT_max))
+                    self._dT_min = burst_params["dT_min"]
+                    self._dT_max = burst_params["dT_max"]
+                    self.doubleSpinBox_2.setValue(burst_params["dT_min"])
+                    self.doubleSpinBox_3.setValue(burst_params["dT_max"])
+
+                if "use_dT_min" in burst_params:
+                    self.checkBox_2.setChecked(burst_params["use_dT_min"])
+
+                if "use_dT_max" in burst_params:
+                    self.checkBox_3.setChecked(burst_params["use_dT_max"])
+
+                if "photon_threshold" in burst_params:
+                    self.spinBox.setValue(burst_params["photon_threshold"])
+
+                if "count_rate_window_ms" in burst_params:
+                    self.doubleSpinBox.setValue(burst_params["count_rate_window_ms"])
+
+                if "invert_count_rate_filter" in burst_params:
+                    self.checkBox.setChecked(burst_params["invert_count_rate_filter"])
+
+                if "filter_mode" in burst_params:
+                    if burst_params["filter_mode"] == "count_rate":
+                        self.radioButton.setChecked(True)
+                    else:
+                        self.radioButton_2.setChecked(True)
+
+                if "use_gap_fill" in burst_params:
+                    self.checkBox_5.setChecked(burst_params["use_gap_fill"])
+
+                if "max_gap" in burst_params:
+                    self.spinBox_7.setValue(burst_params["max_gap"])
+
+                if "trace_bin_width" in burst_params:
+                    self.doubleSpinBox_4.setValue(burst_params["trace_bin_width"])
+
+                if "number_of_burst_bins" in burst_params:
+                    self.spinBox_6.setValue(burst_params["number_of_burst_bins"])
+
+                # Update the plots
+                self.update_plots()
 
     @chisurf.gui.decorators.init_with_ui("tttr_photon_filter.ui")
     def __init__(
@@ -855,10 +1566,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         # Dictionary to store all TTTR objects
         self.tttr_objects = dict()
 
-        # Filetype combos
-        self.comboBox.clear()
-        self.comboBox.insertItem(0, "Auto")
-        self.comboBox.insertItems(1, list(tttrlib.TTTR.get_supported_container_names()))
+        # Load available setups for comboBox
+        self.load_available_setups()
 
         # Main settings
         self.settings: dict = {}
@@ -920,19 +1629,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 self.onClearFiles()
                 return  # Prevent loading any files
 
-            # Try to infer file type from the first file if set to Auto
-            if self.filetype == "Auto" and self.settings['tttr_filenames']:
-                first_file = self.settings['tttr_filenames'][0]
-                file_type_int = tttrlib.inferTTTRFileType(first_file)
-
-                # Update comboBox if a file type is recognized
-                if file_type_int is not None and file_type_int >= 0:
-                    container_names = tttrlib.TTTR.get_supported_container_names()
-                    if 0 <= file_type_int < len(container_names):
-                        # Add 1 to account for 'Auto' at index 0
-                        idx = file_type_int + 1
-                        if 0 <= idx < self.comboBox.count():
-                            self.comboBox.setCurrentIndex(idx)
+            # Get file type from the selected setup
+            file_type = self.filetype
+            # If no setup is selected or the setup doesn't have a file type,
+            # we've already shown a warning in the filetype property
 
             # Proceed with loading the files and showing progress
             total_files = len(self.settings['tttr_filenames'])
@@ -946,16 +1646,29 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
                 if p_str not in self.tttr_objects:
                     if p.exists() and p.is_file():
-                        if isinstance(self.filetype, str) and self.filetype != "Auto":
-                            self.tttr_objects[p_str] = tttrlib.TTTR(p_str, self.filetype)
-                        elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:
-                            # Use inferTTTRFileType for better auto-detection
-                            file_type = tttrlib.inferTTTRFileType(p_str)
-                            if file_type is not None and file_type >= 0:
+                        file_type = self.filetype
+                        try:
+                            if isinstance(file_type, str):
                                 self.tttr_objects[p_str] = tttrlib.TTTR(p_str, file_type)
-                            else:
-                                # Fall back to default auto-detection if inference fails
-                                self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
+                            elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:
+                                # Use inferTTTRFileType for better auto-detection
+                                file_type_int = tttrlib.inferTTTRFileType(p_str)
+                                if file_type_int is not None and file_type_int >= 0:
+                                    self.tttr_objects[p_str] = tttrlib.TTTR(p_str, file_type_int)
+                                else:
+                                    # Fall back to default auto-detection if inference fails
+                                    self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
+                        except Exception as e:
+                            progress_window.close()
+                            QtWidgets.QMessageBox.critical(
+                                self, 
+                                "Error Loading File", 
+                                f"Failed to load file '{p.name}' with the selected setup.\n\n"
+                                f"Error: {str(e)}\n\n"
+                                f"Please check that you have selected the correct setup for this file type."
+                            )
+                            self.onClearFiles()
+                            return  # Exit early to prevent undefined state
 
                 progress_window.set_value(i)
 
@@ -1083,6 +1796,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
         self.comboBox_2.currentTextChanged.connect(self.update_detectors)
         self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
+        self.comboBox.currentTextChanged.connect(self.update_micro_time_binning)
+        self.comboBox.currentTextChanged.connect(self.update_burst_selection_parameters)
+        self.comboBox.currentTextChanged.connect(self.update_channel_routing)
+        self.comboBox.currentTextChanged.connect(self.update_pie_windows_from_setup)
 
         # Custom validator
         validator = CommaSeparatedIntegersValidator()
@@ -1114,6 +1831,16 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         else:
             # Fallback or default to 'count_rate'
             self.radioButton.setChecked(True)
+
+        # Add a button to save burst selection parameters
+        self.save_burst_params_button = QtWidgets.QPushButton("Save Parameters", self)
+        self.save_burst_params_button.clicked.connect(self.save_burst_selection_parameters)
+        self.save_burst_params_button.setToolTip("Save burst parameters as default to setup.")
+        self.gridLayout_3.addWidget(self.save_burst_params_button, 5, 0, 1, 2)
+
+        # Update micro time binning and burst selection parameters from the selected setup
+        self.update_micro_time_binning()
+        self.update_burst_selection_parameters()
 
         # Final initial update
         self.update_parameter()
