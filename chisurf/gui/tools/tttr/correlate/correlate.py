@@ -4,9 +4,8 @@ from chisurf import typing
 import sys
 
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtWidgets
-# Does not work with qtpy so far (needs refactoring)
-# AttributeError: module 'qtpy.QtCore' has no attribute 'pyqtSignal'
+from chisurf.gui import QtCore, QtWidgets
+# Now using qtpy compatibility layer through chisurf.gui import
 
 import numpy as np
 import tttrlib
@@ -27,8 +26,8 @@ import chisurf.gui.widgets.fio
 
 class Correlator(QtCore.QThread):
 
-    procDone = QtCore.pyqtSignal(bool)
-    partDone = QtCore.pyqtSignal(int)
+    procDone = QtCore.Signal(bool)
+    partDone = QtCore.Signal(int)
 
     @property
     def data(self) -> chisurf.data.DataCurve:
