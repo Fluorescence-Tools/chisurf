@@ -1,0 +1,149 @@
+Sample:
+    Name: T4 Lysozyme E5pAcF S44C
+    Measurement ID: E5pAcF S44C-DA
+    Reference:
+        Donor: E5AcF S44C Donor
+
+Measurement datasets:
+    E5pAcF S44C-DA:
+        Setup settings: Donor
+        Instrument response function:
+            Measurement ID: IRF_DA
+        Description: >
+            PBS pH 7.5,~20 nM E5pAcF-Alexa488 S44C-Alexa647, 50 uL sample in
+            cuvette (Hellma).
+        Data:
+            Filename: ./5-44_DA.dat
+    E5AcF S44C Donor:
+        Setup settings: Donor
+        Instrument response function:
+            Measurement ID: IRF_D0
+        Description: >
+            PBS pH 7.5,~20 nM E5pAcF-Alexa488 S44C, 50 uL sample in cuvette (Hellma).
+        Data:
+            Filename: ./5-44_D0.dat
+    IRF_DA:
+        Setup settings: IRF
+        Description: >
+            500 uL of Ludox diluted in water to gain a scattering solution.
+        Data:
+            Filename: ./IRF_DA.dat
+    IRF_D0:
+        Setup settings: IRF
+        description: >
+            500 uL of Ludox diluted in water to gain a scattering solution.
+        Data:
+            Filename: ./IRF_D0.dat
+
+Setup parts:
+    0: # PQ Fluotime200
+        Excitation source manufacturer: NKT Photonics
+        Excitation source name: SuperK extreme
+        Excitation source repetition rate: 20 MHz
+        Excitation source wavelength: 485
+        Excitation source spectrum: null
+    1:
+        Name: Rotatable polarizer
+        Type: polarizer
+        Description: >
+            Polarizer to cleanup and define the the polarization of the excitation
+            source
+        Manufacturer: PQ
+    2:
+        Name: OD filter
+        Type: Filter
+        Manufacturer: PQ
+        Description: Filter used to attenuate exitation signal
+    3:
+        Name: OD filter
+        Type: Filter
+        Manufacturer: PQ
+        Description: Filter used to attenuate emission signal
+    4:
+        Name: FGL495
+        Type: Filter
+        Description: Colored Glass Filter, 495 nm Longpass
+        Manufacturer: Chroma
+    5:
+        Name: Rotatable polarizer
+        Type: polarizer
+        Description: >
+            Polarizer to select the polarization of the emitted signal
+        Manufacturer: PQ
+    6:
+        Name: DETECTION_MONO.MCR
+        Type: Monochromator
+        Description: Monochromator used in front of detector
+        Manufacturer: PQ
+    7:
+        Part type: Hybrid detector
+        Part manufacturer: PicoQuant, Germany
+        Part manufacturer date: null
+        Part name: PMA Hybrid 04
+        Part serial number: 01018658
+    8:
+        Counting electronics manufacturer: Picoquant
+        Counting electronics name: Picoharp 300
+        Counting electronics dead time: null
+        Counting electronics channel width: 0.008
+
+# In the setup section, the actual used setup is assembled.
+Setup:
+    PQ TCSPC:
+        Description: >
+            Ensemble Time Correlated Single Photon Counting (eTCSPC) measurements
+            were performed using either an IBH-5000U (IBH, Scotland) or a Fluotime
+            200 (Picoquant, Germany) system. The excitation source of the IBH machine
+            were a 470 nm diode laser (LDH-P-C470, Picoquant, Germany) operating at
+            10 MHz for donor excitation. The excitation and emission slits were set
+            to 2 nm and 16 nm, respectively. The excitation source of the Fluotime200
+            system was a white light laser (SuperK extreme, NKT Photonics, Denmark)
+            operating at 20 MHz at 485 nm excitation and emission slits set to 2 nm
+            and 5 nm, respectively. Additionally, in both systems, cut-off filters
+            were used to reduce the amount of scattered light (>500 nm for donor
+            emission). For green detection, the monochromator was set to 520 nm.
+            All measurements were conducted under magic angle conditions (excitation
+            polarizer 0 degree, emission polarizer 54.7 degree).
+            In the IBH system, the TAC-histograms were recorded with a bin width of
+            14.1 ps within a time window of 57.8 ns, while the Fluotime200 was set to
+            a bin width of 8 ps within a time window of 51.3 ns. Photons were collected
+            up to a peak count of 100'000 corresponding in average to a total number
+            of 30*10^6 photons. The instrument response function IRF (~230 ps FWHM
+            for the IBH, ~ 150 ps for the Fluotime200) was collected under the same
+            recording settings at the excitation wavelength of the sample without
+            cutoff-filters using a scattering Ludox-dispersion, which yielded a comparable
+            count rate as the later on measured samples. For the IBH system, it was
+            needed was performed before each measurement session a reference measurement
+            with a continuous light signal to account for the differential non-linearity
+            of the counting electronics. The recorded uncorrelated photons yield a
+            reference histogram that is ideally constant. After recording of this
+            measurement, the average number of photons in each time-bin is calculated.
+            Next, the measurement was smoothed by a window function using a Hanning-filter
+            with a window-size of 17 bins. The smoothed decay histogram was normalized
+            to the previously calculated average number of photons. Instead of correcting
+            the experimental histogram the model function is multiplied by the smoothed
+            and normalized reference histogram to preserve the Poissonian statistics
+            of the measured fluorescence intensity histograms of interest.
+        Setup part IDs: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
+Setup settings:
+    PQ TCSPC:  &default
+        Setup name: PQ TCSPC
+        Counting electronics:
+            Setup part ID: [8]
+            Resolution [ps]: 8
+        Detectors:
+            0:
+                Detector ID: 0
+    Donor:
+        << : *default
+        Excitation sources ID: [0]
+        Detectors:
+            0:
+                Detection center wavelength [nm]: 520
+    IRF:
+        << : *default
+        Excitation sources ID: [0]
+        Detectors:
+            0:
+                Detection center wavelength [nm]: 485
