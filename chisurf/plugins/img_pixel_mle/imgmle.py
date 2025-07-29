@@ -560,7 +560,7 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
     @property
     def BIFL_scatter(self) -> bool:
         """Get the BIFL_scatter flag value."""
-        return self.checkBox_BIFL_scatter.isChecked()
+        return bool(self.checkBox_BIFL_scatter.isChecked())
 
     @BIFL_scatter.setter
     def BIFL_scatter(self, value: bool):
@@ -960,7 +960,7 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                                 'gamma (green)': 0.0,
                                 'r0 (green)': 0.0,
                                 'rho (green)': 0.0,
-                                'BIFL scatter fit? (green)': 0.0,  # No fit performed
+                                'BIFL scatter fit? (green)': 0,  # No fit performed
                                 '2I*: P+2S? (green)': 0.0,  # No fit performed
                                 'rS (green)': 0.0,  # Not implemented
                                 'rE (green)': 0.0,  # Not implemented
@@ -1017,7 +1017,7 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                             'gamma (green)': r['x'][1],
                             'r0 (green)': r['x'][2],
                             'rho (green)': r['x'][3],
-                            'BIFL scatter fit? (green)': all_settings['BIFL_scatter'],
+                            'BIFL scatter fit? (green)': int(all_settings['BIFL_scatter']),
                             '2I*: P+2S? (green)': all_settings['p2s_twoIstar'],
                             'rS (green)': 0.0,  # Not implemented
                             'rE (green)': 0.0,  # Not implemented
@@ -1166,6 +1166,15 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
 
         # Create DataFrame from filtered results
         df = pd.DataFrame(filtered_results)
+        
+        # Convert columns with mixed data types to strings to avoid HDF5 serialization issues
+        # The 'BIFL scatter fit? (green)' column is known to have mixed data types
+        if 'BIFL scatter fit? (green)' in df.columns:
+            df['BIFL scatter fit? (green)'] = df['BIFL scatter fit? (green)'].astype(int)
+        
+        # Check for other columns with object dtype that might cause issues
+        for col in df.select_dtypes(include=['object']).columns:
+            df[col] = df[col].astype(str)
 
         # Check which file format is selected
         if all_settings['file_format_hdf']:
@@ -1291,9 +1300,18 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
 
                 # Create DataFrame from filtered results
                 df = pd.DataFrame(filtered_results)
-
+                
                 # Export to file based on selected format
                 if all_settings['file_format_hdf']:
+                    # Convert columns with mixed data types to strings to avoid HDF5 serialization issues
+                    # The 'BIFL scatter fit? (green)' column is known to have mixed data types
+                    if 'BIFL scatter fit? (green)' in df.columns:
+                        df['BIFL scatter fit? (green)'] = df['BIFL scatter fit? (green)'].astype(str)
+                    
+                    # Check for other columns with object dtype that might cause issues
+                    for col in df.select_dtypes(include=['object']).columns:
+                        df[col] = df[col].astype(str)
+                        
                     # Save as HDF5 with compression
                     # complevel: Compression level (0-9, 9 is highest compression)
                     # complib: Compression library ('blosc' is fast and efficient)
