@@ -294,7 +294,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # — micro-time controls —
         self.spinBox_micro_time_start.setValue(state['micro_time_start'])
         self.spinBox_micro_time_stop.setValue(state['micro_time_stop'])
-        self.spinBox_micro_time_binning.setValue(state['micro_time_binning'])
+        
+        # Update micro_time_binning in DetectorWizardPage instead of spinBox
+        micro_time_binning = state['micro_time_binning']
+        self.channel_definer.micro_binning_combo.setCurrentText(str(micro_time_binning))
 
         # — IRF threshold & shifts —
         self.doubleSpinBox_irf_threshold.setValue(state['irf_threshold'])
@@ -306,12 +309,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.p2s_twoIstar = state['p2s_twoIstar']
         self.BIFL_scatter = state['BIFL_scatter']
 
-        # — effective dt —
-        self.doubleSpinBox_dt_effective.setValue(state['dt'])
-
         # — “internal” fit parameters —
         # use the property setters so the UI stays in sync
-        self.excitation_period = state['excitation_period']
         self.g_factor          = state['g_factor']
         self.l1                = state['l1']
         self.l2                = state['l2']
@@ -362,7 +361,6 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             widgets = (
                 self.spinBox_micro_time_start,
                 self.spinBox_micro_time_stop,
-                self.spinBox_micro_time_binning,
                 self.doubleSpinBox_irf_threshold,
                 self.doubleSpinBox_shift,
                 self.doubleSpinBox_shift_sp,
@@ -582,7 +580,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             self.burst_layout.nextRow()
 
     @chisurf.gui.decorators.init_with_ui(
-        "mle_lifetime_analysis/wizard.ui",
+        "burst_mle_analysis/wizard.ui",
         path=chisurf.settings.plugin_path
     )
     def __init__(self, *args, **kwargs):
@@ -611,9 +609,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         )
         self.verticalLayout_burst_files.addWidget(self.burst_files_list)
 
-        # Detector definition tab
+        # Detector definition tab - moved to first page
         self.tab_detector = QtWidgets.QWidget()
-        self.tabWidget.addTab(self.tab_detector, "Detector Definition")
+        self.tabWidget.insertTab(0, self.tab_detector, "Detector Definition")
+        self.tabWidget.setCurrentIndex(0)  # Set detector definition as the active tab
         self.verticalLayout_detector_tab = QtWidgets.QVBoxLayout(self.tab_detector)
         self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
         self.groupBox_detector = QtWidgets.QGroupBox("Detector Configuration")
@@ -722,21 +721,15 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.spinBox_current_file_idx.valueChanged.connect(self.update_current_file)
 
         # --- Fit‐parameter controls (internal) ---
-        internal_params = (
-            self.doubleSpinBox_dt,
-            self.doubleSpinBox_excitation_period,
-            self.doubleSpinBox_g_factor,
-            self.doubleSpinBox_l1,
-            self.doubleSpinBox_l2
-        )
-        for spin in internal_params:
-            spin.valueChanged.connect(self.update_internal_fit_parameters)
 
-        # dt update shortcut
-        self.spinBox_micro_time_binning.valueChanged.connect(self.update_dt)
+        # Connect detector change to update_internal_fit_parameters since g_factor, l1, and l2 are now detector-specific
+        self.comboBox_window.currentTextChanged.connect(self.update_internal_fit_parameters)
+
+        # dt update shortcut - connect to DetectorWizardPage's micro_binning_combo
+        self.channel_definer.micro_binning_combo.currentTextChanged.connect(self.update_dt)
 
         # --- Micro‐time range → update decay + fit ---
-        self.spinBox_micro_time_binning.valueChanged.connect(self._update_max_bins_from_tttr)
+        self.channel_definer.micro_binning_combo.currentTextChanged.connect(self._update_max_bins_from_tttr)
         self.spinBox_micro_time_start.valueChanged.connect(
             lambda val: self.spinBox_micro_time_stop.setMinimum(val + 1)
         )
@@ -802,16 +795,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             self.df_bursts = dlg.get_value()
 
     def initialize_ui_values(self):
-        self.comboBox_tttr_file_type.clear()
-        self.comboBox_tttr_file_type.addItems(['Auto'] + list(tttrlib.TTTR.get_supported_container_names()))
+        # No need to initialize comboBox_tttr_file_type as we're using channel_definer.filetype instead
         self.spinBox_micro_time_start.setValue(0)
         self.spinBox_micro_time_stop.setValue(4096)
-        self.spinBox_micro_time_binning.setValue(16)
-        self.doubleSpinBox_dt.setValue(0.004069)
-        self.doubleSpinBox_excitation_period.setValue(13.6)
-        self.doubleSpinBox_g_factor.setValue(1.08316)
-        self.doubleSpinBox_l1.setValue(0.03080)
-        self.doubleSpinBox_l2.setValue(0.03680)
+
         self.doubleSpinBox_tau.setValue(4.0)
         self.doubleSpinBox_gamma.setValue(0.1)
         self.doubleSpinBox_r0.setValue(0.38)
@@ -839,8 +826,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             self.tttrs.clear()  # Properly clear the LazyTTTRDict
             self._tttr_paths.clear()  # Clear the paths dictionary
             self.burst_files_list.clear()
-            # Reset the comboBox_tttr_file_type to Auto (first index)
-            self.comboBox_tttr_file_type.setCurrentIndex(0)
+            # No need to reset comboBox_tttr_file_type as we're using channel_definer.filetype instead
         elif list_widget == self.irf_file_widgets:
             self.irf_np.clear()
         else:
@@ -920,7 +906,6 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     if repetition_rate > 0:
                         # Convert repetition rate (MHz) to excitation period (ns)
                         excitation_period = 1000.0 / repetition_rate
-                        self.doubleSpinBox_excitation_period.setValue(excitation_period)
                         chisurf.logging.info(f"Updated excitation period to {excitation_period} ns based on repetition rate {repetition_rate} MHz")
                 except (AttributeError, ValueError) as e:
                     chisurf.logging.info(f"Could not extract repetition rate from header: {e}")
@@ -975,11 +960,22 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # 1) Which .bur file is selected in the UI?
         curr_bur = Path(self.current_filename).name
 
-        # 2) Filter df_bursts to just its rows
-        df_this = self.df_bursts[self.df_bursts["burst_file"] == curr_bur]
-        if df_this.empty:
-            chisurf.logging.info(f"No bursts found for {curr_bur!r}")
-            return
+        # 2) Check if 'burst_file' column exists in the DataFrame
+        if 'burst_file' not in self.df_bursts.columns:
+            chisurf.logging.info(f"'burst_file' column not found in DataFrame. Available columns: {list(self.df_bursts.columns)}")
+            # Try to use the first file if burst_file column doesn't exist
+            if len(self.df_bursts) > 0:
+                df_this = self.df_bursts
+                chisurf.logging.info(f"Using all rows in DataFrame as fallback")
+            else:
+                chisurf.logging.info("DataFrame is empty")
+                return
+        else:
+            # Filter df_bursts to just its rows
+            df_this = self.df_bursts[self.df_bursts["burst_file"] == curr_bur]
+            if df_this.empty:
+                chisurf.logging.info(f"No bursts found for {curr_bur!r}")
+                return
 
         # 3) Now grab the TTTR filename from the first row of that subset
         tttr_name = df_this.loc[df_this.index[0], "First File"]
@@ -1076,22 +1072,16 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     def update_dt(self):
         """
-        Compute the per-channel Δt by pulling micro_time_resolution
-        from any loaded TTTR header (they’re all identical),
-        otherwise fall back to the manual dt spin-box.
+        Update the micro_time_resolution in DetectorWizardPage if we have a TTTR file loaded.
+        The effective_micro_time_resolution will be automatically calculated by DetectorWizardPage.
         """
-        binning = self.spinBox_micro_time_binning.value()
-
         if self.tttrs:
             # grab the first TTTR in our dict; all should share the same resolution
             tttr = next(iter(self.tttrs.values()))
-            micro_res = tttr.header.micro_time_resolution * 1e9 # use nano seconds
-            self.doubleSpinBox_dt.setValue(micro_res)
-        else:
-            micro_res = self.doubleSpinBox_dt.value()
-
-        effective = micro_res * binning
-        self.doubleSpinBox_dt_effective.setValue(effective)
+            micro_res = tttr.header.micro_time_resolution * 1e9  # use nano seconds
+            
+            # Update the micro_time_resolution in DetectorWizardPage
+            self.channel_definer.micro_time_le.setText(str(micro_res))
 
     def update_parameters(self):
         self._fit = None
@@ -1099,11 +1089,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     @property
     def dt_effective(self):
-        return self.doubleSpinBox_dt_effective.value()
-
-    @dt_effective.setter
-    def dt_effective(self, value):
-        self.doubleSpinBox_dt_effective.setValue(value)
+        return self.channel_definer.effective_micro_time_resolution
 
     @property
     def n_bursts(self) -> int:
@@ -1138,42 +1124,25 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     @property
     def micro_time_binning(self):
-        return self.spinBox_micro_time_binning.value()
+        return self.channel_definer.tttr_reading['micro_time_binning']
 
     @property
     def tttr_file_type(self):
-        txt = self.comboBox_tttr_file_type.currentText()
-        if txt == 'Auto':
+        # Use the filetype property from DetectorWizardPage
+        txt = self.channel_definer.filetype
+        if txt is None:  # This means "Auto" was selected in DetectorWizardPage
             # Try to use the first tttr path from the LazyTTTRDict
             if self._tttr_paths:
                 # Get the first tttr path from the LazyTTTRDict
                 first_path = next(iter(self._tttr_paths.values()))
                 if first_path:
                     file_type_int = tttrlib.inferTTTRFileType(str(first_path))
-                    # Update comboBox_tttr_file_type if a file type is recognized
-                    if file_type_int is not None and file_type_int >= 0:
-                        # Get the list of supported container names
-                        container_names = tttrlib.TTTR.get_supported_container_names()
-                        if 0 <= file_type_int < len(container_names):
-                            # Add 1 to the index to account for 'Auto' at index 0
-                            idx = file_type_int + 1
-                            if 0 <= idx < self.comboBox_tttr_file_type.count():
-                                self.comboBox_tttr_file_type.setCurrentIndex(idx)
                     return file_type_int
 
             # Fall back to current_filename if no tttr paths are available
             filename = self.current_filename
             if filename:
                 file_type_int = tttrlib.inferTTTRFileType(filename)
-                # Update comboBox_tttr_file_type if a file type is recognized
-                if file_type_int is not None and file_type_int >= 0:
-                    # Get the list of supported container names
-                    container_names = tttrlib.TTTR.get_supported_container_names()
-                    if 0 <= file_type_int < len(container_names):
-                        # Add 1 to the index to account for 'Auto' at index 0
-                        idx = file_type_int + 1
-                        if 0 <= idx < self.comboBox_tttr_file_type.count():
-                            self.comboBox_tttr_file_type.setCurrentIndex(idx)
                 return file_type_int
             return None
         return txt
@@ -1214,47 +1183,121 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     @property
     def excitation_period(self) -> float:
-        return float(self.doubleSpinBox_excitation_period.value())
-
-    @excitation_period.setter
-    def excitation_period(
-            self,
-            v: float
-    ):
-        self.doubleSpinBox_excitation_period.setValue(v)
+        return float(self.channel_definer.excitation_period)
 
     @property
     def g_factor(self) -> float:
-        return float(self.doubleSpinBox_g_factor.value())
+        """
+        Returns the g-factor value for the current detector.
+        If the current detector doesn't have a g_factor value, returns the default value (1).
+        """
+        try:
+            return float(self.channel_definer.detectors[self.current_detector].get("g_factor", 1.0))
+        except (KeyError, AttributeError):
+            return 1.0
 
     @g_factor.setter
     def g_factor(
             self,
             v: float
     ):
-        self.doubleSpinBox_g_factor.setValue(v)
+        """
+        Sets the g-factor value for the current detector.
+        Updates the detector data structure directly.
+        """
+        try:
+            # Get the current detector data
+            detector = self.current_detector
+            if detector in self.channel_definer.detectors:
+                # Update the g_factor value in the data structure
+                self.channel_definer.detectors[detector]["g_factor"] = float(v)
+                # Update the UI
+                row = self._find_detector_row(detector)
+                if row >= 0:
+                    self.channel_definer.detectors_form.cellWidget(row, 3).setText(str(v))
+        except (KeyError, AttributeError):
+            pass
 
     @property
     def l1(self) -> float:
-        return float(self.doubleSpinBox_l1.value())
+        """
+        Returns the l1 value for the current detector.
+        If the current detector doesn't have an l1 value, returns the default value (0).
+        """
+        try:
+            return float(self.channel_definer.detectors[self.current_detector].get("l1", 0.0))
+        except (KeyError, AttributeError):
+            return 0.0
 
     @l1.setter
     def l1(
             self,
             v: float
     ):
-        self.doubleSpinBox_l1.setValue(v)
+        """
+        Sets the l1 value for the current detector.
+        Updates the detector data structure directly.
+        """
+        try:
+            # Get the current detector data
+            detector = self.current_detector
+            if detector in self.channel_definer.detectors:
+                # Update the l1 value in the data structure
+                self.channel_definer.detectors[detector]["l1"] = float(v)
+                # Update the UI
+                row = self._find_detector_row(detector)
+                if row >= 0:
+                    self.channel_definer.detectors_form.cellWidget(row, 4).setText(str(v))
+        except (KeyError, AttributeError):
+            pass
 
     @property
     def l2(self) -> float:
-        return float(self.doubleSpinBox_l2.value())
+        """
+        Returns the l2 value for the current detector.
+        If the current detector doesn't have an l2 value, returns the default value (0).
+        """
+        try:
+            return float(self.channel_definer.detectors[self.current_detector].get("l2", 0.0))
+        except (KeyError, AttributeError):
+            return 0.0
 
     @l2.setter
     def l2(
             self,
             v: float
     ):
-        self.doubleSpinBox_l2.setValue(v)
+        """
+        Sets the l2 value for the current detector.
+        Updates the detector data structure directly.
+        """
+        try:
+            # Get the current detector data
+            detector = self.current_detector
+            if detector in self.channel_definer.detectors:
+                # Update the l2 value in the data structure
+                self.channel_definer.detectors[detector]["l2"] = float(v)
+                # Update the UI
+                row = self._find_detector_row(detector)
+                if row >= 0:
+                    self.channel_definer.detectors_form.cellWidget(row, 5).setText(str(v))
+        except (KeyError, AttributeError):
+            pass
+            
+    def _find_detector_row(self, detector_name):
+        """
+        Helper method to find the row index of a detector in the detectors_form table.
+        
+        Args:
+            detector_name (str): The name of the detector to find.
+            
+        Returns:
+            int: The row index of the detector, or -1 if not found.
+        """
+        for row in range(self.channel_definer.detectors_form.rowCount()):
+            if self.channel_definer.detectors_form.item(row, 0).text() == detector_name:
+                return row
+        return -1
 
     @property
     def scatter_count_rate(self) -> float:
@@ -2030,6 +2073,38 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         if not bur_files:
             raise ValueError(f"No burst files found in {paris_path!s}")
 
+        # Check for JSON file in Info folder of the burst folder
+        info_directory = paris_path / 'Info'
+        json_file_path = info_directory / "photon_selection_parameters.json"
+        
+        # Use safe_open_file to read the JSON file if it exists
+        from chisurf.settings.file_utils import safe_open_file
+        import json
+        
+        setup_info = None
+        json_data = safe_open_file(
+            json_file_path, 
+            processor=json.load, 
+            default_value=None,
+            error_message=f"Could not read setup information from {json_file_path}"
+        )
+        
+        if json_data:
+            chisurf.logging.info(f"Found setup information in {json_file_path}")
+            # Extract setup information from JSON
+            setup_info = json_data.get("setup_info")
+            if setup_info:
+                chisurf.logging.info("Using setup information from JSON file")
+                # If we have setup information, we can use it to configure the wizard
+                # For example, we could set channel settings, detector settings, etc.
+                # This will depend on what's available in the JSON and what's needed by the wizard
+                
+                # If the channel_definer is available, we can update its settings
+                if hasattr(self, 'channel_definer') and setup_info.get("windows"):
+                    self.channel_definer.windows = setup_info.get("windows", {})
+                    self.channel_definer.detectors = setup_info.get("detectors", {})
+                    chisurf.logging.info("Updated channel definitions from JSON file")
+
         # 2) Sample first file to infer which cols are numeric
         sample = pd.read_csv(
             bur_files[0],
@@ -2128,7 +2203,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         detwiz = self.channel_definer
 
         payload = {
-            "tttr_file_type": self.comboBox_tttr_file_type.currentText(),
+            "tttr_file_type": self.channel_definer.filetype or "Auto",
             "channel_settings": self.channel_settings,
             "detector_settings": detwiz.get_settings(),
             "micro_time_binning": self.micro_time_binning
@@ -2165,13 +2240,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # Micro time binning
         mtb = payload.get("micro_time_binning", None)
         if mtb is not None:
-            self.spinBox_micro_time_binning.setValue(int(mtb))
+            # Update micro_time_binning in DetectorWizardPage
+            self.channel_definer.micro_binning_combo.setCurrentText(str(int(mtb)))
 
-        # 2) TTTR file‐type
-        tttr_type = payload.get("tttr_file_type", "Auto")
-        idx = self.comboBox_tttr_file_type.findText(tttr_type)
-        if idx != -1:
-            self.comboBox_tttr_file_type.setCurrentIndex(idx)
+        # 2) TTTR file‐type is now handled by DetectorWizardPage
+        # The tttr_file_type will be set when we load the detector settings below
 
         # 3) reflect path
         self.lineEdit_settings_file.setText(path)
@@ -2206,7 +2279,6 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             for w in (
                 self.spinBox_micro_time_start,
                 self.spinBox_micro_time_stop,
-                self.spinBox_micro_time_binning,
                 self.doubleSpinBox_irf_threshold,
                 self.doubleSpinBox_shift,
                 self.doubleSpinBox_shift_sp,
@@ -2217,7 +2289,6 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             for w in (
                 self.spinBox_micro_time_start,
                 self.spinBox_micro_time_stop,
-                self.spinBox_micro_time_binning,
                 self.doubleSpinBox_irf_threshold,
                 self.doubleSpinBox_shift,
                 self.doubleSpinBox_shift_sp,

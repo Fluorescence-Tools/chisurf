@@ -135,7 +135,14 @@
              <string>File Parameters</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_5">
-             <item row="7" column="1">
+             <item row="0" column="3">
+              <widget class="QPushButton" name="pushButton_show_df">
+               <property name="text">
+                <string>Show bst</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
               <spacer name="verticalSpacer_2">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>
@@ -148,120 +155,7 @@
                </property>
               </spacer>
              </item>
-             <item row="4" column="3">
-              <widget class="QDoubleSpinBox" name="doubleSpinBox_excitation_period">
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="maximum">
-                <double>1000.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>13.600000000000000</double>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="1" colspan="2">
-              <widget class="QLabel" name="label">
-               <property name="text">
-                <string>TTTR File Type:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QSpinBox" name="spinBox_micro_time_binning">
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>1000</number>
-               </property>
-               <property name="value">
-                <number>16</number>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="3">
-              <widget class="QDoubleSpinBox" name="doubleSpinBox_dt_effective">
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="decimals">
-                <number>6</number>
-               </property>
-               <property name="maximum">
-                <double>10.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.001000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.065104000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1" colspan="2">
-              <widget class="QLabel" name="label_7">
-               <property name="text">
-                <string>dt (ns):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="3">
-              <widget class="QDoubleSpinBox" name="doubleSpinBox_dt">
-               <property name="decimals">
-                <number>6</number>
-               </property>
-               <property name="maximum">
-                <double>1.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.000100000000000</double>
-               </property>
-               <property name="value">
-                <double>0.004069000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1" colspan="2">
-              <widget class="QLabel" name="label_8">
-               <property name="text">
-                <string>Effective dt (ns):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="3">
-              <widget class="QPushButton" name="pushButton_show_df">
-               <property name="text">
-                <string>Show bst</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1" colspan="2">
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>Micro Time Binning:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="3">
-              <widget class="QComboBox" name="comboBox_tttr_file_type">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QLabel" name="label_9">
-               <property name="text">
-                <string>Excitation Period (ns):</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1" colspan="2">
               <widget class="QCheckBox" name="checkBox_save_jordis">
                <property name="text">
                 <string>Save Jordis</string>
@@ -815,10 +709,57 @@
            <property name="spacing">
             <number>0</number>
            </property>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_28">
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_29">
              <property name="text">
-              <string>Shift</string>
+              <string>Shift sp/ss</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_shift">
+             <property name="minimum">
+              <double>-9999.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>9999.000000000000000</double>
+             </property>
+             <property name="stepType">
+              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QCheckBox" name="checkBox_2IStar">
+             <property name="text">
+              <string>2I*: P+2S</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_13">
+             <property name="text">
+              <string>IRF threshold</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="2">
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_shift_ss">
+             <property name="minimum">
+              <double>-99.000000000000000</double>
+             </property>
+             <property name="stepType">
+              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="0">
+            <widget class="QLabel" name="label_24">
+             <property name="text">
+              <string>Scatter Countrate [Hz]</string>
              </property>
             </widget>
            </item>
@@ -841,108 +782,10 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_13">
-             <property name="text">
-              <string>IRF threshold</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_g_factor">
-             <property name="decimals">
-              <number>5</number>
-             </property>
-             <property name="maximum">
-              <double>10.000000000000000</double>
-             </property>
-             <property name="stepType">
-              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
-             </property>
-             <property name="value">
-              <double>1.083160000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QCheckBox" name="checkBox_2IStar">
-             <property name="text">
-              <string>2I*: P+2S</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="1">
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_l1">
-             <property name="decimals">
-              <number>5</number>
-             </property>
-             <property name="maximum">
-              <double>1.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>0.001000000000000</double>
-             </property>
-             <property name="stepType">
-              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
-             </property>
-             <property name="value">
-              <double>0.030800000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="1">
+           <item row="6" column="1">
             <widget class="QDoubleSpinBox" name="doubleSpinBox_scatter_Countrate">
              <property name="maximum">
               <double>999999.000000000000000</double>
-             </property>
-             <property name="stepType">
-              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="0">
-            <widget class="QLabel" name="label_24">
-             <property name="text">
-              <string>Scatter Countrate [Hz]</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_29">
-             <property name="text">
-              <string>Shift sp/ss</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="2">
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_l2">
-             <property name="decimals">
-              <number>5</number>
-             </property>
-             <property name="maximum">
-              <double>1.000000000000000</double>
-             </property>
-             <property name="singleStep">
-              <double>0.001000000000000</double>
-             </property>
-             <property name="stepType">
-              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
-             </property>
-             <property name="value">
-              <double>0.036800000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_shift">
-             <property name="minimum">
-              <double>-9999.000000000000000</double>
-             </property>
-             <property name="maximum">
-              <double>9999.000000000000000</double>
              </property>
              <property name="stepType">
               <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
@@ -956,32 +799,15 @@
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_11">
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_28">
              <property name="text">
-              <string>l1/l2</string>
+              <string>Shift</string>
              </property>
             </widget>
            </item>
            <item row="4" column="1">
             <widget class="QDoubleSpinBox" name="doubleSpinBox_shift_sp">
-             <property name="minimum">
-              <double>-99.000000000000000</double>
-             </property>
-             <property name="stepType">
-              <enum>QAbstractSpinBox::AdaptiveDecimalStepType</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_10">
-             <property name="text">
-              <string>G-Factor:</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="2">
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_shift_ss">
              <property name="minimum">
               <double>-99.000000000000000</double>
              </property>
