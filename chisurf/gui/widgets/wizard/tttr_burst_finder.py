@@ -480,7 +480,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         if self.use_upper:
             s = np.logical_and(s, dT <= self.dT_max)
 
-        if self.settings['count_rate_filter_active']:
+        if self.settings.get('filter_active', True):
             filter_options = self.settings['count_rate_filter']
             selection_idx = self.tttr.get_selection_by_count_rate(**filter_options, make_mask=True)
             s = np.logical_and(s[:-1], selection_idx >= 0)
@@ -671,7 +671,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
 
     def update_parameter(self):
         lb, ub = self.region_selector.getRegion()
-        self.settings['count_rate_filter_active'] = self.checkBox_4.isChecked()
+        self.settings['filter_active'] = self.checkBox_4.isChecked()
         self.settings['count_rate_filter']['n_ph_max'] = int(self.spinBox.value())
         self.settings['count_rate_filter']['time_window'] = max(0.05, float(self.doubleSpinBox.value())) * 1e-3
         self.settings['count_rate_filter']['invert'] = bool(self.checkBox.isChecked())

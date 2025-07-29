@@ -9,7 +9,9 @@ import tttrlib
 import json
 import time
 import numpy as np
+import numba as nb
 import pandas as pd
+from scipy.stats import poisson
 
 import pyqtgraph as pg
 import matplotlib
@@ -18,12 +20,14 @@ import chisurf.fio as io
 import chisurf.fio.fluorescence
 import chisurf.math
 import chisurf.gui.decorators
+import chisurf.fluorescence.burst
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.math.signal import fill_small_gaps_in_array
 from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
 from chisurf.gui.widgets.wizard.tttr_channel_definition import save_detector_setups
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
+from chisurf.fluorescence.burst.utils import create_array_with_ones
 
 # Path to the central detector setups file
 DETECTOR_SETUPS_FILE = get_path('settings') / 'detector_setups.json'
@@ -44,15 +48,6 @@ QValidator = QtGui.QValidator
 colors = chisurf.settings.gui['plot']['colors']
 
 
-def create_array_with_ones(start_stop_pairs, length):
-    """
-    Create a boolean array of the given length, set to True (1)
-    in the intervals [start, stop) defined by start_stop_pairs.
-    """
-    arr = np.zeros(length, dtype=bool)
-    for start, stop in start_stop_pairs:
-        arr[start:stop] = 1
-    return arr
 
 
 class ProgressWindow(QtWidgets.QDialog):
@@ -146,13 +141,15 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         Initial threshold for count rate or burst search.
     default_count_rate_window_ms : float, default=1.0
         Initial time window (ms) for count-rate based filtering.
-    invert_count_rate_filter : bool, default=False
-        Whether to invert the count-rate filter initially.
+    invert_filter : bool, default=False
+        Whether to invert the filter initially (applies to all filter types).
     default_filter_mode : str, default='count_rate'
-        Selects which radio button filter mode is active at initialization.
-        Valid options: 'count_rate' or 'burst'.
-        - If 'count_rate', the `radioButton` (count-rate filter) is checked.
-        - If 'burst', the `radioButton_2` (burst-search filter) is checked.
+        Selects which filter mode is active at initialization.
+        Valid options: 'count_rate', 'burst', 'bocpd', or 'kalman'.
+        - If 'count_rate', the "Count rate" option is selected in the combobox.
+        - If 'burst', the "Burst" option is selected in the combobox.
+        - If 'bocpd', the "BOCPD Burst" option is selected in the combobox.
+        - If 'kalman', the "Kalman Burst" option is selected in the combobox.
 
     Notes
     -----
@@ -206,12 +203,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                     return None
                 return file_type
 
-        # If setup doesn't exist or doesn't have file type, show warning
-        QtWidgets.QMessageBox.warning(
-            self, 
-            "Invalid Setup", 
-            f"The selected setup '{setup_name}' is not properly defined. Please check your setup configuration."
-        )
+        # If setup doesn't exist or doesn't have file type, return None without showing warning
+        # This prevents the error message from appearing on startup
         return None
 
     @property
@@ -258,6 +251,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     @property
     def max_gap(self):
+        if not self.use_gap_fill:
+            return 0
         return self.spinBox_7.value()
 
     @property
@@ -300,14 +295,184 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         Sets the spinBox_8 value to the specified integer/float.
         """
         self.spinBox_8.setValue(value)
-
+        
+    @property
+    def bocpd_prior_count(self):
+        """
+        The prior photon count before data for BOCPD Gamma prior.
+        This property gets the current doubleSpinBox_5 value.
+        """
+        return self.doubleSpinBox_5.value()
+        
+    @bocpd_prior_count.setter
+    def bocpd_prior_count(self, value):
+        """
+        Sets the doubleSpinBox_5 value to the specified float.
+        """
+        self.doubleSpinBox_5.setValue(value)
+        
+    # For backward compatibility
+    @property
+    def bocpd_alpha(self):
+        """
+        Deprecated: Use bocpd_prior_count instead.
+        The alpha parameter for BOCPD Gamma prior.
+        """
+        return self.bocpd_prior_count
+        
+    @bocpd_alpha.setter
+    def bocpd_alpha(self, value):
+        """
+        Deprecated: Use bocpd_prior_count instead.
+        Sets the alpha parameter for BOCPD Gamma prior.
+        """
+        self.bocpd_prior_count = value
+        
+    @property
+    def bocpd_prior_duration(self):
+        """
+        The time window assumed for prior_count for BOCPD Gamma prior.
+        This property gets the current doubleSpinBox_6 value.
+        """
+        return self.doubleSpinBox_6.value()
+        
+    @bocpd_prior_duration.setter
+    def bocpd_prior_duration(self, value):
+        """
+        Sets the doubleSpinBox_6 value to the specified float.
+        """
+        self.doubleSpinBox_6.setValue(value)
+        
+    # For backward compatibility
+    @property
+    def bocpd_beta(self):
+        """
+        Deprecated: Use bocpd_prior_duration instead.
+        The beta parameter for BOCPD Gamma prior.
+        """
+        return self.bocpd_prior_duration
+        
+    @bocpd_beta.setter
+    def bocpd_beta(self, value):
+        """
+        Deprecated: Use bocpd_prior_duration instead.
+        Sets the beta parameter for BOCPD Gamma prior.
+        """
+        self.bocpd_prior_duration = value
+        
+    @property
+    def bocpd_changepoint_prob(self):
+        """
+        The probability of burst start in any bin for BOCPD.
+        This property gets the current doubleSpinBox_7 value.
+        """
+        return self.doubleSpinBox_7.value()
+        
+    @bocpd_changepoint_prob.setter
+    def bocpd_changepoint_prob(self, value):
+        """
+        Sets the doubleSpinBox_7 value to the specified float.
+        """
+        self.doubleSpinBox_7.setValue(value)
+        
+    # For backward compatibility
+    @property
+    def bocpd_hazard(self):
+        """
+        Deprecated: Use bocpd_changepoint_prob instead.
+        The hazard rate (probability of change point) for BOCPD.
+        """
+        return self.bocpd_changepoint_prob
+        
+    @bocpd_hazard.setter
+    def bocpd_hazard(self, value):
+        """
+        Deprecated: Use bocpd_changepoint_prob instead.
+        Sets the hazard rate (probability of change point) for BOCPD.
+        """
+        self.bocpd_changepoint_prob = value
+        
+    @property
+    def kalman_q(self):
+        """
+        The process noise parameter for Kalman filter.
+        This property gets the current doubleSpinBox_8 value.
+        """
+        return self.doubleSpinBox_8.value()
+        
+    @kalman_q.setter
+    def kalman_q(self, value):
+        """
+        Sets the doubleSpinBox_8 value to the specified float.
+        """
+        self.doubleSpinBox_8.setValue(value)
+        
+    @property
+    def kalman_r_scale(self):
+        """
+        The measurement noise scaling parameter for Kalman filter.
+        This property gets the current doubleSpinBox_9 value.
+        """
+        return self.doubleSpinBox_9.value()
+        
+    @kalman_r_scale.setter
+    def kalman_r_scale(self, value):
+        """
+        Sets the doubleSpinBox_9 value to the specified float.
+        """
+        self.doubleSpinBox_9.setValue(value)
+        
+    @property
+    def kalman_z_thresh(self):
+        """
+        The threshold for burst detection in Kalman filter.
+        This property gets the current doubleSpinBox_10 value.
+        """
+        return self.doubleSpinBox_10.value()
+        
+    @kalman_z_thresh.setter
+    def kalman_z_thresh(self, value):
+        """
+        Sets the doubleSpinBox_10 value to the specified float.
+        """
+        self.doubleSpinBox_10.setValue(value)
+        
+    @property
+    def kalman_min_len(self):
+        """
+        The minimum burst length in bins for Kalman filter.
+        This property gets the current spinBox_9 value.
+        """
+        return self.spinBox_9.value()
+        
+    @kalman_min_len.setter
+    def kalman_min_len(self, value):
+        """
+        Sets the spinBox_9 value to the specified integer.
+        """
+        self.spinBox_9.setValue(value)
+        
+    @property
+    def kalman_merge_gap(self):
+        """
+        The maximum gap between bursts to merge them in Kalman filter.
+        This property gets the current spinBox_7 value.
+        """
+        return self.spinBox_7.value()
+        
+    @kalman_merge_gap.setter
+    def kalman_merge_gap(self, value):
+        """
+        Sets the spinBox_7 value to the specified integer.
+        """
+        self.spinBox_7.setValue(value)
+        
     @property
     def microtime_ranges(self) -> typing.Optional[typing.List[typing.Tuple[int, int]]]:
         s = self.lineEdit_5.text()
 
         # Check if the input string is empty
         if not s:
-            chisurf.logging.log(0, "::microtime_ranges: Warning - Input string is empty.")
             return None
 
         try:
@@ -344,14 +509,21 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     @property
     def used_filter(self):
         """
-        Returns the currently active filter mode:
-        - 'count_rate' if `radioButton` is checked
-        - 'burst' if `radioButton_2` is checked
+        Returns the currently active filter mode based on comboBox_burst_filter selection:
+        - 'count_rate' if "Count rate" is selected
+        - 'burst' if "Burst" is selected
+        - 'bocpd' if "BOCPD Burst" is selected
+        - 'kalman' if "Kalman Burst" is selected
         """
-        if self.radioButton.isChecked():
+        current_text = self.comboBox_burst_filter.currentText()
+        if current_text == "Count rate":
             return 'count_rate'
-        elif self.radioButton_2.isChecked():
+        elif current_text == "Burst":
             return 'burst'
+        elif current_text == "BOCPD Burst":
+            return 'bocpd'
+        elif current_text == "Kalman Burst":
+            return 'kalman'
 
     @property
     def selected(self):
@@ -387,30 +559,149 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         if self.use_upper:
             s = np.logical_and(s, dT <= self.dT_max)
 
-        # Apply either count_rate or burst filter depending on radio button
-        if self.used_filter == 'count_rate':
-            if self.settings['count_rate_filter_active']:
-                filter_options = self.settings['count_rate_filter']
-                selection_idx = self.tttr.get_selection_by_count_rate(
-                    **filter_options, make_mask=True
-                )
-                s = np.logical_and(s, selection_idx >= 0)
+        # Apply filter depending on combobox selection and filter_active setting
+        if not self.settings.get('filter_active', True):
+            # If filter is not active, skip filter application
+            pass
+        elif self.used_filter == 'count_rate':
+            filter_options = self.settings['count_rate_filter']
+            selection_idx = chisurf.fluorescence.burst.count_rate_filter(
+                tttr=self.tttr,
+                n_ph_max=filter_options['n_ph_max'],
+                time_window=filter_options['time_window'],
+                invert=self.settings.get('invert_filter', False),
+                make_mask=True
+            )
+            s = np.logical_and(s, selection_idx >= 0)
 
         elif self.used_filter == 'burst':
             min_ph = self.min_ph
             ph_window = self.ph_window
             tw = self.dT_max / 1000.0
-            start_stop = tttr.burst_search(min_ph, ph_window, tw)
-            start_stop = np.array(start_stop).reshape((-1, 2))
+            sel = chisurf.fluorescence.burst.burst_filter(
+                tttr=tttr,
+                min_ph=min_ph,
+                ph_window=ph_window,
+                time_window=tw
+            )
+            s = np.logical_and(s, sel)
+            
+        elif self.used_filter == 'bocpd':
+            # Get channels
+            channel_list = self.channels
+            
+            # Get macro times and routing channels
+            macro_times = tttr.macro_times
+            time_unit = tttr.header.macro_time_resolution
+            timestamps = macro_times * time_unit  # Convert to seconds
+            channels = tttr.routing_channels
+            
+            # If no channels are selected, use all available channels
+            if len(channel_list) < 1:
+                channel_list = tttr.get_used_routing_channels()
+            
+            # Extract timestamps for each channel
+            timestamps_list = []
+            for channel in channel_list:
+                channel_timestamps = timestamps[channels == channel]
+                timestamps_list.append(channel_timestamps)
+                
+                if len(channel_timestamps) == 0:
+                    chisurf.logging.log(1, f"No photons found for channel {channel}")
+                    return s.astype(dtype=np.uint8)
+            
+            # Get BOCPD parameters from UI
+            prior_count = self.bocpd_prior_count
+            prior_duration = self.bocpd_prior_duration
+            changepoint_prob = self.bocpd_changepoint_prob
+            min_counts = self.min_ph  # Use min_ph as min_counts
+            max_run = 256  # Default max run length
+            
+            # Run BOCPD burst detection with multiple channels
+            bursts, _, _, _, _ = chisurf.fluorescence.burst.bocpd_burst_detection_multi(
+                timestamps_list,
+                dt=self.trace_bin_width / 1000.0,  # bin width from UI trace_bin_width
+                prior_count=prior_count,
+                prior_duration=prior_duration,
+                changepoint_prob=changepoint_prob,
+                max_run=max_run,
+                min_counts=min_counts
+            )
+            
+            # Convert bursts to start-stop indices
+            start_stop = chisurf.fluorescence.burst.bocpd.convert_bursts_to_start_stop(bursts, tttr)
+            
+            if len(start_stop) == 0:
+                return s.astype(dtype=np.uint8)
+                
+            # Create mask
+            n = len(tttr)
+            sel = create_array_with_ones(start_stop, n)
+            s = np.logical_and(s, sel)
+            
+        elif self.used_filter == 'kalman':
+            # Get channels
+            channel_list = self.channels
+            
+            # Get macro times and routing channels
+            macro_times = tttr.macro_times
+            time_unit = tttr.header.macro_time_resolution
+            timestamps = macro_times * time_unit  # Convert to seconds
+            channels = tttr.routing_channels
+            
+            # If no channels are selected, use all available channels
+            if len(channel_list) < 1:
+                channel_list = tttr.get_used_routing_channels()
+            
+            # Extract timestamps for each channel
+            timestamps_list = []
+            for channel in channel_list:
+                channel_timestamps = timestamps[channels == channel]
+                timestamps_list.append(channel_timestamps)
+                
+                if len(channel_timestamps) == 0:
+                    chisurf.logging.log(1, f"No photons found for channel {channel}")
+                    return s.astype(dtype=np.uint8)
+            
+            # Get Kalman filter parameters
+            q = self.kalman_q
+            r_scale = self.kalman_r_scale
+            z_thresh = self.kalman_z_thresh
+            min_len = self.kalman_min_len
+            merge_gap = self.kalman_merge_gap
+            min_counts = self.min_ph  # Use min_ph as min_counts
+            
+            # Run Kalman filter burst detection with multiple channels
+            bursts, _, _, _, _ = chisurf.fluorescence.burst.kalman_burst_detection_multi(
+                timestamps_list,
+                dt=self.trace_bin_width / 1000.0,  # bin width from UI trace_bin_width
+                q=q,
+                r_scale=r_scale,
+                z_thresh=z_thresh,
+                min_len=min_len,
+                merge_gap=merge_gap,
+                min_counts=min_counts
+            )
+            
+            # Convert bursts to start-stop indices
+            start_stop = chisurf.fluorescence.burst.kalman.convert_bursts_to_start_stop(bursts, tttr)
+            
+            if len(start_stop) == 0:
+                return s.astype(dtype=np.uint8)
+                
+            # Create mask
             n = len(tttr)
             sel = create_array_with_ones(start_stop, n)
             s = np.logical_and(s, sel)
 
+        # Apply invert logic if the invert checkbox is checked (for all filter modes)
+        # First check top-level setting, then fall back to count_rate_filter for backward compatibility
+        if self.settings.get('invert_filter', False) and self.used_filter != 'count_rate':
+            s = ~s
+
         if self.max_gap > 0 and self.use_gap_fill:
             s = fill_small_gaps_in_array(s, max_gap=self.max_gap)
 
-        end_time = time.time()
-        chisurf.logging.log(0, f"Elapsed time: {end_time - start_time}")
         return s.astype(dtype=np.uint8)
 
     @property
@@ -729,7 +1020,11 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
         # Determine path format based on filter mode
         if self.used_filter == "count_rate":
-            path_prefix = f"countrate"
+            path_prefix = "countrate"
+        elif self.used_filter == "bocpd":
+            path_prefix = "bocpd"
+        elif self.used_filter == "kalman":
+            path_prefix = "kalman"
         else:
             path_prefix = "burstwise"
 
@@ -741,9 +1036,12 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         Update internal settings whenever the user changes filters or region selectors.
         """
         lb, ub = self.region_selector.getRegion()
-        self.settings['count_rate_filter_active'] = self.checkBox_4.isChecked()
+        self.settings['filter_active'] = self.checkBox_4.isChecked()
         self.settings['count_rate_filter']['n_ph_max'] = int(self.spinBox.value())
         self.settings['count_rate_filter']['time_window'] = float(self.doubleSpinBox.value()) * 1e-3
+        # Store invert setting at top level for all filter types
+        self.settings['invert_filter'] = bool(self.checkBox.isChecked())
+        # For backward compatibility, also store in count_rate_filter
         self.settings['count_rate_filter']['invert'] = bool(self.checkBox.isChecked())
 
         self.settings['delta_macro_time_filter']['dT_min'] = 10.0 ** lb if self.pw_dT.getAxis('left').logMode else lb
@@ -792,24 +1090,62 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             lb, ub = np.log10(lb), np.log10(ub)
         self.region_selector.setRegion(rgn=(lb, ub))
 
+    def get_unique_folder_path(self, base_path: pathlib.Path) -> pathlib.Path:
+        """
+        Generate a unique folder path by adding numeric suffixes if the folder already exists.
+        
+        Args:
+            base_path: The base path to check and modify if needed
+            
+        Returns:
+            A unique path that doesn't exist yet, by adding _0, _1, etc. suffixes if needed
+        """
+        if not base_path.exists():
+            return base_path
+            
+        # Folder exists, try adding numeric suffixes
+        counter = 0
+        while True:
+            new_path = base_path.parent / f"{base_path.name}_{counter}"
+            if not new_path.exists():
+                return new_path
+            counter += 1
+    
     @property
     def parent_directories(self) -> typing.List[pathlib.Path]:
         """
         For each TTTR filename, get the parent directory with the configured target path.
+        Creates unique folder names with numeric suffixes if folders already exist.
         """
         r = []
         for filename in self.settings['tttr_filenames']:
             filename = filename.replace('\x00', '')
             fn = pathlib.Path(filename).absolute()
-            t = fn.parent / self.target_path
-            r.append(t)
+            base_path = fn.parent / self.target_path
+            # Get a unique path with suffix if needed
+            unique_path = self.get_unique_folder_path(base_path)
+            r.append(unique_path)
+        return r
+        
+    @property
+    def original_directories(self) -> typing.List[pathlib.Path]:
+        """
+        For each TTTR filename, get the parent directory with the configured target path
+        without adding numeric suffixes. These are the original folder names.
+        """
+        r = []
+        for filename in self.settings['tttr_filenames']:
+            filename = filename.replace('\x00', '')
+            fn = pathlib.Path(filename).absolute()
+            base_path = fn.parent / self.target_path
+            r.append(base_path)
         return r
 
     def save_selection(self, output_types = None, zip_output = False, remove_folder = False):
         """
         Save the selection data in .bur or .json.gz, depending on user checkboxes or specified output_types,
         and display a progress bar while saving. Optionally zip the output folder after saving and remove
-        the original folder if requested.
+        the original folder if requested. Also saves a JSON file with all parameters to an info folder.
         
         Parameters:
         -----------
@@ -993,6 +1329,70 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 if progress.wasCanceled():
                     break
 
+        # Save parameters to info folder
+        if self.original_directories:
+            # Get the first original directory (they should all be in the same parent directory)
+            # Using original_directories instead of parent_directories to avoid the suffix
+            output_folder = self.original_directories[0]
+            
+            # Create Info directory (uppercase I as required)
+            info_directory = output_folder / 'Info'
+            info_directory.mkdir(exist_ok=True, parents=True)
+            
+            # Get all parameters
+            parameters = self.get_burst_selection_parameters()
+            
+            # Add additional information
+            parameters["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            parameters["selected_setup"] = self.comboBox.currentText()
+            parameters["channels"] = self.channels
+            parameters["decay_coarse"] = self.decay_coarse
+            
+            # Add microtime ranges if available
+            if self.microtime_ranges:
+                parameters["microtime_ranges"] = self.microtime_ranges
+                
+            # Add file information
+            parameters["files"] = [str(pathlib.Path(f).name) for f in self.settings['tttr_filenames']]
+            
+            # Add complete setup information
+            setup_name = self.comboBox.currentText()
+            if setup_name and setup_name != "No setups available":
+                # Load setups from the detector setups file
+                setups = load_detector_setups()
+                
+                # Check if the selected setup exists
+                if setup_name in setups.get("setups", {}):
+                    # Get the complete setup data
+                    setup_data = setups["setups"][setup_name]
+                    
+                    # Add the complete setup data to the parameters
+                    parameters["setup_info"] = setup_data
+            
+            # Save parameters to JSON file without timestamp in filename
+            params_filename = info_directory / "photon_selection_parameters.json"
+            
+            # Create a separate file with date/time information
+            current_datetime = datetime.now()
+            timestamp = current_datetime.strftime("%Y%m%d-%H%M%S")
+            datetime_filename = info_directory / "datetime.txt"
+            
+            try:
+                # Save parameters to JSON file
+                with open(params_filename, 'w') as f:
+                    json.dump(parameters, f, indent=4)
+                
+                # Save date/time to separate file
+                with open(datetime_filename, 'w') as f:
+                    f.write(f"Date: {current_datetime.strftime('%Y-%m-%d')}\n")
+                    f.write(f"Time: {current_datetime.strftime('%H:%M:%S')}\n")
+                    f.write(f"Timestamp: {timestamp}\n")
+                
+                progress.update_text(f"Parameters saved to: {params_filename}")
+                progress.update_text(f"Date/time saved to: {datetime_filename}")
+            except Exception as e:
+                progress.update_text(f"Error saving files: {str(e)}")
+        
         # If we're not zipping, finish and close the dialog
         # Otherwise just mark data as saved and continue with the same dialog
         if not zip_output:
@@ -1240,20 +1640,47 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         dT_max = 10.0 ** ub if self.pw_dT.getAxis('left').logMode else ub
 
         # Collect all parameters
-        return {
+        params = {
             "dT_min": dT_min,
             "dT_max": dT_max,
             "use_dT_min": self.checkBox_2.isChecked(),
             "use_dT_max": self.checkBox_3.isChecked(),
             "photon_threshold": self.spinBox.value(),
             "count_rate_window_ms": self.doubleSpinBox.value(),
-            "invert_count_rate_filter": self.checkBox.isChecked(),
+            "invert_filter": self.checkBox.isChecked(),
             "filter_mode": self.used_filter,
+            "filter_active": self.checkBox_4.isChecked(),
             "use_gap_fill": self.checkBox_5.isChecked(),
             "max_gap": self.spinBox_7.value(),
             "trace_bin_width": self.doubleSpinBox_4.value(),
-            "number_of_burst_bins": self.spinBox_6.value()
+            "number_of_burst_bins": self.spinBox_6.value(),
+            "channels": self.channels,
+            "decay_coarse": self.decay_coarse
         }
+        
+        # Add microtime ranges if available
+        if self.microtime_ranges:
+            params["microtime_ranges"] = self.microtime_ranges
+        
+        # Add BOCPD parameters if BOCPD is selected
+        if self.used_filter == 'bocpd':
+            params.update({
+                "bocpd_prior_count": self.bocpd_prior_count,
+                "bocpd_prior_duration": self.bocpd_prior_duration,
+                "bocpd_changepoint_prob": self.bocpd_changepoint_prob
+            })
+        
+        # Add Kalman filter parameters if Kalman is selected
+        if self.used_filter == 'kalman':
+            params.update({
+                "kalman_q": self.kalman_q,
+                "kalman_r_scale": self.kalman_r_scale,
+                "kalman_z_thresh": self.kalman_z_thresh,
+                "kalman_min_len": self.kalman_min_len,
+                "kalman_merge_gap": self.kalman_merge_gap
+            })
+        
+        return params
 
     def save_burst_selection_parameters(self):
         """
@@ -1413,6 +1840,51 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 # Update the microtime ranges in lineEdit_5
                 self.update_pie_windows()
 
+    def update_spinbox_7_state(self):
+        """
+        Update the enabled state of spinBox_7 based on the state of checkBox_5.
+        When gap filling is disabled (checkBox_5 is unchecked), spinBox_7 should be disabled.
+        """
+        self.spinBox_7.setEnabled(self.checkBox_5.isChecked())
+        
+    def setup_connections(self):
+        """
+        Set up all signal-slot connections for UI elements.
+        This centralizes all connections in one place for better maintainability.
+        """
+        # Action connections
+        self.actionUpdate_Values.triggered.connect(self.update_parameter)
+        self.actionUpdateUI.triggered.connect(self.updateUI)
+        self.actionFile_changed.triggered.connect(self.read_tttr)
+        self.actionRegionUpdate.triggered.connect(self.onRegionUpdate)
+
+        # Tool button connections
+        self.toolButton_2.toggled.connect(self.pw_mcs.setVisible)
+        self.toolButton_3.toggled.connect(self.pw_decay.setVisible)
+        self.toolButton_4.toggled.connect(self.pw_filter.setVisible)
+        self.toolButton_7.toggled.connect(self.pw_burst_histogram.setVisible)
+        self.toolButton_5.clicked.connect(self.save_selection)
+        self.toolButton_6.clicked.connect(self.onClearFiles)
+
+        # Combo box connections
+        self.comboBox_2.currentTextChanged.connect(self.update_detectors)
+        self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
+        self.comboBox.currentTextChanged.connect(self.update_micro_time_binning)
+        self.comboBox.currentTextChanged.connect(self.update_burst_selection_parameters)
+        self.comboBox.currentTextChanged.connect(self.update_channel_routing)
+        self.comboBox.currentTextChanged.connect(self.update_pie_windows_from_setup)
+        
+        # BOCPD element connections
+        self.doubleSpinBox_5.valueChanged.connect(self.update_parameter)  # Alpha
+        self.doubleSpinBox_6.valueChanged.connect(self.update_parameter)  # Beta
+        self.doubleSpinBox_7.valueChanged.connect(self.update_parameter)  # Hazard
+        
+        # Gap fill checkbox connection
+        self.checkBox_5.stateChanged.connect(self.update_spinbox_7_state)
+        
+        # Save parameters button connection is already connected in the UI file
+        # Removing duplicate connection to prevent the save_burst_selection_parameters method from being called twice
+
     def update_burst_selection_parameters(self, setup_name=None):
         """
         Update the burst selection parameters from the selected setup.
@@ -1461,14 +1933,49 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 if "count_rate_window_ms" in burst_params:
                     self.doubleSpinBox.setValue(burst_params["count_rate_window_ms"])
 
-                if "invert_count_rate_filter" in burst_params:
+                if "invert_filter" in burst_params:
+                    self.checkBox.setChecked(burst_params["invert_filter"])
+                # For backward compatibility
+                elif "invert_count_rate_filter" in burst_params:
                     self.checkBox.setChecked(burst_params["invert_count_rate_filter"])
+                    
+                if "filter_active" in burst_params:
+                    self.checkBox_4.setChecked(burst_params["filter_active"])
 
                 if "filter_mode" in burst_params:
                     if burst_params["filter_mode"] == "count_rate":
-                        self.radioButton.setChecked(True)
+                        self.comboBox_burst_filter.setCurrentText("Count rate")
+                    elif burst_params["filter_mode"] == "burst":
+                        self.comboBox_burst_filter.setCurrentText("Burst")
+                    elif burst_params["filter_mode"] == "bocpd":
+                        self.comboBox_burst_filter.setCurrentText("BOCPD Burst")
+                    elif burst_params["filter_mode"] == "kalman":
+                        self.comboBox_burst_filter.setCurrentText("Kalman Burst")
                     else:
-                        self.radioButton_2.setChecked(True)
+                        # Default to burst mode if unknown
+                        self.comboBox_burst_filter.setCurrentText("Burst")
+                        
+                # BOCPD parameters
+                if burst_params.get("filter_mode") == "bocpd":
+                    if "bocpd_prior_count" in burst_params:
+                        self.bocpd_prior_count = burst_params["bocpd_prior_count"]
+                    if "bocpd_prior_duration" in burst_params:
+                        self.bocpd_prior_duration = burst_params["bocpd_prior_duration"]
+                    if "bocpd_changepoint_prob" in burst_params:
+                        self.bocpd_changepoint_prob = burst_params["bocpd_changepoint_prob"]
+                        
+                # Kalman filter parameters
+                if burst_params.get("filter_mode") == "kalman":
+                    if "kalman_q" in burst_params:
+                        self.kalman_q = burst_params["kalman_q"]
+                    if "kalman_r_scale" in burst_params:
+                        self.kalman_r_scale = burst_params["kalman_r_scale"]
+                    if "kalman_z_thresh" in burst_params:
+                        self.kalman_z_thresh = burst_params["kalman_z_thresh"]
+                    if "kalman_min_len" in burst_params:
+                        self.kalman_min_len = burst_params["kalman_min_len"]
+                    if "kalman_merge_gap" in burst_params:
+                        self.kalman_merge_gap = burst_params["kalman_merge_gap"]
 
                 if "use_gap_fill" in burst_params:
                     self.checkBox_5.setChecked(burst_params["use_gap_fill"])
@@ -1503,7 +2010,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             use_dT_max: bool = True,
             default_photon_threshold: int = 60,
             default_count_rate_window_ms: float = 1.0,
-            invert_count_rate_filter: bool = True,
+            invert_filter: bool = True,
             default_filter_mode: str = 'burst',
             use_gap_fill: bool = False,
             default_max_gap: int = 3,
@@ -1542,11 +2049,11 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             Initial threshold for count rate or burst search.
         default_count_rate_window_ms : float, default=1.0
             Initial time window (ms) for count-rate based filtering.
-        invert_count_rate_filter : bool, default=True
-            Whether to invert the count-rate filter initially.
+        invert_filter : bool, default=True
+            Whether to invert the filter initially (applies to all filter types).
         default_filter_mode : str, default='burst'
             Which filter mode radio button is selected by default.
-            Valid: 'count_rate' or 'burst'.
+            Valid: 'count_rate', 'burst', or 'bocpd'.
         use_gap_fill : bool, default=False
             Whether gap-filling is enabled by default.
         default_max_gap : int, default=3
@@ -1574,7 +2081,68 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.settings['tttr_filenames'] = []
         self.settings['count_rate_filter'] = {}
         self.settings['delta_macro_time_filter'] = {}
+        # Initialize top-level invert_filter setting
+        self.settings['invert_filter'] = invert_filter
         self.filter_data_saved = False
+        
+        # Find the layout containing the burst filter combobox
+        layout = self.comboBox_burst_filter.parentWidget().layout()
+        
+        # Connect the burst filter combobox to the actionUpdate_Values action
+        self.comboBox_burst_filter.currentIndexChanged.connect(self.actionUpdate_Values.trigger)
+
+        # Function to update parameter visibility based on selected filter mode
+        def update_parameter_visibility(filter_mode):
+            is_kalman = filter_mode == "Kalman Burst"
+            is_bocpd = filter_mode == "BOCPD Burst"
+            is_count_rate_or_burst = filter_mode in ["Count rate", "Burst"]
+            
+            # Show/hide Kalman filter parameters (label_15, label_16, label_17, doubleSpinBox_8, doubleSpinBox_9, doubleSpinBox_10)
+            self.label_15.setVisible(is_kalman)  # Q parameter
+            self.doubleSpinBox_8.setVisible(is_kalman)  # Q parameter
+            self.label_16.setVisible(is_kalman)  # R scale parameter
+            self.doubleSpinBox_9.setVisible(is_kalman)  # R scale parameter
+            self.label_17.setVisible(is_kalman)  # Z threshold parameter
+            self.doubleSpinBox_10.setVisible(is_kalman)  # Z threshold parameter
+            self.label_18.setVisible(is_kalman)  # Min length parameter
+            self.spinBox_9.setVisible(is_kalman)  # Min length parameter
+            
+            # Show/hide BOCPD parameters (label_12, label_13, label_14, doubleSpinBox_5, doubleSpinBox_6, doubleSpinBox_7)
+            self.label_12.setVisible(is_bocpd)
+            self.label_13.setVisible(is_bocpd)
+            self.label_14.setVisible(is_bocpd)
+            self.doubleSpinBox_5.setVisible(is_bocpd)
+            self.doubleSpinBox_6.setVisible(is_bocpd)
+            self.doubleSpinBox_7.setVisible(is_bocpd)
+            
+            # Show/hide count rate & burstwise parameters (label, label_11, spinBox, spinBox_8)
+            # label_2 and doubleSpinBox should be shown only for "Count rate"
+            is_count_rate = filter_mode == "Count rate"
+            self.label_2.setVisible(is_count_rate)
+            self.label.setVisible(is_count_rate_or_burst)
+            self.label_11.setVisible(is_count_rate_or_burst)
+            self.doubleSpinBox.setVisible(is_count_rate)
+            self.spinBox.setVisible(is_count_rate_or_burst)
+            self.spinBox_8.setVisible(is_count_rate_or_burst)
+        
+        # Assign the function to the instance
+        self.update_parameter_visibility = update_parameter_visibility
+        
+        # Set up connections to show/hide parameters based on the selected filter mode
+        self.comboBox_burst_filter.currentTextChanged.connect(self.update_parameter_visibility)
+        
+        # Initialize parameter visibility based on current selection
+        self.update_parameter_visibility(self.comboBox_burst_filter.currentText())
+        
+        # Set the default filter mode
+        if default_filter_mode == 'count_rate':
+            self.comboBox_burst_filter.setCurrentText("Count rate")
+        elif default_filter_mode == 'burst':
+            self.comboBox_burst_filter.setCurrentText("Burst")
+        elif default_filter_mode == 'bocpd':
+            self.comboBox_burst_filter.setCurrentText("BOCPD Burst")
+        elif default_filter_mode == 'kalman':
+            self.comboBox_burst_filter.setCurrentText("Kalman Burst")
 
         def after_file_drop():
             """
@@ -1780,26 +2348,9 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.gridLayout_6.addWidget(self.pw_mcs, 2, 0, 1, 1)
         self.gridLayout_6.addWidget(self.pw_decay, 2, 1, 1, 1)
         self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)
-
-        self.actionUpdate_Values.triggered.connect(self.update_parameter)
-        self.actionUpdateUI.triggered.connect(self.updateUI)
-        self.actionFile_changed.triggered.connect(self.read_tttr)
-        self.actionRegionUpdate.triggered.connect(self.onRegionUpdate)
-
-        self.toolButton_2.toggled.connect(self.pw_mcs.setVisible)
-        self.toolButton_3.toggled.connect(self.pw_decay.setVisible)
-        self.toolButton_4.toggled.connect(self.pw_filter.setVisible)
-        self.toolButton_7.toggled.connect(self.pw_burst_histogram.setVisible)
-
-        self.toolButton_5.clicked.connect(self.save_selection)
-        self.toolButton_6.clicked.connect(self.onClearFiles)
-
-        self.comboBox_2.currentTextChanged.connect(self.update_detectors)
-        self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
-        self.comboBox.currentTextChanged.connect(self.update_micro_time_binning)
-        self.comboBox.currentTextChanged.connect(self.update_burst_selection_parameters)
-        self.comboBox.currentTextChanged.connect(self.update_channel_routing)
-        self.comboBox.currentTextChanged.connect(self.update_pie_windows_from_setup)
+        
+        # Setup all signal-slot connections
+        self.setup_connections()
 
         # Custom validator
         validator = CommaSeparatedIntegersValidator()
@@ -1808,7 +2359,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         # Initialize defaults
         self.spinBox.setValue(default_photon_threshold)
         self.doubleSpinBox.setValue(default_count_rate_window_ms)
-        self.checkBox.setChecked(invert_count_rate_filter)
+        self.checkBox.setChecked(invert_filter)
         self.checkBox_2.setChecked(use_dT_min)
         self.checkBox_3.setChecked(use_dT_max)
         self.doubleSpinBox_4.setValue(default_mcs_dT)
@@ -1816,6 +2367,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         # -- NEW: set default gap-fill checkbox/spinbox --
         self.checkBox_5.setChecked(use_gap_fill)  # <--- gap-fill checkbox
         self.spinBox_7.setValue(default_max_gap)  # <--- max-gap spinbox
+        self.update_spinbox_7_state()  # Update spinBox_7 enabled state based on checkBox_5
 
         # Control initial plot visibility
         self.pw_dT.setVisible(show_dT)
@@ -1824,19 +2376,12 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.toolButton_3.setChecked(show_decay)
         self.toolButton_7.setChecked(show_burst)
 
-        # -- Set the default filter mode (radio buttons) --
-        # radioButton = count_rate; radioButton_2 = burst
+        # -- Set the default filter mode --
         if default_filter_mode == 'burst':
-            self.radioButton_2.setChecked(True)
+            self.comboBox_burst_filter.setCurrentText("Burst")
         else:
             # Fallback or default to 'count_rate'
-            self.radioButton.setChecked(True)
-
-        # Add a button to save burst selection parameters
-        self.save_burst_params_button = QtWidgets.QPushButton("Save Parameters", self)
-        self.save_burst_params_button.clicked.connect(self.save_burst_selection_parameters)
-        self.save_burst_params_button.setToolTip("Save burst parameters as default to setup.")
-        self.gridLayout_3.addWidget(self.save_burst_params_button, 5, 0, 1, 2)
+            self.comboBox_burst_filter.setCurrentText("Count rate")
 
         # Update micro time binning and burst selection parameters from the selected setup
         self.update_micro_time_binning()

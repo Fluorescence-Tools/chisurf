@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
     QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton, QWidget,
-    QComboBox, QInputDialog
+    QComboBox, QInputDialog, QDoubleSpinBox
 )
 
 from PyQt5.QtCore import pyqtSignal
@@ -66,9 +66,9 @@ _initial_windows = {
 }
 
 _initial_detectors = {
-    "green":  {"chs": [8, 0, 3], "micro_time_ranges": [(0, 4095)]},
-    "red":    {"chs": [9, 1, 2], "micro_time_ranges": [(0, 2048)]},
-    "yellow": {"chs": [9, 1, 2], "micro_time_ranges": [(2048, 4095)]},
+    "green":  {"chs": [8, 0, 3], "micro_time_ranges": [(0, 4095)], "g_factor": 1, "l1": 0, "l2": 0},
+    "red":    {"chs": [9, 1, 2], "micro_time_ranges": [(0, 2048)], "g_factor": 1, "l1": 0, "l2": 0},
+    "yellow": {"chs": [9, 1, 2], "micro_time_ranges": [(2048, 4095)], "g_factor": 1, "l1": 0, "l2": 0},
 }
 
 # Initial TTTR reading routine settings
@@ -76,7 +76,11 @@ _initial_tttr_reading = {
     "file_type": "SPC-130",
     "macro_time_resolution": 50.0,  # in nanoseconds
     "micro_time_resolution": 50.0,  # in picoseconds
-    "micro_time_binning": 1
+    "micro_time_binning": 1,
+    "excitation_period": 13.6,  # in nanoseconds
+    "g_factor": 1.08316,
+    "l1": 0.03080,
+    "l2": 0.03680
 }
 
 
@@ -259,6 +263,14 @@ class DetectorWizardPage(QWizardPage):
         self.effective_micro_time_le = QLineEdit(self)
         self.effective_micro_time_le.setReadOnly(True)
         tttr_layout.addWidget(self.effective_micro_time_le, 3, 3)
+        
+        # # Row 4: Excitation Period
+        # tttr_layout.addWidget(QLabel("Excitation Period (ns):"), 4, 0)
+        # self.excitation_period_spin = QDoubleSpinBox(self)
+        # self.excitation_period_spin.setDecimals(3)
+        # self.excitation_period_spin.setMaximum(1000.0)
+        # self.excitation_period_spin.setValue(_initial_tttr_reading["excitation_period"])
+        # tttr_layout.addWidget(self.excitation_period_spin, 4, 1)
 
         main_layout.addWidget(self.tttr_reading_widget)
         self.tttr_reading_widget.setVisible(self.show_tttr_reading)
@@ -278,8 +290,8 @@ class DetectorWizardPage(QWizardPage):
         tables_layout.addWidget(self._with_label("PIE-Windows", self.windows_form))
 
         # Detectors table
-        self.detectors_form = QTableWidget(0, 3, self)
-        self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges"])
+        self.detectors_form = QTableWidget(0, 6, self)
+        self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges", "G-Factor", "l1", "l2"])
         self.detectors_form.itemDoubleClicked.connect(self._remove_detector)
         tables_layout.addWidget(self._with_label("Detectors", self.detectors_form))
 
@@ -452,7 +464,10 @@ class DetectorWizardPage(QWizardPage):
         for name, props in data.get("detectors", {}).items():
             chs = ", ".join(map(str, props["chs"]))
             mtr = ", ".join(f"{s}-{e}" for s, e in props["micro_time_ranges"])
-            self._add_detector_row(name, chs, mtr)
+            g_factor = str(props.get("g_factor", 1.00))
+            l1 = str(props.get("l1", 0.00))
+            l2 = str(props.get("l2", 0.00))
+            self._add_detector_row(name, chs, mtr, g_factor, l1, l2)
 
         # populate TTTR reading routine settings
         tttr_reading = data.get("tttr_reading", _initial_tttr_reading)
@@ -478,12 +493,15 @@ class DetectorWizardPage(QWizardPage):
         self.windows_form.setCellWidget(row, 1, QLineEdit(start))
         self.windows_form.setCellWidget(row, 2, QLineEdit(end))
 
-    def _add_detector_row(self, name, ch_text, mtr_text):
+    def _add_detector_row(self, name, ch_text, mtr_text, g_factor="1.00", l1="0.00", l2="0.00"):
         row = self.detectors_form.rowCount()
         self.detectors_form.insertRow(row)
         self.detectors_form.setItem(row, 0, QTableWidgetItem(name))
         self.detectors_form.setCellWidget(row, 1, QLineEdit(ch_text))
         self.detectors_form.setCellWidget(row, 2, QLineEdit(mtr_text))
+        self.detectors_form.setCellWidget(row, 3, QLineEdit(g_factor))
+        self.detectors_form.setCellWidget(row, 4, QLineEdit(l1))
+        self.detectors_form.setCellWidget(row, 5, QLineEdit(l2))
 
     def _add_window(self):
         name = self.new_window_le.text().strip() or f"PIE-Window {self.windows_form.rowCount()+1}"
@@ -540,7 +558,16 @@ class DetectorWizardPage(QWizardPage):
                 tuple(map(int, seg.split('-')))
                 for seg in self.detectors_form.cellWidget(r,2).text().split(',')
             ]
-            dets[name] = {"chs": chs, "micro_time_ranges": mtr}
+            g_factor = float(self.detectors_form.cellWidget(r,3).text())
+            l1 = float(self.detectors_form.cellWidget(r,4).text())
+            l2 = float(self.detectors_form.cellWidget(r,5).text())
+            dets[name] = {
+                "chs": chs, 
+                "micro_time_ranges": mtr,
+                "g_factor": g_factor,
+                "l1": l1,
+                "l2": l2
+            }
 
         # TTTR reading routine
         tttr_reading = {
@@ -548,7 +575,8 @@ class DetectorWizardPage(QWizardPage):
             "macro_time_resolution": float(self.macro_time_le.text()),
             "micro_time_resolution": float(self.micro_time_le.text()),
             "micro_time_binning": int(self.micro_binning_combo.currentText()),
-            "effective_micro_time_resolution": self.effective_micro_time_resolution
+            "effective_micro_time_resolution": self.effective_micro_time_resolution,
+            "excitation_period": self.excitation_period
         }
 
         # Return the result
@@ -597,6 +625,23 @@ class DetectorWizardPage(QWizardPage):
         returns the same dict you’re saving as JSON.
         """
         return self.get_settings()['detectors']
+        
+    @detectors.setter
+    def detectors(self, new_detectors):
+        """
+        Setter for detectors property. Updates the detectors in the UI.
+        
+        Args:
+            new_detectors (dict): Dictionary of detector configurations
+        """
+        # Get current settings
+        current_settings = self.get_settings()
+        
+        # Update detectors in settings
+        current_settings['detectors'] = new_detectors
+        
+        # Load updated settings into UI
+        self._load_data(current_settings)
 
     @property
     def windows(self):
@@ -605,6 +650,23 @@ class DetectorWizardPage(QWizardPage):
         you're saving as JSON under "windows".
         """
         return self.get_settings()['windows']
+        
+    @windows.setter
+    def windows(self, new_windows):
+        """
+        Setter for windows property. Updates the windows in the UI.
+        
+        Args:
+            new_windows (dict): Dictionary of window name -> (start, end) tuples
+        """
+        # Get current settings
+        current_settings = self.get_settings()
+        
+        # Update windows in settings
+        current_settings['windows'] = new_windows
+        
+        # Load updated settings into UI
+        self._load_data(current_settings)
 
     @property
     def filetype(self) -> str | None:
@@ -648,6 +710,16 @@ class DetectorWizardPage(QWizardPage):
         and micro_time_binning.
         """
         return self.get_settings()['tttr_reading']
+        
+    @property
+    def excitation_period(self):
+        """
+        Returns the excitation period in nanoseconds.
+        
+        Returns:
+            float: The excitation period in nanoseconds.
+        """
+        return float(self.macro_time_le.text()) #self.excitation_period_spin.value()
 
     def _load_available_setups(self):
         """Load available setups into the combobox."""
