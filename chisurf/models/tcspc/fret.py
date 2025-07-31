@@ -511,7 +511,7 @@ class FRETModel(LifetimeModel):
     @property
     def reference(self):
         self._reference.update_model()
-        ref = np.maximum(self._reference._y, 0)
+        ref = np.maximum(self._reference.y, 0)
         scale = np.max(self.fit.data.y) / np.max(ref)
         ref *= scale
         return ref
