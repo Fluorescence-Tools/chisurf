@@ -63,6 +63,7 @@ class JordiGFactorCalculator(QWidget):
         self.region_bounds = [0, 100]  # Default region bounds
         self.bg_region_bounds = [0, 100]  # Default background region bounds
         self.use_background_correction = False
+        self.decay_shift = 0.0  # Default shift value (in time units)
         
         # Create UI
         self.init_ui()
@@ -77,7 +78,8 @@ class JordiGFactorCalculator(QWidget):
         # File loading
         self.load_button = QPushButton("Load Jordi File")
         self.load_button.clicked.connect(self.load_jordi_file)
-        self.file_label = QLabel("No file loaded")
+        self.file_label = QLineEdit("No file loaded")
+        self.file_label.setReadOnly(True)  # Make it non-editable
         controls_layout.addWidget(self.load_button, 0, 0)
         controls_layout.addWidget(self.file_label, 0, 1, 1, 3)
         
@@ -133,6 +135,17 @@ class JordiGFactorCalculator(QWidget):
         self.bg_correction_checkbox.stateChanged.connect(self.on_bg_correction_changed)
         controls_layout.addWidget(self.bg_correction_checkbox, 2, 0, 1, 4)
         
+        # Decay shift controls
+        self.shift_label = QLabel("Shift Perpendicular Decay (ns):")
+        self.shift_spinbox = QDoubleSpinBox()
+        self.shift_spinbox.setRange(-5.0, 5.0)  # Allow shift of ±5 ns
+        self.shift_spinbox.setSingleStep(0.01)  # Fine control with 0.01 ns steps
+        self.shift_spinbox.setDecimals(3)  # Show 3 decimal places
+        self.shift_spinbox.setValue(self.decay_shift)  # Set initial value
+        self.shift_spinbox.valueChanged.connect(self.on_shift_changed)
+        controls_layout.addWidget(self.shift_label, 5, 0, 1, 2)
+        controls_layout.addWidget(self.shift_spinbox, 5, 2, 1, 2)
+        
         main_layout.addLayout(controls_layout)
         
         # Main plot widget for full decay curves
@@ -180,19 +193,25 @@ class JordiGFactorCalculator(QWidget):
         self.setLayout(main_layout)
         self.resize(1000, 600)
     
-    def load_jordi_file(self):
+    def load_jordi_file(self, file_path=None):
         """Load a Jordi file and display it.
         
         Jordi files are loaded directly using numpy.loadtxt and split into two equal chunks:
         - First half: VV channel (parallel)
         - Second half: VH channel (perpendicular)
-        """
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Jordi File", "", "Data Files (*.dat);;All Files (*)"
-        )
         
-        if not file_path:
-            return
+        Parameters
+        ----------
+        file_path : str, optional
+            Path to the Jordi file. If None, a file dialog will be opened.
+        """
+        if file_path is None:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, "Load Jordi File", "", "Data Files (*.dat);;All Files (*)"
+            )
+            
+            if not file_path:
+                return
         
         self.file_label.setText(file_path)
         
@@ -271,12 +290,15 @@ class JordiGFactorCalculator(QWidget):
             name='Parallel'
         )
         
-        # Plot perpendicular data
+        # Create shifted time axis for perpendicular data
+        shifted_time_axis = self.time_axis + self.decay_shift
+        
+        # Plot perpendicular data with shifted time axis
         self.plot_widget.plot(
-            self.time_axis, 
+            shifted_time_axis, 
             self.perpendicular_data.y, 
             pen=pg.mkPen('r', width=2),
-            name='Perpendicular'
+            name=f'Perpendicular (Shift: {self.decay_shift:.3f} ns)'
         )
         
         # Re-add region selectors if they were there before
@@ -320,6 +342,20 @@ class JordiGFactorCalculator(QWidget):
         """Handle changes to the background region."""
         self.bg_region_bounds = self.bg_region.getRegion()
         self.calculate_g_factor()
+        
+    def on_shift_changed(self, value):
+        """Handle changes to the decay shift value.
+        
+        Parameters
+        ----------
+        value : float
+            The new shift value in nanoseconds.
+        """
+        self.decay_shift = value
+        # Update the plot with the new shift
+        self.update_plot()
+        # Recalculate the g-factor with the new shift
+        self.calculate_g_factor()
     
     def calculate_g_factor(self):
         """Calculate the g-factor based on the selected region."""
@@ -329,14 +365,35 @@ class JordiGFactorCalculator(QWidget):
         # Get region bounds for tail matching
         min_time, max_time = self.region_bounds
         
-        # Find indices corresponding to the region
-        min_idx = np.argmin(np.abs(self.time_axis - min_time))
-        max_idx = np.argmin(np.abs(self.time_axis - max_time))
+        # Find indices corresponding to the region for parallel data
+        min_idx_parallel = np.argmin(np.abs(self.time_axis - min_time))
+        max_idx_parallel = np.argmin(np.abs(self.time_axis - max_time))
+        
+        # Create shifted time axis for perpendicular data
+        shifted_time_axis = self.time_axis + self.decay_shift
+        
+        # Find indices corresponding to the region for perpendicular data (accounting for shift)
+        min_idx_perp = np.argmin(np.abs(shifted_time_axis - min_time))
+        max_idx_perp = np.argmin(np.abs(shifted_time_axis - max_time))
         
         # Extract data in the region
-        parallel_region = self.parallel_data.y[min_idx:max_idx]
-        perpendicular_region = self.perpendicular_data.y[min_idx:max_idx]
-        time_region = self.time_axis[min_idx:max_idx]
+        parallel_region = self.parallel_data.y[min_idx_parallel:max_idx_parallel]
+        perpendicular_region = self.perpendicular_data.y[min_idx_perp:max_idx_perp]
+        time_region = self.time_axis[min_idx_parallel:max_idx_parallel]
+        
+        # If the shifted indices result in different array lengths, interpolate to match
+        if len(parallel_region) != len(perpendicular_region):
+            # Create interpolation function for perpendicular data
+            from scipy.interpolate import interp1d
+            perp_interp = interp1d(
+                shifted_time_axis[min_idx_perp:max_idx_perp],
+                perpendicular_region,
+                bounds_error=False,
+                fill_value="extrapolate"
+            )
+            
+            # Interpolate perpendicular data to match parallel time points
+            perpendicular_region = perp_interp(time_region)
         
         # Calculate uncorrected g-factor
         g_factors_uncorrected = parallel_region / perpendicular_region
@@ -429,18 +486,25 @@ class JordiGFactorCalculator(QWidget):
         """Update the tail-matched decay plot with the entire range data."""
         self.tail_plot_widget.clear()
         
+        # Create shifted time axis for perpendicular data
+        shifted_time_axis = self.time_axis + self.decay_shift
+        
         # Apply background correction to the entire dataset if enabled
         if self.use_background_correction:
             # Get background region bounds
             bg_min_time, bg_max_time = self.bg_region_bounds
             
-            # Find indices corresponding to the background region
-            bg_min_idx = np.argmin(np.abs(self.time_axis - bg_min_time))
-            bg_max_idx = np.argmin(np.abs(self.time_axis - bg_max_time))
+            # Find indices corresponding to the background region for parallel data
+            bg_min_idx_parallel = np.argmin(np.abs(self.time_axis - bg_min_time))
+            bg_max_idx_parallel = np.argmin(np.abs(self.time_axis - bg_max_time))
+            
+            # Find indices corresponding to the background region for perpendicular data (accounting for shift)
+            bg_min_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_min_time))
+            bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
             
             # Extract background data
-            bg_parallel = self.parallel_data.y[bg_min_idx:bg_max_idx]
-            bg_perpendicular = self.perpendicular_data.y[bg_min_idx:bg_max_idx]
+            bg_parallel = self.parallel_data.y[bg_min_idx_parallel:bg_max_idx_parallel]
+            bg_perpendicular = self.perpendicular_data.y[bg_min_idx_perp:bg_max_idx_perp]
             
             # Calculate average background levels
             bg_parallel_avg = np.mean(bg_parallel)
@@ -465,16 +529,16 @@ class JordiGFactorCalculator(QWidget):
                 name='Parallel (BG corrected)'
             )
             
-            # Plot scaled background-corrected perpendicular data
+            # Plot scaled background-corrected perpendicular data with shifted time axis
             self.tail_plot_widget.plot(
-                self.time_axis, 
+                shifted_time_axis, 
                 scaled_perpendicular, 
                 pen=pg.mkPen('r', width=2, style=Qt.DashLine),
-                name=f'Perpendicular × G ({self.g_factor:.4f}) (BG corrected)'
+                name=f'Perpendicular × G ({self.g_factor:.4f}) (Shift: {self.decay_shift:.3f} ns) (BG corrected)'
             )
             
-            # Update the plot title to indicate background correction
-            self.tail_plot_widget.setTitle('Background-Corrected Tail-Matched Decays')
+            # Update the plot title to indicate background correction and shift
+            self.tail_plot_widget.setTitle(f'Background-Corrected Tail-Matched Decays (Shift: {self.decay_shift:.3f} ns)')
         else:
             # Scale perpendicular data by g-factor without background correction
             scaled_perpendicular = self.perpendicular_data.y * self.g_factor
@@ -487,16 +551,16 @@ class JordiGFactorCalculator(QWidget):
                 name='Parallel'
             )
             
-            # Plot scaled perpendicular data for the entire range
+            # Plot scaled perpendicular data for the entire range with shifted time axis
             self.tail_plot_widget.plot(
-                self.time_axis, 
+                shifted_time_axis, 
                 scaled_perpendicular, 
                 pen=pg.mkPen('r', width=2, style=Qt.DashLine),
-                name=f'Perpendicular × G ({self.g_factor:.4f})'
+                name=f'Perpendicular × G ({self.g_factor:.4f}) (Shift: {self.decay_shift:.3f} ns)'
             )
             
-            # Update the plot title to indicate the entire range is being displayed
-            self.tail_plot_widget.setTitle('Tail-Matched Decays (Entire Range)')
+            # Update the plot title to indicate the entire range is being displayed and the shift
+            self.tail_plot_widget.setTitle(f'Tail-Matched Decays (Entire Range) (Shift: {self.decay_shift:.3f} ns)')
 
 
 if __name__ == "__main__":
