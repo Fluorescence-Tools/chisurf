@@ -505,6 +505,25 @@ class LinePlot(plotbase.Plot):
 
         return None
 
+    def _update_reference_checkbox(self):
+        """
+        Check if the model has a reference attribute and update the checkbox state accordingly.
+        If the model doesn't have a reference attribute, disable the checkbox.
+        """
+        has_reference = False
+        try:
+            # Check if model has reference attribute
+            if hasattr(self.fit.model, 'reference'):
+                has_reference = True
+        except Exception:
+            pass
+            
+        # Update the checkbox state
+        self.plot_controller.checkBox_5.setEnabled(has_reference)
+        if not has_reference and self.plot_controller.use_reference:
+            # If reference is not available but checkbox is checked, uncheck it
+            self.plot_controller.use_reference = False
+            
     def update(self, only_fit_range: bool = False, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
 
@@ -512,6 +531,9 @@ class LinePlot(plotbase.Plot):
         data_log_y = self.plot_controller.data_is_log_y
         data_log_x = self.plot_controller.data_is_log_x
         director = self.plot_controller.director
+        
+        # Check if model has reference attribute and update checkbox state
+        self._update_reference_checkbox()
 
         curves = fit.get_curves()
         data = curves['data']
@@ -555,11 +577,14 @@ class LinePlot(plotbase.Plot):
 
             # Reference-function
             if self.plot_controller.use_reference and curve_settings['allow_reference_curve']:
-                reference = fit.model.reference
-                if reference is None:
-                    reference = np.ones_like(y)
-                    chisurf.logging.warning("No reference curve provided by the model.")
-                y /= reference
+                try:
+                    reference = fit.model.reference
+                    if reference is None:
+                        reference = np.ones_like(y)
+                        chisurf.logging.warning("No reference curve provided by the model.")
+                    y /= reference
+                except AttributeError:
+                    chisurf.logging.warning("Model does not have a reference attribute.")
 
             if self.plot_controller.is_density and curve_settings['allow_density']:
                 y[1:] = y[1:] / np.diff(x)
