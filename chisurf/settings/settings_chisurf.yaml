@@ -103,7 +103,8 @@ gui:
   show_macro_edit: true
   style_sheet: dark.qss
 hidden_execute: true
-log_level: 20
+# Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
+log_level: 30
 mc_settings:
   append_new_structures: false
   av_filename: out.xyz
