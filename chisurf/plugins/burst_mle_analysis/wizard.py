@@ -18,6 +18,7 @@ import chisurf
 import chisurf.gui.decorators
 import chisurf.settings
 import chisurf.gui.widgets.wizard
+from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups, save_detector_setups
 
 
 import collections.abc
@@ -238,11 +239,18 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     def _on_tab_changed(self, index: int):
         if self.tabWidget.widget(index) is self.tab_parameters:
             current_idx = self.spinBox_current_file_idx.value()
-            self.spinBox_current_file_idx.blockSignals(True)
+            widgets = (self.spinBox_current_file_idx,)
+            self.block_widget_signals(widgets)
             self.spinBox_current_file_idx.setValue(current_idx)
-            self.spinBox_current_file_idx.blockSignals(False)
+            self.unblock_widget_signals(widgets)
             self.update_current_file(current_idx)
             self.update_bg_files()
+            
+            # Trigger _on_channel_changed with the current detector
+            current_detector = self.comboBox_window.currentText()
+            if current_detector:
+                chisurf.logging.info(f"Parameters tab selected, triggering _on_channel_changed with detector: {current_detector}")
+                self._on_channel_changed(current_detector)
 
         if self.tabWidget.widget(index) is self.tab_process:
             # Display settings
@@ -323,10 +331,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.doubleSpinBox_r0.setValue   (x0[2])
         self.doubleSpinBox_rho.setValue  (x0[3])
 
-        self.checkBox_fix_tau .setChecked(bool(fixed[0]))
-        self.checkBox_fix_gamma.setChecked(bool(fixed[1]))
-        self.checkBox_fix_r0   .setChecked(bool(fixed[2]))
-        self.checkBox_fix_rho  .setChecked(bool(fixed[3]))
+        self.fix_tau = bool(fixed[0])
+        self.fix_gamma = bool(fixed[1])
+        self.fix_r0 = bool(fixed[2])
+        self.fix_rho = bool(fixed[3])
 
         # — restore cached IRF/BG arrays so your `.irf` & `.bg` props pick them up —
         det = self.current_detector
@@ -349,11 +357,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             bin_start = raw_start // self.micro_time_binning
             bin_stop = raw_stop // self.micro_time_binning
             # block signals so we don't trigger micro-time‐range callbacks
-            for sb in (self.spinBox_micro_time_start, self.spinBox_micro_time_stop):
-                sb.blockSignals(True)
+            widgets = (self.spinBox_micro_time_start, self.spinBox_micro_time_stop)
+            self.block_widget_signals(widgets)
             self.micro_time_range = (bin_start, bin_stop)
-            for sb in (self.spinBox_micro_time_start, self.spinBox_micro_time_stop):
-                sb.blockSignals(False)
+            self.unblock_widget_signals(widgets)
 
         # restore any previously‐saved UI state for this detector
         state = self.channel_settings.get(new_detector)
@@ -366,11 +373,72 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 self.doubleSpinBox_shift_sp,
                 self.doubleSpinBox_shift_ss,
             )
-            for w in widgets:
-                w.blockSignals(True)
+            self.block_widget_signals(widgets)
             self._apply_ui_state(state)
-            for w in widgets:
-                w.blockSignals(False)
+            self.unblock_widget_signals(widgets)
+        
+        # Check if we have saved MLE settings for this detector in the current setup
+        try:
+            # Get the current setup name
+            setup_name = self.channel_definer.setup_combo.currentText()
+            if setup_name:
+                # Get the detector_setups.json file path
+                setups_file = self.channel_definer.current_setups_file
+                
+                # Load existing setups
+                setups = load_detector_setups(setups_file)
+                
+                # Check if the setup exists and has the detector with MLE settings
+                if (setup_name in setups.get("setups", {}) and 
+                    "detectors" in setups["setups"][setup_name] and 
+                    new_detector in setups["setups"][setup_name]["detectors"] and 
+                    "mle_settings" in setups["setups"][setup_name]["detectors"][new_detector]):
+                    
+                    # Get the MLE settings for the detector
+                    detector_params = setups["setups"][setup_name]["detectors"][new_detector]["mle_settings"]
+                    
+                    # Block signals to prevent multiple updates
+                    widgets = (
+                        self.spinBox_micro_time_start,
+                        self.spinBox_micro_time_stop,
+                        self.doubleSpinBox_irf_threshold,
+                        self.doubleSpinBox_shift,
+                        self.doubleSpinBox_shift_sp,
+                        self.doubleSpinBox_shift_ss,
+                    )
+                    self.block_widget_signals(widgets)
+                        
+                    # Update the UI with the loaded parameters
+                    if "micro_time_start" in detector_params and "micro_time_stop" in detector_params:
+                        self.micro_time_range = [detector_params["micro_time_start"], detector_params["micro_time_stop"]]
+                    if "irf_threshold" in detector_params:
+                        self.doubleSpinBox_irf_threshold.setValue(detector_params["irf_threshold"])
+                    if "shift" in detector_params:
+                        self.doubleSpinBox_shift.setValue(detector_params["shift"])
+                    if "shift_sp" in detector_params:
+                        self.doubleSpinBox_shift_sp.setValue(detector_params["shift_sp"])
+                    if "shift_ss" in detector_params:
+                        self.doubleSpinBox_shift_ss.setValue(detector_params["shift_ss"])
+                    
+                    # Update checkbox states
+                    if "p2s_twoIstar" in detector_params:
+                        self.p2s_twoIstar = detector_params["p2s_twoIstar"]
+                    if "BIFL_scatter" in detector_params:
+                        self.BIFL_scatter = detector_params["BIFL_scatter"]
+                    if "fix_tau" in detector_params:
+                        self.fix_tau = detector_params["fix_tau"]
+                    if "fix_gamma" in detector_params:
+                        self.fix_gamma = detector_params["fix_gamma"]
+                    if "fix_r0" in detector_params:
+                        self.fix_r0 = detector_params["fix_r0"]
+                    if "fix_rho" in detector_params:
+                        self.fix_rho = detector_params["fix_rho"]
+                        
+                    # Unblock signals
+                    self.unblock_widget_signals(widgets)
+        except Exception as e:
+            # Silently ignore errors when loading MLE settings
+            pass
 
         # remember where we are now
         self._last_detector = new_detector
@@ -383,6 +451,30 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self._fit = None
         self.update_fit()
 
+    def block_widget_signals(self, widgets):
+        """
+        Block signals for a collection of widgets to prevent multiple updates.
+        
+        Parameters
+        ----------
+        widgets : tuple or list
+            Collection of widgets whose signals should be blocked.
+        """
+        for w in widgets:
+            w.blockSignals(True)
+            
+    def unblock_widget_signals(self, widgets):
+        """
+        Unblock signals for a collection of widgets after updates are complete.
+        
+        Parameters
+        ----------
+        widgets : tuple or list
+            Collection of widgets whose signals should be unblocked.
+        """
+        for w in widgets:
+            w.blockSignals(False)
+            
     def _interpolate_shift(self, arr: np.ndarray, shift: Union[int, float]) -> np.ndarray:
         """
         Shift a 1D array by a given number of bins, supporting fractional shifts.
@@ -612,7 +704,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # Detector definition tab - moved to first page
         self.tab_detector = QtWidgets.QWidget()
         self.tabWidget.insertTab(0, self.tab_detector, "Detector Definition")
-        self.tabWidget.setCurrentIndex(0)  # Set detector definition as the active tab
+        self.tabWidget.setCurrentIndex(1)  # Set detector definition as the active tab
         self.verticalLayout_detector_tab = QtWidgets.QVBoxLayout(self.tab_detector)
         self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
         self.groupBox_detector = QtWidgets.QGroupBox("Detector Configuration")
@@ -705,6 +797,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # hook up save/load
         self.toolButton_save_settings.clicked.connect(self.save_settings)
         self.toolButton_load_settings.clicked.connect(self.load_settings)
+        self.toolButton_save_fit.clicked.connect(self.save_fit)
 
         # --- Clear buttons ---
         clear_buttons = {
@@ -1149,15 +1242,15 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     @property
     def fit_parameters(self):
-        tau = self.doubleSpinBox_tau.value()
-        gamma = self.doubleSpinBox_gamma.value()
-        r0 = self.doubleSpinBox_r0.value()
-        rho = self.doubleSpinBox_rho.value()
+        tau = self.tau
+        gamma = self.gamma
+        r0 = self.r0
+        rho = self.rho
         fixed = [
-            int(self.checkBox_fix_tau.isChecked()),
-            int(self.checkBox_fix_gamma.isChecked()),
-            int(self.checkBox_fix_r0.isChecked()),
-            int(self.checkBox_fix_rho.isChecked()),
+            int(self.fix_tau),
+            int(self.fix_gamma),
+            int(self.fix_r0),
+            int(self.fix_rho),
         ]
         return np.array([tau, gamma, r0, rho]), np.array(fixed)
 
@@ -1410,13 +1503,45 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         """
         Return the background array for the currently selected detector.
         If none was loaded, return a zeros default matching the IRF length.
+        Apply the same shifts as the IRF to ensure alignment.
         """
         det = self.current_detector
         arr = self.bg_np.get(det)
         if arr is None:
             # match IRF length
             return np.zeros_like(self.irf)
-        return arr
+        
+        # Get the IRF to compare sizes
+        irf_arr = self.irf
+        
+        # split into sp / ss halves
+        half = len(arr) // 2
+        sp = arr[:half].astype(np.float64)
+        ss = arr[half:].astype(np.float64)
+        
+        # apply sub-bin shifts
+        sp = self._interpolate_shift(sp, self.shift_sp)
+        ss = self._interpolate_shift(ss, self.shift_ss)
+        
+        # apply integer relative shift to the second decay
+        if self.shift != 0:
+            ss = np.roll(ss, self.shift)
+        
+        # reassemble
+        bg = np.hstack([sp, ss])
+        
+        # Ensure bg is the same size as irf
+        if bg.size != irf_arr.size:
+            chisurf.logging.warning(f"Background size ({bg.size}) doesn't match IRF size ({irf_arr.size}). Resizing.")
+            if bg.size > irf_arr.size:
+                # Truncate bg to match irf size
+                bg = bg[:irf_arr.size]
+            else:
+                # Pad bg with zeros to match irf size
+                padding = np.zeros(irf_arr.size - bg.size, dtype=bg.dtype)
+                bg = np.hstack([bg, padding])
+                
+        return bg
 
     @property
     def BIFL_scatter(self) -> bool:
@@ -1435,6 +1560,181 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     @property
     def save_jordis(self):
         return self.checkBox_save_jordis.isChecked()
+        
+    @property
+    def fix_tau(self) -> bool:
+        """Whether the tau parameter is fixed during fitting."""
+        return self.checkBox_fix_tau.isChecked()
+        
+    @fix_tau.setter
+    def fix_tau(self, v: bool):
+        self.checkBox_fix_tau.setChecked(v)
+        
+    @property
+    def fix_gamma(self) -> bool:
+        """Whether the gamma parameter is fixed during fitting."""
+        return self.checkBox_fix_gamma.isChecked()
+        
+    @fix_gamma.setter
+    def fix_gamma(self, v: bool):
+        self.checkBox_fix_gamma.setChecked(v)
+        
+    @property
+    def fix_r0(self) -> bool:
+        """Whether the r0 parameter is fixed during fitting."""
+        return self.checkBox_fix_r0.isChecked()
+        
+    @fix_r0.setter
+    def fix_r0(self, v: bool):
+        self.checkBox_fix_r0.setChecked(v)
+        
+    @property
+    def fix_rho(self) -> bool:
+        """Whether the rho parameter is fixed during fitting."""
+        return self.checkBox_fix_rho.isChecked()
+        
+    @fix_rho.setter
+    def fix_rho(self, v: bool):
+        self.checkBox_fix_rho.setChecked(v)
+        
+    @property
+    def current_file_idx(self) -> int:
+        """Current file index in the burst files list."""
+        return self.spinBox_current_file_idx.value()
+        
+    @current_file_idx.setter
+    def current_file_idx(self, v: int):
+        self.spinBox_current_file_idx.setValue(v)
+        
+    @property
+    def tau(self) -> float:
+        """Fluorescence lifetime (tau) in nanoseconds."""
+        return self.doubleSpinBox_tau.value()
+        
+    @tau.setter
+    def tau(self, v: float):
+        self.doubleSpinBox_tau.setValue(v)
+        
+    @property
+    def gamma(self) -> float:
+        """Gamma parameter for fitting."""
+        return self.doubleSpinBox_gamma.value()
+        
+    @gamma.setter
+    def gamma(self, v: float):
+        self.doubleSpinBox_gamma.setValue(v)
+        
+    @property
+    def r0(self) -> float:
+        """Fundamental anisotropy (r0) parameter."""
+        return self.doubleSpinBox_r0.value()
+        
+    @r0.setter
+    def r0(self, v: float):
+        self.doubleSpinBox_r0.setValue(v)
+        
+    @property
+    def rho(self) -> float:
+        """Rotational correlation time (rho) in nanoseconds."""
+        return self.doubleSpinBox_rho.value()
+        
+    @rho.setter
+    def rho(self, v: float):
+        self.doubleSpinBox_rho.setValue(v)
+        
+    @property
+    def scatter_countrate(self) -> float:
+        """Scatter count rate in Hz."""
+        return self.doubleSpinBox_scatter_Countrate.value()
+        
+    @scatter_countrate.setter
+    def scatter_countrate(self, v: float):
+        self.doubleSpinBox_scatter_Countrate.setValue(v)
+        
+    @property
+    def tau_result(self) -> float:
+        """Fitted fluorescence lifetime (tau) result in nanoseconds."""
+        return self.doubleSpinBox_tau_result.value()
+        
+    @tau_result.setter
+    def tau_result(self, v: float):
+        self.doubleSpinBox_tau_result.setValue(v)
+        
+    @property
+    def gamma_result(self) -> float:
+        """Fitted gamma parameter result."""
+        return self.doubleSpinBox_gamma_result.value()
+        
+    @gamma_result.setter
+    def gamma_result(self, v: float):
+        self.doubleSpinBox_gamma_result.setValue(v)
+        
+    @property
+    def r0_result(self) -> float:
+        """Fitted fundamental anisotropy (r0) result."""
+        return self.doubleSpinBox_r0_result.value()
+        
+    @r0_result.setter
+    def r0_result(self, v: float):
+        self.doubleSpinBox_r0_result.setValue(v)
+        
+    @property
+    def rho_result(self) -> float:
+        """Fitted rotational correlation time (rho) result in nanoseconds."""
+        return self.doubleSpinBox_rho_result.value()
+        
+    @rho_result.setter
+    def rho_result(self, v: float):
+        self.doubleSpinBox_rho_result.setValue(v)
+        
+    @property
+    def twoIstar_result(self) -> float:
+        """Fitted 2I* result."""
+        return self.doubleSpinBox_twoIstar_result.value()
+        
+    @twoIstar_result.setter
+    def twoIstar_result(self, v: float):
+        self.doubleSpinBox_twoIstar_result.setValue(v)
+        
+    @property
+    def r_scatter_result(self) -> float:
+        """Fitted r scatter result."""
+        return self.doubleSpinBox_r_scatter_result.value()
+        
+    @r_scatter_result.setter
+    def r_scatter_result(self, v: float):
+        self.doubleSpinBox_r_scatter_result.setValue(v)
+        
+    @property
+    def r_exp_result(self) -> float:
+        """Fitted r experimental result."""
+        return self.doubleSpinBox_r_exp_result.value()
+        
+    @r_exp_result.setter
+    def r_exp_result(self, v: float):
+        self.doubleSpinBox_r_exp_result.setValue(v)
+        
+    @property
+    def irf_select(self) -> str:
+        """Selected detector for IRF."""
+        return self.comboBox_irf_select.currentText()
+        
+    @irf_select.setter
+    def irf_select(self, v: str):
+        index = self.comboBox_irf_select.findText(v)
+        if index >= 0:
+            self.comboBox_irf_select.setCurrentIndex(index)
+            
+    @property
+    def background_select(self) -> str:
+        """Selected detector for background."""
+        return self.comboBox_background_select.currentText()
+        
+    @background_select.setter
+    def background_select(self, v: str):
+        index = self.comboBox_background_select.findText(v)
+        if index >= 0:
+            self.comboBox_background_select.setCurrentIndex(index)
 
     @property
     def total_burst_time_seconds(self) -> float:
@@ -1562,12 +1862,24 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # cache IRF/BG per detector
         irf_cache = {}
         bg_cache = {}
+        current_detector_backup = self.current_detector
         for det, info in self.channel_definer.detectors.items():
+            # Temporarily switch to this detector to get the shifted IRF and BG
+            self.comboBox_window.setCurrentText(det)
+            
             st = self.channel_settings[det]
             sb, eb = st['micro_time_start'], st['micro_time_stop']
-            half = st['irf'].size // 2
-            irf_cache[det] = np.hstack([st['irf'][:half][sb:eb], st['irf'][half:][sb:eb]])
-            bg_cache[det] = np.hstack([st['bg'][:half][sb:eb], st['bg'][half:][sb:eb]])
+            
+            # Use the shifted IRF and BG from properties
+            irf_data = self.irf
+            bg_data = self.bg
+            
+            half = irf_data.size // 2
+            irf_cache[det] = np.hstack([irf_data[:half][sb:eb], irf_data[half:][sb:eb]])
+            bg_cache[det] = np.hstack([bg_data[:half][sb:eb], bg_data[half:][sb:eb]])
+        
+        # Restore original detector
+        self.comboBox_window.setCurrentText(current_detector_backup)
 
         # helper to emit a default-zero record
         metrics = ['2I*', 'Tau', 'gamma', 'r0', 'rho', 'BIFL scatter?', '2I*: P+2S?', 'r Scatter', 'r Experimental']
@@ -1680,55 +1992,74 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         result_df = pd.DataFrame(results)
         chisurf.logging.info("results_df", result_df)
 
-        # Write out per-file, per-detector
+        # Optimize saving by grouping by detector first
         written_dirs = set()
-        for file_path in self.burst_files_list.get_selected_files():
-            stem = file_path.stem
-            for det in self.channel_definer.detectors:
-                color = det.lower()
-                letter = color[0]
+        files = self.burst_files_list.get_selected_files()
+        
+        # Pre-process result_df to add stem column for faster filtering
+        result_df['stem'] = result_df['First File'].map(lambda fn: Path(fn).stem)
+        
+        # Group by detector first to reduce directory creation and settings writing
+        for det in self.channel_definer.detectors:
+            color = det.lower()
+            letter = color[0]
+            
+            # Filter for this detector once
+            det_df = result_df[result_df['Detector'] == det]
+            if det_df.empty:
+                continue
+                
+            # Create columns list once per detector
+            cols = [
+                'Ng-p-all', 'Ng-s-all',
+                f'Number of Photons (fit window) ({color})',
+                f'2I* ({color})', f'Tau ({color})', f'gamma ({color})',
+                f'r0 ({color})', f'rho ({color})',
+                f'BIFL scatter? ({color})', f'2I*: P+2S? ({color})',
+                f'r Scatter ({color})', f'r Experimental ({color})'
+            ]
+            
+            # Create zero template once per detector
+            zero_template = {c: 0.0 for c in cols}
+            
+            # Process each file for this detector
+            for file_path in files:
+                stem = file_path.stem
                 out_dir = file_path.parent.parent / f"b{letter}4"
-                out_dir.mkdir(parents=True, exist_ok=True)
-
-                mask = (
-                    result_df['First File']
-                    .map(lambda fn: Path(fn).stem)
-                    .eq(stem)
-                    & result_df['Detector'].eq(det)
-                )
-                df_file = result_df[mask]
+                
+                # Create directory if it doesn't exist yet
+                if not out_dir.exists():
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Write settings file once per directory
+                    settings_file = out_dir / 'channel_settings.json'
+                    with open(settings_file, 'w') as sf:
+                        json.dump(self.channel_settings, sf, indent=4, cls=NumpyEncoder)
+                
+                # Filter for this file
+                df_file = det_df[det_df['stem'] == stem]
                 if df_file.empty:
                     continue
-
-                cols = [
-                    'Ng-p-all', 'Ng-s-all',
-                    f'Number of Photons (fit window) ({color})',
-                    f'2I* ({color})', f'Tau ({color})', f'gamma ({color})',
-                    f'r0 ({color})', f'rho ({color})',
-                    f'BIFL scatter? ({color})', f'2I*: P+2S? ({color})',
-                    f'r Scatter ({color})', f'r Experimental ({color})'
-                ]
-
-                zero_template = {c: 0.0 for c in cols}
+                
+                # Create records with optimized approach
                 records = []
                 for _, data_row in df_file.iterrows():
                     records.append(zero_template.copy())
-                    records.append({c: data_row[c] for c in cols})
+                    # Use dictionary comprehension only once
+                    row_data = {c: data_row[c] for c in cols}
+                    records.append(row_data)
                 records.append(zero_template.copy())
-
-                df_out = pd.DataFrame(records)
+                
+                # Write to file
                 out_file = out_dir / f"{stem}.b{letter}4"
-                df_out.to_csv(
+                pd.DataFrame(records).to_csv(
                     out_file,
                     sep='\t',
                     index=False,
                     float_format='%.6f',
                     columns=cols
                 )
-
-                settings_file = out_dir / 'channel_settings.json'
-                with open(settings_file, 'w') as sf:
-                    json.dump(self.channel_settings, sf, indent=4, cls=NumpyEncoder)
+                
                 written_dirs.add(out_dir.name)
 
         folder_list = ", ".join(sorted(written_dirs)) if written_dirs else "(no data)"
@@ -1751,12 +2082,24 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # cache IRF/BG per detector
         irf_cache = {}
         bg_cache = {}
+        current_detector_backup = self.current_detector
         for det, info in self.channel_definer.detectors.items():
+            # Temporarily switch to this detector to get the shifted IRF and BG
+            self.comboBox_window.setCurrentText(det)
+            
             st = self.channel_settings[det]
             sb, eb = st['micro_time_start'], st['micro_time_stop']
-            half = st['irf'].size // 2
-            irf_cache[det] = np.hstack([st['irf'][:half][sb:eb], st['irf'][half:][sb:eb]])
-            bg_cache[det] = np.hstack([st['bg'][:half][sb:eb], st['bg'][half:][sb:eb]])
+            
+            # Use the shifted IRF and BG from properties
+            irf_data = self.irf
+            bg_data = self.bg
+            
+            half = irf_data.size // 2
+            irf_cache[det] = np.hstack([irf_data[:half][sb:eb], irf_data[half:][sb:eb]])
+            bg_cache[det] = np.hstack([bg_data[:half][sb:eb], bg_data[half:][sb:eb]])
+        
+        # Restore original detector
+        self.comboBox_window.setCurrentText(current_detector_backup)
 
         # helper to emit a default-zero record
         metrics = ['2I* ', 'Tau', 'gamma', 'r0', 'rho', 'BIFL scatter?', '2I*: P+2S?', 'r Scatter', 'r Experimental']
@@ -1860,6 +2203,9 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 results.append(rec)
 
         result_df = pd.DataFrame(results)
+        
+        # Pre-process result_df to add stem column for faster filtering
+        result_df['stem'] = result_df['First File'].map(lambda fn: Path(fn).stem)
 
         files = self.burst_files_list.get_selected_files()
         dets = list(self.channel_definer.detectors.keys())
@@ -1870,40 +2216,69 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         progress.show()
         current_task = 0
 
-        # write out per-file, per-detector
+        # Optimize saving by grouping by detector first
         written_dirs = set()
-        for file_path in files:
-            stem = file_path.stem
-            for det in dets:
-                color = det.lower()
-                letter = color[0]
+        
+        # Group by detector first to reduce directory creation and settings writing
+        for det in dets:
+            color = det.lower()
+            letter = color[0]
+            
+            # Filter for this detector once
+            det_df = result_df[result_df['Detector'] == det]
+            if det_df.empty:
+                # Skip tasks for this detector
+                current_task += len(files)
+                progress.setValue(current_task)
+                QtWidgets.QApplication.processEvents()
+                continue
+                
+            # Create columns list once per detector
+            cols = [
+                'Ng-p-all', 'Ng-s-all',
+                f'Number of Photons (fit window) ({color})',
+                f'2I*  ({color})', f'Tau ({color})', f'gamma ({color})',
+                f'r0 ({color})', f'rho ({color})', f'BIFL scatter? ({color})',
+                f'2I*: P+2S? ({color})', f'r Scatter ({color})', f'r Experimental ({color})'
+            ]
+            
+            # Create zero template once per detector
+            zero_template = {c: 0.0 for c in cols}
+            
+            # Process each file for this detector
+            for file_path in files:
+                stem = file_path.stem
                 out_dir = file_path.parent.parent / f"b{letter}4"
-                out_dir.mkdir(parents=True, exist_ok=True)
-
-                mask = (
-                        result_df['First File'].map(lambda fn: Path(fn).stem).eq(stem)
-                        & result_df['Detector'].eq(det)
-                )
-                df_file = result_df[mask]
+                
+                # Create directory if it doesn't exist yet
+                if not out_dir.exists():
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Write settings file once per directory
+                    settings_file = out_dir / 'channel_settings.json'
+                    with open(settings_file, 'w') as sf:
+                        json.dump(self.channel_settings, sf, indent=4, cls=NumpyEncoder)
+                
+                # Filter for this file
+                df_file = det_df[det_df['stem'] == stem]
                 if df_file.empty:
+                    current_task += 1
+                    progress.setValue(current_task)
+                    QtWidgets.QApplication.processEvents()
                     continue
-
-                cols = [
-                    'Ng-p-all', 'Ng-s-all',
-                    f'Number of Photons (fit window) ({color})',
-                    f'2I*  ({color})', f'Tau ({color})', f'gamma ({color})',
-                    f'r0 ({color})', f'rho ({color})', f'BIFL scatter? ({color})',
-                    f'2I*: P+2S? ({color})', f'r Scatter ({color})', f'r Experimental ({color})'
-                ]
-                zero_template = {c: 0.0 for c in cols}
+                
+                # Create records with optimized approach
                 records = []
                 for _, data_row in df_file.iterrows():
                     records.append(zero_template.copy())
-                    records.append({c: data_row[c] for c in cols})
+                    # Use dictionary comprehension only once
+                    row_data = {c: data_row[c] for c in cols}
+                    records.append(row_data)
                 records.append(zero_template.copy())
-
-                df_out = pd.DataFrame(records)
+                
+                # Write to file
                 out_file = out_dir / f"{stem}.b{letter}4"
+                df_out = pd.DataFrame(records)
                 with open(out_file, 'w', newline='') as f:
                     f.write('\t'.join(cols) + '\t\n')
                     df_out.to_csv(
@@ -1914,12 +2289,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                         float_format='%.6f',
                         columns=cols
                     )
-
-                settings_file = out_dir / 'channel_settings.json'
-                with open(settings_file, 'w') as sf:
-                    json.dump(self.channel_settings, sf, indent=4, cls=NumpyEncoder)
+                
                 written_dirs.add(out_dir.name)
-
+                
+                # Update progress
                 current_task += 1
                 progress.setValue(current_task)
                 QtWidgets.QApplication.processEvents()
@@ -2185,6 +2558,74 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not save settings:\n{e}")
 
+    def save_fit(self):
+        """
+        Save micro_time_start, micro_time_stop, irf_threshold, shift, shift_sp, shift_ss,
+        p2s_twoIstar, BIFL_scatter, fix_tau, fix_gamma, fix_r0, fix_rho
+        to detector_setups.json file in the currently selected setup.
+        """
+        # Get the current detector
+        current_detector = self.current_detector
+        
+        # Get the current setup name
+        setup_name = self.channel_definer.setup_combo.currentText()
+        if not setup_name:
+            QMessageBox.warning(self, "Warning", "No setup selected. Please select a setup first.")
+            return
+        
+        # Get the detector_setups.json file path
+        setups_file = self.channel_definer.current_setups_file
+        
+        # Load existing setups
+        setups = load_detector_setups(setups_file)
+        
+        # Check if the setup exists
+        if setup_name not in setups.get("setups", {}):
+            QMessageBox.warning(self, "Warning", f"Setup '{setup_name}' not found.")
+            return
+        
+        # Get the parameters for the current detector
+        detector_params = {
+            "micro_time_start": self.micro_time_range[0],
+            "micro_time_stop": self.micro_time_range[1],
+            "irf_threshold": self.irf_threshold,
+            "shift": self.shift,
+            "shift_sp": self.shift_sp,
+            "shift_ss": self.shift_ss,
+            "p2s_twoIstar": self.p2s_twoIstar,
+            "BIFL_scatter": self.BIFL_scatter,
+            "fix_tau": self.checkBox_fix_tau.isChecked(),
+            "fix_gamma": self.checkBox_fix_gamma.isChecked(),
+            "fix_r0": self.checkBox_fix_r0.isChecked(),
+            "fix_rho": self.checkBox_fix_rho.isChecked()
+        }
+        
+        # Get the setup data
+        setup_data = setups["setups"][setup_name]
+        
+        # Add or update the MLE settings for the current detector
+        if "detectors" not in setup_data:
+            setup_data["detectors"] = {}
+        
+        # Check if the detector exists in the setup
+        if current_detector not in setup_data["detectors"]:
+            QMessageBox.warning(self, "Warning", f"Detector '{current_detector}' not found in setup '{setup_name}'.")
+            return
+        
+        # Add MLE settings to the detector
+        if "mle_settings" not in setup_data["detectors"][current_detector]:
+            setup_data["detectors"][current_detector]["mle_settings"] = {}
+        
+        # Update the MLE settings
+        setup_data["detectors"][current_detector]["mle_settings"] = detector_params
+        
+        # Save the updated setups
+        if save_detector_setups(setups, setups_file):
+            QMessageBox.information(self, "Saved", f"MLE settings for detector '{current_detector}' saved to setup '{setup_name}'.")
+        else:
+            QMessageBox.critical(self, "Error", f"Could not save MLE settings to setup '{setup_name}'.")
+            
+    
     def save_settings(self):
         """
         Dump TTTR file‐type, per‐channel settings, AND
@@ -2214,7 +2655,6 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         # show the file in both line edits
         self.lineEdit_settings_file.setText(path)
-        detwiz.file_path_line_edit.setText(path)
         QMessageBox.information(self, "Saved", f"All settings saved to:\n{path}")
 
     def load_settings(self):
@@ -2276,25 +2716,17 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             if det not in valid_dets:
                 continue
             self.comboBox_window.setCurrentText(det)
-            for w in (
+            widgets = (
                 self.spinBox_micro_time_start,
                 self.spinBox_micro_time_stop,
                 self.doubleSpinBox_irf_threshold,
                 self.doubleSpinBox_shift,
                 self.doubleSpinBox_shift_sp,
                 self.doubleSpinBox_shift_ss,
-            ):
-                w.blockSignals(True)
+            )
+            self.block_widget_signals(widgets)
             self._apply_ui_state(state)
-            for w in (
-                self.spinBox_micro_time_start,
-                self.spinBox_micro_time_stop,
-                self.doubleSpinBox_irf_threshold,
-                self.doubleSpinBox_shift,
-                self.doubleSpinBox_shift_sp,
-                self.doubleSpinBox_shift_ss,
-            ):
-                w.blockSignals(False)
+            self.unblock_widget_signals(widgets)
 
         # restore whatever was selected originally
         self.comboBox_window.setCurrentText(current)
