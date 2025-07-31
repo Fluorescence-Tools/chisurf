@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-import ast
+
 import pathlib
 import webbrowser
 
@@ -11,7 +11,6 @@ from chisurf import typing
 
 import numpy as np
 from chisurf.gui import QtWidgets, QtGui, QtCore, uic
-from PyQt5 import sip
 
 import chisurf
 import chisurf.decorators
@@ -192,30 +191,11 @@ class Main(QtWidgets.QMainWindow):
                 QtWidgets.QMessageBox.No
             )
             if reply == QtWidgets.QMessageBox.Yes:
-                # Explicitly close and delete all top-level widgets before exit
-                self._cleanup_widgets()
                 event.accept()
             else:
                 event.ignore()
         else:
-            # Explicitly close and delete all top-level widgets before exit
-            self._cleanup_widgets()
             event.accept()
-            
-    def _cleanup_widgets(self):
-        """
-        Explicitly close and delete all top-level widgets before exit.
-        This ensures proper cleanup and prevents Qt warnings about widgets
-        being destroyed after QApplication.
-        """
-        # Get all top-level widgets
-        app = QtWidgets.QApplication.instance()
-        if app:
-            # Close and delete all top-level widgets
-            for widget in app.topLevelWidgets():
-                if widget is not self:  # Don't close the main window yet
-                    widget.close()
-                    sip.delete(widget)
 
     def subWindowActivated(self):
         sub_window = self.mdiarea.currentSubWindow()
