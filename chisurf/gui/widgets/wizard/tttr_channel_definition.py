@@ -1,6 +1,18 @@
+# This file contains the DetectorWizardPage class which is used for detector and PIE-window definition.
+# The UI for this class is now defined in a separate .ui file (detector_wizard_page.ui) instead of
+# being created programmatically. This makes it easier to maintain and modify the UI.
+# The UI file is loaded in the __init__ method of the DetectorWizardPage class.
+#
+# A helper method _hide_layout_widgets is used to hide/show all widgets in a layout.
+# This method is used instead of trying to access widget containers directly,
+# which can cause AttributeError if the widget names don't match between the
+# code and the UI file.
+
 import sys
 import json
 import pathlib
+import tempfile
+import numpy as np
 from PyQt5.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
@@ -8,11 +20,14 @@ from PyQt5.QtWidgets import (
     QComboBox, QInputDialog, QDoubleSpinBox
 )
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5 import uic
+from PyQt5.QtCore import QFile
 
 from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
 import tttrlib
+from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator, DataCurve
 
 # Path to the central detector setups file
 DETECTOR_SETUPS_FILE = get_path('settings') / 'detector_setups.json'
@@ -118,11 +133,15 @@ class DetectorWizardPage(QWizardPage):
                  show_setups_file=True, show_setup_selection=True, show_help=True,
                  show_tttr_reading=True, show_tables=True, show_add_inputs=True, **kwargs):
         """Initialize the DetectorWizardPage.
+        
+        This class uses a UI file (detector_wizard_page.ui) for its layout and widgets.
+        The UI file is loaded in the __init__ method and all signals are connected to their
+        respective slots.
 
         Args:
             json_file (str, optional): Path to a JSON file to load. Defaults to None.
-            show_edit_json (bool, optional): Whether to show the "Edit JSON" button. Defaults to True.
-            show_save (bool, optional): Whether to show the "Save" button. Defaults to True.
+            show_edit_json (bool, optional): Whether to show the "Edit JSON" button. Defaults to False.
+            show_save (bool, optional): Whether to show the "Save" button. Defaults to False.
             show_setups_file (bool, optional): Whether to show the setups file section. Defaults to True.
             show_setup_selection (bool, optional): Whether to show the setup selection section. Defaults to True.
             show_help (bool, optional): Whether to show the help button and text. Defaults to True.
@@ -136,6 +155,7 @@ class DetectorWizardPage(QWizardPage):
         self.setTitle("Detectors and PIE-window definition")
         self.current_setup_name = None
         self.current_setups_file = str(DETECTOR_SETUPS_FILE)
+        self._selected_detector_info = None
         self.show_edit_json = show_edit_json
         self.show_save = show_save
         self.show_setups_file = show_setups_file
@@ -145,192 +165,65 @@ class DetectorWizardPage(QWizardPage):
         self.show_tables = show_tables
         self.show_add_inputs = show_add_inputs
 
-        # Main layout
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0,0,0,0)
-        main_layout.setSpacing(0)
+        # Load the UI file
+        ui_file_path = pathlib.Path(__file__).parent / "detector_wizard_page.ui"
+        uic.loadUi(str(ui_file_path), self)
 
-        # --- Setups File Path ---
-        self.setups_file_widget = QWidget(self)
-        setups_file_layout = QHBoxLayout(self.setups_file_widget)
-        setups_file_layout.setContentsMargins(0, 0, 0, 0)
-        setups_file_layout.addWidget(QLabel("Setups File:"))
-
-        self.setups_file_le = QLineEdit(self)
-        self.setups_file_le.setReadOnly(True)
+        # Set initial values
         self.setups_file_le.setText(str(DETECTOR_SETUPS_FILE))
-        setups_file_layout.addWidget(self.setups_file_le)
-
-        self.load_setups_file_button = QToolButton(self)
-        self.load_setups_file_button.setText("…")
-        self.load_setups_file_button.setToolTip("Load a different detector setups file")
+        
+        # Connect signals
         self.load_setups_file_button.clicked.connect(self._on_load_setups_file)
-        setups_file_layout.addWidget(self.load_setups_file_button)
-
-        main_layout.addWidget(self.setups_file_widget)
-        self.setups_file_widget.setVisible(self.show_setups_file)
-
-        # --- Setup selection ---
-        self.setup_selection_widget = QWidget(self)
-        setup_layout = QHBoxLayout(self.setup_selection_widget)
-        setup_layout.setContentsMargins(0, 0, 0, 0)
-        setup_layout.addWidget(QLabel("Setup:"))
-
-        self.setup_combo = QComboBox(self)
         self.setup_combo.currentIndexChanged.connect(self._on_setup_changed)
-        setup_layout.addWidget(self.setup_combo)
-
-        self.save_setup_button = QToolButton(self)
-        self.save_setup_button.setText("Save")
         self.save_setup_button.clicked.connect(self._on_save_setup)
-        setup_layout.addWidget(self.save_setup_button)
-
-        self.rename_setup_button = QToolButton(self)
-        self.rename_setup_button.setText("Rename")
         self.rename_setup_button.clicked.connect(self._on_rename_setup)
-        setup_layout.addWidget(self.rename_setup_button)
-
-        self.delete_setup_button = QToolButton(self)
-        self.delete_setup_button.setText("Delete")
         self.delete_setup_button.clicked.connect(self._on_delete_setup)
-        setup_layout.addWidget(self.delete_setup_button)
-
-        main_layout.addWidget(self.setup_selection_widget)
-        self.setup_selection_widget.setVisible(self.show_setup_selection)
-
-        # --- Help button ---
-        self.help_widget = QWidget(self)
-        help_layout = QHBoxLayout(self.help_widget)
-        help_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.help_button = QToolButton(self)
-        self.help_button.setText("Show Help")
-        self.help_button.setCheckable(True)
         self.help_button.toggled.connect(self._toggle_help)
-        help_layout.addWidget(self.help_button)
-
-        main_layout.addWidget(self.help_widget)
-        self.help_widget.setVisible(self.show_help)
-
-        self.help_text = QTextEdit(help_text, self)
-        self.help_text.setReadOnly(True)
+        self.read_tttr_button.clicked.connect(self._read_from_tttr_file)
+        self.micro_time_le.textChanged.connect(self._update_effective_resolution)
+        self.micro_binning_combo.currentTextChanged.connect(self._update_effective_resolution)
+        self.windows_form.itemDoubleClicked.connect(self._remove_window)
+        self.detectors_form.itemDoubleClicked.connect(self._remove_detector)
+        self.add_window_button.clicked.connect(self._add_window)
+        self.add_detector_button.clicked.connect(self._add_detector)
+        self.edit_json_button.clicked.connect(self._edit_json)
+        self.save_button.clicked.connect(self._on_save)
+        self.toolButton_calc_g_factor.clicked.connect(self._on_calc_g_factor)
+        
+        # Set help text
+        self.help_text.setText(help_text)
         self.help_text.setVisible(False)
-        main_layout.addWidget(self.help_text)
-        # The help_text visibility is controlled by _toggle_help, but we'll hide it if show_help is False
+        
+        # Set visibility based on parameters
+        # Use the helper method to hide/show widgets in layouts
+        self._hide_layout_widgets(self.setups_file_layout, self.show_setups_file)
+        self._hide_layout_widgets(self.setup_layout, self.show_setup_selection)
+        self._hide_layout_widgets(self.tttr_layout, self.show_tttr_reading)
+        self._hide_layout_widgets(self.gridLayout_3, self.show_tables)
+        self._hide_layout_widgets(self.gridLayout_2, self.show_tables)
+        self._hide_layout_widgets(self.controls, self.show_add_inputs)
+        
+        # For widgets that are directly accessible, we can use setVisible directly
         if not self.show_help:
             self.help_text.setVisible(False)
-
-        # --- TTTR Reading Routine ---
-        self.tttr_reading_widget = QWidget(self)
-        tttr_layout = QGridLayout(self.tttr_reading_widget)
-        tttr_layout.setContentsMargins(0, 0, 0, 0)
-        tttr_layout.addWidget(QLabel("TTTR Reading Routine:"), 0, 0, 1, 4)
-
-        # Row 1: label, filetype, read info button
-        tttr_layout.addWidget(QLabel("File Type:"), 1, 0)
-        self.file_type_combo = QComboBox(self)
-        # Add Auto and all supported TTTR file types
+        self.edit_json_button.setVisible(self.show_edit_json)
+        self.save_button.setVisible(self.show_save)
+        
+        # Initialize file type combo
         self.file_type_combo.addItem("Auto")
         self.file_type_combo.addItems(list(tttrlib.TTTR.get_supported_container_names()))
-        tttr_layout.addWidget(self.file_type_combo, 1, 1)
-
-        # Read from TTTR file button
-        self.read_tttr_button = QPushButton("Info form File", self)
-        self.read_tttr_button.clicked.connect(self._read_from_tttr_file)
-        tttr_layout.addWidget(self.read_tttr_button, 1, 2, 1, 2)
-
-        # Row 2: label, macro time res, label, micro time res
-        tttr_layout.addWidget(QLabel("Macro Time Res. (ns):"), 2, 0)
-        self.macro_time_le = QLineEdit(self)
-        self.macro_time_le.setText(str(_initial_tttr_reading["macro_time_resolution"]))
-        tttr_layout.addWidget(self.macro_time_le, 2, 1)
-
-        tttr_layout.addWidget(QLabel("Micro Time Res. (ps):"), 2, 2)
-        self.micro_time_le = QLineEdit(self)
-        self.micro_time_le.setText(str(_initial_tttr_reading["micro_time_resolution"]))
-        self.micro_time_le.textChanged.connect(self._update_effective_resolution)
-        tttr_layout.addWidget(self.micro_time_le, 2, 3)
-
-        # Row 3: label, micro bin, label, eff micro time
-        tttr_layout.addWidget(QLabel("Micro Time Binning:"), 3, 0)
-        self.micro_binning_combo = QComboBox(self)
-        self.micro_binning_combo.addItems(["1", "2", "4", "8", "16"])
-        self.micro_binning_combo.setCurrentText(str(_initial_tttr_reading["micro_time_binning"]))
-        self.micro_binning_combo.currentTextChanged.connect(self._update_effective_resolution)
-        tttr_layout.addWidget(self.micro_binning_combo, 3, 1)
-
-        tttr_layout.addWidget(QLabel("Eff. Micro Time (ps):"), 3, 2)
-        self.effective_micro_time_le = QLineEdit(self)
-        self.effective_micro_time_le.setReadOnly(True)
-        tttr_layout.addWidget(self.effective_micro_time_le, 3, 3)
         
-        # # Row 4: Excitation Period
-        # tttr_layout.addWidget(QLabel("Excitation Period (ns):"), 4, 0)
-        # self.excitation_period_spin = QDoubleSpinBox(self)
-        # self.excitation_period_spin.setDecimals(3)
-        # self.excitation_period_spin.setMaximum(1000.0)
-        # self.excitation_period_spin.setValue(_initial_tttr_reading["excitation_period"])
-        # tttr_layout.addWidget(self.excitation_period_spin, 4, 1)
-
-        main_layout.addWidget(self.tttr_reading_widget)
-        self.tttr_reading_widget.setVisible(self.show_tttr_reading)
-
-        # --- Tables ---
-        self.tables_widget = QWidget(self)
-        tables_layout = QHBoxLayout(self.tables_widget)
-        tables_layout.setContentsMargins(0, 0, 0, 0)
-        tables_layout.setSpacing(0)
-        main_layout.addWidget(self.tables_widget)
-        self.tables_widget.setVisible(self.show_tables)
-
-        # Windows table
-        self.windows_form = QTableWidget(0, 3, self)
+        # Initialize micro binning combo
+        self.micro_binning_combo.addItems(["1", "2", "4", "8", "16"])
+        
+        # Set initial values for TTTR reading
+        self.macro_time_le.setText(str(_initial_tttr_reading["macro_time_resolution"]))
+        self.micro_time_le.setText(str(_initial_tttr_reading["micro_time_resolution"]))
+        self.micro_binning_combo.setCurrentText(str(_initial_tttr_reading["micro_time_binning"]))
+        
+        # Set table headers
         self.windows_form.setHorizontalHeaderLabels(["Window Name", "Start", "End"])
-        self.windows_form.itemDoubleClicked.connect(self._remove_window)
-        tables_layout.addWidget(self._with_label("PIE-Windows", self.windows_form))
-
-        # Detectors table
-        self.detectors_form = QTableWidget(0, 6, self)
         self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges", "G-Factor", "l1", "l2"])
-        self.detectors_form.itemDoubleClicked.connect(self._remove_detector)
-        tables_layout.addWidget(self._with_label("Detectors", self.detectors_form))
-
-        # --- Add inputs + Save/Edit JSON ---
-        self.add_inputs_widget = QWidget(self)
-        controls = QGridLayout(self.add_inputs_widget)
-        controls.setContentsMargins(0, 0, 0, 0)
-        controls.setSpacing(4)
-
-        # Add window
-        self.new_window_le = QLineEdit(self)
-        self.new_window_le.setPlaceholderText("New PIE-Window name")
-        controls.addWidget(self.new_window_le, 0, 0)
-        btn = QPushButton("Add", self)
-        btn.clicked.connect(self._add_window)
-        controls.addWidget(btn, 0, 1)
-
-        # Add detector
-        self.new_detector_le = QLineEdit(self)
-        self.new_detector_le.setPlaceholderText("New Detector name")
-        controls.addWidget(self.new_detector_le, 1, 0)
-        btn = QPushButton("Add", self)
-        btn.clicked.connect(self._add_detector)
-        controls.addWidget(btn, 1, 1)
-
-        # JSON editor
-        self.edit_json_button = QPushButton("Edit JSON", self)
-        self.edit_json_button.clicked.connect(self._edit_json)
-        self.edit_json_button.setVisible(self.show_edit_json)
-        controls.addWidget(self.edit_json_button, 0, 2)
-
-        # Save button
-        self.save_button = QPushButton("Save", self)
-        self.save_button.clicked.connect(self._on_save)
-        self.save_button.setVisible(self.show_save)
-        controls.addWidget(self.save_button, 1, 2)
-
-        main_layout.addWidget(self.add_inputs_widget)
-        self.add_inputs_widget.setVisible(self.show_add_inputs)
 
         # Load available setups
         self._load_available_setups()
@@ -358,15 +251,33 @@ class DetectorWizardPage(QWizardPage):
         # Initialize the effective micro time resolution
         self._update_effective_resolution()
 
+    # The _with_label method is no longer needed as the UI file already includes labels for widgets
+    # This method is kept for backward compatibility but is not used in the new implementation
     def _with_label(self, text, widget):
-        """Helper to wrap a widget with a label above."""
+        """Helper to wrap a widget with a label above (legacy method, not used with UI file)."""
         v = QVBoxLayout()
         v.addWidget(QLabel(text))
         v.addWidget(widget)
-        container = QVBoxLayout()  # dummy widget
         w = QWidget()
         w.setLayout(v)
         return w
+        
+    def _hide_layout_widgets(self, layout, visible):
+        """Helper method to hide/show all widgets in a layout.
+        
+        This method is used instead of trying to access widget containers directly,
+        which can cause AttributeError if the widget names don't match between the
+        code and the UI file. It iterates through all widgets in the given layout
+        and sets their visibility based on the provided flag.
+        
+        Args:
+            layout: The layout containing widgets to hide/show
+            visible: Boolean indicating whether widgets should be visible
+        """
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item.widget():
+                item.widget().setVisible(visible)
 
     def _toggle_help(self, on):
         self.help_text.setVisible(on)
@@ -440,7 +351,7 @@ class DetectorWizardPage(QWizardPage):
             micro_time_res = float(self.micro_time_le.text())
             binning = int(self.micro_binning_combo.currentText())
             effective_res = micro_time_res * binning
-            self.effective_micro_time_le.setText(f"{effective_res:.2f}")
+            self.effective_micro_time_le.setText(f"{effective_res:.6f}")
         except (ValueError, TypeError):
             # Handle case where inputs are not valid numbers
             self.effective_micro_time_le.setText("N/A")
@@ -558,7 +469,17 @@ class DetectorWizardPage(QWizardPage):
                 tuple(map(int, seg.split('-')))
                 for seg in self.detectors_form.cellWidget(r,2).text().split(',')
             ]
-            g_factor = float(self.detectors_form.cellWidget(r,3).text())
+            
+            # Get the G-factor cell widget and its text
+            g_factor_widget = self.detectors_form.cellWidget(r,3)
+            g_factor_text = g_factor_widget.text() if g_factor_widget else "1.00"
+            
+            # Convert to float with fallback to default value
+            try:
+                g_factor = float(g_factor_text)
+            except ValueError:
+                g_factor = 1.00
+                
             l1 = float(self.detectors_form.cellWidget(r,4).text())
             l2 = float(self.detectors_form.cellWidget(r,5).text())
             dets[name] = {
@@ -720,6 +641,27 @@ class DetectorWizardPage(QWizardPage):
             float: The excitation period in nanoseconds.
         """
         return float(self.macro_time_le.text()) #self.excitation_period_spin.value()
+        
+    @property
+    def selected_detector(self):
+        """
+        Get the currently selected detector information.
+        
+        Returns:
+            dict: A dictionary containing information about the selected detector,
+                  or None if no detector is selected.
+        """
+        return self._selected_detector_info
+        
+    @selected_detector.setter
+    def selected_detector(self, info):
+        """
+        Set the currently selected detector information.
+        
+        Args:
+            info (dict): A dictionary containing information about the selected detector.
+        """
+        self._selected_detector_info = info
 
     def _load_available_setups(self):
         """Load available setups into the combobox."""
@@ -901,7 +843,7 @@ class DetectorWizardPage(QWizardPage):
 
             # Update the UI with the settings from the file
             self.macro_time_le.setText(str(header.macro_time_resolution * 1e9))  # Convert to ns
-            self.micro_time_le.setText(str(header.micro_time_resolution * 1e12))  # Convert to ps
+            self.micro_time_le.setText(str(header.micro_time_resolution * 1e9))  # Convert to ns
 
             # Update the effective micro time resolution
             self._update_effective_resolution()
@@ -920,6 +862,179 @@ class DetectorWizardPage(QWizardPage):
                 f"Failed to read TTTR file: {e}"
             )
 
+    def _on_calc_g_factor(self):
+        """
+        Handle the click of the Calculate G-Factor button.
+        
+        This method:
+        1. Opens a file dialog for the user to select a TTTR file
+        2. Identifies parallel and perpendicular channels from the detector settings
+        3. Creates a Jordi file from the TTTR file using these channels
+        4. Opens the g-factor calculator plugin with the Jordi file
+        5. Updates the G-Factor value in the detectors table when the plugin closes
+        """
+        # Get the currently selected detector settings
+        settings = self.get_settings()
+        detectors = settings["detectors"]
+        
+        # Check if we have at least two detectors (needed for parallel and perpendicular)
+        if len(detectors) < 2:
+            QMessageBox.warning(
+                self,
+                "Warning",
+                "At least two detectors are needed (parallel and perpendicular) to calculate G-Factor."
+            )
+            return
+        
+        # Open a file dialog to select a TTTR file
+        path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Open TTTR File for G-Factor Calculation", 
+            "", 
+            "All Files (*)"
+        )
+        if not path:
+            return
+            
+        try:
+            # Create a TTTR object
+            tttr = tttrlib.TTTR(path)
+            
+            # Get the micro time binning from the UI
+            micro_time_binning = int(self.micro_binning_combo.currentText())
+            
+            # Get the currently selected row in detectors_form
+            selected_rows = self.detectors_form.selectedIndexes()
+            if not selected_rows:
+                QMessageBox.warning(
+                    self,
+                    "Warning",
+                    "Please select a detector row first."
+                )
+                return
+                
+            # Get the row of the first selected cell
+            selected_row = selected_rows[0].row()
+            
+            # Get the detector name from the selected row
+            selected_detector = self.detectors_form.item(selected_row, 0).text().strip()
+            
+            # Get the routing channels from the selected row
+            channels_text = self.detectors_form.cellWidget(selected_row, 1).text()
+            all_channels = list(map(int, channels_text.split(',')))
+            
+            # Split channels into parallel and perpendicular (alternating pattern)
+            parallel_channels = all_channels[::2]  # Even indices (0, 2, 4, ...)
+            perpendicular_channels = all_channels[1::2]  # Odd indices (1, 3, 5, ...)
+            
+            # Store the selected detector information for later use
+            self.selected_detector = {
+                'row': selected_row,
+                'name': selected_detector,
+                'parallel_channels': parallel_channels,
+                'perpendicular_channels': perpendicular_channels
+            }
+            
+            # Extract microtime histograms for parallel and perpendicular channels
+            parallel_hist, _ = tttr.get_microtime_histogram(micro_time_binning, parallel_channels)
+            perpendicular_hist, _ = tttr.get_microtime_histogram(micro_time_binning, perpendicular_channels)
+            
+            # Find non-zero bins in both histograms
+            parallel_nonzero = np.where(parallel_hist > 0)[0]
+            perpendicular_nonzero = np.where(perpendicular_hist > 0)[0]
+            
+            # Find the common range to ensure both histograms are aligned
+            if len(parallel_nonzero) > 0 and len(perpendicular_nonzero) > 0:
+                start_idx = min(parallel_nonzero[0], perpendicular_nonzero[0])
+                end_idx = max(parallel_nonzero[-1], perpendicular_nonzero[-1]) + 1
+                
+                # Trim both histograms to the same range
+                parallel_hist_trimmed = parallel_hist[start_idx:end_idx]
+                perpendicular_hist_trimmed = perpendicular_hist[start_idx:end_idx]
+            else:
+                # If one or both histograms have no non-zero bins, use the original histograms
+                parallel_hist_trimmed = parallel_hist
+                perpendicular_hist_trimmed = perpendicular_hist
+            
+            # Create a temporary file for the Jordi data
+            fd, jordi_file = tempfile.mkstemp(suffix='.dat')
+            
+            # Concatenate the trimmed histograms and save to the Jordi file
+            jordi_data = np.concatenate([parallel_hist_trimmed, perpendicular_hist_trimmed])
+            np.savetxt(jordi_file, jordi_data)
+            
+            # Create and show the g-factor calculator plugin
+            g_factor_calculator = JordiGFactorCalculator()
+            g_factor_calculator.setWindowModality(Qt.ApplicationModal)  # Make it modal
+            
+            # Store the calculator instance and file path for later use
+            self.g_factor_calculator = g_factor_calculator
+            self.jordi_file = jordi_file
+            
+            # Connect to the closeEvent to get the g-factor value when the calculator is closed
+            original_close_event = g_factor_calculator.closeEvent
+            
+            def custom_close_event(event):
+                # Call the original closeEvent first
+                if original_close_event:
+                    original_close_event(event)
+                
+                # Check if g_factor was calculated
+                if hasattr(g_factor_calculator, 'g_factor') and g_factor_calculator.g_factor is not None:
+                    # Get the selected detector information
+                    selected_detector_info = self.selected_detector
+                    if selected_detector_info:
+                        # Update the G-Factor value in the selected row of the detectors table
+                        row = selected_detector_info['row']
+                        g_factor_value = f"{g_factor_calculator.g_factor:.3f}"
+                        
+                        # Create a new QLineEdit widget with the G-factor value and replace the existing one
+                        # This ensures that the G-factor value is set correctly for all rows, including the first row
+                        new_cell_widget = QLineEdit(g_factor_value)
+                        self.detectors_form.setCellWidget(row, 3, new_cell_widget)
+                        
+                        # Force the table to update
+                        self.detectors_form.update()
+                        
+                        # Emit the detectorsChanged signal to notify other components
+                        self.detectorsChanged.emit()
+                        
+                        # Show a success message
+                        QMessageBox.information(
+                            self,
+                            "Success",
+                            f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
+                            f"Updated G-Factor for detector: {selected_detector_info['name']}"
+                        )
+            
+            # Override the closeEvent method
+            g_factor_calculator.closeEvent = custom_close_event
+            
+            # Show the calculator
+            g_factor_calculator.show()
+            
+            # Load the Jordi file using the calculator's load_jordi_file method
+            try:
+                # Set the effective micro time resolution for proper time axis scaling
+                effective_dt = self.effective_micro_time_resolution
+                
+                # Load the Jordi file
+                g_factor_calculator.load_jordi_file(jordi_file)
+                
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to load Jordi file: {str(e)}"
+                )
+            
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to calculate G-Factor: {str(e)}"
+            )
+    
     def load_data_into_tables(self, data):
         """
         Legacy alias for external callers.
