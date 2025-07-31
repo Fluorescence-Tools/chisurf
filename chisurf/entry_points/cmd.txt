@@ -3,3 +3,5 @@ csc_tttr_correlate chisurf.cmd_tools.tttr_correlate:main
 csc_fcs_convert chisurf.cmd_tools.fcs_convert:main
 csc_mrc2bvox chisurf.cmd_tools.mrc2bvox:main
 csc_protein_mc_fret chisurf.cmd_tools.protein_mc_fret:main
+csc_sm_image_mle chisurf.plugins.sm_image_mle.sm_image_mle.__main__:main
+csc_count_rate chisurf.plugins.count_rate_analysis.cli:cli
