@@ -4,8 +4,10 @@ import os.path
 import pathlib
 import typing
 import numpy as np
+import shutil
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
+from chisurf import logging
 
 import chisurf.gui
 import chisurf.gui.widgets
@@ -18,6 +20,7 @@ import chisurf.data
 import chisurf.experiments
 import chisurf.curve
 import chisurf.fitting
+import chisurf.settings
 
 import chisurf.macros
 
@@ -50,6 +53,57 @@ class ChisurfWizard(QtWidgets.QWizard):
         'irf_vv_bg_norm': None,
         'irf_vh_bg_norm': None
     }
+    
+    @staticmethod
+    def get_user_plugin_settings_path() -> pathlib.Path:
+        """
+        Get the path to the user settings directory for the tr_anisotropy plugin.
+        Creates the directory if it doesn't exist.
+        
+        Returns:
+            pathlib.Path: Path to the user settings directory for the plugin
+        """
+        # Get the user settings path
+        user_plugin_path = chisurf.settings.chisurf_settings_path / "plugins" / "tr_anisotropy"
+        # Create the directory if it doesn't exist
+        user_plugin_path.mkdir(parents=True, exist_ok=True)
+        return user_plugin_path
+    
+    @classmethod
+    def get_spk_json_path(cls) -> pathlib.Path:
+        """
+        Get the path to the wizard.spk.json file in the user settings directory.
+        If the file doesn't exist, copy it from the plugin directory.
+        
+        Returns:
+            pathlib.Path: Path to the wizard.spk.json file
+        """
+        # Get the user plugin settings path
+        user_plugin_path = cls.get_user_plugin_settings_path()
+        # Define the path to the wizard.spk.json file
+        spk_json_path = user_plugin_path / "wizard.spk.json"
+        
+        # If the file doesn't exist in the user settings directory, copy it from the plugin directory
+        if not spk_json_path.exists():
+            # Get the path to the plugin directory
+            plugin_path = pathlib.Path(__file__).parent
+            # Define the path to the original wizard.spk.json file
+            original_spk_json_path = plugin_path / "wizard.spk.json"
+            
+            # Check if the original file exists
+            if original_spk_json_path.exists():
+                # Copy the file to the user settings directory
+                shutil.copyfile(original_spk_json_path, spk_json_path)
+            else:
+                # Create a default file if the original doesn't exist
+                default_content = {
+                    "lifetime_spectrum": [[0.3, 1.8], [0.7, 4.1]],
+                    "rotation_spectrum": [[0.28, 0.15], [0.1, 10.0]]
+                }
+                with open(spk_json_path, 'w') as f:
+                    json.dump(default_content, f)
+        
+        return spk_json_path
 
     def readTableValues(self, table):
         rows = table.rowCount()
@@ -104,34 +158,71 @@ class ChisurfWizard(QtWidgets.QWizard):
         return True
 
     def data_files_setup(self):
-        pairs = [
-            ('irf', 'vv', self.lineEdit.text()),
-            ('irf', 'vh', self.lineEdit_3.text()),
-            ('data', 'vv', self.lineEdit_2.text()),
-            ('data', 'vh', self.lineEdit_4.text()),
-        ]
+        # Check if we're using Jordi format
+        is_jordi = chisurf.cs.current_setup.is_jordi
+        
+        if is_jordi:
+            # For Jordi format, we only need one file for IRF and one for data
+            pairs = [
+                ('irf', 'vv/vh', self.lineEdit.text()),  # IRF file contains both VV and VH
+                ('data', 'vv/vh', self.lineEdit_2.text()),  # Data file contains both VV and VH
+            ]
+        else:
+            # For regular format, we need separate files for VV and VH
+            pairs = [
+                ('irf', 'vv', self.lineEdit.text()),
+                ('irf', 'vh', self.lineEdit_3.text()),
+                ('data', 'vv', self.lineEdit_2.text()),
+                ('data', 'vh', self.lineEdit_4.text()),
+            ]
+            
         for _, _, f in pairs:
             if not pathlib.Path(f).is_file():
                 return False
         return True
 
     def load_data(self):
-        pairs = [
-            ('irf', 'vv', self.lineEdit.text()),
-            ('irf', 'vh', self.lineEdit_3.text()),
-            ('data', 'vv', self.lineEdit_2.text()),
-            ('data', 'vh', self.lineEdit_4.text()),
-        ]
-        for v, suffix, filename_str in pairs:
-            ts = v + "_" + suffix
-            chisurf.run(f"cs.current_setup.polarization = '{suffix}'")
-            name = os.path.splitext(filename_str)[0] + suffix
-            expriment_reader = chisurf.cs.current_experiment_reader
-            dataset = expriment_reader.get_data(filename=f"{filename_str}", name=f"{name}")
-            dataset = dataset[0]
-            n, _ = os.path.splitext(dataset.name)
-            dataset.name = n + "_" + suffix
-            self.data[ts] = dataset
+        # Check if we're using Jordi format
+        is_jordi = chisurf.cs.current_setup.is_jordi
+        
+        if is_jordi:
+            # For Jordi format, we need to load each file twice with different polarization parameters
+            jordi_pairs = [
+                ('irf', 'vv', self.lineEdit.text()),
+                ('irf', 'vh', self.lineEdit.text()),
+                ('data', 'vv', self.lineEdit_2.text()),
+                ('data', 'vh', self.lineEdit_2.text()),
+            ]
+            
+            for v, suffix, filename_str in jordi_pairs:
+                ts = v + "_" + suffix
+                chisurf.run(f"cs.current_setup.polarization = '{suffix}'")
+                name = os.path.splitext(filename_str)[0] + suffix
+                expriment_reader = chisurf.cs.current_experiment_reader
+                dataset = expriment_reader.get_data(filename=f"{filename_str}", name=f"{name}")
+                dataset = dataset[0]
+                n, _ = os.path.splitext(dataset.name)
+                dataset.name = n + "_" + suffix
+                self.data[ts] = dataset
+        else:
+            # For regular format, we load each file separately
+            pairs = [
+                ('irf', 'vv', self.lineEdit.text()),
+                ('irf', 'vh', self.lineEdit_3.text()),
+                ('data', 'vv', self.lineEdit_2.text()),
+                ('data', 'vh', self.lineEdit_4.text()),
+            ]
+            
+            for v, suffix, filename_str in pairs:
+                ts = v + "_" + suffix
+                chisurf.run(f"cs.current_setup.polarization = '{suffix}'")
+                name = os.path.splitext(filename_str)[0] + suffix
+                expriment_reader = chisurf.cs.current_experiment_reader
+                dataset = expriment_reader.get_data(filename=f"{filename_str}", name=f"{name}")
+                dataset = dataset[0]
+                n, _ = os.path.splitext(dataset.name)
+                dataset.name = n + "_" + suffix
+                self.data[ts] = dataset
 
     def update_plot(self):
         for pk in self.plots:
@@ -178,10 +269,29 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.irf_bg_range_plot.setLogMode(x=False, y=True)
         self.verticalLayout_3.addWidget(self.irf_bg_range_plot)
 
-        for i, pk in enumerate(self.plots):
-            color = colors[i % len(colors)]
-            plot_item = self.irf_bg_range_plot.getPlotItem()
-            self.plots[pk] = plot_item.plot(x=[0.0], y=[0.0], pen=pg.mkPen(color, width=2))
+        plot_item = self.irf_bg_range_plot.getPlotItem()
+        
+        # Add legend to the plot
+        plot_item.addLegend()
+        
+        # Create plots with specific styling for each type
+        for pk in self.plots:
+            if pk.endswith('_bg_norm'):
+                # Background-corrected IRF should pop more - use brighter colors and thicker lines
+                if pk.startswith('irf_vv'):
+                    self.plots[pk] = plot_item.plot(x=[0.0], y=[0.0], pen=pg.mkPen('b', width=3), name="VV (corrected)")
+                else:
+                    self.plots[pk] = plot_item.plot(x=[0.0], y=[0.0], pen=pg.mkPen('r', width=3), name="VH (corrected)")
+            else:
+                # Non-corrected IRF with 60% alpha
+                if pk.startswith('irf_vv'):
+                    color = pg.mkColor('b')
+                    color.setAlphaF(0.4)
+                    self.plots[pk] = plot_item.plot(x=[0.0], y=[0.0], pen=pg.mkPen(color, width=2), name="VV (raw)")
+                else:
+                    color = pg.mkColor('r')
+                    color.setAlphaF(0.4)
+                    self.plots[pk] = plot_item.plot(x=[0.0], y=[0.0], pen=pg.mkPen(color, width=2), name="VH (raw)")
 
         self.region.setRegion((0, 100))
         self.irf_bg_range_plot.addItem(self.region)
@@ -195,13 +305,44 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         self.region.sigRegionChangeFinished.connect(onRegionUpdate)
 
+    def set_initial_region(self):
+        """
+        Set the initial background region to 30%-80% of the data range.
+        This is called after the data is loaded and plotted.
+        """
+        # Check if we have data
+        if 'irf_vv' in self.data and self.data['irf_vv'] is not None:
+            # Get the data range (length of x-axis)
+            data_range = len(self.data['irf_vv'].x)
+            
+            # Calculate 30% and 80% of the range
+            lower_bound = int(data_range * 0.3)
+            upper_bound = int(data_range * 0.8)
+            
+            # Set the region
+            self.region.setRegion((lower_bound, upper_bound))
+            
+            # Update the spinbox values
+            self.spinBox.setValue(lower_bound)
+            self.spinBox_2.setValue(upper_bound)
+            
+            # Update the IRFs with the new region
+            self.update_irfs()
+            
+            logging.info(f"Set initial background region to {lower_bound}-{upper_bound} (30%-80% of data range {data_range})")
+    
     def page_actions(self):
+        # Auto-save when changing pages if we're on the components page
+        if self.currentPage().title() == "Lifetime and rotation components":
+            # Only auto-save if we have valid data
+            if self.liferot_setup():
+                self.onSaveLifetimes(None)
+                
         if self.currentPage().title() == "Normalize instrument response functions":
             self.load_data()
             self.update_plot()
-        elif self.currentPage().title() =="Add lifetime & rotational components":
-            fn = pathlib.Path(__file__).parent / 'wizard.spk.json'
-            self.onLoadLifetimes(None, filename=fn)
+            # Set the initial region after the data is loaded and plotted
+            self.set_initial_region()
 
     def add_rotation(self):
         lt = float(self.doubleSpinBox_4.value())
@@ -372,10 +513,15 @@ class ChisurfWizard(QtWidgets.QWizard):
 
     def onLoadLifetimes(self, event=None, filename: pathlib.Path = None):
         if filename is None:
+            # Use the user plugin settings path as the working path
+            user_plugin_path = self.get_user_plugin_settings_path()
+            # Ensure the wizard.spk.json file exists in the user settings directory
+            default_file = self.get_spk_json_path()
+            
             filename = chisurf.gui.widgets.get_filename(
                 'Lifetime/anisotropy spectrum',
                 file_type='Lifetime/anisotropy spectrum (*.spk.json)',
-                working_path=pathlib.Path(__file__).parent
+                working_path=user_plugin_path
             )
         with open(filename, 'r') as fp:
             self.lineEdit_5.setText(filename.as_posix())
@@ -385,12 +531,15 @@ class ChisurfWizard(QtWidgets.QWizard):
             self.wizardPageComponents.completeChanged.emit()
 
     def onSaveLifetimes(self, event):
-        print("onSaveLifetimes")
-        filename = chisurf.gui.widgets.save_file(
-                'Lifetime/anisotropy spectrum',
-                file_type='Lifetime/anisotropy spectrum (*.spk.json)',
-                working_path=pathlib.Path(__file__).parent
-        )
+        logging.info("onSaveLifetimes")
+        # Get the current file path from the lineEdit
+        current_file = self.lineEdit_5.text()
+        
+        # If no current file is set, use the default path
+        if not current_file:
+            filename = self.get_spk_json_path()
+        else:
+            filename = pathlib.Path(current_file)
 
         d = {
             'lifetime_spectrum': [],
@@ -411,6 +560,18 @@ class ChisurfWizard(QtWidgets.QWizard):
         if pathlib.Path(filename).parent.is_dir():
             with open(filename, 'w+') as fp:
                 json.dump(d, fp)
+                
+            # If the file was saved to a different location than the default,
+            # copy it to the default location as well
+            default_path = self.get_spk_json_path()
+            if pathlib.Path(filename) != default_path:
+                # Make a backup of the default file if it exists
+                if default_path.exists():
+                    backup_path = default_path.with_suffix('.backup.json')
+                    shutil.copyfile(default_path, backup_path)
+                # Copy the new file to the default location
+                shutil.copyfile(filename, default_path)
+                
         self.activateWindow()
         self.raise_()
 
@@ -421,8 +582,50 @@ class ChisurfWizard(QtWidgets.QWizard):
             return False
         return True
 
+    def update_ui_for_jordi(self):
+        """Update the UI based on the is_jordi flag."""
+        # Check if we're using Jordi format
+        is_jordi = chisurf.cs.current_setup.is_jordi
+        
+        if is_jordi:
+            # For Jordi format, disable and hide the VH file input fields
+            # and update the labels to indicate that one file contains both VV and VH
+            self.lineEdit_3.setEnabled(False)
+            self.lineEdit_4.setEnabled(False)
+            self.lineEdit_3.setVisible(False)
+            self.lineEdit_4.setVisible(False)
+            
+            # Also hide the labels for these fields
+            for label in self.findChildren(QtWidgets.QLabel):
+                if label.text() == "IRF VH:":
+                    label.setVisible(False)
+                elif label.text() == "Data VH:":
+                    label.setVisible(False)
+                elif label.text() == "IRF VV:":
+                    label.setText("IRF (VV+VH):")
+                elif label.text() == "Data VV:":
+                    label.setText("Data (VV+VH):")
+        else:
+            # For regular format, ensure all fields are enabled and visible
+            self.lineEdit_3.setEnabled(True)
+            self.lineEdit_4.setEnabled(True)
+            self.lineEdit_3.setVisible(True)
+            self.lineEdit_4.setVisible(True)
+            
+            # Restore the original labels
+            for label in self.findChildren(QtWidgets.QLabel):
+                if label.text() == "IRF (VV+VH):":
+                    label.setText("IRF VV:")
+                elif label.text() == "Data (VV+VH):":
+                    label.setText("Data VV:")
+                elif label.text() == "IRF VH:":
+                    label.setVisible(True)
+                elif label.text() == "Data VH:":
+                    label.setVisible(True)
+    
     def connect_actions(self):
         self.button(QtWidgets.QWizard.NextButton).clicked.connect(self.page_actions)
+        self.button(QtWidgets.QWizard.BackButton).clicked.connect(self.page_actions)
         self.actionAdd_Rotation.triggered.connect(self.add_rotation)
         self.actionAdd_Lifetime.triggered.connect(self.add_lifetime)
         self.actionRemove_Lifetime.triggered.connect(self.remove_component)
@@ -473,7 +676,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.global_fit: chisurf.fitting.fit.Fit = None
 
         fn = chisurf.settings.chisurf_settings_path / "anisotropy_corrections.json"
-        print("anisotropy_corrections:", fn)
+        logging.info(f"anisotropy_corrections: {fn}")
         self.conf_edit = chisurf.gui.tools.parameter_editor.ParameterEditor(
             target=self.correction_factors,
             json_file=fn
@@ -483,6 +686,33 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         self.init_widgets()
         self.connect_actions()
+        
+        # Update the UI based on the is_jordi flag
+        self.update_ui_for_jordi()
+        
+        # Copy default wizard.spk.json to user folder and load from there
+        try:
+            # Get the path to the plugin directory
+            plugin_path = pathlib.Path(__file__).parent
+            # Define the path to the original wizard.spk.json file
+            original_spk_json_path = plugin_path / "wizard.spk.json"
+            
+            # Get the user plugin settings path
+            user_plugin_path = self.get_user_plugin_settings_path()
+            # Define the path to the user's wizard.spk.json file
+            user_spk_json_path = user_plugin_path / "wizard.spk.json"
+            
+            # Copy the file to the user settings directory only if it doesn't already exist
+            if original_spk_json_path.exists() and not user_spk_json_path.exists():
+                shutil.copyfile(original_spk_json_path, user_spk_json_path)
+                logging.info(f"Copied default settings to {user_spk_json_path}")
+            
+            # Load the settings from the user's file
+            if user_spk_json_path.exists():
+                self.onLoadLifetimes(filename=user_spk_json_path)
+                logging.info(f"Loaded default settings from {user_spk_json_path}")
+        except Exception as e:
+            logging.info(f"Error loading default settings: {e}")
 
 
 if __name__ == "plugin":
