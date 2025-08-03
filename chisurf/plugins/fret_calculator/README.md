@@ -11,8 +11,13 @@ The calculator enables conversion and calculation of:
 - Donor lifetime in the presence of acceptor (τDA)
 - Donor lifetime in the absence of acceptor (τD)
 - FRET rate constant (kFRET)
+- Distance distribution width (sigma)
 
 The calculator automatically updates all values when any parameter is changed, making it easy to explore the relationships between different FRET parameters.
+
+### Distance Distributions
+
+The calculator can handle Gaussian distance distributions characterized by a mean distance (R) and a width (sigma). When sigma is greater than 0, the calculator computes average FRET parameters based on the distance distribution. When sigma is set to 0 or negative, the calculator uses the traditional single-distance mode.
 
 ## Background
 
@@ -34,16 +39,24 @@ Where R0 is the Förster radius, the distance at which the FRET efficiency is 50
 
 1. Launch the plugin from the ChiSurf menu: Tools > FRET Calculator
 2. Enter known values in the appropriate fields
-3. The calculator will automatically compute and update all related parameters
-4. Explore how changing one parameter affects the others
+3. To use distance distributions:
+   - Set a value greater than 0 for the sigma parameter to specify the width of the Gaussian distribution
+   - The calculator will compute average FRET parameters based on the distribution
+   - Set sigma to 0 or negative to use the traditional single-distance mode
+4. The calculator will automatically compute and update all related parameters
+5. Explore how changing one parameter affects the others
 
 ## Applications
 
 - Planning FRET experiments by selecting appropriate donor-acceptor pairs
 - Interpreting FRET data to determine molecular distances
+- Modeling realistic FRET behavior with distance distributions to account for:
+  - Conformational flexibility of biomolecules
+  - Linker dynamics between fluorophores and biomolecules
+  - Heterogeneity in sample populations
 - Educational tool for understanding FRET relationships
 - Converting between different FRET-related parameters
-- Estimating expected FRET efficiencies for known distances
+- Estimating expected FRET efficiencies for known distances or distance distributions
 
 ## License
 
