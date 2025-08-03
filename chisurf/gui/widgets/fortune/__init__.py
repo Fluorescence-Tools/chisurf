@@ -39,14 +39,20 @@ def get_fortune(
                 if attempt > maximum_number_of_attempts:
                     return ""
                 continue
-        with open(
-                file=os.path.join(
-                    fortunepath,
-                    fortune_file
-                ),
-                mode='rU'
-        ) as ffh:
-            ffh.seek(start)
-            fortunecookie = ffh.read(length)
+        try:
+            with open(
+                    file=os.path.join(
+                        fortunepath,
+                        fortune_file
+                    ),
+                    mode='rU',
+                    encoding='utf-8',  # Explicitly use UTF-8 encoding
+                    errors='replace'   # Replace invalid characters
+            ) as ffh:
+                ffh.seek(start)
+                fortunecookie = ffh.read(length)
+        except Exception as e:
+            # If there's any error reading the fortune, return an empty string
+            return ""
         return fortunecookie
 
