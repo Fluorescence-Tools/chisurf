@@ -1,6 +1,11 @@
-# Time-Resolved Anisotropy Plugin
+# TR Anisotropy Plugin
 
 This plugin provides tools for analyzing time-resolved fluorescence anisotropy data.
+
+## Implementation Notes
+
+- Uses ChiSurf's logging system instead of print statements for better log management
+- Logs important events such as loading/saving settings and error conditions
 
 ## Features
 
@@ -8,63 +13,37 @@ This plugin provides tools for analyzing time-resolved fluorescence anisotropy d
 - Set up and visualize rotation spectra and lifetime components
 - Create and manage anisotropy fits with multiple rotation correlation times
 - Analyze rotational diffusion of fluorophores in different environments
+- Intelligent background region selection that automatically sets the initial region to 30%-80% of the data range, optimized for typical IRF profiles
+- Enhanced visualization with prominent background-corrected IRF (thicker lines) and semi-transparent (60% alpha) non-corrected IRF for better visual distinction
+- Interactive legend that clearly identifies VV/VH and raw/corrected IRF curves
 
-## Overview
+## User Settings
 
-Time-resolved anisotropy is a powerful technique for studying the rotational motion of fluorophores, providing insights 
-into molecular size, shape, flexibility, and interactions. This plugin implements a wizard-based interface that 
-guides users through the process of setting up and analyzing anisotropy decay data, from data loading to model fitting 
-and result visualization.
+The plugin stores user-specific settings in the ChiSurf user settings directory:
 
-The plugin supports multiple rotation correlation times and lifetime components, making it suitable for analyzing 
-complex systems with heterogeneous rotational dynamics or multiple fluorophore populations.
+```
+<user_settings_path>/plugins/tr_anisotropy/
+```
 
-## Requirements
+### wizard.spk.json
 
-- Python packages:
-  - PyQt5
-  - numpy
-  - scipy
-  - matplotlib (for plotting)
+This file contains default lifetime and rotation spectrum settings for the anisotropy wizard. When the wizard is first opened, it:
 
-## Usage
+1. Checks if wizard.spk.json exists in the user settings directory
+2. If it doesn't exist, copies the default file from the plugin directory
+3. Loads the settings from the file in the user settings directory
+4. This ensures that user-specific settings are preserved between sessions
 
-1. Launch the plugin from the ChiSurf menu: Tools > Anisotropy-Wizard
-2. Load parallel and perpendicular fluorescence decay data
-3. Configure analysis parameters:
-   - Set up lifetime components
-   - Define rotation correlation times
-   - Adjust fitting parameters
-4. Perform anisotropy decay fitting
-5. Visualize and interpret results
-6. Export analysis for further use
+When saving settings:
+1. The Save button saves directly to the current file without asking for a filename
+2. Auto-save is performed when moving between wizard pages
+3. If the file was previously saved to a different location than the default, it is also copied to the default location
+4. A backup of the previous default file is created with the `.backup.json` extension
 
-## Applications
+## Jordi Format Support
 
-- Determining the size and shape of macromolecules
-- Studying protein-protein interactions
-- Analyzing membrane fluidity and microviscosity
-- Investigating conformational changes in biomolecules
-- Characterizing molecular dynamics in complex environments
-- Monitoring binding events through changes in rotational diffusion
+The plugin supports the Jordi format, which contains both VV and VH data in a single file. When `cs.current_setup.is_jordi = True`:
 
-## Theory
-
-Fluorescence anisotropy decay is described by the equation:
-r(t) = r₀ × Σ βᵢ × exp(-t/φᵢ)
-
-Where:
-- r(t) is the anisotropy at time t
-- r₀ is the fundamental anisotropy
-- βᵢ are the pre-exponential factors
-- φᵢ are the rotational correlation times
-
-The plugin implements this model with support for multiple correlation times to account for complex rotational dynamics.
-
-## License
-
-This plugin is part of the ChiSurf package and is distributed under the same license.
-
-## Author
-
-This plugin was created as part of the ChiSurf project.
+1. Only one file is required for IRF and one for data
+2. The UI is updated to reflect this
+3. The files are loaded with the appropriate polarization parameters
