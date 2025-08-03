@@ -30,7 +30,7 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <item row="6" column="2">
+   <item row="7" column="2">
     <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
      <property name="enabled">
       <bool>true</bool>
@@ -52,7 +52,7 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0">
+   <item row="7" column="0">
     <widget class="QLabel" name="label_6">
      <property name="text">
       <string>kFRET[1/ns]</string>
@@ -132,7 +132,7 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="2">
+   <item row="6" column="2">
     <widget class="QDoubleSpinBox" name="doubleSpinBox_4">
      <property name="frame">
       <bool>true</bool>
@@ -154,7 +154,26 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
+   <item row="5" column="2">
+    <widget class="QDoubleSpinBox" name="doubleSpinBox_6">
+     <property name="decimals">
+      <number>1</number>
+     </property>
+     <property name="minimum">
+      <double>0.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>100.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.500000000000000</double>
+     </property>
+     <property name="value">
+      <double>0.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
     <widget class="QLabel" name="label_5">
      <property name="text">
       <string>Efficency</string>
@@ -165,6 +184,13 @@
     <widget class="QLabel" name="label_4">
      <property name="text">
       <string>Distance (DA) [A]</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Sigma [A]</string>
      </property>
     </widget>
    </item>
@@ -208,7 +234,7 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="0" colspan="3">
+   <item row="8" column="0" colspan="3">
     <widget class="QPushButton" name="pushButton">
      <property name="text">
       <string>close</string>
