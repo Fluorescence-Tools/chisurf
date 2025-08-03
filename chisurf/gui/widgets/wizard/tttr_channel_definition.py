@@ -27,6 +27,7 @@ from PyQt5.QtCore import QFile
 from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
 import tttrlib
+from chisurf.fio.fluorescence.bhfiles import BeckerHicklSetReader
 from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator, DataCurve
 
 # Path to the central detector setups file
@@ -67,8 +68,35 @@ def save_detector_setups(setups_data, file_path=None):
     """
     try:
         save_path = file_path or DETECTOR_SETUPS_FILE
+        
+        # Check if the file exists and is not empty
+        try:
+            if pathlib.Path(save_path).exists() and pathlib.Path(save_path).stat().st_size > 0:
+                # Load existing data if the file exists and is not empty
+                existing_data = load_detector_setups(save_path)
+                
+                # Update the existing data with the new data
+                # For setups, we need to update the nested dictionary
+                if "setups" in setups_data and "setups" in existing_data:
+                    existing_data["setups"].update(setups_data["setups"])
+                    # Use the updated existing data
+                    updated_data = existing_data
+                else:
+                    # If the structure is different, use the new data
+                    updated_data = setups_data
+            else:
+                # If file doesn't exist or is empty, use the new data directly
+                updated_data = setups_data
+        except Exception:
+            # If there's any error reading the file, use the new data directly
+            updated_data = setups_data
+            
+        # Create directory if it doesn't exist
+        pathlib.Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+            
+        # Write the updated data back to the file
         with open(save_path, 'w') as f:
-            json.dump(setups_data, f, indent=4)
+            json.dump(updated_data, f, indent=4)
         return True
     except Exception as e:
         print(f"Error saving detector setups: {e}")
@@ -531,7 +559,19 @@ class DetectorWizardPage(QWizardPage):
             if self.current_setup_name:
                 setups = load_detector_setups(self.current_setups_file)
                 setups.setdefault("setups", {})
-                setups["setups"][self.current_setup_name] = data
+                
+                # If the setup already exists, preserve any additional fields
+                if self.current_setup_name in setups["setups"]:
+                    existing_data = setups["setups"][self.current_setup_name]
+                    # Update only the fields we know about, preserving any other fields
+                    for key in data:
+                        existing_data[key] = data[key]
+                    # Use the updated existing data
+                    setups["setups"][self.current_setup_name] = existing_data
+                else:
+                    # New setup, just use the data as is
+                    setups["setups"][self.current_setup_name] = data
+                    
                 save_detector_setups(setups, self.current_setups_file)
 
             QMessageBox.information(self, "Success", f"Settings saved to {path}")
@@ -722,7 +762,19 @@ class DetectorWizardPage(QWizardPage):
         # Save to the current setups file
         setups = load_detector_setups(self.current_setups_file)
         setups.setdefault("setups", {})
-        setups["setups"][setup_name] = data
+        
+        # If the setup already exists, preserve any additional fields that aren't in the current settings
+        if setup_name in setups["setups"]:
+            existing_data = setups["setups"][setup_name]
+            # Update only the fields we know about, preserving any other fields
+            for key in data:
+                existing_data[key] = data[key]
+            # Use the updated existing data
+            setups["setups"][setup_name] = existing_data
+        else:
+            # New setup, just use the data as is
+            setups["setups"][setup_name] = data
+            
         setups["last_used"] = setup_name
 
         if save_detector_setups(setups, self.current_setups_file):
@@ -824,42 +876,90 @@ class DetectorWizardPage(QWizardPage):
                 QMessageBox.critical(self, "Error", f"Failed to rename setup from '{old_name}' to '{new_name}'.")
 
     def _read_from_tttr_file(self):
-        """Open a TTTR file and read its settings."""
+        """
+        Open a TTTR or SPC file and read its settings.
+        
+        Behavior depends on file type:
+        - .set files: Read only microtime calibration
+        - .spc files: Read only macrotime calibration
+        - Other TTTR files: Read both calibrations
+        """
         path, _ = QFileDialog.getOpenFileName(
             self, 
-            "Open TTTR File", 
+            "Open TTTR or SPC File", 
             "", 
-            "All Files (*)"
+            "All Files (*);;TTTR Files (*.ptu *.ht3 *.pt3);;SPC Files (*.spc *.set)"
         )
         if not path:
             return
 
         try:
-            # Create a TTTR object
-            tttr = tttrlib.TTTR(path)
-
-            # Get the header information
-            header = tttr.get_header()
-
-            # Update the UI with the settings from the file
-            self.macro_time_le.setText(str(header.macro_time_resolution * 1e9))  # Convert to ns
-            self.micro_time_le.setText(str(header.micro_time_resolution * 1e9))  # Convert to ns
-
-            # Update the effective micro time resolution
-            self._update_effective_resolution()
-
-            # Show a success message
-            QMessageBox.information(
-                self, 
-                "Success", 
-                f"Successfully read settings from {path}"
-            )
+            # Handle different file types
+            if path.lower().endswith('.set'):
+                # For .set files: Read only microtime calibration
+                reader = BeckerHicklSetReader(path)
+                
+                # Get only the microtime information
+                micro_time_res = reader.micro_time_resolution
+                
+                # Update only the microtime in the UI
+                if micro_time_res is not None:
+                    self.micro_time_le.setText(str(micro_time_res))  # Convert from ns to ps
+                
+                # Update the effective micro time resolution
+                self._update_effective_resolution()
+                
+                # Show a success message
+                QMessageBox.information(
+                    self, 
+                    "Success", 
+                    f"Successfully read microtime calibration from SET file: {path}"
+                )
+            elif path.lower().endswith('.spc'):
+                # For .spc files: Read only macrotime calibration
+                tttr = tttrlib.TTTR(path)
+                
+                # Get the header information
+                header = tttr.get_header()
+                
+                # Update only the macrotime in the UI
+                self.macro_time_le.setText(str(header.macro_time_resolution * 1e9))  # Convert to ns
+                
+                # Update the effective micro time resolution
+                self._update_effective_resolution()
+                
+                # Show a success message
+                QMessageBox.information(
+                    self, 
+                    "Success", 
+                    f"Successfully read macrotime calibration from SPC file: {path}"
+                )
+            else:
+                # For other TTTR files: Read both calibrations
+                tttr = tttrlib.TTTR(path)
+                
+                # Get the header information
+                header = tttr.get_header()
+                
+                # Update both calibrations in the UI
+                self.macro_time_le.setText(str(header.macro_time_resolution * 1e9))  # Convert to ns
+                self.micro_time_le.setText(str(header.micro_time_resolution * 1e9))  # Convert to ns
+                
+                # Update the effective micro time resolution
+                self._update_effective_resolution()
+                
+                # Show a success message
+                QMessageBox.information(
+                    self, 
+                    "Success", 
+                    f"Successfully read calibrations from TTTR file: {path}"
+                )
 
         except Exception as e:
             QMessageBox.critical(
                 self, 
                 "Error", 
-                f"Failed to read TTTR file: {e}"
+                f"Failed to read file: {e}"
             )
 
     def _on_calc_g_factor(self):
@@ -983,29 +1083,64 @@ class DetectorWizardPage(QWizardPage):
                 if hasattr(g_factor_calculator, 'g_factor') and g_factor_calculator.g_factor is not None:
                     # Get the selected detector information
                     selected_detector_info = self.selected_detector
+                    print(f"Selected detector info: {selected_detector_info}")
                     if selected_detector_info:
                         # Update the G-Factor value in the selected row of the detectors table
                         row = selected_detector_info['row']
                         g_factor_value = f"{g_factor_calculator.g_factor:.3f}"
+                        print(f"Updating detectors table row {row} with g-factor value {g_factor_value}")
                         
-                        # Create a new QLineEdit widget with the G-factor value and replace the existing one
-                        # This ensures that the G-factor value is set correctly for all rows, including the first row
-                        new_cell_widget = QLineEdit(g_factor_value)
-                        self.detectors_form.setCellWidget(row, 3, new_cell_widget)
-                        
-                        # Force the table to update
-                        self.detectors_form.update()
-                        
-                        # Emit the detectorsChanged signal to notify other components
-                        self.detectorsChanged.emit()
-                        
-                        # Show a success message
-                        QMessageBox.information(
-                            self,
-                            "Success",
-                            f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
-                            f"Updated G-Factor for detector: {selected_detector_info['name']}"
-                        )
+                        # Get the existing cell widget and update its text
+                        existing_cell_widget = self.detectors_form.cellWidget(row, 3)
+                        if existing_cell_widget:
+                            # If widget exists, just update its text
+                            existing_cell_widget.setText(g_factor_value)
+                        else:
+                            # If no widget exists yet, create a new one
+                            new_cell_widget = QLineEdit(g_factor_value)
+                            self.detectors_form.setCellWidget(row, 3, new_cell_widget)
+                                                
+                        # Save the updated setup automatically
+                        if self.current_setup_name:
+                            # Get current settings
+                            data = self.get_settings()
+                            
+                            # Save to the current setups file
+                            setups = load_detector_setups(self.current_setups_file)
+                            setups.setdefault("setups", {})
+                            
+                            # If the setup already exists, preserve any additional fields
+                            if self.current_setup_name in setups["setups"]:
+                                existing_data = setups["setups"][self.current_setup_name]
+                                # Update only the fields we know about, preserving any other fields
+                                for key in data:
+                                    existing_data[key] = data[key]
+                                # Use the updated existing data
+                                setups["setups"][self.current_setup_name] = existing_data
+                            else:
+                                # New setup, just use the data as is
+                                setups["setups"][self.current_setup_name] = data
+                                
+                            setups["last_used"] = self.current_setup_name
+                            save_detector_setups(setups, self.current_setups_file)
+                            
+                            # Show a success message with save confirmation
+                            QMessageBox.information(
+                                self,
+                                "Success",
+                                f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
+                                f"Updated G-Factor for detector: {selected_detector_info['name']}\n"
+                                f"Setup '{self.current_setup_name}' saved automatically."
+                            )
+                        else:
+                            # Show a success message without save confirmation
+                            QMessageBox.information(
+                                self,
+                                "Success",
+                                f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
+                                f"Updated G-Factor for detector: {selected_detector_info['name']}\n"
+                                f"Note: No setup was selected, so changes were not saved automatically."
+                            )
             
             # Override the closeEvent method
             g_factor_calculator.closeEvent = custom_close_event
