@@ -70,9 +70,16 @@ class MyMessageBox(QtWidgets.QMessageBox):
 
         # Add fortune message (if enabled) with a better look
         if show_fortune:
-            fortune = chisurf.gui.widgets.fortune.get_fortune()
-            fortune_html = f"<br><i>{fortune}</i><br><br>"  # Italicized fortune text, with spacing
-            self.setInformativeText(formatted_info + fortune_html)
+            try:
+                fortune = chisurf.gui.widgets.fortune.get_fortune()
+                if fortune:  # Only add fortune if it's not empty
+                    fortune_html = f"<br><i>{fortune}</i><br><br>"  # Italicized fortune text, with spacing
+                    self.setInformativeText(formatted_info + fortune_html)
+                else:
+                    self.setInformativeText(formatted_info)
+            except Exception:
+                # If there's any error getting the fortune, just show the info
+                self.setInformativeText(formatted_info)
         else:
             self.setInformativeText(formatted_info)
 
