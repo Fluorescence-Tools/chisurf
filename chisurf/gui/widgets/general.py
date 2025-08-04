@@ -6,7 +6,7 @@ import numbers
 import os
 import pathlib
 
-from chisurf.gui import QtGui, QtWidgets
+from chisurf.gui import QtGui, QtWidgets, QtCore
 from io import BytesIO
 
 import pyqtgraph as pg
@@ -16,6 +16,7 @@ import chisurf.fio
 import chisurf.settings
 import chisurf.curve
 import chisurf.base
+import chisurf
 
 
 def get_widgets_in_layout(
@@ -185,6 +186,42 @@ class FileList(QtWidgets.QListWidget):
             icon = QtGui.QIcon(":/icons/icons/list-add.png")
 
         self.setWindowIcon(icon)
+
+
+class LogListWidget(QtWidgets.QListWidget):
+    """
+    Custom QListWidget that handles Ctrl+C to copy all selected items.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.setUniformItemSizes(True)
+        
+    def keyPressEvent(self, event):
+        """Handle key press events, specifically Ctrl+C for copying selected items."""
+        # Check if Ctrl+C was pressed
+        if event.key() == QtCore.Qt.Key_C and event.modifiers() & QtCore.Qt.ControlModifier:
+            self.copy_selected_items()
+        else:
+            # For all other key events, use the default handler
+            super().keyPressEvent(event)
+            
+    def copy_selected_items(self):
+        """Copy the text of all selected items to the clipboard."""
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return
+            
+        # Collect text from all selected items
+        texts = [item.text() for item in selected_items]
+        text_to_copy = '\n'.join(texts)
+        
+        # Copy to clipboard
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(text_to_copy)
+        
+        # Optional: Log that items were copied
+        chisurf.logging.info(f"Copied {len(selected_items)} log entries to clipboard")
 
 
 def get_filename(
