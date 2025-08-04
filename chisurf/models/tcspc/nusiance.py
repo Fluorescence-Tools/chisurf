@@ -435,7 +435,7 @@ class Convolve(FittingParameterGroup):
         irf_start_idx = self.irf_start
         irf_stop_idx = self.irf_stop
         
-        logging.info(f'Zeroing out IRF y-values. Start: {irf_start_idx}, Stop: {irf_stop_idx}, Total: {len(irf.y)}')
+        logging.debug(f'Zeroing out IRF y-values. Start: {irf_start_idx}, Stop: {irf_stop_idx}, Total: {len(irf.y)}')
             
         if irf_start_idx > 0 or irf_stop_idx < len(irf.y):
             # Create a copy to avoid modifying the original
@@ -443,14 +443,14 @@ class Convolve(FittingParameterGroup):
             # Zero out before irf_start
             if irf_start_idx > 0:
                 irf_y[:irf_start_idx] = 0.0
-                logging.info(f'Zeroed out IRF from 0 to {irf_start_idx}')
+                logging.debug(f'Zeroed out IRF from 0 to {irf_start_idx}')
             # Zero out after irf_stop
             if irf_stop_idx < len(irf_y):
                 irf_y[irf_stop_idx:] = 0.0
-                logging.info(f'Zeroed out IRF from {irf_stop_idx} to {len(irf_y)}')
+                logging.debug(f'Zeroed out IRF from {irf_stop_idx} to {len(irf_y)}')
             # Create a new curve with the modified y values
             irf = chisurf.curve.Curve(x=irf.x, y=irf_y)
-            logging.info(f'Created new IRF curve with truncated values')
+            logging.debug(f'Created new IRF curve with truncated values')
         
         # Handle normalization or scaling
         is_truncated = irf_start_idx > 0 or irf_stop_idx < len(irf.y)
@@ -458,13 +458,13 @@ class Convolve(FittingParameterGroup):
         if normalize:
             # Skip normalization if we've truncated the IRF
             if is_truncated:
-                logging.info(f'Skipping normalization for truncated IRF')
+                logging.debug(f'Skipping normalization for truncated IRF')
             else:
                 # Normalize the IRF only if we haven't truncated it
                 irf.normalize(mode="sum", inplace=True)
-                logging.info(f'Normalized non-truncated IRF')
+                logging.debug(f'Normalized non-truncated IRF')
         else:
-            logging.info(f'No IRF scaling')
+            logging.debug(f'No IRF scaling')
         
         # Apply timeshift
         irf = irf << float(self.timeshift)
@@ -636,14 +636,14 @@ class Convolve(FittingParameterGroup):
         elif mode == "full":
             decay = np.convolve(data, irf_y, mode="full")[:n_points]
         if verbose:
-            print("------------")
-            print("Convolution:")
-            print("Lifetimes: %s" % data)
-            print("dt: %s" % dt)
-            print("Irf: %s" % irf.name)
-            print("Stop: %s" % stop)
-            print("dt: %s" % dt)
-            print("Convolution mode: %s" % mode)
+            logging.debug("------------")
+            logging.debug("Convolution:")
+            logging.debug("Lifetimes: %s" % data)
+            logging.debug("dt: %s" % dt)
+            logging.debug("Irf: %s" % irf.name)
+            logging.debug("Stop: %s" % stop)
+            logging.debug("dt: %s" % dt)
+            logging.debug("Convolution mode: %s" % mode)
 
         decay += (scatter * irf_y)
         return decay
@@ -702,13 +702,13 @@ class Convolve(FittingParameterGroup):
         self._irf_start = FittingParameter(
             value=0.0,
             name='irf_start',
-            label_text="IRF Start",
+            label_text='IRF<sub>start</sub>',
             fixed=True
         )
         self._irf_stop = FittingParameter(
             value=stop,
             name='irf_stop',
-            label_text="IRF Stop",
+            label_text='IRF<sub>stop</sub>',
             fixed=True
         )
         # Set bounds for lamp background to be between 0 and half the lamp height
