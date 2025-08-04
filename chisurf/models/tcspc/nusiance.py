@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import scipy.stats
 
@@ -392,8 +394,24 @@ class Convolve(FittingParameterGroup):
     def n0(self, v: float):
         self._n0.value = v
 
-    @property
-    def irf(self) -> chisurf.curve.Curve:
+    def _process_irf(self, normalize: bool = True) -> chisurf.curve.Curve:
+        """Helper method to process IRF with common operations.
+        
+        This method handles the common operations for both normalized and unnormalized IRF:
+        1. Get the IRF from self._irf
+        2. Subtract lamp background
+        3. Clip negative values
+        4. Zero out IRF values outside the specified range
+        5. Optionally normalize or scale to original height
+        6. Apply timeshift
+        
+        Args:
+            normalize: If True, normalize the IRF (unless truncated). If False, scale to original height.
+            verbose: If True, log processing steps.
+            
+        Returns:
+            chisurf.curve.Curve: The processed IRF curve.
+        """
         if isinstance(self._irf, chisurf.curve.Curve):
             irf = self._irf
             irf -= self.lamp_background
@@ -410,23 +428,68 @@ class Convolve(FittingParameterGroup):
             irf = chisurf.curve.Curve(x=x, y=y)
             irf.y[irf.y < 1] = 0.0
 
+        irf -= self.lamp_background
+        irf.y = np.clip(irf.y, 0, None)
+
         # Zero out the IRF outside the specified range
         irf_start_idx = self.irf_start
         irf_stop_idx = self.irf_stop
+        
+        logging.info(f'Zeroing out IRF y-values. Start: {irf_start_idx}, Stop: {irf_stop_idx}, Total: {len(irf.y)}')
+            
         if irf_start_idx > 0 or irf_stop_idx < len(irf.y):
             # Create a copy to avoid modifying the original
             irf_y = np.copy(irf.y)
             # Zero out before irf_start
             if irf_start_idx > 0:
                 irf_y[:irf_start_idx] = 0.0
+                logging.info(f'Zeroed out IRF from 0 to {irf_start_idx}')
             # Zero out after irf_stop
             if irf_stop_idx < len(irf_y):
                 irf_y[irf_stop_idx:] = 0.0
+                logging.info(f'Zeroed out IRF from {irf_stop_idx} to {len(irf_y)}')
             # Create a new curve with the modified y values
             irf = chisurf.curve.Curve(x=irf.x, y=irf_y)
-
+            logging.info(f'Created new IRF curve with truncated values')
+        
+        # Handle normalization or scaling
+        is_truncated = irf_start_idx > 0 or irf_stop_idx < len(irf.y)
+        
+        if normalize:
+            # Skip normalization if we've truncated the IRF
+            if is_truncated:
+                logging.info(f'Skipping normalization for truncated IRF')
+            else:
+                # Normalize the IRF only if we haven't truncated it
+                irf.normalize(mode="sum", inplace=True)
+                logging.info(f'Normalized non-truncated IRF')
+        else:
+            logging.info(f'No IRF scaling')
+        
+        # Apply timeshift
         irf = irf << float(self.timeshift)
         return irf
+
+    @property
+    def irf(self) -> chisurf.curve.Curve:
+        """Returns the normalized IRF for convolution calculations.
+        
+        Returns:
+            chisurf.curve.Curve: The normalized IRF curve.
+        """
+        return self._process_irf(normalize=True)
+
+    @property
+    def unnormalized_irf(self) -> chisurf.curve.Curve:
+        """Returns the IRF at its original height for plotting purposes.
+        
+        This method is similar to the `irf` property but scales the IRF by the
+        `n_photons_irf` factor to restore its original height.
+        
+        Returns:
+            chisurf.curve.Curve: The unnormalized IRF curve.
+        """
+        return self._process_irf(normalize=False)
 
     @property
     def _irf(self) -> chisurf.curve.Curve:
