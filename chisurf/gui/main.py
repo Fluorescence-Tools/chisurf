@@ -1179,10 +1179,64 @@ class Main(QtWidgets.QMainWindow):
         self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.dockWidgetReadData.raise_()
 
+    def filter_log_content(self):
+        """
+        Filter the content of plainTextEditLog based on the text in lineEdit_LogFilter.
+        """
+        filter_text = self.lineEdit_LogFilter.text().strip().lower()
+        
+        # Initialize _original_log_items if it doesn't exist
+        if not hasattr(self, '_original_log_items'):
+            self._original_log_items = []
+            # Store all current items
+            for i in range(self.plainTextEditLog.count()):
+                self._original_log_items.append(self.plainTextEditLog.item(i).text())
+        
+        # If there's no filter text, show all content
+        if not filter_text:
+            # Restore the original content
+            self.plainTextEditLog.clear()
+            for item_text in self._original_log_items:
+                self.plainTextEditLog.addItem(item_text)
+            return
+            
+        # Filter items that contain the filter text
+        filtered_items = [item for item in self._original_log_items if filter_text in item.lower()]
+        
+        # Clear the current content
+        self.plainTextEditLog.clear()
+        
+        # Add the filtered items back to the log
+        if filtered_items:
+            for item_text in filtered_items:
+                self.plainTextEditLog.addItem(item_text)
+        else:
+            self.plainTextEditLog.addItem("No matching log entries found.")
+            
+    def update_log_filter(self):
+        """
+        Update the log filter when new log entries are added.
+        This method should be called after new log entries are added to plainTextEditLog.
+        """
+        # Get the latest item added to the list
+        if self.plainTextEditLog.count() > 0:
+            latest_item = self.plainTextEditLog.item(self.plainTextEditLog.count() - 1).text()
+            
+            # Add the new item to our original items list
+            if hasattr(self, '_original_log_items'):
+                self._original_log_items.append(latest_item)
+        
+        # Only apply filtering if there's a filter text
+        if hasattr(self, 'lineEdit_LogFilter') and self.lineEdit_LogFilter.text().strip():
+            self.filter_log_content()
+    
     def define_actions(self):
         ##########################################################
         # GUI ACTIONS
         ##########################################################
+        # Connect log filter
+        self.lineEdit_LogFilter.textChanged.connect(self.filter_log_content)
+        
         self.actionTile_windows.triggered.connect(self.onTileWindows)
         self.actionTab_windows.triggered.connect(self.onTabWindows)
         self.actionCascade.triggered.connect(self.onCascadeWindows)
