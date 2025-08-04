@@ -32,8 +32,6 @@ import chisurf.fitting
 import chisurf.gui.resources
 
 
-
-
 class Main(QtWidgets.QMainWindow):
     """
 
