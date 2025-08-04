@@ -34,7 +34,7 @@ requirements:
     - llvm-openmp  # [osx]
     - libcxx  # [osx]
     - libgomp      # [linux]
-    - typing-extensions 4.5.*
+    - typing-extensions 4.14.*
     - pytools 2024
     - pip
     - cython <3.0
@@ -48,7 +48,7 @@ requirements:
     - hdf5
   run:
     - python =3.10
-    - typing-extensions 4.5.*
+    - typing-extensions 4.14.*
     - pytools 2024
     - numpy
     - pyqt
