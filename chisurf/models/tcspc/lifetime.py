@@ -278,7 +278,8 @@ class LifetimeModel(ModelCurve):
 
     def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, chisurf.curve.Curve]:
         d = super().get_curves(copy_curves)
-        d['IRF'] = self.convolve.irf
+        # Use unnormalized IRF for plotting to display it at its original height
+        d['IRF'] = self.convolve.unnormalized_irf
         return d
 
     def decay(self, time: np.array) -> np.array:
