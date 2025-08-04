@@ -7,6 +7,7 @@ import numpy as np
 
 import chisurf.curve
 import chisurf.math.datatools
+from chisurf import logging
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
 from chisurf.models.tcspc.nusiance import Generic, Corrections, Convolve
@@ -235,6 +236,13 @@ class LifetimeModel(ModelCurve):
         if anisotropy is None:
             anisotropy = Anisotropy(name='anisotropy', **kwargs)
         self.anisotropy = anisotropy
+
+        # Automatically set polarization type for fits
+        logging.info("Checking for polarization type setup.")
+        # Use the unified method to set polarization based on group position
+        polarization_set = self.anisotropy.set_polarization_by_group_position(fit, self)
+        if polarization_set:
+            logging.info(f"Polarization type set to {self.anisotropy.polarization_type}")
 
         if lifetimes is None:
             lifetimes = Lifetime(name='lifetimes', fit=fit, **kwargs)
