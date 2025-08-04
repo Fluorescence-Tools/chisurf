@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-
+import ast
 import pathlib
 import webbrowser
 
@@ -24,12 +24,14 @@ import chisurf.gui.widgets.settings_editor
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments.modelling
-import chisurf.gui.widgets.general
+from chisurf.gui.widgets.general import LogListWidget
 
 import chisurf.models
 import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
+
+
 
 
 class Main(QtWidgets.QMainWindow):
@@ -152,6 +154,26 @@ class Main(QtWidgets.QMainWindow):
             self.current_setup_idx = j
             # Call onSetupChanged to update the GUI
             self.onSetupChanged()
+            
+    @property
+    def filter_hide_enabled(self) -> bool:
+        """
+        Property to check if the hide filter checkbox is checked.
+        
+        Returns:
+            bool: True if non-matching log entries should be hidden, False otherwise
+        """
+        return self.checkBox_filter_hide.isChecked()
+        
+    @filter_hide_enabled.setter
+    def filter_hide_enabled(self, value: bool) -> None:
+        """
+        Property to set the state of the hide filter checkbox.
+        
+        Args:
+            value (bool): True to hide non-matching log entries, False to gray them out
+        """
+        self.checkBox_filter_hide.setChecked(value)
 
     @property
     def current_experiment_reader(self):
@@ -1077,6 +1099,34 @@ class Main(QtWidgets.QMainWindow):
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
 
+        # Replace the standard QListWidget with our custom LogListWidget
+        # First, save any existing items
+        existing_items = []
+        if hasattr(self, 'plainTextEditLog'):
+            for i in range(self.plainTextEditLog.count()):
+                existing_items.append(self.plainTextEditLog.item(i).text())
+        
+        # Get the parent widget of plainTextEditLog
+        parent_widget = self.plainTextEditLog.parent()
+        # Get the layout containing plainTextEditLog
+        layout = parent_widget.layout()
+        # Find the index of plainTextEditLog in the layout
+        for i in range(layout.count()):
+            if layout.itemAt(i).widget() == self.plainTextEditLog:
+                layout_index = i
+                break
+        
+        # Remove the old widget
+        self.plainTextEditLog.setParent(None)
+        
+        # Create and add the new widget
+        self.plainTextEditLog = LogListWidget(parent_widget)
+        layout.insertWidget(layout_index, self.plainTextEditLog)
+        
+        # Restore any existing items
+        for item_text in existing_items:
+            self.plainTextEditLog.addItem(item_text)
+
         self.current_fit_widget = None
         self._current_fit = None
         self._current_model_class = None
@@ -1181,9 +1231,12 @@ class Main(QtWidgets.QMainWindow):
 
     def filter_log_content(self):
         """
-        Filter the content of plainTextEditLog based on the text in lineEdit_LogFilter.
+        Filter log content based on filter text and hide checkbox state.
+        If checkBox_filter_hide is checked, hide non-matching lines.
+        If unchecked, highlight matching lines and gray out non-matching lines.
         """
         filter_text = self.lineEdit_LogFilter.text().strip().lower()
+        hide_non_matching = self.checkBox_filter_hide.isChecked()
         
         # Initialize _original_log_items if it doesn't exist
         if not hasattr(self, '_original_log_items'):
@@ -1192,26 +1245,46 @@ class Main(QtWidgets.QMainWindow):
             for i in range(self.plainTextEditLog.count()):
                 self._original_log_items.append(self.plainTextEditLog.item(i).text())
         
-        # If there's no filter text, show all content
+        # If there's no filter text, show all content normally
         if not filter_text:
-            # Restore the original content
+            # Restore the original content with normal formatting
             self.plainTextEditLog.clear()
             for item_text in self._original_log_items:
-                self.plainTextEditLog.addItem(item_text)
+                item = QtWidgets.QListWidgetItem(item_text)
+                self.plainTextEditLog.addItem(item)
             return
-            
-        # Filter items that contain the filter text
-        filtered_items = [item for item in self._original_log_items if filter_text in item.lower()]
         
         # Clear the current content
         self.plainTextEditLog.clear()
         
-        # Add the filtered items back to the log
-        if filtered_items:
-            for item_text in filtered_items:
-                self.plainTextEditLog.addItem(item_text)
+        # Add items back to the log with appropriate formatting
+        if self._original_log_items:
+            for item_text in self._original_log_items:
+                # Check if this item contains the filter text
+                if filter_text in item_text.lower():
+                    # Always add matching items
+                    item = QtWidgets.QListWidgetItem(item_text)
+                    # Highlight matching items
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0)))  # Black text
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(255, 255, 0, 50)))  # Light yellow background
+                    font = item.font()
+                    font.setBold(True)
+                    item.setFont(font)
+                    self.plainTextEditLog.addItem(item)
+                elif not hide_non_matching:
+                    # Only add non-matching items if hide_non_matching is False
+                    item = QtWidgets.QListWidgetItem(item_text)
+                    # Gray out non-matching items
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(150, 150, 150)))  # Gray text
+                    self.plainTextEditLog.addItem(item)
+            
+            # Show a message if no items match the filter
+            if self.plainTextEditLog.count() == 0:
+                item = QtWidgets.QListWidgetItem("No matching log entries found.")
+                self.plainTextEditLog.addItem(item)
         else:
-            self.plainTextEditLog.addItem("No matching log entries found.")
+            item = QtWidgets.QListWidgetItem("No log entries found.")
+            self.plainTextEditLog.addItem(item)
             
     def update_log_filter(self):
         """
@@ -1226,16 +1299,17 @@ class Main(QtWidgets.QMainWindow):
             if hasattr(self, '_original_log_items'):
                 self._original_log_items.append(latest_item)
         
-        # Only apply filtering if there's a filter text
-        if hasattr(self, 'lineEdit_LogFilter') and self.lineEdit_LogFilter.text().strip():
-            self.filter_log_content()
+        # Apply highlighting/graying out if there's a filter text
+        # This will be called regardless of filter text to ensure proper formatting
+        self.filter_log_content()
     
     def define_actions(self):
         ##########################################################
         # GUI ACTIONS
         ##########################################################
-        # Connect log filter
+        # Connect log filter and hide checkbox
         self.lineEdit_LogFilter.textChanged.connect(self.filter_log_content)
+        self.checkBox_filter_hide.stateChanged.connect(self.filter_log_content)
         
         self.actionTile_windows.triggered.connect(self.onTileWindows)
         self.actionTab_windows.triggered.connect(self.onTabWindows)
