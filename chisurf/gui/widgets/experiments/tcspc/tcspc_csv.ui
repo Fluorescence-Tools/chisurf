@@ -311,6 +311,13 @@ the array &quot;3, 7, 11, 15&quot;.</string>
           </widget>
          </item>
          <item>
+          <widget class="QRadioButton" name="radioButton_4">
+           <property name="text">
+            <string>VV,VH</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QRadioButton" name="radioButton">
            <property name="text">
             <string>VM</string>
@@ -566,6 +573,22 @@ the array &quot;3, 7, 11, 15&quot;.</string>
     <hint type="sourcelabel">
      <x>568</x>
      <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_4</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionPolarizationChange</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>181</x>
+     <y>44</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>

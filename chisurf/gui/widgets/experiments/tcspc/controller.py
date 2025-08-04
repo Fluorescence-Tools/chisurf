@@ -46,6 +46,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
             self.radioButton_3.setChecked(True)
         elif pol == 'vh':
             self.radioButton_2.setChecked(True)
+        elif pol == 'vv/vh':
+            self.radioButton_4.setChecked(True)
         else:  # 'vm'
             self.radioButton.setChecked(True)
 
@@ -85,6 +87,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
             pol = 'vv'
         elif self.radioButton_2.isChecked():
             pol = 'vh'
+        elif self.radioButton_4.isChecked():
+            pol = 'vv/vh'
         elif self.radioButton.isChecked():
             pol = 'vm'
         rep_rate = self.doubleSpinBox.value()
