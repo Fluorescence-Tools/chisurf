@@ -113,7 +113,19 @@ class QTextEditLogger(logging.Handler):
         if self.mode == "set":
             self.widget.setText(msg)
         elif self.mode == "append":
-            self.widget.appendPlainText(msg)
+            # Check if widget is QListWidget or QPlainTextEdit
+            if hasattr(self.widget, 'addItem'):
+                # QListWidget
+                self.widget.addItem(msg)
+                # Scroll to the bottom to show the latest entry
+                self.widget.scrollToBottom()
+            else:
+                # QPlainTextEdit
+                self.widget.appendPlainText(msg)
+            
+            # If this is the log widget and the parent has a filter method, call it
+            if hasattr(self.widget.parent(), 'update_log_filter'):
+                self.widget.parent().update_log_filter()
 
 
 def setup_logging_widgets(window):
