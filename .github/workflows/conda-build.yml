@@ -50,7 +50,6 @@ jobs:
         with:
           auto-update-conda: true
           conda-remove-defaults: true
-          python-version: ${{ matrix.python-version }}
           miniforge-version: latest
           channels: conda-forge,bioconda,tpeulen
           channel-priority: true
@@ -65,3 +64,12 @@ jobs:
         run: |
           mamba install -y conda-build boa anaconda-client \
             && conda build conda-recipe
+
+      - name: Upload to conda channel
+        shell: bash -el {0}
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          PKG_PATH=$(conda build conda-recipe --output)
+          echo "Logging in to Anaconda Cloud as tpeulen…"
+          anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
