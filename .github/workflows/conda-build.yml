@@ -72,18 +72,11 @@ jobs:
           conda info
 
       - name: Build + Upload Conda Package
-        shell: bash -l {0}
+        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash -l' }}
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          # 1) install everything we need
           mamba install -n benv -y boa conda-build anaconda-client
-
-          # 2) build with boa (faster than `conda build`, and works cross-platform)
           mamba run -n benv boa build conda-recipe
-
-          # 3) grab the exact artifact path via the conda-build binary
           PKG_PATH=$(mamba run -n benv conda-build conda-recipe --output)
-
-          # 4) upload via the Anaconda client
           mamba run -n benv anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
