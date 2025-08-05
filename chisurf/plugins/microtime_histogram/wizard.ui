@@ -6,14 +6,29 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>891</width>
-    <height>448</height>
+    <width>833</width>
+    <height>499</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Compute microtime histogram</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
@@ -24,6 +39,21 @@
        <string>Histogram</string>
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
         <widget class="QSplitter" name="splitter">
          <property name="orientation">
@@ -31,9 +61,26 @@
          </property>
          <widget class="QWidget" name="widget_2" native="true">
           <layout class="QGridLayout" name="gridLayout">
-           <!-- Setup Info and Detector Selection (NEW) -->
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <property name="spacing">
+            <number>0</number>
+           </property>
            <item row="0" column="0" colspan="2">
             <layout class="QHBoxLayout" name="setup_info_layout">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <item>
               <widget class="QLabel" name="setup_info_label">
                <property name="text">
@@ -43,6 +90,12 @@
              </item>
              <item>
               <widget class="QComboBox" name="setup_selection_combobox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="toolTip">
                 <string>Select setup configuration</string>
                </property>
@@ -70,6 +123,12 @@
              </item>
              <item>
               <widget class="QComboBox" name="detector_selection_combobox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="toolTip">
                 <string>Select detector (green, red) based on setup</string>
                </property>
@@ -77,7 +136,6 @@
              </item>
             </layout>
            </item>
-           <!-- Original UI elements (shifted down by 1 row) -->
            <item row="6" column="0">
             <widget class="QLabel" name="label_2">
              <property name="text">
@@ -240,7 +298,11 @@
             </widget>
            </item>
            <item row="16" column="0" colspan="2">
-            <layout class="QVBoxLayout" name="verticalLayout_5"/>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+            </layout>
            </item>
            <item row="5" column="1">
             <widget class="QLineEdit" name="lineEdit_2">
@@ -322,6 +384,9 @@
            </item>
            <item row="12" column="1">
             <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <item>
               <spacer name="horizontalSpacer">
                <property name="orientation">
@@ -367,14 +432,14 @@
              </property>
              <item>
               <widget class="QComboBox" name="comboBox">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
-               </property>
-               <property name="enabled">
-                <bool>false</bool>
                </property>
               </widget>
              </item>
@@ -428,7 +493,11 @@
             </widget>
            </item>
            <item row="14" column="0" colspan="2">
-            <layout class="QVBoxLayout" name="verticalLayout_3"/>
+            <layout class="QVBoxLayout" name="verticalLayout_3">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+            </layout>
            </item>
           </layout>
          </widget>
@@ -456,7 +525,11 @@
             <number>0</number>
            </property>
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout"/>
+            <layout class="QVBoxLayout" name="verticalLayout">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+            </layout>
            </item>
           </layout>
          </widget>
