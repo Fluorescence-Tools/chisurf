@@ -10,7 +10,6 @@ source:
 
 build:
   number: 0
-  skip: true   # [py != "3.10"]
   binary_relocation: True  # Relocate binaries correctly (for shared libraries, etc.).
   detect_binary_files_with_prefix: True  # [not win]
   entry_points:
@@ -67,7 +66,7 @@ requirements:
     - numba
     - boost-cpp
     - mdtraj
-    - ipython 7.*
+    - ipython
     - notebook
     - emcee 3.1.*
     - pyopengl
@@ -76,7 +75,7 @@ requirements:
     - guidata
     - guiqwt
     - python-docx
-    - qtconsole 5.*
+    - qtconsole
     - pyqtwebengine
     - libcxx  # [osx]
     - hmmlearn
