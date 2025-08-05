@@ -65,7 +65,7 @@ requirements:
     - numba
     - boost-cpp
     - mdtraj
-    - ipython 7.33.*
+    - ipython 7.*
     - notebook
     - emcee 3.1.*
     - pyopengl
@@ -74,7 +74,7 @@ requirements:
     - guidata
     - guiqwt
     - python-docx
-    - qtconsole 5.2.*
+    - qtconsole 5.*
     - pyqtwebengine
     - libcxx  # [osx]
     - hmmlearn
