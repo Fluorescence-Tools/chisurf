@@ -76,10 +76,8 @@ jobs:
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          conda activate benv
-          
           # 1) install everything we need
-          mamba install -y boa conda-build anaconda-client
+          mamba install -n benv -y boa conda-build anaconda-client
 
           # 2) build with boa (faster than `conda build`, and works cross-platform)
           mamba run -n benv boa build conda-recipe
