@@ -65,6 +65,7 @@ jobs:
           conda info
 
       - name: Build + Upload Conda Package
+        shell: bash -el {0}
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
