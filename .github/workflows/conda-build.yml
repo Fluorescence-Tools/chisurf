@@ -58,5 +58,5 @@ jobs:
       - name: Build Conda Package
         shell: bash -el {0}
         run: |
-          mamba install -y conda-build boa anaconda-client
-          conda mambabuild conda-recipe
+          mamba install -y conda-build boa anaconda-client \
+            && mamba build conda-recipe
