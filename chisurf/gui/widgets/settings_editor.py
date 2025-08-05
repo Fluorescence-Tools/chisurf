@@ -4,7 +4,6 @@ import pathlib
 import yaml
 import re
 import os
-import numpy as np
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -13,6 +12,8 @@ import chisurf.fio as io
 from chisurf import logging
 import chisurf.settings
 from chisurf.settings import cs_settings
+
+LIST_SEP = "|"
 
 
 # Custom YAML representer for floats to preserve scientific notation
@@ -42,6 +43,17 @@ def float_representer(dumper, value):
         text = re.sub(r'\.(\d*?)0+e', r'.\1e', text)
         # If mantissa ends with a decimal point, remove it
         text = re.sub(r'\.e', r'e', text)
+        
+        # Ensure we preserve the original format for extreme values
+        if abs(value) < 1e-10 or abs(value) > 1e10:
+            # For extreme values, ensure we keep the decimal point and at least one digit
+            if '.0e' in text:
+                # Already has the format we want
+                pass
+            elif 'e' in text and '.' not in text:
+                # Add .0 before the exponent
+                text = text.replace('e', '.0e')
+        
         return dumper.represent_scalar('tag:yaml.org,2002:float', text)
     else:
         # Use default representation for regular floats
@@ -362,8 +374,22 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
                 # For dictionaries, don't set display text (will be populated with children)
                 pass
             elif isinstance(value, (list, tuple)):
-                # For lists, show comma-separated values
-                value_item.setText(", ".join(str(item) for item in value))
+                # For lists, show comma-separated values with special handling for complex items
+                if not value:
+                    # Empty list
+                    value_item.setText("")
+                elif any(isinstance(item, dict) for item in value):
+                    # List contains dictionaries - show a placeholder
+                    value_item.setText("[complex list - edit with caution]")
+                else:
+                    # Regular list - convert None to 'None' for display
+                    items_str = []
+                    for item in value:
+                        if item is None:
+                            items_str.append("None")
+                        else:
+                            items_str.append(str(item))
+                    value_item.setText(LIST_SEP.join(items_str))
             elif isinstance(value, bool):
                 # For booleans, show "True" or "False"
                 value_item.setText(str(value))
@@ -375,6 +401,9 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
                     value_item.setText(str_value)
                 else:
                     value_item.setText(str_value)
+            elif value is None:
+                # For None values, show "None"
+                value_item.setText("None")
             else:
                 # For other types, show string representation
                 value_item.setText(str(value))
@@ -442,22 +471,31 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
 
                 # Convert string values to appropriate types if possible
                 if isinstance(value, str):
-                    value_str = value
-
                     # Try to convert to appropriate type
                     try:
-                        # Check for boolean values
-                        if value_str.lower() == "true":
-                            value = True
-                        elif value_str.lower() == "false":
-                            value = False
-                        # Check for integer values
-                        elif value_str.isdigit():
-                            value = int(value_str)
-                        # Check for float values
-                        elif re.match(r'^-?\d+(\.\d+)?$', value_str):
-                            value = float(value_str)
-                        # For other types (like strings), keep as is
+                        value_str = value
+                        is_list = LIST_SEP in value_str
+                        if not is_list:
+                            # Check for boolean values
+                            if value_str.lower() == "true":
+                                value = True
+                            elif value_str.lower() == "false":
+                                value = False
+                            # Check for empty string as empty list
+                            elif value_str == "":
+                                value = []
+                            # Check for string representation of empty list
+                            elif value_str == "[]":
+                                value = []
+                            # Check for integer values
+                            elif value_str.isdigit():
+                                value = int(value_str)
+                            # Check for float values
+                            elif re.match(r'^-?\d+(\.\d+)?$', value_str):
+                                value = float(value_str)
+                            # For other types (like strings), keep as is
+                        if is_list:
+                            value = value_str.split(LIST_SEP)
                     except ValueError:
                         # If conversion fails, show a warning and keep as string
                         logging.log(1, f"Warning: Could not convert '{value_str}' for setting '{key}'. Using string value.")
