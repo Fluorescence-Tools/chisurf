@@ -71,17 +71,15 @@ jobs:
           conda info
 
       # build + upload (all platforms, including Windows via Git Bash)
-      - name: Build Conda Package
-        shell: bash -l {0}
-        run: |
-          mamba install -y conda-build boa anaconda-client
-          boa build conda-recipe
-
-      - name: Upload to conda channel
+      - name: Build + Upload Conda Package
         shell: bash -l {0}
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          PKG_PATH=$(conda build conda-recipe --output)
-          echo "Logging in to Anaconda Cloud as tpeulen…"
+          mamba install -y conda-build boa anaconda-client
+          conda activate base           # or `mamba run -n base ...`
+          boa build conda-recipe
+      
+          # use conda-build binary to get the exact .tar.bz2 path
+          PKG_PATH=$(conda-build conda-recipe --output)
           anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
