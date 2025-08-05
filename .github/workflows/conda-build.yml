@@ -64,14 +64,6 @@ jobs:
         run: |
           conda info
 
-      # --- Windows only: bring in nmake from MSVC ---
-      - name: Initialize MSVC Environment (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: cmd
-        run: |
-          REM Adapt path if you use BuildTools or Enterprise SKU
-          call "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-
       # --- Non-Windows build step ---
       - name: Build + Upload Conda Package (Linux/macOS)
         if: matrix.os != 'windows-latest'
@@ -83,6 +75,7 @@ jobs:
           mamba run -n benv conda mambabuild conda-recipe
 
       # --- Windows build step ---
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Build + Upload Conda Package (Windows)
         if: matrix.os == 'windows-latest'
         shell: cmd
