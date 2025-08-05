@@ -77,9 +77,8 @@ jobs:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
           mamba install -y conda-build boa anaconda-client
-          conda activate base           # or `mamba run -n base ...`
-          boa build conda-recipe
+          mamba run -n base boa build conda-recipe
       
           # use conda-build binary to get the exact .tar.bz2 path
           PKG_PATH=$(conda-build conda-recipe --output)
-          anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
+          mamba run -n base anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
