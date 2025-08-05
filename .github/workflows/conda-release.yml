@@ -32,7 +32,7 @@ jobs:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
-          channels: conda-forge,bioconda,tpeulen,defaults
+          channels: conda-forge,bioconda
           channel-priority: true
 
       - name: Display Conda Settings
