@@ -1,13 +1,60 @@
+name: Conda Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+  release:
+    types: ['released', 'prereleased']
+  schedule:
+    # Every Monday at 11PM UTC
+    - cron: "0 23 * * 1"
+
 jobs:
   build:
+    name: CondaBuild (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "windows-latest"]
+        os: ["windows-latest"] # "ubuntu-latest"] #, "macos-latest"] #,
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-      # conda_build_config.yaml download (omitted for brevity)
+      - name: Download conda_build_config.yaml
+        if: matrix.os != 'windows-latest'
+        shell: bash
+        run: |
+          echo "Fetching conda-forge’s pinning config…"
+          curl -sSL \
+            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
+            -o conda_build_config.yaml
+          echo "Pinning config version:"
+          head -n 5 conda_build_config.yaml
+
+      - name: Download conda_build_config.yaml (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "Fetching conda-forge’s pinning config…"
+          Invoke-WebRequest `
+            -Uri 'https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml' `
+            -OutFile conda_build_config.yaml -UseBasicParsing
+          Write-Host "Pinning config version:"
+          Get-Content conda_build_config.yaml -TotalCount 5
+
+      - name: "Set SDK on MacOS (if needed)"
+        if: startsWith(matrix.os, 'macos')
+        run: build_tools/install_macos_sdk.sh
+
+      - name: Install Visual Studio 2017 (Windows only)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install visualstudio2017buildtools --version=15.9.54 -y
+          choco install visualstudio2017-workload-vctools -y
+          setx PATH "%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build"
 
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
@@ -15,26 +62,16 @@ jobs:
           auto-update-conda: true
           conda-remove-defaults: true
           miniforge-version: latest
-          channels: conda-forge,bioconda,tpeulen
+          channels: conda-forge,bioconda
           channel-priority: true
           activate-environment: benv
 
-      # Display Conda info on Linux/macOS
-      - name: Display Conda Settings (Linux/macOS)
-        if: ${{ matrix.os != 'windows-latest' }}
+      - name: Display Conda Settings
         shell: bash -el {0}
-        run: conda info
+        run: |
+          conda info
 
-      # Display Conda info on Windows
-      - name: Display Conda Settings (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: conda info
-
-      # Build + Upload on Linux/macOS
-      - name: Build + Upload Conda Package (Linux/macOS)
-        if: ${{ matrix.os != 'windows-latest' }}
-        shell: bash -l {0}
+      - name: Build + Upload Conda Package
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
@@ -42,19 +79,3 @@ jobs:
           mamba run -n benv boa build conda-recipe
           PKG_PATH=$(mamba run -n benv conda-build conda-recipe --output)
           mamba run -n benv anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
-
-      # Build + Upload on Windows
-      - name: Build + Upload Conda Package (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        env:
-          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        run: |
-          # install tools
-          mamba install -n benv -y boa conda-build anaconda-client
-          # use boa to build
-          mamba run -n benv boa build conda-recipe
-          # get output path
-          $pkg = mamba run -n benv conda-build conda-recipe --output
-          # upload
-          mamba run -n benv anaconda -t $env:ANACONDA_TOKEN upload --user tpeulen --skip-existing $pkg
