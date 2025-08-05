@@ -19,7 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "windows-latest"] # "macos-latest"] #,
-        python-version: ["3.10"]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -54,4 +53,4 @@ jobs:
         shell: bash -el {0}
         run: |
           mamba install -y conda-build boa anaconda-client \
-            && conda mambabuild conda-recipe
+            && conda build conda-recipe
