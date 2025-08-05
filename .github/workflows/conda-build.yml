@@ -20,7 +20,7 @@ jobs:
       matrix:
         os: ["windows-latest"] # "ubuntu-latest"] #, "macos-latest"] #,
     steps:
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Download conda_build_config.yaml
@@ -50,7 +50,7 @@ jobs:
         run: build_tools/install_macos_sdk.sh
 
       - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v3
+        uses: <conda-incubator/setup-miniconda@v3>
         with:
           auto-update-conda: true
           conda-remove-defaults: true
