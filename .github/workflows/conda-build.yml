@@ -64,21 +64,8 @@ jobs:
         run: |
           conda info
 
-      # --- Non-Windows build step ---
-      - name: Build + Upload Conda Package (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        shell: bash -el {0}
-        env:
-          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
-        run: |
-          mamba install -n benv -y boa conda-build anaconda-client
-          mamba run -n benv conda mambabuild conda-recipe
-
-      # --- Windows build step ---
-      - uses: ilammy/msvc-dev-cmd@v1
-      - name: Build + Upload Conda Package (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: cmd
+      - name: Build + Upload Conda Package
+        uses: ilammy/msvc-dev-cmd@v1
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
