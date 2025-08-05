@@ -14,6 +14,7 @@ from chisurf.models.model import ModelWidget
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel, LifetimeMixtureModel
 
 # These will be imported from the new module structure
+from chisurf import logging
 from chisurf.models.tcspc.widgets.convolve import ConvolveWidget
 from chisurf.models.tcspc.widgets.corrections import CorrectionsWidget
 from chisurf.models.tcspc.widgets.generic import GenericWidget
@@ -318,6 +319,14 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
             **kwargs
         )
         self.anisotropy = anisotropy
+
+        # Automatically set polarization type for fits
+        logging.debug("LifetimeModelWidget: Checking for polarization type setup.")
+        # Use the unified method to set polarization based on group position
+        polarization_set = self.anisotropy.set_polarization_by_group_position(fit, self)
+        if polarization_set:
+            logging.info(f"Polarization type set to {self.anisotropy.polarization_type}")
+                    
         self.layout.addWidget(self.lifetimes)
         self.layout.addWidget(anisotropy)
 
@@ -404,7 +413,7 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
             self.fit_list.takeItem(idx)
             self.pop_model(idx)
         else:
-            print("Please select an item to remove.")
+            logging.warning("Please select an item to remove.")
         self.onUpdateParameterUI()
 
     def onUpdataFitList(self):
