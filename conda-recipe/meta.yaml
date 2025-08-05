@@ -46,6 +46,7 @@ requirements:
     - boost-cpp
     # Needed to build tttrlib
     - hdf5
+    - imp
   run:
     - python
     - typing-extensions 4.14.*
