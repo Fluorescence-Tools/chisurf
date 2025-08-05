@@ -69,5 +69,6 @@ jobs:
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
+          ls -al
           mamba install -n benv -y boa conda-build anaconda-client
           mamba run -n benv conda mambabuild conda-recipe
