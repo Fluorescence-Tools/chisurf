@@ -39,7 +39,6 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           auto-update-conda: true
-          use-mamba: true
           conda-remove-defaults: true
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
@@ -50,10 +49,6 @@ jobs:
         shell: bash -el {0}
         run: |
           conda info
-          conda list
-          conda config --show-sources
-          conda config --show
-          printenv | sort
 
       - name: Build Conda Package
         shell: bash -el {0}
