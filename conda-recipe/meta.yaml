@@ -10,8 +10,7 @@ source:
 
 build:
   number: 0
-  # skip anything newer than 3.11:
-  skip: True  # [python_version != "3.10"]
+  skip: True   # [py != "3.10"]
   binary_relocation: True  # Relocate binaries correctly (for shared libraries, etc.).
   detect_binary_files_with_prefix: True  # [not win]
   entry_points:
