@@ -23,6 +23,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
+      - name: Download conda_build_config.yaml
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          echo "Fetching conda-forge’s pinning config…"
+          curl -sSL \
+            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
+            -o conda_build_config.yaml
+          echo "Pinning config version:"
+          head -n 5 conda_build_config.yaml
+
       - name: "Set SDK on MacOS (if needed)"
         if: startsWith(matrix.os, 'macos')
         run: build_tools/install_macos_sdk.sh
