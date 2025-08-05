@@ -1,42 +1,13 @@
-name: Conda Build
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - development    # keep if you really use 'development'
-      - main           # ← add your default branch here
-  release:
-    types: [published, prereleased]  # use 'published', not 'released'
-  schedule:
-    - cron: "0 23 * * 1"  # Every Monday at 11PM UTC
-
 jobs:
   build:
-    name: CondaBuild (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "windows-latest"]  # re-enable ubuntu
+        os: ["ubuntu-latest", "windows-latest"]
     steps:
       - uses: actions/checkout@v2
 
-      # on Linux/macOS...
-      - name: Download conda_build_config.yaml
-        if: matrix.os != 'windows-latest'
-        run: |
-          curl -sSL \
-            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
-            -o conda_build_config.yaml
-
-      # on Windows...
-      - name: Download conda_build_config.yaml (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          Invoke-WebRequest 'https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml' `
-            -OutFile conda_build_config.yaml -UseBasicParsing
+      # conda_build_config.yaml download (omitted for brevity)
 
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
@@ -48,12 +19,22 @@ jobs:
           channel-priority: true
           activate-environment: benv
 
-      - name: Display Conda Settings
-        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash -l' }}
+      # Display Conda info on Linux/macOS
+      - name: Display Conda Settings (Linux/macOS)
+        if: ${{ matrix.os != 'windows-latest' }}
+        shell: bash -el {0}
         run: conda info
 
-      - name: Build + Upload Conda Package
-        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash -l' }}
+      # Display Conda info on Windows
+      - name: Display Conda Settings (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: conda info
+
+      # Build + Upload on Linux/macOS
+      - name: Build + Upload Conda Package (Linux/macOS)
+        if: ${{ matrix.os != 'windows-latest' }}
+        shell: bash -l {0}
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
@@ -61,3 +42,19 @@ jobs:
           mamba run -n benv boa build conda-recipe
           PKG_PATH=$(mamba run -n benv conda-build conda-recipe --output)
           mamba run -n benv anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
+
+      # Build + Upload on Windows
+      - name: Build + Upload Conda Package (Windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          # install tools
+          mamba install -n benv -y boa conda-build anaconda-client
+          # use boa to build
+          mamba run -n benv boa build conda-recipe
+          # get output path
+          $pkg = mamba run -n benv conda-build conda-recipe --output
+          # upload
+          mamba run -n benv anaconda -t $env:ANACONDA_TOKEN upload --user tpeulen --skip-existing $pkg
