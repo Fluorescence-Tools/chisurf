@@ -75,7 +75,7 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install -y conda-build boa anaconda-client
-          conda build conda-recipe
+          boa build conda-recipe
 
       - name: Upload to conda channel
         shell: bash -l {0}
