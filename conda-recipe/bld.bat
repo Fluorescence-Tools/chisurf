@@ -95,13 +95,6 @@ nmake install
 
 cd ..\..\..
 
-:: Build fit2x module
-cd modules\fit2x
-git switch master
-if exist build rmdir /s /q build
-md build
-cd build
-
 :: Call Python with the --version flag to get the version information
 for /f "tokens=2 delims= " %%v in ('%PYTHON% --version 2^>^&1') do set PYTHON_VERSION=%%v
 :: Extract only the numeric part of the version
