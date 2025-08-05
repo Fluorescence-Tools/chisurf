@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"] #, "windows-latest"] # "macos-latest"] #,
+        os: ["windows-latest"] # "ubuntu-latest"] #, "macos-latest"] #,
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -33,6 +33,17 @@ jobs:
             -o conda_build_config.yaml
           echo "Pinning config version:"
           head -n 5 conda_build_config.yaml
+
+      - name: Download conda_build_config.yaml (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "Fetching conda-forge’s pinning config…"
+          Invoke-WebRequest `
+            -Uri 'https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml' `
+            -OutFile conda_build_config.yaml -UseBasicParsing
+          Write-Host "Pinning config version:"
+          Get-Content conda_build_config.yaml -TotalCount 5
 
       - name: "Set SDK on MacOS (if needed)"
         if: startsWith(matrix.os, 'macos')
