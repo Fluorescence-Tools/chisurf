@@ -47,7 +47,7 @@ requirements:
     # Needed to build tttrlib
     - hdf5
   run:
-    - python =3.10
+    - python
     - typing-extensions 4.14.*
     - pytools 2024
     - numpy
