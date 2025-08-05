@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QPushButton, QProgressBar, QListWidget, QListWidgetItem, QFileDialog,
-    QMessageBox, QDialog, QTableWidget, QTableWidgetItem, QLineEdit
+    QMessageBox, QDialog, QTableWidget, QTableWidgetItem, QLineEdit, QAbstractItemView
 )
 from PyQt5.QtCore import Qt
 import chisurf  # your chisurf module with fits, macros, etc.
@@ -18,8 +18,12 @@ import chisurf  # your chisurf module with fits, macros, etc.
 class FileListWidget(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # allow external drops
         self.setAcceptDrops(True)
-        self.setDragDropMode(QListWidget.NoDragDrop)
+        # permit drops (but not internal drags)
+        self.setDragDropMode(QAbstractItemView.DropOnly)
+        # make it clear we’re copying files in
+        self.setDefaultDropAction(Qt.CopyAction)
         self.setDropIndicatorShown(True)
 
     def dragEnterEvent(self, event):
@@ -270,6 +274,7 @@ class AnalysisPage(QWizardPage):
         file_path = pathlib.Path(file).as_posix().replace("\\", "/")
         chisurf.run(f'chisurf.macros.add_dataset(filename=r"{file_path}")')
         chisurf.run(f'chisurf.fits[{fit_idx}].data = chisurf.imported_datasets[-1]')
+        chisurf.run(f'chisurf.fits[{fit_idx}].run()')
         print(f"Running fit on: {file}")
 
     def run_fits(self):
