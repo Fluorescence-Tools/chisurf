@@ -10,17 +10,10 @@
 	path = modules/k2dist
 	url = https://github.com/fluorescence-tools/k2dist
 	branch = main
-[submodule "modules/fit2x"]
-	path = modules/fit2x
-	url = https://gitlab.peulen.xyz/skf/fit2x
-	branch = master
 [submodule "modules/chinet"]
 	path = modules/chinet
 	url = https://github.com/tpeulen/chinet
 	branch = development
-[submodule "modules/ucfret"]
-	path = modules/ucfret
-	url = https://gitlab.peulen.xyz/imp/ucfret
 [submodule "modules/tttrlib"]
 	path = modules/tttrlib
 	url = https://github.com/fluorescence-tools/tttrlib
