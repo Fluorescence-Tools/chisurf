@@ -64,21 +64,26 @@ jobs:
           miniforge-version: latest
           channels: conda-forge,bioconda,tpeulen
           channel-priority: true
+          activate-environment: base
 
       - name: Display Conda Settings
         shell: bash -el {0}
         run: |
           conda info
 
-      # build + upload (all platforms, including Windows via Git Bash)
       - name: Build + Upload Conda Package
         shell: bash -l {0}
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          mamba install -y conda-build boa anaconda-client
+          # 1) install everything we need
+          mamba install -y boa conda-build anaconda-client
+
+          # 2) build with boa (faster than `conda build`, and works cross-platform)
           mamba run -n base boa build conda-recipe
-      
-          # use conda-build binary to get the exact .tar.bz2 path
-          PKG_PATH=$(conda-build conda-recipe --output)
+
+          # 3) grab the exact artifact path via the conda-build binary
+          PKG_PATH=$(mamba run -n base conda-build conda-recipe --output)
+
+          # 4) upload via the Anaconda client
           mamba run -n base anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
