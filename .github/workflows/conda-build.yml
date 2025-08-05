@@ -13,12 +13,12 @@ on:
 
 jobs:
   build:
-    name: CondaBuild (${{ matrix.python-version }}, ${{ matrix.os }})
+    name: CondaBuild (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "windows-latest"] # "macos-latest"] #,
+        os: ["ubuntu-latest"] #, "windows-latest"] # "macos-latest"] #,
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

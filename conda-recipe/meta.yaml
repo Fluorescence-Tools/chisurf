@@ -65,16 +65,16 @@ requirements:
     - numba
     - boost-cpp
     - mdtraj
-    - ipython 7.33.*
+    - ipython #7.33.*
     - notebook
-    - emcee 3.1.*
+    - emcee #3.1.*
     - pyopengl
-    - pytables 3.9.*
+    - pytables #3.9.*
     - pymol-open-source
     - guidata
     - guiqwt
     - python-docx
-    - qtconsole 5.2.*
+    - qtconsole #5.2.*
     - pyqtwebengine
     - libcxx  # [osx]
     - hmmlearn
