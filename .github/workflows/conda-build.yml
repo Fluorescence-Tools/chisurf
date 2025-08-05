@@ -49,13 +49,6 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: build_tools/install_macos_sdk.sh
 
-      - name: Install Visual Studio 2017 (Windows only)
-        if: matrix.os == 'windows-latest'
-        run: |
-          choco install visualstudio2017buildtools --version=15.9.54 -y
-          choco install visualstudio2017-workload-vctools -y
-          setx PATH "%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build"
-
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
         with:
@@ -76,4 +69,4 @@ jobs:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
           mamba install -n benv -y boa conda-build anaconda-client
-          mamba run -n benv conda build conda-recipe
+          mamba run -n benv conda mambabuild conda-recipe
