@@ -8,7 +8,8 @@ on:
   release:
     types: ['released', 'prereleased']
   schedule:
-    - cron: "0 11 * * 1"
+    # Every Monday at 11PM UTC
+    - cron: "0 23 * * 1"
 
 jobs:
   build:
@@ -55,9 +56,7 @@ jobs:
           printenv | sort
 
       - name: Build Conda Package
-        uses: aganders3/headless-gui@v1
-        with:
-          shell: bash -el {0}
-          run: |
-            mamba install -y conda-build boa anaconda-client
-            mamba build conda-recipe                            # build the recipe
+        shell: bash -el {0}
+        run: |
+          mamba install -y conda-build boa anaconda-client
+          mamba build conda-recipe
