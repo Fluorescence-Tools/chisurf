@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - development
+      - development    # keep if you really use 'development'
+      - main           # ← add your default branch here
   release:
-    types: ['released', 'prereleased']
+    types: [published, prereleased]  # use 'published', not 'released'
   schedule:
-    # Every Monday at 11PM UTC
-    - cron: "0 23 * * 1"
+    - cron: "0 23 * * 1"  # Every Monday at 11PM UTC
 
 jobs:
   build:
@@ -18,43 +18,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["windows-latest"] # "ubuntu-latest"] #, "macos-latest"] #,
+        os: ["ubuntu-latest", "windows-latest"]  # re-enable ubuntu
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
+      # on Linux/macOS...
       - name: Download conda_build_config.yaml
         if: matrix.os != 'windows-latest'
-        shell: bash
         run: |
-          echo "Fetching conda-forge’s pinning config…"
           curl -sSL \
             https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
             -o conda_build_config.yaml
-          echo "Pinning config version:"
-          head -n 5 conda_build_config.yaml
 
+      # on Windows...
       - name: Download conda_build_config.yaml (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          Write-Host "Fetching conda-forge’s pinning config…"
-          Invoke-WebRequest `
-            -Uri 'https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml' `
+          Invoke-WebRequest 'https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml' `
             -OutFile conda_build_config.yaml -UseBasicParsing
-          Write-Host "Pinning config version:"
-          Get-Content conda_build_config.yaml -TotalCount 5
-
-      - name: "Set SDK on MacOS (if needed)"
-        if: startsWith(matrix.os, 'macos')
-        run: build_tools/install_macos_sdk.sh
-
-      - name: Install Visual Studio 2017 (Windows only)
-        if: matrix.os == 'windows-latest'
-        run: |
-          choco install visualstudio2017buildtools --version=15.9.54 -y
-          choco install visualstudio2017-workload-vctools -y
-          setx PATH "%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build"
 
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
@@ -67,9 +49,8 @@ jobs:
           activate-environment: benv
 
       - name: Display Conda Settings
-        shell: bash -el {0}
-        run: |
-          conda info
+        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash -l' }}
+        run: conda info
 
       - name: Build + Upload Conda Package
         shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash -l' }}
