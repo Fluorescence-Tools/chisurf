@@ -2,10 +2,15 @@
 name: Build and Upload Conda Packages
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - 'v*.*.*'      # triggers on version tags like v1.2.3
-  workflow_dispatch:  # allows manual runs
+    branches:
+      - development
+  release:
+    types: ['released', 'prereleased']
+  schedule:
+    # Every Monday at 11PM UTC
+    - cron: "0 11 * * 1"
 
 jobs:
   build:
