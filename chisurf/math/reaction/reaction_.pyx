@@ -50,7 +50,7 @@ cdef class Model:
             int tmax=10,
             int reps=1
     ):
-        cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=float)
+        cdef np.ndarray[DTYPE_t,ndim=3] res = np.zeros((tmax,self.nvars,reps),dtype=np.float64)
         tvec = np.arange(tmax)
         self.res = res
         cdef int i, steps
@@ -83,7 +83,7 @@ cdef class Model:
         #cdef np.ndarray[INT_t] tvec
         cdef np.ndarray[DTYPE_t] pv
         l=self.pvl
-        pv = np.zeros(l, dtype=float)
+        pv = np.zeros(l, dtype=np.float64)
         tm = self.tm
         #tvec = np.arange(tmax,dtype=int)
         tc = 0
