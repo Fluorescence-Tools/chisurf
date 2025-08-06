@@ -1,30 +1,30 @@
-name: Conda Build
+name: Build and Publish Conda Package
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - development
-  release:
-    types: ['released', 'prereleased']
-  schedule:
-    # Every Monday at 11PM UTC
-    - cron: "0 23 * * 1"
+    tags:
+      - 'v*.*.*'      # triggers on version tags like v1.2.3
+  workflow_dispatch:  # allows manual runs
 
 jobs:
-  build:
-    name: CondaBuild (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-latest"] #, "windows-latest"] , "macos-latest"] #,
+  build-and-publish:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          # remove fixed Python version to use default
+          auto-update-conda: true       # update conda to latest
+          activate-environment: base    # activate the base environment
+          miniconda-version: latest     # install latest Miniconda
+          channels: conda-forge, bioconda  # add bioconda & conda-forge
+          channel-priority: strict        # enforce strict priority order
 
       - name: Download conda_build_config.yaml
-        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           echo "Fetching conda-forge’s pinning config…"
@@ -34,24 +34,19 @@ jobs:
           echo "Pinning config version:"
           head -n 5 conda_build_config.yaml
 
-      - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          auto-update-conda: true
-          conda-remove-defaults: true
-          miniforge-version: latest
-          channels: conda-forge,bioconda
-          channel-priority: true
-          activate-environment: benv
-
-      - name: Display Conda Settings
-        shell: bash -el {0}
+      - name: Install build tools
         run: |
-          conda info
+          conda install --yes conda-build anaconda-client
 
-      - name: Build and upload the conda packages
-        uses: uibcdf/action-build-and-upload-conda-packages
-        with:
-          meta_yaml_dir: conda-recipe # Replace with the path to your meta.yaml directory
-          user: tpeulen # Replace with your Anaconda username (or an Anaconda organization username)
-          token: ${{ secrets.ANACONDA_TOKEN }} # Replace with the name of your Anaconda Token secret
+      - name: Build conda package
+        run: |
+          conda build conda-recipe
+
+      - name: Upload to Anaconda.org
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          # Get the built package path
+          PACKAGE=$(conda build --output conda-recipe)
+          # Upload to your Anaconda user/channel
+          anaconda -t "$ANACONDA_API_TOKEN" upload --user YOUR_USERNAME --label main "$PACKAGE"
