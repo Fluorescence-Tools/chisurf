@@ -2,12 +2,10 @@
 name: Build and Upload Conda Packages
 
 on:
-  workflow_dispatch:
-#  push:
-#    branches:
-#      - develop
-  release:
-    types: ['released', 'prereleased']
+  push:
+    tags:
+      - 'v*.*.*'      # triggers on version tags like v1.2.3
+  workflow_dispatch:  # allows manual runs
 
 jobs:
   build:
@@ -37,7 +35,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           miniforge-version: latest
           channels: conda-forge,bioconda
-          channel-priority: true
+          channel-priority: strict
 
       - name: Display Conda Settings
         shell: bash -el {0}
@@ -47,6 +45,16 @@ jobs:
           conda config --show-sources
           conda config --show
           printenv | sort
+
+      - name: Download conda_build_config.yaml
+        shell: bash
+        run: |
+          echo "Fetching conda-forge’s pinning config…"
+          curl -sSL \
+            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
+            -o conda_build_config.yaml
+          echo "Pinning config version:"
+          head -n 5 conda_build_config.yaml
 
       - name: Build and Upload Conda Package
         uses: aganders3/headless-gui@v1
