@@ -20,11 +20,11 @@ jobs:
       matrix:
         os: ["windows-latest"] # "ubuntu-latest"] #, "macos-latest"] #,
     steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
       - name: Download conda_build_config.yaml
-        if: matrix.os != 'windows-latest'
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           echo "Fetching conda-forge’s pinning config…"
@@ -33,21 +33,6 @@ jobs:
             -o conda_build_config.yaml
           echo "Pinning config version:"
           head -n 5 conda_build_config.yaml
-
-      - name: Download conda_build_config.yaml (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          Write-Host "Fetching conda-forge’s pinning config…"
-          Invoke-WebRequest `
-            -Uri 'https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml' `
-            -OutFile conda_build_config.yaml -UseBasicParsing
-          Write-Host "Pinning config version:"
-          Get-Content conda_build_config.yaml -TotalCount 5
-
-      - name: "Set SDK on MacOS (if needed)"
-        if: startsWith(matrix.os, 'macos')
-        run: build_tools/install_macos_sdk.sh
 
       - name: Set up Conda
         uses: conda-incubator/setup-miniconda@v3
@@ -64,9 +49,12 @@ jobs:
         run: |
           conda info
 
-      - name: Build + Upload Conda Package
+      - name: Build+Upload Conda Package
+        shell: bash -el {0}
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          mamba install -n benv -y boa conda-build anaconda-client
-          mamba run -n benv conda mambabuild conda-recipe
+          mamba install -y conda-build boa anaconda-client
+          PKG_PATH=$(conda mambabuild conda-recipe --output)
+          echo "Logging in to Anaconda Cloud as tpeulen…"
+          anaconda -t "$ANACONDA_TOKEN" upload --user tpeulen --skip-existing "$PKG_PATH"
