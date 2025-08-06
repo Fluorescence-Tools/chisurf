@@ -51,12 +51,13 @@ jobs:
           conda config --show
           printenv | sort
 
+      # https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
       - name: Download conda_build_config.yaml
         shell: bash
         run: |
           echo "Fetching conda-forge’s pinning config…"
           curl -sSL \
-            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
+            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/a3466e9340d2de032119f8fa1a9a4f5d57c456d3/recipe/conda_build_config.yaml \
             -o conda_build_config.yaml
           echo "Pinning config version:"
           head -n 5 conda_build_config.yaml
