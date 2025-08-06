@@ -83,7 +83,6 @@ jobs:
           shell: bash -el {0}
           run: |
             conda install mamba conda-build boa anaconda-client
-            conda clean --all --yes
             cd conda-recipe
             conda mambabuild . --output-folder conda-bld
             anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
