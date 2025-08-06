@@ -49,29 +49,6 @@ cmake -S .. -B . \
 ninja install -j ${CPU_COUNT}
 cd ../../..
 
-# Build tttrlib
-cd modules/tttrlib
-git fetch --all
-git checkout development
-git pull origin development
-git submodule update --init --recursive
-
-rm -rf build && mkdir build && cd build
-cmake -S .. -B . \
-  -DCMAKE_CXX_COMPILER="${CXX}" \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX" \
-  -DBUILD_PYTHON_INTERFACE=ON \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_LIBRARY=OFF \
-  -DWITH_AVX=OFF \
-  -DBoost_USE_STATIC_LIBS=OFF \
-  -DPython_ROOT_DIR="${PREFIX}/bin" \
-  -DBUILD_PYTHON_DOCS=ON \
-  -G Ninja \
-  ${CONFIG_ARGS}
-make install -j ${CPU_COUNT}
-cd ../../..
-
 
 # Install main module
 #####################
