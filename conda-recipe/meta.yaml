@@ -38,7 +38,7 @@ requirements:
     - typing-extensions 4.14.*
     - pytools 2024
     - pip
-    - cython
+    - cython <3.0
     - pyyaml
     - numpy
     - pyqt           # Needed for pyrcc5 (updating PyQt resource files)
