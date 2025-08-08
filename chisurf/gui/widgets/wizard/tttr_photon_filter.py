@@ -1655,7 +1655,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             "trace_bin_width": self.doubleSpinBox_4.value(),
             "number_of_burst_bins": self.spinBox_6.value(),
             "channels": self.channels,
-            "decay_coarse": self.decay_coarse
+            "decay_coarse": self.decay_coarse,
+            "ph_window": self.ph_window
         }
         
         # Add microtime ranges if available
@@ -1930,6 +1931,9 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                 if "photon_threshold" in burst_params:
                     self.spinBox.setValue(burst_params["photon_threshold"])
 
+                if "ph_window" in burst_params:
+                    self.ph_window = burst_params["ph_window"]
+
                 if "count_rate_window_ms" in burst_params:
                     self.doubleSpinBox.setValue(burst_params["count_rate_window_ms"])
 
@@ -1988,6 +1992,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
                 if "number_of_burst_bins" in burst_params:
                     self.spinBox_6.setValue(burst_params["number_of_burst_bins"])
+
+                self.spinBox_5.setValue(burst_params["decay_coarse"])
 
                 # Update the plots
                 self.update_plots()
