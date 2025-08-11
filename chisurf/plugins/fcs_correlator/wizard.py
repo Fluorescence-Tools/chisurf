@@ -265,17 +265,45 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
             settings = self.detector_page.get_settings()
             dets = settings.get('detectors', {}) or {}
             wins = settings.get('windows', {}) or {}
-            # Refill detectors and windows
+            # Sanitize empty names
+            dets = {k: v for k, v in dets.items() if isinstance(k, str) and k.strip()}
+            wins = {k: v for k, v in wins.items() if isinstance(k, str) and k.strip()}
+            # Refill detectors and windows with signals blocked to avoid transient '' updates
+            cb2 = getattr(self.photon_select, 'comboBox_2', None)
+            cb3 = getattr(self.photon_select, 'comboBox_3', None)
+            prev2 = cb2.blockSignals(True) if cb2 is not None else None
+            prev3 = cb3.blockSignals(True) if cb3 is not None else None
             try:
-                # Attempt to clear existing items in combos if available to avoid duplicates
-                if hasattr(self.photon_select, 'comboBox_2') and self.photon_select.comboBox_2.count() > 0:
-                    self.photon_select.comboBox_2.clear()
-                if hasattr(self.photon_select, 'comboBox_3') and self.photon_select.comboBox_3.count() > 0:
-                    self.photon_select.comboBox_3.clear()
+                if cb2 is not None:
+                    cb2.clear()
+                if cb3 is not None:
+                    cb3.clear()
+                self.photon_select.fill_detectors(dets)
+                self.photon_select.fill_pie_windows(wins)
+                # Ensure a defined selection
+                if cb2 is not None and cb2.count() > 0:
+                    cb2.setCurrentIndex(0)
+                if cb3 is not None and cb3.count() > 0:
+                    cb3.setCurrentIndex(0)
             except Exception:
                 pass
-            self.photon_select.fill_detectors(dets)
-            self.photon_select.fill_pie_windows(wins)
+            finally:
+                try:
+                    if cb2 is not None:
+                        cb2.blockSignals(prev2 if isinstance(prev2, bool) else False)
+                    if cb3 is not None:
+                        cb3.blockSignals(prev3 if isinstance(prev3, bool) else False)
+                except Exception:
+                    pass
+            # Manually update dependent fields after safe selection
+            try:
+                self.photon_select.update_detectors()
+            except Exception:
+                pass
+            try:
+                self.photon_select.update_pie_windows()
+            except Exception:
+                pass
             # Try to align setup name in photon filter if available
             setup_name = getattr(self.detector_page, 'current_setup_name', None)
             if setup_name:
@@ -385,43 +413,61 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
         if getattr(self, 'filter_page_id', None) is not None and new_id == self.filter_page_id:
             self._sync_photon_filter_setup()
             self._sync_photon_filter_files()
-        # When navigating to the correlator page and Photon filter is disabled,
-        # ensure the correlator has the selected TTTR files loaded.
+        # When navigating to the correlator page, ensure the correlator is set up
         if getattr(self, 'correlator_page_id', None) is not None and new_id == self.correlator_page_id:
             try:
-                if not self.file_page.cb_photon_filter.isChecked():
-                    files = self.file_page.checked_files
-                    allowed_extensions = {
-                        f".{ext.lower()}" if not ext.startswith('.') else ext.lower()
-                        for ext in tttrlib.TTTR.get_supported_container_names()
-                    }
-                    expanded_files: List[str] = []
-                    for p_str in files:
-                        p = pathlib.Path(p_str).resolve()
-                        if p.is_dir():
-                            for child in p.iterdir():
-                                if child.is_file() and child.suffix.lower() in allowed_extensions:
-                                    expanded_files.append(str(child.resolve()))
-                        else:
-                            expanded_files.append(str(p))
-                    # Set default analysis folder
-                    if expanded_files:
-                        parent = pathlib.Path(expanded_files[0]).resolve().parent
-                        self.correlator_page.lineEdit_3.setText(parent.as_posix())
-                    # Ensure we do not write chunk files in direct TTTR mode
-                    try:
+                files = self.file_page.checked_files
+                allowed_extensions = {
+                    f".{ext.lower()}" if not ext.startswith('.') else ext.lower()
+                    for ext in tttrlib.TTTR.get_supported_container_names()
+                }
+                expanded_files: List[str] = []
+                for p_str in files:
+                    p = pathlib.Path(p_str).resolve()
+                    if p.is_dir():
+                        for child in p.iterdir():
+                            if child.is_file() and child.suffix.lower() in allowed_extensions:
+                                expanded_files.append(str(child.resolve()))
+                    else:
+                        expanded_files.append(str(p))
+                # Set default analysis folder
+                if expanded_files:
+                    parent = pathlib.Path(expanded_files[0]).resolve().parent
+                    self.correlator_page.lineEdit_3.setText(parent.as_posix())
+                # If Photon filter is disabled, we are in direct TTTR mode: don't write chunk files
+                try:
+                    if not self.file_page.cb_photon_filter.isChecked():
                         self.correlator_page.inner.save_chunks_to_disk = False
-                    except Exception:
-                        pass
-                    # Load into correlator
-                    filetype = self.detector_page.filetype
-                    self.correlator_page.load_tttr_files(expanded_files, filetype)
-                    # Ensure correlator combos are populated from detector definitions
-                    try:
-                        if hasattr(self.correlator_page, 'inner') and hasattr(self.correlator_page.inner, 'apply_detector_setup_from_page'):
-                            self.correlator_page.inner.apply_detector_setup_from_page(self.detector_page)
-                    except Exception:
-                        pass
+                except Exception:
+                    pass
+                # Load into correlator in direct TTTR mode
+                try:
+                    if not self.file_page.cb_photon_filter.isChecked():
+                        filetype = self.detector_page.filetype
+                        self.correlator_page.load_tttr_files(expanded_files, filetype)
+                except Exception:
+                    pass
+                # Always populate correlator combos from Detector page definitions
+                try:
+                    if hasattr(self.correlator_page, 'inner') and hasattr(self.correlator_page.inner, 'apply_detector_setup_from_page'):
+                        self.correlator_page.inner.apply_detector_setup_from_page(self.detector_page)
+                except Exception:
+                    pass
+                # Fallback: if combos absent or empty, prefill channel line edits from detectors
+                try:
+                    settings = self.detector_page.get_settings()
+                    dets = settings.get('detectors', {}) or {}
+                    det_names = [k for k in dets.keys() if isinstance(k, str) and k.strip()]
+                    if det_names:
+                        a = dets[det_names[0]].get('chs', [])
+                        b = dets[det_names[1]].get('chs', a) if len(det_names) > 1 else a
+                        # Only apply fallback if edits are empty
+                        if not str(self.correlator_page.lineEdit.text()).strip():
+                            self.correlator_page.lineEdit.setText(','.join(map(str, a)))
+                        if not str(self.correlator_page.lineEdit_2.text()).strip():
+                            self.correlator_page.lineEdit_2.setText(','.join(map(str, b)))
+                except Exception:
+                    pass
             except Exception:
                 pass
 
@@ -436,13 +482,47 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                 wins = settings.get('windows', {}) or {}
                 setup_name = getattr(self.detector_page, 'current_setup_name', None)
 
-                # Update Photon Filter page from detector definition
+                # Update Photon Filter page from detector definition (sanitize and block signals)
                 try:
                     self.photon_select.comboBox.clear()
                 except Exception:
                     pass
-                self.photon_select.fill_detectors(dets)
-                self.photon_select.fill_pie_windows(wins)
+                # Sanitize empty names
+                dets = {k: v for k, v in dets.items() if isinstance(k, str) and k.strip()}
+                wins = {k: v for k, v in wins.items() if isinstance(k, str) and k.strip()}
+                cb2 = getattr(self.photon_select, 'comboBox_2', None)
+                cb3 = getattr(self.photon_select, 'comboBox_3', None)
+                prev2 = cb2.blockSignals(True) if cb2 is not None else None
+                prev3 = cb3.blockSignals(True) if cb3 is not None else None
+                try:
+                    if cb2 is not None:
+                        cb2.clear()
+                    if cb3 is not None:
+                        cb3.clear()
+                    self.photon_select.fill_detectors(dets)
+                    self.photon_select.fill_pie_windows(wins)
+                    if cb2 is not None and cb2.count() > 0:
+                        cb2.setCurrentIndex(0)
+                    if cb3 is not None and cb3.count() > 0:
+                        cb3.setCurrentIndex(0)
+                except Exception:
+                    pass
+                finally:
+                    try:
+                        if cb2 is not None:
+                            cb2.blockSignals(prev2 if isinstance(prev2, bool) else False)
+                        if cb3 is not None:
+                            cb3.blockSignals(prev3 if isinstance(prev3, bool) else False)
+                    except Exception:
+                        pass
+                try:
+                    self.photon_select.update_detectors()
+                except Exception:
+                    pass
+                try:
+                    self.photon_select.update_pie_windows()
+                except Exception:
+                    pass
 
                 # Select setup in photon filter combo if available
                 if setup_name:
