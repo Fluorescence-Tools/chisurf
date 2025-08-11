@@ -1427,17 +1427,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     def fill_pie_windows(self, k):
         self.windows = k
-        # Refill PIE windows combo safely
-        try:
-            self.comboBox_3.blockSignals(True)
-            self.comboBox_3.clear()
-            self.comboBox_3.addItems(k.keys())
-            if self.comboBox_3.count() > 0:
-                self.comboBox_3.setCurrentIndex(0)
-        finally:
-            self.comboBox_3.blockSignals(False)
-        # Ensure dependent UI updates without risking KeyError
-        self.update_pie_windows()
+        self.comboBox_3.addItems(k.keys())
 
     def zip_output_folder(self, output_folder, existing_progress=None, add_timestamp=False):
         """
@@ -1562,53 +1552,31 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
     def fill_detectors(self, k):
         self.detectors = k
-        # Refill detectors combo safely
-        try:
-            self.comboBox_2.blockSignals(True)
-            self.comboBox_2.clear()
-            # Add "All" option at the beginning
-            self.comboBox_2.addItem("All")
-            self.comboBox_2.addItems(k.keys())
-            # Default to "All"
-            if self.comboBox_2.count() > 0:
-                self.comboBox_2.setCurrentIndex(0)
-        finally:
-            self.comboBox_2.blockSignals(False)
-        # Ensure dependent UI updates without risking KeyError
-        self.update_detectors()
+        # Add "All" option at the beginning
+        self.comboBox_2.addItem("All")
+        self.comboBox_2.addItems(k.keys())
 
     def update_detectors(self):
         """
         Sync the comboBox_2 selection to the channel lineEdit_4.
-        If "All" or an invalid/empty key is selected, empty the channel numbers line widget.
+        If "All" is selected, empty the channel numbers line widget.
         """
         key = self.comboBox_2.currentText()
-        # Guard against empty or unknown keys
-        if not key or key == "All" or key not in getattr(self, 'detectors', {}) or not isinstance(self.detectors.get(key, {}), dict):
+        if key == "All":
+            # Empty the channel numbers line widget
             self.lineEdit_4.setText("")
         else:
             # Set the channel numbers from the selected detector
-            try:
-                chs = self.detectors.get(key, {}).get("chs", [])
-                s = ", ".join([str(i) for i in chs])
-            except Exception:
-                s = ""
+            s = ", ".join([str(i) for i in self.detectors[key]["chs"]])
             self.lineEdit_4.setText(s)
         self.update_parameter()
 
     def update_pie_windows(self):
         """
         Sync the comboBox_3 selection to the lineEdit_5 for microtime ranges.
-        Robust to empty/unknown keys and unexpected value types.
         """
         key = self.comboBox_3.currentText()
-        # Guard against empty or unknown key
-        if not key or key not in getattr(self, 'windows', {}):
-            self.lineEdit_5.setText("")
-            self.update_parameter()
-            return
-
-        pie_win = self.windows.get(key)
+        pie_win = self.windows[key]
 
         # Check if pie_win is a list/tuple or a single integer
         if isinstance(pie_win, (list, tuple)):
