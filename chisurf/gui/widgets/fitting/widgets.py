@@ -486,6 +486,24 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         # Track in storage lists
         self._plots_all[idx] = plot
         self._created_plots.append(plot)
+        
+        # Connect LinePlot region changes to the Fit widget's range selector
+        try:
+            region_changed = getattr(plot, 'regionChanged', None)
+            if region_changed is not None and hasattr(region_changed, 'connect') and self.fit_widget is not None:
+                def _sync_fit_widget_range(xmin: int, xmax: int, fw=self.fit_widget):
+                    # Update only the UI of the fit widget to reflect the plot's region
+                    # The underlying fit_range is already updated inside the plot via chisurf.run
+                    try:
+                        fw.blockSignals(True)
+                        fw.xmin = xmin
+                        fw.xmax = xmax
+                    finally:
+                        fw.blockSignals(False)
+                region_changed.connect(_sync_fit_widget_range)
+        except Exception:
+            pass
+        
         return plot
 
     def on_change_plot(self):

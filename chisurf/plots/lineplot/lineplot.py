@@ -309,6 +309,7 @@ class LinePlotControl(QtWidgets.QWidget):
 class LinePlot(plotbase.Plot):
 
     name = "Fit"
+    regionChanged = QtCore.Signal(int, int)
 
     def get_bounds(
             self,
@@ -425,6 +426,11 @@ class LinePlot(plotbase.Plot):
                     ub = np.log10(ub)
                 self.region.setRegion((lb, ub))
                 chisurf.run(f"cs.current_fit.fit_range = {self.lb_i}, {self.ub_i}")
+                # Notify listeners (e.g., Fit widget) about changed fit-range
+                try:
+                    self.regionChanged.emit(self.lb_i, self.ub_i)
+                except Exception:
+                    pass
                 self.update(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(onRegionUpdate)
