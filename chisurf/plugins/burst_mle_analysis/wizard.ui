@@ -33,7 +33,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_files">
        <attribute name="title">
@@ -338,7 +338,7 @@
                <item>
                 <widget class="QCheckBox" name="checkBox_bg_one_for_all">
                  <property name="text">
-                  <string>One for al</string>
+                  <string>One for all</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
@@ -654,7 +654,7 @@
               <number>3</number>
              </property>
              <property name="maximum">
-              <double>10.000000000000000</double>
+              <double>99999.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -842,7 +842,23 @@
              <string notr="true">background-color: rgb(49, 208, 24)</string>
             </property>
             <property name="text">
-             <string>Process Bursts</string>
+             <string>Run</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_stop">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(255, 0, 0);</string>
+            </property>
+            <property name="text">
+             <string>Stop</string>
             </property>
            </widget>
           </item>
