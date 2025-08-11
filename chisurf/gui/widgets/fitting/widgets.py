@@ -89,16 +89,30 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
             menu.exec_(event.globalPos())
 
     def update(self, *args, update_others=True, **kwargs):
-        super().update()
-        self.clear()
+        # Optimize: avoid triggering expensive fit.update() on every list rebuild
+        # and minimize signal/paint churn during population.
+        try:
+            self.blockSignals(True)
+            self.setUpdatesEnabled(False)
+            super().update()
+            self.clear()
 
-        for nbr, fit in enumerate(chisurf.fits):
-            widget_name = pathlib.Path(fit.data.name).name
-            model_name = fit.model.__class__.name
-            item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, model_name])
-            item.setToolTip(1, fit.name)
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-            fit.update()
+            for nbr, fit in enumerate(chisurf.fits):
+                # Only use lightweight data to populate the list; do not call fit.update() here.
+                try:
+                    widget_name = pathlib.Path(fit.data.name).name
+                except Exception:
+                    widget_name = getattr(fit.data, 'name', 'Unknown')
+                try:
+                    model_name = fit.model.__class__.name
+                except Exception:
+                    model_name = getattr(fit.model.__class__, '__name__', 'Model')
+                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, model_name])
+                item.setToolTip(1, getattr(fit, 'name', widget_name))
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        finally:
+            self.setUpdatesEnabled(True)
+            self.blockSignals(False)
 
     def onItemChanged(self):
         if self.selected_fits:
@@ -395,19 +409,32 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.current_plot_controller = QtWidgets.QWidget(self)
         self.current_plot_controller.hide()
 
-        plots = list()
-        for plot_class, kwargs in fit.model.plot_classes:
-            plot = plot_class(fit, **kwargs)
-            plot.plot_controller.hide()
-            plots.append(plot)
-            self.plot_tab_widget.addTab(plot, plot_class.name)
-            control_layout.addWidget(plot.plot_controller)
-
-        fit.plots = plots
+        # Lazy plot instantiation: create lightweight tab containers now, build plots on demand
+        self._control_layout = control_layout
+        self._plot_specs = list(fit.model.plot_classes)
+        self._plot_containers = []
+        self._plots_all = [None] * len(self._plot_specs)      # positional storage
+        self._created_plots = []                               # actual created plots (shared)
+        # Create empty containers per tab
+        for (plot_class, kwargs) in self._plot_specs:
+            container = QtWidgets.QWidget()
+            container.setLayout(QtWidgets.QVBoxLayout())
+            container.layout().setContentsMargins(0, 0, 0, 0)
+            container.layout().setSpacing(0)
+            self._plot_containers.append(container)
+            self.plot_tab_widget.addTab(container, getattr(plot_class, 'name', plot_class.__name__))
+        # Share created plot list with FitGroup and its member Fits
+        fit.plots = self._created_plots
         for f in fit:
-            f.plots = plots
+            f.plots = self._created_plots
 
-        self.on_change_plot()
+        # Instantiate the initially visible plot after the event loop returns
+        def _ensure_initial_plot():
+            idx = self.plot_tab_widget.currentIndex()
+            self.ensure_plot_created(idx)
+            self.on_change_plot()
+        QtCore.QTimer.singleShot(0, _ensure_initial_plot)
+
         self.plot_tab_widget.currentChanged.connect(self.on_change_plot)
 
         # Use RubberBandResize / RubberBandMove
@@ -437,13 +464,42 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         xs, ys = chisurf.settings.gui['fit_windows_size']
         self.resize(xs, ys)
 
+    def ensure_plot_created(self, idx: int):
+        # Create plot for given index if not yet created
+        if idx < 0 or idx >= len(self._plot_specs):
+            return None
+        if self._plots_all[idx] is not None:
+            return self._plots_all[idx]
+        plot_class, kwargs = self._plot_specs[idx]
+        try:
+            plot = plot_class(self.fit, **kwargs)
+        except Exception as e:
+            # Provide a fallback widget to avoid breaking the tab UI
+            fallback = QtWidgets.QLabel(f"Failed to create plot: {getattr(plot_class, 'name', plot_class.__name__)}\n{e}")
+            self._plot_containers[idx].layout().addWidget(fallback)
+            self._plots_all[idx] = fallback
+            return fallback
+        # Attach to container and control layout
+        plot.plot_controller.hide()
+        self._plot_containers[idx].layout().addWidget(plot)
+        self._control_layout.addWidget(plot.plot_controller)
+        # Track in storage lists
+        self._plots_all[idx] = plot
+        self._created_plots.append(plot)
+        return plot
+
     def on_change_plot(self):
         idx = self.plot_tab_widget.currentIndex()
-        self.current_plot_controller.hide()
-        # Check if plots list is empty to avoid IndexError
-        if not self.fit.plots:
+        # Ensure the selected tab's plot exists
+        plot = self.ensure_plot_created(idx)
+        # Toggle controllers
+        try:
+            self.current_plot_controller.hide()
+        except Exception:
+            pass
+        if plot is None or not hasattr(plot, 'plot_controller'):
             return
-        self.current_plot_controller = self.fit.plots[idx].plot_controller
+        self.current_plot_controller = plot.plot_controller
         self.current_plot_controller.show()
 
     def updateStatusBar(self, msg: str):

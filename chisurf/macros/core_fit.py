@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import os
 import gc
-import docx
-from docx.shared import Inches
-from PyQt5.QtWidgets import QApplication
 
 import chisurf
 import chisurf.base
@@ -62,25 +59,42 @@ def add_fit(
             )
             chisurf.fits.append(fit_group)
 
-            fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
-                fit=fit_group
-            )
-            cs.modelLayout.addWidget(fit_control_widget)
-            for fit in fit_group:
-                cs.modelLayout.addWidget(fit.model)
+            # Batch UI updates to avoid repeated repaints while constructing widgets
+            mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
+            plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
+            try:
+                if mdl_parent: mdl_parent.setUpdatesEnabled(False)
+                if plo_parent: plo_parent.setUpdatesEnabled(False)
+                cs.mdiarea.setUpdatesEnabled(False)
 
-            fit_window = chisurf.gui.widgets.fitting.FitSubWindow(
-                fit=fit_group,
-                control_layout=cs.plotOptionsLayout,
-                fit_widget=fit_control_widget
-            )
+                fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
+                    fit=fit_group
+                )
+                cs.modelLayout.addWidget(fit_control_widget)
+                for fit in fit_group:
+                    cs.modelLayout.addWidget(fit.model)
 
-            fit_window.setWindowTitle(fit.name)
-            fit_window = cs.mdiarea.addSubWindow(fit_window)
-            chisurf.gui.fit_windows.append(fit_window)
-            cs.current_fit = fit_group
-            fit_control_widget.onAutoFitRange()
-            fit_window.show()
+                fit_window = chisurf.gui.widgets.fitting.FitSubWindow(
+                    fit=fit_group,
+                    control_layout=cs.plotOptionsLayout,
+                    fit_widget=fit_control_widget
+                )
+
+                fit_window.setWindowTitle(fit.name)
+                fit_window = cs.mdiarea.addSubWindow(fit_window)
+                chisurf.gui.fit_windows.append(fit_window)
+                cs.current_fit = fit_group
+                # Defer auto-fit range to run after the window is shown to avoid blocking Add Fit
+                try:
+                    chisurf.gui.QtCore.QTimer.singleShot(0, fit_control_widget.onAutoFitRange)
+                except Exception:
+                    fit_control_widget.onAutoFitRange()
+            finally:
+                # Re-enable updates and show
+                cs.mdiarea.setUpdatesEnabled(True)
+                if mdl_parent: mdl_parent.setUpdatesEnabled(True)
+                if plo_parent: plo_parent.setUpdatesEnabled(True)
+                fit_window.show()
     cs.update()
 
 
@@ -123,6 +137,8 @@ def save_fit(target_path: str = None,
 
     # 2) build the Word report
     log.debug("Building Word document")
+    import docx
+    from docx.shared import Inches
     document = docx.Document()
     document.add_heading(cs.current_fit.name, 0)
 
@@ -199,6 +215,7 @@ def save_fit(target_path: str = None,
 
     # ——— force Qt cleanup —————
     log.debug("Processing pending Qt events and cleaning up")
+    from PyQt5.QtWidgets import QApplication
     QApplication.processEvents()
 
     # drop Qt references and run GC
