@@ -7,6 +7,7 @@ pg.setConfigOptions(
 
 import chisurf.plots.global_fit
 import chisurf.plots.global_tcspc
+import chisurf.plots.agent_fit
 from chisurf.plots.molview import *
 from chisurf.plots.distribution import DistributionPlot
 from chisurf.plots.fitinfo import *
