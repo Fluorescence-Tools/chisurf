@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import chisurf
 import chisurf.data
-import chisurf.fitting
 import chisurf.experiments
 
 
 def set_linearization(
         idx: int = None,
         curve_name: str = None,
-        fit: chisurf.fitting.fit.FitGroup = None
+        fit: 'chisurf.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
         cs = chisurf.cs

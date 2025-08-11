@@ -1174,10 +1174,42 @@ class Main(QtWidgets.QMainWindow):
         # Add the status widget to the status bar, aligning to the left
         self.status.addWidget(status_widget, 1)  # 1 gives the widget some stretch
 
+        # Warm up heavy imports after the UI is ready to make first-time actions more responsive
+        try:
+            # Run shortly after the event loop starts so the window can appear first
+            QtCore.QTimer.singleShot(100, self.warmup_imports)
+        except Exception:
+            # If QTimer is not available for some reason, just ignore
+            pass
+
     def update(self):
         super().update()
         self.fit_selector.update()
         self.dataset_selector.update()
+
+    def warmup_imports(self):
+        """Preload heavy modules to improve first-use responsiveness.
+        This shifts import cost to just after startup.
+        """
+        try:
+            import importlib
+            # Core visualization libs typically used when adding a fit
+            import pyqtgraph as _pg  # noqa: F401
+            from matplotlib import colors as _mcolors  # noqa: F401
+            # Numeric/scientific routines used during fitting
+            import scipy.linalg as _sl  # noqa: F401
+            import scipy.stats as _sstats  # noqa: F401
+            # Ensure fitting widgets are fully imported
+            import chisurf.gui.widgets.fitting as _fitwidgets  # noqa: F401
+            # Touch a commonly used class to trigger any uic loads
+            _ = getattr(_fitwidgets, 'FittingControllerWidget', None)
+            # Optionally warm up model registry that may be consulted
+            _ = importlib.import_module('chisurf.models.global_model.globalfit')
+        except Exception as e:
+            try:
+                chisurf.logging.debug(f"warmup_imports encountered: {e}")
+            except Exception:
+                pass
 
     def update_setup_ui(self):
         """Update the UI to reflect changes in current_setup properties."""
