@@ -1,3 +1,9 @@
+:: Define ENV variables
+:: Call Python with the --version flag to get the version information
+for /f "tokens=2 delims= " %%v in ('%PYTHON% --version 2^>^&1') do set PYTHON_VERSION=%%v
+:: Extract only the numeric part of the version
+for /f "tokens=1-3 delims=." %%a in ("%PYTHON_VERSION%") do set PYTHON_VERSION_NUMERIC=%%a.%%b.%%c
+
 :: Generate Python resources
 call pyrcc5 chisurf\gui\resources\resource.qrc -o chisurf\gui\resources\resource.py
 
@@ -5,16 +11,16 @@ call pyrcc5 chisurf\gui\resources\resource.qrc -o chisurf\gui\resources\resource
 git submodule sync --recursive
 git submodule update --init --recursive --force
 
-:: Install Python modules
-
+:: Build labellib
 :: Set to specific Labellib version
 cd modules\labellib
 git fetch --tags
 git checkout tags/2020.10.05
+
 cd thirdparty\pybind11
 git checkout v2.13
 git pull
-cd ..\..\
+cd ..\..
 
 :: Configure the build using CMake
 cmake -S . -B build -A x64 ^
@@ -28,16 +34,8 @@ cmake --build build --config Release --parallel
 cmake --install build --prefix %PREFIX%
 cd ..
 
-echo %CD%
-pip install .\clsmview --no-deps --prefix=%PREFIX%
-pip install .\ndxplorer --no-deps --prefix=%PREFIX%
-pip install .\tttrconvert --no-deps --prefix=%PREFIX%
-pip install .\quest --no-deps --prefix=%PREFIX%
-pip install .\lltf --no-deps --prefix=%PREFIX%
-cd ..
-
-:: Build chinet module
-cd modules\chinet
+:: Build chinet
+cd chinet
 
 git fetch --all
 git checkout development
@@ -62,12 +60,11 @@ cmake .. -G "Visual Studio 17 2022" -A x64 ^
  -DWITH_MONGODB=OFF ^
  -Wno-dev ^
  -DBoost_USE_STATIC_LIBS=OFF
-:: Build and install the project
 cmake --build . --config Release --target install
-cd ..\..\..
+cd ..\..
 
-:: Build tttrlib module
-cd modules\tttrlib
+:: Build tttrlib
+cd tttrlib
 
 git fetch --all
 git checkout development
@@ -92,33 +89,15 @@ cmake .. -G "NMake Makefiles" ^
  -DBoost_USE_STATIC_LIBS=OFF
 
 nmake install
+cd ..\..
 
-cd ..\..\..
-
-:: Call Python with the --version flag to get the version information
-for /f "tokens=2 delims= " %%v in ('%PYTHON% --version 2^>^&1') do set PYTHON_VERSION=%%v
-:: Extract only the numeric part of the version
-for /f "tokens=1-3 delims=." %%a in ("%PYTHON_VERSION%") do set PYTHON_VERSION_NUMERIC=%%a.%%b.%%c
-
-REM Configure the build using CMake
-cmake .. -G "Visual Studio 17 2022" ^
- -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" ^
- -DCMAKE_PREFIX_PATH="%PREFIX%" ^
- -DBUILD_PYTHON_INTERFACE=ON ^
- -DCMAKE_BUILD_TYPE=Release ^
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
- -DCMAKE_SWIG_OUTDIR="%SP_DIR%" ^
- -DPython_ROOT_DIR="%PREFIX%\bin" ^
- -DBUILD_LIBRARY=OFF ^
- -DBUILD_PYTHON_DOCS=ON ^
- -DWITH_AVX=OFF ^
- -Wno-dev ^
- -DBoost_USE_STATIC_LIBS=OFF
-
-:: Build and install the project
-cmake --build . --config Release --target install
-cd ..\..\..
+:: Install Python modules
+pip install .\clsmview --no-deps --prefix=%PREFIX%
+pip install .\ndxplorer --no-deps --prefix=%PREFIX%
+pip install .\tttrconvert --no-deps --prefix=%PREFIX%
+pip install .\quest --no-deps --prefix=%PREFIX%
+pip install .\lltf --no-deps --prefix=%PREFIX%
+cd ..
 
 :: Install main module
 :: Note: Version handling is now managed by the CustomBuildPy class in setup.py
