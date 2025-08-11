@@ -59,7 +59,7 @@ def load_detector_setups(file_path=None):
         default_value={"setups": {}}
     )
 
-def save_detector_setups(setups_data, file_path=None):
+def save_detector_setups(setups_data, file_path=None, replace=False):
     """Save detector setups to the central settings file or a custom file.
 
     Args:
@@ -68,32 +68,34 @@ def save_detector_setups(setups_data, file_path=None):
     """
     try:
         save_path = file_path or DETECTOR_SETUPS_FILE
-        
-        # Check if the file exists and is not empty
+
+        # Try to load existing data to preserve unrelated keys when not replacing; with replace=True, write as-is
         try:
-            if pathlib.Path(save_path).exists() and pathlib.Path(save_path).stat().st_size > 0:
-                # Load existing data if the file exists and is not empty
+            if replace:
+                updated_data = setups_data
+            elif pathlib.Path(save_path).exists() and pathlib.Path(save_path).stat().st_size > 0:
                 existing_data = load_detector_setups(save_path)
-                
-                # Update the existing data with the new data
-                # For setups, we need to update the nested dictionary
-                if "setups" in setups_data and "setups" in existing_data:
-                    existing_data["setups"].update(setups_data["setups"])
-                    # Use the updated existing data
-                    updated_data = existing_data
+                # Start from existing data, then merge incoming setups (add/update only)
+                updated_data = existing_data if isinstance(existing_data, dict) else {}
+                if isinstance(setups_data, dict):
+                    for k, v in setups_data.items():
+                        if k == "setups":
+                            # Merge setups: add or update keys, keep others intact
+                            updated_data.setdefault("setups", {})
+                            if isinstance(v, dict):
+                                updated_data["setups"].update(v)
+                        else:
+                            updated_data[k] = v
                 else:
-                    # If the structure is different, use the new data
                     updated_data = setups_data
             else:
-                # If file doesn't exist or is empty, use the new data directly
                 updated_data = setups_data
         except Exception:
-            # If there's any error reading the file, use the new data directly
             updated_data = setups_data
-            
+
         # Create directory if it doesn't exist
         pathlib.Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-            
+
         # Write the updated data back to the file
         with open(save_path, 'w') as f:
             json.dump(updated_data, f, indent=4)
@@ -813,7 +815,7 @@ class DetectorWizardPage(QWizardPage):
             if setups.get("last_used") == setup_name:
                 setups["last_used"] = ""
 
-            if save_detector_setups(setups, self.current_setups_file):
+            if save_detector_setups(setups, self.current_setups_file, replace=True):
                 QMessageBox.information(self, "Success", f"Setup '{setup_name}' deleted successfully.")
 
                 # Refresh the combobox
@@ -863,7 +865,7 @@ class DetectorWizardPage(QWizardPage):
             if setups.get("last_used") == old_name:
                 setups["last_used"] = new_name
 
-            if save_detector_setups(setups, self.current_setups_file):
+            if save_detector_setups(setups, self.current_setups_file, replace=True):
                 self.current_setup_name = new_name
                 QMessageBox.information(self, "Success", f"Setup renamed from '{old_name}' to '{new_name}' successfully.")
 
