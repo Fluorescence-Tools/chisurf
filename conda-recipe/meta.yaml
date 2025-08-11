@@ -33,7 +33,7 @@ requirements:
     - numpy
     - pkg-config   # [not win]
     - llvm-openmp  # [osx]
-    - libcxx  # [osx]
+    - libcxx       # [osx]
     - libgomp      # [linux]
     - typing-extensions 4.14.*
     - pytools 2024
@@ -45,8 +45,8 @@ requirements:
     # Needed for chinet
     - doxygen
     - boost-cpp
-    # Needed to build tttrlib
-    - hdf5
+    # Needed to build tttrlib, windows build ships tttrlib
+    - hdf5         # [win]
   run:
     - python
     - typing-extensions 4.14.*
