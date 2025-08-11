@@ -5,12 +5,15 @@ from __future__ import annotations
 from chisurf import typing
 
 import numpy as np
+from typing import TYPE_CHECKING
 
-import chisurf.fitting.fit
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 def scan_parameter(
-        fit: chisurf.fitting.fit.Fit,
+        fit: Fit,
         parameter_name: str,
         scan_range=(None, None),
         rel_range: float = 0.2,

@@ -5,15 +5,18 @@ import numpy as np
 import chinet as cn
 import types
 import inspect
+from typing import TYPE_CHECKING
 
 import chisurf.decorators
 import chisurf.parameter
-import chisurf.fitting.fit
 import chisurf.models
 
 from chisurf.curve import Curve
 from chisurf.models import model
 from chisurf.fitting.parameter import GlobalFittingParameter
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class ParameterTransformModel(model.Model):
@@ -123,7 +126,7 @@ class ParameterTransformModel(model.Model):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
+            fit: Fit,
             function: typing.Callable = None,
             *args,
             **kwargs

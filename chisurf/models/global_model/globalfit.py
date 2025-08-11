@@ -3,14 +3,17 @@ from chisurf import typing
 
 import threading
 import numpy as np
+from typing import TYPE_CHECKING
 
 import chisurf.decorators
 import chisurf.parameter
-import chisurf.fitting.fit
 
 from chisurf.curve import Curve
 from chisurf.models import model
 from chisurf.fitting.parameter import GlobalFittingParameter
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit, FitGroup
 
 
 class GlobalFitModel(model.Model, Curve):
@@ -147,8 +150,8 @@ class GlobalFitModel(model.Model, Curve):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
-            fits: typing.List[chisurf.fitting.fit.Fit] = None,
+            fit: Fit,
+            fits: typing.List[Fit] = None,
             *args,
             **kwargs
     ):
@@ -164,7 +167,7 @@ class GlobalFitModel(model.Model, Curve):
 
     def get_wres(
             self,
-            fit: chisurf.fitting.fit.Fit,
+            fit: Fit,
             xmin: int = None,
             xmax: int = None
     ) -> np.array:
@@ -182,7 +185,7 @@ class GlobalFitModel(model.Model, Curve):
             wr = np.array([1.0])
         return wr
 
-    def append_fit(self, fit: chisurf.fitting.fit.Fit) -> None:
+    def append_fit(self, fit: Fit) -> None:
         if fit not in self.fits:
             self.fits.append(fit)
 
@@ -210,7 +213,7 @@ class GlobalFitModel(model.Model, Curve):
             except IndexError:
                 print("not enough fits index out of range")
 
-    def autofitrange(self, fit: chisurf.fitting.fit.FitGroup):
+    def autofitrange(self, fit: FitGroup):
         self.xmin, self.xmax = None, None
         return self.xmin, self.xmax
 

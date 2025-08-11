@@ -6,12 +6,15 @@ import random
 import enum
 import collections
 import warnings
+from typing import TYPE_CHECKING
 
 import chisurf.decorators
 import chisurf.parameter
-import chisurf.fitting.fit
 import chisurf.plots
 from chisurf import logging
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 # Conditionally import scikit-learn
 try:
@@ -67,8 +70,8 @@ class AgentFitModel(GlobalFitModel):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
-            fits: typing.List[chisurf.fitting.fit.Fit] = None,
+            fit: Fit,
+            fits: typing.List[Fit] = None,
             max_iterations: int = None,
             step_size: float = None,
             cooling_rate: float = None,

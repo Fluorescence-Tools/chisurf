@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import pathlib
+from typing import TYPE_CHECKING
 
 import chisurf
 from chisurf.gui import QtWidgets, QtCore, QtGui, uic
 import chisurf.gui.decorators
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments
-import chisurf.fitting.fit
 
 from chisurf.models.tcspc.nusiance import Convolve
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
@@ -34,7 +37,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     @chisurf.gui.decorators.init_with_ui("tcspc_convolve.ui")
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
+            fit: Fit,
             hide_curve_convolution: bool = True,
             *args,
             **kwargs

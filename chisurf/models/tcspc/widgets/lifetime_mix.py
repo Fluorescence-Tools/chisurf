@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import chisurf
 from chisurf import typing
 from chisurf.gui import QtWidgets, QtCore, QtGui
@@ -7,10 +8,12 @@ import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.general
 import chisurf.plots
 import chisurf.math.datatools
-import chisurf.fitting.fit
 
 from chisurf.models.tcspc.mix_model import LifetimeMixModel
 from chisurf.models.tcspc.widgets.lifetime import LifetimeModelWidgetBase
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import FitGroup
 
 
 class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):

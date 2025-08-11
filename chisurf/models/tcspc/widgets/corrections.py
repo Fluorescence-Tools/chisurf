@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import chisurf
 from chisurf.gui import QtWidgets, QtCore, QtGui, uic
 import chisurf.gui.decorators
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments
-import chisurf.fitting.fit
 import chisurf.math.signal
 
 from chisurf.models.tcspc.nusiance import Corrections
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class CorrectionsWidget(Corrections, QtWidgets.QWidget):
@@ -16,7 +19,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
     @chisurf.gui.decorators.init_with_ui("tcspcCorrections.ui")
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit = None,
+            fit: Fit | None = None,
             hide_corrections: bool = False,
             **kwargs
     ):

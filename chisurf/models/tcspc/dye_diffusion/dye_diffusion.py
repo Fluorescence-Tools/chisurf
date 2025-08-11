@@ -7,6 +7,7 @@ import gc
 import json
 import os
 import tempfile
+from typing import TYPE_CHECKING
 
 import numpy as np
 from qtpy import QtWidgets, uic
@@ -17,7 +18,6 @@ from chisurf.structure.av.dynamic import DiffusionSimulation, Dye, Sticking, \
 from chisurf.gui.widgets.fluorescence.av import ProteinQuenchingWidget, DyeWidget, StickingWidget
 
 import chisurf.settings
-import chisurf.fitting.fit
 import chisurf.models.tcspc.nusiance
 import chisurf.gui.widgets.fitting.widgets
 import chisurf.structure.av as fps
@@ -33,6 +33,9 @@ from chisurf.structure.av import ACV
 from chisurf.fluorescence.simulation import photon
 from chisurf.structure import Structure, get_coordinates_of_residues
 from chisurf.gui.widgets.pdb import PDBSelector
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import FitGroup
 
 
 class DyeDecay(Model, Curve):
@@ -732,7 +735,7 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.FitGroup,
+            fit: FitGroup,
             **kwargs
     ):
         # Initialize parent classes first

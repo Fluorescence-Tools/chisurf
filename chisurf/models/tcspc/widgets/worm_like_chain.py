@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import pathlib
+from typing import TYPE_CHECKING
 
 import chisurf
 from chisurf.gui import QtWidgets, QtCore, QtGui, uic
 import chisurf.gui.widgets.fitting
-import chisurf.fitting.fit
 
 import chisurf.models.tcspc.fret as fret
 
@@ -13,6 +13,9 @@ from chisurf.models.tcspc.widgets.lifetime import LifetimeWidget, LifetimeModelW
 
 # Import plot_cls_dist_default from the original module
 from chisurf.models.tcspc.widgets import plot_cls_dist_default
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase):
@@ -41,7 +44,7 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
     def use_dye_linker(self, v: bool):
         self._use_dye_linker.setChecked(v)
 
-    def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
+    def __init__(self, fit: Fit, **kwargs):
         self.donor = LifetimeWidget(
             parent=self,
             model=self,
