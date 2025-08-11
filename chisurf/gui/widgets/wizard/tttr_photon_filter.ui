@@ -424,7 +424,7 @@ p, li { white-space: pre-wrap; }
              <string>Save burst parameters as default to setup.</string>
             </property>
             <property name="text">
-             <string>Save Parameters</string>
+             <string>Save</string>
             </property>
            </widget>
           </item>
