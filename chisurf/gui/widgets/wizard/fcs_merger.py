@@ -2,6 +2,7 @@ import os
 import pathlib
 import typing
 import json
+import re
 import numpy as np
 import pyqtgraph as pg
 
@@ -114,15 +115,22 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         table = self.tableWidget
         rc = table.rowCount()
         table.insertRow(rc)
-        duration = correlation_dict['duration']
-        count_rate_a = correlation_dict['channel_a']['counts'] / duration
-        count_rate_b = correlation_dict['channel_b']['counts'] / duration
+        duration = float(correlation_dict.get('duration', 0.0))
+        # Compute count rates robustly
+        try:
+            cr_a = float(correlation_dict['channel_a']['counts']) / duration if duration > 0 else 0.0
+            cr_b = float(correlation_dict['channel_b']['counts']) / duration if duration > 0 else 0.0
+        except Exception:
+            # Fallback: if only total count_rate present
+            total_cr = float(correlation_dict.get('count_rate', 0.0))
+            cr_a = total_cr / 2.0
+            cr_b = total_cr / 2.0
 
         fnw = QtWidgets.QTableWidgetItem(f"{filename.stem}")
         fnw.setToolTip(f'{filename.as_posix()}')
         table.setItem(rc, 1, fnw)
-        table.setItem(rc, 2, QtWidgets.QTableWidgetItem(f"{count_rate_a: 0.2f}"))
-        table.setItem(rc, 3, QtWidgets.QTableWidgetItem(f"{count_rate_b: 0.2f}"))
+        table.setItem(rc, 2, QtWidgets.QTableWidgetItem(f"{cr_a: 0.2f}"))
+        table.setItem(rc, 3, QtWidgets.QTableWidgetItem(f"{cr_b: 0.2f}"))
         table.setItem(rc, 4, QtWidgets.QTableWidgetItem(f"{duration: 0.2f}"))
         # Add a checkable item for using the curve in merging
         checkbox_item = QtWidgets.QTableWidgetItem()
@@ -137,33 +145,100 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         self.tableWidget.setRowCount(0)
         if folder is None:
             folder = self.correlation_folder
-        selected_files = sorted(list(folder.glob('*.json.gz')))
+        # Support both legacy JSON chunks and new .cor files
+        json_files = sorted(list(folder.glob('*.json.gz')))
+        cor_files = sorted(list(folder.glob('*.cor')))
         self.correlations.clear()
-        for file in selected_files:
-            with io.open_maybe_zipped(file) as fp:
-                d = json.load(fp)
+        # Load JSON chunks if present
+        for file in json_files:
+            try:
+                with io.open_maybe_zipped(file) as fp:
+                    d = json.load(fp)
+                    self.append_correlation(file, d)
+            except Exception:
+                continue
+        # Load .cor chunk files
+        import numpy as _np
+        for file in cor_files:
+            try:
+                arr = _np.loadtxt(str(file), delimiter='\t')
+                if arr.ndim == 1 and arr.size >= 2:
+                    arr = arr.reshape(-1, arr.size)
+                x = arr[:, 0]
+                y = arr[:, 1]
+                # Third column encodes duration (row 0) and count_rate (row 1)
+                duration = float(arr[0, 2]) if arr.shape[1] > 2 and arr.shape[0] >= 1 else 0.0
+                count_rate = float(arr[1, 2]) if arr.shape[1] > 2 and arr.shape[0] >= 2 else 0.0
+                ey = arr[:, 3] if arr.shape[1] > 3 else _np.zeros_like(x)
+                # Derive per-channel counts by splitting total equally (best effort)
+                total_counts = count_rate * duration
+                half_counts = 0.5 * total_counts
+                d = {
+                    'x': x.tolist(),
+                    'y': y.tolist(),
+                    'ey': ey.tolist(),
+                    'duration': duration,
+                    'count_rate': count_rate,
+                    'channel_a': {'channels': [], 'microtime_range': None, 'counts': half_counts},
+                    'channel_b': {'channels': [], 'microtime_range': None, 'counts': half_counts}
+                }
                 self.append_correlation(file, d)
-        chisurf.logging.info( 'Opening analysis folder...')
+            except Exception:
+                continue
+        chisurf.logging.info('Opening analysis folder...')
         self.lineEdit_2.setText(self.target_filepath.as_posix())
+        self.update_plots()
+
+    def set_correlations(self, correlations: typing.List[dict], source_folder: pathlib.Path = None):
+        """
+        Populate the table and plots from already computed correlations (in-memory),
+        without requiring chnk-*.json.gz files on disk.
+        """
+        self.tableWidget.setRowCount(0)
+        self.correlations.clear()
+        # Optionally bind the correlation folder for saving .cor output later
+        if source_folder is not None:
+            try:
+                self.lineEdit.setText(source_folder.as_posix())
+            except Exception:
+                pass
+        for i, cor in enumerate(correlations):
+            fake_file = (source_folder / f'chnk-{i:04}.json.gz') if source_folder is not None else pathlib.Path(f'chnk-{i:04}.json.gz')
+            self.append_correlation(fake_file, cor)
+        try:
+            self.lineEdit_2.setText(self.target_filepath.as_posix())
+        except Exception:
+            pass
         self.update_plots()
 
     @property
     def target_filepath(self) -> pathlib.Path:
-        correlation_filename = self.correlation_folder.stem + '.cor'
+        stem = self.correlation_folder.stem
+        # Sanitize filename: allow letters, numbers, dot, dash, underscore
+        safe_stem = re.sub(r'[^A-Za-z0-9._-]+', '_', stem)
+        if not safe_stem or safe_stem in {'.', '..', '_'}:
+            safe_stem = 'correlation'
+        correlation_filename = safe_stem + '.cor'
         filename = self.correlation_folder.parent / correlation_filename
         return filename
 
     def save_mean_correlation(self, evt=None, filename: pathlib.Path = None):
-        chisurf.logging.info( "WizardFcsMerger::save_mean_correlation")
+        chisurf.logging.info("WizardFcsMerger::save_mean_correlation")
         correlation = self.mean_correlation
         if filename is None:
             filename = self.target_filepath
-        chisurf.logging.info(f'Saving: {filename}')
+        # Ensure parent directory exists (e.g., .../cr5)
+        try:
+            filename.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        chisurf.logging.info(f"Saving: {filename}")
         suren_column = np.zeros_like(correlation['x'])
         suren_column[0] = correlation['duration']
         suren_column[1] = correlation['count_rate']
         c = np.vstack([correlation['x'], correlation['y'], suren_column, correlation['ey']])
-        np.savetxt(filename.as_posix(), c.T, delimiter='\t')
+        # Use native path string to avoid UNC/as_posix issues on Windows
+        np.savetxt(str(filename), c.T, delimiter='\t')
 
     def onRemoveRow(self):
         table = self.tableWidget
