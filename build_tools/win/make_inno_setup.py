@@ -52,7 +52,7 @@ parameters = {
 
 
 inno_template = ""
-with open('setup_template.iss', 'r') as fp:
+with open('setup_template.jinja2', 'r') as fp:
     inno_template += fp.read()
 t = jinja2.Template(inno_template)
 inno_script = t.render(**parameters)
