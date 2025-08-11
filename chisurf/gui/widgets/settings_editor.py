@@ -125,16 +125,22 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
         setting_path = self._get_setting_path(index)
         tooltip = self.documentation_dict.get(setting_path, "")
 
-        value = index.data(QtCore.Qt.EditRole)
+        # Prefer typed value from UserRole; fallback to EditRole
+        value = index.data(QtCore.Qt.UserRole)
+        if value is None and index.data(QtCore.Qt.EditRole) is not None:
+            value = index.data(QtCore.Qt.EditRole)
         data_type = type(value)
 
         # Create appropriate editor based on data type
-        if data_type == bool:
-            editor = QtWidgets.QComboBox(parent)
-            editor.addItems(["True", "False"])
-            editor.setCurrentIndex(0 if value else 1)
+        if data_type == bool or (isinstance(value, str) and value.strip().lower() in ("true", "false")):
+            editor = QtWidgets.QCheckBox(parent)
+            # Determine checked state robustly for both bools and string booleans
+            checked = value if data_type == bool else (str(value).strip().lower() == "true")
+            editor.setChecked(bool(checked))
             if tooltip:
                 editor.setToolTip(tooltip)
+            # Commit data when state changes
+            editor.stateChanged.connect(lambda _state: self.commitData.emit(editor))
             return editor
         elif self.is_hex_color(value):
             # For hex color values, use a color dialog
@@ -245,18 +251,39 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
             super().setModelData(editor, model, index)
             return
 
-        value = index.data(QtCore.Qt.EditRole)
+        # Prefer typed value from UserRole; fallback to EditRole
+        value = index.data(QtCore.Qt.UserRole)
+        if value is None and index.data(QtCore.Qt.EditRole) is not None:
+            value = index.data(QtCore.Qt.EditRole)
         data_type = type(value)
 
-        if data_type == bool:
-            # For boolean values, get from combo box
-            combo_box = editor
-            new_value = combo_box.currentText() == "True"
+        # Handle checkbox editors explicitly regardless of original data type
+        if isinstance(editor, QtWidgets.QCheckBox):
+            new_value = editor.isChecked()
             model.setData(index, new_value, QtCore.Qt.EditRole)
+            model.setData(index, new_value, QtCore.Qt.UserRole)
+            return
+
+        if data_type == bool:
+            # For boolean values, get from checkbox
+            if hasattr(editor, "isChecked"):
+                try:
+                    new_value = bool(editor.isChecked())
+                except Exception:
+                    new_value = bool(value)
+            else:
+                # Fallback in case of unexpected editor type
+                try:
+                    new_value = (str(editor.currentText()) == "True")
+                except Exception:
+                    new_value = bool(value)
+            model.setData(index, new_value, QtCore.Qt.EditRole)
+            model.setData(index, new_value, QtCore.Qt.UserRole)
         elif self.is_hex_color(value):
             # For hex color values, get from button text
             button = editor
             model.setData(index, button.text(), QtCore.Qt.EditRole)
+            model.setData(index, button.text(), QtCore.Qt.UserRole)
         elif isinstance(value, (list, tuple)):
             # For lists, parse comma-separated values
             line_edit = editor
@@ -272,30 +299,37 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
                     pass
 
             model.setData(index, type(value)(items), QtCore.Qt.EditRole)
+            model.setData(index, type(value)(items), QtCore.Qt.UserRole)
         elif data_type == int:
             # For integers, get from spin box
             spin_box = editor
             model.setData(index, spin_box.value(), QtCore.Qt.EditRole)
+            model.setData(index, spin_box.value(), QtCore.Qt.UserRole)
         elif data_type == float:
             # For floats, get from double spin box or line edit
             if isinstance(editor, QtWidgets.QDoubleSpinBox):
-                model.setData(index, editor.value(), QtCore.Qt.EditRole)
+                new_value = editor.value()
+                model.setData(index, new_value, QtCore.Qt.EditRole)
+                model.setData(index, new_value, QtCore.Qt.UserRole)
             else:
                 # For line edit (scientific notation)
                 try:
                     text = editor.text()
                     # Convert to float, preserving scientific notation
-                    value = float(text)
-                    model.setData(index, value, QtCore.Qt.EditRole)
+                    new_value = float(text)
+                    model.setData(index, new_value, QtCore.Qt.EditRole)
+                    model.setData(index, new_value, QtCore.Qt.UserRole)
                 except ValueError:
                     # If conversion fails, keep the original value
                     logging.log(1, f"Warning: Could not convert '{text}' to float. Using original value.")
                     model.setData(index, value, QtCore.Qt.EditRole)
+                    model.setData(index, value, QtCore.Qt.UserRole)
         elif isinstance(value, str) and os.path.sep in value:
             # For file paths, get from line edit in the widget
             widget = editor
             line_edit = widget.property("lineEdit")
             model.setData(index, line_edit.text(), QtCore.Qt.EditRole)
+            model.setData(index, line_edit.text(), QtCore.Qt.UserRole)
         else:
             # For other types, get from line edit
             line_edit = editor
@@ -306,11 +340,14 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
                 if data_type != str:
                     converted_value = data_type(text)
                     model.setData(index, converted_value, QtCore.Qt.EditRole)
+                    model.setData(index, converted_value, QtCore.Qt.UserRole)
                 else:
                     model.setData(index, text, QtCore.Qt.EditRole)
+                    model.setData(index, text, QtCore.Qt.UserRole)
             except ValueError:
                 # If conversion fails, use the string value
                 model.setData(index, text, QtCore.Qt.EditRole)
+                model.setData(index, text, QtCore.Qt.UserRole)
 
 
 class SettingsTreeModel(QtGui.QStandardItemModel):
@@ -367,6 +404,9 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
 
             # Create value item
             value_item = QtGui.QStandardItem()
+            # Store the original typed value in a dedicated role
+            value_item.setData(value, QtCore.Qt.UserRole)
+            # Also set EditRole for convenience/editing
             value_item.setData(value, QtCore.Qt.EditRole)
 
             # Set display text based on data type
@@ -467,38 +507,56 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
                 value = self._get_dict_from_item(key_item)
             else:
                 # Otherwise, get the value from the value item
-                value = value_item.data(QtCore.Qt.EditRole)
+                # Prefer the original typed value stored under UserRole
+                value = value_item.data(QtCore.Qt.UserRole)
+                # Fallback to EditRole if UserRole is not set
+                if value is None and value_item.data(QtCore.Qt.EditRole) is not None:
+                    value = value_item.data(QtCore.Qt.EditRole)
 
                 # Convert string values to appropriate types if possible
                 if isinstance(value, str):
-                    # Try to convert to appropriate type
-                    try:
-                        value_str = value
-                        is_list = LIST_SEP in value_str
-                        if not is_list:
-                            # Check for boolean values
-                            if value_str.lower() == "true":
-                                value = True
-                            elif value_str.lower() == "false":
-                                value = False
-                            # Check for empty string as empty list
-                            elif value_str == "":
-                                value = []
-                            # Check for string representation of empty list
-                            elif value_str == "[]":
-                                value = []
-                            # Check for integer values
-                            elif value_str.isdigit():
-                                value = int(value_str)
-                            # Check for float values
-                            elif re.match(r'^-?\d+(\.\d+)?$', value_str):
-                                value = float(value_str)
-                            # For other types (like strings), keep as is
-                        if is_list:
-                            value = value_str.split(LIST_SEP)
-                    except ValueError:
-                        # If conversion fails, show a warning and keep as string
-                        logging.log(1, f"Warning: Could not convert '{value_str}' for setting '{key}'. Using string value.")
+                    value_str = value
+
+                    # Helper to parse a single scalar token into the right type
+                    def _parse_scalar(token: str):
+                        t = token.strip()
+                        if t == "":
+                            return ""  # keep empty string
+                        tl = t.lower()
+                        if tl in ("none", "null"):
+                            return None
+                        if tl == "true":
+                            return True
+                        if tl == "false":
+                            return False
+                        # Integer (including leading sign)
+                        if re.fullmatch(r"[+-]?\d+", t):
+                            try:
+                                return int(t)
+                            except ValueError:
+                                pass
+                        # Float (including scientific notation)
+                        if re.fullmatch(r"[+-]?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][+-]?\d+)?", t):
+                            try:
+                                return float(t)
+                            except ValueError:
+                                pass
+                        return t
+
+                    # Detect list encoded as a string via LIST_SEP and convert items
+                    is_list = LIST_SEP in value_str
+                    if is_list:
+                        parts = value_str.split(LIST_SEP)
+                        value = [_parse_scalar(p) for p in parts]
+                    else:
+                        # Handle special cases and scalars
+                        if value_str == "":
+                            # Previously used to encode empty list; but keep empty string unless context requires list
+                            value = ""
+                        elif value_str == "[]":
+                            value = []
+                        else:
+                            value = _parse_scalar(value_str)
 
             result_dict[key] = value
 
@@ -800,7 +858,7 @@ class SettingsEditor(QtWidgets.QWidget):
 
         <h3>Editing Values</h3>
         <ul>
-            <li>Boolean values: Select True or False from the dropdown</li>
+            <li>Boolean values: Use the checkbox to toggle True/False</li>
             <li>Numbers: Use the spin box to set the value</li>
             <li>Colors: Click on the color to open a color picker</li>
             <li>Lists: Enter comma-separated values</li>
