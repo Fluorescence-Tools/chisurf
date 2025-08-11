@@ -41,6 +41,8 @@ class EquationDialog(QtWidgets.QDialog):
 
         # Create QTextBrowser for the equation
         self.equationBrowser = QtWidgets.QTextBrowser()
+        # Ensure a white background and black text for the equation display area
+        self.equationBrowser.setStyleSheet("background: white; color: black;")
         # Disable scrollbars to ensure the dialog resizes to fit the content
         self.equationBrowser.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.equationBrowser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -113,6 +115,11 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         description = self.models[self.model_name]['description']
         combined_html = f"{description}<hr/><h3>Equation:</h3>{formatted_equation}"
         self.textEdit.setHtml(combined_html)
+        # Ensure a white background and black text for the inline equation display area
+        try:
+            self.textEdit.setStyleSheet("background: white; color: black;")
+        except Exception:
+            pass
         self.textEdit.setVisible(True)  # Make textEdit visible by default
 
         # Enable link clicking in the textEdit widget
@@ -240,7 +247,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         rcParams['text.usetex'] = False
         rcParams['mathtext.default'] = 'regular'
 
-        # Create a figure with transparent background
+        # Create a figure with white background
         if large:
             # Larger figure for the dialog
             fig = plt.figure(figsize=(5, 2), dpi=100)  # Larger size for the dialog
@@ -248,7 +255,12 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             # Normal figure for the inline display
             fig = plt.figure(figsize=(1.2, 0.5), dpi=100)  # Max width 120 pixels (1.2 inches at 100 dpi)
 
-        fig.patch.set_alpha(1.0)  # Transparent
+        # Force white background
+        try:
+            fig.patch.set_facecolor('white')
+        except Exception:
+            pass
+        fig.patch.set_alpha(1.0)
 
         # Add the equation as text with black color
         plt.text(0.5, 0.5, math_equation, 
@@ -261,7 +273,8 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
         # Save to a BytesIO object
         buf = python_io.BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, transparent=False)
+        # Save with white facecolor to ensure the PNG has a white background
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0, transparent=False, facecolor=fig.get_facecolor())
         plt.close(fig)
 
         # Convert to QPixmap
@@ -389,9 +402,9 @@ class ParseFormulaWidget(QtWidgets.QWidget):
                 pixmap.save(tmp.name, 'PNG')
                 tmp_path = tmp.name
 
-            # Create HTML that displays the image with transparent background and make it clickable
+            # Create HTML that displays the image with white background and make it clickable
             # Include the original equation in the URL so we can render it again in the dialog
-            formatted_equation = f'<div style="text-align: center; display: inline-block; margin: 0 auto;"><a href="equation://{tmp_path}?eq={equation}"><img src="{tmp_path}" style="max-width: 120px;" /></a></div>'
+            formatted_equation = f'<div style="text-align: center; display: inline-block; margin: 0 auto; background-color: white;"><a href="equation://{tmp_path}?eq={equation}"><img src="{tmp_path}" style="max-width: 120px; background-color: white;" /></a></div>'
 
             # Store the path to delete it later
             self._temp_files.append(tmp_path)
@@ -428,9 +441,9 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             # Add spacing around operators
             equation = re.sub(r'([+\-])', r' \1 ', equation)
 
-            # Wrap the equation in a div with styling (transparent background, black text) and make it clickable
+            # Wrap the equation in a div with styling (white background, black text) and make it clickable
             # Use a special URL scheme to indicate that this is a fallback equation
-            formatted_equation = f'<div style="text-align: center; display: inline-block; margin: 0 auto;"><a href="fallback://{equation}"><div style="font-size: 11pt; font-family: Times; text-align: center; color: black; display: inline-block; margin: 0 auto; max-width: 120px;">{equation}</div></a></div>'
+            formatted_equation = f'<div style="text-align: center; display: inline-block; margin: 0 auto; background-color: white;"><a href="fallback://{equation}"><div style="font-size: 11pt; font-family: Times; text-align: center; color: black; display: inline-block; margin: 0 auto; max-width: 120px; background-color: white;">{equation}</div></a></div>'
             return formatted_equation
 
     def onShowEquation(self, checked: bool = None):
@@ -512,8 +525,8 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # Store the path to delete it later
         self._temp_files.append(tmp_path)
 
-        # Create HTML that displays the larger image
-        html = f'<div style="text-align: center;"><img src="{tmp_path}" /></div>'
+        # Create HTML that displays the larger image on a white background
+        html = f'<div style="text-align: center; background-color: white;"><img src="{tmp_path}" style="background-color: white;" /></div>'
 
         # Set the HTML content of the dialog
         self.equationDialog.setEquation(html)
@@ -570,8 +583,8 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # Add spacing around operators
         equation = re.sub(r'([+\-])', r' \1 ', equation)
 
-        # Create HTML that displays the larger equation with a larger font size
-        html = f'<div style="font-size: 24pt; font-family: Times; text-align: center; color: black; padding: 20px;">{equation}</div>'
+        # Create HTML that displays the larger equation with a larger font size on white background
+        html = f'<div style="font-size: 24pt; font-family: Times; text-align: center; color: black; padding: 20px; background-color: white;">{equation}</div>'
 
         # Set the HTML content of the dialog
         self.equationDialog.setEquation(html)
