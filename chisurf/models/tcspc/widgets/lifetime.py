@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import chisurf
 from chisurf import typing
 from chisurf.gui import QtWidgets, QtCore, QtGui
@@ -8,7 +9,6 @@ import chisurf.gui.widgets.general
 import chisurf.math.datatools
 import chisurf.plots
 import chisurf.fitting.parameter
-import chisurf.fitting.fit
 
 from chisurf.models.model import ModelWidget
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel, LifetimeMixtureModel
@@ -19,6 +19,9 @@ from chisurf.models.tcspc.widgets.convolve import ConvolveWidget
 from chisurf.models.tcspc.widgets.corrections import CorrectionsWidget
 from chisurf.models.tcspc.widgets.generic import GenericWidget
 from chisurf.models.tcspc.widgets.anisotropy import AnisotropyWidget
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit, FitGroup
 
 
 class LifetimeWidget(Lifetime, QtWidgets.QWidget):
@@ -241,8 +244,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
-            icon: QtGui.QIcon = None,
+            fit: Fit,
+            icon: QtGui.QIcon | None = None,
             hide_nuisances: bool = False,
             **kwargs
     ):
@@ -299,7 +302,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
 
     def __init__(
         self,
-        fit: chisurf.fitting.fit.FitGroup,
+        fit: FitGroup,
         lifetimes: chisurf.fitting.parameter.FittingParameterGroup = None,
         **kwargs
      ):

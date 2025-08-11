@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import pathlib
+from typing import TYPE_CHECKING
 
 import chisurf
 from chisurf import typing
 from chisurf.gui import QtWidgets, QtCore, QtGui
 import chisurf.plots
 import chisurf.curve
-import chisurf.fitting.fit
 
 from chisurf.models.model import ModelWidget
 from chisurf.models.tcspc.parse.tcspc_parse import ParseDecayModel
@@ -17,6 +17,9 @@ import chisurf.models.parse.widget
 from chisurf.models.tcspc.widgets.convolve import ConvolveWidget
 from chisurf.models.tcspc.widgets.generic import GenericWidget
 from chisurf.models.tcspc.widgets.corrections import CorrectionsWidget
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import FitGroup
 
 
 class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
@@ -46,7 +49,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.FitGroup,
+            fit: FitGroup,
             icon: QtGui.QIcon = None,
             **kwargs
     ):

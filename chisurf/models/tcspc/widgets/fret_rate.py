@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 import chisurf
 from chisurf.gui import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
-import chisurf.fitting.fit
 
 import chisurf.models.tcspc.fret as fret
 
@@ -12,6 +12,9 @@ from chisurf.models.tcspc.widgets.discrete_distance import DiscreteDistanceWidge
 
 # Import plot_cls_dist_default from the original module
 from chisurf.models.tcspc.widgets import plot_cls_dist_default
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
@@ -32,7 +35,7 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
         widgets.append(self._fret_parameters_widget)
         return widgets
 
-    def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
+    def __init__(self, fit: Fit, **kwargs):
         self.donor = LifetimeWidget(
             parent=self,
             model=self,

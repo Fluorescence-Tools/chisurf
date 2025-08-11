@@ -1,5 +1,6 @@
+from __future__ import annotations
 import typing
-
+from typing import TYPE_CHECKING
 
 import chisurf.gui.widgets.fitting
 import chisurf.plots
@@ -8,6 +9,9 @@ from chisurf.models.model import ModelWidget
 from chisurf.gui import QtWidgets, QtGui, QtCore
 from chisurf.models.pda.nusiance import Background
 from chisurf.models.pda.simple import ProbCh0, PdaSimpleModel
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class BackgroundWidget(QtWidgets.QGroupBox, Background):
@@ -296,14 +300,14 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
-            icon: QtGui.QIcon = None,
+            fit: Fit,
+            icon: QtGui.QIcon | None = None,
             hide_nuisances: bool = False,
             **kwargs
     ):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
-        super().__init__(fit=fit, icon=icon)
+        super().__init__(fit=fit, icon=icon, **kwargs)
 
         background = BackgroundWidget(fit=fit, **kwargs)
         pch0 = ProbCh0Widget(fit=fit, **kwargs)
