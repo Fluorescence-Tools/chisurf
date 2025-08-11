@@ -104,7 +104,7 @@ gui:
   style_sheet: dark.qss
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
-log_level: 30
+log_level: 20
 mc_settings:
   append_new_structures: false
   av_filename: out.xyz
