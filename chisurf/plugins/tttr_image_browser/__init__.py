@@ -41,7 +41,7 @@ except Exception:
 
 # Reuse widgets/utilities from existing plugins
 from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
-from chisurf.plugins.trace_browser.__init__ import get_tttr_supported_exts, StarCombo
+from chisurf.plugins.trace_browser.__init__ import get_tttr_supported_exts, StarRatingWidget, NoHoverSelectTable
 
 # Logging
 from chisurf import logging
@@ -159,11 +159,18 @@ class TTTRImageBrowser(QWidget):
         splitter.setOrientation(Qt.Horizontal)
 
         # Left: table of files with rating
-        self.table = QTableWidget(self.page1)
-        self.table.setColumnCount(2)
-        self.table.setHorizontalHeaderLabels(["File", "Rating"])
+        self.table = NoHoverSelectTable(self.page1)
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["File", "Size (MB)", "Rating"])
         self.table.horizontalHeader().setStretchLastSection(False)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        # Stretch file column; let size fit contents; rating minimal width
+        try:
+            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+            self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        except Exception:
+            # Fallback for older Qt versions
+            self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
         # Enable header-based sorting
@@ -296,6 +303,37 @@ class TTTRImageBrowser(QWidget):
             return
         self._open_folder(pathlib.Path(folder))
 
+    def _rel_key(self, path: pathlib.Path) -> str:
+        try:
+            if self.current_folder is not None:
+                return str(pathlib.Path(path).resolve().relative_to(self.current_folder.resolve()))
+        except Exception:
+            pass
+        try:
+            return pathlib.Path(path).name
+        except Exception:
+            return str(path)
+
+    def _meta_get(self, path: pathlib.Path) -> Dict:
+        key = self._rel_key(path)
+        rec = self.meta.get(key)
+        if rec is not None:
+            return rec
+        try:
+            return self.meta.get(pathlib.Path(path).name, {})
+        except Exception:
+            return {}
+
+    def _meta_set(self, path: pathlib.Path, rec: Dict):
+        key = self._rel_key(path)
+        self.meta[key] = rec
+        try:
+            name_key = pathlib.Path(path).name
+            if name_key != key and name_key in self.meta:
+                del self.meta[name_key]
+        except Exception:
+            pass
+
     def _open_folder(self, folder: pathlib.Path):
         self._is_loading = True
         self.current_folder = folder
@@ -307,6 +345,15 @@ class TTTRImageBrowser(QWidget):
         finally:
             self._is_loading = False
 
+    # --- Utilities ---
+    def _human_size(self, n: int) -> str:
+        """Return size in megabytes with one decimal place."""
+        try:
+            mb = float(n) / (1024.0 * 1024.0)
+            return f"{mb:.1f} MB"
+        except Exception:
+            return "? MB"
+
     # --- Table population & meta ---
     def _scan_and_fill(self):
         self.table.setRowCount(0)
@@ -314,38 +361,64 @@ class TTTRImageBrowser(QWidget):
             return
         # Determine allowed extensions based on selected setup file type
         allowed_exts = self._allowed_exts_for_setup()
-        files = []
-        for p in self.current_folder.iterdir():
-            if not p.is_file():
+        files: List[pathlib.Path] = []
+        # Traverse recursively
+        try:
+            it = self.current_folder.rglob('*')
+        except Exception:
+            it = self.current_folder.iterdir()
+        for p in it:
+            try:
+                if p.is_file() and ((not allowed_exts) or (p.suffix.lower() in allowed_exts)):
+                    files.append(p)
+            except Exception:
                 continue
-            if (not allowed_exts) or (p.suffix.lower() in allowed_exts):
-                files.append(p)
-        # Sort by name initially
-        files.sort(key=lambda p: p.name.lower())
+        # Sort by relative path initially for stable order
+        try:
+            files.sort(key=lambda x: str(x.resolve().relative_to(self.current_folder.resolve())).lower())
+        except Exception:
+            files.sort(key=lambda p: p.name.lower())
 
         logging.debug(f"TTTRImageBrowser: Scanning folder {self.current_folder}, found {len(files)} supported files")
         for p in files:
             r = self.table.rowCount()
             self.table.insertRow(r)
-            item = QTableWidgetItem(p.name)
+            # Display relative path for clarity with subfolders
+            try:
+                rel_txt = str(p.resolve().relative_to(self.current_folder.resolve()))
+            except Exception:
+                rel_txt = p.name
+            item = QTableWidgetItem(rel_txt)
             item.setData(Qt.UserRole, str(p))
             self.table.setItem(r, 0, item)
 
-            # Create sortable rating item and StarCombo widget
-            rating = int(self.meta.get(p.name, {}).get("rating", 0))
+            # Size column (human readable, sortable by bytes)
+            try:
+                size_bytes = int(p.stat().st_size)
+            except Exception:
+                size_bytes = -1
+            size_item = QTableWidgetItem(self._human_size(max(size_bytes, 0)))
+            size_item.setFlags(size_item.flags() & ~Qt.ItemIsEditable)
+            size_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            size_item.setData(Qt.EditRole, int(max(size_bytes, 0)))
+            self.table.setItem(r, 1, size_item)
+
+            # Create sortable rating item and clickable star widget
+            rec = self._meta_get(p)
+            rating = int(rec.get("rating", 0))
             rating_item = QTableWidgetItem()
             rating_item.setFlags(rating_item.flags() & ~Qt.ItemIsEditable)
             rating_item.setData(Qt.EditRole, int(rating))
-            self.table.setItem(r, 1, rating_item)
+            self.table.setItem(r, 2, rating_item)
 
-            combo = StarCombo(self.table)
-            combo.set_rating(rating)
+            stars = StarRatingWidget(self.table)
+            stars.set_rating(rating)
             # connect inline handler to update meta and sort key
-            def _on_combo_changed(idx, row=r, path=p, c=combo):
-                self._update_rating(path, int(c.currentData()))
-                it = self.table.item(row, 1)
+            def _on_rating_changed(val, row=r, path=p):
+                self._update_rating(path, int(val))
+                it = self.table.item(row, 2)
                 if it is not None:
-                    it.setData(Qt.EditRole, int(c.currentData()))
+                    it.setData(Qt.EditRole, int(val))
                 # Re-apply filter and current sorting
                 self._refresh_list()
                 try:
@@ -353,8 +426,8 @@ class TTTRImageBrowser(QWidget):
                     self.table.sortItems(header.sortIndicatorSection(), header.sortIndicatorOrder())
                 except Exception:
                     pass
-            combo.currentIndexChanged.connect(_on_combo_changed)
-            self.table.setCellWidget(r, 1, combo)
+            stars.ratingChanged.connect(_on_rating_changed)
+            self.table.setCellWidget(r, 2, stars)
 
         self._apply_filter()
         # Initial sort by File ascending for convenience
@@ -370,9 +443,9 @@ class TTTRImageBrowser(QWidget):
             logging.debug(f"TTTRImageBrowser: Precompute skipped or failed: {_e}")
 
     def _update_rating(self, path: pathlib.Path, rating: int):
-        rec = self.meta.get(path.name) or {}
+        rec = self._meta_get(path)
         rec["rating"] = int(rating)
-        self.meta[path.name] = rec
+        self._meta_set(path, rec)
         if self.current_folder:
             _save_meta(self.current_folder, self.meta)
         # Refresh order if sorting by rating
