@@ -453,8 +453,12 @@ class IntensityPlotWidget(QWidget):
             show_x = (i == n_channels)
 
             trace_plot = self.plot_widget.addPlot(row=i, col=0)
-            trace_plot.plot(time_axis, trace, pen='b')
-            trace_plot.setLabel('left', f'Ch {label}\nCounts / {int(time_window_ms)} ms')
+            try:
+                trace_plot.addLegend()
+            except Exception:
+                pass
+            trace_plot.plot(time_axis, trace, pen='b', name=str(label))
+            trace_plot.setLabel('left', f'{label}\nCounts / {int(time_window_ms)} ms')
             if not show_x:
                 trace_plot.hideAxis('bottom')
             else:
@@ -477,7 +481,11 @@ class IntensityPlotWidget(QWidget):
 
         combined = traces.sum(axis=1)
         trace_plot = self.plot_widget.addPlot(row=n_channels, col=0)
-        trace_plot.plot(time_axis, combined, pen='g')
+        try:
+            trace_plot.addLegend()
+        except Exception:
+            pass
+        trace_plot.plot(time_axis, combined, pen='g', name='Sum')
         trace_plot.setLabel('left', f'Sum\nCounts / {int(time_window_ms)} ms')
         trace_plot.setLabel('bottom', 'Time', units='s')
 
@@ -709,7 +717,34 @@ class IntensityTrace(QWidget):
             dlg.exec_()
 
     def load_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select PTU File", "", "PTU Files (*.ptu)")
+        # Use only tttrlib.get_supported_filetypes() to build the filter
+        try:
+            import tttrlib as _tttr
+        except Exception:
+            _tttr = None
+        exts = []
+        try:
+            if _tttr is not None and hasattr(_tttr, "get_supported_filetypes"):
+                exts = list(_tttr.get_supported_filetypes())
+        except Exception:
+            exts = []
+        # Normalize extensions to dotted lowercase
+        norm = []
+        for e in exts:
+            s = str(e).strip().lower()
+            if not s:
+                continue
+            if not s.startswith('.'):
+                s = '.' + s
+            if s not in norm:
+                norm.append(s)
+        if norm:
+            patterns = ' '.join(f"*{e}" for e in norm)
+            filter_str = f"TTTR Files ({patterns});;All Files (*)"
+        else:
+            filter_str = "All Files (*)"
+
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open TTTR File", "", filter_str)
         if not file_path:
             return
 
@@ -758,22 +793,94 @@ class IntensityTrace(QWidget):
             hist_min=hist_min, hist_max=hist_max, hmm_states=self.current_data.get('hmm_states')
         )
 
-    def process_ptu(self, ptu_file, time_window_length, selected_chs):
+    def process_ptu(self, ptu_file, time_window_length, selected_chs, detectors=None):
+        """
+        Compute intensity traces for a TTTR file.
+        
+        If 'detectors' is provided (dict from DetectorWizardPage.get_settings()['detectors']),
+        traces are computed per detector by aggregating all specified routing channels and
+        applying micro_time_ranges as an OR filter. Labels are detector names (optionally
+        with microtime ranges). If 'detectors' is None, fallback to per-routing-channel traces
+        for the selected_chs.
+        """
         tttr_obj = tttrlib.TTTR(str(ptu_file))
-        all_chs = sorted(tttr_obj.get_used_routing_channels())
-        sel_chs = [ch for ch in selected_chs if ch in all_chs] if selected_chs else all_chs
+
+        # Fallback: per-routing-channel behavior
+        if not detectors:
+            all_chs = sorted(tttr_obj.get_used_routing_channels())
+            sel_chs = [ch for ch in selected_chs if ch in all_chs] if selected_chs else all_chs
+            traces = []
+            for ch in sel_chs:
+                idxs = np.where(tttr_obj.routing_channels == ch)[0]
+                sub_tttr = tttr_obj[idxs]
+                counts = sub_tttr.get_intensity_trace(time_window_length)
+                traces.append(counts)
+            num_bins = max(len(t) for t in traces) if traces else 0
+            padded = np.zeros((num_bins, len(traces))) if traces else np.zeros((0,0))
+            for i, t in enumerate(traces):
+                padded[:len(t), i] = t
+            time_axis = np.arange(num_bins) * time_window_length if num_bins > 0 else np.array([])
+            # labels are routing channel numbers
+            return time_axis, padded, sel_chs
+
+        # Detector-based aggregation
+        rc = tttr_obj.routing_channels
+        mt = tttr_obj.micro_times
+
+        labels = []
         traces = []
-        for ch in sel_chs:
-            idxs = np.where(tttr_obj.routing_channels == ch)[0]
-            sub_tttr = tttr_obj[idxs]
-            counts = sub_tttr.get_intensity_trace(time_window_length)
-            traces.append(counts)
-        num_bins = max(len(t) for t in traces)
-        padded = np.zeros((num_bins, len(traces)))
+        for det_name, dinfo in detectors.items():
+            try:
+                det_chs = list(dinfo.get("chs", []))
+                mtrs = dinfo.get("micro_time_ranges", []) or []
+                if not det_chs:
+                    continue
+                # Mask routing channels
+                mask = np.isin(rc, np.array(det_chs, dtype=rc.dtype))
+                # Apply micro time ranges if any
+                if len(mtrs) > 0:
+                    mt_mask = np.zeros_like(mask, dtype=bool)
+                    for rng in mtrs:
+                        try:
+                            a, b = int(rng[0]), int(rng[1])
+                            mt_mask |= (mt >= a) & (mt <= b)
+                        except Exception:
+                            continue
+                    mask &= mt_mask
+                # Build sub TTTR
+                idxs = np.where(mask)[0]
+                if idxs.size == 0:
+                    # still add empty trace for consistent columns
+                    traces.append(np.array([], dtype=float))
+                    lbl = str(det_name) if det_name is not None else "Detector"
+                    # Append ranges info
+                    if len(mtrs) > 0:
+                        rng_txt = ";".join(f"{int(a)}-{int(b)}" for (a,b) in mtrs if a is not None and b is not None)
+                        if rng_txt:
+                            lbl = f"{lbl}, {rng_txt}"
+                    labels.append(lbl)
+                    continue
+                sub_tttr = tttr_obj[idxs]
+                counts = sub_tttr.get_intensity_trace(time_window_length)
+                traces.append(counts)
+                # Build label with ranges
+                lbl = str(det_name) if det_name is not None else "Detector"
+                if len(mtrs) > 0:
+                    rng_txt = ";".join(f"{int(a)}-{int(b)}" for (a,b) in mtrs if a is not None and b is not None)
+                    if rng_txt:
+                        lbl = f"{lbl}, {rng_txt}"
+                labels.append(lbl)
+            except Exception:
+                continue
+
+        # Pad traces to common length
+        num_bins = max((len(t) for t in traces), default=0)
+        padded = np.zeros((num_bins, len(traces))) if num_bins > 0 else np.zeros((0,0))
         for i, t in enumerate(traces):
-            padded[:len(t), i] = t
-        time_axis = np.arange(num_bins) * time_window_length
-        return time_axis, padded, sel_chs
+            if len(t) > 0:
+                padded[:len(t), i] = t
+        time_axis = np.arange(num_bins) * time_window_length if num_bins > 0 else np.array([])
+        return time_axis, padded, labels
 
     def apply_hmm(self, traces, n_components=2):
         model = GaussianHMM(n_components=n_components, covariance_type="full", n_iter=1000)
