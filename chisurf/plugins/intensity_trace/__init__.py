@@ -55,6 +55,9 @@ from PyQt5.QtWidgets import QGraphicsPathItem
 from hmmlearn.hmm import GaussianHMM
 from pyqtgraph import ImageItem, colormap
 
+# Logging
+from chisurf import logging
+
 
 def save_burst_ids(hmm_states, time_axis, time_window_s, tttr_obj, output_dir="."):
     burst_ids = {}
@@ -771,6 +774,7 @@ class IntensityTrace(QWidget):
         # Save burst IDs
         output_dir = QFileDialog.getExistingDirectory(self, "Select Directory for Burst IDs")
         if output_dir:
+            logging.info(f"IntensityTrace: Saving burst IDs to {output_dir}")
             save_burst_ids(hmm_states, self.current_data['time_axis'],
                            self.current_data['window_ms'] / 1000.0,
                            tttrlib.TTTR(self.file_label.text().replace("Selected file: ", "")),
@@ -804,12 +808,14 @@ class IntensityTrace(QWidget):
         for the selected_chs.
         """
         tttr_obj = tttrlib.TTTR(str(ptu_file))
+        logging.info(f"IntensityTrace: Processing {ptu_file} with bin {time_window_length}s and detectors={'on' if detectors else 'off'}")
 
         # Fallback: per-routing-channel behavior
         if not detectors:
             all_chs = sorted(tttr_obj.get_used_routing_channels())
             sel_chs = [ch for ch in selected_chs if ch in all_chs] if selected_chs else all_chs
             traces = []
+            logging.debug(f"IntensityTrace: Using routing channels {sel_chs}")
             for ch in sel_chs:
                 idxs = np.where(tttr_obj.routing_channels == ch)[0]
                 sub_tttr = tttr_obj[idxs]
@@ -850,6 +856,7 @@ class IntensityTrace(QWidget):
                 # Build sub TTTR
                 idxs = np.where(mask)[0]
                 if idxs.size == 0:
+                    logging.warning(f"IntensityTrace: Detector '{det_name}' has no photons after gating; adding empty trace")
                     # still add empty trace for consistent columns
                     traces.append(np.array([], dtype=float))
                     lbl = str(det_name) if det_name is not None else "Detector"
@@ -883,6 +890,7 @@ class IntensityTrace(QWidget):
         return time_axis, padded, labels
 
     def apply_hmm(self, traces, n_components=2):
+        logging.info(f"IntensityTrace: Running HMM with {n_components} components on traces shape={getattr(traces, 'shape', None)}")
         model = GaussianHMM(n_components=n_components, covariance_type="full", n_iter=1000)
         model.fit(traces)
         states = model.predict(traces)
