@@ -24,6 +24,9 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QEvent
 
+# Logging
+from chisurf import logging
+
 # Reuse existing widgets/utilities
 from chisurf.plugins.intensity_trace.__init__ import IntensityPlotWidget, IntensityTrace
 from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
@@ -153,6 +156,7 @@ class TraceBrowser(QWidget):
         self.meta: Dict[str, Dict] = {}
         self.setup_settings: Optional[Dict] = None
         self.selected_channels: Optional[List[int]] = None
+        self._is_loading: bool = False
 
         # Two-page layout using a simple stacked layout approach
         self.root_layout = QVBoxLayout(self)
@@ -176,6 +180,12 @@ class TraceBrowser(QWidget):
         # Controls row
         ctrl_row = QHBoxLayout()
         self.folder_label = QLabel("No folder selected", self.page1)
+        
+        # Back to setup button
+        self.btn_back = QPushButton("\u2190 Back to setup", self.page1)
+        self.btn_back.clicked.connect(self._on_back_to_setup)
+        ctrl_row.addWidget(self.btn_back)
+        
         self.btn_pick_folder = QPushButton("Pick folder", self.page1)
         self.btn_pick_folder.clicked.connect(self._on_pick_folder)
 
@@ -189,15 +199,17 @@ class TraceBrowser(QWidget):
         ])
         self.filter_combo.currentIndexChanged.connect(self._apply_filter)
 
-        self.sort_combo = QComboBox(self.page1)
-        self.sort_combo.addItems(["Sort: Name", "Sort: Rating desc"])
-        self.sort_combo.currentIndexChanged.connect(self._refresh_list)
+
+        # Clear button to clear the file list
+        self.btn_clear = QPushButton("Clear", self.page1)
+        self.btn_clear.setToolTip("Clear file list")
+        self.btn_clear.clicked.connect(self._on_clear)
 
         ctrl_row.addWidget(self.folder_label)
         ctrl_row.addWidget(self.btn_pick_folder)
         ctrl_row.addWidget(QLabel("Filter:"))
         ctrl_row.addWidget(self.filter_combo)
-        ctrl_row.addWidget(self.sort_combo)
+        ctrl_row.addWidget(self.btn_clear)
 
         self.window_ms_spin = QSpinBox(self.page1)
         self.window_ms_spin.setRange(1, 10000)
@@ -228,6 +240,12 @@ class TraceBrowser(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        # Enable header-based sorting
+        try:
+            self.table.setSortingEnabled(True)
+            self.table.horizontalHeader().setSortIndicatorShown(True)
+        except Exception:
+            pass
         # Disable mouse hover effects for the table
         try:
             self.table.setAttribute(Qt.WA_Hover, False)
@@ -274,6 +292,7 @@ class TraceBrowser(QWidget):
     def _on_continue(self):
         # Store setup settings and selected channels
         self.setup_settings = self.detector_page.get_settings()
+        logging.info("TraceBrowser: Setup accepted from DetectorWizard")
         # Union of all detector channels
         chs: List[int] = []
         for det in self.setup_settings.get("detectors", {}).values():
@@ -281,9 +300,18 @@ class TraceBrowser(QWidget):
                 if c not in chs:
                     chs.append(c)
         self.selected_channels = sorted(chs) if chs else None
+        logging.debug(f"TraceBrowser: Selected channels = {self.selected_channels}")
         self.page0.hide()
         self.page1.show()
 
+    def _on_back_to_setup(self):
+        logging.info("TraceBrowser: Back to setup")
+        try:
+            self.page1.hide()
+            self.page0.show()
+        except Exception:
+            pass
+        
     def _on_pick_folder(self):
         path = QFileDialog.getExistingDirectory(self, "Select folder with PTU/TTTR files")
         if not path:
@@ -293,22 +321,28 @@ class TraceBrowser(QWidget):
     def _open_folder(self, folder: pathlib.Path):
         try:
             if not folder.exists() or not folder.is_dir():
+                logging.warning(f"TraceBrowser: Selected path is not a folder: {folder}")
                 return
+            self._is_loading = True
             self.current_folder = folder
             self.folder_label.setText(str(folder))
+            logging.info(f"TraceBrowser: Opened folder {folder}")
             self.meta = _load_meta(folder)
             self._scan_and_fill()
-        except Exception:
-            pass
+        except Exception as e:
+            logging.exception(f"TraceBrowser: Failed to open folder {folder}: {e}")
+        finally:
+            self._is_loading = False
 
     def _scan_and_fill(self):
         if not self.current_folder:
             return
         # Find files
         files = []
-        supported_exts = set(get_tttr_supported_exts())
+        # Determine allowed extensions based on selected setup file type
+        allowed_exts = self._allowed_exts_for_setup()
         for p in sorted(self.current_folder.iterdir()):
-            if p.is_file() and p.suffix.lower() in supported_exts:
+            if p.is_file() and (not allowed_exts or p.suffix.lower() in allowed_exts):
                 files.append(p)
         # Build rows according to filter/sort
         rows: List[Tuple[pathlib.Path, int]] = []
@@ -317,12 +351,9 @@ class TraceBrowser(QWidget):
             rating = int(rec.get("rating", 0))
             if self._filter_accept(rating):
                 rows.append((p, rating))
-        # Sort
-        if self.sort_combo.currentIndex() == 1:  # rating desc
-            rows.sort(key=lambda t: (t[1], t[0].name.lower()), reverse=True)
-        else:
-            rows.sort(key=lambda t: t[0].name.lower())
+        # Do not sort here; allow user to click header to sort
 
+        logging.debug(f"TraceBrowser: Found {len(files)} files, displaying {len(rows)} after filter")
         # Fill table
         self.table.setRowCount(len(rows))
         for r, (p, rating) in enumerate(rows):
@@ -331,16 +362,38 @@ class TraceBrowser(QWidget):
             item_name.setData(Qt.UserRole, str(p))
             self.table.setItem(r, 0, item_name)
 
+            # Provide an item in the Rating column for proper sorting
+            rating_item = QTableWidgetItem()
+            rating_item.setFlags(rating_item.flags() & ~Qt.ItemIsEditable)
+            rating_item.setData(Qt.EditRole, int(rating))  # numeric sort key
+            self.table.setItem(r, 1, rating_item)
+
             combo = StarCombo(self.table)
             combo.set_rating(rating)
-            def _on_combo_changed(idx, path=p, c=combo):
+            def _on_combo_changed(idx, row=r, path=p, c=combo):
+                # Update meta
                 self._update_rating(path, c.rating())
-                # Refresh the list to respect active filters/sorting
-                self._scan_and_fill()
+                # Update sort key for the rating column item
+                it = self.table.item(row, 1)
+                if it is not None:
+                    it.setData(Qt.EditRole, int(c.rating()))
+                # Re-apply current filter and maintain current sorting
+                self._apply_filter()
+                try:
+                    header = self.table.horizontalHeader()
+                    self.table.sortItems(header.sortIndicatorSection(), header.sortIndicatorOrder())
+                except Exception:
+                    pass
             combo.currentIndexChanged.connect(_on_combo_changed)
             self.table.setCellWidget(r, 1, combo)
 
+        # Initial sort by File ascending for convenience
+        try:
+            self.table.sortItems(0, Qt.AscendingOrder)
+        except Exception:
+            pass
         if rows:
+            # Keep selection on the first visible row
             self.table.selectRow(0)
         else:
             self._clear_plot_and_annotation()
@@ -359,6 +412,57 @@ class TraceBrowser(QWidget):
     def _refresh_list(self):
         self._scan_and_fill()
 
+    def _allowed_exts_for_setup(self) -> set:
+        """Return a set of allowed file extensions (lowercase, with dot) based on the selected setup's file type.
+        If Auto or unavailable, return all tttr-supported extensions. """
+        try:
+            # Ask DetectorWizardPage for selected file type
+            filetype = None
+            try:
+                filetype = self.detector_page.filetype  # returns None for Auto
+            except Exception:
+                filetype = None
+            # Base set: all supported exts (normalized)
+            all_exts = set(get_tttr_supported_exts())
+            if not filetype or str(filetype).strip().lower() == 'auto':
+                logging.debug(f"TraceBrowser: Using all supported extensions (Auto): {sorted(all_exts)}")
+                return all_exts
+            # Map container/format names to typical extensions
+            ft = str(filetype).strip().upper()
+            mapping = {
+                'PTU': {'.ptu'},
+                'PT3': {'.pt3'},
+                'HT3': {'.ht3'},
+                'PT2': {'.pt2'},
+                'PT5': {'.pt5'},
+                'SPC-130': {'.spc'},
+                'SPC-600': {'.spc'},
+                'SPC-830': {'.spc'},
+                'PHU': {'.phu'},
+                'PHOTON_HDF5': {'.h5', '.hdf5', '.photon.hdf5'},
+                'HDF5': {'.h5', '.hdf5'},
+            }
+            exts = mapping.get(ft)
+            if exts:
+                # Intersect with actually supported to be safe
+                result = {e for e in exts if (not all_exts or e in all_exts)} or exts
+                logging.debug(f"TraceBrowser: Using extensions for filetype '{filetype}': {sorted(result)}")
+                return result
+            # Fallback: if unknown filetype name, return all
+            logging.debug(f"TraceBrowser: Unknown filetype '{filetype}', falling back to all supported extensions")
+            return all_exts
+        except Exception:
+            return set(get_tttr_supported_exts())
+
+    def _on_clear(self):
+        # Clear the file list (non-destructive; does not modify files or metadata)
+        try:
+            self.table.setRowCount(0)
+            self._clear_plot_and_annotation()
+            logging.info("TraceBrowser: Cleared file list")
+        except Exception:
+            pass
+
     def _filter_accept(self, rating: int) -> bool:
         idx = self.filter_combo.currentIndex()
         if idx == 0:
@@ -374,6 +478,11 @@ class TraceBrowser(QWidget):
         return True
 
     def _on_selection_changed(self):
+        # Commit current annotation for the currently shown file before switching
+        try:
+            self._commit_current_annotation()
+        except Exception:
+            pass
         paths = self._selected_paths()
         if not paths:
             self._clear_plot_and_annotation()
@@ -382,12 +491,23 @@ class TraceBrowser(QWidget):
         self._plot_file(paths[0])
         # Load annotation of the first selected
         self._annotation_changing = True
-        rec = self.meta.get(paths[0].name, {})
-        self.annotation.setPlainText(rec.get("annotation", ""))
-        self._annotation_changing = False
+        try:
+            rec = self.meta.get(paths[0].name, {})
+            # Block signals while setting text to avoid spurious textChanged
+            try:
+                self.annotation.blockSignals(True)
+            except Exception:
+                pass
+            self.annotation.setPlainText(rec.get("annotation", ""))
+        finally:
+            try:
+                self.annotation.blockSignals(False)
+            except Exception:
+                pass
+            self._annotation_changing = False
 
     def _on_annotation_changed(self):
-        if self._annotation_changing or not self.current_folder:
+        if getattr(self, '_is_loading', False) or self._annotation_changing or not self.current_folder:
             return
         paths = self._selected_paths()
         if not paths:
@@ -399,6 +519,21 @@ class TraceBrowser(QWidget):
         self.meta[p.name] = rec
         _save_meta(self.current_folder, self.meta)
 
+    def _commit_current_annotation(self):
+        """Persist current annotation text for the currently displayed file, if any."""
+        try:
+            if not self.current_folder:
+                return
+            p = getattr(self, '_current_file', None)
+            if p is None:
+                return
+            rec = self.meta.get(p.name) or {}
+            rec["annotation"] = self.annotation.toPlainText()
+            self.meta[p.name] = rec
+            _save_meta(self.current_folder, self.meta)
+        except Exception:
+            pass
+
     def _on_window_changed(self, _):
         # Re-plot with new binning if a file is selected
         paths = self._selected_paths()
@@ -407,6 +542,7 @@ class TraceBrowser(QWidget):
 
     def _plot_file(self, path: pathlib.Path):
         if not tttrlib:
+            logging.warning("TraceBrowser: tttrlib not available - cannot plot")
             self.folder_label.setText("tttrlib not available - cannot plot")
             return
         try:
@@ -433,6 +569,7 @@ class TraceBrowser(QWidget):
                                                 hmm_states=None)
             self._current_file = path
         except Exception as e:
+            logging.exception(f"TraceBrowser: Failed to plot {path}: {e}")
             self.folder_label.setText(f"Failed to plot {path.name}: {e}")
 
     def _clear_plot_and_annotation(self):
@@ -544,7 +681,14 @@ class TraceBrowser(QWidget):
             event.ignore()
 
     def _on_export(self):
-        paths = self._selected_paths()
+        # Export all files currently listed (respecting active filter/sort)
+        paths: List[pathlib.Path] = []
+        for r in range(self.table.rowCount()):
+            item = self.table.item(r, 0)
+            if item is not None:
+                p_str = item.data(Qt.UserRole)
+                if p_str:
+                    paths.append(pathlib.Path(p_str))
         if not paths:
             return
         out_dir = QFileDialog.getExistingDirectory(self, "Select destination folder")
@@ -552,11 +696,14 @@ class TraceBrowser(QWidget):
             return
         out = pathlib.Path(out_dir)
         out.mkdir(parents=True, exist_ok=True)
+        copied = 0
         for p in paths:
             try:
                 shutil.copy2(str(p), str(out / p.name))
-            except Exception:
-                pass
+                copied += 1
+            except Exception as e:
+                logging.warning(f"TraceBrowser: Failed to copy {p} to {out}: {e}")
+        logging.info(f"TraceBrowser: Exported {copied}/{len(paths)} files to {out}")
 
     def _on_export_docx(self):
         # Collect all paths that are currently displayed in the table (respecting filter/sort)
@@ -650,11 +797,13 @@ class TraceBrowser(QWidget):
         # Save the document
         try:
             doc.save(str(save_path))
+            logging.info(f"TraceBrowser: DOCX exported to {save_path}")
             try:
                 QMessageBox.information(self, "DOCX Export", f"Saved: {save_path}")
             except Exception:
                 pass
         except Exception as e:
+            logging.exception(f"TraceBrowser: Failed to save DOCX {save_path}: {e}")
             try:
                 QMessageBox.critical(self, "DOCX Export", f"Failed to save DOCX: {e}")
             except Exception:
