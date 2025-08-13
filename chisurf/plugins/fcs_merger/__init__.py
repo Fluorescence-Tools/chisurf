@@ -13,6 +13,6 @@ The merger is useful for improving signal-to-noise ratio in FCS experiments by
 combining data from multiple measurements.
 """
 
-name = "FCS:Merger"
+name = "Fluorescence Correlation Spectroscopy:Merger"
 
 
