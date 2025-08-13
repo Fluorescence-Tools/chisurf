@@ -20,6 +20,7 @@ import importlib
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
+import chisurf  # Ensure chisurf is available module-wide
 import chisurf.settings
 from chisurf import logging
 import chisurf.gui.decorators
@@ -506,10 +507,12 @@ def setup_gui(
 
             # Check for icon
             icon = None
-            # Look for icon in plugin directory
-            icon_path = plugin_dir / "icon.png"
-            if icon_path.exists():
-                icon = QtGui.QIcon(str(icon_path))
+            # Look for icon in plugin directory (PNG preferred, fallback to SVG)
+            for _icon_name in ("icon.png", "icon.svg"):
+                icon_path = plugin_dir / _icon_name
+                if icon_path.exists():
+                    icon = QtGui.QIcon(str(icon_path))
+                    break
 
             # Get plugin description
             _, description = get_plugin_metadata(plugin_root, module_name)
@@ -648,6 +651,21 @@ def setup_gui(
         setup_style(app=app)
     elif stage == "populate_plugins":
         populate_plugins()
+    elif stage == "check_updates":
+        from chisurf.plugins.updater import updater as _updater_mod
+
+        def _startup_update_check():
+            try:
+                update_available, latest_version, error = _updater_mod.check_for_updates()
+                if error:
+                    chisurf.logging.info(f"Update check skipped or failed: {error}")
+                elif update_available:
+                    chisurf.logging.info(f"Update available: {latest_version}")
+                else:
+                    chisurf.logging.info("ChiSurf is up to date.")
+            except Exception as e:
+                chisurf.logging.debug(f"Silent update check failed: {e}")
+        _startup_update_check()
     elif stage == "startup_interface":
         return startup_interface()
     elif stage == "define_actions":
@@ -724,6 +742,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Arrange widgets", "arrange_widgets", 70),
         ("Initializing Jupyter", "start_jupyter", 85),
         ("Populate plugins", "populate_plugins", 90),
+        ("Check for updates", "check_updates", 93),
         ("Populate notebook", "populate_notebooks", 95),
         ("Setup logging", "setup_logging", 98),
         ("Styling up", "setup_style", 100),
@@ -751,6 +770,7 @@ def get_app():
     win.raise_()
     win.activateWindow()
     win.setFocus()
+
 
     def shutdown_jupyter():
         """Ensure the Jupyter notebook server is terminated when the application closes."""
