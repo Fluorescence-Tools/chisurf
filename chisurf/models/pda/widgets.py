@@ -150,21 +150,23 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
         readFrom = QtWidgets.QToolButton()
         readFrom.setText("read")
+        # assign attribute before using it as parent
+        self.readFrom = readFrom
         self.readFrom_menu = QtWidgets.QMenu(self.readFrom)
         self.readFrom_menu.aboutToShow.connect(self.read_menu)
         readFrom.setMenu(self.readFrom_menu)
         readFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         lh.addWidget(readFrom)
-        self.readFrom = readFrom
 
         linkFrom = QtWidgets.QToolButton()
         linkFrom.setText("link")
+        # assign attribute before using it as parent
+        self.linkFrom = linkFrom
         self.linkFrom_menu = QtWidgets.QMenu(self.linkFrom)
         self.linkFrom_menu.aboutToShow.connect(self.link_menu)
         linkFrom.setMenu(self.linkFrom_menu)
         linkFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         lh.addWidget(linkFrom)
-        self.linkFrom = linkFrom
 
         normalize_amplitude = QtWidgets.QCheckBox("Norm.")
         normalize_amplitude.setChecked(True)
