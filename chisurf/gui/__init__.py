@@ -653,7 +653,8 @@ def setup_gui(
         populate_plugins()
     elif stage == "check_updates":
         from chisurf.plugins.updater import updater as _updater_mod
-
+        from PyQt5.QtWidgets import QMessageBox
+        
         def _startup_update_check():
             try:
                 update_available, latest_version, error = _updater_mod.check_for_updates()
@@ -661,6 +662,22 @@ def setup_gui(
                     chisurf.logging.info(f"Update check skipped or failed: {error}")
                 elif update_available:
                     chisurf.logging.info(f"Update available: {latest_version}")
+                    # Prompt user to open the updater
+                    try:
+                        reply = QMessageBox.question(
+                            None,
+                            "Update Available",
+                            f"A new version of ChiSurf ({latest_version}) is available.\n\nDo you want to open the Updater now?",
+                            QMessageBox.Yes | QMessageBox.No,
+                            QMessageBox.Yes
+                        )
+                        if reply == QMessageBox.Yes:
+                            import importlib
+                            updater_plugin = importlib.import_module("chisurf.plugins.updater")
+                            window = updater_plugin.UpdaterWidget()
+                            window.show()
+                    except Exception as e:
+                        chisurf.logging.debug(f"Failed to show update prompt: {e}")
                 else:
                     chisurf.logging.info("ChiSurf is up to date.")
             except Exception as e:
@@ -756,6 +773,32 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         w2 = setup_gui(app=app, stage=stage, window=window)
         if w2 is not None:
             window = w2
+        # After checking for updates, display version comparison on the splash
+        if stage == "check_updates":
+            try:
+                from chisurf.plugins.updater import updater as _updater_mod
+                from chisurf import info as _info
+                import time as _time
+                cur = getattr(_info, "__version__", "?")
+                update_available, latest_version, error = _updater_mod.check_for_updates()
+                if error:
+                    text = f"v{cur} — Update check failed"
+                else:
+                    if update_available and latest_version:
+                        text = f"v{cur} — Latest v{latest_version} (Update available)"
+                    else:
+                        # If no update or latest unknown, assume up to date
+                        latest_txt = latest_version or cur
+                        text = f"v{cur} — Latest v{latest_txt} (Up to date)"
+                splash.update_message(text)
+                # Ensure the update info is visible for at least one second
+                start_ts = _time.time()
+                # Process events in small slices to keep UI responsive during the wait
+                while _time.time() - start_ts < 2.0:
+                    app.processEvents()
+                    _time.sleep(0.05)
+            except Exception as e:
+                chisurf.logging.debug(f"Failed to update splash with version info: {e}")
 
     window.show()
     splash.hide()
