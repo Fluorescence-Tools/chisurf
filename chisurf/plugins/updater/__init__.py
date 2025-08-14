@@ -60,6 +60,17 @@ class UpdaterWidget(QWidget):
 
         self.setup_ui()
 
+        # Automatically check for updates shortly after the widget starts
+        try:
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(150, self._auto_check_on_start)
+        except Exception:
+            # Fallback: direct call if QTimer not available
+            try:
+                self._auto_check_on_start()
+            except Exception:
+                pass
+
     def setup_ui(self):
         """Set up the user interface."""
         layout = QVBoxLayout()
@@ -98,6 +109,79 @@ class UpdaterWidget(QWidget):
 
         self.setLayout(layout)
 
+    def _auto_check_on_start(self):
+        """Perform an automatic update check and inform the user if an update is available.
+        Also populate the version selection combobox on startup. Keeps UI responsive and robust."""
+        # Prepare UI state
+        try:
+            self.check_button.setEnabled(False)
+            self.update_button.setEnabled(False)
+            self.version_dropdown.setEnabled(False)
+            self.version_dropdown.clear()
+        except Exception:
+            pass
+
+        # First, try to get full update info to populate the versions dropdown
+        populated_versions = False
+        try:
+            update_info = self.updater._get_update_info()
+            if update_info:
+                self.available_versions = update_info.get("available_versions", [])
+                if not self.available_versions and self.updater._is_local_folder():
+                    # If using a local folder, attempt a direct listing
+                    self.available_versions = self.updater._list_available_versions()
+                if self.available_versions:
+                    for version_info in self.available_versions:
+                        version = version_info.get('version')
+                        if version:
+                            self.version_dropdown.addItem(f"Version {version}", version_info)
+                    self.version_dropdown.setEnabled(True)
+                    self.update_button.setEnabled(True)
+                    self.status_label.setText(f"Found {len(self.available_versions)} available versions.")
+                    populated_versions = True
+        except Exception:
+            populated_versions = False
+
+        # Then, do a light availability check to inform the user
+        try:
+            update_available, latest_version, error = check_for_updates()
+        except Exception as e:
+            update_available, latest_version, error = False, None, str(e)
+
+        try:
+            if error:
+                # Keep any versions we may have populated, but show the error
+                self.status_label.setText(f"Update check failed or skipped: {error}")
+                self.check_button.setEnabled(True)
+                # If versions not populated, leave update button disabled
+                if not populated_versions:
+                    self.update_button.setEnabled(False)
+                return
+            if update_available and latest_version:
+                self.status_label.setText(f"Update available: version {latest_version}")
+                self.update_button.setEnabled(True)
+                # Inform the user with a non-intrusive prompt
+                try:
+                    QMessageBox.information(
+                        self,
+                        "Update Available",
+                        f"A new version of ChiSurf ({latest_version}) is available.",
+                        QMessageBox.Ok
+                    )
+                except Exception:
+                    pass
+            else:
+                from chisurf import info as _info
+                if not populated_versions:
+                    self.status_label.setText(f"ChiSurf is up to date (version {_info.__version__}).")
+        except Exception:
+            pass
+        finally:
+            try:
+                self.check_button.setEnabled(True)
+            except Exception:
+                pass
+
 
     def check_for_updates(self):
         """Check for available updates."""
@@ -134,7 +218,7 @@ class UpdaterWidget(QWidget):
             self.available_versions = self.updater._list_available_versions()
             logging.debug(f"Found {len(self.available_versions)} available versions from direct listing")
 
-        # If we have available versions, populate the dropdown
+        # If we have available versions, populate the dropdown first
         if self.available_versions:
             logging.info(f"Found {len(self.available_versions)} available versions")
             for version_info in self.available_versions:
@@ -147,19 +231,38 @@ class UpdaterWidget(QWidget):
 
             self.version_dropdown.setEnabled(True)
             self.update_button.setEnabled(True)
-            status_message = f"Found {len(self.available_versions)} available versions."
-            self.status_label.setText(status_message)
-            logging.info(status_message)
-        else:
-            # Fall back to the standard update check
-            logging.info("No versions found, falling back to standard update check")
-            update_available, latest_version, error = check_for_updates()
+
+            # After population, always run a light availability check to set a correct label
+            try:
+                update_available, latest_version, error = check_for_updates()
+            except Exception as e:
+                update_available, latest_version, error = False, None, str(e)
 
             if error:
                 error_message = f"Error checking for updates: {error}"
                 logging.error(error_message)
                 self.status_label.setText(error_message)
-            elif update_available:
+            elif update_available and latest_version:
+                status_message = f"Update available: version {latest_version}"
+                logging.info(status_message)
+                self.status_label.setText(status_message)
+            else:
+                status_message = f"ChiSurf is already up to date (version {info.__version__})."
+                logging.info(status_message)
+                self.status_label.setText(status_message)
+        else:
+            # No versions found; still run availability check to inform the user
+            logging.info("No versions found; performing availability check")
+            try:
+                update_available, latest_version, error = check_for_updates()
+            except Exception as e:
+                update_available, latest_version, error = False, None, str(e)
+
+            if error:
+                error_message = f"Error checking for updates: {error}"
+                logging.error(error_message)
+                self.status_label.setText(error_message)
+            elif update_available and latest_version:
                 status_message = f"Update available: version {latest_version}"
                 logging.info(status_message)
                 self.status_label.setText(status_message)
