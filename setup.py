@@ -11,17 +11,18 @@ except ImportError:
     from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
 
-from chisurf import info
+import runpy
+_here = os.path.dirname(__file__)
+info = runpy.run_path(os.path.join(_here, 'chisurf', 'info.py'))
 
-
-NAME = info.__name__
-VERSION = info.__version__
-AUTHOR = info.__author__
-LICENSE = info.__license__
-DESCRIPTION = info.__description__
-LONG_DESCRIPTION = info.LONG_DESCRIPTION
-URL = info.__url__
-EMAIL = info.__email__
+NAME = info['__name__']
+VERSION = info['__version__']
+AUTHOR = info['__author__']
+LICENSE = info['__license__']
+DESCRIPTION = info['__description__']
+LONG_DESCRIPTION = info['LONG_DESCRIPTION']
+URL = info['__url__']
+EMAIL = info['__email__']
 
 def dict_from_txt(fn):
     d = {}
@@ -168,7 +169,8 @@ metadata = dict(
     ],
     keywords='fluorescence single-molecule spectroscopy',
     packages=find_packages(
-        include=(NAME + "*",)
+        include=(NAME + "*",),
+        exclude=(NAME + ".notebooks", NAME + ".notebooks.*")
     ),
     package_dir={
         NAME: NAME
@@ -198,12 +200,6 @@ metadata = dict(
     extras_require={
         'ml': ['scikit-learn>=1.0.0'],  # Optional machine learning dependencies
     },
-    setup_requires=[
-        "cython",
-        'numpy',
-        'PyYAML',
-        'setuptools'
-    ],
     ext_modules=get_extensions(),
     # Register custom build commands
     # - build_ext: The standard Cython build command for building extensions
