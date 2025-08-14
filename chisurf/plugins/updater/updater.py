@@ -130,23 +130,35 @@ class ChiSurfUpdater:
             - Error message if an error occurred, None otherwise
         """
         logging.info(f"Checking for updates (current version: {self.current_version})")
+
+        def _parse_version(v: str) -> Tuple:
+            """Parse version string into a tuple for robust comparison.
+            Supports semantic versions like '1.10.2' and date-like '25.08.14'.
+            Falls back to extracting integers; non-numeric parts are ignored.
+            """
+            try:
+                # Normalize separators to dots and split
+                parts = re.split(r"[^0-9]+", v)
+                nums = [int(p) for p in parts if p != ""]
+                # Pad to 3 for common semver comparisons
+                while len(nums) < 3:
+                    nums.append(0)
+                return tuple(nums[:4])
+            except Exception:
+                return (0,)
+
         try:
-            # In a real implementation, this would fetch version info from a server
-            # For now, we'll simulate by checking a local file or creating one if it doesn't exist
             logging.debug("Getting update information")
             update_info = self._get_update_info()
 
             if not update_info:
-                # If no update info exists, return no update available
                 logging.info("No update information available")
                 return False, None, None
 
-            # Compare versions (in a real implementation, this would be more sophisticated)
-            # For now, we'll just compare the version strings
             latest_version = update_info["latest_version"]
             logging.info(f"Latest version available: {latest_version}")
 
-            if latest_version > self.current_version:
+            if _parse_version(latest_version) > _parse_version(self.current_version):
                 logging.info(f"Update available: {self.current_version} -> {latest_version}")
                 return True, latest_version, None
 
