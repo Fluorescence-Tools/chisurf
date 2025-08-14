@@ -3,6 +3,8 @@ import os
 import time
 import pathlib
 import csv
+import tempfile
+import shutil
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import (
@@ -213,15 +215,61 @@ class FileAndFitSelectionPage(QWizardPage):
 
     def populate_fit_combo_box(self):
         try:
+            # Remember previously selected fit object if available
+            prev_fit_obj = None
+            if self.fit_combo_box.count() > 0:
+                prev_fit_obj = self.fit_combo_box.currentData()
+            prev_text = self.fit_combo_box.currentText() if self.fit_combo_box.count() > 0 else ""
+
             self.fit_combo_box.clear()
-            for fit in chisurf.fits:
-                self.fit_combo_box.addItem(fit.name)
+            for f in chisurf.fits:
+                # store the actual fit object for robust matching
+                self.fit_combo_box.addItem(f.name, f)
+
+            # Try to restore by object identity first
+            if prev_fit_obj is not None:
+                for i in range(self.fit_combo_box.count()):
+                    if self.fit_combo_box.itemData(i) is prev_fit_obj:
+                        self.fit_combo_box.setCurrentIndex(i)
+                        break
+                else:
+                    # Fallback to restoring by text if object not found
+                    if prev_text:
+                        idx = self.fit_combo_box.findText(prev_text)
+                        if idx >= 0:
+                            self.fit_combo_box.setCurrentIndex(idx)
+            else:
+                # No previous object, try by text
+                if prev_text:
+                    idx = self.fit_combo_box.findText(prev_text)
+                    if idx >= 0:
+                        self.fit_combo_box.setCurrentIndex(idx)
         except Exception as e:
             print(f"Error loading fits from chisurf.fits: {e}")
             self.fit_combo_box.addItem("No fits available")
 
+    def initializePage(self):
+        # Refresh available fits each time this page becomes active
+        self.populate_fit_combo_box()
+
     def get_selected_fit(self):
         return self.fit_combo_box.currentText()
+
+    def get_selected_fit_index(self) -> int:
+        """Return the index of the selected fit in chisurf.fits using object identity when possible."""
+        try:
+            fit_obj = self.fit_combo_box.currentData()
+            if fit_obj is not None:
+                for idx, f in enumerate(chisurf.fits):
+                    if f is fit_obj:
+                        return idx
+        except Exception:
+            pass
+        # Fallback to combobox index if object resolution failed
+        try:
+            return self.fit_combo_box.currentIndex()
+        except Exception:
+            return -1
 
 
 class AnalysisPage(QWizardPage):
@@ -260,6 +308,11 @@ class AnalysisPage(QWizardPage):
         self.setLayout(layout)
         # This will store all results as a list of dictionaries.
         self.results = []
+        # Temp dir for screenshots and map from filename to saved path
+        self._temp_dir = None
+        self._screenshot_map = {}
+        # Temp dir for per-fit exports (numeric results)
+        self._fit_exports_dir = None
 
     def browse_save_file(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Save Results File", "", "CSV Files (*.csv);;All Files (*)")
@@ -276,6 +329,136 @@ class AnalysisPage(QWizardPage):
         chisurf.run(f'chisurf.fits[{fit_idx}].data = chisurf.imported_datasets[-1]')
         chisurf.run(f'chisurf.fits[{fit_idx}].run()')
         print(f"Running fit on: {file}")
+
+    def _get_or_create_temp_dir(self) -> str:
+        if self._temp_dir and os.path.isdir(self._temp_dir):
+            return self._temp_dir
+        self._temp_dir = tempfile.mkdtemp(prefix="chisurf_batch_")
+        return self._temp_dir
+
+    def _get_or_create_fit_exports_dir(self) -> str:
+        if self._fit_exports_dir and os.path.isdir(self._fit_exports_dir):
+            return self._fit_exports_dir
+        # Keep all per-run fit result exports in a dedicated temp dir
+        base = tempfile.mkdtemp(prefix="chisurf_batch_fit_exports_")
+        self._fit_exports_dir = base
+        return self._fit_exports_dir
+
+    def _sanitize_filename(self, name: str) -> str:
+        # Keep base name without extension, replace problematic chars
+        base = pathlib.Path(name).stem
+        safe = "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in base)
+        return safe or "file"
+
+    def _norm_key(self, file_path: str) -> str:
+        """Create a stable, absolute key for grouping results/screenshots."""
+        try:
+            return str(pathlib.Path(file_path).resolve())
+        except Exception:
+            return os.path.abspath(file_path)
+
+    def _find_target_window(self):
+        # Try to find a likely main window to capture; fallback to wizard itself
+        try:
+            for w in QtWidgets.QApplication.topLevelWidgets():
+                title = w.windowTitle() if hasattr(w, 'windowTitle') else ''
+                if w.isVisible() and ("Chi" in title or "Fit" in title or "PCH" in title or "FIDA" in title):
+                    return w
+            aw = QtWidgets.QApplication.activeWindow()
+            if aw and aw.isVisible():
+                return aw
+        except Exception:
+            pass
+        return self.wizard()
+
+    def _capture_screenshot_for_file(self, file: str, run_index: int) -> str:
+        # Ensure UI updates before capture and mimic save_fit target (MDI current subwindow)
+        QApplication.processEvents()
+        time.sleep(0.05)
+        try:
+            cs = chisurf.cs
+            fit_window = getattr(cs.mdiarea, 'currentSubWindow', lambda: None)()
+        except Exception:
+            fit_window = None
+        widget = fit_window if fit_window is not None else self._find_target_window()
+        try:
+            pixmap = widget.grab()
+            temp_dir = self._get_or_create_temp_dir()
+            safe = self._sanitize_filename(file)
+            png_path = os.path.join(temp_dir, f"{run_index:03d}_{safe}.png")
+            pixmap.save(png_path, 'PNG')
+            return png_path
+        except Exception as e:
+            print(f"Failed to capture screenshot for {file}: {e}")
+            return ""
+
+    def _create_docx_report(self, docx_path: str, file_order: list) -> bool:
+        try:
+            from docx import Document
+            from docx.shared import Inches
+        except Exception as e:
+            QMessageBox.information(self, "DOCX not created", f"python-docx not available: {e}")
+            return False
+        # Group results by normalized key
+        grouped = {}
+        for row in self.results:
+            key = row.get("GroupKey", self._norm_key(row.get("Filename", "")))
+            grouped.setdefault(key, []).append(row)
+        doc = Document()
+        doc.add_heading('Batch Fit Results', level=0)
+        doc.add_paragraph(f"CSV: {os.path.basename(self.wizard().fit_results_file)}")
+        
+        # First, add per-file headings and screenshots (no tables here)
+        for idx, filename in enumerate(file_order, start=1):
+            key = self._norm_key(filename)
+            doc.add_heading(f"{idx}. {os.path.basename(filename)}", level=1)
+            img = self._screenshot_map.get(key, "")
+            if img and os.path.exists(img):
+                try:
+                    doc.add_picture(img, width=Inches(6))
+                except Exception as e:
+                    doc.add_paragraph(f"[Could not add image: {e}]")
+        
+        # Build a single consolidated results table for all files
+        # Columns: Filename, Parameter, Fixed, Value, Chi2r, Run
+        table = None
+        # Flatten rows in the order of file_order
+        consolidated_rows = []
+        for filename in file_order:
+            key = self._norm_key(filename)
+            rows = grouped.get(key, [])
+            if not rows:
+                continue
+            # Preserve the order as collected during fitting
+            for r in rows:
+                consolidated_rows.append(r)
+        
+        if consolidated_rows:
+            table = doc.add_table(rows=1, cols=6)
+            hdr = table.rows[0].cells
+            hdr[0].text = 'Filename'
+            hdr[1].text = 'Parameter'
+            hdr[2].text = 'Fixed'
+            hdr[3].text = 'Value'
+            hdr[4].text = 'Chi2r'
+            hdr[5].text = 'Run'
+            for r in consolidated_rows:
+                cells = table.add_row().cells
+                cells[0].text = str(r.get('Filename', ''))
+                cells[1].text = str(r.get('Parameter', ''))
+                cells[2].text = str(r.get('Fixed', ''))
+                cells[3].text = str(r.get('Value', ''))
+                cells[4].text = str(r.get('Chi2r', ''))
+                cells[5].text = str(r.get('Run', ''))
+        else:
+            doc.add_paragraph('No parameters found.')
+        
+        try:
+            doc.save(docx_path)
+            return True
+        except Exception as e:
+            QMessageBox.warning(self, "DOCX Save Error", f"Could not save DOCX: {e}")
+            return False
 
     def run_fits(self):
         wizard = self.wizard()
@@ -303,7 +486,7 @@ class AnalysisPage(QWizardPage):
                 QMessageBox.warning(self, "Save File", "Please specify a file to save the results.")
                 return
 
-        fit_idx = file_selection_page.fit_combo_box.currentIndex()
+        fit_idx = file_selection_page.get_selected_fit_index()
 
         # Clear previous results if any.
         self.results_list.clear()
@@ -320,17 +503,38 @@ class AnalysisPage(QWizardPage):
 
         total_files = len(selected_files)
         for i, file in enumerate(selected_files, start=1):
+            key = self._norm_key(file)
             # Restore the initial parameter values before each file's fit.
             for param in fit.model.parameters_all:
                 if param.name in initial_params:
                     param.value, param.fixed = initial_params[param.name]
 
             self.dummy_run_fit(file, fit_idx)
+
+            # Save per-run fit results (numeric export)
+            try:
+                exports_dir = self._get_or_create_fit_exports_dir()
+                safe = self._sanitize_filename(file)
+                base = os.path.join(exports_dir, f"{i:03d}_{safe}")
+                # Use the same API as core_fit.save_fit uses internally
+                fit.save(base, 'csv', save_curves=True)
+            except Exception as e:
+                print(f"Per-run fit export failed for {file}: {e}")
+
+            # Take a screenshot of the fit window after each fit
+            try:
+                img_path = self._capture_screenshot_for_file(file, i)
+                if img_path:
+                    self._screenshot_map[key] = img_path
+            except Exception as e:
+                print(f"Screenshot step failed for {file}: {e}")
+
             # Access fit parameters via fit.model.parameters_all and chi2r via fit.chi2r.
             for param in fit.model.parameters_all:
                 result = {
                     "Run": str(i),
                     "Filename": file,
+                    "GroupKey": key,
                     "Parameter": param.name,
                     "Fixed": "Yes" if param.fixed else "No",
                     "Value": param.value,
@@ -342,14 +546,14 @@ class AnalysisPage(QWizardPage):
             progress = int((i / total_files) * 100)
             progress_window.set_value(progress)
             self.results_list.addItem(file)
-            time.sleep(1)  # Simulate processing delay; adjust or remove as needed
+            time.sleep(0.2)  # Short pause to keep UI responsive; adjust as needed
 
         progress_window.close()
 
         # Write the results to the chosen CSV file.
         fieldnames = ["Run", "Filename", "Parameter", "Fixed", "Value", "Chi2r"]
         with open(csv_filename, "w", newline="") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, extrasaction='ignore')
             writer.writeheader()
             for row in self.results:
                 writer.writerow(row)
@@ -357,7 +561,37 @@ class AnalysisPage(QWizardPage):
         # Store the CSV filename in the wizard so the final page can access it.
         wizard.fit_results_file = csv_filename
 
-        QMessageBox.information(self, "Analysis Complete", "All fits have been completed and results saved.")
+        # Create DOCX report alongside the CSV
+        docx_path = os.path.splitext(csv_filename)[0] + ".docx"
+        docx_created = self._create_docx_report(docx_path, selected_files)
+        if docx_created:
+            wizard.fit_results_docx = docx_path
+
+        temp_dir = self._get_or_create_temp_dir()
+
+        # Zip all per-run fit exports to the target folder (next to CSV/DOCX)
+        zip_base = os.path.splitext(csv_filename)[0] + "_fit_results"
+        zip_out = zip_base + ".zip"
+        try:
+            exports_dir = self._get_or_create_fit_exports_dir()
+            # Create the archive; make_archive returns the filename it created
+            created = shutil.make_archive(zip_base, 'zip', root_dir=exports_dir)
+            zip_out = created if created else zip_out
+        except Exception as e:
+            print(f"Failed to create ZIP of per-run fit results: {e}")
+
+        msg = (
+            f"All fits have been completed and results saved."
+            f"\nCSV: {csv_filename}"
+            f"\nScreenshots saved in: {temp_dir}"
+        )
+        if docx_created:
+            msg += f"\nDOCX report: {docx_path}"
+        if zip_out and os.path.exists(zip_out):
+            msg += f"\nPer-run fit results ZIP: {zip_out}"
+        else:
+            msg += "\nPer-run fit results ZIP: [failed to create]"
+        QMessageBox.information(self, "Analysis Complete", msg)
 
 
 if __name__ == "__main__":
