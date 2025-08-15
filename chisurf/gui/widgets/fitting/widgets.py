@@ -719,7 +719,7 @@ class FittingParameterWidget(Controller):
                 f"parameter.fixed = False\n"
                 f"parameter.value = {self.widget_value.value()} \n"
                 f"parameter.fixed = fixed\n"
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
+                f"chisurf.fits[{self.fitting_parameter.fit_idx}].finalize()"
             )
         )
         if callback:
@@ -788,9 +788,33 @@ class FittingParameterWidget(Controller):
         #super().update(*args)
         self.blockSignals(True)
 
+        # Sync link UI state first
+        try:
+            self.set_linked(self.fitting_parameter.is_linked)
+        except Exception:
+            pass
+
         # Update value of widget
-        self.widget_value.setValue(self.fitting_parameter.value)
+        self.widget_value.setValue(float(self.fitting_parameter.value))
         self.widget_fix.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.fixed else QtCore.Qt.Unchecked)
+
+        # Sync bounds UI
+        try:
+            lb, ub = self.fitting_parameter.bounds
+            # Avoid emitting change signals while programmatically updating
+            self.widget_bounds_on.blockSignals(True)
+            self.widget_lower_bound.blockSignals(True)
+            self.widget_upper_bound.blockSignals(True)
+            self.widget_bounds_on.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.bounds_on else QtCore.Qt.Unchecked)
+            self.widget_lower_bound.setValue(float(lb))
+            self.widget_upper_bound.setValue(float(ub))
+        finally:
+            try:
+                self.widget_bounds_on.blockSignals(False)
+                self.widget_lower_bound.blockSignals(False)
+                self.widget_upper_bound.blockSignals(False)
+            except Exception:
+                pass
 
         # Tooltip
         if self.fitting_parameter.bounds_on:
@@ -799,12 +823,12 @@ class FittingParameterWidget(Controller):
         else:
             tooltip_text = "bounds: off\n"
 
-        if self.fitting_parameter.is_linked:
+        if self.fitting_parameter.is_linked and getattr(self.fitting_parameter, 'link', None) is not None:
             tooltip_text += f"linked to: {self.fitting_parameter.link.name}"
         self.widget_value.setToolTip(tooltip_text)
 
         # Error-estimate
-        value = self.fitting_parameter.value
+        value = float(self.fitting_parameter.value)
         error_estimate = self.fitting_parameter.error_estimate
 
         if self.fitting_parameter.fixed or not isinstance(error_estimate, float):
