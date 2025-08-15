@@ -674,8 +674,20 @@ def setup_gui(
                         if reply == QMessageBox.Yes:
                             import importlib
                             updater_plugin = importlib.import_module("chisurf.plugins.updater")
-                            window = updater_plugin.UpdaterWidget()
-                            window.show()
+                            # Keep a strong reference to prevent garbage collection from closing the window
+                            import chisurf as _chisurf_mod
+                            _chisurf_mod.__updater_window__ = updater_plugin.UpdaterWidget()
+                            _chisurf_mod.__updater_window__.show()
+                            try:
+                                _chisurf_mod.__updater_window__.raise_()
+                                _chisurf_mod.__updater_window__.activateWindow()
+                            except Exception:
+                                pass
+                            # Signal startup should be interrupted so only the updater remains open
+                            try:
+                                _chisurf_mod.__startup_interrupt_for_updater__ = True
+                            except Exception:
+                                pass
                     except Exception as e:
                         chisurf.logging.debug(f"Failed to show update prompt: {e}")
                 else:
@@ -773,6 +785,12 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         w2 = setup_gui(app=app, stage=stage, window=window)
         if w2 is not None:
             window = w2
+        # If user chose to open updater, interrupt startup immediately
+        try:
+            if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+                break
+        except Exception:
+            pass
         # After checking for updates, display version comparison on the splash
         if stage == "check_updates":
             try:
@@ -800,6 +818,14 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
             except Exception as e:
                 chisurf.logging.debug(f"Failed to update splash with version info: {e}")
 
+    # If startup was interrupted for updater, do not show the main window
+    try:
+        if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+            splash.hide()
+            return window
+    except Exception:
+        pass
+
     window.show()
     splash.hide()
     splash.finish(window)
@@ -810,9 +836,22 @@ def get_app():
     app = QtWidgets.QApplication(sys.argv)
     app.processEvents()
     win = get_win(app=app)
-    win.raise_()
-    win.activateWindow()
-    win.setFocus()
+
+    # If startup was interrupted to open the updater, do not touch/show the main window
+    try:
+        import chisurf as _chisurf_mod
+        if getattr(_chisurf_mod, "__startup_interrupt_for_updater__", False):
+            win = None  # We won't use the main window in this case
+        else:
+            win.raise_()
+            win.activateWindow()
+            win.setFocus()
+    except Exception:
+        # Fallback to showing the window if available
+        if win is not None:
+            win.raise_()
+            win.activateWindow()
+            win.setFocus()
 
 
     def shutdown_jupyter():
