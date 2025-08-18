@@ -239,10 +239,15 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     @property
     def current_tttr_filename(self):
         v = self.spinBox_4.value()
-        if v < len(self.settings['tttr_filenames']):
-            return self.settings['tttr_filenames'][v]
+        try:
+            filenames = self.settings.get('tttr_filenames', [])
+        except Exception:
+            filenames = []
+        if 0 <= v < len(filenames):
+            return filenames[v]
         else:
-            return None
+            # Return empty string for safe use in setText and truthiness checks
+            return ""
 
     @property
     def decay_coarse(self):
@@ -1093,13 +1098,25 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         Clears the list of filenames, resets the spinBox, clears the lineEdit,
         unsets the current TTTR object, and also clears all plots.
         """
-        self.settings['tttr_filenames'].clear()
+        lst = self.settings.get('tttr_filenames')
+        if isinstance(lst, list):
+            lst.clear()
+        # Reset index spinbox safely
+        self.spinBox_4.blockSignals(True)
         self.spinBox_4.setMaximum(0)
+        self.spinBox_4.setValue(0)
+        self.spinBox_4.blockSignals(False)
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
         self.tttr = None
         # Reset resolved output directory cache to avoid stale paths
         self._resolved_output_dir = None
+        # Also clear any cached TTTR objects
+        try:
+            if hasattr(self, 'tttr_objects') and isinstance(self.tttr_objects, dict):
+                self.tttr_objects.clear()
+        except Exception:
+            pass
 
         # Clear each plot item
         self.plot_unselected.setData([], [])
@@ -1116,8 +1133,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     def updateUI(self):
         """
         Updates the lineEdit with the currently active file name.
+        Safe when there is no current file.
         """
-        self.lineEdit.setText(self.current_tttr_filename)
+        fn = self.current_tttr_filename
+        self.lineEdit.setText(fn if isinstance(fn, str) else "")
 
     def onRegionUpdate(self):
         """
@@ -2184,7 +2203,10 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                             expanded_files.append(str(child.resolve()))
                 else:
                     expanded_files.append(str(p))
-            self.settings['tttr_filenames'] = expanded_files
+            # IMPORTANT: mutate the existing list in-place to preserve the drag/drop injector reference
+            lst = self.settings.get('tttr_filenames')
+            if isinstance(lst, list):
+                lst[:] = expanded_files
 
             # List of restricted extensions requiring manual selection (if needed)
             RESTRICTED_EXTENSIONS = [".spc"]  # Extend or modify as required
