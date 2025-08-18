@@ -28,6 +28,7 @@ name = "Fluorescence decay:Jordi G-Factor Calculator"
 
 import sys
 import numpy as np
+import warnings
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QFileDialog, QLabel, QGridLayout,
@@ -35,6 +36,12 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
+
+# Optional ChiSurf I/O import for Jordi reading (keeps standalone capability)
+try:
+    from chisurf.fio import read_jordi as _read_jordi
+except Exception:
+    _read_jordi = None
 
 # No ChiSurf dependencies
 
@@ -215,14 +222,21 @@ class JordiGFactorCalculator(QWidget):
         
         self.file_label.setText(file_path)
         
-        # Load the Jordi file using numpy.loadtxt
+        # Load the Jordi file using central reader if available (fallback to numpy)
         try:
-            jordi_data = np.loadtxt(file_path)
-            
-            # Split the data into two equal chunks for VV and VH channels
-            half_length = len(jordi_data) // 2
-            vv_data = jordi_data[:half_length]  # Parallel (VV)
-            vh_data = jordi_data[half_length:]  # Perpendicular (VH)
+            if _read_jordi is not None:
+                vv_data, vh_data = _read_jordi(file_path, split=True)
+            else:
+                warnings.warn(
+                    "Direct Jordi reading via numpy.loadtxt is deprecated. Use chisurf.fio.read_jordi instead.",
+                    DeprecationWarning,
+                    stacklevel=2
+                )
+                jordi_data = np.loadtxt(file_path)
+                # Split the data into two equal chunks for VV and VH channels
+                half_length = len(jordi_data) // 2
+                vv_data = jordi_data[:half_length]  # Parallel (VV)
+                vh_data = jordi_data[half_length:]  # Perpendicular (VH)
             
             # Create time axis (assuming equal time steps)
             # For a more realistic time axis, use a range from 0 to 10 ns (matching test data)
