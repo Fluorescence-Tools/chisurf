@@ -109,7 +109,6 @@ class QTextEditLogger(logging.Handler):
         self.setLevel(level=level)
 
     def emit(self, record):
-        print("Logger emit", self.format(record))
         msg = self.format(record)
         if self.mode == "set":
             self.widget.setText(msg)
