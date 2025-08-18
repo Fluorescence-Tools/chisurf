@@ -501,7 +501,7 @@
      <item row="1" column="2">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Model</string>
+        <string>Model:</string>
        </property>
       </widget>
      </item>
