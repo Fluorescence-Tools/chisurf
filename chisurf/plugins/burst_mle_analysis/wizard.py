@@ -25,6 +25,7 @@ import collections.abc
 from pathlib import Path
 import tttrlib
 from typing import Callable, Dict, Iterator
+from chisurf.fio import write_jordi
 
 
 class LazyTTTRDict(collections.abc.MutableMapping):
@@ -2312,7 +2313,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 else:
                     base = f"jordi_{idx}"
                 out_name = f"{base}_{''.join(map(str, detector_chs))}.dat"
-                np.savetxt(out_name, j)
+                write_jordi(j, out_name)
 
         return np.array(jordis)
 
