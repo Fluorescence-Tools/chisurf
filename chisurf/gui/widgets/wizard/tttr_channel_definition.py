@@ -28,6 +28,7 @@ from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
 import tttrlib
 from chisurf.fio.fluorescence.bhfiles import BeckerHicklSetReader
+from chisurf.fio import write_jordi
 from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator, DataCurve
 
 # Path to the central detector setups file
@@ -1063,7 +1064,7 @@ class DetectorWizardPage(QWizardPage):
             
             # Concatenate the trimmed histograms and save to the Jordi file
             jordi_data = np.concatenate([parallel_hist_trimmed, perpendicular_hist_trimmed])
-            np.savetxt(jordi_file, jordi_data)
+            write_jordi(jordi_data, jordi_file)
             
             # Create and show the g-factor calculator plugin
             g_factor_calculator = JordiGFactorCalculator()
