@@ -550,6 +550,8 @@ class Main(QtWidgets.QMainWindow):
 
     def onSaveFits(self, event: QtCore.QEvent = None):
         path, _ = chisurf.gui.widgets.get_directory()
+        if not path:
+            return
         chisurf.working_path = path
         chisurf.run(f'chisurf.macros.save_fits(target_path=r"{path.as_posix()}")')
 
@@ -574,6 +576,8 @@ class Main(QtWidgets.QMainWindow):
             chisurf.logging.warning(f"onSaveFit: could not infer data folder from fit.data.filename: {e}")
 
         path, _ = chisurf.gui.widgets.get_directory(**kwargs)
+        if not path:
+            return
         # Keep behavior: user chooses where to save; update working path accordingly
         chisurf.working_path = path
         chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
