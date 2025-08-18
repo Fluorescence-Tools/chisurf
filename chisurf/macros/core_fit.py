@@ -377,10 +377,26 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         save_fit(target_path=fit_dir, fit_window=fit_window)
 
         # Add fit metadata
+        try:
+            model_obj = fit.model
+            model_name = type(model_obj).__name__
+            model_module = type(model_obj).__module__
+        except Exception:
+            model_name = None
+            model_module = None
+        try:
+            exp_name = getattr(getattr(fit, 'data', None), 'experiment', None)
+            if exp_name is not None:
+                exp_name = getattr(exp_name, 'name', None) or str(exp_name)
+        except Exception:
+            exp_name = None
         fit_metadata = {
             "fit_name": fit_name,
             "original_name": fit.name if hasattr(fit, 'name') else "",
             "fit_index": i,
+            "model_name": model_name,
+            "model_module": model_module,
+            "experiment_name": exp_name,
             "parameters": {}
         }
 
@@ -439,7 +455,11 @@ def load_project(project_path: str):
         The path to the project folder
     """
     import os
+    import pickle
     import yaml
+
+    import chisurf
+    from chisurf.macros import core_data as core_data_macros
 
     cs = chisurf.cs
 
@@ -455,7 +475,9 @@ def load_project(project_path: str):
         return
 
     with open(project_file, "r") as f:
-        metadata = yaml.safe_load(f)
+        # Use FullLoader to support python types
+        metadata = yaml.load(f, Loader=yaml.FullLoader)
+        #metadata = yaml.safe_load(f) or {}
 
     # Close all existing fits
     cs.onCloseAllFits()
@@ -466,36 +488,84 @@ def load_project(project_path: str):
         chisurf.logging.error(f"Fits directory {fits_dir} does not exist")
         return
 
-    # First pass: load all fits
-    for fit_metadata in metadata["fits"]:
-        fit_name = fit_metadata["fit_name"]
+    # First pass: load all fits (data + create fit + load model CSV)
+    for fit_metadata in metadata.get("fits", []):
+        fit_name = fit_metadata.get("fit_name")
         fit_dir = os.path.join(fits_dir, fit_name)
-
-        # Find the data file
-        data_files = [f for f in os.listdir(fit_dir) if f.endswith("_data.pkl")]
-        if not data_files:
-            chisurf.logging.warning(f"No data file found for fit {fit_name}")
+        if not os.path.isdir(fit_dir):
+            chisurf.logging.warning(f"Fit directory missing: {fit_dir}")
             continue
 
-        data_file = os.path.join(fit_dir, data_files[0])
+        # Load the data pickle if present
+        data_files = [f for f in os.listdir(fit_dir) if f.endswith("_data.pkl")]
+        dataset_obj = None
+        if data_files:
+            data_file = os.path.join(fit_dir, data_files[0])
+            try:
+                with open(data_file, 'rb') as df:
+                    dataset_obj = pickle.load(df)
+                # If we loaded a snapshot dict, reconstruct a DataCurve
+                if isinstance(dataset_obj, dict) and dataset_obj.get("__chisurf_dataset_snapshot__") == 1:
+                    from chisurf.data import DataCurve as _DataCurve
+                    arr = dataset_obj.get("arrays", {}) or {}
+                    x = arr.get("x")
+                    y = arr.get("y")
+                    ex = arr.get("ex")
+                    ey = arr.get("ey")
+                    # Ensure arrays are present
+                    import numpy as _np
+                    if x is None or y is None:
+                        raise ValueError("Snapshot missing x or y arrays")
+                    if ex is None:
+                        ex = _np.zeros_like(x)
+                    if ey is None:
+                        ey = _np.ones_like(y)
+                    dc = _DataCurve(name=dataset_obj.get("name") or "Dataset")
+                    dc.set_data(x=_np.asarray(x), y=_np.asarray(y), ex=_np.asarray(ex), ey=_np.asarray(ey))
+                    # Try to preserve filename metadata if available
+                    try:
+                        dc.filename = dataset_obj.get("filename") or dc.filename
+                    except Exception:
+                        pass
+                    dataset_obj = dc
+            except Exception as e:
+                chisurf.logging.warning(f"Failed to load dataset pickle {data_file}: {e}")
 
-        # Load the data and create a fit
-        chisurf.macros.add_dataset(filename=data_file)
+        # Add dataset to application state
+        if dataset_obj is not None:
+            core_data_macros.add_dataset(dataset=dataset_obj)
+        else:
+            # No dataset to add; skip this fit entirely
+            chisurf.logging.warning(f"Skipping fit {fit_name}: no dataset available")
+            continue
 
-        # Find the fit file
+        # Determine the index of the newly added dataset
+        dataset_index = len(chisurf.imported_datasets) - 1
+
+        # Create a new fit for this dataset, try to match model by saved name
+        model_name = fit_metadata.get("model_name")
+        try:
+            add_fit(dataset_indices=[dataset_index], model_name=model_name)
+        except Exception as e:
+            chisurf.logging.warning(f"Failed to create fit for {fit_name}: {e}")
+            continue
+
+        # Find the fit result CSV (first non-data CSV)
         fit_files = [f for f in os.listdir(fit_dir) if f.endswith(".csv") and not f.endswith("_data.csv")]
         if not fit_files:
             chisurf.logging.warning(f"No fit file found for fit {fit_name}")
             continue
-
         fit_file = os.path.join(fit_dir, fit_files[0])
 
-        # Load the fit
+        # Load the fit into the most recently created fit
         fit_index = len(chisurf.fits) - 1
-        load_fit_result(fit_index, fit_file)
+        try:
+            load_fit_result(fit_index, fit_file)
+        except Exception as e:
+            chisurf.logging.warning(f"Failed to load fit result for {fit_name} from {fit_file}: {e}")
 
     # Second pass: restore parameter links
-    for i, fit_metadata in enumerate(metadata["fits"]):
+    for i, fit_metadata in enumerate(metadata.get("fits", [])):
         if i >= len(chisurf.fits):
             chisurf.logging.warning(f"Fit index {i} out of range")
             continue
@@ -503,7 +573,7 @@ def load_project(project_path: str):
         fit = chisurf.fits[i]
 
         # Restore parameter links
-        for param_name, param_data in fit_metadata.get("parameters", {}).items():
+        for param_name, param_data in (fit_metadata.get("parameters", {}) or {}).items():
             if param_name not in fit.model.parameters_all_dict:
                 chisurf.logging.warning(f"Parameter {param_name} not found in fit {i}")
                 continue
@@ -529,21 +599,29 @@ def load_project(project_path: str):
                         param.link = linked_param
 
     # Restore UI state
-    ui_state = metadata.get("ui_state", {})
+    ui_state = metadata.get("ui_state", {}) or {}
 
     # Set current fit
     current_fit_idx = ui_state.get("current_fit_index", 0)
-    if current_fit_idx < len(chisurf.fits):
+    if 0 <= current_fit_idx < len(chisurf.fits):
         cs.current_fit = chisurf.fits[current_fit_idx]
 
-    # Set current experiment
-    current_experiment_idx = ui_state.get("current_experiment_idx", 0)
-    if current_experiment_idx < len(cs.experimentComboBox):
-        cs.current_experiment_idx = current_experiment_idx
+    # Set current experiment (via setter to trigger UI updates)
+    try:
+        current_experiment_idx = ui_state.get("current_experiment_idx", 0)
+        total_exp = cs.comboBox_experimentSelect.count()
+        if 0 <= current_experiment_idx < total_exp:
+            cs.set_current_experiment_idx(current_experiment_idx)
+    except Exception:
+        pass
 
-    # Set current setup
-    current_setup_idx = ui_state.get("current_setup_idx", 0)
-    if current_setup_idx < len(cs.setupComboBox):
-        cs.current_setup_idx = current_setup_idx
+    # Set current setup (via setter to trigger UI updates)
+    try:
+        current_setup_idx = ui_state.get("current_setup_idx", 0)
+        total_setup = cs.comboBox_setupSelect.count()
+        if 0 <= current_setup_idx < total_setup:
+            cs.set_current_setup_idx(current_setup_idx)
+    except Exception:
+        pass
 
     chisurf.logging.info(f"Project loaded from {project_path}")
