@@ -7,6 +7,7 @@ within the ChiSurf application.
 
 import os
 import numpy as np
+from chisurf.fio import write_jordi
 
 # Create synthetic Jordi data for testing
 def create_synthetic_jordi_data(filename, n_points=1000):
@@ -30,8 +31,8 @@ def create_synthetic_jordi_data(filename, n_points=1000):
     # Combine into Jordi format (parallel followed by perpendicular)
     jordi_data = np.concatenate([parallel, perpendicular])
     
-    # Save to file
-    np.savetxt(filename, jordi_data, fmt='%.6f')
+    # Save to file using central Jordi writer
+    write_jordi(jordi_data, filename, fmt='%.6f')
     
     print(f"Created synthetic Jordi data file: {filename}")
     print(f"Expected g-factor: ~1.67")
