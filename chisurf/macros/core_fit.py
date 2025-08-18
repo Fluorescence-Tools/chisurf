@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import gc
+import shutil
 
 import chisurf
 import chisurf.base
@@ -244,7 +245,8 @@ def save_fits(target_path: str, use_complex_name: bool = False):
             fit = fit_window.fit
 
             # Skip global fits
-            if isinstance(fit.data.setup, chisurf.experiments.globalfit.GlobalFitSetup):
+            setup = getattr(fit.data, 'setup', None)
+            if isinstance(setup, chisurf.experiments.globalfit.GlobalFitSetup):
                 continue
 
             if use_complex_name:
@@ -253,8 +255,46 @@ def save_fits(target_path: str, use_complex_name: bool = False):
                 save_name = os.path.basename(fit.data.name)
 
             fit_name = fit.name
-            p2 = target_path + '/' + save_name
-            os.mkdir(p2)
+            p2 = os.path.join(target_path, save_name)
+
+            # Ensure per-fit directory handling with overwrite/skip/cancel dialog
+            if os.path.exists(p2):
+                try:
+                    from PyQt5.QtWidgets import QMessageBox
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Question)
+                    msg.setWindowTitle("Folder exists")
+                    msg.setText(f"The folder '{p2}' already exists.")
+                    msg.setInformativeText("Do you want to overwrite it?")
+                    overwrite_btn = msg.addButton("Overwrite", QMessageBox.AcceptRole)
+                    skip_btn = msg.addButton("Skip", QMessageBox.RejectRole)
+                    cancel_btn = msg.addButton("Cancel", QMessageBox.DestructiveRole)
+                    msg.setDefaultButton(skip_btn)
+                    msg.exec_()
+                    clicked = msg.clickedButton()
+                    if clicked is overwrite_btn:
+                        chisurf.logging.info(f"Overwriting existing folder: {p2}")
+                        try:
+                            if os.path.isdir(p2):
+                                shutil.rmtree(p2)
+                            else:
+                                os.remove(p2)
+                        except Exception as e:
+                            chisurf.logging.warning(f"Failed to remove existing path {p2}: {e}")
+                        os.makedirs(p2, exist_ok=True)
+                    elif clicked is skip_btn:
+                        chisurf.logging.info(f"Skipping existing folder: {p2}")
+                        continue
+                    else:
+                        chisurf.logging.info("Save all fits cancelled by user")
+                        return
+                except Exception as e:
+                    # Headless or dialog failed: default to skipping
+                    chisurf.logging.warning(f"Could not show overwrite dialog or handle existing folder ({e}). Skipping fit.")
+                    continue
+            else:
+                os.makedirs(p2, exist_ok=True)
+
             save_fit(target_path=p2, fit_window=fit_window)
 
 
