@@ -6,3 +6,4 @@ include chisurf/settings/*.yaml
 include chisurf/gui/styles/*.css
 include chisurf/plugins/spectra_viewer/*.db
 include chisurf/notebooks/*.ipynb
+include chisurf/entry_points/*.txt
