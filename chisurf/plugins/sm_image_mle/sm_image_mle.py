@@ -25,6 +25,7 @@ from skimage.segmentation import clear_border, watershed
 from skimage.feature import peak_local_max
 from scipy import ndimage as ndi
 import matplotlib.pyplot as plt
+from chisurf.fio import write_jordi
 
 
 # --------------------------------------------------
@@ -382,7 +383,7 @@ def process_ptu_file(
         )
         jordi_filename = f"molecule_{lab:03d}.jordi"
         jordi_path = jordis_folder / jordi_filename
-        np.savetxt(jordi_path, jordi_vector, delimiter='\t', fmt='%.6f')
+        write_jordi(jordi_vector, jordi_path, delimiter='\t', fmt='%.6f')
 
         fit = tttrlib.Fit23(
             dt=DT_EFFECTIVE_ns,
