@@ -345,10 +345,13 @@ def get_directory(
         directory = chisurf.working_path
     caption_text = caption or "Select Directory"
     if isinstance(directory, pathlib.Path):
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text, str(directory.absolute()))
+        directory_str = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text, str(directory.absolute()))
     else:
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text)
-    directory = pathlib.Path(directory)
+        directory_str = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text)
+    # If cancel is clicked, return None and do not update working path
+    if not directory_str:
+        return None, []
+    directory = pathlib.Path(directory_str)
     chisurf.working_path = directory
     if not get_files:
         return directory, []
