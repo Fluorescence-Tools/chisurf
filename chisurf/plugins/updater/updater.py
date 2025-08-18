@@ -43,10 +43,12 @@ import tempfile
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 import re
 import shutil
 import logging
 from typing import Optional, Dict, Any, Tuple, List, Callable
+from datetime import datetime, timedelta, timezone
 
 from chisurf.settings.file_utils import safe_open_file
 from chisurf.settings.path_utils import get_path
@@ -705,7 +707,8 @@ class ChiSurfUpdater:
                 "package_url": latest_version["file_path"],
                 "release_notes": f"Version {latest_version['version']} from local folder",
                 "channels": ["conda-forge", "defaults"],
-                "available_versions": versions
+                "available_versions": versions,
+                "changelog": self._build_changelog(self.current_version, latest_version["version"])
             }
 
             return update_info
@@ -723,7 +726,8 @@ class ChiSurfUpdater:
                     "package_url": latest_version["file_path"],
                     "release_notes": f"Version {latest_version['version']} from remote server",
                     "channels": ["conda-forge", "defaults"],
-                    "available_versions": versions
+                    "available_versions": versions,
+                    "changelog": self._build_changelog(self.current_version, latest_version["version"])
                 }
 
                 return update_info
@@ -732,6 +736,138 @@ class ChiSurfUpdater:
             logging.warning("No versions found at the update URL")
             return None
 
+
+    def _parse_version_date(self, v: str) -> Optional[datetime]:
+        """Parse version strings like 'yy.mm.dd' or 'yyyy.mm.dd' to a UTC datetime at start of day."""
+        try:
+            parts = re.split(r"[^0-9]+", v)
+            nums = [int(p) for p in parts if p != ""]
+            if len(nums) >= 3:
+                y, m, d = nums[0], nums[1], nums[2]
+                if y < 100:
+                    y += 2000
+                return datetime(y, m, d, tzinfo=timezone.utc)
+        except Exception:
+            pass
+        return None
+
+    def _extract_repo_slug(self) -> Optional[Tuple[str, str]]:
+        """Extract (owner, repo) from info.update_url or help_url if possible."""
+        url = getattr(info, 'update_url', '') or getattr(info, '__url__', '') or getattr(info, 'help_url', '')
+        if not url:
+            return None
+        try:
+            m = re.search(r"github\.com/([^/]+)/([^/]+)", url)
+            if m:
+                owner = m.group(1)
+                repo = m.group(2)
+                # Strip trailing anchors like 'releases' from repo if present
+                repo = repo.replace('.git', '')
+                if repo.endswith('?'):
+                    repo = repo.split('?')[0]
+                return owner, repo
+        except Exception:
+            return None
+        return None
+
+    def _build_changelog(self, from_version: str, to_version: str, limit: int = 50) -> str:
+        """Build a simple changelog by querying GitHub commits between version dates.
+        Falls back to a helpful message if not available.
+        """
+        try:
+            owner_repo = self._extract_repo_slug()
+            since_dt = self._parse_version_date(from_version) if from_version else None
+            until_dt = self._parse_version_date(to_version) if to_version else None
+
+            if not owner_repo or not until_dt:
+                return (
+                    f"Changes since {from_version} -> {to_version} could not be determined automatically.\n"
+                    f"Visit the repository for details: https://github.com/Fluorescence-Tools/chisurf"
+                )
+
+            owner, repo = owner_repo
+
+            # If since date missing or invalid, assume 14 days prior to 'until'
+            if not since_dt:
+                since_dt = until_dt - timedelta(days=14)
+
+            # Ensure since < until; if equal or after, step back a day
+            if since_dt >= until_dt:
+                since_dt = until_dt - timedelta(days=1)
+
+            # Use end-of-day for until by adding one day
+            until_plus = until_dt + timedelta(days=1)
+
+            # Determine branch to query (default to development)
+            branch = getattr(self, 'channel', None)
+            if isinstance(branch, str) and branch:
+                bl = branch.lower()
+                if bl.startswith('dev'):
+                    branch = 'development'
+                elif bl in ('main', 'master'):
+                    branch = bl
+                else:
+                    # Use custom branch names as is
+                    branch = branch
+            else:
+                branch = 'development'
+
+            branch_q = urllib.parse.quote(str(branch))
+
+            api_url = (
+                f"https://api.github.com/repos/{owner}/{repo}/commits?"
+                f"since={since_dt.isoformat()}&until={until_plus.isoformat()}&per_page=100&sha={branch_q}"
+            )
+
+            headers = {
+                'User-Agent': 'ChiSurf-Updater',
+                'Accept': 'application/vnd.github+json'
+            }
+
+            req = urllib.request.Request(api_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = resp.read().decode('utf-8')
+            commits = json.loads(data)
+            if not isinstance(commits, list):
+                commits = []
+
+            lines = []
+            for c in commits[:limit]:
+                try:
+                    commit = c.get('commit', {})
+                    msg = commit.get('message', '').split('\n')[0].strip()
+                    if msg.lower().startswith('merge'):
+                        continue
+                    author = commit.get('author', {}).get('name') or c.get('author', {}).get('login') or 'unknown'
+                    date_str = commit.get('author', {}).get('date', '')
+                    # Normalize date short
+                    date_short = date_str[:10] if date_str else ''
+                    if msg:
+                        lines.append(f"- {date_short} {msg} (by {author})")
+                except Exception:
+                    continue
+
+            compare_hint = f"https://github.com/{owner}/{repo}/commits"
+
+            if not lines:
+                return (
+                    f"Changes between {from_version} and {to_version} on branch '{branch}':\n"
+                    f"(No commits found in the requested date range.)\n\n"
+                    f"See commit history: {compare_hint}"
+                )
+
+            if len(commits) > limit:
+                lines.append(f"... and {len(commits) - limit} more commits")
+
+            header = f"Changes between {from_version} and {to_version}:\n"
+            footer = f"\nMore details: {compare_hint}"
+            return header + "\n".join(lines) + footer
+        except Exception as e:
+            # Fallback message on any failure
+            return (
+                f"Changes since {from_version} -> {to_version} could not be retrieved ({e}).\n"
+                f"Visit: https://github.com/Fluorescence-Tools/chisurf/commits"
+            )
 
     def _needs_elevation(self) -> bool:
         """
