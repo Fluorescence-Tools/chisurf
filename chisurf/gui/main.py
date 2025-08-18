@@ -438,10 +438,10 @@ class Main(QtWidgets.QMainWindow):
         This method prompts the user for a directory and project name, then calls
         the save_project function to save the project.
         """
-        # Show warning that this function is not yet working properly
+        # Inform user about experimental status
         chisurf.gui.widgets.general.MyMessageBox(
-            label="Warning",
-            info="The save project function is not yet working properly. Proceed with caution.",
+            label="Project Save",
+            info="Saving current session as a project. This feature is experimental.",
             show_fortune=False
         )
 
@@ -463,7 +463,7 @@ class Main(QtWidgets.QMainWindow):
 
         # Save project
         chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.core_fit.save_project(target_path=r"{path.as_posix()}", project_name="{project_name}")')
+        chisurf.macros.core_fit.save_project(target_path=path.as_posix(), project_name=project_name)
 
     def onLoadProject(self, event: QtCore.QEvent = None):
         """
@@ -472,10 +472,10 @@ class Main(QtWidgets.QMainWindow):
         This method prompts the user for a project folder, then calls
         the load_project function to load the project.
         """
-        # Show warning that this function is not yet working properly
+        # Inform user about experimental status
         chisurf.gui.widgets.general.MyMessageBox(
-            label="Warning",
-            info="The load project function is not yet working properly. Proceed with caution.",
+            label="Project Load",
+            info="Loading a saved project. This feature is experimental.",
             show_fortune=False
         )
 
@@ -498,7 +498,7 @@ class Main(QtWidgets.QMainWindow):
 
         # Load project
         chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.core_fit.load_project(project_path=r"{path.as_posix()}")')
+        chisurf.macros.core_fit.load_project(project_path=path.as_posix())
 
     def set_current_setup_idx(self, v: int):
         self.comboBox_setupSelect.setCurrentIndex(v)
@@ -1377,16 +1377,11 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        # Add actions for saving and loading projects (disabled)
-        self.actionSaveProject = QtWidgets.QAction("Save Project...", self)
-        self.actionSaveProject.setShortcut("Ctrl+Shift+S")
-        self.actionSaveProject.triggered.connect(self.onSaveProject)
-        self.menuFile.addAction(self.actionSaveProject)
-
-        self.actionLoadProject = QtWidgets.QAction("Load Project...", self)
-        self.actionLoadProject.setShortcut("Ctrl+Shift+O")
-        self.actionLoadProject.triggered.connect(self.onLoadProject)
-        self.menuFile.addAction(self.actionLoadProject)
+        # Use actions from .ui file for saving and loading projects (disabled by default)
+        self.actionSave_Project.triggered.connect(self.onSaveProject)
+        self.actionSave_Project.setEnabled(False)
+        self.actionOpen_Project.triggered.connect(self.onLoadProject)
+        self.actionOpen_Project.setEnabled(False)
 
     def load_tools(self):
         import chisurf
