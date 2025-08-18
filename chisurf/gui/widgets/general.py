@@ -328,7 +328,8 @@ def save_file(
 def get_directory(
         filename_ending: str = None,
         get_files: bool = False,
-        directory: pathlib.Path = None
+        directory: pathlib.Path = None,
+        caption: str = None
 ) -> typing.Tuple[pathlib.Path, typing.List[str]]:
     """Opens a new window where you can choose a directory. The current
     working path is updated to this directory.
@@ -342,10 +343,11 @@ def get_directory(
     fn_ending = filename_ending
     if directory is None:
         directory = chisurf.working_path
+    caption_text = caption or "Select Directory"
     if isinstance(directory, pathlib.Path):
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory", str(directory.absolute()))
+        directory = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text, str(directory.absolute()))
     else:
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory")
+        directory = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text)
     directory = pathlib.Path(directory)
     chisurf.working_path = directory
     if not get_files:
