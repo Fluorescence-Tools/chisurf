@@ -23,7 +23,7 @@ import logging
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
     QProgressDialog, QApplication, QComboBox, QTextEdit,
-    QMessageBox, QRadioButton, QLineEdit, QFileDialog, QGroupBox
+    QMessageBox, QRadioButton, QLineEdit, QFileDialog, QGroupBox, QCheckBox
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -60,6 +60,31 @@ class UpdaterWidget(QWidget):
 
         self.setup_ui()
 
+        # Ensure we use development channel when applicable (always checked and disabled for now)
+        try:
+            if getattr(self, 'dev_checkbox', None) is not None and self.dev_checkbox.isChecked():
+                self.updater.channel = "development"
+            else:
+                self.updater.channel = "master"
+            # Update the branch label after setting channel
+            try:
+                self._update_branch_label()
+            except Exception:
+                pass
+        except Exception:
+            # Default to dev if anything goes wrong
+            self.updater.channel = "development"
+            try:
+                self._update_branch_label()
+            except Exception:
+                pass
+
+        # React to version selection to update changelog
+        try:
+            self.version_dropdown.currentIndexChanged.connect(self._on_version_changed)
+        except Exception:
+            pass
+
         # Automatically check for updates shortly after the widget starts
         try:
             from PyQt5.QtCore import QTimer
@@ -86,6 +111,32 @@ class UpdaterWidget(QWidget):
         self.status_label = QLabel("Click 'Check for Updates' to check for available updates.")
         layout.addWidget(self.status_label)
 
+        # Development branch checkbox (always on, disabled since no stable release exists)
+        dev_layout = QHBoxLayout()
+        self.dev_checkbox = QCheckBox("Development")
+        try:
+            self.dev_checkbox.setChecked(True)
+            self.dev_checkbox.setEnabled(False)  # user cannot uncheck for now
+            self.dev_checkbox.setToolTip("ChiSurf currently has no stable release; updates check the development branch.")
+            # Even if disabled for now, wire stateChanged for future-proofing
+            try:
+                self.dev_checkbox.stateChanged.connect(self._on_branch_checkbox_changed)
+            except Exception:
+                pass
+        except Exception:
+            pass
+        dev_layout.addWidget(self.dev_checkbox)
+        # Label to display the selected branch
+        self.branch_label = QLabel("")
+        dev_layout.addWidget(self.branch_label)
+        dev_layout.addStretch()
+        layout.addLayout(dev_layout)
+        # Initialize branch label text
+        try:
+            self._update_branch_label()
+        except Exception:
+            pass
+
         # Version dropdown
         version_layout = QHBoxLayout()
         version_layout.addWidget(QLabel("Available Versions:"))
@@ -106,6 +157,19 @@ class UpdaterWidget(QWidget):
         button_layout.addWidget(self.update_button)
 
         layout.addLayout(button_layout)
+
+        # Changelog area
+        layout.addWidget(QLabel("Changes since your installed version:"))
+        self.changelog_text = QTextEdit()
+        try:
+            self.changelog_text.setReadOnly(True)
+            font = QFont("Consolas")
+            font.setPointSize(9)
+            self.changelog_text.setFont(font)
+        except Exception:
+            pass
+        self.changelog_text.setPlaceholderText("Changelog will appear here after checking for updates...")
+        layout.addWidget(self.changelog_text)
 
         self.setLayout(layout)
 
@@ -139,6 +203,15 @@ class UpdaterWidget(QWidget):
                     self.update_button.setEnabled(True)
                     self.status_label.setText(f"Found {len(self.available_versions)} available versions.")
                     populated_versions = True
+                    # Populate changelog for latest version if provided
+                    try:
+                        changelog = update_info.get("changelog")
+                        if changelog:
+                            self.changelog_text.setPlainText(changelog)
+                        else:
+                            self._update_changelog_for_selected()
+                    except Exception:
+                        pass
         except Exception:
             populated_versions = False
 
@@ -232,6 +305,16 @@ class UpdaterWidget(QWidget):
             self.version_dropdown.setEnabled(True)
             self.update_button.setEnabled(True)
 
+            # Populate changelog for current selection
+            try:
+                changelog = update_info.get("changelog") if isinstance(update_info, dict) else None
+                if changelog:
+                    self.changelog_text.setPlainText(changelog)
+                else:
+                    self._update_changelog_for_selected()
+            except Exception:
+                pass
+
             # After population, always run a light availability check to set a correct label
             try:
                 update_available, latest_version, error = check_for_updates()
@@ -274,6 +357,78 @@ class UpdaterWidget(QWidget):
 
         self.check_button.setEnabled(True)
         logging.debug("Update check completed")
+        # Update changelog after finishing
+        try:
+            self._update_changelog_for_selected()
+        except Exception:
+            pass
+
+    def _on_version_changed(self, index):
+        try:
+            self._update_changelog_for_selected()
+        except Exception:
+            pass
+
+    def _update_changelog_for_selected(self):
+        try:
+            idx = self.version_dropdown.currentIndex()
+            if idx < 0 and self.available_versions:
+                idx = 0
+            if idx < 0:
+                return
+            data = self.version_dropdown.itemData(idx)
+            if not isinstance(data, dict):
+                return
+            target_version = data.get('version')
+            if not target_version:
+                return
+            from chisurf import info as _info
+            changelog = self.updater._build_changelog(_info.__version__, target_version)
+            self.changelog_text.setPlainText(changelog)
+        except Exception as e:
+            try:
+                self.changelog_text.setPlainText(f"Could not load changelog: {e}")
+            except Exception:
+                pass
+
+    def _on_branch_checkbox_changed(self, state):
+        """Update channel and label if the branch checkbox changes."""
+        try:
+            if self.dev_checkbox.isChecked():
+                self.updater.channel = "development"
+            else:
+                # If ever allowed to uncheck, fallback to main/master
+                self.updater.channel = "master"
+            self._update_branch_label()
+        except Exception:
+            pass
+
+    def _update_branch_label(self):
+        """Refresh the QLabel to show the currently selected branch."""
+        try:
+            # Prefer updater.channel if available
+            branch_text = None
+            try:
+                ch = getattr(self.updater, 'channel', None)
+                if isinstance(ch, str) and ch:
+                    ch_lower = ch.lower()
+                    if ch_lower.startswith('dev') or ch_lower == 'development':
+                        branch_text = 'Development'
+                    elif ch_lower in ('main', 'master'):
+                        branch_text = 'Main'
+                    else:
+                        # Show raw channel name if it's custom
+                        branch_text = ch
+            except Exception:
+                pass
+
+            # Fallback to checkbox state if needed
+            if not branch_text:
+                branch_text = 'Development' if self.dev_checkbox.isChecked() else 'Main'
+
+            self.branch_label.setText(f"Selected branch: {branch_text}")
+        except Exception:
+            pass
 
     def update_chisurf(self):
         """Update ChiSurf to the selected version."""
