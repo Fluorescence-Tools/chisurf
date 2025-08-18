@@ -2,7 +2,12 @@ import numpy as np
 import numba as nb
 
 import chisurf
-import LabelLib as ll
+try:
+    import LabelLib as ll
+    HAS_LABELLIB = True
+except Exception:
+    ll = None
+    HAS_LABELLIB = False
 from chisurf.structure.av.utils import atoms_in_reach
 
 
@@ -173,6 +178,8 @@ def calculate_1_radius(
     linker_width = w
     dye_radius = r
     simulation_grid_spacing = dg
+    if not HAS_LABELLIB:
+        raise RuntimeError("LabelLib (labellib) is not available. Accessible volume calculation requires labellib.")
     av1 = ll.dyeDensityAV1(
         xyzr,
         dye_attachment_point,
@@ -241,6 +248,8 @@ def calculate_3_radius(
     linker_length = l
     linker_width = w
     simulation_grid_spacing = dg
+    if not HAS_LABELLIB:
+        raise RuntimeError("LabelLib (labellib) is not available. Accessible volume calculation requires labellib.")
     av1 = ll.dyeDensityAV3(
         xyzr,
         dye_attachment_point,
