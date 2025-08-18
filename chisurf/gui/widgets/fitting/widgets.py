@@ -356,7 +356,11 @@ class FittingControllerWidget(Controller):
             self.xmin = xmin
         if xmax is not None:
             self.xmax = xmax
-        chisurf.run(f"cs.current_fit.fit_range = {self.xmin}, {self.xmax}")
+        try:
+            # Apply directly to this widget's fit to avoid depending on cs.current_fit
+            self.fit.fit_range = (self.xmin, self.xmax)
+        except Exception as e:
+            chisurf.logging.warning(f'Failed to set fit range directly: {e}')
         self.fit.update()
 
     def onAutoFitRange(self):
