@@ -554,7 +554,27 @@ class Main(QtWidgets.QMainWindow):
         chisurf.run(f'chisurf.macros.save_fits(target_path=r"{path.as_posix()}")')
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
+        # Prefer default directory from the current fit's data filename, if available
+        try:
+            default_dir = None
+            fit = getattr(self, 'current_fit', None)
+            data_obj = getattr(fit, 'data', None) if fit is not None else None
+            filename = getattr(data_obj, 'filename', None) if data_obj is not None else None
+            if isinstance(filename, str):
+                fn = filename.strip()
+                if fn and fn.lower() != 'none':
+                    p = pathlib.Path(fn)
+                    # Use parent folder only for absolute paths
+                    if p.is_absolute():
+                        default_dir = p.parent
+            # Only set the directory if the caller did not specify one
+            if ('directory' not in kwargs or kwargs.get('directory') is None) and default_dir is not None:
+                kwargs['directory'] = default_dir
+        except Exception as e:
+            chisurf.logging.warning(f"onSaveFit: could not infer data folder from fit.data.filename: {e}")
+
         path, _ = chisurf.gui.widgets.get_directory(**kwargs)
+        # Keep behavior: user chooses where to save; update working path accordingly
         chisurf.working_path = path
         chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
 
