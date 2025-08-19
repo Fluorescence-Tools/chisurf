@@ -17,12 +17,15 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+import pyqtgraph as pg
+
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
     QListWidget, QListWidgetItem, QSplitter, QTextEdit, QComboBox, QSpinBox,
-    QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QLineEdit, QMessageBox
+    QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QLineEdit, QMessageBox,
+    QSizePolicy, QCheckBox
 )
-from PyQt5.QtCore import Qt, QEvent, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, QEvent, pyqtSignal, QSize, QTimer
 
 # Logging
 from chisurf import logging
@@ -206,16 +209,44 @@ class StarRatingWidget(QWidget):
     def keyPressEvent(self, event):
         try:
             key = event.key()
-            if key in (Qt.Key_Left, Qt.Key_Down):
+            # Left/Right adjust rating as usual
+            if key == Qt.Key_Left:
                 self.set_rating(self._rating - 1)
                 self.ratingChanged.emit(int(self._rating))
                 event.accept()
                 return
-            elif key in (Qt.Key_Right, Qt.Key_Up):
+            elif key == Qt.Key_Right:
                 self.set_rating(self._rating + 1)
                 self.ratingChanged.emit(int(self._rating))
                 event.accept()
                 return
+            # Up/Down should exclusively change the trace (row) selection in the table
+            elif key in (Qt.Key_Up, Qt.Key_Down):
+                table = self.parent()
+                if isinstance(table, QTableWidget):
+                    # Find my row in the table
+                    my_row = -1
+                    col = 1
+                    for r in range(table.rowCount()):
+                        if table.cellWidget(r, col) is self:
+                            my_row = r
+                            break
+                    if my_row != -1:
+                        delta = -1 if key == Qt.Key_Up else 1
+                        next_row = my_row + delta
+                        if 0 <= next_row < table.rowCount():
+                            table.selectRow(next_row)
+                            try:
+                                table.setCurrentCell(next_row, 0)
+                            except Exception:
+                                pass
+                            try:
+                                table.setFocus(Qt.OtherFocusReason)
+                            except Exception:
+                                pass
+                        # Even if we can't move (top/bottom), consume the event to keep exclusivity
+                        event.accept()
+                        return
             elif key in (Qt.Key_Tab, Qt.Key_Backtab):
                 table = self.parent()
                 if isinstance(table, QTableWidget):
@@ -307,6 +338,15 @@ class TraceBrowser(QWidget):
         self.setup_settings: Optional[Dict] = None
         self.selected_channels: Optional[List[int]] = None
         self._is_loading: bool = False
+        # Debounced metadata saving to keep UI snappy on rating changes
+        self._meta_save_timer: Optional[QTimer] = None
+        try:
+            self._meta_save_timer = QTimer(self)
+            self._meta_save_timer.setSingleShot(True)
+            self._meta_save_timer.setInterval(300)
+            self._meta_save_timer.timeout.connect(self._flush_meta_to_disk)
+        except Exception:
+            self._meta_save_timer = None
 
         # Two-page layout using a simple stacked layout approach
         self.root_layout = QVBoxLayout(self)
@@ -355,11 +395,26 @@ class TraceBrowser(QWidget):
         self.btn_clear.setToolTip("Clear file list")
         self.btn_clear.clicked.connect(self._on_clear)
 
+        # Clear caches button (in-memory and on-disk caches)
+        self.btn_clear_caches = QPushButton("Clear caches", self.page1)
+        self.btn_clear_caches.setToolTip("Clear in-memory and on-disk caches for this folder")
+        self.btn_clear_caches.clicked.connect(self._on_clear_caches)
+
         ctrl_row.addWidget(self.folder_label)
         ctrl_row.addWidget(self.btn_pick_folder)
         ctrl_row.addWidget(QLabel("Filter:"))
         ctrl_row.addWidget(self.filter_combo)
         ctrl_row.addWidget(self.btn_clear)
+        ctrl_row.addWidget(self.btn_clear_caches)
+
+        # Subfolder processing option
+        self.chk_subfolders = QCheckBox("Process subfolders", self.page1)
+        self.chk_subfolders.setChecked(False)
+        try:
+            self.chk_subfolders.toggled.connect(lambda _=None: self._on_subfolders_toggled())
+        except Exception:
+            pass
+        ctrl_row.addWidget(self.chk_subfolders)
 
         self.window_ms_spin = QSpinBox(self.page1)
         self.window_ms_spin.setRange(1, 10000)
@@ -367,6 +422,45 @@ class TraceBrowser(QWidget):
         self.window_ms_spin.setSuffix(" ms bin")
         self.window_ms_spin.valueChanged.connect(self._on_window_changed)
         ctrl_row.addWidget(self.window_ms_spin)
+
+        # Y-range controls (pyqtgraph SpinBox)
+        ctrl_row.addWidget(QLabel("Y min:"))
+        self.y_min_spin = pg.SpinBox(self.page1)
+        self.y_min_spin.setRange(-1e9, 1e12)
+        self.y_min_spin.setDecimals(0)
+        self.y_min_spin.setValue(0)
+        self.y_min_spin.sigValueChanged.connect(self._on_y_range_changed)
+        # Update while typing too
+        try:
+            self.y_min_spin.sigValueChanging.connect(self._on_y_range_changed)
+        except Exception:
+            pass
+        # Make spinbox expand and keep a reasonable minimum width
+        try:
+            self.y_min_spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            self.y_min_spin.setMinimumWidth(90)
+        except Exception:
+            pass
+        ctrl_row.addWidget(self.y_min_spin)
+
+        ctrl_row.addWidget(QLabel("Y max:"))
+        self.y_max_spin = pg.SpinBox(self.page1)
+        self.y_max_spin.setRange(-1e9, 1e12)
+        self.y_max_spin.setDecimals(0)
+        self.y_max_spin.setValue(1000)
+        self.y_max_spin.sigValueChanged.connect(self._on_y_range_changed)
+        # Update while typing too
+        try:
+            self.y_max_spin.sigValueChanging.connect(self._on_y_range_changed)
+        except Exception:
+            pass
+        # Make spinbox expand and keep a reasonable minimum width
+        try:
+            self.y_max_spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            self.y_max_spin.setMinimumWidth(90)
+        except Exception:
+            pass
+        ctrl_row.addWidget(self.y_max_spin)
 
         self.btn_export = QPushButton("Export selected…", self.page1)
         self.btn_export.clicked.connect(self._on_export)
@@ -447,6 +541,14 @@ class TraceBrowser(QWidget):
         self.table.setAcceptDrops(True)
         # Forward drag-and-drop events from table to this widget via event filter
         self.table.installEventFilter(self)
+
+        # Initialize subfolder checkbox after UI is built
+        try:
+            if hasattr(self, 'chk_subfolders') and callable(getattr(self.chk_subfolders, 'isChecked', None)):
+                # No-op; state already set
+                pass
+        except Exception:
+            pass
 
     def _on_continue(self):
         # Store setup settings and selected channels
@@ -529,17 +631,31 @@ class TraceBrowser(QWidget):
     def _scan_and_fill(self):
         if not self.current_folder:
             return
-        # Find files recursively
+        # Find files (optionally recursively)
         files: List[pathlib.Path] = []
         # Determine allowed extensions based on selected setup file type
         allowed_exts = self._allowed_exts_for_setup()
+        recursive = False
         try:
-            it = self.current_folder.rglob('*')
+            recursive = bool(getattr(self, 'chk_subfolders', None) and self.chk_subfolders.isChecked())
+        except Exception:
+            recursive = False
+        try:
+            it = self.current_folder.rglob('*') if recursive else self.current_folder.iterdir()
         except Exception:
             it = self.current_folder.iterdir()
         for p in sorted(it):
             try:
-                if p.is_file() and (not allowed_exts or p.suffix.lower() in allowed_exts):
+                if not p.is_file():
+                    continue
+                # Exclude anything under a hidden .trash within the current folder
+                try:
+                    relp = p.relative_to(self.current_folder)
+                    if any(part == ".trash" for part in relp.parts):
+                        continue
+                except Exception:
+                    pass
+                if not allowed_exts or p.suffix.lower() in allowed_exts:
                     # Skip CLSM/image TTTR files; Trace Browser should only list non-image TTTRs
                     try:
                         if self._is_image_tttr(p):
@@ -558,7 +674,7 @@ class TraceBrowser(QWidget):
                 rows.append((p, rating))
         # Do not sort here; allow user to click header to sort
 
-        logging.debug(f"TraceBrowser: Found {len(files)} files (recursive), displaying {len(rows)} after filter")
+        logging.debug(f"TraceBrowser: Found {len(files)} files ({'recursive' if recursive else 'flat'}), displaying {len(rows)} after filter")
         # Fill table
         self.table.setRowCount(len(rows))
         for r, (p, rating) in enumerate(rows):
@@ -578,7 +694,7 @@ class TraceBrowser(QWidget):
             rating_item.setData(Qt.EditRole, int(rating))  # numeric sort key
             self.table.setItem(r, 1, rating_item)
 
-            # Size column (bytes with human-readable display)
+            # Size column (display in MB; numeric sort key also in MB)
             try:
                 sz = p.stat().st_size
             except Exception:
@@ -587,7 +703,7 @@ class TraceBrowser(QWidget):
             size_item.setFlags(size_item.flags() & ~Qt.ItemIsEditable)
             size_item.setText(self._human_size(sz))
             size_item.setToolTip(f"{self._human_size(sz)} ({sz} bytes)")
-            size_item.setData(Qt.EditRole, int(sz))  # numeric sort key
+            size_item.setData(Qt.EditRole, float(sz) / (1024.0 * 1024.0))  # numeric sort key in MB
             self.table.setItem(r, 2, size_item)
 
             stars = StarRatingWidget(self.table)
@@ -595,10 +711,22 @@ class TraceBrowser(QWidget):
             def _on_rating_changed(val, row=r, path=p, w=stars):
                 # Update meta
                 self._update_rating(path, int(val))
-                # Update sort key for the rating column item
-                it = self.table.item(row, 1)
-                if it is not None:
-                    it.setData(Qt.EditRole, int(val))
+                # Determine current row of this widget (sorting/filtering may have moved it)
+                cur_row = -1
+                try:
+                    for rr in range(self.table.rowCount()):
+                        if self.table.cellWidget(rr, 1) is w:
+                            cur_row = rr
+                            break
+                except Exception:
+                    cur_row = row  # fall back to original row if something goes wrong
+                # Update sort key for the rating column item at the current row
+                try:
+                    it = self.table.item(cur_row, 1)
+                    if it is not None:
+                        it.setData(Qt.EditRole, int(val))
+                except Exception:
+                    pass
                 # Re-apply current filter and maintain current sorting (lightweight)
                 self._refresh_list()
                 try:
@@ -631,16 +759,41 @@ class TraceBrowser(QWidget):
         rec = self._meta_get(path)
         rec["rating"] = int(rating)
         self._meta_set(path, rec)
-        _save_meta(self.current_folder, self.meta)
+        # Defer disk write to keep UI responsive
+        self._schedule_meta_save()
 
     def _apply_filter(self):
         # Lightweight refresh: only update row visibility based on current filter and allowed extensions
         self._refresh_list()
 
+    def _schedule_meta_save(self):
+        try:
+            if self._meta_save_timer is not None:
+                # restart the debounce timer
+                self._meta_save_timer.start()
+            else:
+                # fallback: immediate save if timer is unavailable
+                if self.current_folder:
+                    _save_meta(self.current_folder, self.meta)
+        except Exception:
+            try:
+                if self.current_folder:
+                    _save_meta(self.current_folder, self.meta)
+            except Exception:
+                pass
+
+    def _flush_meta_to_disk(self):
+        try:
+            if self.current_folder:
+                _save_meta(self.current_folder, self.meta)
+        except Exception:
+            pass
+
     def _refresh_list(self):
         # Update row visibility without rescanning files or recomputing traces
         try:
             rows = []
+            missing_rows = []
             for r in range(self.table.rowCount()):
                 item0 = self.table.item(r, 0)
                 if item0 is None:
@@ -649,9 +802,47 @@ class TraceBrowser(QWidget):
                 if not p_str:
                     continue
                 p = pathlib.Path(p_str)
+                # Drop rows whose files no longer exist (e.g., moved to .trash or deleted externally)
+                try:
+                    if not p.exists():
+                        missing_rows.append(r)
+                        continue
+                except Exception:
+                    # If existence check fails, be conservative and keep the row
+                    pass
                 rec = self._meta_get(p)
                 rating = int(rec.get("rating", 0))
                 rows.append((r, p, rating))
+            # Remove rows for missing files (from bottom to top to keep indices valid)
+            if missing_rows:
+                for rr in sorted(missing_rows, reverse=True):
+                    try:
+                        self.table.removeRow(rr)
+                    except Exception:
+                        # If removeRow fails, just hide it
+                        try:
+                            self.table.setRowHidden(rr, True)
+                        except Exception:
+                            pass
+                # If current plotted file no longer exists, clear plot/annotation
+                try:
+                    if self._current_file and not self._current_file.exists():
+                        self._clear_plot_and_annotation()
+                except Exception:
+                    pass
+                # After structural changes, rebuild the rows snapshot
+                rows = []
+                for r in range(self.table.rowCount()):
+                    item0 = self.table.item(r, 0)
+                    if item0 is None:
+                        continue
+                    p_str = item0.data(Qt.UserRole)
+                    if not p_str:
+                        continue
+                    p = pathlib.Path(p_str)
+                    rec = self._meta_get(p)
+                    rating = int(rec.get("rating", 0))
+                    rows.append((r, p, rating))
             # Filter rows by rating and by allowed extensions (in case setup filetype changed)
             idx = self.filter_combo.currentIndex()
             allowed_exts = self._allowed_exts_for_setup()
@@ -742,6 +933,40 @@ class TraceBrowser(QWidget):
         except Exception:
             pass
 
+    def _on_clear_caches(self):
+        """Clear in-memory and on-disk caches for the current folder."""
+        try:
+            # In-memory caches
+            try:
+                if hasattr(self, '_trace_mem_cache'):
+                    self._trace_mem_cache.clear()
+            except Exception:
+                pass
+            try:
+                if hasattr(self, '_is_image_cache'):
+                    self._is_image_cache.clear()
+            except Exception:
+                pass
+            # On-disk cache directory within current folder
+            base = self.current_folder
+            removed_dirs = 0
+            if base and isinstance(base, pathlib.Path):
+                cache_dir = base / ".tttr_trace_cache"
+                try:
+                    if cache_dir.exists() and cache_dir.is_dir():
+                        import shutil
+                        shutil.rmtree(str(cache_dir), ignore_errors=True)
+                        removed_dirs += 1
+                except Exception:
+                    pass
+            logging.info(f"TraceBrowser: Cleared caches (memory + {removed_dirs} dir(s) removed)")
+            try:
+                QMessageBox.information(self, "Caches cleared", "Trace caches have been cleared.")
+            except Exception:
+                pass
+        except Exception as e:
+            logging.warning(f"TraceBrowser: Failed to clear caches: {e}")
+
     def _filter_accept(self, rating: int) -> bool:
         idx = self.filter_combo.currentIndex()
         if idx == 0:
@@ -768,6 +993,11 @@ class TraceBrowser(QWidget):
             return
         # Plot only first selected for preview
         self._plot_file(paths[0])
+        # Ensure y-range from spinboxes is applied on selection change
+        try:
+            self._on_y_range_changed()
+        except Exception:
+            pass
         # Load annotation of the first selected
         self._annotation_changing = True
         try:
@@ -818,6 +1048,33 @@ class TraceBrowser(QWidget):
         paths = self._selected_paths()
         if paths:
             self._plot_file(paths[0])
+
+    def _on_y_range_changed(self, *_):
+        # Apply y-range to current plots whenever either spinbox changes
+        y_min = float(self.y_min_spin.value()) if hasattr(self, 'y_min_spin') else None
+        y_max = float(self.y_max_spin.value()) if hasattr(self, 'y_max_spin') else None
+        print(f'_on_y_range_changed {y_min}, {y_max}')
+        if y_min is None or y_max is None:
+            return
+        if y_min > y_max:
+            y_min, y_max = y_max, y_min
+        try:
+            # Preferred path: delegate to IntensityPlotWidget if available
+            if hasattr(self.plot, 'set_y_range'):
+                self.plot.set_y_range(y_min, y_max)
+                return
+        except Exception:
+            pass
+        # Fallback: directly adjust Y range on underlying trace plots
+        try:
+            plots = getattr(self.plot, 'plots', []) or []
+            for trace_plot, _ in list(plots):
+                try:
+                    trace_plot.setYRange(float(y_min), float(y_max), padding=0)
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     # --- Image detection helpers ---
     def _is_clsm_compatible(self, tttr_obj) -> bool:
@@ -1045,6 +1302,16 @@ class TraceBrowser(QWidget):
                                                 time_window_ms=window_ms,
                                                 hist_min=None, hist_max=None,
                                                 hmm_states=None)
+            # Apply y-range from spinboxes if available
+            try:
+                y_min = float(self.y_min_spin.value()) if hasattr(self, 'y_min_spin') else None
+                y_max = float(self.y_max_spin.value()) if hasattr(self, 'y_max_spin') else None
+                if y_min is not None and y_max is not None:
+                    if y_min > y_max:
+                        y_min, y_max = y_max, y_min
+                    self.plot.set_y_range(y_min, y_max)
+            except Exception:
+                pass
             self._current_file = path
         except Exception as e:
             logging.exception(f"TraceBrowser: Failed to plot {path}: {e}")
@@ -1118,9 +1385,27 @@ class TraceBrowser(QWidget):
                     elif et == QEvent.Drop:
                         self.dropEvent(event)
                         return True
+                # Handle Delete key to move selected traces to .trash
+                if et == QEvent.KeyPress:
+                    try:
+                        key = getattr(event, 'key', None)
+                        if key is not None and event.key() in (Qt.Key_Delete,):
+                            self._on_delete_selected()
+                            return True
+                    except Exception:
+                        pass
         except Exception:
             pass
         return super().eventFilter(obj, event)
+
+    def _on_subfolders_toggled(self):
+        try:
+            if not self.current_folder:
+                return
+            # Re-scan and refill based on new recursion setting
+            self._scan_and_fill()
+        except Exception:
+            pass
 
     def _first_dropped_directory(self, event) -> Optional[pathlib.Path]:
         try:
@@ -1157,6 +1442,152 @@ class TraceBrowser(QWidget):
             self._open_folder(folder)
         else:
             event.ignore()
+
+    def _trash_dir(self) -> Optional[pathlib.Path]:
+        base = self.current_folder
+        if base is None:
+            return None
+        trash = base / ".trash"
+        try:
+            trash.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return trash
+
+    def _on_delete_selected(self):
+        # Move selected files to .trash within current_folder, then refresh list (no prompts)
+        # Capture current selection anchor (top-most selected row) to restore position after deletion
+        try:
+            sel_model = self.table.selectionModel()
+            sel_rows = [s.row() for s in sel_model.selectedRows()] if sel_model else []
+            sel_rows.sort()
+            anchor_row = sel_rows[0] if sel_rows else None
+        except Exception:
+            anchor_row = None
+        selected_paths = self._selected_paths()
+        if not selected_paths:
+            return
+        # Build a de-duplicated set of files to move: selected files + any siblings with the same stem
+        to_move_set = set()
+        try:
+            # Helper to add a path if it's a file and not already under .trash
+            def _maybe_add(fp: pathlib.Path):
+                try:
+                    if not fp.exists() or not fp.is_file():
+                        return
+                    # Exclude files already inside any .trash subpath of current_folder
+                    try:
+                        relp = fp.relative_to(self.current_folder)
+                        if any(part == ".trash" for part in relp.parts):
+                            return
+                    except Exception:
+                        pass
+                    to_move_set.add(fp)
+                except Exception:
+                    pass
+            for p in selected_paths:
+                _maybe_add(p)
+                # Add all siblings with the same stem in the same directory
+                try:
+                    parent = p.parent
+                    stem = p.stem
+                    for sib in parent.glob(stem + ".*"):
+                        _maybe_add(sib)
+                except Exception:
+                    pass
+        except Exception:
+            # Fallback: just move the selected paths
+            to_move_set = set(selected_paths)
+        if not to_move_set:
+            return
+        trash = self._trash_dir()
+        if trash is None:
+            return
+        import time
+        moved = 0
+        total = len(to_move_set)
+        for p in sorted(to_move_set):
+            try:
+                if not p.exists() or not p.is_file():
+                    continue
+                # Compute relative target inside .trash, preserving subfolders when possible
+                try:
+                    rel = p.relative_to(self.current_folder)
+                except Exception:
+                    rel = pathlib.Path(p.name)
+                dest = trash / rel
+                # Ensure parent exists
+                try:
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                except Exception:
+                    pass
+                # Avoid overwrite: if exists, add timestamp suffix
+                final_dest = dest
+                if final_dest.exists():
+                    ts = time.strftime("%Y%m%d-%H%M%S")
+                    final_dest = final_dest.with_name(f"{final_dest.stem}__{ts}{final_dest.suffix}")
+                shutil.move(str(p), str(final_dest))
+                logging.info(f"TraceBrowser: moved to trash: '{p}' -> '{final_dest}'")
+                moved += 1
+                # Drop any meta entry for this file
+                try:
+                    key = self._rel_key(p)
+                    if key in self.meta:
+                        del self.meta[key]
+                except Exception:
+                    pass
+            except Exception as e:
+                logging.warning(f"TraceBrowser: Failed to move {p} to .trash: {e}")
+        if moved:
+            logging.info(f"TraceBrowser: moved {moved}/{total} file(s) to .trash at '{trash}'.")
+        # Save meta after changes
+        try:
+            self._schedule_meta_save()
+        except Exception:
+            pass
+        # Refresh list and clear plot if current file moved
+        try:
+            if self._current_file and not self._current_file.exists():
+                self._clear_plot_and_annotation()
+        except Exception:
+            pass
+        self._refresh_list()
+        # Restore selection near the previous anchor and keep view position
+        try:
+            if anchor_row is not None and self.table.rowCount() > 0:
+                target = min(max(anchor_row, 0), self.table.rowCount() - 1)
+                row_to_select = None
+                # Prefer next visible row at or after target
+                for r in range(target, self.table.rowCount()):
+                    if not self.table.isRowHidden(r):
+                        row_to_select = r
+                        break
+                # Fallback: previous visible rows
+                if row_to_select is None:
+                    for r in range(min(target - 1, self.table.rowCount() - 1), -1, -1):
+                        if not self.table.isRowHidden(r):
+                            row_to_select = r
+                            break
+                # Final fallback: first visible row
+                if row_to_select is None:
+                    for r in range(self.table.rowCount()):
+                        if not self.table.isRowHidden(r):
+                            row_to_select = r
+                            break
+                if row_to_select is not None:
+                    self.table.selectRow(row_to_select)
+                    try:
+                        item = self.table.item(row_to_select, 0)
+                        if item is not None:
+                            self.table.scrollToItem(item, QAbstractItemView.PositionAtCenter)
+                    except Exception:
+                        pass
+                    try:
+                        self.table.setFocus(Qt.OtherFocusReason)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
     def _on_export(self):
         # Export all files currently listed (respecting active filter/sort)
