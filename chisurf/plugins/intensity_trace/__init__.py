@@ -403,12 +403,15 @@ class TransitionMatrixWindow(QDialog):
         self.setLayout(layout)
 
 class IntensityPlotWidget(QWidget):
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.plot_widget = pg.GraphicsLayoutWidget()
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(self.plot_widget)
         self.plots = []
+        # Optional global y-range override for all trace plots (histograms are Y-linked)
+        self._y_range_override = None  # type: tuple[float, float] | None
 
     def _create_log_hist_plot(self, linked_y_plot, show_x_axis):
         log_axis = pg.AxisItem(orientation='bottom', logMode=True)
@@ -434,6 +437,35 @@ class IntensityPlotWidget(QWidget):
         item.setBrush(QBrush(QColor(*color)))
         item.setPen(QPen(Qt.NoPen))
         plot.addItem(item)
+
+    def set_y_range(self, y_min: float, y_max: float):
+        """Set a global Y range for all trace plots. Histograms are Y-linked and will follow."""
+        print(f"set_y_range({y_min}, {y_max})")
+        if y_min is None or y_max is None:
+            self._y_range_override = None
+            return
+        a = float(y_min)
+        b = float(y_max)
+        if not np.isfinite(a) or not np.isfinite(b):
+            return
+        if a > b:
+            a, b = b, a
+        self._y_range_override = (a, b)
+        print(f"Global Y range override: {self._y_range_override}")
+        for trace_plot, _ in self.plots:
+            print(f"{trace_plot.name}: {trace_plot.getYRange()}")
+            trace_plot.setYRange(a, b, padding=0)
+            print(f"{trace_plot.name}: {trace_plot.getYRange()}")
+
+    def _apply_y_override_if_any(self):
+        ov = getattr(self, '_y_range_override', None)
+        if ov and isinstance(ov, tuple) and len(ov) == 2:
+            a, b = ov
+            for trace_plot, _ in self.plots:
+                try:
+                    trace_plot.setYRange(a, b, padding=0)
+                except Exception:
+                    pass
 
     def plot_trace_and_histogram(
         self, time_axis, traces, channel_labels=None,
@@ -581,6 +613,11 @@ class IntensityPlotWidget(QWidget):
             plot.setXLink(self.plots[0][0])
         for _, hist in self.plots[1:]:
             hist.setXLink(self.plots[0][1])
+        # Apply any y-range override after plots are constructed
+        try:
+            self._apply_y_override_if_any()
+        except Exception:
+            pass
 
 class IntensityTrace(QWidget):
     def __init__(self):
