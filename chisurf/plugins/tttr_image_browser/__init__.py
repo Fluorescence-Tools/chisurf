@@ -20,9 +20,9 @@ import hashlib
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QTextEdit, QComboBox,
-    QSpinBox, QSplitter, QMessageBox, QProgressDialog
+    QSpinBox, QSplitter, QMessageBox, QProgressDialog, QCheckBox
 )
-from PyQt5.QtCore import Qt, QEvent
+from PyQt5.QtCore import Qt, QEvent, QTimer
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QFont, QPen
 import pyqtgraph as pg
 
@@ -90,6 +90,15 @@ class TTTRImageBrowser(QWidget):
         self._fullres_pixmap: Optional[QPixmap] = None
         self._mosaic_cache: Dict[pathlib.Path, Tuple[np.ndarray, List[str], int, int]] = {}
         self._is_loading: bool = False
+        # Debounced metadata saving to keep UI snappy on rating changes
+        self._meta_save_timer: Optional[QTimer] = None
+        try:
+            self._meta_save_timer = QTimer(self)
+            self._meta_save_timer.setSingleShot(True)
+            self._meta_save_timer.setInterval(300)
+            self._meta_save_timer.timeout.connect(self._flush_meta_to_disk)
+        except Exception:
+            self._meta_save_timer = None
 
         # Root layout
         self.root_layout = QVBoxLayout(self)
@@ -132,6 +141,11 @@ class TTTRImageBrowser(QWidget):
         self.btn_clear.setToolTip("Clear file list")
         self.btn_clear.clicked.connect(self._on_clear)
 
+        # Clear caches button (in-memory and on-disk caches)
+        self.btn_clear_caches = QPushButton("Clear caches", self.page1)
+        self.btn_clear_caches.setToolTip("Clear in-memory and on-disk caches for this folder")
+        self.btn_clear_caches.clicked.connect(self._on_clear_caches)
+
         self.btn_export = QPushButton("Export selected…", self.page1)
         self.btn_export.clicked.connect(self._on_export)
 
@@ -148,6 +162,17 @@ class TTTRImageBrowser(QWidget):
         ctrl_row.addWidget(QLabel("Filter:"))
         ctrl_row.addWidget(self.filter_combo)
         ctrl_row.addWidget(self.btn_clear)
+        ctrl_row.addWidget(self.btn_clear_caches)
+
+        # Subfolder processing option
+        self.chk_subfolders = QCheckBox("Process subfolders", self.page1)
+        self.chk_subfolders.setChecked(False)
+        try:
+            self.chk_subfolders.toggled.connect(lambda _=None: self._on_subfolders_toggled())
+        except Exception:
+            pass
+        ctrl_row.addWidget(self.chk_subfolders)
+
         ctrl_row.addWidget(self.btn_export)
         ctrl_row.addWidget(self.btn_save_tiff)
         ctrl_row.addWidget(self.btn_export_docx)
@@ -161,9 +186,9 @@ class TTTRImageBrowser(QWidget):
         # Left: table of files with rating
         self.table = NoHoverSelectTable(self.page1)
         self.table.setColumnCount(3)
-        self.table.setHorizontalHeaderLabels(["File", "Size (MB)", "Rating"])
+        self.table.setHorizontalHeaderLabels(["File", "Rating", "Size (MB)"])
         self.table.horizontalHeader().setStretchLastSection(False)
-        # Stretch file column; let size fit contents; rating minimal width
+        # Stretch file column; let rating/size fit contents
         try:
             self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
             self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
@@ -362,14 +387,28 @@ class TTTRImageBrowser(QWidget):
         # Determine allowed extensions based on selected setup file type
         allowed_exts = self._allowed_exts_for_setup()
         files: List[pathlib.Path] = []
-        # Traverse recursively
+        # Traverse optionally recursively
+        recursive = False
         try:
-            it = self.current_folder.rglob('*')
+            recursive = bool(getattr(self, 'chk_subfolders', None) and self.chk_subfolders.isChecked())
+        except Exception:
+            recursive = False
+        try:
+            it = self.current_folder.rglob('*') if recursive else self.current_folder.iterdir()
         except Exception:
             it = self.current_folder.iterdir()
         for p in it:
             try:
-                if p.is_file() and ((not allowed_exts) or (p.suffix.lower() in allowed_exts)):
+                if not p.is_file():
+                    continue
+                # Exclude anything under a hidden .trash within the current folder
+                try:
+                    relp = p.resolve().relative_to(self.current_folder.resolve())
+                    if any(part == ".trash" for part in relp.parts):
+                        continue
+                except Exception:
+                    pass
+                if (not allowed_exts) or (p.suffix.lower() in allowed_exts):
                     files.append(p)
             except Exception:
                 continue
@@ -392,34 +431,37 @@ class TTTRImageBrowser(QWidget):
             item.setData(Qt.UserRole, str(p))
             self.table.setItem(r, 0, item)
 
-            # Size column (human readable, sortable by bytes)
-            try:
-                size_bytes = int(p.stat().st_size)
-            except Exception:
-                size_bytes = -1
-            size_item = QTableWidgetItem(self._human_size(max(size_bytes, 0)))
-            size_item.setFlags(size_item.flags() & ~Qt.ItemIsEditable)
-            size_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            size_item.setData(Qt.EditRole, int(max(size_bytes, 0)))
-            self.table.setItem(r, 1, size_item)
-
-            # Create sortable rating item and clickable star widget
+            # Rating column (sortable numeric item + clickable star widget)
             rec = self._meta_get(p)
             rating = int(rec.get("rating", 0))
             rating_item = QTableWidgetItem()
             rating_item.setFlags(rating_item.flags() & ~Qt.ItemIsEditable)
             rating_item.setData(Qt.EditRole, int(rating))
-            self.table.setItem(r, 2, rating_item)
+            self.table.setItem(r, 1, rating_item)
 
             stars = StarRatingWidget(self.table)
             stars.set_rating(rating)
             # connect inline handler to update meta and sort key
-            def _on_rating_changed(val, row=r, path=p):
+            def _on_rating_changed(val, path=p, w=stars):
+                # Update meta
                 self._update_rating(path, int(val))
-                it = self.table.item(row, 2)
-                if it is not None:
-                    it.setData(Qt.EditRole, int(val))
-                # Re-apply filter and current sorting
+                # Determine current row of this widget (sorting/filtering may have moved it)
+                cur_row = -1
+                try:
+                    for rr in range(self.table.rowCount()):
+                        if self.table.cellWidget(rr, 1) is w:
+                            cur_row = rr
+                            break
+                except Exception:
+                    pass
+                # Update sort key for the rating column item at the current row
+                try:
+                    it = self.table.item(cur_row, 1)
+                    if it is not None:
+                        it.setData(Qt.EditRole, int(val))
+                except Exception:
+                    pass
+                # Re-apply current filter and maintain current sorting
                 self._refresh_list()
                 try:
                     header = self.table.horizontalHeader()
@@ -427,7 +469,18 @@ class TTTRImageBrowser(QWidget):
                 except Exception:
                     pass
             stars.ratingChanged.connect(_on_rating_changed)
-            self.table.setCellWidget(r, 2, stars)
+            self.table.setCellWidget(r, 1, stars)
+
+            # Size column (human readable MB; numeric sort key in MB)
+            try:
+                size_bytes = int(p.stat().st_size)
+            except Exception:
+                size_bytes = -1
+            size_item = QTableWidgetItem(self._human_size(max(size_bytes, 0)))
+            size_item.setFlags(size_item.flags() & ~Qt.ItemIsEditable)
+            size_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            size_item.setData(Qt.EditRole, float(max(size_bytes, 0)) / (1024.0 * 1024.0))
+            self.table.setItem(r, 2, size_item)
 
         self._apply_filter()
         # Initial sort by File ascending for convenience
@@ -446,13 +499,34 @@ class TTTRImageBrowser(QWidget):
         rec = self._meta_get(path)
         rec["rating"] = int(rating)
         self._meta_set(path, rec)
-        if self.current_folder:
-            _save_meta(self.current_folder, self.meta)
+        # Defer disk write to keep UI responsive
+        self._schedule_meta_save()
         # Refresh order if sorting by rating
         self._refresh_list()
 
     def _apply_filter(self):
         self._refresh_list()
+
+    def _schedule_meta_save(self):
+        try:
+            if self._meta_save_timer is not None:
+                self._meta_save_timer.start()
+            else:
+                if self.current_folder:
+                    _save_meta(self.current_folder, self.meta)
+        except Exception:
+            try:
+                if self.current_folder:
+                    _save_meta(self.current_folder, self.meta)
+            except Exception:
+                pass
+
+    def _flush_meta_to_disk(self):
+        try:
+            if self.current_folder:
+                _save_meta(self.current_folder, self.meta)
+        except Exception:
+            pass
 
     def _refresh_list(self):
         # Apply filter by rating and re-sort rows
@@ -466,7 +540,8 @@ class TTTRImageBrowser(QWidget):
             if not p_str:
                 continue
             p = pathlib.Path(p_str)
-            rating = int(self.meta.get(p.name, {}).get("rating", 0))
+            rec = self._meta_get(p)
+            rating = int(rec.get("rating", 0))
             rows.append((r, p, rating))
         # Filter rows by rating and by allowed extensions (in case filetype changed)
         idx = self.filter_combo.currentIndex()
@@ -516,7 +591,7 @@ class TTTRImageBrowser(QWidget):
         self._plot_file(paths[0])
         # Load annotation for the first selected
         p = paths[0]
-        rec = self.meta.get(p.name) or {}
+        rec = self._meta_get(p)
         self._annotation_changing = True
         try:
             try:
@@ -538,9 +613,9 @@ class TTTRImageBrowser(QWidget):
         if not paths:
             return
         p = paths[0]
-        rec = self.meta.get(p.name) or {}
+        rec = self._meta_get(p)
         rec["annotation"] = self.annotation.toPlainText()
-        self.meta[p.name] = rec
+        self._meta_set(p, rec)
         _save_meta(self.current_folder, self.meta)
 
     def _commit_current_annotation(self):
@@ -551,9 +626,9 @@ class TTTRImageBrowser(QWidget):
             p = getattr(self, '_current_file', None)
             if p is None:
                 return
-            rec = self.meta.get(p.name) or {}
+            rec = self._meta_get(p)
             rec["annotation"] = self.annotation.toPlainText()
-            self.meta[p.name] = rec
+            self._meta_set(p, rec)
             _save_meta(self.current_folder, self.meta)
         except Exception:
             pass
@@ -986,20 +1061,27 @@ class TTTRImageBrowser(QWidget):
                 except Exception:
                     img2d = None
             images.append((name, img2d))
-            # Label construction (detector name + channels + microtime ranges)
+            # Label construction (detector name + microtime ranges + channels) in consistent order
             try:
-                det_chs = None
+                # Gather and sort unique channels across entries
+                det_chs_set = set()
                 for e in entries:
                     chs = e.get('detector_chs') if isinstance(e, dict) else None
                     if chs:
-                        det_chs = list({int(c) for c in chs}); det_chs.sort(); break
+                        try:
+                            det_chs_set.update(int(c) for c in chs)
+                        except Exception:
+                            det_chs_set.update(chs)
+                det_chs = sorted(det_chs_set) if det_chs_set else []
                 ch_txt = ",".join(map(str, det_chs)) if det_chs else ""
+                # Gather unique micro time ranges across entries
                 mtr_list = []
                 for e in entries:
                     mtr = e.get('micro_time_range') if isinstance(e, dict) else None
                     if isinstance(mtr, (list, tuple)) and len(mtr)==2 and mtr[0] is not None and mtr[1] is not None:
                         try:
-                            a,b = int(mtr[0]), int(mtr[1]); mtr_list.append((a,b))
+                            a,b = int(mtr[0]), int(mtr[1])
+                            mtr_list.append((a,b))
                         except Exception:
                             pass
                 seen=set(); uniq_mtrs=[]
@@ -1007,9 +1089,10 @@ class TTTRImageBrowser(QWidget):
                     if ab not in seen:
                         seen.add(ab); uniq_mtrs.append(ab)
                 mtr_txt = ";".join(f"{a}-{b}" for (a,b) in uniq_mtrs)
+                # Build parts with preferred order: name | mt | ch
                 parts = [str(name)]
-                if ch_txt: parts.append(f"ch: {ch_txt}")
                 if mtr_txt: parts.append(f"mt: {mtr_txt}")
+                if ch_txt: parts.append(f"ch: {ch_txt}")
                 label_str = "  |  ".join(parts)
             except Exception:
                 label_str = str(name)
@@ -1280,9 +1363,26 @@ class TTTRImageBrowser(QWidget):
                     elif et == QEvent.Drop:
                         self.dropEvent(event)
                         return True
+                # Handle Delete key to move selected images to .trash
+                if et == QEvent.KeyPress:
+                    try:
+                        key = getattr(event, 'key', None)
+                        if key is not None and event.key() in (Qt.Key_Delete,):
+                            self._on_delete_selected()
+                            return True
+                    except Exception:
+                        pass
         except Exception:
             pass
         return super().eventFilter(obj, event)
+
+    def _on_subfolders_toggled(self):
+        try:
+            if not self.current_folder:
+                return
+            self._scan_and_fill()
+        except Exception:
+            pass
 
     def _precompute_all_images(self):
         """
@@ -1398,12 +1498,36 @@ class TTTRImageBrowser(QWidget):
                         img2d = arr.sum(axis=0) if arr is not None else None
                         images.append(img2d)
 
-                        # Build label
-                        det_chs_txt = ""
-                        if entries and entries[0].get('detector_chs'):
-                            chs = sorted(set(map(int, entries[0]['detector_chs'])))
-                            det_chs_txt = f"ch: {','.join(map(str, chs))}"
-                        labels.append("  |  ".join(filter(None, [combo_name, det_chs_txt])))
+                        # Build label (consistent order: name | mt | ch)
+                        # Gather channels across all entries and sort
+                        det_chs_set = set()
+                        for e in entries:
+                            chs = e.get('detector_chs') or []
+                            try:
+                                det_chs_set.update(int(c) for c in chs)
+                            except Exception:
+                                det_chs_set.update(chs)
+                        det_chs = sorted(det_chs_set) if det_chs_set else []
+                        ch_txt = f"ch: {','.join(map(str, det_chs))}" if det_chs else ""
+                        # Gather unique micro time ranges
+                        mtr_list = []
+                        for e in entries:
+                            mtr = e.get('micro_time_range') or None
+                            if isinstance(mtr, (list, tuple)) and len(mtr)==2 and mtr[0] is not None and mtr[1] is not None:
+                                try:
+                                    a,b = int(mtr[0]), int(mtr[1])
+                                    mtr_list.append((a,b))
+                                except Exception:
+                                    pass
+                        seen=set(); uniq_mtrs=[]
+                        for ab in mtr_list:
+                            if ab not in seen:
+                                seen.add(ab); uniq_mtrs.append(ab)
+                        mtr_txt = f"mt: {';'.join(f'{a}-{b}' for (a,b) in uniq_mtrs)}" if uniq_mtrs else ""
+                        parts = [combo_name]
+                        if mtr_txt: parts.append(mtr_txt)
+                        if ch_txt: parts.append(ch_txt)
+                        labels.append("  |  ".join(parts))
 
                     non_none = [im for im in images if im is not None]
                     if not non_none:
@@ -1524,6 +1648,193 @@ class TTTRImageBrowser(QWidget):
             self._open_folder(folder)
         else:
             event.ignore()
+
+    def _trash_dir(self) -> Optional[pathlib.Path]:
+        base = self.current_folder
+        if base is None:
+            return None
+        trash = base / ".trash"
+        try:
+            trash.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        return trash
+
+    def _on_delete_selected(self):
+        # Move selected files (and siblings with same stem) to .trash within current_folder, then refresh list
+        # Capture current selection anchor (top-most selected row) to restore position after deletion
+        try:
+            sel_model = self.table.selectionModel()
+            sel_rows = [s.row() for s in sel_model.selectedRows()] if sel_model else []
+            sel_rows.sort()
+            anchor_row = sel_rows[0] if sel_rows else None
+        except Exception:
+            anchor_row = None
+        selected_paths = self._selected_paths()
+        if not selected_paths:
+            return
+        to_move_set = set()
+        try:
+            def _maybe_add(fp: pathlib.Path):
+                try:
+                    if not fp.exists() or not fp.is_file():
+                        return
+                    # Exclude files already inside any .trash subpath of current_folder
+                    try:
+                        relp = fp.resolve().relative_to(self.current_folder.resolve())
+                        if any(part == ".trash" for part in relp.parts):
+                            return
+                    except Exception:
+                        pass
+                    to_move_set.add(fp)
+                except Exception:
+                    pass
+            for p in selected_paths:
+                _maybe_add(p)
+                # Add all siblings with the same stem in the same directory
+                try:
+                    parent = p.parent
+                    stem = p.stem
+                    for sib in parent.glob(stem + ".*"):
+                        _maybe_add(sib)
+                except Exception:
+                    pass
+        except Exception:
+            to_move_set = set(selected_paths)
+        if not to_move_set:
+            return
+        trash = self._trash_dir()
+        if trash is None:
+            return
+        import shutil
+        import time
+        moved = 0
+        total = len(to_move_set)
+        for p in sorted(to_move_set):
+            try:
+                if not p.exists() or not p.is_file():
+                    continue
+                # Compute relative target inside .trash, preserving subfolders when possible
+                try:
+                    rel = p.resolve().relative_to(self.current_folder.resolve())
+                except Exception:
+                    rel = pathlib.Path(p.name)
+                dest = trash / rel
+                try:
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                except Exception:
+                    pass
+                final_dest = dest
+                if final_dest.exists():
+                    ts = time.strftime("%Y%m%d-%H%M%S")
+                    final_dest = final_dest.with_name(f"{final_dest.stem}__{ts}{final_dest.suffix}")
+                shutil.move(str(p), str(final_dest))
+                logging.info(f"TTTRImageBrowser: moved to trash: '{p}' -> '{final_dest}'")
+                moved += 1
+                # Drop any meta entry for this file
+                try:
+                    key = self._rel_key(p)
+                    if key in self.meta:
+                        del self.meta[key]
+                except Exception:
+                    pass
+                # Remove from table immediately to reflect state
+                try:
+                    self._remove_path_from_table(p)
+                except Exception:
+                    pass
+            except Exception as e:
+                logging.warning(f"TTTRImageBrowser: Failed to move {p} to .trash: {e}")
+        if moved:
+            logging.info(f"TTTRImageBrowser: moved {moved}/{total} file(s) to .trash at '{trash}'.")
+        # Save meta after changes
+        try:
+            self._schedule_meta_save()
+        except Exception:
+            pass
+        # Refresh view; clear preview if current file moved
+        try:
+            if self._current_file and not self._current_file.exists():
+                self._clear_preview_and_annotation()
+        except Exception:
+            pass
+        try:
+            self._refresh_list()
+        except Exception:
+            pass
+        # Restore selection near previous anchor and keep view position
+        try:
+            if anchor_row is not None and self.table.rowCount() > 0:
+                target = min(max(anchor_row, 0), self.table.rowCount() - 1)
+                row_to_select = None
+                # Prefer next visible row at or after target
+                for r in range(target, self.table.rowCount()):
+                    if not self.table.isRowHidden(r):
+                        row_to_select = r
+                        break
+                # Fallback: previous visible rows
+                if row_to_select is None:
+                    for r in range(min(target - 1, self.table.rowCount() - 1), -1, -1):
+                        if not self.table.isRowHidden(r):
+                            row_to_select = r
+                            break
+                # Final fallback: first visible row
+                if row_to_select is None:
+                    for r in range(self.table.rowCount()):
+                        if not self.table.isRowHidden(r):
+                            row_to_select = r
+                            break
+                if row_to_select is not None:
+                    self.table.selectRow(row_to_select)
+                    try:
+                        item = self.table.item(row_to_select, 0)
+                        if item is not None:
+                            self.table.scrollToItem(item, QAbstractItemView.PositionAtCenter)
+                    except Exception:
+                        pass
+                    try:
+                        self.table.setFocus(Qt.OtherFocusReason)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    def _on_clear_caches(self):
+        """Clear in-memory and on-disk image caches under the current folder."""
+        try:
+            # In-memory caches
+            try:
+                if hasattr(self, '_mosaic_cache'):
+                    self._mosaic_cache.clear()
+            except Exception:
+                pass
+            try:
+                if hasattr(self, '_fullres_pixmap'):
+                    self._fullres_pixmap = None
+            except Exception:
+                pass
+            # On-disk: remove all .tttr_image_cache folders under current_folder (recursively)
+            removed_dirs = 0
+            base = self.current_folder
+            if base and isinstance(base, pathlib.Path):
+                try:
+                    import shutil
+                    for d in base.rglob(CACHE_DIR_NAME):
+                        try:
+                            if d.exists() and d.is_dir():
+                                shutil.rmtree(str(d), ignore_errors=True)
+                                removed_dirs += 1
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+            logging.info(f"TTTRImageBrowser: Cleared caches (memory + {removed_dirs} dir(s) removed)")
+            try:
+                QMessageBox.information(self, "Caches cleared", "Image caches have been cleared.")
+            except Exception:
+                pass
+        except Exception as e:
+            logging.warning(f"TTTRImageBrowser: Failed to clear caches: {e}")
 
     # --- Export ---
     def _on_export(self):
@@ -1711,7 +2022,7 @@ class TTTRImageBrowser(QWidget):
                     except Exception:
                         img_path = None
             # Compose doc content
-            rec = self.meta.get(p.name, {})
+            rec = self._meta_get(p)
             rating = int(rec.get("rating", 0))
             annotation = rec.get("annotation", "")
             folder_text = str(p.parent)
