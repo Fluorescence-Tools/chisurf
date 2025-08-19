@@ -23,6 +23,12 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
             **kwargs
     ):
         super().__init__(*args, **kwargs)
+        # Ensure the Background FittingParameterGroup is properly initialized (creates _bg0/_bg1)
+        try:
+            Background.__init__(self, **kwargs)
+        except Exception:
+            # If already initialized or kwargs not applicable, continue
+            pass
         if hide_generic:
             self.hide()
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -32,11 +38,11 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
         self.setTitle("Generic")
 
         # Generic parameters
-        bg0 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bg0_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg0,
             label_text='Bg0',
         )
-        bg1 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bg1_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg1,
             label_text='Bg1'
         )
@@ -44,9 +50,25 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(bg0, 1, 0)
-        layout.addWidget(bg1, 1, 1)
+        layout.addWidget(self._bg0_widget, 1, 0)
+        layout.addWidget(self._bg1_widget, 1, 1)
         self.layout.addLayout(layout)
+
+    def update(self, *__args):
+        # Call the group-box update for standard behavior
+        QtWidgets.QGroupBox.update(self, *__args)
+        # Synchronize UI widgets with underlying parameters
+        try:
+            # Preferred: use controller finalize to sync all UI elements (value, bounds, link state, etc.)
+            self._bg0_widget.finalize()
+            self._bg1_widget.finalize()
+        except Exception:
+            # Fallback: at least sync the numeric values
+            try:
+                self._bg0_widget.setValue(self.bg0)
+                self._bg1_widget.setValue(self.bg1)
+            except Exception:
+                pass
 
 
 
