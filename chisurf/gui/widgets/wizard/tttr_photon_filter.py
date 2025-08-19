@@ -2287,6 +2287,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
         # Inject file-drop logic
         self.textEdit.setVisible(False)
+        # Expose the drop handler so external code (e.g., batch processing) can reuse the standard flow
+        self._after_file_drop = after_file_drop
         chisurf.gui.decorators.lineEdit_dragFile_injector(
             self.lineEdit, call=after_file_drop, target=self.settings['tttr_filenames']
         )

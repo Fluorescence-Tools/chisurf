@@ -27,9 +27,275 @@ from chisurf import settings
 from sklearn.mixture import GaussianMixture
 
 from .gmm_settings_dialog import GMMSettingsDialog
+from chisurf.gui.widgets.progress import EnhancedProgressDialog
+
+# Module-level logger for this file
+logger = logging.getLogger(__name__)
 
 
-class BrickMicWizard(QtWidgets.QMainWindow):
+class DirectoryDropListWidget(QtWidgets.QListWidget):
+    """QListWidget that accepts folder drops and emits a list of dropped paths."""
+    pathsDropped = QtCore.Signal(list)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setDragEnabled(False)
+        self.setDropIndicatorShown(True)
+        self.setDefaultDropAction(QtCore.Qt.CopyAction)
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
+        has_urls = event.mimeData().hasUrls()
+        logger.debug("DirectoryDropListWidget.dragEnterEvent: has_urls=%s", has_urls)
+        if has_urls:
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent):
+        logger.debug("DirectoryDropListWidget.dragMoveEvent")
+        event.acceptProposedAction()
+
+    def dropEvent(self, event: QtGui.QDropEvent):
+        urls = event.mimeData().urls() or []
+        logger.debug("DirectoryDropListWidget.dropEvent: urls=%s", [u.toString() for u in urls])
+        paths = []
+        for url in urls:
+            local = url.toLocalFile()
+            if local:
+                p = Path(local)
+                if p.exists():
+                    paths.append(p)
+                else:
+                    logger.warning("Dropped path does not exist: %s", local)
+            else:
+                logger.debug("URL without local file ignored: %s", url.toString())
+        if paths:
+            logger.info("Emitting pathsDropped with %d path(s)", len(paths))
+            self.pathsDropped.emit(paths)
+        else:
+            logger.info("No valid paths to emit from dropEvent")
+        event.acceptProposedAction()
+
+    def supportedDropActions(self):
+        return QtCore.Qt.CopyAction
+
+
+class BatchProcessingDialog(QtWidgets.QDialog):
+    """
+    Dialog for batch analysis: accept dropped folders, recursively find folders
+    containing TTTR files, list them, and process sequentially using the
+    provided BrickMicWizard instance.
+    """
+    def __init__(self, parent_wizard: 'BurstSelectionTool'):
+        super().__init__(parent_wizard)
+        self.wizard = parent_wizard
+        self.setWindowTitle("Batch Burst Analysis")
+        self.resize(700, 500)
+
+        # Build UI
+        main_layout = QtWidgets.QVBoxLayout(self)
+
+        info_label = QtWidgets.QLabel(
+            "Drop folders here. Folders containing TTTR files will be added.\n"
+            "If a folder does not contain TTTR files, subfolders will be scanned."
+        )
+        info_label.setWordWrap(True)
+        main_layout.addWidget(info_label)
+
+        # Custom list widget that accepts directory drops
+        self.list_widget = DirectoryDropListWidget()
+        self.list_widget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.list_widget.pathsDropped.connect(self._add_folders_from_paths)
+        main_layout.addWidget(self.list_widget, 1)
+
+        # Buttons: delete selected, clear, process
+        btn_row = QtWidgets.QHBoxLayout()
+        self.btn_delete = QtWidgets.QPushButton("Delete Selected")
+        self.btn_clear = QtWidgets.QPushButton("Clear All")
+        self.btn_process = QtWidgets.QPushButton("Process")
+        btn_row.addStretch(1)
+        btn_row.addWidget(self.btn_delete)
+        btn_row.addWidget(self.btn_clear)
+        btn_row.addWidget(self.btn_process)
+        main_layout.addLayout(btn_row)
+
+        self.btn_delete.clicked.connect(self._delete_selected)
+        self.btn_clear.clicked.connect(self.list_widget.clear)
+        self.btn_process.clicked.connect(self._process)
+
+        self.allowed_extensions = {
+            '.ht3', '.ptu', '.spc', '.hdf', '.h5'
+        }
+        logger.debug("BatchProcessingDialog allowed_extensions=%s", sorted(self.allowed_extensions))
+
+    # --- Helpers ---
+    def _folder_has_tttr_files(self, folder: Path) -> list[str]:
+        files = []
+        try:
+            for child in folder.iterdir():
+                if child.is_file() and child.suffix.lower() in self.allowed_extensions:
+                    files.append(str(child.resolve()))
+        except Exception as e:
+            logger.warning("Failed to scan folder '%s': %s", folder, e)
+        logger.debug("Scanned folder '%s' -> %d tttr file(s)", folder, len(files))
+        return files
+
+    def _add_folder_unique(self, folder: Path):
+        folder_str = str(folder.resolve())
+        # avoid duplicates
+        for i in range(self.list_widget.count()):
+            if self.list_widget.item(i).text() == folder_str:
+                logger.debug("Folder already in list, skipping: %s", folder_str)
+                return
+        logger.info("Adding folder to batch list: %s", folder_str)
+        self.list_widget.addItem(folder_str)
+
+    def _add_folders_from_paths(self, paths: list[Path]):
+        """
+        For each dropped path:
+        - If it's a directory and contains TTTR files, add the directory.
+        - If it doesn't contain TTTR files, recursively scan subdirectories
+          and add those that do contain TTTR files.
+        - Ignore files.
+        """
+        logger.info("Received %d path(s) from drop", len(paths) if paths else 0)
+        for p in paths:
+            try:
+                if p.is_dir():
+                    logger.debug("Scanning dropped directory: %s", p)
+                    tttr_files = self._folder_has_tttr_files(p)
+                    if tttr_files:
+                        logger.info("Directory has %d TTTR file(s): %s", len(tttr_files), p)
+                        self._add_folder_unique(p)
+                    else:
+                        # recurse into subfolders
+                        found_any = False
+                        for sub in p.rglob('*'):
+                            if sub.is_dir():
+                                sub_files = self._folder_has_tttr_files(sub)
+                                if sub_files:
+                                    found_any = True
+                                    self._add_folder_unique(sub)
+                        if not found_any:
+                            logger.warning("No TTTR files found (even in subfolders) for: %s", p)
+                else:
+                    logger.debug("Ignoring non-directory drop: %s", p)
+            except Exception as e:
+                logger.exception("Error while processing dropped path '%s': %s", p, e)
+
+    def _delete_selected(self):
+        for item in self.list_widget.selectedItems():
+            row = self.list_widget.row(item)
+            self.list_widget.takeItem(row)
+
+    def _process(self):
+        n = self.list_widget.count()
+        logger.info("BatchProcessingDialog: starting process for %d folder(s)", n)
+        if n == 0:
+            QtWidgets.QMessageBox.information(self, "No items", "No folders to process.")
+            return
+
+        progress = EnhancedProgressDialog(
+            title="Batch Processing",
+            label_text="Starting batch...",
+            min_value=0,
+            max_value=n,
+            parent=self
+        )
+        progress.show()
+
+        # Ensure wizard UI is enabled during processing; wizard.process_all_files manages its own state
+        for i in range(n):
+            if progress.wasCanceled():
+                logger.warning("BatchProcessingDialog: processing canceled by user at index %d", i)
+                break
+            item = self.list_widget.item(i)
+            folder_str = item.text()
+            folder = Path(folder_str)
+
+            # Highlight current item and ensure it is visible
+            try:
+                self.list_widget.setCurrentRow(i)
+                self.list_widget.scrollToItem(item, QtWidgets.QAbstractItemView.PositionAtCenter)
+                # Light yellow while processing
+                item.setBackground(QtGui.QBrush(QtGui.QColor(255, 255, 200)))
+            except Exception:
+                pass
+
+            logger.info("Processing folder %d/%d: %s", i+1, n, folder_str)
+
+            # Collect TTTR files in this folder (non-recursive)
+            files = []
+            for child in folder.iterdir():
+                if child.is_file() and child.suffix.lower() in self.allowed_extensions:
+                    files.append(str(child.resolve()))
+
+            logger.debug("Found %d file(s) in folder '%s': %s", len(files), folder_str, files)
+            if not files:
+                logger.warning("No TTTR files found in folder: %s", folder_str)
+
+            # Use the standard drop-based approach to populate the TTTR photon filter
+            # Start from a clean state for each folder
+            try:
+                self.wizard.burst_finder.onClearFiles()
+            except Exception:
+                pass
+
+            # Simulate a drop of the folder path into the lineEdit-driven injector
+            # The injector expands directories to files and runs the canonical loading flow
+            self.wizard.burst_finder.settings['tttr_filenames'] = files
+
+            # For user feedback show the folder in the line edit
+            try:
+                if files:
+                    self.wizard.burst_finder.lineEdit.setText(files[0])
+                else:
+                    self.wizard.burst_finder.lineEdit.setText(folder_str)
+            except Exception:
+                pass
+
+            # Call the exposed drop handler if available; otherwise fall back to direct load
+            try:
+                self.wizard.burst_finder._after_file_drop()
+            except Exception:
+                # Fallback in case drop handler isn't available
+                try:
+                    self.wizard.burst_finder.read_tttr()
+                except Exception:
+                    pass
+
+            logger.debug("Batch: populated via drop handler; current files=%s", self.wizard.burst_finder.settings.get('tttr_filenames'))
+            progress.update_progress(i, text=f"Processing {folder.name} ({i+1}/{n})")
+            QtWidgets.QApplication.processEvents()
+            try:
+                self.wizard.process_all_files()
+                # Mark as done (light green)
+                try:
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(200, 255, 200)))
+                except Exception:
+                    pass
+            except Exception as e:
+                # Mark as failed (light red)
+                try:
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(255, 200, 200)))
+                except Exception:
+                    pass
+                logger.exception("Error processing folder '%s' with files=%s: %s", folder_str, files, e)
+                QtWidgets.QMessageBox.warning(self, "Error", f"Error processing folder:\n{folder_str}\n\n{e}")
+
+            progress.update_progress(i + 1)
+
+        progress.finish(final_text="Batch completed")
+        logger.info("BatchProcessingDialog: finished batch processing")
+        self.accept()
+
+
+class BurstSelectionTool(QtWidgets.QMainWindow):
+
+    def open_batch_dialog(self):
+        dlg = BatchProcessingDialog(self)
+        dlg.exec_()
 
     def get_optimal_components(self, data, max_components=None):
         """
@@ -190,6 +456,11 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         self.pushButton.clicked.connect(self.process_all_files)
         self.pushButton_2.clicked.connect(self.clear_data)
         self.pushButton_show_df.clicked.connect(self.show_dataframe_editor)
+        # Batch processing button
+        try:
+            self.pushButton_batch.clicked.connect(self.open_batch_dialog)
+        except Exception:
+            pass
         
         # Connect checkBox_FileCSV and checkBox_FileMFDHDF to their respective handlers
         self.checkBox_FileCSV.stateChanged.connect(self.on_file_format_toggled)
@@ -223,20 +494,18 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         and then call process_all_files, or simply parse them here.
         """
         file_paths = []
-        for url in event.mimeData().urls():
+        urls = event.mimeData().urls() or []
+        for url in urls:
             # Convert to local file path (handles local files, not necessarily remote)
             local_path = url.toLocalFile()
             if local_path:
                 file_paths.append(local_path)
-
         event.acceptProposedAction()
 
-        # For demonstration, print the dropped files:
-        logging.info(f"Dropped files: {file_paths}")
+        logger.info("Main window drop: %d file(s) -> %s", len(file_paths), file_paths)
 
-        # Optionally, store these in your burst_finder.settings
-        # and auto-process them:
-        self.burst_finder.settings['tttr_filenames'] = file_paths
+        # Store in burst_finder.settings and auto-process
+        self.burst_finder.settings['tttr_filenames'] = list(file_paths)
         self.process_all_files()
 
     # --------------------------------------------------------------------------
@@ -248,8 +517,9 @@ class BrickMicWizard(QtWidgets.QMainWindow):
         then loads and processes the saved burst files for display.
         """
         tttr_files = self.burst_finder.settings.get('tttr_filenames', [])
+        logger.debug("process_all_files: tttr_filenames count=%d types=%s", len(tttr_files) if tttr_files else 0, list({type(f).__name__ for f in (tttr_files or [])}))
         if not tttr_files:
-            logging.info("No TTTR files to process.")
+            logger.info("No TTTR files to process.")
             return
 
         # First, save the selection (ensures all bursts are processed)
