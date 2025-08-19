@@ -55,7 +55,11 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
     def update(self, *__args):
         ProbCh0.update(self)
         QtWidgets.QWidget.update(self, *__args)
+        # Sync amplitude widgets
         for w, v in zip(self._amp_widgets, self.amplitudes):
+            w.setValue(v)
+        # Sync p(ch0) widgets
+        for w, v in zip(self._pch0_widgets, self.pch0):
             w.setValue(v)
 
     @property
@@ -184,7 +188,30 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         lh.addWidget(normalize_amplitude)
         self.lh.addLayout(lh)
 
-        self.append()
+        # Build parameter widgets for existing parameters if any; otherwise add one default component
+        n_existing = len(self._amplitudes) if hasattr(self, '_amplitudes') and self._amplitudes is not None else 0
+        if n_existing == 0:
+            # No parameters yet: create the initial component and its widgets
+            self.append()
+        else:
+            # Create controller widgets for all existing amplitude/pch0 parameter pairs
+            for i in range(n_existing):
+                row_layout = QtWidgets.QHBoxLayout()
+                row_layout.setContentsMargins(0, 0, 0, 0)
+                row_layout.setSpacing(0)
+                self._amp_widgets.append(
+                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                        self._amplitudes[i],
+                        layout=row_layout
+                    )
+                )
+                self._pch0_widgets.append(
+                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                        self._pch0[i],
+                        layout=row_layout
+                    )
+                )
+                self.lh.addLayout(row_layout)
 
     def onNormalizeAmplitudes(self):
         chisurf.run(f"chisurf.macros.model.normalize_amplitudes('{self.name}', {self.normalize_amplitude.isChecked()})")
