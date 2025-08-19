@@ -4,7 +4,7 @@ import pathlib
 import os
 import datetime
 import re
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_namespace_packages, Extension
 try:
     from Cython.Distutils import build_ext
 except ImportError:
@@ -168,9 +168,9 @@ metadata = dict(
         'Topic :: Scientific/Engineering',
     ],
     keywords='fluorescence single-molecule spectroscopy',
-    packages=find_packages(
-        include=(NAME + "*",),
-        exclude=(NAME + ".notebooks", NAME + ".notebooks.*")
+    packages=(
+        find_namespace_packages(include=(NAME + "*",))
+        + [NAME + ".entry_points", NAME + ".notebooks"]
     ),
     package_dir={
         NAME: NAME
@@ -184,6 +184,13 @@ metadata = dict(
             '*.csv', '*.npy', '*.dat',
             '*.dll', '*.so', '*.pyd', '*.ipynb',
             '*.db'
+        ]
+    },
+    # Explicitly exclude importable-but-non-package directories to avoid setuptools warnings
+    exclude_package_data={
+        '': [
+            'entry_points/*',
+            'notebooks/*',
         ]
     },
     install_requires=[
