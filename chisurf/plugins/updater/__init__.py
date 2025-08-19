@@ -46,6 +46,12 @@ class UpdaterWidget(QWidget):
         super().__init__(parent)
         self.setWindowTitle("ChiSurf Updater")
         self.available_versions = []
+        # Set default and minimum size to 600x600 as requested
+        try:
+            self.resize(600, 600)
+            self.setMinimumSize(600, 600)
+        except Exception:
+            pass
 
         # Import settings
         from chisurf.settings import cs_settings
@@ -163,6 +169,8 @@ class UpdaterWidget(QWidget):
         self.changelog_text = QTextEdit()
         try:
             self.changelog_text.setReadOnly(True)
+            # Disable line wrapping in changelog for better readability of long entries
+            self.changelog_text.setLineWrapMode(QTextEdit.NoWrap)
             font = QFont("Consolas")
             font.setPointSize(9)
             self.changelog_text.setFont(font)
@@ -172,6 +180,11 @@ class UpdaterWidget(QWidget):
         layout.addWidget(self.changelog_text)
 
         self.setLayout(layout)
+        try:
+            # Set default window size to 600x600
+            self.resize(800, 600)
+        except Exception:
+            pass
 
     def _auto_check_on_start(self):
         """Perform an automatic update check and inform the user if an update is available.
@@ -383,7 +396,24 @@ class UpdaterWidget(QWidget):
             if not target_version:
                 return
             from chisurf import info as _info
-            changelog = self.updater._build_changelog(_info.__version__, target_version)
+
+            # Default: show changes from currently installed to selected
+            from_version = _info.__version__
+
+            # If a non-latest version is selected and a previous version exists in the list,
+            # show the changes between the previous version and the selected version.
+            try:
+                if isinstance(self.available_versions, list) and idx >= 0 and (idx + 1) < len(self.available_versions):
+                    prev_info = self.available_versions[idx + 1]
+                    if isinstance(prev_info, dict):
+                        prev_ver = prev_info.get('version')
+                        if isinstance(prev_ver, str) and prev_ver:
+                            from_version = prev_ver
+            except Exception:
+                # Fall back to current installed version if anything goes wrong
+                pass
+
+            changelog = self.updater._build_changelog(from_version, target_version)
             self.changelog_text.setPlainText(changelog)
         except Exception as e:
             try:
