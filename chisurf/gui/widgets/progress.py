@@ -120,8 +120,30 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self.setValue(self.maximum())
         QtWidgets.QApplication.processEvents()
         
-        # Use a single-shot timer to close/hide after a short delay
-        QtCore.QTimer.singleShot(1500, lambda: self.close() if auto_close else self.hide())
+        # Use an instance QTimer parented to this dialog to avoid calling back after deletion
+        try:
+            if hasattr(self, "_auto_timer") and self._auto_timer is not None:
+                self._auto_timer.stop()
+                self._auto_timer.deleteLater()
+        except Exception:
+            pass
+        self._auto_timer = QtCore.QTimer(self)
+        self._auto_timer.setSingleShot(True)
+
+        def _finalize():
+            try:
+                if auto_close:
+                    self.close()
+                else:
+                    self.hide()
+            except RuntimeError:
+                # The dialog may already be deleted; ignore safely
+                pass
+
+        # Ensure the timer does not outlive the dialog
+        self.destroyed.connect(lambda *_: self._auto_timer.stop())
+        self._auto_timer.timeout.connect(_finalize)
+        self._auto_timer.start(1500)
 
 
 class ProgressDialog:
