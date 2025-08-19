@@ -802,11 +802,11 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
                     text = f"v{cur} — Update check failed"
                 else:
                     if update_available and latest_version:
-                        text = f"v{cur} — Latest v{latest_version} (Update available)"
+                        text = f"{cur} vs. {latest_version} (Update available)"
                     else:
                         # If no update or latest unknown, assume up to date
                         latest_txt = latest_version or cur
-                        text = f"v{cur} — Latest v{latest_txt} (Up to date)"
+                        text = f"v{cur} (Up to date)"
                 splash.update_message(text)
                 # Ensure the update info is visible for at least one second
                 start_ts = _time.time()
