@@ -5,12 +5,12 @@ This module serves as the entry point for the burst selection plugin.
 It imports the necessary classes from the refactored modules.
 """
 
-from .burst_selector import BrickMicWizard
+from .burst_selector import BurstSelectionTool
 
 
 if __name__ == "plugin":
     # You can customize the visibility of UI elements here
-    brick_mic_wiz = BrickMicWizard(
+    brick_mic_wiz = BurstSelectionTool(
         show_channel_selection=True,
         show_clear_button=False,
         show_decay_button=False,
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     app.aboutToQuit.connect(app.deleteLater)
     # You can customize the visibility of UI elements here
-    brick_mic_wiz = BrickMicWizard(
+    brick_mic_wiz = BurstSelectionTool(
         show_channel_selection=True,
         show_clear_button=False,
         show_decay_button=False,
