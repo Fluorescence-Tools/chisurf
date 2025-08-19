@@ -462,6 +462,7 @@ class FitGroup(Fit):
             )
 
     def finalize(self):
+        self.update()
         self._model.finalize()
 
     def update(self) -> None:
