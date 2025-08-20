@@ -212,6 +212,9 @@ class JordiGFactorCalculator(QWidget):
         file_path : str, optional
             Path to the Jordi file. If None, a file dialog will be opened.
         """
+        # PyQt's clicked(bool) passes a boolean when connected directly. Treat booleans as no path.
+        if isinstance(file_path, bool):
+            file_path = None
         if file_path is None:
             file_path, _ = QFileDialog.getOpenFileName(
                 self, "Load Jordi File", "", "Data Files (*.dat);;All Files (*)"
@@ -220,7 +223,7 @@ class JordiGFactorCalculator(QWidget):
             if not file_path:
                 return
         
-        self.file_label.setText(file_path)
+        self.file_label.setText(str(file_path))
         
         # Load the Jordi file using central reader if available (fallback to numpy)
         try:
