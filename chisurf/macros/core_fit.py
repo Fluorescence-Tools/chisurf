@@ -239,8 +239,51 @@ def load_fit_result(
         return False
 
 
+def _merge_docx(docx_files, out_path: str) -> bool:
+    """Merge multiple DOCX files into a single document by stacking their bodies.
+
+    Returns True on success, False otherwise.
+    Note: This simple merge appends XML bodies and may not keep images/styles perfectly,
+    but is sufficient to "simply stack" documents.
+    """
+    try:
+        from docx import Document
+    except Exception as e:
+        chisurf.logging.info(f"python-docx not available, skipping combined DOCX creation: {e}")
+        return False
+
+    from copy import deepcopy
+    try:
+        master = Document()
+        first = True
+        # Helper to get body element compatibly
+        def _body(doc):
+            try:
+                return doc.element.body
+            except Exception:
+                return doc._element.body
+        for fp in docx_files:
+            if not fp or not os.path.exists(fp):
+                continue
+            sub = Document(fp)
+            if not first:
+                master.add_page_break()
+            first = False
+            src_body = _body(sub)
+            dst_body = _body(master)
+            # Append deep copies of all children (paragraphs, tables, images)
+            for child in list(src_body):
+                dst_body.append(deepcopy(child))
+        master.save(out_path)
+        return True
+    except Exception as e:
+        chisurf.logging.warning(f"Failed to merge DOCX files: {e}")
+        return False
+
+
 def save_fits(target_path: str, use_complex_name: bool = False):
     if os.path.isdir(target_path):
+        created_docx = []
         for fit_window in chisurf.gui.fit_windows:
             fit = fit_window.fit
 
@@ -296,6 +339,20 @@ def save_fits(target_path: str, use_complex_name: bool = False):
                 os.makedirs(p2, exist_ok=True)
 
             save_fit(target_path=p2, fit_window=fit_window)
+
+            # Track created per-fit DOCX path for merging
+            per_fit_docx = os.path.join(p2, f"{save_name}.docx")
+            if os.path.exists(per_fit_docx):
+                created_docx.append(per_fit_docx)
+
+        # After saving all, create combined DOCX by stacking
+        if created_docx:
+            combined_path = os.path.join(target_path, "all_fits.docx")
+            ok = _merge_docx(created_docx, combined_path)
+            if ok:
+                chisurf.logging.info(f"Combined DOCX created: {combined_path}")
+            else:
+                chisurf.logging.info("Combined DOCX could not be created.")
 
 
 def close_fit(idx: int = None):
