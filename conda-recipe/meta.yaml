@@ -84,12 +84,18 @@ requirements:
     - hdbscan
     - umap-learn
     - tttrlib # [not win]
-    # Assistant Chat plugin runtime dependencies
-    - fastapi
-    - uvicorn
-    - httpx
-    - python-multipart
-    - faiss-cpu
+#    # Assistant Chat plugin runtime dependencies
+#    - fastapi
+#    - uvicorn
+#    - httpx
+#    - python-multipart
+#    - faiss-cpu
+#    - langchain
+#    - langchain-community
+#    - langchain-ollama
+#    - sentence-transformers
+#    - pymupdf
+#    - pypdf
 
 app:
   entry: chisurf
