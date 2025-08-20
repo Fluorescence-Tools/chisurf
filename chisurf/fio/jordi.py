@@ -14,6 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Optional, Union
 
+import io
 import numpy as np
 
 ArrayLike = Union[np.ndarray, Iterable[float]]
@@ -64,6 +65,7 @@ def write_jordi(
     comments: str = "",
     header: Optional[str] = None,
     delimiter: Optional[str] = None,
+    footer: Optional[Union[str, Iterable[str]]] = None,
 ) -> Path:
     """
     Write Jordi data to an ASCII file.
@@ -82,6 +84,9 @@ def write_jordi(
         Create parent directories if they do not exist.
     newline, comments, header
         Passed to numpy.savetxt for flexibility.
+    footer
+        Optional footer text to append after a separator row containing a negative number ("-1").
+        If a sequence of strings is provided, each element is written as a line.
 
     Returns
     -------
@@ -112,6 +117,26 @@ def write_jordi(
     # Keep defaults close to prior usage (no specific fmt provided previously)
     np.savetxt(out_path.as_posix(), vec, **kwargs)
 
+    # If a footer is provided, append a separator with a negative number and then the footer text
+    if footer is not None:
+        with out_path.open("a", encoding="utf-8", newline="") as fh:
+            # Ensure there is a newline before the separator if the file does not end with one
+            # numpy.savetxt typically ends with a newline already, so we just write the separator
+            fh.write(f"-1{newline}")
+            if isinstance(footer, str):
+                # Write as-is, but ensure it ends with a newline
+                if footer and not footer.endswith(("\n", "\r")):
+                    fh.write(footer + newline)
+                else:
+                    fh.write(footer)
+            else:
+                for line in footer:
+                    line = "" if line is None else str(line)
+                    if line.endswith(("\n", "\r")):
+                        fh.write(line)
+                    else:
+                        fh.write(line + newline)
+
     return out_path
 
 
@@ -122,9 +147,16 @@ def read_jordi(
     dtype=float,
     delimiter: str | None = None,
     comments: str = "#",
+    return_footer: bool = False,
 ):
     """
-    Read Jordi data from an ASCII file.
+    Read Jordi data from an ASCII file with optional footer.
+
+    The file is split at the first non-comment data row that contains any negative
+    numeric value. All rows before that separator are parsed as conventional Jordi
+    numeric data. All rows after the separator constitute the footer (can contain
+    arbitrary metadata). The separator row itself is not included in the data nor
+    the footer.
 
     Parameters
     ----------
@@ -139,16 +171,75 @@ def read_jordi(
         The string used to separate values. If None, will try to infer.
     comments : str, default '#'
         The character used to indicate the start of a comment.
+    return_footer : bool, default False
+        When True, also return the footer string. If split is True, returns
+        (cp, cs, footer); otherwise returns (arr, footer).
 
     Returns
     -------
-    np.ndarray | tuple[np.ndarray, np.ndarray]
-        The full Jordi vector or a tuple of (parallel, perpendicular).
+    np.ndarray | tuple
+        The full Jordi vector or a tuple of (parallel, perpendicular). If
+        return_footer=True, the footer string is appended to the return value.
     """
     path = Path(filename)
-    arr = np.loadtxt(path.as_posix(), dtype=dtype, delimiter=delimiter, comments=comments)
 
-    # Handle possible 2D shapes gracefully: (N,2) or (2,N) → concatenate [cp, cs]
+    # Read raw lines
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            lines = fh.readlines()
+    except UnicodeDecodeError:
+        # Fallback without explicit encoding
+        with path.open("r") as fh:
+            lines = fh.readlines()
+
+    # Detect the first non-comment row that contains a negative number
+    sep_idx = None
+    for idx, raw in enumerate(lines):
+        s = raw.strip()
+        if not s:
+            continue  # ignore blank rows for detection
+        if comments and s.startswith(comments):
+            continue  # ignore comment rows for detection
+        # Tokenize and try to parse numbers
+        tokens = s.split(delimiter) if delimiter else s.split()
+        if not tokens:
+            continue
+        neg_found = False
+        all_numeric = True
+        for tok in tokens:
+            try:
+                val = float(tok)
+            except Exception:
+                all_numeric = False
+                break
+            if val < 0:
+                neg_found = True
+        if all_numeric and neg_found:
+            sep_idx = idx
+            break
+
+    # Build data and footer sections (separator line excluded from both)
+    if sep_idx is None:
+        data_lines = lines
+        footer_lines: list[str] = []
+    else:
+        data_lines = lines[:sep_idx]
+        footer_lines = lines[sep_idx + 1 :]
+
+    footer_text = "".join(footer_lines)
+
+    # Parse numeric data section with numpy.loadtxt using an in-memory buffer
+    data_text = "".join(data_lines)
+    if data_text.strip():
+        try:
+            arr = np.loadtxt(io.StringIO(data_text), dtype=dtype, delimiter=delimiter, comments=comments)
+        except Exception:
+            # If parsing fails (e.g., no numeric data), return empty array
+            arr = np.array([], dtype=dtype)
+    else:
+        arr = np.array([], dtype=dtype)
+
+    # Normalize shape: accept (N,2) or (2,N) and convert to 1D concatenated
     if arr.ndim == 2:
         r, c = arr.shape
         if c == 2:
@@ -156,20 +247,25 @@ def read_jordi(
         elif r == 2:
             arr = np.hstack([arr[0, :], arr[1, :]])
         else:
-            # Flatten as fallback
             arr = arr.ravel()
-
-    if arr.ndim != 1:
+    elif arr.ndim != 1:
         arr = arr.ravel()
 
+    # If odd length, splitting is not reliable
     if len(arr) % 2 != 0:
-        # If odd length, we can't split reliably; still return raw if split=False
         if split:
             raise ValueError(f"Jordi vector must have even length to split. Got length {len(arr)} from {path}.")
+        if return_footer:
+            return arr, footer_text
         return arr
 
     if split:
         half = len(arr) // 2
-        return arr[:half], arr[half:]
+        cp, cs = arr[:half], arr[half:]
+        if return_footer:
+            return cp, cs, footer_text
+        return cp, cs
     else:
+        if return_footer:
+            return arr, footer_text
         return arr

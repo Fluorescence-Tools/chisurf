@@ -208,6 +208,10 @@ class JordiAnisotropyBatchWindow(QWidget):
         vv = np.asarray(vv, dtype=float)
         vh = np.asarray(vh, dtype=float)
 
+        # Apply optional flip
+        if bool(self.snapshot.get('flip', False)):
+            vv, vh = vh, vv
+
         if self.snapshot['apply_bg']:
             vv = vv - float(self.snapshot['bg_vv'])
             vh = vh - float(self.snapshot['bg_vh'])
@@ -365,21 +369,27 @@ class JordiAnisotropyCalculator(QWidget):
         self.bg_vh_spin.valueChanged.connect(self._on_param_changed)
         controls.addWidget(self.bg_vh_spin, 1, 7)
 
+        # Flip VV<->VH
+        self.flip_checkbox = QCheckBox("Flip VV↔VH (data swapped in Jordi)")
+        self.flip_checkbox.setChecked(False)
+        self.flip_checkbox.stateChanged.connect(self._on_param_changed)
+        controls.addWidget(self.flip_checkbox, 2, 0, 1, 2)
+
         # Shift
-        controls.addWidget(QLabel("Shift VH (channels):"), 2, 0)
+        controls.addWidget(QLabel("Shift VH (channels):"), 2, 2)
         self.shift_spin = QDoubleSpinBox()
         self.shift_spin.setDecimals(3)
         self.shift_spin.setRange(-150.0, 150.0)
         self.shift_spin.setSingleStep(0.5)
         self.shift_spin.setValue(self.decay_shift)
         self.shift_spin.valueChanged.connect(self._on_param_changed)
-        controls.addWidget(self.shift_spin, 2, 1)
+        controls.addWidget(self.shift_spin, 2, 3)
 
         # r infinity display and subtraction
-        controls.addWidget(QLabel("r∞:"), 2, 2)
+        controls.addWidget(QLabel("r∞:"), 2, 4)
         self.rinf_line = QLineEdit("N/A")
         self.rinf_line.setReadOnly(True)
-        controls.addWidget(self.rinf_line, 2, 3)
+        controls.addWidget(self.rinf_line, 2, 5)
 
 
         main_layout.addLayout(controls)
@@ -450,8 +460,11 @@ class JordiAnisotropyCalculator(QWidget):
 
         # Create channel axis (0..N-1)
         self.time_axis = np.arange(len(vv), dtype=float)
-        self.vv = np.asarray(vv, dtype=float)
-        self.vh = np.asarray(vh, dtype=float)
+        # Store raw and keep backward-compatible attributes
+        self.vv_raw = np.asarray(vv, dtype=float)
+        self.vh_raw = np.asarray(vh, dtype=float)
+        self.vv = self.vv_raw
+        self.vh = self.vh_raw
 
         # Set region initially to last 20% for r∞
         n = len(self.time_axis)
@@ -478,6 +491,7 @@ class JordiAnisotropyCalculator(QWidget):
             'bg_vh': float(self.bg_vh_spin.value()) if hasattr(self, 'bg_vh_spin') else 0.0,
             'g': float(self.g_spin.value()) if hasattr(self, 'g_spin') else 1.0,
             'shift': float(self.shift_spin.value()) if hasattr(self, 'shift_spin') else 0.0,
+            'flip': bool(self.flip_checkbox.isChecked()) if hasattr(self, 'flip_checkbox') else False,
             'region_min': float(region_min),
             'region_max': float(region_max),
         }
@@ -517,6 +531,15 @@ class JordiAnisotropyCalculator(QWidget):
             out[mask] = np.interp(xq[mask], t, y)
         return out
 
+    def _get_vv_vh(self):
+        """Return VV, VH arrays, applying the VV<->VH flip if requested."""
+        vv = getattr(self, 'vv_raw', self.vv)
+        vh = getattr(self, 'vh_raw', self.vh)
+        flip = getattr(self, 'flip_checkbox', None)
+        if flip is not None and flip.isChecked():
+            return vh, vv
+        return vv, vh
+
     def save_outputs(self):
         """Save shifted decays (as Jordi), anisotropy decay, and r∞ info.
         Generates three files based on a user-chosen base filename:
@@ -537,8 +560,9 @@ class JordiAnisotropyCalculator(QWidget):
         stem = base.with_suffix("")
 
         # Prepare VV and shifted VH with current background setting
-        vv_arr = self.vv.astype(float).copy()
-        vh_arr = self.vh.astype(float).copy()
+        vv_curr, vh_curr = self._get_vv_vh()
+        vv_arr = vv_curr.astype(float).copy()
+        vh_arr = vh_curr.astype(float).copy()
         if self.bg_checkbox.isChecked():
             vv_arr = vv_arr - float(self.bg_vv_spin.value())
             vh_arr = vh_arr - float(self.bg_vh_spin.value())
@@ -606,8 +630,9 @@ class JordiAnisotropyCalculator(QWidget):
             return None, np.nan
 
         g = float(self.g_spin.value())
-        vv = self.vv.astype(float)
-        vh = self.vh.astype(float)
+        vv_curr, vh_curr = self._get_vv_vh()
+        vv = vv_curr.astype(float)
+        vh = vh_curr.astype(float)
 
         if self.bg_checkbox.isChecked():
             vv = vv - float(self.bg_vv_spin.value())
@@ -659,8 +684,9 @@ class JordiAnisotropyCalculator(QWidget):
         apply_bg = self.bg_checkbox.isChecked()
         vv_plot = None
         vh_plot = None
-        if self.vv is not None:
-            vv_plot = self.vv.astype(float).copy()
+        vv_curr, vh_curr = self._get_vv_vh()
+        if vv_curr is not None:
+            vv_plot = vv_curr.astype(float).copy()
             if apply_bg:
                 vv_plot = vv_plot - float(self.bg_vv_spin.value())
                 # For log plotting, mask non-positive values as NaN
@@ -668,8 +694,8 @@ class JordiAnisotropyCalculator(QWidget):
             self.decay_plot.plot(self.time_axis, vv_plot, pen=pg.mkPen('b', width=2),
                                  name='VV (BG corrected)' if apply_bg else 'VV')
 
-        if self.vh is not None:
-            vh_plot = self.vh.astype(float).copy()
+        if vh_curr is not None:
+            vh_plot = vh_curr.astype(float).copy()
             if apply_bg:
                 vh_plot = vh_plot - float(self.bg_vh_spin.value())
                 vh_plot = np.where(vh_plot > 0, vh_plot, np.nan)
