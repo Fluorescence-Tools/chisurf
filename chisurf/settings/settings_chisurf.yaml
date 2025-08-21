@@ -14,6 +14,7 @@ database:
   read_file_size_limit: 104857600
 enable_experimental: false
 exceptions_on_gui: true
+warn_missing_detector_setups: true
 fcs:
   weight_type: suren
 fitting_message: true

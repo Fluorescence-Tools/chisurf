@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
     QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton, QWidget,
-    QComboBox, QInputDialog, QDoubleSpinBox
+    QComboBox, QInputDialog, QDoubleSpinBox, QCheckBox
 )
 
 from PyQt5.QtCore import pyqtSignal, Qt
@@ -51,11 +51,76 @@ parameters used when reading TTTR files. These settings will be saved with your 
 def load_detector_setups(file_path=None):
     """Load detector setups from the central settings file or a custom file.
 
-    Args:
-        file_path: Optional custom path to load from. If None, uses DETECTOR_SETUPS_FILE.
+    If the central setups file does not exist, inform the user how to create it
+    and allow suppressing this warning in the future.
     """
+    path = pathlib.Path(file_path or DETECTOR_SETUPS_FILE)
+    # Read preference for showing the warning
+    try:
+        import chisurf.settings  # local import to avoid circulars at import time
+        show_warning = bool(chisurf.settings.cs_settings.get('warn_missing_detector_setups', True))
+    except Exception:
+        show_warning = True
+
+    if not path.exists():
+        # Show dialog only in GUI context and when using the default file
+        is_default = (file_path is None) or (path == DETECTOR_SETUPS_FILE)
+        app_running = False
+        try:
+            from PyQt5.QtWidgets import QApplication  # local import
+            app_running = QApplication.instance() is not None
+        except Exception:
+            app_running = False
+
+        if show_warning and is_default and app_running:
+            msg = QMessageBox()
+            msg.setWindowTitle("Detector setups file not found")
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText(f"Detector setups file was not found:\n{str(path)}")
+            msg.setInformativeText("You can create it by saving a setup from the Detector Wizard.\n"
+                                   "Use the 'Save Settings' button to store your configuration.\n"
+                                   "Alternatively, choose an existing JSON with the '...' button.")
+            try:
+                # Add 'Don't show again' checkbox
+                cb = QCheckBox("Don't show this warning again")
+                msg.setCheckBox(cb)
+            except Exception:
+                cb = None
+            # Add action button to open the Detector Wizard
+            open_btn = msg.addButton("Open Detector Wizard", QMessageBox.ActionRole)
+            ok_btn = msg.addButton(QMessageBox.Ok)
+            msg.exec_()
+            # Persist suppression if chosen
+            try:
+                if cb is not None and cb.isChecked():
+                    from chisurf.settings.settings_utils import set_warn_missing_detector_setups as _set_warn
+                    _set_warn(False)
+                    try:
+                        chisurf.settings.cs_settings['warn_missing_detector_setups'] = False
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            # If user chose to open the wizard, show it and then try to load again
+            try:
+                if msg.clickedButton() is open_btn:
+                    # DetectorWizard is defined in this module
+                    wiz = DetectorWizard()
+                    wiz.exec_()
+                    if path.exists():
+                        return safe_open_file(
+                            file_path=path,
+                            processor=json.load,
+                            default_value={"setups": {}}
+                        )
+            except Exception:
+                pass
+        # Return empty default
+        return {"setups": {}}
+
+    # File exists; load normally
     return safe_open_file(
-        file_path=file_path or DETECTOR_SETUPS_FILE,
+        file_path=path,
         processor=json.load,
         default_value={"setups": {}}
     )
