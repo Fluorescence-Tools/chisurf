@@ -61,3 +61,30 @@ def copy_styles_to_user_folder():
             destination_file = user_settings_path / file.name
             if not destination_file.exists():  # Avoid overwriting existing files
                 shutil.copyfile(file, destination_file)
+
+
+def set_warn_missing_detector_setups(show_warning: bool) -> bool:
+    """Persist the warn_missing_detector_setups flag in the user's settings YAML.
+
+    Args:
+        show_warning: If True, the warning dialog will be shown when the setups file is missing.
+                      If False, the warning will be suppressed in the future.
+    Returns:
+        True if the file was written successfully, False otherwise.
+    """
+    try:
+        settings_file = get_path('settings') / 'settings_chisurf.yaml'
+        data = safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}"
+        )
+        if not isinstance(data, dict):
+            data = {}
+        data['warn_missing_detector_setups'] = bool(show_warning)
+        with open(settings_file, 'w', encoding='utf-8') as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+        return True
+    except Exception:
+        return False

@@ -24,24 +24,10 @@ from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.math.signal import fill_small_gaps_in_array
 from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
-from chisurf.gui.widgets.wizard.tttr_channel_definition import save_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channel_definition import save_detector_setups, load_detector_setups
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 from chisurf.fluorescence.burst.utils import create_array_with_ones
 
-# Path to the central detector setups file
-DETECTOR_SETUPS_FILE = get_path('settings') / 'detector_setups.json'
-
-def load_detector_setups(file_path=None):
-    """Load detector setups from the central settings file or a custom file.
-
-    Args:
-        file_path: Optional custom path to load from. If None, uses DETECTOR_SETUPS_FILE.
-    """
-    return safe_open_file(
-        file_path=file_path or DETECTOR_SETUPS_FILE,
-        processor=json.load,
-        default_value={"setups": {}}
-    )
 
 QValidator = QtGui.QValidator
 colors = chisurf.settings.gui['plot']['colors']
@@ -1734,7 +1720,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             setup_data["burst_selection"] = burst_params
 
             # Save the updated setups
-            if save_detector_setups(setups, DETECTOR_SETUPS_FILE):
+            if save_detector_setups(setups):
                 QtWidgets.QMessageBox.information(
                     self,
                     "Success",
