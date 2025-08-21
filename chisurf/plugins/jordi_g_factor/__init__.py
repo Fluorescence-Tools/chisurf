@@ -142,6 +142,12 @@ class JordiGFactorCalculator(QWidget):
         self.bg_correction_checkbox.stateChanged.connect(self.on_bg_correction_changed)
         controls_layout.addWidget(self.bg_correction_checkbox, 2, 0, 1, 4)
         
+        # Flip VV<->VH checkbox
+        self.flip_checkbox = QCheckBox("Flip VV↔VH (data swapped in Jordi)")
+        self.flip_checkbox.setChecked(False)
+        self.flip_checkbox.stateChanged.connect(lambda *_: (self.update_plot(), self.calculate_g_factor()))
+        controls_layout.addWidget(self.flip_checkbox, 5, 0, 1, 2)
+        
         # Decay shift controls
         self.shift_label = QLabel("Shift Perpendicular Decay (channels):")
         self.shift_spinbox = QDoubleSpinBox()
@@ -150,8 +156,8 @@ class JordiGFactorCalculator(QWidget):
         self.shift_spinbox.setDecimals(3)  # Show 3 decimal places
         self.shift_spinbox.setValue(self.decay_shift)  # Set initial value
         self.shift_spinbox.valueChanged.connect(self.on_shift_changed)
-        controls_layout.addWidget(self.shift_label, 5, 0, 1, 2)
-        controls_layout.addWidget(self.shift_spinbox, 5, 2, 1, 2)
+        controls_layout.addWidget(self.shift_label, 5, 2, 1, 1)
+        controls_layout.addWidget(self.shift_spinbox, 5, 3, 1, 1)
         
         main_layout.addLayout(controls_layout)
         
@@ -288,6 +294,17 @@ class JordiGFactorCalculator(QWidget):
         # Calculate initial g-factor
         self.calculate_g_factor()
     
+    def _get_par_perp(self):
+        """Return parallel (VV) and perpendicular (VH) arrays, applying VV↔VH flip if requested."""
+        if self.parallel_data is None or self.perpendicular_data is None:
+            return None, None
+        par = self.parallel_data.y
+        perp = self.perpendicular_data.y
+        flip = getattr(self, 'flip_checkbox', None)
+        if flip is not None and flip.isChecked():
+            return perp, par
+        return par, perp
+
     def update_plot(self):
         """Update the plot with current data."""
         if self.parallel_data is None or self.perpendicular_data is None:
@@ -301,6 +318,11 @@ class JordiGFactorCalculator(QWidget):
         # Create shifted time axis for perpendicular data
         shifted_time_axis = self.time_axis + self.decay_shift
         
+        # Get possibly flipped arrays
+        par_arr, perp_arr = self._get_par_perp()
+        if par_arr is None or perp_arr is None:
+            return
+        
         # Determine if background correction should be applied to full decays
         if self.use_background_correction:
             # Compute background averages from selected background region
@@ -312,14 +334,14 @@ class JordiGFactorCalculator(QWidget):
             bg_min_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_min_time))
             bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
             
-            bg_parallel = self.parallel_data.y[bg_min_idx_parallel:bg_max_idx_parallel]
-            bg_perpendicular = self.perpendicular_data.y[bg_min_idx_perp:bg_max_idx_perp]
+            bg_parallel = par_arr[bg_min_idx_parallel:bg_max_idx_parallel]
+            bg_perpendicular = perp_arr[bg_min_idx_perp:bg_max_idx_perp]
             bg_parallel_avg = float(np.mean(bg_parallel)) if bg_parallel.size else 0.0
             bg_perpendicular_avg = float(np.mean(bg_perpendicular)) if bg_perpendicular.size else 0.0
             
             # Subtract from full arrays and mask non-positive for log plotting
-            parallel_plot = self.parallel_data.y.astype(float) - bg_parallel_avg
-            perpendicular_plot = self.perpendicular_data.y.astype(float) - bg_perpendicular_avg
+            parallel_plot = par_arr.astype(float) - bg_parallel_avg
+            perpendicular_plot = perp_arr.astype(float) - bg_perpendicular_avg
             parallel_plot = np.where(parallel_plot > 0, parallel_plot, np.nan)
             perpendicular_plot = np.where(perpendicular_plot > 0, perpendicular_plot, np.nan)
             
@@ -340,13 +362,13 @@ class JordiGFactorCalculator(QWidget):
             # Plot uncorrected decays
             self.plot_widget.plot(
                 self.time_axis, 
-                self.parallel_data.y, 
+                par_arr, 
                 pen=pg.mkPen('b', width=2),
                 name='Parallel'
             )
             self.plot_widget.plot(
                 shifted_time_axis, 
-                self.perpendicular_data.y, 
+                perp_arr, 
                 pen=pg.mkPen('r', width=2),
                 name=f'Perpendicular (Shift: {self.decay_shift:.3f} ch)'
             )
@@ -412,6 +434,11 @@ class JordiGFactorCalculator(QWidget):
         if self.parallel_data is None or self.perpendicular_data is None:
             return
         
+        # Get possibly flipped arrays
+        par_full, perp_full = self._get_par_perp()
+        if par_full is None or perp_full is None:
+            return
+        
         # Get region bounds for tail matching
         min_time, max_time = self.region_bounds
         
@@ -427,8 +454,8 @@ class JordiGFactorCalculator(QWidget):
         max_idx_perp = np.argmin(np.abs(shifted_time_axis - max_time))
         
         # Extract data in the region
-        parallel_region = self.parallel_data.y[min_idx_parallel:max_idx_parallel]
-        perpendicular_region = self.perpendicular_data.y[min_idx_perp:max_idx_perp]
+        parallel_region = par_full[min_idx_parallel:max_idx_parallel]
+        perpendicular_region = perp_full[min_idx_perp:max_idx_perp]
         time_region = self.time_axis[min_idx_parallel:max_idx_parallel]
         
         # If the shifted indices result in different array lengths, interpolate to match
@@ -445,8 +472,14 @@ class JordiGFactorCalculator(QWidget):
             # Interpolate perpendicular data to match parallel time points
             perpendicular_region = perp_interp(time_region)
         
-        # Calculate uncorrected g-factor
-        g_factors_uncorrected = parallel_region / perpendicular_region
+        # Calculate uncorrected g-factor using safe division to avoid runtime warnings
+        with np.errstate(divide='ignore', invalid='ignore'):
+            g_factors_uncorrected = np.divide(
+                parallel_region,
+                perpendicular_region,
+                out=np.full_like(parallel_region, np.nan, dtype=float),
+                where=(np.isfinite(perpendicular_region) & (perpendicular_region != 0))
+            )
         valid_indices_uncorrected = ~np.isnan(g_factors_uncorrected) & ~np.isinf(g_factors_uncorrected) & (g_factors_uncorrected > 0)
         valid_g_factors_uncorrected = g_factors_uncorrected[valid_indices_uncorrected]
         
@@ -465,23 +498,24 @@ class JordiGFactorCalculator(QWidget):
         else:
             self.g_factor_value.setText("N/A")
             self.g_factor_stddev_value.setText("N/A")
+            g_factor_uncorrected = np.nan
         
         # Apply background correction if enabled
         if self.use_background_correction:
             # Get background region bounds
             bg_min_time, bg_max_time = self.bg_region_bounds
             
-            # Find indices corresponding to the background region
+            # Find indices corresponding to the background region (no shift here, consistent with original logic)
             bg_min_idx = np.argmin(np.abs(self.time_axis - bg_min_time))
             bg_max_idx = np.argmin(np.abs(self.time_axis - bg_max_time))
             
-            # Extract background data
-            bg_parallel = self.parallel_data.y[bg_min_idx:bg_max_idx]
-            bg_perpendicular = self.perpendicular_data.y[bg_min_idx:bg_max_idx]
+            # Extract background data from full arrays
+            bg_parallel = par_full[bg_min_idx:bg_max_idx]
+            bg_perpendicular = perp_full[bg_min_idx:bg_max_idx]
             
             # Calculate average background levels
-            bg_parallel_avg = np.mean(bg_parallel)
-            bg_perpendicular_avg = np.mean(bg_perpendicular)
+            bg_parallel_avg = np.mean(bg_parallel) if bg_parallel.size else 0.0
+            bg_perpendicular_avg = np.mean(bg_perpendicular) if bg_perpendicular.size else 0.0
             
             # Update background value display
             self.bg_parallel_value.setText(f"{bg_parallel_avg:.4f}")
@@ -495,8 +529,14 @@ class JordiGFactorCalculator(QWidget):
             parallel_region_corrected = np.maximum(parallel_region_corrected, 0)
             perpendicular_region_corrected = np.maximum(perpendicular_region_corrected, 0)
             
-            # Calculate g-factor as the ratio of background-corrected parallel to perpendicular
-            g_factors_corrected = parallel_region_corrected / perpendicular_region_corrected
+            # Calculate g-factor as the ratio of background-corrected parallel to perpendicular (safe division)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                g_factors_corrected = np.divide(
+                    parallel_region_corrected,
+                    perpendicular_region_corrected,
+                    out=np.full_like(parallel_region_corrected, np.nan, dtype=float),
+                    where=(np.isfinite(perpendicular_region_corrected) & (perpendicular_region_corrected != 0))
+                )
             
             # Filter out invalid values
             valid_indices_corrected = ~np.isnan(g_factors_corrected) & ~np.isinf(g_factors_corrected) & (g_factors_corrected > 0)
@@ -539,6 +579,11 @@ class JordiGFactorCalculator(QWidget):
         # Create shifted time axis for perpendicular data
         shifted_time_axis = self.time_axis + self.decay_shift
         
+        # Get possibly flipped arrays
+        par_full, perp_full = self._get_par_perp()
+        if par_full is None or perp_full is None:
+            return
+        
         # Apply background correction to the entire dataset if enabled
         if self.use_background_correction:
             # Get background region bounds
@@ -553,20 +598,20 @@ class JordiGFactorCalculator(QWidget):
             bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
             
             # Extract background data
-            bg_parallel = self.parallel_data.y[bg_min_idx_parallel:bg_max_idx_parallel]
-            bg_perpendicular = self.perpendicular_data.y[bg_min_idx_perp:bg_max_idx_perp]
+            bg_parallel = par_full[bg_min_idx_parallel:bg_max_idx_parallel]
+            bg_perpendicular = perp_full[bg_min_idx_perp:bg_max_idx_perp]
             
             # Calculate average background levels
-            bg_parallel_avg = np.mean(bg_parallel)
-            bg_perpendicular_avg = np.mean(bg_perpendicular)
+            bg_parallel_avg = np.mean(bg_parallel) if bg_parallel.size else 0.0
+            bg_perpendicular_avg = np.mean(bg_perpendicular) if bg_perpendicular.size else 0.0
             
             # Update background value display
             self.bg_parallel_value.setText(f"{bg_parallel_avg:.4f}")
             self.bg_perpendicular_value.setText(f"{bg_perpendicular_avg:.4f}")
             
             # Subtract background from the entire dataset
-            parallel_corrected = np.maximum(self.parallel_data.y - bg_parallel_avg, 0)
-            perpendicular_corrected = np.maximum(self.perpendicular_data.y - bg_perpendicular_avg, 0)
+            parallel_corrected = np.maximum(par_full - bg_parallel_avg, 0)
+            perpendicular_corrected = np.maximum(perp_full - bg_perpendicular_avg, 0)
             
             # Scale background-corrected perpendicular data by g-factor
             scaled_perpendicular = perpendicular_corrected * self.g_factor
@@ -591,12 +636,12 @@ class JordiGFactorCalculator(QWidget):
             self.tail_plot_widget.setTitle(f'Background-Corrected Tail-Matched Decays (Shift: {self.decay_shift:.3f} ch)')
         else:
             # Scale perpendicular data by g-factor without background correction
-            scaled_perpendicular = self.perpendicular_data.y * self.g_factor
+            scaled_perpendicular = perp_full * self.g_factor
             
             # Plot parallel data for the entire range
             self.tail_plot_widget.plot(
                 self.time_axis, 
-                self.parallel_data.y, 
+                par_full, 
                 pen=pg.mkPen('b', width=2),
                 name='Parallel'
             )
