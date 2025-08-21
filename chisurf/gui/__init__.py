@@ -675,7 +675,7 @@ def setup_gui(
                             updater_plugin = importlib.import_module("chisurf.plugins.updater")
                             # Keep a strong reference to prevent garbage collection from closing the window
                             import chisurf as _chisurf_mod
-                            _chisurf_mod.__updater_window__ = updater_plugin.UpdaterWidget()
+                            _chisurf_mod.__updater_window__ = updater_plugin.UpdaterWidget(suppress_initial_notification=True)
                             _chisurf_mod.__updater_window__.show()
                             try:
                                 _chisurf_mod.__updater_window__.raise_()

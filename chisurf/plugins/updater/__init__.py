@@ -41,11 +41,13 @@ class UpdaterWidget(QWidget):
     The update URL is configured in the settings or defaults to the one specified in info.py.
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, suppress_initial_notification: bool = False):
         """Initialize the updater widget."""
         super().__init__(parent)
         self.setWindowTitle("ChiSurf Updater")
         self.available_versions = []
+        # Whether to suppress the initial informational popup when the widget auto-checks on start
+        self._suppress_initial_notification = bool(suppress_initial_notification)
         # Set default and minimum size to 600x600 as requested
         try:
             self.resize(600, 600)
@@ -246,16 +248,17 @@ class UpdaterWidget(QWidget):
             if update_available and latest_version:
                 self.status_label.setText(f"Update available: version {latest_version}")
                 self.update_button.setEnabled(True)
-                # Inform the user with a non-intrusive prompt
-                try:
-                    QMessageBox.information(
-                        self,
-                        "Update Available",
-                        f"A new version of ChiSurf ({latest_version}) is available.",
-                        QMessageBox.Ok
-                    )
-                except Exception:
-                    pass
+                # Inform the user with a non-intrusive prompt unless suppressed
+                if not getattr(self, "_suppress_initial_notification", False):
+                    try:
+                        QMessageBox.information(
+                            self,
+                            "Update Available",
+                            f"A new version of ChiSurf ({latest_version}) is available.",
+                            QMessageBox.Ok
+                        )
+                    except Exception:
+                        pass
             else:
                 from chisurf import info as _info
                 if not populated_versions:
