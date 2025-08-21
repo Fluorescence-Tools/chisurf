@@ -235,14 +235,47 @@ class ChisurfWizard(QtWidgets.QWizard):
     def update_irfs(self):
         lb, ub = self.region.getRegion()
         lb, ub = int(lb), int(ub)
-        bg_vv = self.data['irf_vv'].y[lb:ub].mean()
-        bg_vh = self.data['irf_vh'].y[lb:ub].mean()
 
-        vv = np.clip(self.data['irf_vv'].y - bg_vv, 0, None)
-        vh = np.clip(self.data['irf_vh'].y - bg_vh, 0, None)
+        # Ensure required data is available
+        if 'irf_vv' not in self.data or 'irf_vh' not in self.data:
+            return
+        if self.data['irf_vv'] is None or self.data['irf_vh'] is None:
+            return
+
+        y_vv = np.asarray(self.data['irf_vv'].y)
+        y_vh = np.asarray(self.data['irf_vh'].y)
+        n = min(len(y_vv), len(y_vh))
+        if n == 0:
+            return
+
+        # Clamp bounds to valid range [0, n]
+        lb = max(0, min(lb, n))
+        ub = max(0, min(ub, n))
+
+        # Avoid empty slice: if region invalid or empty, use 0.0 background to skip correction
+        if ub <= lb:
+            logging.warning(f"Background region is empty or invalid (lb={lb}, ub={ub}). Skipping background update.")
+            return
+
+        # Compute safe background means
+        sl_vv = y_vv[lb:ub]
+        sl_vh = y_vh[lb:ub]
+        bg_vv = float(np.nanmean(sl_vv)) if sl_vv.size > 0 else 0.0
+        bg_vh = float(np.nanmean(sl_vh)) if sl_vh.size > 0 else 0.0
+
+        # Background subtract and clip to non-negative
+        vv = np.clip(y_vv - bg_vv, 0, None)
+        vh = np.clip(y_vh - bg_vh, 0, None)
+
+        # Normalize intensities; guard against division by zero
         s = (vv + vh).sum() / 2.0
-        vv *= s / vv.sum()
-        vh *= s / vh.sum()
+        vv_sum = vv.sum()
+        vh_sum = vh.sum()
+        if s > 0:
+            if vv_sum > 0:
+                vv = vv * (s / vv_sum)
+            if vh_sum > 0:
+                vh = vh * (s / vh_sum)
 
         self.data['irf_vv_bg_norm'] = chisurf.data.DataCurve(
             x=self.data['irf_vv'].x, y=vv, ey=self.data['irf_vv'].ey,
