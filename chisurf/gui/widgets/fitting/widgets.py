@@ -673,7 +673,8 @@ class FittingParameterWidget(Controller):
         self.widget_value = pg.SpinBox(
             dec=True,
             decimals=decimals,
-            suffix=suffix
+            suffix=suffix,
+            finite=False
         )
         self.widget_value.opts['compactHeight'] = False
         self.horizontalLayout.addWidget(self.widget_value)
@@ -699,7 +700,11 @@ class FittingParameterWidget(Controller):
         self.widget_link.setDisabled(hide_link)
 
         # Display of values
-        self.widget_value.setValue(float(fitting_parameter.value))
+        try:
+            _init_v = float(fitting_parameter.value)
+        except Exception:
+            _init_v = self.widget_value.value() if hasattr(self, 'widget_value') else 0.0
+        self.widget_value.setValue(_init_v)
         self.label.setText(label_text.ljust(5))
 
         # variable bounds
@@ -789,6 +794,18 @@ class FittingParameterWidget(Controller):
         self.widget_value.setValue(v)
 
     def finalize(self, *args):
+        # Ensure execution on the widget's thread (GUI thread). If called from another thread,
+        # reschedule finalize to run on the correct thread and return immediately.
+        if QtCore.QThread.currentThread() is not self.thread():
+            try:
+                # Queue the call to this object's thread (GUI thread)
+                QtCore.QMetaObject.invokeMethod(self, "finalize", QtCore.Qt.QueuedConnection)
+            except Exception:
+                # Fallback: schedule via QApplication event loop
+                app = QtWidgets.QApplication.instance()
+                if app is not None:
+                    QtCore.QTimer.singleShot(0, lambda: self.finalize())
+            return
         #super().update(*args)
         self.blockSignals(True)
 
@@ -798,8 +815,12 @@ class FittingParameterWidget(Controller):
         except Exception:
             pass
 
-        # Update value of widget
-        self.widget_value.setValue(float(self.fitting_parameter.value))
+        # Update value of widget (guard against None)
+        try:
+            _v = float(self.fitting_parameter.value)
+        except Exception:
+            _v = self.widget_value.value()
+        self.widget_value.setValue(_v)
         self.widget_fix.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.fixed else QtCore.Qt.Unchecked)
 
         # Sync bounds UI
@@ -810,8 +831,17 @@ class FittingParameterWidget(Controller):
             self.widget_lower_bound.blockSignals(True)
             self.widget_upper_bound.blockSignals(True)
             self.widget_bounds_on.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.bounds_on else QtCore.Qt.Unchecked)
-            self.widget_lower_bound.setValue(float(lb))
-            self.widget_upper_bound.setValue(float(ub))
+            # Safely update bound spin boxes; handle None
+            try:
+                lb_val = float(lb)
+            except Exception:
+                lb_val = self.widget_lower_bound.value()
+            try:
+                ub_val = float(ub)
+            except Exception:
+                ub_val = self.widget_upper_bound.value()
+            self.widget_lower_bound.setValue(lb_val)
+            self.widget_upper_bound.setValue(ub_val)
         finally:
             try:
                 self.widget_bounds_on.blockSignals(False)
@@ -833,14 +863,17 @@ class FittingParameterWidget(Controller):
 
         # Error-estimate
         value = float(self.fitting_parameter.value)
-        error_estimate = self.fitting_parameter.error_estimate
+        if not np.isfinite(value):
+            rel_error = "NA"
+        else:
+            error_estimate = self.fitting_parameter.error_estimate
+            rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
 
         if self.fitting_parameter.fixed or not isinstance(error_estimate, float):
             self.lineEdit.setText("NA")
             # Reset background color to default
             self.lineEdit.setStyleSheet("")
         else:
-            rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
             self.lineEdit.setText("NA" if np.isnan(rel_error) else f"{rel_error:.0f}%")
 
             # Set background color based on relative error
@@ -853,7 +886,7 @@ class FittingParameterWidget(Controller):
                 error_threshold_large = parameter_settings.get('error_threshold_large', 100)
 
                 cmap = mcolors.LinearSegmentedColormap.from_list(
-                    'error_color_gradient', 
+                    'error_color_gradient',
                     [(0, error_color_small), (1, error_color_large)]
                 )
 
