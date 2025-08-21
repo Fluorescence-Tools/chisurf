@@ -27,6 +27,7 @@ class FRETCalculator(QtWidgets.QWidget):
         self.doubleSpinBox_5.editingFinished.connect(self.onkFRETChanged)
         self.onkFRETChanged()
 
+
     def onRChanged(self):
         self.blockSignals(True)
         
@@ -221,7 +222,8 @@ class FRETCalculator(QtWidgets.QWidget):
             self.blockSignals(False)  # Allow signals for onRChanged
             self.onRChanged()
             self.blockSignals(True)   # Block signals again
-            
+        
+        
         self.blockSignals(False)
 
     def onR0Changed(self):
@@ -254,6 +256,11 @@ class FRETCalculator(QtWidgets.QWidget):
             self.blockSignals(False)  # Allow signals for onRChanged
             self.onRChanged()
             self.blockSignals(True)   # Block signals again
+        
+        # Update HomoFRET mirrors and recompute if available
+        if hasattr(self, "homo_group"):
+            self._update_R0_label()
+            self.compute_homo()
             
         self.blockSignals(False)
 
