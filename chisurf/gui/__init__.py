@@ -761,6 +761,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
     # Update progress as the setup progresses
     stages = [
+        ("Check for updates", "check_updates", 5),
         ("Loading modules", "gui_imports", 10),
         ("Setup ipython", "setup_ipython", 30),
         ("Starting interface", "startup_interface", 40),
@@ -770,7 +771,6 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Arrange widgets", "arrange_widgets", 70),
         ("Initializing Jupyter", "start_jupyter", 85),
         ("Populate plugins", "populate_plugins", 90),
-        ("Check for updates", "check_updates", 93),
         ("Populate notebook", "populate_notebooks", 95),
         ("Setup logging", "setup_logging", 98),
         ("Styling up", "setup_style", 100),
