@@ -735,6 +735,7 @@ def setup_gui(
     return None
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
+    logging.info("Starting GUI startup (get_win)")
     import pyqtgraph as pg
     pg.setConfigOptions(useOpenGL=False)  # Disable OpenGL in PyQtGraph
 
@@ -765,6 +766,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Loading modules", "gui_imports", 10),
         ("Setup ipython", "setup_ipython", 30),
         ("Starting interface", "startup_interface", 40),
+        ("Setup logging", "setup_logging", 45),
         ("Initialize setups", "init_setups", 50),
         ("Defining actions", "define_actions", 55),
         ("Loading tools", "load_tools", 65),
@@ -772,16 +774,17 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Initializing Jupyter", "start_jupyter", 85),
         ("Populate plugins", "populate_plugins", 90),
         ("Populate notebook", "populate_notebooks", 95),
-        ("Setup logging", "setup_logging", 98),
         ("Styling up", "setup_style", 100),
     ]
 
     window = None
     for message, stage, progress_value in stages:
+        logging.info(f"Startup stage '{stage}' starting: {message}")
         splash.update_message(message)
         splash.update_progress(progress_value)
         app.processEvents()
         w2 = setup_gui(app=app, stage=stage, window=window)
+        logging.info(f"Startup stage '{stage}' finished")
         if w2 is not None:
             window = w2
         # If user chose to open updater, interrupt startup immediately
