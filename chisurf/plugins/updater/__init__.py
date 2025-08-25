@@ -20,6 +20,7 @@ The update URL is configured in the settings or defaults to the one specified in
 
 import sys
 import logging
+import yaml
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
     QProgressDialog, QApplication, QComboBox, QTextEdit,
@@ -30,6 +31,7 @@ from PyQt5.QtGui import QFont
 
 from .updater import ChiSurfUpdater, check_for_updates, update_chisurf
 from chisurf import info
+import chisurf.settings as _cs_settings_mod
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Help:Check for Updates"
@@ -58,6 +60,14 @@ class UpdaterWidget(QWidget):
         # Import settings
         from chisurf.settings import cs_settings
         self.cs_settings = cs_settings
+
+        # Load startup-related settings for the updater plugin
+        try:
+            self._load_startup_settings()
+        except Exception:
+            # Fallback defaults
+            self._ignore_updates = False
+            self._check_on_startup = True
 
         # Get update URL from settings or fall back to the one from info.py
         hardcoded_url = "https://www.peulen.xyz/downloads/chisurf/conda"
@@ -145,6 +155,30 @@ class UpdaterWidget(QWidget):
         except Exception:
             pass
 
+        # Startup behavior group
+        startup_group = QGroupBox("Startup behavior")
+        sg_layout = QVBoxLayout()
+        # Check on startup
+        self.cb_check_on_start = QCheckBox("Check for updates on startup")
+        try:
+            self.cb_check_on_start.setToolTip("When enabled, ChiSurf will check for updates during startup.")
+            self.cb_check_on_start.setChecked(bool(getattr(self, '_check_on_startup', True)))
+            self.cb_check_on_start.stateChanged.connect(lambda s: self._on_toggle_check_on_startup(s == Qt.Checked))
+        except Exception:
+            pass
+        sg_layout.addWidget(self.cb_check_on_start)
+        # Ignore updates (suppress startup prompts)
+        self.cb_ignore_updates = QCheckBox("Ignore updates (do not prompt on startup)")
+        try:
+            self.cb_ignore_updates.setToolTip("If enabled, ChiSurf will not prompt about updates during startup.")
+            self.cb_ignore_updates.setChecked(bool(getattr(self, '_ignore_updates', False)))
+            self.cb_ignore_updates.stateChanged.connect(lambda s: self._on_toggle_ignore_updates(s == Qt.Checked))
+        except Exception:
+            pass
+        sg_layout.addWidget(self.cb_ignore_updates)
+        startup_group.setLayout(sg_layout)
+        layout.addWidget(startup_group)
+
         # Version dropdown
         version_layout = QHBoxLayout()
         version_layout.addWidget(QLabel("Available Versions:"))
@@ -188,9 +222,75 @@ class UpdaterWidget(QWidget):
         except Exception:
             pass
 
+    def _load_startup_settings(self) -> None:
+        """Load updater startup settings from user chisurf settings.
+        Defaults: ignore_updates_on_startup=False, check_on_startup=True.
+        Stored under cs_settings['plugins']['updater']."""
+        try:
+            # Get plugin settings dict safely
+            plugins = self.cs_settings.get('plugins') or {}
+            updater_settings = plugins.get('updater') or {}
+            self._ignore_updates = bool(updater_settings.get('ignore_updates_on_startup', False))
+            self._check_on_startup = bool(updater_settings.get('check_on_startup', True))
+        except Exception:
+            self._ignore_updates = False
+            self._check_on_startup = True
+
+    def _save_startup_settings(self) -> bool:
+        """Persist updater startup settings into settings_chisurf.yaml.
+        Returns True on success, False otherwise."""
+        try:
+            # Ensure plugin settings path exists in cs_settings
+            all_settings = _cs_settings_mod.cs_settings
+            if 'plugins' not in all_settings or not isinstance(all_settings['plugins'], dict):
+                all_settings['plugins'] = {}
+            if 'updater' not in all_settings['plugins'] or not isinstance(all_settings['plugins']['updater'], dict):
+                all_settings['plugins']['updater'] = {}
+            all_settings['plugins']['updater']['ignore_updates_on_startup'] = bool(self._ignore_updates)
+            all_settings['plugins']['updater']['check_on_startup'] = bool(self._check_on_startup)
+
+            # Write back to yaml file
+            settings_file = _cs_settings_mod.chisurf_settings_file
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                yaml.safe_dump(all_settings, f, default_flow_style=False)
+            return True
+        except Exception:
+            return False
+
+    def _on_toggle_check_on_startup(self, enabled: bool) -> None:
+        """Handle change of 'check on startup' checkbox."""
+        try:
+            self._check_on_startup = bool(enabled)
+            self._save_startup_settings()
+        except Exception:
+            pass
+
+    def _on_toggle_ignore_updates(self, enabled: bool) -> None:
+        """Handle change of 'ignore updates on startup' checkbox."""
+        try:
+            self._ignore_updates = bool(enabled)
+            self._save_startup_settings()
+        except Exception:
+            pass
+
     def _auto_check_on_start(self):
-        """Perform an automatic update check and inform the user if an update is available.
-        Also populate the version selection combobox on startup. Keeps UI responsive and robust."""
+        """Perform an automatic update check on startup respecting user settings.
+        If updates are ignored or startup checks are disabled, skip notifying on startup.
+        Also populate the version selection combobox on startup when allowed. """
+        # Respect user settings ONLY during application startup, not when user opens this widget
+        try:
+            if getattr(self, '_suppress_initial_notification', False) and (
+                getattr(self, '_ignore_updates', False) or not getattr(self, '_check_on_startup', True)
+            ):
+                # Do not auto-check or prompt on startup
+                self.status_label.setText("Startup update check is disabled by user settings.")
+                # Ensure buttons are enabled for manual checks
+                self.check_button.setEnabled(True)
+                # Do not touch update button here; it will be enabled after manual checks
+                return
+        except Exception:
+            pass
+
         # Prepare UI state
         try:
             self.check_button.setEnabled(False)

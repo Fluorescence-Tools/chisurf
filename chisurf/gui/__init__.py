@@ -651,11 +651,23 @@ def setup_gui(
     elif stage == "populate_plugins":
         populate_plugins()
     elif stage == "check_updates":
-        from chisurf.plugins.updater import updater as _updater_mod
-        from PyQt5.QtWidgets import QMessageBox
-        
-        def _startup_update_check():
-            try:
+        # Respect user setting to ignore update prompts on startup
+        try:
+            _plugins = chisurf.settings.cs_settings.get('plugins') or {}
+            _updater_settings = _plugins.get('updater') or {}
+            _ignore_updates = bool(_updater_settings.get('ignore_updates_on_startup', False))
+            _check_on_startup = bool(_updater_settings.get('check_on_startup', True))
+        except Exception:
+            _ignore_updates = False
+            _check_on_startup = True
+
+        if _ignore_updates or not _check_on_startup:
+            chisurf.logging.info("Startup update prompt suppressed by user settings.")
+        else:
+            from chisurf.plugins.updater import updater as _updater_mod
+            from PyQt5.QtWidgets import QMessageBox
+            
+            def _startup_update_check():
                 update_available, latest_version, error = _updater_mod.check_for_updates()
                 if error:
                     chisurf.logging.info(f"Update check skipped or failed: {error}")
@@ -691,9 +703,7 @@ def setup_gui(
                         chisurf.logging.debug(f"Failed to show update prompt: {e}")
                 else:
                     chisurf.logging.info("ChiSurf is up to date.")
-            except Exception as e:
-                chisurf.logging.debug(f"Silent update check failed: {e}")
-        _startup_update_check()
+            _startup_update_check()
     elif stage == "startup_interface":
         return startup_interface()
     elif stage == "define_actions":
