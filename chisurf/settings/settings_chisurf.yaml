@@ -195,6 +195,9 @@ plugins:
   - Single-Molecule:Burst-Selection
   - Single-Molecule:Burst MLE Lifetime Analysis
   - Tools:ndXplorer
+  updater:
+    ignore_updates_on_startup: false
+    check_on_startup: true
 tcspc:
   autoscale: true
   convolution_on_by_default: true
