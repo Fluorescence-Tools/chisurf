@@ -111,7 +111,15 @@ class QTextEditLogger(logging.Handler):
     def emit(self, record):
         msg = self.format(record)
         if self.mode == "set":
-            self.widget.setText(msg)
+            # Support label-like widgets and QStatusBar
+            if hasattr(self.widget, 'setText') and callable(getattr(self.widget, 'setText')):
+                self.widget.setText(msg)
+            elif hasattr(self.widget, 'showMessage') and callable(getattr(self.widget, 'showMessage')):
+                # For QStatusBar (including TruncatingStatusBar), use showMessage
+                try:
+                    self.widget.showMessage(msg)
+                except Exception:
+                    pass
         elif self.mode == "append":
             # Check if widget is QListWidget or QPlainTextEdit
             if hasattr(self.widget, 'addItem'):
@@ -132,8 +140,9 @@ def setup_logging_widgets(window):
 
     # Create logger for status bar
     ##############################
+    # Use the status bar itself for messages so its truncation logic applies
     log_handler = QTextEditLogger(
-        window.status_label,
+        window.status,
         'set',
         log_string = "%(message)s",
         level = logging.INFO
