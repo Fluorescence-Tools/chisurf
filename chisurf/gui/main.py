@@ -12,6 +12,42 @@ from chisurf import typing
 import numpy as np
 from chisurf.gui import QtWidgets, QtGui, QtCore, uic
 
+
+class TruncatingStatusBar(QtWidgets.QStatusBar):
+    """QStatusBar that truncates overly long messages by keeping the start and end
+    and inserting ellipsis in the middle.
+
+    This ensures the status bar stays readable even for very long messages.
+    """
+    def __init__(self, *args, max_message_length: int = 160, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._max_message_length = max(7, int(max_message_length))  # minimum to allow x...y
+
+    def setMaxMessageLength(self, n: int):
+        try:
+            self._max_message_length = max(7, int(n))
+        except Exception:
+            pass
+
+    def _format_message(self, message: str) -> str:
+        try:
+            s = str(message)
+        except Exception:
+            return message
+        max_len = self._max_message_length
+        if not s or len(s) <= max_len:
+            return s
+        # Compute how many chars to keep from start and end, reserving 3 for '...'
+        keep_total = max_len - 3
+        start_keep = keep_total // 2
+        end_keep = keep_total - start_keep
+        return f"{s[:start_keep]}...{s[-end_keep:]}"
+
+    # Override showMessage to apply truncation automatically
+    def showMessage(self, message: str, timeout: int = 0):  # type: ignore[override]
+        truncated = self._format_message(message)
+        super().showMessage(truncated, timeout)
+
 import chisurf
 import chisurf.decorators
 import chisurf.base
@@ -1169,7 +1205,7 @@ class Main(QtWidgets.QMainWindow):
         self.fit_selector = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
 
         # Setup status bar with progress bar and message
-        self.status = QtWidgets.QStatusBar(self)
+        self.status = TruncatingStatusBar(self)
         self.setStatusBar(self.status)
 
         # Create a QWidget to hold the progress bar and message
