@@ -195,6 +195,7 @@ plugins:
   - Single-Molecule:Burst-Selection
   - Single-Molecule:Burst MLE Lifetime Analysis
   - Tools:ndXplorer
+  - Tools:Screenshot
   updater:
     ignore_updates_on_startup: false
     check_on_startup: true
