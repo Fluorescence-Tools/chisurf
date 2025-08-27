@@ -88,6 +88,9 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self.setMinimumDuration(0)
         self.setAutoClose(False)
         self.setAutoReset(False)
+        # Internal state to support deferred finalization
+        self._pending_auto_close = True
+        self._auto_timer = None
         
     def update_text(self, text):
         """Update the label text without closing the dialog"""
@@ -101,17 +104,21 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self.setValue(value)
         QtWidgets.QApplication.processEvents()
         
-    def finish(self, final_text=None, auto_close=True):
+    def finish(self, final_text=None, auto_close=True, wait_for_user=False, close_delay_ms=1500):
         """
         Finish the progress operation with optional final text.
-        Automatically closes or hides the dialog after a short delay.
+        By default, automatically closes or hides the dialog after a short delay.
         
         Parameters:
         -----------
         final_text : str, optional
             Final text to display before closing
         auto_close : bool, optional
-            Whether to close (True) or hide (False) the dialog
+            Whether to close (True) or hide (False) the dialog when finalized
+        wait_for_user : bool, optional
+            If True, do not auto-finalize. Caller must invoke finalize() later (e.g., on Save).
+        close_delay_ms : int, optional
+            Delay in milliseconds before auto-finalizing. Ignored when wait_for_user is True.
         """
         if final_text is not None:
             self.update_text(final_text)
@@ -120,7 +127,7 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self.setValue(self.maximum())
         QtWidgets.QApplication.processEvents()
         
-        # Use an instance QTimer parented to this dialog to avoid calling back after deletion
+        # Always stop any previous timer
         try:
             if hasattr(self, "_auto_timer") and self._auto_timer is not None:
                 self._auto_timer.stop()
@@ -129,10 +136,13 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
             pass
         self._auto_timer = QtCore.QTimer(self)
         self._auto_timer.setSingleShot(True)
+        
+        # Remember desired final action for potential manual finalize
+        self._pending_auto_close = bool(auto_close)
 
         def _finalize():
             try:
-                if auto_close:
+                if self._pending_auto_close:
                     self.close()
                 else:
                     self.hide()
@@ -143,7 +153,37 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         # Ensure the timer does not outlive the dialog
         self.destroyed.connect(lambda *_: self._auto_timer.stop())
         self._auto_timer.timeout.connect(_finalize)
-        self._auto_timer.start(1500)
+        
+        if wait_for_user or (isinstance(close_delay_ms, int) and close_delay_ms < 0):
+            # Defer finalization until caller explicitly requests it
+            return
+        
+        # Start auto-finalization timer
+        self._auto_timer.start(int(close_delay_ms) if close_delay_ms is not None else 1500)
+
+    def finalize(self, force_auto_close=None):
+        """Finalize immediately by closing or hiding the dialog.
+        Parameters
+        ----------
+        force_auto_close : Optional[bool]
+            If provided, overrides stored behavior. True=close, False=hide.
+        """
+        # Stop any pending timer
+        try:
+            if hasattr(self, "_auto_timer") and self._auto_timer is not None:
+                self._auto_timer.stop()
+                self._auto_timer.deleteLater()
+        except Exception:
+            pass
+        # Decide action
+        auto = self._pending_auto_close if force_auto_close is None else bool(force_auto_close)
+        try:
+            if auto:
+                self.close()
+            else:
+                self.hide()
+        except RuntimeError:
+            pass
 
 
 class ProgressDialog:
