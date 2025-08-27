@@ -1,10 +1,13 @@
 import typing
 import faulthandler
+
+from chisurf.plugins.burst_mle_analysis.utils import LazyTTTRDict, NumpyEncoder, FileListWidget
+
 faulthandler.enable(all_threads=True)
 
 from typing import Union
 
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 from qtpy.QtWidgets import QFileDialog, QMessageBox, QProgressDialog
 import pyqtgraph as pg
 import numpy as np
@@ -20,195 +23,10 @@ import chisurf.settings
 import chisurf.gui.widgets.wizard
 from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups, save_detector_setups
 
-
-import collections.abc
 from pathlib import Path
 import tttrlib
-from typing import Callable, Dict, Iterator
+from typing import Dict
 from chisurf.fio import write_jordi
-
-
-class LazyTTTRDict(collections.abc.MutableMapping):
-    """
-    A dict-like that maps a key (file‐stem) → TTTR object,
-    but only calls tttrlib.TTTR(path, file_type) on first access.
-    """
-    def __init__(
-        self,
-        path_map: Dict[str, Path],
-        file_type_getter: Callable[[], str]
-    ):
-        """
-        Parameters
-        ----------
-        path_map : Dict[str, Path]
-            Maps file‐stem (no extension) → full Path to .ptu/.ht3/etc.
-        file_type_getter : () → str
-            A zero‐argument callable returning current TTTR file‐type (e.g. self.tttr_file_type).
-        """
-        self._paths = path_map
-        self._cache: Dict[str, tttrlib.TTTR] = {}
-        self._file_type_getter = file_type_getter
-        self._warning_shown = False
-
-    def __getitem__(self, key: str) -> tttrlib.TTTR:
-        if key not in self._paths:
-            raise KeyError(f"No TTTR path for key {key!r}")
-        if key not in self._cache:
-            path = self._paths[key]
-            # Check if _file_type_getter is None
-            if self._file_type_getter is None:
-                if not self._warning_shown:
-                    QMessageBox.warning(
-                        None,
-                        "Warning",
-                        "The file type getter is None. This may cause issues with TTTR file loading."
-                    )
-                    self._warning_shown = True
-                # Use a default file type or try to infer it
-                file_type = tttrlib.inferTTTRFileType(str(path))
-            else:
-                file_type = self._file_type_getter()
-            # instantiate on first use
-            self._cache[key] = tttrlib.TTTR(str(path), file_type)
-        return self._cache[key]
-
-    def __setitem__(self, key: str, value: tttrlib.TTTR):
-        # allow manual override if you really want
-        self._cache[key] = value
-
-    def __delitem__(self, key: str):
-        self._paths.pop(key, None)
-        self._cache.pop(key, None)
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._paths)
-
-    def __len__(self) -> int:
-        return len(self._paths)
-
-    def get(self, key: str, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def add_path(self, key: str, path: Path):
-        """
-        Register a new TTTR file to be loaded on demand.
-        """
-        self._paths[key] = path
-
-    def clear(self):
-        self._paths.clear()
-        self._cache.clear()
-
-
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            # Convert to list (or you could serialize differently)
-            return obj.tolist()
-        # Let the base class default method raise the TypeError
-        return super().default(obj)
-
-
-class FileListWidget(QtWidgets.QListWidget):
-    """
-    A QListWidget subclass that accepts file drops and maintains a list of file paths.
-
-    Parameters
-    ----------
-    parent : QWidget, optional
-        Parent widget.
-    file_added_callback : callable, optional
-        Function to call when files are added.
-    process_on_drop : bool, optional
-        Whether to process files immediately on drop.
-    """
-
-    def __init__(self, parent=None, file_added_callback=None, process_on_drop=False):
-        super().__init__(parent)
-        self.setAcceptDrops(True)
-        self.file_added_callback = file_added_callback
-        self.process_on_drop = process_on_drop
-        # Allow the file list to grow vertically and fill available space
-        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
-        self.setSizePolicy(sp)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
-        """
-        Handle drag enter events to accept file URLs.
-        """
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dragMoveEvent(self, event: QtGui.QDragMoveEvent):
-        """
-        Handle drag move events to accept file URLs.
-        """
-        if event.mimeData().hasUrls():
-            event.acceptProposedAction()
-        else:
-            event.ignore()
-
-    def dropEvent(self, event: QtGui.QDropEvent):
-        """
-        Handle drop events, extract file paths, and add them to the list.
-        """
-        if not event.mimeData().hasUrls():
-            event.ignore()
-            return
-
-        file_paths: typing.List[str] = []
-        for url in event.mimeData().urls():
-            local = Path(url.toLocalFile())
-            if local.is_file():
-                file_paths.append(str(local))
-            elif local.is_dir():
-                bursts = list(local.glob('**/*.bur'))
-                if bursts:
-                    file_paths.extend(str(f) for f in bursts)
-                else:
-                    for ext in tttrlib.get_supported_filetypes():
-                        file_paths.extend(str(f) for f in local.glob(f'**/*{ext}'))
-        file_paths.sort()
-        self.blockSignals(True)
-        for fp in file_paths:
-            self.add_file(fp)
-        self.blockSignals(False)
-        if self.file_added_callback:
-            self.file_added_callback()
-        event.acceptProposedAction()
-
-    def add_file(self, file_path: str):
-        """
-        Add a file path to the list as a checkable item.
-
-        Parameters
-        ----------
-        file_path : str
-            Path of the file to add.
-        """
-        item = QtWidgets.QListWidgetItem(file_path, self)
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-        item.setCheckState(QtCore.Qt.Checked)
-        self.addItem(item)
-
-    def get_selected_files(self) -> typing.List[Path]:
-        """
-        Get the list of currently selected (checked) files.
-
-        Returns
-        -------
-        List[Path]
-            Paths of selected files.
-        """
-        return [Path(self.item(i).text()) for i in range(self.count())
-                if self.item(i).checkState() == QtCore.Qt.Checked]
 
 
 class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
@@ -273,7 +91,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             'micro_time_start': start_bin,
             'micro_time_stop': stop_bin,
             'micro_time_binning': self.micro_time_binning,
-            'irf_threshold': self.irf_threshold,
+            'irf_threshold_vv': self.irf_threshold_vv,
+            'irf_threshold_vh': self.irf_threshold_vh,
             'shift': self.shift,
             'shift_sp': self.shift_sp,
             'shift_ss': self.shift_ss,
@@ -295,18 +114,18 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     def _apply_ui_state(self, state):
         """Push a saved state back into the widgets."""
         # — micro-time controls —
-        self.spinBox_micro_time_start.setValue(state['micro_time_start'])
-        self.spinBox_micro_time_stop.setValue(state['micro_time_stop'])
+        self.micro_time_range = (state['micro_time_start'], state['micro_time_stop'])
 
         # Update micro_time_binning in DetectorWizardPage instead of spinBox
         micro_time_binning = state['micro_time_binning']
         self.channel_definer.micro_binning_combo.setCurrentText(str(micro_time_binning))
 
         # — IRF threshold & shifts —
-        self.doubleSpinBox_irf_threshold.setValue(state['irf_threshold'])
-        self.doubleSpinBox_shift.setValue(state['shift'])
-        self.doubleSpinBox_shift_sp.setValue(state['shift_sp'])
-        self.doubleSpinBox_shift_ss.setValue(state['shift_ss'])
+        self.irf_threshold_vv = state['irf_threshold_vv']
+        self.irf_threshold_vh = state['irf_threshold_vh']
+        self.shift = state['shift']
+        self.shift_sp = state['shift_sp']
+        self.shift_ss = state['shift_ss']
 
         self.min_photons = state['min_photons']
         self.p2s_twoIstar = state['p2s_twoIstar']
@@ -321,10 +140,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # — initial‐guess & fixed flags —
         x0 = state['initial_x0']
         fixed = state['fixed_flags']
-        self.doubleSpinBox_tau.setValue(x0[0])
-        self.doubleSpinBox_gamma.setValue(x0[1])
-        self.doubleSpinBox_r0.setValue(x0[2])
-        self.doubleSpinBox_rho.setValue(x0[3])
+        self.tau = x0[0]
+        self.gamma = x0[1]
+        self.r0 = x0[2]
+        self.rho = x0[3]
 
         self.fix_tau = bool(fixed[0])
         self.fix_gamma = bool(fixed[1])
@@ -363,7 +182,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             widgets = (
                 self.spinBox_micro_time_start,
                 self.spinBox_micro_time_stop,
-                self.doubleSpinBox_irf_threshold,
+                self.doubleSpinBox_irf_threshold_vv,
+                self.doubleSpinBox_irf_threshold_vh,
                 self.doubleSpinBox_shift,
                 self.doubleSpinBox_shift_sp,
                 self.doubleSpinBox_shift_ss,
@@ -396,24 +216,27 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     widgets = (
                         self.spinBox_micro_time_start,
                         self.spinBox_micro_time_stop,
-                        self.doubleSpinBox_irf_threshold,
+                        self.doubleSpinBox_irf_threshold_vv,
+                        self.doubleSpinBox_irf_threshold_vh,
                         self.doubleSpinBox_shift,
                         self.doubleSpinBox_shift_sp,
                         self.doubleSpinBox_shift_ss,
                     )
                     self.block_widget_signals(widgets)
 
-                    # Update the UI with the loaded parameters
+                    # Update the UI with the loaded parameters (require new per-channel keys)
                     if "micro_time_start" in detector_params and "micro_time_stop" in detector_params:
                         self.micro_time_range = [detector_params["micro_time_start"], detector_params["micro_time_stop"]]
-                    if "irf_threshold" in detector_params:
-                        self.doubleSpinBox_irf_threshold.setValue(detector_params["irf_threshold"])
+                    if "irf_threshold_vv" in detector_params:
+                        self.irf_threshold_vv = detector_params["irf_threshold_vv"]
+                    if "irf_threshold_vh" in detector_params:
+                        self.irf_threshold_vh = detector_params["irf_threshold_vh"]
                     if "shift" in detector_params:
-                        self.doubleSpinBox_shift.setValue(detector_params["shift"])
+                        self.shift = detector_params["shift"]
                     if "shift_sp" in detector_params:
-                        self.doubleSpinBox_shift_sp.setValue(detector_params["shift_sp"])
+                        self.shift_sp = detector_params["shift_sp"]
                     if "shift_ss" in detector_params:
-                        self.doubleSpinBox_shift_ss.setValue(detector_params["shift_ss"])
+                        self.shift_ss = detector_params["shift_ss"]
 
                     # Update checkbox states
                     if "p2s_twoIstar" in detector_params:
@@ -582,7 +405,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         np_dict: dict,
         one_for_all: bool,
         normalize: int,
-        threshold: float = -1,
+        threshold: typing.Union[float, typing.Tuple[float, float]] = -1,
         state_key: str = None,  # should be 'irf' or 'bg' when called
         detector: Union[str, list[str]] = None
     ):
@@ -601,10 +424,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 dets = detector if isinstance(detector, (list, tuple)) else [detector]
 
         for det in dets:
-            print('det:', det)
             fw = widgets_dict.get(det)
             files: typing.List[Path] = fw.get_selected_files() if fw else []
-            print('files:', files)
 
             # register every file so that LazyTTTRDict knows where to find it,
             # then grab the TTTR object (loading on first access).
@@ -730,7 +551,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # Detector definition tab - moved to first page
         self.tab_detector = QtWidgets.QWidget()
         self.tabWidget.insertTab(0, self.tab_detector, "Detector Definition")
-        self.tabWidget.setCurrentIndex(1)  # Set detector definition as the active tab
+        self.tabWidget.setCurrentIndex(0)  # Start on Detector Wizard page
         self.verticalLayout_detector_tab = QtWidgets.QVBoxLayout(self.tab_detector)
         self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
         self.groupBox_detector = QtWidgets.QGroupBox("Detector Configuration")
@@ -885,7 +706,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         # --- IRF parameter controls ---
         irf_controls = [
-            self.doubleSpinBox_irf_threshold,
+            self.doubleSpinBox_irf_threshold_vv,
+            self.doubleSpinBox_irf_threshold_vh,
             self.checkBox_irf_one_for_all,
             self.comboBox_irf_select,
             self.doubleSpinBox_shift,
@@ -919,19 +741,19 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     def initialize_ui_values(self):
         # No need to initialize comboBox_tttr_file_type as we're using channel_definer.filetype instead
-        self.spinBox_micro_time_start.setValue(0)
-        self.spinBox_micro_time_stop.setValue(4096)
+        self.micro_time_range = (0, 4096)
 
-        self.doubleSpinBox_tau.setValue(4.0)
-        self.doubleSpinBox_gamma.setValue(0.1)
-        self.doubleSpinBox_r0.setValue(0.38)
-        self.doubleSpinBox_rho.setValue(1.22)
-        self.checkBox_fix_tau.setChecked(False)
-        self.checkBox_fix_gamma.setChecked(False)
-        self.checkBox_fix_r0.setChecked(True)
-        self.checkBox_fix_rho.setChecked(False)
-        self.spinBox_min_photons.setValue(10)
-        self.doubleSpinBox_irf_threshold.setValue(0.02)
+        self.tau = 4.0
+        self.gamma = 0.1
+        self.r0 = 0.38
+        self.rho = 1.22
+        self.fix_tau = False
+        self.fix_gamma = False
+        self.fix_r0 = True
+        self.fix_rho = False
+        self.min_photons = 10
+        self.irf_threshold_vv = 0.02
+        self.irf_threshold_vh = 0.02
 
     def browse_files(self, list_widget):
         dialog = QtWidgets.QFileDialog(self, "Select Files")
@@ -971,7 +793,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             np_dict=self.irf_np,
             one_for_all=self.one_for_all_irf,
             normalize=2,
-            threshold=self.irf_threshold,
+            threshold=(self.irf_threshold_vv, self.irf_threshold_vh),
             state_key='irf',
             detector=detector
         )
@@ -1157,13 +979,22 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.decay_of_current_file = data
 
     def update_fit_ui(self, res: dict):
-        self.doubleSpinBox_tau_result.setValue(res['x'][0])
-        self.doubleSpinBox_gamma_result.setValue(res['x'][1])
-        self.doubleSpinBox_r0_result.setValue(res['x'][2])
-        self.doubleSpinBox_rho_result.setValue(res['x'][3])
-        self.doubleSpinBox_twoIstar_result.setValue(res['twoIstar'])
-        self.doubleSpinBox_r_scatter_result.setValue(res['x'][6])
-        self.doubleSpinBox_r_exp_result.setValue(res['x'][7])
+        # Use property setters to avoid direct widget access and keep side-effects consistent
+        try:
+            x = res.get('x', res['x'])
+        except Exception:
+            x = res['x']
+        self.tau_result = float(x[0])
+        self.gamma_result = float(x[1])
+        self.r0_result = float(x[2])
+        self.rho_result = float(x[3])
+        # twoIstar may be absent depending on fit; guard accordingly
+        if 'twoIstar' in res:
+            self.twoIstar_result = float(res['twoIstar'])
+        if len(x) > 6:
+            self.r_scatter_result = float(x[6])
+        if len(x) > 7:
+            self.r_exp_result = float(x[7])
 
     def update_window_combobox(self):
         dets = list(self.channel_definer.detectors.keys())
@@ -1257,6 +1088,24 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # self.spinBox_micro_time_start.setMaximum(stop)
         # self.spinBox_micro_time_stop.setMinimum(start)
         # self.spinBox_micro_time_stop.setMaximum(stop)
+
+    @property
+    def micro_time_start(self) -> int:
+        """Start bin of the micro-time window."""
+        return int(self.spinBox_micro_time_start.value())
+
+    @micro_time_start.setter
+    def micro_time_start(self, v: int):
+        self.spinBox_micro_time_start.setValue(int(v))
+
+    @property
+    def micro_time_stop(self) -> int:
+        """Stop bin (exclusive) of the micro-time window."""
+        return int(self.spinBox_micro_time_stop.value())
+
+    @micro_time_stop.setter
+    def micro_time_stop(self, v: int):
+        self.spinBox_micro_time_stop.setValue(int(v))
 
     @property
     def micro_time_binning(self):
@@ -1445,15 +1294,36 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         return float(np.sum(self.bg))
 
     @property
-    def irf_threshold(self) -> float:
-        return float(self.doubleSpinBox_irf_threshold.value())
+    def irf_threshold_vv(self) -> float:
+        return float(self.doubleSpinBox_irf_threshold_vv.value())
 
-    @irf_threshold.setter
-    def irf_threshold(
+    @irf_threshold_vv.setter
+    def irf_threshold_vv(
             self,
             v: float
     ):
-        self.doubleSpinBox_irf_threshold.setValue(v)
+        self.doubleSpinBox_irf_threshold_vv.setValue(v)
+        try:
+            if not self.doubleSpinBox_irf_threshold_vv.signalsBlocked():
+                self.on_irf_parameters_changed()
+        except Exception:
+            pass
+
+    @property
+    def irf_threshold_vh(self) -> float:
+        return float(self.doubleSpinBox_irf_threshold_vh.value())
+
+    @irf_threshold_vh.setter
+    def irf_threshold_vh(
+            self,
+            v: float
+    ):
+        self.doubleSpinBox_irf_threshold_vh.setValue(v)
+        try:
+            if not self.doubleSpinBox_irf_threshold_vh.signalsBlocked():
+                self.on_irf_parameters_changed()
+        except Exception:
+            pass
 
     @property
     def min_photons(self) -> float:
@@ -1501,15 +1371,42 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         """Integer shift of the second (ss) decay relative to the first (sp)."""
         return int(self.doubleSpinBox_shift.value())
 
+    @shift.setter
+    def shift(self, v: int):
+        self.doubleSpinBox_shift.setValue(int(v))
+        try:
+            if not self.doubleSpinBox_shift.signalsBlocked():
+                self.on_irf_parameters_changed()
+        except Exception:
+            pass
+
     @property
     def shift_sp(self) -> float:
         """Sub-channel (fractional) shift to apply to the sp IRF."""
         return float(self.doubleSpinBox_shift_sp.value())
 
+    @shift_sp.setter
+    def shift_sp(self, v: float):
+        self.doubleSpinBox_shift_sp.setValue(float(v))
+        try:
+            if not self.doubleSpinBox_shift_sp.signalsBlocked():
+                self.on_irf_parameters_changed()
+        except Exception:
+            pass
+
     @property
     def shift_ss(self) -> float:
         """Sub-channel (fractional) shift to apply to the ss IRF."""
         return float(self.doubleSpinBox_shift_ss.value())
+
+    @shift_ss.setter
+    def shift_ss(self, v: float):
+        self.doubleSpinBox_shift_ss.setValue(float(v))
+        try:
+            if not self.doubleSpinBox_shift_ss.signalsBlocked():
+                self.on_irf_parameters_changed()
+        except Exception:
+            pass
 
     @property
     def irf(self) -> np.ndarray:
@@ -1623,6 +1520,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     @tau.setter
     def tau(self, v: float):
         self.doubleSpinBox_tau.setValue(v)
+        try:
+            if not self.doubleSpinBox_tau.signalsBlocked():
+                self.update_variable_fit_parameters()
+        except Exception:
+            pass
 
     @property
     def gamma(self) -> float:
@@ -1632,6 +1534,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     @gamma.setter
     def gamma(self, v: float):
         self.doubleSpinBox_gamma.setValue(v)
+        try:
+            if not self.doubleSpinBox_gamma.signalsBlocked():
+                self.update_variable_fit_parameters()
+        except Exception:
+            pass
 
     @property
     def r0(self) -> float:
@@ -1641,6 +1548,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     @r0.setter
     def r0(self, v: float):
         self.doubleSpinBox_r0.setValue(v)
+        try:
+            if not self.doubleSpinBox_r0.signalsBlocked():
+                self.update_variable_fit_parameters()
+        except Exception:
+            pass
 
     @property
     def rho(self) -> float:
@@ -1650,6 +1562,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     @rho.setter
     def rho(self, v: float):
         self.doubleSpinBox_rho.setValue(v)
+        try:
+            if not self.doubleSpinBox_rho.signalsBlocked():
+                self.update_variable_fit_parameters()
+        except Exception:
+            pass
 
     @property
     def scatter_countrate(self) -> float:
@@ -1878,7 +1795,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             irf_cache[det] = np.hstack([st['irf'][:half][sb:eb], st['irf'][half:][sb:eb]])
             bg_cache[det] = np.hstack([st['bg'][:half][sb:eb], st['bg'][half:][sb:eb]])
 
-        # helper to emit a default-zero record
+        # helper to emit a default-NaN record for fit metrics
         metrics = ['2I*', 'Tau', 'gamma', 'r0', 'rho', 'BIFL scatter?', '2I*: P+2S?', 'r Scatter', 'r Experimental']
         results = []
 
@@ -1892,7 +1809,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 f'Number of Photons (fit window) ({color})': 0
             }
             for m in metrics:
-                rec[f'{m} ({color})'] = 0.0
+                rec[f'{m} ({color})'] = -1
             results.append(rec)
 
         # --- main loop ---
@@ -2069,7 +1986,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             irf_cache[det] = np.hstack([st['irf'][:half][sb:eb], st['irf'][half:][sb:eb]])
             bg_cache[det] = np.hstack([st['bg'][:half][sb:eb], st['bg'][half:][sb:eb]])
 
-        # helper to emit a default-zero record
+        # helper to emit a default-NaN record for fit metrics
         metrics = ['2I* ', 'Tau', 'gamma', 'r0', 'rho', 'BIFL scatter?', '2I*: P+2S?', 'r Scatter', 'r Experimental']
         results = []
 
@@ -2087,7 +2004,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 f'Number of Photons (fit window) ({color})': cp_sum + cs_sum
             }
             for m in metrics:
-                rec[f'{m} ({color})'] = 0
+                rec[f'{m} ({color})'] = float('nan')
             results.append(rec)
 
         for idx, row in self.df_bursts.iterrows():
@@ -2136,7 +2053,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     default_record(fname, det, cp_sum, cs_sum)
                     continue
                 if (cp_sum + cs_sum < st['min_photons']):
-                    chisurf.logging.info(
+                    chisurf.logging.debug(
                         f"Skip: {Path(fname).name} Burst: {idx} Detector: {det} NPh: {cp_sum + cs_sum} < {st['min_photons']}")
                     default_record(fname, det, cp_sum, cs_sum)
                     continue
@@ -2256,7 +2173,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             micro_time_binning: int,
             save_files: bool = False,
             normalize_counts: int = 1,
-            threshold: float = -1,
+            threshold: typing.Union[float, typing.Tuple[float, float]] = -1,
             minlength: int = -1
     ) -> typing.List[np.ndarray]:
         jordis = list()
@@ -2269,14 +2186,26 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             else:
                 tp = ts = self.filter_tttr(tttr, micro_time_range, detector_chs)
 
-            # Build microtime histograms
-            cp = tp.get_microtime_histogram(micro_time_binning, minlength=minlength)[0][start_bin:stop_bin]
-            cs = ts.get_microtime_histogram(micro_time_binning, minlength=minlength)[0][start_bin:stop_bin]
+            # Build microtime histograms and ensure float dtype for safe normalization
+            cp = tp.get_microtime_histogram(micro_time_binning, minlength=minlength)[0][start_bin:stop_bin].astype(np.float64, copy=False)
+            cs = ts.get_microtime_histogram(micro_time_binning, minlength=minlength)[0][start_bin:stop_bin].astype(np.float64, copy=False)
 
-            # Apply a threshold
-            if threshold > 0:
-                cp[cp < threshold * cp.max()] = 0
-                cs[cs < threshold * cs.max()] = 0
+            # Apply thresholds (can be a single float or a (vv, vh) tuple)
+            th_vv = th_vh = -1.0
+            try:
+                if isinstance(threshold, (tuple, list)) and len(threshold) >= 2:
+                    th_vv = float(threshold[0]) if threshold[0] is not None else -1.0
+                    th_vh = float(threshold[1]) if threshold[1] is not None else -1.0
+                elif isinstance(threshold, (float, int)):
+                    th_vv = th_vh = float(threshold)
+            except Exception:
+                th_vv = th_vh = -1.0
+            if th_vv > 0:
+                if cp.size and cp.max() > 0:
+                    cp[cp < th_vv * cp.max()] = 0
+            if th_vh > 0:
+                if cs.size and cs.max() > 0:
+                    cs[cs < th_vh * cs.max()] = 0
 
             # Optional normalization
             if normalize_counts == 1:
@@ -2287,15 +2216,18 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     cs /= ct
             elif normalize_counts == 2:
                 # Normalize individually
-                if cp.sum() > 0:
-                    cp = cp / cp.sum()
-                if cs.sum() > 0:
-                    cs = cs / cs.sum()
+                cp_sum = cp.sum()
+                cs_sum = cs.sum()
+                if cp_sum > 0:
+                    cp = cp / cp_sum
+                if cs_sum > 0:
+                    cs = cs / cs_sum
             elif normalize_counts == 3:
                 # Normalize by acquisition time
                 acquisition_time = (tttr.macro_times[-1] - tttr.macro_times[0]) * tttr.header.macro_time_resolution
-                cs /= acquisition_time
-                cp /= acquisition_time
+                if acquisition_time > 0:
+                    cs /= acquisition_time
+                    cp /= acquisition_time
 
             # apply integer shift of the second decay relative to the first
             if self.shift != 0:
@@ -2334,7 +2266,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         mask = (
                 (mt >= raw_start) &
-                (mt <= raw_stop) &
+                (mt < raw_stop) &
                 np.isin(ch, detector_chs)
         )
         return tttr[np.where(mask)[0]]
@@ -2469,41 +2401,10 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         # now self.tttrs is set up, but no TTTR objects created yet
         return df, self.tttrs
 
-    def save_settings(self):
-        """
-        Dump TTTR file type, per‐channel settings, AND the DetectorWizardPage settings
-        into a single JSON, and show the path in lineEdit_settings_file.
-        """
-        path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Save All Settings",
-            str(Path.home() / "mle_wizard_settings.json"),
-            "JSON Files (*.json)"
-        )
-        if not path:
-            return
-
-        payload = {
-            "tttr_file_type": self.tttr_file_type,
-            "channel_settings": self.channel_settings,
-            "detector_settings": self.channel_definer.settings,
-            "micro_time_binning": self.micro_time_binning,
-        }
-
-        try:
-            with open(path, 'w') as f:
-                json.dump(payload, f, indent=4, cls=NumpyEncoder)
-            # keep the file path visible
-            self.lineEdit_settings_file.setText(path)
-            # also update the DetectorWizardPage’s own line‐edit
-            self.channel_definer.file_path_line_edit.setText(path)
-            QMessageBox.information(self, "Saved", f"All settings saved to:\n{path}")
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not save settings:\n{e}")
 
     def save_fit(self):
         """
-        Save micro_time_start, micro_time_stop, irf_threshold, shift, shift_sp, shift_ss,
+        Save micro_time_start, micro_time_stop, irf_threshold_vv, irf_threshold_vh, shift, shift_sp, shift_ss,
         p2s_twoIstar, BIFL_scatter, fix_tau, fix_gamma, fix_r0, fix_rho
         to detector_setups.json file in the currently selected setup.
         """
@@ -2531,16 +2432,17 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         detector_params = {
             "micro_time_start": self.micro_time_range[0],
             "micro_time_stop": self.micro_time_range[1],
-            "irf_threshold": self.irf_threshold,
+            "irf_threshold_vv": self.irf_threshold_vv,
+            "irf_threshold_vh": self.irf_threshold_vh,
             "shift": self.shift,
             "shift_sp": self.shift_sp,
             "shift_ss": self.shift_ss,
             "p2s_twoIstar": self.p2s_twoIstar,
             "BIFL_scatter": self.BIFL_scatter,
-            "fix_tau": self.checkBox_fix_tau.isChecked(),
-            "fix_gamma": self.checkBox_fix_gamma.isChecked(),
-            "fix_r0": self.checkBox_fix_r0.isChecked(),
-            "fix_rho": self.checkBox_fix_rho.isChecked()
+            "fix_tau": self.fix_tau,
+            "fix_gamma": self.fix_gamma,
+            "fix_r0": self.fix_r0,
+            "fix_rho": self.fix_rho
         }
 
         # Get the setup data
@@ -2662,7 +2564,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             widgets = (
                 self.spinBox_micro_time_start,
                 self.spinBox_micro_time_stop,
-                self.doubleSpinBox_irf_threshold,
+                self.doubleSpinBox_irf_threshold_vv,
+                self.doubleSpinBox_irf_threshold_vh,
                 self.doubleSpinBox_shift,
                 self.doubleSpinBox_shift_sp,
                 self.doubleSpinBox_shift_ss,
