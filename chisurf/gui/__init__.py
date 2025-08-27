@@ -684,10 +684,24 @@ def setup_gui(
                     chisurf.logging.info(f"Update available: {latest_version}")
                     # Prompt user to open the updater
                     try:
+                        from chisurf.plugins.updater import build_installed_vs_latest_changelog as _build_changes
+                        try:
+                            _installed_ver, _changes = _build_changes(str(latest_version))
+                        except Exception:
+                            _installed_ver, _changes = None, None
+
+                        _msg = (
+                            f"A new version of ChiSurf ({latest_version}) is available.\n\n"
+                            + (
+                                f"Changes since your installed version ({_installed_ver}):\n\n{_changes}\n\n"
+                                if _changes else ""
+                            )
+                            + "Do you want to open the Updater now?"
+                        )
                         reply = QMessageBox.question(
                             None,
                             "Update Available",
-                            f"A new version of ChiSurf ({latest_version}) is available.\n\nDo you want to open the Updater now?",
+                            _msg,
                             QMessageBox.Yes | QMessageBox.No,
                             QMessageBox.Yes
                         )

@@ -652,3 +652,31 @@ if __name__ == "plugin":
     window = UpdaterWidget()
     # Show the window
     window.show()
+
+
+def build_installed_vs_latest_changelog(latest_version: str, max_chars: int = 1500, limit: int = 50):
+    """
+    Build changelog text comparing the installed version vs the provided latest version.
+
+    Args:
+        latest_version: The latest version string to compare against the installed version.
+        max_chars: Optional maximum number of characters to return; truncates with hint if exceeded.
+        limit: Maximum number of commit entries to include when querying GitHub.
+
+    Returns:
+        Tuple: (installed_version, changelog_text)
+    """
+    try:
+        from chisurf import info as _info
+        installed = getattr(_info, "__version__", "")
+    except Exception:
+        installed = ""
+
+    try:
+        up = ChiSurfUpdater()
+        changelog = up._build_changelog(installed, str(latest_version), limit=limit)
+        if isinstance(changelog, str) and max_chars and len(changelog) > max_chars:
+            changelog = changelog[:max_chars] + "\n...\n(Open Updater to see full changes)"
+        return installed, changelog
+    except Exception:
+        return installed, ""
