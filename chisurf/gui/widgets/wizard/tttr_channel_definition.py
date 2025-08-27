@@ -343,9 +343,17 @@ class DetectorWizardPage(QWizardPage):
                     "tttr_reading": _initial_tttr_reading
                 }
             self._load_data(data)
-
+            
         # Initialize the effective micro time resolution
         self._update_effective_resolution()
+
+        # Initialize finish state: disable Finish until user explicitly saves
+        self._allow_finish = False
+
+    def isComplete(self):
+        """Only allow finishing the wizard after the user saved settings."""
+        # QWizard queries this to enable/disable the Finish button
+        return bool(getattr(self, "_allow_finish", False))
 
     # The _with_label method is no longer needed as the UI file already includes labels for widgets
     # This method is kept for backward compatibility but is not used in the new implementation
@@ -643,6 +651,13 @@ class DetectorWizardPage(QWizardPage):
                 save_detector_setups(setups, self.current_setups_file)
 
             QMessageBox.information(self, "Success", f"Settings saved to {path}")
+
+            # Mark page as complete and notify wizard so Finish becomes enabled
+            self._allow_finish = True
+            try:
+                self.completeChanged.emit()
+            except Exception:
+                pass
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Save failed: {e}")
 
