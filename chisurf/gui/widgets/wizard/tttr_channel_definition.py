@@ -310,7 +310,7 @@ class DetectorWizardPage(QWizardPage):
         self.file_type_combo.addItems(list(tttrlib.TTTR.get_supported_container_names()))
         
         # Initialize micro binning combo
-        self.micro_binning_combo.addItems(["1", "2", "4", "8", "16"])
+        self.micro_binning_combo.addItems(["1", "2", "4", "8", "16", "32", "64", "128"])
         
         # Set initial values for TTTR reading
         self.macro_time_le.setText(str(_initial_tttr_reading["macro_time_resolution"]))
@@ -639,9 +639,20 @@ class DetectorWizardPage(QWizardPage):
                 # If the setup already exists, preserve any additional fields
                 if self.current_setup_name in setups["setups"]:
                     existing_data = setups["setups"][self.current_setup_name]
-                    # Update only the fields we know about, preserving any other fields
+                    # Update fields while preserving unknown nested data (e.g., per-detector mle_settings)
                     for key in data:
-                        existing_data[key] = data[key]
+                        if key == 'detectors':
+                            existing_data.setdefault('detectors', {})
+                            # Merge per-detector entries
+                            for det_name, det_info in data['detectors'].items():
+                                if det_name in existing_data['detectors'] and isinstance(existing_data['detectors'][det_name], dict):
+                                    # Update known fields only, preserve anything else
+                                    existing_data['detectors'][det_name].update(det_info)
+                                else:
+                                    existing_data['detectors'][det_name] = det_info
+                            # Keep detectors present in existing_data but not in new data as-is
+                        else:
+                            existing_data[key] = data[key]
                     # Use the updated existing data
                     setups["setups"][self.current_setup_name] = existing_data
                 else:
@@ -849,9 +860,20 @@ class DetectorWizardPage(QWizardPage):
         # If the setup already exists, preserve any additional fields that aren't in the current settings
         if setup_name in setups["setups"]:
             existing_data = setups["setups"][setup_name]
-            # Update only the fields we know about, preserving any other fields
+            # Update fields while preserving unknown nested data (e.g., per-detector mle_settings)
             for key in data:
-                existing_data[key] = data[key]
+                if key == 'detectors':
+                    existing_data.setdefault('detectors', {})
+                    # Merge per-detector entries
+                    for det_name, det_info in data['detectors'].items():
+                        if det_name in existing_data['detectors'] and isinstance(existing_data['detectors'][det_name], dict):
+                            # Update known fields only, preserve anything else
+                            existing_data['detectors'][det_name].update(det_info)
+                        else:
+                            existing_data['detectors'][det_name] = det_info
+                    # Keep detectors present in existing_data but not in new data as-is
+                else:
+                    existing_data[key] = data[key]
             # Use the updated existing data
             setups["setups"][setup_name] = existing_data
         else:
@@ -1197,7 +1219,18 @@ class DetectorWizardPage(QWizardPage):
                                 existing_data = setups["setups"][self.current_setup_name]
                                 # Update only the fields we know about, preserving any other fields
                                 for key in data:
-                                    existing_data[key] = data[key]
+                                    if key == 'detectors':
+                                        existing_data.setdefault('detectors', {})
+                                        # Merge per-detector entries
+                                        for det_name, det_info in data['detectors'].items():
+                                            if det_name in existing_data['detectors'] and isinstance(existing_data['detectors'][det_name], dict):
+                                                # Update known fields only, preserve anything else
+                                                existing_data['detectors'][det_name].update(det_info)
+                                            else:
+                                                existing_data['detectors'][det_name] = det_info
+                                        # Keep detectors present in existing_data but not in new data as-is
+                                    else:
+                                        existing_data[key] = data[key]
                                 # Use the updated existing data
                                 setups["setups"][self.current_setup_name] = existing_data
                             else:
