@@ -29,12 +29,12 @@ name = "Fluorescence decay:Jordi G-Factor Calculator"
 import sys
 import numpy as np
 import warnings
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QFileDialog, QLabel, QGridLayout,
     QDoubleSpinBox, QLineEdit, QCheckBox
 )
-from PyQt5.QtCore import Qt
+from qtpy.QtCore import Qt
 import pyqtgraph as pg
 
 # Optional ChiSurf I/O import for Jordi reading (keeps standalone capability)
