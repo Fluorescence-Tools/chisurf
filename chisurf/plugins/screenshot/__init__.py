@@ -53,7 +53,12 @@ ess_image_filters = "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;BMP Image (*.
 
 
 def _run_screenshot():
-    """Prompt for a filename (pre-filled with current date), grab main window screenshot, save, and exit."""
+    """Prompt for a filename (pre-filled with current date), grab main window screenshot, copy to clipboard, save, and exit.
+
+    Behavior change:
+    - The grabbed screenshot is now copied to the system clipboard immediately,
+      even if the user cancels the save dialog.
+    """
     try:
         from chisurf.gui.widgets import general as _general
     except Exception:
@@ -63,6 +68,33 @@ def _run_screenshot():
     if win is None:
         try:
             chisurf.logging.error("Screenshot plugin: Main window not found.")
+        except Exception:
+            pass
+        return
+
+    # Ensure the UI has processed pending paints before grabbing
+    app = QtWidgets.QApplication.instance()
+    if app is not None:
+        app.processEvents()
+
+    # Grab pixmap of the window and copy to clipboard immediately
+    try:
+        pixmap = win.grab()  # QPixmap of the widget
+        try:
+            if app is None:
+                app = QtWidgets.QApplication.instance()
+            if app is not None:
+                cb = app.clipboard()
+                if cb is not None:
+                    cb.setPixmap(pixmap)
+        except Exception as e:
+            try:
+                chisurf.logging.debug(f"Screenshot plugin: failed to copy to clipboard: {e}")
+            except Exception:
+                pass
+    except Exception as e:
+        try:
+            chisurf.logging.error(f"Screenshot plugin failed to grab window: {e}")
         except Exception:
             pass
         return
@@ -98,7 +130,7 @@ def _run_screenshot():
             pass
 
     if not filename:
-        # User cancelled, just exit
+        # User cancelled, but clipboard is already populated
         return
 
     path = pathlib.Path(filename)
@@ -116,13 +148,7 @@ def _run_screenshot():
             pass
         path = path.with_suffix(suffix)
 
-    # Ensure the UI has processed pending paints before grabbing
-    app = QtWidgets.QApplication.instance()
-    if app is not None:
-        app.processEvents()
-
     try:
-        pixmap = win.grab()  # QPixmap of the widget
         ok = pixmap.save(str(path))
         if ok:
             try:
