@@ -231,7 +231,8 @@ class DetectorWizardPage(QWizardPage):
 
     def __init__(self, json_file=None, *args, show_edit_json=False, show_save=False,
                  show_setups_file=True, show_setup_selection=True, show_help=True,
-                 show_tttr_reading=True, show_tables=True, show_add_inputs=True, **kwargs):
+                 show_tttr_reading=True, show_tables=True, show_add_inputs=True,
+                 allow_finish=True, **kwargs):
         """Initialize the DetectorWizardPage.
         
         This class uses a UI file (detector_wizard_page.ui) for its layout and widgets.
@@ -401,7 +402,7 @@ class DetectorWizardPage(QWizardPage):
         self._update_effective_resolution()
 
         # Initialize finish state: disable Finish until user explicitly saves
-        self._allow_finish = False
+        self._allow_finish = allow_finish
 
     def isComplete(self):
         """Only allow finishing the wizard after the user saved settings."""
