@@ -658,6 +658,10 @@ def build_installed_vs_latest_changelog(latest_version: str, max_chars: int = 15
     """
     Build changelog text comparing the installed version vs the provided latest version.
 
+    This helper is used by the startup prompt. It should be quiet on errors
+    (no raw HTTP errors in the popup) and mirror the UpdaterWidget defaults
+    (development branch).
+
     Args:
         latest_version: The latest version string to compare against the installed version.
         max_chars: Optional maximum number of characters to return; truncates with hint if exceeded.
@@ -674,9 +678,19 @@ def build_installed_vs_latest_changelog(latest_version: str, max_chars: int = 15
 
     try:
         up = ChiSurfUpdater()
+        # Use the same default branch as the Updater UI (development)
+        try:
+            up.channel = "development"
+        except Exception:
+            pass
         changelog = up._build_changelog(installed, str(latest_version), limit=limit)
-        if isinstance(changelog, str) and max_chars and len(changelog) > max_chars:
-            changelog = changelog[:max_chars] + "\n...\n(Open Updater to see full changes)"
+        # Suppress fallback error texts in startup popup
+        if isinstance(changelog, str):
+            cl_lower = changelog.lower()
+            if ("could not be retrieved" in cl_lower) or ("could not be determined" in cl_lower):
+                changelog = ""
+            elif max_chars and len(changelog) > max_chars:
+                changelog = changelog[:max_chars] + "\n...\n(Open Updater to see full changes)"
         return installed, changelog
     except Exception:
         return installed, ""
