@@ -13,16 +13,20 @@ import json
 import pathlib
 import tempfile
 import numpy as np
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
     QTableWidget, QTableWidgetItem, QPushButton, QTextEdit, QDialog,
     QMessageBox, QHBoxLayout, QGridLayout, QFileDialog, QToolButton, QWidget,
     QComboBox, QInputDialog, QDoubleSpinBox, QCheckBox
 )
 
-from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5 import uic
-from PyQt5.QtCore import QFile
+from qtpy.QtCore import Signal, Qt
+from qtpy import QtWidgets as _QtWidgets
+from qtpy import QtCore as _QtCore
+from qtpy import uic as _uic
+
+def qtpy_loadUi(path, baseinstance=None):
+    return _uic.loadUi(path, baseinstance)
 
 from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
@@ -67,7 +71,7 @@ def load_detector_setups(file_path=None):
         is_default = (file_path is None) or (path == DETECTOR_SETUPS_FILE)
         app_running = False
         try:
-            from PyQt5.QtWidgets import QApplication  # local import
+            from qtpy.QtWidgets import QApplication  # local import
             app_running = QApplication.instance() is not None
         except Exception:
             app_running = False
@@ -223,7 +227,7 @@ class JsonEditorDialog(QDialog):
 
 
 class DetectorWizardPage(QWizardPage):
-    detectorsChanged = pyqtSignal()
+    detectorsChanged = Signal()
 
     def __init__(self, json_file=None, *args, show_edit_json=False, show_save=False,
                  show_setups_file=True, show_setup_selection=True, show_help=True,
@@ -261,9 +265,15 @@ class DetectorWizardPage(QWizardPage):
         self.show_tables = show_tables
         self.show_add_inputs = show_add_inputs
 
+        # Protection flags/state for G-Factor edits
+        # Only direct user edits or internal calculator/data loading may change g-factor fields
+        self._allow_g_update = False  # internal whitelist for programmatic updates
+        self._g_user_editing = {}     # row -> bool, True while the user is actively editing
+        self._g_last_valid = {}       # row -> last accepted string value
+
         # Load the UI file
         ui_file_path = pathlib.Path(__file__).parent / "detector_wizard_page.ui"
-        uic.loadUi(str(ui_file_path), self)
+        qtpy_loadUi(str(ui_file_path), self)
 
         # Set initial values
         self.setups_file_le.setText(str(DETECTOR_SETUPS_FILE))
@@ -319,7 +329,50 @@ class DetectorWizardPage(QWizardPage):
         
         # Set table headers
         self.windows_form.setHorizontalHeaderLabels(["Window Name", "Start", "End"])
-        self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges", "G-Factor", "l1", "l2"])
+        try:
+            self.detectors_form.setColumnCount(7)
+        except Exception:
+            pass
+        self.detectors_form.setHorizontalHeaderLabels(["Detector Name", "Channels", "Micro Time Ranges", "G-Factor", "l1", "l2", "G-Factor Channels"])
+
+        # Improve table space usage: adaptive column widths and stretch
+        try:
+            from qtpy.QtWidgets import QHeaderView, QSizePolicy
+            # Make tables expand within layouts
+            for table in (self.windows_form, self.detectors_form):
+                table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+                table.setWordWrap(False)
+                table.horizontalHeader().setHighlightSections(False)
+                table.horizontalHeader().setStretchLastSection(False)
+                table.horizontalHeader().setMinimumSectionSize(60)
+                table.verticalHeader().setVisible(False)
+                table.setAlternatingRowColors(False)
+
+            # Windows table: Name stretches, Start/End resize to contents but user-resizable
+            wh = self.windows_form.horizontalHeader()
+            wh.setSectionResizeMode(0, QHeaderView.Stretch)
+            wh.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+            wh.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
+            # Detectors table: allocate space sensibly across 7 columns
+            dh = self.detectors_form.horizontalHeader()
+            # Name, Channels, Micro Time Ranges should stretch
+            dh.setSectionResizeMode(0, QHeaderView.Stretch)  # Detector Name
+            dh.setSectionResizeMode(1, QHeaderView.Stretch)  # Channels
+            dh.setSectionResizeMode(2, QHeaderView.Stretch)  # Micro Time Ranges
+            # Numeric fields: size to contents but allow user to expand
+            for col in (3, 4, 5):  # G-Factor, l1, l2
+                dh.setSectionResizeMode(col, QHeaderView.ResizeToContents)
+            # G-Factor Channels: stretch (often a short range but can use leftover)
+            dh.setSectionResizeMode(6, QHeaderView.Stretch)
+
+            # Enable interactive resizing by the user
+            for col in range(0, 7):
+                # Start with Interactive so user can drag; the above modes define initial behavior
+                dh.setSectionResizeMode(col, dh.sectionResizeMode(col))
+            dh.setCascadingSectionResizes(True)
+        except Exception:
+            pass
 
         # Load available setups
         self._load_available_setups()
@@ -467,22 +520,40 @@ class DetectorWizardPage(QWizardPage):
         self.windows_form.blockSignals(True)
         self.detectors_form.blockSignals(True)
 
+        # reset g-factor protection state for fresh rows
+        self._g_user_editing.clear()
+        self._g_last_valid.clear()
+
         # clear
         self.windows_form.setRowCount(0)
         self.detectors_form.setRowCount(0)
 
-        # populate windows
-        for name, (start, end) in data.get("windows", {}).items():
-            self._add_window_row(name, str(start), str(end))
+        # During programmatic population, allow g-factor text changes
+        prev_allow = self._allow_g_update
+        self._allow_g_update = True
+        try:
+            # populate windows
+            for name, (start, end) in data.get("windows", {}).items():
+                self._add_window_row(name, str(start), str(end))
 
-        # populate detectors
-        for name, props in data.get("detectors", {}).items():
-            chs = ", ".join(map(str, props["chs"]))
-            mtr = ", ".join(f"{s}-{e}" for s, e in props["micro_time_ranges"])
-            g_factor = str(props.get("g_factor", 1.00))
-            l1 = str(props.get("l1", 0.00))
-            l2 = str(props.get("l2", 0.00))
-            self._add_detector_row(name, chs, mtr, g_factor, l1, l2)
+            # populate detectors
+            for name, props in data.get("detectors", {}).items():
+                chs = ", ".join(map(str, props["chs"]))
+                mtr = ", ".join(f"{s}-{e}" for s, e in props["micro_time_ranges"]) 
+                g_factor = str(props.get("g_factor", 1.00))
+                l1 = str(props.get("l1", 0.00))
+                l2 = str(props.get("l2", 0.00))
+                # New: g_factor_channels supports [start, end] or "start-end"; anything else -> empty
+                gfch = props.get("g_factor_channels")
+                if isinstance(gfch, (list, tuple)) and len(gfch) == 2:
+                    gf_channels_text = f"{int(gfch[0])}-{int(gfch[1])}"
+                elif isinstance(gfch, str):
+                    gf_channels_text = gfch
+                else:
+                    gf_channels_text = ""
+                self._add_detector_row(name, chs, mtr, g_factor, l1, l2, gf_channels_text)
+        finally:
+            self._allow_g_update = prev_allow
 
         # populate TTTR reading routine settings
         tttr_reading = data.get("tttr_reading", _initial_tttr_reading)
@@ -508,15 +579,22 @@ class DetectorWizardPage(QWizardPage):
         self.windows_form.setCellWidget(row, 1, QLineEdit(start))
         self.windows_form.setCellWidget(row, 2, QLineEdit(end))
 
-    def _add_detector_row(self, name, ch_text, mtr_text, g_factor="1.00", l1="0.00", l2="0.00"):
+    def _add_detector_row(self, name, ch_text, mtr_text, g_factor="1.00", l1="0.00", l2="0.00", gf_channels_text: str = ""):
         row = self.detectors_form.rowCount()
         self.detectors_form.insertRow(row)
         self.detectors_form.setItem(row, 0, QTableWidgetItem(name))
         self.detectors_form.setCellWidget(row, 1, QLineEdit(ch_text))
         self.detectors_form.setCellWidget(row, 2, QLineEdit(mtr_text))
-        self.detectors_form.setCellWidget(row, 3, QLineEdit(g_factor))
+        g_le = QLineEdit(g_factor)
+        self.detectors_form.setCellWidget(row, 3, g_le)
+        self._wire_g_factor_cell(row, g_le)
         self.detectors_form.setCellWidget(row, 4, QLineEdit(l1))
         self.detectors_form.setCellWidget(row, 5, QLineEdit(l2))
+        # New column: G-Factor Channels (selection range in Jordi domain)
+        try:
+            self.detectors_form.setCellWidget(row, 6, QLineEdit(gf_channels_text))
+        except Exception:
+            pass
 
     def _add_window(self):
         name = self.new_window_le.text().strip() or f"PIE-Window {self.windows_form.rowCount()+1}"
@@ -535,7 +613,7 @@ class DetectorWizardPage(QWizardPage):
         if any(self.detectors_form.item(r,0).text()==name for r in range(self.detectors_form.rowCount())):
             QMessageBox.warning(self, "Warning", "Detector name exists.")
             return
-        self._add_detector_row(name, "0, 1", "0-2048")
+        self._add_detector_row(name, "0, 1", "0-2048", gf_channels_text="")
         self.new_detector_le.clear()
         self.detectorsChanged.emit()
 
@@ -586,13 +664,32 @@ class DetectorWizardPage(QWizardPage):
                 
             l1 = float(self.detectors_form.cellWidget(r,4).text())
             l2 = float(self.detectors_form.cellWidget(r,5).text())
-            dets[name] = {
+
+            # Optional: G-Factor Channels from column 6 as "start-end"
+            gf_channels = None
+            try:
+                gf_widget = self.detectors_form.cellWidget(r,6)
+                if gf_widget:
+                    txt = gf_widget.text().strip()
+                    if txt:
+                        parts = txt.replace(' ', '').split('-')
+                        if len(parts) == 2:
+                            gf_start = int(parts[0])
+                            gf_end = int(parts[1])
+                            gf_channels = [gf_start, gf_end]
+            except Exception:
+                gf_channels = None
+
+            det_entry = {
                 "chs": chs, 
                 "micro_time_ranges": mtr,
                 "g_factor": g_factor,
                 "l1": l1,
                 "l2": l2
             }
+            if gf_channels is not None:
+                det_entry["g_factor_channels"] = gf_channels
+            dets[name] = det_entry
 
         # TTTR reading routine
         tttr_reading = {
@@ -1172,6 +1269,15 @@ class DetectorWizardPage(QWizardPage):
             g_factor_calculator = JordiGFactorCalculator()
             g_factor_calculator.setWindowModality(Qt.ApplicationModal)  # Make it modal
             
+            # Pass routing channel info and context to the calculator for reference
+            try:
+                setattr(g_factor_calculator, 'parallel_channels', parallel_channels)
+                setattr(g_factor_calculator, 'perpendicular_channels', perpendicular_channels)
+                setattr(g_factor_calculator, 'micro_time_binning', micro_time_binning)
+                setattr(g_factor_calculator, 'detector_name', selected_detector)
+            except Exception:
+                pass
+            
             # Store the calculator instance and file path for later use
             self.g_factor_calculator = g_factor_calculator
             self.jordi_file = jordi_file
@@ -1198,16 +1304,47 @@ class DetectorWizardPage(QWizardPage):
                         # Get the existing cell widget and update its text
                         existing_cell_widget = self.detectors_form.cellWidget(row, 3)
                         if existing_cell_widget:
-                            # If widget exists, just update its text
-                            existing_cell_widget.setText(g_factor_value)
+                            # Use protected programmatic setter to update value
+                            self._set_g_factor_programmatically(row, g_factor_value)
                         else:
-                            # If no widget exists yet, create a new one
+                            # If no widget exists yet, create a new one and wire protection
                             new_cell_widget = QLineEdit(g_factor_value)
                             self.detectors_form.setCellWidget(row, 3, new_cell_widget)
+                            self._wire_g_factor_cell(row, new_cell_widget)
+                        
+                        # Also capture the selection range (G-Factor Channels) from the calculator, if available
+                        gf_range_text = None
+                        try:
+                            rng = None
+                            if hasattr(g_factor_calculator, 'region') and g_factor_calculator.region is not None:
+                                try:
+                                    rng = g_factor_calculator.region.getRegion()
+                                except Exception:
+                                    rng = None
+                            if rng is None and hasattr(g_factor_calculator, 'region_bounds'):
+                                rng = getattr(g_factor_calculator, 'region_bounds', None)
+                            if isinstance(rng, (list, tuple)) and len(rng) == 2:
+                                s = int(float(rng[0]))
+                                e = int(float(rng[1]))
+                                if e < s:
+                                    s, e = e, s
+                                gf_range_text = f"{s}-{e}"
+                                # Update column 6 in the table
+                                try:
+                                    gf_widget = self.detectors_form.cellWidget(row, 6)
+                                    if gf_widget is None:
+                                        gf_widget = QLineEdit(gf_range_text)
+                                        self.detectors_form.setCellWidget(row, 6, gf_widget)
+                                    else:
+                                        gf_widget.setText(gf_range_text)
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
                                                 
                         # Save the updated setup automatically
                         if self.current_setup_name:
-                            # Get current settings
+                            # Get current settings (now includes g_factor and g_factor_channels)
                             data = self.get_settings()
                             
                             # Save to the current setups file
@@ -1241,22 +1378,24 @@ class DetectorWizardPage(QWizardPage):
                             save_detector_setups(setups, self.current_setups_file)
                             
                             # Show a success message with save confirmation
-                            QMessageBox.information(
-                                self,
-                                "Success",
+                            msg = (
                                 f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
                                 f"Updated G-Factor for detector: {selected_detector_info['name']}\n"
-                                f"Setup '{self.current_setup_name}' saved automatically."
                             )
+                            if gf_range_text:
+                                msg += f"G-Factor Channels: {gf_range_text}\n"
+                            msg += f"Setup '{self.current_setup_name}' saved automatically."
+                            QMessageBox.information(self, "Success", msg)
                         else:
                             # Show a success message without save confirmation
-                            QMessageBox.information(
-                                self,
-                                "Success",
+                            msg = (
                                 f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
                                 f"Updated G-Factor for detector: {selected_detector_info['name']}\n"
-                                f"Note: No setup was selected, so changes were not saved automatically."
                             )
+                            if gf_range_text:
+                                msg += f"G-Factor Channels: {gf_range_text}\n"
+                            msg += "Note: No setup was selected, so changes were not saved automatically."
+                            QMessageBox.information(self, "Success", msg)
             
             # Override the closeEvent method
             g_factor_calculator.closeEvent = custom_close_event
@@ -1271,6 +1410,38 @@ class DetectorWizardPage(QWizardPage):
                 
                 # Load the Jordi file
                 g_factor_calculator.load_jordi_file(jordi_file)
+
+                # If user specified a G-Factor Channels range in the table, pass it to the calculator
+                try:
+                    gf_widget = self.detectors_form.cellWidget(selected_row, 6)
+                    if gf_widget:
+                        txt = gf_widget.text().strip()
+                        if txt:
+                            parts = txt.replace(' ', '').split('-')
+                            if len(parts) == 2:
+                                s = int(float(parts[0]))
+                                e = int(float(parts[1]))
+                                # Ensure order and bounds are sane
+                                if e < s:
+                                    s, e = e, s
+                                # Apply to calculator
+                                if hasattr(g_factor_calculator, 'region'):
+                                    try:
+                                        g_factor_calculator.region.setRegion([s, e])
+                                    except Exception:
+                                        pass
+                                if hasattr(g_factor_calculator, 'region_bounds'):
+                                    try:
+                                        g_factor_calculator.region_bounds = [s, e]
+                                    except Exception:
+                                        pass
+                                # Recompute with new region
+                                try:
+                                    g_factor_calculator.calculate_g_factor()
+                                except Exception:
+                                    pass
+                except Exception:
+                    pass
                 
             except Exception as e:
                 QMessageBox.critical(
@@ -1293,6 +1464,83 @@ class DetectorWizardPage(QWizardPage):
         # reuse our internal loader
         self._load_data(data)
 
+
+    # --- G-Factor protection helpers ---
+    def _wire_g_factor_cell(self, row, line_edit: QLineEdit):
+        """Protect a row's G-Factor QLineEdit so only user edits or internal allowed updates can change it."""
+        # Initialize tracking for this row
+        self._g_user_editing[row] = False
+        self._g_last_valid[row] = line_edit.text()
+
+        def on_text_edited(_):
+            # Fired only by user typing
+            self._g_user_editing[row] = True
+
+        def on_editing_finished():
+            try:
+                txt = line_edit.text().strip()
+                # Accept empty as default 1.0
+                val = float(txt) if txt else 1.0
+                # Normalize formatting
+                new_txt = f"{val:.3f}"
+                # Allow internal write for normalization
+                prev = self._allow_g_update
+                self._allow_g_update = True
+                try:
+                    if line_edit.text() != new_txt:
+                        line_edit.setText(new_txt)
+                finally:
+                    self._allow_g_update = prev
+                # Commit last valid
+                self._g_last_valid[row] = new_txt
+            except Exception:
+                # Revert to last valid on invalid input
+                prev = self._allow_g_update
+                self._allow_g_update = True
+                try:
+                    line_edit.setText(self._g_last_valid.get(row, "1.000"))
+                finally:
+                    self._allow_g_update = prev
+            finally:
+                self._g_user_editing[row] = False
+
+        def on_text_changed(_):
+            # Reject programmatic changes unless explicitly allowed
+            if self._allow_g_update:
+                # Keep last_valid in sync during allowed writes
+                self._g_last_valid[row] = line_edit.text()
+                return
+            if self._g_user_editing.get(row, False):
+                # User typing: allow
+                return
+            # Unauthorised programmatic change: revert
+            prev = self._allow_g_update
+            self._allow_g_update = True
+            try:
+                line_edit.setText(self._g_last_valid.get(row, line_edit.text()))
+            finally:
+                self._allow_g_update = prev
+
+        # Connect signals
+        try:
+            line_edit.textEdited.connect(on_text_edited)
+        except Exception:
+            pass
+        line_edit.editingFinished.connect(on_editing_finished)
+        line_edit.textChanged.connect(on_text_changed)
+
+    def _set_g_factor_programmatically(self, row: int, value_text: str):
+        """Safely set a row's G-Factor from internal code (calculator/data load)."""
+        le = self.detectors_form.cellWidget(row, 3)
+        if not isinstance(le, QLineEdit):
+            return
+        prev = self._allow_g_update
+        self._allow_g_update = True
+        try:
+            le.setText(value_text)
+            self._g_last_valid[row] = value_text
+        finally:
+            self._allow_g_update = prev
 
 class DetectorWizard(QWizard):
     def __init__(self, json_file=None, show_edit_json=True, show_save=True, 
