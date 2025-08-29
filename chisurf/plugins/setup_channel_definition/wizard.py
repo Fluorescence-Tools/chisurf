@@ -22,7 +22,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
 
         # File format
-        self.filter = chisurf.gui.widgets.wizard.DetectorWizardPage()
+        self.filter = chisurf.gui.widgets.wizard.DetectorWizardPage(allow_finish=False)
         self.addPage(self.filter)
 
 
