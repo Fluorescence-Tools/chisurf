@@ -71,9 +71,9 @@ requirements:
     - mdtraj
     - ipython
     - notebook
-    - emcee 3.1.*
+    - emcee
     - pyopengl
-    - pytables 3.9.*
+    - pytables
     - pymol-open-source
     - guidata
     - guiqwt
