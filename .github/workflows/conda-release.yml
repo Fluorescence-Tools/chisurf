@@ -23,6 +23,7 @@ jobs:
     env:
       OUT_DIR: conda-bld
       ANACONDA_USER: tpeulen
+      ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
 
     steps:
       - name: Free Disk Space (Ubuntu)
@@ -108,10 +109,10 @@ jobs:
             --output-folder "$GITHUB_WORKSPACE/${OUT_DIR}"
 
       - name: Upload to Anaconda.org (if token present)
-        if: ${{ secrets.ANACONDA_TOKEN != '' }}
+        if: ${{ env.ANACONDA_TOKEN != '' }}
         shell: bash -l {0}
         run: |
-          anaconda -t "${{ secrets.ANACONDA_TOKEN }}" upload \
+          anaconda -t "${ANACONDA_TOKEN}" upload \
             -u "${ANACONDA_USER}" \
             --label "${UPLOAD_LABEL}" \
             --force ${OUT_DIR}/**/*.tar.bz2
