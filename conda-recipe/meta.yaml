@@ -7,11 +7,11 @@ package:
 source:
   path: ..
 
-
 build:
   number: 0
-  binary_relocation: True  # Relocate binaries correctly (for shared libraries, etc.).
-  detect_binary_files_with_prefix: True  # [not win]
+  script: bash build.sh
+  binary_relocation: true
+  detect_binary_files_with_prefix: true  # [not win]
   entry_points:
     {% for entry_point_type, entry_points in data.get("entry_points", dict()).items() -%}
     {% for entry_point in entry_points -%}
@@ -25,37 +25,38 @@ requirements:
     - {{ compiler('cxx') }}
     - cmake <4
     - ninja
-    - make # [not win]
+    - make  # [not win]
+
   host:
     - python
     - git
-    - swig <4.3.0
+    - pip
+    - cython >=0.29,<3
     - numpy
-    - pkg-config   # [not win]
+    - swig <4.3.0
+    - pkg-config  # [not win]
     - llvm-openmp  # [osx]
     - libcxx       # [osx]
     - libgomp      # [linux]
-    - typing-extensions 4.14.*
-    - pytools 2024
-    - pip
-    - cython <3.0
-    - pyyaml
-    - numpy
-    - pyqt           # Needed for pyrcc5 (updating PyQt resource files)
-    # Needed for chinet
     - doxygen
     - boost-cpp
-    # Needed to build tttrlib, windows build ships tttrlib
-    - hdf5         # [win]
+    - pyqt             # provides pyrcc5 for resource build
+    - pybind11
+    - eigen
+
+    # Windows-only: if you rely on system tttrlib there, keep hdf5 here
+    - hdf5  # [win]
+
   run:
     - python
-    - typing-extensions 4.14.*
-    - pytools 2024
     - numpy
-    - pyqt
+    - typing-extensions >=4.14
+    - pytools >=2024.0
     - pyyaml
     - click
     - click-didyoumean
+    - qtpy >=2.4
+    - pyqt
     - pyqtgraph
     - matplotlib
     - scikit-image
@@ -77,25 +78,13 @@ requirements:
     - python-docx
     - qtconsole
     - pyqtwebengine
-    - libcxx  # [osx]
     - hmmlearn
     - sympy
     - zeus-mcmc
     - hdbscan
     - umap-learn
-    - tttrlib # [not win]
-#    # Assistant Chat plugin runtime dependencies
-#    - fastapi
-#    - uvicorn
-#    - httpx
-#    - python-multipart
-#    - faiss-cpu
-#    - langchain
-#    - langchain-community
-#    - langchain-ollama
-#    - sentence-transformers
-#    - pymupdf
-#    - pypdf
+    - tttrlib  # [not win]
+    - libcxx   # [osx]
 
 app:
   entry: chisurf
@@ -105,7 +94,7 @@ test:
   imports:
     - chisurf
   commands:
-    - chisurf &        # [linux or osx]
+    - python -c "import chisurf, sys; print(getattr(chisurf, '__version__', 'ok'))"
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
