@@ -1,4 +1,4 @@
-name: Build and Upload Conda Packages
+name: Conda Build
 
 on:
   workflow_dispatch:

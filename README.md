@@ -1,4 +1,5 @@
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
+[![Conda Build](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/conda-release.yml/badge.svg?branch=development)](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/conda-release.yml)
 
 # ChiSurf
 
