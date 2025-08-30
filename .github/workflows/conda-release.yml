@@ -1,36 +1,35 @@
-
 name: Build and Upload Conda Packages
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - development
+    branches: [ development ]
   release:
-    types: ['released', 'prereleased']
+    types: [ released, prereleased ]
   schedule:
-    # Every Monday at 11PM UTC
+    # Every Monday at 11:00 UTC
     - cron: "0 11 * * 1"
 
 jobs:
   build:
-    name: CondaBuild (${{ matrix.python-version }}, ${{ matrix.os }})
+    name: CondaBuild (py${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]#, "macos-latest"] #, "windows-latest"]
-        python-version: ["3.10"]
+        os: [ ubuntu-latest ] # add macos-latest / windows-latest if you like
+        python-version: [ "3.10" ]
+
+    env:
+      OUT_DIR: conda-bld
+      ANACONDA_USER: tpeulen
+
     steps:
       - name: Free Disk Space (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
         uses: jlumbroso/free-disk-space@main
         with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
           tool-cache: false
-
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
           android: true
           dotnet: true
           haskell: true
@@ -38,26 +37,34 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - name: Checkout Repository (with all submodules)
-        uses: actions/checkout@v3
+      - name: Checkout (with tags & submodules)
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0           # full history, not just the latest commit
-          submodules: recursive    # initialize & update all nested submodules
+          fetch-depth: 0
+          submodules: recursive
 
-      - name: "Set SDK on MacOS (if needed)"
+      - name: "Set SDK on macOS (if needed)"
         if: startsWith(matrix.os, 'macos')
         run: build_tools/install_macos_sdk.sh
 
-      - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Set up micromamba (conda-forge strict)
+        uses: mamba-org/setup-micromamba@v2
         with:
-          python-version: ${{ matrix.python-version }}
-          conda-remove-defaults: "true"
-          channels: conda-forge,bioconda
-          channel-priority: strict
+          cache-downloads: true
+          environment-name: build
+          create-args: >-
+            python=${{ matrix.python-version }}
+            boa
+            conda-build
+            anaconda-client
+          condarc: |
+            channels:
+              - conda-forge
+              - bioconda
+            channel_priority: strict
 
       - name: Display Conda Settings
-        shell: bash -el {0}
+        shell: bash -l {0}
         run: |
           conda info
           conda list
@@ -65,28 +72,52 @@ jobs:
           conda config --show
           printenv | sort
 
-      # https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
-      - name: Download conda_build_config.yaml
+      - name: Fetch conda-forge pinning (conda_build_config.yaml)
         shell: bash
         run: |
-          echo "Fetching conda-forge’s pinning config…"
-          curl -sSL \
-            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/a3466e9340d2de032119f8fa1a9a4f5d57c456d3/recipe/conda_build_config.yaml \
+          echo "Fetching conda-forge pinning config…"
+          curl -fsSL \
+            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/conda_build_config.yaml \
             -o conda_build_config.yaml
-          echo "Pinning config version:"
-          head -n 5 conda_build_config.yaml
+          echo "Pinning config head:"
+          head -n 12 conda_build_config.yaml
 
-      - name: Build and Upload Conda Package
-        uses: aganders3/headless-gui@v1
+      - name: Derive VERSION (tag on release; else git describe)
+        shell: bash -l {0}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION=$(git describe --tags --dirty --always || true)
+          fi
+          echo "VERSION=$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          # choose label
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "UPLOAD_LABEL=main" >> $GITHUB_ENV
+          else
+            echo "UPLOAD_LABEL=dev" >> $GITHUB_ENV
+          fi
+
+      - name: Build (mambabuild)
+        shell: bash -l {0}
+        working-directory: conda-recipe
+        run: |
+          conda mambabuild . \
+            --variant-config-files ../conda_build_config.yaml \
+            --output-folder "$GITHUB_WORKSPACE/${OUT_DIR}"
+
+      - name: Upload to Anaconda.org (if token present)
+        if: ${{ secrets.ANACONDA_TOKEN != '' }}
+        shell: bash -l {0}
+        run: |
+          anaconda -t "${{ secrets.ANACONDA_TOKEN }}" upload \
+            -u "${ANACONDA_USER}" \
+            --label "${UPLOAD_LABEL}" \
+            --force ${OUT_DIR}/**/*.tar.bz2
+
+      - name: Keep built artifacts
+        uses: actions/upload-artifact@v4
         with:
-          shell: bash -el {0}
-          run: |
-            conda install mamba conda-build boa anaconda-client
-
-            cd conda-recipe
-
-            conda mambabuild . \
-              --variant-config-files ../conda_build_config \
-              --output-folder conda-bld
-      
-            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
+          name: conda-packages-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: ${{ env.OUT_DIR }}/**/*.tar.bz2
