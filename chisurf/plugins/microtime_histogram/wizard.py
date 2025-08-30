@@ -1463,8 +1463,29 @@ class MicrotimeHistogram(QtWidgets.QWidget):
                 chisurf.logging.info(f"Parallel channels (even indices): {parallel_channels}")
                 chisurf.logging.info(f"Perpendicular channels (odd indices): {perpendicular_channels}")
                 
-                y_parallel, _ = t.get_microtime_histogram(self.binning_factor, parallel_channels)
-                y_perpendicular, _ = t.get_microtime_histogram(self.binning_factor, perpendicular_channels)
+                # Determine minlength from window upper bound if available
+                minlength_bins = -1
+                try:
+                    if use_detector_wizard and hasattr(self, 'detector_wizard_page') and self.detector_wizard_page:
+                        ch_info = self.detector_wizard_page.channels()
+                        # Compute the maximum window upper bound across all entries
+                        max_upper = None
+                        for entries in ch_info.values():
+                            for entry in entries:
+                                wr = entry.get('window_range')
+                                if wr and len(wr) == 2:
+                                    upper = int(wr[1])
+                                    if (max_upper is None) or (upper > max_upper):
+                                        max_upper = upper
+                        if max_upper is not None and self.binning_factor > 0:
+                            # Convert window upper bound to coarsened-bin index for minlength
+                            minlength_bins = max(0, int(max_upper) // int(self.binning_factor))
+                except Exception as _e:
+                    # Fallback to default behavior if anything goes wrong
+                    minlength_bins = -1
+
+                y_parallel, _ = t.get_microtime_histogram(self.binning_factor, parallel_channels, minlength=minlength_bins)
+                y_perpendicular, _ = t.get_microtime_histogram(self.binning_factor, perpendicular_channels, minlength=minlength_bins)
 
                 # Get time resolution in nanoseconds
                 self.time_resolution = self.time_step
