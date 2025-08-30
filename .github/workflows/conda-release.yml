@@ -91,7 +91,6 @@ jobs:
         working-directory: conda-recipe
         run: |
           micromamba run -n build conda mambabuild . \
-            --variant-config-files ../conda_build_config.yaml \
             --output-folder "${GITHUB_WORKSPACE}/${OUT_DIR}"
 
       - name: Upload to Anaconda.org (skip if no token)
