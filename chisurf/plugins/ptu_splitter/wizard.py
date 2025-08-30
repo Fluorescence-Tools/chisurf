@@ -111,6 +111,37 @@ class PTUSplitter(QtWidgets.QWidget):
         # Initialize progress bar to 0
         self.progressBar.setValue(0)
 
+        # Add "Batch…" button to open batch splitting dialog
+        try:
+            self.batchButton = QtWidgets.QPushButton("Batch…")
+            # Place next to existing split button if possible; otherwise add to main layout
+            added = False
+            lay = self.layout()
+            if lay is not None:
+                lay.addWidget(self.batchButton)
+                added = True
+            if not added and hasattr(self, 'verticalLayout') and getattr(self, 'verticalLayout'):
+                try:
+                    self.verticalLayout.addWidget(self.batchButton)
+                    added = True
+                except Exception:
+                    pass
+            if not added and hasattr(self, 'horizontalLayout') and getattr(self, 'horizontalLayout'):
+                try:
+                    self.horizontalLayout.addWidget(self.batchButton)
+                    added = True
+                except Exception:
+                    pass
+            # Fallback: create a layout if none existed
+            if not added:
+                self.setLayout(QtWidgets.QVBoxLayout())
+                self.layout().addWidget(self.batchButton)
+            # Connect to dialog
+            self.batchButton.clicked.connect(lambda: BatchSplittingDialog(self).exec_())
+        except Exception:
+            # Best-effort: avoid crashing if layout assumptions fail
+            pass
+
     # --------------------------------------------------------------------------
     # Private helper to open a file (browse or drag & drop)
     # --------------------------------------------------------------------------
@@ -448,3 +479,187 @@ if __name__ == '__main__':
     brick_mic_wiz.setWindowTitle('PTU-Splitter')
     brick_mic_wiz.show()
     sys.exit(app.exec_())
+
+
+
+class _PtuFileDropList(QtWidgets.QListWidget):
+    """QListWidget that accepts drops of files and folders and collects .ptu files.
+    Emits nothing; items are directly added to the list, unique per absolute path.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.setDropIndicatorShown(True)
+        self.setDefaultDropAction(QtCore.Qt.CopyAction)
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent):
+        event.acceptProposedAction()
+
+    def dropEvent(self, event: QtGui.QDropEvent):
+        urls = event.mimeData().urls() or []
+        paths: list[Path] = []
+        for url in urls:
+            local = url.toLocalFile()
+            if local:
+                p = Path(local)
+                if p.exists():
+                    paths.append(p)
+        if paths:
+            self.add_paths(paths)
+        event.acceptProposedAction()
+
+    def add_paths(self, paths: list[Path]):
+        files = []
+        for p in paths:
+            if p.is_dir():
+                files.extend(self._collect_ptu_files_in_folder(p))
+            elif p.is_file() and p.suffix.lower() == ".ptu":
+                files.append(p.resolve())
+        # add unique
+        existing = {self.item(i).text() for i in range(self.count())}
+        for f in sorted(set(map(str, files))):
+            if f not in existing:
+                self.addItem(f)
+
+    @staticmethod
+    def _collect_ptu_files_in_folder(folder: Path) -> list[Path]:
+        try:
+            return [p.resolve() for p in folder.rglob("*.ptu") if p.is_file()]
+        except Exception:
+            return []
+
+
+class BatchSplittingDialog(QtWidgets.QDialog):
+    """Batch splitting dialog for PTU files.
+
+    - Users can drop files and folders; folders are scanned recursively for .ptu.
+    - Clicking Start will iterate files and drive the parent PTUSplitter UI to split.
+    """
+    def __init__(self, parent_wizard: 'PTUSplitter'):
+        super().__init__(parent_wizard)
+        self.wizard: PTUSplitter = parent_wizard
+        self.setWindowTitle("Batch PTU Splitter")
+        self.resize(700, 500)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+
+        info = QtWidgets.QLabel(
+            "Drop PTU files and/or folders below. Folders will be scanned recursively for .ptu files."
+        )
+        info.setWordWrap(True)
+        main_layout.addWidget(info)
+
+        self.list_widget = _PtuFileDropList()
+        main_layout.addWidget(self.list_widget, 1)
+
+        # Options row
+        opts_row = QtWidgets.QHBoxLayout()
+        self.chk_use_file_parent = QtWidgets.QCheckBox("Use file's parent as output folder")
+        self.chk_use_file_parent.setChecked(True)
+        opts_row.addWidget(self.chk_use_file_parent)
+        opts_row.addStretch(1)
+        main_layout.addLayout(opts_row)
+
+        # Buttons row
+        btn_row = QtWidgets.QHBoxLayout()
+        self.btn_add_files = QtWidgets.QPushButton("Add Files…")
+        self.btn_add_folders = QtWidgets.QPushButton("Add Folder…")
+        self.btn_remove = QtWidgets.QPushButton("Remove Selected")
+        self.btn_clear = QtWidgets.QPushButton("Clear All")
+        self.btn_start = QtWidgets.QPushButton("Start")
+        self.btn_close = QtWidgets.QPushButton("Close")
+        for b in (self.btn_add_files, self.btn_add_folders, self.btn_remove, self.btn_clear):
+            btn_row.addWidget(b)
+        btn_row.addStretch(1)
+        btn_row.addWidget(self.btn_start)
+        btn_row.addWidget(self.btn_close)
+        main_layout.addLayout(btn_row)
+
+        # Progress
+        self.progress = QtWidgets.QProgressBar()
+        self.progress.setRange(0, 100)
+        self.progress.setValue(0)
+        main_layout.addWidget(self.progress)
+
+        # Connections
+        self.btn_add_files.clicked.connect(self._add_files_dialog)
+        self.btn_add_folders.clicked.connect(self._add_folder_dialog)
+        self.btn_remove.clicked.connect(self._remove_selected)
+        self.btn_clear.clicked.connect(self.list_widget.clear)
+        self.btn_start.clicked.connect(self._start_processing)
+        self.btn_close.clicked.connect(self.close)
+
+    # --- UI helpers ---
+    def _add_files_dialog(self):
+        dlg = QtWidgets.QFileDialog(self, "Select PTU files")
+        dlg.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
+        dlg.setNameFilter("PTU files (*.ptu)")
+        if dlg.exec_():
+            files = [Path(f) for f in dlg.selectedFiles()]
+            self.list_widget.add_paths(files)
+
+    def _add_folder_dialog(self):
+        dlg = QtWidgets.QFileDialog(self, "Select a folder")
+        dlg.setFileMode(QtWidgets.QFileDialog.Directory)
+        dlg.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
+        if dlg.exec_():
+            folders = [Path(f) for f in dlg.selectedFiles()]
+            self.list_widget.add_paths(folders)
+
+    def _remove_selected(self):
+        for it in self.list_widget.selectedItems():
+            row = self.list_widget.row(it)
+            self.list_widget.takeItem(row)
+
+    # --- Processing ---
+    def _start_processing(self):
+        count = self.list_widget.count()
+        if count == 0:
+            QtWidgets.QMessageBox.information(self, "No files", "Please add PTU files or folders first.")
+            return
+
+        # Snapshot of initial output folder if user wants to keep it
+        initial_out = self.wizard.lineEdit_2.text().strip()
+        use_file_parent = self.chk_use_file_parent.isChecked()
+
+        # Disable UI during processing
+        self._set_controls_enabled(False)
+        try:
+            for i in range(count):
+                item = self.list_widget.item(i)
+                path_str = item.text()
+                # Update dialog progress
+                self.progress.setValue(int(i * 100 / max(1, count)))
+                QtWidgets.QApplication.processEvents()
+
+                # Drive the wizard
+                try:
+                    self.wizard._open_input_file(path_str)
+                    if not use_file_parent and initial_out:
+                        self.wizard.lineEdit_2.setText(initial_out)
+                    # Use current UI state for chunk size, keep/delete original, etc.
+                    self.wizard.split_file()
+                except Exception as e:
+                    QtWidgets.QMessageBox.warning(self, "Error", f"Failed processing:\n{path_str}\n\n{e}")
+                    continue
+
+            self.progress.setValue(100)
+            QtWidgets.QMessageBox.information(self, "Batch complete", f"Processed {count} file(s).")
+        finally:
+            self._set_controls_enabled(True)
+
+    def _set_controls_enabled(self, enabled: bool):
+        self.list_widget.setEnabled(enabled)
+        self.btn_add_files.setEnabled(enabled)
+        self.btn_add_folders.setEnabled(enabled)
+        self.btn_remove.setEnabled(enabled)
+        self.btn_clear.setEnabled(enabled)
+        self.btn_start.setEnabled(enabled)
+        self.btn_close.setEnabled(True)
