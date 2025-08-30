@@ -24,6 +24,8 @@ jobs:
       OUT_DIR: conda-bld
       ANACONDA_USER: tpeulen
       ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      # If it's a release, use "main"; else "dev"
+      UPLOAD_LABEL: ${{ startsWith(github.ref, 'refs/tags/') && (github.event_name == 'release') && (github.event.action == 'released' || github.event.action == 'prereleased') && 'main' || 'dev' }}
 
     steps:
       - name: Free Disk Space (Ubuntu)
@@ -51,13 +53,14 @@ jobs:
       - name: Set up micromamba (conda-forge strict)
         uses: mamba-org/setup-micromamba@v2
         with:
-          cache-downloads: true
           environment-name: build
           create-args: >-
             python=${{ matrix.python-version }}
             boa
             conda-build
             anaconda-client
+            curl
+          cache-downloads: true
           condarc: |
             channels:
               - conda-forge
@@ -67,58 +70,45 @@ jobs:
       - name: Display Conda Settings
         shell: bash -l {0}
         run: |
-          conda info
-          conda list
-          conda config --show-sources
-          conda config --show
+          micromamba run -n build conda info
+          micromamba run -n build conda list
+          micromamba run -n build conda config --show-sources
+          micromamba run -n build conda config --show
           printenv | sort
 
-      - name: Fetch conda-forge pinning (conda_build_config.yaml)
-        shell: bash
-        run: |
-          echo "Fetching conda-forge pinning config…"
-          curl -fsSL \
-            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/conda_build_config.yaml \
-            -o conda_build_config.yaml
-          echo "Pinning config head:"
-          head -n 12 conda_build_config.yaml
-
-      - name: Derive VERSION (tag on release; else git describe)
-        shell: bash -l {0}
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            VERSION="${{ github.ref_name }}"
-          else
-            VERSION=$(git describe --tags --dirty --always || true)
-          fi
-          echo "VERSION=$VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          # choose label
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "UPLOAD_LABEL=main" >> $GITHUB_ENV
-          else
-            echo "UPLOAD_LABEL=dev" >> $GITHUB_ENV
-          fi
+#      - name: Fetch conda-forge pinning (conda_build_config.yaml)
+#        shell: bash -l {0}
+#        run: |
+#          echo "Fetching conda-forge pinning config…"
+#          curl -fsSL \
+#            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/conda_build_config.yaml \
+#            -o conda_build_config.yaml
+#          echo "Pinning config head:"
+#          head -n 12 conda_build_config.yaml
 
       - name: Build (mambabuild)
         shell: bash -l {0}
         working-directory: conda-recipe
         run: |
-          conda mambabuild . \
+          micromamba run -n build conda mambabuild . \
             --variant-config-files ../conda_build_config.yaml \
-            --output-folder "$GITHUB_WORKSPACE/${OUT_DIR}"
+            --output-folder "${GITHUB_WORKSPACE}/${OUT_DIR}"
 
-      - name: Upload to Anaconda.org (if token present)
-        if: ${{ env.ANACONDA_TOKEN != '' }}
+      - name: Upload to Anaconda.org (skip if no token)
         shell: bash -l {0}
         run: |
-          anaconda -t "${ANACONDA_TOKEN}" upload \
-            -u "${ANACONDA_USER}" \
-            --label "${UPLOAD_LABEL}" \
-            --force ${OUT_DIR}/**/*.tar.bz2
+          if [[ -n "${ANACONDA_TOKEN}" ]]; then
+            echo "Uploading packages to anaconda.org/${ANACONDA_USER} (label=${UPLOAD_LABEL})"
+            micromamba run -n build anaconda -t "${ANACONDA_TOKEN}" upload \
+              -u "${ANACONDA_USER}" \
+              --label "${UPLOAD_LABEL}" \
+              --force ${OUT_DIR}/**/*.tar.bz2
+          else
+            echo "ANACONDA_TOKEN is empty; skipping upload."
+          fi
 
       - name: Keep built artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: conda-packages-${{ matrix.os }}-py${{ matrix.python-version }}
+          name: conda-packages-${{ matrix.os }}-py3.10
           path: ${{ env.OUT_DIR }}/**/*.tar.bz2
