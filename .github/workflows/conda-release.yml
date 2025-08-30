@@ -65,23 +65,28 @@ jobs:
           conda config --show
           printenv | sort
 
-      # https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/master/recipe/conda_build_config.yaml \
-      - name: Download conda_build_config.yaml
-        shell: bash
-        run: |
-          echo "Fetching conda-forge’s pinning config…"
-          curl -sSL \
-            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/a3466e9340d2de032119f8fa1a9a4f5d57c456d3/recipe/conda_build_config.yaml \
-            -o conda_build_config.yaml
-          echo "Pinning config version:"
-          head -n 5 conda_build_config.yaml
-
       - name: Build and Upload Conda Package
         uses: aganders3/headless-gui@v1
         with:
           shell: bash -el {0}
           run: |
             conda install mamba conda-build boa anaconda-client
+
+            # Use CF pinnings explicitly to avoid any repo-local variants
+            curl -sSL https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/conda_build_config.yaml -o cf-pinnings.yaml
+
             cd conda-recipe
-            conda mambabuild . --output-folder conda-bld
+
+            # Render sanity check (assert chisurf, not quest, and no forbidden deps)
+            RENDER="$(conda render . --override-channels -c conda-forge --variant-config-files ../cf-pinnings.yaml)"
+            echo "$RENDER" | awk '/^package:/{p=1} p && NF==0{p=0} p'
+            NAME="$(echo "$RENDER" | awk '/^  name:/{print $2; exit}')"
+            if [[ "$NAME" != "chisurf" ]]; then
+              echo "::error::Rendered package name is '$NAME' (expected 'chisurf')"; exit 1
+            fi
+
+            conda mambabuild . --override-channels -c conda-forge \
+              --variant-config-files ../cf-pinnings.yaml \
+              --output-folder conda-bld
+      
             anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
