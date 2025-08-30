@@ -39,6 +39,9 @@ requirements:
     - llvm-openmp  # [osx]
     - libcxx       # [osx]
     - libgomp      # [linux]
+    - pyyaml
+    - numpy
+    # Needed for chinet
     - doxygen
     - boost-cpp
     - pyqt             # provides pyrcc5 for resource build
