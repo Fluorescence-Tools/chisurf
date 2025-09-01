@@ -18,9 +18,13 @@ def _open_maybe_zipped(filename: str, mode: str = "r"):
     Compatibility wrapper for zipped/plain I/O across chisurf versions.
     """
     try:
-        return io.open_maybe_zipped(filename=filename, mode=mode)
+        opener = io.open_maybe_zipped
+        used = "io.open_maybe_zipped"
     except AttributeError:
-        return io.zipped.open_maybe_zipped(filename=filename, mode=mode)
+        opener = io.zipped.open_maybe_zipped
+        used = "io.zipped.open_maybe_zipped"
+    logging.debug(f"_open_maybe_zipped: using {used} with mode={mode} for filename={filename}")
+    return opener(filename=filename, mode=mode)
 
 
 def _decode(line) -> str:
@@ -40,27 +44,33 @@ def _tokenize(line: str, delimiter_hint: str | None) -> list[str]:
     return [t for t in line.strip().split(delimiter_hint)]
 
 
+### NEW: helper to test numeric tokens (supports decimal comma if requested)
+def _is_number_token(tok: str, decimal_comma: bool = False) -> bool:
+    s = _decode(tok).strip()
+    if not s:
+        return False
+    if decimal_comma:
+        s = s.replace(",", ".")
+    try:
+        float(s)
+        return True
+    except Exception:
+        return False
+
+
 def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None, str | None, int, bool, list[str]]:
     """
-    Pure column-count based detection (no block markers, no numeric heuristics).
-
-    Algorithm (per user spec):
-      1) Read up to max_scan_lines into memory.
-      2) For each delimiter candidate, split every line and record column counts (ncols_i).
-      3) Determine the 'complete' width as the most frequent ncols >= 2; on ties choose the larger.
-      4) The first line with ncols == complete_width is the first *complete* data row.
-      5) The line immediately before that is used as header if it splits and has 'enough' columns,
-         or if it doesn't split at all (treated as header/preamble).
-      6) If later rows have more columns, earlier split rows with fewer columns naturally become header
-         due to step (3).
+    Pure column-count based detection (no block markers, no numeric heuristics), with a
+    small addition: if the first complete-width row contains non-numeric tokens,
+    it is treated as a header row and will be skipped.
 
     Returns:
-      skiprows (index of first complete data row),
+      skiprows (index of first *data* row),
       header_idx (index of header line or None),
       delimiter (str|None),
       ncols (complete width),
       dec_comma (bool),
-      sniff_sample (list[str]) small preview around start for debugging.
+      sniff_sample (list[str]) preview.
     """
     # Read lines
     lines: list[str] = []
@@ -104,7 +114,13 @@ def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None,
         except StopIteration:
             continue
 
-        # Header candidate: row just before first complete row
+        # Decimal-comma possibility for this delimiter
+        dec_flag = bool(has_comma_digits and (delim in (";", "\t", "|", None)))
+
+        ### NEW: decide whether the first complete-width row is a header row
+        toks_first = _tokenize(lines[first_complete], delim)
+        non_numeric_in_first = any(not _is_number_token(t, decimal_comma=dec_flag) for t in toks_first)
+        # By default, assume header is the line *before* the first complete row (legacy behavior)
         header_idx = None
         if first_complete > 0:
             prev = first_complete - 1
@@ -114,10 +130,16 @@ def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None,
                 header_idx = prev  # unsplittable -> header/preamble
             elif 2 <= prev_cols < complete_cols and prev_cols >= enough_cols_threshold:
                 header_idx = prev   # splits but fewer cols -> header
-
-            # if blank just before, allow stepping back one more if that line splits "enough"
+            # If blank just before, allow stepping back one more if that line splits "enough"
             if header_idx is None and prev_cols == 0 and prev - 1 >= 0 and ncols[prev - 1] >= enough_cols_threshold:
                 header_idx = prev - 1
+
+        # If the first complete-width row looks like a header (contains non-numeric tokens),
+        # promote it to the header and advance the first data row by one.
+        first_idx_use = first_complete
+        if non_numeric_in_first:
+            header_idx = first_complete
+            first_idx_use = first_complete + 1  # skip header row in data
 
         # Score this delimiter: length of consecutive complete-width block from first_complete + richness
         run_len = 0
@@ -128,14 +150,12 @@ def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None,
         richness = float(np.log(max(complete_cols, 2)))
         score = run_len * richness
 
-        dec_flag = bool(has_comma_digits and (delim in (";", "\t", "|", None)))
-
         if score > best["score"]:
             best.update(
                 score=score,
                 delim=delim,
                 complete_cols=complete_cols,
-                first_idx=first_complete,
+                first_idx=first_idx_use,  # NOTE: uses possibly +1 if header promoted
                 header_idx=header_idx,
                 dec_comma=dec_flag
             )
@@ -143,6 +163,7 @@ def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None,
     # Fallback if nothing usable was found
     if best["score"] < 0:
         sniff_sample = lines[: min(15, N)]
+        logging.debug("_find_table_region: no usable table detected; returning defaults")
         return 0, None, None, 0, False, sniff_sample
 
     # Build small preview around the detected start
@@ -150,6 +171,10 @@ def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None,
     sample_end = min(N, best["first_idx"] + 12)
     sniff_sample = [ln for ln in lines[sample_start:sample_end] if ln.strip()]
 
+    logging.debug(
+        f"_find_table_region: best delim={repr(best['delim'])} complete_cols={best['complete_cols']} "
+        f"first_idx={best['first_idx']} header_idx={best['header_idx']} decimal_comma={best['dec_comma']}"
+    )
     return best["first_idx"], best["header_idx"], best["delim"], best["complete_cols"], best["dec_comma"], sniff_sample
 
 
@@ -159,7 +184,9 @@ def _decimal_comma_converters(ncols: int):
     """
     def conv_factory():
         return lambda s: float(_decode(s).strip().replace(",", "."))
-    return {i: conv_factory() for i in range(ncols)}
+    convs = {i: conv_factory() for i in range(ncols)}
+    logging.debug(f"_decimal_comma_converters: created converters for ncols={ncols}")
+    return convs
 
 
 # ----------------------------- Public API ---------------------------------
@@ -178,6 +205,10 @@ def save_xy(
     """
     if verbose:
         logging.info("Writing histogram to file: %s" % filename)
+        try:
+            logging.debug(f"save_xy: n_points={min(len(x), len(y))} fmt={fmt!r} header_present={header_string is not None}")
+        except Exception:
+            pass
     with _open_maybe_zipped(filename=filename, mode='w') as fp:
         if header_string is not None:
             fp.write(header_string)
@@ -198,13 +229,15 @@ def load_xy(
     if usecols is None:
         usecols = [0, 1]
     if verbose:
-        logging.info("Loading file: ", filename)
+        logging.info(f"Loading file: {filename}")
+        logging.debug(f"load_xy params: usecols={usecols}, skiprows={skiprows}, delimiter={repr(delimiter)}")
     data = np.loadtxt(
         filename,
         skiprows=skiprows,
         usecols=usecols,
         delimiter=delimiter
     )
+    logging.debug(f"load_xy loaded array shape={getattr(data, 'shape', None)} dtype={getattr(data, 'dtype', None)}")
     return data.T[0], data.T[1]
 
 
@@ -278,6 +311,18 @@ class Csv(object):
             colspecs = (15, 17, 17)
         self.colspecs = colspecs
 
+        if self.verbose:
+            try:
+                logging.debug(
+                    "Csv.__init__: "
+                    f"use_header={self.use_header} x_on={self.x_on} y_on={self.error_y_on} "
+                    f"col_x={self.col_x} col_y={self.col_y} reverse={self.reverse} "
+                    f"file_type={self.file_type} skiprows={self.skiprows} directory={self.directory!r} "
+                    f"colspecs={self.colspecs}"
+                )
+            except Exception:
+                pass
+
         if isinstance(filename, str):
             self.load(filename)
 
@@ -304,6 +349,8 @@ class Csv(object):
         Heuristics:
           - Reads a chunk of the file and determines the *complete* column width (most frequent width ≥ 2).
           - The first row with this width is treated as the first data row (skiprows).
+          - If that first complete-width row contains non-numeric tokens (e.g., "Chan\tData"),
+            it is treated as a header row and skipped by default.
           - The line immediately before it is treated as header if it splits and has "enough" columns,
             or if it doesn't split at all (considered a header/preamble line).
           - Delimiter is inferred among {',', '\\t', ';', '|', whitespace}.
@@ -321,7 +368,7 @@ class Csv(object):
             self._filename = filename
             colspecs = self.colspecs
 
-            # ---- Auto-detect table region (column-count logic only) ----
+            # ---- Auto-detect table region (column-count logic + header-on-first-row handling) ----
             try:
                 with _open_maybe_zipped(filename=filename, mode='r') as fp:
                     auto_skip, header_idx, auto_delim, ncols_auto, dec_comma, sniff_sample = _find_table_region(fp)
@@ -330,7 +377,7 @@ class Csv(object):
 
             # Decide skiprows
             if skiprows is None:
-                skiprows_eff = auto_skip
+                skiprows_eff = auto_skip  # already advanced past header row if it was detected there
             else:
                 # If user provided a value, respect it (but don't undercut auto_skip if they passed too small).
                 skiprows_eff = max(skiprows, auto_skip)
@@ -339,9 +386,9 @@ class Csv(object):
             if delimiter is None and infer_delimiter:
                 delimiter = auto_delim  # may be None -> whitespace
 
-            # Capture header tokens if we detected a header and the caller wants headers
+            # Capture header tokens if we detected a header (for Csv.header)
             self._header = None
-            if header_idx is not None and (use_header or use_header is False):
+            if header_idx is not None:
                 try:
                     with _open_maybe_zipped(filename=filename, mode='r') as fp:
                         for _ in range(header_idx):
@@ -351,6 +398,8 @@ class Csv(object):
                     toks = [t.strip() for t in toks if t.strip() != ""]
                     if toks:
                         self._header = toks
+                        if self.verbose:
+                            logging.debug(f"Csv.load: header tokens detected n={len(toks)} sample={toks[:min(5,len(toks))]}")
                 except Exception:
                     self._header = None
 
@@ -382,6 +431,10 @@ class Csv(object):
                     max_cols = ncols_auto if ncols_auto > 0 else 256
                     load_kwargs["converters"] = _decimal_comma_converters(max_cols)
 
+                if self.verbose:
+                    # Log a compact view of kwargs without dumping converters functions
+                    kw_preview = {k: ("<converters>" if k == "converters" else v) for k, v in load_kwargs.items()}
+                    logging.debug(f"Csv.load: np.genfromtxt kwargs: {kw_preview}")
                 d = np.genfromtxt(**load_kwargs)
 
             else:
@@ -404,6 +457,12 @@ class Csv(object):
             elif d.ndim == 1:
                 d = d.reshape(-1, 1)
 
+            if self.verbose:
+                try:
+                    logging.info(f"Csv.load: loaded shape={d.shape} dtype={getattr(d, 'dtype', None)}")
+                except Exception:
+                    pass
+
             self._data = d
         else:
             chisurf.logging.warning(f"File {filename} not found")
@@ -418,14 +477,21 @@ class Csv(object):
     ):
         self._data = data
         if self.verbose:
+            shape = getattr(data, 'shape', None)
             s = """Saving
             ------
             filename: %s
             reading_routine: %s
             delimiter: %s
-            Object-type: %s
-            """ % (filename, file_type, delimiter, type(data))
+            object_type: %s
+            shape: %s
+            """ % (filename, file_type, delimiter, type(data), shape)
             logging.info(s)
+            try:
+                hdr_len = len(header.splitlines()) if isinstance(header, str) and header else 0
+                logging.debug(f"Csv.save: header lines={hdr_len}")
+            except Exception:
+                pass
         if file_type == 'txt':
             np.savetxt(
                 filename,
