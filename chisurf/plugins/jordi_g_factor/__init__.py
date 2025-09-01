@@ -222,8 +222,14 @@ class JordiGFactorCalculator(QWidget):
         if isinstance(file_path, bool):
             file_path = None
         if file_path is None:
+            # Start in ChiSurf working directory if available; keep standalone capability
+            try:
+                import chisurf as _cs
+                start_dir = str(getattr(_cs, 'working_path', '') or '')
+            except Exception:
+                start_dir = ""
             file_path, _ = QFileDialog.getOpenFileName(
-                self, "Load Jordi File", "", "Data Files (*.dat);;All Files (*)"
+                self, "Load Jordi File", start_dir, "Data Files (*.dat);;All Files (*)"
             )
             
             if not file_path:
