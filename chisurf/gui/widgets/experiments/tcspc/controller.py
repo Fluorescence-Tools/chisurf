@@ -11,6 +11,7 @@ from chisurf.experiments import reader
 import chisurf.data
 import chisurf.gui.widgets.fio
 import chisurf.gui.widgets.experiments.widgets
+from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator
 
 
 class CsvTCSPCWidget(QtWidgets.QWidget):
@@ -24,6 +25,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         self.actionGfactorChanged.triggered.connect(self.onParametersChanged)
         self.actionIsjordiChanged.triggered.connect(self.onParametersChanged)
         self.actionMatrixColumnsChanged.triggered.connect(self.onParametersChanged)
+        self.actionVhShiftChanged.triggered.connect(self.onParametersChanged)
+        self.pushButton_inspect.clicked.connect(self.openJordiGFactorPlugin)
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
@@ -73,6 +76,82 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         else:
             self.doubleSpinBox_2.setValue(setup.dt)
 
+        # Update VH shift spinbox if present
+        if hasattr(self, 'spinBox_vh_shift') and hasattr(setup, 'vh_shift'):
+            try:
+                self.spinBox_vh_shift.setValue(int(setup.vh_shift))
+            except Exception:
+                pass
+
+    def openJordiGFactorPlugin(self):
+        """
+        Launch the Jordi G-Factor Calculator plugin.
+        - Ask user to select a Jordi file (fast rotating dye)
+        - Let user adjust parameters (g-factor, VH shift) in the plugin
+        - On acceptance, update this controller's g-factor and VH shift
+        """
+        try:
+            # 1) Ask for Jordi file
+            file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self,
+                "Open Jordi VV/VH file (fast rotating dye)",
+                "",
+                "Data Files (*.dat *.txt *.csv);;All Files (*)"
+            )
+            if not file_path:
+                return
+
+            # 2) Create plugin widget and load file
+            plugin = JordiGFactorCalculator()
+            plugin.load_jordi_file(file_path)
+
+            # 3) Embed in dialog with OK/Cancel
+            dlg = QtWidgets.QDialog(self)
+            dlg.setWindowTitle("Jordi G-Factor & Shift Inspector")
+            vbox = QtWidgets.QVBoxLayout(dlg)
+            vbox.addWidget(plugin)
+            btns = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, parent=dlg)
+            vbox.addWidget(btns)
+            btns.accepted.connect(dlg.accept)
+            btns.rejected.connect(dlg.reject)
+
+            # Apply values when the dialog finishes (Accepted, Rejected, or closed via window button)
+            def apply_from_plugin(*_):
+                try:
+                    try:
+                        g_factor = float(plugin.g_factor) if plugin.g_factor is not None else float(self.doubleSpinBox_3.value())
+                    except Exception:
+                        g_factor = float(self.doubleSpinBox_3.value())
+                    try:
+                        vh_shift = int(round(float(plugin.decay_shift)))
+                    except Exception:
+                        vh_shift = int(self.spinBox_vh_shift.value()) if hasattr(self, 'spinBox_vh_shift') else 0
+
+                    # Update UI controls (emits valueChanged -> triggers actions wired in .ui)
+                    self.doubleSpinBox_3.setValue(g_factor)
+                    if hasattr(self, 'spinBox_vh_shift'):
+                        self.spinBox_vh_shift.setValue(vh_shift)
+
+                    # Ensure parameter propagation if signals are blocked
+                    try:
+                        self.actionGfactorChanged.trigger()
+                    except Exception:
+                        pass
+                    try:
+                        self.actionVhShiftChanged.trigger()
+                    except Exception:
+                        pass
+                except Exception:
+                    # Silently ignore application errors to avoid crashing on dialog close
+                    pass
+
+            dlg.finished.connect(apply_from_plugin)
+
+            # Execute the dialog; values will be applied on any finish/close
+            dlg.exec_()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Jordi Plugin Error", f"Failed to open Jordi plugin: {e}")
+
     def onParametersChanged(self):
         is_jordi = bool(self.checkBox_3.isChecked())
         try:
@@ -108,6 +187,7 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
                     f"cs.current_setup.polarization = '{pol}'",
                     f"cs.current_setup.rep_rate = {rep_rate}",
                     f"cs.current_setup.rebin = ({rebin_x}, {rebin_y})",
+                    f"cs.current_setup.vh_shift = {int(self.spinBox_vh_shift.value()) if hasattr(self, 'spinBox_vh_shift') else 0}",
                     f"cs.current_setup.dt = {dt}"
                 ]
             )

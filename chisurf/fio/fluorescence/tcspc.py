@@ -60,6 +60,20 @@ def read_tcspc_csv(
         c2 = c2.reshape([n_data_sets, new_channels, rebin_y]).sum(axis=2)
         n_data_points = c1.shape[1]
 
+        # Apply integer VH shift (in channels) if provided by data_reader
+        data_reader = kwargs.get('data_reader', None)
+        vh_shift = int(getattr(data_reader, 'vh_shift', 0) or 0)
+        if vh_shift != 0:
+            if vh_shift > 0:
+                # Shift to the right: prepend zeros and trim end
+                pad = ((0, 0), (vh_shift, 0))
+                c2 = np.pad(c2, pad, mode='constant')[:, :-vh_shift]
+            else:
+                # Shift to the left: append zeros and trim beginning
+                s = abs(vh_shift)
+                pad = ((0, 0), (0, s))
+                c2 = np.pad(c2, pad, mode='constant')[:, s:]
+
         if polarization == 'vv':
             y = c1
             ey = chisurf.fluorescence.tcspc.counting_noise(

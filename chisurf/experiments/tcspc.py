@@ -38,6 +38,7 @@ class TCSPCReader(reader.ExperimentReader):
             fit_start_fraction: float = None,
             fit_count_threshold: float = None,
             reading_routine: str = 'auto',
+            vh_shift: int = 0,
             *args,
             **kwargs
     ):
@@ -121,6 +122,7 @@ class TCSPCReader(reader.ExperimentReader):
         self.fit_count_threshold = fit_count_threshold
         self.fit_start_fraction = fit_start_fraction
         self.reading_routine = reading_routine
+        self.vh_shift = int(vh_shift) if vh_shift is not None else 0
 
     def autofitrange(self, data, **kwargs) -> typing.Tuple[int, int]:
         return chisurf.fluorescence.tcspc.initial_fit_range(
