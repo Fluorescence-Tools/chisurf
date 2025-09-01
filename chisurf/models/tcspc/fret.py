@@ -7,6 +7,7 @@ import chisurf.fluorescence.anisotropy.kappa2 as kapp2
 
 import chisurf.math
 import chisurf.math.datatools
+import chisurf.gui.widgets.fitting.widgets
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
@@ -278,7 +279,7 @@ class Gaussians(FittingParameterGroup):
     def __init__(
             self,
             short: str = 'G',
-            is_distance_between_gaussians: bool = True,
+            is_distance_between_gaussians: bool = False,
             name: str = 'gaussians',
             **kwargs
     ):
@@ -425,7 +426,6 @@ class FRETModel(LifetimeModel):
         )
         #rs = distribution2rates(self.distance_distribution, tauD0, 2./3., forster_radius)
         r = np.hstack(rs).reshape(-1, order='F')
-        #r = np.hstack(rs).ravel([-1])
         return r
 
     @property
@@ -511,7 +511,7 @@ class FRETModel(LifetimeModel):
     @property
     def reference(self):
         self._reference.update_model()
-        ref = np.maximum(self._reference._y, 0)
+        ref = np.maximum(self._reference.y, 0)
         scale = np.max(self.fit.data.y) / np.max(ref)
         ref *= scale
         return ref
@@ -556,6 +556,18 @@ class FRETModel(LifetimeModel):
         self._reference = LifetimeModel(fit, **kwargs)
         self._reference.lifetimes = self.donor
         self._reference.convolve = self.convolve
+
+    def get_parameter_widgets(self):
+        """
+        Get all parameter widgets for this model.
+
+        Returns
+        -------
+        list
+            List of parameter widgets.
+        """
+        widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
+        return widgets
 
 
 class GaussianModel(FRETModel):
@@ -628,7 +640,7 @@ class FRETrateModel(FRETModel):
 
 class WormLikeChainModel(FRETModel):
 
-    name = "FD(A): Worm-like chain"
+    name = "FRET: FD (Worm-like chain)"
 
     @property
     def distance_distribution(self):
@@ -740,5 +752,3 @@ class SingleDistanceModel(FRETModel):
         super().__init__(fit=fit, **kwargs)
         self._rda = kwargs.get('rda', np.array([100.0]))
         self._prda = kwargs.get('prda', np.array([100.0]))
-
-

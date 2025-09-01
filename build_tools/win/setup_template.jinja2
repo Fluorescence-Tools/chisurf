@@ -1,0 +1,72 @@
+[Setup]
+AppId={{ AppId }}
+AppName={{ AppName }}
+AppVersion={{ AppVersion }}
+AppPublisher={{ AppPublisher }}
+AppPublisherURL={{ AppURL }}
+AppSupportURL={{ AppURL }}
+AppUpdatesURL={{ AppURL }}
+UsePreviousAppDir=no
+DefaultGroupName={{ AppName }}
+LicenseFile={{ LicenseFile }}
+OutputDir={{ Output_dir }}
+OutputBaseFilename=chisurf_windows_setup_{{ AppVersion }}
+SetupIconFile={{ SetupIconFile }}
+Compression=lzma2/ultra64
+SolidCompression=yes
+CompressionThreads=auto
+UninstallLogMode=overwrite
+DirExistsWarning=yes
+UninstallDisplayIcon="{app}\{{ AppName }}"
+DisableProgramGroupPage=no
+
+; IMPORTANT: built-in scope dialog + per-user default
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
+
+; Default dir decided at runtime based on chosen scope
+DefaultDirName={code:GetInstallDir}
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
+[Files]
+; Icon files must be explicitely included
+Source: ".\icons\*.ico"; DestDir: "{app}\icons"
+Source: "{{ SourceDir }}\dist\win\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
+Source: "fix_shebangs.py"; DestDir: "{app}"
+
+[Icons]
+; --- Start Menu: all entry points ---
+{% for entry_point in gui_entry_points -%}
+  {% if entry_point|lower == 'chisurf' -%}
+Name: "{group}\chisurf"; Filename: "{app}\chisurf.exe"; IconFilename: "{app}\icons\icon.ico"
+  {% else -%}
+Name: "{group}\{{ entry_point|lower }}"; Filename: "{app}\Scripts\{{ entry_point }}.exe"; IconFilename: "{app}\icons\icon.ico"
+  {% endif -%}
+{% endfor %}
+
+; --- Desktop: ONLY chisurf.exe ---
+Name: "{commondesktop}\chisurf"; Filename: "{app}\chisurf.exe"; Tasks: desktopicon; Check: IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
+Name: "{userdesktop}\chisurf";   Filename: "{app}\chisurf.exe"; Tasks: desktopicon; Check: not IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
+
+[UninstallDelete]
+Type: files; Name: "{app}\install.log"
+
+[Run]
+; Example: VC runtimes if you add them
+;Filename: "{tmp}\vcredist_x64.exe"; Parameters: "/quiet"; Check: IsAdminInstallMode
+
+[Code]
+function GetInstallDir(Param: string): string;
+begin
+  if IsAdminInstallMode then
+    Result := ExpandConstant('{pf}\{{ AppName }}')
+  else
+    // Per-user installs typically go under LocalAppData\Programs
+    Result := ExpandConstant('{localappdata}\Programs\{{ AppName }}');
+end;

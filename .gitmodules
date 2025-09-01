@@ -1,7 +1,3 @@
-[submodule "modules/ndxplorer"]
-	path = modules/ndxplorer
-	url = https://github.com/fluorescence-tools/ndxplorer
-	branch = main
 [submodule "modules/clsmview"]
 	path = modules/clsmview
 	url = https://github.com/fluorescence-tools/clsmview
@@ -14,23 +10,23 @@
 	path = modules/k2dist
 	url = https://github.com/fluorescence-tools/k2dist
 	branch = main
-[submodule "modules/fit2x"]
-	path = modules/fit2x
-	url = https://gitlab.peulen.xyz/skf/fit2x
-	branch = master
 [submodule "modules/chinet"]
 	path = modules/chinet
-	url = https://github.com/tpeulen/chinet.git
-	branch = main
-[submodule "tools"]
-	path = tools
-	url = https://gitlab.peulen.xyz/build/tools
-	branch = master
-[submodule "modules/scikit-fluorescence"]
-	path = modules/scikit-fluorescence
-	url = https://gitlab.peulen.xyz/skf/scikit-fluorescence
-	branch = master
+	url = https://github.com/tpeulen/chinet
+	branch = development
+[submodule "modules/tttrlib"]
+	path = modules/tttrlib
+	url = https://github.com/fluorescence-tools/tttrlib
+	branch = development
 [submodule "modules/labellib"]
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
+	branch = master
+[submodule "modules/ndxplorer"]
+	path = modules/ndxplorer
+	url = https://github.com/fluorescence-tools/ndxplorer
+	branch = development
+[submodule "modules/quest"]
+	path = modules/quest
+	url = https://github.com/fluorescence-tools/quest
 	branch = master

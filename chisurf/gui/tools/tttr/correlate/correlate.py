@@ -4,9 +4,8 @@ from chisurf import typing
 import sys
 
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtWidgets
-# Does not work with qtpy so far (needs refactoring)
-# AttributeError: module 'qtpy.QtCore' has no attribute 'pyqtSignal'
+from chisurf.gui import QtCore, QtWidgets
+# Now using qtpy compatibility layer through chisurf.gui import
 
 import numpy as np
 import tttrlib
@@ -24,14 +23,11 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments
 import chisurf.gui.widgets.fio
 
-correlator_settings = chisurf.settings.cs_settings['correlator']
-plot_settings = chisurf.settings.gui['plot']
-
 
 class Correlator(QtCore.QThread):
 
-    procDone = QtCore.pyqtSignal(bool)
-    partDone = QtCore.pyqtSignal(int)
+    procDone = QtCore.Signal(bool)
+    partDone = QtCore.Signal(int)
 
     @property
     def data(self) -> chisurf.data.DataCurve:
@@ -71,10 +67,10 @@ class Correlator(QtCore.QThread):
         :return: numpy-array with same length as photon-stream, each photon
         is associated to one weight.
         """
-        chisurf.logging.info("Correlator:getWeightStream")
+        chisurf.logging.info(f"Correlator::getWeightStream({tacWeighting}, {max_number_of_routing_channels})")
         photons = self.p.photon_source.photons
         if isinstance(tacWeighting, list):
-            print("channel-wise selection")
+            chisurf.logging.info("channel-wise selection")
             #print("Max-Rout: %s" % photons.n_rout)
             wt = np.zeros(
                 [max_number_of_routing_channels, photons.n_tac],
@@ -82,7 +78,7 @@ class Correlator(QtCore.QThread):
             )
             wt[tacWeighting] = 1.0
         elif isinstance(tacWeighting, np.ndarray):
-            print("TAC-weighted")
+            chisurf.logging.info("TAC-weighted")
             wt = tacWeighting
         w = chisurf.fluorescence.fcs.correlate.get_weights(
             routing_channels=photons.routing_channels,
@@ -99,10 +95,10 @@ class Correlator(QtCore.QThread):
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)
-        print("Correlation running...")
-        print("Correlation method: %s" % self.p.method)
-        print("Fine-correlation: %s" % self.p.fine)
-        print("Data stream split into %s correlations." % self.p.split)
+        chisurf.logging.info("Correlation running...")
+        chisurf.logging.info("Correlation method: %s" % self.p.method)
+        chisurf.logging.info("Fine-correlation: %s" % self.p.fine)
+        chisurf.logging.info("Data stream split into %s correlations." % self.p.split)
         photons = self.p.photon_source.photons
 
         if use_tttrlib:
@@ -199,7 +195,7 @@ class Correlator(QtCore.QThread):
             y=cor.mean(axis=0)[1:],
             ey=1. / w.mean(axis=0)[1:]
         )
-        chisurf.logging.info("correlation done")
+        chisurf.logging.info("Correlation finished!")
 
         self._data_curve = data_curve
         self.procDone.emit(True)
@@ -230,20 +226,33 @@ class Correlator(QtCore.QThread):
 
 class CorrelatorWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="correlatorWidget.ui"
-    )
+    @chisurf.gui.decorators.init_with_ui(ui_filename="correlatorWidget.ui")
     def __init__(
             self,
             photon_source,
             ch1: int = '0',
             ch2: int = '8',
-            number_of_cascades: int = correlator_settings['number_of_cascades'],
-            B: int = correlator_settings['B'],
-            split: int = correlator_settings['split'],
-            weighting: str = correlator_settings['weighting'],
-            fine: bool = correlator_settings['fine']
+            number_of_cascades: int = None,
+            B: int = None,
+            split: int = None,
+            weighting: str = None,
+            fine: bool = None
     ):
+        # Import settings here to make them dynamic
+        from chisurf.settings import cs_settings
+        correlator_settings = cs_settings['correlator']
+
+        # Use default settings if parameters are None
+        if number_of_cascades is None:
+            number_of_cascades = correlator_settings['number_of_cascades']
+        if B is None:
+            B = correlator_settings['B']
+        if split is None:
+            split = correlator_settings['split']
+        if weighting is None:
+            weighting = correlator_settings['weighting']
+        if fine is None:
+            fine = correlator_settings['fine']
         self.number_of_cascades = number_of_cascades
         self.B = B
         self.split = split
@@ -373,10 +382,22 @@ class CrFilterWidget(QtWidgets.QWidget):
     def __init__(
             self,
             photon_source,
-            verbose: bool = chisurf.verbose,
-            time_window = correlator_settings['time_window'],
-            max_count_rate = correlator_settings['max_count_rate']
+            verbose: bool = None,
+            time_window = None,
+            max_count_rate = None
     ):
+        # Import settings here to make them dynamic
+        import chisurf
+        from chisurf.settings import cs_settings
+        correlator_settings = cs_settings['correlator']
+
+        # Use default settings if parameters are None
+        if verbose is None:
+            verbose = cs_settings['verbose']
+        if time_window is None:
+            time_window = correlator_settings['time_window']
+        if max_count_rate is None:
+            max_count_rate = correlator_settings['max_count_rate']
         self.photon_source = photon_source
         self.verbose = verbose
         self.time_window = time_window
@@ -417,12 +438,12 @@ class CrFilterWidget(QtWidgets.QWidget):
             tw = int(self.time_window / dt)
             n_ph_max = int(self.max_count_rate * self.time_window)
             if self.verbose:
-                print("Using count-rate filter:")
-                print("Window-size [ms]: %s" % self.time_window)
-                print("max_count_rate [kHz]: %s" % self.max_count_rate)
-                print("n_ph_max in window [#]: %s" % n_ph_max)
-                print("Window-size [n(MTCLK)]: %s" % tw)
-                print("---------------------------------")
+                chisurf.logging.info("Using count-rate filter:")
+                chisurf.logging.info("Window-size [ms]: %s" % self.time_window)
+                chisurf.logging.info("max_count_rate [kHz]: %s" % self.max_count_rate)
+                chisurf.logging.info("n_ph_max in window [#]: %s" % n_ph_max)
+                chisurf.logging.info("Window-size [n(MTCLK)]: %s" % tw)
+                chisurf.logging.info("---------------------------------")
 
             mt = photons.macro_times
             n_ph = mt.shape[0]
@@ -487,6 +508,10 @@ class CorrelateTTTR(
         plot.setLogMode(x=True, y=False)
         plot.showGrid(True, True, 1.0)
 
+        # Import settings here to make them dynamic
+        from chisurf.settings import cs_settings, colors
+        plot_settings = cs_settings['gui']['plot']
+
         current_curve = self.cs.selected_curve_index
         lw = plot_settings['line_width']
         for i, curve in enumerate(self._curves):
@@ -494,7 +519,7 @@ class CorrelateTTTR(
             plot.plot(
                 x=curve.x, y=curve.y,
                 pen=pg.mkPen(
-                    chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'],
+                    colors[i % len(colors)]['hex'],
                     width=w
                 ),
                 name=curve.name
@@ -520,8 +545,15 @@ class CorrelateTTTR(
         #    photon_source=self.countrateFilterWidget
         #)
 
+        # Import settings here to make them dynamic
+        from chisurf.settings import cs_settings
+        correlator_settings = cs_settings['correlator']
+
         self.correlator = CorrelatorWidget(
-            photon_source=self.fileWidget
+            photon_source=self.fileWidget,
+            number_of_cascades=correlator_settings['number_of_cascades'],
+            B=correlator_settings['B'],
+            split=correlator_settings['split']
         )
         self.verticalLayout.addWidget(self.correlator)
 

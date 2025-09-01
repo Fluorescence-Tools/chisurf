@@ -16,68 +16,26 @@ def stoichometry_matrix(
         products_stoichometry
 ):
     """
-    http://en.wikipedia.org/wiki/Rate_equation
+    Computes the stoichiometry matrix for a given chemical reaction system.
 
-    :param n_species: int
-        number of species
-    :param educts: list of list
-        educts
-    :param products: list of list
-        procucts
-    :param educts_stoichometry: list of list
+    This function constructs a stoichiometry matrix for a set of chemical reactions
+    based on the number of species involved, their educts, products, and their respective
+    stoichiometry coefficients. The resulting matrix provides information about
+    how each reaction transforms the number of molecules of each species.
 
-    :param products_stoichometry: list of list
-    :return:
+    Parameters:
+        n_species (int): The total number of chemical species in the system.
+        educts (List[List[int]]): The indices of reactant species for each reaction.
+        products (List[List[int]]): The indices of product species for each reaction.
+        educts_stoichometry (List[List[float]]): The stoichiometric coefficients
+            for reactants of each reaction.
+        products_stoichometry (List[List[float]]): The stoichiometric coefficients
+            for products of each reaction.
 
-    Examples
-    --------
-
-    >>> rs = ReactionSystem()
-    >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=2)
-    Adding new reaction
-    -------------------
-    1 * [0]  -> 1 * [1]     rate: 2.00000
-    >>> rs.n_species
-    2
-    >>> rs.educts
-    [[0]]
-    >>> rs.products
-    [[1]]
-    >>> rs.educts_stoichometry
-    [[1]]
-    >>> rs.products_stoichometry
-    [[1]]
-    >>> stoichometry_matrix(rs.n_species, rs.educts, rs.products, rs.educts_stoichometry, rs.products_stoichometry)
-    array([[-1.],
-    [ 1.]])
-    >>> rs.add_reaction(educts=[0, 1], products=[3], educt_stoichiometry=[1, 1], product_stoichometry=[1], rate=0.005)
-    Adding new reaction
-    -------------------
-    1 * [0] + 1 * [1]  -> 1 * [3]   rate: 0.00500
-
-    In the first and second reaction one product is generated. In the first reaction a
-    product of the kind [1] is generated in the second reaction a product of the kind [3]
-
-    >>> rs.products_stoichometry
-    [[1], [1]]
-    >>> rs.products
-    [[1], [3]]
-
-    In the first reaction one educt of type [0] is consumed. In the second reaction one educt of type [0] and one
-    educt of type [1] are consumed
-
-    >>> rs.educts_stoichometry
-    [[1], [1, 1]]
-    >>> rs.educts
-    [[0], [0, 1]]
-
-    This is also reflected in the stoichometry_matrix
-
-    >>> stoichometry_matrix(rs.n_species, rs.educts, rs.products, rs.educts_stoichometry, rs.products_stoichometry)
-    array([[-1., -1.],
-       [ 1., -1.],
-       [ 0.,  0.],
-       [ 0.,  1.]])
+    Returns:
+        np.ndarray: A 2D array of shape (n_species, n_reactions) representing the
+            stoichiometry matrix, where rows correspond to species and columns
+            correspond to reactions.
     """
     n_reactions = len(educts_stoichometry)
     m = np.zeros((n_species, n_reactions))
@@ -91,13 +49,41 @@ def stoichometry_matrix(
 
 
 class ChemicalSpecies(object):
+    """
+    Represents a chemical species with a name and an optional description.
 
+    This class is used to define chemical species by providing a name and an optional
+    description, which describe the species' identity and details. It allows retrieval
+    of these properties using the relevant accessors.
+    """
     @property
     def name(self) -> str:
+        """
+        Represents the getter method for the 'name' property of an object, which
+        returns the stored private attribute '_name'.
+
+        @property
+            Retrieves the name attribute stored in the '_name' instance attribute.
+
+        Returns
+        -------
+        str
+            The value of the '_name' attribute representing the name.
+        """
         return self._name
 
     @property
     def description(self) -> str:
+        """
+        Property to get the description attribute of the object.
+
+        The `description` property provides access to the private `_description`
+        attribute. It does not allow modification of the attribute and is used
+        to retrieve the stored value representing the object's descriptive information.
+
+        @return: The value of the `_description` attribute.
+        @rtype: str
+        """
         return self._description
 
     def __init__(
@@ -105,72 +91,122 @@ class ChemicalSpecies(object):
             name: str,
             description: str = ""
     ):
+        """
+            Initializes an instance of the class to handle specific data and
+            assign initial values to attributes.
+
+            Parameters
+            ----------
+            name : str
+                A name to uniquely identify the instance.
+            description : str, optional
+                A brief description of the instance, defaults to an empty string.
+        """
         self._name = name
         self._description = description
 
 
 class ReactionSystem(object):
+    """
+    ReactionSystem is a computational framework to model, analyze, and simulate
+    chemical reactions in continuous time. It supports uni-molecular and
+    bi-molecular reactions with defined stoichiometries and rates. The class
+    allows storage, modification, and simulation of reactions, providing tools
+    to analyze their dynamics.
 
+    Parameters
+    ----------
+    verbose : bool
+        Controls if verbose operation mode is active. Default value is `chisurf.settings.cs_settings['verbose']`.
+    **kwargs :
+        Additional keyword arguments to pass initialization data.
+
+    Attributes
+    ----------
+    verbose : bool
+        Indicates if verbose mode is enabled.
+    educts : list
+        List of educt species in the system for each reaction.
+    products : list
+        List of product species in the system for each reaction.
+    educts_stoichometry : list
+        Stoichiometric coefficients of educts for each reaction.
+    products_stoichometry : list
+        Stoichiometric coefficients of products for each reaction.
+    rates : list
+        Reaction rate constants for each reaction in the system.
+    _concentrations : numpy.ndarray
+        Array holding concentration values of species in the system.
+    _species_brightness : numpy.ndarray
+        Array defining individual species' brightness.
+    _times : numpy.ndarray
+        Array of time points for analyzing concentration dynamics.
+    _initial_concentrations : list
+        Initial concentrations of species in the system.
+    _xmin : float
+        Minimum x-axis value for plotting or simulation.
+    _xmax : float
+        Maximum x-axis value for plotting or simulation.
+
+    Examples
+    --------
+    Usage to model complex chemical reaction systems with various reaction
+    types, define associated properties, and simulate temporal dynamics.
+    """
     def __init__(
             self,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             **kwargs
     ):
         """
+            Initializes the class with optional configurations for verbosity and additional
+            attributes used within the model. The class includes attributes for managing
+            concentrations, brightness of species, and temporal data. Additionally, lists for
+            reactants, products, stoichiometry, and rates are initialized for chemical
+            reaction modeling.
 
-        :param kwargs:
-        :return:
+            Parameters
+            ----------
+            verbose : bool, optional
+                Indicates whether verbose mode is enabled. Default is the value of chisurf.settings.cs_settings['verbose'].
+            **kwargs : dict, optional
+                Arbitrary keyword arguments that may include:
+                - 'concentrations' : np.ndarray, optional
+                    A 2D numpy array specifying the concentrations of species.
+                - 'species_brightness' : np.ndarray, optional
+                    A 2D numpy array specifying the brightness values of species.
+                - 'times' : np.ndarray, optional
+                    A 1D numpy array specifying time points related to the reactions.
 
-        Examples
-        --------
-
-        Generate a new reaction system
-
-        >>> from chisurf.math.reaction.continuous import ReactionSystem
-        >>> rs = ReactionSystem()
-
-        Addition of new uni-molecular reactions
-        A -> B and B -> A
-
-        >>> rs.add_reaction(educts=[0], products=[1], educt_stoichiometry=[1], product_stoichometry=[1], rate=5.3333)
-        >>> rs.add_reaction(educts=[1], products=[0], educt_stoichiometry=[1], product_stoichometry=[1], rate=8.0)
-
-        Addition of dimerization/Bimolecular reactions
-        2 * A -> AA, A + B -> AB, B + B -> BB
-
-        >>> rs.add_reaction(educts=[0], products=[2], educt_stoichiometry=[2], product_stoichometry=[1], rate=0.005)
-        >>> rs.add_reaction(educts=[0, 1], products=[3], educt_stoichiometry=[1, 1], product_stoichometry=[1], rate=0.005)
-        >>> rs.add_reaction(educts=[1], products=[4], educt_stoichiometry=[2], product_stoichometry=[1], rate=0.005)
-
-        Additional uni-molecular reactions
-        AA -> AB, AB -> AA, AB -> BB, BB -> AB
-
-        >>> rs.add_reaction(educts=[2], products=[3], educt_stoichiometry=[1], product_stoichometry=[1], rate=0.025)
-        >>> rs.add_reaction(educts=[3], products=[2], educt_stoichiometry=[1], product_stoichometry=[1], rate=0.00125)
-        >>> rs.add_reaction(educts=[3], products=[4], educt_stoichiometry=[1], product_stoichometry=[1], rate=0.025)
-        >>> rs.add_reaction(educts=[4], products=[3], educt_stoichiometry=[1], product_stoichometry=[1], rate=0.00125)
-
-        Helix-assoziierung
-        BB -> HH, HH -> BB
-
-        >>> rs.add_reaction(educts=[4], products=[5], educt_stoichiometry=[1], product_stoichometry=[1], rate=0.005)
-        >>> rs.add_reaction(educts=[5], products=[4], educt_stoichiometry=[1], product_stoichometry=[1], rate=0.0005)
-
-        # A, B, AA, AB, BB, HH
-        >>> rs.species_brightness = np.array([0.0, 0.0, 0.5, 0.5, 1.0, 0.65])
-        # initial value
-        #>>> y0 = np.array([1., 0.0, 0.0, 0.0, 0.0, 0.0])
-        #>>> t_output = np.linspace(0, 1000, 500)
-        #>>> rs.calc()
-        #>>> rs.calc(y0, t_output)
-        #>>> rs.plot()
-        >>> y0 = np.array([100., 0.0, 0.0, 0.0, 0.0, 0.0])
-        >>> t_output = np.linspace(0, 1000, 500)
-        >>> rs.initial_concentrations = y0
-        >>> rs.times = t_output
-        >>> rs.calc()
-        >>> rs.plot()
+            Attributes
+            ----------
+            verbose : bool
+                Stores the verbosity state of the object.
+            _concentrations : np.ndarray
+                A matrix representing concentrations of species over time.
+            _species_brightness : np.ndarray
+                A matrix representing the brightness of species.
+            _times : np.ndarray
+                A list of time values for the reaction system.
+            educts : list
+                List of educt reactants involved in reactions.
+            products : list
+                List of product species resulting from reactions.
+            educts_stoichometry : list
+                Stochastic coefficients for each educt in reactions.
+            products_stoichometry : list
+                Stochastic coefficients for each product in reactions.
+            rates : list
+                Rate constants associated with the reactions.
+            _initial_concentrations : list
+                Initial concentrations of species in the system.
+            _xmin : int
+                Minimum time or x-axis limit for simulations/representations.
+            _xmax : int, optional
+                Maximum time or x-axis limit for simulations/representations.
         """
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         self.verbose = verbose
         self._concentrations = kwargs.get('concentrations', np.array([[1.0], [1.]], dtype=np.float64))
         self._species_brightness = kwargs.get(
@@ -190,6 +226,24 @@ class ReactionSystem(object):
         self._xmax = None
 
     def clear(self):
+        """
+        Clears all the internal attributes of the object, resetting them to their initial empty
+        or default states. This method is typically used to reset the object to a clean slate
+        for reuse or reinitialization.
+
+        Attributes reset include:
+        - educts, products: Lists of chemical entities involved in a reaction.
+        - educts_stoichometry, products_stoichometry: Stoichiometric coefficients of the
+          respective chemical entities.
+        - rates: Reaction rates associated with the chemical process.
+        - _concentrations, _initial_concentrations: Internal data structures storing
+          concentration values over time.
+        - _times: Internal attribute for storing time data.
+        - _species_brightness: Internal attribute for storing species' brightness data.
+
+        Raises:
+            No exceptions are raised by this method. It only reinitializes attributes.
+        """
         self.educts = list()
         self.products = list()
         self.educts_stoichometry = list()
@@ -202,10 +256,30 @@ class ReactionSystem(object):
 
     @property
     def n_reactions(self):
+        """
+        Provides the count of reactions based on the number of rates.
+
+        Summary:
+        This property method calculates the total number of reactions by
+        determining the length of the rates attribute. It assumes that each
+        individual rate corresponds to exactly one reaction.
+
+        Returns:
+            int: The total number of reactions.
+        """
         return len(self.rates)
 
     @property
     def n_species(self):
+        """
+            Retrieves the number of unique species involved in the reaction.
+
+            This property calculates the total number of species (educts and products)
+            by identifying the highest species index and adding 1. If there are no
+            valid educts or products, it returns 0.
+
+            @return: The total number of unique species as an integer.
+        """
         try:
             flat = reduce(lambda x, y: x+y, self.educts + self.products)
             return max(flat) + 1

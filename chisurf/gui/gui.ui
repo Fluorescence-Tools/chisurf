@@ -138,7 +138,7 @@
           <x>0</x>
           <y>0</y>
           <width>254</width>
-          <height>112</height>
+          <height>69</height>
          </rect>
         </property>
         <property name="sizePolicy">
@@ -252,7 +252,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -290,7 +290,6 @@
      <property name="title">
       <string>Project</string>
      </property>
-     <addaction name="actionNew_Project_2"/>
      <addaction name="actionOpen_Project"/>
      <addaction name="actionSave_Project"/>
     </widget>
@@ -308,15 +307,6 @@
     <addaction name="actionPrint"/>
     <addaction name="separator"/>
     <addaction name="actionExit_2"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionHelp_2"/>
-    <addaction name="separator"/>
-    <addaction name="actionAbout"/>
-    <addaction name="actionUpdate"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -341,84 +331,6 @@
     <addaction name="actionCascade"/>
     <addaction name="menuType_Here"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
-    <property name="title">
-     <string>Tools</string>
-    </property>
-    <widget class="QMenu" name="menuFRET">
-     <property name="title">
-      <string>FRET</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/FRET.png</normaloff>:/icons/icons/FRET.png</iconset>
-     </property>
-     <addaction name="actionCalculator"/>
-    </widget>
-    <widget class="QMenu" name="menuAnisotropy">
-     <property name="title">
-      <string>Anisotropy</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/Cone.png</normaloff>:/icons/icons/Cone.png</iconset>
-     </property>
-     <addaction name="actionAnisotropy_Lines"/>
-     <addaction name="actionKappa2_Distribution"/>
-    </widget>
-    <widget class="QMenu" name="menuModelling">
-     <property name="title">
-      <string>Modelling</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
-     </property>
-     <widget class="QMenu" name="menuTrajectory_tools">
-      <property name="title">
-       <string>Trajectory tools</string>
-      </property>
-      <property name="icon">
-       <iconset resource="resources/resource.qrc">
-        <normaloff>:/icons/icons/Peptide_FRET.png</normaloff>:/icons/icons/Peptide_FRET.png</iconset>
-      </property>
-      <addaction name="actionTrajectory_converter"/>
-      <addaction name="actionSave_topology"/>
-      <addaction name="separator"/>
-      <addaction name="actionAlign_trajectory"/>
-      <addaction name="actionRotate_Translate_trajectory"/>
-      <addaction name="separator"/>
-      <addaction name="actionJoin_trajectories"/>
-      <addaction name="actionRemove_clashes"/>
-     </widget>
-     <addaction name="menuTrajectory_tools"/>
-     <addaction name="separator"/>
-     <addaction name="actionStructure2Transfer"/>
-     <addaction name="separator"/>
-     <addaction name="actionPDB2Label"/>
-     <addaction name="separator"/>
-     <addaction name="actionCalculate_Potential"/>
-    </widget>
-    <widget class="QMenu" name="menuTTTR">
-     <property name="title">
-      <string>TTTR</string>
-     </property>
-     <property name="icon">
-      <iconset resource="resources/resource.qrc">
-       <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
-     </property>
-     <addaction name="actionConvert"/>
-     <addaction name="actionGenerate_decay"/>
-     <addaction name="actionCorrelate"/>
-     <addaction name="actionTTTR_CLSM"/>
-    </widget>
-    <addaction name="menuFRET"/>
-    <addaction name="menuAnisotropy"/>
-    <addaction name="menuModelling"/>
-    <addaction name="menuTTTR"/>
-    <addaction name="actionF_Test"/>
-    <addaction name="actionndXplorer"/>
-   </widget>
    <widget class="QMenu" name="menuMacro">
     <property name="title">
      <string>Macro</string>
@@ -435,48 +347,12 @@
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionClear_local_settings"/>
+    <addaction name="actionClear_logging_files"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
-   <addaction name="menuTools"/>
    <addaction name="menuMacro"/>
    <addaction name="menuSettings"/>
-   <addaction name="menuHelp"/>
-  </widget>
-  <widget class="QToolBar" name="toolBar_2">
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="windowTitle">
-    <string>Toolbar</string>
-   </property>
-   <property name="iconSize">
-    <size>
-     <width>16</width>
-     <height>16</height>
-    </size>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionLoad_Data"/>
-   <addaction name="actionSaveAllFits"/>
-   <addaction name="actionClose_Fit"/>
-   <addaction name="separator"/>
-   <addaction name="actionTile_windows"/>
-   <addaction name="actionTab_windows"/>
-   <addaction name="separator"/>
-   <addaction name="actionExit_2"/>
-   <addaction name="separator"/>
-   <addaction name="actionRun"/>
-   <addaction name="actionStop"/>
-   <addaction name="actionRecord"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_console">
    <property name="enabled">
@@ -491,7 +367,7 @@
    <property name="minimumSize">
     <size>
      <width>80</width>
-     <height>100</height>
+     <height>38</height>
     </size>
    </property>
    <property name="maximumSize">
@@ -591,20 +467,7 @@
      <property name="spacing">
       <number>0</number>
      </property>
-     <item row="1" column="0">
-      <widget class="QComboBox" name="comboBox_Model">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="toolTip">
-        <string>This selection box is updated according to the selected dataset.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
+     <item row="1" column="4">
       <widget class="QToolButton" name="toolButton">
        <property name="text">
         <string>Analysis</string>
@@ -618,7 +481,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="2">
+     <item row="0" column="1" colspan="4">
       <widget class="QSplitter" name="splitter">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -633,6 +496,26 @@
        <widget class="QWidget" name="verticalLayoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout_5"/>
        </widget>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Model:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QComboBox" name="comboBox_Model">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>This selection box is updated according to the selected dataset.</string>
+       </property>
       </widget>
      </item>
     </layout>
@@ -677,7 +560,7 @@
   </widget>
   <widget class="QDockWidget" name="dockWidgetHistory">
    <property name="windowTitle">
-    <string>History</string>
+    <string>History / Log</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>
@@ -699,6 +582,51 @@
      <property name="bottomMargin">
       <number>0</number>
      </property>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Logging</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="plainTextEditLog">
+       <property name="selectionMode">
+        <enum>QAbstractItemView::ExtendedSelection</enum>
+       </property>
+       <property name="uniformItemSizes">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Filter</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_LogFilter"/>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkBox_filter_hide">
+         <property name="text">
+          <string>hide</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>History</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QPlainTextEdit" name="plainTextEditHistory">
        <property name="font">
@@ -895,6 +823,43 @@
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Toolbar</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionLoad_Data"/>
+   <addaction name="actionSaveAllFits"/>
+   <addaction name="actionClose_Fit"/>
+   <addaction name="separator"/>
+   <addaction name="actionTile_windows"/>
+   <addaction name="actionTab_windows"/>
+   <addaction name="separator"/>
+   <addaction name="actionExit_2"/>
+   <addaction name="separator"/>
+   <addaction name="actionRun"/>
+   <addaction name="actionStop"/>
+   <addaction name="actionRecord"/>
+   <addaction name="separator"/>
+   <addaction name="actionF_Test"/>
   </widget>
   <action name="actionExit">
    <property name="icon">
@@ -1267,7 +1232,7 @@
   <action name="actionClose_all">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
+     <normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</normaloff>../../../../Desktop/icons/x-mark-4-xxl.png</iconset>
    </property>
    <property name="text">
     <string>Close all</string>
@@ -1354,6 +1319,9 @@
    </property>
   </action>
   <action name="actionConvert">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
@@ -1363,6 +1331,9 @@
    </property>
   </action>
   <action name="actionGenerate_decay">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources/resource.qrc">
      <normaloff>:/icons/icons/TCSPC.png</normaloff>:/icons/icons/TCSPC.png</iconset>
@@ -1469,17 +1440,26 @@
      <normaloff>:/icons/icons/tttr.png</normaloff>:/icons/icons/tttr.png</iconset>
    </property>
    <property name="text">
-    <string>TTTR CLSM</string>
+    <string>CLSM</string>
    </property>
   </action>
   <action name="actionClear_local_settings">
    <property name="text">
-    <string>Clear local settings</string>
+    <string>Reset local settings</string>
+   </property>
+  </action>
+  <action name="actionClear_logging_files">
+   <property name="text">
+    <string>Clear logging files</string>
    </property>
   </action>
   <action name="actionndXplorer">
+   <property name="icon">
+    <iconset>
+     <normaloff>:/icons/icon.svg</normaloff>:/icons/icon.svg</iconset>
+   </property>
    <property name="text">
-    <string>ndXplorer</string>
+    <string>NDXplorer</string>
    </property>
   </action>
   <action name="actionAnisotropy">
@@ -1526,6 +1506,15 @@
    </property>
    <property name="toolTip">
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A Bayesian FRET TCSPC analysis that converts &lt;/p&gt;&lt;p&gt;fluorescence decays into posterior model &lt;/p&gt;&lt;p&gt;densities of distance distributions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </action>
+  <action name="actionQuEst">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/dye-diffusion.png</normaloff>:/icons/icons/dye-diffusion.png</iconset>
+   </property>
+   <property name="text">
+    <string>Quenching Estimator</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>

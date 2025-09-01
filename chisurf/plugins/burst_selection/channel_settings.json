@@ -1,0 +1,26 @@
+{
+    "windows": {
+        "prompt": [0, 2048],
+        "delayed": [2048, 4095]
+    },
+    "detectors": {
+        "all": {
+            "chs": [0, 1],
+            "micro_time_ranges": [
+                [0, 1024]
+            ]
+        },
+        "green": {
+            "chs": [0],
+            "micro_time_ranges": [
+                [0, 1000]
+            ]
+        },
+        "red": {
+            "chs": [1],
+            "micro_time_ranges": [
+                [0, 2048]
+            ]
+        }
+    }
+}

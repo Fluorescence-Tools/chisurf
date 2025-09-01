@@ -1,5 +1,6 @@
+from __future__ import annotations
 import typing
-
+from typing import TYPE_CHECKING
 
 import chisurf.gui.widgets.fitting
 import chisurf.plots
@@ -8,6 +9,9 @@ from chisurf.models.model import ModelWidget
 from chisurf.gui import QtWidgets, QtGui, QtCore
 from chisurf.models.pda.nusiance import Background
 from chisurf.models.pda.simple import ProbCh0, PdaSimpleModel
+
+if TYPE_CHECKING:
+    from chisurf.fitting.fit import Fit
 
 
 class BackgroundWidget(QtWidgets.QGroupBox, Background):
@@ -19,6 +23,12 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
             **kwargs
     ):
         super().__init__(*args, **kwargs)
+        # Ensure the Background FittingParameterGroup is properly initialized (creates _bg0/_bg1)
+        try:
+            Background.__init__(self, **kwargs)
+        except Exception:
+            # If already initialized or kwargs not applicable, continue
+            pass
         if hide_generic:
             self.hide()
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -28,11 +38,11 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
         self.setTitle("Generic")
 
         # Generic parameters
-        bg0 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bg0_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg0,
             label_text='Bg0',
         )
-        bg1 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bg1_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg1,
             label_text='Bg1'
         )
@@ -40,9 +50,25 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
         layout = QtWidgets.QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(bg0, 1, 0)
-        layout.addWidget(bg1, 1, 1)
+        layout.addWidget(self._bg0_widget, 1, 0)
+        layout.addWidget(self._bg1_widget, 1, 1)
         self.layout.addLayout(layout)
+
+    def update(self, *__args):
+        # Call the group-box update for standard behavior
+        QtWidgets.QGroupBox.update(self, *__args)
+        # Synchronize UI widgets with underlying parameters
+        try:
+            # Preferred: use controller finalize to sync all UI elements (value, bounds, link state, etc.)
+            self._bg0_widget.finalize()
+            self._bg1_widget.finalize()
+        except Exception:
+            # Fallback: at least sync the numeric values
+            try:
+                self._bg0_widget.setValue(self.bg0)
+                self._bg1_widget.setValue(self.bg1)
+            except Exception:
+                pass
 
 
 
@@ -51,7 +77,11 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
     def update(self, *__args):
         ProbCh0.update(self)
         QtWidgets.QWidget.update(self, *__args)
+        # Sync amplitude widgets
         for w, v in zip(self._amp_widgets, self.amplitudes):
+            w.setValue(v)
+        # Sync p(ch0) widgets
+        for w, v in zip(self._pch0_widgets, self.pch0):
             w.setValue(v)
 
     @property
@@ -146,21 +176,23 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
         readFrom = QtWidgets.QToolButton()
         readFrom.setText("read")
+        # assign attribute before using it as parent
+        self.readFrom = readFrom
         self.readFrom_menu = QtWidgets.QMenu(self.readFrom)
         self.readFrom_menu.aboutToShow.connect(self.read_menu)
         readFrom.setMenu(self.readFrom_menu)
         readFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         lh.addWidget(readFrom)
-        self.readFrom = readFrom
 
         linkFrom = QtWidgets.QToolButton()
         linkFrom.setText("link")
+        # assign attribute before using it as parent
+        self.linkFrom = linkFrom
         self.linkFrom_menu = QtWidgets.QMenu(self.linkFrom)
         self.linkFrom_menu.aboutToShow.connect(self.link_menu)
         linkFrom.setMenu(self.linkFrom_menu)
         linkFrom.setPopupMode(QtWidgets.QToolButton.InstantPopup)
         lh.addWidget(linkFrom)
-        self.linkFrom = linkFrom
 
         normalize_amplitude = QtWidgets.QCheckBox("Norm.")
         normalize_amplitude.setChecked(True)
@@ -178,7 +210,30 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         lh.addWidget(normalize_amplitude)
         self.lh.addLayout(lh)
 
-        self.append()
+        # Build parameter widgets for existing parameters if any; otherwise add one default component
+        n_existing = len(self._amplitudes) if hasattr(self, '_amplitudes') and self._amplitudes is not None else 0
+        if n_existing == 0:
+            # No parameters yet: create the initial component and its widgets
+            self.append()
+        else:
+            # Create controller widgets for all existing amplitude/pch0 parameter pairs
+            for i in range(n_existing):
+                row_layout = QtWidgets.QHBoxLayout()
+                row_layout.setContentsMargins(0, 0, 0, 0)
+                row_layout.setSpacing(0)
+                self._amp_widgets.append(
+                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                        self._amplitudes[i],
+                        layout=row_layout
+                    )
+                )
+                self._pch0_widgets.append(
+                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                        self._pch0[i],
+                        layout=row_layout
+                    )
+                )
+                self.lh.addLayout(row_layout)
 
     def onNormalizeAmplitudes(self):
         chisurf.run(f"chisurf.macros.model.normalize_amplitudes('{self.name}', {self.normalize_amplitude.isChecked()})")
@@ -296,14 +351,14 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit,
-            icon: QtGui.QIcon = None,
+            fit: Fit,
+            icon: QtGui.QIcon | None = None,
             hide_nuisances: bool = False,
             **kwargs
     ):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
-        super().__init__(fit=fit, icon=icon)
+        super().__init__(fit=fit, icon=icon, **kwargs)
 
         background = BackgroundWidget(fit=fit, **kwargs)
         pch0 = ProbCh0Widget(fit=fit, **kwargs)

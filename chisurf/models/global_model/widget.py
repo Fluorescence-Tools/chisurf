@@ -15,7 +15,7 @@ import chisurf.gui.decorators
 
 from chisurf import plots
 from .globalfit import GlobalFitModel
-from .parse import ParameterTransformModel
+from chisurf.models.parameter_transform import ParameterTransformWidget
 from chisurf.models import model
 
 
@@ -325,101 +325,4 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     def clear_listed_links(self):
         self.table_GlobalLinks.setRowCount(0)
-
-
-class ParameterTransformWidget(ParameterTransformModel, model.ModelWidget):
-
-    plot_classes = [
-                    (plots.FitInfo, {}),
-                    # (plots.ResidualPlot, {})
-    ]
-
-    def create_parameter_widgets(self):
-        layout = self.w.gridLayout
-        chisurf.gui.widgets.clear_layout(layout)
-        n_columns = chisurf.settings.gui['fit_models']['n_columns']
-        row = 1
-        p_dict = self.parameters_all_dict
-        p_keys = list(p_dict.keys())
-        p_keys.sort()
-        self.set_default_parameter_values()
-        for i, pk in enumerate(p_keys):
-            p = p_dict[pk]
-            pw = chisurf.gui.widgets.fitting.make_fitting_parameter_widget(p, callback=self.finalize)
-            column = i % n_columns
-            if column == 0:
-                row += 1
-            layout.addWidget(pw, row, column)
-
-    def set_default_parameter_values(self):
-        d = self.codes[self.code_name]['initial']
-        for k in self.parameters_all_dict.keys():
-            initial = d.get(k, None)
-            if initial is not None:
-                self.parameters_all_dict[k].value = initial['value']
-                self.parameters_all_dict[k].bounds = initial['bounds']
-                self.parameters_all_dict[k].bounds_on = True
-
-    @property
-    def code_name(self):
-        return list(self.codes.keys())[self.w.comboBox.currentIndex()]
-
-    @code_name.setter
-    def code_name(self, v: str):
-        idx = self.w.comboBox.findText(v)
-        self.w.comboBox.setCurrentIndex(idx)
-
-    @property
-    def codes(self) -> typing.Dict:
-        return self._codes
-
-    @codes.setter
-    def codes(self, v: typing.Dict):
-        self._codes = v
-        self.w.comboBox.clear()
-        self.w.comboBox.addItems(list(v.keys()))
-
-    def onCodeChanged(self):
-        code = self.codes[self.code_name]['code']
-        self.w.textEdit.setPlainText(code)
-        self.onFunctionUpdate()
-
-    def onFunctionUpdate(self):
-        t = self.w.textEdit.toPlainText()
-        self.function = str(t)
-        self.create_parameter_widgets()
-
-    def load_model_file(self, filename: pathlib.Path):
-        with io.open_maybe_zipped(filename, 'r') as fp:
-            self._code_file = filename
-            self.codes = yaml.safe_load(fp)
-            self.w.lineEdit.setText(str(filename.as_posix()))
-
-    def __init__(
-            self,
-            fit: chisurf.fitting.fit.Fit,
-            *args,
-            code_file: pathlib.Path = None,
-            **kwargs
-    ):
-        super().__init__(fit, *args, **kwargs)
-        path = pathlib.Path(__file__).parent.absolute()
-
-        w = chisurf.gui.uic.loadUi(path / "parameter_transform.ui")
-        l = chisurf.gui.QtWidgets.QVBoxLayout()
-        self.setLayout(l)
-        l.addWidget(w)
-        self.w = w
-
-        self._codes = {}
-        if code_file is None:
-            code_file = path / 'models.yaml'
-        self._code_file = code_file.absolute().as_posix()
-        self.load_model_file(code_file)
-
-        self.w.actionFunctionUpdate.triggered.connect(self.onFunctionUpdate)
-        self.w.actionCodeChanges.triggered.connect(self.onCodeChanged)
-
-        self.w.checkBox.setChecked(False)
-        self.w.comboBox.setCurrentIndex(1)
 

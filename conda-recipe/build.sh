@@ -1,73 +1,52 @@
+set -euo pipefail
+
+# macOS SDK note
 if [[ "${target_platform}" == osx-* ]]; then
-  # See https://conda-forge.org/docs/maintainer/knowledge_base.html#newer-c-features-with-old-sdk
-  CXXFLAGS="${CXXFLAGS} -D_LIBCPP_DISABLE_AVAILABILITY"
+  export CXXFLAGS="${CXXFLAGS:-} -D_LIBCPP_DISABLE_AVAILABILITY"
 fi
 
-pyrcc5 chisurf/gui/resources/resource.qrc -o chisurf/gui/resources/resource.py
+PY="$PYTHON"
 
-# Install modules
-#################
-# Update submodules
-git submodule sync --recursive
-git submodule update --init --recursive --force
+# 1) Qt resources
+"$PREFIX/bin/pyrcc5" chisurf/gui/resources/resource.qrc -o chisurf/gui/resources/resource.py
 
-# Install python modules
-########################
+# 2) Prepare & install labellib exactly as you require
+pushd modules/labellib
+  git fetch --tags --force || true
+  git checkout -f 2020.10.05 || git checkout -f tags/2020.10.05 || true
+  (cd thirdparty/pybind11 && git fetch --tags --force || true; git checkout -f v2.13)
+  rm -rf thirdparty/eigen
+  git clone --depth 1 --branch 3.4 https://gitlab.com/libeigen/eigen thirdparty/eigen
+popd
 
-# Labellib
-cd modules/labellib
-git fetch --tags && git checkout tags/2020.10.05
-cd thirdparty/pybind11 && git checkout v2.13 && git pull && cd ../..
-cd thirdparty && rm -rf eigen
-git clone https://gitlab.com/libeigen/eigen
-cd eigen && git switch 3.4
-cd ../../../..
-pip install modules/labellib --no-deps --prefix="$PREFIX"
+# 4) Install your local modules
+"$PY" -m pip install ./modules/labellib    --no-deps -vv --prefix="$PREFIX"
+"$PY" -m pip install ./modules/clsmview    --no-deps -vv --prefix="$PREFIX"
+"$PY" -m pip install ./modules/ndxplorer   --no-deps -vv --prefix="$PREFIX"
+"$PY" -m pip install ./modules/tttrconvert --no-deps -vv --prefix="$PREFIX"
+"$PY" -m pip install ./modules/quest       --no-deps -vv --prefix="$PREFIX"
+"$PY" -m pip install ./modules/lltf        --no-deps -vv --prefix="$PREFIX"
 
-pip install modules/scikit-fluorescence --no-deps --prefix="$PREFIX"
-pip install modules/clsmview --no-deps --prefix="$PREFIX"
-pip install modules/k2dist --no-deps --prefix="$PREFIX"
-pip install modules/ndxplorer --no-deps --prefix="$PREFIX"
-pip install modules/tttrconvert --no-deps --prefix="$PREFIX"
+# 5) Build & install chinet (CMake+SWIG)
+pushd modules/chinet
+  rm -rf build && mkdir build && cd build
+  cmake -S .. -B . \
+    -DCMAKE_C_COMPILER="${CC}" \
+    -DCMAKE_CXX_COMPILER="${CXX}" \
+    -DCMAKE_INSTALL_PREFIX="$PREFIX" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_PYTHON_INTERFACE=ON \
+    -DWITH_AVX=OFF \
+    -DBoost_USE_STATIC_LIBS=OFF \
+    -DCMAKE_SWIG_OUTDIR="${PREFIX}" \
+    -DBUILD_PYTHON_DOCS=ON \
+    -DPython_ROOT_DIR="${PREFIX}/bin" \
+    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="${PREFIX}" \
+    -DWITH_MONGODB=OFF \
+    -G Ninja
+  ninja -j "${CPU_COUNT}"
+  ninja install
+popd
 
-# Build chinet
-cd modules/chinet
-rm -rf build && mkdir build && cd build
-cmake -S .. -B . \
-  -DCMAKE_CXX_COMPILER="${CXX}" \
-  -DCMAKE_INSTALL_PREFIX="$PREFIX" \
-  -DBUILD_PYTHON_INTERFACE=ON \
-  -DWITH_AVX=OFF \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBoost_USE_STATIC_LIBS=OFF \
-  -DCMAKE_SWIG_OUTDIR="${PREFIX}" \
-  -DBUILD_PYTHON_DOCS=ON \
-  -DPython_ROOT_DIR="${PREFIX}/bin" \
-  -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="${PREFIX}" \
-  -G Ninja
-ninja install -j ${CPU_COUNT}
-cd ../../..
-
-# Build fit2x
-cd modules/fit2x
-git switch master
-rm -rf build && mkdir build && cd build
-cmake \
- -DCMAKE_INSTALL_PREFIX="$PREFIX" \
- -DCMAKE_PREFIX_PATH="$PREFIX" \
- -DBUILD_PYTHON_INTERFACE=ON \
- -DCMAKE_BUILD_TYPE=Release \
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="$SP_DIR" \
- -DCMAKE_SWIG_OUTDIR="$SP_DIR" \
- -DPython_ROOT_DIR="${PREFIX}/bin" \
- ..
-make && make install
-cd ../../..
-
-
-# Install main module
-#####################
-# Compile cython code
-$PYTHON setup.py build_ext --force --inplace
-# Install python code
-$PYTHON setup.py install --single-version-externally-managed --record=record.txt
+# 6) Install top-level chisurf
+"$PY" -m pip install . --no-deps -vv --prefix="$PREFIX"

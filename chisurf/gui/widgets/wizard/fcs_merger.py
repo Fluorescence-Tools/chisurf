@@ -1,12 +1,12 @@
 import os
 import pathlib
 import typing
-
 import json
+import re
 import numpy as np
-
 import pyqtgraph as pg
 
+import chisurf
 import chisurf.fio as io
 import chisurf.data
 import chisurf.fluorescence.fcs
@@ -51,7 +51,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         correlation = {
             'x': np.array(taus).mean(axis=0)[1:],
             'y': ys.mean(axis=0)[1:],
-            'ey': ey[1:], #np.array(ws).mean(axis=0)[1:],
+            'ey': ey[1:],  # np.array(ws).mean(axis=0)[1:],
             'duration': acquisition_time,
             'count_rate': count_rate
         }
@@ -59,7 +59,16 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
     @property
     def mean_correlation(self) -> dict:
-        data = self.compute_average_correlations(self.correlations)
+        # Use only curves with the checkbox checked
+        selected_correlations = []
+        for row in range(self.tableWidget.rowCount()):
+            item = self.tableWidget.item(row, 0)
+            if item is not None and item.checkState() == QtCore.Qt.Checked:
+                selected_correlations.append(self.correlations[row])
+        if not selected_correlations:
+            # Fallback: if none are selected, use all curves.
+            selected_correlations = self.correlations
+        data = self.compute_average_correlations(selected_correlations)
         return data
 
     @property
@@ -67,15 +76,18 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         return pathlib.Path('..')
 
     def update_plots(self, *args, **kwargs):
-        chisurf.logging.log(0, 'WizardTTTRCorrelator::Updating plots')
+        chisurf.logging.info('WizardTTTRCorrelator::Updating plots')
         self.pw_fcs.clear()
         idx = self.current_curve_idx
         for i, cor in enumerate(self.correlations):
-            if i == idx:
-                width = 3.0
+            # Check if the curve is selected for merging
+            checkbox_item = self.tableWidget.item(i, 0)
+            if checkbox_item is not None and checkbox_item.checkState() == QtCore.Qt.Unchecked:
+                # Draw not-used curves with a dashed grey pen
+                pen = pg.mkPen('grey', width=1.0, style=QtCore.Qt.DashLine)
             else:
-                width = 1.0
-            pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=width)
+                width = 3.0 if i == idx else 1.0
+                pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=width)
             self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
 
         self.pw_fcs_mean.clear()
@@ -83,7 +95,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         self.plot_item_fcs_mean.plot(x=corr_mean['x'], y=corr_mean['y'])
 
     def onClearFiles(self):
-        print( "WizardTTTRCorrelator::onClearFiles")
+        chisurf.logging.info("WizardTTTRCorrelator::onClearFiles")
         self.settings['tttr_filenames'].clear()
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
@@ -103,50 +115,130 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         table = self.tableWidget
         rc = table.rowCount()
         table.insertRow(rc)
-        duration = correlation_dict['duration']
-        count_rate_a = correlation_dict['channel_a']['counts'] / duration
-        count_rate_b = correlation_dict['channel_b']['counts'] / duration
+        duration = float(correlation_dict.get('duration', 0.0))
+        # Compute count rates robustly
+        try:
+            cr_a = float(correlation_dict['channel_a']['counts']) / duration if duration > 0 else 0.0
+            cr_b = float(correlation_dict['channel_b']['counts']) / duration if duration > 0 else 0.0
+        except Exception:
+            # Fallback: if only total count_rate present
+            total_cr = float(correlation_dict.get('count_rate', 0.0))
+            cr_a = total_cr / 2.0
+            cr_b = total_cr / 2.0
 
         fnw = QtWidgets.QTableWidgetItem(f"{filename.stem}")
         fnw.setToolTip(f'{filename.as_posix()}')
-        table.setItem(rc, 0, fnw)
-        table.setItem(rc, 1, QtWidgets.QTableWidgetItem(f"{count_rate_a: 0.2f}"))
-        table.setItem(rc, 2, QtWidgets.QTableWidgetItem(f"{count_rate_b: 0.2f}"))
-        table.setItem(rc, 3, QtWidgets.QTableWidgetItem(f"{duration: 0.2f}"))
+        table.setItem(rc, 1, fnw)
+        table.setItem(rc, 2, QtWidgets.QTableWidgetItem(f"{cr_a: 0.2f}"))
+        table.setItem(rc, 3, QtWidgets.QTableWidgetItem(f"{cr_b: 0.2f}"))
+        table.setItem(rc, 4, QtWidgets.QTableWidgetItem(f"{duration: 0.2f}"))
+        # Add a checkable item for using the curve in merging
+        checkbox_item = QtWidgets.QTableWidgetItem()
+        checkbox_item.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
+        checkbox_item.setCheckState(QtCore.Qt.Checked)
+        table.setItem(rc, 0, checkbox_item)
+        # Update the correlation dictionary accordingly
+        correlation_dict['use_curve'] = True
 
     def open_correlation_folder(self, folder: pathlib.Path = None):
-        chisurf.logging.log(0, "WizardFcsMerger::open_correlation_folder")
+        chisurf.logging.info( "WizardFcsMerger::open_correlation_folder")
         self.tableWidget.setRowCount(0)
         if folder is None:
             folder = self.correlation_folder
-        selected_files = sorted(list(folder.glob('*.json.gz')))
+        # Support both legacy JSON chunks and new .cor files
+        json_files = sorted(list(folder.glob('*.json.gz')))
+        cor_files = sorted(list(folder.glob('*.cor')))
         self.correlations.clear()
-        for file in selected_files:
-            with io.open_maybe_zipped(file) as fp:
-                d = json.load(fp)
+        # Load JSON chunks if present
+        for file in json_files:
+            try:
+                with io.open_maybe_zipped(file) as fp:
+                    d = json.load(fp)
+                    self.append_correlation(file, d)
+            except Exception:
+                continue
+        # Load .cor chunk files
+        import numpy as _np
+        for file in cor_files:
+            try:
+                arr = _np.loadtxt(str(file), delimiter='\t')
+                if arr.ndim == 1 and arr.size >= 2:
+                    arr = arr.reshape(-1, arr.size)
+                x = arr[:, 0]
+                y = arr[:, 1]
+                # Third column encodes duration (row 0) and count_rate (row 1)
+                duration = float(arr[0, 2]) if arr.shape[1] > 2 and arr.shape[0] >= 1 else 0.0
+                count_rate = float(arr[1, 2]) if arr.shape[1] > 2 and arr.shape[0] >= 2 else 0.0
+                ey = arr[:, 3] if arr.shape[1] > 3 else _np.zeros_like(x)
+                # Derive per-channel counts by splitting total equally (best effort)
+                total_counts = count_rate * duration
+                half_counts = 0.5 * total_counts
+                d = {
+                    'x': x.tolist(),
+                    'y': y.tolist(),
+                    'ey': ey.tolist(),
+                    'duration': duration,
+                    'count_rate': count_rate,
+                    'channel_a': {'channels': [], 'microtime_range': None, 'counts': half_counts},
+                    'channel_b': {'channels': [], 'microtime_range': None, 'counts': half_counts}
+                }
                 self.append_correlation(file, d)
-        chisurf.logging.log(0, 'Opening analysis folder')
-        print(list(selected_files))
+            except Exception:
+                continue
+        chisurf.logging.info('Opening analysis folder...')
         self.lineEdit_2.setText(self.target_filepath.as_posix())
+        self.update_plots()
+
+    def set_correlations(self, correlations: typing.List[dict], source_folder: pathlib.Path = None):
+        """
+        Populate the table and plots from already computed correlations (in-memory),
+        without requiring chnk-*.json.gz files on disk.
+        """
+        self.tableWidget.setRowCount(0)
+        self.correlations.clear()
+        # Optionally bind the correlation folder for saving .cor output later
+        if source_folder is not None:
+            try:
+                self.lineEdit.setText(source_folder.as_posix())
+            except Exception:
+                pass
+        for i, cor in enumerate(correlations):
+            fake_file = (source_folder / f'chnk-{i:04}.json.gz') if source_folder is not None else pathlib.Path(f'chnk-{i:04}.json.gz')
+            self.append_correlation(fake_file, cor)
+        try:
+            self.lineEdit_2.setText(self.target_filepath.as_posix())
+        except Exception:
+            pass
         self.update_plots()
 
     @property
     def target_filepath(self) -> pathlib.Path:
-        correlation_filename = self.correlation_folder.stem + '.cor'
+        stem = self.correlation_folder.stem
+        # Sanitize filename: allow letters, numbers, dot, dash, underscore
+        safe_stem = re.sub(r'[^A-Za-z0-9._-]+', '_', stem)
+        if not safe_stem or safe_stem in {'.', '..', '_'}:
+            safe_stem = 'correlation'
+        correlation_filename = safe_stem + '.cor'
         filename = self.correlation_folder.parent / correlation_filename
         return filename
 
-    def save_mean_correlation(self, evt = None, filename: pathlib.Path = None):
-        chisurf.logging.log(0, "WizardFcsMerger::save_mean_correlation")
+    def save_mean_correlation(self, evt=None, filename: pathlib.Path = None):
+        chisurf.logging.info("WizardFcsMerger::save_mean_correlation")
         correlation = self.mean_correlation
         if filename is None:
             filename = self.target_filepath
-        chisurf.logging.log(0, 'Saving:', filename)
+        # Ensure parent directory exists (e.g., .../cr5)
+        try:
+            filename.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        chisurf.logging.info(f"Saving: {filename}")
         suren_column = np.zeros_like(correlation['x'])
         suren_column[0] = correlation['duration']
         suren_column[1] = correlation['count_rate']
-        c = np.vstack([correlation['x'] * 1000.0, correlation['y'], suren_column, correlation['ey']])
-        np.savetxt(filename.as_posix(), c.T, delimiter='\t')
+        c = np.vstack([correlation['x'], correlation['y'], suren_column, correlation['ey']])
+        # Use native path string to avoid UNC/as_posix issues on Windows
+        np.savetxt(str(filename), c.T, delimiter='\t')
 
     def onRemoveRow(self):
         table = self.tableWidget
@@ -159,6 +251,55 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
             self.correlations.pop(idx)
             self.update_plots()
 
+    def onRowDoubleClicked(self, item: QtWidgets.QTableWidgetItem):
+        # Instead of removing the row, toggle the checkbox state
+        row = item.row()
+        checkbox_item = self.tableWidget.item(row, 0)
+        if checkbox_item is not None:
+            current_state = checkbox_item.checkState()
+            new_state = QtCore.Qt.Unchecked if current_state == QtCore.Qt.Checked else QtCore.Qt.Checked
+            checkbox_item.setCheckState(new_state)
+            # Update the correlation dictionary if needed
+            self.correlations[row]['use_curve'] = (new_state == QtCore.Qt.Checked)
+            self.update_plots()
+
+    def add_to_chisurf(self):
+        """
+        Add the generated correlation curve to chisurf as a dataset using FCS Kristine correlation.
+        This method uses the already generated .cor file instead of creating a new one.
+        """
+        print("Adding correlation to ChiSurf...")
+        chisurf.logging.info("WizardFcsMerger::adding correlation to chisurf")
+
+        # Ensure the correlation file exists
+        cor_file = self.target_filepath
+        if not cor_file.exists():
+            # Save the correlation file if it doesn't exist
+            print("Saving correlation file...")
+            print("Filename: ", cor_file.as_posix(), "\n")
+            self.save_mean_correlation(filename=cor_file)
+
+        if not cor_file.exists():
+            # Display a message box to the user if file still doesn't exist
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+            msg_box.setWindowTitle("No Correlation File")
+            msg_box.setText("No correlation file available. Please save correlation data before adding to ChiSurf.")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+            return
+
+        # Use the standard approach as specified in the issue description
+        # Set the current experiment and setup using the global cs instance
+        chisurf.cs.current_experiment = 'FCS'
+        chisurf.cs.current_setup = 'Seidel Kristine'
+
+        # Add dataset to chisurf using the standard approach
+        chisurf.macros.add_dataset(filename=cor_file.as_posix())
+
+        # Show success message
+        chisurf.logging.info(f"Added correlation to ChiSurf: {cor_file.name}")
+
     @chisurf.gui.decorators.init_with_ui("fcs_merger.ui")
     def __init__(self, *args, **kwargs):
         self.setTitle("Correlation merging")
@@ -170,32 +311,26 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
         chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit, call=self.open_correlation_folder)
 
-        # Create plots
-        self.pw_fcs = pg.plot()
+        # Setup plots
+        self.pw_fcs = pg.PlotWidget(parent=self, title='FCS')
         self.pw_fcs.resize(100, 150)
         self.plot_item_fcs = self.pw_fcs.getPlotItem()
         self.plot_item_fcs.setLogMode(True, False)
         self.horizontalLayout_3.addWidget(self.pw_fcs)
 
-        self.pw_fcs_mean = pg.plot()
+        self.pw_fcs_mean = pg.PlotWidget(parent=self, title='FCS Merged')
         self.pw_fcs_mean.resize(100, 150)
         self.plot_item_fcs_mean = self.pw_fcs_mean.getPlotItem()
         self.plot_item_fcs_mean.setLogMode(True, False)
         self.horizontalLayout_3.addWidget(self.pw_fcs_mean)
 
-        # Connect actions
-        self.actionRowDoubleClicked.triggered.connect(self.onRemoveRow)
+        # Setup table widget with an extra column for the merge checkbox.
+        self.tableWidget.setColumnCount(5)
+        self.tableWidget.setHorizontalHeaderLabels(["Use", "File", "CR A", "CR B", "Duration"])
+
+        # Remove the double-click deletion action and instead toggle the checkbox on double click.
+        # self.actionRowDoubleClicked.triggered.connect(self.onRemoveRow)  <-- Removed!
+        self.tableWidget.itemDoubleClicked.connect(self.onRowDoubleClicked)
         self.actionRowSingleClick.triggered.connect(self.update_plots)
         self.toolButton_3.clicked.connect(self.save_mean_correlation)
-
-        # self.actionUpdate_Values.triggered.connect(self.update_parameter)
-        # self.actionUpdateUI.triggered.connect(self.updateUI)
-        # self.actionFile_changed.triggered.connect(self.read_tttr)
-        # self.actionRegionUpdate.triggered.connect(self.onRegionUpdate)
-        #
-        # self.toolButton_2.toggled.connect(self.pw_mcs.setVisible)
-        # self.toolButton_3.toggled.connect(self.pw_decay.setVisible)
-        # self.toolButton_4.toggled.connect(self.pw_filter.setVisible)
-        # self.toolButton_5.clicked.connect(self.save_filter_data)
-        # self.toolButton_3.clicked.connect(self.correlate_data)
-
+        self.toolButton_add_to_chisurf.clicked.connect(self.add_to_chisurf)

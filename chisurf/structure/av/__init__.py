@@ -15,7 +15,7 @@ from . import dynamic
 from . import static
 from . import functions
 from . import fps_ as fps
-from . static import calculate_1_radius, calculate_3_radius
+from . static import calculate_1_radius, calculate_3_radius, HAS_LABELLIB
 
 package_directory = os.path.dirname(__file__)
 dye_file = os.path.join(
@@ -64,6 +64,10 @@ class BasicAV(object):
             **kwargs
     ):
         super().__init__(*args, **kwargs)
+        if not HAS_LABELLIB:
+            raise RuntimeError(
+                "LabelLib (labellib) is not available. Accessible volume functionality (chisurf.structure.av) requires labellib."
+            )
         if simulation_grid_resolution is None:
             simulation_grid_resolution = chisurf.settings.fps['simulation_grid_resolution']
         self.dg = simulation_grid_resolution

@@ -7,7 +7,7 @@ In particular three kinds of file-types are handled:
 3. TTTR-files containing photon data :py:mod:`chisurf.fio.photons`
 4. XYZ-files containing coordinates :py:mod:`chisurf.fio.xyz`
 5. DX-files containing densities :py:mod:`chisurf.fio.dx`
-6. SDT-files containing time-resolved fluorescence decays :py:mod:`chisurf.fio.sdtfile`
+6. SDT-files containing time-resolved fluorescence decays :py:mod:`chisurf.fio.bhfiles`
 
 """
 import lzma
@@ -16,6 +16,7 @@ import numpy as np
 from . zipped import *
 
 import chisurf.fio.fluorescence
+from .jordi import write_jordi, read_jordi
 
 
 def compress_numpy_array(array):

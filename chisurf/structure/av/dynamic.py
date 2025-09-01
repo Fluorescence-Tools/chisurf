@@ -91,7 +91,7 @@ class DiffusionSimulation(object):
         :param verbose:
         """
         if verbose is None:
-            verbose = chisurf.verbose
+            verbose = chisurf.settings.cs_settings['verbose']
         self.verbose = verbose
 
         self.dye = dye
@@ -410,11 +410,17 @@ class Dye(ParameterGroup):
         return av
 
     def update_parameter(self):
-        self.av_length = self.dye_definition['av_length']
-        self.av_width = self.dye_definition['av_linker_width']
-        self.av_radius = self.dye_definition['av_radius1']
-        self.diffusion_coefficient = self.dye_definition['diffusion_coefficient']
-        self.critical_distance = self.dye_definition['quenching_distance']
+        try:
+            if isinstance(self.dye_definition, dict):
+                self.av_length = self.dye_definition.get('av_length', self.av_length)
+                self.av_width = self.dye_definition.get('av_linker_width', self.av_width)
+                self.av_radius = self.dye_definition.get('av_radius1', self.av_radius)
+                self.diffusion_coefficient = self.dye_definition.get('diffusion_coefficient', self.diffusion_coefficient)
+                self.critical_distance = self.dye_definition.get('quenching_distance', self.critical_distance)
+        except (TypeError, KeyError, AttributeError):
+            # If dye_definition is not a dictionary or doesn't have the required keys,
+            # we'll keep the current values
+            pass
 
     def __init__(
             self,
@@ -422,7 +428,7 @@ class Dye(ParameterGroup):
             **kwargs
     ):
         ParameterGroup.__init__(self)
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.sticking = sticking
         self.structure = sticking.structure
         self.model = kwargs.get('model', None)
@@ -474,8 +480,9 @@ class Dye(ParameterGroup):
         )
 
         dye_name = str(kwargs.get('dye_name', None))
-        if dye_name in chisurf.structure.av.dye_names[0]:
-            self.dye_name = self._dye_name
+        if dye_name in chisurf.structure.av.dye_names:
+            self._dye_name = dye_name
+            self.update_parameter()
 
 
 class Sticking(ParameterGroup):
@@ -542,7 +549,7 @@ class Sticking(ParameterGroup):
         :param kwargs:
         """
         super().__init__(fit, **kwargs)
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.quenching_parameter = quenching_parameter
         self.structure = structure
         self.model = kwargs.get('model', None)
@@ -608,14 +615,24 @@ class ProteinQuenching(ParameterGroup):
                 atoms_idx = np.where(
                     (atoms['res_name'] == residue_key) & (atoms['atom_name'] == 'CB')
                 )[0]
-            q_new[residue_key] = {
-                'rate': v[residue_key]['rate'],
-                'atoms': list(
-                    set(
-                        atoms[atoms_idx]['atom_name']
-                    ).difference(self._excluded_atoms)
-                ),
-            }
+
+            # Check if v[residue_key] is a list or a dictionary
+            if isinstance(v[residue_key], list):
+                # If it's a list, convert it to a dictionary with a default rate of 1.0
+                q_new[residue_key] = {
+                    'rate': 1.0,
+                    'atoms': v[residue_key],
+                }
+            else:
+                # If it's a dictionary, use the rate from the dictionary
+                q_new[residue_key] = {
+                    'rate': v[residue_key]['rate'],
+                    'atoms': list(
+                        set(
+                            atoms[atoms_idx]['atom_name']
+                        ).difference(self._excluded_atoms)
+                    ),
+                }
         v = q_new
 
         # determine atom-indices and coordinates
@@ -663,7 +680,7 @@ class ProteinQuenching(ParameterGroup):
         return s
 
     def __init__(self, structure, **kwargs):
-        self.verbose = kwargs.get('verbose', chisurf.verbose)
+        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.structure = structure
 
         self._quencher = None
@@ -705,5 +722,3 @@ class ProteinQuenching(ParameterGroup):
                                        }
                                    }
         )
-
-

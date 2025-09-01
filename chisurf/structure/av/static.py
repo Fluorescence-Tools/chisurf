@@ -2,8 +2,13 @@ import numpy as np
 import numba as nb
 
 import chisurf
-import LabelLib as ll
-from scikit_fluorescence.modeling.label.av import LabelDistributionAV
+try:
+    import LabelLib as ll
+    HAS_LABELLIB = True
+except Exception:
+    ll = None
+    HAS_LABELLIB = False
+from chisurf.structure.av.utils import atoms_in_reach
 
 
 def calculate_1_radius(
@@ -173,6 +178,8 @@ def calculate_1_radius(
     linker_width = w
     dye_radius = r
     simulation_grid_spacing = dg
+    if not HAS_LABELLIB:
+        raise RuntimeError("LabelLib (labellib) is not available. Accessible volume calculation requires labellib.")
     av1 = ll.dyeDensityAV1(
         xyzr,
         dye_attachment_point,
@@ -241,6 +248,8 @@ def calculate_3_radius(
     linker_length = l
     linker_width = w
     simulation_grid_spacing = dg
+    if not HAS_LABELLIB:
+        raise RuntimeError("LabelLib (labellib) is not available. Accessible volume calculation requires labellib.")
     av1 = ll.dyeDensityAV3(
         xyzr,
         dye_attachment_point,
@@ -476,7 +485,7 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=None, linker_sphere=None,
     density = np.ones((ng, ng, ng), dtype=np.uint32)
 
     # select a subset of the atoms (only the ones in reach of the dye linker)
-    xyz_a, vdw_a = LabelDistributionAV.__atoms_in_reach(xyz=xyz, vdw=vdw, dmaxsq=(l + r + vdw_max)**2, atom_i=atom_i)
+    xyz_a, vdw_a = atoms_in_reach(xyz=xyz, vdw=vdw, dmaxsq=(l + r + vdw_max)**2, atom_i=atom_i)
     # Move the coordinates of the atoms
     r0 = xyz[atom_i]
     xyz_a -= r0
@@ -634,4 +643,3 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
             hist_3d[ix, iy, iz] += 0.005
     r0 = r0.mean(axis=0)
     return hist_3d, r0
-

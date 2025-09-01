@@ -138,12 +138,12 @@ class PDDEMModel(FRETModel):
     name = "FRET: PDDEM"
 
     def __init__(self, fit, **kwargs):
-        FRETModel.__init__(self, fit, **kwargs)
-        self.pddem = PDDEM(name='pddem', **kwargs)
-        self.gaussians = Gaussians(name='gaussians', **kwargs)
         self.fa = Lifetime(name='fa', **kwargs)
         self.fb = Lifetime(name='fb', **kwargs)
         self.donor = self.fb
+        FRETModel.__init__(self, fit, **kwargs)
+        self.pddem = PDDEM(name='pddem', **kwargs)
+        self.gaussians = Gaussians(name='gaussians', **kwargs)
 
     @property
     def distance_distribution(self):

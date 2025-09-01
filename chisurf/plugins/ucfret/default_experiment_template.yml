@@ -1,0 +1,73 @@
+# Default template for UCFRET experiment files
+
+Sample:
+  Name: Sample Name
+  Measurement ID: DA_Measurement
+  Reference:
+    Donor: D0_Measurement
+
+Measurement datasets:
+  DA_Measurement:
+    Setup settings: Donor
+    Instrument response function:
+      Measurement ID: IRF_DA
+    Description: Description of the DA measurement
+    Data:
+      Filename: ./sample_DA.dat
+  D0_Measurement:
+    Setup settings: Donor
+    Instrument response function:
+      Measurement ID: IRF_D0
+    Description: Description of the D0 measurement
+    Data:
+      Filename: ./sample_D0.dat
+  IRF_DA:
+    Setup settings: IRF
+    Description: Description of the DA IRF measurement
+    Data:
+      Filename: ./IRF_DA.dat
+  IRF_D0:
+    Setup settings: IRF
+    Description: Description of the D0 IRF measurement
+    Data:
+      Filename: ./IRF_D0.dat
+
+Setup parts:
+  0: # Excitation source
+    Excitation source manufacturer: Manufacturer
+    Excitation source name: Source Name
+    Excitation source repetition rate: 20
+    Excitation source wavelength: 485
+    Excitation source spectrum: null
+  8: # Counting electronics
+    Counting electronics manufacturer: Manufacturer
+    Counting electronics name: Electronics Name
+    Counting electronics dead time: null
+    Counting electronics channel width: 0.008
+
+Setup:
+  TCSPC:
+    Description: Description of the TCSPC setup
+    Setup part IDs: [0, 8]
+
+Setup settings:
+  TCSPC:
+    Setup name: TCSPC
+    Counting electronics:
+      Setup part ID: [8]
+      Resolution [ps]: 8
+    Detectors:
+      0:
+        Detector ID: 0
+  Donor:
+    Setup name: TCSPC
+    Excitation sources ID: [0]
+    Detectors:
+      0:
+        Detection center wavelength [nm]: 520
+  IRF:
+    Setup name: TCSPC
+    Excitation sources ID: [0]
+    Detectors:
+      0:
+        Detection center wavelength [nm]: 485

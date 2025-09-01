@@ -82,92 +82,146 @@ def create_mti_summary(
 
 
 def create_bur_summary(start_stop, filename, tttr, windows, detectors):
-    # Initialize a list to store each row of summary data
-    summary_data = []
+    """
+    A vectorized approach to compute burst summary information.
 
-    # Read the TTTR file
+    :param start_stop: List of tuples (start_index, stop_index)
+    :param filename: String representing the file name
+    :param tttr: TTTR object with attributes:
+                 - macro_times
+                 - micro_times
+                 - routing_channel
+                 - header.macro_time_resolution
+    :param windows: Dictionary {window_name: [(r_start, r_stop), ...]}
+    :param detectors: Dictionary {det_name: {"chs": [...], "micro_time_ranges": [(mt_start, mt_stop), ...]}}
+    :return: A pandas DataFrame with one row per burst, including detector + window stats.
+    """
+
+    # Extract main arrays once
+    n_max = len(tttr)
+    macro_times = tttr.macro_times
+    micro_times = tttr.micro_times
+    routing_channels = tttr.routing_channel
     res = tttr.header.macro_time_resolution
 
-    # Iterate through the list of (start, stop) tuples
+    summary_data = []
+
+    # Loop over each burst defined by (start_index, stop_index)
     for start_index, stop_index in start_stop:
-        burst = tttr[start_index:stop_index]
-        duration = (tttr.macro_times[stop_index] - tttr.macro_times[start_index]) * res
-        mean_macro_time = (tttr.macro_times[stop_index] + tttr.macro_times[start_index]) / 2.0 * res
-        n_photons = abs(stop_index - start_index)
-        count_rate = n_photons / duration
+        if start_index > n_max or stop_index > n_max:
+            continue
 
-        # Create the initial OrderedDict
-        row_data = OrderedDict([
-            ("First Photon", start_index),
-            ("Last Photon", stop_index),
-            ("Duration (ms)", duration * 1000.0),
-            ("Mean Macro Time (ms)", mean_macro_time * 1000.0),
-            ("Number of Photons", n_photons),
-            ("Count Rate (KHz)", count_rate / 1000.0),
-            ("First File", filename),
-            ("Last File", filename),
-        ])
+        # Slice once for this burst
+        burst_rout = routing_channels[start_index:stop_index]
+        burst_micro = micro_times[start_index:stop_index]
+        burst_macro = macro_times[start_index:stop_index]
 
-        for window in windows:
-            r_start, r_stop = windows[window][0]
-            for det in detectors:
-                # Create selection mask
-                chs = detectors[det]["chs"]
-                micro_time_ranges = detectors[det]["micro_time_ranges"]
+        # Compute global burst stats
+        if stop_index <= start_index:
+            # Handle corner cases (e.g., empty slice)
+            duration = 0.0
+            mean_macro_time = 0.0
+            n_photons = 0
+        else:
+            duration = (macro_times[stop_index] - macro_times[start_index]) * res
+            mean_macro_time = ((macro_times[stop_index] + macro_times[start_index]) / 2.0) * res
+            n_photons = stop_index - start_index
 
-                mt = burst.micro_times
-                mT = burst.macro_times
-                rout = burst.routing_channel
+        # Avoid division by zero
+        count_rate = n_photons / duration if duration > 0 else np.nan
 
-                # Signal in Detector
-                idx = get_indices_in_ranges(rout, mt, chs, micro_time_ranges)
-                nbr_ph_color = len(idx)
-                if nbr_ph_color == 0:
-                    first, last = -1, -1
-                    duration_color = -1
-                    mean_macro_time_color = -1
-                    count_rate_color = -1
+        # Initialize the row dictionary
+        row_data = {
+            "First Photon": start_index,
+            "Last Photon": stop_index,
+            "Duration (ms)": duration * 1e3,
+            "Mean Macro Time (ms)": mean_macro_time * 1e3,
+            "Number of Photons": n_photons,
+            "Count Rate (KHz)": count_rate / 1e3,
+            "First File": filename,
+            "Last File": filename
+        }
+
+        # ----------------------------------------------------------------------
+        # 1) Precompute a boolean mask for each detector (channels + micro_time_ranges)
+        # ----------------------------------------------------------------------
+        detector_masks = {}
+        for det_name, det_info in detectors.items():
+            chs = det_info["chs"]
+            micro_time_ranges = det_info["micro_time_ranges"]
+
+            # (a) channel mask (is routing_channel in the allowed channels?)
+            ch_mask = np.isin(burst_rout, chs)
+
+            # (b) microtime mask (is micro_time within one of the specified ranges?)
+            micro_mask = np.zeros(len(burst_micro), dtype=bool)
+            for (mts, mtp) in micro_time_ranges:
+                micro_mask |= (burst_micro >= mts) & (burst_micro < mtp)
+
+            # Combined detector mask
+            det_mask = ch_mask & micro_mask
+            detector_masks[det_name] = det_mask
+
+        # ----------------------------------------------------------------------
+        # 2) Compute per-detector stats for the entire burst
+        # ----------------------------------------------------------------------
+        for det_name, mask in detector_masks.items():
+            idx = np.nonzero(mask)[0]
+            if len(idx) == 0:
+                # No photons in this detector for the entire burst
+                row_data[f"First Photon ({det_name})"] = -1
+                row_data[f"Last Photon ({det_name})"] = -1
+                row_data[f"Duration ({det_name}) (ms)"] = -1.0
+                row_data[f"Mean Macrotime ({det_name}) (ms)"] = -1.0
+                row_data[f"Number of Photons ({det_name})"] = 0
+                row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = -1.0
+            else:
+                first_idx = idx[0]
+                last_idx = idx[-1]
+                num_ph = len(idx)
+                dur_color_ms = (burst_macro[last_idx] - burst_macro[first_idx]) * res * 1e3
+                mean_mt_color_ms = ((burst_macro[last_idx] + burst_macro[first_idx]) / 2.0) * res * 1e3
+                rate_color_khz = (num_ph / dur_color_ms) if dur_color_ms > 0 else np.nan
+
+                row_data[f"First Photon ({det_name})"] = start_index + first_idx
+                row_data[f"Last Photon ({det_name})"] = start_index + last_idx
+                row_data[f"Duration ({det_name}) (ms)"] = dur_color_ms
+                row_data[f"Mean Macrotime ({det_name}) (ms)"] = mean_mt_color_ms
+                row_data[f"Number of Photons ({det_name})"] = num_ph
+                row_data[f"{det_name.capitalize()} Count Rate (KHz)"] = rate_color_khz
+
+        # ----------------------------------------------------------------------
+        # 3) Compute per-detector, per-window stats
+        # ----------------------------------------------------------------------
+        for window_name, w_ranges in windows.items():
+            # If you only need the first (r_start, r_stop) in windows[window_name]:
+            (r_start, r_stop) = w_ranges[0]
+
+            # Build a mask for the window's microtime range
+            w_mask = (burst_micro >= r_start) & (burst_micro < r_stop)
+
+            for det_name in detectors:
+                # Intersection of detector mask with the window mask
+                combined_mask = detector_masks[det_name] & w_mask
+                idx = np.nonzero(combined_mask)[0]
+                if len(idx) == 0:
+                    row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = -1.0
                 else:
-                    first, last = idx[0], idx[-1]
-                    nbr_ph_color = len(idx)
-                    duration_color = (mT[idx[-1]] - mT[idx[0]]) * res * 1000.0
-                    mean_macro_time_color = (mT[last] + mT[first]) / 2.0 * res  * 1000.0
-                    count_rate_color = nbr_ph_color / duration_color
+                    num_ph = len(idx)
+                    dur_window_ms = (burst_macro[idx[-1]] - burst_macro[idx[0]]) * res * 1e3
+                    rate_window_khz = (num_ph / dur_window_ms) if dur_window_ms > 0 else np.nan
+                    row_data[f"S {window_name} {det_name} (kHz) | {r_start}-{r_stop}"] = rate_window_khz
 
-                # Signal in Window
-                idx_window = get_indices_in_ranges(rout, mt, chs, [(r_start, r_stop)])
-                nbr_ph_window = len(idx_window)
-                if nbr_ph_window == 0:
-                    count_rate_window = -1.0
-                else:
-                    nbr_ph_window = len(idx_window)
-                    duration_window = (mT[idx_window[-1]] - mT[idx_window[0]]) * res * 1000.0
-                    count_rate_window = nbr_ph_window / duration_window
+        # Append row data
+        summary_data.append(row_data)
 
-                # Create the update dict as an OrderedDict
-                c = OrderedDict([
-                    (f"First Photon ({det})", first),
-                    (f"Last Photon ({det})", last),
-                    (f"Duration ({det}) (ms)", duration_color),
-                    (f"Mean Macrotime ({det}) (ms)", mean_macro_time_color),
-                    (f"Number of Photons ({det})", nbr_ph_color),
-                    (f"{det}".capitalize() + " Count Rate (KHz)", count_rate_color),
-                    (f'S {window} {det} (kHz) | {r_start}-{r_stop}', count_rate_window)
-                ])
-
-                # Update row_data with c
-                row_data.update(c)
-
-
-        summary_data.append(row_data)  # Add the row data to the summary list
-
+    # Build dataframe
     summary_df = pd.DataFrame(summary_data)
-
     return summary_df
 
 
-
 class CommaSeparatedIntegersValidator(QValidator):
+
     def validate(self, input_str, pos):
         # Allow empty input
         if not input_str:
@@ -426,7 +480,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         if self.use_upper:
             s = np.logical_and(s, dT <= self.dT_max)
 
-        if self.settings['count_rate_filter_active']:
+        if self.settings.get('filter_active', True):
             filter_options = self.settings['count_rate_filter']
             selection_idx = self.tttr.get_selection_by_count_rate(**filter_options, make_mask=True)
             s = np.logical_and(s[:-1], selection_idx >= 0)
@@ -478,8 +532,8 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.plot_select.setData(x=x, y=y)
 
     def update_dt_plot(self):
-        if isinstance(self.dT, np.ndarray):
-            dT = self.dT
+        dT = self.dT
+        if isinstance(dT, np.ndarray):
             n_min = self.plot_min
             n_max = self.plot_max
 
@@ -495,6 +549,9 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
             mx = np.ma.masked_array(x, mask=mask)
             my = np.ma.masked_array(y, mask=mask)
             self.plot_unselected.setData(x=mx.compressed(), y=my.compressed())
+        else:
+            print("Issue with dT:", dT)
+
 
     def update_mcs_plot(self):
         if self.toolButton_2.isChecked():
@@ -549,22 +606,29 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
             if isinstance(self.tttr, tttrlib.TTTR):
                 idx = np.where(self.selected)[0]
                 y, x = self.tttr[idx].get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1]
-                x = x[:idx_max]
-                y = y[:idx_max]
-                x *= 1e9  # units in nano seconds
-                self.plot_decay_selected.setData(x=x, y=y)
-                y, x = self.tttr.get_microtime_histogram(self.decay_coarse)
-                idx_max = np.where(y > 0)[0][-1]
-                x = x[:idx_max]
-                y = y[:idx_max]
-                x *= 1e9
-                self.plot_decay_all.setData(x=x, y=y)
+                if len(x) > 0:
+                    idx_max = np.where(y > 0)[0][-1]
+                    x = x[:idx_max]
+                    y = y[:idx_max]
+                    x *= 1e9  # units in nano seconds
+                    self.plot_decay_selected.setData(x=x, y=y)
+                    y, x = self.tttr.get_microtime_histogram(self.decay_coarse)
+                    idx_max = np.where(y > 0)[0][-1]
+                    x = x[:idx_max]
+                    y = y[:idx_max]
+                    x *= 1e9
+                    self.plot_decay_all.setData(x=x, y=y)
         else:
             self.plot_decay_all.setData(x=[1.0], y=[1.0])
             self.plot_decay_selected.setData(x=[1.0], y=[1.0])
 
     def update_plots(self, selection: str = "all"):
+        print("updating plots:", selection)
+        try:
+            if callable(self.callback_function):
+                self.callback_function()
+        except AttributeError:
+            pass
         if 'mcs' in selection:
             self.update_mcs_plot()
         if 'decay' in selection:
@@ -587,7 +651,10 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
                 n = len(self.settings['tttr_filenames'])
                 self.spinBox_4.setMaximum(n - 1)
                 self.comboBox.setEnabled(False)
-                self.tttr = tttrlib.TTTR(fn, self.filetype)
+                if isinstance(self.filetype, str):
+                    self.tttr = tttrlib.TTTR(fn, self.filetype)
+                else:
+                    self.tttr = tttrlib.TTTR(fn)
                 header = self.tttr.get_header()
                 s = header.json
                 d = json.loads(s)
@@ -604,9 +671,9 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
 
     def update_parameter(self):
         lb, ub = self.region_selector.getRegion()
-        self.settings['count_rate_filter_active'] = self.checkBox_4.isChecked()
+        self.settings['filter_active'] = self.checkBox_4.isChecked()
         self.settings['count_rate_filter']['n_ph_max'] = int(self.spinBox.value())
-        self.settings['count_rate_filter']['time_window'] = float(self.doubleSpinBox.value()) * 1e-3
+        self.settings['count_rate_filter']['time_window'] = max(0.05, float(self.doubleSpinBox.value())) * 1e-3
         self.settings['count_rate_filter']['invert'] = bool(self.checkBox.isChecked())
 
         self.settings['delta_macro_time_filter']['dT_min'] = 10.0**lb
@@ -622,6 +689,18 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
         self.tttr = None
+
+        # Clear each plot item
+        self.plot_unselected.setData([], [])
+        self.plot_selected.setData([], [])
+        self.plot_mcs_all.setData([], [])
+        self.plot_mcs_selected.setData([], [])
+        self.plot_decay_all.setData([], [])
+        self.plot_decay_selected.setData([], [])
+        self.plot_select.setData([], [])
+
+        # Clear the burst histogram entirely (removes bars/text)
+        self.pw_burst_histogram.clear()
 
     def updateUI(self):
         self.lineEdit.setText(self.current_tttr_filename)
@@ -729,13 +808,36 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.update_parameter()
 
     @chisurf.gui.decorators.init_with_ui("tttr_burst_finder.ui")
-    def __init__(self, *args, windows, detectors, **kwargs):
+    def __init__(self, *args,
+                 windows,
+                 detectors,
+                 callback_function=None,
+                 show_dT=True,
+                 show_burst_histogram=True,
+                 show_mcs=True,
+                 show_decay=True,
+                 show_filter=True,
+                 initial_trace_bin_width: float = 1.0,
+                 initial_photon_threshold: int = 100,
+                 initial_tw_size: float = 1.0,
+                 initial_max_gap: int = 6,
+                 initial_decay_coarse: int = 16,
+                 initial_number_of_burst_bins: int = 50,
+                 initial_dT_min: float = 0.0001,
+                 initial_dT_max: float = 0.15,
+                 **kwargs):
         self.setTitle("Photon filter / burst finder")
 
+        # Store the windows and detectors dictionaries and update corresponding UI elements.
         self.windows = windows
         self.detectors = detectors
         self.fill_detectors(detectors)
         self.fill_pie_windows(windows)
+        self.callback_function = callback_function
+
+        self.comboBox.clear()
+        self.comboBox.insertItem(0, "Auto")  # Insert "Auto" at index 0
+        self.comboBox.insertItems(1, list(tttrlib.TTTR.get_supported_container_names()))
 
         self.settings: dict = dict()
         tttr_filenames: typing.List[pathlib.Path] = list()
@@ -759,50 +861,62 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.setSizePolicy(sizePolicy)
 
         self.tttr = None
+
+        # Set default dT values (which will later be overridden by any passed initial_dT_min/max)
         self._dT_min = 0.0001
         self._dT_max = 0.15
 
-        # Plot widget: Burst size histogram
-        self.pw_burst_histogram = pg.plot()
-        self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
-        # self.pw_burst_histogram.setLabel('left', 'Counts')
-        # self.pw_burst_histogram.setLabel('bottom', 'Burst Length (time)')
-        self.pw_burst_histogram.resize(100, 80)
-
+        # Define common pens for the plots.
         color_all = QtGui.QColor(255, 255, 0, 64)
         color_selected = QtGui.QColor(0, 255, 255, 255)
         pen2 = pg.mkPen(color_all, width=1, style=QtCore.Qt.SolidLine)
         pen1 = pg.mkPen(color_selected, width=1, style=QtCore.Qt.SolidLine)
 
-        # Plot widget: delta macro time plot
-        self.pw_dT = pg.plot()
+        # Plot widget: Burst size histogram
+        self.pw_burst_histogram = pg.PlotWidget(parent=self, title='Burst size distribution')
+        self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
+        self.pw_burst_histogram.resize(100, 80)
+        self.pw_burst_histogram.setVisible(show_burst_histogram)
+
+        # Plot widget: Delta macro time plot
+        self.pw_dT = pg.PlotWidget(parent=self, title='Delta macrotime')
         self.plot_item_dt = self.pw_dT.getPlotItem()
         self.plot_unselected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_selected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_dT.resize(200, 40)
+        self.pw_dT.setVisible(show_dT)
 
         # Plot widget: MCS trace
-        self.pw_mcs = pg.plot()
+        self.pw_mcs = pg.PlotWidget(parent=self, title='Count-rate display')
         self.plot_item_mcs = self.pw_mcs.getPlotItem()
+        # Set axis labels for MCS trace plot
+        self.plot_item_mcs.setLabel('bottom', 'Time (s)')
+        self.plot_item_mcs.setLabel('left', 'Intensity')
         self.plot_mcs_all = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_mcs_selected = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_mcs.resize(200, 80)
+        self.pw_mcs.setVisible(show_mcs)
 
         # Plot widget: Fluorescence decay
-        self.pw_decay = pg.plot()
+        self.pw_decay = pg.PlotWidget(parent=self, title='Microtime histogram')
         self.plot_item_decay = self.pw_decay.getPlotItem()
+        # Set axis labels for decay plot
+        self.plot_item_decay.setLabel('bottom', 'Time (ns)')
+        self.plot_item_decay.setLabel('left', 'Counts')
         self.plot_decay_all = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen2)
         self.plot_decay_selected = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen1)
         self.pw_decay.resize(200, 80)
+        self.pw_decay.setVisible(show_decay)
 
         # Plot widget: Filtered photons
-        self.pw_filter = pg.plot()
+        self.pw_filter = pg.PlotWidget(parent=self, title='Filered/Photons')
         self.pw_filter.setXLink(self.pw_dT)
         self.pw_dT.setMouseEnabled(x=False, y=False)
         self.pw_filter.setMouseEnabled(x=False, y=False)
         self.plot_item_sel = self.pw_filter.getPlotItem()
         self.plot_select = self.plot_item_sel.plot(x=[1.0], y=[1.0])
         self.pw_filter.resize(200, 20)
+        self.pw_filter.setVisible(show_filter)
 
         self.plot_item_dt.setLogMode(False, True)
         self.plot_item_decay.setLogMode(False, True)
@@ -833,13 +947,34 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
 
         self.region_selector.sigRegionChangeFinished.connect(onRegionUpdate)
 
-        self.gridLayout_6.addWidget(self.pw_dT,              0, 0, 1, 3)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_filter,          1, 0, 1, 3)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_mcs,             2, 0, 1, 1)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_decay,           2, 1, 1, 1)  # (widget, row, column, rowSpan, columnSpan)
-        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)  # (widget, row, column, rowSpan, columnSpan)
+        # --- Add new initial settings for burst selection parameters ---
+        # Set the initial trace bin width (time window) for the MCS trace.
+        self.doubleSpinBox_4.setValue(initial_trace_bin_width)
+        # Set the photon number threshold.
+        self.spinBox.setValue(initial_photon_threshold)
+        # Set the maximum gap (for gap filling in burst selection).
+        self.spinBox_7.setValue(initial_max_gap)
+        # Set the decay coarse binning.
+        self.spinBox_5.setValue(initial_decay_coarse)
+        # Set the number of burst bins for the histogram.
+        self.spinBox_6.setValue(initial_number_of_burst_bins)
+        # Set the lower and upper limits for dT (delta macro time) filtering.
+        self._dT_min = initial_dT_min
+        self._dT_max = initial_dT_max
+        self.doubleSpinBox_2.setValue(initial_dT_min)
+        self.doubleSpinBox_3.setValue(initial_dT_max)
+        # Update the region selector to match the new dT limits.
+        self.doubleSpinBox.setValue(initial_tw_size)
+        self.region_selector.setRegion((np.log10(initial_dT_min), np.log10(initial_dT_max)))
 
-        # Connect actions
+        # Add widgets to layout.
+        self.gridLayout_6.addWidget(self.pw_dT, 0, 0, 1, 3)
+        self.gridLayout_6.addWidget(self.pw_filter, 1, 0, 1, 3)
+        self.gridLayout_6.addWidget(self.pw_mcs, 2, 0, 1, 1)
+        self.gridLayout_6.addWidget(self.pw_decay, 2, 1, 1, 1)
+        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)
+
+        # Connect actions.
         self.actionUpdate_Values.triggered.connect(self.update_parameter)
         self.actionUpdateUI.triggered.connect(self.updateUI)
         self.actionFile_changed.triggered.connect(self.read_tttr)
@@ -855,9 +990,8 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
         self.comboBox_2.currentTextChanged.connect(self.update_detectors)
         self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
 
-        # Set the custom validator
+        # Set the custom validator.
         validator = CommaSeparatedIntegersValidator()
         self.lineEdit_4.setValidator(validator)
 
         self.update_parameter()
-

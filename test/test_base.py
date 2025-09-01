@@ -255,6 +255,24 @@ class Tests(unittest.TestCase):
             None
         )
 
+    def test_hasattr(self):
+        # Test that hasattr correctly returns True for existing attributes
+        # and False for non-existent attributes
+        b = chisurf.base.Base(name="test_base", test_attr="test_value")
+
+        # Test existing attributes
+        self.assertTrue(hasattr(b, "name"))
+        self.assertTrue(hasattr(b, "test_attr"))
+        self.assertTrue(hasattr(b, "unique_identifier"))
+
+        # Test non-existent attributes
+        self.assertFalse(hasattr(b, "non_existent_attr"))
+        self.assertFalse(hasattr(b, "another_non_existent_attr"))
+
+        # Test that accessing non-existent attributes raises AttributeError
+        with self.assertRaises(AttributeError):
+            _ = b.non_existent_attr
+
     def test_data_group(self):
         a_value = 1.2
         c_value = 3.1

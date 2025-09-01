@@ -257,11 +257,15 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
         self._parameters.append(p)
 
     def finalize(self):
-        for p in self.parameters_all:
-            try:
-                p.controller.finalize()
-            except AttributeError:
-                chisurf.logging.warning("AttributeError:", p, " has no controller.")
+        for name, param in self.parameters_all_dict.items():
+            controller = getattr(param, "controller", None)
+            if controller is not None:
+                try:
+                    controller.finalize()
+                except Exception as e:
+                    chisurf.logging.warning(f"Failed to finalize controller of parameter '{name}': {e}")
+            else:
+                chisurf.logging.warning(f"Parameter '{name}' has no controller to finalize.")
 
     # def __getattribute__(
     #         self,
@@ -302,7 +306,7 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
-        if chisurf.verbose:
+        if chisurf.settings.cs_settings['verbose']:
             print("---------------")
             print("Class: %s" % self.__class__.name)
             print(kwargs)
@@ -322,4 +326,3 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             p0 = args[0]
             if isinstance(p0, FittingParameterGroup):
                 self.__dict__ = p0.__dict__
-

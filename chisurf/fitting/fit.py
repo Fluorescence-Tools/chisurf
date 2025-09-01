@@ -151,6 +151,7 @@ class Fit(chisurf.base.Base):
             xmin: int = 0,
             xmax: int = 0,
             model_kw: typing.Dict = None,
+            group: list = None,
             **kwargs
     ):
         super().__init__(**kwargs)
@@ -168,6 +169,10 @@ class Fit(chisurf.base.Base):
         if model_kw is None:
             model_kw = {}
         self._model_kw = model_kw
+        # Store the group reference before creating the model
+        if isinstance(group, list):
+            self.group = group
+            self.group.append(self)
         self.model = model_class
 
     def __getstate__(self):
@@ -278,7 +283,6 @@ class Fit(chisurf.base.Base):
                 )
 
     def run(self, *args, **kwargs) -> None:
-        fit = self
         fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
@@ -458,6 +462,7 @@ class FitGroup(Fit):
             )
 
     def finalize(self):
+        self.update()
         self._model.finalize()
 
     def update(self) -> None:
@@ -502,9 +507,9 @@ class FitGroup(Fit):
             fit = Fit(
                 model_class=model_class,
                 data=d,
-                model_kw=model_kw
+                model_kw=model_kw,
+                group=self.grouped_fits
             )
-            self.grouped_fits.append(fit)
 
         super().__init__(
             data=data

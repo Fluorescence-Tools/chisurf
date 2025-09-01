@@ -9,18 +9,58 @@ import zlib
 import copy
 import yaml
 import pickle
+import logging
 
 import numpy as np
 import chisurf
 
-from slugify import slugify
+import re
+import unicodedata
 from collections.abc import Iterable
+
+
+def slugify(text, separator='_', regex_pattern=r'[^-a-z0-9_]+'):
+    """
+    Convert a string to a slug.
+
+    Parameters
+    ----------
+    text : str
+        The string to convert
+    separator : str
+        The separator to use (default is '_')
+    regex_pattern : str
+        The regex pattern used to identify characters to replace
+
+    Returns
+    -------
+    str
+        A slugified string
+    """
+    # Convert to lowercase
+    text = str(text).lower()
+
+    # Convert accented characters to their ASCII equivalents
+    text = unicodedata.normalize('NFKD', text)
+    text = ''.join([c for c in text if not unicodedata.combining(c)])
+
+    # Replace characters matching the regex pattern with the separator
+    text = re.sub(regex_pattern, separator, text)
+
+    # Replace multiple consecutive separators with a single one
+    text = re.sub(f'{separator}+', separator, text)
+
+    # Remove leading/trailing separators
+    text = text.strip(separator)
+
+    return text
 
 
 def to_elementary(
     obj: typing.Dict,
     verbose: bool = False,
-    remove_protected: bool = True
+    remove_protected: bool = True,
+    skip_qt_widgets: bool = False
 ) -> typing.Dict:
     """Creates a dictionary containing only elements of (basic) elementary types.
 
@@ -39,6 +79,9 @@ def to_elementary(
         If set to True (the default value is True) protected dictonary
         items, i.e., items with a key that start with an underscore, are not
         copied to the target dictionary.
+    skip_qt_widgets : bool
+        If set to True (the default value is False) Qt widgets from PyQt5
+        will be skipped during conversion to avoid serialization issues.
 
     Returns
     -------
@@ -46,59 +89,80 @@ def to_elementary(
         Dictionary that only contains objects of the type stings,
         floats, int, or boolean.
     """
+    logging.debug(f"to_elementary: type={type(obj)}")
     if verbose:
         print(type(obj))
     if isinstance(obj, dict):
+        logging.debug("to_elementary: Converting elements of dict.")
         if verbose:
             print("Converting elements of dict.")
         re = dict()
         for k in obj:
             if (k[0] == "_") and remove_protected:
+                logging.debug(f"to_elementary: Skipping protected key: {k}")
                 continue
+            logging.debug(f"to_elementary: Converting key: {k}")
             if verbose:
                 print("Converting key:", k)
             re[k] = to_elementary(
                 obj=obj[k],
                 verbose=verbose,
-                remove_protected=remove_protected
+                remove_protected=remove_protected,
+                skip_qt_widgets=skip_qt_widgets
             )
         return re
     # Check numpy types first, as np.float also is a python float instance
     elif isinstance(obj, np.floating):
+        logging.debug("to_elementary: Converting numpy float to python.")
         if verbose:
             print("Converting numpy float to python.")
         return float(obj)
     elif isinstance(obj, (str, float, int, bool)) or obj is None:
+        logging.debug(f"to_elementary: Passing through elementary type: {type(obj)}")
         return obj
     elif isinstance(obj, np.ndarray):
+        logging.debug(f"to_elementary: Converting np.ndarray to list. Shape: {obj.shape}")
         if verbose:
             print("Converting np.ndarray to list.")
         return obj.tolist()
     elif isinstance(obj, Iterable):
+        logging.debug("to_elementary: Converting Iterable to list.")
         if verbose:
             print("Converting Iterable list.")
         return [
             to_elementary(
                 obj=e,
                 verbose=verbose,
-                remove_protected=remove_protected
+                remove_protected=remove_protected,
+                skip_qt_widgets=skip_qt_widgets
             ) for e in obj
         ]
     elif isinstance(obj, np.integer):
+        logging.debug("to_elementary: Converting numpy integer to python.")
         if verbose:
             print("Converting numpy integer to python.")
         return int(obj)
+    # Check if it's a Qt widget and skip if requested
+    elif skip_qt_widgets and hasattr(obj, '__module__') and obj.__module__.startswith('PyQt5'):
+        logging.warning(f"Skipping element {obj.__class__.__name__}")
+        return None
     elif isinstance(obj, chisurf.base.Base):
+        logging.debug(f"to_elementary: Converting chisurf.base.Base of type {obj.__class__.__name__}.")
         if verbose:
             print("Converting chisurf.base.Base.")
         return to_elementary(
             obj.to_dict(
                 convert_values_to_elementary=True,
                 copy_values=True,
-                remove_protected=remove_protected
-            )
+                remove_protected=remove_protected,
+                skip_qt_widgets=skip_qt_widgets
+            ),
+            verbose=verbose,
+            remove_protected=remove_protected,
+            skip_qt_widgets=skip_qt_widgets
         )
     else:
+        logging.warning(f"to_elementary: Object of type {type(obj)} was not converted to basic type")
         print("WARNING object was not converted to basic type")
         return str(obj)
 
@@ -154,7 +218,7 @@ def find_objects(
         if isinstance(value, searched_object_type):
             re.append(value)
         elif isinstance(value, list):
-            re += find_objects(value, searched_object_type)
+            re += find_objects(value, searched_object_type, remove_doublets)
     if remove_doublets:
         return list(set(re))
     else:
@@ -163,7 +227,7 @@ def find_objects(
 
 class Base(object):
 
-    _verbose = chisurf.verbose
+    _verbose = chisurf.settings.cs_settings['verbose']
     supported_save_file_types: typing.List[str] = ["yaml", "json", "pkl"]
     meta_data: typing.Dict = dict()
 
@@ -200,7 +264,8 @@ class Base(object):
             self,
             filename: str,
             file_type: str = 'yaml',
-            verbose: bool = False
+            verbose: bool = False,
+            skip_qt_widgets: bool = False
     ) -> None:
         chisurf.logging.info(
             "%s of type %s is saving filename %s as file type %s" % (
@@ -217,9 +282,9 @@ class Base(object):
             root, ext = os.path.splitext(filename)
             filename = root + "." + file_type
             if file_type == "yaml":
-                txt = self.to_yaml()
+                txt = self.to_yaml(skip_qt_widgets=skip_qt_widgets)
             elif file_type == "json":
-                txt = self.to_json()
+                txt = self.to_json(skip_qt_widgets=skip_qt_widgets)
             elif file_type == "pkl":
                 txt = pickle.dumps(self)
                 mode = 'wb'
@@ -255,7 +320,8 @@ class Base(object):
             self,
             remove_protected: bool = False,
             copy_values: bool = True,
-            convert_values_to_elementary: bool = False
+            convert_values_to_elementary: bool = False,
+            skip_qt_widgets: bool = False
     ) -> dict:
         """
 
@@ -273,6 +339,9 @@ class Base(object):
             converted using the function *chisurf.base.to_elementary* to an
             elementary data type, i.e., float, int, bool, str and list of these
             types.
+        skip_qt_widgets: bool
+            If this parameter is set to True (default False), Qt widgets from PyQt5
+            will be skipped during dictionary creation to avoid serialization issues.
 
         Returns
         -------
@@ -281,13 +350,21 @@ class Base(object):
             the attribute *__dict__*.
 
         """
-        if to_elementary:
+        if convert_values_to_elementary:
             copy_values = True
         if remove_protected:
             d = dict()
             for key in self.__dict__:
                 if key[0] != '_':
                     try:
+                        # Skip Qt widgets if requested
+                        if skip_qt_widgets:
+                            value = self.__dict__[key]
+                            # Check if it's a Qt widget
+                            if hasattr(value, '__module__') and value.__module__.startswith('PyQt5'):
+                                chisurf.logging.warning(f"Skipping element {key}")
+                                continue
+                        
                         if copy_values:
                             d[key] = copy.copy(self.__dict__[key])
                         else:
@@ -297,6 +374,17 @@ class Base(object):
         else:
             if copy_values:
                 d = copy.copy(self.__dict__)
+                # Skip Qt widgets if requested
+                if skip_qt_widgets:
+                    keys_to_remove = []
+                    for key, value in d.items():
+                        if hasattr(value, '__module__') and value.__module__.startswith('PyQt5'):
+                            keys_to_remove.append(key)
+                    
+                    for key in keys_to_remove:
+                        chisurf.logging.warning(f"Skipping element {key}")
+                        d.pop(key, None)
+                
                 d["meta_data"] = copy.deepcopy(self.meta_data)
                 return d
             else:
@@ -317,15 +405,19 @@ class Base(object):
             indent: int = 4,
             sort_keys: bool = True,
             d: typing.Dict = None,
-            remove_protected: bool = False
+            remove_protected: bool = False,
+            skip_qt_widgets: bool = False
     ) -> str:
         if d is None:
             d = self.to_dict(
-                remove_protected=remove_protected
+                remove_protected=remove_protected,
+                skip_qt_widgets=skip_qt_widgets
             )
         return json.dumps(
             obj=to_elementary(
-                d
+                d,
+                remove_protected=remove_protected,
+                skip_qt_widgets=skip_qt_widgets
             ),
             indent=indent,
             sort_keys=sort_keys
@@ -334,14 +426,18 @@ class Base(object):
     def to_yaml(
             self,
             remove_protected: bool = True,
-            convert_values_to_elementary: bool = True
+            convert_values_to_elementary: bool = True,
+            skip_qt_widgets: bool = False
     ) -> str:
         return yaml.dump(
             data=to_elementary(
                 self.to_dict(
                     remove_protected=remove_protected,
-                    convert_values_to_elementary=convert_values_to_elementary
-                )
+                    convert_values_to_elementary=convert_values_to_elementary,
+                    skip_qt_widgets=skip_qt_widgets
+                ),
+                remove_protected=remove_protected,
+                skip_qt_widgets=skip_qt_widgets
             )
         )
 
@@ -417,11 +513,7 @@ class Base(object):
             print(j)
         self.from_dict(j)
 
-    def __setattr__(
-            self,
-            key: str,
-            value: object
-    ):
+    def __setattr__(self, key: str, value: object):
         propobj = getattr(self.__class__, key, None)
         if isinstance(propobj, property):
             if propobj.fset is None:
@@ -430,16 +522,15 @@ class Base(object):
         else:
             super().__setattr__(key, value)
 
-    def __getattr__(
-            self,
-            key: str
-    ):
+    def __getattr__(self, key: str):
         propobj = getattr(self.__class__, key, None)
         # the key refers to a property
         if isinstance(propobj, property):
             if propobj.fget is None:
                 raise AttributeError("can't get attribute")
             return propobj.fget(self)
+        if propobj is None:
+            raise AttributeError(f"{self.__class__.__name__} object has no attribute '{key}'")
         return propobj
 
     def __getstate__(self):
@@ -497,6 +588,10 @@ class Base(object):
         if meta_data is None:
             meta_data = dict()
         self.meta_data = meta_data
+
+        self.verbose = verbose
+        if len(args) > 0 and isinstance(args[0], dict):
+            kwargs = args[0]
 
         if unique_identifier is None:
             unique_identifier = str(uuid.uuid4())

@@ -6,7 +6,7 @@ import numbers
 import os
 import pathlib
 
-from chisurf.gui import QtGui, QtWidgets
+from chisurf.gui import QtGui, QtWidgets, QtCore
 from io import BytesIO
 
 import pyqtgraph as pg
@@ -16,6 +16,7 @@ import chisurf.fio
 import chisurf.settings
 import chisurf.curve
 import chisurf.base
+import chisurf
 
 
 def get_widgets_in_layout(
@@ -70,9 +71,16 @@ class MyMessageBox(QtWidgets.QMessageBox):
 
         # Add fortune message (if enabled) with a better look
         if show_fortune:
-            fortune = chisurf.gui.widgets.fortune.get_fortune()
-            fortune_html = f"<br><i>{fortune}</i><br><br>"  # Italicized fortune text, with spacing
-            self.setInformativeText(formatted_info + fortune_html)
+            try:
+                fortune = chisurf.gui.widgets.fortune.get_fortune()
+                if fortune:  # Only add fortune if it's not empty
+                    fortune_html = f"<br><i>{fortune}</i><br><br>"  # Italicized fortune text, with spacing
+                    self.setInformativeText(formatted_info + fortune_html)
+                else:
+                    self.setInformativeText(formatted_info)
+            except Exception:
+                # If there's any error getting the fortune, just show the info
+                self.setInformativeText(formatted_info)
         else:
             self.setInformativeText(formatted_info)
 
@@ -180,6 +188,42 @@ class FileList(QtWidgets.QListWidget):
         self.setWindowIcon(icon)
 
 
+class LogListWidget(QtWidgets.QListWidget):
+    """
+    Custom QListWidget that handles Ctrl+C to copy all selected items.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.setUniformItemSizes(True)
+        
+    def keyPressEvent(self, event):
+        """Handle key press events, specifically Ctrl+C for copying selected items."""
+        # Check if Ctrl+C was pressed
+        if event.key() == QtCore.Qt.Key_C and event.modifiers() & QtCore.Qt.ControlModifier:
+            self.copy_selected_items()
+        else:
+            # For all other key events, use the default handler
+            super().keyPressEvent(event)
+            
+    def copy_selected_items(self):
+        """Copy the text of all selected items to the clipboard."""
+        selected_items = self.selectedItems()
+        if not selected_items:
+            return
+            
+        # Collect text from all selected items
+        texts = [item.text() for item in selected_items]
+        text_to_copy = '\n'.join(texts)
+        
+        # Copy to clipboard
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(text_to_copy)
+        
+        # Optional: Log that items were copied
+        chisurf.logging.info(f"Copied {len(selected_items)} log entries to clipboard")
+
+
 def get_filename(
         description: str = '',
         file_type: str = 'All files (*.*)',
@@ -220,10 +264,10 @@ def open_files(
     running program (ChiSurf) is updated according to the folder of the opened
     file.
 
-    :param working_path:
-    :param description:
-    :param file_type:
-    :return:
+    :param working_path: Base path to open the dialog in. If None, uses the current working path.
+    :param description: Dialog title or description.
+    :param file_type: File filter to display.
+    :return: List of selected filenames, or empty list if cancel is clicked or an error occurs.
     """
     if working_path is None:
         working_path = chisurf.working_path
@@ -233,45 +277,59 @@ def open_files(
         str(working_path.absolute()),
         file_type
     )[0]
-    chisurf.working_path = pathlib.Path(filenames[0]).home()
-    return filenames
+    try:
+        # Only update the working path if at least one file was selected
+        if filenames:
+            # Use parent() to get the directory containing the file
+            chisurf.working_path = pathlib.Path(filenames[0]).parent
+    except Exception as e:
+        # Log the error but don't show it to the user
+        import logging
+        logging.error(f"Error in open_files: {e}")
 
+    return filenames
 
 def save_file(
         description: str = '',
         file_type: str = 'All files (*.*)',
         working_path: pathlib.Path = None
 ) -> str:
-    """Same as open see above a file within a working path. If no path is
-    specified the last path is used. After using this function the current
-    working path of the running program (ChiSurf) is updated according to the
-    folder of the opened
-    file.
+    """Opens a file save dialog. If cancel is clicked, returns None.
 
-    :param working_path:
-    :param description:
-    :param file_type:
-    :return:
+    Updates the current working path of the program (ChiSurf) based on the folder
+    of the saved file.
+
+    :param description: Dialog title or description.
+    :param file_type: File filter to display.
+    :param working_path: Base path to open the dialog in.
+    :return: The selected filename, or None if cancel is clicked.
     """
     if isinstance(working_path, str):
         working_path = chisurf.working_path / working_path
     if working_path is None:
         working_path = chisurf.working_path
+
     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
-            None,
-                caption=description,
-                dir=str(working_path.absolute()),
-                filter=file_type
+        None,
+        caption=description,
+        dir=str(working_path.absolute()),
+        filter=file_type
     )
-    # Move working path to path of file
-    chisurf.working_path = pathlib.Path(filename).home()
+
+    # If cancel is clicked, filename will be an empty string.
+    if not filename:
+        return None
+
+    # Update the working path to the directory containing the saved file.
+    chisurf.working_path = pathlib.Path(filename).parent
     return filename
 
 
 def get_directory(
         filename_ending: str = None,
         get_files: bool = False,
-        directory: pathlib.Path = None
+        directory: pathlib.Path = None,
+        caption: str = None
 ) -> typing.Tuple[pathlib.Path, typing.List[str]]:
     """Opens a new window where you can choose a directory. The current
     working path is updated to this directory.
@@ -285,11 +343,15 @@ def get_directory(
     fn_ending = filename_ending
     if directory is None:
         directory = chisurf.working_path
+    caption_text = caption or "Select Directory"
     if isinstance(directory, pathlib.Path):
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory", str(directory.absolute()))
+        directory_str = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text, str(directory.absolute()))
     else:
-        directory = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Directory")
-    directory = pathlib.Path(directory)
+        directory_str = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text)
+    # If cancel is clicked, return None and do not update working path
+    if not directory_str:
+        return None, []
+    directory = pathlib.Path(directory_str)
     chisurf.working_path = directory
     if not get_files:
         return directory, []

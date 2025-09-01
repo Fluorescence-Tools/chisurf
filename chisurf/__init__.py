@@ -40,10 +40,54 @@ verbose = chisurf.settings.verbose
 __jupyter_process__ = None
 __jupyter_address__ = None
 
+# Initialize logging early and idempotently so we capture startup issues before GUI widgets exist.
+try:
+    if not globals().get("__logging_initialized__", False):
+        # Determine log level from settings; fall back to INFO
+        try:
+            _level = chisurf.settings.cs_settings.get('log_level', None)
+        except Exception:
+            _level = None
+        if not isinstance(_level, int):
+            _level = getattr(chisurf.settings, 'log_level', None)
+        if not isinstance(_level, int):
+            _level = logging.INFO
 
-logging.basicConfig(
-    filename=settings.session_log,
-    level=logging.DEBUG
-)
+        # Determine session log file
+        log_file = getattr(chisurf.settings, 'session_log', None)
 
+        fmt = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+        root = logging.getLogger()
+        root.setLevel(_level)
 
+        # Attach file handler if not already attached
+        has_file = False
+        for h in list(root.handlers):
+            try:
+                if isinstance(h, logging.FileHandler) and getattr(h, 'baseFilename', None) == (str(log_file) if log_file else None):
+                    has_file = True
+            except Exception:
+                pass
+        if log_file and not has_file:
+            try:
+                fh = logging.FileHandler(str(log_file), encoding='utf-8')
+                fh.setLevel(_level)
+                fh.setFormatter(fmt)
+                root.addHandler(fh)
+            except Exception:
+                # If file handler fails (e.g., path issues), continue with console only
+                pass
+
+        # Attach stderr stream handler if not already attached
+        has_stream = any(isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler) for h in root.handlers)
+        if not has_stream:
+            sh = logging.StreamHandler(stream=sys.stderr)
+            sh.setLevel(_level)
+            sh.setFormatter(fmt)
+            root.addHandler(sh)
+
+        __logging_initialized__ = True
+        logging.getLogger(__name__).debug("Early logging initialized (level=%s, file=%s)", _level, log_file)
+except Exception:
+    # Last resort: basic stderr logging
+    logging.basicConfig(level=logging.INFO)

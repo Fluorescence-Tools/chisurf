@@ -245,7 +245,7 @@ def calc_internal_coordinates_bb(
         **kwargs
 ):
     if verbose is None:
-        verbose = chisurf.verbose
+        verbose = chisurf.settings.cs_settings['verbose']
 
     structure.coord_i = np.zeros(
         structure.atoms.shape[0],
@@ -405,10 +405,12 @@ class ProteinCentroid(
             *args,
             **kwargs
     ):
+        # Protonation is now optional and defaults to False since the protonate method is a no-op
+        protonate_param = kwargs.pop('protonate', False)
         super().__init__(
             p_object,
             *args,
-            protonate=True,
+            protonate=protonate_param,
             **kwargs
         )
 
@@ -552,4 +554,3 @@ class ProteinCentroid(
         #coord_i = np.zeros(self.atoms.shape[0], dtype={'names': internal_keys, 'formats': internal_formats})
         calc_internal_coordinates_bb(self)
         self.update_coordinates()
-

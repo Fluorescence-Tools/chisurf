@@ -169,7 +169,17 @@
           <string>save</string>
          </property>
         </widget>
-       </item>
+      </item>
+      <item row="2" column="3">
+        <widget class="QToolButton" name="toolButton_add_to_chisurf">
+         <property name="text">
+          <string>Add to ChiSurf</string>
+         </property>
+         <property name="toolTip">
+          <string>Add correlation curve to ChiSurf as a dataset</string>
+         </property>
+        </widget>
+      </item>
        <item row="2" column="1">
         <widget class="QLineEdit" name="lineEdit_2">
          <property name="readOnly">

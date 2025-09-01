@@ -219,9 +219,11 @@ class PdaSimpleModel(ModelCurve):
     def update_model(
             self,
             pch0: np.array = None,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             **kwargs
     ):
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         self.pda.background_ch1 = self.background.bg0
         self.pda.background_ch2 = self.background.bg1
         p = self.pch0.pch0_spectrum

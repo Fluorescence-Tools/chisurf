@@ -11,7 +11,7 @@ import chisurf.decorators
 import chisurf.structure
 from chisurf.structure.potential.potentials import HPotential, GoPotential, \
     MJPotential, CEPotential, ClashPotential, ASA
-from scikit_fluorescence.modeling.label.potential import AvPotential
+from chisurf.structure.av.potential import AvPotential
 
 
 class HPotentialWidget(HPotential, QtWidgets.QWidget):

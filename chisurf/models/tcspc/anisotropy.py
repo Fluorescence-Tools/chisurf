@@ -4,8 +4,10 @@ import numpy as np
 
 import chisurf.fluorescence
 import chisurf.fitting
-from chisurf.fitting.parameter import FittingParameterGroup
 import chisurf.math.datatools
+
+from chisurf import logging
+from chisurf.fitting.parameter import FittingParameterGroup
 
 
 class Anisotropy(FittingParameterGroup):
@@ -73,6 +75,69 @@ class Anisotropy(FittingParameterGroup):
     @polarization_type.setter
     def polarization_type(self, v: str):
         self._polarization_type = v
+
+    def set_polarization_by_group_position(self, fit, model_instance):
+        """
+        Set the polarization type based on the position of a fit in a group.
+        
+        This method unifies the polarization assignment logic that was previously
+        duplicated in LifetimeModel.__init__ and LifetimeModelWidget.__init__.
+        
+        When called, this method checks every fit in the group and updates their
+        polarization types based on their position in the group. This ensures that
+        all fits have the correct polarization type, even if they were added
+        sequentially to the group.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object that may be part of a group
+        model_instance : object
+            The model instance (self) that is calling this method
+
+        Returns
+        -------
+        bool
+            True if polarization was set, False otherwise
+        """
+        logging.debug("Anisotropy: Setting polarization type based on group position")
+        logging.debug(f"Model instance: {model_instance.__class__.__name__}")
+        # Check if the fit has a group attribute
+        logging.debug(f"Fit has group attribute: {hasattr(fit, 'group')}")
+        if hasattr(fit, 'group'):
+            group = fit.group
+            logging.debug(f"Fit group: {group}")
+            logging.debug(f"Fit group length: {len(group)}")
+            if len(group) == 1:
+                # Single fit in group gets magic angle
+                logging.info("Single fit in group, setting polarization to 'vm'")
+                self.polarization_type = 'vm'
+                return True
+            else:
+                # Update polarization for all fits in the group
+                logging.info("Updating polarization for all fits in the group")
+                for i, f in enumerate(group):
+                    logging.debug(f"Fit index: {i}")
+                    if hasattr(f, 'model') and f.model is not None:
+                        model = f.model
+                        logging.debug("Using f.model")
+                    else:
+                        logging.debug("Using model_instance")
+                        # current model (not yet added to fit)
+                        model = model_instance
+
+                    # Set polarization type based on index (even indices get 'vv', odd indices get 'vh')
+                    if i % 2 == 0:
+                        logging.info(f"Setting polarization to 'vv' for fit at index {i}")
+                        model.anisotropy.polarization_type = 'vv'
+                    else:
+                        logging.info(f"Setting polarization to 'vh' for fit at index {i}")
+                        model.anisotropy.polarization_type = 'vh'
+
+                return True
+
+        # If we get here, polarization was not set
+        return False
 
     def get_decay(self, lifetime_spectrum: np.ndarray):
         return chisurf.fluorescence.anisotropy.decay.calculcate_spectrum(

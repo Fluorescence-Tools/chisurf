@@ -92,6 +92,7 @@ def read_fcs(
     :return:
     """
 
+    import chisurf.fio.fluorescence.pqres
     name_reader = {
         'confocor3': chisurf.fio.fluorescence.fcs.confocor3.read_zeiss_fcs,
         'china-mat': chisurf.fio.fluorescence.fcs.china.read_china_mat,
@@ -99,7 +100,8 @@ def read_fcs(
         'pq.dat': chisurf.fio.fluorescence.fcs.pq_dat.read_dat,
         'yaml': chisurf.fio.fluorescence.fcs.fcs_yaml.read_yaml,
         'kristine': chisurf.fio.fluorescence.fcs.kristine.read_kristine,
-        'pycorrfit': chisurf.fio.fluorescence.fcs.pycorrfit.read_pycorrfit
+        'pycorrfit': chisurf.fio.fluorescence.fcs.pycorrfit.read_pycorrfit,
+        'pqres': chisurf.fio.fluorescence.pqres.read_pqres_fcs
     }
 
     data_sets: typing.List[chisurf.data.DataCurve] = list()
@@ -109,7 +111,7 @@ def read_fcs(
         csv = chisurf.fio.ascii.Csv()
         csv.load(
             filename=filename,
-            verbose=chisurf.verbose,
+            verbose=chisurf.settings.cs_settings['verbose'],
             **kwargs
         )
         x, y = csv.data[0], csv.data[1]
@@ -122,7 +124,8 @@ def read_fcs(
         'pq.dat',
         'yaml',
         'kristine',
-        'pycorrfit'
+        'pycorrfit',
+        'pqres'
     ]:
         reader = name_reader[reader_name]
         ds: typing.List[FCSDataset] = reader(
@@ -211,5 +214,3 @@ def write_fcs(
                 fp.write(
                     txt
                 )
-
-

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import scipy.stats
 
@@ -75,6 +77,11 @@ class Generic(FittingParameterGroup):
         if isinstance(v, Curve):
             self._background_curve = v
 
+    def unload_background_curve(self):
+        """Unload the background curve and reset it to default (None)
+        """
+        self._background_curve = None
+
     @property
     def t_bg(self) -> float:
         """Measurement time of background-measurement
@@ -109,7 +116,10 @@ class Generic(FittingParameterGroup):
         self._background_curve = background_curve
         self._sc = FittingParameter(
             value=0.0,
-            name='sc'
+            name='sc',
+            lb=0.0,
+            ub=100.0,
+            bounds_on=True
         )
         self._bg = FittingParameter(
             value=0.0,
@@ -145,6 +155,12 @@ class Corrections(FittingParameterGroup):
     def lintable(self, v: np.array):
         self._curve = v
         self._lintable = self.calc_lintable(v.y)
+
+    def unload_lintable(self):
+        """Unload the linearization table and reset it to default (array of ones)
+        """
+        self._curve = None
+        self._lintable = None
 
     @property
     def window_length(self) -> int:
@@ -334,6 +350,27 @@ class Convolve(FittingParameterGroup):
         self._stop.value = v
 
     @property
+    def irf_start(self) -> int:
+        return int(self._irf_start.value // self.dt)
+
+    @irf_start.setter
+    def irf_start(self, v: int):
+        # Convert to numpy array of long integers
+        v_array = np.array([v], dtype=np.int64)
+        self._irf_start.value = v_array
+
+    @property
+    def irf_stop(self) -> int:
+        stop = int(self._irf_stop.value // self.dt)
+        return stop
+
+    @irf_stop.setter
+    def irf_stop(self, v: int):
+        # Convert to numpy array of long integers
+        v_array = np.array([v], dtype=np.int64)
+        self._irf_stop.value = v_array
+
+    @property
     def rep_rate(self) -> float:
         return self._rep.value
 
@@ -357,8 +394,24 @@ class Convolve(FittingParameterGroup):
     def n0(self, v: float):
         self._n0.value = v
 
-    @property
-    def irf(self) -> chisurf.curve.Curve:
+    def _process_irf(self, normalize: bool = True) -> chisurf.curve.Curve:
+        """Helper method to process IRF with common operations.
+        
+        This method handles the common operations for both normalized and unnormalized IRF:
+        1. Get the IRF from self._irf
+        2. Subtract lamp background
+        3. Clip negative values
+        4. Zero out IRF values outside the specified range
+        5. Optionally normalize or scale to original height
+        6. Apply timeshift
+        
+        Args:
+            normalize: If True, normalize the IRF (unless truncated). If False, scale to original height.
+            verbose: If True, log processing steps.
+            
+        Returns:
+            chisurf.curve.Curve: The processed IRF curve.
+        """
         if isinstance(self._irf, chisurf.curve.Curve):
             irf = self._irf
             irf -= self.lamp_background
@@ -374,8 +427,69 @@ class Convolve(FittingParameterGroup):
             y *= np.sum(self.data.y)
             irf = chisurf.curve.Curve(x=x, y=y)
             irf.y[irf.y < 1] = 0.0
+
+        irf -= self.lamp_background
+        irf.y = np.clip(irf.y, 0, None)
+
+        # Zero out the IRF outside the specified range
+        irf_start_idx = self.irf_start
+        irf_stop_idx = self.irf_stop
+        
+        logging.debug(f'Zeroing out IRF y-values. Start: {irf_start_idx}, Stop: {irf_stop_idx}, Total: {len(irf.y)}')
+            
+        if irf_start_idx > 0 or irf_stop_idx < len(irf.y):
+            # Create a copy to avoid modifying the original
+            irf_y = np.copy(irf.y)
+            # Zero out before irf_start
+            if irf_start_idx > 0:
+                irf_y[:irf_start_idx] = 0.0
+                logging.debug(f'Zeroed out IRF from 0 to {irf_start_idx}')
+            # Zero out after irf_stop
+            if irf_stop_idx < len(irf_y):
+                irf_y[irf_stop_idx:] = 0.0
+                logging.debug(f'Zeroed out IRF from {irf_stop_idx} to {len(irf_y)}')
+            # Create a new curve with the modified y values
+            irf = chisurf.curve.Curve(x=irf.x, y=irf_y)
+            logging.debug(f'Created new IRF curve with truncated values')
+        
+        # Handle normalization or scaling
+        is_truncated = irf_start_idx > 0 or irf_stop_idx < len(irf.y)
+        
+        if normalize:
+            # Skip normalization if we've truncated the IRF
+            if is_truncated:
+                logging.debug(f'Skipping normalization for truncated IRF')
+            else:
+                # Normalize the IRF only if we haven't truncated it
+                irf.normalize(mode="sum", inplace=True)
+                logging.debug(f'Normalized non-truncated IRF')
+        else:
+            logging.debug(f'No IRF scaling')
+        
+        # Apply timeshift
         irf = irf << float(self.timeshift)
         return irf
+
+    @property
+    def irf(self) -> chisurf.curve.Curve:
+        """Returns the normalized IRF for convolution calculations.
+        
+        Returns:
+            chisurf.curve.Curve: The normalized IRF curve.
+        """
+        return self._process_irf(normalize=True)
+
+    @property
+    def unnormalized_irf(self) -> chisurf.curve.Curve:
+        """Returns the IRF at its original height for plotting purposes.
+        
+        This method is similar to the `irf` property but scales the IRF by the
+        `n_photons_irf` factor to restore its original height.
+        
+        Returns:
+            chisurf.curve.Curve: The unnormalized IRF curve.
+        """
+        return self._process_irf(normalize=False)
 
     @property
     def _irf(self) -> chisurf.curve.Curve:
@@ -404,6 +518,14 @@ class Convolve(FittingParameterGroup):
             # number of molecules in the excited state
             tau0 = np.dot(x, y).sum() / y.sum()
             self.n0 = y.sum() / tau0
+
+            # Update the upper bound of the lamp background parameter to half the lamp height
+            if hasattr(v, 'y') and len(v.y) > 0:
+                lamp_height = np.max(v.y)
+                if lamp_height > 0:
+                    # Get current bounds and update only the upper bound
+                    current_bounds = self._lb.bounds
+                    self._lb.bounds = current_bounds[0], lamp_height / 2
         except AttributeError:
             self.n0 = 1000.
 
@@ -456,6 +578,11 @@ class Convolve(FittingParameterGroup):
 
         return decay
 
+    def unload_irf(self):
+        """Unload the IRF and reset it to default (None)
+        """
+        self.__irf = None
+
     def convolve(
             self,
             data: chisurf.data.DataCurve,
@@ -468,7 +595,7 @@ class Convolve(FittingParameterGroup):
             decay: np.array = None
     ) -> np.array:
         if verbose is None:
-            verbose = chisurf.verbose
+            verbose = chisurf.settings.cs_settings['verbose']
         if mode is None:
             mode = self.mode
         if dt is None:
@@ -509,14 +636,14 @@ class Convolve(FittingParameterGroup):
         elif mode == "full":
             decay = np.convolve(data, irf_y, mode="full")[:n_points]
         if verbose:
-            print("------------")
-            print("Convolution:")
-            print("Lifetimes: %s" % data)
-            print("dt: %s" % dt)
-            print("Irf: %s" % irf.name)
-            print("Stop: %s" % stop)
-            print("dt: %s" % dt)
-            print("Convolution mode: %s" % mode)
+            logging.debug("------------")
+            logging.debug("Convolution:")
+            logging.debug("Lifetimes: %s" % data)
+            logging.debug("dt: %s" % dt)
+            logging.debug("Irf: %s" % irf.name)
+            logging.debug("Stop: %s" % stop)
+            logging.debug("dt: %s" % dt)
+            logging.debug("Convolution mode: %s" % mode)
 
         decay += (scatter * irf_y)
         return decay
@@ -572,14 +699,32 @@ class Convolve(FittingParameterGroup):
             name='stop',
             fixed=True
         )
+        self._irf_start = FittingParameter(
+            value=0.0,
+            name='irf_start',
+            label_text='IRF<sub>start</sub>',
+            fixed=True
+        )
+        self._irf_stop = FittingParameter(
+            value=stop,
+            name='irf_stop',
+            label_text='IRF<sub>stop</sub>',
+            fixed=True
+        )
+        # Set bounds for lamp background to be between 0 and half the lamp height
+        # Default upper bound will be updated when IRF is set
         self._lb = FittingParameter(
             value=0.0,
             name='lb',
-            fixed=True
+            fixed=True,
+            bounds_on=True,
+            lb=0.0,
+            ub=1.0  # Default upper bound, will be updated when IRF is set
         )
         self._ts = FittingParameter(
             value=0.0,
-            name='ts'
+            name='ts',
+            bounds_on=False
         )
 
         self._iw = FittingParameter(
@@ -602,4 +747,3 @@ class Convolve(FittingParameterGroup):
         self.__irf = irf
         if self.__irf is not None:
             self._irf = self.__irf
-

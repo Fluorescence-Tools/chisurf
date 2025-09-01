@@ -7,6 +7,7 @@ import numpy as np
 
 import chisurf.curve
 import chisurf.math.datatools
+from chisurf import logging
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
 from chisurf.models.tcspc.nusiance import Generic, Corrections, Convolve
@@ -236,6 +237,13 @@ class LifetimeModel(ModelCurve):
             anisotropy = Anisotropy(name='anisotropy', **kwargs)
         self.anisotropy = anisotropy
 
+        # Automatically set polarization type for fits
+        logging.info("Checking for polarization type setup.")
+        # Use the unified method to set polarization based on group position
+        polarization_set = self.anisotropy.set_polarization_by_group_position(fit, self)
+        if polarization_set:
+            logging.info(f"Polarization type set to {self.anisotropy.polarization_type}")
+
         if lifetimes is None:
             lifetimes = Lifetime(name='lifetimes', fit=fit, **kwargs)
         self.lifetimes = lifetimes
@@ -278,7 +286,8 @@ class LifetimeModel(ModelCurve):
 
     def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, chisurf.curve.Curve]:
         d = super().get_curves(copy_curves)
-        d['IRF'] = self.convolve.irf
+        # Use unnormalized IRF for plotting to display it at its original height
+        d['IRF'] = self.convolve.unnormalized_irf
         return d
 
     def decay(self, time: np.array) -> np.array:
@@ -292,11 +301,13 @@ class LifetimeModel(ModelCurve):
             shift_bg_with_irf: bool = None,
             lifetime_spectrum: np.array = None,
             scatter: float = None,
-            verbose: bool = chisurf.verbose,
+            verbose: bool = None,
             background: float = None,
             background_curve: chisurf.curve.Curve = None,
             **kwargs
     ):
+        if verbose is None:
+            verbose = chisurf.settings.cs_settings['verbose']
         if lifetime_spectrum is None:
             lifetime_spectrum = self.lifetime_spectrum
         if scatter is None:

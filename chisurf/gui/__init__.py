@@ -3,16 +3,171 @@ from __future__ import annotations
 import sys
 import subprocess
 import pathlib
+import os
+import signal
+import threading
+import time
+import atexit
+import ast
 
 from functools import partial
 import pkgutil
 import importlib
 
+#import os
+#os.environ['QT_OPENGL'] = 'software'  # Use software rendering
+
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
 
+import chisurf  # Ensure chisurf is available module-wide
 import chisurf.settings
+from chisurf import logging
 import chisurf.gui.decorators
+
+
+def launch_jupyter_process(
+    notebook_executable="jupyter-notebook",
+    port=8888,
+    directory: pathlib.Path = pathlib.Path().home()
+):
+    """
+    Launch Jupyter Notebook with a watchdog that kills it when this process dies.
+    Cross-platform: uses os.killpg on Unix, CREATE_NEW_PROCESS_GROUP on Windows.
+    """
+    jupyter_cmd = [
+        sys.executable, "-m", "notebook",
+        f"--port={port}",
+        "--no-browser",
+        "--NotebookApp.token=''",
+        "--NotebookApp.password=''",
+        "--NotebookApp.disable_check_xsrf=True",
+        f"--notebook-dir={directory}"
+    ]
+
+    # On Windows, put Jupyter into its own process group
+    creationflags = subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
+    start_new_session = (sys.platform != "win32")
+
+    # Capture stdout (URL) and merge stderr
+    jupyter_proc = subprocess.Popen(
+        jupyter_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        creationflags=creationflags,
+        start_new_session=start_new_session
+    )
+
+    def terminate_jupyter():
+        """Cleanly kill the notebook process (and its group)."""
+        try:
+            if sys.platform == "win32":
+                # send CTRL_BREAK to the group, then kill if still alive
+                jupyter_proc.send_signal(signal.CTRL_BREAK_EVENT)
+                jupyter_proc.kill()
+            else:
+                os.killpg(jupyter_proc.pid, signal.SIGKILL)
+        except Exception:
+            pass
+
+    def watchdog_unix():
+        """Only on Unix: if parent vanishes, kill the notebook group."""
+        parent_pid = os.getpid()
+        while True:
+            time.sleep(2)
+            try:
+                os.kill(parent_pid, 0)
+            except OSError:
+                terminate_jupyter()
+                break
+
+    # Register for normal shutdown
+    atexit.register(terminate_jupyter)
+
+    # Start a watcher **only on Unix**, since on Windows os.kill(pid,0) will terminate PID=0
+    if sys.platform != "win32":
+        thread = threading.Thread(target=watchdog_unix, daemon=True)
+        thread.start()
+
+    return jupyter_proc
+
+
+class QTextEditLogger(logging.Handler):
+
+    def __init__(
+            self,
+            widget,
+            mode='set',
+            log_string = "%(asctime)s - %(levelname)s - %(message)s",
+            level=logging.INFO
+    ):
+        super().__init__()
+        self.widget = widget
+        self.mode = mode
+        self.setFormatter(logging.Formatter(log_string))
+        self.setLevel(level=level)
+
+    def emit(self, record):
+        msg = self.format(record)
+        if self.mode == "set":
+            # Support label-like widgets and QStatusBar
+            if hasattr(self.widget, 'setText') and callable(getattr(self.widget, 'setText')):
+                self.widget.setText(msg)
+            elif hasattr(self.widget, 'showMessage') and callable(getattr(self.widget, 'showMessage')):
+                # For QStatusBar (including TruncatingStatusBar), use showMessage
+                try:
+                    self.widget.showMessage(msg)
+                except Exception:
+                    pass
+        elif self.mode == "append":
+            # Check if widget is QListWidget or QPlainTextEdit
+            if hasattr(self.widget, 'addItem'):
+                # QListWidget
+                self.widget.addItem(msg)
+                # Scroll to the bottom to show the latest entry
+                self.widget.scrollToBottom()
+            else:
+                # QPlainTextEdit
+                self.widget.appendPlainText(msg)
+            
+            # If this is the log widget and the parent has a filter method, call it
+            if hasattr(self.widget.parent(), 'update_log_filter'):
+                self.widget.parent().update_log_filter()
+
+
+def setup_logging_widgets(window):
+
+    # Create logger for status bar
+    ##############################
+    # Use the status bar itself for messages so its truncation logic applies
+    log_handler = QTextEditLogger(
+        window.status,
+        'set',
+        log_string = "%(message)s",
+        level = logging.INFO
+    )
+    window.status_log_handler = log_handler
+
+    log_level = chisurf.settings.cs_settings.get('log_level', logging.INFO)
+
+    # Attach logging to the root logger
+    logging.getLogger().addHandler(log_handler)
+    logging.getLogger().setLevel(log_level)
+
+    ###########################
+
+    # Create logger for text log field
+    ##################################
+    log_handler = QTextEditLogger(window.plainTextEditLog, 'append', level = logging.DEBUG)
+    window.log_history_handler = log_handler
+
+    # Attach logging to the root logger
+    logging.getLogger().addHandler(log_handler)
+    logging.getLogger().setLevel(log_level)
+
+    # Example logging message
+    logging.info("ChiSurf started.")
 
 
 class CustomProgressBar(QtWidgets.QProgressBar):
@@ -66,7 +221,18 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
         # Initialize message attributes
         self.current_message = ""
-        self.message_color = QtCore.Qt.white  # Default text color is white
+        self.message_color = QtCore.Qt.lightGray  # Light gray text color
+
+        # Get version information
+        from chisurf.info import __version__
+        self.version_text = f"Version: {__version__}"
+
+        # Initialize copyright, license, and contributors information
+        import datetime
+        current_year = datetime.datetime.now().year
+        self.copyright_text = f"© 2014-{current_year} ChiSurf Team"
+        self.license_text = "Licensed under GPL2.1"
+        self.contributors_text = "Developers & Contributors: \nThomas-Otavio Peulen, Katherina Hemmen, Jakub Kubiak"
 
     def update_progress(self, value):
         """Update progress bar value."""
@@ -97,6 +263,27 @@ class SplashScreen(QtWidgets.QSplashScreen):
         painter.drawText(message_rect.adjusted(0, message_y, 0, 0),
                          QtCore.Qt.AlignHCenter,
                          self.current_message)
+
+        # Set font for additional text boxes
+        font = painter.font()
+        font.setPointSize(8)
+        painter.setFont(font)
+
+        # Draw copyright text at the bottom left
+        copyright_rect = QtCore.QRect(10, self.height() - 100, self.width() - 20, 20)
+        painter.drawText(copyright_rect, QtCore.Qt.AlignLeft, self.copyright_text)
+
+        # Draw version text below copyright
+        version_rect = QtCore.QRect(10, self.height() - 90, self.width() - 20, 20)
+        painter.drawText(version_rect, QtCore.Qt.AlignLeft, self.version_text)
+
+        # Draw license text below version
+        license_rect = QtCore.QRect(10, self.height() - 80, self.width() - 20, 20)
+        painter.drawText(license_rect, QtCore.Qt.AlignLeft, self.license_text)
+
+        # Draw contributors text at the bottom right
+        contributors_rect = QtCore.QRect(240, self.height() - 80, self.width() - 20, 100)
+        painter.drawText(contributors_rect, QtCore.Qt.AlignLeft, self.contributors_text)
 
 
 def setup_gui(
@@ -151,79 +338,318 @@ def setup_gui(
             ).read()
         )
 
-    def start_jupyter(
-                      notebook_executable="jupyter-notebook",
-                      port=8888,
-                      directory=pathlib.Path().home()
-    ):
-        return subprocess.Popen([notebook_executable,
-                                 "--port=%s" % port,
-                                 "--browser=n",
-                                 "--NotebookApp.token=''",  # Disable token
-                                 "--NotebookApp.password=''",  # Disable password
-                                 "--NotebookApp.disable_check_xsrf=True",
-                                 # Disable cross-site request forgery protection (optional)
-                                 "--notebook-dir=%s" % directory],
-                                bufsize=1, stderr=subprocess.PIPE
-                            )
+    def read_module_docstring(package_path):
+        """
+        Given a path to a package directory, reads its __init__.py
+        and returns the module docstring (or None if there isn't one).
+        """
+        init_py = package_path / "__init__.py"
+        if not init_py.exists():
+            return None
+
+        # Read the source
+        source = init_py.read_text(encoding="utf-8")
+
+        # Parse into an AST and extract the docstring
+        tree = ast.parse(source, filename=str(init_py))
+        return ast.get_docstring(tree)
+
+    def get_plugin_metadata(plugin_dir, module_name):
+        """
+        Extract plugin metadata without importing the module.
+        Returns a tuple of (name, description)
+        """
+        # Default values
+        name = module_name
+        description = "No description available."
+
+        # Path to the __init__.py file
+        init_py = plugin_dir / module_name / "__init__.py"
+
+        # Check if the file exists in the built-in directory
+        if not init_py.exists():
+            # Try to find it in the user plugins directory
+            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+            user_init_py = user_plugin_root / module_name / "__init__.py"
+            if user_init_py.exists():
+                init_py = user_init_py
+                chisurf.logging.info(f"Found user plugin: {module_name} at {init_py}")
+            else:
+                return name, description
+
+        try:
+            # Read the source
+            source = init_py.read_text(encoding="utf-8")
+
+            # Parse into an AST
+            tree = ast.parse(source, filename=str(init_py))
+
+            # Extract the docstring
+            description = ast.get_docstring(tree) or description
+
+            # Look for a name assignment
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and target.id == 'name':
+                            if isinstance(node.value, ast.Str):
+                                name = node.value.s
+                            elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                name = node.value.value
+
+            return name, description
+        except Exception as e:
+            chisurf.logging.warning(f"Error extracting metadata from {init_py}: {e}")
+            return name, description
 
     def populate_plugins():
-        plugin_menu = window.menuBar.addMenu('Plugins')
-        plugin_path = pathlib.Path(chisurf.plugins.__file__).absolute().parent
-        for _, module_name, _ in pkgutil.iter_modules(chisurf.plugins.__path__):
-            module_path = "chisurf.plugins." + module_name
-            module = importlib.import_module(str(module_path))
-            try:
-                name = module.name
-            except AttributeError as e:
-                print(f"Failed to find plugin name: {e}")
-                name = module_name
-            p = partial(
-                window.onRunMacro, plugin_path / module_name / "wizard.py",
+        # Find the Help menu to insert the Plugins menu before it
+        help_menu = None
+        for action in window.menuBar.actions():
+            if action.text() == 'Help':
+                help_menu = action
+                break
+
+        # Insert the Plugins menu before the Help menu
+        plugin_menu = QtWidgets.QMenu('Plugins', window)
+        window.menuBar.insertMenu(help_menu, plugin_menu)
+
+        # Store the plugin menu in a global variable so it can be accessed by populate_notebooks
+        global plugin_menu_action
+        plugin_menu_action = plugin_menu.menuAction()
+        plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+
+        # Dictionary to store submenus
+        submenus = {}
+
+        # Get plugin settings
+        plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+        disabled_plugins = plugin_settings.get('disabled_plugins', [])
+        hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
+        plugin_order = plugin_settings.get('plugin_order', {})
+
+        # Check if we're in experimental mode
+        experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+
+        # Get all module names from built-in plugins
+        module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
+        module_names = [name for _, name, _ in module_infos]
+
+        # Add user plugins
+        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+        if user_plugin_root.exists() and user_plugin_root.is_dir():
+            # Get all directories in the user plugin root
+            for item in user_plugin_root.iterdir():
+                if item.is_dir() and (item / "__init__.py").exists():
+                    # Add the directory name to the list of module names if it's not already there
+                    if item.name not in module_names:
+                        module_names.append(item.name)
+
+        # Create a list of (module_name, order) tuples
+        module_order_pairs = []
+        for module_name in module_names:
+            # Get plugin metadata without importing
+            name, _ = get_plugin_metadata(plugin_root, module_name)
+
+            # Check if this is a user plugin
+            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+            user_plugin_dir = user_plugin_root / module_name
+            is_user_plugin = user_plugin_dir.exists() and (user_plugin_dir / "__init__.py").exists()
+
+            # If it's a user plugin, get the name from the user plugin directory
+            if is_user_plugin:
+                # Try to get the name from the user plugin directory
+                try:
+                    # Read the source
+                    source = (user_plugin_dir / "__init__.py").read_text(encoding="utf-8")
+
+                    # Parse into an AST
+                    tree = ast.parse(source, filename=str(user_plugin_dir / "__init__.py"))
+
+                    # Look for a name assignment
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Assign):
+                            for target in node.targets:
+                                if isinstance(target, ast.Name) and target.id == 'name':
+                                    if isinstance(node.value, ast.Str):
+                                        user_name = node.value.s
+                                        chisurf.logging.info(f"User plugin name: {user_name} (module: {module_name})")
+                                        name = user_name
+                                    elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                                        user_name = node.value.value
+                                        chisurf.logging.info(f"User plugin name: {user_name} (module: {module_name})")
+                                        name = user_name
+                except Exception as e:
+                    chisurf.logging.warning(f"Error extracting name from {user_plugin_dir / '__init__.py'}: {e}")
+
+            # Get the order from plugin_order, default to 0 if not set
+            order = plugin_order.get(name, 0)
+            module_order_pairs.append((module_name, order, name))
+
+        # Sort by order (ascending) and then by module_name (alphabetically)
+        module_order_pairs.sort(key=lambda x: (x[1], x[0]))
+
+        # Process modules in the sorted order
+        for module_name, _, name in module_order_pairs:
+            # Check if this plugin is marked as broken
+            # Handle broken plugins only by their name not location in menu
+            clean_name = name.split(":")[-1]
+            is_broken = name in disabled_plugins or module_name in disabled_plugins or clean_name in disabled_plugins
+
+            # Skip broken plugins if they should be hidden and we're not in experimental mode
+            if is_broken and hide_disabled_plugins and not experimental_mode:
+                continue
+
+            # Determine which file to run: wizard.py if it exists, else __init__.py
+            plugin_dir = plugin_root / module_name
+            wizard_file = plugin_dir / "wizard.py"
+            script_file = wizard_file if wizard_file.is_file() else (plugin_dir / "__init__.py")
+
+            # Build the callback
+            callback = partial(
+                window.onRunMacro,
+                str(script_file),
                 executor='exec',
                 globals={'__name__': 'plugin'}
             )
-            plugin_action = QtWidgets.QAction(f"{name}", window)
-            plugin_action.triggered.connect(p)
-            plugin_menu.addAction(plugin_action)
+
+            # Check for icon
+            icon = None
+            # Look for icon in plugin directory (PNG preferred, fallback to SVG)
+            for _icon_name in ("icon.png", "icon.svg"):
+                icon_path = plugin_dir / _icon_name
+                if icon_path.exists():
+                    icon = QtGui.QIcon(str(icon_path))
+                    break
+
+            # Get plugin description
+            _, description = get_plugin_metadata(plugin_root, module_name)
+
+            # Check if the name contains a colon to determine if it should go in a submenu
+            if ":" in name:
+                # Split the name into submenu name and plugin name
+                submenu_name, plugin_name = name.split(":", 1)
+
+                # Create submenu if it doesn't exist
+                if submenu_name not in submenus:
+                    submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
+
+                # Add the plugin to the submenu
+                plugin_action = QtWidgets.QAction(f"{plugin_name.strip()}", window)
+                if icon:
+                    plugin_action.setIcon(icon)
+                plugin_action.triggered.connect(callback)
+                # Set tooltip with plugin description
+                plugin_action.setToolTip(description)
+                # Add a visual indicator for broken plugins in experimental mode
+                if is_broken and experimental_mode:
+                    plugin_action.setText(f"{plugin_name.strip()} [BROKEN]")
+                submenus[submenu_name].addAction(plugin_action)
+            else:
+                # Add the plugin directly to the main menu
+                plugin_action = QtWidgets.QAction(f"{name}", window)
+                if icon:
+                    plugin_action.setIcon(icon)
+                plugin_action.triggered.connect(callback)
+                # Set tooltip with plugin description
+                plugin_action.setToolTip(description)
+                # Add a visual indicator for broken plugins in experimental mode
+                if is_broken and experimental_mode:
+                    plugin_action.setText(f"{name} [BROKEN]")
+                plugin_menu.addAction(plugin_action)
 
     def populate_notebooks():
-        notebook_menu = window.menuBar.addMenu('Notebooks')
+        # Find the Help menu to insert the Notebooks menu before it
+        help_menu = None
+        for action in window.menuBar.actions():
+            if action.text() == 'Help':
+                help_menu = action
+                break
+
+        # Create the Notebooks menu
+        notebook_menu = QtWidgets.QMenu('Notebooks', window)
+
+        # Get the next action after the Plugins menu
+        next_action = None
+        found_plugins = False
+        for action in window.menuBar.actions():
+            if found_plugins:
+                next_action = action
+                break
+            if action == plugin_menu_action:
+                found_plugins = True
+
+        # Insert the Notebooks menu after the Plugins menu
+        window.menuBar.insertMenu(next_action, notebook_menu)
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
-        plugin_path = pathlib.Path(chisurf.plugins.browser.__file__).absolute().parent
+        plugin_path = pathlib.Path(chisurf.plugins.__file__).parent / "browser"
 
-        def add_notebook(notebook_file, base_addr='/notebooks/'):
-            adr = str(chisurf.__jupyter_address__ + base_addr) + str(notebook_file.relative_to(home_dir))
-            p = partial(
-                window.onRunMacro, plugin_path / "wizard.py",
-                executor='exec',
-                globals={'__name__': 'plugin', 'adr': adr}
-            )
+        # Define the target directory inside the home directory
+        chisurf_notebooks_dir = home_dir / "notebooks"
+        chisurf_notebooks_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
+
+        def copy_notebook(src, dest_dir):
+            """Copy a notebook file using pathlib only."""
+            dest_file = dest_dir / src.name
+            if not dest_file.exists():  # Only copy if the file doesn't exist
+                dest_file.write_bytes(src.read_bytes())  # Read and write in binary mode
+                chisurf.logging.info(f"Copied notebook: {src.name} to {dest_file}")
+            return dest_file
+
+        def add_notebook(notebook_file):
+            if not notebook_file.exists():
+                return
+
             try:
-                if notebook_file.exists():
-                    menu_text = notebook_file.stem
-                    action = QtWidgets.QAction(f"{menu_text}", window)
-                else:
-                    return
-            except AttributeError as e:
+                notebook_file = notebook_file.resolve()  # Ensure absolute path
+
+                # If the file is not inside home_dir, copy it to ~/notebooks/
+                if not notebook_file.is_relative_to(home_dir):
+                    notebook_file = copy_notebook(notebook_file, chisurf_notebooks_dir)
+
+                # Convert path to POSIX format (to avoid Windows `\` issues in URL)
+                notebook_path_str = notebook_file.relative_to(home_dir).as_posix()
+
+                # Correct Jupyter notebook URL with `/tree/`
+                # http://localhost:8932/notebooks/Links/smFRET_01_Burst_Search_ALEX.
+                adr = f"{chisurf.__jupyter_address__}/notebooks/{notebook_path_str}"
+
+                p = partial(
+                    window.onRunMacro, plugin_path / "wizard.py",
+                    executor='exec',
+                    globals={'__name__': 'plugin', 'adr': adr}
+                )
+
+                menu_text = notebook_file.stem
+                action = QtWidgets.QAction(f"{menu_text}", window)
+                action.triggered.connect(p)
+                notebook_menu.addAction(action)
+
+            except AttributeError:
                 action = QtWidgets.QAction(f"{notebook_file}", window)
-            action.triggered.connect(p)
-            notebook_menu.addAction(action)
+                action.triggered.connect(p)
+                notebook_menu.addAction(action)
 
-        # http://localhost:8888/tree
-        add_notebook(pathlib.Path.home(), '/tree')
+        # Copy all notebooks from the package to the user's home directory
+        # This ensures that all shipped notebooks are available to the user
+        notebook_path = chisurf_path / 'notebooks'
+        chisurf.logging.info(f"Checking for notebooks in: {notebook_path}")
+        for notebook_file in sorted(notebook_path.glob("*.ipynb")):
+            copy_notebook(notebook_file, chisurf_notebooks_dir)
 
-        notebook_path = chisurf.settings.cs_settings.get('notebook_path', chisurf_path / 'notebooks')
-        for notebook_file in notebook_path.glob("*.ipynb"):
+        # Add the Jupyter root directory with `/tree/`
+        add_notebook(home_dir)
+
+        # Load notebooks from user's home directory for the menu
+        for notebook_file in sorted(chisurf_notebooks_dir.glob("*.ipynb")):
             add_notebook(notebook_file)
-
 
     if stage is None:
         gui_imports()
         setup_ipython()
-        startup_interface()
+        window = startup_interface()
         setup_style(app=app)
     elif stage == "gui_imports":
         gui_imports()
@@ -233,6 +659,74 @@ def setup_gui(
         setup_style(app=app)
     elif stage == "populate_plugins":
         populate_plugins()
+    elif stage == "check_updates":
+        # Respect user setting to ignore update prompts on startup
+        try:
+            _plugins = chisurf.settings.cs_settings.get('plugins') or {}
+            _updater_settings = _plugins.get('updater') or {}
+            _ignore_updates = bool(_updater_settings.get('ignore_updates_on_startup', False))
+            _check_on_startup = bool(_updater_settings.get('check_on_startup', True))
+        except Exception:
+            _ignore_updates = False
+            _check_on_startup = True
+
+        if _ignore_updates or not _check_on_startup:
+            chisurf.logging.info("Startup update prompt suppressed by user settings.")
+        else:
+            from chisurf.plugins.updater import updater as _updater_mod
+            from PyQt5.QtWidgets import QMessageBox
+            
+            def _startup_update_check():
+                update_available, latest_version, error = _updater_mod.check_for_updates()
+                if error:
+                    chisurf.logging.info(f"Update check skipped or failed: {error}")
+                elif update_available:
+                    chisurf.logging.info(f"Update available: {latest_version}")
+                    # Prompt user to open the updater
+                    try:
+                        from chisurf.plugins.updater import build_installed_vs_latest_changelog as _build_changes
+                        try:
+                            _installed_ver, _changes = _build_changes(str(latest_version))
+                        except Exception:
+                            _installed_ver, _changes = None, None
+
+                        _msg = (
+                            f"A new version of ChiSurf ({latest_version}) is available.\n\n"
+                            + (
+                                f"Changes since your installed version ({_installed_ver}):\n\n{_changes}\n\n"
+                                if _changes else ""
+                            )
+                            + "Do you want to open the Updater now?"
+                        )
+                        reply = QMessageBox.question(
+                            None,
+                            "Update Available",
+                            _msg,
+                            QMessageBox.Yes | QMessageBox.No,
+                            QMessageBox.Yes
+                        )
+                        if reply == QMessageBox.Yes:
+                            import importlib
+                            updater_plugin = importlib.import_module("chisurf.plugins.updater")
+                            # Keep a strong reference to prevent garbage collection from closing the window
+                            import chisurf as _chisurf_mod
+                            _chisurf_mod.__updater_window__ = updater_plugin.UpdaterWidget(suppress_initial_notification=True)
+                            _chisurf_mod.__updater_window__.show()
+                            try:
+                                _chisurf_mod.__updater_window__.raise_()
+                                _chisurf_mod.__updater_window__.activateWindow()
+                            except Exception:
+                                pass
+                            # Signal startup should be interrupted so only the updater remains open
+                            try:
+                                _chisurf_mod.__startup_interrupt_for_updater__ = True
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        chisurf.logging.debug(f"Failed to show update prompt: {e}")
+                else:
+                    chisurf.logging.info("ChiSurf is up to date.")
+            _startup_update_check()
     elif stage == "startup_interface":
         return startup_interface()
     elif stage == "define_actions":
@@ -243,27 +737,47 @@ def setup_gui(
         window.init_setups()
     elif stage == "load_tools":
         window.load_tools()
+        # In your setup_gui function:
     elif stage == "start_jupyter":
-        # start jupyter notebook and wait for line with the web address
         chisurf.logging.info("Starting Jupyter notebook process")
-        chisurf.__jupyter_process__ = start_jupyter()
+        # Start the notebook and capture the process
+        chisurf.__jupyter_process__ = launch_jupyter_process()
+        proc = chisurf.__jupyter_process__
+
+        # Read lines until we see the HTTP address (or the process exits)
         while chisurf.__jupyter_address__ is None:
-            line = str(chisurf.__jupyter_process__.stderr.readline())
-            chisurf.logging.info(line)
+            line = proc.stdout.readline()
+            if not line:
+                # The process died or closed its output
+                raise RuntimeError("Jupyter process exited before printing URL")
+            chisurf.logging.info(line.strip())
             if "http://" in line:
                 start = line.find("http://")
                 end = line.find("/", start + len("http://"))
-                chisurf.__jupyter_address__  = line[start:end]
-        chisurf.logging.info("Server found at %s, migrating monitoring to listener thread" % chisurf.__jupyter_address__)
+                chisurf.__jupyter_address__ = line[start:end]
+
+        chisurf.logging.info(
+            "Server found at %s, migrating monitoring to listener thread",
+            chisurf.__jupyter_address__
+        )
+    elif stage == "setup_logging":
+        setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
         chisurf.logging.info("Looking for ipynb in home folder")
         populate_notebooks()
+    return None
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
-    import pyqtgraph
-    import chisurf.gui.resources
+    logging.info("Starting GUI startup (get_win)")
+    import pyqtgraph as pg
+    pg.setConfigOptions(useOpenGL=False)  # Disable OpenGL in PyQtGraph
 
-    pixmap = QtGui.QPixmap(":/images/icons/splashscreen.png")
+    import chisurf.gui.resources
+    import pathlib
+
+    # Load splash screen from file path instead of resource
+    splash_path = pathlib.Path(chisurf.__file__).parent / "gui" / "resources" / "icons" / "splashscreen.png"
+    pixmap = QtGui.QPixmap(str(splash_path))
     splash = SplashScreen(pixmap)
 
     # move splashscreen to center of active window
@@ -275,19 +789,21 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     getattr(splash, "raise")()
     splash.activateWindow()
 
-    splash.setContentsMargins(0, 0, 0, 64)
+    splash.setContentsMargins(0, 0, 0, 100)
     splash.show()
     app.processEvents()
 
     # Update progress as the setup progresses
     stages = [
+        ("Check for updates", "check_updates", 5),
         ("Loading modules", "gui_imports", 10),
         ("Setup ipython", "setup_ipython", 30),
         ("Starting interface", "startup_interface", 40),
+        ("Setup logging", "setup_logging", 45),
         ("Initialize setups", "init_setups", 50),
         ("Defining actions", "define_actions", 55),
-        ("Arrange widgets", "arrange_widgets", 65),
-        ("Loading tools", "load_tools", 70),
+        ("Loading tools", "load_tools", 65),
+        ("Arrange widgets", "arrange_widgets", 70),
         ("Initializing Jupyter", "start_jupyter", 85),
         ("Populate plugins", "populate_plugins", 90),
         ("Populate notebook", "populate_notebooks", 95),
@@ -296,12 +812,54 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
     window = None
     for message, stage, progress_value in stages:
+        logging.info(f"Startup stage '{stage}' starting: {message}")
         splash.update_message(message)
         splash.update_progress(progress_value)
         app.processEvents()
         w2 = setup_gui(app=app, stage=stage, window=window)
+        logging.info(f"Startup stage '{stage}' finished")
         if w2 is not None:
             window = w2
+        # If user chose to open updater, interrupt startup immediately
+        try:
+            if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+                break
+        except Exception:
+            pass
+        # After checking for updates, display version comparison on the splash
+        if stage == "check_updates":
+            try:
+                from chisurf.plugins.updater import updater as _updater_mod
+                from chisurf import info as _info
+                import time as _time
+                cur = getattr(_info, "__version__", "?")
+                update_available, latest_version, error = _updater_mod.check_for_updates()
+                if error:
+                    text = f"v{cur} — Update check failed"
+                else:
+                    if update_available and latest_version:
+                        text = f"{cur} vs. {latest_version} (Update available)"
+                    else:
+                        # If no update or latest unknown, assume up to date
+                        latest_txt = latest_version or cur
+                        text = f"v{cur} (Up to date)"
+                splash.update_message(text)
+                # Ensure the update info is visible for at least one second
+                start_ts = _time.time()
+                # Process events in small slices to keep UI responsive during the wait
+                while _time.time() - start_ts < 2.0:
+                    app.processEvents()
+                    _time.sleep(0.05)
+            except Exception as e:
+                chisurf.logging.debug(f"Failed to update splash with version info: {e}")
+
+    # If startup was interrupted for updater, do not show the main window
+    try:
+        if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+            splash.hide()
+            return window
+    except Exception:
+        pass
 
     window.show()
     splash.hide()
@@ -313,9 +871,40 @@ def get_app():
     app = QtWidgets.QApplication(sys.argv)
     app.processEvents()
     win = get_win(app=app)
-    win.raise_()
-    win.activateWindow()
-    win.setFocus()
+
+    # If startup was interrupted to open the updater, do not touch/show the main window
+    try:
+        import chisurf as _chisurf_mod
+        if getattr(_chisurf_mod, "__startup_interrupt_for_updater__", False):
+            win = None  # We won't use the main window in this case
+        else:
+            win.raise_()
+            win.activateWindow()
+            win.setFocus()
+    except Exception:
+        # Fallback to showing the window if available
+        if win is not None:
+            win.raise_()
+            win.activateWindow()
+            win.setFocus()
+
+
+    def shutdown_jupyter():
+        """Ensure the Jupyter notebook server is terminated when the application closes."""
+        import chisurf
+        jupyter_proc = getattr(chisurf, '__jupyter_process__', None)
+        # Only terminate if it's still running.
+        if jupyter_proc is not None and jupyter_proc.poll() is None:
+            jupyter_proc.terminate()
+            try:
+                jupyter_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                # If it doesn't stop in time, force-kill it.
+                jupyter_proc.kill()
+
+    # Connect our shutdown function to the application's aboutToQuit signal.
+    app.aboutToQuit.connect(shutdown_jupyter)
+
     return app
 
 

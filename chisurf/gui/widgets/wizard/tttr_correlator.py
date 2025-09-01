@@ -8,8 +8,10 @@ import numpy as np
 
 import pyqtgraph as pg
 
+import chisurf
 import chisurf.fio as io
 import chisurf.gui.decorators
+import chisurf.settings
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 
 colors = chisurf.settings.gui['plot']['colors']
@@ -18,81 +20,77 @@ colors = chisurf.settings.gui['plot']['colors']
 class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
     @property
-    def analysis_folder(self):
-        return pathlib.Path(self.lineEdit_3.text())
+    def analysis_folder(self) -> pathlib.Path:
+        return pathlib.Path(str(self.lineEdit_3.text()))
 
     @property
-    def output_path(self):
-        return pathlib.Path(self.lineEdit_5.text())
+    def output_path(self) -> pathlib.Path:
+        return pathlib.Path(str(self.lineEdit_5.text()))
 
     @property
-    def channel_a(self) -> typing.List[int]:
-        s = self.lineEdit.text()
-        if len(s) > 0:
-            return [int(x) for x in s.split(',')]
+    def channel_a(self) -> list[int]:
+        s: str = str(self.lineEdit.text())
+        if s:
+            return [int(x) for x in s.replace(',', ' ').split()]
         elif isinstance(self.tttr, tttrlib.TTTR):
-            return self.tttr.get_used_routing_channels()
-        else:
-            return []
+            return list(map(int, self.tttr.get_used_routing_channels()))
+        return []
 
     @property
-    def channel_b(self) -> typing.List[int]:
-        s = self.lineEdit_2.text()
-        if len(s) > 0:
-            return [int(x) for x in s.split(',')]
+    def channel_b(self) -> list[int]:
+        s: str = str(self.lineEdit_2.text())
+        if s:
+            return [int(x) for x in s.replace(',', ' ').split()]
         elif isinstance(self.tttr, tttrlib.TTTR):
-            return self.tttr.get_used_routing_channels()
-        else:
-            return []
+            return list(map(int, self.tttr.get_used_routing_channels()))
+        return []
 
     @property
-    def filter_file(self):
-        return self.lineEdit_4.text()
+    def filter_file(self) -> str:
+        return str(self.lineEdit_4.text())
 
     @property
-    def filter_enabled(self):
+    def filter_enabled(self) -> bool:
         return pathlib.Path(self.filter_file).exists()
 
     @property
-    def correlation_nbins(self):
-        return self.spinBox_2.value()
+    def correlation_nbins(self) -> int:
+        return int(self.spinBox_2.value())
 
     @property
-    def correlation_ncasc(self):
-        return self.spinBox_3.value()
+    def correlation_ncasc(self) -> int:
+        return int(self.spinBox_3.value())
 
     @property
     def correlation_is_fine(self) -> bool:
         return bool(self.checkBox_2.isChecked())
 
     @property
-    def correlation_nsplits(self):
-        return self.spinBox.value()
+    def correlation_nsplits(self) -> int:
+        return int(self.spinBox.value())
 
     @property
     def target_path(self) -> pathlib.Path:
-        return pathlib.Path(self.lineEdit_5.text())
+        return pathlib.Path(str(self.lineEdit_5.text()))
 
     @property
-    def microtime_range_a(self):
-        s = str(self.lineEdit_6.text())
+    def microtime_range_a(self) -> list[tuple[int, int]]:
+        s: str = str(self.lineEdit_6.text())
         return self.get_microtime_ranges(s)
 
     @property
-    def microtime_range_b(self):
-        s = str(self.lineEdit_7.text())
+    def microtime_range_b(self) -> list[tuple[int, int]]:
+        s: str = str(self.lineEdit_7.text())
         return self.get_microtime_ranges(s)
 
-    def get_microtime_ranges(self, s) -> typing.Optional[typing.List[typing.Tuple[int, int]]]:
+    def get_microtime_ranges(self, s) -> typing.List[typing.Tuple[int, int]] | None:
         chisurf.logging.log(0, "WizardTTTRCorrelator::get_microtime_ranges")
         # Check if the input string is empty
         if not s:
             chisurf.logging.log(0, "::microtime_ranges: Warning - Input string is empty.")
             return None
-
         try:
             ranges = [tuple(map(int, item.split('-'))) for item in s.split(';')]
-
             # Check if each range has exactly two values
             if all(len(r) == 2 for r in ranges):
                 return ranges
@@ -106,9 +104,10 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
     def update_plots(self):
         chisurf.logging.log(0, 'WizardTTTRCorrelator::Updating plots')
         self.pw_fcs.clear()
-        for i, cor in enumerate(self.correlations):
-            pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=1)
-            self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
+        if self.is_correlated:
+            for i, cor in enumerate(self.correlations):
+                pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=1)
+                self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
 
     def read_tttrs(self):
         chisurf.logging.log(0, "WizardTTTRCorrelator::read_tttrs")
@@ -133,7 +132,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             chs = cha + '-' + chb
         else:
             chs = 'All'
-        s = pathlib.Path('cr5/') / f'{chs}'
+        s = pathlib.Path('cr5') / f'{chs}'
         self.lineEdit_5.setText(s.as_posix())
 
     def update_parameter(self):
@@ -146,6 +145,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.settings['correlation']['channel_b'] = self.channel_b
         self.settings['correlation']['filter'] = self.filter_file
 
+        # Reset correlation flag when parameters change
+        self.is_correlated = False
+
         self.update_plots()
         self.update_output_path()
 
@@ -155,6 +157,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
         self.tttr = None
+
+        # Reset correlation flag
+        self.is_correlated = False
 
     def split_array(self, tttr, n):
         chisurf.logging.log(0, "WizardTTTRCorrelator::split_array")
@@ -174,17 +179,53 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
     def save_correlations(self):
         chisurf.logging.log(0, "WizardTTTRCorrelator::saving correlations to files")
+        # If disabled, skip writing per-chunk files (direct TTTR mode)
+        if not getattr(self, 'save_chunks_to_disk', True):
+            return
+        # Ensure analysis folder is set even for direct TTTR correlation
+        try:
+            self.ensure_analysis_folder_default()
+        except Exception:
+            pass
         output_folder = self.analysis_folder / self.output_path
         output_folder.mkdir(parents=True, exist_ok=True)
+        # Save each chunk as a .cor text file with columns: tau, G, suren (duration, count_rate), ey (zeros)
         for i, cor in enumerate(self.correlations):
-            json_path = output_folder / f'chnk-{i:04}.json.gz'
-            with io.open_maybe_zipped(json_path, 'w') as fp:
-                json.dump(cor, fp)
+            try:
+                x = np.array(cor.get('x', []))
+                y = np.array(cor.get('y', []))
+                duration = float(cor.get('duration', 0.0))
+                # Derive total count rate from channel counts if available
+                try:
+                    ca = float(cor.get('channel_a', {}).get('counts', 0.0))
+                    cb = float(cor.get('channel_b', {}).get('counts', 0.0))
+                    count_rate = (ca + cb) / duration if duration > 0 else 0.0
+                except Exception:
+                    count_rate = 0.0
+                suren = np.zeros_like(x)
+                if suren.size > 0:
+                    suren[0] = duration
+                if suren.size > 1:
+                    suren[1] = count_rate
+                ey = np.zeros_like(x)
+                mat = np.vstack([x, y, suren, ey])
+                cor_path = output_folder / f'chnk-{i:04}.cor'
+                # Use native path string for Windows compatibility
+                np.savetxt(str(cor_path), mat.T, delimiter='\t')
+            except Exception:
+                # Best effort: continue saving remaining chunks
+                continue
 
     def correlate_data(self):
         chisurf.logging.log(0, "WizardTTTRCorrelator::Correlate data")
-        n_chunks = self.correlation_nsplits
 
+        # Ensure default analysis folder if missing (use parent of first TTTR file)
+        try:
+            self.ensure_analysis_folder_default()
+        except Exception:
+            pass
+
+        n_chunks = self.correlation_nsplits
         ch1 = self.channel_a
         ch2 = self.channel_b
         chisurf.logging.log(0, "ch1", ch1)
@@ -192,10 +233,39 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         chisurf.logging.log(0, "n_chunks", n_chunks)
         chisurf.logging.log(0, "self.tttr:", self.tttr)
 
+        # **Handle empty tttr case**
+        if self.tttr is None or len(self.tttr) == 0:
+            chisurf.logging.log(1, "Warning: No TTTR data available for correlation.")
+
+            # **Display a message box to the user**
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+            msg_box.setWindowTitle("No Photons Selected")
+            msg_box.setText("No photons selected for correlation. Please load data before continuing.")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+
+            return  # Stop execution
+
         correlation_settings = self.get_correlation_settings()
-        correlations = self.correlations
-        correlations.clear()
+        self.correlations.clear()
+
+        # Create a progress dialog
+        progress = QtWidgets.QProgressDialog("Computing correlations...", "Cancel", 0, n_chunks, self)
+        progress.setWindowTitle("Correlation Progress")
+        progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.show()
+
         for i, tttr in enumerate(self.split_array(self.tttr, n_chunks)):
+            if progress.wasCanceled():
+                chisurf.logging.log(1, "Correlation process was canceled by the user.")
+                break
+
+            # **Handle empty chunk case**
+            if tttr is None or len(tttr.macro_times) == 0:
+                chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to empty TTTR data.")
+                continue
+
             t = tttr.macro_times
 
             # Select based on channels
@@ -210,20 +280,26 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 mask_a = tttrlib.TTTRMask()
                 mask_a.select_microtime_ranges(tttr, self.microtime_range_a)
                 mask_a.flip()
-                ma2 = np.array(mask_a.get_mask(), dtype=bool)
-                m_a = np.logical_and(m_a, ma2)
+                m_a = np.logical_and(m_a, np.array(mask_a.get_mask(), dtype=bool))
+
             if self.microtime_range_b:
                 mask_b = tttrlib.TTTRMask()
                 mask_b.select_microtime_ranges(tttr, self.microtime_range_b)
                 mask_b.flip()
-                mb2 = np.array(mask_b.get_mask(), dtype=bool)
-                m_b = np.logical_and(m_b, mb2)
+                m_b = np.logical_and(m_b, np.array(mask_b.get_mask(), dtype=bool))
 
             w1 = np.array(m_a, dtype=np.float64)
             w2 = np.array(m_b, dtype=np.float64)
             sw1, sw2 = sum(w1), sum(w2)
-            dT = tttr.header.macro_time_resolution
-            dur = tttr.macro_times[-1] * dT  # seconds
+            # Multiply x values by 1000 to convert from s to ms
+            dT = tttr.header.macro_time_resolution * 1000.0
+
+            # **Handle empty macro_times to prevent IndexError**
+            if len(t) == 0:
+                chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to missing macro_times.")
+                continue
+            dur = (t[-1] - t[0]) * dT  # seconds
+
             if sw1 > 0.0 and sw2 > 0.0:
                 correlator = tttrlib.Correlator(**correlation_settings)
                 correlator.set_macrotimes(t, t)
@@ -233,14 +309,14 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                     n_microtime_channels = tttr.get_number_of_micro_time_channels()
                     mt = tttr.micro_times
                     correlator.set_microtimes(mt, mt, n_microtime_channels)
-                    x *= tttr.header.micro_time_resolution
+                    x /= (tttr.header.micro_time_resolution / 1000.0)
                 d = {
                     'x': x.tolist(),
                     'y': correlator.correlation.tolist(),
                     'correlation_settings': correlation_settings,
                     'analysis_folder': self.analysis_folder.as_posix(),
                     'chunk': i,
-                    'duration': dur,
+                    'duration': dur / 1000.0, # duration in seconds
                     'channel_a': {
                         'channels': ch1,
                         'microtime_range': self.microtime_range_a,
@@ -252,47 +328,189 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                         'counts': sw2
                     }
                 }
-                correlations.append(d)
+                self.correlations.append(d)
             else:
-                chisurf.logging.log(1, "Warning: no photons to correlate with.")
+                chisurf.logging.log(1, "Warning: No photons to correlate with.")
+
+            # Update progress bar
+            progress.setValue(i + 1)
+            QtWidgets.QApplication.processEvents()  # Keeps UI responsive
+
+        progress.close()
+        self.is_correlated = True
         self.update_plots()
         self.save_correlations()
 
-    def open_sl5(self, filename: str) -> tttrlib.TTTR:
+    def ensure_analysis_folder_default(self):
+        """
+        Ensure lineEdit_3 (analysis folder) is populated. If empty and TTTR files
+        are known, set it to the parent folder of the first TTTR file.
+        """
+        try:
+            txt = str(self.lineEdit_3.text()).strip()
+        except Exception:
+            txt = ""
+        if (not txt) and isinstance(self.settings, dict):
+            files = self.settings.get('tttr_filenames', []) or []
+            if files:
+                try:
+                    first_parent = pathlib.Path(files[0]).resolve().parent
+                    self.lineEdit_3.setText(first_parent.as_posix())
+                except Exception:
+                    pass
+
+    def load_tttr_files(self, filenames: typing.List[str], filetype: typing.Optional[str] = None):
+        """
+        Load a list of TTTR files directly (without SL5), concatenate them into
+        a single TTTR object, and update internal state.
+
+        File type selection:
+        - If filetype is a string (selected in DetectorWizardPage), pass it to tttrlib.TTTR.
+        - If filetype is None (Auto), rely on tttrlib's internal auto-detection by omitting the argument.
+        """
+        self.settings.setdefault('tttr_filenames', [])
+        self.settings['tttr_filenames'] = list(filenames)
+        tttr_obj = None
+        for fn in filenames:
+            p = pathlib.Path(fn)
+            if not p.exists() or not p.is_file():
+                continue
+            try:
+                if isinstance(filetype, str):
+                    tt = tttrlib.TTTR(p.as_posix(), filetype)
+                else:
+                    # Infer file type if possible, else let tttrlib decide
+                    try:
+                        ft_int = tttrlib.inferTTTRFileType(p.as_posix())
+                        if ft_int is not None and ft_int >= 0:
+                            tt = tttrlib.TTTR(p.as_posix(), ft_int)
+                        else:
+                            tt = tttrlib.TTTR(p.as_posix())
+                    except Exception:
+                        tt = tttrlib.TTTR(p.as_posix())
+            except Exception:
+                tt = None
+            if tt is None:
+                continue
+            if tttr_obj is None:
+                tttr_obj = tt
+            else:
+                tttr_obj.append(tt)
+        self.tttr = tttr_obj
+        # If a folder was not set yet, set it from the files
+        self.ensure_analysis_folder_default()
+
+    def open_sl5(self, filename: str) -> tttrlib.TTTR | None:
         chisurf.logging.log(0, 'WizardTTTRCorrelator::open_sl5:', filename)
         data = dict()
-        with io.open_maybe_zipped(filename) as fp:
-            data.update(json.load(fp))
-        tttr_filename = self.analysis_folder / pathlib.Path(data['filename'])
-        tttr_filetype = data['filetype']
-        f = chisurf.fio.decompress_numpy_array(data['filter'])
-        idx = np.where(f > 0)[0]
-        if tttr_filename.exists():
-            chisurf.logging.log(0, 'tttr_filename: ', tttr_filename)
-            chisurf.logging.log(0, 'tttr_filetype: ', tttr_filetype)
-            tttr = tttrlib.TTTR(tttr_filename.as_posix(), tttr_filetype)
+        try:
+            with io.open_maybe_zipped(filename) as fp:
+                data.update(json.load(fp))
+        except Exception as e:
+            chisurf.logging.log(1, f"Failed to read selection file {filename}: {e}")
+            return None
+        tttr_filename = self.analysis_folder / pathlib.Path(data.get('filename', ''))
+        tttr_filetype = data.get('filetype')
+        f = chisurf.fio.decompress_numpy_array(data.get('filter'))
+        idx = np.where(f > 0)[0] if f is not None else None
+        if not tttr_filename.exists():
+            chisurf.logging.log(1, f"TTTR source file does not exist: {tttr_filename}")
+            return None
+        chisurf.logging.log(0, 'tttr_filetype: ', tttr_filetype)
+        tttr = tttrlib.TTTR(tttr_filename.as_posix(), tttr_filetype)
+        if idx is not None:
             tttr = tttr[idx]
-            chisurf.logging.log(0, tttr.get_macro_times())
         return tttr
 
-    def open_selections(self, filenames: typing.List[pathlib.Path]) -> tttrlib.TTTR:
+    def open_selections(self, filenames: typing.List[pathlib.Path]) -> tttrlib.TTTR | None:
         chisurf.logging.log(0, "WizardTTTRCorrelator::open_selections:", filenames)
-        self.tttr = self.open_sl5(filenames[0])
-        for filename in filenames:
-            self.tttr.append(self.open_sl5(filename))
+        if not filenames:
+            chisurf.logging.log(1, "No selection files provided to open_selections.")
+            return None
+        first = self.open_sl5(str(filenames[0]))
+        if first is None:
+            chisurf.logging.log(1, f"Failed to open first selection file: {filenames[0]}")
+            return None
+        self.tttr = first
+        for filename in filenames[1:]:
+            tttr_part = self.open_sl5(str(filename))
+            if tttr_part is not None:
+                self.tttr.append(tttr_part)
         chisurf.logging.log(0, "tttr", self.tttr)
+        return self.tttr
 
     def open_analysis_folder(self, folder: pathlib.Path = None):
         chisurf.logging.log(0, "WizardTTTRCorrelator::open_analysis_folder")
         if folder is None:
             folder = self.analysis_folder / 'sl5'
+        if not folder.exists():
+            chisurf.logging.log(1, f"Analysis folder does not exist: {folder}")
+            return
         selected_files = sorted(list(folder.glob('*.json.gz')))
         chisurf.logging.log(0, 'Opening analysis folder')
         chisurf.logging.log(0, list(selected_files))
+        if not selected_files:
+            chisurf.logging.log(1, f"No selection files (*.json.gz) found in: {folder}")
+            return
         self.open_selections(selected_files)
 
     @chisurf.gui.decorators.init_with_ui("tttr_correlator.ui")
-    def __init__(self, *args, **kwargs):
+    def __init__(
+            self,
+            ncasc: int = None,
+            nbins: int = None,
+            nsplits: int = None,
+            is_fine: bool = None,
+            channel_a: str = "",
+            channel_b: str = "",
+            filter_file: str = "",
+            analysis_folder: str = "",
+            output_path: str = "",
+            microtime_range_a: str = "",
+            microtime_range_b: str = "",
+            *args,
+            **kwargs
+    ):
+        """
+        Initializes the TTTR Correlation Wizard with optional parameters.
+
+        Parameters:
+        ----------
+        ncasc : int, optional
+            Number of cascades in correlation. If None, the value is taken from 
+            cs_settings['correlator']['number_of_cascades'] at runtime.
+        nbins : int, optional
+            Number of bins for correlation. If None, the value is taken from 
+            cs_settings['correlator']['B'] at runtime.
+        nsplits : int, optional
+            Number of data splits for correlation. If None, the value is taken from 
+            cs_settings['correlator']['split'] at runtime.
+        is_fine : bool, optional
+            Whether to use fine correlation. If None, the value is taken from 
+            cs_settings['correlator']['fine'] at runtime.
+        channel_a : str, optional
+            Comma-separated list of channels for detector A, default is "" (empty).
+        channel_b : str, optional
+            Comma-separated list of channels for detector B, default is "" (empty).
+        filter_file : str, optional
+            Path to the filter file, default is "" (none).
+        analysis_folder : str, optional
+            Path to the analysis folder, default is "".
+        output_path : str, optional
+            Path to save correlation results, default is "".
+        microtime_range_a : str, optional
+            Semi-colon separated microtime ranges for channel A (e.g., "0-100;200-300").
+        microtime_range_b : str, optional
+            Semi-colon separated microtime ranges for channel B (e.g., "50-150;250-350").
+
+        Notes:
+        ------
+        - UI elements are set based on the provided arguments.
+        - The correlation flag (`self.is_correlated`) is invalidated when any parameter is modified.
+        - Default values for correlation parameters are taken from chisurf.settings.cs_settings at runtime,
+          allowing them to reflect any changes to settings that occur during runtime.
+        """
+
         self.setTitle("Correlator")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.setSizePolicy(sizePolicy)
@@ -300,16 +518,25 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.tttr: tttrlib.TTTR = None
         self.settings: dict = dict()
         self.settings['correlation'] = dict()
+        self.settings['tttr_filenames'] = []
         self.correlations = list()
+        # Control whether per-chunk JSON files are written to disk
+        self.save_chunks_to_disk = True
+
+        # Flag to track correlation status
+        self.is_correlated = False
 
         self.textEdit.setVisible(False)
         chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit_3, call=self.open_analysis_folder)
 
         # Create plots
-        self.pw_fcs = pg.plot()
+        self.pw_fcs = pg.PlotWidget()
         self.pw_fcs.resize(150, 150)
+
         self.plot_item_fcs = self.pw_fcs.getPlotItem()
         self.plot_item_fcs.setLogMode(True, False)
+        self.plot_item_fcs.setLabel('bottom', 'Correlation time, t_c (ms)')
+        self.plot_item_fcs.setLabel('left', 'Correlation amplitude, G')
         self.verticalLayout_2.addWidget(self.pw_fcs)
 
         # Connect actions
@@ -317,5 +544,213 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.toolButton_3.clicked.connect(self.correlate_data)
         self.toolButton_4.clicked.connect(self.onClearFiles)
 
+        # Optional: hook up detector-window combos if present in UI
+        self._channel_defs: dict = {}
+        try:
+            if hasattr(self, 'comboBox'):
+                self.comboBox.currentTextChanged.connect(lambda _=None: self._on_combo_changed('A'))
+            if hasattr(self, 'comboBox_2'):
+                self.comboBox_2.currentTextChanged.connect(lambda _=None: self._on_combo_changed('B'))
+        except Exception:
+            pass
+
+        # Update output filename when user edits channel fields manually
+        try:
+            self.lineEdit.textChanged.connect(self._on_channel_text_changed)
+            self.lineEdit_2.textChanged.connect(self._on_channel_text_changed)
+        except Exception:
+            pass
+
+        # Apply UI modifications from arguments
+        self._apply_initial_parameters(
+            ncasc, nbins, nsplits, is_fine, channel_a, channel_b,
+            filter_file, analysis_folder, output_path, microtime_range_a, microtime_range_b
+        )
+
+        # Force update of UI elements with values from settings
+        # This ensures that any default values from the UI file are overridden
+        self.spinBox_2.setValue(int(chisurf.settings.cs_settings['correlator']['B']))
+        self.spinBox_3.setValue(int(chisurf.settings.cs_settings['correlator']['number_of_cascades']))
+        self.spinBox.setValue(int(chisurf.settings.cs_settings['correlator']['split']))
+        self.checkBox_2.setChecked(bool(chisurf.settings.cs_settings['correlator']['fine']))
+
+        # Ensure parameters are updated after setting them
         self.update_parameter()
 
+    def _apply_initial_parameters(
+            self, ncasc, nbins, nsplits, is_fine, channel_a, channel_b,
+            filter_file, analysis_folder, output_path, microtime_range_a, microtime_range_b
+    ):
+        """
+        Sets initial values of UI elements based on provided parameters.
+        This method ensures that the correlation flag (`self.is_correlated`) is invalidated.
+
+        If any of the correlation parameters (ncasc, nbins, nsplits, is_fine) are None,
+        their values are taken from chisurf.settings.cs_settings at runtime.
+        """
+
+        chisurf.logging.log(0, "Setting initial parameters for UI elements")
+
+        # Always get the latest values from settings
+        settings_ncasc = chisurf.settings.cs_settings['correlator']['number_of_cascades']
+        settings_nbins = chisurf.settings.cs_settings['correlator']['B']
+        settings_nsplits = chisurf.settings.cs_settings['correlator']['split']
+        settings_is_fine = bool(chisurf.settings.cs_settings['correlator']['fine'])
+
+        # Use provided parameters if not None, otherwise use settings
+        if ncasc is None:
+            ncasc = settings_ncasc
+        if nbins is None:
+            nbins = settings_nbins
+        if nsplits is None:
+            nsplits = settings_nsplits
+        if is_fine is None:
+            is_fine = settings_is_fine
+
+        # Map each parameter to its corresponding UI widget
+        ui_elements = {
+            'ncasc': (self.spinBox_3, ncasc),
+            'nbins': (self.spinBox_2, nbins),
+            'nsplits': (self.spinBox, nsplits),
+            'is_fine': (self.checkBox_2, is_fine),
+            'channel_a': (self.lineEdit, channel_a),
+            'channel_b': (self.lineEdit_2, channel_b),
+            'filter_file': (self.lineEdit_4, filter_file),
+            'analysis_folder': (self.lineEdit_3, analysis_folder),
+            'output_path': (self.lineEdit_5, output_path),
+            'microtime_range_a': (self.lineEdit_6, microtime_range_a),
+            'microtime_range_b': (self.lineEdit_7, microtime_range_b),
+        }
+
+        # Apply values to UI elements
+        for key, (widget, value) in ui_elements.items():
+            if isinstance(widget, QtWidgets.QSpinBox):  # Numerical inputs
+                widget.setValue(int(value))
+            elif isinstance(widget, QtWidgets.QCheckBox):  # Checkboxes
+                widget.setChecked(bool(value))
+            elif isinstance(widget, QtWidgets.QLineEdit):  # Text inputs
+                widget.setText(str(value))
+
+        # Reset correlation flag since parameters were modified
+        self.is_correlated = False
+
+    def apply_detector_setup_from_page(self, detector_page):
+        """
+        Populate correlator combos from a DetectorWizardPage instance.
+        Uses detector_page.channels() which returns a dict mapping names to
+        lists of dicts with keys: 'window_range', 'detector_chs', 'micro_time_range'.
+        """
+        try:
+            channel_defs = detector_page.channels()
+        except Exception:
+            channel_defs = {}
+        self.populate_channel_combos(channel_defs)
+
+    def populate_channel_combos(self, channel_defs: dict):
+        """
+        Fill comboBox (A) and comboBox_2 (B) with detector-window keys.
+        """
+        self._channel_defs = channel_defs or {}
+        keys = list(self._channel_defs.keys())
+        # Sort keys for consistent UI order
+        try:
+            keys.sort()
+        except Exception:
+            pass
+        # Populate combos safely
+        try:
+            if hasattr(self, 'comboBox'):
+                self.comboBox.blockSignals(True)
+                self.comboBox.clear()
+                self.comboBox.addItems(keys)
+                if self.comboBox.count() > 0:
+                    self.comboBox.setCurrentIndex(0)
+                self.comboBox.blockSignals(False)
+        except Exception:
+            pass
+        try:
+            if hasattr(self, 'comboBox_2'):
+                self.comboBox_2.blockSignals(True)
+                self.comboBox_2.clear()
+                self.comboBox_2.addItems(keys)
+                if self.comboBox_2.count() > 0:
+                    # If there is at least a second item, select it for B by default, else first
+                    self.comboBox_2.setCurrentIndex(1 if self.comboBox_2.count() > 1 else 0)
+                self.comboBox_2.blockSignals(False)
+        except Exception:
+            pass
+        # Apply current selections to fields
+        self._on_combo_changed('A')
+        self._on_combo_changed('B')
+
+    def _on_channel_text_changed(self, *_):
+        """
+        When the user edits the channel fields (A or B) manually, refresh parameters
+        and update the suggested output filename.
+        """
+        try:
+            self.update_parameter()
+        except Exception:
+            pass
+        try:
+            self.update_output_path()
+        except Exception:
+            pass
+
+    def _on_combo_changed(self, side: str):
+        """
+        Update channel and microtime fields for side 'A' or 'B' when combo changes.
+        """
+        # Choose correct combo and targets
+        if side == 'A':
+            combo = getattr(self, 'comboBox', None)
+            ch_edit = getattr(self, 'lineEdit', None)
+            mtr_edit = getattr(self, 'lineEdit_6', None)
+        else:
+            combo = getattr(self, 'comboBox_2', None)
+            ch_edit = getattr(self, 'lineEdit_2', None)
+            mtr_edit = getattr(self, 'lineEdit_7', None)
+        if combo is None or ch_edit is None or mtr_edit is None:
+            return
+        key = combo.currentText()
+        entries = self._channel_defs.get(key)
+        if not entries:
+            return
+        # Derive unique detector channels
+        try:
+            all_chs = []
+            for e in entries:
+                chs = e.get('detector_chs', [])
+                if isinstance(chs, (list, tuple)):
+                    all_chs.extend(list(chs))
+            # Deduplicate preserving order
+            seen = set()
+            uniq = []
+            for c in all_chs:
+                if c not in seen:
+                    seen.add(c)
+                    uniq.append(c)
+            ch_edit.setText(','.join(str(c) for c in uniq))
+        except Exception:
+            pass
+        # Derive microtime range string by aggregating detector micro_time_range segments
+        mtr_str = ""
+        try:
+            segs = []
+            for e in entries:
+                r = e.get('micro_time_range')
+                if isinstance(r, (list, tuple)) and len(r) >= 2:
+                    segs.append(f"{int(r[0])}-{int(r[1])}")
+            mtr_str = ';'.join(segs)
+        except Exception:
+            mtr_str = ''
+        try:
+            mtr_edit.setText(mtr_str)
+        except Exception:
+            pass
+        # Apply parameter updates
+        try:
+            self.update_parameter()
+            self.update_output_path()
+        except Exception:
+            pass

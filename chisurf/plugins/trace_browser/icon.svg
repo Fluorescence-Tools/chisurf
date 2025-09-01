@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>Trace Browser Icon</title>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3F51B5"/>
+      <stop offset="100%" stop-color="#2196F3"/>
+    </linearGradient>
+  </defs>
+  <!-- Axes -->
+  <g stroke="#607D8B" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M16 16 L16 104 L112 104"/>
+  </g>
+  <!-- Trace line -->
+  <polyline points="16,84 28,72 36,78 44,60 52,66 60,40 68,48 76,36 84,44 92,34 100,42 108,30" 
+            fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Magnifying glass -->
+  <g transform="translate(0,0)" stroke="#4CAF50" stroke-width="6" fill="none" stroke-linecap="round">
+    <circle cx="86" cy="86" r="14" fill="white" stroke="#4CAF50"/>
+    <path d="M96 96 L114 114"/>
+  </g>
+  <!-- Subtle dots to suggest TTTR time bins -->
+  <g fill="#90A4AE">
+    <circle cx="24" cy="108" r="1.5"/>
+    <circle cx="40" cy="108" r="1.5"/>
+    <circle cx="56" cy="108" r="1.5"/>
+    <circle cx="72" cy="108" r="1.5"/>
+    <circle cx="88" cy="108" r="1.5"/>
+    <circle cx="104" cy="108" r="1.5"/>
+  </g>
+</svg>

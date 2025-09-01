@@ -16,10 +16,22 @@ T = typing.TypeVar('T', bound='Parameter')
 @chisurf.decorators.register
 class Parameter(chisurf.base.Base):
 
+    @staticmethod
+    def check_recursive_link(current, target):
+        if id(current) == id(target):
+            return True
+        if current.link is not None:
+            return Parameter.check_recursive_link(current.link, target)
+        return False
+
     @property
     def fit_idx(self):
         import chisurf.fitting
         idxs = chisurf.fitting.find_fit_idx_of_parameter(self)
+        if len(idxs) == 0:
+            # Parameter is not associated with any fit
+            chisurf.logging.warning(f"Parameter {self.name} is not associated with any fit")
+            return -1  # Return a default value indicating no fit
         if len(idxs) > 1:
             chisurf.logging.warning("Ambiguous link call. Fitting parameter used in multiple fits")
         fit_idx_self = idxs[0]
@@ -27,11 +39,12 @@ class Parameter(chisurf.base.Base):
 
     @property
     def name(self) -> str:
-        return self._port.name
+        return self._name
 
     @name.setter
     def name(self, v: str):
         self._port.name = v
+        self._name = v
 
     @property
     def bounds(self) -> typing.Tuple[float, float]:
@@ -54,28 +67,65 @@ class Parameter(chisurf.base.Base):
 
     @property
     def value(self) -> float:
-        """The value of the parameter.
-
-        This value of the parameter considers links and
-        bounds, i.e., if a parameter is linked to another
-        parameter the value of the linked parameter is returned.
-        First, links are considered, then bounds are considered.
-
-        :return:
         """
-        return self._port.value.item(0)
+        float: The current parameter value.
+
+        If a callable is set, it is evaluated every time this property is accessed.
+        The result is clamped to bounds if bounds are enabled, and if the parameter
+        is not fixed, it is written back to the underlying port.
+
+        If the parameter is linked, the link takes precedence and the callable
+        is ignored.
+        """
+        # If linked, defer entirely to linked parameter's port value.
+        if self.is_linked:
+            return self._port.value
+
+        # Compute from callable if available.
+        if self._callable:
+            try:
+                v = float(self._callable())
+            except Exception:
+                return self._port.value
+            if self.bounds_on:
+                lb, ub = self.bounds
+                if np.isfinite(lb):
+                    v = max(lb, v)
+                if np.isfinite(ub):
+                    v = min(ub, v)
+            if not self.fixed:
+                f = self._port.fixed
+                self._port.fixed = False
+                self._port.value = v
+                self._port.fixed = f
+            return v
+
+        return self._port.value
 
     @value.setter
     def value(self, value: float):
-        self._port.value = np.array([value], dtype=np.double)
+        """
+        Set the parameter value.
+
+        If the parameter is callable-backed, the setter is ignored to enforce
+        that the callable is always used.
+        """
+        if self._callable:
+            return
+        f = self._port.fixed
+        self._port.fixed = False
+        self._port.value = value
+        self._port.fixed = f
 
     @property
     def link(self) -> chisurf.parameter.Parameter:
         return self._link
 
     @link.setter
-    def link(self, link: Parameter):
+    def link(self, link: Parameter|None):
         if isinstance(link, Parameter):
+            if Parameter.check_recursive_link(link, self):
+                raise ValueError("Cannot create a recursive link between parameters.")
             self._link = link
             if self.controller is not None:
                 self.controller.set_linked(link is not None)
@@ -200,49 +250,43 @@ class Parameter(chisurf.base.Base):
     def update(self):
         pass
 
-    def __init__(
-            self,
-            value: float = 1.0,
-            link: Parameter = None,
-            lb: float = float("-inf"),
-            ub: float = float("inf"),
-            bounds_on: bool = False,
-            *args,
-            **kwargs
-    ):
+    def __init__(self, value: float = 1.0, link: 'Parameter' = None,
+                 lb: float = float("-inf"), ub: float = float("inf"),
+                 bounds_on: bool = False, *args, **kwargs):
         """
-        :param value: the value of the parameter (default 1.0)
-        :param link: the (optional) parameter to which the new instance is linked to
-        :param lb: the lower bound of the parameter value
-        :param ub: the upper bound of the parameter value
-        :param bounds_on: if this is True the parameter value is bounded between
-        the upper and the lower bound as specified by ub and lb.
-        :param args:
-        :param kwargs:
+        Initialize a Parameter.
+
+        Parameters
+        ----------
+        value : float or callable
+            Initial value of the parameter, or a callable to compute it dynamically.
+        link : Parameter, optional
+            Another parameter to link this parameter to.
+        lb : float
+            Lower bound for the parameter.
+        ub : float
+            Upper bound for the parameter.
+        bounds_on : bool
+            Whether bounds should be enforced.
         """
         super().__init__(*args, **kwargs)
-        name = kwargs.pop('name', '')
+        self._name = kwargs.pop('name', '')
         port = kwargs.pop('port', None)
         if port is not None:
             self._port = port
+            self._callable = None
         else:
             if callable(value):
                 self._callable = value
                 self._port = chinet.Port(
-                    value=np.array([0.0], dtype=np.double),  # the value is not actually used
-                    name=name,
-                    lb=lb,
-                    ub=ub,
-                    is_bounded=bounds_on
+                    value=np.atleast_1d(0.0).astype(np.float64),
+                    name=self._name, lb=lb, ub=ub, is_bounded=bounds_on
                 )
             else:
                 self._callable = None
                 self._port = chinet.Port(
-                    value=np.atleast_1d(value),
-                    name=name,
-                    lb=lb,
-                    ub=ub,
-                    is_bounded=bounds_on
+                    value=np.atleast_1d(value).astype(np.float64),
+                    name=self._name, lb=lb, ub=ub, is_bounded=bounds_on
                 )
         self._link = link
         if isinstance(link, Parameter):
@@ -324,4 +368,3 @@ class ParameterGroup(chisurf.base.Base):
     #             s += "\n"
     #         fp.write(s)
     #
-

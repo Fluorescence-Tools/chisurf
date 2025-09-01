@@ -5,7 +5,7 @@ import numpy as np
 
 from chisurf import typing
 
-from chisurf.gui import QtWidgets, QtCore
+from chisurf.gui import QtWidgets, QtCore, QtGui
 
 import pyqtgraph as pg
 import pyqtgraph.dockarea
@@ -20,6 +20,45 @@ import chisurf.fitting
 import chisurf.settings
 import chisurf.math.statistics
 from chisurf.plots import plotbase
+
+
+class DraggableTextItem(pg.TextItem):
+    """A TextItem that can be dragged with the mouse."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setAcceptHoverEvents(True)
+        self.setCursor(QtCore.Qt.OpenHandCursor)
+        self._dragging = False
+        self._dragOffset = QtCore.QPointF(0, 0)
+
+    def hoverEnterEvent(self, event):
+        self.setCursor(QtCore.Qt.OpenHandCursor)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging = True
+            self.setCursor(QtCore.Qt.ClosedHandCursor)
+            self._dragOffset = event.pos()
+            event.accept()
+        else:
+            event.ignore()
+
+    def mouseMoveEvent(self, event):
+        if self._dragging and event.buttons() & QtCore.Qt.LeftButton:
+            new_pos = self.mapToParent(event.pos() - self._dragOffset)
+            self.setPos(new_pos)
+            event.accept()
+        else:
+            event.ignore()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._dragging = False
+            self.setCursor(QtCore.Qt.OpenHandCursor)
+            event.accept()
+        else:
+            event.ignore()
 
 colors = chisurf.settings.gui['plot']['colors']
 
@@ -270,6 +309,7 @@ class LinePlotControl(QtWidgets.QWidget):
 class LinePlot(plotbase.Plot):
 
     name = "Fit"
+    regionChanged = QtCore.Signal(int, int)
 
     def get_bounds(
             self,
@@ -357,12 +397,12 @@ class LinePlot(plotbase.Plot):
         area.addDock(d3, 'bottom', d1)
         self.layout.addWidget(area)
 
-        # Labels
-        self.text = pg.TextItem(
+        # Labels - using draggable text item for quality parameters
+        self.text = DraggableTextItem(
             text='',
             border='w',
             fill=(0, 0, 255, 100),
-            anchor=(1, 1)
+            anchor=(0, 0)
         )
         self.text.setParentItem(plots['main_plot'])
         self.text.setPos(100, 0)
@@ -386,6 +426,11 @@ class LinePlot(plotbase.Plot):
                     ub = np.log10(ub)
                 self.region.setRegion((lb, ub))
                 chisurf.run(f"cs.current_fit.fit_range = {self.lb_i}, {self.ub_i}")
+                # Notify listeners (e.g., Fit widget) about changed fit-range
+                try:
+                    self.regionChanged.emit(self.lb_i, self.ub_i)
+                except Exception:
+                    pass
                 self.update(only_fit_range=True)
 
             region.sigRegionChangeFinished.connect(onRegionUpdate)
@@ -466,6 +511,25 @@ class LinePlot(plotbase.Plot):
 
         return None
 
+    def _update_reference_checkbox(self):
+        """
+        Check if the model has a reference attribute and update the checkbox state accordingly.
+        If the model doesn't have a reference attribute, disable the checkbox.
+        """
+        has_reference = False
+        try:
+            # Check if model has reference attribute
+            if hasattr(self.fit.model, 'reference'):
+                has_reference = True
+        except Exception:
+            pass
+            
+        # Update the checkbox state
+        self.plot_controller.checkBox_5.setEnabled(has_reference)
+        if not has_reference and self.plot_controller.use_reference:
+            # If reference is not available but checkbox is checked, uncheck it
+            self.plot_controller.use_reference = False
+            
     def update(self, only_fit_range: bool = False, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
 
@@ -473,6 +537,9 @@ class LinePlot(plotbase.Plot):
         data_log_y = self.plot_controller.data_is_log_y
         data_log_x = self.plot_controller.data_is_log_x
         director = self.plot_controller.director
+        
+        # Check if model has reference attribute and update checkbox state
+        self._update_reference_checkbox()
 
         curves = fit.get_curves()
         data = curves['data']
@@ -516,11 +583,14 @@ class LinePlot(plotbase.Plot):
 
             # Reference-function
             if self.plot_controller.use_reference and curve_settings['allow_reference_curve']:
-                reference = fit.model.reference
-                if reference is None:
-                    reference = np.ones_like(y)
-                    chisurf.logging.warning("No reference curve provided by the model.")
-                y /= reference
+                try:
+                    reference = fit.model.reference
+                    if reference is None:
+                        reference = np.ones_like(y)
+                        chisurf.logging.warning("No reference curve provided by the model.")
+                    y /= reference
+                except AttributeError:
+                    chisurf.logging.warning("Model does not have a reference attribute.")
 
             if self.plot_controller.is_density and curve_settings['allow_density']:
                 y[1:] = y[1:] / np.diff(x)

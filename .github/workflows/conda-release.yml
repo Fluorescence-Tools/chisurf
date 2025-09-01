@@ -1,55 +1,113 @@
-
-name: Build and Upload Conda Packages
+name: Conda Build
 
 on:
   workflow_dispatch:
-#  push:
-#    branches:
-#      - develop
+  push:
+    branches: [ development ]
   release:
-    types: ['released', 'prereleased']
+    types: [ released, prereleased ]
+  schedule:
+    # Every Monday at 11:00 UTC
+    - cron: "0 11 * * 1"
 
 jobs:
   build:
-    name: CondaBuild (${{ matrix.python-version }}, ${{ matrix.os }})
+    name: CondaBuild (py${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]#, "macos-latest"] #, "windows-latest"]
-        python-version: ["3.10"]
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+        os: [ ubuntu-latest ] # add macos-latest / windows-latest if you like
+        python-version: [ "3.10" ]
 
-      - name: "Set SDK on MacOS (if needed)"
+    env:
+      OUT_DIR: conda-bld
+      ANACONDA_USER: tpeulen
+      ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+      # If it's a release, use "main"; else "dev"
+      UPLOAD_LABEL: ${{ startsWith(github.ref, 'refs/tags/') && (github.event_name == 'release') && (github.event.action == 'released' || github.event.action == 'prereleased') && 'main' || 'dev' }}
+
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout (with tags & submodules)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: "Set SDK on macOS (if needed)"
         if: startsWith(matrix.os, 'macos')
         run: build_tools/install_macos_sdk.sh
 
-      - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Set up micromamba (conda-forge strict)
+        uses: mamba-org/setup-micromamba@v2
         with:
-          auto-update-conda: true
-          python-version: ${{ matrix.python-version }}
-          miniforge-version: latest
-          channels: conda-forge,bioconda,tpeulen,defaults
-          channel-priority: true
+          environment-name: build
+          create-args: >-
+            python=${{ matrix.python-version }}
+            boa
+            conda-build
+            anaconda-client
+            curl
+          cache-downloads: true
+          condarc: |
+            channels:
+              - conda-forge
+              - bioconda
+            channel_priority: strict
 
       - name: Display Conda Settings
-        shell: bash -el {0}
+        shell: bash -l {0}
         run: |
-          conda info
-          conda list
-          conda config --show-sources
-          conda config --show
+          micromamba run -n build conda info
+          micromamba run -n build conda list
+          micromamba run -n build conda config --show-sources
+          micromamba run -n build conda config --show
           printenv | sort
 
-      - name: Build and Upload Conda Package
-        uses: aganders3/headless-gui@v1
+#      - name: Fetch conda-forge pinning (conda_build_config.yaml)
+#        shell: bash -l {0}
+#        run: |
+#          echo "Fetching conda-forge pinning config…"
+#          curl -fsSL \
+#            https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/conda_build_config.yaml \
+#            -o conda_build_config.yaml
+#          echo "Pinning config head:"
+#          head -n 12 conda_build_config.yaml
+
+      - name: Build (mambabuild)
+        shell: bash -l {0}
+        working-directory: conda-recipe
+        run: |
+          micromamba run -n build conda mambabuild . \
+            --output-folder "${GITHUB_WORKSPACE}/${OUT_DIR}"
+
+      - name: Upload to Anaconda.org (skip if no token)
+        shell: bash -l {0}
+        run: |
+          if [[ -n "${ANACONDA_TOKEN}" ]]; then
+            echo "Uploading packages to anaconda.org/${ANACONDA_USER} (label=${UPLOAD_LABEL})"
+            micromamba run -n build anaconda -t "${ANACONDA_TOKEN}" upload \
+              -u "${ANACONDA_USER}" \
+              --label "${UPLOAD_LABEL}" \
+              --force ${OUT_DIR}/**/*.tar.bz2
+          else
+            echo "ANACONDA_TOKEN is empty; skipping upload."
+          fi
+
+      - name: Keep built artifacts
+        uses: actions/upload-artifact@v4
         with:
-          shell: bash -el {0}
-          run: |
-            conda install mamba conda-build boa anaconda-client
-            cd conda-recipe
-            conda mambabuild . --output-folder conda-bld
-            anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload -u tpeulen --force conda-bld/**/*.tar.bz2
+          name: conda-packages-${{ matrix.os }}-py3.10
+          path: ${{ env.OUT_DIR }}/**/*.tar.bz2
