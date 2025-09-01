@@ -118,16 +118,69 @@ class BatchProcessingWizard(QWizard):
         self.setGeometry(100, 100, 700, 500)
         self.setWizardStyle(QWizard.ModernStyle)
 
-        self.addPage(WelcomePage(self))
+        # Capture page IDs for navigation control
+        self.pid_welcome = self.addPage(WelcomePage(self))
+        # New optional page to select already loaded datasets
+        self.loaded_data_selection_page = LoadedDataSelectionPage(self)
+        self.pid_loaded = self.addPage(self.loaded_data_selection_page)
+        # Page to add files and select fit
         self.file_and_fit_selection_page = FileAndFitSelectionPage(self)
-        self.addPage(self.file_and_fit_selection_page)
+        self.pid_file = self.addPage(self.file_and_fit_selection_page)
+        # Analysis and results pages
         self.analysis_page = AnalysisPage(self)
-        self.addPage(self.analysis_page)
+        self.pid_analysis = self.addPage(self.analysis_page)
         self.results_page = ResultsPage(self)
-        self.addPage(self.results_page)
+        self.pid_results = self.addPage(self.results_page)
 
-        # This will hold the CSV filename where the results are stored.
+        # Storage for results and selections
         self.fit_results_file = ""
+        self.selected_loaded_datasets = []
+
+        # Hook page change to enforce type check when navigating
+        self._block_page_change = False
+        self.currentIdChanged.connect(self._on_current_id_changed)
+
+    def _datasets_have_mixed_types(self, datasets):
+        try:
+            if len(datasets) <= 1:
+                return False
+            classes = set()
+            for ds in datasets:
+                try:
+                    exp = getattr(ds, 'experiment', None)
+                    classes.add(type(exp))
+                except Exception:
+                    classes.add(type(None))
+            return len(classes) > 1
+        except Exception:
+            # On any unexpected issue, do not block navigation
+            return False
+
+    def _on_current_id_changed(self, new_id: int):
+        # Avoid re-entrancy when we programmatically change pages
+        if self._block_page_change:
+            return
+        try:
+            # Only enforce when navigating to pages after the loaded selection page
+            if new_id in (self.pid_file, self.pid_analysis, self.pid_results):
+                sel = list(getattr(self, 'selected_loaded_datasets', []) or [])
+                if self._datasets_have_mixed_types(sel):
+                    # Warn and send user back to the selection page
+                    self._block_page_change = True
+                    try:
+                        type_names = sorted({type(getattr(ds, 'experiment', None)).__name__ for ds in sel})
+                        QMessageBox.warning(
+                            self,
+                            "Mixed Experiment Types",
+                            "Please select datasets of the same experiment type.\nFound types: " + ", ".join(type_names)
+                        )
+                    finally:
+                        # Return to selection page
+                        self.setCurrentId(self.pid_loaded)
+                        self._block_page_change = False
+        except Exception:
+            # Fail-safe: do nothing on errors to avoid locking the wizard
+            self._block_page_change = False
 
 
 class WelcomePage(QWizardPage):
@@ -154,10 +207,84 @@ class WelcomePage(QWizardPage):
         self.setLayout(layout)
 
 
+class LoadedDataSelectionPage(QWizardPage):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle("Step 1: Select Already Loaded Data (optional)")
+        self.setSubTitle("Select already loaded datasets to process. Leave empty to add files in the next step.")
+        layout = QVBoxLayout()
+        info = QLabel("If you have already loaded data in ChiSurf, you can select them here and skip reloading from files.")
+        info.setWordWrap(True)
+        layout.addWidget(info)
+        self.loaded_list = QListWidget()
+        layout.addWidget(self.loaded_list)
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.clicked.connect(self.populate_loaded_list)
+        layout.addWidget(self.refresh_button)
+        self.setLayout(layout)
+
+    def initializePage(self):
+        self.populate_loaded_list()
+
+    def populate_loaded_list(self):
+        self.loaded_list.clear()
+        try:
+            for idx, ds in enumerate(chisurf.imported_datasets):
+                # Skip the global dataset from being listed/selectable
+                ds_name_attr = getattr(ds, 'name', None)
+                if isinstance(ds_name_attr, str) and ds_name_attr == 'Global Dataset':
+                    continue
+                # Prefer explicit name, fallback to filename, then a generic label
+                name = ds_name_attr or getattr(ds, 'filename', None) or f"Dataset {idx+1}"
+                text = f"{idx+1}. {name}"
+                item = QListWidgetItem(text)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                item.setCheckState(Qt.Unchecked)
+                item.setData(Qt.UserRole, ds)
+                self.loaded_list.addItem(item)
+        except Exception as e:
+            print(f"Error populating loaded datasets: {e}")
+
+    def get_selected_loaded_datasets(self):
+        selected = []
+        for i in range(self.loaded_list.count()):
+            item = self.loaded_list.item(i)
+            if item.checkState() == Qt.Checked:
+                selected.append(item.data(Qt.UserRole))
+        return selected
+
+    def validatePage(self):
+        try:
+            selected = self.get_selected_loaded_datasets()
+            # Validate that all selected datasets are of the same experiment type
+            if len(selected) > 1:
+                def exp_cls(ds):
+                    try:
+                        exp = getattr(ds, 'experiment', None)
+                        return type(exp)
+                    except Exception:
+                        return type(None)
+                classes = {exp_cls(ds) for ds in selected}
+                if len(classes) > 1:
+                    # Build a readable list of type names for the message
+                    type_names = sorted({cls.__name__ if cls is not None else 'None' for cls in classes})
+                    QMessageBox.warning(
+                        self,
+                        "Mixed Experiment Types",
+                        "Please select datasets of the same experiment type.\nFound types: " + ", ".join(type_names)
+                    )
+                    return False
+            # Store selection on the wizard
+            self.wizard().selected_loaded_datasets = selected
+        except Exception:
+            # In case of unexpected issues, allow proceeding without selection
+            self.wizard().selected_loaded_datasets = []
+        return True
+
 class FileAndFitSelectionPage(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("Step 1: Select Files and Fit")
+        self.setTitle("Step 2: Select Files and Fit")
         self.setSubTitle("Add the files you want to process and select the fitting method to use.")
         self.layout = QVBoxLayout()
 
@@ -197,10 +324,20 @@ class FileAndFitSelectionPage(QWizardPage):
             self.file_list.addItem(item)
 
     def validatePage(self):
-        if self.file_list.count() == 0 or self.fit_combo_box.currentText() == "":
+        fit_ok = bool(self.fit_combo_box.currentText())
+        has_files = self.file_list.count() > 0
+        loaded = []
+        try:
+            loaded = list(getattr(self.wizard(), 'selected_loaded_datasets', []) or [])
+        except Exception:
+            loaded = []
+        if not fit_ok:
+            QMessageBox.warning(self, "Incomplete Selection", "Please select a fit method before proceeding.")
+            return False
+        if not has_files and not loaded:
             QMessageBox.warning(
-                self, "Incomplete Selection",
-                "Please add at least one file and select a fit method before proceeding."
+                self, "No Data Selected",
+                "Please select already loaded datasets on the previous page or add at least one file."
             )
             return False
         return True
@@ -275,8 +412,8 @@ class FileAndFitSelectionPage(QWizardPage):
 class AnalysisPage(QWizardPage):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("Step 2: Run Fits")
-        self.setSubTitle("Run fits on your selected files. Fit results will be saved to a CSV file.")
+        self.setTitle("Step 3: Run Fits")
+        self.setSubTitle("Run fits on your selected data. Fit results will be saved to a CSV file.")
         layout = QVBoxLayout()
 
         self.analysis_label = QLabel("Click 'Run Fits' to start processing. Progress will be shown below.")
@@ -300,9 +437,9 @@ class AnalysisPage(QWizardPage):
         self.run_fits_button.clicked.connect(self.run_fits)
         layout.addWidget(self.run_fits_button)
 
-        # A list to show processed file names as they complete.
+        # A list to show processed items as they complete.
         self.results_list = QListWidget()
-        layout.addWidget(QLabel("Processed Files:"))
+        layout.addWidget(QLabel("Processed Data:"))
         layout.addWidget(self.results_list)
 
         self.setLayout(layout)
@@ -466,13 +603,14 @@ class AnalysisPage(QWizardPage):
 
         selected_files = file_selection_page.get_selected_files()
         selected_fit_name = file_selection_page.get_selected_fit()
-
-        if not selected_files:
-            QMessageBox.warning(self, "No Files Selected", "Please select at least one file for processing.")
-            return
+        loaded_datasets = list(getattr(wizard, 'selected_loaded_datasets', []) or [])
 
         if not selected_fit_name:
             QMessageBox.warning(self, "No Fit Selected", "Please select a fit method before proceeding.")
+            return
+
+        if not selected_files and not loaded_datasets:
+            QMessageBox.warning(self, "No Data Selected", "Please select already loaded datasets or add files to process.")
             return
 
         # If the results file field is empty, prompt the user to choose a save location.
@@ -496,44 +634,64 @@ class AnalysisPage(QWizardPage):
         fit = chisurf.fits[fit_idx]
         initial_params = {param.name: (param.value, param.fixed) for param in fit.model.parameters_all}
 
+        # Build processing queue: first loaded datasets, then files
+        items = []
+        for ds in loaded_datasets:
+            # Derive a human-readable name
+            name = getattr(ds, 'name', None) or getattr(ds, 'filename', None) or f"Dataset {len(items)+1}"
+            items.append({"kind": "dataset", "value": ds, "name": str(name)})
+        for fpath in selected_files:
+            items.append({"kind": "file", "value": fpath, "name": fpath})
+
         # Create and show the progress window.
-        progress_window = ProgressWindow(title="Processing Files", message="Running fits...", max_value=100,
+        progress_window = ProgressWindow(title="Processing Data", message="Running fits...", max_value=100,
                                          parent=self)
         progress_window.show()
 
-        total_files = len(selected_files)
-        for i, file in enumerate(selected_files, start=1):
-            key = self._norm_key(file)
-            # Restore the initial parameter values before each file's fit.
+        total_items = len(items)
+        for i, item in enumerate(items, start=1):
+            display_name = item["name"]
+            key = self._norm_key(display_name)
+            # Restore the initial parameter values before each run
             for param in fit.model.parameters_all:
                 if param.name in initial_params:
                     param.value, param.fixed = initial_params[param.name]
 
-            self.dummy_run_fit(file, fit_idx)
+            # Run fit depending on item type
+            try:
+                if item["kind"] == "dataset":
+                    ds = item["value"]
+                    # Directly assign and run
+                    fit.data = ds
+                    fit.run()
+                else:
+                    # Reuse existing file-based loader
+                    self.dummy_run_fit(display_name, fit_idx)
+            except Exception as e:
+                print(f"Fit run failed for {display_name}: {e}")
 
             # Save per-run fit results (numeric export)
             try:
                 exports_dir = self._get_or_create_fit_exports_dir()
-                safe = self._sanitize_filename(file)
+                safe = self._sanitize_filename(display_name)
                 base = os.path.join(exports_dir, f"{i:03d}_{safe}")
-                # Use the same API as core_fit.save_fit uses internally
                 fit.save(base, 'csv', save_curves=True)
             except Exception as e:
-                print(f"Per-run fit export failed for {file}: {e}")
+                print(f"Per-run fit export failed for {display_name}: {e}")
 
             # Take a screenshot of the fit window after each fit
             try:
-                img_path = self._capture_screenshot_for_file(file, i)
+                img_path = self._capture_screenshot_for_file(display_name, i)
                 if img_path:
                     self._screenshot_map[key] = img_path
             except Exception as e:
-                print(f"Screenshot step failed for {file}: {e}")
+                print(f"Screenshot step failed for {display_name}: {e}")
 
-            # Access fit parameters via fit.model.parameters_all and chi2r via fit.chi2r.
+            # Collect results rows
             for param in fit.model.parameters_all:
                 result = {
                     "Run": str(i),
-                    "Filename": file,
+                    "Filename": display_name,
                     "GroupKey": key,
                     "Parameter": param.name,
                     "Fixed": "Yes" if param.fixed else "No",
@@ -542,11 +700,11 @@ class AnalysisPage(QWizardPage):
                 }
                 self.results.append(result)
 
-            # Update progress and the file list view.
-            progress = int((i / total_files) * 100)
+            # Update progress and the list view.
+            progress = int((i / total_items) * 100)
             progress_window.set_value(progress)
-            self.results_list.addItem(file)
-            time.sleep(0.2)  # Short pause to keep UI responsive; adjust as needed
+            self.results_list.addItem(display_name)
+            time.sleep(0.2)
 
         progress_window.close()
 
@@ -562,8 +720,9 @@ class AnalysisPage(QWizardPage):
         wizard.fit_results_file = csv_filename
 
         # Create DOCX report alongside the CSV
+        processed_names = [item["name"] for item in items]
         docx_path = os.path.splitext(csv_filename)[0] + ".docx"
-        docx_created = self._create_docx_report(docx_path, selected_files)
+        docx_created = self._create_docx_report(docx_path, processed_names)
         if docx_created:
             wizard.fit_results_docx = docx_path
 
@@ -574,7 +733,6 @@ class AnalysisPage(QWizardPage):
         zip_out = zip_base + ".zip"
         try:
             exports_dir = self._get_or_create_fit_exports_dir()
-            # Create the archive; make_archive returns the filename it created
             created = shutil.make_archive(zip_base, 'zip', root_dir=exports_dir)
             zip_out = created if created else zip_out
         except Exception as e:
