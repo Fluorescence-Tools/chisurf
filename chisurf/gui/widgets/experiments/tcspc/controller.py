@@ -92,10 +92,16 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         """
         try:
             # 1) Ask for Jordi file
+            # Use ChiSurf working directory if available
+            try:
+                import chisurf as _cs
+                start_dir = str(getattr(_cs, 'working_path', '') or '')
+            except Exception:
+                start_dir = ""
             file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
                 self,
                 "Open Jordi VV/VH file (fast rotating dye)",
-                "",
+                start_dir,
                 "Data Files (*.dat *.txt *.csv);;All Files (*)"
             )
             if not file_path:
