@@ -37,6 +37,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
                 'plot_irf': True
             }
          ),
+        (chisurf.plots.FitTablePlot, {}),
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {})

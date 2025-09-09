@@ -220,6 +220,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                 'y_label': 'y'
             }
         ),
+        (chisurf.plots.FitTablePlot, {}),
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
         (
@@ -353,6 +354,7 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
                 'plot_irf': True
             }
          ),
+        (chisurf.plots.FitTablePlot, {}),
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {}),

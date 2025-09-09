@@ -22,6 +22,7 @@ class ParseFCSWidget(ParseModelWidget):
                 'y_label': 'y'
             }
         ),
+        (plots.FitTablePlot, {}),
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {})

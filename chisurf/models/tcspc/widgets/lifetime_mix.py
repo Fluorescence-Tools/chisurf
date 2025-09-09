@@ -31,6 +31,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
                 'plot_irf': True
             }
          ),
+        (chisurf.plots.FitTablePlot, {}),
         (chisurf.plots.FitInfo, {}),
         (chisurf.plots.ParameterScanPlot, {}),
         (chisurf.plots.ResidualPlot, {}),
