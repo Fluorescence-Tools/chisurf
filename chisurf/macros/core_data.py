@@ -78,19 +78,42 @@ def add_dataset(
 
         if experiment_reader is None:
             experiment_reader = cs.current_experiment_reader
-        if dataset is None:
+
+        # Obtain dataset if not provided
+        if dataset is None and experiment_reader is not None:
             dataset = experiment_reader.get_data(**kwargs)
 
+        # If nothing was read, inform the user and exit safely
+        if dataset is None:
+            chisurf.gui.widgets.msg_box = chisurf.gui.widgets.MyMessageBox(
+                label="Error",
+                info="No data could be read. Check reading settings and file.",
+                details="Reader returned no dataset."
+            )
+            return
+
+        # Normalize to a group without modifying global state yet
         if isinstance(dataset, chisurf.data.ExperimentDataGroup):
             dataset_group = dataset
         else:
             dataset_group = chisurf.data.ExperimentDataCurveGroup(dataset)
 
+        # Guard against empty groups which would break the UI (d[0])
+        if len(dataset_group) == 0:
+            chisurf.gui.widgets.msg_box = chisurf.gui.widgets.MyMessageBox(
+                label="Error",
+                info="No data entries found in the selected file using the current reader.",
+                details=f"Reader: {getattr(experiment_reader, 'name', type(experiment_reader).__name__)}\nFilename: {filename}"
+            )
+            return
+
+        # Append valid data
         if len(dataset_group) == 1:
             chisurf.imported_datasets.append(dataset_group[0])
         else:
             chisurf.imported_datasets.append(dataset_group)
 
+        # Update UI only after successful append
         cs.update()
 
     except Exception as e:
