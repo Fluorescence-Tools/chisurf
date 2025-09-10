@@ -1157,6 +1157,16 @@ class Main(QtWidgets.QMainWindow):
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
 
+        # Enable drop on the 'Drop files here' label and connect event filter
+        try:
+            self.label_filedrop.setAcceptDrops(True)
+            self.label_filedrop.installEventFilter(self)
+            # Helpful tooltip
+            if hasattr(self.label_filedrop, 'setToolTip'):
+                self.label_filedrop.setToolTip("Drop files here to open with the current setup")
+        except Exception:
+            pass
+
         # Replace the standard QListWidget with our custom LogListWidget
         # First, save any existing items
         existing_items = []
@@ -1246,6 +1256,49 @@ class Main(QtWidgets.QMainWindow):
         super().update()
         self.fit_selector.update()
         self.dataset_selector.update()
+
+    def eventFilter(self, obj, event):
+        # Handle drag-and-drop onto the 'Drop files here' label
+        try:
+            label = getattr(self, 'label_filedrop', None)
+        except Exception:
+            label = None
+        if obj is not None and label is not None and obj is label:
+            t = event.type()
+            if t == QtCore.QEvent.DragEnter:
+                if event.mimeData().hasUrls():
+                    event.acceptProposedAction()
+                    return True
+            elif t == QtCore.QEvent.DragMove:
+                if event.mimeData().hasUrls():
+                    event.acceptProposedAction()
+                    return True
+            elif t == QtCore.QEvent.Drop:
+                if event.mimeData().hasUrls():
+                    try:
+                        paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
+                        paths = [p for p in paths if p]
+                        if paths:
+                            paths.sort()
+                            # Same behavior as dropping on the dataset selector
+                            command = "\n".join([f"chisurf.macros.add_dataset(filename=r'{p}')" for p in paths])
+                            try:
+                                chisurf.run(command)
+                            except Exception:
+                                # Fallback: call directly without chisurf.run
+                                for p in paths:
+                                    try:
+                                        chisurf.macros.add_dataset(filename=rf"{p}")
+                                    except Exception:
+                                        pass
+                            event.acceptProposedAction()
+                            try:
+                                self.status.showMessage(f"Added {len(paths)} file(s)", 3000)
+                            except Exception:
+                                pass
+                    finally:
+                        return True
+        return super().eventFilter(obj, event)
 
     def warmup_imports(self):
         """Preload heavy modules to improve first-use responsiveness.
