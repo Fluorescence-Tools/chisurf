@@ -5,10 +5,42 @@ from typing import Optional, List
 import numpy as np
 import pandas as pd
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf.fitting
 from chisurf.plots import plotbase
+
+
+class NoBackgroundProxy(QtCore.QIdentityProxyModel):
+    """Proxy model that removes any background color roles.
+    This neutralizes background coloring coming from the underlying model (e.g., guidata's DataFrameModel).
+    """
+    def data(self, index: QtCore.QModelIndex, role: int = QtCore.Qt.DisplayRole):
+        if role in (QtCore.Qt.BackgroundRole, QtCore.Qt.BackgroundColorRole):
+            return None
+        return super().data(index, role)
+
+class ReadOnlyColumnProxy(QtCore.QIdentityProxyModel):
+    """Proxy model that disables editing for specified column labels.
+    Looks up columns by their horizontal header text and removes ItemIsEditable flag.
+    Can be stacked with other proxies (e.g., NoBackgroundProxy).
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._readonly_headers = set()
+
+    def setReadOnlyHeaders(self, headers):
+        self._readonly_headers = set(headers or [])
+
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
+        f = super().flags(index)
+        try:
+            header = self.headerData(index.column(), QtCore.Qt.Horizontal)
+            if isinstance(header, str) and header in self._readonly_headers:
+                f &= ~QtCore.Qt.ItemIsEditable
+        except Exception:
+            pass
+        return f
 
 try:
     # Used for the model parameter table dialog
@@ -16,6 +48,55 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     DataFrameEditor = None  # type: ignore
 
+
+class BooleanToggleDelegate(QtWidgets.QStyledItemDelegate):
+    def _is_checked(self, value) -> bool:
+        try:
+            if isinstance(value, (bool, np.bool_)):
+                return bool(value)
+            if isinstance(value, (int, np.integer)):
+                return bool(int(value))
+            if isinstance(value, str):
+                v = value.strip().lower()
+                return v in ('1', 'true', 't', 'yes', 'y', 'on')
+        except Exception:
+            pass
+        return False
+
+    def _toggle(self, value) -> bool:
+        return not self._is_checked(value)
+
+    def _checkbox_rect(self, option: QtWidgets.QStyleOptionViewItem) -> QtCore.QRect:
+        rect = QtCore.QRect(option.rect)
+        size = 16
+        x = rect.x() + (rect.width() - size) // 2
+        y = rect.y() + (rect.height() - size) // 2
+        return QtCore.QRect(x, y, size, size)
+
+    def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex) -> None:
+        checked = self._is_checked(index.data(QtCore.Qt.DisplayRole))
+        style = QtWidgets.QApplication.style() if QtWidgets.QApplication.instance() else option.widget.style()
+        cb_opt = QtWidgets.QStyleOptionButton()
+        cb_opt.state = QtWidgets.QStyle.State_Enabled | (QtWidgets.QStyle.State_On if checked else QtWidgets.QStyle.State_Off)
+        cb_opt.rect = self._checkbox_rect(option)
+        style.drawControl(QtWidgets.QStyle.CE_CheckBox, cb_opt, painter)
+
+    def createEditor(self, parent, option, index):
+        # No inline editor; we toggle directly via editorEvent
+        return None
+
+    def editorEvent(self, event: QtCore.QEvent, model: QtCore.QAbstractItemModel, option: QtWidgets.QStyleOptionViewItem, index: QtCore.QModelIndex) -> bool:
+        et = event.type()
+        if et in (QtCore.QEvent.MouseButtonRelease, QtCore.QEvent.MouseButtonDblClick):
+            new_val = self._toggle(index.data(QtCore.Qt.DisplayRole))
+            str_val = 'True' if new_val else 'False'
+            return model.setData(index, str_val, QtCore.Qt.EditRole)
+        if et == QtCore.QEvent.KeyPress:
+            if isinstance(event, QtGui.QKeyEvent) and event.key() in (QtCore.Qt.Key_Space, QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+                new_val = self._toggle(index.data(QtCore.Qt.DisplayRole))
+                str_val = 'True' if new_val else 'False'
+                return model.setData(index, str_val, QtCore.Qt.EditRole)
+        return False
 
 class FitTablePlot(plotbase.Plot):
     """
@@ -61,10 +142,33 @@ class FitTablePlot(plotbase.Plot):
         # Main table
         self.table = QtWidgets.QTableWidget(self)
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["x", "data", "model", "weighted residuals"])
-        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.setHorizontalHeaderLabels(["x", "data", "model", "w. res."])
+        hh = self.table.horizontalHeader()
+        hh.setStretchLastSection(False)
+        # Compact columns: size to contents and allow horizontal scroll
+        try:
+            hh.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        except Exception:
+            try:
+                hh.setResizeMode(QtWidgets.QHeaderView.ResizeToContents)  # Qt4 fallback
+            except Exception:
+                pass
+        hh.setMinimumSectionSize(20)
         self.table.setAlternatingRowColors(False)
+        self.table.setWordWrap(False)
+        # Compact font for table only
+        try:
+            f = self.table.font()
+            f.setPointSize(max(7, f.pointSize()-1))
+            f.setStyleStrategy(QtGui.QFont.PreferAntialias)
+            self.table.setFont(f)
+            self.table.verticalHeader().setDefaultSectionSize(max(16, self.table.fontMetrics().height()+6))
+        except Exception:
+            pass
+        # Right-align numeric cells by default via item flags later
         self.table.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
+        self.table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
         # Wire item changed to backpropagate edits
         self.table.itemChanged.connect(self.on_item_changed)
@@ -111,7 +215,27 @@ class FitTablePlot(plotbase.Plot):
             return out
 
         ym = align(ym_raw, nd)
-        wres = align(wres_raw, nd)
+        # Embed weighted residuals into the full data length based on fit range
+        try:
+            xmin, xmax = self.fit.fit_range
+        except Exception:
+            xmin, xmax = 0, nd - 1
+        if nd <= 0:
+            return x, y, ym, np.array([])
+        # Clip and normalize indices
+        xmin = int(np.clip(xmin, 0, nd - 1))
+        xmax = int(np.clip(xmax, 0, nd - 1))
+        if xmax < xmin:
+            xmin, xmax = xmax, xmin
+        # Initialize with NaNs and fill inside fit range from residuals
+        wres = np.full(nd, np.nan, dtype=float)
+        try:
+            seg_len = min(wres_raw.size, xmax - xmin + 1, nd - xmin)
+            if seg_len > 0:
+                wres[xmin:xmin + seg_len] = wres_raw[:seg_len].astype(float, copy=False)
+        except Exception:
+            # If anything goes wrong, fall back to simple alignment
+            wres = align(wres_raw, nd)
         return x, y, ym, wres
 
     def _set_arrays(self, x: np.ndarray, y: np.ndarray) -> None:
@@ -159,26 +283,35 @@ class FitTablePlot(plotbase.Plot):
                 # x (editable)
                 itx = QtWidgets.QTableWidgetItem(self._format_float(x[i]))
                 itx.setFlags(itx.flags() | QtCore.Qt.ItemIsEditable)
+                itx.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
                 self.table.setItem(i, 0, itx)
 
                 # data (editable)
                 ity = QtWidgets.QTableWidgetItem(self._format_float(y[i]))
                 ity.setFlags(ity.flags() | QtCore.Qt.ItemIsEditable)
+                ity.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
                 self.table.setItem(i, 1, ity)
 
                 # model (read-only)
                 itm = QtWidgets.QTableWidgetItem(self._format_float(ym[i]))
                 itm.setFlags(itm.flags() & ~QtCore.Qt.ItemIsEditable)
+                itm.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
                 self.table.setItem(i, 2, itm)
 
                 # weighted residuals (read-only)
                 itw = QtWidgets.QTableWidgetItem(self._format_float(wres[i]))
                 itw.setFlags(itw.flags() & ~QtCore.Qt.ItemIsEditable)
+                itw.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
                 self.table.setItem(i, 3, itw)
         finally:
             self._block_item_changed = False
 
         self.lbl_info.setText(f"N={n}  |  chi2r={getattr(self.fit, 'chi2r', float('nan')):.4g}")
+        # After population, ensure columns are minimally sized
+        try:
+            self.table.resizeColumnsToContents()
+        except Exception:
+            pass
 
     # ---- Slots ----
     def on_item_changed(self, item: QtWidgets.QTableWidgetItem):
@@ -273,10 +406,18 @@ class FitTablePlot(plotbase.Plot):
             QtWidgets.QMessageBox.information(self, "No parameters", "Model exposes no editable parameters.")
             return
 
+        # Ensure boolean columns are real booleans (no NaN) for proper checkbox behavior
+        for _col in ("fixed", "bounds_on", "linked"):
+            if _col in df.columns:
+                try:
+                    df[_col] = df[_col].apply(lambda v: bool(v) if pd.notna(v) else False)
+                except Exception:
+                    pass
+
         dlg = DataFrameEditor(self)
         if not dlg.setup_and_check(df, title="Model parameters"):
             return
-        # Customize the editor: hide index/row headers and adjust size
+        # Customize the editor: hide index/row headers and adjust size; install boolean toggle delegates
         try:
             # Hide any row headers (index) on contained table views
             views = dlg.findChildren(QtWidgets.QTableView)
@@ -285,11 +426,39 @@ class FitTablePlot(plotbase.Plot):
                     v.verticalHeader().setVisible(False)
                 except Exception:
                     pass
+                # Disable alternating row colors and remove background coloring via proxy
+                try:
+                    v.setAlternatingRowColors(False)
+                    orig_model = v.model()
+                    # Stack proxies: NoBackgroundProxy -> ReadOnlyColumnProxy
+                    if orig_model is not None:
+                        nb_source = orig_model
+                        if not isinstance(orig_model, NoBackgroundProxy):
+                            nb = NoBackgroundProxy(v)
+                            nb.setSourceModel(orig_model)
+                            nb_source = nb
+                        ro = ReadOnlyColumnProxy(v)
+                        ro.setSourceModel(nb_source)
+                        ro.setReadOnlyHeaders(["name"])  # make 'name' column read-only
+                        v.setModel(ro)
+                except Exception:
+                    pass
                 # Also hide a first column named like an index, if present
                 try:
                     header0 = v.model().headerData(0, QtCore.Qt.Horizontal)
                     if isinstance(header0, str) and header0.strip().lower() in ("index", "#", ""):
                         v.setColumnHidden(0, True)
+                except Exception:
+                    pass
+                # Install checkbox toggle delegate on boolean columns
+                try:
+                    model = v.model()
+                    if model is not None:
+                        ncols = model.columnCount()
+                        for ci in range(ncols):
+                            header = model.headerData(ci, QtCore.Qt.Horizontal)
+                            if isinstance(header, str) and header in ("fixed", "bounds_on", "linked"):
+                                v.setItemDelegateForColumn(ci, BooleanToggleDelegate(v))
                 except Exception:
                     pass
         except Exception:
@@ -308,6 +477,22 @@ class FitTablePlot(plotbase.Plot):
             new_df = dlg.get_value()
             # Backpropagate edits to parameters
             pmap = param_dict  # already a name->parameter dict
+            
+            def _parse_bool(v) -> bool:
+                try:
+                    if isinstance(v, (bool, np.bool_)):
+                        return bool(v)
+                    if isinstance(v, (int, np.integer)):
+                        return int(v) != 0
+                    if isinstance(v, (float, np.floating)):
+                        return float(v) != 0.0
+                    if isinstance(v, str):
+                        s = v.strip().lower()
+                        return s in ('1', 'true', 't', 'yes', 'y', 'on')
+                except Exception:
+                    pass
+                return False
+            
             for _, row in new_df.iterrows():
                 name = row.get('name')
                 if name not in pmap:
@@ -331,20 +516,20 @@ class FitTablePlot(plotbase.Plot):
                 # Update fixed
                 try:
                     if 'fixed' in row:
-                        p.fixed = bool(row['fixed'])
+                        p.fixed = _parse_bool(row['fixed'])
                 except Exception:
                     pass
 
                 # Update bounds_on
                 try:
                     if 'bounds_on' in row:
-                        p.bounds_on = bool(row['bounds_on'])
+                        p.bounds_on = _parse_bool(row['bounds_on'])
                 except Exception:
                     pass
 
                 # Update linking
                 try:
-                    want_linked = bool(row.get('linked'))
+                    want_linked = _parse_bool(row.get('linked'))
                 except Exception:
                     want_linked = False
                 target_name = str(row.get('link_target')) if row.get('link_target') is not None else ''
