@@ -17,4 +17,4 @@ from chisurf.plots.plotbase import *
 from chisurf.plots.proteinMC import *
 from chisurf.plots.surfaceplot import SurfacePlot
 from chisurf.plots.wr_plot import ResidualPlot
-from chisurf.plots.dataframe_plot import FitTablePlot
+from chisurf.plots.table_plot import FitTablePlot
