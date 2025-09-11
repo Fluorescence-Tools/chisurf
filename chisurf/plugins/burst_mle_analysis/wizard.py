@@ -2702,7 +2702,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     self.channel_definer.detectors = setup_info.get("detectors", {})
                     chisurf.logging.info("Updated channel definitions from JSON file")
 
-        # 2) Sample first file to infer which cols are numeric
+        # 2) Sample first file to infer which cols are numeric and build robust dtype spec
         sample = pd.read_csv(
             bur_files[0],
             sep="\t",
@@ -2712,9 +2712,24 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             engine="c",
             low_memory=False
         )
+        # Numeric columns from sample
         num_cols = sample.select_dtypes(include="number").columns
-        dtype_spec = {col: "float64" for col in num_cols}
-        dtype_spec["First File"] = "string"
+        dtype_spec: dict[str, str] = {col: "float64" for col in num_cols}
+        # Ensure file/path-like columns are treated as strings across all files
+        string_like_cols = set()
+        for col in sample.columns:
+            if col.strip() == "" or "File" in col or col in ("First File", "Last File", "BID File", "burst_file"):
+                string_like_cols.add(col)
+        # Explicitly include common string columns even if not present in the sample
+        string_like_cols.update({"First File", "Last File", "BID File", "burst_file", ""})
+        for col in string_like_cols:
+            dtype_spec[col] = "string"
+        # BID Index should be integer if present (use pandas nullable integer)
+        if "BID Index" in sample.columns:
+            dtype_spec["BID Index"] = "Int64"
+        else:
+            # add proactively; ignored for files without the column
+            dtype_spec["BID Index"] = "Int64"
 
         # 3) Read each file and concat
         file_dfs = []
@@ -2728,7 +2743,8 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 engine="c",
                 low_memory=False
             )
-            df_part["burst_file"] = fn.name
+            # Track source .bur file name
+            df_part["burst_file"] = str(getattr(fn, 'name', fn))
             file_dfs.append(df_part)
         df = pd.concat(file_dfs, ignore_index=True)
 
