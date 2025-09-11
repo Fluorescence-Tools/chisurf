@@ -359,7 +359,7 @@ def generate_burst_dataframe(start_stop, filename, tttr, windows, detectors, inc
         out.append(zero_row.copy())
 
     for start, stop in start_stop:
-        if stop <= start or stop>n_ph or start<0:
+        if stop <= start or stop>=n_ph or start<0:
             continue
 
         # allocate a fresh row
