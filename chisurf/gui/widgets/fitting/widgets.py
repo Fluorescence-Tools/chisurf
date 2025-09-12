@@ -523,6 +523,18 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             return
         self.current_plot_controller = plot.plot_controller
         self.current_plot_controller.show()
+        # Ensure the newly visible plot refreshes its content
+        try:
+            update_all = getattr(plot, 'update_all', None)
+            if callable(update_all):
+                QtCore.QTimer.singleShot(0, update_all)
+            elif hasattr(plot, 'update'):
+                QtCore.QTimer.singleShot(0, plot.update)
+        except Exception:
+            try:
+                plot.update()
+            except Exception:
+                pass
 
     def updateStatusBar(self, msg: str):
         self.statusBar().showMessage(msg)
