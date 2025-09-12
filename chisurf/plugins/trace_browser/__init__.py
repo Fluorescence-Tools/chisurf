@@ -13,6 +13,7 @@ import os
 import json
 import shutil
 import pathlib
+import csv
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -23,7 +24,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
     QListWidget, QListWidgetItem, QSplitter, QTextEdit, QComboBox, QSpinBox,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QLineEdit, QMessageBox,
-    QSizePolicy, QCheckBox
+    QSizePolicy, QCheckBox, QGroupBox, QGridLayout
 )
 from PyQt5.QtCore import Qt, QEvent, pyqtSignal, QSize, QTimer
 
@@ -350,6 +351,11 @@ class TraceBrowser(QWidget):
 
         # Two-page layout using a simple stacked layout approach
         self.root_layout = QVBoxLayout(self)
+        try:
+            self.root_layout.setContentsMargins(6, 6, 6, 6)
+            self.root_layout.setSpacing(4)
+        except Exception:
+            pass
 
         # Page 0: Detector setup
         self.page0 = QWidget(self)
@@ -366,18 +372,46 @@ class TraceBrowser(QWidget):
         # Page 1: Trace browser
         self.page1 = QWidget(self)
         p1_layout = QVBoxLayout(self.page1)
+        try:
+            p1_layout.setContentsMargins(6, 6, 6, 6)
+            p1_layout.setSpacing(4)
+        except Exception:
+            pass
 
         # Controls row
         ctrl_row = QHBoxLayout()
+        try:
+            ctrl_row.setContentsMargins(0, 0, 0, 0)
+            ctrl_row.setSpacing(4)
+        except Exception:
+            pass
         self.folder_label = QLabel("No folder selected", self.page1)
         
         # Back to setup button
         self.btn_back = QPushButton("\u2190 Back to setup", self.page1)
         self.btn_back.clicked.connect(self._on_back_to_setup)
+        try:
+            self.btn_back.setMaximumHeight(26)
+            self.btn_back.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
         ctrl_row.addWidget(self.btn_back)
         
         self.btn_pick_folder = QPushButton("Pick folder", self.page1)
         self.btn_pick_folder.clicked.connect(self._on_pick_folder)
+        try:
+            self.btn_pick_folder.setMaximumHeight(26)
+            self.btn_pick_folder.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
+
+        # Include subfolder option (renamed from "Process subfolders")
+        self.chk_subfolders = QCheckBox("Include subfolders", self.page1)
+        self.chk_subfolders.setChecked(False)
+        try:
+            self.chk_subfolders.toggled.connect(lambda _=None: self._on_subfolders_toggled())
+        except Exception:
+            pass
 
         self.filter_combo = QComboBox(self.page1)
         self.filter_combo.addItems([
@@ -394,27 +428,43 @@ class TraceBrowser(QWidget):
         self.btn_clear = QPushButton("Clear", self.page1)
         self.btn_clear.setToolTip("Clear file list")
         self.btn_clear.clicked.connect(self._on_clear)
+        try:
+            self.btn_clear.setMaximumHeight(26)
+            self.btn_clear.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
 
         # Clear caches button (in-memory and on-disk caches)
         self.btn_clear_caches = QPushButton("Clear caches", self.page1)
         self.btn_clear_caches.setToolTip("Clear in-memory and on-disk caches for this folder")
         self.btn_clear_caches.clicked.connect(self._on_clear_caches)
+        try:
+            self.btn_clear_caches.setMaximumHeight(26)
+            self.btn_clear_caches.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
 
         ctrl_row.addWidget(self.folder_label)
         ctrl_row.addWidget(self.btn_pick_folder)
+        ctrl_row.addWidget(self.chk_subfolders)
         ctrl_row.addWidget(QLabel("Filter:"))
         ctrl_row.addWidget(self.filter_combo)
-        ctrl_row.addWidget(self.btn_clear)
-        ctrl_row.addWidget(self.btn_clear_caches)
-
-        # Subfolder processing option
-        self.chk_subfolders = QCheckBox("Process subfolders", self.page1)
-        self.chk_subfolders.setChecked(False)
+        # Group Clear and Clear caches vertically to save horizontal space
+        clear_group = QGroupBox("Clear", self.page1)
         try:
-            self.chk_subfolders.toggled.connect(lambda _=None: self._on_subfolders_toggled())
+            clear_group.setFlat(True)
         except Exception:
             pass
-        ctrl_row.addWidget(self.chk_subfolders)
+        clear_layout = QVBoxLayout(clear_group)
+        try:
+            clear_layout.setContentsMargins(4, 2, 4, 2)
+            clear_layout.setSpacing(2)
+        except Exception:
+            pass
+        clear_layout.addWidget(self.btn_clear)
+        clear_layout.addWidget(self.btn_clear_caches)
+        ctrl_row.addWidget(clear_group)
+
 
         self.window_ms_spin = QSpinBox(self.page1)
         self.window_ms_spin.setRange(1, 10000)
@@ -423,8 +473,8 @@ class TraceBrowser(QWidget):
         self.window_ms_spin.valueChanged.connect(self._on_window_changed)
         ctrl_row.addWidget(self.window_ms_spin)
 
-        # Y-range controls (pyqtgraph SpinBox)
-        ctrl_row.addWidget(QLabel("Y min:"))
+        # Y-range controls (pyqtgraph SpinBox) - place Ymin above Ymax
+        ymin_label = QLabel("Ymin:", self.page1)
         self.y_min_spin = pg.SpinBox(self.page1)
         self.y_min_spin.setRange(-1e9, 1e12)
         self.y_min_spin.setDecimals(0)
@@ -438,12 +488,11 @@ class TraceBrowser(QWidget):
         # Make spinbox expand and keep a reasonable minimum width
         try:
             self.y_min_spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            self.y_min_spin.setMinimumWidth(90)
+            self.y_min_spin.setMinimumWidth(70)
         except Exception:
             pass
-        ctrl_row.addWidget(self.y_min_spin)
 
-        ctrl_row.addWidget(QLabel("Y max:"))
+        ymax_label = QLabel("Ymax:", self.page1)
         self.y_max_spin = pg.SpinBox(self.page1)
         self.y_max_spin.setRange(-1e9, 1e12)
         self.y_max_spin.setDecimals(0)
@@ -457,18 +506,72 @@ class TraceBrowser(QWidget):
         # Make spinbox expand and keep a reasonable minimum width
         try:
             self.y_max_spin.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            self.y_max_spin.setMinimumWidth(90)
+            self.y_max_spin.setMinimumWidth(70)
         except Exception:
             pass
-        ctrl_row.addWidget(self.y_max_spin)
+
+        # Stack Ymin above Ymax in a compact grid inside a group box and add to the control row
+        y_group = QGroupBox("Y-range", self.page1)
+        try:
+            y_group.setFlat(True)
+        except Exception:
+            pass
+        y_layout = QGridLayout(y_group)
+        try:
+            y_layout.setContentsMargins(4, 2, 4, 2)
+            y_layout.setHorizontalSpacing(4)
+            y_layout.setVerticalSpacing(2)
+        except Exception:
+            pass
+        y_layout.addWidget(ymin_label, 0, 0)
+        y_layout.addWidget(self.y_min_spin, 0, 1)
+        y_layout.addWidget(ymax_label, 1, 0)
+        y_layout.addWidget(self.y_max_spin, 1, 1)
+        ctrl_row.addWidget(y_group)
 
         self.btn_export = QPushButton("Export selected…", self.page1)
         self.btn_export.clicked.connect(self._on_export)
-        ctrl_row.addWidget(self.btn_export)
+        try:
+            self.btn_export.setMaximumHeight(26)
+            self.btn_export.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
+
+        self.btn_export_csv = QPushButton("Export CSV…", self.page1)
+        self.btn_export_csv.setToolTip("Export computed intensity traces as CSV files (per listed file)")
+        self.btn_export_csv.clicked.connect(self._on_export_csv)
+        try:
+            self.btn_export_csv.setMaximumHeight(26)
+            self.btn_export_csv.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
 
         self.btn_export_docx = QPushButton("Export DOCX…", self.page1)
         self.btn_export_docx.clicked.connect(self._on_export_docx)
-        ctrl_row.addWidget(self.btn_export_docx)
+        try:
+            self.btn_export_docx.setMaximumHeight(26)
+            self.btn_export_docx.setStyleSheet("QPushButton{padding:2px 6px;}")
+        except Exception:
+            pass
+
+        # Group export buttons together in a compact grid
+        export_group = QGroupBox("Export", self.page1)
+        try:
+            export_group.setFlat(True)
+        except Exception:
+            pass
+        export_layout = QGridLayout(export_group)
+        try:
+            export_layout.setContentsMargins(4, 2, 4, 2)
+            export_layout.setHorizontalSpacing(4)
+            export_layout.setVerticalSpacing(2)
+        except Exception:
+            pass
+        # Arrange in two columns to reduce horizontal space
+        export_layout.addWidget(self.btn_export, 0, 0)
+        export_layout.addWidget(self.btn_export_csv, 0, 1)
+        export_layout.addWidget(self.btn_export_docx, 1, 0)
+        ctrl_row.addWidget(export_group)
 
         p1_layout.addLayout(ctrl_row)
 
@@ -506,6 +609,16 @@ class TraceBrowser(QWidget):
             pass
         # Neutralize hover highlight via stylesheet (keeps normal selection highlight)
         self.table.setStyleSheet("QTableView::item:hover { background: transparent; }")
+        # Make table rows and text more space efficient
+        try:
+            self.table.setWordWrap(False)
+            self.table.setTextElideMode(Qt.ElideMiddle)
+            vh = self.table.verticalHeader()
+            vh.setVisible(False)
+            vh.setDefaultSectionSize(18)
+            vh.setMinimumSectionSize(16)
+        except Exception:
+            pass
         self.table.itemSelectionChanged.connect(self._on_selection_changed)
 
         splitter.addWidget(self.table)
@@ -1613,6 +1726,76 @@ class TraceBrowser(QWidget):
             except Exception as e:
                 logging.warning(f"TraceBrowser: Failed to copy {p} to {out}: {e}")
         logging.info(f"TraceBrowser: Exported {copied}/{len(paths)} files to {out}")
+
+    def _on_export_csv(self):
+        # Export computed intensity traces as CSV for all files currently listed (respecting filter/sort)
+        # Collect all paths from the table
+        paths: List[pathlib.Path] = []
+        for r in range(self.table.rowCount()):
+            item = self.table.item(r, 0)
+            if item is not None:
+                p_str = item.data(Qt.UserRole)
+                if p_str:
+                    paths.append(pathlib.Path(p_str))
+        if not paths:
+            return
+        out_dir = QFileDialog.getExistingDirectory(self, "Select destination folder for CSV files")
+        if not out_dir:
+            return
+        out = pathlib.Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        window_ms = int(self.window_ms_spin.value()) if hasattr(self, 'window_ms_spin') else 10
+        exported = 0
+        skipped = 0
+        for p in paths:
+            try:
+                # Skip image-like TTTR files
+                if self._is_image_tttr(p):
+                    skipped += 1
+                    continue
+                # Compute or load cached trace
+                time_axis, padded, labels = self._compute_trace_cached(p, window_ms)
+                # Expect padded shape (num_bins, num_series)
+                if time_axis is None or padded is None or len(time_axis) == 0:
+                    skipped += 1
+                    continue
+                # Ensure labels
+                if not labels:
+                    # Try to build from selected channels if available
+                    try:
+                        tt = tttrlib.TTTR(str(p)) if tttrlib is not None else None
+                        if tt is not None:
+                            chs = sorted(tt.get_used_routing_channels())
+                            labels = [str(c) for c in chs]
+                    except Exception:
+                        labels = []
+                # Sanitize labels to avoid commas/newlines in header
+                safe_labels = [str(l).replace('\n', ' ').replace('\r', ' ').replace(',', ';') for l in labels]
+                header = ['time_s'] + safe_labels
+                # Prepare rows
+                csv_path = out / f"{p.stem}_bin{window_ms}ms.csv"
+                with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(header)
+                    nb = int(padded.shape[0])
+                    # Ensure 2D behavior
+                    if len(padded.shape) == 1:
+                        for i in range(nb):
+                            writer.writerow([float(time_axis[i]), float(padded[i])])
+                    else:
+                        nc = int(padded.shape[1])
+                        for i in range(nb):
+                            row = [float(time_axis[i])] + [float(padded[i, j]) for j in range(nc)]
+                            writer.writerow(row)
+                exported += 1
+            except Exception as e:
+                logging.warning(f"TraceBrowser: Failed to export CSV for {p}: {e}")
+        logging.info(f"TraceBrowser: CSV exported for {exported}/{len(paths)} files to {out}; skipped {skipped}")
+        try:
+            QMessageBox.information(self, "CSV Export", f"Exported {exported}/{len(paths)} CSV files to: {out}")
+        except Exception:
+            pass
+
 
     def _on_export_docx(self):
         # Collect all paths that are currently displayed in the table (respecting filter/sort)
