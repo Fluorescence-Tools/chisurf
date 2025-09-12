@@ -470,7 +470,8 @@ class IntensityPlotWidget(QWidget):
     def plot_trace_and_histogram(
         self, time_axis, traces, channel_labels=None,
         bin_count=100, time_window_ms=10.0,
-        hist_min=None, hist_max=None, hmm_states=None
+        hist_min=None, hist_max=None, hmm_states=None,
+        show_window_lines=False
     ):
         self.plot_widget.clear()
         self.plots.clear()
@@ -539,6 +540,22 @@ class IntensityPlotWidget(QWidget):
             self._add_fill_between_yaxis_and_curve(hist_plot, counts, centers)
 
         self.plots.append((trace_plot, hist_plot))
+
+        # Optionally add vertical lines at time-window boundaries
+        if show_window_lines and time_axis is not None and len(time_axis) > 1:
+            try:
+                # time_axis is assumed to be bin start times in seconds
+                # Limit to at most 200 lines for performance
+                n = len(time_axis)
+                step = max(1, n // 200)
+                positions = time_axis[::step]
+                pen = pg.mkPen(color=(150, 150, 150, 120), width=1)
+                for (pitem, _h) in self.plots:
+                    for x in positions:
+                        vline = pg.InfiniteLine(pos=x, angle=90, pen=pen)
+                        pitem.addItem(vline)
+            except Exception:
+                pass
 
         if hmm_states is not None:
             state_plot = self.plot_widget.addPlot(row=n_channels+1, col=0, colspan=1)
