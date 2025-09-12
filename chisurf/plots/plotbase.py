@@ -33,43 +33,7 @@ class Plot(View):
         self.widgets = list()
 
     def update(self, *args, **kwargs) -> None:
-        try:
-            # Always propagate to QWidget.update for repaint scheduling
-            super().update(*args, **kwargs)
-        except Exception:
-            pass
-        # If subclass did not override update but provides update_all, call it
-        try:
-            update_all = getattr(self, 'update_all', None)
-            if callable(update_all) and type(self).update is Plot.update:
-                update_all(*args, **kwargs)
-        except Exception:
-            pass
-
-    def showEvent(self, event):
-        try:
-            super().showEvent(event)
-        except Exception:
-            pass
-        # Defer the refresh to when the widget is fully shown
-        try:
-            QtCore.QTimer.singleShot(0, self._refresh_on_show)
-        except Exception:
-            # As a fallback, call directly
-            self._refresh_on_show()
-
-    def _refresh_on_show(self):
-        """Ensure plots refresh their data when the widget becomes visible."""
-        try:
-            # Calling self.update will trigger subclass-specific refresh if available
-            self.update()
-        except Exception:
-            try:
-                update_all = getattr(self, 'update_all', None)
-                if callable(update_all):
-                    update_all()
-            except Exception:
-                pass
+        super().update(*args, **kwargs)
 
     def close(self):
         QtWidgets.QWidget.close(self)
