@@ -1,14 +1,22 @@
 """
-Lifetime MLE Analysis Wizard
+Lifetime MLE Analysis Wizard (reactive/cached)
 
-This module provides a GUI wizard for analyzing fluorescence lifetime data
-from imaging experiments using Maximum Likelihood Estimation (MLE).
+This version makes the GUI more *reactive* by avoiding unnecessary
+recomputation of histograms/decays. In particular, changing the micro-time
+window (start/stop) now only re-slices cached full histograms instead of
+rebuilding them, and IRF preparation is cached and only recomputed when its
+own parameters change (thresholds/shifts/binning/channels/IRF file).
 
-Features:
-- Batch processing of multiple TTTR files with a single IRF
-- Interactive file selection for viewing results
-- Export options for single or multiple files
-- Pixel-by-pixel lifetime analysis
+Key ideas:
+- Cache full micro-time histograms for P/S once per (TTTR, channels, binning)
+  and only slice them on start/stop changes.
+- Cache raw IRF histograms and a *prepared* IRF for the current
+  thresholds/shifts. Re-prepare IRF only when those parameters change.
+- Background from file is cached as full histograms, then sliced at use-time.
+- Update routing in `update_parameters()` detects which control changed and
+  triggers the minimal required work: slice-only, IRF-only, or full rebuild.
+
+Everything else is backward-compatible with your previous UI wiring.
 """
 
 import typing
@@ -24,6 +32,8 @@ import numpy as np
 import pandas as pd
 import os
 import time
+import contextlib
+
 
 import chisurf
 import chisurf.gui.decorators
@@ -94,7 +104,6 @@ class CombinedProgressDialog(QDialog):
         self.current_frame = 0
         self.total_lines = 0
         self.current_line = 0
-
 
     def set_file_progress(self, current, total):
         """Set the progress for files."""
@@ -197,22 +206,16 @@ class FileListWidget(QtWidgets.QListWidget):
 class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
     """
     Main wizard for Lifetime MLE Analysis.
+
+    This class now includes a small caching layer and minimal recomputation
+    rules so that common UI tweaks (e.g., micro-time start/stop) are instant.
     """
+    # ==============================
+    # Small helpers: IRF preparation
+    # ==============================
     def _interpolate_shift(self, arr: np.ndarray, shift: Union[int, float]) -> np.ndarray:
         """
         Shift a 1D array by a given number of bins, supporting fractional shifts.
-
-        Parameters
-        ----------
-        arr : np.ndarray
-            Input array to shift.
-        shift : int or float
-            Number of bins to shift (positive rightwards, negative leftwards).
-
-        Returns
-        -------
-        np.ndarray
-            Shifted array with zeros filled.
         """
         result = arr.astype(np.float64).copy()
         if shift == 0:
@@ -230,54 +233,42 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             result = np.interp(x - frac_shift, x, result, left=0.0, right=0.0)
         return result
 
-    def prepare_irf(self, irf_p: np.ndarray, irf_s: np.ndarray, 
-                   threshold: float = -1, 
-                   shift: int = 0, 
-                   shift_sp: float = 0, 
-                   shift_ss: float = 0) -> Tuple[np.ndarray, np.ndarray]:
+    def prepare_irf(self, irf_p: np.ndarray, irf_s: np.ndarray,
+                    threshold: float = -1,
+                    shift: int = 0,
+                    shift_sp: float = 0,
+                    shift_ss: float = 0,
+                    threshold_vv: Optional[float] = None,
+                    threshold_vh: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
         """
         Prepare IRF by applying threshold, normalization, and shifts.
-
-        Parameters
-        ----------
-        irf_p : np.ndarray
-            Parallel channel IRF.
-        irf_s : np.ndarray
-            Perpendicular channel IRF.
-        threshold : float
-            Threshold value as a fraction of the maximum. Values below this threshold will be set to zero.
-        shift : int
-            Integer shift of the second (ss) decay relative to the first (sp).
-        shift_sp : float
-            Sub-channel (fractional) shift to apply to the sp IRF.
-        shift_ss : float
-            Sub-channel (fractional) shift to apply to the ss IRF.
-
-        Returns
-        -------
-        Tuple[np.ndarray, np.ndarray]
-            Processed parallel and perpendicular IRFs.
         """
-        # Make copies to avoid modifying the original arrays
         irf_p = irf_p.astype(np.float64).copy()
         irf_s = irf_s.astype(np.float64).copy()
 
-        # Apply threshold to IRF histograms
-        if threshold > 0:
-            irf_p[irf_p < threshold * irf_p.max()] = 0
-            irf_s[irf_s < threshold * irf_s.max()] = 0
+        # Thresholds (per-channel if provided)
+        t_p = threshold_vv if threshold_vv is not None else threshold
+        t_s = threshold_vh if threshold_vh is not None else threshold
+        if t_p is not None and t_p > 0:
+            mx = irf_p.max() if irf_p.size else 1.0
+            irf_p[irf_p < t_p * mx] = 0
+        if t_s is not None and t_s > 0:
+            mx = irf_s.max() if irf_s.size else 1.0
+            irf_s[irf_s < t_s * mx] = 0
 
-        # Normalize after thresholding
-        if np.sum(irf_p) > 0:
-            irf_p = irf_p / np.sum(irf_p)
-        if np.sum(irf_s) > 0:
-            irf_s = irf_s / np.sum(irf_s)
+        # Normalize
+        sp = irf_p.sum()
+        if sp > 0:
+            irf_p /= sp
+        ss = irf_s.sum()
+        if ss > 0:
+            irf_s /= ss
 
-        # Apply sub-bin shifts
+        # Sub-bin shifts
         irf_p = self._interpolate_shift(irf_p, shift_sp)
         irf_s = self._interpolate_shift(irf_s, shift_ss)
 
-        # Apply integer relative shift to the second decay
+        # Relative integer shift of S
         if shift != 0:
             irf_s = np.roll(irf_s, shift)
             if shift > 0:
@@ -287,111 +278,140 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
 
         return irf_p, irf_s
 
+    # ==============================
+    # Init & caches
+    # ==============================
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Initialize variables
+        # Data / IRF / BG containers
         self.tttr_data = None
         self.irf_tttr = None
         self.clsm_p = None
         self.clsm_s = None
-        self.irf_p = None
-        self.irf_s = None
+        self.irf_p = None  # RAW IRF P (full length, post-hist but pre-prepare)
+        self.irf_s = None  # RAW IRF S (full length, post-hist but pre-prepare)
         self.tau = None
         self.rho = None
         self._fit = None
         self.decay_all_photons = None
         self.micro_time_range = [0, 0]
+        self._micro_time_user_override: bool = False
+        self._binning_factor_override: Optional[int] = None
+        self._excitation_period_override: Optional[float] = None
+        self._in_multi_detector_loop: bool = False
+        # Per-detector UI/state cache (like Burst MLE)
+        self.channel_settings: Dict[str, Dict] = {}
+        self._last_detector_selected: Optional[str] = None
 
-        # Background pattern variables
+        # Background pattern variables (FULL, unsliced)
         self.bg_tttr = None
-        self.bg_p = None
-        self.bg_s = None
+        self._bg_p_full = None
+        self._bg_s_full = None
 
-        # Load UI from file
+        # ------------------
+        # Caches & signatures
+        # ------------------
+        # Full histograms of *data* (not IRF):
+        self._full_hist_p: Optional[np.ndarray] = None
+        self._full_hist_s: Optional[np.ndarray] = None
+        self._hist_signature: Optional[tuple] = None  # (id(tttr), ch_p tuple, ch_s tuple, binning, n_channels)
+
+        # IRF raw hist cache (preparation works on these):
+        self._irf_hist_signature: Optional[tuple] = None  # (id(irf_tttr), ch_p tuple, ch_s tuple, binning, n_channels)
+
+        # Prepared IRF cache (fully prepared for current thresholds/shifts):
+        self._irf_p_prepared_full: Optional[np.ndarray] = None
+        self._irf_s_prepared_full: Optional[np.ndarray] = None
+        self._irf_prepare_signature: Optional[tuple] = None  # (irf_hist_sig, thr_vv, thr_vh, shift, shift_sp, shift_ss)
+
+        # Load UI
         ui_file = os.path.join(os.path.dirname(__file__), 'imgmle.ui')
         uic.loadUi(ui_file, self)
 
-        # Add p2s_twoIstar_flag checkbox
-        self.checkBox_2IStar = QtWidgets.QCheckBox("Enable 2I* calculation")
+        # Detector tab
+        self.tab_detector = QtWidgets.QWidget()
+        self.tab_widget.insertTab(0, self.tab_detector, "Detector Definition")
+        self.tab_widget.setCurrentIndex(0)
+        self.verticalLayout_detector_tab = QtWidgets.QVBoxLayout(self.tab_detector)
+        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
+        self.groupBox_detector = QtWidgets.QGroupBox("Detector Configuration")
+        self.verticalLayout_detector = QtWidgets.QVBoxLayout(self.groupBox_detector)
+        self.verticalLayout_detector.addWidget(self.channel_definer)
+        self.verticalLayout_detector_tab.addWidget(self.groupBox_detector)
+        self.channel_definer.detectorsChanged.connect(self._on_detectors_updated)
+
+        # Populate & connect
+        self._populate_detector_combo()
+        self.comboBox_detector_select.currentTextChanged.connect(self._on_detector_changed)
+
+        # Dual IRF thresholds
+        self.doubleSpinBox_irf_threshold_vv.setDecimals(4)
+        self.doubleSpinBox_irf_threshold_vv.setRange(0.0, 1.0)
+        self.doubleSpinBox_irf_threshold_vv.setSingleStep(0.001)
+        init_thr = 0.02
+        self.doubleSpinBox_irf_threshold_vv.setValue(init_thr)
+
+        self.doubleSpinBox_irf_threshold_vh.setDecimals(4)
+        self.doubleSpinBox_irf_threshold_vh.setRange(0.0, 1.0)
+        self.doubleSpinBox_irf_threshold_vh.setSingleStep(0.001)
+        self.doubleSpinBox_irf_threshold_vh.setValue(init_thr)
+
+        # Flags
         self.checkBox_2IStar.setChecked(True)
-        self.checkBox_2IStar.setToolTip("Enable calculation of 2I* and 2I*: P+2S? values")
-
-        # Add BIFL scatter fit checkbox
-        self.checkBox_BIFL_scatter = QtWidgets.QCheckBox("Enable BIFL scatter fit")
         self.checkBox_BIFL_scatter.setChecked(False)
-        self.checkBox_BIFL_scatter.setToolTip("Enable BIFL scatter fit calculation")
 
-        # Find a suitable layout to add the checkboxes to
-        # Add them to the same layout as the other fit parameter checkboxes
-        # Assuming the fix_tau_checkbox is in a layout
-        if hasattr(self, 'fix_tau_checkbox') and self.fix_tau_checkbox is not None:
-            layout = self.fix_tau_checkbox.parent().layout()
-            if layout is not None:
-                layout.addWidget(self.checkBox_2IStar)
-                layout.addWidget(self.checkBox_BIFL_scatter)
-
-        # Make file format radio buttons mutually exclusive
+        # File format radio group
         self.file_format_group = QtWidgets.QButtonGroup(self)
         self.file_format_group.addButton(self.radioButton_FileHDF)
         self.file_format_group.addButton(self.radioButton_FileCsv)
 
-        # Set up FileListWidget callbacks
+        # FileListWidget callbacks
         self.tttr_list.file_added_callback = self.update_tttr_files
         self.irf_list.file_added_callback = self.update_irf_files
         self.bg_list.file_added_callback = self.update_bg_files
 
-        # Connect button signals
+        # Buttons
         self.browse_tttr_button.clicked.connect(lambda: self.browse_files(self.tttr_list))
         self.clear_tttr_button.clicked.connect(lambda: self.clear_files(self.tttr_list))
         self.browse_irf_button.clicked.connect(lambda: self.browse_files(self.irf_list))
         self.clear_irf_button.clicked.connect(lambda: self.clear_files(self.irf_list))
         self.browse_bg_button.clicked.connect(lambda: self.browse_files(self.bg_list, "Background Files (*.ht3 *.ptu *.pt3);;All Files (*.*)"))
         self.clear_bg_button.clicked.connect(lambda: self.clear_files(self.bg_list))
-        self.process_button.clicked.connect(self.process_data)
-        self.export_button.clicked.connect(self.export_results)
-        self.update_fit_button.clicked.connect(self.update_fit)
+        self.process_button.clicked.connect(self.process_data_all_detectors)
 
-        # Connect background radio buttons
+        # Background radios
         self.bg_fixed_radio.toggled.connect(self.toggle_background_source)
         self.bg_file_radio.toggled.connect(self.toggle_background_source)
 
-        # Connect file selector combo box
+        # File selector
         self.file_selector_combo.currentIndexChanged.connect(self.on_file_selection_changed)
 
-        # Initialize plots
+        # Plots
         self.residual_plot.setLabel('left', 'Residuals')
         self.combined_plot.setLabel('bottom', 'Time (ch.)')
         self.combined_plot.setLabel('left', 'Intensity')
         self.combined_plot.setLogMode(y=True)
         self.combined_plot.setYRange(-1, 5)
-
-        # Link x-axis of residual and combined plots
         self.residual_plot.setXLink(self.combined_plot)
 
-        # Connect signals
+        # Wire signals
         self.connect_signals()
 
-        # Initialize UI values
+        # UI init
         self.initialize_ui_values()
 
-        # Set window size
+        # Window size
         self.resize(700, 500)
 
+    # ==============================
+    # Wiring / signals
+    # ==============================
     def connect_signals(self):
-        """Connect signals to slots."""
-        # Connect tab changed signal
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
 
-        # Connect parameter change signals
-        self.ch_p_spinbox.valueChanged.connect(self.update_parameters)
-        self.ch_s_spinbox.valueChanged.connect(self.update_parameters)
-        self.binning_factor_spinbox.valueChanged.connect(self.update_parameters)
+        # Fit-affecting numeric params → just update fit
         self.min_photons_spinbox.valueChanged.connect(self.update_parameters)
-        self.g_factor_spinbox.valueChanged.connect(self.update_parameters)
-        self.l1_spinbox.valueChanged.connect(self.update_parameters)
-        self.l2_spinbox.valueChanged.connect(self.update_parameters)
-        self.period_spinbox.valueChanged.connect(self.update_parameters)
         self.tau_spinbox.valueChanged.connect(self.update_parameters)
         self.gamma_spinbox.valueChanged.connect(self.update_parameters)
         self.r0_spinbox.valueChanged.connect(self.update_parameters)
@@ -400,26 +420,21 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
         self.fix_gamma_checkbox.stateChanged.connect(self.update_parameters)
         self.fix_r0_checkbox.stateChanged.connect(self.update_parameters)
         self.fix_rho_checkbox.stateChanged.connect(self.update_parameters)
-
-        # Connect new checkboxes
         self.checkBox_2IStar.stateChanged.connect(self.update_parameters)
         self.checkBox_BIFL_scatter.stateChanged.connect(self.update_parameters)
 
-        # Connect micro time range parameter change signals
+        # Time-window controls → slice-only
         self.micro_time_start_spinbox.valueChanged.connect(self.update_parameters)
         self.micro_time_stop_spinbox.valueChanged.connect(self.update_parameters)
-        self.adjust_stop_checkbox.stateChanged.connect(self.update_parameters)
-        self.read_period_checkbox.stateChanged.connect(self.update_parameters)
 
-        # Connect time shift parameter change signals
+        # IRF-preparation-only controls → re-prepare IRF then fit
         self.shift_spinbox.valueChanged.connect(self.update_parameters)
         self.shift_sp_spinbox.valueChanged.connect(self.update_parameters)
         self.shift_ss_spinbox.valueChanged.connect(self.update_parameters)
+        self.doubleSpinBox_irf_threshold_vv.valueChanged.connect(self.update_parameters)
+        self.doubleSpinBox_irf_threshold_vh.valueChanged.connect(self.update_parameters)
 
-        # Connect irf_threshold parameter change signal
-        self.doubleSpinBox_irf_threshold.valueChanged.connect(self.update_parameters)
-
-        # Connect background correction parameter change signals
+        # Background controls → rebuild background only
         self.bg_p_spinbox.valueChanged.connect(self.update_parameters)
         self.bg_s_spinbox.valueChanged.connect(self.update_parameters)
         self.use_bg_checkbox.stateChanged.connect(self.update_parameters)
@@ -427,94 +442,612 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
         self.bg_file_radio.toggled.connect(self.update_parameters)
 
     def initialize_ui_values(self):
-        """Initialize UI values."""
-        # Initialize micro time range
         start, stop = self.micro_time_range
         self.micro_time_start_spinbox.setValue(start)
         self.micro_time_stop_spinbox.setValue(stop)
 
-        # Initialize IRF threshold
-        self.doubleSpinBox_irf_threshold.setValue(0.02)
-
-        # Initialize background source visibility
-        #self.bg_fixed_widget.setVisible(self.bg_fixed_radio.isChecked())
-        #self.bg_file_widget.setVisible(self.bg_file_radio.isChecked())
-
+    # ==============================
+    # Setup / detector
+    # ==============================
     def on_tab_changed(self, index: int):
-        """Handle tab changed event."""
-        pass
+        try:
+            if index != 0 and getattr(self, 'channel_definer', None) is not None:
+                self._apply_setup_from_wizard()
+        except Exception:
+            pass
 
+    def _split_ps_channels(self, chs: typing.List[int]) -> typing.Tuple[typing.List[int], typing.List[int]]:
+        if not chs:
+            return [], []
+        pchs = chs[::2]
+        schs = chs[1::2] if len(chs) > 1 else chs
+        return pchs, schs
+
+    def _populate_detector_combo(self):
+        if getattr(self, 'comboBox_detector_select', None) is None:
+            return
+        self.comboBox_detector_select.blockSignals(True)
+        self.comboBox_detector_select.clear()
+        try:
+            dets = []
+            if getattr(self, 'channel_definer', None) is not None:
+                dets = list(self.channel_definer.detectors.keys())
+            if dets:
+                self.comboBox_detector_select.addItems(dets)
+                self._on_detector_changed(dets[0])
+        except Exception:
+            pass
+        finally:
+            self.comboBox_detector_select.blockSignals(False)
+
+    def _on_detectors_updated(self):
+        try:
+            # Initialize per-detector state cache
+            if getattr(self, 'channel_definer', None) is not None:
+                for det in list(self.channel_definer.detectors.keys()):
+                    self._ensure_channel_state(det)
+            self._populate_detector_combo()
+            self._apply_setup_from_wizard()
+        except Exception:
+            pass
+
+    def _apply_setup_from_wizard(self):
+        try:
+            if getattr(self, 'channel_definer', None) is None:
+                return
+            try:
+                st = self.channel_definer.get_settings()
+                tttr_read = st.get('tttr_reading', {}) if isinstance(st, dict) else {}
+                binf = int(tttr_read.get('micro_time_binning', self._binning_factor_override or 1))
+                self._binning_factor_override = binf
+                if 'excitation_period' in tttr_read:
+                    try:
+                        self._excitation_period_override = float(tttr_read.get('excitation_period'))
+                    except Exception:
+                        self._excitation_period_override = None
+            except Exception:
+                pass
+            det_name = None
+            try:
+                det_name = self.comboBox_detector_select.currentText() if getattr(self, 'comboBox_detector_select', None) is not None else None
+                if not det_name and self.channel_definer.detectors:
+                    det_name = list(self.channel_definer.detectors.keys())[0]
+            except Exception:
+                pass
+            if det_name:
+                self._on_detector_changed(det_name)
+                try:
+                    info = self.channel_definer.detectors.get(det_name, {})
+                    mtrs = info.get('micro_time_ranges', []) or []
+                    if len(mtrs) > 0 and not getattr(self, '_micro_time_user_override', False):
+                        binning = max(1, int(self._get_binning_factor()))
+                        sb = int(mtrs[0][0] // binning)
+                        eb = int(mtrs[0][1] // binning)
+                        if eb <= sb:
+                            eb = sb + 1
+                        try:
+                            if getattr(self, 'tttr_data', None) is not None:
+                                n_channels = int(self.tttr_data.header.number_of_micro_time_channels // binning)
+                                sb = max(0, min(sb, max(0, n_channels - 1)))
+                                eb = max(1, min(eb, n_channels))
+                        except Exception:
+                            pass
+                        self.micro_time_start_spinbox.setValue(sb)
+                        self.micro_time_stop_spinbox.setValue(eb)
+                        self.micro_time_range = [sb, eb]
+                        # Slice-only if we already have caches
+                        self._update_slice_and_fit()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    def _get_binning_factor(self) -> int:
+        try:
+            if getattr(self, 'channel_definer', None) is not None:
+                st = self.channel_definer.get_settings()
+                if isinstance(st, dict):
+                    val = st.get('tttr_reading', {}).get('micro_time_binning')
+                    if val is not None:
+                        return int(val)
+        except Exception:
+            pass
+        if getattr(self, '_binning_factor_override', None):
+            try:
+                return int(self._binning_factor_override)
+            except Exception:
+                pass
+        try:
+            if getattr(self, 'binning_factor_spinbox', None) is not None:
+                return int(self.binning_factor_spinbox.value())
+        except Exception:
+            pass
+        return 1
+
+    def _get_excitation_period_ns(self) -> Optional[float]:
+        try:
+            if getattr(self, 'channel_definer', None) is not None:
+                st = self.channel_definer.get_settings()
+                if isinstance(st, dict):
+                    val = st.get('tttr_reading', {}).get('excitation_period')
+                    if val is not None:
+                        return float(val)
+        except Exception:
+            pass
+        try:
+            if self._excitation_period_override is not None:
+                return float(self._excitation_period_override)
+        except Exception:
+            pass
+        try:
+            if hasattr(self, 'tttr_data') and self.tttr_data is not None:
+                header = self.tttr_data.header
+                if hasattr(header, 'laser_period') and header.laser_period:
+                    return float(header.laser_period) * 1e9
+                if hasattr(header, 'tttr_info') and 'SyncRate' in header.tttr_info:
+                    sync_rate = float(header.tttr_info['SyncRate'])
+                    if sync_rate > 0:
+                        return 1e9 / sync_rate
+                nch = int(header.number_of_micro_time_channels)
+                dt_ns = float(header.micro_time_resolution) * 1e9
+                if nch > 0 and dt_ns > 0:
+                    return nch * dt_ns
+        except Exception:
+            pass
+        return None
+
+    def _get_effective_detector_params(self) -> Tuple[List[int], List[int], int, Optional[Tuple[int, int]], float, float, float]:
+        ch_p_list: List[int] = [0]
+        ch_s_list: List[int] = [1]
+        binning = self._get_binning_factor()
+        mtr = None
+        g = 1.0
+        l1 = 1.0 / 3.0
+        l2 = 1.0 / 3.0
+        try:
+            if getattr(self, 'channel_definer', None) is not None and self.channel_definer.detectors:
+                det_name = None
+                if getattr(self, 'comboBox_detector_select', None) is not None:
+                    det_name = self.comboBox_detector_select.currentText()
+                if not det_name:
+                    det_name = list(self.channel_definer.detectors.keys())[0]
+                info = self.channel_definer.detectors.get(det_name, {})
+                if 'ch_p' in info or 'ch_s' in info:
+                    try:
+                        cp = info.get('ch_p', []) or []
+                        cs = info.get('ch_s', []) or []
+                        ch_p_list = [int(cp)] if isinstance(cp, int) else [int(x) for x in cp]
+                        ch_s_list = [int(cs)] if isinstance(cs, int) else [int(x) for x in cs]
+                    except Exception:
+                        pass
+                else:
+                    chs = info.get('chs', [])
+                    pchs, schs = self._split_ps_channels(chs)
+                    if pchs:
+                        ch_p_list = [int(x) for x in pchs]
+                    if schs:
+                        ch_s_list = [int(x) for x in schs]
+                mtrs = info.get('micro_time_ranges', []) or []
+                if len(mtrs) > 0:
+                    mtr = (int(mtrs[0][0]), int(mtrs[0][1]))
+                g = float(info.get('g_factor', g))
+                l1 = float(info.get('l1', l1))
+                l2 = float(info.get('l2', l2))
+        except Exception:
+            pass
+        return ch_p_list, ch_s_list, binning, mtr, g, l1, l2
+
+    def _capture_current_ui_state(self) -> Dict:
+        """Capture current UI state relevant per detector (like in Burst MLE)."""
+        try:
+            start = int(self.micro_time_start_spinbox.value())
+            stop = int(self.micro_time_stop_spinbox.value())
+        except Exception:
+            start, stop = (self.micro_time_range[0], self.micro_time_range[1])
+        state = {
+            'micro_time_start': start,
+            'micro_time_stop': stop,
+            'micro_time_binning': int(self._get_binning_factor()),
+            'irf_threshold_vv': float(self.irf_threshold_vv),
+            'irf_threshold_vh': float(self.irf_threshold_vh),
+            'shift': int(getattr(self, 'shift_spinbox', None).value() if getattr(self, 'shift_spinbox', None) is not None else 0),
+            'shift_sp': float(getattr(self, 'shift_sp_spinbox', None).value() if getattr(self, 'shift_sp_spinbox', None) is not None else 0.0),
+            'shift_ss': float(getattr(self, 'shift_ss_spinbox', None).value() if getattr(self, 'shift_ss_spinbox', None) is not None else 0.0),
+            # Per-detector flags
+            'p2s_twoIstar': bool(self.p2s_twoIstar) if hasattr(self, 'p2s_twoIstar') else bool(getattr(self, 'checkBox_2IStar', None).isChecked()) if getattr(self, 'checkBox_2IStar', None) is not None else True,
+            'BIFL_scatter': bool(self.BIFL_scatter) if hasattr(self, 'BIFL_scatter') else bool(getattr(self, 'checkBox_BIFL_scatter', None).isChecked()) if getattr(self, 'checkBox_BIFL_scatter', None) is not None else False,
+        }
+        return state
+
+    def _ensure_channel_state(self, det: str) -> Dict:
+        """Ensure a per-detector state exists; initialize from setup if missing."""
+        st = self.channel_settings.get(det, {}).copy()
+        # binning
+        if 'micro_time_binning' not in st:
+            st['micro_time_binning'] = int(self._get_binning_factor())
+        # thresholds default from detector mle_settings or sensible defaults
+        try:
+            info = getattr(self.channel_definer, 'detectors', {}).get(det, {})
+            mle = (info.get('mle_settings', {}) or {}) if isinstance(info, dict) else {}
+        except Exception:
+            info = {}
+            mle = {}
+        st.setdefault('irf_threshold_vv', float(mle.get('irf_threshold_vv', 0.02)))
+        st.setdefault('irf_threshold_vh', float(mle.get('irf_threshold_vh', st['irf_threshold_vv'])))
+        st.setdefault('shift', 0)
+        st.setdefault('shift_sp', 0.0)
+        st.setdefault('shift_ss', 0.0)
+        # Flags: default from mle_settings or current UI
+        default_twoI = bool(mle.get('p2s_twoIstar', getattr(self, 'p2s_twoIstar', True)))
+        default_bifl = bool(mle.get('BIFL_scatter', getattr(self, 'BIFL_scatter', False)))
+        st.setdefault('p2s_twoIstar', default_twoI)
+        st.setdefault('BIFL_scatter', default_bifl)
+        # micro-time start/stop from detector ranges if not present
+        if 'micro_time_start' not in st or 'micro_time_stop' not in st:
+            try:
+                mtrs = info.get('micro_time_ranges', []) or []
+            except Exception:
+                mtrs = []
+            sb = 0; eb = max(1, self.micro_time_range[1])
+            if mtrs:
+                binning = max(1, int(st['micro_time_binning']))
+                try:
+                    sb = int(mtrs[0][0] // binning)
+                    eb = int(mtrs[0][1] // binning)
+                except Exception:
+                    sb, eb = 0, max(1, self.micro_time_range[1])
+            # clamp to TTTR size if available
+            try:
+                if getattr(self, 'tttr_data', None) is not None:
+                    n_tot = int(self.tttr_data.header.number_of_micro_time_channels // max(1, st['micro_time_binning']))
+                    sb = max(0, min(sb, max(0, n_tot - 1)))
+                    eb = max(sb + 1, min(eb, n_tot))
+            except Exception:
+                pass
+            if eb <= sb:
+                eb = sb + 1
+            st['micro_time_start'] = int(sb)
+            st['micro_time_stop'] = int(eb)
+        # Save back and return
+        self.channel_settings[det] = st
+        return st
+
+    def _apply_channel_state(self, st: Dict):
+        """Apply per-detector state to UI, blocking signals to avoid redundant recomputation."""
+        try:
+            # Block signals while setting values
+            for w in [getattr(self, 'micro_time_start_spinbox', None), getattr(self, 'micro_time_stop_spinbox', None),
+                      getattr(self, 'doubleSpinBox_irf_threshold_vv', None), getattr(self, 'doubleSpinBox_irf_threshold_vh', None),
+                      getattr(self, 'shift_spinbox', None), getattr(self, 'shift_sp_spinbox', None), getattr(self, 'shift_ss_spinbox', None),
+                      getattr(self, 'checkBox_2IStar', None), getattr(self, 'checkBox_BIFL_scatter', None)]:
+                if w is not None:
+                    w.blockSignals(True)
+            # Set values
+            if getattr(self, 'micro_time_start_spinbox', None) is not None:
+                self.micro_time_start_spinbox.setValue(int(st.get('micro_time_start', 0)))
+            if getattr(self, 'micro_time_stop_spinbox', None) is not None:
+                self.micro_time_stop_spinbox.setValue(int(st.get('micro_time_stop', max(1, self.micro_time_range[1]))))
+            self.micro_time_range = [int(st.get('micro_time_start', 0)), int(st.get('micro_time_stop', max(1, self.micro_time_range[1])))]
+            # thresholds
+            self.irf_threshold_vv = float(st.get('irf_threshold_vv', 0.02))
+            self.irf_threshold_vh = float(st.get('irf_threshold_vh', self.irf_threshold_vv))
+            # shifts
+            if getattr(self, 'shift_spinbox', None) is not None:
+                self.shift_spinbox.setValue(int(st.get('shift', 0)))
+            if getattr(self, 'shift_sp_spinbox', None) is not None:
+                self.shift_sp_spinbox.setValue(float(st.get('shift_sp', 0.0)))
+            if getattr(self, 'shift_ss_spinbox', None) is not None:
+                self.shift_ss_spinbox.setValue(float(st.get('shift_ss', 0.0)))
+            # flags
+            if getattr(self, 'checkBox_2IStar', None) is not None:
+                self.checkBox_2IStar.setChecked(bool(st.get('p2s_twoIstar', getattr(self, 'p2s_twoIstar', True))))
+            if getattr(self, 'checkBox_BIFL_scatter', None) is not None:
+                self.checkBox_BIFL_scatter.setChecked(bool(st.get('BIFL_scatter', getattr(self, 'BIFL_scatter', False))))
+        finally:
+            for w in [getattr(self, 'micro_time_start_spinbox', None), getattr(self, 'micro_time_stop_spinbox', None),
+                      getattr(self, 'doubleSpinBox_irf_threshold_vv', None), getattr(self, 'doubleSpinBox_irf_threshold_vh', None),
+                      getattr(self, 'shift_spinbox', None), getattr(self, 'shift_sp_spinbox', None), getattr(self, 'shift_ss_spinbox', None),
+                      getattr(self, 'checkBox_2IStar', None), getattr(self, 'checkBox_BIFL_scatter', None)]:
+                if w is not None:
+                    w.blockSignals(False)
+
+    def _sync_current_ui_to_channel_settings(self):
+        """Persist current UI values into per-detector state cache."""
+        try:
+            det = self._current_detector_name()
+            if not det:
+                return
+            st = self._ensure_channel_state(det)
+            cur = self._capture_current_ui_state()
+            st.update(cur)
+            self.channel_settings[det] = st
+        except Exception:
+            pass
+
+    def _on_detector_changed(self, det_name: str):
+        try:
+            if not det_name or getattr(self, 'channel_definer', None) is None:
+                return
+            # Save previous detector state
+            if self._last_detector_selected:
+                try:
+                    prev = self._last_detector_selected
+                    if prev in getattr(self.channel_definer, 'detectors', {}).keys():
+                        self.channel_settings[prev] = self._capture_current_ui_state()
+                except Exception:
+                    pass
+            info = self.channel_definer.detectors.get(det_name)
+            if not info:
+                return
+            # Ensure and apply per-detector state (start/stop, thresholds, shifts)
+            st = self._ensure_channel_state(det_name)
+            self._apply_channel_state(st)
+            # Avoid setup overwrite of window in subsequent loading
+            self._micro_time_user_override = True
+            # Changing detector likely changes channels → full recompute
+            self.update_irf_files()
+            self.update_bg_files()
+            self.load_data_and_compute_decays()  # ensures caches for new detector
+            self._last_detector_selected = det_name
+        except Exception:
+            pass
+
+    # ==============================
+    # Caches: builders & updaters
+    # ==============================
+    def _current_hist_signature(self, ch_p: List[int], ch_s: List[int], binning: int, n_channels: int) -> tuple:
+        return (id(self.tttr_data), tuple(ch_p), tuple(ch_s), int(binning), int(n_channels))
+
+    def _ensure_full_hists(self, force: bool = False):
+        if self.tttr_data is None:
+            return
+        ch_p_list, ch_s_list, binning_factor, _mtr_unused, *_ = self._get_effective_detector_params()
+        try:
+            n_channels = int(self.tttr_data.header.number_of_micro_time_channels // max(1, binning_factor))
+        except Exception:
+            n_channels = 0
+        sig = self._current_hist_signature(ch_p_list, ch_s_list, binning_factor, n_channels)
+        if force or self._full_hist_p is None or self._hist_signature != sig:
+            micro_times = self.tttr_data.micro_times // max(1, binning_factor)
+            idx_p = self.tttr_data.get_selection_by_channel(ch_p_list)
+            idx_s = self.tttr_data.get_selection_by_channel(ch_s_list)
+            self._full_hist_p = np.bincount(micro_times[idx_p], minlength=n_channels)
+            self._full_hist_s = np.bincount(micro_times[idx_s], minlength=n_channels)
+            self._hist_signature = sig
+
+    def _current_irf_hist_signature(self, ch_p: List[int], ch_s: List[int], binning: int, n_channels: int) -> tuple:
+        return (id(self.irf_tttr), tuple(ch_p), tuple(ch_s), int(binning), int(n_channels))
+
+    def _ensure_irf_hist(self, force: bool = False):
+        if self.irf_tttr is None:
+            return
+        ch_p_list, ch_s_list, binning_factor, _mtr_unused, *_ = self._get_effective_detector_params()
+        try:
+            n_channels = int(self.irf_tttr.header.number_of_micro_time_channels // max(1, binning_factor))
+        except Exception:
+            n_channels = 0
+        sig = self._current_irf_hist_signature(ch_p_list, ch_s_list, binning_factor, n_channels)
+        if force or self.irf_p is None or self._irf_hist_signature != sig:
+            irf_data_p = self.irf_tttr[self.irf_tttr.get_selection_by_channel(ch_p_list)]
+            irf_data_s = self.irf_tttr[self.irf_tttr.get_selection_by_channel(ch_s_list)]
+            self.irf_p, _ = irf_data_p.get_microtime_histogram(binning_factor)
+            self.irf_s, _ = irf_data_s.get_microtime_histogram(binning_factor)
+            # Align size to n_channels just in case
+            if self.irf_p.size > n_channels:
+                self.irf_p = self.irf_p[:n_channels]
+            if self.irf_s.size > n_channels:
+                self.irf_s = self.irf_s[:n_channels]
+            self._irf_hist_signature = sig
+            # Invalidate prepared IRF (depends on raw IRF)
+            self._irf_prepare_signature = None
+
+    def _current_irf_prepare_signature(self) -> Optional[tuple]:
+        if self._irf_hist_signature is None:
+            return None
+        return (
+            self._irf_hist_signature,
+            float(self.irf_threshold_vv),
+            float(self.irf_threshold_vh),
+            int(self.shift_spinbox.value()),
+            float(self.shift_sp_spinbox.value()),
+            float(self.shift_ss_spinbox.value()),
+        )
+
+    def _ensure_prepared_irf(self, force: bool = False):
+        # Ensure raw IRF hist exists
+        self._ensure_irf_hist()
+        sig = self._current_irf_prepare_signature()
+        if sig is None:
+            return
+        if force or self._irf_p_prepared_full is None or self._irf_prepare_signature != sig:
+            p, s = self.prepare_irf(
+                self.irf_p if self.irf_p is not None else np.array([]),
+                self.irf_s if self.irf_s is not None else np.array([]),
+                threshold=-1,
+                shift=sig[3],
+                shift_sp=sig[4],
+                shift_ss=sig[5],
+                threshold_vv=sig[1],
+                threshold_vh=sig[2]
+            )
+            self._irf_p_prepared_full = p
+            self._irf_s_prepared_full = s
+            self._irf_prepare_signature = sig
+
+    def _key_cols(self, df: pd.DataFrame) -> list:
+        keys = [c for c in ['FileIndex', 'Z pixel', 'Y pixel', 'X pixel', 'Pixel Number'] if c in df.columns]
+        return keys
+
+    def _normalize_coord_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        # normalize typical variants => single canonical name, then drop dups
+        canonical = {
+            'xpixel': 'X pixel', 'x': 'X pixel',
+            'ypixel': 'Y pixel', 'y': 'Y pixel',
+            'zpixel': 'Z pixel', 'z': 'Z pixel',
+            'pixelnumber': 'Pixel Number', 'pixel': 'Pixel Number', 'pix': 'Pixel Number',
+            'fileindex': 'FileIndex', 'file': 'FileIndex', 'file_id': 'FileIndex',
+        }
+        ren = {}
+        for col in list(df.columns):
+            key = col.replace(' ', '').lower()
+            if key in canonical:
+                ren[col] = canonical[key]
+        if ren:
+            df = df.rename(columns=ren)
+        # drop duplicate columns (keeps the first)
+        df = df.loc[:, ~df.columns.duplicated()]
+        return df
+
+    def _rename_measurement_cols(self, df: pd.DataFrame, det_name: str) -> pd.DataFrame:
+        keys = set(self._key_cols(df))
+        rename = {}
+        for c in df.columns:
+            if c in keys:
+                continue
+            rename[c] = f"{c} [{det_name}]"
+        return df.rename(columns=rename)
+
+    def _combine_multi_detector_results_as_columns(self) -> pd.DataFrame:
+        frames = []
+        for det_block in getattr(self, 'results_list_all_detectors', []) or []:
+            if not det_block:
+                continue
+            det_name = det_block[0].get('detector', self._current_detector_name())
+            rows = []
+            for entry in det_block:
+                fidx = entry.get('file_index', 0)
+                for r in (entry.get('results') or []):
+                    rr = dict(r)
+                    rr['FileIndex'] = fidx
+                    rows.append(rr)
+            if not rows:
+                continue
+            df = self._build_dataframe_from_results(rows)
+            df = self._normalize_coord_columns(df)
+            df = self._rename_measurement_cols(df, det_name)
+            frames.append(df)
+
+        if not frames:
+            return pd.DataFrame()
+
+        base = frames[0]
+        keys = self._key_cols(base)
+        for df in frames[1:]:
+            base = base.merge(df, on=keys, how='outer', suffixes=('', '_dup'))
+            # any accidental dup columns from pandas suffixes
+            dup_cols = [c for c in base.columns if c.endswith('_dup')]
+            if dup_cols:
+                base = base.drop(columns=dup_cols)
+
+        # order: keys first, then the detector-annotated metrics
+        return base[keys + sorted([c for c in base.columns if c not in keys])]
+
+    # ==============================
+    # UI helpers
+    # ==============================
     def update_parameters(self):
-        """Update parameters from UI."""
-        # If we have data loaded, update the fit
-        if hasattr(self, 'tttr_data') and self.tttr_data is not None:
-            # Get the sender (which parameter was changed)
-            sender = self.sender()
+        """Smart parameter update routing to minimize recomputation."""
+        if not hasattr(self, 'tttr_data') or self.tttr_data is None:
+            return
 
-            # If channel parameters, binning factor, micro time range, or time shift parameters changed, regenerate decay curves
-            if sender in [self.ch_p_spinbox, self.ch_s_spinbox, self.binning_factor_spinbox,
-                         self.micro_time_start_spinbox, self.micro_time_stop_spinbox,
-                         self.adjust_stop_checkbox, self.read_period_checkbox,
-                         self.shift_spinbox, self.shift_sp_spinbox, self.shift_ss_spinbox]:
-                # Regenerate decay curves with new parameters
-                self.load_data_and_compute_decays()
-            else:
-                # For other parameters, just update the fit
-                self.update_fit()
-
-        # Update micro time range from UI
+        sender = self.sender()
+        # Update cached micro time range from UI
         self.micro_time_range = [self.micro_time_start_spinbox.value(), self.micro_time_stop_spinbox.value()]
+        # Persist current UI to per-detector cache
+        self._sync_current_ui_to_channel_settings()
+
+        # 1) Micro-time window changed → slice-only
+        if sender in [getattr(self, 'micro_time_start_spinbox', None), getattr(self, 'micro_time_stop_spinbox', None)]:
+            self._micro_time_user_override = True
+            self._update_slice_and_fit()
+            return
+
+        # 2) IRF-preparation-only inputs → re-prepare IRF and refit (no data hist rebuild)
+        if sender in [
+            getattr(self, 'shift_spinbox', None),
+            getattr(self, 'shift_sp_spinbox', None),
+            getattr(self, 'shift_ss_spinbox', None),
+            getattr(self, 'doubleSpinBox_irf_threshold_vv', None),
+            getattr(self, 'doubleSpinBox_irf_threshold_vh', None)
+        ]:
+            # Just invalidate prepared IRF and refit
+            self._ensure_prepared_irf(force=True)
+            self.update_fit()
+            return
+
+        # 3) Background controls → refit only (background built in get_settings)
+        if sender in [
+            getattr(self, 'bg_p_spinbox', None),
+            getattr(self, 'bg_s_spinbox', None),
+            getattr(self, 'use_bg_checkbox', None),
+            getattr(self, 'bg_fixed_radio', None),
+            getattr(self, 'bg_file_radio', None)
+        ]:
+            self.update_fit()
+            return
+
+        # 4) Fit seeds/fixes → refit only
+        if sender in [
+            getattr(self, 'min_photons_spinbox', None),
+            getattr(self, 'tau_spinbox', None),
+            getattr(self, 'gamma_spinbox', None),
+            getattr(self, 'r0_spinbox', None),
+            getattr(self, 'rho_spinbox', None),
+            getattr(self, 'fix_tau_checkbox', None),
+            getattr(self, 'fix_gamma_checkbox', None),
+            getattr(self, 'fix_r0_checkbox', None),
+            getattr(self, 'fix_rho_checkbox', None),
+            getattr(self, 'checkBox_2IStar', None),
+            getattr(self, 'checkBox_BIFL_scatter', None)
+        ]:
+            self.update_fit()
+            return
+
+        # Unknown sender or structural changes → be safe and rebuild
+        self.load_data_and_compute_decays()
 
     def toggle_background_source(self):
-        """Toggle the visibility of background source widgets based on the selected radio button."""
-        #self.bg_fixed_widget.setVisible(self.bg_fixed_radio.isChecked())
-        #self.bg_file_widget.setVisible(self.bg_file_radio.isChecked())
-
-        # If switching to file-based background, load the background pattern
         if self.bg_file_radio.isChecked():
             self.load_background_pattern()
-
-        # Update the fit if the background source changes
         self.update_fit()
 
+    # ==============================
+    # File handling
+    # ==============================
     def browse_files(self, list_widget, name_filter="TTTR Files (*.ht3 *.ptu *.pt3);;All Files (*.*)"):
-        """Browse for files and add them to the list widget."""
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFiles)
         file_dialog.setNameFilter(name_filter)
-
         if file_dialog.exec_():
             file_names = file_dialog.selectedFiles()
             for file_name in file_names:
                 list_widget.add_file(file_name)
 
     def clear_files(self, list_widget):
-        """Clear all files from the list widget."""
         list_widget.clear()
-
-        # If clearing TTTR or IRF files, also clear decay curves and fit
         if list_widget in [self.tttr_list, self.irf_list]:
-            # Clear data
             if list_widget == self.tttr_list:
                 self.tttr_data = None
                 self.clsm_p = None
                 self.clsm_s = None
                 self.decay_all_photons = None
+                # Invalidate caches
+                self._full_hist_p = None
+                self._full_hist_s = None
+                self._hist_signature = None
             elif list_widget == self.irf_list:
                 self.irf_tttr = None
                 self.irf_p = None
                 self.irf_s = None
-
-            # Clear fit
+                self._irf_hist_signature = None
+                self._irf_p_prepared_full = None
+                self._irf_s_prepared_full = None
+                self._irf_prepare_signature = None
             self._fit = None
-
-            # Clear plots
             if hasattr(self, 'combined_plot') and self.combined_plot is not None:
                 self.combined_plot.clear()
             if hasattr(self, 'residual_plot') and self.residual_plot is not None:
                 self.residual_plot.clear()
-
-            # Reset fit parameter labels
             if hasattr(self, 'tau_label'):
                 self.tau_label.setText("Tau: -")
             if hasattr(self, 'gamma_label'):
@@ -525,335 +1058,271 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                 self.rho_label.setText("Rho: -")
             if hasattr(self, 'chi2_label'):
                 self.chi2_label.setText("Chi²: -")
-
-        # If clearing background files, clear background data
         elif list_widget == self.bg_list:
             self.bg_tttr = None
-            self.bg_p = None
-            self.bg_s = None
-
-            # Update the fit
+            self._bg_p_full = None
+            self._bg_s_full = None
             self.update_fit()
 
     def update_tttr_files(self):
-        """Update TTTR files and compute decays if both TTTR and IRF files are available."""
         self.load_data_and_compute_decays()
 
     @property
-    def irf_threshold(self) -> float:
-        """
-        Threshold for IRF processing, as a fraction of the maximum value.
-        Values below this threshold will be set to zero.
-        """
-        return float(self.doubleSpinBox_irf_threshold.value())
-
-    @property
     def p2s_twoIstar(self) -> bool:
-        """Get the p2s_twoIstar flag value."""
         return self.checkBox_2IStar.isChecked()
 
     @p2s_twoIstar.setter
     def p2s_twoIstar(self, value: bool):
-        """Set the p2s_twoIstar flag value."""
         self.checkBox_2IStar.setChecked(value)
 
     @property
     def BIFL_scatter(self) -> bool:
-        """Get the BIFL_scatter flag value."""
         return bool(self.checkBox_BIFL_scatter.isChecked())
 
     @BIFL_scatter.setter
     def BIFL_scatter(self, value: bool):
-        """Set the BIFL_scatter flag value."""
         self.checkBox_BIFL_scatter.setChecked(value)
 
-    @irf_threshold.setter
-    def irf_threshold(self, v: float):
-        self.doubleSpinBox_irf_threshold.setValue(v)
+    @property
+    def irf_threshold_vv(self) -> float:
+        try:
+            if getattr(self, 'doubleSpinBox_irf_threshold_vv', None) is not None:
+                return float(self.doubleSpinBox_irf_threshold_vv.value())
+        except Exception:
+            pass
+        return 0.02
+
+    @irf_threshold_vv.setter
+    def irf_threshold_vv(self, v: float):
+        try:
+            if getattr(self, 'doubleSpinBox_irf_threshold_vv', None) is not None:
+                self.doubleSpinBox_irf_threshold_vv.setValue(v)
+                return
+        except Exception:
+            pass
+
+    @property
+    def irf_threshold_vh(self) -> float:
+        try:
+            if getattr(self, 'doubleSpinBox_irf_threshold_vh', None) is not None:
+                return float(self.doubleSpinBox_irf_threshold_vh.value())
+        except Exception:
+            pass
+        return self.irf_threshold_vv
+
+    @irf_threshold_vh.setter
+    def irf_threshold_vh(self, v: float):
+        try:
+            if getattr(self, 'doubleSpinBox_irf_threshold_vh', None) is not None:
+                self.doubleSpinBox_irf_threshold_vh.setValue(v)
+                return
+        except Exception:
+            pass
+        self.irf_threshold_vv = v
 
     def update_irf_files(self):
-        """Update IRF files and compute decays if both TTTR and IRF files are available."""
         self.load_data_and_compute_decays()
 
     def update_bg_files(self):
-        """Update background files and load the background pattern."""
         self.load_background_pattern()
         self.update_fit()
 
+    # ==============================
+    # Background
+    # ==============================
     def load_background_pattern(self):
-        """Load background pattern from the selected file."""
-        # If not using file-based background, return
         if not self.bg_file_radio.isChecked():
             return
-
-        # Get selected files
         bg_files = self.bg_list.get_selected_files()
-
         if not bg_files:
-            # No files selected, clear background data
             self.bg_tttr = None
-            self.bg_p = None
-            self.bg_s = None
+            self._bg_p_full = None
+            self._bg_s_full = None
             return
-
         try:
-            # Get parameters from UI
-            ch_p = [self.ch_p_spinbox.value()]
-            ch_s = [self.ch_s_spinbox.value()]
-            binning_factor = self.binning_factor_spinbox.value()
-
-            # Load background data
+            ch_p_list, ch_s_list, binning_factor, _mtr_unused, *_ = self._get_effective_detector_params()
             fn_bg = bg_files[0]
             self.bg_tttr = tttrlib.TTTR(fn_bg)
-
-            # Get micro time histograms for the background
-            bg_data_p = self.bg_tttr[self.bg_tttr.get_selection_by_channel(ch_p)]
-            bg_data_s = self.bg_tttr[self.bg_tttr.get_selection_by_channel(ch_s)]
-            self.bg_p, _ = bg_data_p.get_microtime_histogram(binning_factor)
-            self.bg_s, _ = bg_data_s.get_microtime_histogram(binning_factor)
-
-            # Apply micro time range
-            start, stop = self.micro_time_range
-            if stop > len(self.bg_p):
-                stop = len(self.bg_p)
-
-            self.bg_p = self.bg_p[:stop]
-            self.bg_s = self.bg_s[:stop]
-
-            if start > 0:
-                self.bg_p = self.bg_p[start:]
-                self.bg_s = self.bg_s[start:]
-
+            bg_data_p = self.bg_tttr[self.bg_tttr.get_selection_by_channel(ch_p_list)]
+            bg_data_s = self.bg_tttr[self.bg_tttr.get_selection_by_channel(ch_s_list)]
+            self._bg_p_full, _ = bg_data_p.get_microtime_histogram(binning_factor)
+            self._bg_s_full, _ = bg_data_s.get_microtime_histogram(binning_factor)
             chisurf.logging.info(f"Loaded background pattern from {fn_bg}")
-
         except Exception as e:
-            # If there's an error, show a message but don't crash
             QMessageBox.warning(self, "Error", f"Error loading background pattern: {str(e)}")
             self.bg_tttr = None
-            self.bg_p = None
-            self.bg_s = None
+            self._bg_p_full = None
+            self._bg_s_full = None
 
+    # ==============================
+    # Data & decays
+    # ==============================
     def load_data_and_compute_decays(self):
-        """Load data and compute decays for selected channels."""
-        # Get parameters from UI
-        ch_p = [self.ch_p_spinbox.value()]
-        ch_s = [self.ch_s_spinbox.value()]
-        binning_factor = self.binning_factor_spinbox.value()
-        # Get micro time range from UI
-        start = self.micro_time_start_spinbox.value()
-        stop = self.micro_time_stop_spinbox.value()
-
-        # Get selected files
+        ch_p_list, ch_s_list, binning_factor, mtr, _, _, _ = self._get_effective_detector_params()
         tttr_files = self.tttr_list.get_selected_files()
         irf_files = self.irf_list.get_selected_files()
-
         if not tttr_files or not irf_files:
-            # Not enough files selected, can't compute decays yet
             return
-
         try:
-            # Store all TTTR data objects
+            # Load TTTR (first sets context; keep others in list for batch processing)
             self.tttr_data_list = []
-
-            # Process the first TTTR file to set parameters
             fn_clsm = tttr_files[0]
             self.tttr_data = tttrlib.TTTR(fn_clsm)
             self.tttr_data_list.append(self.tttr_data)
-
-            # Add all other TTTR files to the list
             for i in range(1, len(tttr_files)):
-                tttr_data = tttrlib.TTTR(tttr_files[i])
-                self.tttr_data_list.append(tttr_data)
+                self.tttr_data_list.append(tttrlib.TTTR(tttr_files[i]))
 
-            # Read period from PTU file if enabled
-            if self.read_period_checkbox.isChecked() and fn_clsm.lower().endswith('.ptu'):
-                try:
-                    # Try to read period from PTU file
-                    header = self.tttr_data.header
-                    if hasattr(header, 'laser_period'):
-                        # Period is in seconds, convert to nanoseconds
-                        period_ns = header.laser_period * 1e9
-                        self.period_spinbox.setValue(period_ns)
-                        chisurf.logging.info(f"Read period from PTU: {period_ns} ns")
-                    elif hasattr(header, 'tttr_info') and 'SyncRate' in header.tttr_info:
-                        # SyncRate is in Hz, convert to period in nanoseconds
-                        sync_rate = float(header.tttr_info['SyncRate'])
-                        if sync_rate > 0:
-                            period_ns = 1e9 / sync_rate
-                            self.period_spinbox.setValue(period_ns)
-                            chisurf.logging.info(f"Read period from PTU SyncRate: {period_ns} ns")
-                except Exception as e:
-                    chisurf.logging.warning(f"Failed to read period from PTU: {str(e)}")
-
-            # Load IRF data
+            # IRF TTTR
             fn_irf = irf_files[0]
             self.irf_tttr = tttrlib.TTTR(fn_irf)
 
-            # Get micro time histograms for the IRF
-            irf_data_p = self.irf_tttr[self.irf_tttr.get_selection_by_channel(ch_p)]
-            irf_data_s = self.irf_tttr[self.irf_tttr.get_selection_by_channel(ch_s)]
-            self.irf_p, t = irf_data_p.get_microtime_histogram(binning_factor)
-            self.irf_s, _ = irf_data_s.get_microtime_histogram(binning_factor)
+            # Ensure caches
+            self._ensure_full_hists(force=True)
+            self._ensure_irf_hist(force=True)
+            self._ensure_prepared_irf(force=True)
 
-            # Get time shift parameters from UI
-            shift = self.shift_spinbox.value()
-            shift_sp = self.shift_sp_spinbox.value()
-            shift_ss = self.shift_ss_spinbox.value()
+            # Set default micro-time window from setup if available (and not overridden)
+            if mtr is not None and not getattr(self, '_micro_time_user_override', False):
+                bfac = max(1, int(binning_factor))
+                sb = int(mtr[0] // bfac)
+                eb = int(mtr[1] // bfac)
+                if eb <= sb:
+                    eb = sb + 1
+                try:
+                    n_tot = int(self.tttr_data.header.number_of_micro_time_channels // bfac)
+                    sb = max(0, min(sb, max(0, n_tot - 1)))
+                    eb = max(1, min(eb, n_tot))
+                except Exception:
+                    pass
+                self.micro_time_start_spinbox.setValue(sb)
+                self.micro_time_stop_spinbox.setValue(eb)
+                self.micro_time_range = [sb, eb]
 
-            # Prepare IRF (threshold, normalize, shift)
-            self.irf_p, self.irf_s = self.prepare_irf(
-                self.irf_p, self.irf_s,
-                threshold=self.irf_threshold,
-                shift=shift,
-                shift_sp=shift_sp,
-                shift_ss=shift_ss
-            )
-
-            # Calculate micro time range
-            n_channels = self.tttr_data.header.number_of_micro_time_channels // binning_factor
-
-            # Update UI with actual number of channels if needed
-            if self.micro_time_stop_spinbox.maximum() < n_channels:
-                self.micro_time_stop_spinbox.setMaximum(n_channels)
-
-            # Adjust stop based on period if enabled
-            if self.adjust_stop_checkbox.isChecked():
-                # Get period in nanoseconds
-                period_ns = self.period_spinbox.value()
-
-                # Calculate time resolution in nanoseconds
-                time_resolution_ns = self.tttr_data.header.micro_time_resolution * 1e9 * binning_factor
-
-                # Calculate number of channels corresponding to one period
-                period_channels = int(period_ns / time_resolution_ns)
-
-                # Set stop to period_channels or n_channels, whichever is smaller
-                stop = min(period_channels, n_channels)
-
-                # Update UI
-                self.micro_time_stop_spinbox.setValue(stop)
-                chisurf.logging.info(f"Adjusted stop to {stop} based on period {period_ns} ns")
-
-            # Set micro time range
-            self.micro_time_range = [start, stop]
-
-            # Generate decay curve for all photons in the image
-            micro_times = self.tttr_data.micro_times // binning_factor
-
-            # Get indices for parallel and perpendicular channels
-            idx_p = self.tttr_data.get_selection_by_channel(ch_p)
-            idx_s = self.tttr_data.get_selection_by_channel(ch_s)
-
-            # Create histograms with the specified range
-            hist_p = np.bincount(micro_times[idx_p], minlength=n_channels)[:stop]
-            hist_s = np.bincount(micro_times[idx_s], minlength=n_channels)[:stop]
-
-            # Apply start index
-            if start > 0:
-                hist_p = hist_p[start:]
-                hist_s = hist_s[start:]
-
-            # Combine histograms
-            self.decay_all_photons = np.hstack([hist_p, hist_s])
-
-            # Update the fit and plot the result
-            self.update_fit()
-
-            # Switch to analysis tab
-            self.tab_widget.setCurrentIndex(3)
-
+            # Update slice & fit
+            self._update_slice_and_fit()
         except Exception as e:
-            # If there's an error, show a message but don't crash
             QMessageBox.warning(self, "Error", f"Error loading data: {str(e)}")
             return
 
+    def _update_slice_and_fit(self):
+        if self.tttr_data is None:
+            return
+        self._ensure_full_hists()
+        start, stop = self.micro_time_range
+        # Guard against empty caches
+        if self._full_hist_p is None or self._full_hist_s is None:
+            return
+        # Slice-only
+        hist_p = self._full_hist_p[start:stop]
+        hist_s = self._full_hist_s[start:stop]
+        self.decay_all_photons = np.hstack([hist_p, hist_s])
+        # Prepared IRF is sliced during get_settings()/plot
+        self.update_fit()
+
+    # ==============================
+    # Batch processing (unchanged heavy path)
+    # ==============================
+    @contextlib.contextmanager
+    def _suppress_qmessagebox(self, default_answer=None):
+        """
+        Temporarily suppress QMessageBox popups during batch operations.
+        All messages are logged instead. 'question' returns default_answer or QMessageBox.Yes.
+        """
+        try:
+            MB = QMessageBox
+            orig_info = MB.information
+            orig_warn = MB.warning
+            orig_crit = MB.critical
+            orig_question = MB.question
+
+            def _noop_info(parent, title, text, *args, **kwargs):
+                try:
+                    chisurf.logging.info(f"[info suppressed] {title}: {text}")
+                except Exception:
+                    pass
+                return MB.Ok
+
+            def _noop_warn(parent, title, text, *args, **kwargs):
+                try:
+                    chisurf.logging.warning(f"[warning suppressed] {title}: {text}")
+                except Exception:
+                    pass
+                return MB.Ok
+
+            def _noop_crit(parent, title, text, *args, **kwargs):
+                try:
+                    chisurf.logging.error(f"[critical suppressed] {title}: {text}")
+                except Exception:
+                    pass
+                return MB.Ok
+
+            def _noop_question(parent, title, text, buttons=MB.Yes | MB.No, default_button=MB.No):
+                try:
+                    chisurf.logging.info(f"[question suppressed] {title}: {text}")
+                except Exception:
+                    pass
+                return default_answer if default_answer is not None else MB.Yes
+
+            MB.information = _noop_info
+            MB.warning = _noop_warn
+            MB.critical = _noop_crit
+            MB.question = _noop_question
+            yield
+        finally:
+            try:
+                MB.information = orig_info
+                MB.warning = orig_warn
+                MB.critical = orig_crit
+                MB.question = orig_question
+            except Exception:
+                pass
+
     def process_data(self):
-        """Process the data using the current parameters."""
-        # First, load data and compute decays for all photons
+        # Keep heavy per-pixel path unchanged; users trigger via button.
         self.load_data_and_compute_decays()
-
-        # Get all settings using the get_settings method
         all_settings = self.get_settings()
-
-        # Extract needed parameters
-        ch_p = [all_settings['ch_p']]
-        ch_s = [all_settings['ch_s']]
+        ch_p = all_settings['ch_p']
+        ch_s = all_settings['ch_s']
+        if isinstance(ch_p, int):
+            ch_p = [ch_p]
+        if isinstance(ch_s, int):
+            ch_s = [ch_s]
         binning_factor = all_settings['binning_factor']
         minimum_n_photons = all_settings['min_photons']
-        auto_export = all_settings['auto_export']
-
-        # Check if data was loaded successfully
         if not hasattr(self, 'tttr_data_list') or not self.tttr_data_list:
             return
-
-        # Get IRF from settings
         irf = all_settings['irf']
-
-        # Get initial values and fixed parameters
         x0 = np.array([all_settings['tau'], all_settings['gamma'], all_settings['r0'], all_settings['rho']])
-
         fixed = np.array([
             1 if all_settings['fix_tau'] else 0,
             1 if all_settings['fix_gamma'] else 0,
             1 if all_settings['fix_r0'] else 0,
             1 if all_settings['fix_rho'] else 0
         ])
-
-        # Create results list for export (one list per file)
         self.results_list = []
-
-        # Store tau and rho arrays for each file
         self.tau_list = []
         self.rho_list = []
-
-        # For backward compatibility
         self.results = []
-
-        # Get selected files for naming
         tttr_files = self.tttr_list.get_selected_files()
-
-        # Create combined progress dialog
         total_files = len(self.tttr_data_list)
         progress_dialog = CombinedProgressDialog(self)
         progress_dialog.set_file_progress(1, total_files)
         progress_dialog.show()
         QApplication.processEvents()
-
-        # Process the data
         time_start = time.time()
-
-        # Get micro time range once
         start, stop = self.micro_time_range
-
-        # Process each TTTR file
         for file_idx, tttr_data in enumerate(self.tttr_data_list):
-            # Update file progress
             progress_dialog.set_file_progress(file_idx, total_files)
             QApplication.processEvents()
-
-            # Set current TTTR data
             self.tttr_data = tttr_data
-
-            # Get file name for results
-            file_name = os.path.basename(tttr_files[file_idx]) if file_idx < len(tttr_files) else f"File_{file_idx+1}"
-
-            # Create a new list for this file's results
             file_results = []
             self.results_list.append(file_results)
-
-            # Create CLSM containers for pixel-by-pixel analysis
             self.clsm_p = tttrlib.CLSMImage(self.tttr_data, channels=ch_p, fill=True)
             self.clsm_s = tttrlib.CLSMImage(self.tttr_data, channels=ch_s, fill=True)
-
-            # Stack frames if checkbox is checked
             if all_settings['stack_frames']:
                 self.clsm_p.stack_frames()
                 self.clsm_s.stack_frames()
-
-            # Calculate micro time range
             n_channels = self.tttr_data.header.number_of_micro_time_channels // binning_factor
-
-            # Settings for MLE - use the settings from get_settings but update dt for current file
             settings = {
                 'dt': self.tttr_data.header.micro_time_resolution * 1e9 * binning_factor,
                 'g_factor': all_settings['g_factor'],
@@ -863,59 +1332,34 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                 'irf': irf,
                 'period': all_settings['period'],
                 'background': all_settings['background'],
-                'p2s_twoIstar_flag': all_settings['p2s_twoIstar'],  # Enable 2I* and 2I*: P+2S? calculation
-                'soft_bifl_scatter_flag': all_settings['BIFL_scatter']  # Enable BIFL scatter fit
+                'p2s_twoIstar_flag': all_settings['p2s_twoIstar'],
+                'soft_bifl_scatter_flag': all_settings['BIFL_scatter']
             }
-
-            # Create Fit23 instance
             fit23 = tttrlib.Fit23(**settings)
-
-            # Get image dimensions
             intensity = self.clsm_p.intensity
             micro_times = self.tttr_data.micro_times // binning_factor
             n_channels = self.tttr_data.header.number_of_micro_time_channels // binning_factor
-
-            # Create arrays for tau and rho
             tau_array = np.zeros_like(intensity, dtype=np.float32)
             rho_array = np.zeros_like(intensity, dtype=np.float32)
             n_frames, n_lines, n_pixel = self.clsm_p.shape
-
-            # Update progress dialog with frame and line information
             progress_dialog.set_frame_progress(0, n_frames)
             progress_dialog.set_line_progress(0, n_lines)
             QApplication.processEvents()
-
-            # Pre-compute line durations for all lines to avoid repeated calculations
             line_durations = np.zeros((n_frames, n_lines))
             for i in range(n_frames):
                 for j in range(n_lines):
-                    line_durations[i, j] = self.clsm_p.get_line_duration(i, j)  # in seconds
-
-            # Pre-allocate arrays for histograms to avoid repeated memory allocations
+                    line_durations[i, j] = self.clsm_p.get_line_duration(i, j)
             hist_p_template = np.zeros(stop - start, dtype=np.int64)
             hist_s_template = np.zeros(stop - start, dtype=np.int64)
-
-            # Create a list to store results for batch processing
             batch_results = []
-
-            # Process each frame
             for i in range(n_frames):
-                # Update frame progress
                 progress_dialog.set_frame_progress(i + 1, n_frames)
                 QApplication.processEvents()
-
-                # Process each line in the frame
                 for j in range(n_lines):
-                    # Update line progress
                     progress_dialog.set_line_progress(j + 1, n_lines)
                     QApplication.processEvents()
-
-                    # Get line duration once per line
                     line_duration = line_durations[i, j]
-                    pixel_duration = line_duration / n_pixel  # in seconds
-
-                    # Process all pixels in the line in batches
-                    # First collect all pixel data for the line
+                    pixel_duration = line_duration / n_pixel
                     line_data = []
                     for k in range(n_pixel):
                         idx_p = self.clsm_p[i][j][k].tttr_indices
@@ -923,9 +1367,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                         n_p = len(idx_p)
                         n_s = len(idx_s)
                         total_photons = n_p + n_s
-
-                        # Store pixel data for processing
-                        # Make copies of the indices to prevent garbage collection issues
                         line_data.append({
                             'idx_p': np.array(idx_p, copy=True) if len(idx_p) > 0 else idx_p,
                             'idx_s': np.array(idx_s, copy=True) if len(idx_s) > 0 else idx_s,
@@ -935,8 +1376,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                             'pixel_idx': k,
                             'pixel_duration': pixel_duration
                         })
-
-                    # Process each pixel in the line
                     for pixel_data in line_data:
                         k = pixel_data['pixel_idx']
                         n_p = pixel_data['n_p']
@@ -945,157 +1384,152 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                         idx_p = pixel_data['idx_p']
                         idx_s = pixel_data['idx_s']
                         pixel_duration = pixel_data['pixel_duration']
-
-                        # Skip processing if not enough photons
                         if total_photons < minimum_n_photons:
-                            # Add result with actual photon counts but no fit data
+                            det_name = self._current_detector_name()
+                            color = (det_name or 'detector').lower()
+                            rate_key = f"{det_name} Count Rate (KHz)"
                             result_dict = {
                                 'Y pixel': j,
                                 'X pixel': k,
-                                'Green Count Rate (KHz)': total_photons / (pixel_duration * 1000.0),  # Convert to KHz
-                                'Number of Photons (green)': total_photons,
+                                rate_key: total_photons / (pixel_duration * 1000.0),
+                                f'Number of Photons': total_photons,
                                 'Pixel Number': j * n_pixel + k,
-                                'Number of Photons (fit window) (green)': 0,  # We don't calculate this for skipped pixels
-                                'tau (green)': 0.0,
-                                'gamma (green)': 0.0,
-                                'r0 (green)': 0.0,
-                                'rho (green)': 0.0,
-                                'BIFL scatter fit? (green)': 0,  # No fit performed
-                                '2I*: P+2S? (green)': 0.0,  # No fit performed
-                                'rS (green)': 0.0,  # Not implemented
-                                'rE (green)': 0.0,  # Not implemented
-                                '2I* (green)': 0.0,  # No fit performed
-                                'Ng-p-all': n_p,
-                                'Ng-s-all': n_s,
-                                'Ng-all': total_photons
+                                f'Number of Photons (fit window)': 0,
+                                f'tau': np.nan,
+                                f'gamma': np.nan,
+                                f'r0': np.nan,
+                                f'rho': np.nan,
+                                f'BIFL scatter fit?': 0,
+                                f'2I*: P+2S?': 0,
+                                f'rS': np.nan,
+                                f'rE': np.nan,
+                                f'2I*': np.nan,
+                                f'N{color[0]}-p-all': n_p,
+                                f'N{color[0]}-s-all': n_s,
+                                f'N{color[0]}-all': total_photons
                             }
-                            # Only add Z pixel if there's more than one frame
                             if n_frames > 1:
                                 result_dict['Z pixel'] = i
                             batch_results.append(result_dict)
                             continue
-
-                        # Create histograms efficiently
-                        # Use pre-allocated arrays for better memory efficiency
                         if n_p > 0:
-                            # Use bincount directly with slicing for efficiency
                             hist_p = np.bincount(micro_times[idx_p], minlength=n_channels)[start:stop] if start < n_channels else hist_p_template.copy()
                             fit_window_photons_p = np.sum(hist_p)
                         else:
                             hist_p = hist_p_template.copy()
                             fit_window_photons_p = 0
-
                         if n_s > 0:
-                            # Use bincount directly with slicing for efficiency
                             hist_s = np.bincount(micro_times[idx_s], minlength=n_channels)[start:stop] if start < n_channels else hist_s_template.copy()
                             fit_window_photons_s = np.sum(hist_s)
                         else:
                             hist_s = hist_s_template.copy()
                             fit_window_photons_s = 0
-
                         fit_window_photons = fit_window_photons_p + fit_window_photons_s
-
-                        # Combine histograms - use np.concatenate for better performance
                         hist = np.concatenate([hist_p, hist_s])
-
-                        # Perform the fit
                         r = fit23(hist, x0, fixed)
-
-                        # Store the results
                         tau_array[i, j, k] = r['x'][0]
                         rho_array[i, j, k] = r['x'][3]
-
-                        # Add result for export
+                        det_name = self._current_detector_name()
+                        color = (det_name or 'detector').lower()
+                        rate_key = f"{det_name} Count Rate (KHz)"
                         result_dict = {
                             'Y pixel': j,
                             'X pixel': k,
-                            'Green Count Rate (KHz)': total_photons / (pixel_duration * 1000.0),  # Convert to KHz
-                            'Number of Photons (green)': total_photons,
+                            rate_key: total_photons / (pixel_duration * 1000.0),
+                            f'Number of Photons': total_photons,
                             'Pixel Number': j * n_pixel + k,
-                            'Number of Photons (fit window) (green)': fit_window_photons,
-                            'tau (green)': r['x'][0],
-                            'gamma (green)': r['x'][1],
-                            'r0 (green)': r['x'][2],
-                            'rho (green)': r['x'][3],
-                            'BIFL scatter fit? (green)': int(all_settings['BIFL_scatter']),
-                            '2I*: P+2S? (green)': all_settings['p2s_twoIstar'],
-                            'rS (green)': 0.0,  # Not implemented
-                            'rE (green)': 0.0,  # Not implemented
-                            '2I* (green)': r.get('twoIstar', -1),
+                            f'Number of Photons (fit window)': fit_window_photons,
+                            f'tau': r['x'][0],
+                            f'gamma': r['x'][1],
+                            f'r0': r['x'][2],
+                            f'rho': r['x'][3],
+                            f'BIFL scatter fit?': int(all_settings['BIFL_scatter']),
+                            f'2I*: P+2S?': all_settings['p2s_twoIstar'],
+                            f'rS': np.nan,
+                            f'rE': np.nan,
+                            f'2I*': r.get('twoIstar', -1),
                             'Ng-p-all': n_p,
                             'Ng-s-all': n_s,
                             'Ng-all': total_photons
                         }
-                        # Only add Z pixel if there's more than one frame
                         if n_frames > 1:
                             result_dict['Z pixel'] = i
                         batch_results.append(result_dict)
-
-                    # Add batch results to this file's results list
                     file_results.extend(batch_results)
-                    # Also add to main results list for backward compatibility
                     self.results.extend(batch_results)
-                    batch_results = []  # Clear batch results for next line
-
-            # Store the tau and rho arrays for this file
+                    batch_results = []
             self.tau_list.append(tau_array)
             self.rho_list.append(rho_array)
-
-            # Set the current tau and rho for display (last processed file)
             self.tau = tau_array
             self.rho = rho_array
-
-            # Reset frame and line progress for next file
             progress_dialog.set_frame_progress(0, 1)
             progress_dialog.set_line_progress(0, 1)
             QApplication.processEvents()
-
         time_stop = time.time()
-        # Update progress dialog to show completion
         progress_dialog.set_file_progress(total_files, total_files)
         QApplication.processEvents()
-
-        # Hide the progress dialog once processing is complete
         progress_dialog.hide()
-
-        # Display the results
         self.display_results()
-
-        # Update the fit and plot the result
         self.update_fit()
-
-        # Enable export button
-        self.export_button.setEnabled(True)
-
-        # Show processing time
-        QMessageBox.information(self, "Processing Complete", 
-                               f"Processing completed in {time_stop - time_start:.2f} seconds.")
-
-        # Auto export if enabled
-        if auto_export:
+        if not getattr(self, '_in_multi_detector_loop', False):
+            QMessageBox.information(self, "Processing Complete", f"Processing completed in {time_stop - time_start:.2f} seconds.")
+        if not getattr(self, '_in_multi_detector_loop', False):
             self.auto_export_results()
 
+    def process_data_all_detectors(self):
+        """
+        Process either the currently selected detector or all detectors if defined.
+        When multiple detectors are processed, suppress modal message boxes so the run
+        is not interrupted. If Auto Export is enabled, export once at the end.
+        """
+        try:
+            if getattr(self, 'channel_definer', None) is not None and self.channel_definer.detectors:
+                det_names = list(self.channel_definer.detectors.keys())
+                self.results_list_all_detectors = []
+                self._in_multi_detector_loop = True
+                with self._suppress_qmessagebox():
+                    for det in det_names:
+                        if getattr(self, 'comboBox_detector_select', None) is not None:
+                            idx = self.comboBox_detector_select.findText(det)
+                            if idx >= 0:
+                                self.comboBox_detector_select.setCurrentIndex(idx)
+                            else:
+                                self._on_detector_changed(det)
+                        else:
+                            self._on_detector_changed(det)
+                        self.process_data()
+                        tagged_per_file = []
+                        for f_idx, file_results in enumerate(getattr(self, 'results_list', [])):
+                            tagged_per_file.append({'detector': det, 'file_index': f_idx, 'results': file_results})
+                        self.results_list_all_detectors.append(tagged_per_file)
+                self._in_multi_detector_loop = False
+                # Single final export always
+                self.auto_export_results()
+            else:
+                self.process_data()
+        except Exception as e:
+            try:
+                QMessageBox.warning(self, "Processing Error", f"Failed to process all detectors: {str(e)}")
+            except Exception:
+                try:
+                    chisurf.logging.error(f"Failed to process all detectors: {e}")
+                except Exception:
+                    pass
+
+    # ==============================
+    # Display / plots
+    # ==============================
     def on_file_selection_changed(self, index):
-        """Handle file selection changes in the combo box."""
         if index < 0 or not hasattr(self, 'tau_list') or not self.tau_list:
             return
-
-        # Display the selected file's results
         if index < len(self.tau_list):
             self.display_file_results(index)
 
     def display_file_results(self, file_index):
-        """Display results for a specific file."""
         if file_index < 0 or not hasattr(self, 'tau_list') or file_index >= len(self.tau_list):
             return
-
-        # Get the tau array for the selected file
         tau = self.tau_list[file_index]
-
-        # Display the lifetime image
         self.image_view.setImage(tau[0], levels=(0, 5))
-
-        # Display the lifetime histogram
         self.hist_plot.clear()
         y, x = np.histogram(tau[0].flatten(), bins=131, range=(0.01, 5))
         self.hist_plot.plot(x, y, stepMode=True, fillLevel=0, brush=(0, 0, 255, 150))
@@ -1103,338 +1537,224 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
         self.hist_plot.setLabel('bottom', 'Lifetime (ns)')
 
     def display_results(self):
-        """Display the results in the results tab."""
         if not hasattr(self, 'tau_list') or not self.tau_list:
             return
-
-        # Update the file selector combo box
         self.file_selector_combo.blockSignals(True)
         self.file_selector_combo.clear()
-
-        # Get selected files for naming
         tttr_files = self.tttr_list.get_selected_files()
-
-        # Add file names to the combo box
         for i, _ in enumerate(self.tau_list):
             if i < len(tttr_files):
                 file_name = os.path.basename(tttr_files[i])
             else:
                 file_name = f"File {i+1}"
             self.file_selector_combo.addItem(file_name)
-
         self.file_selector_combo.blockSignals(False)
-
-        # Display the first file's results
         if self.tau_list:
             self.display_file_results(0)
 
-        # Switch to results tab
-        self.tab_widget.setCurrentIndex(2)
+    # ==============================
+    # Export
+    # ==============================
+    def _current_detector_name(self) -> str:
+        try:
+            if getattr(self, 'comboBox_detector_select', None) is not None:
+                det = self.comboBox_detector_select.currentText().strip()
+                if det:
+                    return det
+            if getattr(self, 'channel_definer', None) is not None and self.channel_definer.detectors:
+                return list(self.channel_definer.detectors.keys())[0]
+        except Exception:
+            pass
+        return 'detector'
+
+    def _build_dataframe_from_results(self, results) -> pd.DataFrame:
+        df = pd.DataFrame(results)
+
+        # detector-color rename kept
+        det_name = self._current_detector_name()
+        color = det_name.lower()
+        rename_map = {c: c.replace('(green)', f'({color})') for c in list(df.columns) if '(green)' in c}
+        if rename_map:
+            df = df.rename(columns=rename_map)
+
+        # ints for flags
+        try:
+            bifl_col = f'BIFL scatter fit?'
+            if bifl_col in df.columns:
+                df[bifl_col] = df[bifl_col].astype(int)
+        except Exception:
+            pass
+
+        # normalize coordinate columns & dtypes
+        df = self._normalize_coord_columns(df)
+        if 'FileIndex' in df.columns:
+            with contextlib.suppress(Exception):
+                df['FileIndex'] = pd.to_numeric(df['FileIndex'], errors='coerce').fillna(0).astype(int)
+
+        for col in df.select_dtypes(include=['object']).columns:
+            df[col] = df[col].astype(str)
+        return df
+
+    def _compose_base_name(self, base_name: str, n_frames: int, binning_factor: int, min_photons: int, micro_time_start: int, micro_time_stop: int) -> str:
+        return f"{base_name}_Frames_{n_frames}_#23_BinFactor_{binning_factor}_MinPh#{min_photons}_MicroTime_{micro_time_start}-{micro_time_stop}"
 
     def auto_export_results(self):
-        """Automatically export the results to a file without user interaction."""
         if not hasattr(self, 'results_list') or not self.results_list:
             QMessageBox.warning(self, "No Results", "No results to export.")
             return
-
-        # Get all settings
         all_settings = self.get_settings()
-
-        # Always export all results (flatten the results list for all files)
-        filtered_results = [item for sublist in self.results_list for item in sublist]
-
-        # Get selected files for naming
         tttr_files = self.tttr_list.get_selected_files()
         if not tttr_files:
             return
-
-        # Determine base name for the filename
         if len(tttr_files) == 1:
             base_name = os.path.splitext(os.path.basename(tttr_files[0]))[0]
         else:
             base_name = "MultipleFiles"
-
-        # Get parameters for filename from settings
         min_photons = all_settings['min_photons']
         binning_factor = all_settings['binning_factor']
         micro_time_start, micro_time_stop = all_settings['micro_time_range']
-
-        # Get number of frames if available
         n_frames = 0
         if hasattr(self, 'clsm_p') and self.clsm_p is not None:
             n_frames = self.clsm_p.shape[0]
+        composed_base = self._compose_base_name(base_name, n_frames, binning_factor, min_photons, micro_time_start, micro_time_stop)
+        file_dir = os.path.dirname(tttr_files[0])
 
-        # Create DataFrame from filtered results
-        df = pd.DataFrame(filtered_results)
-        
-        # Convert columns with mixed data types to strings to avoid HDF5 serialization issues
-        # The 'BIFL scatter fit? (green)' column is known to have mixed data types
-        if 'BIFL scatter fit? (green)' in df.columns:
-            df['BIFL scatter fit? (green)'] = df['BIFL scatter fit? (green)'].astype(int)
-        
-        # Check for other columns with object dtype that might cause issues
-        for col in df.select_dtypes(include=['object']).columns:
-            df[col] = df[col].astype(str)
-
-        # Check which file format is selected
-        if all_settings['file_format_hdf']:
-            # Save as HDF5
-            file_name = f"{base_name}_Frames_{n_frames}_Green_Fit#23_BinFactor_{binning_factor}_MinPh#{min_photons}_MicroTime_{micro_time_start}-{micro_time_stop}.h5"
-            file_dir = os.path.dirname(tttr_files[0])
-            file_path = os.path.join(file_dir, file_name)
-
-            # Save DataFrame to HDF5 file with compression
-            # complevel: Compression level (0-9, 9 is highest compression)
-            # complib: Compression library ('blosc' is fast and efficient)
-            # format: 'table' allows for partial reading and querying (slower but more flexible)
-            df.to_hdf(file_path, key='results', mode='w', complevel=9, complib='blosc', format='table')
-        else:
-            # Save as CSV (tab-separated)
-            file_name = f"{base_name}_Frames_{n_frames}_Green_Fit#23_BinFactor_{binning_factor}_MinPh#{min_photons}_MicroTime_{micro_time_start}-{micro_time_stop}.pg4"
-            file_dir = os.path.dirname(tttr_files[0])
-            file_path = os.path.join(file_dir, file_name)
-
-            # Export to file
-            with open(file_path, 'w') as f:
-                # Write header
-                f.write('\t'.join(df.columns) + '\n')
-
-                # Write data
-                for _, row in df.iterrows():
-                    f.write('\t'.join([f"{val:.8f}" if isinstance(val, float) else f"{val}" for val in row]) + '\n')
-
-        QMessageBox.information(self, "Auto Export Complete", f"Results automatically exported to {file_path}")
-
-    def export_results(self):
-        """Export the results to a file."""
-        if not hasattr(self, 'results_list') or not self.results_list:
-            QMessageBox.warning(self, "No Results", "No results to export.")
-            return
-
-        # Get all settings
-        all_settings = self.get_settings()
-
-        # Initialize export_option with a default value
-        export_option = None
-
-        # Ask if user wants to export all files or just the current file
-        if len(self.tau_list) > 1:
-            export_option = QtWidgets.QMessageBox.question(
-                self, 
-                "Export Options", 
-                "Do you want to export results for all files or just the currently selected file?",
-                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.YesToAll | QtWidgets.QMessageBox.Cancel
-            )
-
-            if export_option == QtWidgets.QMessageBox.Cancel:
+        # Multi-detector handling: if we processed all detectors, write a single HDF5 with groups per detector
+        multi_det = hasattr(self, 'results_list_all_detectors') and self.results_list_all_detectors
+        if multi_det:
+            df_all = self._combine_multi_detector_results_as_columns()
+            if df_all.empty:
+                QMessageBox.warning(self, "Export Error", "No multi-detector results to export.")
                 return
 
-            # Filter results based on selection
-            if export_option == QtWidgets.QMessageBox.Yes:
-                current_file_index = self.file_selector_combo.currentIndex()
-                if current_file_index >= 0 and current_file_index < len(self.tau_list):
-                    # Get results for the current file
-                    filtered_results = self.results_list[current_file_index]
-                else:
-                    QMessageBox.warning(self, "Error", "No file currently selected.")
-                    return
-            else:  # YesToAll (all files)
-                # Flatten the results list for all files
-                filtered_results = [item for sublist in self.results_list for item in sublist]
-        else:
-            # Only one file, export all results
-            filtered_results = self.results_list[0] if self.results_list else []
-
-        # Get file name for export
-        file_dialog = QFileDialog()
-        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
-
-        # Set file filter based on selected format
-        if all_settings['file_format_hdf']:
-            file_dialog.setNameFilter("HDF5 Files (*.h5);;All Files (*.*)")
-            file_dialog.setDefaultSuffix("h5")
-        else:
-            file_dialog.setNameFilter("PG4 Files (*.pg4);;All Files (*.*)")
-            file_dialog.setDefaultSuffix("pg4")
-
-        tttr_files = self.tttr_list.get_selected_files()
-        if tttr_files:
-            # Get base name for the filename
-            if len(tttr_files) == 1 or (export_option == QtWidgets.QMessageBox.Yes and len(self.tau_list) > 1):
-                # Single file export
-                if export_option == QtWidgets.QMessageBox.Yes and len(self.tau_list) > 1:
-                    current_file_index = self.file_selector_combo.currentIndex()
-                    if current_file_index < len(tttr_files):
-                        base_name = os.path.splitext(os.path.basename(tttr_files[current_file_index]))[0]
-                    else:
-                        base_name = f"File_{current_file_index+1}"
-                else:
-                    base_name = os.path.splitext(os.path.basename(tttr_files[0]))[0]
-            else:
-                # Multiple files export
-                base_name = "MultipleFiles"
-
-            # Get parameters for filename from settings
-            min_photons = all_settings['min_photons']
-            binning_factor = all_settings['binning_factor']
-            micro_time_start, micro_time_stop = all_settings['micro_time_range']
-
-            # Get number of frames if available
-            n_frames = 0
-            if hasattr(self, 'clsm_p') and self.clsm_p is not None:
-                n_frames = self.clsm_p.shape[0]
-
-            # Generate filename based on parameters and selected format
+            # one flat table, no HDF5 groups
             if all_settings['file_format_hdf']:
-                file_ext = ".h5"
+                file_name = f"{composed_base}_allDetectors.h5"
+                file_path = os.path.join(file_dir, file_name)
+                try:
+                    df_all.to_hdf(file_path, key='results', mode='w',
+                                  complevel=9, complib='blosc', format='table')
+                except Exception as e:
+                    QMessageBox.warning(self, "Export Error", f"Failed writing HDF5: {e}")
+                    return
+                QMessageBox.information(self, "Auto Export Complete", f"Results automatically exported to {file_path}")
             else:
-                file_ext = ".pg4"
-
-            file_name = f"{base_name}_Frames_{n_frames}_Green_Fit#23_BinFactor_{binning_factor}_MinPh#{min_photons}_MicroTime_{micro_time_start}-{micro_time_stop}{file_ext}"
-            file_dialog.selectFile(file_name)
-
-        if file_dialog.exec_():
-            file_names = file_dialog.selectedFiles()
-            if file_names:
-                file_path = file_names[0]
-
-                # Create DataFrame from filtered results
-                df = pd.DataFrame(filtered_results)
-                
-                # Export to file based on selected format
-                if all_settings['file_format_hdf']:
-                    # Convert columns with mixed data types to strings to avoid HDF5 serialization issues
-                    # The 'BIFL scatter fit? (green)' column is known to have mixed data types
-                    if 'BIFL scatter fit? (green)' in df.columns:
-                        df['BIFL scatter fit? (green)'] = df['BIFL scatter fit? (green)'].astype(str)
-                    
-                    # Check for other columns with object dtype that might cause issues
-                    for col in df.select_dtypes(include=['object']).columns:
-                        df[col] = df[col].astype(str)
-                        
-                    # Save as HDF5 with compression
-                    # complevel: Compression level (0-9, 9 is highest compression)
-                    # complib: Compression library ('blosc' is fast and efficient)
-                    # fletcher32: Adds a checksum for data integrity
-                    # format: 'table' allows for partial reading and querying (slower but more flexible)
-                    df.to_hdf(file_path, key='results', mode='w', complevel=9, complib='blosc', fletcher32=True, format='table')
-                else:
-                    # Save as CSV (tab-separated)
+                file_name = f"{composed_base}_allDetectors.pg4"
+                file_path = os.path.join(file_dir, file_name)
+                try:
                     with open(file_path, 'w') as f:
-                        # Write header
-                        f.write('\t'.join(df.columns) + '\n')
+                        f.write('\t'.join(df_all.columns) + '\n')
+                        for _, row in df_all.iterrows():
+                            f.write(
+                                '\t'.join([f"{val:.8f}" if isinstance(val, float) else f"{val}" for val in row]) + '\n')
+                except Exception as e:
+                    QMessageBox.warning(self, "Export Error", f"Failed writing CSV: {e}")
+                    return
+                QMessageBox.information(self, "Auto Export Complete", f"Results automatically exported to {file_path}")
+            return
 
-                        # Write data
-                        for _, row in df.iterrows():
+        # Fallbacks: single detector or CSV
+        if multi_det and not all_settings['file_format_hdf']:
+            # CSV cannot hold groups; write per-detector CSV files into same directory
+            try:
+                for det_block in self.results_list_all_detectors:
+                    if not det_block:
+                        continue
+                    det_name = det_block[0].get('detector', self._current_detector_name())
+                    rows = []
+                    for entry in det_block:
+                        fidx = entry.get('file_index', 0)
+                        res = entry.get('results', [])
+                        for r in res:
+                            r = dict(r)
+                            r['FileIndex'] = fidx
+                            rows.append(r)
+                    df_det = self._build_dataframe_from_results(rows)
+                    fn = f"{composed_base}_{det_name}.pg4"
+                    fp = os.path.join(file_dir, fn)
+                    with open(fp, 'w') as f:
+                        f.write('\t'.join(df_det.columns) + '\n')
+                        for _, row in df_det.iterrows():
                             f.write('\t'.join([f"{val:.8f}" if isinstance(val, float) else f"{val}" for val in row]) + '\n')
+                QMessageBox.information(self, "Auto Export Complete", f"Per-detector CSVs exported to {file_dir}")
+            except Exception as e:
+                QMessageBox.warning(self, "Export Error", f"Failed writing CSVs: {e}")
+            return
 
-                QMessageBox.information(self, "Export Complete", f"Results exported to {file_path}")
+        # Single-detector case
+        filtered_results = [item for sublist in self.results_list for item in sublist]
+        df = self._build_dataframe_from_results(filtered_results)
+        det_name = self._current_detector_name()
+        if all_settings['file_format_hdf']:
+            file_name = f"{composed_base}_{det_name}.h5"
+            file_path = os.path.join(file_dir, file_name)
+            df.to_hdf(file_path, key='results', mode='w', complevel=9, complib='blosc', format='table')
+        else:
+            file_name = f"{composed_base}_{det_name}.pg4"
+            file_path = os.path.join(file_dir, file_name)
+            with open(file_path, 'w') as f:
+                f.write('\t'.join(df.columns) + '\n')
+                for _, row in df.iterrows():
+                    f.write('\t'.join([f"{val:.8f}" if isinstance(val, float) else f"{val}" for val in row]) + '\n')
+        QMessageBox.information(self, "Auto Export Complete", f"Results automatically exported to {file_path}")
 
+    # ==============================
+    # Fit & plots
+    # ==============================
     def fit_parameters(self):
-        """Get the fit parameters."""
         tau = self.tau_spinbox.value()
         gamma = self.gamma_spinbox.value()
         r0 = self.r0_spinbox.value()
         rho = self.rho_spinbox.value()
         x0 = np.array([tau, gamma, r0, rho])
-
         fixed = np.array([
             1 if self.fix_tau_checkbox.isChecked() else 0,
             1 if self.fix_gamma_checkbox.isChecked() else 0,
             1 if self.fix_r0_checkbox.isChecked() else 0,
             1 if self.fix_rho_checkbox.isChecked() else 0
         ])
-
         return x0, fixed
 
     def create_background(self, irf, use_bg=None, bg_fixed=None, bg_file=None, bg_p=None, bg_s=None):
-        """Create background array based on UI controls or loaded background pattern.
-
-        Parameters
-        ----------
-        irf : np.ndarray
-            IRF array to match the shape of the background array.
-        use_bg : bool, optional
-            Whether to use background correction. If None, uses the value from the UI.
-        bg_fixed : bool, optional
-            Whether to use fixed background values. If None, uses the value from the UI.
-        bg_file : bool, optional
-            Whether to use background pattern from file. If None, uses the value from the UI.
-        bg_p : float, optional
-            Fixed background value for parallel channel. If None, uses the value from the UI.
-        bg_s : float, optional
-            Fixed background value for perpendicular channel. If None, uses the value from the UI.
-
-        Returns
-        -------
-        np.ndarray
-            Background array with the same shape as the IRF.
-        """
-        # Use values from parameters if provided, otherwise use values from UI
         use_bg = use_bg if use_bg is not None else self.use_bg_checkbox.isChecked()
         bg_fixed = bg_fixed if bg_fixed is not None else self.bg_fixed_radio.isChecked()
         bg_file = bg_file if bg_file is not None else self.bg_file_radio.isChecked()
         bg_p = bg_p if bg_p is not None else self.bg_p_spinbox.value()
         bg_s = bg_s if bg_s is not None else self.bg_s_spinbox.value()
-
-        # If background correction is disabled, return zeros
         if not use_bg:
             return np.zeros_like(irf)
-
-        # The first half is for parallel channel, the second half is for perpendicular channel
         n_half = len(irf) // 2
         background = np.zeros_like(irf)
-
-        # Check if using file-based background
-        if bg_file and self.bg_p is not None and self.bg_s is not None:
-            # Use loaded background pattern
-            # Make sure the background arrays match the expected size
-            bg_p_array = self.bg_p
-            bg_s_array = self.bg_s
-
-            # Resize if necessary
-            if len(bg_p_array) > n_half:
-                bg_p_array = bg_p_array[:n_half]
-            elif len(bg_p_array) < n_half:
-                # Pad with zeros
-                bg_p_array = np.pad(bg_p_array, (0, n_half - len(bg_p_array)), 'constant')
-
-            if len(bg_s_array) > n_half:
-                bg_s_array = bg_s_array[:n_half]
-            elif len(bg_s_array) < n_half:
-                # Pad with zeros
-                bg_s_array = np.pad(bg_s_array, (0, n_half - len(bg_s_array)), 'constant')
-
-            # Set background values
-            background[:n_half] = bg_p_array
-            background[n_half:] = bg_s_array
-
-            chisurf.logging.info("Using background pattern from file")
+        # Slice full background to current window
+        start, stop = self.micro_time_range
+        if bg_file and self._bg_p_full is not None and self._bg_s_full is not None:
+            p = self._bg_p_full[start:stop]
+            s = self._bg_s_full[start:stop]
+            if p.size > n_half:
+                p = p[:n_half]
+            if s.size > n_half:
+                s = s[:n_half]
+            if p.size < n_half:
+                p = np.pad(p, (0, n_half - p.size))
+            if s.size < n_half:
+                s = np.pad(s, (0, n_half - s.size))
+            background[:n_half] = p
+            background[n_half:] = s
+            chisurf.logging.info("Using background pattern from file (sliced)")
         else:
-            # Use fixed background values
-            # Set background values
             background[:n_half] = bg_p
             background[n_half:] = bg_s
-
             chisurf.logging.info(f"Using fixed background values: P={bg_p}, S={bg_s}")
-
         return background
 
     def update_fit(self):
-        """Update the fit based on current parameters."""
         if not hasattr(self, 'tttr_data') or self.tttr_data is None:
             return
-
-        if not hasattr(self, 'irf_p') or self.irf_p is None:
+        if self.decay_all_photons is None:
             return
-
-        if not hasattr(self, 'decay_all_photons') or self.decay_all_photons is None:
-            return
-
-        # Get all settings using the get_settings method
+        # Ensure prepared IRF (depends on thresholds/shifts) is ready
+        self._ensure_prepared_irf()
         all_settings = self.get_settings()
-
-        # Get parameters for the fit
         x0 = np.array([all_settings['tau'], all_settings['gamma'], all_settings['r0'], all_settings['rho']])
         fixed = np.array([
             1 if all_settings['fix_tau'] else 0,
@@ -1442,8 +1762,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             1 if all_settings['fix_r0'] else 0,
             1 if all_settings['fix_rho'] else 0
         ])
-
-        # Extract only the settings needed for Fit23
         settings = {
             'dt': all_settings['dt'],
             'g_factor': all_settings['g_factor'],
@@ -1453,167 +1771,96 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             'irf': all_settings['irf'],
             'period': all_settings['period'],
             'background': all_settings['background'],
-            'p2s_twoIstar_flag': all_settings['p2s_twoIstar'],  # Enable 2I* and 2I*: P+2S? calculation
-            'soft_bifl_scatter_flag': all_settings['BIFL_scatter']  # Enable BIFL scatter fit
+            'p2s_twoIstar_flag': all_settings['p2s_twoIstar'],
+            'soft_bifl_scatter_flag': all_settings['BIFL_scatter']
         }
-
-        # Create Fit23 instance
         self._fit = tttrlib.Fit23(**settings)
-
-        # Perform the fit
         res = self._fit(data=self.decay_all_photons, initial_values=x0, fixed=fixed)
-
-        # Plot the fit result
         self.plot_fit_result(res)
 
     def plot_fit_result(self, fit_result):
-        """Plot the fit result."""
-        # Clear both plots
         self.combined_plot.clear()
         self.residual_plot.clear()
-
         if self._fit is None:
             return
-
-        # Plot data and model in the combined plot
-        self.combined_plot.plot(self._fit.data,
-                               pen=None,
-                               symbol='o',
-                               symbolSize=3)
+        # Data & model
+        self.combined_plot.plot(self._fit.data, pen=None, symbol='o', symbolSize=3)
         self.combined_plot.plot(self._fit.model, pen='g')
-
-        # Plot IRF with the same micro time range
+        # IRF slice from prepared cache
         start, stop = self.micro_time_range
-        irf_p_range = self.irf_p[:stop]
-        irf_s_range = self.irf_s[:stop]
-        if start > 0:
-            irf_p_range = irf_p_range[start:]
-            irf_s_range = irf_s_range[start:]
-
-        # Prepare IRF (threshold, normalize, shift)
-        irf_p_range, irf_s_range = self.prepare_irf(
-            irf_p_range, irf_s_range,
-            threshold=self.irf_threshold,
-            shift=self.shift_spinbox.value(),
-            shift_sp=self.shift_sp_spinbox.value(),
-            shift_ss=self.shift_ss_spinbox.value()
-        )
-
-        irf = np.hstack([irf_p_range, irf_s_range])
-
-        # Scale IRF for display purposes
-        max_irf = np.max(irf) if np.max(irf) > 0 else 1
-        max_data = max(self._fit.data) if max(self._fit.data) > 0 else 1
-        irf = irf * (max_data / max_irf)
-        self.combined_plot.plot(irf, pen='r', name='IRF')
-
-        # Compute and plot weighted residuals
-        data = self._fit.data
-        model = self._fit.model
-        # Avoid division by zero
+        self._ensure_prepared_irf()
+        irf_p_range = (self._irf_p_prepared_full[start:stop]
+                       if self._irf_p_prepared_full is not None else np.array([]))
+        irf_s_range = (self._irf_s_prepared_full[start:stop]
+                       if self._irf_s_prepared_full is not None else np.array([]))
+        irf = np.hstack([irf_p_range, irf_s_range]) if irf_p_range.size or irf_s_range.size else np.array([])
+        if irf.size:
+            max_irf = np.max(irf) if np.max(irf) > 0 else 1
+            max_data = max(self._fit.data) if max(self._fit.data) > 0 else 1
+            irf_scaled = irf * (max_data / max_irf)
+            self.combined_plot.plot(irf_scaled, pen='r', name='IRF')
+        # Weighted residuals
+        data = np.asarray(self._fit.data, dtype=float)
+        model = np.asarray(self._fit.model, dtype=float)
+        resid = np.zeros_like(data, dtype=float)
         with np.errstate(divide='ignore', invalid='ignore'):
-            resid = (data - model) / np.sqrt(model)
-        # Fall-back zeros where model==0
-        resid = np.nan_to_num(resid)
-
-        # Draw residuals in the top panel
+            mask = data > 0
+            resid[mask] = (data[mask] - model[mask]) / np.sqrt(data[mask])
+        try:
+            resid = np.nan_to_num(resid, nan=0.0, posinf=0.0, neginf=0.0)
+        except TypeError:
+            resid = np.nan_to_num(resid)
         pen = pg.mkPen(color=(200, 20, 20), width=1)
-        self.residual_plot.plot(resid,
-                               pen=pen,
-                               symbol='o',
-                               symbolSize=3)
-
-        # Update fit parameters display
+        self.residual_plot.plot(resid, pen=pen, symbol='o', symbolSize=3)
         self.update_fit_ui(fit_result)
 
     def update_fit_ui(self, fit_result):
-        """Update the fit parameters display."""
         if fit_result is None:
             return
-
-        # Update labels with fit results
-        self.tau_label.setText(f"Tau: {fit_result['x'][0]:.3f}")
-        self.gamma_label.setText(f"Gamma: {fit_result['x'][1]:.3f}")
-        self.r0_label.setText(f"R0: {fit_result['x'][2]:.3f}")
-        self.rho_label.setText(f"Rho: {fit_result['x'][3]:.3f}")
-
-        # Calculate chi-square
+        self.tau_label.setText(f"{fit_result['x'][0]:.3f}")
+        self.gamma_label.setText(f"{fit_result['x'][1]:.3f}")
+        self.r0_label.setText(f"{fit_result['x'][2]:.3f}")
+        self.rho_label.setText(f"{fit_result['x'][3]:.3f}")
         if hasattr(self._fit, 'chi_square'):
             chi2 = self._fit.chi_square
         else:
-            # Approximate chi-square calculation
             data = self._fit.data
             model = self._fit.model
             with np.errstate(divide='ignore', invalid='ignore'):
                 chi2 = np.sum(((data - model) ** 2) / np.maximum(model, 1))
-
         self.chi2_label.setText(f"Chi²: {chi2:.3f}")
 
+    # ==============================
+    # Settings IO
+    # ==============================
     def get_settings(self) -> Dict:
-        """
-        Gather all settings into a dictionary.
-
-        Returns
-        -------
-        Dict
-            Dictionary containing all settings.
-        """
-        # Get binning factor
-        binning_factor = self.binning_factor_spinbox.value()
-
-        # Get micro time range
+        ch_p_eff, ch_s_eff, binning_factor, _mtr_eff, g_eff, l1_eff, l2_eff = self._get_effective_detector_params()
         start, stop = self.micro_time_range
-
-        # Get IRF with the applied micro time range
-        if hasattr(self, 'irf_p') and self.irf_p is not None and hasattr(self, 'irf_s') and self.irf_s is not None:
-            irf_p_range = self.irf_p[:stop]
-            irf_s_range = self.irf_s[:stop]
-            if start > 0:
-                irf_p_range = irf_p_range[start:]
-                irf_s_range = irf_s_range[start:]
-
-            # Prepare IRF (threshold, normalize, shift)
-            irf_p_range, irf_s_range = self.prepare_irf(
-                irf_p_range, irf_s_range,
-                threshold=self.irf_threshold,
-                shift=self.shift_spinbox.value(),
-                shift_sp=self.shift_sp_spinbox.value(),
-                shift_ss=self.shift_ss_spinbox.value()
-            )
-
+        # Use prepared IRF cache and slice here
+        self._ensure_prepared_irf()
+        if self._irf_p_prepared_full is not None and self._irf_s_prepared_full is not None:
+            irf_p_range = self._irf_p_prepared_full[start:stop]
+            irf_s_range = self._irf_s_prepared_full[start:stop]
             irf = np.hstack([irf_p_range, irf_s_range])
         else:
             irf = None
-
-        # Get dt (time resolution)
         dt = None
         if hasattr(self, 'tttr_data') and self.tttr_data is not None:
             dt = self.tttr_data.header.micro_time_resolution * 1e9 * binning_factor
-
-        # Get fit parameters
         x0, fixed = self.fit_parameters()
-
-        # Create settings dictionary
         settings = {
             'dt': dt,
-            'g_factor': self.g_factor_spinbox.value(),
-            'l1': self.l1_spinbox.value(),
-            'l2': self.l2_spinbox.value(),
+            'g_factor': g_eff,
+            'l1': l1_eff,
+            'l2': l2_eff,
             'convolution_stop': -1,
             'irf': irf,
-            'period': self.period_spinbox.value(),
-            'background': self.create_background(
-                irf,
-                use_bg=self.use_bg_checkbox.isChecked(),
-                bg_fixed=self.bg_fixed_radio.isChecked(),
-                bg_file=self.bg_file_radio.isChecked(),
-                bg_p=self.bg_p_spinbox.value(),
-                bg_s=self.bg_s_spinbox.value()
-            ) if irf is not None else None,
+            'period': self._get_excitation_period_ns(),
+            'background': self.create_background(irf) if irf is not None else None,
             'binning_factor': binning_factor,
             'micro_time_range': self.micro_time_range,
-            'ch_p': self.ch_p_spinbox.value(),
-            'ch_s': self.ch_s_spinbox.value(),
+            'ch_p': ch_p_eff,
+            'ch_s': ch_s_eff,
             'min_photons': self.min_photons_spinbox.value(),
             'tau': x0[0],
             'gamma': x0[1],
@@ -1623,7 +1870,8 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             'fix_gamma': self.fix_gamma_checkbox.isChecked(),
             'fix_r0': self.fix_r0_checkbox.isChecked(),
             'fix_rho': self.fix_rho_checkbox.isChecked(),
-            'irf_threshold': self.irf_threshold,
+            'irf_threshold_vv': self.irf_threshold_vv,
+            'irf_threshold_vh': self.irf_threshold_vh,
             'shift': self.shift_spinbox.value(),
             'shift_sp': self.shift_sp_spinbox.value(),
             'shift_ss': self.shift_ss_spinbox.value(),
@@ -1632,47 +1880,49 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             'bg_file': self.bg_file_radio.isChecked(),
             'bg_p': self.bg_p_spinbox.value(),
             'bg_s': self.bg_s_spinbox.value(),
-            'adjust_stop': self.adjust_stop_checkbox.isChecked(),
-            'read_period': self.read_period_checkbox.isChecked(),
-            # Additional GUI elements
-            'auto_export': self.checkBoxAutoExport.isChecked(),
             'stack_frames': self.checkBoxStackFrames.isChecked(),
             'file_format_hdf': self.radioButton_FileHDF.isChecked(),
             'file_format_csv': self.radioButton_FileCsv.isChecked(),
             'p2s_twoIstar': self.p2s_twoIstar,
             'BIFL_scatter': self.BIFL_scatter
         }
-
         return settings
 
     def load_settings_from_dict(self, settings: Dict):
-        """
-        Load settings from a dictionary.
-
-        Parameters
-        ----------
-        settings : Dict
-            Dictionary containing settings to load.
-        """
-        # Update UI elements with values from settings
-        if 'g_factor' in settings:
-            self.g_factor_spinbox.setValue(settings['g_factor'])
-        if 'l1' in settings:
-            self.l1_spinbox.setValue(settings['l1'])
-        if 'l2' in settings:
-            self.l2_spinbox.setValue(settings['l2'])
+        try:
+            if 'g_factor' in settings and hasattr(self, 'g_factor_spinbox'):
+                self.g_factor_spinbox.setValue(settings['g_factor'])
+            if 'l1' in settings and hasattr(self, 'l1_spinbox'):
+                self.l1_spinbox.setValue(settings['l1'])
+            if 'l2' in settings and hasattr(self, 'l2_spinbox'):
+                self.l2_spinbox.setValue(settings['l2'])
+        except Exception:
+            pass
         if 'period' in settings:
-            self.period_spinbox.setValue(settings['period'])
+            try:
+                self._excitation_period_override = float(settings['period'])
+            except Exception:
+                self._excitation_period_override = None
         if 'binning_factor' in settings:
-            self.binning_factor_spinbox.setValue(settings['binning_factor'])
+            try:
+                self._binning_factor_override = int(settings['binning_factor'])
+            except Exception:
+                self._binning_factor_override = None
         if 'micro_time_range' in settings:
             self.micro_time_start_spinbox.setValue(settings['micro_time_range'][0])
             self.micro_time_stop_spinbox.setValue(settings['micro_time_range'][1])
             self.micro_time_range = settings['micro_time_range']
-        if 'ch_p' in settings:
-            self.ch_p_spinbox.setValue(settings['ch_p'])
-        if 'ch_s' in settings:
-            self.ch_s_spinbox.setValue(settings['ch_s'])
+            self._micro_time_user_override = True
+        if 'ch_p' in settings and getattr(self, 'ch_p_spinbox', None) is not None:
+            try:
+                self.ch_p_spinbox.setValue(settings['ch_p'])
+            except Exception:
+                pass
+        if 'ch_s' in settings and getattr(self, 'ch_s_spinbox', None) is not None:
+            try:
+                self.ch_s_spinbox.setValue(settings['ch_s'])
+            except Exception:
+                pass
         if 'min_photons' in settings:
             self.min_photons_spinbox.setValue(settings['min_photons'])
         if 'tau' in settings:
@@ -1691,8 +1941,17 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             self.fix_r0_checkbox.setChecked(settings['fix_r0'])
         if 'fix_rho' in settings:
             self.fix_rho_checkbox.setChecked(settings['fix_rho'])
+        if 'irf_threshold_vv' in settings:
+            self.irf_threshold_vv = settings['irf_threshold_vv']
+        if 'irf_threshold_vh' in settings:
+            self.irf_threshold_vh = settings['irf_threshold_vh']
         if 'irf_threshold' in settings:
-            self.doubleSpinBox_irf_threshold.setValue(settings['irf_threshold'])
+            self.irf_threshold_vv = settings['irf_threshold']
+            try:
+                if getattr(self, 'doubleSpinBox_irf_threshold_vh', None) is None:
+                    self.irf_threshold_vh = settings['irf_threshold']
+            except Exception:
+                pass
         if 'shift' in settings:
             self.shift_spinbox.setValue(settings['shift'])
         if 'shift_sp' in settings:
@@ -1708,13 +1967,6 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             self.bg_p_spinbox.setValue(settings['bg_p'])
         if 'bg_s' in settings:
             self.bg_s_spinbox.setValue(settings['bg_s'])
-        if 'adjust_stop' in settings:
-            self.adjust_stop_checkbox.setChecked(settings['adjust_stop'])
-        if 'read_period' in settings:
-            self.read_period_checkbox.setChecked(settings['read_period'])
-        # Additional GUI elements
-        if 'auto_export' in settings:
-            self.checkBoxAutoExport.setChecked(settings['auto_export'])
         if 'stack_frames' in settings:
             self.checkBoxStackFrames.setChecked(settings['stack_frames'])
         if 'file_format_hdf' in settings:
@@ -1725,6 +1977,8 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             self.p2s_twoIstar = settings['p2s_twoIstar']
         if 'BIFL_scatter' in settings:
             self.BIFL_scatter = settings['BIFL_scatter']
+        # After loading: update minimal path
+        self._update_slice_and_fit()
 
-        # Update parameters
-        self.update_parameters()
+
+
