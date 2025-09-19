@@ -85,7 +85,6 @@ class TTTRFileList(FileList):
 
 
 
-
 def compute_bids_from_tttr(tttr: "tttrlib.TTTR", time_window_s: float) -> np.ndarray:
     """Compute start/stop photon indices for fixed time windows.
 
@@ -124,13 +123,21 @@ def compute_bids_from_tttr(tttr: "tttrlib.TTTR", time_window_s: float) -> np.nda
     return bids
 
 
-class SetupPage(QtWidgets.QWizardPage):
+class TTTRTimeWindowTool(QtWidgets.QWidget):
+    """Single-window TTTR→BID tool with preview.
+
+    Consolidates setup, file selection, preview, and processing into one window.
+    """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("Setup")
-        self.setSubTitle("Choose the time-window length and output folder")
+        self.setWindowTitle("TTTR Time-Window BIDs")
+        try:
+            self.resize(1000, 700)
+        except Exception:
+            pass
 
-        layout = QtWidgets.QFormLayout(self)
+        # --- Top controls: time window + output folder ---
+        top_form = QtWidgets.QGridLayout()
 
         self.tws_spin = QtWidgets.QDoubleSpinBox(self)
         self.tws_spin.setDecimals(3)
@@ -138,46 +145,30 @@ class SetupPage(QtWidgets.QWizardPage):
         self.tws_spin.setSingleStep(1.0)
         self.tws_spin.setValue(10.0)
         self.tws_spin.setSuffix(" ms")
-        layout.addRow("Time window:", self.tws_spin)
+        self.tws_spin.valueChanged.connect(self._update_preview)
 
-        h = QtWidgets.QHBoxLayout()
         self.output_edit = QtWidgets.QLineEdit(self)
         self.btn_browse = QtWidgets.QPushButton("Browse…", self)
         self.btn_browse.clicked.connect(self._choose_dir)
-        h.addWidget(self.output_edit)
-        h.addWidget(self.btn_browse)
-        layout.addRow("Output folder:", self._wrap(h))
 
-        self.setLayout(layout)
+        top_form.addWidget(QtWidgets.QLabel("Time window:"), 0, 0)
+        top_form.addWidget(self.tws_spin, 0, 1)
+        top_form.addWidget(QtWidgets.QLabel("Output folder:"), 0, 2)
+        top_form.addWidget(self.output_edit, 0, 3)
+        top_form.addWidget(self.btn_browse, 0, 4)
 
-    def _choose_dir(self):
-        d, _ = get_directory(caption="Select output folder")
-        if d is not None:
-            self.output_edit.setText(str(d))
-
-    @staticmethod
-    def _wrap(layout: QtWidgets.QLayout) -> QtWidgets.QWidget:
-        w = QtWidgets.QWidget()
-        w.setLayout(layout)
-        return w
-
-    def get_values(self) -> Tuple[float, pathlib.Path | None]:
-        tw_ms = float(self.tws_spin.value())
-        out = self.output_edit.text().strip()
-        return tw_ms, (pathlib.Path(out) if out else None)
-
-
-class FilesPage(QtWidgets.QWizardPage):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setTitle("Files")
-        self.setSubTitle("Drag and drop TTTR files to process")
-
-        layout = QtWidgets.QVBoxLayout(self)
+        # --- Files & actions row ---
+        files_layout = QtWidgets.QVBoxLayout()
+        try:
+            _exts_text = " ".join(sorted(_supported_exts()))
+        except Exception:
+            _exts_text = ".ptu .phu .ht2 .ht3 .pt3 .t3r"
+        files_layout.addWidget(QtWidgets.QLabel(f"Drop TTTR files here ({_exts_text})", self))
 
         self.file_list = TTTRFileList(accept_drops=True, filename_ending='')
         self.file_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.file_list.setMinimumHeight(200)
+        self.file_list.setMinimumHeight(160)
+        files_layout.addWidget(self.file_list)
 
         btns = QtWidgets.QHBoxLayout()
         self.btn_add = QtWidgets.QPushButton("Add…", self)
@@ -185,17 +176,56 @@ class FilesPage(QtWidgets.QWizardPage):
         btns.addWidget(self.btn_add)
         btns.addStretch(1)
         btns.addWidget(self.btn_clear)
-
-        try:
-            _exts_text = " ".join(sorted(_supported_exts()))
-        except Exception:
-            _exts_text = ".ptu .phu .ht2 .ht3 .pt3 .t3r"
-        layout.addWidget(QtWidgets.QLabel(f"Drop TTTR files here ({_exts_text})", self))
-        layout.addWidget(self.file_list)
-        layout.addLayout(btns)
+        files_layout.addLayout(btns)
 
         self.btn_add.clicked.connect(self._on_add)
         self.btn_clear.clicked.connect(self.file_list.clear)
+
+        # --- Preview selector + plot ---
+        preview_row = QtWidgets.QHBoxLayout()
+        preview_row.addWidget(QtWidgets.QLabel("Preview file:", self))
+        self.cmb_file = QtWidgets.QComboBox(self)
+        self.cmb_file.currentIndexChanged.connect(self._on_select_file)
+        preview_row.addWidget(self.cmb_file, 1)
+
+        self.plot = IntensityPlotWidget(self) if IntensityPlotWidget is not None else None
+
+        # --- Bottom actions + status ---
+        action_row = QtWidgets.QHBoxLayout()
+        self.btn_process = QtWidgets.QPushButton("Process All", self)
+        self.btn_process.clicked.connect(self._process_all)
+        action_row.addStretch(1)
+        action_row.addWidget(self.btn_process)
+
+        self.status = QtWidgets.QTextEdit(self)
+        self.status.setReadOnly(True)
+        self.status.setMinimumHeight(100)
+
+        # --- Compose main layout ---
+        main = QtWidgets.QVBoxLayout(self)
+        main.addLayout(top_form)
+        main.addLayout(files_layout)
+        main.addLayout(preview_row)
+        if self.plot is not None:
+            main.addWidget(self.plot)
+        else:
+            main.addWidget(QtWidgets.QLabel("Plot widget unavailable", self))
+        main.addLayout(action_row)
+        main.addWidget(self.status)
+
+        # Initialize preview combo when list changes
+        try:
+            self.file_list.model().rowsInserted.connect(self._refresh_combo)
+            self.file_list.model().rowsRemoved.connect(self._refresh_combo)
+            self.file_list.model().modelReset.connect(self._refresh_combo)
+        except Exception:
+            pass
+
+    # --- Helpers ---
+    def _choose_dir(self):
+        d, _ = get_directory(caption="Select output folder")
+        if d is not None:
+            self.output_edit.setText(str(d))
 
     def _on_add(self):
         dlg = QtWidgets.QFileDialog(self, "Select TTTR files")
@@ -212,56 +242,27 @@ class FilesPage(QtWidgets.QWizardPage):
                 p = pathlib.Path(s)
                 if p.suffix.lower() in extset:
                     self.file_list.addItem(str(p))
+        self._refresh_combo()
 
-    def get_files(self) -> List[pathlib.Path]:
-        return [pathlib.Path(s) for s in self.file_list.filenames]
-
-
-class ProcessPage(QtWidgets.QWizardPage):
-    def __init__(self, setup_page: SetupPage, files_page: FilesPage, parent=None):
-        super().__init__(parent)
-        self.setup_page = setup_page
-        self.files_page = files_page
-        self.setTitle("Preview & Process")
-        self.setSubTitle("Preview intensity for one file and save BIDs for all")
-
-        layout = QtWidgets.QVBoxLayout(self)
-
-        top = QtWidgets.QHBoxLayout()
-        top.addWidget(QtWidgets.QLabel("Preview file:", self))
-        self.cmb_file = QtWidgets.QComboBox(self)
-        self.cmb_file.currentIndexChanged.connect(self._on_select_file)
-        top.addWidget(self.cmb_file, 1)
-        layout.addLayout(top)
-
-        self.plot = IntensityPlotWidget(self) if IntensityPlotWidget is not None else None
-        if self.plot is not None:
-            layout.addWidget(self.plot)
-        else:
-            layout.addWidget(QtWidgets.QLabel("Plot widget unavailable", self))
-
-        btns = QtWidgets.QHBoxLayout()
-        self.btn_process = QtWidgets.QPushButton("Process All", self)
-        self.btn_process.clicked.connect(self._process_all)
-        btns.addStretch(1)
-        btns.addWidget(self.btn_process)
-        layout.addLayout(btns)
-
-        self.status = QtWidgets.QTextEdit(self)
-        self.status.setReadOnly(True)
-        self.status.setMinimumHeight(100)
-        layout.addWidget(self.status)
-
-        self.setLayout(layout)
-
-    def initializePage(self):
-        # Populate combo with files
-        self.cmb_file.clear()
-        for p in self.files_page.get_files():
-            self.cmb_file.addItem(p.name, str(p))
+    def _refresh_combo(self):
+        try:
+            self.cmb_file.blockSignals(True)
+            self.cmb_file.clear()
+            for s in getattr(self.file_list, 'filenames', []):
+                p = pathlib.Path(s)
+                self.cmb_file.addItem(p.name, str(p))
+        finally:
+            try:
+                self.cmb_file.blockSignals(False)
+            except Exception:
+                pass
         if self.cmb_file.count() > 0:
             self.cmb_file.setCurrentIndex(0)
             self._on_select_file(0)
+
+    def _update_preview(self):
+        idx = self.cmb_file.currentIndex()
+        self._on_select_file(idx)
 
     def _on_select_file(self, _idx: int):
         if self.plot is None:
@@ -269,8 +270,8 @@ class ProcessPage(QtWidgets.QWizardPage):
         path = self.cmb_file.currentData()
         if not path:
             return
-        tw_ms, _out = self.setup_page.get_values()
-        tw_s = float(tw_ms) / 1000.0
+        tw_ms = float(self.tws_spin.value())
+        tw_s = tw_ms / 1000.0
         try:
             tttr = tttrlib.TTTR(str(path))
             counts = tttr.get_intensity_trace(tw_s)
@@ -278,7 +279,6 @@ class ProcessPage(QtWidgets.QWizardPage):
                 return
             time_axis = np.arange(len(counts), dtype=float) * tw_s
             traces = np.asarray(counts, dtype=float).reshape(-1, 1)
-            # Visualize with vertical lines at bin boundaries
             self.plot.plot_trace_and_histogram(time_axis, traces, channel_labels=["All"],
                                                bin_count=60, time_window_ms=tw_ms,
                                                show_window_lines=True)
@@ -286,19 +286,36 @@ class ProcessPage(QtWidgets.QWizardPage):
             logging.error(f"Failed to preview {path}: {exc}")
 
     def _process_all(self):
-        files = self.files_page.get_files()
+        files = [pathlib.Path(s) for s in getattr(self.file_list, 'filenames', [])]
         if not files:
             return
-        tw_ms, out_dir = self.setup_page.get_values()
-        if out_dir is None:
-            # Ask for directory if not provided
-            d, _ = get_directory(caption="Select output folder")
-            if d is None:
-                return
-            out_dir = d
-        out_dir.mkdir(parents=True, exist_ok=True)
 
-        tw_s = float(tw_ms) / 1000.0
+        tw_ms = float(self.tws_spin.value())
+        out_dir_txt = self.output_edit.text().strip()
+        out_dir = pathlib.Path(out_dir_txt) if out_dir_txt else None
+
+        if out_dir is None:
+            if len(files) == 1:
+                single = files[0]
+                folder_name = f"{single.stem}_TW_{tw_ms:.0f}ms"
+                out_dir = single.parent / folder_name
+            else:
+                suggested_name = f"analysis_TW_{tw_ms:.0f}ms"
+                d, _ = get_directory(caption="Select output folder", suggestion=suggested_name)
+                if d is None:
+                    return
+                out_dir = d
+
+        # Create the main output directory and a 'bst' subdirectory
+        bst_dir = out_dir / 'bst'
+        try:
+            bst_dir.mkdir(parents=True, exist_ok=True)
+            self.output_edit.setText(str(out_dir))
+        except Exception as exc:
+            self._log(f"Error creating directory {bst_dir}: {exc}")
+            return
+
+        tw_s = tw_ms / 1000.0
         ok = 0
         for p in files:
             try:
@@ -307,7 +324,8 @@ class ProcessPage(QtWidgets.QWizardPage):
                 if bids.size == 0:
                     self._log(f"{p.name}: no data")
                     continue
-                out = out_dir / f"{p.stem}.bid"
+                # Save as .bst file in the 'bst' subdirectory
+                out = bst_dir / f"{p.stem}.bst"
                 np.savetxt(str(out), bids.astype(np.int64), fmt="%d\t%d")
                 self._log(f"Saved {out.name} ({len(bids)} windows)")
                 ok += 1
@@ -320,34 +338,23 @@ class ProcessPage(QtWidgets.QWizardPage):
             logging.info(msg)
         except Exception:
             pass
-        self.status.append(msg)
-        self.status.ensureCursorVisible()
+        try:
+            self.status.append(msg)
+            self.status.ensureCursorVisible()
+        except Exception:
+            pass
 
 
-class TTTRTimeWindowWizard(QtWidgets.QWizard):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("TTTR Time-Window Splitter (BIDs)")
-        self.resize(1000, 700)
-
-        self.page_setup = SetupPage(self)
-        self.page_files = FilesPage(self)
-        self.page_process = ProcessPage(self.page_setup, self.page_files, self)
-
-        self.addPage(self.page_setup)
-        self.addPage(self.page_files)
-        self.addPage(self.page_process)
-
+# Backward compatibility: keep the old class name pointing to the new single-window tool
+TTTRTimeWindowWizard = TTTRTimeWindowTool
 
 if __name__ == "plugin":
-    app = QtWidgets.QApplication.instance()
-    parent = None if app is None else app.activeWindow()
-    w = TTTRTimeWindowWizard(parent)
+    w = TTTRTimeWindowTool()
     w.show()
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    w = TTTRTimeWindowWizard()
+    w = TTTRTimeWindowTool()
     w.show()
     sys.exit(app.exec_())
