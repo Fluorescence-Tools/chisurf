@@ -49,9 +49,10 @@ from chisurf.fio.fluorescence.burst import (
 from chisurf.fluorescence.burst.utils import create_array_with_ones
 # Detector setup wizard page for defining detectors/windows like the Trace Browser
 try:
-    from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage  # type: ignore
+    from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage, DetectorWizard  # type: ignore
 except Exception:
     DetectorWizardPage = None  # type: ignore
+    DetectorWizard = None # type: ignore
 
 
 # Plugin name in menu
@@ -93,7 +94,9 @@ _TTTR_EXT2TYPE: Dict[str, str] = {
 
 
 def _find_tttr_by_stem(start_dir: pathlib.Path, bid_stem: str) -> Optional[pathlib.Path]:
-    """Find TTTR file matching a BID stem in start_dir or its parent.
+    """Find TTTR file matching a BID stem by searching up the directory tree.
+
+    Searches up to 4 levels up from start_dir.
 
     More permissive matching:
     - exact stem match (stem.ext)
@@ -114,36 +117,33 @@ def _find_tttr_by_stem(start_dir: pathlib.Path, bid_stem: str) -> Optional[pathl
             return (3, -len(cstem))
         return (9, len(cstem))  # non-match
 
-    for base in [start_dir, start_dir.parent]:
-        if not base.exists():
+    current_dir = start_dir
+    for _ in range(4):  # Search current dir and 3 parents
+        if not current_dir.exists():
+            # Go to the next parent if the current one doesn't exist
+            if current_dir.parent == current_dir:
+                break  # Reached root
+            current_dir = current_dir.parent
             continue
+
         # Collect all TTTR files in this base folder
         files: List[pathlib.Path] = []
         for ext in _TTTR_EXT2TYPE.keys():
-            files.extend(base.glob(f"*{ext}"))
-        if not files:
-            continue
+            files.extend(current_dir.glob(f"*{ext}"))
 
-        # Score and select best match in this directory
-        scored = [(_score(p), p) for p in files]
-        matched = [(s, p) for s, p in scored if s[0] < 9]
-        if matched:
-            # Sort by score, then by secondary metric (longer stem preferred via negative length), then by filename length
-            matched.sort(key=lambda sp: (sp[0][0], sp[0][1], len(sp[1].name)))
-            return matched[0][1]
+        if files:
+            # Score and select best match in this directory
+            scored = [(_score(p), p) for p in files]
+            matched = [(s, p) for s, p in scored if s[0] < 9]
+            if matched:
+                # Sort by score, then by secondary metric (longer stem preferred via negative length), then by filename length
+                matched.sort(key=lambda sp: (sp[0][0], sp[0][1], len(sp[1].name)))
+                return matched[0][1]
 
-        # As a last resort in this base: try strict exact and forward prefix patterns
-        exact = [base / f"{bid_stem}{ext}" for ext in _TTTR_EXT2TYPE.keys()]
-        exact = [p for p in exact if p.exists()]
-        if exact:
-            exact.sort(key=lambda x: len(x.name))
-            return exact[0]
-        starts: List[pathlib.Path] = []
-        for ext in _TTTR_EXT2TYPE.keys():
-            starts.extend(base.glob(f"{bid_stem}*{ext}"))
-        if starts:
-            starts.sort(key=lambda x: len(x.name))
-            return starts[0]
+        # Move to the parent directory for the next iteration
+        if current_dir.parent == current_dir:
+            break  # Reached the root of the filesystem
+        current_dir = current_dir.parent
 
     return None
 
@@ -213,14 +213,15 @@ def _get_unique_folder_path(base_path: pathlib.Path) -> pathlib.Path:
     return base_path.parent / f"{base_path.name}-{ts}"
 
 
-def _prepare_output_dir(tttr_path: pathlib.Path, analysis_folder: Optional[os.PathLike | str], target_path: str, unique_folder: bool) -> pathlib.Path:
-    if analysis_folder is not None:
-        out_dir = pathlib.Path(analysis_folder)
-    else:
-        out_dir = tttr_path.parent / target_path
+def _prepare_output_dir(base_dir: pathlib.Path, target_folder_name: str, unique_folder: bool) -> pathlib.Path:
+    logging.debug(f"_prepare_output_dir called with: base_dir={base_dir}, target_folder_name={target_folder_name}, unique_folder={unique_folder}")
+    out_dir = base_dir / target_folder_name
+    logging.debug(f"Initial out_dir: {out_dir}")
     if unique_folder:
         out_dir = _get_unique_folder_path(out_dir)
+        logging.debug(f"Unique out_dir: {out_dir}")
     out_dir.mkdir(parents=True, exist_ok=True)
+    logging.debug(f"Ensured output directory exists: {out_dir}")
     return out_dir
 
 
@@ -234,7 +235,7 @@ def _infer_windows_detectors(tttr: "tttrlib.TTTR", windows: Optional[dict], dete
     return windows, detectors
 
 
-def _write_info_files(output_dir: pathlib.Path, files: List[pathlib.Path], detectors: dict, windows: dict, selected_setup: Optional[str] = None) -> None:
+def _write_info_files(output_dir: pathlib.Path, files: List[pathlib.Path], detectors: dict, windows: dict, selected_setup: Optional[str] = None, bid_files: Optional[List[pathlib.Path]] = None) -> None:
     info_dir = output_dir / 'Info'
     info_dir.mkdir(parents=True, exist_ok=True)
 
@@ -265,6 +266,11 @@ def _write_info_files(output_dir: pathlib.Path, files: List[pathlib.Path], detec
     with open(info_dir / 'datetime.txt', 'w') as f:
         now = time.strftime('%Y-%m-%d'), time.strftime('%H:%M:%S')
         f.write(f"Date: {now[0]}\nTime: {now[1]}\n")
+
+    if bid_files:
+        with open(info_dir / 'burst_files.txt', 'w') as f:
+            for p in bid_files:
+                f.write(f"{p.name}\n")
 
 
 def _write_sl5(output_dir: pathlib.Path, tttr_path: pathlib.Path, filetype: str, selected_mask: np.ndarray) -> None:
@@ -475,7 +481,7 @@ def convert_bid_file(
     tttr_path = _find_tttr_by_stem(bid_path.parent, stem)
     if tttr_path is None:
         raise FileNotFoundError(f"Could not locate TTTR file for BID '{bid_path.name}' (stem='{stem}')")
-    output_dir = _prepare_output_dir(tttr_path, analysis_folder, target_path, unique_folder)
+    output_dir = _prepare_output_dir(tttr_path.parent, bid_path.stem, unique_folder)
 
     # Default outputs
     if output_types is None:
