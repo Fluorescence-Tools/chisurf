@@ -1180,14 +1180,8 @@ class DetectorWizardPage(QWizardPage):
         settings = self.get_settings()
         detectors = settings["detectors"]
         
-        # Check if we have at least two detectors (needed for parallel and perpendicular)
-        if len(detectors) < 2:
-            QMessageBox.warning(
-                self,
-                "Warning",
-                "At least two detectors are needed (parallel and perpendicular) to calculate G-Factor."
-            )
-            return
+        # We require at least two routing channels within the selected detector row.
+        # Validation for channel count happens after a row is selected and channels are parsed.
         
         # Open a file dialog to select a TTTR file
         path, _ = QFileDialog.getOpenFileName(
@@ -1229,6 +1223,15 @@ class DetectorWizardPage(QWizardPage):
             # Split channels into parallel and perpendicular (alternating pattern)
             parallel_channels = all_channels[::2]  # Even indices (0, 2, 4, ...)
             perpendicular_channels = all_channels[1::2]  # Odd indices (1, 3, 5, ...)
+            
+            # Validate that both parallel and perpendicular lists are non-empty
+            if len(all_channels) < 2 or len(parallel_channels) == 0 or len(perpendicular_channels) == 0:
+                QMessageBox.warning(
+                    self,
+                    "Warning",
+                    "Selected detector must contain at least two routing channels (parallel and perpendicular) to calculate G-Factor."
+                )
+                return
             
             # Store the selected detector information for later use
             self.selected_detector = {
