@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
     QListWidget, QListWidgetItem, QSplitter, QTextEdit, QComboBox, QSpinBox,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QLineEdit, QMessageBox,
-    QSizePolicy, QCheckBox, QGroupBox, QGridLayout
+    QSizePolicy, QCheckBox, QGroupBox, QGridLayout, QToolButton
 )
 from PyQt5.QtCore import Qt, QEvent, pyqtSignal, QSize, QTimer
 
@@ -34,6 +34,12 @@ from chisurf import logging
 # Reuse existing widgets/utilities
 from chisurf.plugins.intensity_trace.__init__ import IntensityPlotWidget, IntensityTrace
 from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
+
+# Import TTTR Time Window plugin
+try:
+    from chisurf.plugins.tttr_time_windows.wizard import TTTRTimeWindowWizard
+except Exception:
+    TTTRTimeWindowWizard = None
 
 try:
     import tttrlib
@@ -424,23 +430,25 @@ class TraceBrowser(QWidget):
         self.filter_combo.currentIndexChanged.connect(self._apply_filter)
 
 
-        # Clear button to clear the file list
-        self.btn_clear = QPushButton("Clear", self.page1)
+        # Clear button to clear the file list (compact tool button)
+        self.btn_clear = QToolButton(self.page1)
+        self.btn_clear.setText("Clear")
         self.btn_clear.setToolTip("Clear file list")
         self.btn_clear.clicked.connect(self._on_clear)
         try:
-            self.btn_clear.setMaximumHeight(26)
-            self.btn_clear.setStyleSheet("QPushButton{padding:2px 6px;}")
+            self.btn_clear.setAutoRaise(True)
+            self.btn_clear.setToolButtonStyle(Qt.ToolButtonTextOnly)
         except Exception:
             pass
 
-        # Clear caches button (in-memory and on-disk caches)
-        self.btn_clear_caches = QPushButton("Clear caches", self.page1)
+        # Clear caches button (in-memory and on-disk caches) - compact
+        self.btn_clear_caches = QToolButton(self.page1)
+        self.btn_clear_caches.setText("Clear caches")
         self.btn_clear_caches.setToolTip("Clear in-memory and on-disk caches for this folder")
         self.btn_clear_caches.clicked.connect(self._on_clear_caches)
         try:
-            self.btn_clear_caches.setMaximumHeight(26)
-            self.btn_clear_caches.setStyleSheet("QPushButton{padding:2px 6px;}")
+            self.btn_clear_caches.setAutoRaise(True)
+            self.btn_clear_caches.setToolButtonStyle(Qt.ToolButtonTextOnly)
         except Exception:
             pass
 
@@ -449,21 +457,6 @@ class TraceBrowser(QWidget):
         ctrl_row.addWidget(self.chk_subfolders)
         ctrl_row.addWidget(QLabel("Filter:"))
         ctrl_row.addWidget(self.filter_combo)
-        # Group Clear and Clear caches vertically to save horizontal space
-        clear_group = QGroupBox("Clear", self.page1)
-        try:
-            clear_group.setFlat(True)
-        except Exception:
-            pass
-        clear_layout = QVBoxLayout(clear_group)
-        try:
-            clear_layout.setContentsMargins(4, 2, 4, 2)
-            clear_layout.setSpacing(2)
-        except Exception:
-            pass
-        clear_layout.addWidget(self.btn_clear)
-        clear_layout.addWidget(self.btn_clear_caches)
-        ctrl_row.addWidget(clear_group)
 
 
         self.window_ms_spin = QSpinBox(self.page1)
@@ -529,51 +522,77 @@ class TraceBrowser(QWidget):
         y_layout.addWidget(self.y_max_spin, 1, 1)
         ctrl_row.addWidget(y_group)
 
-        self.btn_export = QPushButton("Export selected…", self.page1)
+        self.btn_export = QToolButton(self.page1)
+        self.btn_export.setText("Export selected…")
         self.btn_export.clicked.connect(self._on_export)
         try:
-            self.btn_export.setMaximumHeight(26)
-            self.btn_export.setStyleSheet("QPushButton{padding:2px 6px;}")
+            self.btn_export.setAutoRaise(True)
+            self.btn_export.setToolButtonStyle(Qt.ToolButtonTextOnly)
         except Exception:
             pass
 
-        self.btn_export_csv = QPushButton("Export CSV…", self.page1)
+        self.btn_export_csv = QToolButton(self.page1)
+        self.btn_export_csv.setText("Export CSV…")
         self.btn_export_csv.setToolTip("Export computed intensity traces as CSV files (per listed file)")
         self.btn_export_csv.clicked.connect(self._on_export_csv)
         try:
-            self.btn_export_csv.setMaximumHeight(26)
-            self.btn_export_csv.setStyleSheet("QPushButton{padding:2px 6px;}")
+            self.btn_export_csv.setAutoRaise(True)
+            self.btn_export_csv.setToolButtonStyle(Qt.ToolButtonTextOnly)
         except Exception:
             pass
 
-        self.btn_export_docx = QPushButton("Export DOCX…", self.page1)
+        self.btn_export_docx = QToolButton(self.page1)
+        self.btn_export_docx.setText("Export DOCX…")
         self.btn_export_docx.clicked.connect(self._on_export_docx)
         try:
-            self.btn_export_docx.setMaximumHeight(26)
-            self.btn_export_docx.setStyleSheet("QPushButton{padding:2px 6px;}")
+            self.btn_export_docx.setAutoRaise(True)
+            self.btn_export_docx.setToolButtonStyle(Qt.ToolButtonTextOnly)
         except Exception:
             pass
 
-        # Group export buttons together in a compact grid
-        export_group = QGroupBox("Export", self.page1)
+        self.btn_transfer_to_analysis = QToolButton(self.page1)
+        self.btn_transfer_to_analysis.setText("to HMM")
+        self.btn_transfer_to_analysis.setToolTip("Open selected trace in Single-Molecule Intensity Trace plugin for HMM analysis")
+        self.btn_transfer_to_analysis.clicked.connect(self._on_transfer_to_analysis)
         try:
-            export_group.setFlat(True)
+            self.btn_transfer_to_analysis.setAutoRaise(True)
+            self.btn_transfer_to_analysis.setToolButtonStyle(Qt.ToolButtonTextOnly)
         except Exception:
             pass
-        export_layout = QGridLayout(export_group)
-        try:
-            export_layout.setContentsMargins(4, 2, 4, 2)
-            export_layout.setHorizontalSpacing(4)
-            export_layout.setVerticalSpacing(2)
-        except Exception:
-            pass
-        # Arrange in two columns to reduce horizontal space
-        export_layout.addWidget(self.btn_export, 0, 0)
-        export_layout.addWidget(self.btn_export_csv, 0, 1)
-        export_layout.addWidget(self.btn_export_docx, 1, 0)
-        ctrl_row.addWidget(export_group)
 
+        self.btn_transfer_to_tw = QToolButton(self.page1)
+        self.btn_transfer_to_tw.setText("to TW")
+        self.btn_transfer_to_tw.setToolTip("Open selected trace in TTTR Time Window plugin for BID generation")
+        self.btn_transfer_to_tw.clicked.connect(self._on_transfer_to_tw)
+        try:
+            self.btn_transfer_to_tw.setAutoRaise(True)
+            self.btn_transfer_to_tw.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        except Exception:
+            pass
+
+        # Add the top control row (compact)
+        ctrl_row.addStretch(1)
         p1_layout.addLayout(ctrl_row)
+
+        # New compact tools row below subfolder/filter
+        tools_row = QHBoxLayout()
+        try:
+            tools_row.setContentsMargins(0, 0, 0, 0)
+            tools_row.setSpacing(4)
+        except Exception:
+            pass
+        # Order: to HMM | to TW | Export | CSV | DOCX | Clear | Clear caches
+        tools_row.addWidget(self.btn_transfer_to_analysis)
+        tools_row.addWidget(self.btn_transfer_to_tw)
+        tools_row.addSpacing(8)
+        tools_row.addWidget(self.btn_export)
+        tools_row.addWidget(self.btn_export_csv)
+        tools_row.addWidget(self.btn_export_docx)
+        tools_row.addSpacing(8)
+        tools_row.addWidget(self.btn_clear)
+        tools_row.addWidget(self.btn_clear_caches)
+        tools_row.addStretch(1)
+        p1_layout.addLayout(tools_row)
 
         # Splitter: left list, right details
         splitter = QSplitter(self.page1)
@@ -662,6 +681,11 @@ class TraceBrowser(QWidget):
                 pass
         except Exception:
             pass
+
+        # Store reference to intensity trace windows to prevent garbage collection
+        self.intensity_trace_windows = []
+        # Store reference to time window wizards to prevent garbage collection
+        self.time_window_wizards = []
 
     def _on_continue(self):
         # Store setup settings and selected channels
@@ -1311,17 +1335,17 @@ class TraceBrowser(QWidget):
             return loaded
         # Compute
         time_window_s = float(window_ms) / 1000.0
-        sel_chs = self.selected_channels
-        if sel_chs is None:
-            try:
-                tttr_obj = tttrlib.TTTR(str(file_path))
-                sel_chs = sorted(tttr_obj.get_used_routing_channels())
-            except Exception:
-                sel_chs = []
         if isinstance(self.setup_settings, dict) and 'detectors' in self.setup_settings:
             dets = self.setup_settings.get('detectors') or {}
-            time_axis, padded, labels = IntensityTrace().process_ptu(file_path, time_window_s, sel_chs, detectors=dets)
+            time_axis, padded, labels = IntensityTrace().process_ptu(file_path, time_window_s, selected_detectors=dets)
         else:
+            sel_chs = self.selected_channels
+            if sel_chs is None:
+                try:
+                    tttr_obj = tttrlib.TTTR(str(file_path))
+                    sel_chs = sorted(tttr_obj.get_used_routing_channels())
+                except Exception:
+                    sel_chs = []
             time_axis, padded, chs = IntensityTrace().process_ptu(file_path, time_window_s, sel_chs)
             labels = [str(c) for c in chs]
         # Save caches
@@ -1915,6 +1939,163 @@ class TraceBrowser(QWidget):
                 self._plot_file(paths[0])
         except Exception:
             pass
+
+    def _on_transfer_to_analysis(self):
+        """Transfer the currently selected trace to the Single-Molecule Intensity Trace plugin."""
+        selected_paths = self._selected_paths()
+        if not selected_paths:
+            try:
+                QMessageBox.information(self, "Transfer to Analysis", "Please select a trace file first.")
+            except Exception:
+                pass
+            return
+        
+        # Use the first selected file
+        selected_file = selected_paths[0]
+        
+        try:
+            logging.info(f"TraceBrowser: Starting transfer of {selected_file.name} to Intensity Trace Analysis")
+            
+            # Create a new IntensityTrace window and store reference to prevent garbage collection
+            intensity_trace_window = IntensityTrace()
+            
+            # Store reference to keep window alive
+            self.intensity_trace_windows.append(intensity_trace_window)
+            
+            # Set window title to make it clear this is from trace browser
+            intensity_trace_window.setWindowTitle(f"Intensity Trace Analysis - {selected_file.name}")
+            
+            # Set up the file path
+            intensity_trace_window.file_label.setText(f"Selected file: {selected_file}")
+            
+            # Get current settings from trace browser
+            time_window_ms = float(self.window_ms_spin.value())
+            time_window_s = time_window_ms / 1000.0
+            
+            logging.info(f"TraceBrowser: Using time window {time_window_ms} ms")
+            
+            # Determine channels to use
+            selected_channels = self.selected_channels
+            if selected_channels is None:
+                try:
+                    tttr_obj = tttrlib.TTTR(str(selected_file))
+                    selected_channels = sorted(tttr_obj.get_used_routing_channels())
+                    logging.info(f"TraceBrowser: Auto-detected channels: {selected_channels}")
+                except Exception as e:
+                    selected_channels = [0, 2]  # Default channels
+                    logging.warning(f"TraceBrowser: Failed to detect channels, using default {selected_channels}: {e}")
+            else:
+                logging.info(f"TraceBrowser: Using configured channels: {selected_channels}")
+            
+            # Set the parameters in the intensity trace window
+            intensity_trace_window.window_spin.setValue(time_window_ms)
+
+            # Pass detector setup
+            if self.setup_settings:
+                intensity_trace_window._detector_settings = self.setup_settings
+                intensity_trace_window._refresh_detector_checkboxes()
+
+            # Load the file, which will also trigger processing
+            intensity_trace_window.load_file(file_path=str(selected_file))
+
+            # Update the plot
+            logging.info(f"TraceBrowser: Updating plot...")
+            intensity_trace_window.update_plot()
+            
+            # Show the window and bring it to front
+            intensity_trace_window.show()
+            intensity_trace_window.raise_()
+            intensity_trace_window.activateWindow()
+            
+            # Connect window close event to remove from our list
+            def on_window_closed():
+                try:
+                    if intensity_trace_window in self.intensity_trace_windows:
+                        self.intensity_trace_windows.remove(intensity_trace_window)
+                    logging.info(f"TraceBrowser: Intensity trace window for {selected_file.name} closed")
+                except Exception:
+                    pass
+            
+            # Connect the close event (this is a bit tricky with PyQt5, so we'll use a simple approach)
+            original_close_event = intensity_trace_window.closeEvent
+
+            def close_event_wrapper(event):
+                on_window_closed()
+                if original_close_event:
+                    original_close_event(event)
+                else:
+                    event.accept()
+            intensity_trace_window.closeEvent = close_event_wrapper
+            
+            logging.info(f"TraceBrowser: Successfully transferred {selected_file.name} to Intensity Trace Analysis")
+            
+        except Exception as e:
+            logging.exception(f"TraceBrowser: Failed to transfer {selected_file} to analysis: {e}")
+            try:
+                QMessageBox.critical(self, "Transfer Failed", f"Failed to transfer trace to analysis:\n\n{str(e)}\n\nCheck the log for more details.")
+            except Exception:
+                pass
+
+    def _on_transfer_to_tw(self):
+        """Transfer the currently selected trace to the TTTR Time Window plugin for BID generation."""
+        paths = self._selected_paths()
+        if not paths:
+            QMessageBox.warning(self, "No Selection", "Please select a trace file to transfer.")
+            return
+
+        path = paths[0]
+        time_window_ms = self.window_ms_spin.value()
+
+        logging.info(f"TraceBrowser: Starting transfer of {path.name} to TTTR Time Window plugin")
+        logging.info(f"TraceBrowser: Using time window {time_window_ms} ms")
+
+        try:
+            # Ensure the plugin is available
+            if TTTRTimeWindowWizard is None:
+                raise ImportError("TTTRTimeWindowWizard plugin not available.")
+
+            time_window_wizard = TTTRTimeWindowWizard()
+
+            # Pre-configure the wizard with current settings
+            time_window_wizard.tws_spin.setValue(time_window_ms)
+
+            # Pre-populate the files page with the selected file
+            time_window_wizard.file_list.addItem(str(path))
+
+            # Set a descriptive window title
+            time_window_wizard.setWindowTitle(f"Time Window BID Generation: {path.name}")
+            time_window_wizard.show()
+
+            # Store a reference to prevent garbage collection
+            self.time_window_wizards.append(time_window_wizard)
+
+            # Cleanup on close
+            def on_wizard_closed():
+                try:
+                    if time_window_wizard in self.time_window_wizards:
+                        self.time_window_wizards.remove(time_window_wizard)
+                except ValueError:
+                    pass
+
+            original_close_event = time_window_wizard.closeEvent
+
+            def close_event_wrapper(event):
+                on_wizard_closed()
+                original_close_event(event)
+
+            time_window_wizard.closeEvent = close_event_wrapper
+            
+            # Also connect to the finished signal if available
+            try:
+                time_window_wizard.finished.connect(on_wizard_closed)
+            except Exception:
+                pass
+            
+            logging.info(f"TraceBrowser: Successfully transferred {path.name} to TTTR Time Window plugin")
+            
+        except Exception as e:
+            logging.error(f"TraceBrowser: Failed to transfer {path} to time window plugin: {e}")
+            QMessageBox.critical(self, "Transfer Failed", f"Could not open trace in time window plugin.\n\nError: {e}")
 
 
 if __name__ == "__main__":
