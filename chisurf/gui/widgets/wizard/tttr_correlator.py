@@ -195,11 +195,14 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 x = np.array(cor.get('x', []))
                 y = np.array(cor.get('y', []))
                 duration = float(cor.get('duration', 0.0))
-                # Derive total count rate from channel counts if available
+                # Derive mean count rate from channel counts
                 try:
                     ca = float(cor.get('channel_a', {}).get('counts', 0.0))
                     cb = float(cor.get('channel_b', {}).get('counts', 0.0))
-                    count_rate = (ca + cb) / duration if duration > 0 else 0.0
+                    # Mean count rate in kHz (kristine format expects kHz)
+                    # Average count rate per channel: (total photons / 2) / duration / 1000
+                    count_rate = (ca + cb) / 2.0 / duration / 1000.0 if duration > 0 else 0.0
+                    print(f"Chunk {i}: duration={duration}s, counts={ca+cb}, count_rate={count_rate}kHz")
                 except Exception:
                     count_rate = 0.0
                 suren = np.zeros_like(x)
@@ -211,7 +214,8 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 mat = np.vstack([x, y, suren, ey])
                 cor_path = output_folder / f'chnk-{i:04}.cor'
                 # Use native path string for Windows compatibility
-                np.savetxt(str(cor_path), mat.T, delimiter='\t')
+                # Format with 5 significant digits, suppress scientific notation for small numbers
+                np.savetxt(str(cor_path), mat.T, delimiter='\t', fmt='%.5g')
             except Exception:
                 # Best effort: continue saving remaining chunks
                 continue
@@ -254,6 +258,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         progress = QtWidgets.QProgressDialog("Computing correlations...", "Cancel", 0, n_chunks, self)
         progress.setWindowTitle("Correlation Progress")
         progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.setWindowFlags(progress.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         progress.show()
 
         for i, tttr in enumerate(self.split_array(self.tttr, n_chunks)):
@@ -291,14 +296,24 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             w1 = np.array(m_a, dtype=np.float64)
             w2 = np.array(m_b, dtype=np.float64)
             sw1, sw2 = sum(w1), sum(w2)
-            # Multiply x values by 1000 to convert from s to ms
+            # macro_time_resolution is in seconds, multiply by 1000 to get milliseconds
             dT = tttr.header.macro_time_resolution * 1000.0
 
             # **Handle empty macro_times to prevent IndexError**
             if len(t) == 0:
                 chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to missing macro_times.")
                 continue
-            dur = (t[-1] - t[0]) * dT  # seconds
+            
+            # Compute duration more robustly using percentiles to avoid outliers
+            # Use 0.1% and 99.9% percentiles instead of first/last photon
+            if len(t) > 100:
+                t_start = np.percentile(t, 0.1)
+                t_end = np.percentile(t, 99.9)
+            else:
+                # For small datasets, use first and last photon
+                t_start = t[0]
+                t_end = t[-1]
+            dur = (t_end - t_start) * dT  # duration in milliseconds
 
             if sw1 > 0.0 and sw2 > 0.0:
                 correlator = tttrlib.Correlator(**correlation_settings)
@@ -310,6 +325,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                     mt = tttr.micro_times
                     correlator.set_microtimes(mt, mt, n_microtime_channels)
                     x /= (tttr.header.micro_time_resolution / 1000.0)
+                print(f"Chunk {i}: sw1={sw1}, sw2={sw2}, dur_ms={dur}, dur_s={dur/1000.0}, dT={dT}")
                 d = {
                     'x': x.tolist(),
                     'y': correlator.correlation.tolist(),
@@ -329,16 +345,22 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                     }
                 }
                 self.correlations.append(d)
+                
+                # Update plot immediately after computing each correlation
+                self.is_correlated = True
+                pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=1)
+                self.plot_item_fcs.plot(x=d['x'], y=d['y'], pen=pen)
             else:
                 chisurf.logging.log(1, "Warning: No photons to correlate with.")
 
-            # Update progress bar
+            # Update progress bar and keep it on top
             progress.setValue(i + 1)
+            progress.raise_()
+            progress.activateWindow()
             QtWidgets.QApplication.processEvents()  # Keeps UI responsive
 
         progress.close()
         self.is_correlated = True
-        self.update_plots()
         self.save_correlations()
 
     def ensure_analysis_folder_default(self):

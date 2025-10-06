@@ -3,7 +3,7 @@ correlator:
   count_rate_filter: false
   fine: 0
   max_count_rate: 120
-  number_of_cascades: 25
+  number_of_cascades: 20
   split: 6
   time_window: 500
   weighting: 0

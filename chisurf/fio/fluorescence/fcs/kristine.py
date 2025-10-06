@@ -36,8 +36,8 @@ def write_kristine(
     col_1 = np.array(correlation_time)
     col_2 = np.array(correlation_amplitude)
     col_3 = np.zeros_like(correlation_amplitude)
-    col_3[0] = mean_countrate
-    col_3[1] = acquisition_time
+    col_3[0] = acquisition_time
+    col_3[1] = mean_countrate
     if isinstance(
             correlation_amplitude_uncertainty,
             np.ndarray

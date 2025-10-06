@@ -34,26 +34,42 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         cors = []
         ws = []
         acquisition_time = 0.0
-        count_rate = 0.0
+        weighted_count_rate_sum = 0.0
+        n_curves = len(correlations)
+        
         for correlation in correlations:
             tau = np.array(correlation['x'])
             cor = np.array(correlation['y'])
-            acquisition_time += correlation['duration']
+            duration = correlation['duration']
+            acquisition_time += duration
             counts = correlation['channel_a']['counts'] + correlation['channel_b']['counts']
-            count_rate += counts / acquisition_time
+            # Average count rate per channel in kHz: (total_counts / 2) / duration / 1000
+            cr = (counts / 2.0) / duration / 1000.0
+            # Weighted sum for proper averaging: sum(duration * count_rate)
+            weighted_count_rate_sum += duration * cr
             taus.append(tau)
             cors.append(cor)
-            w = chisurf.fluorescence.fcs.noise(tau, cor, acquisition_time, count_rate, weight_type='suren')
-            ws.append(w)
+            # Only compute weights if merging multiple curves
+            if n_curves > 1:
+                w = chisurf.fluorescence.fcs.noise(tau, cor, duration, cr, weight_type='suren')
+                ws.append(w)
+        
         ys = np.array(cors)
-        n_curves = len(correlations)
-        ey = np.std(ys, axis=0) / np.sqrt(n_curves)
+        # Weighted average count rate: sum(duration * count_rate) / sum(duration)
+        avg_count_rate = weighted_count_rate_sum / acquisition_time if acquisition_time > 0 else 0.0
+        
+        # For single curve, use zeros for error; for multiple curves, compute standard error
+        if n_curves == 1:
+            ey = np.zeros_like(ys[0])
+        else:
+            ey = np.std(ys, axis=0) / np.sqrt(n_curves)
+        
         correlation = {
             'x': np.array(taus).mean(axis=0)[1:],
             'y': ys.mean(axis=0)[1:],
-            'ey': ey[1:],  # np.array(ws).mean(axis=0)[1:],
+            'ey': ey[1:],
             'duration': acquisition_time,
-            'count_rate': count_rate
+            'count_rate': avg_count_rate
         }
         return correlation
 
@@ -116,12 +132,12 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         rc = table.rowCount()
         table.insertRow(rc)
         duration = float(correlation_dict.get('duration', 0.0))
-        # Compute count rates robustly
+        # Compute count rates in kHz
         try:
-            cr_a = float(correlation_dict['channel_a']['counts']) / duration if duration > 0 else 0.0
-            cr_b = float(correlation_dict['channel_b']['counts']) / duration if duration > 0 else 0.0
+            cr_a = float(correlation_dict['channel_a']['counts']) / duration / 1000.0 if duration > 0 else 0.0
+            cr_b = float(correlation_dict['channel_b']['counts']) / duration / 1000.0 if duration > 0 else 0.0
         except Exception:
-            # Fallback: if only total count_rate present
+            # Fallback: if only total count_rate present (already in kHz)
             total_cr = float(correlation_dict.get('count_rate', 0.0))
             cr_a = total_cr / 2.0
             cr_b = total_cr / 2.0
@@ -236,9 +252,17 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         suren_column = np.zeros_like(correlation['x'])
         suren_column[0] = correlation['duration']
         suren_column[1] = correlation['count_rate']
-        c = np.vstack([correlation['x'], correlation['y'], suren_column, correlation['ey']])
+        
+        # Only include error column if it contains non-zero values (multiple curves merged)
+        if np.any(correlation['ey'] != 0):
+            c = np.vstack([correlation['x'], correlation['y'], suren_column, correlation['ey']])
+        else:
+            # For single curve, save only 3 columns (x, y, suren)
+            c = np.vstack([correlation['x'], correlation['y'], suren_column])
+        
         # Use native path string to avoid UNC/as_posix issues on Windows
-        np.savetxt(str(filename), c.T, delimiter='\t')
+        # Format with 5 significant digits, suppress scientific notation for small numbers
+        np.savetxt(str(filename), c.T, delimiter='\t', fmt='%.5g')
 
     def onRemoveRow(self):
         table = self.tableWidget
@@ -326,7 +350,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
         # Setup table widget with an extra column for the merge checkbox.
         self.tableWidget.setColumnCount(5)
-        self.tableWidget.setHorizontalHeaderLabels(["Use", "File", "CR A", "CR B", "Duration"])
+        self.tableWidget.setHorizontalHeaderLabels(["Use", "File", "CR A (kHz)", "CR B (kHz)", "Duration (s)"])
 
         # Remove the double-click deletion action and instead toggle the checkbox on double click.
         # self.actionRowDoubleClicked.triggered.connect(self.onRemoveRow)  <-- Removed!
