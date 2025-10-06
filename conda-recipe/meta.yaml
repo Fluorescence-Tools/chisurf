@@ -1,6 +1,11 @@
 {% set name = "chisurf" %}
 {% set version = environ.get("CHISURF_VERSION") or datetime.datetime.now().strftime("%y.%m.%d") %}
 
+{# Read entry points from pyproject.toml #}
+{% set pyproject = load_file_data('../pyproject.toml', from_recipe_dir=True) %}
+{% set scripts = pyproject.get('project', {}).get('scripts', {}) %}
+{% set gui_scripts = pyproject.get('project', {}).get('gui-scripts', {}) %}
+
 package:
   name: {{ name }}
   version: {{ version }}
@@ -12,9 +17,14 @@ build:
   number: 0
   binary_relocation: true
   detect_binary_files_with_prefix: true  # [not win]
-  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-  # Entry points are automatically extracted from pyproject.toml by pip
-  # No need to specify them here when using pip install
+  # Entry points dynamically generated from pyproject.toml
+  entry_points:
+    {% for name, entry in scripts.items() -%}
+    - {{ name }} = {{ entry }}
+    {% endfor -%}
+    {% for name, entry in gui_scripts.items() -%}
+    - {{ name }} = {{ entry }}
+    {% endfor %}
 
 requirements:
   build:

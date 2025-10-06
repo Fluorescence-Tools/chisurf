@@ -6,7 +6,7 @@ requires = [
     "numpy<2.0",
 ]
 build-backend = "_build_backend"
-backend-path = ["."]
+backend-path = ["build_tools"]
 
 [project]
 name = "chisurf"

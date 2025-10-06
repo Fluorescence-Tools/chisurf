@@ -114,10 +114,11 @@ echo Building ChiSurf version: %PKG_VERSION%
 :: Save original file
 copy chisurf\info.py chisurf\info.py.bak
 
-:: Replace __version__ line with the version from conda
+:: replace __version__ line with the version from conda
 powershell -Command "(Get-Content chisurf\info.py) -replace \"__version__ = .*\", \"__version__ = '%PKG_VERSION%'\" | Set-Content chisurf\info.py"
 
 :: Install main module using pip with pyproject.toml
+:: Use --no-deps to avoid dependency issues, setuptools will create entry points
 %PYTHON% -m pip install . --no-deps --no-build-isolation -vv --prefix=%PREFIX%
 
 :: Restore original info.py
