@@ -34,20 +34,26 @@ def _set_hidden_on_windows(path: pathlib.Path) -> None:
 
 
 def get_path(path_type: str = 'settings') -> pathlib.Path:
-    """Get the path of the chisurf settings file.
+    """Get key chisurf paths.
 
-    This function returns the path of the chisurf settings files in the
-    user folder. The default path is '~/.chisurf'. If the path does not
-    exist, this function creates the folder. On Windows, when the folder is
-    created by this function, it will be marked as hidden.
-
-    :return: pathlib.Path object pointing to the chisurf setting folder
+    - For path_type == 'settings': returns the user settings dir '~/.chisurf'.
+      Ensures it exists and marks it hidden on Windows (only when newly created).
+    - For path_type == 'chisurf': returns the installed chisurf package directory.
+      Never modifies attributes of the installed package directory.
     """
     if path_type == 'settings':
-        path = pathlib.Path.home() / '.chisurf'  # Define the settings path
+        path = pathlib.Path.home() / '.chisurf'
         existed_before = path.exists()
         path.mkdir(parents=True, exist_ok=True)
+        # Only set hidden for the user settings dir, and only if we created it now
+        if not existed_before:
+            _set_hidden_on_windows(path)
+        return path
     elif path_type == 'chisurf':
-        path = pathlib.Path(__file__).parent.parent
-    _set_hidden_on_windows(path)
-    return path
+        # Return the module root without changing attributes
+        return pathlib.Path(__file__).parent.parent
+    else:
+        # Fallback: return settings dir behavior for unknown types, without risking hiding other paths
+        path = pathlib.Path.home() / '.chisurf'
+        path.mkdir(parents=True, exist_ok=True)
+        return path
