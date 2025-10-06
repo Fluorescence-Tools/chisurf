@@ -3,6 +3,7 @@ import os
 import glob
 import jinja2
 import pathlib
+import tomli
 
 module_path = pathlib.Path("../../chisurf").absolute().resolve()
 setup_path = pathlib.Path("../..").absolute().resolve()
@@ -11,7 +12,12 @@ sys.path.append(str(setup_path.resolve()))
 path = pathlib.Path(module_path)
 
 import info
-from setup import gui_scripts
+
+# Read GUI scripts from pyproject.toml instead of setup.py
+pyproject_path = setup_path / "pyproject.toml"
+with open(pyproject_path, 'rb') as f:
+    pyproject = tomli.load(f)
+gui_scripts = pyproject.get("project", {}).get("gui-scripts", {})
 
 # append the relative location you want to import from
 # import your module stored in '../common'

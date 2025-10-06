@@ -6,4 +6,16 @@ include chisurf/settings/*.yaml
 include chisurf/gui/styles/*.css
 include chisurf/plugins/spectra_viewer/*.db
 include chisurf/notebooks/*.ipynb
-include chisurf/entry_points/*.txt
+include _build_backend.py
+include README.md
+include LICENSE
+
+# Exclude entry point text files (now defined in pyproject.toml)
+exclude chisurf/entry_points/*.txt
+
+# Exclude build and development files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
+exclude .gitignore
+exclude .gitmodules

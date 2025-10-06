@@ -1,0 +1,131 @@
+[build-system]
+requires = [
+    "setuptools>=64",
+    "wheel",
+    "Cython>=0.29,<3.1",
+    "numpy<2.0",
+]
+build-backend = "_build_backend"
+backend-path = ["."]
+
+[project]
+name = "chisurf"
+dynamic = ["version"]
+description = "ChiSurf: an interactive global analysis platform for fluorescence data."
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "GPL-2.1"}
+authors = [
+    {name = "Thomas-Otavio Peulen", email = "thomas@peulen.xyz"}
+]
+maintainers = [
+    {name = "Thomas-Otavio Peulen", email = "thomas@peulen.xyz"}
+]
+keywords = ["fluorescence", "single-molecule", "spectroscopy"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+]
+
+dependencies = [
+    "PyQt5",
+    "qtpy",
+    "sip",
+    "pyqtgraph",
+    "qtconsole",
+    "numba",
+    "numpy<2.0",
+    "numexpr",
+    "scipy",
+    "cython",
+    "deprecation",
+    "emcee",
+    "PyYAML",
+    "typing-extensions",
+    "tables",
+    "matplotlib",
+    "python-docx",
+    "mdtraj",
+    "ipython",
+]
+
+[project.optional-dependencies]
+ml = [
+    "scikit-learn>=1.0.0",
+]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+]
+
+[project.urls]
+Homepage = "https://www.peulen.xyz/downloads/chisurf"
+Documentation = "https://github.com/Fluorescence-Tools/chisurf/wiki"
+Repository = "https://github.com/Fluorescence-Tools/chisurf"
+"Bug Tracker" = "https://github.com/Fluorescence-Tools/chisurf/issues"
+
+[project.scripts]
+csc_tttr_decay_histogram = "chisurf.cmd_tools.tttr_decay_histogram:main"
+csc_tttr_correlate = "chisurf.cmd_tools.tttr_correlate:main"
+csc_fcs_convert = "chisurf.cmd_tools.fcs_convert:main"
+csc_mrc2bvox = "chisurf.cmd_tools.mrc2bvox:main"
+csc_protein_mc_fret = "chisurf.cmd_tools.protein_mc_fret:main"
+csc_sm_image_mle = "chisurf.plugins.sm_image_mle.sm_image_mle.__main__:main"
+csc_count_rate = "chisurf.plugins.count_rate_analysis.cli:cli"
+csc_microtime_histogram = "chisurf.plugins.microtime_histogram.__main__:main"
+
+[project.gui-scripts]
+chisurf = "chisurf.__main__:main"
+csg_kappa2distribution = "chisurf.plugins.kappa2_dist.__main__:main"
+csg_fps_json_edit = "chisurf.gui.tools.structure.create_av_json.__main__:main"
+csg_calculator = "chisurf.plugins.fret_calculator.__main__:main"
+csg_f_test = "chisurf.gui.tools.f_test.__main__:main"
+csg_tttr_clsm_pixel_select = "chisurf.gui.tools.tttr.clsm_pixel_select.__main__:main"
+csg_tttr_convert = "chisurf.gui.tools.tttr.convert.__main__:main"
+csg_tttr_correlator = "chisurf.gui.tools.tttr.correlate.__main__:main"
+csg_tttr_decay_histogram = "chisurf.gui.tools.tttr.decay.__main__:main"
+csg_traj_align = "chisurf.gui.tools.structure.align_trajectory.__main__:main"
+csg_traj_convert = "chisurf.gui.tools.structure.convert_trajectory.__main__:main"
+csg_traj_fret_analysis = "chisurf.gui.tools.structure.fret_trajectory.__main__:main"
+csg_traj_join = "chisurf.gui.tools.structure.join_trajectories.__main__:main"
+csg_traj_energy_calculator = "chisurf.gui.tools.structure.potential_energy.__main__:main"
+csg_traj_remove_clashed_frames = "chisurf.gui.tools.structure.remove_clashed_frames.__main__:main"
+csg_traj_rotate_translate = "chisurf.gui.tools.structure.rotate_translate_trajectory.__main__:main"
+csg_traj_save_topology = "chisurf.gui.tools.structure.save_topology.__main__:main"
+csg_quest = "quest.quest_gui:start_gui"
+csg_trace_browser = "chisurf.plugins.trace_browser.__main__:main"
+csg_tttr_image_browser = "chisurf.plugins.tttr_image_browser.__main__:main"
+chisurf_update = "chisurf.plugins.updater.__main__:main"
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["chisurf*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"*" = [
+    "*.json", "*.yaml",
+    "*.ui", "*.css", "*.qss",
+    "*.png", "*.svg",
+    "*.csv", "*.npy", "*.dat",
+    "*.dll", "*.so", "*.pyd", "*.ipynb",
+    "*.db", "*.txt"
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "chisurf.info.__version__"}

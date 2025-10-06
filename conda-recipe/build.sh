@@ -48,5 +48,16 @@ pushd modules/chinet
   ninja install
 popd
 
-# 6) Install top-level chisurf
+# 6) Use the version from conda's PKG_VERSION environment variable
+# This is automatically set by conda-build from meta.yaml
+echo "Building ChiSurf version: $PKG_VERSION"
+
+# Replace dynamic version in chisurf/info.py with the build version
+cp chisurf/info.py chisurf/info.py.bak
+sed -i.tmp "s/__version__ = .*/__version__ = '$PKG_VERSION'/" chisurf/info.py
+
+# 7) Install top-level chisurf
 "$PY" -m pip install . --no-deps -vv --prefix="$PREFIX"
+
+# Restore original info.py
+mv chisurf/info.py.bak chisurf/info.py

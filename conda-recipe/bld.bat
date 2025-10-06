@@ -99,11 +99,26 @@ pip install .\quest --no-deps --prefix=%PREFIX%
 pip install .\lltf --no-deps --prefix=%PREFIX%
 cd ..
 
-:: Install main module
-:: Note: Version handling is now managed by the CustomBuildPy class in setup.py
-:: This ensures consistent version handling across both pip and conda builds
-:: The CustomBuildPy class will:
-:: 1. Replace the dynamic version with a hardcoded version (current date) during build
-:: 2. Restore the original dynamic version in the source code after the build
-%PYTHON% setup.py build_ext --force --inplace
-%PYTHON% setup.py install --single-version-externally-managed --record=record.txt
+:: Clean pre-compiled Cython C++ files to force regeneration with current NumPy
+:: This ensures compatibility with the NumPy version in the build environment
+if exist chisurf\fluorescence\simulation\simulation_.cpp del chisurf\fluorescence\simulation\simulation_.cpp
+if exist chisurf\structure\av\fps_.cpp del chisurf\structure\av\fps_.cpp
+if exist chisurf\structure\potential\cPotentials_.cpp del chisurf\structure\potential\cPotentials_.cpp
+if exist chisurf\math\reaction\reaction_.cpp del chisurf\math\reaction\reaction_.cpp
+
+:: Use the version from conda's PKG_VERSION environment variable
+:: This is automatically set by conda-build from meta.yaml
+echo Building ChiSurf version: %PKG_VERSION%
+
+:: Replace dynamic version in chisurf/info.py with the build version
+:: Save original file
+copy chisurf\info.py chisurf\info.py.bak
+
+:: Replace __version__ line with the version from conda
+powershell -Command "(Get-Content chisurf\info.py) -replace \"__version__ = .*\", \"__version__ = '%PKG_VERSION%'\" | Set-Content chisurf\info.py"
+
+:: Install main module using pip with pyproject.toml
+%PYTHON% -m pip install . --no-deps --no-build-isolation -vv --prefix=%PREFIX%
+
+:: Restore original info.py
+move /Y chisurf\info.py.bak chisurf\info.py

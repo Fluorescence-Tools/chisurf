@@ -51,8 +51,8 @@ Name: "{group}\{{ entry_point|lower }}"; Filename: "{app}\Scripts\{{ entry_point
 {% endfor %}
 
 ; --- Desktop: ONLY chisurf.exe ---
-Name: "{commondesktop}\chisurf"; Filename: "{app}\chisurf.exe"; Tasks: desktopicon; Check: IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
-Name: "{userdesktop}\chisurf";   Filename: "{app}\chisurf.exe"; Tasks: desktopicon; Check: not IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
+Name: "{commondesktop}\chisurf"; Filename: "{app}\Scripts\chisurf.exe"; Tasks: desktopicon; Check: IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
+Name: "{userdesktop}\chisurf";   Filename: "{app}\Scripts\chisurf.exe"; Tasks: desktopicon; Check: not IsAdminInstallMode; IconFilename: "{app}\icons\icon.ico"
 
 [UninstallDelete]
 Type: files; Name: "{app}\install.log"
