@@ -20,9 +20,9 @@
       eigen_val, eigen_vec = np.linalg.eig(K)
       idx = abs(eigen_val).argsort()[::]
       eigen_val = eigen_val[idx]
-      eigen_vec = eigen_vec[:,idx].T
+      v = eigen_vec[:,idx].T
 
-      v0 = eigen_vec[0]
+      v0 = v[0]
 
       # Prevent division by zero when calculating population fractions
       v0_sum = v0.sum()
