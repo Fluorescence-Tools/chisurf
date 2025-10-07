@@ -48,59 +48,135 @@ def read_tcspc_csv(
     data = csvSetup.data
 
     if is_jordi:
-        if data.ndim == 1:
-            data = data.reshape(1, len(data))
-
-        n_data_sets, n_vv_vh = data.shape
-        n_data_points = n_vv_vh // 2
-        c1, c2 = data[:, :n_data_points], data[:, n_data_points:]
-
-        new_channels = int(n_data_points / rebin_y)
-        c1 = c1.reshape([n_data_sets, new_channels, rebin_y]).sum(axis=2)
-        c2 = c2.reshape([n_data_sets, new_channels, rebin_y]).sum(axis=2)
-        n_data_points = c1.shape[1]
-
-        # Apply integer VH shift (in channels) if provided by data_reader
-        data_reader = kwargs.get('data_reader', None)
-        vh_shift = int(getattr(data_reader, 'vh_shift', 0) or 0)
-        if vh_shift != 0:
-            if vh_shift > 0:
-                # Shift to the right: prepend zeros and trim end
-                pad = ((0, 0), (vh_shift, 0))
-                c2 = np.pad(c2, pad, mode='constant')[:, :-vh_shift]
-            else:
-                # Shift to the left: append zeros and trim beginning
-                s = abs(vh_shift)
-                pad = ((0, 0), (0, s))
-                c2 = np.pad(c2, pad, mode='constant')[:, s:]
-
+        # Read jordi file with the new format
+        from chisurf.fio.jordi import read_jordi
+        
+        # Read the data with metadata
+        data, meta = read_jordi(filename, split=True, return_metadata=True)
+        
+        # Get available channels
+        available_channels = list(data.keys())
+        
+        # Get g_factor from metadata if available
+        g_factor = float(meta.get('g_factor', g_factor))
+        
+        # Convert data to numpy arrays
+        n_data_sets = 1  # Default to 1 dataset
+        
+        # Handle different polarization cases
         if polarization == 'vv':
-            y = c1
-            ey = chisurf.fluorescence.tcspc.counting_noise(
-                decay=c1
-            )
+            if 'VV' not in available_channels:
+                raise ValueError("VV channel not found in the jordi file")
+            y = data['VV']
+            if y.ndim == 1:
+                y = y.reshape(1, -1)
+                n_data_sets = 1
+            else:
+                n_data_sets = y.shape[0]
+            ey = chisurf.fluorescence.tcspc.counting_noise(decay=y)
+            
         elif polarization == 'vh':
-            y = c2
-            ey = chisurf.fluorescence.tcspc.counting_noise(
-                decay=c2
-            )
+            if 'VH' not in available_channels:
+                raise ValueError("VH channel not found in the jordi file")
+            y = data['VH']
+            if y.ndim == 1:
+                y = y.reshape(1, -1)
+                n_data_sets = 1
+            else:
+                n_data_sets = y.shape[0]
+                
+            # Apply integer VH shift if provided by data_reader
+            data_reader = kwargs.get('data_reader', None)
+            vh_shift = int(getattr(data_reader, 'vh_shift', 0) or 0)
+            if vh_shift != 0:
+                if vh_shift > 0:
+                    # Shift to the right: prepend zeros and trim end
+                    pad = ((0, 0), (vh_shift, 0)) if n_data_sets > 1 else ((vh_shift, 0),)
+                    y = np.pad(y, pad, mode='constant')
+                    y = y[:, :-vh_shift] if n_data_sets > 1 else y[:-vh_shift]
+                else:
+                    # Shift to the left: append zeros and trim beginning
+                    s = abs(vh_shift)
+                    pad = ((0, 0), (0, s)) if n_data_sets > 1 else ((0, s),)
+                    y = np.pad(y, pad, mode='constant')
+                    y = y[:, s:] if n_data_sets > 1 else y[s:]
+                    
+            ey = chisurf.fluorescence.tcspc.counting_noise(decay=y)
+            
+        elif polarization == 'vm':
+            if 'VM' not in available_channels:
+                # Calculate VM from VV and VH if not directly available
+                if 'VV' not in available_channels or 'VH' not in available_channels:
+                    raise ValueError("VM channel not found and cannot be calculated (missing VV or VH)")
+                vv = data['VV']
+                vh = data['VH']
+                y = vv + 2.0 * g_factor * vh
+            else:
+                y = data['VM']
+                
+            if y.ndim == 1:
+                y = y.reshape(1, -1)
+                n_data_sets = 1
+            else:
+                n_data_sets = y.shape[0]
+                
+            ey = chisurf.fluorescence.tcspc.counting_noise(decay=y)
+            
         elif polarization == 'vv/vh':
-            e1 = chisurf.fluorescence.tcspc.counting_noise(
-                decay=c1
-            )
-            e2 = chisurf.fluorescence.tcspc.counting_noise(
-                decay=c2
-            )
-            y = np.vstack([c1, c2])
+            if 'VV' not in available_channels or 'VH' not in available_channels:
+                raise ValueError("Both VV and VH channels are required for vv/vh polarization")
+                
+            vv = data['VV']
+            vh = data['VH']
+            
+            # Handle single dataset case
+            if vv.ndim == 1:
+                vv = vv.reshape(1, -1)
+                vh = vh.reshape(1, -1)
+                n_data_sets = 1
+            else:
+                n_data_sets = vv.shape[0]
+                
+            # Stack VV and VH channels
+            y = np.vstack([vv, vh])
+            
+            # Calculate errors
+            e1 = chisurf.fluorescence.tcspc.counting_noise(decay=vv)
+            e2 = chisurf.fluorescence.tcspc.counting_noise(decay=vh)
             ey = np.vstack([e1, e2])
+            
+        else:  # Default to VM calculation
+            if 'VM' in available_channels:
+                y = data['VM']
+            elif 'VV' in available_channels and 'VH' in available_channels:
+                vv = data['VV']
+                vh = data['VH']
+                y = vv + 2.0 * g_factor * vh
+            else:
+                raise ValueError("Cannot determine polarization. Available channels: " + 
+                               ", ".join(available_channels))
+            
+            if y.ndim == 1:
+                y = y.reshape(1, -1)
+                n_data_sets = 1
+            else:
+                n_data_sets = y.shape[0]
+                
+            ey = chisurf.fluorescence.tcspc.counting_noise(decay=y)
+        
+        # Apply rebinning
+        n_data_points = y.shape[-1]
+        new_channels = int(n_data_points / rebin_y)
+        
+        # Reshape and sum for rebinning
+        if n_data_sets > 1:
+            y = y.reshape([n_data_sets, new_channels, rebin_y]).sum(axis=2)
+            ey = ey.reshape([n_data_sets, new_channels, rebin_y]).sum(axis=2)
         else:
-            f2 = 2.0 * g_factor
-            y = c1 + f2 * c2
-            ey = chisurf.fluorescence.tcspc.counting_noise_combined_parallel_perpendicular(
-                parallel=c1,
-                perpendicular=c2,
-                g_factor=g_factor
-            )
+            y = y.reshape([1, new_channels, rebin_y]).sum(axis=2)
+            ey = ey.reshape([1, new_channels, rebin_y]).sum(axis=2)
+            
+        n_data_points = y.shape[1]
         x = np.arange(
             n_data_points,
             dtype=np.float64
