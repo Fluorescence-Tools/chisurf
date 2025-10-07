@@ -5,8 +5,10 @@ from . tcspc import *
 from chisurf import typing
 import chisurf.fluorescence.tcspc.convolve
 import chisurf.fluorescence.tcspc.corrections
+import chisurf.fluorescence.tcspc.irf_estimation
 
 from .tcspc import rescale_w_bg
+from .irf_estimation import IRFEstimator
 
 
 def counting_noise(
