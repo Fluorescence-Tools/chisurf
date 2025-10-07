@@ -7,7 +7,7 @@ import numpy as np
 import csv
 
 import chisurf
-import chisurf.fluorescence.fcs
+# Import moved to function level to avoid circular imports
 
 from chisurf import typing
 from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
@@ -667,6 +667,9 @@ def read_asc(
         if mean_count_rate == 0.0:
             aquisition_time = np.mean(intensity_time[-1])
             mean_count_rate = np.mean(intensity[-1])
+        
+        # Import here to avoid circular import
+        import chisurf.fluorescence.fcs
         w = 1. / chisurf.fluorescence.fcs.noise(
             correlation_time,
             correlation_amplitude,
