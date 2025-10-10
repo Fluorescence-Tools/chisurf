@@ -14,7 +14,7 @@ def noise(
         correlation: np.ndarray,
         measurement_duration: float,
         mean_count_rate: float,
-        weight_type: str = 'starchev',
+        weight_type: str = 'suren',
         skip_points: int = 0,
         correlation_amplitude_range: typing.Tuple[int, int] = (0, 16),
         time_upper: float = 10,
