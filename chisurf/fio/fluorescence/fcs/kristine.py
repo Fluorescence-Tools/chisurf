@@ -94,7 +94,7 @@ def read_kristine(
     except IndexError:
         # In case everything fails
         # Use no errors at all but uniform weighting
-        w = 1. / chisurf.fluorescence.fcs.noise(x, y, dur, cr)
+        w = 1. / chisurf.fluorescence.fcs.noise(x, y, dur, cr, weight_type='suren')
     measurement_id, _ = os.path.splitext(
         os.path.basename(
             filename
