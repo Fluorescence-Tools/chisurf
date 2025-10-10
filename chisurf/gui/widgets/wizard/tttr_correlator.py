@@ -383,44 +383,226 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
     def load_tttr_files(self, filenames: typing.List[str], filetype: typing.Optional[str] = None):
         """
-        Load a list of TTTR files directly (without SL5), concatenate them into
-        a single TTTR object, and update internal state.
+        Load a list of TTTR files directly (and optionally .bst burst-id files),
+        concatenate them into a single TTTR object, and update internal state.
+
+        Behavior:
+        - Plain TTTR files are opened normally (optionally with the provided filetype).
+        - .bst files are parsed to obtain start/stop index ranges; the corresponding
+          TTTR file is searched in the same folder or up to three parent folders.
+          The TTTR events are then restricted to the union of the provided ranges.
 
         File type selection:
         - If filetype is a string (selected in DetectorWizardPage), pass it to tttrlib.TTTR.
         - If filetype is None (Auto), rely on tttrlib's internal auto-detection by omitting the argument.
         """
-        self.settings.setdefault('tttr_filenames', [])
-        self.settings['tttr_filenames'] = list(filenames)
+        # Split into .bst and non-.bst paths
+        bst_files = []
+        plain_files = []
+        for fn in filenames or []:
+            try:
+                if str(fn).lower().endswith('.bst'):
+                    bst_files.append(str(fn))
+                else:
+                    plain_files.append(str(fn))
+            except Exception:
+                continue
+
+        # Resolve .bst files to (tttr_path, idx_array)
+        resolved_from_bst: typing.Dict[str, typing.List[typing.Tuple[int, int]]] = {}
+        for bst in bst_files:
+            p_bst = pathlib.Path(bst)
+            if not p_bst.exists() or not p_bst.is_file():
+                continue
+            # Determine the referenced TTTR filename (basename contains extension)
+            base_with_ext = p_bst.name[:-4]  # strip trailing '.bst'
+            # Search current dir and up to three parents for the TTTR file
+            candidates = [p_bst.parent]
+            try:
+                if p_bst.parent.parent:
+                    candidates.append(p_bst.parent.parent)
+                if p_bst.parent.parent.parent:
+                    candidates.append(p_bst.parent.parent.parent)
+                if p_bst.parent.parent.parent.parent:
+                    candidates.append(p_bst.parent.parent.parent.parent)
+            except Exception:
+                pass
+            tttr_path = None
+            for folder in candidates:
+                cand = folder / base_with_ext
+                if cand.exists() and cand.is_file():
+                    tttr_path = cand
+                    break
+            if tttr_path is None:
+                # Could not locate TTTR file for this .bst; skip gracefully
+                chisurf.logging.log(1, f"Could not resolve TTTR for BST: {p_bst}")
+                continue
+            # Parse start/stop ranges from bst file
+            ranges: typing.List[typing.Tuple[int, int]] = []
+            try:
+                with open(p_bst, 'r', encoding='utf-8', errors='ignore') as fh:
+                    for line in fh:
+                        line = line.strip()
+                        if not line or line.startswith('#') or line.startswith('//'):
+                            continue
+                        parts = line.replace(',', ' ').split()
+                        if len(parts) < 2:
+                            continue
+                        try:
+                            s = int(float(parts[0]))
+                            e = int(float(parts[1]))
+                            if e >= s:
+                                ranges.append((s, e))
+                        except Exception:
+                            continue
+            except Exception as e:
+                chisurf.logging.log(1, f"Failed to parse BST file '{p_bst}': {e}")
+                continue
+            if not ranges:
+                continue
+            key = str(tttr_path.resolve())
+            resolved_from_bst.setdefault(key, []).extend(ranges)
+
+        # Merge overlapping/adjacent ranges per TTTR and convert to numpy indices
+        bst_indices: typing.Dict[str, typing.Any] = {}
+        for tttr_path, rr in resolved_from_bst.items():
+            try:
+                # sort ranges
+                rr = sorted(rr)
+                merged: typing.List[typing.Tuple[int, int]] = []
+                for s, e in rr:
+                    if not merged:
+                        merged.append((s, e))
+                    else:
+                        ps, pe = merged[-1]
+                        if s <= pe + 1:
+                            merged[-1] = (ps, max(pe, e))
+                        else:
+                            merged.append((s, e))
+                # Build a single index array (inclusive ranges)
+                import numpy as _np
+                parts = [
+                    _np.arange(s, e + 1, dtype=_np.int64)
+                    for s, e in merged if e >= s
+                ]
+                if parts:
+                    bst_indices[tttr_path] = _np.concatenate(parts)
+            except Exception:
+                continue
+
+        # Now construct TTTR by loading plain files and bst-resolved files, applying indices
         tttr_obj = None
-        for fn in filenames:
+        def _open_tttr(path_str: str):
+            try:
+                p = pathlib.Path(path_str)
+                p_posix = p.as_posix()
+                ext = p.suffix.lower()
+                if ext == '.spc':
+                    try:
+                        ft_int = tttrlib.inferTTTRFileType(p_posix)
+                        if ft_int is not None and ft_int >= 0:
+                            return tttrlib.TTTR(p_posix, ft_int)
+                    except Exception:
+                        pass
+                    try:
+                        return tttrlib.TTTR(p_posix, 'SPC')
+                    except Exception:
+                        return tttrlib.TTTR(p_posix)
+                if isinstance(filetype, str) and filetype.strip():
+                    try:
+                        return tttrlib.TTTR(p_posix, filetype)
+                    except Exception:
+                        pass
+                try:
+                    ft_int = tttrlib.inferTTTRFileType(p_posix)
+                    if ft_int is not None and ft_int >= 0:
+                        return tttrlib.TTTR(p_posix, ft_int)
+                except Exception:
+                    pass
+                return tttrlib.TTTR(p_posix)
+            except Exception:
+                return None
+
+        # Remove plain TTTR files that are also referenced by BST selections to avoid duplicates
+        bst_tttr_set = set(bst_indices.keys())
+        filtered_plain = []
+        for fn in plain_files:
+            try:
+                if str(pathlib.Path(fn).resolve()) not in bst_tttr_set:
+                    filtered_plain.append(fn)
+            except Exception:
+                filtered_plain.append(fn)
+
+        # 1) Load plain TTTR files first
+        for fn in filtered_plain:
             p = pathlib.Path(fn)
             if not p.exists() or not p.is_file():
                 continue
-            try:
-                if isinstance(filetype, str):
-                    tt = tttrlib.TTTR(p.as_posix(), filetype)
-                else:
-                    # Infer file type if possible, else let tttrlib decide
-                    try:
-                        ft_int = tttrlib.inferTTTRFileType(p.as_posix())
-                        if ft_int is not None and ft_int >= 0:
-                            tt = tttrlib.TTTR(p.as_posix(), ft_int)
-                        else:
-                            tt = tttrlib.TTTR(p.as_posix())
-                    except Exception:
-                        tt = tttrlib.TTTR(p.as_posix())
-            except Exception:
-                tt = None
+            tt = _open_tttr(str(p))
             if tt is None:
                 continue
             if tttr_obj is None:
                 tttr_obj = tt
             else:
                 tttr_obj.append(tt)
+
+        # 2) Load TTTR files resolved from BST with index restriction
+        for tttr_path, idx in bst_indices.items():
+            tt = _open_tttr(tttr_path)
+            if tt is None:
+                continue
+            try:
+                # Clip indices to valid range to avoid selection dimension warnings
+                try:
+                    n_events = len(tt)
+                except Exception:
+                    n_events = None
+                if n_events is not None:
+                    import numpy as _np
+                    idx = _np.asarray(idx, dtype=_np.int64)
+                    if idx.size == 0:
+                        continue
+                    idx = idx[_np.logical_and(idx >= 0, idx < n_events)]
+                    if idx.size == 0:
+                        continue
+                tt = tt[idx]
+            except Exception:
+                # If advanced indexing not supported, fall back to sequential append of slices
+                try:
+                    import numpy as _np
+                    if idx is not None and idx.size > 0:
+                        # As a last resort, build via contiguous chunks
+                        splits = _np.where(_np.diff(idx) > 1)[0]
+                        start = 0
+                        parts = []
+                        for s in splits:
+                            parts.append(tt[idx[start:s+1]])
+                            start = s + 1
+                        parts.append(tt[idx[start:]])
+                        if parts:
+                            first = parts[0]
+                            for part in parts[1:]:
+                                first.append(part)
+                            tt = first
+                except Exception:
+                    pass
+            if tttr_obj is None:
+                tttr_obj = tt
+            else:
+                tttr_obj.append(tt)
+
+        # Update visible filenames to underlying TTTR files (not the .bst wrappers)
+        visible_files = filtered_plain + list(bst_indices.keys())
+        self.settings.setdefault('tttr_filenames', [])
+        self.settings['tttr_filenames'] = visible_files
         self.tttr = tttr_obj
-        # If a folder was not set yet, set it from the files
-        self.ensure_analysis_folder_default()
+        # Prefer analysis folder from the first underlying TTTR path if available
+        try:
+            if visible_files:
+                first_parent = pathlib.Path(visible_files[0]).resolve().parent
+                self.lineEdit_3.setText(first_parent.as_posix())
+        except Exception:
+            pass
 
     def open_sl5(self, filename: str) -> tttrlib.TTTR | None:
         chisurf.logging.log(0, 'WizardTTTRCorrelator::open_sl5:', filename)

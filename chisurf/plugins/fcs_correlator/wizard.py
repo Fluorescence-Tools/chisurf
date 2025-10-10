@@ -132,7 +132,7 @@ class FileAndStepsPage(QtWidgets.QWizardPage):
         layout = QtWidgets.QVBoxLayout(self)
         form = QtWidgets.QFormLayout()
 
-        self.file_list = FileListWidget(self, file_added_callback=self._emit_complete)
+        self.file_list = FileListWidget(self, file_added_callback=self._files_or_checks_changed)
         form.addRow("Files:", self.file_list)
 
         checks = QtWidgets.QHBoxLayout()
@@ -146,11 +146,20 @@ class FileAndStepsPage(QtWidgets.QWizardPage):
         form.itemAt(form.rowCount()-1, QtWidgets.QFormLayout.FieldRole).widget().setLayout(checks)
 
         layout.addLayout(form, 1)
+        # Initialize step availability based on current file list
+        try:
+            self._update_step_availability()
+        except Exception:
+            pass
 
         # Connections
-        self.cb_photon_filter.toggled.connect(self._emit_complete)
-        self.cb_fcs_merger.toggled.connect(self._emit_complete)
-        self.file_list.itemSelectionChanged.connect(self._emit_complete)
+        self.cb_photon_filter.toggled.connect(self._files_or_checks_changed)
+        self.cb_fcs_merger.toggled.connect(self._files_or_checks_changed)
+        self.file_list.itemSelectionChanged.connect(self._files_or_checks_changed)
+        try:
+            self.file_list.itemChanged.connect(self._files_or_checks_changed)
+        except Exception:
+            pass
 
     # QWizardPage API
     def isComplete(self) -> bool:
@@ -164,6 +173,48 @@ class FileAndStepsPage(QtWidgets.QWizardPage):
 
     def _emit_complete(self):
         self.completeChanged.emit()
+
+    def _files_or_checks_changed(self):
+        # Update step availability based on selected/checked files and emit completion change
+        try:
+            self._update_step_availability()
+        finally:
+            self._emit_complete()
+
+    def _update_step_availability(self):
+        """
+        Disable the 'Count rate/burst filter' step if any checked file is a .bst Burst-ID file.
+        Re-enable it otherwise.
+        """
+        try:
+            files = self.checked_files
+        except Exception:
+            files = []
+        has_bst = False
+        for f in files:
+            try:
+                if pathlib.Path(f).suffix.lower() == '.bst':
+                    has_bst = True
+                    break
+            except Exception:
+                continue
+        if has_bst:
+            # Turn off and disable the photon filter step in presence of BST files
+            try:
+                self.cb_photon_filter.setChecked(False)
+            except Exception:
+                pass
+            try:
+                self.cb_photon_filter.setEnabled(False)
+                self.cb_photon_filter.setToolTip("Disabled when Burst-ID (.bst) files are selected.")
+            except Exception:
+                pass
+        else:
+            try:
+                self.cb_photon_filter.setEnabled(True)
+                self.cb_photon_filter.setToolTip("")
+            except Exception:
+                pass
 
     @property
     def files(self) -> List[str]:
@@ -231,18 +282,44 @@ class CorrelatorPage(QtWidgets.QWizardPage):
         try:
             self.inner.load_tttr_files(filenames, filetype)
         except Exception:
-            # Fallback: use the selected setup's filetype if provided; otherwise rely on tttrlib auto.
+            # Fallback: open each file with extension-aware type resolution
             self.inner.settings.setdefault('tttr_filenames', [])
             self.inner.settings['tttr_filenames'] = list(filenames)
+            def _open_tttr_for_ui(p: pathlib.Path, global_type):
+                p_str = p.as_posix()
+                ext = p.suffix.lower()
+                try:
+                    if ext == '.spc':
+                        try:
+                            ft_int = tttrlib.inferTTTRFileType(p_str)
+                            if ft_int is not None and ft_int >= 0:
+                                return tttrlib.TTTR(p_str, ft_int)
+                        except Exception:
+                            pass
+                        try:
+                            return tttrlib.TTTR(p_str, 'SPC')
+                        except Exception:
+                            return tttrlib.TTTR(p_str)
+                    if isinstance(global_type, str) and global_type.strip():
+                        try:
+                            return tttrlib.TTTR(p_str, global_type)
+                        except Exception:
+                            pass
+                    try:
+                        ft_int = tttrlib.inferTTTRFileType(p_str)
+                        if ft_int is not None and ft_int >= 0:
+                            return tttrlib.TTTR(p_str, ft_int)
+                    except Exception:
+                        pass
+                    return tttrlib.TTTR(p_str)
+                except Exception:
+                    return None
             tttr_obj = None
             for fn in filenames:
                 p = pathlib.Path(fn)
                 if not p.exists() or not p.is_file():
                     continue
-                try:
-                    tt = tttrlib.TTTR(p.as_posix(), filetype) if isinstance(filetype, str) else tttrlib.TTTR(p.as_posix())
-                except Exception:
-                    tt = None
+                tt = _open_tttr_for_ui(p, filetype)
                 if tt is None:
                     continue
                 if tttr_obj is None:
@@ -328,7 +405,7 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                 return
 
             files = self.file_page.checked_files
-            # Expand directories to allowed TTTR files (container names)
+            # Expand directories to allowed TTTR files (container names) and pass through .bst
             allowed_extensions = {
                 f".{ext.lower()}" if not ext.startswith('.') else ext.lower()
                 for ext in tttrlib.TTTR.get_supported_container_names()
@@ -338,7 +415,7 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                 p = pathlib.Path(p_str).resolve()
                 if p.is_dir():
                     for child in p.iterdir():
-                        if child.is_file() and child.suffix.lower() in allowed_extensions:
+                        if child.is_file() and (child.suffix.lower() in allowed_extensions or child.suffix.lower() == '.bst'):
                             expanded_files.append(str(child.resolve()))
                 else:
                     expanded_files.append(str(p))
@@ -346,10 +423,73 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
             # Preload dropped files into photon filter page using detector page's filetype
             filetype = self.detector_page.filetype
 
-            # Load TTTR objects similar to PhotonFilter's after_file_drop
-            RESTRICTED_EXTENSIONS = [".spc"]
-            self.photon_select.tttr_objects = dict()
+            # Resolve any .bst entries to their underlying TTTR file so that the
+            # photon filter (which expects raw TTTR files) can open them.
+            def _resolve_bst_to_tttr(path: pathlib.Path) -> Optional[pathlib.Path]:
+                try:
+                    base_with_ext = path.name[:-4]
+                    candidates = [path.parent]
+                    if path.parent.parent:
+                        candidates.append(path.parent.parent)
+                    if path.parent.parent.parent:
+                        candidates.append(path.parent.parent.parent)
+                    if path.parent.parent.parent.parent:
+                        candidates.append(path.parent.parent.parent.parent)
+                    for folder in candidates:
+                        cand = folder / base_with_ext
+                        if cand.exists() and cand.is_file():
+                            return cand.resolve()
+                except Exception:
+                    pass
+                return None
+
+            actual_files: List[str] = []
             for fn in expanded_files:
+                p = pathlib.Path(fn).resolve()
+                if p.suffix.lower() == '.bst':
+                    tttr_resolved = _resolve_bst_to_tttr(p)
+                    if tttr_resolved is not None:
+                        actual_files.append(str(tttr_resolved))
+                else:
+                    actual_files.append(str(p))
+
+            # Load TTTR objects similar to PhotonFilter's after_file_drop, with extension-aware type resolution
+            self.photon_select.tttr_objects = dict()
+            def _open_tttr_for_ui(p: pathlib.Path, global_type):
+                p_str = str(p)
+                ext = p.suffix.lower()
+                # Always prefer inference for .spc to avoid forcing wrong reader (e.g., PTU on SPC)
+                try:
+                    if ext == '.spc':
+                        try:
+                            ft_int = tttrlib.inferTTTRFileType(p_str)
+                            if ft_int is not None and ft_int >= 0:
+                                return tttrlib.TTTR(p_str, ft_int)
+                        except Exception:
+                            pass
+                        # As a fallback, try the string 'SPC' if supported, else auto
+                        try:
+                            return tttrlib.TTTR(p_str, 'SPC')
+                        except Exception:
+                            return tttrlib.TTTR(p_str)
+                    # For other files: use provided type if any; otherwise try inference, then auto
+                    if isinstance(global_type, str) and global_type.strip():
+                        try:
+                            return tttrlib.TTTR(p_str, global_type)
+                        except Exception:
+                            # Fallback to inference if the provided type fails
+                            pass
+                    try:
+                        ft_int = tttrlib.inferTTTRFileType(p_str)
+                        if ft_int is not None and ft_int >= 0:
+                            return tttrlib.TTTR(p_str, ft_int)
+                    except Exception:
+                        pass
+                    return tttrlib.TTTR(p_str)
+                except Exception as e:
+                    raise e
+
+            for fn in actual_files:
                 p = pathlib.Path(fn).resolve()
                 p_str = str(p)
                 if p_str in self.photon_select.tttr_objects:
@@ -357,21 +497,7 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                 if not p.exists() or not p.is_file():
                     continue
                 try:
-                    if isinstance(filetype, str):
-                        self.photon_select.tttr_objects[p_str] = tttrlib.TTTR(p_str, filetype)
-                    elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:
-                        ft_int = tttrlib.inferTTTRFileType(p_str)
-                        if ft_int is not None and ft_int >= 0:
-                            self.photon_select.tttr_objects[p_str] = tttrlib.TTTR(p_str, ft_int)
-                        else:
-                            self.photon_select.tttr_objects[p_str] = tttrlib.TTTR(p_str)
-                    else:
-                        QtWidgets.QMessageBox.warning(
-                            self,
-                            "File Type Required",
-                            f"File '{p.name}' requires an explicit file type selection. Please set it in the detector page."
-                        )
-                        return
+                    self.photon_select.tttr_objects[p_str] = _open_tttr_for_ui(p, filetype)
                 except Exception:
                     QtWidgets.QMessageBox.critical(
                         self,
@@ -381,8 +507,8 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                     self.photon_select.onClearFiles()
                     return
 
-            self.photon_select.settings['tttr_filenames'] = list(expanded_files)
-            n_files = len(expanded_files)
+            self.photon_select.settings['tttr_filenames'] = list(actual_files)
+            n_files = len(actual_files)
             self.photon_select.spinBox_4.setMaximum(n_files - 1 if n_files > 0 else 0)
             if n_files > 0:
                 # Set current file index to the last one, assign path to lineEdit and load
@@ -592,9 +718,38 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                 # Preload dropped files into photon filter page using detector page's filetype
                 filetype = self.detector_page.filetype
 
-                # Load TTTR objects similar to PhotonFilter's after_file_drop
-                RESTRICTED_EXTENSIONS = [".spc"]
+                # Load TTTR objects similar to PhotonFilter's after_file_drop, with extension-aware type resolution
                 self.photon_select.tttr_objects = dict()
+                def _open_tttr_for_ui(p: pathlib.Path, global_type):
+                    p_str = str(p)
+                    ext = p.suffix.lower()
+                    try:
+                        if ext == '.spc':
+                            try:
+                                ft_int = tttrlib.inferTTTRFileType(p_str)
+                                if ft_int is not None and ft_int >= 0:
+                                    return tttrlib.TTTR(p_str, ft_int)
+                            except Exception:
+                                pass
+                            try:
+                                return tttrlib.TTTR(p_str, 'SPC')
+                            except Exception:
+                                return tttrlib.TTTR(p_str)
+                        if isinstance(global_type, str) and global_type.strip():
+                            try:
+                                return tttrlib.TTTR(p_str, global_type)
+                            except Exception:
+                                pass
+                        try:
+                            ft_int = tttrlib.inferTTTRFileType(p_str)
+                            if ft_int is not None and ft_int >= 0:
+                                return tttrlib.TTTR(p_str, ft_int)
+                        except Exception:
+                            pass
+                        return tttrlib.TTTR(p_str)
+                    except Exception as e:
+                        raise e
+
                 for fn in expanded_files:
                     p = pathlib.Path(fn).resolve()
                     p_str = str(p)
@@ -603,21 +758,7 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                     if not p.exists() or not p.is_file():
                         continue
                     try:
-                        if isinstance(filetype, str):
-                            self.photon_select.tttr_objects[p_str] = tttrlib.TTTR(p_str, filetype)
-                        elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:
-                            ft_int = tttrlib.inferTTTRFileType(p_str)
-                            if ft_int is not None and ft_int >= 0:
-                                self.photon_select.tttr_objects[p_str] = tttrlib.TTTR(p_str, ft_int)
-                            else:
-                                self.photon_select.tttr_objects[p_str] = tttrlib.TTTR(p_str)
-                        else:
-                            QtWidgets.QMessageBox.warning(
-                                self,
-                                "File Type Required",
-                                f"File '{p.name}' requires an explicit file type selection. Please set it in the detector page."
-                            )
-                            return
+                        self.photon_select.tttr_objects[p_str] = _open_tttr_for_ui(p, filetype)
                     except Exception:
                         QtWidgets.QMessageBox.critical(
                             self,
@@ -685,7 +826,7 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
                     pth = pathlib.Path(p_str).resolve()
                     if pth.is_dir():
                         for child in pth.iterdir():
-                            if child.is_file() and child.suffix.lower() in allowed_extensions:
+                            if child.is_file() and (child.suffix.lower() in allowed_extensions or child.suffix.lower() == '.bst'):
                                 expanded_files.append(str(child.resolve()))
                     else:
                         expanded_files.append(str(pth))
