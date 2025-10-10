@@ -419,6 +419,14 @@ class IntensityPlotWidget(QtWidgets.QWidget):
         self.plot_widget = pg.GraphicsLayoutWidget()
         self.setLayout(QtWidgets.QVBoxLayout())
         self.layout().addWidget(self.plot_widget)
+        try:
+            self.layout().setContentsMargins(0, 0, 0, 0)
+            self.layout().setSpacing(0)
+            self.plot_widget.setBackground(None)
+            self.plot_widget.ci.layout.setContentsMargins(0, 0, 0, 0)
+            self.plot_widget.ci.layout.setSpacing(0)
+        except Exception:
+            pass
         self.plots = []
         # Optional global y-range override for all trace plots (histograms are Y-linked)
         self._y_range_override = None  # type: tuple[float, float] | None
@@ -502,7 +510,9 @@ class IntensityPlotWidget(QtWidgets.QWidget):
 
             trace_plot = self.plot_widget.addPlot(row=i, col=0)
             try:
-                trace_plot.addLegend()
+                trace_plot.hideButtons()
+                trace_plot.getViewBox().setPadding(0.0)
+                trace_plot.layout.setContentsMargins(0, 0, 0, 0)
             except Exception:
                 pass
             trace_plot.plot(time_axis, trace, pen='b', name=str(label))
@@ -514,6 +524,12 @@ class IntensityPlotWidget(QtWidgets.QWidget):
 
             hist_plot = self._create_log_hist_plot(trace_plot, show_x)
             self.plot_widget.addItem(hist_plot, row=i, col=1)
+            try:
+                hist_plot.hideButtons()
+                hist_plot.getViewBox().setPadding(0.0)
+                hist_plot.layout.setContentsMargins(0, 0, 0, 0)
+            except Exception:
+                pass
 
             data = trace[trace > 0]
             if hist_min is not None and hist_max is not None:
