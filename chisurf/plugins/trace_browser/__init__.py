@@ -358,8 +358,8 @@ class TraceBrowser(QWidget):
         # Two-page layout using a simple stacked layout approach
         self.root_layout = QVBoxLayout(self)
         try:
-            self.root_layout.setContentsMargins(6, 6, 6, 6)
-            self.root_layout.setSpacing(4)
+            self.root_layout.setContentsMargins(0, 0, 0, 0)
+            self.root_layout.setSpacing(0)
         except Exception:
             pass
 
@@ -379,8 +379,8 @@ class TraceBrowser(QWidget):
         self.page1 = QWidget(self)
         p1_layout = QVBoxLayout(self.page1)
         try:
-            p1_layout.setContentsMargins(6, 6, 6, 6)
-            p1_layout.setSpacing(4)
+            p1_layout.setContentsMargins(0, 0, 0, 0)
+            p1_layout.setSpacing(0)
         except Exception:
             pass
 
@@ -388,7 +388,7 @@ class TraceBrowser(QWidget):
         ctrl_row = QHBoxLayout()
         try:
             ctrl_row.setContentsMargins(0, 0, 0, 0)
-            ctrl_row.setSpacing(4)
+            ctrl_row.setSpacing(0)
         except Exception:
             pass
         self.folder_label = QLabel("No folder selected", self.page1)
@@ -504,16 +504,16 @@ class TraceBrowser(QWidget):
             pass
 
         # Stack Ymin above Ymax in a compact grid inside a group box and add to the control row
-        y_group = QGroupBox("Y-range", self.page1)
+        y_group = QGroupBox("", self.page1)
         try:
             y_group.setFlat(True)
         except Exception:
             pass
         y_layout = QGridLayout(y_group)
         try:
-            y_layout.setContentsMargins(4, 2, 4, 2)
-            y_layout.setHorizontalSpacing(4)
-            y_layout.setVerticalSpacing(2)
+            y_layout.setContentsMargins(0, 0, 0, 0)
+            y_layout.setHorizontalSpacing(0)
+            y_layout.setVerticalSpacing(0)
         except Exception:
             pass
         y_layout.addWidget(ymin_label, 0, 0)
@@ -577,7 +577,7 @@ class TraceBrowser(QWidget):
         tools_row = QHBoxLayout()
         try:
             tools_row.setContentsMargins(0, 0, 0, 0)
-            tools_row.setSpacing(4)
+            tools_row.setSpacing(0)
         except Exception:
             pass
         # Order: to HMM | to TW | Export | CSV | DOCX | Clear | Clear caches
@@ -597,7 +597,7 @@ class TraceBrowser(QWidget):
         top_bar_layout = QVBoxLayout(top_bar)
         try:
             top_bar_layout.setContentsMargins(0, 0, 0, 0)
-            top_bar_layout.setSpacing(2)
+            top_bar_layout.setSpacing(0)
         except Exception:
             pass
         top_bar_layout.addLayout(ctrl_row)
@@ -613,6 +613,10 @@ class TraceBrowser(QWidget):
         # Splitter: left list, right details
         splitter = QSplitter(self.page1)
         splitter.setOrientation(Qt.Horizontal)
+        try:
+            splitter.setHandleWidth(2)
+        except Exception:
+            pass
 
         # Left: table of files with rating and size
         self.table = NoHoverSelectTable(self.page1)
@@ -661,14 +665,20 @@ class TraceBrowser(QWidget):
         # Right: plot and annotation
         right = QWidget(self.page1)
         right_layout = QVBoxLayout(right)
+        try:
+            right_layout.setContentsMargins(0, 0, 0, 0)
+            right_layout.setSpacing(0)
+        except Exception:
+            pass
         self.plot = IntensityPlotWidget(self.page1)
         right_layout.addWidget(self.plot)
-        right_layout.addWidget(QLabel("Annotation:"))
         self.annotation = QTextEdit(self.page1)
         # Limit annotation editor height to at most 300 px
         try:
             self.annotation.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             self.annotation.setMaximumHeight(300)
+            self.annotation.setPlaceholderText("Annotation")
+            self.annotation.setStyleSheet("QTextEdit { padding: 0; }")
         except Exception:
             pass
         self.annotation.textChanged.connect(self._on_annotation_changed)
