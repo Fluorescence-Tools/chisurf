@@ -572,7 +572,6 @@ class TraceBrowser(QWidget):
 
         # Add the top control row (compact)
         ctrl_row.addStretch(1)
-        p1_layout.addLayout(ctrl_row)
 
         # New compact tools row below subfolder/filter
         tools_row = QHBoxLayout()
@@ -592,7 +591,24 @@ class TraceBrowser(QWidget):
         tools_row.addWidget(self.btn_clear)
         tools_row.addWidget(self.btn_clear_caches)
         tools_row.addStretch(1)
-        p1_layout.addLayout(tools_row)
+
+        # Wrap the two top rows in a fixed-height container so they don't scale in fullscreen
+        top_bar = QWidget(self.page1)
+        top_bar_layout = QVBoxLayout(top_bar)
+        try:
+            top_bar_layout.setContentsMargins(0, 0, 0, 0)
+            top_bar_layout.setSpacing(2)
+        except Exception:
+            pass
+        top_bar_layout.addLayout(ctrl_row)
+        top_bar_layout.addLayout(tools_row)
+        try:
+            top_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            # Constrain the height to its sizeHint to prevent vertical growth
+            top_bar.setMaximumHeight(top_bar.sizeHint().height())
+        except Exception:
+            pass
+        p1_layout.addWidget(top_bar)
 
         # Splitter: left list, right details
         splitter = QSplitter(self.page1)
@@ -649,11 +665,17 @@ class TraceBrowser(QWidget):
         right_layout.addWidget(self.plot)
         right_layout.addWidget(QLabel("Annotation:"))
         self.annotation = QTextEdit(self.page1)
+        # Limit annotation editor height to at most 300 px
+        try:
+            self.annotation.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            self.annotation.setMaximumHeight(300)
+        except Exception:
+            pass
         self.annotation.textChanged.connect(self._on_annotation_changed)
         right_layout.addWidget(self.annotation)
         splitter.addWidget(right)
 
-        p1_layout.addWidget(splitter)
+        p1_layout.addWidget(splitter, 1)
 
         # Add pages to root
         self.root_layout.addWidget(self.page0)
