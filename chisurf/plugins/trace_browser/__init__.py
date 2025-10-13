@@ -53,8 +53,8 @@ try:
 except Exception:
     burstio = None
 try:
-    from modules.ndxplorer.ndxplorer import reader as ndx_reader
-    from modules.ndxplorer.ndxplorer.plot_main import NDXplorer
+    from ndxplorer import reader as ndx_reader
+    from ndxplorer.plot_main import NDXplorer
 except Exception:
     ndx_reader = None
     NDXplorer = None
@@ -763,6 +763,8 @@ class TraceBrowser(QWidget):
         self.time_window_wizards = []
         # Store reference to NDXplorer windows to prevent garbage collection
         self.ndxplorer_windows = []
+
+        self._on_continue()
 
     def _on_continue(self):
         # Store setup settings and selected channels
