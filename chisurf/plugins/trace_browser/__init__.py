@@ -37,14 +37,27 @@ from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPag
 
 # Import TTTR Time Window plugin
 try:
-    from chisurf.plugins.tttr_time_windows.wizard import TTTRTimeWindowWizard
+    from chisurf.plugins.tttr_time_windows.wizard import TTTRTimeWindowWizard, compute_bids_from_tttr
 except Exception:
     TTTRTimeWindowWizard = None
+    compute_bids_from_tttr = None
 
 try:
     import tttrlib
 except Exception:
     tttrlib = None
+
+# Burst analysis and NDXplorer integration
+try:
+    from chisurf.fio.fluorescence import burst as burstio
+except Exception:
+    burstio = None
+try:
+    from modules.ndxplorer.ndxplorer import reader as ndx_reader
+    from modules.ndxplorer.ndxplorer.plot_main import NDXplorer
+except Exception:
+    ndx_reader = None
+    NDXplorer = None
 
 # Optional docx dependency (python-docx)
 try:
@@ -338,6 +351,11 @@ class TraceBrowser(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Trace Browser")
+        # Set default window size
+        try:
+            self.resize(800, 600)
+        except Exception:
+            pass
 
         # State
         self.current_folder: Optional[pathlib.Path] = None
@@ -394,11 +412,11 @@ class TraceBrowser(QWidget):
         self.folder_label = QLabel("No folder selected", self.page1)
         
         # Back to setup button
-        self.btn_back = QPushButton("\u2190 Back to setup", self.page1)
+        self.btn_back = QPushButton("\u2190 Select setup", self.page1)
         self.btn_back.clicked.connect(self._on_back_to_setup)
         try:
             self.btn_back.setMaximumHeight(26)
-            self.btn_back.setStyleSheet("QPushButton{padding:2px 6px;}")
+            self.btn_back.setStyleSheet("QPushButton{padding:2px 6px; background-color: #ffd166; color: #222;} QPushButton:hover{background-color:#ffca3a;}")
         except Exception:
             pass
         ctrl_row.addWidget(self.btn_back)
@@ -570,9 +588,20 @@ class TraceBrowser(QWidget):
         except Exception:
             pass
 
+        # One-click NDXplorer button
+        self.btn_ndx_oneclick = QToolButton(self.page1)
+        self.btn_ndx_oneclick.setText("to NDX")
+        self.btn_ndx_oneclick.setToolTip("Compute burst analysis (from current TW) and open in NDXplorer")
+        self.btn_ndx_oneclick.clicked.connect(self._on_open_in_ndxplorer)
+        try:
+            self.btn_ndx_oneclick.setAutoRaise(True)
+            self.btn_ndx_oneclick.setToolButtonStyle(Qt.ToolButtonTextOnly)
+        except Exception:
+            pass
+        
         # Add the top control row (compact)
         ctrl_row.addStretch(1)
-
+        
         # New compact tools row below subfolder/filter
         tools_row = QHBoxLayout()
         try:
@@ -583,6 +612,7 @@ class TraceBrowser(QWidget):
         # Order: to HMM | to TW | Export | CSV | DOCX | Clear | Clear caches
         tools_row.addWidget(self.btn_transfer_to_analysis)
         tools_row.addWidget(self.btn_transfer_to_tw)
+        tools_row.addWidget(self.btn_ndx_oneclick)
         tools_row.addSpacing(8)
         tools_row.addWidget(self.btn_export)
         tools_row.addWidget(self.btn_export_csv)
@@ -662,35 +692,48 @@ class TraceBrowser(QWidget):
 
         splitter.addWidget(self.table)
 
-        # Right: plot and annotation
-        right = QWidget(self.page1)
-        right_layout = QVBoxLayout(right)
+        # Right: plot and annotation separated by a vertical splitter
+        right_splitter = QSplitter(self.page1)
+        right_splitter.setOrientation(Qt.Vertical)
         try:
-            right_layout.setContentsMargins(0, 0, 0, 0)
-            right_layout.setSpacing(0)
+            right_splitter.setHandleWidth(2)
         except Exception:
             pass
+
+        # Top: main plot
         self.plot = IntensityPlotWidget(self.page1)
-        right_layout.addWidget(self.plot)
+        right_splitter.addWidget(self.plot)
+
+        # Bottom: annotation editor (resizable via splitter)
         self.annotation = QTextEdit(self.page1)
-        # Limit annotation editor height to at most 300 px
         try:
-            self.annotation.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            self.annotation.setMaximumHeight(300)
+            self.annotation.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            # Remove fixed max height so splitter controls the space
+            self.annotation.setMaximumHeight(16777215)
             self.annotation.setPlaceholderText("Annotation")
             self.annotation.setStyleSheet("QTextEdit { padding: 0; }")
+            self.annotation.setMinimumHeight(60)
         except Exception:
             pass
         self.annotation.textChanged.connect(self._on_annotation_changed)
-        right_layout.addWidget(self.annotation)
-        splitter.addWidget(right)
+        right_splitter.addWidget(self.annotation)
+
+        # Prefer more space for plot initially
+        try:
+            right_splitter.setStretchFactor(0, 3)
+            right_splitter.setStretchFactor(1, 1)
+        except Exception:
+            pass
+
+        splitter.addWidget(right_splitter)
 
         p1_layout.addWidget(splitter, 1)
 
-        # Add pages to root
+        # Add pages to root (start on browser)
         self.root_layout.addWidget(self.page0)
         self.root_layout.addWidget(self.page1)
-        self.page1.hide()
+        self.page0.hide()
+        self.page1.show()
 
         # cache of last plotted file
         self._current_file: Optional[pathlib.Path] = None
@@ -718,6 +761,8 @@ class TraceBrowser(QWidget):
         self.intensity_trace_windows = []
         # Store reference to time window wizards to prevent garbage collection
         self.time_window_wizards = []
+        # Store reference to NDXplorer windows to prevent garbage collection
+        self.ndxplorer_windows = []
 
     def _on_continue(self):
         # Store setup settings and selected channels
@@ -834,6 +879,27 @@ class TraceBrowser(QWidget):
                     files.append(p)
             except Exception:
                 continue
+        # Auto-initialize channels if setup was not used: detect from first TTTR
+        try:
+            if tttrlib is not None and self.selected_channels is None and files:
+                for _p in files:
+                    try:
+                        # ensure non-image
+                        if self._is_image_tttr(_p):
+                            continue
+                    except Exception:
+                        pass
+                    try:
+                        tt = tttrlib.TTTR(str(_p))
+                        chs = sorted(tt.get_used_routing_channels())
+                        if chs:
+                            self.selected_channels = chs
+                            logging.info(f"TraceBrowser: Auto-selected channels from {_p.name}: {chs}")
+                            break
+                    except Exception:
+                        continue
+        except Exception as _e:
+            logging.debug(f"TraceBrowser: Auto channel initialization skipped: {_e}")
         # Build rows according to filter/sort
         rows: List[Tuple[pathlib.Path, int]] = []
         for p in files:
@@ -2128,6 +2194,213 @@ class TraceBrowser(QWidget):
         except Exception as e:
             logging.error(f"TraceBrowser: Failed to transfer {path} to time window plugin: {e}")
             QMessageBox.critical(self, "Transfer Failed", f"Could not open trace in time window plugin.\n\nError: {e}")
+
+
+    def _on_open_in_ndxplorer(self):
+        """One-click pipeline: Use current TW → compute BIDs → write burst analysis → open NDXplorer.
+        - Uses current time-window from Trace Browser.
+        - BIDs are saved to a temporary folder (.bst) for debugging, but main output is a burst analysis folder
+          next to the data (bi4_bur/*.bur with Info/*.mti), following existing naming conventions.
+        """
+        # Validate selection
+        selected_paths = self._selected_paths()
+        if not selected_paths:
+            try:
+                QMessageBox.information(self, "NDXplorer", "Please select a trace file first.")
+            except Exception:
+                pass
+            return
+        if tttrlib is None:
+            try:
+                QMessageBox.critical(self, "NDXplorer", "tttrlib is not available.")
+            except Exception:
+                pass
+            return
+        if NDXplorer is None or ndx_reader is None:
+            try:
+                QMessageBox.critical(self, "NDXplorer", "NDXplorer components are not available.")
+            except Exception:
+                pass
+            return
+
+        src = selected_paths[0]
+        try:
+            tw_ms = float(self.window_ms_spin.value())
+        except Exception:
+            tw_ms = 10.0
+        tw_s = tw_ms / 1000.0
+
+        logging.info(f"TraceBrowser: NDX one-click for {src.name} with TW={tw_ms} ms")
+
+        try:
+            # Load TTTR
+            tttr = tttrlib.TTTR(str(src))
+
+            # Compute BIDs using helper if available, else fallback
+            if compute_bids_from_tttr is not None:
+                bids = compute_bids_from_tttr(tttr, tw_s)
+            else:
+                # Minimal fallback: bin macro times into fixed windows
+                mt = tttr.macro_times
+                res = float(getattr(tttr.header, 'macro_time_resolution', 0.0)) or float(getattr(tttr, 'macro_time_resolution', 0.0))
+                if res <= 0:
+                    raise RuntimeError("Macro time resolution unavailable from TTTR header")
+                clocks_per_bin = max(1, int(np.floor(tw_s / res)))
+                max_clock = int(mt.max()) if len(mt) else 0
+                edges = np.arange(0, max_clock + 1, clocks_per_bin, dtype=np.int64)
+                starts = np.searchsorted(mt, edges, side='left')
+                stops  = np.searchsorted(mt, edges + clocks_per_bin, side='left')
+                bids = np.stack([starts, stops], axis=1)
+
+            if bids is None or getattr(bids, 'size', 0) == 0:
+                try:
+                    QMessageBox.warning(self, "NDXplorer", "No data to compute burst IDs.")
+                except Exception:
+                    pass
+                return
+
+            # Optionally save BIDs to a temp .bst file for inspection
+            try:
+                import tempfile
+                tmpdir = pathlib.Path(tempfile.mkdtemp(prefix="chisurf_bst_"))
+                bst_file = tmpdir / f"{src.stem}.bst"
+                np.savetxt(str(bst_file), bids.astype(np.int64), fmt="%d\t%d")
+                logging.info(f"TraceBrowser: Saved temporary BIDs: {bst_file}")
+            except Exception as _e:
+                logging.debug(f"TraceBrowser: Could not save temporary BIDs: {_e}")
+
+            # Build analysis directory next to data; keep naming consistent with TW tool
+            analysis_dir = src.parent / f"{src.stem}_TW_{tw_ms:.0f}ms"
+            bi4_bur_dir  = analysis_dir / "bi4_bur"
+            info_dir     = analysis_dir / "Info"
+            try:
+                bi4_bur_dir.mkdir(parents=True, exist_ok=True)
+                info_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logging.exception(f"TraceBrowser: Could not create analysis directories: {e}")
+                try:
+                    QMessageBox.critical(self, "NDXplorer", f"Failed to create analysis folder:\n{e}")
+                except Exception:
+                    pass
+                return
+
+            # Derive detectors and windows from setup if present; else auto-detect a single 'all' detector/window
+            detectors = None
+            windows = None
+            try:
+                if isinstance(self.setup_settings, dict) and 'detectors' in self.setup_settings and self.setup_settings['detectors']:
+                    detectors = self.setup_settings['detectors']
+                    # Build windows as union of all micro_time_ranges if not explicitly given
+                    # Here, keep a single window spanning full micro-time if necessary
+                else:
+                    # Auto-detector: use all routing channels
+                    try:
+                        chs = sorted(tttr.get_used_routing_channels())
+                    except Exception:
+                        chs = []
+                    mt_max = int(np.max(tttr.micro_times)) + 1 if len(tttr) > 0 else 0
+                    detectors = {
+                        'all': {
+                            'chs': chs,
+                            'micro_time_ranges': [(0, mt_max if mt_max > 0 else 4096)]
+                        }
+                    }
+                # Windows: single full micro-time window by default
+                if windows is None:
+                    mt_max = int(np.max(tttr.micro_times)) + 1 if len(tttr) > 0 else 0
+                    windows = {'all': (0, mt_max if mt_max > 0 else 4096)}
+            except Exception as e:
+                logging.debug(f"TraceBrowser: Falling back to default detectors/windows: {e}")
+                mt_max = int(np.max(tttr.micro_times)) + 1 if len(tttr) > 0 else 0
+                detectors = {'all': {'chs': [], 'micro_time_ranges': [(0, mt_max if mt_max > 0 else 4096)]}}
+                windows   = {'all': (0, mt_max if mt_max > 0 else 4096)}
+
+            # Convert BIDs to start/stop tuples
+            try:
+                start_stop = [(int(s), int(e)) for s, e in np.asarray(bids).tolist()]
+            except Exception:
+                start_stop = [(int(s), int(e)) for s, e in bids]
+
+            # Write BUR file (via DataFrame pipeline) following existing conventions
+            bur_path = bi4_bur_dir / f"{src.stem}.bur"
+            try:
+                if burstio is None:
+                    raise ImportError("burst utilities unavailable")
+                df = burstio.generate_burst_dataframe(start_stop, str(src.name), tttr, windows, detectors)
+                burstio.write_dataframe_to_bur(df, str(bur_path))
+                logging.info(f"TraceBrowser: Wrote BUR: {bur_path}")
+            except Exception as e:
+                logging.exception(f"TraceBrowser: Failed to write BUR: {e}")
+                try:
+                    QMessageBox.critical(self, "NDXplorer", f"Failed to write .bur file:\n{e}")
+                except Exception:
+                    pass
+                return
+
+            # Write MTI summary for completeness
+            try:
+                if burstio is not None:
+                    max_macro_time = 0.0
+                    try:
+                        res = float(getattr(tttr.header, 'macro_time_resolution', 0.0)) or float(getattr(tttr, 'macro_time_resolution', 0.0))
+                        if len(tttr) > 0 and res > 0:
+                            max_macro_time = float(tttr.macro_times.max()) * res
+                    except Exception:
+                        max_macro_time = 0.0
+                    burstio.write_mti_summary(src, analysis_dir, max_macro_time=max_macro_time, append=True)
+            except Exception as _e:
+                logging.debug(f"TraceBrowser: MTI write skipped: {_e}")
+
+            # Open in NDXplorer
+            try:
+                ds = ndx_reader.read_burst_analysis(str(analysis_dir))
+                ndx = NDXplorer(data_source=ds)
+                try:
+                    ndx.working_path = str(analysis_dir)
+                except Exception:
+                    pass
+                ndx.setWindowTitle(f"NDXplorer - {src.stem} (TW {tw_ms:.0f} ms)")
+                ndx.show()
+                ndx.raise_()
+                ndx.activateWindow()
+
+                # Ensure the analysis folder is actually loaded (not just path set)
+                try:
+                    # Use NDXplorer's loader to read the burst analysis directory
+                    ndx.open_files(file_handles=str(analysis_dir), file_type="burst_dir", append=False)
+                except Exception as _e:
+                    logging.debug(f"TraceBrowser: NDXplorer open_files failed, continuing with preloaded DataSource: {_e}")
+
+                self.ndxplorer_windows.append(ndx)
+
+                # Hook close to drop reference
+                original_close_event = getattr(ndx, 'closeEvent', None)
+                def _close_wrapper(event):
+                    try:
+                        if ndx in self.ndxplorer_windows:
+                            self.ndxplorer_windows.remove(ndx)
+                    except Exception:
+                        pass
+                    if original_close_event:
+                        original_close_event(event)
+                    else:
+                        event.accept()
+                ndx.closeEvent = _close_wrapper
+
+                logging.info("TraceBrowser: NDXplorer opened successfully")
+            except Exception as e:
+                logging.exception(f"TraceBrowser: Failed to open NDXplorer: {e}")
+                try:
+                    QMessageBox.critical(self, "NDXplorer", f"Failed to open NDXplorer:\n{e}")
+                except Exception:
+                    pass
+
+        except Exception as e:
+            logging.exception(f"TraceBrowser: One-click NDX workflow failed: {e}")
+            try:
+                QMessageBox.critical(self, "NDXplorer", f"One-click workflow failed:\n{e}")
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
