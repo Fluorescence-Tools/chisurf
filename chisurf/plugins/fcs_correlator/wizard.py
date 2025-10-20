@@ -336,6 +336,29 @@ class CorrelatorPage(QtWidgets.QWizardPage):
 
 class ChisurfFCSWizard(QtWidgets.QWizard):
 
+    def _on_detector_setup_changed(self, *_):
+        """When the user changes the detector/setup selection, clear the file list
+        to prevent processing files with a mismatched setup. Also clear any
+        preloaded photon filter files/state for safety.
+        """
+        try:
+            # Clear file list on the Files page
+            try:
+                self.file_page.file_list.clear()
+                # Update step availability/completion state
+                self.file_page._files_or_checks_changed()
+            except Exception:
+                pass
+            # Clear photon filter page state (files/tttr objects) if present
+            try:
+                if hasattr(self.photon_select, 'onClearFiles'):
+                    self.photon_select.onClearFiles()
+            except Exception:
+                pass
+        except Exception:
+            # Safety: never raise from a UI signal handler
+            pass
+
     def _sync_photon_filter_setup(self):
         """Ensure photon filter has detector/window definitions from detector page."""
         try:
@@ -930,6 +953,12 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
 
         self.fcs_merger = chisurf.gui.widgets.wizard.WizardFcsMerger()
         self.fcs_merger_page_id = self.addPage(self.fcs_merger)
+
+        # React to changes of detector/setup selection by clearing files for safety
+        try:
+            self.detector_page.setup_combo.currentIndexChanged.connect(self._on_detector_setup_changed)
+        except Exception:
+            pass
 
         # Navigation hooks
         self.currentIdChanged.connect(self._on_current_id_changed)
