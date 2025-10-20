@@ -271,31 +271,40 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to empty TTTR data.")
                 continue
 
+            print(f"Processing chunk {i}...")
+            print(f"Computing masks for chunk {i}...")
             t = tttr.macro_times
 
-            # Select based on channels
             mask_a = tttrlib.TTTRMask()
             mask_b = tttrlib.TTTRMask()
+
             mask_a.select_channels(tttr, ch1, mask=True)
             mask_b.select_channels(tttr, ch2, mask=True)
-            m_a = np.array(mask_a.get_mask(), dtype=bool)
-            m_b = np.array(mask_b.get_mask(), dtype=bool)
+
+            # Get masks as numpy arrays (zero-copy views)
+            m_a = mask_a.mask.astype(bool)
+            m_b = mask_b.mask.astype(bool)
 
             if self.microtime_range_a:
-                mask_a = tttrlib.TTTRMask()
-                mask_a.select_microtime_ranges(tttr, self.microtime_range_a)
-                mask_a.flip()
-                m_a = np.logical_and(m_a, np.array(mask_a.get_mask(), dtype=bool))
+                mask_mt_a = tttrlib.TTTRMask()
+                mask_mt_a.select_microtime_ranges(tttr, self.microtime_range_a)
+                mask_mt_a.flip()
+                m_a = np.logical_and(m_a, mask_mt_a.mask.astype(bool))
 
             if self.microtime_range_b:
-                mask_b = tttrlib.TTTRMask()
-                mask_b.select_microtime_ranges(tttr, self.microtime_range_b)
-                mask_b.flip()
-                m_b = np.logical_and(m_b, np.array(mask_b.get_mask(), dtype=bool))
+                mask_mt_b = tttrlib.TTTRMask()
+                mask_mt_b.select_microtime_ranges(tttr, self.microtime_range_b)
+                mask_mt_b.flip()
+                m_b = np.logical_and(m_b, mask_mt_b.mask.astype(bool))
 
-            w1 = np.array(m_a, dtype=np.float64)
-            w2 = np.array(m_b, dtype=np.float64)
-            sw1, sw2 = sum(w1), sum(w2)
+            # OPTIMIZATION 2: Direct conversion to float64
+            w1 = m_a.astype(np.float64)
+            w2 = m_b.astype(np.float64)
+
+            # OPTIMIZATION 3: Use numpy sum
+            sw1 = w1.sum()
+            sw2 = w2.sum()
+
             # macro_time_resolution is in seconds, multiply by 1000 to get milliseconds
             dT = tttr.header.macro_time_resolution * 1000.0
 
@@ -314,6 +323,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 t_start = t[0]
                 t_end = t[-1]
             dur = (t_end - t_start) * dT  # duration in milliseconds
+
+            print(f"Computing correlation for chunk {i}...")
+            print(f"Duration: {dur}, start: {t_start}, end: {t_end}, dT: {dT}")
 
             if sw1 > 0.0 and sw2 > 0.0:
                 correlator = tttrlib.Correlator(**correlation_settings)
