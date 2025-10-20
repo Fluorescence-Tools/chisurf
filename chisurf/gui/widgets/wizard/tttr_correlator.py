@@ -297,11 +297,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 mask_mt_b.flip()
                 m_b = np.logical_and(m_b, mask_mt_b.mask.astype(bool))
 
-            # OPTIMIZATION 2: Direct conversion to float64
-            w1 = m_a.astype(np.float64)
-            w2 = m_b.astype(np.float64)
+            w1 = np.array(m_a, dtype=np.float64)
+            w2 = np.array(m_b, dtype=np.float64)
 
-            # OPTIMIZATION 3: Use numpy sum
             sw1 = w1.sum()
             sw2 = w2.sum()
 
