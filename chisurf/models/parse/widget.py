@@ -134,6 +134,14 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # Connect to the destroyed signal to clean up temp files
         self.destroyed.connect(self.cleanup_temp_files)
 
+        # Listen for external changes to the model function (e.g., via CLI macro)
+        try:
+            self.model.add_func_listener(self._on_model_func_changed)
+            # Ensure we detach on widget destruction
+            self.destroyed.connect(lambda: self.model.remove_func_listener(self._on_model_func_changed))
+        except Exception:
+            pass
+
     def load_model_file(self, filename: pathlib.Path):
         with io.open_maybe_zipped(filename, 'r') as fp:
             self._model_file = filename
@@ -609,27 +617,111 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # Show the dialog
         self.equationDialog.show()
 
+    # ---- Small internal helpers to avoid duplication ----
+    def _set_editor_text_safely(self, text: str) -> None:
+        try:
+            self.plainTextEdit.blockSignals(True)
+        except Exception:
+            pass
+        try:
+            self.plainTextEdit.setPlainText(text)
+        finally:
+            try:
+                self.plainTextEdit.blockSignals(False)
+            except Exception:
+                pass
+
+    def _apply_yaml_defaults_if_match(self, func: str) -> None:
+        """Apply YAML default initial values if func matches the selected model's equation."""
+        try:
+            yaml_equation = self.models[self.model_name]['equation']
+            if func == yaml_equation:
+                ivs = self.models[self.model_name]['initial']
+                for key, val in ivs.items():
+                    try:
+                        self.model.parameter_dict[key].value = float(val)
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+
+    def _update_equation_preview(self, equation: str) -> None:
+        """Update formatted equation + description preview and dialog if open."""
+        try:
+            formatted_equation = self.format_equation(equation)
+            description = self.models[self.model_name]['description']
+            combined_html = f"{description}<hr/><h3>Equation:</h3>{formatted_equation}"
+            self.textEdit.setHtml(combined_html)
+            self.textEdit.setVisible(True)
+            if self.equationDialog is not None and self.equationDialog.isVisible():
+                self.equationDialog.setEquation(formatted_equation)
+        except Exception:
+            pass
+
     def onEquationChanged(self):
+        # First, update the widget's own model so its parsed parameters match the editor
+        equation = str(self.plainTextEdit.toPlainText()).strip()
+        try:
+            self.model.func = equation
+        except Exception:
+            pass
+
+        # Then propagate to the currently selected fit(s) via macro (CLI-style path)
         self.onUpdateFunc()
-        self.set_default_parameter_values()
-        self.create_parameter_widgets()
-        self.model.update_model()
 
-        # Get the new equation and format it
-        equation = self.plainTextEdit.toPlainText()
-        formatted_equation = self.format_equation(equation)
+        # Apply YAML defaults if the current equation matches the selected YAML model
+        self._apply_yaml_defaults_if_match(equation)
 
-        # Update the textEdit with the new equation while preserving the description
-        description = self.models[self.model_name]['description']
-        combined_html = f"{description}<hr/><h3>Equation:</h3>{formatted_equation}"
-        self.textEdit.setHtml(combined_html)
-        self.textEdit.setVisible(True)  # Make sure textEdit is visible
+        # Rebuild parameter widgets from the (now) parsed parameters
+        try:
+            self.create_parameter_widgets()
+        except Exception:
+            pass
 
-        # Update the equation in the dialog if it's visible (keeping for backward compatibility)
-        if self.equationDialog is not None and self.equationDialog.isVisible():
-            self.equationDialog.setEquation(formatted_equation)
+        # Update the underlying model curve
+        try:
+            self.model.update_model()
+        except Exception:
+            pass
+
+        # Update the inline preview (and dialog if open)
+        self._update_equation_preview(equation)
 
 
+
+    def _on_model_func_changed(self, model=None):
+        """Handle external changes to the model function (e.g., CLI macro).
+
+        This rebuilds parameter widgets and refreshes previews without routing
+        back through onEquationChanged() to avoid feedback loops.
+        """
+        # Determine the new function string
+        try:
+            func = self.model.func if model is None else getattr(model, 'func', self.model.func)
+        except Exception:
+            func = None
+
+        # Update editor text safely without emitting signals
+        if func is not None:
+            self._set_editor_text_safely(func)
+
+        # Apply YAML defaults if matches current selected YAML model
+        self._apply_yaml_defaults_if_match(func or '')
+
+        # Recreate parameter widgets based on newly parsed parameters
+        try:
+            self.create_parameter_widgets()
+        except Exception:
+            pass
+
+        # Update the underlying model curve
+        try:
+            self.model.update_model()
+        except Exception:
+            pass
+
+        # Refresh formatted equation + description preview (and dialog if open)
+        self._update_equation_preview(func or (self.plainTextEdit.toPlainText() if func is None else ''))
 
 class ParseModelWidget(ParseModel, ModelWidget):
 
