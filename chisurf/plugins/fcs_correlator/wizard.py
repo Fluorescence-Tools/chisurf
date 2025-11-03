@@ -138,7 +138,8 @@ class FileAndStepsPage(QtWidgets.QWizardPage):
         checks = QtWidgets.QHBoxLayout()
         self.cb_photon_filter = QtWidgets.QCheckBox("Count rate/burst filter")
         self.cb_fcs_merger = QtWidgets.QCheckBox("FCS merger")
-        self.cb_photon_filter.setChecked(True)
+        # Default: disable photon/count-rate filter, enable FCS merger
+        self.cb_photon_filter.setChecked(False)
         self.cb_fcs_merger.setChecked(True)
         checks.addWidget(self.cb_photon_filter)
         checks.addWidget(self.cb_fcs_merger)

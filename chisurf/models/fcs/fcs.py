@@ -40,3 +40,16 @@ class ParseFCSWidget(ParseModelWidget):
         fn = pathlib.Path(__file__).parent / 'models.yaml'
         super().__init__(fit=fit, model_file=fn, **kwargs)
 
+        # Ensure the default selected model is "Diffusion with one bunching"
+        # which corresponds to the YAML entry "3D Gauss, 1 bunching".
+        # Allow callers to override via kwargs['model_name'] if provided.
+        default_model = kwargs.get('model_name', "3D Gauss, 1 bunching")
+        try:
+            if hasattr(self, 'parse') and default_model in self.parse.models:
+                self.parse.model_name = default_model
+                # Update equation, parameters, and UI to reflect the selection
+                self.parse.onModelChanged()
+        except Exception:
+            # Be forgiving during initialization if UI is not fully wired yet
+            pass
+
