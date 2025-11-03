@@ -383,7 +383,7 @@ def process_ptu_file(
         )
         jordi_filename = f"molecule_{lab:03d}.jordi"
         jordi_path = jordis_folder / jordi_filename
-        write_jordi(jordi_vector, jordi_path, delimiter='\t', fmt='%.6f')
+        write_jordi(jordi_path, data=jordi_vector, delimiter='\t', fmt='%.6f')
 
         fit = tttrlib.Fit23(
             dt=DT_EFFECTIVE_ns,
