@@ -557,6 +557,214 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             event.accept()
 
 
+class FittingParameterDetailPopup(QtWidgets.QDialog):
+
+    def __init__(self, controller: 'FittingParameterWidget'):
+        super().__init__(controller)
+        # Use Popup flag so clicks outside cause deactivation; we then hide on focus loss
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Popup)
+        self.controller = controller
+        self.setObjectName('FittingParameterDetailPopup')
+        # Ensure we hide if the window deactivates (extra safety beyond Qt.Popup)
+        self.installEventFilter(self)
+        # Ensure the popup can take focus and is activated when shown
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating, False)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(6)
+
+        # Header
+        self.lbl_title = QtWidgets.QLabel(f"{controller.fitting_parameter.name}")
+        font = self.lbl_title.font()
+        font.setBold(True)
+        self.lbl_title.setFont(font)
+        layout.addWidget(self.lbl_title)
+
+        # Link info and actions
+        link_row = QtWidgets.QHBoxLayout()
+        self.lbl_link = QtWidgets.QLabel("")
+        self.btn_change_link = QtWidgets.QToolButton()
+        self.btn_change_link.setText("Link…")
+        self.btn_unlink = QtWidgets.QToolButton()
+        self.btn_unlink.setText("Unlink")
+        link_row.addWidget(self.lbl_link, 1)
+        link_row.addWidget(self.btn_change_link)
+        link_row.addWidget(self.btn_unlink)
+        layout.addLayout(link_row)
+
+        # Value editor
+        val_row = QtWidgets.QHBoxLayout()
+        val_row.addWidget(QtWidgets.QLabel("Value:"))
+        self.sb_value = pg.SpinBox(dec=True, decimals=self.controller.widget_value.opts.get('decimals', 6), finite=False)
+        val_row.addWidget(self.sb_value)
+        layout.addLayout(val_row)
+
+        # Fixed checkbox
+        self.cb_fixed = QtWidgets.QCheckBox("Fixed")
+        layout.addWidget(self.cb_fixed)
+
+        # Bounds group
+        bounds_group = QtWidgets.QGroupBox("Bounds")
+        b_layout = QtWidgets.QGridLayout(bounds_group)
+        self.cb_bounds_on = QtWidgets.QCheckBox("Enable bounds")
+        b_layout.addWidget(self.cb_bounds_on, 0, 0, 1, 2)
+        b_layout.addWidget(QtWidgets.QLabel("Lower:"), 1, 0)
+        self.sb_lb = pg.SpinBox(dec=True, decimals=self.controller.widget_lower_bound.opts.get('decimals', 6))
+        b_layout.addWidget(self.sb_lb, 1, 1)
+        b_layout.addWidget(QtWidgets.QLabel("Upper:"), 2, 0)
+        self.sb_ub = pg.SpinBox(dec=True, decimals=self.controller.widget_upper_bound.opts.get('decimals', 6))
+        b_layout.addWidget(self.sb_ub, 2, 1)
+        layout.addWidget(bounds_group)
+
+
+        # Close hint
+        hint = QtWidgets.QLabel("Click outside to close")
+        hint.setStyleSheet("color: gray; font-size: 9pt")
+        layout.addWidget(hint)
+
+        # Connections
+        self.btn_change_link.clicked.connect(self._on_change_link)
+        self.btn_unlink.clicked.connect(self._on_unlink)
+        self.cb_fixed.toggled.connect(self._on_fixed_toggled)
+        self.cb_bounds_on.toggled.connect(self._on_bounds_on_toggled)
+        self.sb_lb.editingFinished.connect(self._on_bounds_changed)
+        self.sb_ub.editingFinished.connect(self._on_bounds_changed)
+        self.sb_value.editingFinished.connect(self._on_value_changed)
+
+        self.refresh_from_model()
+
+    def eventFilter(self, obj, event):
+        # Hide the popup when it loses focus or the window deactivates
+        if event is not None:
+            et = int(event.type())
+            if et == int(QtCore.QEvent.FocusOut) or et == int(QtCore.QEvent.WindowDeactivate):
+                # Use hide (not close) as requested
+                self.hide()
+                return True
+        return super().eventFilter(obj, event)
+
+    def focusOutEvent(self, event: QtGui.QFocusEvent):
+        # Extra safety: hide on focus out
+        try:
+            self.hide()
+        finally:
+            event.accept()
+
+    def _on_change_link(self):
+        menu = self.controller.build_link_menu()
+        # Show menu under the button
+        pos = self.btn_change_link.mapToGlobal(QtCore.QPoint(0, self.btn_change_link.height()))
+        menu.exec_(pos)
+        # After possible changes, refresh
+        self.controller.finalize()
+        self.refresh_from_model()
+
+    def _on_unlink(self):
+        fp = self.controller.fitting_parameter
+        chisurf.run(
+            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].link = None\n"
+            f"chisurf.fits[{fp.fit_idx}].update()"
+        )
+        self.controller.finalize()
+        self.refresh_from_model()
+
+    def _on_fixed_toggled(self):
+        fp = self.controller.fitting_parameter
+        chisurf.run(
+            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].fixed = {self.cb_fixed.isChecked()}\n"
+            f"chisurf.fits[{fp.fit_idx}].update()"
+        )
+        self.controller.finalize()
+
+    def _on_bounds_on_toggled(self):
+        fp = self.controller.fitting_parameter
+        checked = self.cb_bounds_on.isChecked()
+        # Toggle bounds_on in the model
+        chisurf.run(
+            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds_on = {checked}"
+        )
+        # Enable/disable editors immediately for better UX
+        self.sb_lb.setEnabled(checked)
+        self.sb_ub.setEnabled(checked)
+        # If turning ON and current bounds are invalid/missing, initialize them from the UI spin boxes
+        if checked:
+            bounds_valid = False
+            try:
+                b = getattr(fp, 'bounds', None)
+                bounds_valid = isinstance(b, (tuple, list)) and len(b) == 2
+            except Exception:
+                bounds_valid = False
+            if not bounds_valid:
+                chisurf.run(
+                    f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds = ({self.sb_lb.value()}, {self.sb_ub.value()})"
+                )
+        # Refresh UI/model without risking unpack errors
+        self.controller.finalize()
+        self.refresh_from_model()
+
+    def _on_bounds_changed(self):
+        fp = self.controller.fitting_parameter
+        chisurf.run(
+            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds = ({self.sb_lb.value()}, {self.sb_ub.value()})"
+        )
+        self.controller.finalize()
+        self.refresh_from_model()
+
+    def _on_value_changed(self):
+        fp = self.controller.fitting_parameter
+        chisurf.run(
+            f"parameter = chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}']\n"
+            f"fixed = parameter.fixed \n"
+            f"parameter.fixed = False\n"
+            f"parameter.value = {self.sb_value.value()} \n"
+            f"parameter.fixed = fixed\n"
+            f"chisurf.fits[{fp.fit_idx}].finalize()"
+        )
+        self.controller.finalize()
+
+    def refresh_from_model(self):
+        fp = self.controller.fitting_parameter
+        # Update link label
+        if getattr(fp, 'link', None) is not None:
+            self.lbl_link.setText(f"Linked to: {fp.link.name}")
+            self.btn_unlink.setEnabled(True)
+        else:
+            self.lbl_link.setText("Not linked")
+            self.btn_unlink.setEnabled(False)
+        # Value
+        try:
+            v = float(fp.value)
+        except Exception:
+            v = self.controller.widget_value.value()
+        self.sb_value.setValue(v)
+        # Fixed
+        self.cb_fixed.blockSignals(True)
+        self.cb_fixed.setChecked(bool(fp.fixed))
+        self.cb_fixed.blockSignals(False)
+        # Bounds
+        self.cb_bounds_on.blockSignals(True)
+        self.sb_lb.blockSignals(True)
+        self.sb_ub.blockSignals(True)
+        self.cb_bounds_on.setChecked(bool(fp.bounds_on))
+        # Enable/disable editors based on bounds_on
+        self.sb_lb.setEnabled(bool(fp.bounds_on))
+        self.sb_ub.setEnabled(bool(fp.bounds_on))
+        try:
+            b = getattr(fp, 'bounds', None)
+            if isinstance(b, (tuple, list)) and len(b) == 2:
+                lb, ub = b
+                self.sb_lb.setValue(float(lb))
+                self.sb_ub.setValue(float(ub))
+        except Exception:
+            pass
+        self.cb_bounds_on.blockSignals(False)
+        self.sb_lb.blockSignals(False)
+        self.sb_ub.blockSignals(False)
+
+
+
+
 class FittingParameterWidget(Controller):
 
     def make_linkcall(self, fit_idx: int, parameter_name: str):
@@ -600,8 +808,7 @@ class FittingParameterWidget(Controller):
 
         return linkcall
 
-    def contextMenuEvent(self, event: QtGui.QCloseEvent):
-
+    def build_link_menu(self) -> QtWidgets.QMenu:
         menu = QtWidgets.QMenu(self)
         menu.setTitle(
             "Link " + self.fitting_parameter.name + " to:"
@@ -639,6 +846,11 @@ class FittingParameterWidget(Controller):
                 submenu.addMenu(action_submenu)
 
                 menu.addMenu(submenu)
+        return menu
+
+    def contextMenuEvent(self, event: QtGui.QCloseEvent):
+
+        menu = self.build_link_menu()
         menu.exec_(event.globalPos())
 
     def __str__(self):
@@ -681,6 +893,7 @@ class FittingParameterWidget(Controller):
         self.callback = callback
         self.name = fitting_parameter.name
         self.fitting_parameter = fitting_parameter
+        self._details_popup = None  # created lazily on first label click
 
         self.widget_value = pg.SpinBox(
             dec=True,
@@ -710,6 +923,15 @@ class FittingParameterWidget(Controller):
         self.widget_fix.setVisible(fixable or not hide_fix_checkbox)
         self.widget.setHidden(hide_bounds)
         self.widget_link.setDisabled(hide_link)
+
+        # Make label interactive: clicking opens a details popup
+        try:
+            self.label.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+            self.label.setToolTip("Click to view and edit details")
+            # install a mousePress handler
+            self.label.mousePressEvent = self._on_label_mouse_press  # type: ignore
+        except Exception:
+            pass
 
         # Display of values
         try:
@@ -754,12 +976,7 @@ class FittingParameterWidget(Controller):
         )
 
         # Variable is bounded
-        self.widget_bounds_on.toggled.connect(
-            lambda: chisurf.run(
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].bounds_on = "
-                f"{self.widget_bounds_on.isChecked()}"
-            )
-        )
+        self.widget_bounds_on.toggled.connect(self._on_main_bounds_on_toggled)
 
         self.widget_lower_bound.editingFinished.connect(
             lambda: chisurf.run(
@@ -788,6 +1005,46 @@ class FittingParameterWidget(Controller):
         if isinstance(layout, QtWidgets.QLayout):
             layout.addWidget(self)
 
+
+    def _on_label_mouse_press(self, event: QtGui.QMouseEvent):
+        try:
+            if event.button() == QtCore.Qt.LeftButton:
+                self._open_details_popup()
+            else:
+                # fall back to default behavior
+                super().mousePressEvent(event)
+        except Exception:
+            pass
+
+    def _open_details_popup(self):
+        # Lazy-create popup
+        if self._details_popup is None or not isinstance(self._details_popup, FittingParameterDetailPopup):
+            self._details_popup = FittingParameterDetailPopup(self)
+        # Position popup under the label
+        try:
+            global_pos = self.label.mapToGlobal(self.label.rect().bottomLeft())
+        except Exception:
+            global_pos = QtGui.QCursor.pos()
+        self._details_popup.move(global_pos)
+        self._details_popup.refresh_from_model()
+        self._details_popup.show()
+        # Ensure the popup gains focus and is on top
+        try:
+            self._details_popup.raise_()
+            self._details_popup.activateWindow()
+            self._details_popup.setFocus(QtCore.Qt.PopupFocusReason)
+            # Some platforms need delayed activation
+            QtCore.QTimer.singleShot(0, self._details_popup.activateWindow)
+        except Exception:
+            pass
+
+    def _on_label_mouse_press(self, event: QtGui.QMouseEvent):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._open_details_popup()
+        else:
+            # For other buttons, fall back to default behavior (e.g., open context menu on right click)
+            super().mousePressEvent(event)
+
     def set_linked(self, is_linked: bool):
         if is_linked:
             self.widget_value.setEnabled(False)
@@ -804,6 +1061,28 @@ class FittingParameterWidget(Controller):
 
     def setValue(self, v):
         self.widget_value.setValue(v)
+
+    def _on_main_bounds_on_toggled(self):
+        fp = self.fitting_parameter
+        checked = self.widget_bounds_on.isChecked()
+        # Toggle bounds_on in the model
+        chisurf.run(
+            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds_on = {checked}"
+        )
+        # If turning ON and current bounds are invalid/missing, initialize them from the UI spin boxes
+        if checked:
+            bounds_valid = False
+            try:
+                b = getattr(fp, 'bounds', None)
+                bounds_valid = isinstance(b, (tuple, list)) and len(b) == 2
+            except Exception:
+                bounds_valid = False
+            if not bounds_valid:
+                chisurf.run(
+                    f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds = ({self.widget_lower_bound.value()}, {self.widget_upper_bound.value()})"
+                )
+        # Refresh UI/model without risking unpack errors
+        self.finalize()
 
     def finalize(self, *args):
         # Ensure execution on the widget's thread (GUI thread). If called from another thread,
@@ -835,25 +1114,28 @@ class FittingParameterWidget(Controller):
         self.widget_value.setValue(_v)
         self.widget_fix.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.fixed else QtCore.Qt.Unchecked)
 
-        # Sync bounds UI
+        # Sync bounds UI safely (no unpack unless valid)
         try:
-            lb, ub = self.fitting_parameter.bounds
-            # Avoid emitting change signals while programmatically updating
             self.widget_bounds_on.blockSignals(True)
             self.widget_lower_bound.blockSignals(True)
             self.widget_upper_bound.blockSignals(True)
-            self.widget_bounds_on.setCheckState(QtCore.Qt.Checked if self.fitting_parameter.bounds_on else QtCore.Qt.Unchecked)
-            # Safely update bound spin boxes; handle None
-            try:
-                lb_val = float(lb)
-            except Exception:
-                lb_val = self.widget_lower_bound.value()
-            try:
-                ub_val = float(ub)
-            except Exception:
-                ub_val = self.widget_upper_bound.value()
+            bounds_on = bool(getattr(self.fitting_parameter, 'bounds_on', False))
+            self.widget_bounds_on.setCheckState(QtCore.Qt.Checked if bounds_on else QtCore.Qt.Unchecked)
+
+            # Default to current UI values; replace with model values only if valid
+            lb_val = self.widget_lower_bound.value()
+            ub_val = self.widget_upper_bound.value()
+            b = getattr(self.fitting_parameter, 'bounds', None)
+            if isinstance(b, (tuple, list)) and len(b) == 2:
+                try:
+                    lb_val = float(b[0])
+                    ub_val = float(b[1])
+                except Exception:
+                    pass
             self.widget_lower_bound.setValue(lb_val)
             self.widget_upper_bound.setValue(ub_val)
+        except Exception:
+            pass
         finally:
             try:
                 self.widget_bounds_on.blockSignals(False)
@@ -862,10 +1144,14 @@ class FittingParameterWidget(Controller):
             except Exception:
                 pass
 
-        # Tooltip
-        if self.fitting_parameter.bounds_on:
-            lower, upper = self.fitting_parameter.bounds
-            tooltip_text = f"bound: ({lower}, {upper})\n"
+        # Tooltip (guard against invalid bounds)
+        if getattr(self.fitting_parameter, 'bounds_on', False):
+            b = getattr(self.fitting_parameter, 'bounds', None)
+            if isinstance(b, (tuple, list)) and len(b) == 2:
+                lower, upper = b
+                tooltip_text = f"bound: ({lower}, {upper})\n"
+            else:
+                tooltip_text = "bounds: on (unset)\n"
         else:
             tooltip_text = "bounds: off\n"
 
@@ -926,6 +1212,20 @@ class FittingParameterWidget(Controller):
             tooltip = "linked to " + self.fitting_parameter.link.name
             self.widget_link.setToolTip(tooltip)
             self.widget_value.setEnabled(False)
+
+        # If the details popup is open, refresh its contents to reflect latest model state
+        try:
+            if getattr(self, '_details_popup', None) is not None and self._details_popup.isVisible():
+                self._details_popup.refresh_from_model()
+        except Exception:
+            pass
+
+        # If the details popup is open, refresh its contents to reflect latest model state
+        try:
+            if getattr(self, '_details_popup', None) is not None and self._details_popup.isVisible():
+                self._details_popup.refresh_from_model()
+        except Exception:
+            pass
 
         self.blockSignals(False)
 
