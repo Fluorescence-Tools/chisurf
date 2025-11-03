@@ -570,6 +570,8 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
         # Ensure the popup can take focus and is activated when shown
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_ShowWithoutActivating, False)
+        # Counter to temporarily suspend auto-hide on focus loss (e.g., while link menu is open)
+        self._suspend_auto_hide = 0
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(6)
@@ -634,20 +636,38 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
 
         self.refresh_from_model()
 
+    def _begin_suspend_auto_hide(self):
+        try:
+            self._suspend_auto_hide += 1
+        except Exception:
+            self._suspend_auto_hide = 1
+
+    def _end_suspend_auto_hide(self):
+        try:
+            self._suspend_auto_hide -= 1
+            if self._suspend_auto_hide < 0:
+                self._suspend_auto_hide = 0
+        except Exception:
+            self._suspend_auto_hide = 0
+
     def eventFilter(self, obj, event):
-        # Hide the popup when it loses focus or the window deactivates
+        # Hide the popup when it loses focus or the window deactivates, unless suspended
         if event is not None:
             et = int(event.type())
             if et == int(QtCore.QEvent.FocusOut) or et == int(QtCore.QEvent.WindowDeactivate):
+                if getattr(self, '_suspend_auto_hide', 0) > 0:
+                    # Do not hide; let event pass through
+                    return False
                 # Use hide (not close) as requested
                 self.hide()
                 return True
         return super().eventFilter(obj, event)
 
     def focusOutEvent(self, event: QtGui.QFocusEvent):
-        # Extra safety: hide on focus out
+        # Extra safety: hide on focus out unless suspended
         try:
-            self.hide()
+            if getattr(self, '_suspend_auto_hide', 0) == 0:
+                self.hide()
         finally:
             event.accept()
 
@@ -655,10 +675,22 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
         menu = self.controller.build_link_menu()
         # Show menu under the button
         pos = self.btn_change_link.mapToGlobal(QtCore.QPoint(0, self.btn_change_link.height()))
-        menu.exec_(pos)
-        # After possible changes, refresh
-        self.controller.finalize()
-        self.refresh_from_model()
+        # While the menu is open and linking occurs, do not auto-hide the popup
+        self._begin_suspend_auto_hide()
+        try:
+            menu.exec_(pos)
+            # After possible changes, refresh UI/model
+            self.controller.finalize()
+            self.refresh_from_model()
+        finally:
+            self._end_suspend_auto_hide()
+            # Keep the popup open and focused after linking
+            try:
+                self.raise_()
+                self.activateWindow()
+                self.setFocus(QtCore.Qt.PopupFocusReason)
+            except Exception:
+                pass
 
     def _on_unlink(self):
         fp = self.controller.fitting_parameter
