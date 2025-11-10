@@ -1,21 +1,19 @@
 """
-ChiSurf Update Plugin
+ChiSurf Update & Conda Manager Plugin
 
-This plugin provides functionality to check for and install updates for ChiSurf.
-It supports updating on Windows, macOS, and Linux, and handles elevated
-privileges when needed.
+This plugin provides:
+- Update checker and installer for ChiSurf (via conda)
+- A simple Conda Package Manager UI to search/install/update/remove packages,
+  manage environments (list/create/remove/clone/export/import), and manage
+  channels (list/add/remove)
 
-Features:
-- Check for available updates
-- Download and install updates using conda
-- Handle platform-specific update logic
-- Inform the user to restart the application manually after updating
+It supports Windows, macOS, and Linux. On Windows, elevated privileges are
+handled when required by the updater.
 
-Note:
-The update process will close all ChiSurf windows and continue in a separate window.
-After the update completes, the user will need to restart ChiSurf manually.
-
-The update URL is configured in the settings or defaults to the one specified in info.py.
+Notes:
+- Updating ChiSurf may close all ChiSurf windows and continue in a separate window.
+  After completion, restart ChiSurf manually.
+- The update URL is configured in the settings or defaults to the one specified in info.py.
 """
 
 import sys
@@ -24,17 +22,19 @@ import yaml
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
     QProgressDialog, QApplication, QComboBox, QTextEdit,
-    QMessageBox, QRadioButton, QLineEdit, QFileDialog, QGroupBox, QCheckBox
+    QMessageBox, QRadioButton, QLineEdit, QFileDialog, QGroupBox, QCheckBox,
+    QListWidget
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 
 from .updater import ChiSurfUpdater, check_for_updates, update_chisurf
+from .conda_widget import CondaManagerDialog
 from chisurf import info
 import chisurf.settings as _cs_settings_mod
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Help:Check for Updates"
+name = "Help:Updates and Packages"
 
 class UpdaterWidget(QWidget):
     """
@@ -198,6 +198,15 @@ class UpdaterWidget(QWidget):
         self.update_button.setEnabled(False)  # Disabled until updates are available
         button_layout.addWidget(self.update_button)
 
+        # Open Package Manager button
+        self.conda_manager_button = QPushButton("Package Manager")
+        try:
+            self.conda_manager_button.setToolTip("Open the package manager to manage conda packages in your environment.")
+            self.conda_manager_button.clicked.connect(self.open_conda_manager)
+        except Exception:
+            pass
+        button_layout.addWidget(self.conda_manager_button)
+
         layout.addLayout(button_layout)
 
         # Changelog area
@@ -221,6 +230,17 @@ class UpdaterWidget(QWidget):
             self.resize(800, 600)
         except Exception:
             pass
+
+    def open_conda_manager(self):
+        """Open the Conda Package Manager dialog."""
+        try:
+            dlg = CondaManagerDialog(self)
+            dlg.exec_()
+        except Exception as e:
+            try:
+                QMessageBox.critical(self, "Conda Manager", f"Failed to open Conda Manager:\n{e}")
+            except Exception:
+                pass
 
     def _load_startup_settings(self) -> None:
         """Load updater startup settings from user chisurf settings.

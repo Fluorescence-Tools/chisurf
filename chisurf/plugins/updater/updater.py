@@ -63,6 +63,10 @@ class ChiSurfUpdater:
     2. Download and install updates using conda
     3. Handle platform-specific update logic (Windows, macOS, Linux)
     4. Restart the application after updating
+    
+    Note: For broader conda package management (listing/searching/installing arbitrary
+    packages, managing environments and channels), see the `CondaManager` class defined
+    in this module. The updater will instantiate and share configuration with it.
     """
 
     def __init__(self, update_url: Optional[str] = None, channel: str = "main"):
@@ -120,6 +124,11 @@ class ChiSurfUpdater:
         self.channel = channel
         self.current_version = info.__version__
         self.settings_path = get_path('settings')
+        # Expose a shared CondaManager for general package management
+        try:
+            self.conda = CondaManager(self)  # type: ignore[name-defined]
+        except Exception:
+            self.conda = None
 
     def check_for_updates(self) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -999,17 +1008,31 @@ class ChiSurfUpdater:
             # Log the command being executed
             logging.debug(f"Executing command: {' '.join(cmd)}")
 
+            popen_cmd = cmd
+            use_shell = False
+
+            # On Windows, calling a .bat/.cmd directly without shell may fail.
+            if self.system == 'windows':
+                exe = (cmd[0] if cmd else '').lower()
+                if exe.endswith('.bat') or exe.endswith('.cmd'):
+                    # Wrap with cmd.exe /C
+                    popen_cmd = ['cmd.exe', '/C', *cmd]
+                    logging.debug("Wrapping batch file execution with cmd.exe /C for Windows")
+
             process = subprocess.Popen(
-                cmd,
+                popen_cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                shell=use_shell
             )
             stdout, stderr = process.communicate()
 
             # Log command output at debug level instead of displaying it
             if stdout:
                 logging.debug(f"Command stdout:\n{stdout}")
+            if stderr:
+                logging.debug(f"Command stderr:\n{stderr}")
 
             if process.returncode != 0:
                 error_msg = f"Command failed with exit code {process.returncode}: {stderr}"
@@ -1038,22 +1061,39 @@ class ChiSurfUpdater:
             return self._run_command(cmd)
 
         try:
-            # Create a temporary batch file to run the command
-            with tempfile.NamedTemporaryFile(suffix='.bat', delete=False, mode='w') as f:
-                f.write('@echo off\n')
-                f.write(' '.join(cmd) + '\n')
-                f.write('if %ERRORLEVEL% NEQ 0 (\n')
-                f.write('  echo Update failed with error code %ERRORLEVEL%\n')
-                f.write('  exit /b %ERRORLEVEL%\n')
-                f.write(')\n')
-                f.write('echo Update successful\n')
-                batch_file = f.name
+            # Create a temporary batch file to run the command with logging
+            temp_dir = tempfile.mkdtemp(prefix="chisurf_elev_")
+            log_file = os.path.join(temp_dir, "elevated_command.log")
 
-            # Run the batch file with elevated privileges using PowerShell
+            # Properly quote arguments that contain spaces
+            quoted_cmd = [f'"{arg}"' if ' ' in str(arg) and not str(arg).startswith('"') else str(arg) for arg in cmd]
+            win_cmd_str = " ".join(quoted_cmd)
+
+            batch_file = os.path.join(temp_dir, "run_elevated.bat")
+            with open(batch_file, 'w') as f:
+                f.write('@echo off\n')
+                f.write(f'echo Running elevated command at %DATE% %TIME% > "{log_file}"\n')
+                f.write(f'echo Command: {win_cmd_str} >> "{log_file}"\n')
+                # Execute the command and capture all output to the log
+                f.write(f'{win_cmd_str} >> "{log_file}" 2>&1\n')
+                f.write('set EXITCODE=%ERRORLEVEL%\n')
+                f.write('echo. >> "' + log_file + '"\n')
+                f.write('echo Exit code: %EXITCODE% >> "' + log_file + '"\n')
+                f.write('if %EXITCODE% NEQ 0 (\n')
+                f.write('  echo Elevated command failed with error code %EXITCODE% >> "' + log_file + '"\n')
+                f.write('  exit /b %EXITCODE%\n')
+                f.write(')\n')
+                f.write('echo Elevated command completed successfully >> "' + log_file + '"\n')
+                f.write('exit /b 0\n')
+
+            # Run the batch file with elevated privileges using PowerShell and wait for completion
             powershell_cmd = [
-                'powershell.exe', '-Command',
-                f'Start-Process -FilePath "{batch_file}" -Verb RunAs -Wait'
+                'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+                f"$p = Start-Process -FilePath '{batch_file}' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
             ]
+
+            logging.debug(f"Running elevated batch: {batch_file}")
+            logging.debug(f"Elevated log will be written to: {log_file}")
 
             process = subprocess.Popen(
                 powershell_cmd,
@@ -1063,14 +1103,32 @@ class ChiSurfUpdater:
             )
             stdout, stderr = process.communicate()
 
-            # Clean up the temporary file
+            if stdout:
+                logging.debug(f"Elevation launcher stdout:\n{stdout}")
+            if stderr:
+                logging.debug(f"Elevation launcher stderr:\n{stderr}")
+
+            # Read last lines of the elevated log if present for quick context
+            tail_hint = ""
             try:
-                os.unlink(batch_file)
-            except:
+                if os.path.exists(log_file):
+                    with open(log_file, 'r', errors='ignore') as lf:
+                        lines = lf.readlines()
+                        tail = "".join(lines[-25:]) if lines else ""
+                        tail_hint = tail.strip()
+            except Exception:
                 pass
 
             if process.returncode != 0:
-                return False, f"Elevation failed with exit code {process.returncode}: {stderr}"
+                err_msg = f"Elevation failed with exit code {process.returncode}. See log: {log_file}"
+                if tail_hint:
+                    err_msg += f"\n--- Log tail ---\n{tail_hint}"
+                return False, err_msg
+
+            # The batch itself exits with the wrapped command's exit code; inspect the log tail for visibility
+            logging.info(f"Elevated command finished. Log: {log_file}")
+            if tail_hint:
+                logging.debug(f"Elevated command log tail:\n{tail_hint}")
 
             return True, None
         except Exception as e:
@@ -1388,3 +1446,300 @@ def update_chisurf(callback=None, auto_restart=True) -> Tuple[bool, Optional[str
     """
     updater = ChiSurfUpdater()
     return updater.update(callback, auto_restart)
+
+
+class CondaManager:
+    """
+    Lightweight conda package/environment/channels manager used by ChiSurf.
+
+    It prefers an existing conda in the current environment, and falls back to
+    system PATH. Most commands support JSON output for structured results.
+    """
+    def __init__(self, updater: Optional[ChiSurfUpdater] = None):
+        self.updater = updater
+        self.system = (updater.system if updater else platform.system().lower())
+        self._conda_exe_cache: Optional[str] = None
+        self._preferred: List[str] = []  # execution preference order
+        # Prefer mamba/micromamba when found, otherwise conda
+        # We'll detect lazily.
+
+    # ---------- Detection ----------
+    def conda_exe(self) -> str:
+        if self._conda_exe_cache:
+            return self._conda_exe_cache
+        candidates: List[str] = []
+        sys_prefix = sys.prefix
+        conda_prefix = os.environ.get('CONDA_PREFIX', '')
+        app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+        if self.system == 'windows':
+            # micromamba/mamba/conda common locations
+            candidates += [
+                os.path.join(app_dir, 'Scripts', 'micromamba.exe'),
+                os.path.join(sys_prefix, 'Scripts', 'micromamba.exe'),
+                os.path.join(conda_prefix, 'Scripts', 'micromamba.exe'),
+                os.path.join(app_dir, 'Scripts', 'mamba.exe'),
+                os.path.join(sys_prefix, 'Scripts', 'mamba.exe'),
+                os.path.join(conda_prefix, 'Scripts', 'mamba.exe'),
+                os.path.join(app_dir, 'Scripts', 'conda.exe'),
+                os.path.join(sys_prefix, 'Scripts', 'conda.exe'),
+                os.path.join(conda_prefix, 'Scripts', 'conda.exe'),
+                os.path.join(sys_prefix, 'condabin', 'conda.bat'),
+                os.path.join(conda_prefix, 'condabin', 'conda.bat'),
+            ]
+        else:
+            candidates += [
+                os.path.join(app_dir, 'bin', 'micromamba'),
+                os.path.join(sys_prefix, 'bin', 'micromamba'),
+                os.path.join(conda_prefix, 'bin', 'micromamba'),
+                os.path.join(app_dir, 'bin', 'mamba'),
+                os.path.join(sys_prefix, 'bin', 'mamba'),
+                os.path.join(conda_prefix, 'bin', 'mamba'),
+                os.path.join(app_dir, 'bin', 'conda'),
+                os.path.join(sys_prefix, 'bin', 'conda'),
+                os.path.join(conda_prefix, 'bin', 'conda'),
+            ]
+        # Finally, rely on PATH
+        candidates += ['micromamba', 'mamba', 'conda']
+        for c in candidates:
+            if os.path.exists(c) or c in ['micromamba', 'mamba', 'conda']:
+                self._conda_exe_cache = c
+                # Remember preference order by tool name
+                name = os.path.basename(c).lower()
+                if 'micro' in name:
+                    self._preferred = ['micromamba', 'mamba', 'conda']
+                elif 'mamba' in name:
+                    self._preferred = ['mamba', 'conda']
+                else:
+                    self._preferred = ['conda']
+                # Propagate for child conda calls
+                os.environ['CONDA_EXE'] = c
+                break
+        return self._conda_exe_cache or 'conda'
+
+    # ---------- Running helpers ----------
+    def _popen(self, cmd: List[str]) -> Tuple[bool, str, str, int]:
+        try:
+            popen_cmd = cmd
+            if self.system == 'windows':
+                exe = (cmd[0] if cmd else '').lower()
+                if exe.endswith('.bat') or exe.endswith('.cmd'):
+                    popen_cmd = ['cmd.exe', '/C', *cmd]
+            logging.debug(f"CondaManager executing: {' '.join(popen_cmd)}")
+            p = subprocess.Popen(popen_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            out, err = p.communicate()
+            if out:
+                logging.debug(f"stdout:\n{out}")
+            if err:
+                logging.debug(f"stderr:\n{err}")
+            return (p.returncode == 0), out, err, p.returncode
+        except Exception as e:
+            return False, '', str(e), -1
+
+    def _with_prefix(self, args: List[str], prefix: Optional[str]) -> List[str]:
+        if not prefix:
+            prefix = sys.prefix
+        # conda and mamba both accept -p/--prefix
+        return args + ['-p', prefix]
+
+    def _channels_args(self, channels: Optional[List[str]]) -> List[str]:
+        ch: List[str] = []
+        if channels:
+            for c in channels:
+                ch += ['-c', c]
+        return ch
+
+    # ---------- Public operations ----------
+    def info(self) -> Tuple[bool, Any, str]:
+        cmd = [self.conda_exe(), 'info', '--json']
+        ok, out, err, _ = self._popen(cmd)
+        data = None
+        if ok:
+            try:
+                data = json.loads(out)
+            except Exception:
+                ok = False
+                err = err or 'Failed to parse conda info JSON'
+        return ok, data, err
+
+    def list_installed(self, prefix: Optional[str] = None) -> Tuple[bool, Any, str]:
+        cmd = self._with_prefix([self.conda_exe(), 'list', '--json'], prefix)
+        ok, out, err, _ = self._popen(cmd)
+        data = None
+        if ok:
+            try:
+                data = json.loads(out)
+            except Exception:
+                ok = False
+                err = err or 'Failed to parse conda list JSON'
+        return ok, data, err
+
+    def search(self, query: str, channels: Optional[List[str]] = None) -> Tuple[bool, Any, str]:
+        cmd = [self.conda_exe(), 'search', query, '--json'] + self._channels_args(channels)
+        ok, out, err, _ = self._popen(cmd)
+        data = None
+        if ok:
+            try:
+                data = json.loads(out)
+            except Exception:
+                ok = False
+                err = err or 'Failed to parse conda search JSON'
+        return ok, data, err
+
+    def install(self, packages: List[str], prefix: Optional[str] = None, channels: Optional[List[str]] = None, update_deps: bool = True) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'install', '-y']
+        if update_deps:
+            args += ['--update-deps']
+        args = self._with_prefix(args, prefix) + packages + self._channels_args(channels)
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def remove(self, packages: List[str], prefix: Optional[str] = None) -> Tuple[bool, str]:
+        args = self._with_prefix([self.conda_exe(), 'remove', '-y'], prefix) + packages
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def update(self, packages: Optional[List[str]] = None, prefix: Optional[str] = None) -> Tuple[bool, str]:
+        args = self._with_prefix([self.conda_exe(), 'update', '-y'], prefix)
+        if packages and len(packages) > 0:
+            args += packages
+        else:
+            args += ['--all']
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def dry_run_update_all(self, prefix: Optional[str] = None) -> Tuple[bool, Any, str]:
+        args = self._with_prefix([self.conda_exe(), 'update', '--dry-run', '--json', '--all'], prefix)
+        ok, out, err, _ = self._popen(args)
+        data = None
+        if ok:
+            try:
+                data = json.loads(out)
+            except Exception:
+                ok = False
+                err = err or 'Failed to parse dry-run update JSON'
+        return ok, data, err
+
+    def clean_all(self) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'clean', '-y', '--all']
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    # ----- Environments -----
+    def list_envs(self) -> Tuple[bool, List[str], str]:
+        # Prefer `conda env list --json`
+        args = [self.conda_exe(), 'env', 'list', '--json']
+        ok, out, err, _ = self._popen(args)
+        envs: List[str] = []
+        if ok:
+            try:
+                data = json.loads(out)
+                envs = data.get('envs', [])
+            except Exception:
+                ok = False
+                err = err or 'Failed to parse env list JSON'
+        return ok, envs, err
+
+    def current_prefix(self) -> str:
+        return sys.prefix
+
+    def create_env(self, name: Optional[str] = None, prefix: Optional[str] = None, python: Optional[str] = None, packages: Optional[List[str]] = None) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'create', '-y']
+        if prefix and not name:
+            args += ['-p', prefix]
+        elif name and not prefix:
+            args += ['-n', name]
+        else:
+            # Default to name if both missing
+            if not name:
+                name = 'chisurf-env'
+            args += ['-n', name]
+        if python:
+            args += [f'python={python}']
+        if packages:
+            args += packages
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def remove_env(self, name: Optional[str] = None, prefix: Optional[str] = None) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'env', 'remove', '-y']
+        if prefix and not name:
+            args += ['-p', prefix]
+        elif name and not prefix:
+            args += ['-n', name]
+        else:
+            return False, 'Specify either name or prefix'
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def clone_env(self, name_src: Optional[str] = None, prefix_src: Optional[str] = None, name_dst: Optional[str] = None, prefix_dst: Optional[str] = None) -> Tuple[bool, str]:
+        # Clone via export+create is more portable; but conda has `conda create --name dst --clone src`
+        args = [self.conda_exe(), 'create', '-y']
+        if name_dst and not prefix_dst:
+            args += ['-n', name_dst]
+        elif prefix_dst and not name_dst:
+            args += ['-p', prefix_dst]
+        else:
+            return False, 'Specify destination name or prefix'
+        if name_src and not prefix_src:
+            args += ['--clone', name_src]
+        elif prefix_src and not name_src:
+            args += ['--clone', prefix_src]
+        else:
+            return False, 'Specify source name or prefix'
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def export_env(self, prefix: Optional[str] = None) -> Tuple[bool, str]:
+        # Returns YAML text
+        args = [self.conda_exe(), 'env', 'export']
+        if prefix:
+            args += ['-p', prefix]
+        else:
+            args += ['-p', sys.prefix]
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def import_env(self, file_path: str, name: Optional[str] = None) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'env', 'create', '-f', file_path]
+        if name:
+            args += ['-n', name]
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    # ----- Channels -----
+    def get_channels(self) -> Tuple[bool, List[str], str]:
+        # Use `conda config --show --json` and read 'channels'
+        args = [self.conda_exe(), 'config', '--show', '--json']
+        ok, out, err, _ = self._popen(args)
+        channels: List[str] = []
+        if ok:
+            try:
+                data = json.loads(out)
+                channels = data.get('channels', []) or data.get('channel_aliases', [])
+            except Exception:
+                ok = False
+                err = err or 'Failed to parse conda config JSON'
+        return ok, channels, err
+
+    def add_channel(self, channel: str) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'config', '--add', 'channels', channel]
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def remove_channel(self, channel: str) -> Tuple[bool, str]:
+        args = [self.conda_exe(), 'config', '--remove', 'channels', channel]
+        ok, out, err, _ = self._popen(args)
+        return ok, (out if ok else err)
+
+    def set_channels(self, channels: List[str]) -> Tuple[bool, str]:
+        # Clear existing then add in order
+        ok, out = self._popen([self.conda_exe(), 'config', '--remove-key', 'channels'])[:2]
+        # ignore failure of remove-key
+        last_msg = ''
+        for ch in channels:
+            ok2, msg = self.add_channel(ch)
+            last_msg = msg
+            if not ok2:
+                return False, msg
+        return True, (last_msg or 'Channels updated')
