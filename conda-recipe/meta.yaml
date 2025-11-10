@@ -92,8 +92,6 @@ requirements:
     - hmmlearn
     - sympy
     - zeus-mcmc
-    - hdbscan
-    - umap-learn
     - tttrlib  # [not win]
     - libcxx   # [osx]
 
