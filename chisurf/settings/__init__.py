@@ -6,6 +6,9 @@ import json
 import pathlib
 import sys
 
+# Initialize environment (PATH, Qt plugins, vispy, FreeType) as early as possible
+from . import env_bootstrap  # noqa: F401
+
 # Import utility functions
 from .file_utils import safe_open_file
 from .path_utils import get_path
@@ -42,37 +45,6 @@ chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 # if set to true uses settings in source folder.
 cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
 
-# Apply thread-related environment variables as early as possible, before any heavy imports
-try:
-    import sys as _sys
-    import os as _os
-    _threads = cs_settings.get('threads', {}) if isinstance(cs_settings, dict) else {}
-    # Defaults as requested
-    _defaults = {
-        'numba_num_threads': "1",
-        'numba_threading_layer': "workqueue",
-        'mkl_num_threads': "1",
-        'omp_num_threads': "1",
-        'mkl_threading_layer': "SEQUENTIAL",
-    }
-    _override = bool(_threads.get('override_existing_env', False))
-    def _set_env(var_name: str, value: str):
-        if _override or var_name not in _os.environ or _os.environ.get(var_name, "") == "":
-            _os.environ[var_name] = str(value)
-    # Detect if heavy modules already imported
-    _heavy_loaded = any(m in _sys.modules for m in ("numpy", "numba", "umap"))
-    if _heavy_loaded:
-        # Changing env vars may not take effect if modules already imported
-        # We still set them for any modules imported later.
-        pass
-    _set_env("NUMBA_NUM_THREADS", _threads.get('numba_num_threads', _defaults['numba_num_threads']))
-    _set_env("NUMBA_THREADING_LAYER", _threads.get('numba_threading_layer', _defaults['numba_threading_layer']))
-    _set_env("MKL_NUM_THREADS", _threads.get('mkl_num_threads', _defaults['mkl_num_threads']))
-    _set_env("OMP_NUM_THREADS", _threads.get('omp_num_threads', _defaults['omp_num_threads']))
-    _set_env("MKL_THREADING_LAYER", _threads.get('mkl_threading_layer', _defaults['mkl_threading_layer']))
-except Exception:
-    # Fail silently; settings application is best-effort and should not break startup
-    pass
 
 anisotropy = dict()
 anisotropy_data = safe_open_file(
