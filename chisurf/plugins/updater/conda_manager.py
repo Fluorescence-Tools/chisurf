@@ -4,6 +4,7 @@ import json
 import subprocess
 import platform
 import re
+import shutil
 from typing import List, Dict, Any, Optional, Tuple
 
 # Reuse conda discovery logic from the updater
@@ -31,6 +32,10 @@ class CondaManager:
 
     It intentionally avoids external heavy dependencies and relies on the
     conda executable available in the current installation.
+
+    New in this version:
+    - Prefer using `mamba` for package operations (install/update/remove/list/search/create),
+      with automatic fallback to `conda` when `mamba` is not available or fails.
     """
 
     def __init__(self, conda_executable: Optional[str] = None):
@@ -40,6 +45,10 @@ class CondaManager:
         else:
             # Leverage existing discovery logic
             self.conda_exe = ChiSurfUpdater(update_url=None)._get_conda_executable()
+        # Discover mamba
+        self.mamba_exe = self._discover_mamba()
+        # Allow toggling preference if needed
+        self.prefer_mamba: bool = True
 
     # --- Internal helpers -------------------------------------------------
     def _wrap_cmd_for_windows(self, cmd: List[str]) -> List[str]:
@@ -48,6 +57,108 @@ class CondaManager:
             if exe.endswith('.bat') or exe.endswith('.cmd'):
                 return ['cmd.exe', '/C', *cmd]
         return cmd
+
+    def _discover_mamba(self) -> Optional[str]:
+        """Find the `mamba` executable if available on PATH or near conda.
+        Returns the absolute path or None if not found.
+        """
+        # Try PATH first
+        path = shutil.which('mamba')
+        if path:
+            return path
+        # Try Windows .exe explicitly
+        if self._system == 'windows':
+            path = shutil.which('mamba.exe')
+            if path:
+                return path
+        # Try alongside conda executable (same directory)
+        try:
+            conda_dir = os.path.dirname(self.conda_exe)
+            candidates = [
+                os.path.join(conda_dir, 'mamba'),
+                os.path.join(conda_dir, 'mamba.exe'),
+                os.path.join(conda_dir, 'mamba.bat'),
+                os.path.join(conda_dir, 'mamba.cmd'),
+            ]
+            for c in candidates:
+                if os.path.isfile(c):
+                    return c
+        except Exception:
+            pass
+        return None
+
+    def preferred_solver(self) -> str:
+        """Return the currently preferred solver name: 'mamba' if available and preferred, else 'conda'."""
+        return 'mamba' if (self.prefer_mamba and self.mamba_exe) else 'conda'
+
+    def _run_with_exe(self, exe: str, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None):
+        cmd = [exe, *args]
+        # Prefer quiet mode to reduce non-JSON noise
+        if '--quiet' not in cmd and '-q' not in cmd:
+            cmd.append('--quiet')
+        if use_json and '--json' not in cmd:
+            cmd.append('--json')
+        popen_cmd = self._wrap_cmd_for_windows(cmd)
+        try:
+            proc = subprocess.Popen(
+                popen_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding='utf-8',
+                errors='replace',
+                shell=False,
+                env=env or os.environ.copy(),
+            )
+            stdout, stderr = proc.communicate()
+            if proc.returncode != 0:
+                # Try to parse JSON error if present (relaxed)
+                msg = None
+                if stdout:
+                    try:
+                        data = self._parse_json_relaxed(stdout)
+                        if isinstance(data, dict):
+                            msg = data.get('error') or data.get('message') or data.get('exception_name')
+                    except Exception:
+                        pass
+                if not msg:
+                    msg = (stderr or '').strip() or f"Command failed: {os.path.basename(exe)}"
+                raise CondaCommandError(msg, self._truncate(stdout), self._truncate(stderr), proc.returncode)
+            if use_json:
+                # Strict first
+                try:
+                    return json.loads(stdout or '{}')
+                except Exception:
+                    # Relaxed parsing
+                    try:
+                        return self._parse_json_relaxed(stdout)
+                    except Exception as e:
+                        raise CondaCommandError(f"Invalid JSON from {os.path.basename(exe)}: {e}\nOutput: {self._truncate(stdout)}",
+                                                self._truncate(stdout), self._truncate(stderr), proc.returncode)
+            else:
+                # Return plain text wrapped in a dict
+                return {"stdout": stdout, "stderr": stderr}
+        except CondaCommandError:
+            raise
+        except Exception as e:
+            raise CondaCommandError(f"Failed to run {os.path.basename(exe)}: {e}")
+
+    def _run_mamba_first(self, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None):
+        """Try running with mamba first (if available), otherwise fall back to conda.
+        Returns parsed result or raises CondaCommandError if both fail.
+        """
+        last_err: Optional[Exception] = None
+        if self.prefer_mamba and self.mamba_exe:
+            try:
+                return self._run_with_exe(self.mamba_exe, args, use_json=use_json, env=env)
+            except Exception as e:
+                last_err = e
+        # Fallback to conda
+        try:
+            return self._run_with_exe(self.conda_exe, args, use_json=use_json, env=env)
+        except Exception as e2:
+            # Prefer the conda error if mamba wasn't tried
+            raise e2 if last_err is None else CondaCommandError(f"Both mamba and conda failed: {last_err} | {e2}")
 
     def _truncate(self, text: str, limit: int = 4000) -> str:
         if text and len(text) > limit:
@@ -282,7 +393,8 @@ class CondaManager:
         if yes:
             args += ['-y']
         args += pkgs
-        return self._run(args)
+        # Prefer mamba, fallback to conda
+        return self._run_mamba_first(args)
 
     def update(self, pkgs: Optional[List[str]] = None, prefix: Optional[str] = None, name: Optional[str] = None,
                all_: bool = False, channels: Optional[List[str]] = None, yes: bool = True) -> Dict[str, Any]:
@@ -299,7 +411,8 @@ class CondaManager:
             args += ['--all']
         if pkgs:
             args += pkgs
-        return self._run(args)
+        # Prefer mamba, fallback to conda
+        return self._run_mamba_first(args)
 
     def remove(self, pkgs: Optional[List[str]] = None, prefix: Optional[str] = None, name: Optional[str] = None,
                all_: bool = False, yes: bool = True) -> Dict[str, Any]:

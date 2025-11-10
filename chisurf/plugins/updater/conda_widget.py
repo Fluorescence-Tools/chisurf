@@ -317,6 +317,11 @@ class CondaManagerDialog(QDialog):
                 self.run_list_installed()
             except Exception:
                 pass
+            # Ensure 'conda-forge' channel is present
+            try:
+                self._ensure_conda_forge_channel()
+            except Exception:
+                pass
 
     def closeEvent(self, event):
         """Mark closing to guard late signals from background workers."""
@@ -468,6 +473,60 @@ class CondaManagerDialog(QDialog):
             worker.start()
         except Exception:
             # Best-effort only
+            pass
+
+    # ---------- Channel guard: ensure conda-forge is present ----------
+    def _ensure_conda_forge_channel(self) -> None:
+        """Ensure that 'conda-forge' is present in Conda channels; add it if missing.
+        This runs asynchronously: first fetch channels, then add if required.
+        """
+        try:
+            logger.info("Checking for 'conda-forge' channel…")
+            self._append_log("Checking channels…")
+            worker = CondaWorker(self.manager.get_channels)
+            self._track_worker(worker)
+            worker.finished.connect(self._on_channels_checked)
+            worker.start()
+        except Exception as e:
+            self._append_log(f"Channel check failed: {e}")
+
+    def _on_channels_checked(self, ok: bool, payload: object, msg: str):
+        try:
+            if not ok:
+                self._append_log(f"Could not read channels: {msg}")
+                logger.warning("Could not read channels: %s", msg)
+                return
+            channels: List[str] = []
+            if isinstance(payload, (list, tuple)):
+                channels = [str(c).strip() for c in payload if c]
+            elif isinstance(payload, dict):
+                # Some implementations might return a mapping
+                channels = [str(k).strip() for k in payload.keys()]
+            # Case-insensitive check for 'conda-forge'
+            has_cf = any(c.lower() == 'conda-forge' for c in channels)
+            if has_cf:
+                self._append_log("Channel 'conda-forge' already present.")
+                logger.info("'conda-forge' already present in channels")
+                return
+            # Add the channel
+            self._append_log("Adding channel: conda-forge …")
+            logger.info("Adding 'conda-forge' to channels via 'conda config --add channels conda-forge'")
+            worker = CondaWorker(self.manager.add_channel, 'conda-forge')
+            self._track_worker(worker)
+            worker.finished.connect(self._on_channel_added)
+            worker.start()
+        except Exception as e:
+            self._append_log(f"Error processing channels: {e}")
+
+    def _on_channel_added(self, ok: bool, payload: object, msg: str):
+        try:
+            if ok:
+                self._append_log("Channel 'conda-forge' added.")
+                QMessageBox.information(self, "Channels", "Channel 'conda-forge' has been added to your Conda configuration.")
+            else:
+                self._append_log(f"Failed to add 'conda-forge': {msg}")
+                QMessageBox.warning(self, "Channels", msg or "Failed to add 'conda-forge' channel")
+        except Exception:
             pass
 
     def _on_repo_info(self, ok: bool, payload: object, msg: str):
