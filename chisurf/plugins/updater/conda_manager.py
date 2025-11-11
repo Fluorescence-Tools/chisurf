@@ -5,7 +5,11 @@ import subprocess
 import platform
 import re
 import shutil
-from typing import List, Dict, Any, Optional, Tuple
+import pathlib
+from typing import List, Dict, Any, Optional, Tuple, Callable
+
+# Path helper to locate user settings folder for CONDARC
+from chisurf.settings.path_utils import get_path
 
 # Reuse conda discovery logic from the updater
 from .updater import ChiSurfUpdater
@@ -36,6 +40,9 @@ class CondaManager:
     New in this version:
     - Prefer using `mamba` for package operations (install/update/remove/list/search/create),
       with automatic fallback to `conda` when `mamba` is not available or fails.
+    - Always use a user-writable `.condarc` located inside the ChiSurf user settings
+      folder (e.g. `~/.chisurf/.condarc`) to prevent PermissionError when the app
+      runs from Program Files. The `CONDARC` env var is set for every subprocess call.
     """
 
     def __init__(self, conda_executable: Optional[str] = None):
@@ -45,12 +52,72 @@ class CondaManager:
         else:
             # Leverage existing discovery logic
             self.conda_exe = ChiSurfUpdater(update_url=None)._get_conda_executable()
-        # Discover mamba
-        self.mamba_exe = self._discover_mamba()
-        # Allow toggling preference if needed
+        # Discover micromamba
+        self.micromamba_exe = self._discover_micromamba()
+        # Enforce micromamba-only operation: if no micromamba, fail early (no conda/mamba fallback)
+        if not self.micromamba_exe:
+            raise CondaCommandError(
+                "Micromamba executable not found. Please install micromamba and ensure it is on PATH. Fallback to conda/mamba is disabled.")
+        # Allow toggling preference if needed (kept for API compatibility, but must be True)
         self.prefer_mamba: bool = True
+        # Ensure a user-level condarc exists and remember its path
+        self._condarc_path = self._ensure_user_condarc()
 
     # --- Internal helpers -------------------------------------------------
+    def _ensure_user_condarc(self) -> str:
+        """
+        Ensure a user-writable condarc file exists in the ChiSurf settings folder.
+        Returns the absolute path to the condarc file and guarantees its parent
+        directory exists. Handles legacy cases where ".condarc" was created as a
+        directory containing a "config" file.
+        """
+        settings_dir = get_path('settings')
+        # Legacy: some installers created a directory named ".condarc" with a file "config" inside
+        legacy_dir = settings_dir / '.condarc'
+        if legacy_dir.exists() and legacy_dir.is_dir():
+            condarc_file = legacy_dir / 'config'
+        else:
+            condarc_file = settings_dir / '.condarc'
+        # Make sure parent exists
+        condarc_file.parent.mkdir(parents=True, exist_ok=True)
+        # If nothing exists yet, write a minimal safe configuration
+        if not condarc_file.exists():
+            try:
+                condarc_file.write_text(
+                    'channels:\n'
+                    '  - conda-forge\n'
+                    '  - defaults\n'
+                    'ssl_verify: true\n',
+                    encoding='utf-8'
+                )
+            except Exception:
+                # If we fail to write, still return the path; subprocess will surface errors
+                pass
+        return str(pathlib.Path(condarc_file).resolve())
+
+    def _base_env(self, extra: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+        env = os.environ.copy()
+        if self._condarc_path:
+            env['CONDARC'] = self._condarc_path
+        # Disable conda/mamba plugin system to avoid crashes like "'<pkg>' is not in list"
+        # seen with certain conda plugins. We want predictable, fast, mamba-only behavior.
+        env['CONDA_NO_PLUGINS'] = 'true'
+        # Reduce noise from mamba banner if supported
+        env.setdefault('MAMBA_NO_BANNER', '1')
+        # Also ensure root prefixes point to a user-writable location under ChiSurf settings
+        try:
+            settings_dir = get_path('settings')
+            root_dir = pathlib.Path(settings_dir) / 'conda-root'
+            root_dir.mkdir(parents=True, exist_ok=True)
+            root = str(root_dir.resolve())
+            env.setdefault('CONDA_ROOT_PREFIX', root)
+            env.setdefault('MAMBA_ROOT_PREFIX', root)
+        except Exception:
+            pass
+        if extra:
+            env.update(extra)
+        return env
+
     def _wrap_cmd_for_windows(self, cmd: List[str]) -> List[str]:
         if self._system == 'windows':
             exe = (cmd[0] if cmd else '').lower()
@@ -58,27 +125,21 @@ class CondaManager:
                 return ['cmd.exe', '/C', *cmd]
         return cmd
 
-    def _discover_mamba(self) -> Optional[str]:
-        """Find the `mamba` executable if available on PATH or near conda.
+    def _discover_micromamba(self) -> Optional[str]:
+        """Find the `micromamba` executable if available on PATH or near conda.
         Returns the absolute path or None if not found.
         """
         # Try PATH first
-        path = shutil.which('mamba')
-        if path:
-            return path
-        # Try Windows .exe explicitly
-        if self._system == 'windows':
-            path = shutil.which('mamba.exe')
+        for exe_name in ['micromamba', 'micromamba.exe']:
+            path = shutil.which(exe_name)
             if path:
                 return path
         # Try alongside conda executable (same directory)
         try:
             conda_dir = os.path.dirname(self.conda_exe)
             candidates = [
-                os.path.join(conda_dir, 'mamba'),
-                os.path.join(conda_dir, 'mamba.exe'),
-                os.path.join(conda_dir, 'mamba.bat'),
-                os.path.join(conda_dir, 'mamba.cmd'),
+                os.path.join(conda_dir, 'micromamba'),
+                os.path.join(conda_dir, 'micromamba.exe'),
             ]
             for c in candidates:
                 if os.path.isfile(c):
@@ -88,10 +149,10 @@ class CondaManager:
         return None
 
     def preferred_solver(self) -> str:
-        """Return the currently preferred solver name: 'mamba' if available and preferred, else 'conda'."""
-        return 'mamba' if (self.prefer_mamba and self.mamba_exe) else 'conda'
+        """Return the currently preferred solver name. Fallback removed → always 'micromamba'."""
+        return 'micromamba'
 
-    def _run_with_exe(self, exe: str, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None):
+    def _run_with_exe(self, exe: str, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None, on_progress: Optional[Callable[[str], None]] = None):
         cmd = [exe, *args]
         # Prefer quiet mode to reduce non-JSON noise
         if '--quiet' not in cmd and '-q' not in cmd:
@@ -100,17 +161,35 @@ class CondaManager:
             cmd.append('--json')
         popen_cmd = self._wrap_cmd_for_windows(cmd)
         try:
+            stream = on_progress is not None
             proc = subprocess.Popen(
                 popen_cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=(subprocess.STDOUT if stream else subprocess.PIPE),
                 text=True,
                 encoding='utf-8',
                 errors='replace',
                 shell=False,
-                env=env or os.environ.copy(),
+                env=self._base_env(env),
             )
-            stdout, stderr = proc.communicate()
+            if stream:
+                collected: List[str] = []
+                try:
+                    assert proc.stdout is not None
+                    for line in proc.stdout:
+                        if not line:
+                            break
+                        collected.append(line)
+                        try:
+                            on_progress(line.rstrip('\r\n'))
+                        except Exception:
+                            pass
+                finally:
+                    proc.wait()
+                stdout = ''.join(collected)
+                stderr = ''
+            else:
+                stdout, stderr = proc.communicate()
             if proc.returncode != 0:
                 # Try to parse JSON error if present (relaxed)
                 msg = None
@@ -127,14 +206,18 @@ class CondaManager:
             if use_json:
                 # Strict first
                 try:
-                    return json.loads(stdout or '{}')
+                    data = json.loads(stdout or '{}')
                 except Exception:
                     # Relaxed parsing
                     try:
-                        return self._parse_json_relaxed(stdout)
+                        data = self._parse_json_relaxed(stdout)
                     except Exception as e:
                         raise CondaCommandError(f"Invalid JSON from {os.path.basename(exe)}: {e}\nOutput: {self._truncate(stdout)}",
                                                 self._truncate(stdout), self._truncate(stderr), proc.returncode)
+                # Unwrap micromamba envelope { success: bool, result: ... }
+                if isinstance(data, dict) and 'result' in data and ('success' in data or 'status' in data):
+                    return data.get('result')
+                return data
             else:
                 # Return plain text wrapped in a dict
                 return {"stdout": stdout, "stderr": stderr}
@@ -143,22 +226,11 @@ class CondaManager:
         except Exception as e:
             raise CondaCommandError(f"Failed to run {os.path.basename(exe)}: {e}")
 
-    def _run_mamba_first(self, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None):
-        """Try running with mamba first (if available), otherwise fall back to conda.
-        Returns parsed result or raises CondaCommandError if both fail.
-        """
-        last_err: Optional[Exception] = None
-        if self.prefer_mamba and self.mamba_exe:
-            try:
-                return self._run_with_exe(self.mamba_exe, args, use_json=use_json, env=env)
-            except Exception as e:
-                last_err = e
-        # Fallback to conda
-        try:
-            return self._run_with_exe(self.conda_exe, args, use_json=use_json, env=env)
-        except Exception as e2:
-            # Prefer the conda error if mamba wasn't tried
-            raise e2 if last_err is None else CondaCommandError(f"Both mamba and conda failed: {last_err} | {e2}")
+    def _run_micromamba_first(self, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None, on_progress: Optional[Callable[[str], None]] = None):
+        """Run using micromamba only. Fallback has been removed by design."""
+        if not (self.prefer_mamba and self.micromamba_exe):
+            raise CondaCommandError("Micromamba is not available, and fallback is disabled.")
+        return self._run_with_exe(self.micromamba_exe, args, use_json=use_json, env=env, on_progress=on_progress)
 
     def _truncate(self, text: str, limit: int = 4000) -> str:
         if text and len(text) > limit:
@@ -247,8 +319,11 @@ class CondaManager:
         # Give up
         raise json.JSONDecodeError("Unable to parse JSON (relaxed)", s, 0)
 
-    def _run(self, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None):
-        cmd = [self.conda_exe, *args]
+    def _run(self, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None, on_progress: Optional[Callable[[str], None]] = None):
+        # Enforce micromamba usage for all operations
+        exe = self.micromamba_exe or 'micromamba'
+        # Micromamba does not use conda's plugin system; avoid passing --no-plugins
+        cmd = [exe, *args]
         # Prefer quiet mode to reduce non-JSON noise
         if '--quiet' not in cmd and '-q' not in cmd:
             cmd.append('--quiet')
@@ -256,17 +331,35 @@ class CondaManager:
             cmd.append('--json')
         popen_cmd = self._wrap_cmd_for_windows(cmd)
         try:
+            stream = on_progress is not None
             proc = subprocess.Popen(
                 popen_cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=(subprocess.STDOUT if stream else subprocess.PIPE),
                 text=True,
                 encoding='utf-8',
                 errors='replace',
                 shell=False,
-                env=env or os.environ.copy(),
+                env=self._base_env(env),
             )
-            stdout, stderr = proc.communicate()
+            if stream:
+                collected: List[str] = []
+                try:
+                    assert proc.stdout is not None
+                    for line in proc.stdout:
+                        if not line:
+                            break
+                        collected.append(line)
+                        try:
+                            on_progress(line.rstrip('\r\n'))
+                        except Exception:
+                            pass
+                finally:
+                    proc.wait()
+                stdout = ''.join(collected)
+                stderr = ''
+            else:
+                stdout, stderr = proc.communicate()
             if proc.returncode != 0:
                 # Try to parse JSON error if present (relaxed)
                 msg = None
@@ -278,26 +371,30 @@ class CondaManager:
                     except Exception:
                         pass
                 if not msg:
-                    msg = (stderr or '').strip() or 'Conda command failed'
+                    msg = (stderr or '').strip() or 'Micromamba command failed'
                 raise CondaCommandError(msg, self._truncate(stdout), self._truncate(stderr), proc.returncode)
             if use_json:
                 # Strict first
                 try:
-                    return json.loads(stdout or '{}')
+                    data = json.loads(stdout or '{}')
                 except Exception:
                     # Relaxed parsing
                     try:
-                        return self._parse_json_relaxed(stdout)
+                        data = self._parse_json_relaxed(stdout)
                     except Exception as e:
-                        raise CondaCommandError(f"Invalid JSON from conda: {e}\nOutput: {self._truncate(stdout)}",
+                        raise CondaCommandError(f"Invalid JSON from micromamba: {e}\nOutput: {self._truncate(stdout)}",
                                                 self._truncate(stdout), self._truncate(stderr), proc.returncode)
+                # Unwrap micromamba envelope { success: bool, result: ... }
+                if isinstance(data, dict) and 'result' in data and ('success' in data or 'status' in data):
+                    return data.get('result')
+                return data
             else:
                 # Return plain text wrapped in a dict
                 return {"stdout": stdout, "stderr": stderr}
         except CondaCommandError:
             raise
         except Exception as e:
-            raise CondaCommandError(f"Failed to run conda: {e}")
+            raise CondaCommandError(f"Failed to run micromamba: {e}")
 
     def _prefix_args(self, name: Optional[str] = None, prefix: Optional[str] = None) -> List[str]:
         args: List[str] = []
@@ -307,11 +404,80 @@ class CondaManager:
             args += ['--name', name]
         return args
 
-    # --- Public API -------------------------------------------------------
-    def info(self) -> Dict[str, Any]:
-        return self._run(['info'])
+    def _run_with_fallback(self, args: List[str], env: Optional[Dict[str, str]] = None, on_progress: Optional[Callable[[str], None]] = None):
+        """Run a micromamba command with JSON first, and retry without JSON on CondaCommandError.
+        Returns parsed JSON (dict/list) or a dict with stdout/stderr from the non-JSON retry.
+        """
+        try:
+            return self._run(args, use_json=True, env=env, on_progress=on_progress)
+        except CondaCommandError:
+            return self._run(args, use_json=False, env=env, on_progress=on_progress)
 
-    def get_envs(self) -> Dict[str, Any]:
+    def _run_micromamba_first_with_fallback(self, args: List[str], env: Optional[Dict[str, str]] = None, on_progress: Optional[Callable[[str], None]] = None):
+        """Run with micromamba-only using JSON; on CondaCommandError retry without JSON."""
+        try:
+            return self._run_micromamba_first(args, use_json=True, env=env, on_progress=on_progress)
+        except CondaCommandError:
+            return self._run_micromamba_first(args, use_json=False, env=env, on_progress=on_progress)
+
+    # --- Recovery helpers --------------------------------------------------
+    def _contains_any(self, hay: str, needles: List[str]) -> bool:
+        hay = (hay or "").lower()
+        for n in needles:
+            if n.lower() in hay:
+                return True
+        return False
+
+    def _clean_package_cache(self, on_progress: Optional[Callable[[str], None]] = None) -> None:
+        """Attempt to clean broken/corrupted packages from the cache using micromamba.
+        Uses: micromamba clean --packages --tarballs -y (no JSON).
+        """
+        try:
+            if on_progress:
+                on_progress("[Micromamba] Cleaning local package cache (micromamba clean --packages --tarballs)…")
+            self._run(['clean', '--packages', '--tarballs', '-y'], use_json=False, on_progress=on_progress)
+            if on_progress:
+                on_progress("[Micromamba] Package cache cleaned.")
+        except Exception as _:
+            # Non-fatal: ignore, we'll still retry the operation
+            if on_progress:
+                on_progress("[Micromamba] Cache clean did not complete (ignored).")
+
+    def _run_with_recovery(self, args: List[str], on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+        """Execute install-like commands with mamba-only and minimal recovery strategy.
+        1) Try micromamba with JSON/plain fallback.
+        2) If we see SafetyError/Verification/Clobber errors, clean cache and retry once with micromamba.
+        """
+        # First try normal path
+        try:
+            return self._run_micromamba_first_with_fallback(args, on_progress=on_progress)
+        except CondaCommandError as e:
+            msg = str(e)
+            # Mitigation for mamba/conda plugin crashes like "'<pkg>' is not in list" or plugin stack traces.
+            if self._contains_any(msg, ["is not in list", "plugin", "--no-plugins"]):
+                if on_progress:
+                    on_progress("[Micromamba] Detected plugin-related crash. Retrying once without plugins and with plain output…")
+                try:
+                    # Micromamba doesn't use plugins; just retry without JSON
+                    patched_args = args[:]
+                    return self._run_micromamba_first(patched_args, use_json=False, on_progress=on_progress)
+                except CondaCommandError:
+                    # Fall through to other recovery checks
+                    pass
+            # If mamba reported cache/collision errors, try clean + mamba retry once
+            if self._contains_any(msg, ["safetyerror", "verificationerror", "clobbererror", "condaverificationerror", "unknownpackageclobbererror"]):
+                if on_progress:
+                    on_progress("[Micromamba] Detected corrupted cache or path collision. Cleaning cache and retrying with micromamba…")
+                self._clean_package_cache(on_progress=on_progress)
+                return self._run_micromamba_first_with_fallback(args, on_progress=on_progress)
+            # Unknown error: rethrow
+            raise
+
+    # --- Public API -------------------------------------------------------
+    def info(self, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+        return self._run(['info'], on_progress=on_progress)
+
+    def get_envs(self, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         """
         Returns a dict with keys:
           - envs: List[str]
@@ -351,17 +517,22 @@ class CondaManager:
                 records.append(rec)
         return records
 
-    def list_packages(self, prefix: Optional[str] = None, name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_packages(self, prefix: Optional[str] = None, name: Optional[str] = None, on_progress: Optional[Callable[[str], None]] = None) -> List[Dict[str, Any]]:
         args = ['list'] + self._prefix_args(name=name, prefix=prefix)
         try:
-            data = self._run(args)
-            # conda list --json returns a list of packages
+            data = self._run(args, on_progress=on_progress)
+            # Normalize various shapes to a list of records
+            pkgs: List[Dict[str, Any]] = []
             if isinstance(data, list):
-                return data
-            pkgs = data.get('packages', []) if isinstance(data, dict) else []
-            if isinstance(pkgs, list):
-                return pkgs
-            return []
+                pkgs = data
+            elif isinstance(data, dict):
+                # micromamba typically returns {packages:[...]}, older conda: list directly
+                if 'packages' in data and isinstance(data['packages'], list):
+                    pkgs = data['packages']
+                elif 'result' in data and isinstance(data['result'], list):
+                    pkgs = data['result']
+            # Enrich with derived fields
+            return [self._enrich_record(rec) for rec in pkgs if isinstance(rec, dict)]
         except CondaCommandError as e:
             # Fallback: run without JSON and parse the text output
             try:
@@ -369,35 +540,81 @@ class CondaManager:
                 text = (res or {}).get('stdout', '')
                 records = self._parse_list_plaintext(text)
                 if records:
-                    return records
+                    return [self._enrich_record(r) for r in records]
             except Exception:
                 pass
             # Re-raise original error if fallback failed
             raise e
 
-    def search(self, term: str, channels: Optional[List[str]] = None) -> Dict[str, Any]:
+    def search(self, term: str, channels: Optional[List[str]] = None, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         args = ['search', term]
         if channels:
             for ch in channels:
                 args += ['-c', ch]
-        return self._run(args)
+        # Prefer micromamba for search too; use non-JSON fallback on error
+        raw = self._run_micromamba_first_with_fallback(args, on_progress=on_progress)
+        # Normalize various possible outputs to a consistent {"packages": [records...]}
+        records: List[Dict[str, Any]] = []
+
+        def _add_from_list(lst: List[Any], name_hint: Optional[str] = None):
+            for r in lst:
+                if isinstance(r, dict):
+                    if name_hint and 'name' not in r:
+                        r['name'] = name_hint
+                    records.append(self._enrich_record(r))
+
+        if isinstance(raw, list):
+            # Some variants may return flat list
+            _add_from_list(raw)
+        elif isinstance(raw, dict):
+            # Newer micromamba shape: {"query": {...}, "result": {"pkgs": [ ... ]}} or {"result": [ ... ]}
+            res = raw.get('result') if 'result' in raw else None
+            if isinstance(res, dict):
+                if isinstance(res.get('pkgs'), list):
+                    _add_from_list(res['pkgs'])
+                else:
+                    # Some tools may put name-keys under result
+                    for k, v in res.items():
+                        if isinstance(v, list):
+                            _add_from_list(v, name_hint=k)
+            elif isinstance(res, list):
+                _add_from_list(res)
+            # Classic mamba/conda JSON
+            if not records:
+                # micromamba can return {packages:{name:[...]}} or {packages:[...]}
+                pkgs = raw.get('packages')
+                if isinstance(pkgs, dict):
+                    for name, recs in pkgs.items():
+                        if isinstance(recs, list):
+                            _add_from_list(recs, name_hint=name)
+                elif isinstance(pkgs, list):
+                    _add_from_list(pkgs)
+                else:
+                    # Attempt other top-level shapes {name:[...]}
+                    for k, v in raw.items():
+                        if isinstance(v, list):
+                            _add_from_list(v, name_hint=k)
+        return {"packages": records}
 
     def install(self, pkgs: List[str], prefix: Optional[str] = None, name: Optional[str] = None,
-                channels: Optional[List[str]] = None, update_deps: bool = True, yes: bool = True) -> Dict[str, Any]:
+               channels: Optional[List[str]] = None, update_deps: bool = True, yes: bool = True,
+               on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         args = ['install'] + self._prefix_args(name=name, prefix=prefix)
         if channels:
             for ch in channels:
                 args += ['-c', ch]
-        if update_deps:
-            args += ['--update-deps']
+        # Note: micromamba (our default runner) may not support --update-deps; omit to ensure compatibility.
+        # Conda generally updates dependencies as needed during install; if a future need arises,
+        # consider capability detection against `install --help` and add the flag conditionally.
         if yes:
             args += ['-y']
         args += pkgs
-        # Prefer mamba, fallback to conda
-        return self._run_mamba_first(args)
+        # Prefer micromamba with robust recovery (handles cache/collision errors)
+        return self._run_with_recovery(args, on_progress=on_progress)
 
     def update(self, pkgs: Optional[List[str]] = None, prefix: Optional[str] = None, name: Optional[str] = None,
-               all_: bool = False, channels: Optional[List[str]] = None, yes: bool = True) -> Dict[str, Any]:
+               all_: bool = False, channels: Optional[List[str]] = None, yes: bool = True,
+               on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         # If no specific packages are provided, update all by default (UI expectation)
         if pkgs is None:
             all_ = True
@@ -411,11 +628,11 @@ class CondaManager:
             args += ['--all']
         if pkgs:
             args += pkgs
-        # Prefer mamba, fallback to conda
-        return self._run_mamba_first(args)
+        # Prefer micromamba with robust recovery
+        return self._run_with_recovery(args, on_progress=on_progress)
 
     def remove(self, pkgs: Optional[List[str]] = None, prefix: Optional[str] = None, name: Optional[str] = None,
-               all_: bool = False, yes: bool = True) -> Dict[str, Any]:
+               all_: bool = False, yes: bool = True, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         args = ['remove'] + self._prefix_args(name=name, prefix=prefix)
         if yes:
             args += ['-y']
@@ -423,10 +640,11 @@ class CondaManager:
             args += ['--all']
         if pkgs:
             args += pkgs
-        return self._run(args)
+        # Prefer micromamba with robust recovery
+        return self._run_with_recovery(args, on_progress=on_progress)
 
     def create(self, name: Optional[str] = None, prefix: Optional[str] = None, pkgs: Optional[List[str]] = None,
-               channels: Optional[List[str]] = None, yes: bool = True) -> Dict[str, Any]:
+               channels: Optional[List[str]] = None, yes: bool = True, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         args = ['create'] + self._prefix_args(name=name, prefix=prefix)
         if yes:
             args += ['-y']
@@ -435,10 +653,180 @@ class CondaManager:
                 args += ['-c', ch]
         if pkgs:
             args += pkgs
-        return self._run(args)
+        return self._run(args, on_progress=on_progress)
 
-    def config_show(self) -> Dict[str, Any]:
-        return self._run(['config', '--show'])
+    def config_show(self, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
+        """Return configuration as a dict. Prefer JSON if micromamba supports it."""
+        # Try micromamba JSON first
+        try:
+            data = self._run(['config', 'list', '--json'], on_progress=on_progress)
+            if isinstance(data, dict):
+                cfg = data.get('rc', data) if 'rc' in data else data
+            else:
+                cfg = {}
+            # Attach detected rc path for UI convenience
+            cfg.setdefault('rc_path', self._condarc_path)
+            return cfg
+        except Exception:
+            pass
+        # Fallback to plaintext show
+        plain = self._run(['config', '--show'], use_json=False, on_progress=on_progress)
+        text = (plain or {}).get('stdout', '')
+        cfg: Dict[str, Any] = {}
+        channels: List[str] = []
+        for line in text.splitlines():
+            s = line.strip()
+            if not s or s.startswith('#'):
+                continue
+            if s.lower().startswith('channels:'):
+                # Next lines with leading '-' are channels
+                continue
+            if s.startswith('- '):
+                ch = s[2:].strip()
+                if ch:
+                    channels.append(ch)
+            else:
+                # simple key: value
+                if ':' in s:
+                    k, v = s.split(':', 1)
+                    cfg[k.strip()] = v.strip()
+        if channels:
+            cfg['channels'] = channels
+        cfg.setdefault('rc_path', self._condarc_path)
+        return cfg
+
+    def add_channel(self, channel: str) -> Dict[str, Any]:
+        """Add a channel to conda configuration.
+        Strategy (robust across micromamba/conda variations):
+          1) If channel already present, return success immediately.
+          2) Try micromamba-native: `config append channels <channel>`.
+          3) Try alternative micromamba form: `config prepend channels <channel>` (keeps higher priority).
+          4) Try conda-style: `config --add channels <channel>` (only works on conda/mamba, not micromamba).
+          5) As last resort, edit .condarc YAML in place to add the channel.
+        Returns a dict describing the method used.
+        """
+        ch = (channel or '').strip()
+        if not ch:
+            return {'ok': True, 'method': 'noop', 'reason': 'empty-channel'}
+
+        # 1) Already present?
+        try:
+            existing = self.get_channels()
+            if isinstance(existing, list) and ch in existing:
+                return {'ok': True, 'method': 'already', 'channels': existing}
+        except Exception:
+            # Continue attempts
+            pass
+
+        # 2) micromamba: append
+        try:
+            res = self._run_micromamba_first_with_fallback(['config', 'append', 'channels', ch])
+            # Verify it took effect
+            try:
+                now = self.get_channels()
+                if isinstance(now, list) and ch in now:
+                    return {'ok': True, 'method': 'micromamba-append', 'channels': now}
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        # 3) micromamba: prepend (places channel earlier)
+        try:
+            res = self._run_micromamba_first_with_fallback(['config', 'prepend', 'channels', ch])
+            try:
+                now = self.get_channels()
+                if isinstance(now, list) and ch in now:
+                    return {'ok': True, 'method': 'micromamba-prepend', 'channels': now}
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        # 4) conda-style `--add` (only works when underlying runner supports it)
+        try:
+            res = self._run_with_fallback(['config', '--add', 'channels', ch])
+            try:
+                now = self.get_channels()
+                if isinstance(now, list) and ch in now:
+                    return {'ok': True, 'method': 'conda-add', 'channels': now}
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+        # 5) YAML fallback edit of .condarc
+        try:
+            return self._add_channel_via_yaml(ch)
+        except Exception as e:
+            raise CondaCommandError(f"Failed to add channel '{ch}': {e}")
+
+    def _add_channel_via_yaml(self, channel: str) -> Dict[str, Any]:
+        """Safely add a channel to the condarc YAML as a last resort.
+        This does not execute any conda command; it edits the rc file directly.
+        """
+        import io
+        try:
+            import yaml  # PyYAML
+        except Exception as e:
+            raise CondaCommandError(f"PyYAML not available to edit condarc: {e}")
+
+        rc_path = self._condarc_path
+        # Ensure parent directory exists
+        try:
+            pathlib.Path(rc_path).parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
+        data: Dict[str, Any] = {}
+        if os.path.exists(rc_path):
+            try:
+                with open(rc_path, 'r', encoding='utf-8') as f:
+                    loaded = yaml.safe_load(f)  # may be None
+                    if isinstance(loaded, dict):
+                        data = loaded
+            except Exception:
+                # if YAML invalid, start fresh minimal config
+                data = {}
+
+        channels = data.get('channels')
+        if not isinstance(channels, list):
+            channels = []
+        if channel not in channels:
+            channels.append(channel)
+        data['channels'] = channels
+
+        # Write back atomically (best-effort on Windows)
+        tmp_path = rc_path + '.tmp'
+        with open(tmp_path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
+        try:
+            # Replace original
+            if os.path.exists(rc_path):
+                try:
+                    os.replace(tmp_path, rc_path)
+                except Exception:
+                    # Fallback to remove+rename
+                    try:
+                        os.remove(rc_path)
+                    except Exception:
+                        pass
+                    os.rename(tmp_path, rc_path)
+            else:
+                os.rename(tmp_path, rc_path)
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
+
+        # Verify via config_show
+        now = self.get_channels()
+        if isinstance(now, list) and channel in now:
+            return {'ok': True, 'method': 'yaml', 'channels': now, 'rc_path': rc_path}
+        # Even if config_show didn't reflect it, return success with file path
+        return {'ok': True, 'method': 'yaml', 'channels': now, 'rc_path': rc_path}
 
     def get_channels(self) -> List[str]:
         try:
@@ -450,6 +838,71 @@ class CondaManager:
             pass
         # Fallback to defaults
         return ['conda-forge', 'defaults']
+
+    # --- Helpers for UI enrichment ----------------------------------------
+    def condarc_path(self) -> str:
+        """Expose the condarc path used for subprocess calls."""
+        return self._condarc_path or ''
+
+    def _enrich_record(self, rec: Dict[str, Any]) -> Dict[str, Any]:
+        """Ensure standard fields exist and derive repository/channel information.
+        Adds:
+          - channel: normalized channel name (e.g., 'conda-forge' instead of 't/<TOKEN>/conda-forge')
+          - base_url: kept if present
+          - repo: human-friendly source (usually same as channel)
+        """
+        import re
+        r = dict(rec) if isinstance(rec, dict) else {}
+        base_url = r.get('base_url') or r.get('url_base')
+
+        # Prefer explicit channel from record
+        raw_channel = r.get('channel') or ''
+
+        # If no channel present, try to infer from base_url
+        if not raw_channel and base_url and isinstance(base_url, str):
+            try:
+                # e.g. https://conda.anaconda.org/conda-forge
+                raw_channel = base_url.rstrip('/').split('/')[-1]
+            except Exception:
+                raw_channel = ''
+
+        # As a last resort, fall back to subdir/platform (better than empty)
+        if not raw_channel:
+            raw_channel = r.get('subdir') or r.get('platform') or 'unknown'
+
+        # Normalize tokenized/URL-like channel specifications
+        ch = str(raw_channel or '').strip()
+        # Strip private token prefix pattern like "t/<TOKEN>/"
+        ch = re.sub(r"^t/[^/]+/", "", ch)
+        # If the remaining channel still contains slashes, keep the last non-empty segment
+        if '/' in ch:
+            parts = [p for p in ch.split('/') if p]
+            if parts:
+                ch = parts[-1]
+
+        # If base_url clearly indicates conda-forge, force channel to 'conda-forge'
+        if isinstance(base_url, str) and 'conda-forge' in base_url:
+            ch = 'conda-forge'
+
+        # A few well-known normalizations
+        mapped = {
+            'conda forge': 'conda-forge',
+            'defaults': 'defaults',
+            'pypi': 'pypi',
+        }
+        ch_l = ch.lower()
+        if ch_l in mapped:
+            ch = mapped[ch_l]
+
+        r['channel'] = ch
+
+        # For UI: repo is just the normalized channel (avoid leaking URLs/tokens)
+        r.setdefault('repo', ch)
+
+        # Standardize build string key
+        if 'build' in r and 'build_string' not in r:
+            r['build_string'] = r['build']
+        return r
 
 
 # --- Compatibility adapter methods for CondaManagerDialog/UI ---
@@ -465,9 +918,9 @@ class CondaManager:
             return []
         return envs
 
-    def list_installed(self, prefix: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_installed(self, prefix: Optional[str] = None, on_progress: Optional[Callable[[str], None]] = None) -> List[Dict[str, Any]]:
         """Alias of list_packages for UI compatibility."""
-        return self.list_packages(prefix=prefix)
+        return self.list_packages(prefix=prefix, on_progress=on_progress)
 
     def create_env(
         self,
@@ -528,12 +981,12 @@ class CondaManager:
         res = self._run(args, use_json=False)
         return (res or {}).get('stdout', '')
 
-    def add_channel(self, channel: str) -> str:
-        """Add a conda channel using `conda config --add channels <channel>`.
-        Returns CLI text output for UI logging.
-        """
-        res = self._run(['config', '--add', 'channels', channel], use_json=False)
-        return (res or {}).get('stdout', '')
+    # NOTE:
+    # A robust `add_channel(self, channel: str)` implementation already exists above
+    # (lines ~698-762). Do NOT re‑declare it here, otherwise the Python class will
+    # override the robust implementation with this simplified variant.
+    # The previous minimal version that called `config --add` unconditionally has
+    # been removed to ensure micromamba compatibility and to allow YAML fallback.
 
     def remove_channel(self, channel: str) -> str:
         """Remove a conda channel using `conda config --remove channels <channel>`.

@@ -7,6 +7,7 @@ using CondaManager.
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Dict, List, Optional, Tuple, Set
 import logging
 
@@ -20,12 +21,14 @@ from PyQt5.QtWidgets import (
     QSpacerItem, QSizePolicy
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QTextCursor
 
 from .conda_manager import CondaManager
 
 
 class CondaWorker(QThread):
     finished = pyqtSignal(bool, object, str)
+    progress = pyqtSignal(str)
 
     def __init__(self, fn, *args, **kwargs):
         super().__init__()
@@ -35,7 +38,12 @@ class CondaWorker(QThread):
 
     def run(self):
         try:
-            res = self.fn(*self.args, **self.kwargs)
+            # Try to stream progress if the function supports an on_progress kwarg
+            try:
+                res = self.fn(*self.args, **{**self.kwargs, 'on_progress': self._emit_progress})
+            except TypeError:
+                # Fallback if callable doesn't accept on_progress
+                res = self.fn(*self.args, **self.kwargs)
             ok = False
             payload: object = None
             msg = ""
@@ -57,13 +65,23 @@ class CondaWorker(QThread):
         except Exception as e:
             self.finished.emit(False, None, str(e))
 
+    def _emit_progress(self, text: str):
+        if text is None:
+            return
+        try:
+            s = str(text)
+        except Exception:
+            s = ""
+        if s:
+            self.progress.emit(s)
+
 
 class CondaManagerDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("ChiSurf Package Manager")
         try:
-            self.resize(640, 480)
+            self.resize(960, 480)
         except Exception:
             pass
         self.manager = CondaManager()
@@ -145,6 +163,12 @@ class CondaManagerDialog(QDialog):
             self.tbl_pkgs.horizontalHeader().setStretchLastSection(True)
             self.tbl_pkgs.horizontalHeader().setDefaultSectionSize(140)
             self.tbl_pkgs.setColumnWidth(0, 32)
+            # Enable interactive sorting by clicking on headers
+            self.tbl_pkgs.setSortingEnabled(True)
+            try:
+                self.tbl_pkgs.horizontalHeader().setSortIndicatorShown(True)
+            except Exception:
+                pass
         except Exception:
             pass
         pk_lay.addWidget(self.tbl_pkgs)
@@ -261,9 +285,31 @@ class CondaManagerDialog(QDialog):
                 pass
 
         # Log output
+        # Log controls row (log level selector)
+        log_ctrl_lay = QHBoxLayout()
+        try:
+            log_ctrl_lay.setContentsMargins(0, 0, 0, 0)
+            log_ctrl_lay.setSpacing(6)
+        except Exception:
+            pass
+        log_ctrl_lay.addWidget(QLabel("Output:"))
+        from PyQt5.QtWidgets import QComboBox
+        self.cmb_log_level = QComboBox()
+        # Provide common levels
+        self.cmb_log_level.addItems(["Debug", "Info", "Warning", "Error"])
+        # Default to Info
+        try:
+            self.cmb_log_level.setCurrentIndex(1)
+        except Exception:
+            pass
+        log_ctrl_lay.addWidget(QLabel("Log level:"))
+        log_ctrl_lay.addWidget(self.cmb_log_level)
+        # Spacer to push controls left
+        log_ctrl_lay.addItem(QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        layout.addLayout(log_ctrl_lay)
+
         self.txt_log = QTextEdit()
         self.txt_log.setReadOnly(True)
-        layout.addWidget(QLabel("Output:"))
         layout.addWidget(self.txt_log, 1)
         # Repo info line below output
         self.lbl_repo = QLabel("")
@@ -301,6 +347,9 @@ class CondaManagerDialog(QDialog):
             # Pressing Enter in the search bar triggers an online search
             self.ed_search.returnPressed.connect(self.run_search)
             self.tbl_pkgs.itemChanged.connect(self._on_table_item_changed)
+            # Log level selector
+            if hasattr(self, 'cmb_log_level'):
+                self.cmb_log_level.currentIndexChanged.connect(self._on_log_level_changed)
         except Exception:
             pass
 
@@ -336,12 +385,76 @@ class CondaManagerDialog(QDialog):
 
     # ---------- Helpers ----------
     def _append_log(self, text: str):
+        # Treat _append_log messages as INFO-level for UI filtering
+        level = logging.INFO
         try:
-            logger.info(text)
+            logger.log(level, text)
         except Exception:
             pass
+        if not self._should_show_log(level):
+            return
         try:
             self.txt_log.append(text)
+            # Auto-scroll to bottom whenever new text arrives
+            try:
+                self.txt_log.moveCursor(QTextCursor.End)
+                self.txt_log.ensureCursorVisible()
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    def _on_worker_progress(self, text: str):
+        """Handle background worker progress as DEBUG-level messages to reduce noise."""
+        level = logging.DEBUG
+        try:
+            logger.log(level, text)
+        except Exception:
+            pass
+        if not self._should_show_log(level):
+            return
+        try:
+            self.txt_log.append(str(text))
+            try:
+                self.txt_log.moveCursor(QTextCursor.End)
+                self.txt_log.ensureCursorVisible()
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    def _current_ui_log_level(self) -> int:
+        try:
+            idx = self.cmb_log_level.currentIndex()
+        except Exception:
+            idx = 1
+        # Map index to logging level
+        if idx == 0:
+            return logging.DEBUG
+        if idx == 1:
+            return logging.INFO
+        if idx == 2:
+            return logging.WARNING
+        return logging.ERROR
+
+    def _should_show_log(self, level: int) -> bool:
+        try:
+            current = self._current_ui_log_level()
+            return level >= current
+        except Exception:
+            return True
+
+    def _on_log_level_changed(self, *_):
+        """Apply selected log level to python logger and optionally append a note."""
+        lvl = self._current_ui_log_level()
+        try:
+            logger.setLevel(lvl)
+        except Exception:
+            pass
+        # Note change in UI at INFO and below
+        try:
+            if self._should_show_log(logging.INFO):
+                self.txt_log.append(f"[Log] Level set to {logging.getLevelName(lvl)}")
         except Exception:
             pass
 
@@ -373,40 +486,39 @@ class CondaManagerDialog(QDialog):
             return False
 
     def _show_busy(self, message: str) -> None:
-        """Show an application-modal, auto-closing info box to block the UI during long ops."""
+        """Indicate busy state in lbl_repo (yellow) and disable controls; no modal dialog."""
         try:
             cnt = getattr(self, '_busy_count', 0)
-            if cnt <= 0 or not hasattr(self, '_busy_box') or self._busy_box is None:
-                from PyQt5.QtWidgets import QMessageBox
-                self._busy_box = QMessageBox(self)
+            if cnt <= 0:
+                # Cache current label text and style to restore later
                 try:
-                    self._busy_box.setIcon(QMessageBox.Information)
+                    self._repo_prev_text = getattr(self, '_repo_prev_text', None) or self.lbl_repo.text()
                 except Exception:
-                    pass
+                    self._repo_prev_text = None
                 try:
-                    self._busy_box.setWindowTitle("Please wait")
+                    self._repo_prev_style = getattr(self, '_repo_prev_style', None) or self.lbl_repo.styleSheet()
                 except Exception:
-                    pass
-                try:
-                    self._busy_box.setStandardButtons(QMessageBox.NoButton)
-                except Exception:
-                    pass
-                try:
-                    self._busy_box.setWindowModality(Qt.ApplicationModal)
-                except Exception:
-                    pass
-            # Update text and show
+                    self._repo_prev_style = None
+            # Compose status text
             try:
-                base = "This may take a while — please be patient."
-                msg = message.strip()
-                text = msg if msg else base
-                if msg:
-                    text = f"{msg}\n\n{base}"
-                self._busy_box.setText(text)
+                base_info = ''
+                try:
+                    base_info = self.lbl_repo.text().strip()
+                except Exception:
+                    base_info = ''
+                msg = (message or '').strip()
+                status = msg if msg else 'Working…'
+                text = base_info
+                if text:
+                    text += f"    |    Status: {status}"
+                else:
+                    text = f"Status: {status}"
+                self.lbl_repo.setText(text)
             except Exception:
                 pass
+            # Yellow background for busy
             try:
-                self._busy_box.show()
+                self.lbl_repo.setStyleSheet("QLabel { background-color: #f0ad4e; color: #000000; padding: 4px; }")
             except Exception:
                 pass
             self._busy_count = cnt + 1
@@ -415,21 +527,40 @@ class CondaManagerDialog(QDialog):
             pass
 
     def _hide_busy(self) -> None:
-        """Decrease busy counter and close the busy box when it reaches zero."""
+        """Decrease busy counter; when zero, restore lbl_repo and re-enable controls."""
         try:
             cnt = getattr(self, '_busy_count', 0)
             cnt -= 1
             if cnt <= 0:
                 self._busy_count = 0
+                # Restore previous repo label text/style if available; otherwise refresh info
+                restored = False
                 try:
-                    if hasattr(self, '_busy_box') and self._busy_box is not None:
+                    if getattr(self, '_repo_prev_text', None) is not None:
                         try:
-                            self._busy_box.close()
+                            self.lbl_repo.setText(self._repo_prev_text)
                         except Exception:
                             pass
-                        self._busy_box = None
+                        restored = True
+                    if getattr(self, '_repo_prev_style', None) is not None:
+                        try:
+                            self.lbl_repo.setStyleSheet(self._repo_prev_style)
+                        except Exception:
+                            pass
+                        restored = True or restored
                 except Exception:
                     pass
+                # Clear cache
+                try:
+                    self._repo_prev_text = None
+                    self._repo_prev_style = None
+                except Exception:
+                    pass
+                if not restored:
+                    try:
+                        self.refresh_repo_info()
+                    except Exception:
+                        pass
                 self._set_controls_enabled(True)
             else:
                 self._busy_count = cnt
@@ -437,20 +568,9 @@ class CondaManagerDialog(QDialog):
             pass
 
     def _reset_busy(self) -> None:
-        """Forcefully close any busy dialog and reset internal busy state.
-        Use this as a safety net when an operation finished but the modal remained.
-        """
+        """Reset busy state and restore lbl_repo to previous info; safety net after operations."""
         try:
             self._busy_count = 0
-            try:
-                if hasattr(self, '_busy_box') and self._busy_box is not None:
-                    try:
-                        self._busy_box.close()
-                    except Exception:
-                        pass
-                    self._busy_box = None
-            except Exception:
-                pass
             # Reset flow flags so future operations behave predictably
             try:
                 self._busy_until_refresh = False
@@ -460,6 +580,33 @@ class CondaManagerDialog(QDialog):
                 self._list_busy_own = False
             except Exception:
                 pass
+            # Restore label text/style
+            restored = False
+            try:
+                if getattr(self, '_repo_prev_text', None) is not None:
+                    try:
+                        self.lbl_repo.setText(self._repo_prev_text)
+                    except Exception:
+                        pass
+                    restored = True
+                if getattr(self, '_repo_prev_style', None) is not None:
+                    try:
+                        self.lbl_repo.setStyleSheet(self._repo_prev_style)
+                    except Exception:
+                        pass
+                    restored = True or restored
+            except Exception:
+                pass
+            try:
+                self._repo_prev_text = None
+                self._repo_prev_style = None
+            except Exception:
+                pass
+            if not restored:
+                try:
+                    self.refresh_repo_info()
+                except Exception:
+                    pass
             self._set_controls_enabled(True)
         except Exception:
             pass
@@ -475,13 +622,16 @@ class CondaManagerDialog(QDialog):
             # Best-effort only
             pass
 
-    # ---------- Channel guard: ensure conda-forge is present ----------
+    # ---------- Channel guard: ensure required channels are present ----------
     def _ensure_conda_forge_channel(self) -> None:
-        """Ensure that 'conda-forge' is present in Conda channels; add it if missing.
-        This runs asynchronously: first fetch channels, then add if required.
+        """Ensure that required channels are present in Conda (.condarc).
+        Currently required: 'conda-forge' and 'tpeulen'.
+        Runs asynchronously: fetch channels, then add any missing sequentially.
         """
         try:
-            logger.info("Checking for 'conda-forge' channel…")
+            # Define required channels (order matters: conda-forge first)
+            self._required_channels: List[str] = ['conda-forge', 'tpeulen']
+            logger.info("Checking for required channels: %s", ", ".join(self._required_channels))
             self._append_log("Checking channels…")
             worker = CondaWorker(self.manager.get_channels)
             self._track_worker(worker)
@@ -502,40 +652,108 @@ class CondaManagerDialog(QDialog):
             elif isinstance(payload, dict):
                 # Some implementations might return a mapping
                 channels = [str(k).strip() for k in payload.keys()]
-            # Case-insensitive check for 'conda-forge'
-            has_cf = any(c.lower() == 'conda-forge' for c in channels)
-            if has_cf:
-                self._append_log("Channel 'conda-forge' already present.")
-                logger.info("'conda-forge' already present in channels")
+            # Build missing list (case-insensitive)
+            have_lower = {c.lower() for c in channels}
+            req = getattr(self, '_required_channels', ['conda-forge'])
+            missing = [c for c in req if c.lower() not in have_lower]
+            if not missing:
+                self._append_log("All required channels are present.")
+                logger.info("All required channels present: %s", ", ".join(channels))
                 return
-            # Add the channel
-            self._append_log("Adding channel: conda-forge …")
-            logger.info("Adding 'conda-forge' to channels via 'conda config --add channels conda-forge'")
-            worker = CondaWorker(self.manager.add_channel, 'conda-forge')
-            self._track_worker(worker)
-            worker.finished.connect(self._on_channel_added)
-            worker.start()
+            # Queue missing channels and add sequentially
+            self._channels_to_add = list(missing)
+            self._append_log(f"Missing channels: {', '.join(self._channels_to_add)}")
+            self._add_next_required_channel()
         except Exception as e:
             self._append_log(f"Error processing channels: {e}")
 
-    def _on_channel_added(self, ok: bool, payload: object, msg: str):
+    def _add_next_required_channel(self) -> None:
+        try:
+            pending = getattr(self, '_channels_to_add', [])
+            if not pending:
+                # After adding all, enforce strict priority
+                self._append_log("Setting channel priority to 'strict' …")
+                worker = CondaWorker(self.manager.set_channel_priority, 'strict')
+                self._track_worker(worker)
+                worker.finished.connect(self._on_priority_set)
+                worker.start()
+                return
+            ch = pending.pop(0)
+            self._channels_to_add = pending
+            self._append_log(f"Adding channel: {ch} …")
+            # Generic log; CondaManager.add_channel will pick the best strategy (append/prepend/conda-add/YAML)
+            logger.info("Adding channel: %s", ch)
+            worker = CondaWorker(self.manager.add_channel, ch)
+            self._track_worker(worker)
+            worker.finished.connect(self._on_channel_add_step)
+            worker.start()
+        except Exception as e:
+            self._append_log(f"Failed to add required channels: {e}")
+
+    def _on_channel_add_step(self, ok: bool, payload: object, msg: str):
         try:
             if ok:
-                self._append_log("Channel 'conda-forge' added.")
-                QMessageBox.information(self, "Channels", "Channel 'conda-forge' has been added to your Conda configuration.")
+                # Continue with next channel if any
+                self._add_next_required_channel()
             else:
-                self._append_log(f"Failed to add 'conda-forge': {msg}")
-                QMessageBox.warning(self, "Channels", msg or "Failed to add 'conda-forge' channel")
+                self._append_log(f"Failed to add channel: {msg}")
+                QMessageBox.warning(self, "Channels", msg or "Failed to add channel")
+        except Exception:
+            pass
+
+    def _on_priority_set(self, ok: bool, payload: object, msg: str):
+        try:
+            if ok:
+                self._append_log("Channel priority set to 'strict'.")
+                QMessageBox.information(self, "Channels", "Channel 'conda-forge' added and priority set to 'strict'.")
+            else:
+                self._append_log(f"Failed to set channel priority: {msg}")
+                QMessageBox.warning(self, "Channels", msg or "Failed to set channel priority to 'strict'")
         except Exception:
             pass
 
     def _on_repo_info(self, ok: bool, payload: object, msg: str):
         try:
+            # Determine preferred solver and corresponding background color
+            try:
+                solver = (self.manager.preferred_solver() or 'conda').lower()
+            except Exception:
+                solver = 'conda'
+            # Treat both mamba and micromamba as fast (green); conda as slow (red)
+            is_fast = solver in ('mamba', 'micromamba')
+            bg = '#5cb85c' if is_fast else '#d9534f'  # green for fast solvers, red for conda
+            fg = '#ffffff'
+
+            # Obtain condarc path from payload, manager, or environment
+            rc_path = None
+            try:
+                if isinstance(payload, dict):
+                    rc_path = payload.get('rc_path') or payload.get('rc_location')
+            except Exception:
+                rc_path = None
+            if not rc_path:
+                try:
+                    rc_path = getattr(self.manager, 'condarc_path', lambda: None)()
+                except Exception:
+                    rc_path = None
+            if not rc_path:
+                try:
+                    rc_path = os.environ.get('CONDARC')
+                except Exception:
+                    rc_path = None
+            if not rc_path:
+                rc_path = '(default condarc)'
+
             if not ok or not isinstance(payload, dict):
-                # Show at least the current env
+                # Show at least the current env with solver and condarc info
                 prefix = self._current_env_prefix()
-                self.lbl_repo.setText(f"Env: {prefix}")
+                self.lbl_repo.setText(f"Env: {prefix}    |    Solver: {solver.upper()}    |    condarc: {rc_path}")
+                try:
+                    self.lbl_repo.setStyleSheet(f"QLabel {{ background-color: {bg}; color: {fg}; padding: 4px; }}")
+                except Exception:
+                    pass
                 return
+
             info = payload
             pkgs_dirs = []
             try:
@@ -545,7 +763,11 @@ class CondaManagerDialog(QDialog):
                 pkgs_dirs = []
             prefix = self._current_env_prefix()
             repo_dir = pkgs_dirs[0] if pkgs_dirs else "(unknown)"
-            self.lbl_repo.setText(f"Repo: {repo_dir}    |    Env: {prefix}")
+            self.lbl_repo.setText(f"Repo: {repo_dir}    |    Env: {prefix}    |    Solver: {solver.upper()}    |    condarc: {rc_path}")
+            try:
+                self.lbl_repo.setStyleSheet(f"QLabel {{ background-color: {bg}; color: {fg}; padding: 4px; }}")
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -581,9 +803,63 @@ class CondaManagerDialog(QDialog):
         self._all_packages = records or []
         self._apply_pkg_filter()
 
+    def _version_key(self, ver: str):
+        """Return a tuple usable for correct semantic-ish version sorting.
+        Splits into numeric and alpha chunks so that 1.10 > 1.2 and rc/beta sort below releases.
+        """
+        try:
+            import re
+            s = (ver or "").strip()
+            if not s:
+                return ((),)
+            parts = re.findall(r"\d+|[A-Za-z]+|[^A-Za-z0-9]+", s)
+            out = []
+            for p in parts:
+                if p.isdigit():
+                    out.append((0, int(p)))  # numbers sort first, by value
+                elif p.isalpha():
+                    # prioritize stable releases above pre-release tags
+                    tag = p.lower()
+                    # map common pre-release tags to order
+                    rank = {
+                        'a': -3, 'alpha': -3,
+                        'b': -2, 'beta': -2,
+                        'rc': -1,
+                    }.get(tag, 0)
+                    out.append((1, rank, tag))
+                else:
+                    # separators
+                    out.append((2, p))
+            return tuple(out)
+        except Exception:
+            return (ver or "",)
+
+    class _VersionItem(QTableWidgetItem):
+        def __init__(self, text: str, sort_key):
+            super().__init__(text)
+            self._sort_key = sort_key
+
+        def __lt__(self, other):
+            try:
+                if isinstance(other, CondaManagerDialog._VersionItem):
+                    return self._sort_key < other._sort_key
+            except Exception:
+                pass
+            try:
+                return super().__lt__(other)
+            except Exception:
+                return False
+
     def _populate_pkg_table(self, rows: List[Dict[str, Any]]):
         try:
             self._suppress_item_changed = True
+            # Temporarily disable sorting while populating to avoid row churn
+            try:
+                prev_sorting = self.tbl_pkgs.isSortingEnabled()
+                if prev_sorting:
+                    self.tbl_pkgs.setSortingEnabled(False)
+            except Exception:
+                prev_sorting = False
             self.tbl_pkgs.setRowCount(0)
             for rec in rows:
                 row = self.tbl_pkgs.rowCount()
@@ -603,14 +879,32 @@ class CondaManagerDialog(QDialog):
                 name = str(rec.get('name', ''))
                 ver = str(rec.get('version', ''))
                 bld = str(rec.get('build', '') or rec.get('build_string', ''))
-                src = str(rec.get('channel', '') or rec.get('subdir', '') or rec.get('source', ''))
+                src = str(rec.get('repo', '') or rec.get('channel', '') or rec.get('subdir', '') or rec.get('source', ''))
                 self.tbl_pkgs.setItem(row, 1, QTableWidgetItem(name))
-                self.tbl_pkgs.setItem(row, 2, QTableWidgetItem(ver))
+                # Version column uses version-aware item for correct sorting
+                ver_key = self._version_key(ver)
+                self.tbl_pkgs.setItem(row, 2, self._VersionItem(ver, ver_key))
                 self.tbl_pkgs.setItem(row, 3, QTableWidgetItem(bld))
                 self.tbl_pkgs.setItem(row, 4, QTableWidgetItem(src))
             # Update toggle button label after repopulating
             if hasattr(self, '_update_select_toggle_label'):
                 self._update_select_toggle_label()
+            # Re-enable sorting and apply default version-desc sort
+            try:
+                self.tbl_pkgs.setSortingEnabled(True)
+                header = self.tbl_pkgs.horizontalHeader()
+                try:
+                    header.setSortIndicatorShown(True)
+                    header.setSortIndicator(2, Qt.DescendingOrder)
+                except Exception:
+                    pass
+                self.tbl_pkgs.sortItems(2, Qt.DescendingOrder)
+            except Exception:
+                # Restore previous state if we had disabled sorting
+                try:
+                    self.tbl_pkgs.setSortingEnabled(bool(prev_sorting))
+                except Exception:
+                    pass
         except Exception:
             pass
         finally:
@@ -637,7 +931,7 @@ class CondaManagerDialog(QDialog):
                         str(rec.get('name', '')),
                         str(rec.get('version', '')),
                         str(rec.get('build', '') or rec.get('build_string', '')),
-                        str(rec.get('channel', '') or rec.get('subdir', '') or rec.get('source', ''))
+                        str(rec.get('repo', '') or rec.get('channel', '') or rec.get('subdir', '') or rec.get('source', ''))
                     ]).lower()
                     if q in hay:
                         out.append(rec)
@@ -731,6 +1025,10 @@ class CondaManagerDialog(QDialog):
         try:
             worker.finished.connect(lambda *_: self._cleanup_worker(worker))
             worker.finished.connect(worker.deleteLater)
+            # Live progress into the log box
+            if hasattr(worker, 'progress'):
+                # Route worker progress through DEBUG-level filter to reduce noise
+                worker.progress.connect(self._on_worker_progress)
         except Exception:
             pass
 
@@ -753,8 +1051,11 @@ class CondaManagerDialog(QDialog):
         query = self.ed_search.text().strip()
         if not query:
             return
-        self._append_log(f"Searching for '{query}'...")
-        worker = CondaWorker(self.manager.search, query)
+        self._append_log(f"Searching for '{query}' (channels: conda-forge)…")
+        # Block UI while searching
+        self._show_busy("Searching remote repositories…")
+        # Force conda-forge to avoid PackagesNotFoundError on defaults-only setups
+        worker = CondaWorker(self.manager.search, query, ["conda-forge"])  # extra arg = channels
         self._track_worker(worker)
         worker.finished.connect(self._on_search_finished)
         worker.start()
@@ -796,7 +1097,13 @@ class CondaManagerDialog(QDialog):
         if to_install:
             self._apply_queue.append(("install", to_install))
         self._apply_running = False
-        # No blocking modal; log status and start
+        # Block UI during the entire apply sequence; will be released after list refresh
+        try:
+            self._busy_until_refresh = True
+        except Exception:
+            pass
+        self._show_busy("Applying changes…")
+        # Log status and start
         self._append_log("Applying changes…")
         self._run_next_apply_op()
 
@@ -870,21 +1177,41 @@ class CondaManagerDialog(QDialog):
             records: List[Dict[str, Any]] = []
             installed = getattr(self, '_installed_names', set())
             if isinstance(payload, dict):
-                for name, recs in payload.items():
-                    if isinstance(recs, list) and recs:
-                        # Use the last record (often newest)
-                        rec = recs[-1]
-                        nm = rec.get('name', name)
-                        records.append({
-                            'name': nm,
-                            'version': rec.get('version', ''),
-                            'build': rec.get('build', '') or rec.get('build_string', ''),
-                            'channel': rec.get('channel', '') or rec.get('subdir', ''),
-                            'installed': nm in installed
-                        })
-                    else:
-                        nm = str(name)
-                        records.append({'name': nm, 'version': '', 'build': '', 'channel': '', 'installed': nm in installed})
+                # Normalized micromamba shape: { "packages": [ {..}, ... ] }
+                packages_obj = payload.get('packages') if isinstance(payload, dict) else None
+                if isinstance(packages_obj, list):
+                    for rec in packages_obj:
+                        try:
+                            nm = str(rec.get('name', ''))
+                            out = {
+                                'name': nm,
+                                'version': rec.get('version', ''),
+                                'build': rec.get('build', '') or rec.get('build_string', ''),
+                                'repo': rec.get('repo', ''),
+                                'channel': rec.get('channel', '') or rec.get('subdir', ''),
+                                'installed': nm in installed
+                            }
+                            records.append(out)
+                        except Exception:
+                            continue
+                else:
+                    # Legacy mapping: { name: [records...] }
+                    for name, recs in payload.items():
+                        if isinstance(recs, list) and recs:
+                            # Use the last record (often newest)
+                            rec = recs[-1]
+                            nm = rec.get('name', name)
+                            records.append({
+                                'name': nm,
+                                'version': rec.get('version', ''),
+                                'build': rec.get('build', '') or rec.get('build_string', ''),
+                                'repo': rec.get('repo', ''),
+                                'channel': rec.get('channel', '') or rec.get('subdir', ''),
+                                'installed': nm in installed
+                            })
+                        else:
+                            nm = str(name)
+                            records.append({'name': nm, 'version': '', 'build': '', 'repo': '', 'channel': '', 'installed': nm in installed})
             elif isinstance(payload, list):
                 for rec in payload:
                     try:
@@ -893,12 +1220,13 @@ class CondaManagerDialog(QDialog):
                             'name': nm,
                             'version': rec.get('version', ''),
                             'build': rec.get('build', '') or rec.get('build_string', ''),
+                            'repo': rec.get('repo', ''),
                             'channel': rec.get('channel', '') or rec.get('subdir', ''),
                             'installed': nm in installed
                         })
                     except Exception:
                         s = str(rec)
-                        records.append({'name': s, 'version': '', 'build': '', 'channel': '', 'installed': s in installed})
+                        records.append({'name': s, 'version': '', 'build': '', 'repo': '', 'channel': '', 'installed': s in installed})
             # Ensure installed packages appear checked in the table by default
             try:
                 self._checked_names |= set(installed)
@@ -909,11 +1237,20 @@ class CondaManagerDialog(QDialog):
         except Exception as e:
             self._append_log(f"Error parsing search results: {e}")
         finally:
-            pass
+            try:
+                self._hide_busy()
+            except Exception:
+                pass
 
     def run_list_installed(self):
         logger.info("Listing installed packages...")
         self._append_log("Listing installed packages...")
+        # Show busy and mark that this list operation should close the busy dialog when done
+        try:
+            self._list_busy_own = True
+        except Exception:
+            pass
+        self._show_busy("Listing installed packages…")
         worker = CondaWorker(self.manager.list_installed, self._current_env_prefix())
         self._track_worker(worker)
         worker.finished.connect(self._on_list_installed_finished)
@@ -997,6 +1334,9 @@ class CondaManagerDialog(QDialog):
             return
         logger.info("Installing selected packages: %s", " ".join(pkgs))
         self._append_log(f"Installing: {' '.join(pkgs)}")
+        # Keep UI blocked until the subsequent list refresh completes
+        self._busy_until_refresh = True
+        self._show_busy("Installing selected packages…")
         worker = CondaWorker(self.manager.install, pkgs, self._current_env_prefix())
         self._track_worker(worker)
         worker.finished.connect(self._on_text_result)
@@ -1022,6 +1362,9 @@ class CondaManagerDialog(QDialog):
             return
         logger.info("Updating selected packages: %s", " ".join(pkgs))
         self._append_log(f"Updating: {' '.join(pkgs)}")
+        # Block UI and keep busy until the list refresh closes it
+        self._busy_until_refresh = True
+        self._show_busy("Updating selected packages…")
         worker = CondaWorker(self.manager.update, pkgs, self._current_env_prefix())
         self._track_worker(worker)
         worker.finished.connect(self._on_text_result)
@@ -1030,6 +1373,9 @@ class CondaManagerDialog(QDialog):
     def run_update_all(self):
         logger.info("Updating all packages ...")
         self._append_log("Updating all packages (this may take a while)...")
+        # Block UI and keep busy until the list refresh closes it
+        self._busy_until_refresh = True
+        self._show_busy("Updating all packages…")
         worker = CondaWorker(self.manager.update, None, self._current_env_prefix())
         self._track_worker(worker)
         worker.finished.connect(self._on_text_result)

@@ -18,6 +18,7 @@ Notes:
 
 import sys
 import logging
+import html
 import yaml
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
@@ -214,8 +215,8 @@ class UpdaterWidget(QWidget):
         self.changelog_text = QTextEdit()
         try:
             self.changelog_text.setReadOnly(True)
-            # Disable line wrapping in changelog for better readability of long entries
-            self.changelog_text.setLineWrapMode(QTextEdit.NoWrap)
+            # Enable line wrapping so long entries are easier to read
+            self.changelog_text.setLineWrapMode(QTextEdit.WidgetWidth)
             font = QFont("Consolas")
             font.setPointSize(9)
             self.changelog_text.setFont(font)
@@ -230,6 +231,70 @@ class UpdaterWidget(QWidget):
             self.resize(800, 600)
         except Exception:
             pass
+
+    def _format_changelog_html(self, text: str) -> str:
+        """Return pretty HTML for the raw changelog string.
+        - Wraps lines (handled by QTextEdit), adds indentation via list formatting
+        - Converts lines starting with "- " into <li> items
+        - Preserves non-list paragraphs and footer links
+        """
+        try:
+            if not isinstance(text, str) or not text.strip():
+                return "<i>No changelog available.</i>"
+
+            lines = text.splitlines()
+            header = None
+            items = []
+            others = []
+            footer = []
+
+            # Simple state machine: collect leading header, bullet items, other lines, and detect footer hint
+            for i, ln in enumerate(lines):
+                s = ln.strip("\r\n")
+                if i == 0 and s.lower().startswith("changes "):
+                    header = html.escape(s)
+                    continue
+                if s.startswith("- "):
+                    # Keep the date/message nicely separated; escape HTML
+                    items.append(html.escape(s[2:].strip()))
+                elif s.lower().startswith("more details:") or s.lower().startswith("see commit history:"):
+                    footer.append(s)
+                elif s:
+                    others.append(s)
+
+            html_parts = []
+            if header:
+                html_parts.append(f"<b>{header}</b>")
+
+            if items:
+                html_parts.append("<ul>")
+                for it in items:
+                    html_parts.append(f"  <li>{it}</li>")
+                html_parts.append("</ul>")
+
+            # Any remaining paragraphs
+            for para in others:
+                html_parts.append(f"<p>{html.escape(para)}</p>")
+
+            # Footer with links if any
+            for ft in footer:
+                # try to hyperlink if URL present
+                parts = ft.split()  # naive
+                url = None
+                for p in parts:
+                    if p.startswith("http://") or p.startswith("https://"):
+                        url = p
+                        break
+                if url:
+                    label = html.escape(ft.replace(url, "").strip(" :")) or "More details"
+                    html_parts.append(f"<p>{label}: <a href=\"{html.escape(url)}\">{html.escape(url)}</a></p>")
+                else:
+                    html_parts.append(f"<p>{html.escape(ft)}</p>")
+
+            return "\n".join(html_parts)
+        except Exception:
+            # Fallback: escaped preformatted
+            return f"<pre>{html.escape(str(text))}</pre>"
 
     def open_conda_manager(self):
         """Open the Conda Package Manager dialog."""
@@ -342,7 +407,7 @@ class UpdaterWidget(QWidget):
                     try:
                         changelog = update_info.get("changelog")
                         if changelog:
-                            self.changelog_text.setPlainText(changelog)
+                            self.changelog_text.setHtml(self._format_changelog_html(changelog))
                         else:
                             self._update_changelog_for_selected()
                     except Exception:
@@ -445,7 +510,7 @@ class UpdaterWidget(QWidget):
             try:
                 changelog = update_info.get("changelog") if isinstance(update_info, dict) else None
                 if changelog:
-                    self.changelog_text.setPlainText(changelog)
+                    self.changelog_text.setHtml(self._format_changelog_html(changelog))
                 else:
                     self._update_changelog_for_selected()
             except Exception:
@@ -537,10 +602,10 @@ class UpdaterWidget(QWidget):
                 pass
 
             changelog = self.updater._build_changelog(from_version, target_version)
-            self.changelog_text.setPlainText(changelog)
+            self.changelog_text.setHtml(self._format_changelog_html(changelog))
         except Exception as e:
             try:
-                self.changelog_text.setPlainText(f"Could not load changelog: {e}")
+                self.changelog_text.setHtml(self._format_changelog_html(f"Could not load changelog: {e}"))
             except Exception:
                 pass
 
