@@ -732,4 +732,49 @@ class Data(Base):
         return s
 
 
+def safe_import(module_name: str, package_name: str = None, parent=None):
+    """
+    Safely import a module with user-friendly error handling for conda packages.
+    
+    Args:
+        module_name: The module to import (e.g., 'numpy', 'scipy.optimize')
+        package_name: The conda package name if different from module_name (e.g., 'scipy' for 'scipy.optimize')
+        parent: Parent widget for error dialogs
+    
+    Returns:
+        The imported module, or None if import failed
+        
+    Example:
+        >>> np = safe_import('numpy')
+        >>> optimize = safe_import('scipy.optimize', 'scipy')
+    """
+    if package_name is None:
+        package_name = module_name.split('.')[0]
+    
+    try:
+        return __import__(module_name)
+    except ImportError:
+        # Try to show Package Manager redirect dialog
+        try:
+            from chisurf.gui import QtWidgets
+            if QtWidgets is not None:
+                title = f"Package {package_name} not available"
+                text = (
+                    f"The package '{package_name}' is required but not installed.\n\n"
+                    f"Please use ChiSurf's Package Manager (available in Help > Updates and Packages > Package Manager) "
+                    f"to install the '{package_name}' package."
+                )
+                
+                msg = QtWidgets.QMessageBox(parent)
+                msg.setIcon(QtWidgets.QMessageBox.Information)
+                msg.setWindowTitle(title)
+                msg.setText(text)
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.exec_()
+        except Exception:
+            # Fallback to logging if Qt not available
+            chisurf.logging.warning(f"Package '{package_name}' not available. Please use ChiSurf's Package Manager to install it.")
+        return None
+
+
 import chisurf.fio as io
