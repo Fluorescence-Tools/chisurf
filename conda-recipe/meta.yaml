@@ -94,7 +94,7 @@ requirements:
     - zeus-mcmc
     - tttrlib  # [not win]
     - libcxx   # [osx]
-    - mamba
+    - micromamba
 
 app:
   entry: chisurf
