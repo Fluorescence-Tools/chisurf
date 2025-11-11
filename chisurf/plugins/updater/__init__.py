@@ -128,6 +128,7 @@ class UpdaterWidget(QWidget):
 
         # Status label
         self.status_label = QLabel("Click 'Check for Updates' to check for available updates.")
+        self._update_status_tooltip()
         layout.addWidget(self.status_label)
 
         # Development branch checkbox (always on, disabled since no stable release exists)
@@ -369,6 +370,7 @@ class UpdaterWidget(QWidget):
             ):
                 # Do not auto-check or prompt on startup
                 self.status_label.setText("Startup update check is disabled by user settings.")
+                self._update_status_tooltip()
                 # Ensure buttons are enabled for manual checks
                 self.check_button.setEnabled(True)
                 # Do not touch update button here; it will be enabled after manual checks
@@ -402,6 +404,7 @@ class UpdaterWidget(QWidget):
                     self.version_dropdown.setEnabled(True)
                     self.update_button.setEnabled(True)
                     self.status_label.setText(f"Found {len(self.available_versions)} available versions.")
+                    self._update_status_tooltip()
                     populated_versions = True
                     # Populate changelog for latest version if provided
                     try:
@@ -425,6 +428,7 @@ class UpdaterWidget(QWidget):
             if error:
                 # Keep any versions we may have populated, but show the error
                 self.status_label.setText(f"Update check failed or skipped: {error}")
+                self._update_status_tooltip()
                 self.check_button.setEnabled(True)
                 # If versions not populated, leave update button disabled
                 if not populated_versions:
@@ -432,6 +436,7 @@ class UpdaterWidget(QWidget):
                 return
             if update_available and latest_version:
                 self.status_label.setText(f"Update available: version {latest_version}")
+                self._update_status_tooltip()
                 self.update_button.setEnabled(True)
                 # Inform the user with a non-intrusive prompt unless suppressed
                 if not getattr(self, "_suppress_initial_notification", False):
@@ -448,6 +453,7 @@ class UpdaterWidget(QWidget):
                 from chisurf import info as _info
                 if not populated_versions:
                     self.status_label.setText(f"ChiSurf is up to date (version {_info.__version__}).")
+                    self._update_status_tooltip()
         except Exception:
             pass
         finally:
@@ -478,6 +484,7 @@ class UpdaterWidget(QWidget):
             error_message = "Error checking for updates: No update information available"
             logging.error(error_message)
             self.status_label.setText(error_message)
+            self._update_status_tooltip()
             self.check_button.setEnabled(True)
             return
 
@@ -526,14 +533,17 @@ class UpdaterWidget(QWidget):
                 error_message = f"Error checking for updates: {error}"
                 logging.error(error_message)
                 self.status_label.setText(error_message)
+                self._update_status_tooltip()
             elif update_available and latest_version:
                 status_message = f"Update available: version {latest_version}"
                 logging.info(status_message)
                 self.status_label.setText(status_message)
+                self._update_status_tooltip()
             else:
                 status_message = f"ChiSurf is already up to date (version {info.__version__})."
                 logging.info(status_message)
                 self.status_label.setText(status_message)
+                self._update_status_tooltip()
         else:
             # No versions found; still run availability check to inform the user
             logging.info("No versions found; performing availability check")
@@ -546,15 +556,18 @@ class UpdaterWidget(QWidget):
                 error_message = f"Error checking for updates: {error}"
                 logging.error(error_message)
                 self.status_label.setText(error_message)
+                self._update_status_tooltip()
             elif update_available and latest_version:
                 status_message = f"Update available: version {latest_version}"
                 logging.info(status_message)
                 self.status_label.setText(status_message)
+                self._update_status_tooltip()
                 self.update_button.setEnabled(True)
             else:
                 status_message = f"ChiSurf is already up to date (version {info.__version__})."
                 logging.info(status_message)
                 self.status_label.setText(status_message)
+                self._update_status_tooltip()
 
         self.check_button.setEnabled(True)
         logging.debug("Update check completed")
@@ -621,32 +634,25 @@ class UpdaterWidget(QWidget):
         except Exception:
             pass
 
-    def _update_branch_label(self):
-        """Refresh the QLabel to show the currently selected branch."""
+    def _update_status_tooltip(self):
+        """Update the status label tooltip with solver information."""
         try:
-            # Prefer updater.channel if available
-            branch_text = None
+            solver_path = self.updater.conda.conda_exe()
+            solver_name = os.path.basename(solver_path).lower()
+            if 'micro' in solver_name:
+                solver_type = 'micromamba'
+            elif 'mamba' in solver_name:
+                solver_type = 'mamba'
+            else:
+                solver_type = 'conda'
+
+            tooltip_text = f"Solver: {solver_type}\nLocation: {solver_path}"
+            self.status_label.setToolTip(tooltip_text)
+        except Exception as e:
             try:
-                ch = getattr(self.updater, 'channel', None)
-                if isinstance(ch, str) and ch:
-                    ch_lower = ch.lower()
-                    if ch_lower.startswith('dev') or ch_lower == 'development':
-                        branch_text = 'Development'
-                    elif ch_lower in ('main', 'master'):
-                        branch_text = 'Main'
-                    else:
-                        # Show raw channel name if it's custom
-                        branch_text = ch
+                self.status_label.setToolTip("Solver information unavailable")
             except Exception:
                 pass
-
-            # Fallback to checkbox state if needed
-            if not branch_text:
-                branch_text = 'Development' if self.dev_checkbox.isChecked() else 'Main'
-
-            self.branch_label.setText(f"Selected branch: {branch_text}")
-        except Exception:
-            pass
 
     def update_chisurf(self):
         """Update ChiSurf to the selected version."""
@@ -690,6 +696,7 @@ class UpdaterWidget(QWidget):
             logging.info("Update cancelled by user")
             progress_dialog.close()
             self.status_label.setText("Update cancelled by user.")
+            self._update_status_tooltip()
             return
 
         # If we have available versions and one is selected, use it

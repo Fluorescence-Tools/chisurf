@@ -6,6 +6,8 @@ import platform
 import re
 import shutil
 import pathlib
+import tempfile
+import logging
 from typing import List, Dict, Any, Optional, Tuple, Callable
 
 # Path helper to locate user settings folder for CONDARC
@@ -148,9 +150,25 @@ class CondaManager:
             pass
         return None
 
-    def preferred_solver(self) -> str:
-        """Return the currently preferred solver name. Fallback removed → always 'micromamba'."""
-        return 'micromamba'
+    def _needs_elevation(self) -> bool:
+        """
+        Determine if elevated privileges are needed for conda operations.
+
+        Returns:
+            Boolean indicating if elevated privileges are needed
+        """
+        if self._system == "windows":
+            # Check if the installation directory is in Program Files
+            chisurf_path = get_path('chisurf')
+            program_files = os.environ.get('ProgramFiles', 'C:\\Program Files')
+            program_files_x86 = os.environ.get('ProgramFiles(x86)', 'C:\\Program Files (x86)')
+
+            return (str(chisurf_path).startswith(program_files) or
+                    str(chisurf_path).startswith(program_files_x86))
+
+        # On Unix-like systems, check if the conda environment is in a system directory
+        conda_prefix = os.environ.get('CONDA_PREFIX', '')
+        return conda_prefix.startswith('/usr') and not conda_prefix.startswith('/usr/local')
 
     def _run_with_exe(self, exe: str, args: List[str], use_json: bool = True, env: Optional[Dict[str, str]] = None, on_progress: Optional[Callable[[str], None]] = None):
         cmd = [exe, *args]
@@ -473,6 +491,96 @@ class CondaManager:
             # Unknown error: rethrow
             raise
 
+    def _run_with_elevation(self, cmd: List[str]) -> Tuple[bool, Optional[str]]:
+        """
+        Run a command with elevated privileges on Windows.
+
+        Args:
+            cmd: Command to run as a list of arguments
+
+        Returns:
+            Tuple containing:
+            - Boolean indicating if the command was successful
+            - Error message if the command failed, None otherwise
+        """
+        if self._system != "windows":
+            return self._run_command(cmd)
+
+        try:
+            # Create a temporary batch file to run the command with logging
+            temp_dir = tempfile.mkdtemp(prefix="chisurf_conda_elev_")
+            log_file = os.path.join(temp_dir, "elevated_conda_command.log")
+
+            # Properly quote arguments that contain spaces
+            quoted_cmd = [f'"{arg}"' if ' ' in str(arg) and not str(arg).startswith('"') else str(arg) for arg in cmd]
+            win_cmd_str = " ".join(quoted_cmd)
+
+            batch_file = os.path.join(temp_dir, "run_conda_elevated.bat")
+            with open(batch_file, 'w') as f:
+                f.write('@echo off\n')
+                f.write(f'echo Running elevated conda command at %DATE% %TIME% > "{log_file}"\n')
+                f.write(f'echo Command: {win_cmd_str} >> "{log_file}"\n')
+                f.write('echo. >> "' + log_file + '"\n')
+                # Execute the command and capture all output to the log
+                f.write(f'{win_cmd_str} >> "{log_file}" 2>&1\n')
+                f.write('set EXITCODE=%ERRORLEVEL%\n')
+                f.write('echo. >> "' + log_file + '"\n')
+                f.write('echo Exit code: %EXITCODE% >> "' + log_file + '"\n')
+                f.write('if %EXITCODE% NEQ 0 (\n')
+                f.write('  echo Elevated conda command failed with error code %EXITCODE% >> "' + log_file + '"\n')
+                f.write('  exit /b %EXITCODE%\n')
+                f.write(')\n')
+                f.write('echo Elevated conda command completed successfully >> "' + log_file + '"\n')
+                f.write('exit /b 0\n')
+
+            # Run the batch file with elevated privileges using PowerShell and wait for completion
+            powershell_cmd = [
+                'powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+                f"$p = Start-Process -FilePath '{batch_file}' -Verb RunAs -Wait -PassThru; exit $p.ExitCode"
+            ]
+
+            logging.debug(f"Running elevated conda batch: {batch_file}")
+            logging.debug(f"Elevated conda log will be written to: {log_file}")
+
+            process = subprocess.Popen(
+                powershell_cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            stdout, stderr = process.communicate()
+
+            if stdout:
+                logging.debug(f"Elevation launcher stdout:\n{stdout}")
+            if stderr:
+                logging.debug(f"Elevation launcher stderr:\n{stderr}")
+
+            # Read last lines of the elevated log if present for quick context
+            tail_hint = ""
+            try:
+                if os.path.exists(log_file):
+                    with open(log_file, 'r', errors='ignore') as lf:
+                        lines = lf.readlines()
+                        tail = "".join(lines[-25:]) if lines else ""
+                        tail_hint = tail.strip()
+            except Exception:
+                pass
+
+            if process.returncode != 0:
+                err_msg = f"Elevation failed with exit code {process.returncode}. See log: {log_file}"
+                if tail_hint:
+                    err_msg += f"\n--- Log tail ---\n{tail_hint}"
+                return False, err_msg
+
+            # The batch itself exits with the wrapped command's exit code; inspect the log tail for visibility
+            logging.info(f"Elevated conda command finished. Log: {log_file}")
+            if tail_hint:
+                logging.debug(f"Elevated conda command log tail:\n{tail_hint}")
+
+            return True, None
+        except Exception as e:
+            return False, str(e)
+
     # --- Public API -------------------------------------------------------
     def info(self, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
         return self._run(['info'], on_progress=on_progress)
@@ -609,8 +717,22 @@ class CondaManager:
         if yes:
             args += ['-y']
         args += pkgs
-        # Prefer micromamba with robust recovery (handles cache/collision errors)
-        return self._run_with_recovery(args, on_progress=on_progress)
+
+        # Check if elevated privileges are needed
+        needs_elevation = self._needs_elevation()
+        if needs_elevation:
+            logging.info("Elevated privileges required for conda install operation")
+            if on_progress:
+                on_progress("Administrator privileges are required for this operation.")
+            # Use elevated execution
+            success, error_msg = self._run_with_elevation([self.micromamba_exe] + args)
+            if not success:
+                raise CondaCommandError(f"Install failed with elevated privileges: {error_msg}")
+            # Return a success result similar to _run_with_recovery format
+            return {"success": True, "message": "Package(s) installed successfully with elevated privileges"}
+        else:
+            # Prefer micromamba with robust recovery (handles cache/collision errors)
+            return self._run_with_recovery(args, on_progress=on_progress)
 
     def update(self, pkgs: Optional[List[str]] = None, prefix: Optional[str] = None, name: Optional[str] = None,
                all_: bool = False, channels: Optional[List[str]] = None, yes: bool = True,
@@ -628,8 +750,22 @@ class CondaManager:
             args += ['--all']
         if pkgs:
             args += pkgs
-        # Prefer micromamba with robust recovery
-        return self._run_with_recovery(args, on_progress=on_progress)
+
+        # Check if elevated privileges are needed
+        needs_elevation = self._needs_elevation()
+        if needs_elevation:
+            logging.info("Elevated privileges required for conda update operation")
+            if on_progress:
+                on_progress("Administrator privileges are required for this operation.")
+            # Use elevated execution
+            success, error_msg = self._run_with_elevation([self.micromamba_exe] + args)
+            if not success:
+                raise CondaCommandError(f"Update failed with elevated privileges: {error_msg}")
+            # Return a success result similar to _run_with_recovery format
+            return {"success": True, "message": "Package(s) updated successfully with elevated privileges"}
+        else:
+            # Prefer micromamba with robust recovery
+            return self._run_with_recovery(args, on_progress=on_progress)
 
     def remove(self, pkgs: Optional[List[str]] = None, prefix: Optional[str] = None, name: Optional[str] = None,
                all_: bool = False, yes: bool = True, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:
@@ -640,8 +776,22 @@ class CondaManager:
             args += ['--all']
         if pkgs:
             args += pkgs
-        # Prefer micromamba with robust recovery
-        return self._run_with_recovery(args, on_progress=on_progress)
+
+        # Check if elevated privileges are needed
+        needs_elevation = self._needs_elevation()
+        if needs_elevation:
+            logging.info("Elevated privileges required for conda remove operation")
+            if on_progress:
+                on_progress("Administrator privileges are required for this operation.")
+            # Use elevated execution
+            success, error_msg = self._run_with_elevation([self.micromamba_exe] + args)
+            if not success:
+                raise CondaCommandError(f"Remove failed with elevated privileges: {error_msg}")
+            # Return a success result similar to _run_with_recovery format
+            return {"success": True, "message": "Package(s) removed successfully with elevated privileges"}
+        else:
+            # Prefer micromamba with robust recovery
+            return self._run_with_recovery(args, on_progress=on_progress)
 
     def create(self, name: Optional[str] = None, prefix: Optional[str] = None, pkgs: Optional[List[str]] = None,
                channels: Optional[List[str]] = None, yes: bool = True, on_progress: Optional[Callable[[str], None]] = None) -> Dict[str, Any]:

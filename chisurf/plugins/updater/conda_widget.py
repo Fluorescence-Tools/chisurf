@@ -714,15 +714,11 @@ class CondaManagerDialog(QDialog):
 
     def _on_repo_info(self, ok: bool, payload: object, msg: str):
         try:
-            # Determine preferred solver and corresponding background color
+            # Determine preferred solver
             try:
                 solver = (self.manager.preferred_solver() or 'conda').lower()
             except Exception:
                 solver = 'conda'
-            # Treat both mamba and micromamba as fast (green); conda as slow (red)
-            is_fast = solver in ('mamba', 'micromamba')
-            bg = '#5cb85c' if is_fast else '#d9534f'  # green for fast solvers, red for conda
-            fg = '#ffffff'
 
             # Obtain condarc path from payload, manager, or environment
             rc_path = None
@@ -748,10 +744,6 @@ class CondaManagerDialog(QDialog):
                 # Show at least the current env with solver and condarc info
                 prefix = self._current_env_prefix()
                 self.lbl_repo.setText(f"Env: {prefix}    |    Solver: {solver.upper()}    |    condarc: {rc_path}")
-                try:
-                    self.lbl_repo.setStyleSheet(f"QLabel {{ background-color: {bg}; color: {fg}; padding: 4px; }}")
-                except Exception:
-                    pass
                 return
 
             info = payload
@@ -764,10 +756,6 @@ class CondaManagerDialog(QDialog):
             prefix = self._current_env_prefix()
             repo_dir = pkgs_dirs[0] if pkgs_dirs else "(unknown)"
             self.lbl_repo.setText(f"Repo: {repo_dir}    |    Env: {prefix}    |    Solver: {solver.upper()}    |    condarc: {rc_path}")
-            try:
-                self.lbl_repo.setStyleSheet(f"QLabel {{ background-color: {bg}; color: {fg}; padding: 4px; }}")
-            except Exception:
-                pass
         except Exception:
             pass
 

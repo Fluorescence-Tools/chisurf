@@ -1517,6 +1517,22 @@ class CondaManager:
                 break
         return self._conda_exe_cache or 'conda'
 
+    def preferred_solver(self) -> str:
+        """Return the name of the preferred solver (micromamba, mamba, or conda)."""
+        try:
+            if self._preferred:
+                return self._preferred[0]
+            # Fallback: determine from cached executable
+            if self._conda_exe_cache:
+                name = os.path.basename(self._conda_exe_cache).lower()
+                if 'micro' in name:
+                    return 'micromamba'
+                elif 'mamba' in name:
+                    return 'mamba'
+            return 'conda'
+        except Exception:
+            return 'conda'
+
     # ---------- Running helpers ----------
     def _popen(self, cmd: List[str]) -> Tuple[bool, str, str, int]:
         try:
