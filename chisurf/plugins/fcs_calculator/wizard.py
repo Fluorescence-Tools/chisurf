@@ -1,11 +1,13 @@
 import sys
 import math
+import json
 from typing import Dict, List
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QGridLayout, QLabel, QDoubleSpinBox, QRadioButton,
     QGroupBox, QHBoxLayout, QVBoxLayout, QSpacerItem, QSizePolicy, QComboBox,
-    QTextEdit, QPushButton, QDialog, QDialogButtonBox, QButtonGroup, QCheckBox
+    QTextEdit, QPushButton, QDialog, QDialogButtonBox, QButtonGroup, QCheckBox,
+    QFileDialog
 )
 from PyQt5.QtCore import Qt
 
@@ -45,10 +47,29 @@ def water_viscosity_Pa_s(T_K: float) -> float:
 
 
 def stokes_einstein_D(T_K: float, eta_Pa_s: float, r_h_m: float) -> float:
+    """Translational diffusion coefficient of a sphere.
+
+    Implements :math:`D = k_B T / (6 \pi \eta r_h)` from standard
+    Stokes–Einstein theory for Brownian motion of spherical particles.
+
+    Parameters
+    ----------
+    T_K : float
+        Absolute temperature in kelvin.
+    eta_Pa_s : float
+        Dynamic viscosity of the solution in Pa·s.
+    r_h_m : float
+        Hydrodynamic radius of the particle in meters.
+    """
     return KB * T_K / (6.0 * math.pi * eta_Pa_s * r_h_m)
 
 
 def stokes_einstein_rh(T_K: float, eta_Pa_s: float, D_m2_s: float) -> float:
+    """Hydrodynamic radius from a known diffusion coefficient.
+
+    Inverse of :func:`stokes_einstein_D`, returning :math:`r_h` for a given
+    translational diffusion coefficient :math:`D`.
+    """
     return KB * T_K / (6.0 * math.pi * eta_Pa_s * D_m2_s)
 
 
@@ -66,9 +87,71 @@ def D_from_tau_Veff_S(tau_s: float, Veff_m3: float, S: float) -> float:
 
 
 def scale_D_from_25C(D25_um2_s: float, T_K: float, eta_Pa_s: float) -> float:
+    """Scale diffusion coefficient from 25 °C water to arbitrary (T, η).
+
+    Uses the common scaling relation for diffusion coefficients at different
+    temperatures and viscosities, taking 25 °C water as the reference state:
+
+    .. math::
+
+        D(T, \eta) = D_{25,W} \cdot \frac{T}{298.15\,\text{K}} \cdot
+        \frac{\eta_{25,W}}{\eta(T)}.
+    """
     if T_K <= 0 or eta_Pa_s <= 0: return float('nan')
     eta_25 = 8.9e-4  # Pa·s (water @ 25 °C)
     return D25_um2_s * (T_K / 298.15) * (eta_25 / eta_Pa_s)
+
+
+def perrin_friction_ellipsoid(p: float) -> float:
+    """Perrin translational friction factor for an ellipsoid.
+
+    The axial ratio is :math:`p = a/b` (semi-major/ semi-minor axis).
+    """
+    if p < 1:  # oblate
+        q = 1.0 / p
+        return math.sqrt(q*q - 1.0) / (pow(q, 2.0/3.0) * math.atan(math.sqrt(q*q - 1.0)))
+    elif p > 1:  # prolate
+        q = 1.0 / p
+        return math.sqrt(1.0 - q*q) / (pow(q, 2.0/3.0) * math.log((1.0 + math.sqrt(1.0 - q*q)) / q))
+    else:  # sphere
+        return 1.0
+
+
+def perrin_friction_cylinder(p: float) -> float:
+    """Translational friction factor for a cylinder.
+
+    Uses the Hansen (2004) polynomial approximation for :math:`F_t(p)` with
+    :math:`p = L/d` (length/diameter).
+    """
+    lnp = math.log(p)
+    return 1.0304 + 0.0193 * pow(lnp, 1) + 0.06229 * pow(lnp, 2) + 0.00476 * pow(lnp, 3) + 0.00166 * pow(lnp, 4) + 2.66e-6 * pow(lnp, 7)
+
+
+def diffusion_ellipsoid(T_K: float, eta_Pa_s: float, a_m: float, b_m: float) -> float:
+    """Diffusion coefficient for an ellipsoid with semi-axes a and b.
+
+    Uses the equivalent radius :math:`R_e = (ab^2)^{1/3}` and Perrin
+    translational friction factor :math:`F_t(p)` with :math:`p=a/b`.
+    Returns :math:`D` in µm²/s.
+    """
+    p = a_m / b_m
+    Ft = perrin_friction_ellipsoid(p)
+    Re = pow(a_m * a_m * b_m, 1.0/3.0)  # equivalent radius
+    D = KB * T_K / (6.0 * math.pi * eta_Pa_s * Re * Ft)
+    return m2s_to_um2s(D)
+
+
+def diffusion_cylinder(T_K: float, eta_Pa_s: float, L_m: float, d_m: float) -> float:
+    """Diffusion coefficient for a cylinder of length L and diameter d.
+
+    Uses the equivalent radius and Hansen (2004) Perrin factor approximation
+    for aspect ratio :math:`p=L/d`. Returns :math:`D` in µm²/s.
+    """
+    p = L_m / d_m
+    Ft = perrin_friction_cylinder(p)
+    Re = pow(3.0 / (2.0 * p * p), 1.0/3.0) * L_m / 2.0
+    D = KB * T_K / (6.0 * math.pi * eta_Pa_s * Re * Ft)
+    return m2s_to_um2s(D)
 
 
 # ========= Dyes (inline dict; accurate refs from Kapusta 2010) =========
@@ -203,11 +286,48 @@ DYE_DATA: Dict[str, Dict] = {
                 "methods": ["2fFCS"]
             }
         ]
+    },
+    "Bovine Serum Albumin (BSA)": {
+        "D25_um2_s": 59.9,
+        "sources": [
+            {
+                "citation": "Meechai et al. (1999) Translational diffusion coefficients of bovine serum albumin in aqueous solution at high ionic strength",
+                "url": "",
+                "methods": ["DLS"]
+            }
+        ]
+    },
+    "Sucrose": {
+        "D25_um2_s": 458.6,
+        "sources": [
+            {
+                "citation": "Atkins (2002) Atkins' physical chemistry",
+                "url": "",
+                "methods": ["?"]
+            }
+        ]
+    },
+    "Ribonuclease A (RNase)": {
+        "D25_um2_s": 119,
+        "sources": [
+            {
+                "citation": "Atkins (2002) Atkins' physical chemistry",
+                "url": "",
+                "methods": ["?"]
+            }
+        ]
     }
 }
 
 # ========= GUI =========
 class ConfocalCalcWidget(QWidget):
+    """Interactive FCS confocal diffusion/volume calculator.
+
+    Links FCS fit parameters (τ, D, r_h, Veff, N, concentration) with
+    temperature-dependent viscosity, reference dyes (D @ 25 °C, water) and
+    basic molecular-shape models (sphere, ellipsoid, cylinder).
+    """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("FCS Confocal Calculator — τ, D, rₕ, Veff, Concentration")
@@ -292,7 +412,39 @@ class ConfocalCalcWidget(QWidget):
         dye_box.setLayout(v)
 
         # Place constraint group box at top of widget
-        root = QVBoxLayout(); root.addWidget(fix_box); root.addLayout(grid); root.addWidget(dye_box)
+        root = QVBoxLayout()
+        root.addWidget(fix_box)
+        root.addLayout(grid)
+        root.addWidget(dye_box)
+
+        self.shape_combo = QComboBox()
+        self.shape_combo.addItems(["Sphere", "Ellipsoid", "Cylinder"])
+        self.shape_size_nm = QDoubleSpinBox(); self._cfg(self.shape_size_nm, 0.1, 1e9, 3, 5.0)
+        self.shape_aspect = QDoubleSpinBox(); self._cfg(self.shape_aspect, 0.1, 1e3, 3, 1.0)
+        self.btn_apply_shape = QPushButton("Apply shape→D")
+
+        shape_box = QGroupBox("Molecular shape")
+        shape_layout = QGridLayout()
+        shape_layout.addWidget(QLabel("Type"), 0, 0)
+        shape_layout.addWidget(self.shape_combo, 0, 1)
+        shape_layout.addWidget(QLabel("Size (nm)"), 1, 0)
+        shape_layout.addWidget(self.shape_size_nm, 1, 1)
+        shape_layout.addWidget(QLabel("Aspect"), 2, 0)
+        shape_layout.addWidget(self.shape_aspect, 2, 1)
+        shape_layout.addWidget(self.btn_apply_shape, 3, 0, 1, 2)
+        shape_box.setLayout(shape_layout)
+        root.addWidget(shape_box)
+
+        self.btn_export_json = QPushButton("Export JSON")
+        self.btn_import_json = QPushButton("Import JSON")
+        json_box = QGroupBox("Settings JSON")
+        json_layout = QHBoxLayout()
+        json_layout.addWidget(self.btn_export_json)
+        json_layout.addWidget(self.btn_import_json)
+        json_layout.addItem(QSpacerItem(10,10,QSizePolicy.Expanding,QSizePolicy.Minimum))
+        json_box.setLayout(json_layout)
+        root.addWidget(json_box)
+
         self.setLayout(root)
         self._update_field_enable()
         # Initialize water viscosity mode default
@@ -316,6 +468,14 @@ class ConfocalCalcWidget(QWidget):
 
         # Dye actions
         self.btn_apply_dref.clicked.connect(self._apply_dref_to_D)
+
+        # Shape actions
+        self.shape_combo.currentIndexChanged.connect(self._on_shape_changed)
+        self.btn_apply_shape.clicked.connect(self._apply_shape_to_D)
+
+        # JSON actions
+        self.btn_export_json.clicked.connect(self._export_json)
+        self.btn_import_json.clicked.connect(self._import_json)
 
     # ---------- Constraint / UI state ----------
     def _on_constraint_changed(self, _btn, _state):
@@ -393,6 +553,163 @@ class ConfocalCalcWidget(QWidget):
         self._set_spin(self.D_um2_s, D_use)
         self._recompute()
         self.D_um2_s.setFocus()
+
+    def _on_shape_changed(self, _index: int):
+        shape = self.shape_combo.currentText()
+        self.shape_aspect.setEnabled(shape != "Sphere")
+
+    def _apply_shape_to_D(self):
+        if self._in_update:
+            return
+        shape = self.shape_combo.currentText()
+        try:
+            T_K = self.temp_C.value() + 273.15
+            eta = self._current_eta_Pa_s()
+            size_nm = self.shape_size_nm.value()
+            aspect = self.shape_aspect.value()
+            if size_nm <= 0:
+                return
+            D_use = None
+            if shape == "Sphere":
+                r_m = nm_to_m(size_nm) / 2.0
+                D_m2_s = stokes_einstein_D(T_K, eta, r_m)
+                D_use = m2s_to_um2s(D_m2_s)
+            elif shape == "Ellipsoid":
+                if aspect <= 0:
+                    return
+                b_m = nm_to_m(size_nm) / 2.0
+                a_m = b_m * aspect
+                D_use = diffusion_ellipsoid(T_K, eta, a_m, b_m)
+            elif shape == "Cylinder":
+                if aspect <= 0:
+                    return
+                d_m = nm_to_m(size_nm)
+                L_m = d_m * aspect
+                D_use = diffusion_cylinder(T_K, eta, L_m, d_m)
+            if D_use is None or not math.isfinite(D_use) or D_use <= 0:
+                return
+            self.rb_fix_D.setChecked(True)
+            self._update_field_enable()
+            self._set_spin(self.D_um2_s, D_use)
+            self._recompute()
+            self.D_um2_s.setFocus()
+        except Exception:
+            pass
+
+    def _collect_settings(self) -> Dict:
+        shape = self.shape_combo.currentText()
+        fix_mode = "D" if self.rb_fix_D.isChecked() else ("rh" if self.rb_fix_rh.isChecked() else "V")
+        return {
+            "tau_us": self.tau_us.value(),
+            "D_um2_s": self.D_um2_s.value(),
+            "rh_nm": self.rh_nm.value(),
+            "S": self.S.value(),
+            "veff_fL": self.veff_fL.value(),
+            "temp_C": self.temp_C.value(),
+            "eta_mPa_s": self.eta_mPa_s.value(),
+            "conc_nM": self.conc_nM.value(),
+            "num_mols": self.num_mols.value(),
+            "use_water_eta": self.use_water_eta.isChecked(),
+            "invN": self.invN.value(),
+            "fix_mode": fix_mode,
+            "dye": self.dye_combo.currentText(),
+            "scale_dref": self.scale_dref.isChecked(),
+            "shape_type": shape,
+            "shape_size_nm": self.shape_size_nm.value(),
+            "shape_aspect": self.shape_aspect.value(),
+        }
+
+    def _apply_settings(self, data: Dict):
+        self._in_update = True
+        try:
+            if "tau_us" in data:
+                self.tau_us.setValue(float(data["tau_us"]))
+            if "D_um2_s" in data:
+                self.D_um2_s.setValue(float(data["D_um2_s"]))
+            if "rh_nm" in data:
+                self.rh_nm.setValue(float(data["rh_nm"]))
+            if "S" in data:
+                self.S.setValue(float(data["S"]))
+            if "veff_fL" in data:
+                self.veff_fL.setValue(float(data["veff_fL"]))
+            if "temp_C" in data:
+                self.temp_C.setValue(float(data["temp_C"]))
+            if "eta_mPa_s" in data:
+                self.eta_mPa_s.setValue(float(data["eta_mPa_s"]))
+            if "conc_nM" in data:
+                self.conc_nM.setValue(float(data["conc_nM"]))
+            if "num_mols" in data:
+                self.num_mols.setValue(float(data["num_mols"]))
+            if "use_water_eta" in data:
+                self.use_water_eta.setChecked(bool(data["use_water_eta"]))
+            if "invN" in data:
+                self.invN.setValue(float(data["invN"]))
+            fix_mode = data.get("fix_mode")
+            if fix_mode == "D":
+                self.rb_fix_D.setChecked(True)
+            elif fix_mode == "rh":
+                self.rb_fix_rh.setChecked(True)
+            elif fix_mode == "V":
+                self.rb_fix_V.setChecked(True)
+            dye = data.get("dye")
+            if dye and dye in DYE_DATA:
+                idx = self.dye_combo.findText(dye)
+                if idx >= 0:
+                    self.dye_combo.setCurrentIndex(idx)
+            if "scale_dref" in data:
+                if data["scale_dref"]:
+                    self.scale_dref.setChecked(True)
+                else:
+                    self.scale_dref_none.setChecked(True)
+            shape = data.get("shape_type")
+            if shape:
+                idx = self.shape_combo.findText(shape)
+                if idx >= 0:
+                    self.shape_combo.setCurrentIndex(idx)
+            if "shape_size_nm" in data:
+                self.shape_size_nm.setValue(float(data["shape_size_nm"]))
+            if "shape_aspect" in data:
+                self.shape_aspect.setValue(float(data["shape_aspect"]))
+        finally:
+            self._in_update = False
+            self._update_field_enable()
+            self._recompute()
+
+    def _export_json(self):
+        data = self._collect_settings()
+        text = json.dumps(data, indent=2, sort_keys=True)
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save FCS Calculator Settings",
+            "",
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not path:
+            return
+        try:
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write(text)
+        except Exception:
+            # Fail silently; caller can retry or ignore
+            return
+
+    def _import_json(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load FCS Calculator Settings",
+            "",
+            "JSON Files (*.json);;All Files (*)",
+        )
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        except Exception:
+            # Fail silently; caller can retry or ignore
+            return
+        if isinstance(data, dict):
+            self._apply_settings(data)
 
     # References/help removed in optimized UI
 
