@@ -546,16 +546,23 @@ QDockWidget::close-button,
 QDockWidget::float-button {
     text-align: center;
     spacing: 1px;
+    background-color: #cc4444;
+    border: 1px solid #ffaaaa;
+    border-radius: 3px;
+    width: 14px;
+    height: 14px;
 }
 
 QDockWidget::close-button:hover,
 QDockWidget::float-button:hover {
-    background: #303030; /* was #242424 */
+    background-color: #ff6666;
+    border-color: #ffe0e0;
 }
 
 QDockWidget::close-button:pressed,
 QDockWidget::float-button:pressed {
     padding: 1px -1px -1px 1px;
+    background-color: #aa3333;
 }
 
 QDockWidget::title {
