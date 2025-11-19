@@ -134,14 +134,6 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # Connect to the destroyed signal to clean up temp files
         self.destroyed.connect(self.cleanup_temp_files)
 
-        # Listen for external changes to the model function (e.g., via CLI macro)
-        try:
-            self.model.add_func_listener(self._on_model_func_changed)
-            # Ensure we detach on widget destruction
-            self.destroyed.connect(lambda: self.model.remove_func_listener(self._on_model_func_changed))
-        except Exception:
-            pass
-
     def load_model_file(self, filename: pathlib.Path):
         with io.open_maybe_zipped(filename, 'r') as fp:
             self._model_file = filename
@@ -688,13 +680,20 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self._update_equation_preview(equation)
 
 
-
     def _on_model_func_changed(self, model=None):
         """Handle external changes to the model function (e.g., CLI macro).
 
         This rebuilds parameter widgets and refreshes previews without routing
         back through onEquationChanged() to avoid feedback loops.
         """
+        # # Ensure all Qt widget interactions happen on this widget's thread.
+        # if QtCore.QThread.currentThread() is not self.thread():
+        #     try:
+        #         QtCore.QTimer.singleShot(0, lambda: self._on_model_func_changed(model))
+        #     except Exception:
+        #         pass
+        #     return
+
         # Determine the new function string
         try:
             func = self.model.func if model is None else getattr(model, 'func', self.model.func)
@@ -731,7 +730,8 @@ class ParseModelWidget(ParseModel, ModelWidget):
             *args,
             **kwargs
     ):
-        super().__init__(fit, *args, **kwargs)
+        QtWidgets.QWidget.__init__(self)
+        ParseModel.__init__(self, fit, *args, **kwargs)
         parse = ParseFormulaWidget(
             model=self,
             model_file=kwargs.get('model_file', None)

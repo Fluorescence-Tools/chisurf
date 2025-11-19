@@ -16,38 +16,6 @@ class ParseModel(ModelCurve, FittingParameterGroup):
 
     name = "Parse-Model"
 
-    # ---- Lightweight observer callbacks for external UI sync ----
-    def add_func_listener(self, callback):
-        """Register a callback to be invoked after the function is parsed.
-        Callback signature: callback(model: ParseModel).
-        """
-        try:
-            if callback is None:
-                return
-            if not hasattr(self, "_func_listeners"):
-                self._func_listeners = []
-            if callback not in self._func_listeners:
-                self._func_listeners.append(callback)
-        except Exception:
-            pass
-
-    def remove_func_listener(self, callback):
-        try:
-            if hasattr(self, "_func_listeners") and callback in self._func_listeners:
-                self._func_listeners.remove(callback)
-        except Exception:
-            pass
-
-    def _notify_func_listeners(self):
-        try:
-            for cb in getattr(self, "_func_listeners", []) or []:
-                try:
-                    cb(self)
-                except Exception:
-                    continue
-        except Exception:
-            pass
-
     @property
     def func(self) -> str:
         return self._func
@@ -56,8 +24,6 @@ class ParseModel(ModelCurve, FittingParameterGroup):
     def func(self, v):
         self._func = v
         self.parse_code()
-        # Notify after parsing so that parameters are available
-        self._notify_func_listeners()
 
     def parse_code(self):
 

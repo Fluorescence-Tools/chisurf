@@ -123,8 +123,13 @@ def change_model(function_str: str, fit_idx: Any = None) -> bool:
         try:
             m.func = f"{function_str}"
             try:
-                # If the model supports an explicit update call, invoke it
-                m.update_model()
+                # Prefer a full model update (parameters, widgets, plots)
+                # when available. Fall back to a bare update_model() call
+                # for non-widget models.
+                try:
+                    m.update()
+                except Exception:
+                    m.update_model()
             except Exception:
                 pass
             updated_any = True
