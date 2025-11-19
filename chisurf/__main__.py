@@ -13,7 +13,14 @@ def main():
 
         # Start the application
         app = get_app()
-        sys.exit(app.exec_())
+        exit_code = app.exec_()
+
+        # Hard-exit the process after the Qt event loop finishes. This avoids
+        # running full Python interpreter finalization (Py_Finalize), which can
+        # trigger shutdown-time crashes in C extensions (e.g. Qt bindings) when
+        # complex object graphs are torn down.
+        import os
+        os._exit(exit_code)
 
     except Exception as e:
         # Handle the exception

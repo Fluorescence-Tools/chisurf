@@ -33,6 +33,16 @@ def add_fit(
     if len(dataset_indices) == 0:
         return
 
+    # If multiple datasets were requested, build each fit independently
+    # using the already-stable single-dataset code path.
+    if len(dataset_indices) > 1:
+        for idx in dataset_indices:
+            try:
+                add_fit(dataset_indices=[idx], model_name=model_name, model_kw=model_kw)
+            except Exception as e:
+                chisurf.logging.warning(f"add_fit: failed for dataset index {idx}: {e}")
+        return
+
     # create a list of data sets to which a fit with
     # a particular model is added
     data_sets = [cs.dataset_selector.datasets[i] for i in dataset_indices]
@@ -85,11 +95,13 @@ def add_fit(
                 fit_window = cs.mdiarea.addSubWindow(fit_window)
                 chisurf.gui.fit_windows.append(fit_window)
                 cs.current_fit = fit_group
-                # Defer auto-fit range to run after the window is shown to avoid blocking Add Fit
+                # Run auto-fit range synchronously so that each fit completes
+                # its range setup and model/plot updates before the next fit
+                # is created. This mirrors the stable sequential behaviour.
                 try:
-                    chisurf.gui.QtCore.QTimer.singleShot(0, fit_control_widget.onAutoFitRange)
-                except Exception:
                     fit_control_widget.onAutoFitRange()
+                except Exception:
+                    pass
             finally:
                 # Re-enable updates and show
                 cs.mdiarea.setUpdatesEnabled(True)

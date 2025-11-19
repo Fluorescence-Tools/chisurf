@@ -26,6 +26,88 @@ from chisurf import logging
 import chisurf.gui.decorators
 
 
+class _GuiExecutor(QtCore.QObject):
+    """Internal helper to execute callables on the GUI thread via queued signals."""
+
+    runRequested = QtCore.Signal(object, tuple, dict)
+
+    @QtCore.Slot(object, tuple, dict)
+    def _run(self, func, args, kwargs):
+        try:
+            if func is not None:
+                func(*args, **(kwargs or {}))
+        except Exception:
+            try:
+                logging.exception("Error in GUI executor callback")
+            except Exception:
+                pass
+
+
+_gui_executor = None
+
+
+def run_on_gui_thread(func, *args, **kwargs):
+    """Ensure *func* executes on the Qt GUI thread.
+
+    - If called from the GUI thread, executes *func* synchronously and returns its
+      result.
+    - If called from another thread and a QApplication exists, schedules *func*
+      via a queued signal and returns immediately.
+    - If no QApplication exists or scheduling fails, falls back to direct call.
+    """
+    global _gui_executor
+
+    if func is None:
+        return None
+
+    try:
+        app = QtWidgets.QApplication.instance()
+    except Exception:
+        app = None
+
+    # No Qt application: just run synchronously
+    if app is None:
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            return None
+
+    current = QtCore.QThread.currentThread()
+    gui_thread = app.thread()
+
+    # Already on GUI thread: execute directly
+    if current is gui_thread:
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            return None
+
+    # From a worker thread: use queued signal/slot via _GuiExecutor
+    if _gui_executor is None:
+        try:
+            _executor = _GuiExecutor()
+            _executor.moveToThread(gui_thread)
+            # Ensure queued delivery onto GUI thread
+            _executor.runRequested.connect(_executor._run, QtCore.Qt.QueuedConnection)
+            _gui_executor = _executor
+        except Exception:
+            # Fallback to direct execution if setup fails
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                return None
+
+    try:
+        _gui_executor.runRequested.emit(func, args, kwargs or {})
+        return None
+    except Exception:
+        # Last-resort fallback: direct execution
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            return None
+
+
 def launch_jupyter_process(
     notebook_executable="jupyter-notebook",
     port=8888,

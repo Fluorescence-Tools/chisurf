@@ -246,33 +246,49 @@ class Main(QtWidgets.QMainWindow):
                 QtWidgets.QMessageBox.Yes,
                 QtWidgets.QMessageBox.No
             )
-            if reply == QtWidgets.QMessageBox.Yes:
-                event.accept()
-            else:
+            if reply != QtWidgets.QMessageBox.Yes:
                 event.ignore()
-        else:
-            event.accept()
+                return
+        # Controlled spin-down: close all fits before the main window exits.
+        try:
+            self.onCloseAllFits()
+        except Exception:
+            pass
+
+        event.accept()
 
     def subWindowActivated(self):
         sub_window = self.mdiarea.currentSubWindow()
         if sub_window is not None:
-            for fit_idx, f in enumerate(chisurf.fits):
-                if f == sub_window.fit:
-                    if self.current_fit is not chisurf.fits[fit_idx]:
-                        chisurf.run(f"cs.current_fit = chisurf.fits[{fit_idx}]")
-                        self._fit_idx = fit_idx
-                        break
-
-            self.current_fit_widget = sub_window.fit_widget
-
-            window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + self.current_fit.name
-            self.setWindowTitle(window_title)
-
+            # Clear existing widgets from layouts
             chisurf.gui.widgets.hide_items_in_layout(self.modelLayout)
             chisurf.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
-            self.current_fit.model.show()
-            self.current_fit_widget.show()
-            sub_window.current_plot_controller.show()
+
+            # Handle fit windows first
+            if hasattr(sub_window, 'fit') and sub_window.fit is not None:
+                for fit_idx, f in enumerate(chisurf.fits):
+                    if f == sub_window.fit:
+                        if self.current_fit is not chisurf.fits[fit_idx]:
+                            chisurf.run(f"cs.current_fit = chisurf.fits[{fit_idx}]")
+                            self._fit_idx = fit_idx
+                            break
+
+                self.current_fit_widget = sub_window.fit_widget
+
+                window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + self.current_fit.name
+                self.setWindowTitle(window_title)
+
+                self.current_fit.model.show()
+                self.current_fit_widget.show()
+                sub_window.current_plot_controller.show()
+            # Handle plugin windows with plot controllers (like sm_acquisition)
+            elif hasattr(sub_window, 'current_plot_controller') and sub_window.current_plot_controller is not None:
+                # Add and show the plugin's plot controller
+                self.plotOptionsLayout.addWidget(sub_window.current_plot_controller)
+                sub_window.current_plot_controller.show()
+                # Update window title for plugin windows
+                window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + sub_window.windowTitle()
+                self.setWindowTitle(window_title)
 
     def onRunMacro(
             self,
@@ -443,7 +459,31 @@ class Main(QtWidgets.QMainWindow):
     def onAddFit(self, *args, data_idx: typing.List[int] = None):
         if data_idx is None:
             data_idx = [r.row() for r in self.dataset_selector.selectedIndexes()]
-        chisurf.run(f"chisurf.macros.add_fit(model_name='{self.current_model_name}', dataset_indices={data_idx})")
+        # If multiple datasets are selected, schedule per-dataset fit
+        # creation on the Qt event loop. This mirrors clicking "Add Fit"
+        # repeatedly while keeping each add_fit call isolated, which has
+        # proven stable.
+        if not data_idx:
+            return
+
+        indices = list(data_idx)
+        model_name = self.current_model_name
+
+        def _create_next_fit():
+            if not indices:
+                return
+            idx = indices.pop(0)
+            try:
+                chisurf.macros.core_fit.add_fit(
+                    dataset_indices=[idx],
+                    model_name=model_name,
+                )
+            except Exception:
+                pass
+            if indices:
+                QtCore.QTimer.singleShot(0, _create_next_fit)
+
+        _create_next_fit()
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
@@ -561,12 +601,42 @@ class Main(QtWidgets.QMainWindow):
         self._current_setup_idx = self.comboBox_setupSelect.currentIndex()
 
     def onCloseAllFits(self):
-        for sub_window in chisurf.gui.fit_windows:
-            sub_window.widget().close_confirm = False
-            sub_window.close()
+        # Close all existing fit windows directly, suppressing any per-fit
+        # confirmation dialogs. This mirrors the original implementation and
+        # avoids repeated cs.update() calls during shutdown.
+        old_confirm = chisurf.settings.gui.get('confirm_close_fit', True)
+        try:
+            chisurf.settings.gui['confirm_close_fit'] = False
+        except Exception:
+            old_confirm = None
 
-        chisurf.fits.clear()
-        chisurf.gui.fit_windows.clear()
+        try:
+            for sub_window in list(chisurf.gui.fit_windows):
+                try:
+                    # Disable any per-window confirmation flags
+                    setattr(sub_window, 'close_confirm', False)
+                except Exception:
+                    pass
+                try:
+                    w = sub_window.widget()
+                    if w is not None:
+                        setattr(w, 'close_confirm', False)
+                except Exception:
+                    pass
+                try:
+                    sub_window.close()
+                except Exception:
+                    pass
+
+            # Clear Python-side tracking lists
+            chisurf.fits.clear()
+            chisurf.gui.fit_windows.clear()
+        finally:
+            if old_confirm is not None:
+                try:
+                    chisurf.settings.gui['confirm_close_fit'] = old_confirm
+                except Exception:
+                    pass
 
         # Clear the analysis dock layouts
         chisurf.gui.widgets.clear_layout(self.modelLayout)
@@ -991,7 +1061,7 @@ class Main(QtWidgets.QMainWindow):
         chisurf.console.pushVariables({'QtCore': QtCore})
         chisurf.console.pushVariables({'QtGui': QtGui})
         chisurf.console.set_default_style('linux')
-        chisurf.run = chisurf.console.execute
+        chisurf.run = chisurf.console.execute_on_gui_thread
         chisurf.run(str(chisurf.settings.gui['console_init']))
 
     def _setup_experiment(self, exp_type, config):
@@ -1297,7 +1367,8 @@ class Main(QtWidgets.QMainWindow):
                             except Exception:
                                 pass
                     finally:
-                        return True
+                        pass
+                    return True
         return super().eventFilter(obj, event)
 
     def warmup_imports(self):

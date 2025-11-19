@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from chisurf import typing
+from qtpy import QtCore
 from chisurf.gui import QtWidgets
 
 import qtconsole
@@ -18,6 +19,8 @@ class QIPythonWidget(
     qtconsole.qtconsoleapp.RichJupyterWidget
     # qtconsole.qtconsoleapp.JupyterWidget
 ):
+
+    codeRequested = QtCore.Signal(str)
 
     def start_recording(self):
         self._macro = ""
@@ -89,6 +92,12 @@ class QIPythonWidget(
         self._macro = ""
         self.recording = recording
 
+        # Connect signal used for cross-thread execution of code
+        try:
+            self.codeRequested.connect(self._execute_from_signal)
+        except Exception:
+            pass
+
         # save nevertheless every input into a session file
         self.session_file = chisurf.settings.session_file
         self.set_default_style(chisurf.settings.gui['console_style'])
@@ -107,3 +116,48 @@ class QIPythonWidget(
         """ Prints some plain name to the console """
         self._append_plain_text(text)
 
+    @QtCore.Slot(str)
+    def _execute_from_signal(self, code: str) -> None:
+        """Internal slot to execute code; runs on this widget's thread."""
+        try:
+            self.execute(code)
+        except Exception:
+            pass
+
+    def execute_on_gui_thread(self, code: str = None):
+        """Execute code via the IPython console on this widget's thread.
+
+        This allows chisurf.run(...) to be called safely from any thread.
+        """
+        print("execute_on_gui_thread")
+        if code is None:
+            return None
+        try:
+            code_str = str(code)
+        except Exception:
+            return None
+
+        # If already on this widget's thread (typically the GUI thread), execute directly
+        try:
+            if QtCore.QThread.currentThread() is self.thread():
+                return self.execute(code_str)
+        except Exception:
+            # If thread affinity check fails, fall back to direct execution
+            try:
+                return self.execute(code_str)
+            except Exception:
+                return None
+
+        # Called from a non-GUI thread: emit signal; Qt will deliver it
+        # to this widget on its own thread (queued connection).
+        try:
+            self.codeRequested.emit(code_str)
+            return None
+        except Exception:
+            pass
+
+        # Fallback: execute directly rather than silently dropping the command
+        try:
+            return self.execute(code_str)
+        except Exception:
+            return None
