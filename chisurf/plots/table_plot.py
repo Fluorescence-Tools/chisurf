@@ -98,18 +98,132 @@ class BooleanToggleDelegate(QtWidgets.QStyledItemDelegate):
                 return model.setData(index, str_val, QtCore.Qt.EditRole)
         return False
 
-class FitTablePlot(plotbase.Plot):
-    """
-    Plot widget that shows a live-editable table of:
-      - x (independent variable)
-      - data (y)
-      - model (y_model)
-      - weighted residuals (wres)
+class _FitTableModel(QtCore.QAbstractTableModel):
+    """Lightweight table model exposing x, data, model, and residuals.
 
-    Editing x or data cells will backpropagate to the Fit's DataCurve and
-    trigger a model recomputation and table refresh. A "Show model" button
-    opens a DataFrameEditor dialog with model parameters allowing edits that
-    are backpropagated to the Fit.
+    Columns:
+      0: x (editable)
+      1: data (editable)
+      2: model (read-only)
+      3: weighted residuals (read-only)
+    """
+
+    HEADERS = ["x", "data", "model", "w. res."]
+
+    def __init__(self, parent_plot: "FitTablePlot"):
+        super().__init__(parent_plot)
+        self._plot = parent_plot
+        self._x = np.array([], dtype=float)
+        self._y = np.array([], dtype=float)
+        self._ym = np.array([], dtype=float)
+        self._wres = np.array([], dtype=float)
+
+    # ---- Required model API ----
+    def rowCount(self, parent=QtCore.QModelIndex()) -> int:
+        return 0 if parent.isValid() else self._x.size
+
+    def columnCount(self, parent=QtCore.QModelIndex()) -> int:
+        return 0 if parent.isValid() else 4
+
+    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = QtCore.Qt.DisplayRole):
+        if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+            try:
+                return self.HEADERS[section]
+            except Exception:
+                return None
+        return super().headerData(section, orientation, role)
+
+    def data(self, index: QtCore.QModelIndex, role: int = QtCore.Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        row = index.row()
+        col = index.column()
+        if row < 0 or row >= self._x.size:
+            return None
+
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+            try:
+                if col == 0:
+                    v = self._x[row]
+                elif col == 1:
+                    v = self._y[row]
+                elif col == 2:
+                    v = self._ym[row]
+                elif col == 3:
+                    v = self._wres[row]
+                else:
+                    return None
+            except Exception:
+                return None
+
+            if role == QtCore.Qt.EditRole:
+                return repr(float(v))
+            try:
+                if np.isfinite(v):
+                    return f"{float(v):.6g}"
+                return "nan"
+            except Exception:
+                return str(v)
+
+        if role == QtCore.Qt.TextAlignmentRole:
+            return int(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        return None
+
+    def flags(self, index: QtCore.QModelIndex) -> QtCore.Qt.ItemFlags:
+        if not index.isValid():
+            return QtCore.Qt.NoItemFlags
+        base = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
+        if index.column() in (0, 1):
+            base |= QtCore.Qt.ItemIsEditable
+        return base
+
+    def setData(self, index: QtCore.QModelIndex, value, role: int = QtCore.Qt.EditRole) -> bool:
+        if role != QtCore.Qt.EditRole or not index.isValid():
+            return False
+        row = index.row()
+        col = index.column()
+        if row < 0 or row >= self._x.size or col not in (0, 1):
+            return False
+        try:
+            v = float(str(value))
+        except Exception:
+            return False
+
+        if col == 0:
+            self._x[row] = v
+        else:
+            self._y[row] = v
+
+        # Backpropagate to fit and recompute model/residuals
+        self._plot._set_arrays(self._x, self._y)
+        # Refresh arrays from updated fit
+        self._plot._refresh_arrays_into_model()
+
+        # Emit dataChanged for whole row (all columns) for simplicity
+        left = self.index(row, 0)
+        right = self.index(row, 3)
+        self.dataChanged.emit(left, right, [QtCore.Qt.DisplayRole])
+        return True
+
+    # ---- Helpers called by parent plot ----
+    def set_arrays(self, x: np.ndarray, y: np.ndarray, ym: np.ndarray, wres: np.ndarray) -> None:
+        self.beginResetModel()
+        self._x = np.asarray(x, dtype=float)
+        self._y = np.asarray(y, dtype=float)
+        self._ym = np.asarray(ym, dtype=float)
+        self._wres = np.asarray(wres, dtype=float)
+        self.endResetModel()
+
+
+class FitTablePlot(plotbase.Plot):
+    """Data table view for a Fit, implemented with QTableView + model.
+
+    Columns:
+      - x (independent variable, editable)
+      - data (y, editable)
+      - model (y_model, read-only)
+      - weighted residuals (wres, read-only)
     """
 
     name = "Data table"
@@ -132,20 +246,25 @@ class FitTablePlot(plotbase.Plot):
         self.btn_show_model.setToolTip("Open a table editor for model parameters")
         self.btn_show_model.clicked.connect(self.on_show_model)
 
+        self.btn_copy = QtWidgets.QPushButton("Copy", controls)
+        self.btn_copy.setToolTip("Copy Data table (x, data, model, w. res.) to clipboard")
+        self.btn_copy.clicked.connect(self.on_copy_table_to_clipboard)
+
         self.lbl_info = QtWidgets.QLabel("", controls)
         self.lbl_info.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
 
         h.addWidget(self.btn_show_model)
+        h.addWidget(self.btn_copy)
         h.addStretch(1)
         h.addWidget(self.lbl_info)
 
-        # Main table
-        self.table = QtWidgets.QTableWidget(self)
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["x", "data", "model", "w. res."])
+        # Main table view + model
+        self.table = QtWidgets.QTableView(self)
+        self._model = _FitTableModel(self)
+        self.table.setModel(self._model)
+
         hh = self.table.horizontalHeader()
         hh.setStretchLastSection(False)
-        # Compact columns: size to contents and allow horizontal scroll
         try:
             hh.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         except Exception:
@@ -154,31 +273,27 @@ class FitTablePlot(plotbase.Plot):
             except Exception:
                 pass
         hh.setMinimumSectionSize(20)
+
         self.table.setAlternatingRowColors(False)
         self.table.setWordWrap(False)
-        # Compact font for table only
-        try:
-            f = self.table.font()
-            f.setPointSize(max(7, f.pointSize()-1))
-            f.setStyleStrategy(QtGui.QFont.PreferAntialias)
-            self.table.setFont(f)
-            self.table.verticalHeader().setDefaultSectionSize(max(16, self.table.fontMetrics().height()+6))
-        except Exception:
-            pass
-        # Right-align numeric cells by default via item flags later
-        self.table.setEditTriggers(QtWidgets.QAbstractItemView.DoubleClicked | QtWidgets.QAbstractItemView.EditKeyPressed)
         self.table.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.table.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
-        # Wire item changed to backpropagate edits
-        self.table.itemChanged.connect(self.on_item_changed)
+        # Compact font for table only
+        try:
+            f = self.table.font()
+            f.setPointSize(max(7, f.pointSize() - 1))
+            f.setStyleStrategy(QtGui.QFont.PreferAntialias)
+            self.table.setFont(f)
+            self.table.verticalHeader().setDefaultSectionSize(max(16, self.table.fontMetrics().height() + 6))
+        except Exception:
+            pass
 
         self.layout.addWidget(controls)
         self.layout.addWidget(self.table)
 
-        # Populate
-        self._block_item_changed = False
-        self.update()
+        # Populate initial arrays
+        self._refresh_arrays_into_model()
 
     # ---- Utilities ----
     def _get_arrays(self):
@@ -263,91 +378,45 @@ class FitTablePlot(plotbase.Plot):
             except Exception:
                 pass
 
-    def _format_float(self, v: float) -> str:
-        try:
-            if np.isfinite(v):
-                return f"{v:.6g}"
-            return "nan"
-        except Exception:
-            return str(v)
-
-    # ---- GUI population ----
-    def _rebuild_table(self):
+    def _refresh_arrays_into_model(self) -> None:
         x, y, ym, wres = self._get_arrays()
-        n = len(x)
-        self._block_item_changed = True
-        try:
-            self.table.clearContents()
-            self.table.setRowCount(n)
-            for i in range(n):
-                # x (editable)
-                itx = QtWidgets.QTableWidgetItem(self._format_float(x[i]))
-                itx.setFlags(itx.flags() | QtCore.Qt.ItemIsEditable)
-                itx.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-                self.table.setItem(i, 0, itx)
-
-                # data (editable)
-                ity = QtWidgets.QTableWidgetItem(self._format_float(y[i]))
-                ity.setFlags(ity.flags() | QtCore.Qt.ItemIsEditable)
-                ity.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-                self.table.setItem(i, 1, ity)
-
-                # model (read-only)
-                itm = QtWidgets.QTableWidgetItem(self._format_float(ym[i]))
-                itm.setFlags(itm.flags() & ~QtCore.Qt.ItemIsEditable)
-                itm.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-                self.table.setItem(i, 2, itm)
-
-                # weighted residuals (read-only)
-                itw = QtWidgets.QTableWidgetItem(self._format_float(wres[i]))
-                itw.setFlags(itw.flags() & ~QtCore.Qt.ItemIsEditable)
-                itw.setTextAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-                self.table.setItem(i, 3, itw)
-        finally:
-            self._block_item_changed = False
-
+        self._model.set_arrays(x, y, ym, wres)
+        n = x.size
         self.lbl_info.setText(f"N={n}  |  chi2r={getattr(self.fit, 'chi2r', float('nan')):.4g}")
-        # After population, ensure columns are minimally sized
+
+    def on_copy_table_to_clipboard(self) -> None:
+        """Copy the current Data table (x, data, model, w. res.) to the clipboard.
+
+        Data is exported as tab-separated text with a single header row.
+        """
         try:
-            self.table.resizeColumnsToContents()
+            model = self._model
+            n_rows = model.rowCount()
+            n_cols = model.columnCount()
+            if n_rows <= 0 or n_cols <= 0:
+                return
+
+            # Header
+            header_cells = []
+            for c in range(n_cols):
+                h = model.headerData(c, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
+                header_cells.append(str(h) if h is not None else "")
+            lines = ["\t".join(header_cells)]
+
+            # Rows
+            for r in range(n_rows):
+                row_cells = []
+                for c in range(n_cols):
+                    idx = model.index(r, c)
+                    v = model.data(idx, QtCore.Qt.DisplayRole)
+                    row_cells.append(str(v) if v is not None else "")
+                lines.append("\t".join(row_cells))
+
+            text = "\n".join(lines)
+            cb = QtWidgets.QApplication.clipboard()
+            cb.setText(text)
         except Exception:
             pass
-
-    # ---- Slots ----
-    def on_item_changed(self, item: QtWidgets.QTableWidgetItem):
-        if self._block_item_changed:
-            return
-        row = item.row()
-        col = item.column()
-        # Only propagate edits for x (0) and data (1)
-        if col not in (0, 1):
-            return
-        # Gather full arrays from table to preserve vector integrity
-        n = self.table.rowCount()
-        x_list: List[float] = []
-        y_list: List[float] = []
-        for i in range(n):
-            try:
-                xv = float(self.table.item(i, 0).text())
-            except Exception:
-                xv = np.nan
-            try:
-                yv = float(self.table.item(i, 1).text())
-            except Exception:
-                yv = np.nan
-            x_list.append(xv)
-            y_list.append(yv)
-        x = np.asarray(x_list, dtype=float)
-        y = np.asarray(y_list, dtype=float)
-        # Basic sanitization: drop NaNs by keeping previous data for them
-        x0, y0, _, _ = self._get_arrays()
-        if len(x0) == len(x):
-            x = np.where(np.isfinite(x), x, x0)
-        if len(y0) == len(y):
-            y = np.where(np.isfinite(y), y, y0)
-
-        self._set_arrays(x, y)
-        self._rebuild_table()
 
     def on_show_model(self):
         if DataFrameEditor is None:
@@ -564,9 +633,9 @@ class FitTablePlot(plotbase.Plot):
                 self.fit.model.finalize()
             except Exception:
                 pass
-            self._rebuild_table()
+            self._refresh_arrays_into_model()
 
     # ---- Plot API ----
     def update(self, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
-        self._rebuild_table()
+        self._refresh_arrays_into_model()
