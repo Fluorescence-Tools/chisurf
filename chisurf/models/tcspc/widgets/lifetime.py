@@ -216,8 +216,8 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                 'scale_x': 'lin',
                 'd_scaley': 'log',
                 'r_scaley': 'lin',
-                'x_label': 'x',
-                'y_label': 'y'
+                'x_label': 'time (ns)',
+                'y_label': 'counts'
             }
         ),
         (chisurf.plots.FitTablePlot, {}),
@@ -349,8 +349,8 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
                 'd_scaley': 'log',
                 'r_scalex': 'lin',
                 'r_scaley': 'lin',
-                'x_label': 'x',
-                'y_label': 'y',
+                'x_label': 'time (ns)',
+                'y_label': 'counts',
                 'plot_irf': True
             }
          ),
