@@ -1148,6 +1148,61 @@ class Main(QtWidgets.QMainWindow):
         source_config_file = pathlib.Path(chisurf.settings.get_path('chisurf')) / "settings" / "experiment_configs.yaml"
         user_config_file = pathlib.Path(chisurf.settings.get_path('settings')) / "experiment_configs.yaml"
 
+        check_updates = True
+        try:
+            check_updates = bool(chisurf.settings.cs_settings.get('check_experiment_config_updates_on_startup', True))
+        except Exception:
+            check_updates = True
+
+        if check_updates and source_config_file.exists() and user_config_file.exists():
+            try:
+                files_differ = source_config_file.read_bytes() != user_config_file.read_bytes()
+            except Exception:
+                files_differ = False
+
+            if files_differ:
+                app_running = False
+                try:
+                    app_running = QtWidgets.QApplication.instance() is not None
+                except Exception:
+                    app_running = False
+
+                if app_running:
+                    msg = QtWidgets.QMessageBox(self)
+                    msg.setWindowTitle("Experiment configuration update available")
+                    msg.setIcon(QtWidgets.QMessageBox.Information)
+                    msg.setText("The experiment configuration file in your settings folder differs from the latest shipped version.")
+                    msg.setInformativeText(
+                        "Do you want to update your experiment configuration to the new default?\n\n"
+                        "This will overwrite your current user experiment configuration file."
+                    )
+                    yes_button = msg.addButton("Update", QtWidgets.QMessageBox.YesRole)
+                    msg.addButton("Skip", QtWidgets.QMessageBox.NoRole)
+                    try:
+                        checkbox = QtWidgets.QCheckBox("Don't check experiment configuration updates on startup")
+                        msg.setCheckBox(checkbox)
+                    except Exception:
+                        checkbox = None
+
+                    msg.exec_()
+
+                    try:
+                        if checkbox is not None and checkbox.isChecked():
+                            from chisurf.settings.settings_utils import set_check_experiment_config_updates_on_startup as _set_exp_flag
+                            _set_exp_flag(False)
+                            try:
+                                chisurf.settings.cs_settings['check_experiment_config_updates_on_startup'] = False
+                            except Exception:
+                                pass
+                    except Exception:
+                        pass
+
+                    try:
+                        if msg.clickedButton() is yes_button:
+                            shutil.copyfile(source_config_file, user_config_file)
+                    except Exception:
+                        pass
+
         # Ensure the user config file exists
         if not user_config_file.exists():
             # If user config doesn't exist but source does, copy it
@@ -1162,7 +1217,7 @@ class Main(QtWidgets.QMainWindow):
         if user_config_file.exists():
             try:
                 with open(user_config_file, 'r') as f:
-                    experiment_configs = yaml.safe_load(f)
+                    experiment_configs = yaml.safe_load(f) or {}
             except Exception as e:
                 chisurf.logging.error(f"Error loading experiment configurations: {e}")
                 experiment_configs = {}
