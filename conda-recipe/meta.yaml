@@ -64,6 +64,7 @@ requirements:
     - typing-extensions >=4.14
     - pytools >=2024.0
     - pyyaml
+    - markdown
     - click
     - click-didyoumean
     - qtpy
@@ -95,6 +96,7 @@ requirements:
     - tttrlib  # [not win]
     - libcxx   # [osx]
     - micromamba
+    - pygments
 
 app:
   entry: chisurf
