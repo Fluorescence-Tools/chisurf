@@ -129,7 +129,6 @@ class QIPythonWidget(
 
         This allows chisurf.run(...) to be called safely from any thread.
         """
-        print("execute_on_gui_thread")
         if code is None:
             return None
         try:
