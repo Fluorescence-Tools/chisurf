@@ -361,14 +361,41 @@ class FittingControllerWidget(Controller):
             self.fit.fit_range = (self.xmin, self.xmax)
         except Exception as e:
             chisurf.logging.warning(f'Failed to set fit range directly: {e}')
+        # Avoid deep re-entrant updates when auto-fit-range is already
+        # driving a fit update.
+        if getattr(self, '_auto_fit_range_in_progress', False):
+            return
         self.fit.update()
 
     def onAutoFitRange(self):
         try:
             fit_range = self.fit.data.data_reader.autofitrange(self.fit.data)
             chisurf.logging.info(f'onAutoFitRange: {fit_range}')
+            xmin, xmax = fit_range
+
+            # Update the UI spin boxes. This may emit signals connected to
+            # onFitRangeChanged, so we guard the subsequent explicit update
+            # with a flag to prevent re-entrant model/plot updates.
             self.xmin, self.xmax = fit_range
-            self.onFitRangeChanged(None, *fit_range)
+
+            try:
+                self._auto_fit_range_in_progress = True
+            except Exception:
+                pass
+
+            try:
+                try:
+                    # Apply range directly to this widget's fit
+                    self.fit.fit_range = (xmin, xmax)
+                except Exception as e:
+                    chisurf.logging.warning(f'Failed to set fit range during auto-fit: {e}')
+                # Trigger a single fit update for the new range
+                self.fit.update()
+            finally:
+                try:
+                    self._auto_fit_range_in_progress = False
+                except Exception:
+                    pass
         except AttributeError:
             s = (f"Fit {self.__class__.__name__} "
                  f"with model {self.fit.model.__class__.__name__} "
@@ -433,6 +460,8 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             f.plots = self._created_plots
 
         # Instantiate the initially visible plot after the event loop returns
+        # to avoid re-entrancy issues during fit creation; this may introduce
+        # a tiny visual delay but is safer.
         def _ensure_initial_plot():
             idx = self.plot_tab_widget.currentIndex()
             self.ensure_plot_created(idx)
@@ -523,7 +552,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             return
         self.current_plot_controller = plot.plot_controller
         self.current_plot_controller.show()
-        # Ensure the newly visible plot refreshes its content
+        # Ensure the newly visible plot refreshes its content; we defer the
+        # heavy update to the next event-loop turn to avoid deep re-entrancy
+        # during fit creation.
         try:
             update_all = getattr(plot, 'update_all', None)
             if callable(update_all):
@@ -540,7 +571,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
         self.statusBar().showMessage(msg)
 
     def closeEvent(self, event: QtCore.QEvent):
-        if chisurf.settings.gui['confirm_close_fit']:
+        # Honour a per-window opt-out flag (used by macros/app shutdown) as
+        # well as the global confirm_close_fit setting.
+        if getattr(self, 'close_confirm', True) and chisurf.settings.gui['confirm_close_fit']:
             reply = chisurf.gui.widgets.MyMessageBox.question(
                 self,
                 'Message',
@@ -1316,6 +1349,26 @@ def make_fitting_parameter_widget(
     if label_text is None:
         # Safely get label_text from parameter's __dict__ or use name as fallback
         label_text = fitting_parameter.__dict__.get('label_text', fitting_parameter.name)
+    # If no explicit suffix was provided, infer simple unit suffixes from the
+    # parameter name (e.g. *_nm -> " nm", *_um -> " µm"). This keeps
+    # backwards compatibility while improving readability for standard unit
+    # conventions used throughout ChiSurf.
+    auto_suffix = suffix
+    if not auto_suffix:
+        n = str(fitting_parameter.name)
+        if n.endswith("_nm"):
+            auto_suffix = " nm"
+        elif n.endswith("_um"):
+            auto_suffix = " µm"
+        elif n.endswith("_ms"):
+            auto_suffix = " ms"
+        elif n.endswith("_us"):
+            auto_suffix = " µs"
+        elif n.endswith("_ns"):
+            auto_suffix = " ns"
+        elif n.endswith("_K"):
+            auto_suffix = " K"
+
     widget = FittingParameterWidget(
         fitting_parameter,
         hide_label=hide_label,
@@ -1327,7 +1380,7 @@ def make_fitting_parameter_widget(
         name=name,
         hide_link=hide_link,
         label_text=label_text,
-        suffix=suffix,
+        suffix=auto_suffix,
         callback=callback
     )
     fitting_parameter.controller = widget
