@@ -23,6 +23,11 @@ class ResidualPlot(plotbase.Plot):
         p = pg.PlotWidget()
         self.layout.addWidget(p)
 
+        try:
+            p.getPlotItem().setLabel('left', 'w.res.')
+        except Exception:
+            pass
+
         for i, f in enumerate(fit):
             color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
             c = pg.PlotCurveItem(pen=pg.mkPen(color, width=lw), name=f.data.name)
