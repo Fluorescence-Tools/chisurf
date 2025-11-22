@@ -129,17 +129,30 @@ class DistributionPlot(plotbase.Plot):
         super().__init__(fit=fit, parent=parent)
         self.data_x, self.data_y = None, None
         self.distribution_options = distribution_options
+
+        # Optional axis scaling (e.g. scale_x='log') for specific uses such as
+        # diffusion-time distributions in MaxEnt FCS. Pop these so they are not
+        # forwarded into QWidget constructors via DistributionPlotControl.
+        self._scale_x = kwargs.pop('scale_x', 'lin')
+        self._scale_y = kwargs.pop('scale_y', 'lin')
         self.plot_controller = DistributionPlotControl(
             self,
             parent=self,
-            distribution_options=distribution_options,
-            **kwargs
+            distribution_options=distribution_options
         )
 
         pw = pg.PlotWidget()
         self.layout.addWidget(pw)
 
         self.distribution_plot = pw.getPlotItem()
+
+        # Apply requested axis scaling
+        try:
+            log_x = str(self._scale_x).lower() == 'log'
+            log_y = str(self._scale_y).lower() == 'log'
+            self.distribution_plot.setLogMode(x=log_x, y=log_y)
+        except Exception:
+            pass
         pen = pg.mkPen(colors['data'], width=lw)
         self.distribution_curve = self.distribution_plot.plot(
             x=[0.0],
