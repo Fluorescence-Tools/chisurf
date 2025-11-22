@@ -546,6 +546,8 @@ class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
                                                   'd_scaley': 'log',
                                                   'r_scalex': 'lin',
                                                   'r_scaley': 'lin',
+                                                  'x_label': 'time (ns)',
+                                                  'y_label': 'counts',
                                                   }
                     ),
                     (chisurf.plots.SurfacePlot, {}),
