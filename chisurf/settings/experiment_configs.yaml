@@ -133,6 +133,9 @@ fcs:
         file_type: ALV-Correlator files (*.asc)
   models:
     - chisurf.models.fcs.fcs.ParseFCSWidget
+    - chisurf.models.fcs.dye_volume_widget.DyeShapeFCSWidget
+    - chisurf.models.fcs.maxent_widget.MaxEntFCSWidget
+    - chisurf.models.fcs.maxent_widget.MaxEntRHWidget
 
 structure:
   readers:
