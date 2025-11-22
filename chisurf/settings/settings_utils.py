@@ -88,3 +88,22 @@ def set_warn_missing_detector_setups(show_warning: bool) -> bool:
         return True
     except Exception:
         return False
+
+
+def set_check_experiment_config_updates_on_startup(check_updates: bool) -> bool:
+    try:
+        settings_file = get_path('settings') / 'settings_chisurf.yaml'
+        data = safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}"
+        )
+        if not isinstance(data, dict):
+            data = {}
+        data['check_experiment_config_updates_on_startup'] = bool(check_updates)
+        with open(settings_file, 'w', encoding='utf-8') as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+        return True
+    except Exception:
+        return False
