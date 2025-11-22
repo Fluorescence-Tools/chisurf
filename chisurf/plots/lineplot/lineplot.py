@@ -443,12 +443,11 @@ class LinePlot(plotbase.Plot):
                 plots['top_left_plot'].showGrid(True, True, 1.0)
             if chisurf.settings.gui['plot']['show_acorr_grid']:
                 plots['top_right_plot'].showGrid(True, True, 1.0)
-        # Labels
-        if chisurf.settings.gui['plot']['label_axis']:
-            plots['top_left_plot'].setLabel('left', "w.res.")
-            plots['top_right_plot'].setLabel('left', "a.corr.")
-            plots['main_plot'].setLabel('left', y_label)
-            plots['main_plot'].setLabel('bottom', x_label)
+        # Axis labels: always show for clarity
+        plots['top_left_plot'].setLabel('left', "w.res.")
+        plots['top_right_plot'].setLabel('left', "a.corr.")
+        plots['main_plot'].setLabel('left', y_label)
+        plots['main_plot'].setLabel('bottom', x_label)
 
         lines = OrderedDict()
         curves = self.fit.get_curves()
