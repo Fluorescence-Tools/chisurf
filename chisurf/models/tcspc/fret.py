@@ -45,6 +45,10 @@ class FRETParameters(FittingParameterGroup):
     def kappa2(self) -> float:
         return self._kappa2.value
 
+    @kappa2.setter
+    def kappa2(self, v: float):
+        self._kappa2.value = v
+
     @property
     def xDOnly(self) -> float:
         return np.sqrt(self._xDonly.value ** 2)
@@ -128,6 +132,21 @@ class OrientationParameter(FittingParameterGroup):
         elif self.mode == 'slow_isotropic':
             return self._k2_slow_iso
         return self._k2_fast_iso
+
+    @orientation_spectrum.setter
+    def orientation_spectrum(self, v):
+        """Set the orientation-factor spectrum used for static averaging.
+
+        Expects an interleaved (amplitude, k2, amplitude, k2, ...) 1D array or
+        sequence. This is primarily used in "slow_isotropic" mode, where
+        ``FRETModel.fret_rate_spectrum`` consumes the full distribution via
+        ``distribution2rates``.
+        """
+        arr = np.asarray(v, dtype=float).ravel()
+        if arr.size < 2 or arr.size % 2 != 0:
+            raise ValueError("orientation_spectrum must be an interleaved (amp, k2, ...) array")
+        # Store into the slow-isotropic spectrum; fast-isotropic uses scalar kappa2
+        self._k2_slow_iso = arr
 
     @property
     def mode(self):
@@ -414,17 +433,19 @@ class FRETModel(LifetimeModel):
         FRET-rate spectrum (excluding the donor-offset).
         """
         tauD0 = self.fret_parameters.tauD0
-        #kappa2 = self.fret_parameters.kappa2
+        kappa2_scalar = self.fret_parameters.kappa2
         forster_radius = self.fret_parameters.forster_radius
-        #kappa2s = self.orientation_parameter.orientation_spectrum
-        kappa2s = 0.6667
+        orientation_mode = getattr(self.orientation_parameter, "mode", "fast_isotropic")
+        if orientation_mode == "slow_isotropic":
+            kappa2s = self.orientation_parameter.orientation_spectrum
+        else:
+            kappa2s = kappa2_scalar
         rs = distribution2rates(
             self.distance_distribution,
             tauD0,
             kappa2s,
             forster_radius
         )
-        #rs = distribution2rates(self.distance_distribution, tauD0, 2./3., forster_radius)
         r = np.hstack(rs).reshape(-1, order='F')
         return r
 

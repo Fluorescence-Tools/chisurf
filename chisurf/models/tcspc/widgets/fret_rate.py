@@ -12,6 +12,7 @@ from chisurf.models.tcspc.widgets.discrete_distance import DiscreteDistanceWidge
 
 # Import plot_cls_dist_default from the original module
 from chisurf.models.tcspc.widgets import plot_cls_dist_default
+from chisurf.models.tcspc.widgets import kappa2_helpers
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit
@@ -31,7 +32,8 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
             List of parameter widgets.
         """
         widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
-        widgets.append(self._orientation_widget)
+        if hasattr(self, '_orientation_widget'):
+            widgets.append(self._orientation_widget)
         widgets.append(self._fret_parameters_widget)
         return widgets
 
@@ -61,10 +63,8 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
         )
         self.layout.addWidget(self._fret_parameters_widget)
 
-        # self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-        #     self.orientation_parameter
-        # )
-        # self.layout.addWidget(self._orientation_widget)
+        # Shared κ² mode controls (dynamic vs static + distribution/experimental buttons)
+        kappa2_helpers.setup_kappa2_controls(self, self.layout)
 
         self.layout.addWidget(self.donor)
         self.layout.addWidget(self.fret_rates)

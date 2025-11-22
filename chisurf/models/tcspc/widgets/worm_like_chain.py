@@ -13,6 +13,7 @@ from chisurf.models.tcspc.widgets.lifetime import LifetimeWidget, LifetimeModelW
 
 # Import plot_cls_dist_default from the original module
 from chisurf.models.tcspc.widgets import plot_cls_dist_default
+from chisurf.models.tcspc.widgets import kappa2_helpers
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit
@@ -32,9 +33,23 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
             List of parameter widgets.
         """
         widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
-        widgets.append(self._orientation_widget)
+        if hasattr(self, '_orientation_widget'):
+            widgets.append(self._orientation_widget)
         widgets.append(self._fret_parameters_widget)
         return widgets
+
+    def _show_kappa2_distribution(self):
+        kappa2_helpers.show_kappa2_distribution_plot(
+            parent=self,
+            orientation_parameter=getattr(self, "orientation_parameter", None),
+            fret_parameters=self.fret_parameters,
+        )
+
+    def _open_experimental_k2(self):
+        kappa2_helpers.open_experimental_k2_dialog(
+            parent=self,
+            fret_model=self,
+        )
 
     @property
     def use_dye_linker(self) -> bool:
@@ -71,6 +86,9 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters)
         layout.addWidget(self._fret_parameters_widget)
+
+        # Shared κ² mode controls (dynamic vs static + distribution/experimental buttons)
+        kappa2_helpers.setup_kappa2_controls(self, layout)
 
         self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.orientation_parameter

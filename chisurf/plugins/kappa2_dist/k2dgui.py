@@ -9,7 +9,13 @@ import pyqtgraph.dockarea
 import os
 
 
-from .k2dfun import kappasq_all_delta, kappasq_all, kappasq_dwt, s2delta
+from .k2dfun import (
+    kappasq_all_delta,
+    kappasq_all,
+    kappasq_dwt,
+    s2delta,
+    p_isotropic_orientation_factor,
+)
 
 
 class Kappa2Dist(QtWidgets.QWidget):
@@ -85,6 +91,14 @@ class Kappa2Dist(QtWidgets.QWidget):
                 fret_efficiency=self.fret_efficiency,
                 n_bins=self.n_bins
             )
+        elif self.model == "isotropic":
+            # Isotropic orientation-factor distribution using analytic formula
+            n_bins = self.n_bins
+            k2_edges = np.linspace(0.0, 4.0, n_bins)
+            k2_centers = 0.5 * (k2_edges[1:] + k2_edges[:-1])
+            k2hist = p_isotropic_orientation_factor(k2_centers, normalize=True)
+            x = k2_edges
+            self.k2 = k2_centers
         self.k2scale = x
         self.k2hist = k2hist
         self.kappa2_curve.setData(x=x[1:], y=k2hist)
@@ -114,6 +128,10 @@ class Kappa2Dist(QtWidgets.QWidget):
             return "cone"
         elif self.radioButton.isChecked():
             return "diffusion"
+        elif hasattr(self, "radioButton_iso") and self.radioButton_iso.isChecked():
+            return "isotropic"
+        # Fallback
+        return "cone"
 
     @property
     def rAD_known(self) -> bool:

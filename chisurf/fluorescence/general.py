@@ -483,13 +483,44 @@ def distribution2rates(
     if remove_negative:
         rate_dist = np.maximum(rate_dist, 0)
 
-    for i in range(n_dist):
-        rate_dist[i, 1] = distance_to_fret_rate_constant(
-            rate_dist[i, 1],
+    k2_array = np.atleast_1d(kappa2)
+
+    # Static orientation spectrum provided as interleaved (amp, k2, ...)
+    if k2_array.ndim == 1 and k2_array.size > 2:
+        k2 = k2_array.reshape((-1, 2))
+        k2_amp = k2[:, 0]
+        k2_val = k2[:, 1]
+
+        amp_r = rate_dist[:, 0, :].reshape(-1)
+        dist = rate_dist[:, 1, :].reshape(-1)
+
+        # Base rate for kappa2 = 1.0 from the compiled helper
+        base = distance_to_fret_rate_constant(
+            dist,
             forster_radius,
             tau0,
-            kappa2
+            1.0,
         )
+
+        # For arbitrary kappa2 the rate scales linearly with kappa2
+        rates_2d = k2_val[:, None] * base[None, :]
+        amps_2d = k2_amp[:, None] * amp_r[None, :]
+
+        amplitudes = amps_2d.ravel()
+        rates = rates_2d.ravel()
+
+        c = np.empty((1, 2, amplitudes.size), dtype=np.float64)
+        c[0, 0, :] = amplitudes
+        c[0, 1, :] = rates
+        return c
+
+    # Scalar kappa2: compute all rates in one vectorized, compiled operation
+    rate_dist[:, 1, :] = distance_to_fret_rate_constant(
+        rate_dist[:, 1, :],
+        forster_radius,
+        tau0,
+        float(kappa2),
+    )
     return rate_dist
     #
     # k2 = kappa2.reshape((len(kappa2)/2, 2))
