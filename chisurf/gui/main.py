@@ -4,6 +4,7 @@ import os
 import ast
 import pathlib
 import webbrowser
+import traceback
 
 import chisurf.gui
 import chisurf.macros.core_fit
@@ -478,8 +479,21 @@ class Main(QtWidgets.QMainWindow):
                     dataset_indices=[idx],
                     model_name=model_name,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                # Surface errors instead of silently swallowing them so that
+                # model/widget construction problems (e.g. for new Gaussian
+                # PDA models) can be diagnosed.
+                msg = f"Add fit failed for dataset index {idx} with model '{model_name}': {e}"
+                try:
+                    chisurf.logging.error(msg)
+                    chisurf.logging.error(traceback.format_exc())
+                except Exception:
+                    pass
+                try:
+                    # Show a short status-bar message to the user
+                    self.status.showMessage(msg, 10000)
+                except Exception:
+                    pass
             if indices:
                 QtCore.QTimer.singleShot(0, _create_next_fit)
 
