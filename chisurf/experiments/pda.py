@@ -231,6 +231,23 @@ class PdaReader(reader.ExperimentReader):
                 minimum_time_window_length=self.minimum_time_window_length
             )
 
+            # Align experimental S1S2 orientation with the theoretical model.
+            #
+            # The tttrlib.Pda model S1S2 matrix (from the probability spectrum)
+            # uses rows for channel 1 (green) and columns for channel 2 (red).
+            # The experimental histogram produced by compute_experimental_histograms
+            # is effectively stored with rows corresponding to channel 2 and
+            # columns to channel 1. For consistent comparison (2D residuals and
+            # 1D projections), we transpose the experimental matrix here so that
+            # both share the same (green,row; red,col) convention.
+            try:
+                import numpy as _np
+                s1s2_e = _np.asarray(s1s2_e)
+                if s1s2_e.ndim == 2:
+                    s1s2_e = s1s2_e.T
+            except Exception:
+                pass
+
             row_indices, col_indices = list(), list()
             for r in range(self.maximum_number_of_photons):
                 for c in range(self.maximum_number_of_photons - r):
