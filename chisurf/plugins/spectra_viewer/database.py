@@ -79,7 +79,7 @@ class SpectraDatabase:
         CREATE TABLE IF NOT EXISTS spectra (
             id INTEGER PRIMARY KEY,
             item_id INTEGER,
-            spectrum_type TEXT,  -- 'absorption' or 'emission'
+            spectrum_type TEXT,  -- 'absorption', 'emission', 'transmission', 'quantum_efficiency', etc.
             wavelengths BLOB,    -- numpy array stored as binary
             intensity_values BLOB,         -- numpy array stored as binary
             FOREIGN KEY (item_id) REFERENCES items(id),
@@ -166,7 +166,7 @@ class SpectraDatabase:
 
         Args:
             item_id (int): ID of the item
-            spectrum_type (str): Type of spectrum ('absorption' or 'emission')
+            spectrum_type (str): Type of spectrum ('absorption', 'emission', 'transmission', etc.)
             wavelengths (numpy.ndarray): Array of wavelengths
             values (numpy.ndarray): Array of values
         """
@@ -233,6 +233,12 @@ class SpectraDatabase:
         )
         return self.cursor.fetchall()
 
+    def get_all_items(self):
+        self.cursor.execute(
+            "SELECT id, name, type_id, description FROM items"
+        )
+        return self.cursor.fetchall()
+
     def get_item_by_name_and_type(self, name, type_id):
         """Get an item by name and type.
 
@@ -269,7 +275,7 @@ class SpectraDatabase:
 
         Args:
             item_id (int): ID of the item
-            spectrum_type (str): Type of spectrum ('absorption' or 'emission')
+            spectrum_type (str): Type of spectrum ('absorption', 'emission', 'transmission', etc.)
 
         Returns:
             tuple: (wavelengths, values) as numpy arrays, or None if not found

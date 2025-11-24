@@ -28,40 +28,36 @@ import os
 import sys
 import json
 import csv
-import numpy as np
-import subprocess
 from pathlib import Path
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-import pyqtgraph as pg
 
-import chisurf
-from chisurf.fio.ascii import Csv, load_xy
-from chisurf.math.datatools import overlapping_region, align_x_spacing, minmax
-
-# Import the database module
-from .database import SpectraDatabase
+# Heavy, optional and plugin-specific imports are performed lazily inside
+# SpectraViewerWidget.__init__ to keep importing this package lightweight.
+# They are cached in module-level variables so that all methods can use them
+# without re-importing.
+np = None
+pg = None
+subprocess = None
+chisurf = None
+Csv = None
+load_xy = None
+overlapping_region = None
+align_x_spacing = None
+minmax = None
+SpectraDatabase = None
+CrosstalkCalculatorWidget = None
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Tools:Spectra Viewer"
 
-# Load the plugin icon
-icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icon.png')
+# Load the plugin icon (fail silently to a default icon if not present)
+icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
 if os.path.exists(icon_path):
     icon = QtGui.QIcon(icon_path)
 else:
-    # If icon doesn't exist, try to create it
-    try:
-        import icon
-        if os.path.exists(icon_path):
-            icon = QtGui.QIcon(icon_path)
-        else:
-            # Create a default icon if the icon file doesn't exist
-            icon = QtGui.QIcon()
-    except Exception as e:
-        print(f"Error loading icon for spectra_viewer: {e}")
-        # Create a default icon if there's an error
-        icon = QtGui.QIcon()
+    # Fallback to an empty icon without importing any auxiliary modules
+    icon = QtGui.QIcon()
 
 class SpectraViewerWidget(QtWidgets.QMainWindow):
     """Main widget for the Spectra Viewer plugin."""
@@ -70,6 +66,51 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("Spectra Viewer")
         self.resize(1000, 800)
+
+        # Lazy imports of heavy dependencies to avoid side effects when the
+        # package is imported only for metadata (e.g. when running the
+        # node editor as a standalone module). Cache them in module-level
+        # globals so that other methods (e.g. update_plots) can use them.
+        global np, pg, subprocess, chisurf, Csv, load_xy
+        global overlapping_region, align_x_spacing, minmax
+        global SpectraDatabase, CrosstalkCalculatorWidget
+
+        if np is None:
+            import numpy as _np  # type: ignore  # noqa: F401
+            np = _np
+        if subprocess is None:
+            import subprocess as _subprocess  # type: ignore  # noqa: F401
+            subprocess = _subprocess
+        if pg is None:
+            import pyqtgraph as _pg  # type: ignore  # noqa: F401
+            pg = _pg
+        if chisurf is None:
+            import chisurf as _chisurf  # type: ignore  # noqa: F401
+            chisurf = _chisurf
+        if Csv is None or load_xy is None:
+            from chisurf.fio.ascii import Csv as _Csv, load_xy as _load_xy  # type: ignore  # noqa: F401
+            Csv = _Csv
+            load_xy = _load_xy
+        if overlapping_region is None or align_x_spacing is None or minmax is None:
+            from chisurf.math.datatools import (  # type: ignore  # noqa: F401
+                overlapping_region as _overlapping_region,
+                align_x_spacing as _align_x_spacing,
+                minmax as _minmax,
+            )
+            overlapping_region = _overlapping_region
+            align_x_spacing = _align_x_spacing
+            minmax = _minmax
+        if SpectraDatabase is None:
+            from .database import SpectraDatabase as _SpectraDatabase  # type: ignore  # noqa: F401
+            SpectraDatabase = _SpectraDatabase
+        # The optical path editor is currently considered experimental; do not
+        # import it here to avoid pulling in the node editor when the viewer
+        # is used as a simple spectra browser.
+        # if CrosstalkCalculatorWidget is None:
+        #     from .optical_path_editor import (  # type: ignore  # noqa: F401
+        #         CrosstalkCalculatorWidget as _CrosstalkCalculatorWidget,
+        #     )
+        #     CrosstalkCalculatorWidget = _CrosstalkCalculatorWidget
 
         # Initialize data structures
         self.plugin_dir = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -108,6 +149,10 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         # Selected spectra for display and calculations
         self.selected_spectra = []
 
+        # Cache of all items and their derived features for filtering
+        self.all_items = []
+        self._item_features = {}
+
         # Setup menubar
         self.setup_menubar()
 
@@ -140,11 +185,12 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         spectra_layout = QtWidgets.QVBoxLayout(spectra_group)
         left_layout.addWidget(spectra_group)
 
-        # Spectra type selection
+        # Spectra type selection (hidden in UI, kept for backward compatibility)
         spectra_type_layout = QtWidgets.QHBoxLayout()
         spectra_layout.addLayout(spectra_type_layout)
 
-        spectra_type_layout.addWidget(QtWidgets.QLabel("Type:"))
+        self.item_type_label = QtWidgets.QLabel("Type:")
+        spectra_type_layout.addWidget(self.item_type_label)
         self.item_type_combo = QtWidgets.QComboBox()
 
         # Dynamically populate item types based on available directories
@@ -153,18 +199,73 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         self.item_type_combo.currentIndexChanged.connect(self.on_item_type_changed)
         spectra_type_layout.addWidget(self.item_type_combo)
 
-        # Item selection
+        # Hide type widgets so classes (Atto, PhotochemCAD, ...) are not exposed
+        self.item_type_label.hide()
+        self.item_type_combo.hide()
+
+        # Item selection (flat list over all compounds, filtered by properties)
         item_select_layout = QtWidgets.QHBoxLayout()
         spectra_layout.addLayout(item_select_layout)
 
         item_select_layout.addWidget(QtWidgets.QLabel("Item:"))
+
+        # Hidden combo box kept for backward-compatible logic; the visible
+        # control for the user is the item_list below.
         self.item_combo = QtWidgets.QComboBox()
         self.item_combo.setEditable(True)
         self.item_combo.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
         self.item_combo.completer().setCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.item_combo.completer().setFilterMode(QtCore.Qt.MatchContains)
         self.item_combo.currentIndexChanged.connect(self.on_item_changed)
-        item_select_layout.addWidget(self.item_combo)
+        self.item_combo.hide()
+
+        # Visible list of compounds
+        self.item_list = QtWidgets.QListWidget()
+        self.item_list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.item_list.itemSelectionChanged.connect(self.on_item_list_selection_changed)
+        item_select_layout.addWidget(self.item_list)
+
+        # Filters for item list: name and key optical properties
+        filter_layout = QtWidgets.QGridLayout()
+        spectra_layout.addLayout(filter_layout)
+
+        filter_layout.addWidget(QtWidgets.QLabel("Filter:"), 0, 0)
+        self.item_filter_edit = QtWidgets.QLineEdit()
+        self.item_filter_edit.setPlaceholderText("Filter by name")
+        self.item_filter_edit.textChanged.connect(self.apply_item_filter)
+        filter_layout.addWidget(self.item_filter_edit, 0, 1, 1, 3)
+
+        self.abs_max_filter = QtWidgets.QDoubleSpinBox()
+        self.abs_max_filter.setRange(0.0, 1000.0)
+        self.abs_max_filter.setDecimals(1)
+        self.abs_max_filter.setSingleStep(1.0)
+        self.abs_max_filter.valueChanged.connect(self.apply_item_filter)
+        filter_layout.addWidget(QtWidgets.QLabel("Abs max ≥ (nm):"), 1, 0)
+        filter_layout.addWidget(self.abs_max_filter, 1, 1)
+
+        self.em_max_filter = QtWidgets.QDoubleSpinBox()
+        self.em_max_filter.setRange(0.0, 1000.0)
+        self.em_max_filter.setDecimals(1)
+        self.em_max_filter.setSingleStep(1.0)
+        self.em_max_filter.valueChanged.connect(self.apply_item_filter)
+        filter_layout.addWidget(QtWidgets.QLabel("Em max ≥ (nm):"), 1, 2)
+        filter_layout.addWidget(self.em_max_filter, 1, 3)
+
+        self.qy_filter = QtWidgets.QDoubleSpinBox()
+        self.qy_filter.setRange(0.0, 1.0)
+        self.qy_filter.setDecimals(3)
+        self.qy_filter.setSingleStep(0.01)
+        self.qy_filter.valueChanged.connect(self.apply_item_filter)
+        filter_layout.addWidget(QtWidgets.QLabel("QY ≥"), 2, 0)
+        filter_layout.addWidget(self.qy_filter, 2, 1)
+
+        self.ext_coeff_filter = QtWidgets.QDoubleSpinBox()
+        self.ext_coeff_filter.setRange(0.0, 300000.0)
+        self.ext_coeff_filter.setDecimals(0)
+        self.ext_coeff_filter.setSingleStep(1000.0)
+        self.ext_coeff_filter.valueChanged.connect(self.apply_item_filter)
+        filter_layout.addWidget(QtWidgets.QLabel("Ext. Coef. ≥"), 2, 2)
+        filter_layout.addWidget(self.ext_coeff_filter, 2, 3)
 
         # Item information group (hidden by default)
         self.info_group = QtWidgets.QGroupBox("Item Information")
@@ -243,7 +344,7 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         forster_group = QtWidgets.QGroupBox("Förster Radius Calculation")
         forster_layout = QtWidgets.QVBoxLayout(forster_group)
         left_layout.addWidget(forster_group)
-        forster_group.setEnabled(False)
+        forster_group.setEnabled(True)
 
         # Donor and acceptor selection
         donor_layout = QtWidgets.QHBoxLayout()
@@ -299,10 +400,18 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         self.calculate_button.clicked.connect(self.calculate_forster_radius)
         calc_layout.addWidget(self.calculate_button)
 
-        self.forster_result = QtWidgets.QLineEdit()
-        self.forster_result.setReadOnly(True)
+        self.forster_result = QtWidgets.QLabel("R₀ = ")
         calc_layout.addWidget(self.forster_result)
 
+        # Crosstalk table button
+        self.crosstalk_button = QtWidgets.QPushButton("Crosstalk Table")
+        self.crosstalk_button.clicked.connect(self.show_crosstalk_table)
+        calc_layout.addWidget(self.crosstalk_button)
+
+        # Simulator button (temporarily disabled: node/beam path editor)
+        self.simulator_button = QtWidgets.QPushButton("Path Simulator")
+        self.simulator_button.setEnabled(False)
+        calc_layout.addWidget(self.simulator_button)
 
         # Add stretch to push everything to the top
         left_layout.addStretch()
@@ -334,6 +443,82 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         self.structure_scroll.setWidget(self.structure_content)
         self.structure_scroll.setMaximumHeight(250)  # Limit the height of the scroll area
         # Images are hidden by default and will be shown in a separate window
+
+    def _append_loaded_spectrum(self, item_id, name, spectrum_type, data):
+        """Append a spectrum to loaded_spectra and the list widget, return its key."""
+        if data is None:
+            return None
+        # Create a unique key
+        key = (item_id, spectrum_type)
+        # Store
+        self.loaded_spectra[key] = {
+            'type': spectrum_type,
+            'name': name,
+            'data': data,
+            'metadata': getattr(self, 'item_metadata', None)
+        }
+        # List entry
+        item = QtWidgets.QListWidgetItem(f"{name} — {spectrum_type}")
+        item.setData(QtCore.Qt.UserRole, key)
+        self.spectra_list.addItem(item)
+        return key
+
+    def add_current_spectrum(self):
+        """Add the current item's available spectra (abs/em/transmission/QE) to the loaded list."""
+        if self.current_item_id is None:
+            QtWidgets.QMessageBox.warning(self, "No Item", "Select an item first.")
+            return
+        item_id = self.current_item_id
+        name = self.current_item or "Item"
+        added_keys = []
+        present_types = []
+        with self.db:
+            for st in ("absorption", "emission", "transmission", "quantum_efficiency"):
+                data = self.db.get_spectrum(item_id, st)
+                if data:
+                    present_types.append(st)
+                    key = self._append_loaded_spectrum(item_id, name, st, data)
+                    if key:
+                        added_keys.append(key)
+        if not added_keys:
+            msg = "No spectra found for this item in the database.\nTried types: absorption, emission, transmission, quantum_efficiency."
+            # Extra hint for Filters
+            msg += "\nIf this is a filter, ensure its transmission spectrum exists in the DB."
+            QtWidgets.QMessageBox.information(self, "No Spectra", msg)
+            return
+        # Provide feedback
+        QtWidgets.QMessageBox.information(self, "Spectra Added", f"Added: {', '.join(present_types)} for {name}")
+        # Select newly added items
+        self.spectra_list.clearSelection()
+        for i in range(self.spectra_list.count()):
+            it = self.spectra_list.item(i)
+            if it.data(QtCore.Qt.UserRole) in added_keys:
+                it.setSelected(True)
+        # Track selection and update plot
+        self.selected_spectra = added_keys
+        self.update_plots()
+
+    def remove_selected_spectra(self):
+        """Remove selected spectra from the loaded list and update plot."""
+        items = self.spectra_list.selectedItems()
+        if not items:
+            return
+        for it in items:
+            key = it.data(QtCore.Qt.UserRole)
+            if key in self.loaded_spectra:
+                del self.loaded_spectra[key]
+            row = self.spectra_list.row(it)
+            self.spectra_list.takeItem(row)
+        # Refresh selection list
+        self.selected_spectra = [self.spectra_list.item(i).data(QtCore.Qt.UserRole)
+                                 for i in range(self.spectra_list.count())
+                                 if self.spectra_list.item(i).isSelected()]
+        self.update_plots()
+
+    def on_spectra_selection_changed(self):
+        """Track which loaded spectra are selected and re-plot."""
+        self.selected_spectra = [it.data(QtCore.Qt.UserRole) for it in self.spectra_list.selectedItems()]
+        self.update_plots()
 
 
     def populate_download_combo(self):
@@ -372,35 +557,41 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         QtWidgets.QMessageBox.warning(self, "Warning", f"Download script for {script_name} not found.")
 
     def populate_item_list(self):
-        """Populate the item combobox with available items based on the selected type."""
-        # Clear the combobox first
+        """Populate the item combobox with all available items from the database."""
+        # Clear existing items and caches
         self.item_combo.clear()
+        if hasattr(self, "item_list"):
+            self.item_list.clear()
+        self.all_items = []
+        self._item_features = {}
 
-        # Get the selected item type
-        item_type_index = self.item_type_combo.currentIndex()
-        if item_type_index < 0:
-            self.item_combo.addItem("No items found")
-            return
-
-        item_type_display = self.item_type_combo.currentText()
-        item_type_id = self.item_type_combo.itemData(item_type_index)
-
-        # Skip if no item type is selected or if it's a placeholder
-        if not item_type_display or item_type_display == "No item types found" or item_type_id == -1:
-            self.item_combo.addItem("No items found")
-            return
-
-        # Get items from the database
         with self.db:
-            items = self.db.get_items_by_type(item_type_id)
+            items = self.db.get_all_items()
+            item_types = self.db.get_item_types()
 
-        # Add items to the combo box
+        type_map = {t_id: display_name for (t_id, _name, display_name) in item_types}
+
         if items:
-            for item_id, item_name, _ in items:
-                # Store the item_id as user data
-                self.item_combo.addItem(item_name, item_id)
+            for item_id, item_name, type_id, description in items:
+                type_display = type_map.get(type_id, "")
+                self.all_items.append(
+                    {
+                        "id": item_id,
+                        "name": item_name,
+                        "type_id": type_id,
+                        "type_display": type_display,
+                        "description": description,
+                    }
+                )
+
+            self.apply_item_filter()
         else:
-            # Check if we have any data in the old format
+            # Fallback to old on-disk format when database is empty
+            item_type_display = self.item_type_combo.currentText()
+            if not item_type_display:
+                self.item_combo.addItem("No items found")
+                return
+
             old_format_items = []
 
             # Convert display name to directory name (e.g., "Atto Dyes" -> "atto_dyes")
@@ -416,18 +607,182 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
                 old_format_items.sort()
 
             if old_format_items:
-                # We have old format data but no database entries
-                # Suggest running the migration script
                 QtWidgets.QMessageBox.information(
                     self, 
                     "Database Migration Required",
                     f"Found {item_type_display} data in the old file format. Please run the migration script to convert it to the new database format."
                 )
 
-                # Add the old format items to the combo box
                 self.item_combo.addItems(old_format_items)
             else:
-                self.item_combo.addItem(f"No {item_type_display} found - use Download from menu")
+                self.item_combo.addItem("No items found")
+
+    def _get_item_features(self, item_id):
+        features = self._item_features.get(item_id)
+        if features is not None:
+            return features
+
+        global np
+        if np is None:
+            import numpy as _np  # type: ignore  # noqa: F401
+            np = _np
+
+        abs_max = None
+        em_max = None
+        qy = None
+        ext_coeff = None
+
+        with self.db:
+            optical_props = self.db.get_optical_properties(item_id)
+            abs_data = self.db.get_spectrum(item_id, "absorption")
+            em_data = self.db.get_spectrum(item_id, "emission")
+
+        if abs_data:
+            x, y = abs_data
+            if y.size > 0:
+                idx = int(np.argmax(y))
+                if 0 <= idx < x.size:
+                    abs_max = float(x[idx])
+
+        if em_data:
+            x, y = em_data
+            if y.size > 0:
+                idx = int(np.argmax(y))
+                if 0 <= idx < x.size:
+                    em_max = float(x[idx])
+
+        qy_str = optical_props.get("Quantum Yield")
+        if qy_str is not None:
+            try:
+                qy = float(str(qy_str).replace(",", ""))
+            except Exception:
+                pass
+
+        ext_str = optical_props.get("Extinction Coefficient")
+        if ext_str is not None:
+            try:
+                ext_coeff = float(str(ext_str).replace(",", ""))
+            except Exception:
+                pass
+
+        features = {
+            "abs_max": abs_max,
+            "em_max": em_max,
+            "qy": qy,
+            "ext_coeff": ext_coeff,
+        }
+        self._item_features[item_id] = features
+        return features
+
+    def apply_item_filter(self):
+        if not self.all_items:
+            self.item_combo.clear()
+            if hasattr(self, "item_list"):
+                self.item_list.clear()
+                self.item_list.addItem("No items found")
+            self.item_combo.addItem("No items found")
+            return
+
+        text = ""
+        if hasattr(self, "item_filter_edit"):
+            text = self.item_filter_edit.text().strip().lower()
+
+        abs_min = self.abs_max_filter.value() if hasattr(self, "abs_max_filter") else 0.0
+        em_min = self.em_max_filter.value() if hasattr(self, "em_max_filter") else 0.0
+        qy_min = self.qy_filter.value() if hasattr(self, "qy_filter") else 0.0
+        ext_min = self.ext_coeff_filter.value() if hasattr(self, "ext_coeff_filter") else 0.0
+
+        self.item_combo.blockSignals(True)
+        if hasattr(self, "item_list"):
+            self.item_list.blockSignals(True)
+            self.item_list.clear()
+        self.item_combo.clear()
+
+        matched_ids = []
+
+        for info in self.all_items:
+            item_id = info.get("id")
+            name = info.get("name", "")
+            type_display = info.get("type_display", "") or ""
+
+            if text:
+                haystack = f"{name} {type_display}".lower()
+                if text not in haystack:
+                    continue
+
+            features = self._get_item_features(item_id)
+
+            if abs_min > 0.0:
+                v = features.get("abs_max")
+                if v is None or v < abs_min:
+                    continue
+            if em_min > 0.0:
+                v = features.get("em_max")
+                if v is None or v < em_min:
+                    continue
+            if qy_min > 0.0:
+                v = features.get("qy")
+                if v is None or v < qy_min:
+                    continue
+            if ext_min > 0.0:
+                v = features.get("ext_coeff")
+                if v is None or v < ext_min:
+                    continue
+
+            # Keep combo and list in sync (combo remains hidden)
+            self.item_combo.addItem(name, item_id)
+            matched_ids.append(item_id)
+
+            if hasattr(self, "item_list"):
+                lw_item = QtWidgets.QListWidgetItem(name)
+                lw_item.setData(QtCore.Qt.UserRole, item_id)
+                self.item_list.addItem(lw_item)
+
+        self.item_combo.blockSignals(False)
+        if hasattr(self, "item_list"):
+            self.item_list.blockSignals(False)
+
+        if not matched_ids:
+            # No real items matched; show placeholder
+            self.item_combo.addItem("No items found")
+            if hasattr(self, "item_list") and self.item_list.count() == 0:
+                self.item_list.addItem("No items found")
+            return
+
+        # Select a default item: keep current selection if possible, otherwise
+        # pick the first match.
+        try:
+            index_to_select = matched_ids.index(self.current_item_id) if self.current_item_id in matched_ids else 0
+        except ValueError:
+            index_to_select = 0
+
+        if 0 <= index_to_select < self.item_combo.count():
+            self.item_combo.setCurrentIndex(index_to_select)
+        if hasattr(self, "item_list") and 0 <= index_to_select < self.item_list.count():
+            self.item_list.setCurrentRow(index_to_select)
+
+        # Trigger normal item-loading logic via combo signal/handler
+        if self.current_item_id is None:
+            self.on_item_changed()
+
+    def on_item_list_selection_changed(self):
+        """Sync item_list selection back to the hidden combo box and reuse
+        existing on_item_changed logic."""
+        if not hasattr(self, "item_list") or self.item_list is None:
+            return
+        selected = self.item_list.selectedItems()
+        if not selected:
+            return
+        item = selected[0]
+        item_id = item.data(QtCore.Qt.UserRole)
+        if item_id is None:
+            return
+
+        # Find corresponding index in the combo box and select it
+        for idx in range(self.item_combo.count()):
+            if self.item_combo.itemData(idx) == item_id:
+                self.item_combo.setCurrentIndex(idx)
+                break
 
     def populate_item_types(self):
         """Dynamically populate the item type combo box based on available item types in the database."""
@@ -508,9 +863,13 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         self.current_item = item_name
         self.current_item_id = item_id
 
-        # Get the item type
-        type_index = self.item_type_combo.currentIndex()
-        self.current_type_id = self.item_type_combo.itemData(type_index)
+        # Get the item type from the cached item list when available
+        item_type_id = None
+        for info in getattr(self, "all_items", []):
+            if info.get("id") == item_id:
+                item_type_id = info.get("type_id")
+                break
+        self.current_type_id = item_type_id
 
         # Load the item data from the database
         with self.db:
@@ -1065,13 +1424,6 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
         donor_id = self.donor_combo.itemData(donor_idx)
         acceptor_id = self.acceptor_combo.itemData(acceptor_idx)
 
-        # Calculate spectral overlap
-        overlap_integral = self.calculate_spectral_overlap(donor_id, acceptor_id)
-
-        if overlap_integral is None:
-            QtWidgets.QMessageBox.warning(self, "Warning", "Failed to calculate spectral overlap. Make sure donor is emission and acceptor is absorption.")
-            return
-
         # Get parameters
         kappa_squared = self.kappa_squared.value()
         donor_qy = self.donor_qy.value()
@@ -1107,31 +1459,59 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
 
         # Use the value from the UI field
         max_extinction_coef = self.acceptor_ext_coef.value()
+        # Compute spectral overlap J with λ in nm and ε(λ) = ε_max * A_norm(λ)
+        donor_spectrum = self.loaded_spectra[donor_id]
+        if donor_spectrum['type'] != 'emission' or acceptor_spectrum['type'] != 'absorption':
+            QtWidgets.QMessageBox.warning(self, "Warning", "Donor must be emission and acceptor must be absorption spectrum.")
+            return
 
-        # Calculate Förster radius
-        # R₀⁶ = (9000 * ln(10) * κ² * Φᴅ * J) / (128 * π⁵ * n⁴ * Nₐ)
-        # where:
-        # κ² is the orientation factor
-        # Φᴅ is the quantum yield of the donor
-        # J is the spectral overlap integral
-        # n is the refractive index of the medium
-        # Nₐ is Avogadro's number (6.022 × 10²³)
+        donor_x, donor_y = donor_spectrum['data']
 
-        # Constants
-        avogadro = 6.022e23
-        ln10 = np.log(10)
-        pi = np.pi
+        # Overlapping region in nm
+        x_min = max(min(donor_x), min(acceptor_x))
+        x_max = min(max(donor_x), max(acceptor_x))
+        donor_mask = (donor_x >= x_min) & (donor_x <= x_max)
+        acceptor_mask = (acceptor_x >= x_min) & (acceptor_x <= x_max)
 
-        # Calculate R₀ in Å
-        numerator = 9000 * ln10 * kappa_squared * donor_qy * overlap_integral
-        denominator = 128 * pi**5 * refractive_index**4 * avogadro
+        donor_x_overlap = donor_x[donor_mask]
+        donor_y_overlap = donor_y[donor_mask]
+        acceptor_x_overlap = acceptor_x[acceptor_mask]
+        acceptor_y_overlap = acceptor_y[acceptor_mask]
 
-        r0_sixth = numerator / denominator
-        r0 = r0_sixth**(1/6)  # in cm
-        r0_angstrom = r0 * 1e8  # Convert to Å
+        if donor_x_overlap.size == 0 or acceptor_x_overlap.size == 0:
+            QtWidgets.QMessageBox.warning(self, "Warning", "No spectral overlap between donor and acceptor.")
+            return
+
+        # Normalize donor emission to unit area over nm
+        donor_area = np.trapz(donor_y_overlap, donor_x_overlap)
+        if donor_area <= 0:
+            QtWidgets.QMessageBox.warning(self, "Warning", "Invalid donor emission for overlap integration.")
+            return
+        donor_y_norm = donor_y_overlap / donor_area
+
+        # Interpolate acceptor absorption to donor grid and normalize to peak 1
+        acceptor_y_interp = np.interp(donor_x_overlap, acceptor_x_overlap, acceptor_y_overlap)
+        acceptor_peak = float(np.max(acceptor_y)) if acceptor_y.size > 0 else 0.0
+        if acceptor_peak <= 0:
+            QtWidgets.QMessageBox.warning(self, "Warning", "Invalid acceptor absorption for overlap integration.")
+            return
+        acceptor_shape = acceptor_y_interp / acceptor_peak
+        epsilon_interp = max_extinction_coef * acceptor_shape  # M^-1 cm^-1
+
+        # J in mixed units consistent with 0.02108 constant: integrate over nm with λ^4 (nm^4)
+        J = np.trapz(donor_y_norm * epsilon_interp * (donor_x_overlap ** 4), donor_x_overlap)
+
+        # Calculate Förster radius in nm using standard constant
+        # R0[nm] = 0.02108 * (κ² * ΦD * J / n^4)^(1/6)
+        try:
+            r0_nm = 0.02108 * ((kappa_squared * donor_qy * J) / (refractive_index ** 4)) ** (1.0 / 6.0)
+        except Exception:
+            QtWidgets.QMessageBox.warning(self, "Warning", "Failed to compute Förster radius (check parameters).")
+            return
+        r0_angstrom = r0_nm * 10.0
 
         # Display result
-        self.forster_result.setText(f"{r0_angstrom:.2f} Å")
+        self.forster_result.setText(f"{r0_nm:.2f} nm")
 
         # Show detailed calculation in a message box
         details = (
@@ -1142,11 +1522,113 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
             f"Donor Quantum Yield: {donor_qy}\n"
             f"Acceptor Extinction Coefficient (max): {max_extinction_coef:.2e} M⁻¹cm⁻¹\n"
             f"Refractive Index: {refractive_index}\n"
-            f"Spectral Overlap Integral (J): {overlap_integral:.3e} M⁻¹cm³\n"
-            f"Förster Radius (R₀): {r0_angstrom:.2f} Å"
+            f"Spectral Overlap Integral (J): {J:.3e} (ε·nm⁴ units)\n"
+            f"Förster Radius (R₀): {r0_nm:.2f} nm ({r0_angstrom:.2f} Å)"
         )
 
         QtWidgets.QMessageBox.information(self, "Förster Radius Calculation", details)
+
+    def show_crosstalk_table(self):
+        """Show crosstalk table dialog with emission-filter overlap calculations."""
+        # Get all loaded spectra
+        fluorophores = []
+        filters = []
+
+        for spectrum_id, spectrum in self.loaded_spectra.items():
+            if spectrum['type'] == 'emission':
+                fluorophores.append((spectrum_id, spectrum))
+            elif spectrum['type'] == 'transmission':
+                filters.append((spectrum_id, spectrum))
+
+        if not fluorophores or not filters:
+            QtWidgets.QMessageBox.warning(
+                self, "Insufficient Data",
+                "Need at least one emission spectrum (fluorophore) and one transmission spectrum (filter) loaded."
+            )
+            return
+
+        # Create spillover table dialog
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Crosstalk Table")
+        dialog.resize(800, 600)
+
+        layout = QtWidgets.QVBoxLayout(dialog)
+
+        # Create table
+        table = QtWidgets.QTableWidget()
+        table.setRowCount(len(fluorophores))
+        table.setColumnCount(len(filters) + 1)  # +1 for fluorophore names
+
+        # Set headers
+        headers = ['Fluorophore']
+        for _, filter_spectrum in filters:
+            headers.append(filter_spectrum['name'])
+        table.setHorizontalHeaderLabels(headers)
+        table.verticalHeader().setVisible(False)
+
+        # Calculate spillover values
+        for i, (fluoro_id, fluoro_spectrum) in enumerate(fluorophores):
+            # Set fluorophore name
+            fluoro_name = fluoro_spectrum['name']
+            table.setItem(i, 0, QtWidgets.QTableWidgetItem(fluoro_name))
+
+            fluoro_x, fluoro_y = fluoro_spectrum['data']
+
+            for j, (filter_id, filter_spectrum) in enumerate(filters):
+                filter_x, filter_y = filter_spectrum['data']
+
+                # Calculate overlap integral
+                try:
+                    # Find overlapping wavelength range
+                    min_wavelength = max(min(fluoro_x), min(filter_x))
+                    max_wavelength = min(max(fluoro_x), max(filter_x))
+
+                    # Filter data to overlapping range
+                    fluoro_mask = (fluoro_x >= min_wavelength) & (fluoro_x <= max_wavelength)
+                    filter_mask = (filter_x >= min_wavelength) & (filter_x <= max_wavelength)
+
+                    fluoro_x_overlap = fluoro_x[fluoro_mask]
+                    fluoro_y_overlap = fluoro_y[fluoro_mask]
+                    filter_x_overlap = filter_x[filter_mask]
+                    filter_y_overlap = filter_y[filter_mask]
+
+                    # Interpolate filter data to fluorophore wavelengths
+                    filter_y_interp = np.interp(fluoro_x_overlap, filter_x_overlap, filter_y_overlap)
+
+                    # Calculate spillover: integral of emission * transmission / integral of emission
+                    if np.sum(fluoro_y_overlap) > 0:
+                        spillover = np.trapz(fluoro_y_overlap * filter_y_interp, fluoro_x_overlap) / np.trapz(fluoro_y_overlap, fluoro_x_overlap) * 100.0
+                        spillover_str = f"{spillover:.1f}%"
+                    else:
+                        spillover_str = "N/A"
+
+                except Exception as e:
+                    spillover_str = "Error"
+                    print(f"Error calculating spillover for {fluoro_name} vs {filter_spectrum['name']}: {e}")
+
+                table.setItem(i, j + 1, QtWidgets.QTableWidgetItem(spillover_str))
+
+        # Make table read-only and stretch columns
+        table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        layout.addWidget(table)
+
+        # Add close button
+        close_button = QtWidgets.QPushButton("Close")
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button)
+
+        dialog.exec_()
+
+    def show_simulator(self):
+        """Show a message indicating that the optical path simulator is disabled."""
+        QtWidgets.QMessageBox.information(
+            self,
+            "Path Simulator Disabled",
+            "The optical path / node editor simulator is currently disabled in this build."
+        )
 
     def highlight_missing_fields(self):
         """Highlight missing fields for Förster radius calculation."""
@@ -1694,8 +2176,14 @@ class SpectraViewerWidget(QtWidgets.QMainWindow):
                     # Selected spectra in color
                     if spectrum_type == 'absorption':
                         color = pg.mkPen('b', width=2)
-                    else:  # emission
+                    elif spectrum_type == 'emission':
                         color = pg.mkPen('r', width=2)
+                    elif spectrum_type == 'transmission':
+                        color = pg.mkPen('g', width=2)
+                    elif spectrum_type == 'quantum_efficiency':
+                        color = pg.mkPen('orange', width=2)
+                    else:
+                        color = pg.mkPen('purple', width=2)  # Other types
                     self.spectra_plot.plot(x, y, pen=color, name=f"{name} ({spectrum_type})")
                 else:
                     # Non-selected spectra in gray with transparency
