@@ -86,6 +86,7 @@ pda:
         name: PTU/HT3/SPC
   models:
     - chisurf.models.pda.widgets.PdaSimpleModelWidget
+    - chisurf.models.pda.widgets.PdaGaussianDistanceModelWidget
 
 fcs:
   readers:
