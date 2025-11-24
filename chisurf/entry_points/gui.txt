@@ -18,4 +18,5 @@ csg_traj_save_topology chisurf.gui.tools.structure.save_topology.__main__:main
 csg_quest quest.quest_gui:start_gui
 csg_trace_browser chisurf.plugins.trace_browser.__main__:main
 csg_tttr_image_browser chisurf.plugins.tttr_image_browser.__main__:main
+csg_burst_browser chisurf.plugins.burst_browser.__main__:main
 chisurf_update chisurf.plugins.updater.__main__:main
