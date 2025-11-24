@@ -32,6 +32,7 @@ plot_cls_dist_default = [
                     'accessor_kwargs': {'sort': False},
                     'curve_options': {
                         'symbol': "t",
+                        'bar_mode': 'sticks',
                     }
                 },
                 'FRET-rate constant': {

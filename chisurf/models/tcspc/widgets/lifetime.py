@@ -234,6 +234,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                         'curve_options': {
                             'stepMode': False,
                             'connect': False,
+                            'bar_mode': 'sticks',
                             'symbol': "o"
                         }
                     }
