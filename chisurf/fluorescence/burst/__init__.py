@@ -37,3 +37,9 @@ from chisurf.fluorescence.burst.count_rate import count_rate_filter
 
 # Burst module
 from chisurf.fluorescence.burst.burst import burst_filter
+
+# Background estimation module
+from chisurf.fluorescence.burst.background import (
+    estimate_background_from_bursts,
+    estimate_background_from_interphoton_times,
+)
