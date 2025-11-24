@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+import chisurf
 import chisurf.fluorescence.tcspc
 import chisurf.fluorescence.anisotropy.kappa2 as kapp2
 
@@ -63,6 +64,7 @@ class FRETParameters(FittingParameterGroup):
             tau0: float = chisurf.settings.fret['tau0'],
             xDOnly: float = 0.0,
             kappa2: float = 0.66667,
+            enable_fret_efficiency: bool = True,
             **kwargs
     ):
         model = kwargs.get('models', None)
@@ -99,28 +101,37 @@ class FRETParameters(FittingParameterGroup):
             model=model
         )
 
-        func_calc_fret = kwargs.get('func_calc_fret', 'error')
-        self._fret_efficiency = FittingParameter(
-            name='E_FRET',
-            label_text='E<sub>FRET</sub>',
-            value=func_calc_fret,
-            fixed=False,
-            lb=0.0,
-            ub=1.0,
-            bounds_on=True,
-            model=model
-        )
-        parameters = [
-            self._tauD0,
-            self._forster_radius,
-            self._kappa2,
-            self._xDonly,
-            self._fret_efficiency
-        ]
-        super().__init__(
-            parameters=parameters,
-            **kwargs
-        )
+        # Base parameter list is always tau0, R0, kappa2 and xDOnly.
+        parameters = [self._tauD0, self._forster_radius, self._kappa2, self._xDonly]
+
+        # Optional E_FRET parameter (used in TCSPC FRET models).
+        if enable_fret_efficiency:
+            func_calc_fret = kwargs.get('func_calc_fret', None)
+            if callable(func_calc_fret):
+                value = func_calc_fret
+            else:
+                value = 0.0
+                if func_calc_fret is not None:
+                    try:
+                        value = float(func_calc_fret)
+                    except Exception:
+                        chisurf.logging.warning(
+                            f"FRETParameters: func_calc_fret={func_calc_fret!r} is not callable or numeric; defaulting E_FRET to 0.0"
+                        )
+
+            self._fret_efficiency = FittingParameter(
+                name='E_FRET',
+                label_text='E<sub>FRET</sub>',
+                value=value,
+                fixed=False,
+                lb=0.0,
+                ub=1.0,
+                bounds_on=True,
+                model=model
+            )
+            parameters.append(self._fret_efficiency)
+
+        super().__init__(parameters=parameters, **kwargs)
 
 
 class OrientationParameter(FittingParameterGroup):
