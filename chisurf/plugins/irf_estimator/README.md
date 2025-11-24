@@ -13,12 +13,19 @@ The **IRF Estimator** plugin provides blind instrument response function (IRF) e
 - **Save IRF**: Export estimated IRF in Jordi format
 - **ChiSurf Integration**: Load estimated IRF directly into ChiSurf for analysis
 
+## Access in ChiSurf
+
+- Open ChiSurf and go to the `Fluorescence decay` menu.
+- Select `IRF Estimator` (plugin name `Fluorescence decay:IRF Estimator` in the Plugin Manager).
+
 ## Usage
 
 ### 1. Load Decay Data
 
-2. Select a Jordi format file containing fluorescence decay data
-3. The decay will be displayed in the left plot (logarithmic scale)
+1. Choose how to load data:
+   - **Load Decay (Jordi)**: Select a Jordi format file containing fluorescence decay data.
+   - **Load from Dataset**: Select an already loaded TCSPC dataset from ChiSurf.
+2. The selected decay will be displayed in the main plot (logarithmic scale). For multi-decay Jordi files, all decays are loaded and the plugin can process them to compute an averaged IRF.
 
 ### 2. Adjust Parameters (Optional)
 
