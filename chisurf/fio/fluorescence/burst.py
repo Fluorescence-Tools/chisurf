@@ -565,3 +565,9 @@ def read_burst_analysis(
     update_tttr_dict(data_path, tttrs)
     return df, tttrs
 
+
+def read_bur_file(bur_path):
+    bur_path = pathlib.Path(bur_path)
+    if not bur_path.exists():
+        raise FileNotFoundError(bur_path)
+    return pd.read_csv(bur_path, sep="\t")
