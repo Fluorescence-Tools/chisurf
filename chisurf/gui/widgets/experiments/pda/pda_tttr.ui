@@ -300,6 +300,16 @@
    <item row="8" column="0" colspan="5">
     <layout class="QVBoxLayout" name="verticalLayout"/>
    </item>
+   <item row="3" column="4">
+    <widget class="QCheckBox" name="checkBox">
+     <property name="text">
+      <string>Auto load</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
   <action name="actionParametersChanged">
    <property name="text">

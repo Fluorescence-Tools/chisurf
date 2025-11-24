@@ -76,6 +76,25 @@ class PdaTTTRWidget(
                     if file_path:
                         self._maybe_add_path(file_path)
                 event.acceptProposedAction()
+
+                # If the parent PDA widget has an "Auto load" checkbox
+                # enabled, automatically trigger loading of the newly
+                # dropped files, reusing the same routine as the "Load
+                # dropped files" button.
+                try:
+                    owner = self.parent()
+                    # Walk up a few levels in case the list is nested in
+                    # intermediate layouts/containers.
+                    steps = 0
+                    while owner is not None and not hasattr(owner, "_on_load_dropped_files_clicked") and steps < 4:
+                        owner = owner.parent()
+                        steps += 1
+                    if owner is not None and getattr(owner, "checkBox", None) is not None and owner.checkBox.isChecked():
+                        owner._on_load_dropped_files_clicked()
+                except Exception:
+                    # Auto-load on drop is best-effort and must not break
+                    # normal dragging behavior.
+                    pass
             else:
                 event.ignore()
 
@@ -142,7 +161,7 @@ class PdaTTTRWidget(
         self.drop_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.drop_label.setToolTip("Drag and drop TTTR files, BID/BUR/BST files, or burst analysis folders (bi4_bur). Checked files are used.")
         # List widget for files
-        self.file_list = PdaTTTRWidget.DropFileList(accept_exts=self._accepted_exts, dir_resolver=self._expand_burst_folder)
+        self.file_list = PdaTTTRWidget.DropFileList(parent=self, accept_exts=self._accepted_exts, dir_resolver=self._expand_burst_folder)
         # Notify parameter changes when items toggled
         self.file_list.itemChanged.connect(lambda _: self.actionParametersChanged.trigger())
         # Also notify when rows are inserted/removed (e.g., via context menu)
@@ -633,7 +652,9 @@ class PdaTTTRWidget(
             tttr_files = [f for f in files if pathlib.Path(f).suffix.lower() in self._tttr_exts]
             if not bur_files and not tttr_files:
                 logging.warning("PDA: Dropped items contain neither BUR nor TTTR files to load.")
-                QtWidgets.QMessageBox.warning(self, "No files", "Please drop .bur burst files or TTTR files (e.g., .ptu, .ht3, .spc, .sdt, .t3r, .t2r, .phu, .phd) to load.")
+                QtWidgets.QMessageBox.warning(
+                    self, "No files", "Please drop .bur burst files or TTTR files "
+                                      "(e.g., .ptu, .ht3, .spc, .sdt, .t3r, .t2r, .phu, .phd) to load.")
                 return
 
             # Gather current PDA parameters from UI
@@ -774,8 +795,14 @@ class PdaTTTRWidget(
                 except Exception:
                     pass
 
-            # Removed user info popup; log instead
             logging.info(f"PDA: Loaded {len(tttr_files)} TTTR file(s).")
+            try:
+                if getattr(self, "checkBox", None) is not None and self.checkBox.isChecked():
+                    if hasattr(self, "file_list"):
+                        self.file_list.clear()
+                    self.actionParametersChanged.trigger()
+            except Exception:
+                logging.warning("PDA: Auto-clear after load failed.")
         except Exception as e:
             # Show error message and log warning
             logging.warning(f"PDA: Failed to load files: {e}")
