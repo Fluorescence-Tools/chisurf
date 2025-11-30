@@ -42,3 +42,8 @@ doc/api/
 .mypy*
 .*mypy*
 
+#plugins
+plugins/_dev_*
+
+#Programming documentation
+_PROG
