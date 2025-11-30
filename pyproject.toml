@@ -56,6 +56,7 @@ dependencies = [
     "python-docx",
     "mdtraj",
     "ipython",
+    "click",
 ]
 
 [project.optional-dependencies]
@@ -77,15 +78,7 @@ Repository = "https://github.com/Fluorescence-Tools/chisurf"
 "Bug Tracker" = "https://github.com/Fluorescence-Tools/chisurf/issues"
 
 [project.scripts]
-csc_tttr_decay_histogram = "chisurf.cmd_tools.tttr_decay_histogram:main"
-csc_tttr_correlate = "chisurf.cmd_tools.tttr_correlate:main"
-csc_fcs_convert = "chisurf.cmd_tools.fcs_convert:main"
-csc_mrc2bvox = "chisurf.cmd_tools.mrc2bvox:main"
-csc_protein_mc_fret = "chisurf.cmd_tools.protein_mc_fret:main"
-csc_sm_image_mle = "chisurf.plugins.sm_image_mle.sm_image_mle.__main__:main"
-csc_count_rate = "chisurf.plugins.count_rate_analysis.cli:cli"
-csc_microtime_histogram = "chisurf.plugins.microtime_histogram.__main__:main"
-csc_burst_background = "chisurf.plugins.burst_background.cli:cli"
+csc = "chisurf.cli:cli"
 
 [project.gui-scripts]
 chisurf = "chisurf.__main__:main"
@@ -130,3 +123,6 @@ namespaces = true
 
 [tool.setuptools.dynamic]
 version = {attr = "chisurf.info.__version__"}
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --ignore-glob=**/_old --ignore-glob=**/_dev_*"

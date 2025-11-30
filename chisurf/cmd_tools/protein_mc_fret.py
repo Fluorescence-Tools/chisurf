@@ -8,7 +8,11 @@ import os
 import tempfile
 
 import numpy as np
-from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
+
+try:
+    from progressbar import Bar, ETA, ProgressBar, RotatingMarker, Percentage
+except ImportError:  # optional dependency
+    Bar = ETA = ProgressBar = RotatingMarker = Percentage = None
 
 import chisurf.settings
 from chisurf.math.rand import weighted_choice, mc
@@ -128,6 +132,8 @@ class ProteinMCWorker(object):
         u1 = self.u1
 
         structure = self.structure
+        if ProgressBar is None:
+            raise RuntimeError("The 'progressbar' package is required to run ProteinMCWorker.mc_1u. Install 'progressbar' to use this tool.")
         widgets = ['Simulating: ', Percentage(), ' ', Bar(marker=RotatingMarker()), ' ', ETA()]
         verbose = kwargs.get('verbose', self.verbose)
         structure.auto_update = False

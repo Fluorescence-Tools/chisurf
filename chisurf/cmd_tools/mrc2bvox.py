@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
-import mrcfile
-import numpy as np
 import glob
 import argparse
 import os
+
+import numpy as np
+
+try:
+    import mrcfile
+except ImportError:  # optional dependency
+    mrcfile = None
 
 
 def main(
@@ -16,6 +21,9 @@ def main(
     parser.add_argument('--input_files', type=str, help='a set of PDB files')
     args = parser.parse_args()
     opt = vars(args)
+
+    if mrcfile is None:
+        raise RuntimeError("The 'mrcfile' package is required to run mrc2bvox. Install 'mrcfile' to use this tool.")
 
     input_files = glob.glob(args.input_files)
 
