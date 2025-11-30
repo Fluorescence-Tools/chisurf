@@ -6,6 +6,7 @@ include chisurf/settings/*.yaml
 include chisurf/gui/styles/*.css
 include chisurf/plugins/spectra_viewer/*.db
 include chisurf/notebooks/*.ipynb
+recursive-include docs *.md *.png *.svg *.jpg *.jpeg *.gif
 include _build_backend.py
 include README.md
 include LICENSE
