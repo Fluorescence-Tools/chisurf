@@ -248,24 +248,25 @@ class Csv(object):
 
     Examples
     --------
-    Two-column data
+    Two-column in-memory data
 
-    >>> import chisurf.fio.ascii
-    >>> csv = chisurf.fio.ascii.Csv()
-    >>> filename = './test/data/tcspc/ibh_sample/Decay_577D.txt'
-    >>> csv.load(filename)
-    >>> csv.data
-    array([...])
+    >>> import numpy as np
+    >>> from chisurf.fio.ascii import Csv
+    >>> arr = np.column_stack(([0.0, 1.0, 2.0], [10.0, 11.0, 12.0]))
+    >>> csv = Csv(data=arr)
+    >>> csv.n_rows, csv.n_cols
+    (3, 2)
+    >>> csv.data.shape
+    (2, 3)
 
-    One-column Jordi data
+    One-column in-memory data
 
-    >>> csv = chisurf.fio.ascii.Csv()
-    >>> filename = './test/data/tcspc/ibh_sample/Decay_577D.txt'
-    >>> csv.load(filename)
-    >>> csv.data_x
-    array([...])
-    >>> csv.data_y
-    array([...])
+    >>> arr = np.array([[1.0], [2.0], [3.0]])
+    >>> csv = Csv(data=arr)
+    >>> csv.n_rows, csv.n_cols
+    (3, 1)
+    >>> csv.data.shape
+    (1, 3)
     """
 
     def __init__(
