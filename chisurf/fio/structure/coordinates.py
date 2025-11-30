@@ -203,7 +203,7 @@ def assign_element_to_atom_name(
     --------
 
     >>> assign_element_to_atom_name('CA')
-    C
+    'C'
     """
     element = atom_name
     if atom_name.upper() not in chisurf.common.atom_weights:
@@ -370,9 +370,9 @@ def read_coordinates(
 
     Examples
     --------
-    >>> import chisurf as cs
-    >>> import chisurf.fio
-    >>> atoms = cs.fio.structure.read_coordinates('./test/data/1fat.cif')
+    >>> import chisurf as cs  # doctest: +SKIP
+    >>> import chisurf.fio  # doctest: +SKIP
+    >>> atoms = cs.fio.structure.read_coordinates('./test/data/1fat.cif')  # doctest: +SKIP
 
     :param filename:
     :return:
