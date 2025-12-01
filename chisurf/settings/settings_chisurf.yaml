@@ -100,9 +100,31 @@ gui:
     show_data_grid: true
     show_legend: false
     show_residual_grid: true
+  dock_tab_colors:
+    "Read data": "#3b4a67"
+    "Datasets": "#3b674a"
+    "Analysis": "#674a3b"
+    "Plot settings": "#5c3b67"
+    "Macro": "#67613b"
+    "History / Log": "#3b6767"
   show_console: true
   show_macro_edit: true
   style_sheet: dark.qss
+  auto_theme_cycle: false
+  theme_cycle_map:
+    default_style: dark_blue_flat.qss
+    spring:
+      day: dark_green.qss
+      night: dark_green.qss
+    summer:
+      day: dark_blue_flat.qss
+      night: dark_blue_flat.qss
+    autumn:
+      day: dark_orange.qss
+      night: dark_orange.qss
+    winter:
+      day: dark_violet.qss
+      night: dark_violet.qss
   start_jupyter_on_startup: false
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
