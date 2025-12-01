@@ -52,7 +52,8 @@ def incremental_average(
     6.0
     """
     if previous_average is None:
-        number_of_samples = 1
+        # No previous average: by definition the running average is the new sample
+        return next_sample
     try:
         xp, xn = fractions
     except (TypeError, ValueError):
@@ -160,9 +161,10 @@ def random_point_in_sphere(
     Examples
     --------
     >>> point = random_point_in_sphere(radius=2.0)
-    >>> print(point)  # e.g., array([0.532, -1.234, 0.678])
+    >>> len(point)
+    3
     >>> points = random_point_in_sphere(radius=2.0, n_per_sphere=5)
-    >>> print(points.shape)
+    >>> points.shape
     (5, 3)
     """
     r = radius
@@ -209,8 +211,8 @@ def bayesian_information_criterion(
     Examples
     --------
     >>> bic = bayesian_information_criterion(k=3, n=100, value=2.5, case='gaussian')
-    >>> print(bic)
-    100 * 2.5 + 3 * np.log(100)
+    >>> bic
+    263.8155105579643
     """
     if case == 'gaussian':
         return n * value + k * np.log(n)
@@ -318,7 +320,8 @@ def chi2_max(
     Examples
     --------
     >>> chi2_threshold = chi2_max(chi2_value=1.0, number_of_parameters=3, nu=20, conf_level=0.95)
-    >>> print(chi2_threshold)
+    >>> chi2_threshold
+    1.464758681821117
     """
     return chi2_value * (
         1.0 + float(number_of_parameters) / nu *
