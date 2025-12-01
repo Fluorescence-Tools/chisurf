@@ -6,7 +6,7 @@
     s: 3.5
     td: 0.5
     b: 1
-  description: Free diffusion in 3D Gauss
+  description: Three-dimensional free diffusion with a Gaussian confocal detection volume
 3D Gauss, 1 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba+ba*exp(-x/bt))
   initial:
@@ -16,7 +16,7 @@
     b: 1
     bt: 0.002
     ba: 0.1
-  description: No description
+  description: 3D Gaussian diffusion with one exponential blinking / bunching relaxation term
 3D Gauss, 2 diffusion terms, 1 global bunching:
   equation: b+1/abs(N)*(a1*(1+x/td1)**(-1)*(1+1/s**2*x/td1)**(-0.5)+(1-a1)*(1+x/td2)**(-1)*(1+1/s**2*x/td2)**(-0.5))*(1-ba+ba*exp(-x/bt))
   initial:
@@ -28,7 +28,7 @@
     b: 1
     bt: 0.002
     ba: 0.1
-  description: No description
+  description: Mixture of two 3D Gaussian diffusion components with one global exponential bunching term
 3D Gauss, 2 diffusion terms, 2 global bunching:
   equation: b+1/abs(N)*(a1*(1+x/td1)**(-1)*(1+1/s**2*x/td1)**(-0.5)+(1-a1)*(1+x/td2)**(-1)*(1+1/s**2*x/td2)**(-0.5))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
   initial:
@@ -42,7 +42,7 @@
     ba1: 0.1
     bt2: 0.002
     ba2: 0.1
-  description: No description
+  description: Mixture of two 3D Gaussian diffusion components with two global exponential bunching terms
 3D Gauss, 2 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2))
   initial:
@@ -54,7 +54,7 @@
     ba1: 0.05
     bt2: 0.01
     ba2: 0.05
-  description: No description!
+  description: 3D Gaussian diffusion with two exponential bunching relaxation terms
 3D Gauss, 3 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3))
   initial:
@@ -68,7 +68,7 @@
     ba2: 0.05
     bt3: 0.1
     ba3: 0.1
-  description: No description!
+  description: 3D Gaussian diffusion with three exponential bunching relaxation terms
 3D Gauss, 7 bunching:
   equation: b+1/abs(N)*(1+x/td)**(-1)*(1+1/s**2*x/td)**(-0.5)*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-ba6+ba6*exp(-x/bt6))*(1-ba7+ba7*exp(-x/bt7))
   initial:
@@ -90,7 +90,7 @@
     ba6: 0.1
     bt7: 0.1
     ba7: 0.1
-  description: No description!
+  description: 3D Gaussian diffusion with seven exponential bunching relaxation terms
 3D Gauss, 1 bunching + 1 anti-bunching:
   equation:
       b+1/abs(N)*(1+x/td)**(-1)/sqrt(1+1/s**2*x/td)*(1-abs(ba)+abs(ba)*exp(-x/abs(bt)))*(1-abs(aba)*exp(-x/abs(abt)))
@@ -284,7 +284,7 @@ Simple 2D diffusion & 1x relaxation:
     ba2: 0.05
     bt3: 0.1
     ba3: 0.1
-  description: Model for 2x 2-dimensional diffusion in a membrane and two relaxation
+  description: Model for 2x 2-dimensional diffusion in a membrane and three relaxation
     terms
 2x 2D diffusion & 1x anticorrelation:
   equation: b + 1/N*(a1/(1+ x/td1)+(1-a1)/(1+ x/td2))*(1-aR*exp(-x/tR))
@@ -347,7 +347,7 @@ Simple 2D diffusion & 1x relaxation:
     ba4: 0.1
     aab: 1
     tab: 4.0e-06
-  description: Model for 2x 2-dimensional diffusion in a membrane, three relaxation
+  description: Model for 2x 2-dimensional diffusion in a membrane, four relaxation
     terms and photon antibunching
 1x 2D diffusion & 5x relaxation & photon antibunching:
   equation: b+(1/N*(1/(1+x/td)))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-aab*exp(-x/tab))
@@ -367,7 +367,7 @@ Simple 2D diffusion & 1x relaxation:
     ba5: 0.1
     aab: 1
     tab: 4.0e-06
-  description: Model for 1x 2-dimensional diffusion in a membrane and four relaxation
+  description: Model for 1x 2-dimensional diffusion in a membrane and five relaxation
     terms & photon antibunching
 1x 3D diffusion & 5x relaxation & photon antibunching:
   equation: b+(1/N3)*(1/(1+x/td3))*(1/sqrt(1+1/s**2*x/td3))*(1-ba1+ba1*exp(-x/bt1)-ba2+ba2*exp(-x/bt2)-ba3+ba3*exp(-x/bt3)-ba4+ba4*exp(-x/bt4)-ba5+ba5*exp(-x/bt5))*(1-aab*exp(-x/tab))
