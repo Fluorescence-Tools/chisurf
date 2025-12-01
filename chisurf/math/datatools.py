@@ -111,10 +111,10 @@ def overlapping_region(
     >>> y2 = np.sin(x2)
     >>> a2 = (x2, y2)
     >>> (rx1, ry1), (rx2, ry2) = overlapping_region(a1, a2)
-    >>> p.plot(x1, y1, 'r')
-    >>> p.plot(rx1, ry1, 'k')
-    >>> p.plot(x2, y2, 'g')
-    >>> p.plot(rx2, ry2, 'b')
+    >>> _ = p.plot(x1, y1, 'r')
+    >>> _ = p.plot(rx1, ry1, 'k')
+    >>> _ = p.plot(x2, y2, 'g')
+    >>> _ = p.plot(rx2, ry2, 'b')
     >>> p.show()
     """
     x1, y1 = dataset1
