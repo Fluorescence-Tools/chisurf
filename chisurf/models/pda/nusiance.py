@@ -255,3 +255,47 @@ class PdaFretNuisance(FittingParameterGroup):
             name='nPh_max',
             fixed=True,
         )
+
+
+class PdaPhotonRange(FittingParameterGroup):
+
+    @property
+    def nPh_min(self) -> float:
+        return self._nPh_min.value
+
+    @nPh_min.setter
+    def nPh_min(self, v: float):
+        self._nPh_min.value = v
+
+    @property
+    def nPh_max(self) -> float:
+        return self._nPh_max.value
+
+    @nPh_max.setter
+    def nPh_max(self, v: float):
+        self._nPh_max.value = v
+
+    def __init__(self, name: str = 'PDA-photon-range', **kwargs):
+        super().__init__(name=name, **kwargs)
+        default_nmin = 30.0
+        default_nmax = 0.0
+        try:
+            fit = getattr(self, 'fit', None)
+            data = getattr(fit, 'data', None) if fit is not None else None
+            pda_meta = getattr(data, 'pda', None)
+            if isinstance(pda_meta, dict):
+                default_nmin = float(pda_meta.get('minimum_number_of_photons', default_nmin))
+                default_nmax = float(pda_meta.get('maximum_number_of_photons', default_nmax))
+        except Exception:
+            default_nmin = 30.0
+            default_nmax = 0.0
+        self._nPh_min = FittingParameter(
+            value=default_nmin,
+            name='nPh_min',
+            fixed=True,
+        )
+        self._nPh_max = FittingParameter(
+            value=default_nmax,
+            name='nPh_max',
+            fixed=True,
+        )
