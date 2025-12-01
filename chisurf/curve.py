@@ -15,6 +15,12 @@ T = typing.TypeVar('T', bound='Curve')
 
 
 class NCurve(chisurf.base.Base):
+    """Base class for 1D numeric arrays.
+
+    This class stores a single NumPy array ``d`` and provides basic
+    slicing/serialization support. Subclasses such as :class:`Curve`
+    interpret the array in more structured ways.
+    """
 
     def __init__(
             self,
@@ -42,9 +48,34 @@ class NCurve(chisurf.base.Base):
 
 
 class Curve(NCurve):
+    """Simple 1D curve represented by paired ``(x, y)`` arrays.
+
+    The underlying storage ``d`` is a 2×N array with ``d[0] = x`` and
+    ``d[1] = y``. The class provides basic arithmetic, slicing and
+    (de-)serialization helpers.
+
+    Examples
+    --------
+    Construct a small curve and access its data:
+
+    >>> import numpy as np
+    >>> from chisurf.curve import Curve
+    >>> x = np.array([0.0, 1.0, 2.0])
+    >>> y = np.array([1.0, 2.0, 3.0])
+    >>> c = Curve(x=x, y=y)
+    >>> len(c)
+    3
+    >>> float(c.y[0])
+    1.0
+    """
 
     @property
     def fwhm(self) -> float:
+        """Full width at half maximum of the curve.
+
+        The calculation is delegated to
+        :func:`chisurf.math.signal.calculate_fwhm`.
+        """
         v, _, _ = chisurf.math.signal.calculate_fwhm(
             x_values=self.x,
             y_values=self.y
@@ -53,7 +84,18 @@ class Curve(NCurve):
 
     @property
     def cdf(self) -> Curve:
-        """Cumulative distribution function
+        """Return the cumulative distribution function of ``y``.
+
+        The returned object is a new :class:`Curve` with the same ``x``
+        grid and ``y`` replaced by ``np.cumsum(self.y)``.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from chisurf.curve import Curve
+        >>> c = Curve(x=np.array([0., 1., 2.]), y=np.array([1., 2., 3.]))
+        >>> c.cdf.y[-1]
+        6.0
         """
         return self.__class__(
             x=self.x,
@@ -62,6 +104,7 @@ class Curve(NCurve):
 
     @property
     def x(self) -> np.ndarray:
+        """Abscissa array of the curve."""
         return self.d[0]
 
     @x.setter
@@ -70,6 +113,7 @@ class Curve(NCurve):
 
     @property
     def y(self) -> np.ndarray:
+        """Ordinate array of the curve."""
         return self.d[1]
 
     @y.setter
@@ -78,6 +122,7 @@ class Curve(NCurve):
 
     @property
     def dx(self) -> np.ndarray:
+        """First differences of the ``x`` array (``np.diff(self.x)``)."""
         return np.diff(self.x)
 
     def save(
@@ -88,6 +133,11 @@ class Curve(NCurve):
             x_min: int = None,
             x_max: int = None
     ) -> None:
+        """Save the curve to disk via :mod:`chisurf.fio`.
+
+        When ``file_type == 'csv'`` the data are written as two rows
+        ``[x, y]`` using :class:`chisurf.fio.ascii.Csv`.
+        """
         super().save(
             filename=filename,
             file_type=file_type,
@@ -108,6 +158,11 @@ class Curve(NCurve):
             skiprows: int = 0,
             **kwargs
     ) -> None:
+        """Load curve data from disk.
+
+        For ``file_type == 'csv'`` the first two rows are interpreted
+        as ``x`` and ``y``.
+        """
         super().load(
             filename=filename,
             file_type=file_type
@@ -133,6 +188,11 @@ class Curve(NCurve):
             copy_values: bool = True,
             convert_values_to_elementary: bool = False
     ) -> typing.Dict:
+        """Serialize the curve to a dictionary.
+
+        Depending on ``convert_values_to_elementary`` the arrays are stored
+        as plain Python lists or NumPy arrays.
+        """
         d = super().to_dict(
             remove_protected=remove_protected,
             copy_values=copy_values,
@@ -151,6 +211,7 @@ class Curve(NCurve):
         return d
 
     def from_dict(self, v: dict):
+        """Restore a curve from :meth:`to_dict` output."""
         super().from_dict(v)
         y = np.array(v['y'], dtype=np.float64)
         x = np.array(v['x'], dtype=np.float64)
@@ -164,6 +225,14 @@ class Curve(NCurve):
             *args,
             **kwargs
     ):
+        """Create a curve from x/y arrays.
+
+        Parameters
+        ----------
+        x, y : array_like
+            Arrays of identical length defining the abscissa and
+            ordinate of the curve.
+        """
         d = np.vstack([x, y])
         super().__init__(*args, d=d, **kwargs)
 
@@ -200,6 +269,7 @@ class Curve(NCurve):
         return factor
 
     def __add__(self, c: T) -> Curve:
+        """Return the pointwise sum of two curves or curve and array."""
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -210,6 +280,7 @@ class Curve(NCurve):
         )
 
     def __sub__(self, c: T) -> Curve:
+        """Return the pointwise difference between two curves or curve and array."""
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -220,6 +291,7 @@ class Curve(NCurve):
         )
 
     def __mul__(self, c: T) -> Curve:
+        """Return the pointwise product of two curves or curve and array."""
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -230,6 +302,7 @@ class Curve(NCurve):
         )
 
     def __truediv__(self, c: T) -> Curve:
+        """Return the pointwise ratio of two curves or curve and array."""
         if isinstance(c, Curve):
             if not np.array_equal(self.x, c.x):
                 raise ValueError("The x-axis differ")
@@ -240,6 +313,7 @@ class Curve(NCurve):
         )
 
     def __lshift__(self, shift: float) -> Curve:
+        """Return a copy with ``y`` shifted by ``shift`` samples."""
         return self.__class__(
             x=self.x,
             y=chisurf.math.signal.shift_array(self.y, shift),
@@ -247,15 +321,43 @@ class Curve(NCurve):
         )
 
     def __len__(self) -> int:
+        """Number of points in the curve (length of ``y``)."""
         return len(self.y)
 
     def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Return a slice of the curve as ``(x, y)``.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from chisurf.curve import Curve
+        >>> c = Curve(x=np.array([0., 1., 2.]), y=np.array([1., 2., 3.]))
+        >>> xs, ys = c[0:2]
+        >>> list(xs)
+        [0.0, 1.0]
+        >>> list(ys)
+        [1.0, 2.0]
+        """
         x = self.x.__getitem__(key)
         y = self.y.__getitem__(key)
         return x, y
 
 
 class CurveGroup(object):
+    """Light-weight container for a sequence of :class:`Curve` objects.
+
+    The default implementation simply stores a list of curves and provides
+    helpers to add, remove and query them.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from chisurf.curve import Curve, CurveGroup
+    >>> c1 = Curve(x=np.array([0., 1.]), y=np.array([1., 2.]))
+    >>> group = CurveGroup([c1])
+    >>> len(group.get_data_curves())
+    1
+    """
 
     _curves: typing.List[chisurf.curve.Curve]
 
@@ -268,6 +370,7 @@ class CurveGroup(object):
         self._curves = seq
 
     def clear_curves(self):
+        """Remove all curves from the group."""
         self._curves.clear()
 
     def get_data_curves(
@@ -275,6 +378,7 @@ class CurveGroup(object):
             *args,
             **kwargs
     ) -> typing.List[chisurf.curve.Curve]:
+        """Return the list of curves stored in the group."""
         return self._curves
 
     @abc.abstractmethod
@@ -282,6 +386,7 @@ class CurveGroup(object):
             self,
             selected_index: typing.List[int] = None
     ):
+        """Remove curves whose indices are listed in ``selected_index``."""
         if selected_index is None:
             selected_index = list()
         curve_list = list()
@@ -297,6 +402,7 @@ class CurveGroup(object):
             v: chisurf.curve.Curve = None,
             **kwargs
     ):
+        """Append a new curve ``v`` to the group if it is not ``None``."""
         if v is not None:
             self._curves.append(v)
 
