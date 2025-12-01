@@ -63,7 +63,7 @@
       <number>9999</number>
      </property>
      <property name="value">
-      <number>10</number>
+      <number>5</number>
      </property>
     </widget>
    </item>
@@ -87,7 +87,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="5">
+   <item row="1" column="0" colspan="5">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <property name="spacing">
       <number>0</number>
@@ -200,7 +200,7 @@
    <item row="6" column="1">
     <widget class="QComboBox" name="comboBox_det1"/>
    </item>
-   <item row="1" column="1" colspan="4">
+   <item row="0" column="1" colspan="4">
     <widget class="QComboBox" name="comboBox_setup"/>
    </item>
    <item row="7" column="4">
@@ -244,7 +244,7 @@
       <number>9999</number>
      </property>
      <property name="value">
-      <number>180</number>
+      <number>150</number>
      </property>
     </widget>
    </item>
@@ -261,10 +261,10 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0">
+   <item row="0" column="0">
     <widget class="QLabel" name="label_10">
      <property name="text">
-      <string>TextLabel</string>
+      <string>Setup</string>
      </property>
     </widget>
    </item>
@@ -293,7 +293,7 @@
       <double>9999.000000000000000</double>
      </property>
      <property name="value">
-      <double>1.500000000000000</double>
+      <double>0.500000000000000</double>
      </property>
     </widget>
    </item>
