@@ -7,3 +7,4 @@ import chisurf.gui.tools.structure
 import chisurf.gui.tools.code_editor
 import chisurf.gui.tools.f_test
 import chisurf.gui.tools.parameter_editor
+import chisurf.gui.tools.system_info_watermark

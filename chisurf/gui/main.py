@@ -5,6 +5,7 @@ import ast
 import pathlib
 import webbrowser
 import traceback
+import sys
 
 import chisurf.gui
 import chisurf.macros.core_fit
@@ -12,6 +13,8 @@ from chisurf import typing
 
 import numpy as np
 from chisurf.gui import QtWidgets, QtGui, QtCore, uic
+from chisurf.gui.tools import system_info_watermark as _system_info_watermark
+from chisurf.gui.gui_tweaks import apply_platform_window_tweaks, apply_dock_tab_colors
 
 
 class TruncatingStatusBar(QtWidgets.QStatusBar):
@@ -153,7 +156,7 @@ class Main(QtWidgets.QMainWindow):
 
     @current_setup_idx.setter
     def current_setup_idx(self, v: int):
-        self.set_current_experiment_idx(v)
+        self.set_current_setup_idx(v)
 
     @property
     def current_setup_name(self):
@@ -161,9 +164,21 @@ class Main(QtWidgets.QMainWindow):
 
     @property
     def current_setup(self) -> chisurf.experiments.reader.ExperimentReader:
-        current_setup = self.current_experiment.readers[
-            self.current_setup_idx
-        ]
+        readers = self.current_experiment.readers
+        if not readers:
+            raise IndexError("No experiment readers defined for the current experiment")
+        idx = getattr(self, "_current_setup_idx", 0)
+        try:
+            combo_idx = self.comboBox_setupSelect.currentIndex()
+        except Exception:
+            combo_idx = idx
+        if idx < 0 or idx >= len(readers):
+            if 0 <= combo_idx < len(readers):
+                idx = combo_idx
+            else:
+                idx = 0
+        self._current_setup_idx = idx
+        current_setup = readers[idx]
         return current_setup
 
     @current_setup.setter
@@ -576,13 +591,13 @@ class Main(QtWidgets.QMainWindow):
         if not path:
             return
 
-        # Check if this is a valid project folder
-        project_file = path / "project.yaml"
+        # Check if this is a valid project folder (JSON-based project format)
+        project_file = path / "project.json"
         if not project_file.exists():
             QtWidgets.QMessageBox.warning(
                 self,
                 "Invalid Project",
-                f"The selected folder does not contain a valid project file (project.yaml)."
+                f"The selected folder does not contain a valid project file (project.json)."
             )
             return
 
@@ -590,14 +605,56 @@ class Main(QtWidgets.QMainWindow):
         chisurf.working_path = path
         chisurf.macros.core_fit.load_project(project_path=path.as_posix())
 
+    def onCloseProject(self, event: QtCore.QEvent = None):
+        try:
+            self.onCloseAllFits()
+        except Exception:
+            pass
+        try:
+            chisurf.imported_datasets = []
+        except Exception:
+            pass
+        try:
+            self.dataset_selector.update()
+        except Exception:
+            pass
+        try:
+            self._current_dataset = None
+            self._current_fit = None
+            self._fit_idx = 0
+        except Exception:
+            pass
+        try:
+            self.comboBox_Model.clear()
+        except Exception:
+            pass
+
     def set_current_setup_idx(self, v: int):
-        self.comboBox_setupSelect.setCurrentIndex(v)
+        try:
+            count = self.comboBox_setupSelect.count()
+        except Exception:
+            count = 0
+        if count > 0:
+            if v < 0:
+                v = 0
+            elif v >= count:
+                v = count - 1
+        else:
+            v = 0
+        try:
+            self.comboBox_setupSelect.setCurrentIndex(v)
+        except Exception:
+            pass
         self._current_setup_idx = v
 
     def onSetupChanged(self):
         chisurf.gui.widgets.hide_items_in_layout(
             self.layout_experiment_reader
         )
+        readers = self.current_experiment.readers
+        if not readers:
+            self._current_setup_idx = 0
+            return
         try:
             widget = self.current_setup
             self.layout_experiment_reader.addWidget(widget)
@@ -613,6 +670,14 @@ class Main(QtWidgets.QMainWindow):
             if hasattr(widget, 'updateUI') and callable(widget.updateUI):
                 widget.updateUI()
         self._current_setup_idx = self.comboBox_setupSelect.currentIndex()
+
+        # If the reader/controller implements a hook for context help, pass
+        # a callable it can use to open the help window at the right place.
+        try:
+            if hasattr(widget, 'set_help_callback') and callable(widget.set_help_callback):
+                widget.set_help_callback(self.open_context_help_for_reader)
+        except Exception:
+            pass
 
     def onCloseAllFits(self):
         # Close all existing fit windows directly, suppressing any per-fit
@@ -704,16 +769,94 @@ class Main(QtWidgets.QMainWindow):
 
     def onOpenHelp(self):
         """Open the help plugin."""
-        # Import the help plugin
+        try:
+            self.open_context_help_for_reader(None)
+        except Exception as e:
+            chisurf.gui.widgets.general.MyMessageBox(
+                label="Help Plugin Error",
+                info=f"Error loading help plugin: {str(e)}",
+                show_fortune=False
+            )
+
+    def open_context_help_for_reader(self, topic: str | None = None) -> None:
+        """Open the help plugin, optionally with a filter for a given topic.
+
+        Parameters
+        ----------
+        topic : str or None
+            Optional free-text topic, e.g. an experiment or reader name.
+            When provided, the help browser's filter box is pre-filled so the
+            relevant documentation entries are highlighted.
+        """
+
         import importlib
+        import pathlib
         try:
             help_plugin = importlib.import_module("chisurf.plugins.help")
-            # Create an instance of the HelpWidget class
-            window = help_plugin.HelpWidget()
-            # Show the window
+            window = getattr(self, "_help_window", None)
+            if window is None or not isinstance(window, help_plugin.HelpWidget):
+                window = help_plugin.HelpWidget()
+                try:
+                    window.destroyed.connect(lambda _=None: setattr(self, "_help_window", None))
+                except Exception:
+                    pass
+                self._help_window = window
+
+            try:
+                if topic:
+                    txt = str(topic).strip()
+                    if txt:
+                        handled = False
+                        # Allow topics like "some/doc.md#section-id" to open
+                        # a specific Markdown file and subsection directly in
+                        # the help browser. If parsing fails, fall back to the
+                        # existing filter behavior.
+                        try:
+                            path_part = txt
+                            anchor = None
+                            if "#" in txt:
+                                path_part, frag = txt.split("#", 1)
+                                path_part = path_part.strip()
+                                anchor = frag.strip() or None
+
+                            if path_part.lower().endswith(".md"):
+                                raw_path = pathlib.Path(path_part)
+
+                                # Resolve relative paths against the project
+                                # root (same root used by the help plugin for
+                                # core docs discovery).
+                                if not raw_path.is_absolute():
+                                    try:
+                                        base = pathlib.Path(chisurf.__file__).resolve().parent
+                                        root = base.parent
+                                        candidate = (root / raw_path).resolve()
+                                    except Exception:
+                                        candidate = raw_path
+                                else:
+                                    candidate = raw_path
+
+                                if candidate.exists():
+                                    try:
+                                        window.open_markdown_path(candidate, anchor)
+                                        handled = True
+                                    except Exception:
+                                        handled = False
+
+                        except Exception:
+                            handled = False
+
+                        if not handled:
+                            window.filter_line_edit.setText(txt)
+            except Exception:
+                pass
+
             window.show()
+            try:
+                window.raise_()
+                window.activateWindow()
+            except Exception:
+                pass
         except Exception as e:
-            # Show error message if plugin can't be loaded
             chisurf.gui.widgets.general.MyMessageBox(
                 label="Help Plugin Error",
                 info=f"Error loading help plugin: {str(e)}",
@@ -1110,7 +1253,14 @@ class Main(QtWidgets.QMainWindow):
                         settings_key = reader_config['settings_key']
                         if settings_key in chisurf.settings.cs_settings:
                             controller_params.update(chisurf.settings.cs_settings[settings_key])
-                    controller = controller_class(**controller_params)
+                    # Couple the controller to its reader so that
+                    # ExperimentReaderController.experiment_reader is set and
+                    # controller UIs can manipulate reader attributes
+                    # (e.g. FCS noise/weighting mode).
+                    controller = controller_class(
+                        experiment_reader=reader,
+                        **controller_params
+                    )
 
                 readers_list.append((reader, controller))
 
@@ -1120,6 +1270,14 @@ class Main(QtWidgets.QMainWindow):
         if 'models' in config:
             model_classes = [self._resolve_class(model_class) for model_class in config['models']]
             experiment.add_model_classes(models=model_classes)
+
+        try:
+            chisurf.models.load_user_models()
+            user_model_classes = list(chisurf.models.iter_user_models_for_experiment(exp_type, experiment.name))
+        except Exception:
+            user_model_classes = []
+        if user_model_classes:
+            experiment.add_model_classes(models=user_model_classes)
 
         # Register the experiment
         chisurf.experiment[experiment.name] = experiment
@@ -1295,6 +1453,19 @@ class Main(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
+        try:
+            self.toolButton_reader_help.clicked.connect(self._on_reader_help_clicked)
+        except Exception:
+            pass
+
+        # Apply small platform-specific tweaks to the outer window chrome.
+        # On Windows we request a dark titlebar via the DWM API so the
+        # window frame matches the dark theme without giving up native
+        # resizing/snap behavior. This is a no-op on other platforms.
+        try:
+            self._apply_platform_window_tweaks()
+        except Exception:
+            pass
 
         # Enable drop on the 'Drop files here' label and connect event filter
         try:
@@ -1328,6 +1499,7 @@ class Main(QtWidgets.QMainWindow):
         
         # Create and add the new widget
         self.plainTextEditLog = LogListWidget(parent_widget)
+        self.plainTextEditLog.setObjectName("plainTextEditLog")
         layout.insertWidget(layout_index, self.plainTextEditLog)
         
         # Restore any existing items
@@ -1340,6 +1512,7 @@ class Main(QtWidgets.QMainWindow):
         self._current_experiment_idx = 0
         self._fit_idx = 0
         self._current_setup_idx = 0
+        self._system_info_watermark = None
 
         self.experiment_names = list()
         self.dataset_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
@@ -1391,10 +1564,49 @@ class Main(QtWidgets.QMainWindow):
             # If QTimer is not available for some reason, just ignore
             pass
 
+        try:
+            self._init_system_info_watermark()
+            QtCore.QTimer.singleShot(0, self._update_system_info_watermark_geometry)
+        except Exception:
+            pass
+
     def update(self):
         super().update()
         self.fit_selector.update()
         self.dataset_selector.update()
+
+    def _init_system_info_watermark(self) -> None:
+        try:
+            parent = getattr(self, "mdiarea", None)
+        except Exception:
+            parent = None
+        label = getattr(self, "_system_info_watermark", None)
+        try:
+            label = _system_info_watermark.ensure_watermark(parent, label)
+        except Exception:
+            return
+        self._system_info_watermark = label
+
+    def _update_system_info_watermark_geometry(self) -> None:
+        label = getattr(self, "_system_info_watermark", None)
+        try:
+            _system_info_watermark.update_geometry(label)
+        except Exception:
+            pass
+
+    def showEvent(self, event: QtGui.QShowEvent) -> None:  # type: ignore[override]
+        super().showEvent(event)
+        try:
+            self._update_system_info_watermark_geometry()
+        except Exception:
+            pass
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:  # type: ignore[override]
+        super().resizeEvent(event)
+        try:
+            self._update_system_info_watermark_geometry()
+        except Exception:
+            pass
 
     def eventFilter(self, obj, event):
         # Handle drag-and-drop onto the 'Drop files here' label
@@ -1464,6 +1676,120 @@ class Main(QtWidgets.QMainWindow):
             except Exception:
                 pass
 
+    def _apply_platform_window_tweaks(self) -> None:
+        """Apply small, non-invasive tweaks to the main window frame.
+
+        Currently this enables a dark titlebar on supported Windows
+        versions using the DWM "immersive dark mode" attribute, so the
+        outer chrome looks less like a stock bright Windows app while
+        retaining native move/resize/snap behavior.
+        """
+        apply_platform_window_tweaks(self)
+
+    def _on_reader_help_clicked(self) -> None:
+        try:
+            exp_name = self.comboBox_experimentSelect.currentText().strip()
+        except Exception:
+            exp_name = ""
+        try:
+            setup_name = self.comboBox_setupSelect.currentText().strip()
+        except Exception:
+            setup_name = ""
+
+        topic = None
+
+        # Resolve context help topic from configurable reader rules in settings.
+        try:
+            help_cfg = getattr(chisurf.settings, "help", {}) or {}
+            rules = help_cfg.get("reader_rules", []) or []
+
+            current_setup = getattr(chisurf.cs, "current_setup", None)
+            reader_name = None
+            is_jordi = False
+            try:
+                if current_setup is not None:
+                    reader_name = getattr(current_setup, "experiment_reader", None)
+                    is_jordi = bool(getattr(current_setup, "is_jordi", False))
+            except Exception:
+                reader_name = None
+                is_jordi = False
+
+            reader_name_lc = reader_name.strip() if isinstance(reader_name, str) else None
+
+            for rule in rules:
+                try:
+                    rule_exp = str(rule.get("experiment", "")).strip()
+                except Exception:
+                    rule_exp = ""
+                if not rule_exp or rule_exp != exp_name:
+                    continue
+
+                match = True
+
+                rule_reader = rule.get("reader")
+                if rule_reader is not None:
+                    try:
+                        rule_reader_str = str(rule_reader).strip()
+                    except Exception:
+                        rule_reader_str = ""
+                    if not reader_name_lc or reader_name_lc.lower() != rule_reader_str.lower():
+                        match = False
+
+                if not match:
+                    continue
+
+                rule_setup = rule.get("setup")
+                if rule_setup is not None:
+                    try:
+                        rule_setup_str = str(rule_setup).strip()
+                    except Exception:
+                        rule_setup_str = ""
+                    if setup_name != rule_setup_str:
+                        match = False
+
+                if not match:
+                    continue
+
+                try:
+                    doc = str(rule.get("doc", "")).strip()
+                except Exception:
+                    doc = ""
+                if not doc:
+                    continue
+
+                anchor = None
+                if is_jordi and "jordi_anchor" in rule:
+                    try:
+                        anchor = str(rule.get("jordi_anchor", "")).strip() or None
+                    except Exception:
+                        anchor = None
+                if not anchor:
+                    try:
+                        anchor = str(rule.get("anchor", "")).strip() or None
+                    except Exception:
+                        anchor = None
+
+                topic = f"{doc}#{anchor}" if anchor else doc
+                break
+        except Exception:
+            topic = None
+
+        # Fallback for all other experiments/readers: keep the original
+        # behavior of using experiment + setup names as a text filter.
+        if topic is None:
+            parts = [p for p in (exp_name, setup_name) if p]
+            raw_topic = " ".join(parts) if parts else ""
+            topic = raw_topic.replace("/", " ") or None
+
+        try:
+            self.open_context_help_for_reader(topic)
+        except Exception:
+            # Fallback: plain help window
+            try:
+                self.onOpenHelp()
+            except Exception:
+                pass
+
     def update_setup_ui(self):
         """Update the UI to reflect changes in current_setup properties."""
         # Call onSetupChanged to update the UI
@@ -1511,6 +1837,8 @@ class Main(QtWidgets.QMainWindow):
         self.modelLayout.setAlignment(QtCore.Qt.AlignTop)
         self.plotOptionsLayout.setAlignment(QtCore.Qt.AlignTop)
         self.dockWidgetReadData.raise_()
+
+        apply_dock_tab_colors(self)
 
     def filter_log_content(self):
         """
@@ -1585,7 +1913,7 @@ class Main(QtWidgets.QMainWindow):
         # Apply highlighting/graying out if there's a filter text
         # This will be called regardless of filter text to ensure proper formatting
         self.filter_log_content()
-    
+
     def define_actions(self):
         ##########################################################
         # GUI ACTIONS
@@ -1630,11 +1958,54 @@ class Main(QtWidgets.QMainWindow):
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
 
-        # Use actions from .ui file for saving and loading projects (disabled by default)
+        # Use actions from .ui file for saving and loading projects
+        # Now enabled by default and backed by the JSON-based project macros.
         self.actionSave_Project.triggered.connect(self.onSaveProject)
-        self.actionSave_Project.setEnabled(False)
+        self.actionSave_Project.setEnabled(True)
         self.actionOpen_Project.triggered.connect(self.onLoadProject)
-        self.actionOpen_Project.setEnabled(False)
+        self.actionOpen_Project.setEnabled(True)
+        self.actionClose_Project.triggered.connect(self.onCloseProject)
+        self.actionClose_Project.setEnabled(True)
+
+    def onOpenFretRdaAxisSettings(self):
+        """Open a dialog for global FRET R_DA axis settings."""
+        try:
+            from chisurf.models.pda.widgets import FretRdaAxisSettingsWidget
+        except Exception as e:
+            try:
+                chisurf.logging.error(f"Could not load FretRdaAxisSettingsWidget: {e}")
+            except Exception:
+                pass
+            try:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "FRET RDA axis settings",
+                    (
+                        "The RDA axis settings widget could not be loaded.\n"
+                        "Please check that chisurf.models.pda.widgets is available."
+                    ),
+                )
+            except Exception:
+                pass
+            return
+
+        dlg = getattr(self, "_fret_rda_axis_dialog", None)
+        if dlg is None or not isinstance(dlg, QtWidgets.QDialog):
+            dlg = QtWidgets.QDialog(self)
+            dlg.setWindowTitle("FRET RDA axis settings")
+            layout = QtWidgets.QVBoxLayout(dlg)
+            layout.setContentsMargins(8, 8, 8, 8)
+            layout.setSpacing(4)
+            widget = FretRdaAxisSettingsWidget(dlg)
+            layout.addWidget(widget)
+            self._fret_rda_axis_dialog = dlg
+
+        dlg.show()
+        try:
+            dlg.raise_()
+            dlg.activateWindow()
+        except Exception:
+            pass
 
     def load_tools(self):
         import chisurf
@@ -1664,6 +2035,15 @@ class Main(QtWidgets.QMainWindow):
             window_title="ChiSurf Settings"
         )
         self.actionSettings.triggered.connect(self.configuration.show)
+        # Global FRET R_DA axis settings dialog
+        self.actionFretRdaAxisSettings = QtWidgets.QAction("FRET RDA axis ...", self)
+        self.actionFretRdaAxisSettings.triggered.connect(self.onOpenFretRdaAxisSettings)
+        try:
+            # Place just before the "Clear local settings" entry
+            self.menuSettings.insertAction(self.actionClear_local_settings, self.actionFretRdaAxisSettings)
+        except Exception:
+            # Fallback: append to the Settings menu
+            self.menuSettings.addAction(self.actionFretRdaAxisSettings)
         # Reset local settings, i.e., the settings file in the user folder
         self.actionClear_local_settings.triggered.connect(self.onClearLocalSettings)
         # Clear logging files, i.e., the log files in the user folder
