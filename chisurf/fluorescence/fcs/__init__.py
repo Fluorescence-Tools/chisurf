@@ -166,3 +166,350 @@ def noise(
         sd = np.ones_like(correlation)
 
     return sd
+
+
+def background_factor_ac(signal_cr_khz: float, background_cr_khz: float) -> float:
+    """Return background attenuation factor for an autocorrelation model.
+
+    The correlation amplitude of a fluorophore in the presence of a constant
+    background is reduced by a factor
+
+    .. math::
+
+        k_\mathrm{bg} = \left(\frac{S - B}{S}\right)^2 ,
+
+    where ``S`` is the total detected countrate (signal + background) and
+    ``B`` is the background countrate. This factor multiplies the *amplitude*
+    of a background-free model curve while leaving its baseline unchanged, so
+    that
+
+    ``G_meas(τ) - b = k_bg * (G_true(τ) - b)``.
+
+    Parameters
+    ----------
+    signal_cr_khz : float
+        Total detected countrate S in kHz.
+    background_cr_khz : float
+        Background countrate B in kHz.
+
+    Returns
+    -------
+    float
+        Attenuation factor ``k_bg`` in the range (0, 1]. If the inputs are
+        non-finite or ``S <= B`` or ``S <= 0``, ``1.0`` is returned and no
+        correction should be applied.
+    """
+
+    try:
+        S = float(signal_cr_khz)
+        B = float(background_cr_khz)
+    except Exception:
+        return 1.0
+
+    if not np.isfinite(S) or not np.isfinite(B):
+        return 1.0
+    if S <= 0.0 or B < 0.0 or B >= S:
+        return 1.0
+
+    ratio = (S - B) / S
+    return float(ratio * ratio)
+
+
+def background_factor_cc(
+        signal1_cr_khz: float,
+        background1_cr_khz: float,
+        signal2_cr_khz: float,
+        background2_cr_khz: float,
+) -> float:
+    """Return background attenuation factor for a cross-correlation model.
+
+    For cross-correlation between two channels with total countrates ``S1``,
+    ``S2`` and backgrounds ``B1``, ``B2``, the amplitude reduction is
+
+    .. math::
+
+        k_\mathrm{bg} = \frac{S_1 - B_1}{S_1} \cdot \frac{S_2 - B_2}{S_2} .
+
+    As for :func:`background_factor_ac`, this factor is meant to be applied to
+    the *amplitude* of a background-free model curve while keeping the
+    baseline ``b`` unchanged.
+
+    Parameters
+    ----------
+    signal1_cr_khz, signal2_cr_khz : float
+        Total detected countrates ``S1`` and ``S2`` in kHz.
+    background1_cr_khz, background2_cr_khz : float
+        Background countrates ``B1`` and ``B2`` in kHz.
+
+    Returns
+    -------
+    float
+        Attenuation factor ``k_bg`` in the range (0, 1]. If any input is
+        non-finite or inconsistent (e.g. ``Si <= Bi`` or ``Si <= 0``), ``1.0``
+        is returned and no correction should be applied.
+    """
+
+    try:
+        S1 = float(signal1_cr_khz)
+        B1 = float(background1_cr_khz)
+        S2 = float(signal2_cr_khz)
+        B2 = float(background2_cr_khz)
+    except Exception:
+        return 1.0
+
+    if not (np.isfinite(S1) and np.isfinite(B1) and np.isfinite(S2) and np.isfinite(B2)):
+        return 1.0
+    if S1 <= 0.0 or S2 <= 0.0:
+        return 1.0
+    if B1 < 0.0 or B2 < 0.0 or B1 >= S1 or B2 >= S2:
+        return 1.0
+
+    r1 = (S1 - B1) / S1
+    r2 = (S2 - B2) / S2
+    return float(r1 * r2)
+
+
+def _spline_local_residual_std(
+        times: np.ndarray,
+        correlation: np.ndarray,
+        knot_count: int = 5,
+        window: int = 3,
+) -> np.ndarray:
+    """Estimate local noise via residuals to a smooth spline on log10(tau).
+
+    This is inspired by PyCorrFit's spline-based weighting: a smooth function is
+    fitted to ``G(τ)`` on a log-time axis, and the local standard deviation of
+    the residuals within a sliding window is used as a noise estimate.
+
+    The implementation is deliberately conservative:
+
+    - If SciPy is available, a cubic B-spline with ``knot_count`` interior
+      knots is used (``scipy.interpolate.splrep/splev``).
+    - If SciPy is not available or fitting fails, a simple moving-average
+      smoother is used instead.
+    - Any non-finite or degenerate cases fall back to unit standard deviations.
+    """
+
+    t = np.asarray(times, dtype=float).ravel()
+    g = np.asarray(correlation, dtype=float).ravel()
+    n = g.size
+    if n == 0:
+        return np.ones_like(g, dtype=float)
+
+    # Work on positive, finite lag times only; others get unit variance.
+    mask = np.isfinite(t) & np.isfinite(g) & (t > 0.0)
+    if not np.any(mask):
+        return np.ones_like(g, dtype=float)
+
+    t_valid = t[mask]
+    g_valid = g[mask]
+    if t_valid.size < max(knot_count + 2, 8):
+        # Not enough points for a meaningful spline fit.
+        return np.ones_like(g, dtype=float)
+
+    # Use log10 time axis for smoother behavior across decades.
+    x = np.log10(t_valid)
+
+    # Build a smooth approximation g_smooth(x).
+    g_smooth = None
+    try:
+        try:
+            import scipy.interpolate as _spintp  # type: ignore[import]
+        except Exception:
+            _spintp = None  # type: ignore[assignment]
+
+        if _spintp is not None:
+            # Interior knots between min/max of the log-time axis.
+            k = int(max(1, knot_count))
+            knots = np.linspace(x[1], x[-1], k + 2)[1:-1]
+            tck = _spintp.splrep(x, g_valid, s=0.0, k=3, t=knots)
+            g_smooth = _spintp.splev(x, tck, der=0)
+    except Exception:
+        g_smooth = None
+
+    if g_smooth is None:
+        # Fallback: simple moving average on linear time.
+        half = int(max(1, window))
+        width = 2 * half + 1
+        kernel = np.ones(width, dtype=float) / float(width)
+        g_pad = np.pad(g_valid, (half, half), mode="edge")
+        g_smooth = np.convolve(g_pad, kernel, mode="valid")
+
+    g_smooth = np.asarray(g_smooth, dtype=float).ravel()
+    if g_smooth.size != g_valid.size:
+        return np.ones_like(g, dtype=float)
+
+    resid = g_valid - g_smooth
+
+    # Sliding-window standard deviation of residuals.
+    w = max(1, int(window))
+    sd_local = np.empty_like(resid, dtype=float)
+    for i in range(resid.size):
+        lo = max(0, i - w)
+        hi = min(resid.size, i + w + 1)
+        block = resid[lo:hi]
+        if block.size < 2 or not np.any(np.isfinite(block)):
+            sd_local[i] = 1.0
+        else:
+            s = float(np.nanstd(block))
+            sd_local[i] = s if np.isfinite(s) and s > 0.0 else 1.0
+
+    # Map back into full-size array; invalid/zero-time entries get unit sd.
+    sd_full = np.ones_like(g, dtype=float)
+    sd_full[mask] = sd_local
+    return sd_full
+
+
+def compute_weights(
+        times: np.ndarray,
+        correlation: np.ndarray,
+        acquisition_time_s: float,
+        mean_count_rate_khz: float,
+        mode: str | None = None,
+        existing_weights: np.ndarray | None = None,
+        noise_kwargs: dict | None = None,
+) -> np.ndarray:
+    """Return correlation-amplitude weights for FCS curves.
+
+    This helper produces the *weights* (typically ``1/sigma``) used by
+    :mod:`chisurf` for FCS fitting. It is a thin convenience wrapper around
+    :func:`noise` and is intended for use when reading FCS data.
+
+    Parameters
+    ----------
+    times : np.ndarray
+        Correlation lag times (ms).
+    correlation : np.ndarray
+        Correlation amplitudes ``G(τ)``.
+    acquisition_time_s : float
+        Total acquisition time in seconds.
+    mean_count_rate_khz : float
+        Mean countrate in kHz.
+    mode : {None, "file", "none", "uniform", "suren", "starchev", "photon_noise"}, optional
+        Weighting mode. ``None`` or ``"file"`` keeps ``existing_weights`` if
+        available. ``"none"`` / ``"uniform"`` produce unit weights. The
+        remaining modes call :func:`noise` with the corresponding
+        ``weight_type``.
+    existing_weights : np.ndarray, optional
+        Pre-existing weights (``1/sigma``) as stored in an
+        ``FCSDataset['correlation_amplitude_weights']``. Used when
+        ``mode is None`` or ``mode == "file"``.
+    noise_kwargs : dict, optional
+        Additional keyword arguments forwarded to :func:`noise`.
+
+    Returns
+    -------
+    np.ndarray
+        Weights ``w = 1/sigma`` with the same shape as ``correlation``.
+    """
+
+    if noise_kwargs is None:
+        noise_kwargs = {}
+
+    times = np.asarray(times, dtype=float).ravel()
+    correlation = np.asarray(correlation, dtype=float).ravel()
+    if times.size == 0 or correlation.size == 0:
+        return np.ones_like(correlation, dtype=float)
+
+    if existing_weights is not None:
+        existing_weights = np.asarray(existing_weights, dtype=float).ravel()
+        if existing_weights.size != correlation.size:
+            existing_weights = None
+
+    # Default behaviour: keep weights provided by the reader
+    if mode is None or str(mode).lower() == "file":
+        if existing_weights is not None:
+            return existing_weights
+        # Fall back to a reasonable photon-noise estimate
+        mode = "suren"
+
+    m = str(mode).lower()
+
+    if m in ("none", "uniform"):
+        return np.ones_like(correlation, dtype=float)
+
+    # PyCorrFit-style spline-based local variance: weight_type "splineX".
+    if m.startswith("spline"):
+        # Optional knot count in the suffix (e.g. "spline5").
+        suffix = m[len("spline"):]
+        knots = None
+        if suffix:
+            try:
+                knots = int(suffix)
+            except Exception:
+                knots = None
+        if knots is None:
+            try:
+                knots = int(noise_kwargs.get("spline_knots", 5))
+            except Exception:
+                knots = 5
+
+        try:
+            spread = int(noise_kwargs.get("weight_spread", 3))
+        except Exception:
+            spread = 3
+
+        try:
+            sd = _spline_local_residual_std(
+                times=times,
+                correlation=correlation,
+                knot_count=knots,
+                window=spread,
+            )
+        except Exception:
+            # Fallback: uniform if spline-based estimation fails.
+            sd = np.ones_like(correlation, dtype=float)
+
+        # Convert standard deviations to weights later in the common tail.
+        sd = np.asarray(sd, dtype=float).ravel()
+        if sd.size != correlation.size:
+            return np.ones_like(correlation, dtype=float)
+
+        tiny = 1e-12
+        w = np.empty_like(sd, dtype=float)
+        for i, v in enumerate(sd):
+            if not np.isfinite(v) or abs(v) < tiny:
+                w[i] = 1.0
+            else:
+                w[i] = 1.0 / float(v)
+        return w
+
+    if m == "photon_noise":
+        weight_type = "suren"
+    elif m in ("suren", "starchev"):
+        weight_type = m
+    else:
+        # Unknown mode: keep existing weights if any, otherwise uniform
+        if existing_weights is not None:
+            return existing_weights
+        return np.ones_like(correlation, dtype=float)
+
+    try:
+        sd = noise(
+            times=times,
+            correlation=correlation,
+            measurement_duration=float(acquisition_time_s),
+            mean_count_rate=float(mean_count_rate_khz),
+            weight_type=weight_type,
+            **noise_kwargs,
+        )
+    except Exception:
+        # On failure, fall back to uniform weights
+        return np.ones_like(correlation, dtype=float)
+
+    sd = np.asarray(sd, dtype=float).ravel()
+    if sd.size != correlation.size:
+        # Shape mismatch: do not attempt to broadcast, just use uniform
+        return np.ones_like(correlation, dtype=float)
+
+    # Convert standard deviations to weights = 1/sigma, guarding against
+    # zeros and non-finite values.
+    tiny = 1e-12
+    w = np.empty_like(sd, dtype=float)
+    for i, v in enumerate(sd):
+        if not np.isfinite(v) or abs(v) < tiny:
+            w[i] = 1.0
+        else:
+            w[i] = 1.0 / float(v)
+    return w
+
