@@ -229,6 +229,8 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     def onAddLink(self, links: typing.List = None):
         table = self.table_GlobalLinks
+        if not isinstance(links, list):
+            links = None
         if links is None:
             links = []
             if self.link_all_of_type:
@@ -279,14 +281,20 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.comboBox_gfOriginParameter.clear()
         if len(self.fits) > 0:
             if not self.link_all_of_type:
-                pn = [p.name for p in self.fit.model.parameters_all]
+                origin_index = self.comboBox_gfOriginFit.currentIndex()
+                pn = []
+                if 0 <= origin_index < len(self.fits):
+                    fit = self.fits[origin_index]
+                    pn = [p.name for p in fit.model.parameters_all]
                 pn.sort()
-                self.comboBox_gfOriginParameter.addItems([p for p in pn])
+                self.comboBox_gfOriginParameter.addItems(pn)
             else:
                 names = set([p.name for f in self.fits for p in f.model.parameters_all])
                 names = list(names)
                 names.sort()
                 self.comboBox_gfOriginParameter.addItems(names)
+
+        self.update_link_text()
 
     def update_parameter_target(self):
         self.comboBox_gfTargetParameter.clear()
