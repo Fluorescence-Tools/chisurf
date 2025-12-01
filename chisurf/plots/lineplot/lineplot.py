@@ -345,11 +345,14 @@ class LinePlot(plotbase.Plot):
             reference_curve: bool = False,
             x_label: str = 'x',
             y_label: str = 'y',
+            curve_styles: typing.Dict | None = None,
             **kwargs
     ):
         # Internal state of region selector
         self.lb_i: int = 0
         self.ub_i: int = 0
+
+        self.curve_styles = curve_styles or {}
 
         kwargs['fit'] = fit
         super().__init__(**kwargs)
@@ -497,13 +500,15 @@ class LinePlot(plotbase.Plot):
                         lw *= 0.5
                         pen_color = '#4D' + pen_color.split('#')[1]
                     pen = pg.mkPen(pen_color, width=lw)
-                    return target_plot.plot(
+                    line = target_plot.plot(
                         x=[0.0], y=[0.0],
                         pen=pen,
                         name=label,
                         autoDownsample=auto_downsample,
                         clipToView=clip_to_view,
                     )
+                    self._apply_curve_style(curve_key, line)
+                    return line
         else:
             curve = curves[curve_key]
             if isinstance(curve, chisurf.data.DataCurve):
@@ -514,15 +519,62 @@ class LinePlot(plotbase.Plot):
                 auto_downsample = curve_options.get('auto_downsample', False)
                 clip_to_view = curve_options.get('clip_to_view', auto_downsample)
                 pen = pg.mkPen(pen_color, width=lw)
-                return target_plot.plot(
+                line = target_plot.plot(
                     x=[0.0], y=[0.0],
                     pen=pen,
                     name=curve_key,
                     autoDownsample=auto_downsample,
                     clipToView=clip_to_view,
                 )
+                self._apply_curve_style(curve_key, line)
+                return line
 
         return None
+
+    def _get_curve_style(self, curve_key: str) -> typing.Optional[typing.Dict]:
+        styles = getattr(self, "curve_styles", None)
+        if not styles:
+            return None
+        if curve_key in styles:
+            return styles[curve_key]
+        if "_" in curve_key:
+            base = curve_key.split("_", 1)[0]
+            if base in styles:
+                return styles[base]
+        return None
+
+    def _apply_curve_style(self, curve_key: str, line: pg.PlotDataItem) -> None:
+        style = self._get_curve_style(curve_key)
+        if not style:
+            return
+        try:
+            if "pen" in style:
+                line.setPen(style.get("pen"))
+        except Exception:
+            pass
+        try:
+            symbol = style.get("symbol")
+            if symbol is not None:
+                line.setSymbol(symbol)
+        except Exception:
+            pass
+        try:
+            size = style.get("symbol_size")
+            if size is not None:
+                line.setSymbolSize(size)
+        except Exception:
+            pass
+        try:
+            brush = style.get("symbol_brush")
+            if brush is not None:
+                line.setSymbolBrush(brush)
+        except Exception:
+            pass
+        try:
+            if style.get("no_line"):
+                line.setPen(None)
+        except Exception:
+            pass
 
     def _update_reference_checkbox(self):
         """
