@@ -93,6 +93,7 @@ pda:
   models:
     - chisurf.models.pda.widgets.PdaSimpleModelWidget
     - chisurf.models.pda.widgets.PdaGaussianDistanceModelWidget
+    - chisurf.models.pda.widgets.PdaAnisotropyModelWidget
 
 fcs:
   readers:
