@@ -290,6 +290,18 @@ class FittingControllerWidget(Controller):
 
         self.spinBox_3.valueChanged.connect(self._result_changed)
 
+        # Detect whether the current dataset is intrinsically multidimensional
+        # based on generic grid metadata (data.meta_data['grid']). For such
+        # datasets we enable all four range spin boxes and interpret them as
+        # 2D bounds; for purely 1D datasets we keep the original two spin
+        # boxes and hide/disable the extra pair. This keeps the controller
+        # agnostic of specific experiments/models.
+        self._is_2d_dataset = False
+        self._2d_shape = None
+        self._grid_meta = {}
+        self._grid_order = None
+        self._init_dimensionality()
+
         if hide_fit_button:
             self.pushButton_fit.hide()
         if hide_range:
@@ -350,6 +362,22 @@ class FittingControllerWidget(Controller):
     def xmax(self, v: int):
         self.spinBox.setValue(v)
 
+    @property
+    def xmin2(self) -> int:
+        return int(self.spinBox_4.value())
+
+    @xmin2.setter
+    def xmin2(self, v: int):
+        self.spinBox_4.setValue(v)
+
+    @property
+    def xmax2(self) -> int:
+        return int(self.spinBox_6.value())
+
+    @xmax2.setter
+    def xmax2(self, v: int):
+        self.spinBox_6.setValue(v)
+
     def onFitRangeChanged(self, event, xmin: int = None, xmax: int = None):
         chisurf.logging.info(f'onFitRangeChanged: {xmin, xmax}')
         if xmin is not None:
@@ -361,6 +389,14 @@ class FittingControllerWidget(Controller):
             self.fit.fit_range = (self.xmin, self.xmax)
         except Exception as e:
             chisurf.logging.warning(f'Failed to set fit range directly: {e}')
+        # For intrinsically 2D datasets (PDA/RICS), update the Fit/FitGroup
+        # mask from the four spin boxes interpreted as (x_min, x_max,
+        # y_min, y_max) indices on the underlying 2D grid.
+        if getattr(self, '_is_2d_dataset', False):
+            try:
+                self._update_2d_mask_from_spinboxes()
+            except Exception as e:
+                chisurf.logging.warning(f'Failed to update 2D mask from spinboxes: {e}')
         # Avoid deep re-entrant updates when auto-fit-range is already
         # driving a fit update.
         if getattr(self, '_auto_fit_range_in_progress', False):
@@ -371,26 +407,84 @@ class FittingControllerWidget(Controller):
         try:
             fit_range = self.fit.data.data_reader.autofitrange(self.fit.data)
             chisurf.logging.info(f'onAutoFitRange: {fit_range}')
-            xmin, xmax = fit_range
+            xmin_1d, xmax_1d = fit_range
 
-            # Update the UI spin boxes. This may emit signals connected to
-            # onFitRangeChanged, so we guard the subsequent explicit update
-            # with a flag to prevent re-entrant model/plot updates.
-            self.xmin, self.xmax = fit_range
-
+            # Guard against re-entrant updates when auto-fit-range is itself
+            # driving a fit update.
             try:
                 self._auto_fit_range_in_progress = True
             except Exception:
                 pass
 
             try:
-                try:
-                    # Apply range directly to this widget's fit
-                    self.fit.fit_range = (xmin, xmax)
-                except Exception as e:
-                    chisurf.logging.warning(f'Failed to set fit range during auto-fit: {e}')
-                # Trigger a single fit update for the new range
+                if getattr(self, '_is_2d_dataset', False) and self._2d_shape is not None:
+                    # For intrinsically 2D datasets (e.g. PDA, RICS) we treat
+                    # autofitrange as a suggestion for the *flattened* 1D
+                    # extent, but the UI spin boxes encode 2D index bounds.
+                    # Here we default the 2D selection to the full grid and
+                    # use the full 1D range for the fit; any further
+                    # restriction is expressed via the 2D mask only.
+
+                    ny, nx = int(self._2d_shape[0]), int(self._2d_shape[1])
+
+                    # Ensure spin box ranges match the grid shape
+                    self.spinBox_2.setRange(0, max(0, nx - 1))
+                    self.spinBox_4.setRange(0, max(0, nx - 1))
+                    self.spinBox.setRange(0, max(0, ny - 1))
+                    self.spinBox_6.setRange(0, max(0, ny - 1))
+
+                    # Full 2D extents in index space
+                    self.spinBox_2.setValue(0)
+                    self.spinBox_4.setValue(max(0, nx - 1))
+                    self.spinBox.setValue(0)
+                    self.spinBox_6.setValue(max(0, ny - 1))
+
+                    # Full 1D range over the flattened data vector
+                    try:
+                        n_flat = int(len(self.fit.data.y))
+                    except Exception:
+                        n_flat = max(0, int(xmax_1d))
+                    try:
+                        self.fit.fit_range = (0, n_flat)
+                    except Exception as e:
+                        chisurf.logging.warning(f'Failed to set 1D fit range during 2D auto-fit: {e}')
+
+                    # Refresh the 2D mask from the full-extent spin boxes
+                    try:
+                        self._update_2d_mask_from_spinboxes()
+                    except Exception as e:
+                        chisurf.logging.warning(f'Failed to update 2D mask after 2D autofitrange: {e}')
+                else:
+                    # 1D datasets: keep the original semantics where the two
+                    # spin boxes encode [xmin, xmax) directly.
+                    self.xmin, self.xmax = (xmin_1d, xmax_1d)
+                    try:
+                        self.fit.fit_range = (xmin_1d, xmax_1d)
+                    except Exception as e:
+                        chisurf.logging.warning(f'Failed to set fit range during auto-fit: {e}')
+
+                # Trigger a single fit update for the new range / mask
                 self.fit.update()
+                # Allow models to react to the completed auto-fit range via
+                # an optional hook. This keeps the controller generic while
+                # enabling model-specific post-processing (e.g. MaxEnt L-curves).
+                try:
+                    grouped = getattr(self.fit, "grouped_fits", None)
+                    if isinstance(grouped, (list, tuple)):
+                        models = [getattr(f, "model", None) for f in grouped]
+                    else:
+                        models = [getattr(self.fit, "model", None)]
+                    for m in models:
+                        hook = getattr(m, "on_auto_fit_range_completed", None)
+                        if callable(hook):
+                            try:
+                                hook()
+                            except Exception as e:
+                                chisurf.logging.warning(
+                                    f"FittingControllerWidget.onAutoFitRange: model hook on_auto_fit_range_completed failed: {e}"
+                                )
+                except Exception:
+                    pass
             finally:
                 try:
                     self._auto_fit_range_in_progress = False
@@ -401,6 +495,214 @@ class FittingControllerWidget(Controller):
                  f"with model {self.fit.model.__class__.__name__} "
                  f"does not have an attribute data.data_reader")
             chisurf.logging.warning(s)
+
+    # ------------------------------------------------------------------
+    # Dimensionality and 2D mask helpers
+    # ------------------------------------------------------------------
+
+    def _init_dimensionality(self) -> None:
+        """Detect whether the attached dataset exposes a generic grid.
+
+        Detection is based solely on ``data.meta_data['grid']``, which is a
+        dictionary with at least the following keys when present:
+
+        - ``ndim``: int
+            Number of logical grid dimensions. Only ``ndim == 2`` is
+            currently supported by this widget.
+        - ``shape``: tuple
+            Grid shape ``(ny, nx)`` used when reconstructing 2D selections
+            from the 1D flattened data arrays.
+        - ``order``: str, optional
+            NumPy-style memory order string used to map the 2D grid to the
+            1D data vector. Known values are::
+
+                'C'  # row-major flattening (default)
+                'F'  # column-major flattening
+
+            Some experiments may additionally provide explicit index arrays
+            (e.g. ``row_indices`` / ``col_indices``) when the 1D vector is a
+            sparse view of the grid. These are used by
+            :meth:`_update_2d_mask_from_spinboxes` to translate 2D rectangles
+            into 1D masks when present.
+
+        Experiment-specific readers (e.g. PDA, RICS) are responsible for
+        populating this metadata; the controller itself stays agnostic of the
+        concrete experiment/model types.
+        """
+
+        data = None
+        try:
+            data = self.fit.data
+        except Exception:
+            pass
+
+        # Reset cached dimensionality state
+        self._is_2d_dataset = False
+        self._2d_shape = None
+        self._grid_meta = {}
+        self._grid_flattening = None
+
+        if data is None:
+            return
+
+        try:
+            meta_all = getattr(data, 'meta_data', {}) or {}
+        except Exception:
+            meta_all = {}
+        grid_meta = meta_all.get('grid', {}) or {}
+
+        try:
+            ndim = int(grid_meta.get('ndim', 1))
+        except Exception:
+            ndim = 1
+        shape = grid_meta.get('shape', None)
+
+        if ndim == 2 and shape is not None:
+            try:
+                ny, nx = int(shape[0]), int(shape[1])
+                if ny > 0 and nx > 0:
+                    self._is_2d_dataset = True
+                    self._2d_shape = (ny, nx)
+                    self._grid_meta = grid_meta
+                    self._grid_order = grid_meta.get('order', 'C')
+            except Exception:
+                pass
+
+        # Configure spin boxes according to dimensionality
+        try:
+            if self._is_2d_dataset and self._2d_shape is not None:
+                ny, nx = int(self._2d_shape[0]), int(self._2d_shape[1])
+                # x-axis: columns (0 .. nx-1)
+                self.spinBox_2.setRange(0, max(0, nx - 1))
+                self.spinBox_4.setRange(0, max(0, nx - 1))
+                # y-axis: rows (0 .. ny-1)
+                self.spinBox.setRange(0, max(0, ny - 1))
+                self.spinBox_6.setRange(0, max(0, ny - 1))
+
+                # Default to full extents if not yet initialized
+                if self.spinBox_4.value() == 0:
+                    self.spinBox_2.setValue(0)
+                    self.spinBox_4.setValue(max(0, nx - 1))
+                if self.spinBox_6.value() == 0:
+                    self.spinBox.setValue(0)
+                    self.spinBox_6.setValue(max(0, ny - 1))
+
+                # Make sure the secondary spin boxes are visible and enabled
+                self.spinBox_4.setEnabled(True)
+                self.spinBox_6.setEnabled(True)
+                self.spinBox_4.show()
+                self.spinBox_6.show()
+
+                # Update mask when any of the 2D range spin boxes changes.
+                try:
+                    self.spinBox_2.editingFinished.connect(lambda: self._update_2d_mask_from_spinboxes())
+                    self.spinBox_4.editingFinished.connect(lambda: self._update_2d_mask_from_spinboxes())
+                    self.spinBox.editingFinished.connect(lambda: self._update_2d_mask_from_spinboxes())
+                    self.spinBox_6.editingFinished.connect(lambda: self._update_2d_mask_from_spinboxes())
+                except Exception:
+                    pass
+            else:
+                # 1D datasets: keep only the original two spin boxes active
+                # for the fit range; the extra pair is disabled to avoid
+                # suggesting a 2D selection.
+                self.spinBox_4.setEnabled(False)
+                self.spinBox_6.setEnabled(False)
+        except Exception:
+            pass
+
+    def _update_2d_mask_from_spinboxes(self) -> None:
+        """Build a 1D mask from 2D bounds for PDA/RICS datasets.
+
+        Spin box mapping:
+            spinBox_2 -> x_min
+            spinBox_4 -> x_max
+            spinBox   -> y_min
+            spinBox_6 -> y_max
+
+        The resulting 1D mask is stored on ``self.fit.mask`` so that the
+        abstract Fit/FitGroup machinery can remain unaware of PDA/RICS
+        specifics while still respecting the 2D selection.
+        """
+
+        if not getattr(self, '_is_2d_dataset', False):
+            return
+
+        try:
+            data = self.fit.data
+        except Exception:
+            return
+
+        # Read bounds and normalize order
+        x_min = int(self.xmin)
+        x_max = int(self.xmin2)
+        y_min = int(self.xmax)
+        y_max = int(self.xmax2)
+
+        if self._2d_shape is None:
+            return
+        ny, nx = int(self._2d_shape[0]), int(self._2d_shape[1])
+        if ny <= 0 or nx <= 0:
+            return
+
+        # Clamp to valid index ranges and ensure min <= max
+        x0 = max(0, min(x_min, x_max))
+        x1 = min(nx - 1, max(x_min, x_max))
+        y0 = max(0, min(y_min, y_max))
+        y1 = min(ny - 1, max(y_min, y_max))
+
+        if x1 < x0 or y1 < y0:
+            # Degenerate rectangle -> clear mask
+            try:
+                self.fit.mask = None
+            except Exception:
+                pass
+            return
+
+        # Use the generic grid metadata to map 2D bounds back to the 1D
+        # flattened representation. By default we assume a dense 2D grid
+        # flattened in NumPy 'C' (row-major) order. Experiments may
+        # optionally provide explicit index arrays (row_indices/col_indices)
+        # to describe sparse or non-rectangular supports.
+
+        grid_meta = getattr(self, '_grid_meta', {}) or {}
+
+        # Prefer explicit index arrays when available
+        if 'row_indices' in grid_meta and 'col_indices' in grid_meta:
+            # 1D flattening via explicit (row_indices, col_indices)
+            try:
+                row_indices = np.asarray(grid_meta.get('row_indices'), dtype=np.int64)
+                col_indices = np.asarray(grid_meta.get('col_indices'), dtype=np.int64)
+            except Exception:
+                return
+            if row_indices.size == 0 or col_indices.size == 0:
+                return
+            n = min(row_indices.size, col_indices.size)
+            mask = (
+                (col_indices[:n] >= x0) & (col_indices[:n] <= x1) &
+                (row_indices[:n] >= y0) & (row_indices[:n] <= y1)
+            )
+            try:
+                self.fit.mask = mask.astype(float)
+            except Exception:
+                pass
+            return
+
+        # Default: full 2D grid, flattened in NumPy 'C' (row-major) order
+        try:
+            ny_img, nx_img = int(ny), int(nx)
+        except Exception:
+            ny_img, nx_img = ny, nx
+
+        yy, xx = np.indices((ny_img, nx_img))
+        mask_2d = (
+            (xx >= x0) & (xx <= x1) &
+            (yy >= y0) & (yy <= y1)
+        )
+        mask_1d = mask_2d.ravel()
+        try:
+            self.fit.mask = mask_1d.astype(float)
+        except Exception:
+            pass
 
 
 class FitSubWindow(QtWidgets.QMdiSubWindow):
@@ -616,6 +918,13 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
         self.lbl_title.setFont(font)
         layout.addWidget(self.lbl_title)
 
+        # Optional human-readable description of the parameter, taken from
+        # the underlying Parameter/FittingParameter "description" attribute.
+        self.lbl_description = QtWidgets.QLabel("")
+        self.lbl_description.setWordWrap(True)
+        self.lbl_description.setStyleSheet("color: gray; font-size: 9pt")
+        layout.addWidget(self.lbl_description)
+
         # Link info and actions
         link_row = QtWidgets.QHBoxLayout()
         self.lbl_link = QtWidgets.QLabel("")
@@ -790,6 +1099,14 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
 
     def refresh_from_model(self):
         fp = self.controller.fitting_parameter
+        # Description text (may be empty)
+        try:
+            desc = getattr(fp, 'description', "")
+        except Exception:
+            desc = ""
+        self.lbl_description.setVisible(bool(desc))
+        if desc:
+            self.lbl_description.setText(str(desc))
         # Update link label
         if getattr(fp, 'link', None) is not None:
             self.lbl_link.setText(f"Linked to: {fp.link.name}")
@@ -960,6 +1277,14 @@ class FittingParameterWidget(Controller):
         self.fitting_parameter = fitting_parameter
         self._details_popup = None  # created lazily on first label click
 
+        # Allow HTML/RichText labels (e.g. "cpm<sub>all</sub>") so that
+        # parameter names can be decorated with subscripts/superscripts
+        # while keeping the underlying parameter name unchanged.
+        try:
+            self.label.setTextFormat(QtCore.Qt.RichText)
+        except Exception:
+            pass
+
         self.widget_value = pg.SpinBox(
             dec=True,
             decimals=decimals,
@@ -1004,7 +1329,15 @@ class FittingParameterWidget(Controller):
         except Exception:
             _init_v = self.widget_value.value() if hasattr(self, 'widget_value') else 0.0
         self.widget_value.setValue(_init_v)
-        self.label.setText(label_text.ljust(5))
+        # Do not left-pad HTML labels with spaces; this breaks rich text.
+        # For plain-text labels we keep the original padding.
+        try:
+            if "<" in label_text or ">" in label_text:
+                self.label.setText(label_text)
+            else:
+                self.label.setText(label_text.ljust(5))
+        except Exception:
+            self.label.setText(label_text)
 
         # variable bounds
         if not fitting_parameter.bounds_on:
@@ -1020,16 +1353,7 @@ class FittingParameterWidget(Controller):
         self.widget.hide()
 
         # The variable value
-        self.widget_value.editingFinished.connect(
-            lambda: chisurf.run(
-                f"parameter = chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}']\n"
-                f"fixed = parameter.fixed \n"
-                f"parameter.fixed = False\n"
-                f"parameter.value = {self.widget_value.value()} \n"
-                f"parameter.fixed = fixed\n"
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].finalize()"
-            )
-        )
+        self.widget_value.editingFinished.connect(self._on_main_value_changed)
         if callback:
             self.widget_value.editingFinished.connect(self.callback)
 
@@ -1126,6 +1450,37 @@ class FittingParameterWidget(Controller):
 
     def setValue(self, v):
         self.widget_value.setValue(v)
+
+    def _on_main_value_changed(self):
+        fp = self.fitting_parameter
+        try:
+            fit_idx = fp.fit_idx
+        except Exception:
+            fit_idx = -1
+        # Guard against invalid indices so we never accidentally target chisurf.fits[-1]
+        try:
+            n_fits = len(chisurf.fits)
+        except Exception:
+            n_fits = 0
+        if not isinstance(fit_idx, int) or fit_idx < 0 or fit_idx >= n_fits:
+            try:
+                chisurf.logging.warning(
+                    f"FittingParameterWidget: invalid fit_idx {fit_idx} for parameter '{getattr(fp, 'name', '?')}', "
+                    f"skipping value change."
+                )
+            except Exception:
+                pass
+            return
+
+        value = self.widget_value.value()
+        chisurf.run(
+            f"parameter = chisurf.fits[{fit_idx}].model.parameters_all_dict['{fp.name}']\n"
+            f"fixed = parameter.fixed \n"
+            f"parameter.fixed = False\n"
+            f"parameter.value = {value} \n"
+            f"parameter.fixed = fixed\n"
+            f"chisurf.fits[{fit_idx}].finalize()"
+        )
 
     def _on_main_bounds_on_toggled(self):
         fp = self.fitting_parameter

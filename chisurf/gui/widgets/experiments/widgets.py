@@ -7,6 +7,7 @@ import os
 import pickle
 
 from qtpy import QtWidgets, QtCore, QtGui
+import pyqtgraph as pg
 
 import chisurf.fio
 import chisurf.gui.widgets
@@ -15,6 +16,10 @@ import chisurf.data
 import chisurf.fitting
 import chisurf.decorators
 from chisurf.experiments import reader
+from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+from .rics import RICSController
+from .pch import PCHController
+from .fcs import FCSController
 
 
 @chisurf.decorators.register
@@ -308,38 +313,4 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         # Set resize mode for the first and third columns
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
-
         header.setSectionsClickable(True)
-
-
-class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
-
-    def get_filename(self) -> pathlib.Path:
-        return chisurf.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
-
-    def __init__(
-            self,
-            file_type='Kristine files (*.cor)',
-            *args,
-            **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        self.file_type = file_type
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        self.layout = layout
-        self.csv_widget = chisurf.gui.widgets.fio.CsvWidget()
-        self.layout.addWidget(self.csv_widget)
-
-    def updateUI(self):
-        """Update UI elements based on current_setup properties."""
-        import chisurf
-        # Get the current setup
-        setup = chisurf.cs.current_setup
-
-        # Update any UI elements based on setup properties
-        # For now, this is a placeholder implementation
-        # If there are specific properties that need to be updated,
-        # they can be added here in the future

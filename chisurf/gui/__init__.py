@@ -13,17 +13,17 @@ import ast
 from functools import partial
 import pkgutil
 import importlib
-
-#import os
-#os.environ['QT_OPENGL'] = 'software'  # Use software rendering
+import chisurf.gui.gui_tweaks  # GUI tweaks (QT_OPENGL, etc.)
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
+import pyqtgraph as pg
 
 import chisurf  # Ensure chisurf is available module-wide
 import chisurf.settings
 from chisurf import logging
 import chisurf.gui.decorators
+
 
 
 class _GuiExecutor(QtCore.QObject):
@@ -411,14 +411,92 @@ def setup_gui(
     def setup_style(app):
         import pathlib
         import chisurf
-        app.setStyleSheet(
-            open(
-                pathlib.Path(chisurf.__file__).parent /
-                "gui/styles/" /
-                chisurf.settings.cs_settings['gui']['style_sheet'],
-                mode='r'
-            ).read()
-        )
+        gui_settings = chisurf.settings.cs_settings.get('gui') or {}
+        style_name = gui_settings.get('style_sheet')
+
+        base_path = pathlib.Path(chisurf.__file__).parent
+        package_styles_path = base_path / "gui" / "styles"
+
+        try:
+            user_styles_path = chisurf.settings.get_path('settings') / 'styles'
+        except Exception:
+            user_styles_path = None
+
+        def _apply_stylesheet(qss_text, fallback_path=None):
+            try:
+                text = qss_text
+                if (not text) and fallback_path is not None and fallback_path.is_file():
+                    text = fallback_path.read_text(encoding="utf-8")
+                if not text:
+                    return False
+                app.setStyleSheet(text)
+                try:
+                    chisurf.settings.style_sheet = text
+                except Exception:
+                    pass
+                return True
+            except Exception:
+                return False
+
+        def _resolve_style_path(name):
+            if not name:
+                return None
+            name = str(name).strip()
+            if not name:
+                return None
+            if user_styles_path is not None:
+                try:
+                    cand = user_styles_path / name
+                    if cand.is_file():
+                        return cand
+                except Exception:
+                    pass
+            try:
+                cand = package_styles_path / name
+                if cand.is_file():
+                    return cand
+            except Exception:
+                pass
+            return None
+
+        def _apply_style_by_name(name):
+            style_path = _resolve_style_path(name)
+            if style_path is None:
+                return False
+            try:
+                return _apply_stylesheet(style_path.read_text(encoding="utf-8"), style_path)
+            except Exception:
+                return False
+
+        if not style_name:
+            logging.warning("No GUI style_sheet configured; using default Qt theme.")
+            return
+
+        if _apply_style_by_name(style_name):
+            return
+
+        style_path = package_styles_path / style_name
+
+        try:
+            if not style_path.is_file():
+                logging.warning(f"GUI style sheet not found: {style_path}")
+                parent = None
+                try:
+                    parent = app.activeWindow()
+                except Exception:
+                    parent = None
+                QtWidgets.QMessageBox.warning(
+                    parent,
+                    "Theme not found",
+                    (
+                        "The configured GUI theme file could not be loaded:\n"
+                        f"{style_path}\n\n"
+                        "The application will continue with the default theme.\n"
+                        "Please open the settings and select an existing theme."
+                    )
+                )
+        except Exception as e:
+            logging.warning(f"Failed to load GUI style sheet '{style_path}': {e}")
 
     def read_module_docstring(package_path):
         """
@@ -821,6 +899,16 @@ def setup_gui(
         window.load_tools()
         # In your setup_gui function:
     elif stage == "start_jupyter":
+        try:
+            _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+            _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
+        except Exception:
+            _start_jupyter = False
+
+        if not _start_jupyter:
+            chisurf.logging.info("Skipping Jupyter notebook startup (disabled in settings).")
+            return None
+
         chisurf.logging.info("Starting Jupyter notebook process")
         # Start the notebook and capture the process
         chisurf.__jupyter_process__ = launch_jupyter_process()
@@ -845,14 +933,25 @@ def setup_gui(
     elif stage == "setup_logging":
         setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
+        try:
+            _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+            _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
+        except Exception:
+            _start_jupyter = False
+
+        if not _start_jupyter or chisurf.__jupyter_address__ is None:
+            chisurf.logging.info("Skipping notebook menu population (Jupyter disabled or not running).")
+            return None
+
         chisurf.logging.info("Looking for ipynb in home folder")
         populate_notebooks()
     return None
 
 def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     logging.info("Starting GUI startup (get_win)")
-    import pyqtgraph as pg
+    from chisurf.gui.gui_tweaks import apply_pyqtgraph_autorange_compat
     pg.setConfigOptions(useOpenGL=False)  # Disable OpenGL in PyQtGraph
+    apply_pyqtgraph_autorange_compat(pg)
 
     import chisurf.gui.resources
     import pathlib
@@ -868,14 +967,22 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     fg.moveCenter(screen.geometry().center())
     splash.move(fg.topLeft())
 
-    getattr(splash, "raise")()
-    splash.activateWindow()
-
     splash.setContentsMargins(0, 0, 0, 100)
     splash.show()
+    try:
+        splash.raise_()
+        splash.activateWindow()
+    except Exception:
+        pass
     app.processEvents()
 
     # Update progress as the setup progresses
+    try:
+        _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+        _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
+    except Exception:
+        _start_jupyter = False
+
     stages = [
         ("Check for updates", "check_updates", 5),
         ("Loading modules", "gui_imports", 10),
@@ -886,11 +993,18 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Defining actions", "define_actions", 55),
         ("Loading tools", "load_tools", 65),
         ("Arrange widgets", "arrange_widgets", 70),
-        ("Initializing Jupyter", "start_jupyter", 85),
-        ("Populate plugins", "populate_plugins", 90),
-        ("Populate notebook", "populate_notebooks", 95),
-        ("Styling up", "setup_style", 100),
     ]
+
+    if _start_jupyter:
+        stages.extend([
+            ("Initializing Jupyter", "start_jupyter", 85),
+            ("Populate plugins", "populate_plugins", 90),
+            ("Populate notebook", "populate_notebooks", 95),
+        ])
+    else:
+        stages.append(("Populate plugins", "populate_plugins", 90))
+
+    stages.append(("Styling up", "setup_style", 100))
 
     window = None
     for message, stage, progress_value in stages:
