@@ -1,3 +1,6 @@
+import importlib.util
+import pathlib
+
 import chisurf.models.model
 import chisurf.models.parse
 import chisurf.models.fcs
@@ -12,6 +15,36 @@ from chisurf import logging
 
 
 def function_to_model_decorator(**kws):
+    """Create a decorator that wraps a callable into a `Model` subclass.
+
+    The returned decorator turns a Python callable into a
+    :class:`chisurf.models.Model` subclass that is backed by a ``chinet``
+    node. Keyword arguments passed to this factory are forwarded to the
+    model constructor.
+
+    Parameters
+    ----------
+    **kws
+        Keyword arguments forwarded to :class:`chisurf.models.Model` when the
+        generated class is instantiated.
+
+    Returns
+    -------
+    callable
+        A decorator. When applied to a function it returns a new
+        :class:`chisurf.models.Model` subclass.
+
+    Examples
+    --------
+    Create a model class from a simple callback function. The resulting
+    class can later be instantiated by the fitting framework.
+
+    >>> def callback():
+    ...     pass
+    >>> ModelClass = function_to_model_decorator()(callback)
+    >>> isinstance(ModelClass, type)
+    True
+    """
 
     def decorator(func):
 
