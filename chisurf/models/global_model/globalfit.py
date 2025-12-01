@@ -10,7 +10,6 @@ import chisurf.parameter
 
 from chisurf.curve import Curve
 from chisurf.models import model
-from chisurf.fitting.parameter import GlobalFittingParameter
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit, FitGroup
@@ -206,10 +205,12 @@ class GlobalFitModel(model.Model, Curve):
                 continue
             try:
                 origin_parameter = f[origin_fit][origin_name]
-                target_parameter = GlobalFittingParameter(f, g, formula)
-
-                origin_parameter.link = target_parameter
-                print("f[%s][%s] linked to %s" % (origin_fit, origin_parameter.name, target_parameter.name))
+                target = eval(str(formula), {"__builtins__": {}}, {"f": f, "g": g})
+                if not isinstance(target, chisurf.parameter.Parameter):
+                    chisurf.logging.warning("Global link formula did not resolve to a Parameter: %r" % (formula,))
+                    continue
+                origin_parameter.link = target
+                print("f[%s][%s] linked to %s" % (origin_fit, origin_parameter.name, target.name))
             except IndexError:
                 print("not enough fits index out of range")
 

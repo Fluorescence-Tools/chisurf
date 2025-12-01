@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
-    <height>715</height>
+    <width>370</width>
+    <height>503</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -139,6 +139,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>If checked, add all available local fits to the used-fits list. If unchecked, only the selected fit is added.</string>
+           </property>
            <property name="text">
             <string/>
            </property>
@@ -204,117 +207,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="title">
-      <string>Global-Variables</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QWidget" name="widget" native="true">
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QGridLayout" name="gridLayout">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-           <item row="0" column="2">
-            <widget class="QPushButton" name="toolButton_4">
-             <property name="text">
-              <string>add</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_3">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Name</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="lineEdit">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maxLength">
-              <number>5</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QPushButton" name="toolButton_5">
-             <property name="text">
-              <string>clear</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-          </layout>
-         </item>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QGroupBox" name="groupBox_2">
      <property name="enabled">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="title">
       <string>Linking</string>
@@ -370,7 +265,7 @@
           </spacer>
          </item>
          <item row="3" column="5">
-          <widget class="QPushButton" name="pushButton_4">
+          <widget class="QToolButton" name="pushButton_4">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -383,7 +278,7 @@
           </widget>
          </item>
          <item row="3" column="4">
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QToolButton" name="pushButton_3">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -396,7 +291,7 @@
           </widget>
          </item>
          <item row="3" column="6">
-          <widget class="QPushButton" name="pushButton_5">
+          <widget class="QToolButton" name="pushButton_5">
            <property name="enabled">
             <bool>false</bool>
            </property>
@@ -416,13 +311,6 @@
            <property name="spacing">
             <number>0</number>
            </property>
-           <item row="2" column="2" colspan="2">
-            <widget class="QLineEdit" name="lineEdit_3">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="2">
             <widget class="QComboBox" name="comboBox_gfOriginFit">
              <property name="enabled">
@@ -434,6 +322,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Origin fit index (within the used-fits list) from which the parameter will be linked.</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="3">
@@ -444,10 +335,16 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Name of the origin parameter that will be linked.</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="0">
             <widget class="QCheckBox" name="checkBox_2">
+             <property name="toolTip">
+              <string>When checked, link only the parameter in the selected origin fit. When unchecked, link this parameter for all used fits that contain it.</string>
+             </property>
              <property name="text">
               <string/>
              </property>
@@ -464,6 +361,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Target parameter within the selected fit that origin parameters will be linked to.</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="8">
@@ -474,10 +374,13 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Target fit index whose parameter will serve as the link target.</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="7" rowspan="3">
-            <widget class="QPushButton" name="addGlobalLink">
+            <widget class="QToolButton" name="addGlobalLink">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -489,6 +392,9 @@
                <width>20</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>Add the current origin/target selection as a new entry in the global links table.</string>
              </property>
              <property name="text">
               <string>&gt;</string>
@@ -506,6 +412,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Target expression used by the global link (for example: f[1]['p0'] or g['global_var']). Enable manual editing via the checkbox on the left.</string>
+             </property>
              <property name="text">
               <string/>
              </property>
@@ -513,6 +422,9 @@
            </item>
            <item row="2" column="0">
             <widget class="QCheckBox" name="checkBox_4">
+             <property name="toolTip">
+              <string>Enable manual editing of the target expression instead of using the target fit/parameter combo boxes.</string>
+             </property>
              <property name="text">
               <string/>
              </property>
@@ -527,6 +439,9 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>List of defined global links. Uncheck to disable a link, double-click a row to remove it.</string>
            </property>
            <property name="verticalScrollBarPolicy">
             <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -560,12 +475,15 @@
           </widget>
          </item>
          <item row="3" column="1">
-          <widget class="QPushButton" name="pushButton_8">
+          <widget class="QToolButton" name="pushButton_8">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Apply all enabled links from the table to the fits (sets parameter.link values).</string>
            </property>
            <property name="text">
             <string>set links</string>
@@ -744,38 +662,6 @@
     <hint type="sourcelabel">
      <x>337</x>
      <y>39</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>toolButton_4</sender>
-   <signal>clicked()</signal>
-   <receiver>actionOnAddGlobalVariable</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>380</x>
-     <y>216</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>toolButton_5</sender>
-   <signal>clicked()</signal>
-   <receiver>actionOnClearVariables</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>413</x>
-     <y>216</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
