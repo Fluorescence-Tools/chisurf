@@ -106,6 +106,33 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
         self.toolButton_4.clicked.connect(self.onShowEquation)
 
+        # Use the existing "edit" and "help" tool buttons as a
+        # mutually exclusive toggle between equation editor and
+        # formatted equation display. This mimics radio-button
+        # behaviour while reusing the current UI controls.
+        try:
+            self._mode_button_group = QtWidgets.QButtonGroup(self)
+            self._mode_button_group.setExclusive(True)
+            self._mode_button_group.addButton(self.toolButton_3)
+            self._mode_button_group.addButton(self.toolButton_4)
+        except Exception:
+            self._mode_button_group = None
+
+        # Default to showing the formatted equation (help) and hiding
+        # the raw editor to reduce vertical space. This also fixes the
+        # startup state where both were visible.
+        try:
+            self.toolButton_4.setChecked(True)
+            self.toolButton_3.setChecked(False)
+            self.textEdit.setVisible(self.toolButton_4.isChecked())
+            self.plainTextEdit.setVisible(self.toolButton_3.isChecked())
+            # Hide the explicit edit/help buttons from the UI; switching
+            # between modes is handled via double-click and Enter now.
+            self.toolButton_3.hide()
+            self.toolButton_4.hide()
+        except Exception:
+            pass
+
         self.editor = chisurf.gui.tools.code_editor.CodeEditor(None, language='yaml', can_load=False)
         self.editor.hide()
 
@@ -120,11 +147,25 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             self.textEdit.setStyleSheet("background: white; color: black;")
         except Exception:
             pass
-        self.textEdit.setVisible(True)  # Make textEdit visible by default
+        # Visibility is controlled by the edit/display toggle buttons
+        # (toolButton_3 / toolButton_4) to avoid both being shown at
+        # the same time.
 
         # Enable link clicking in the textEdit widget
         self.textEdit.setOpenLinks(False)
         self.textEdit.anchorClicked.connect(self.onEquationClicked)
+
+        try:
+            self.textEdit.installEventFilter(self)
+            try:
+                self._textedit_viewport = self.textEdit.viewport()
+            except Exception:
+                self._textedit_viewport = None
+            if self._textedit_viewport is not None:
+                self._textedit_viewport.installEventFilter(self)
+            self.plainTextEdit.installEventFilter(self)
+        except Exception:
+            pass
 
         self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
         self.actionModelChanged.triggered.connect(self.onModelChanged)
@@ -200,7 +241,10 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         description = self.models[self.model_name]['description']
         combined_html = f"{description}<hr/><h3>Equation:</h3>{formatted_equation}"
         self.textEdit.setHtml(combined_html)
-        self.textEdit.setVisible(True)  # Make sure textEdit is visible
+        try:
+            self.textEdit.setVisible(self.toolButton_4.isChecked())
+        except Exception:
+            pass
 
         # Update the equation in the dialog if it's visible (keeping for backward compatibility)
         if self.equationDialog is not None and self.equationDialog.isVisible():
@@ -609,6 +653,119 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         # Show the dialog
         self.equationDialog.show()
 
+    def eventFilter(self, obj, event):
+        """Handle double-clicks and Enter key presses for quick mode switching.
+
+        - Double-click on the formatted equation display (textEdit) switches
+          to edit mode.
+        - Pressing Enter in the editor (plainTextEdit) tries to apply the
+          equation, switches back to display mode on success and shows a
+          warning dialog if parsing/execution fails.
+        """
+        try:
+            # Double-click on the equation display (widget or viewport)
+            # -> switch to edit mode
+            if (
+                (obj is self.textEdit or obj is getattr(self, "_textedit_viewport", None))
+                and event.type() == QtCore.QEvent.MouseButtonDblClick
+            ):
+                try:
+                    self.toolButton_3.setChecked(True)
+                    self.toolButton_4.setChecked(False)
+                except Exception:
+                    # Fallback: toggle visibility directly if buttons are missing
+                    try:
+                        self.plainTextEdit.setVisible(True)
+                        self.textEdit.setVisible(False)
+                    except Exception:
+                        pass
+                try:
+                    self.plainTextEdit.setFocus()
+                except Exception:
+                    pass
+                return True
+
+            # Enter in the editor -> validate, apply, then switch to display
+            if obj is self.plainTextEdit and event.type() == QtCore.QEvent.KeyPress:
+                key = event.key()
+                if key in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+                    modifiers = event.modifiers()
+                    # Allow Shift+Enter etc. to still insert newlines
+                    if not (modifiers & QtCore.Qt.ShiftModifier):
+                        self._apply_editor_and_switch_to_display()
+                        return True
+        except Exception:
+            pass
+
+        return super().eventFilter(obj, event)
+
+    def _validate_equation(self, equation: str):
+        """Check whether an equation string can be parsed and evaluated.
+
+        Returns (ok, message). "ok" is False if parsing/evaluation failed,
+        and "message" then contains a short description of the error.
+        """
+        equation = (equation or "").strip()
+        if not equation:
+            return False, "Equation is empty."
+
+        try:
+            fit = getattr(self.model, "fit", None)
+        except Exception:
+            fit = None
+
+        try:
+            # Use a temporary ParseModel so that errors do not corrupt the
+            # active model state.
+            tmp_model = ParseModel(fit=fit)
+        except Exception:
+            tmp_model = ParseModel(fit=None)
+
+        try:
+            tmp_model.func = equation  # Triggers parsing
+            tmp_model.update_model()   # Triggers evaluation
+        except Exception as e:
+            return False, str(e)
+
+        return True, ""
+
+    def _apply_editor_and_switch_to_display(self) -> None:
+        """Apply the current editor contents and switch to display mode.
+
+        On error, stay in edit mode and show a warning dialog.
+        """
+        equation = str(self.plainTextEdit.toPlainText()).strip()
+        ok, msg = self._validate_equation(equation)
+        if not ok:
+            try:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Equation error",
+                    f"The equation could not be parsed or executed.\n\n{msg}",
+                )
+            except Exception:
+                pass
+            return
+
+        # Equation is valid: propagate the change through the normal handler
+        try:
+            self.onEquationChanged()
+        except Exception:
+            # Even if the full pipeline fails, we already validated the core
+            # parse/eval path, so ignore here.
+            pass
+
+        # Switch back to display mode
+        try:
+            self.toolButton_4.setChecked(True)
+            self.toolButton_3.setChecked(False)
+        except Exception:
+            try:
+                self.textEdit.setVisible(True)
+                self.plainTextEdit.setVisible(False)
+            except Exception:
+                pass
+
     # ---- Small internal helpers to avoid duplication ----
     def _set_editor_text_safely(self, text: str) -> None:
         try:
@@ -644,7 +801,10 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             description = self.models[self.model_name]['description']
             combined_html = f"{description}<hr/><h3>Equation:</h3>{formatted_equation}"
             self.textEdit.setHtml(combined_html)
-            self.textEdit.setVisible(True)
+            try:
+                self.textEdit.setVisible(self.toolButton_4.isChecked())
+            except Exception:
+                pass
             if self.equationDialog is not None and self.equationDialog.isVisible():
                 self.equationDialog.setEquation(formatted_equation)
         except Exception:

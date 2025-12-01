@@ -93,10 +93,16 @@
    <item row="3" column="0" colspan="6">
     <widget class="QTextBrowser" name="textEdit">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>120</height>
+      </size>
      </property>
      <property name="verticalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -106,17 +112,55 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="4">
-    <widget class="QToolButton" name="toolButton">
-     <property name="text">
-      <string>parse</string>
+   <item row="7" column="0" colspan="6">
+    <widget class="QGroupBox" name="groupBox_parse">
+     <property name="title">
+      <string>Parse parameters</string>
      </property>
+     <layout class="QGridLayout" name="gridLayout_1">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <property name="spacing">
+       <number>0</number>
+      </property>
+     </layout>
     </widget>
    </item>
-   <item row="7" column="0" colspan="6">
-    <layout class="QGridLayout" name="gridLayout_1"/>
+   <item row="8" column="0" colspan="6">
+    <widget class="QGroupBox" name="groupBox_fcs">
+     <property name="title">
+      <string>FCS parameters</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_fcs">
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <property name="spacing">
+       <number>0</number>
+      </property>
+     </layout>
+    </widget>
    </item>
-   <item row="2" column="3">
+   <item row="3" column="5">
     <widget class="QToolButton" name="toolButton_4">
      <property name="toolTip">
       <string>Display equation help/description.</string>
@@ -139,10 +183,10 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="3">
+   <item row="2" column="0" colspan="6">
     <widget class="QComboBox" name="comboBox">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -207,22 +251,6 @@
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>toolButton</sender>
-   <signal>clicked()</signal>
-   <receiver>actionFormulaChanged</receiver>
-   <slot>trigger()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>270</x>
-     <y>36</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>comboBox</sender>
    <signal>currentIndexChanged(QString)</signal>
