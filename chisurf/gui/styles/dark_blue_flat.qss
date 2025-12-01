@@ -554,14 +554,14 @@ QMdiSubWindow {
 /* ===== Tool buttons ===== */
 
 QToolButton {
-    background-color: #3b3b3b;
-    border: 1px solid #202020;
-    border-radius: 2px;
+    background-color: #694545;
+    border: 1px solid #000000;
+    border-radius: 3px;
     padding: 1px 3px;
 }
 
 QToolButton:hover {
-    background-color: #4a4a4a;
+    background-color: #855454;
 }
 
 /* Dock-specific titles already defined above */
