@@ -139,9 +139,24 @@ class ParameterScanPlot(
         super().update(*args, **kwargs)
         try:
             p = self.plot_controller.parameter
+            if p is None:
+                return
+
             x, y = p.parameter_scan
-            if isinstance(x, np.ndarray) and isinstance(y, np.ndarray):
-                self.distribution_curve.setData(x=x, y=y)
-        except:
-            chisurf.logging.warning("ParameterScanPlot: update_all failed")
+            if x is None or y is None:
+                return
+
+            x = np.asarray(x)
+            y = np.asarray(y)
+            if x.size == 0 or y.size == 0:
+                return
+
+            # Avoid feeding all-NaN arrays into pyqtgraph, which leads to
+            # RuntimeWarnings about NaN slices.
+            if not np.any(np.isfinite(x)) or not np.any(np.isfinite(y)):
+                return
+
+            self.distribution_curve.setData(x=x, y=y)
+        except Exception as e:
+            chisurf.logging.warning(f"ParameterScanPlot: update failed: {e}")
 
