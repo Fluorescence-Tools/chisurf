@@ -11,7 +11,6 @@ import chisurf.parameter
 from chisurf.curve import Curve
 from chisurf.models import model
 from chisurf.models.parameter_transform import ParameterTransformModel
-from chisurf.fitting.parameter import GlobalFittingParameter
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit, FitGroup
