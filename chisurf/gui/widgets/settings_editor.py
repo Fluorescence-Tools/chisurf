@@ -16,6 +16,151 @@ from chisurf.settings import cs_settings
 LIST_SEP = "|"
 
 
+# Relative path (from project root) to the main settings documentation.
+SETTINGS_DOC_REL_PATH = "docs/chisurf_settings.md"
+
+
+# Cache for dynamically computed mapping from root setting keys to
+# documentation headings, keyed by the YAML basename
+_SETTINGS_HELP_SECTION_CACHE: dict[str, dict[str, str]] = {}
+
+
+def _slugify_heading_for_docs(text: str) -> str:
+    """Replicate the HelpWidget heading slug logic for anchor IDs.
+
+    This matches chisurf.plugins.help.HelpWidget._slugify_heading so that
+    anchors computed here correspond to those used when rendering the
+    Markdown in the help browser.
+    """
+    slug = text.strip().lower()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"\s+", "-", slug)
+    slug = re.sub(r"-+", "-", slug)
+    return slug or "section"
+
+
+def get_help_topic_for_setting(setting_path: str, source_filename: str | None) -> str | None:
+    """Return a help topic string for a given settings path.
+
+    The topic string is either of the form "docs/chisurf_settings.md#anchor"
+    (for direct Markdown navigation) or None if no mapping exists.
+    """
+    if not source_filename:
+        return None
+
+    basename = os.path.basename(source_filename)
+
+    # Resolve (and cache) the mapping from root keys to headings for this file
+    section_map = _SETTINGS_HELP_SECTION_CACHE.get(basename)
+    if section_map is None:
+        section_map = _build_help_section_map_for_file(basename)
+        _SETTINGS_HELP_SECTION_CACHE[basename] = section_map or {}
+
+    if not section_map:
+        return None
+
+    # Only use the root key (top-level) to determine the section
+    root_key = setting_path.split(".", 1)[0]
+    heading = section_map.get(root_key)
+    if not heading:
+        return None
+
+    anchor = _slugify_heading_for_docs(heading)
+    return f"{SETTINGS_DOC_REL_PATH}#{anchor}"
+
+
+def _build_help_section_map_for_file(basename: str) -> dict[str, str]:
+    """Build a mapping from root setting keys to documentation headings.
+
+    The mapping is derived dynamically from docs/chisurf_settings.md and the
+    actual settings structures, so it does not hard-code section numbers or
+    titles.
+    """
+    try:
+        base = pathlib.Path(chisurf.__file__).resolve().parent
+        root = base.parent
+        md_path = root / SETTINGS_DOC_REL_PATH
+        text = md_path.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+
+    # Collect all Markdown headings (without the leading # characters)
+    headings: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        m = re.match(r"^(#{1,6})\s+(.*)", stripped)
+        if not m:
+            continue
+        heading = m.group(2).strip()
+        if heading:
+            headings.append(heading)
+
+    # Normalized helper to locate "Top-level flags" irrespective of hyphen type
+    def _find_top_level_flags_heading() -> str | None:
+        for h in headings:
+            norm = h.lower().replace("‑", "-")  # normalize non-breaking hyphen
+            if "top-level flags" in norm:
+                return h
+        return None
+
+    mapping: dict[str, str] = {}
+
+    if basename == "settings_chisurf.yaml":
+        # Use the loaded cs_settings keys as root keys
+        try:
+            cs_dict = getattr(chisurf.settings, "cs_settings", {}) or {}
+            root_keys = [str(k) for k in cs_dict.keys()]
+        except Exception:
+            root_keys = []
+
+        # First, try to find a heading that mentions each key in backticks
+        for key in root_keys:
+            needle = f"`{key}`"
+            for h in headings:
+                if needle in h:
+                    mapping[key] = h
+                    break
+
+        # For any remaining top-level keys, fall back to the generic
+        # "Top-level flags" heading if present.
+        top_flags = _find_top_level_flags_heading()
+        if top_flags:
+            for key in root_keys:
+                if key not in mapping:
+                    mapping[key] = top_flags
+        return mapping
+
+    if basename == "agentfit_settings.yaml":
+        # Find the section that documents agentfit_settings.yaml
+        agent_heading: str | None = None
+        for h in headings:
+            if "`agentfit_settings.yaml`" in h:
+                agent_heading = h
+                break
+        if not agent_heading:
+            return {}
+
+        # Load the YAML to know which keys exist
+        from chisurf.settings.path_utils import get_path as _get_path
+
+        try:
+            src_dir = _get_path("chisurf") / "settings"
+            yml_path = src_dir / "agentfit_settings.yaml"
+            if not yml_path.is_file():
+                return {}
+            data = yaml.safe_load(yml_path.read_text(encoding="utf-8")) or {}
+            if not isinstance(data, dict):
+                return {}
+            for key in data.keys():
+                mapping[str(key)] = agent_heading
+        except Exception:
+            return {}
+        return mapping
+
+    # Unknown YAML file: no mapping
+    return {}
+
+
 # Custom YAML representer for floats to preserve scientific notation
 def float_representer(dumper, value):
     """
@@ -131,6 +276,10 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
             value = index.data(QtCore.Qt.EditRole)
         data_type = type(value)
 
+        if self._is_theme_setting(setting_path):
+            editor = self._create_theme_editor(parent, value, tooltip)
+            return editor
+
         # Create appropriate editor based on data type
         if data_type == bool or (isinstance(value, str) and value.strip().lower() in ("true", "false")):
             editor = QtWidgets.QCheckBox(parent)
@@ -223,6 +372,59 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
 
         return ".".join(path_parts)
 
+    def _is_theme_setting(self, setting_path: str) -> bool:
+        return setting_path == "gui.style_sheet"
+
+    def _create_theme_editor(self, parent, value, tooltip):
+        current_value = "" if value is None else str(value)
+        combo = QtWidgets.QComboBox(parent)
+
+        themes = []
+        try:
+            package_styles_dir = pathlib.Path(chisurf.__file__).parent / "gui" / "styles"
+            if package_styles_dir.is_dir():
+                for p in sorted(package_styles_dir.glob("*.qss")):
+                    name = p.name
+                    if name not in themes:
+                        themes.append(name)
+        except Exception as e:
+            logging.log(1, f"Error while listing package styles: {e}")
+
+        try:
+            user_styles_dir = chisurf.settings.get_path('settings') / 'styles'
+            if user_styles_dir.is_dir():
+                for p in sorted(user_styles_dir.glob("*.qss")):
+                    name = p.name
+                    if name not in themes:
+                        themes.append(name)
+        except Exception as e:
+            logging.log(1, f"Error while listing user styles: {e}")
+
+        if not themes:
+            combo.addItem("<no styles available>")
+            combo.setProperty("hasThemes", False)
+            combo.setEnabled(False)
+            if tooltip:
+                combo.setToolTip(tooltip)
+            return combo
+
+        for name in themes:
+            combo.addItem(name)
+
+        if current_value and current_value in themes:
+            index = combo.findText(current_value)
+            if index >= 0:
+                combo.setCurrentIndex(index)
+        else:
+            combo.setCurrentIndex(0)
+
+        if tooltip:
+            combo.setToolTip(tooltip)
+
+        combo.setProperty("hasThemes", True)
+
+        return combo
+
     def _choose_color(self, button):
         """Open a color dialog and set the selected color."""
         current_color = QtGui.QColor(button.text())
@@ -249,6 +451,16 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
         """Set the model data from the editor."""
         if not index.isValid() or index.column() != 1:
             super().setModelData(editor, model, index)
+            return
+
+        setting_path = self._get_setting_path(index)
+
+        if self._is_theme_setting(setting_path) and isinstance(editor, QtWidgets.QComboBox):
+            if editor.property("hasThemes") is False:
+                return
+            new_value = editor.currentText()
+            model.setData(index, new_value, QtCore.Qt.EditRole)
+            model.setData(index, new_value, QtCore.Qt.UserRole)
             return
 
         # Prefer typed value from UserRole; fallback to EditRole
@@ -353,7 +565,7 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
 class SettingsTreeModel(QtGui.QStandardItemModel):
     """A tree model for displaying and editing settings."""
 
-    def __init__(self, parent=None, documentation_dict=None):
+    def __init__(self, parent=None, documentation_dict=None, source_filename: str | None = None):
         """
         Initialize the model.
 
@@ -363,10 +575,14 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
             The parent object.
         documentation_dict : dict, optional
             A dictionary containing documentation for settings.
+        source_filename : str, optional
+            Path to the YAML settings file being edited; used to resolve
+            per-setting help topics into documentation anchors.
         """
-        super().__init__(0, 2, parent)
-        self.setHorizontalHeaderLabels(["Setting", "Value"])
+        super().__init__(0, 3, parent)
+        self.setHorizontalHeaderLabels(["Setting", "Value", "Help"])
         self.documentation_dict = documentation_dict or {}
+        self.source_filename: str | None = source_filename
 
     def load_settings(self, settings_dict):
         """
@@ -378,7 +594,7 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
             The settings dictionary to load.
         """
         self.clear()
-        self.setHorizontalHeaderLabels(["Setting", "Value"])
+        self.setHorizontalHeaderLabels(["Setting", "Value", "Help"])
         self._populate_model(settings_dict)
 
     def _populate_model(self, settings_dict, parent=None, path=""):
@@ -455,8 +671,21 @@ class SettingsTreeModel(QtGui.QStandardItemModel):
                 key_item.setToolTip(tooltip)
                 value_item.setToolTip(tooltip)
 
+            # Create help item with optional topic mapping
+            help_item = QtGui.QStandardItem()
+            help_item.setEditable(False)
+            topic = get_help_topic_for_setting(current_path, getattr(self, "source_filename", None))
+            if topic:
+                help_item.setText("?")
+                help_item.setData(topic, QtCore.Qt.UserRole)
+                # Use the same tooltip if available
+                if current_path in self.documentation_dict:
+                    help_item.setToolTip(self.documentation_dict[current_path])
+            else:
+                help_item.setText("")
+
             # Add items to model
-            row = [key_item, value_item]
+            row = [key_item, value_item, help_item]
 
             if isinstance(value, dict):
                 # For dictionaries, add as parent and recurse
@@ -629,6 +858,9 @@ class SettingsEditor(QtWidgets.QWidget):
         self.delegate = self.create_delegate()
         self.tree_view.setItemDelegate(self.delegate)
 
+        # React to clicks in the Help column
+        self.tree_view.clicked.connect(self.on_tree_view_clicked)
+
         # Add tree view to layout
         layout.addWidget(self.tree_view)
 
@@ -668,7 +900,7 @@ class SettingsEditor(QtWidgets.QWidget):
         QAbstractItemModel
             The model for the tree view.
         """
-        return SettingsTreeModel(self, self.documentation_dict)
+        return SettingsTreeModel(self, self.documentation_dict, source_filename=self.filename)
 
     def create_delegate(self):
         """
@@ -702,6 +934,13 @@ class SettingsEditor(QtWidgets.QWidget):
 
             self.path_label.setText(str(filename))
             self.filename = filename
+
+            # Ensure the model knows which file it represents (for help topics)
+            try:
+                if hasattr(self.model, "source_filename"):
+                    self.model.source_filename = filename
+            except Exception:
+                pass
 
             # Load settings into model
             self.model.load_settings(self.settings_dict)
@@ -841,6 +1080,121 @@ class SettingsEditor(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(
                 self, "Save Error", f"Error saving settings: {str(e)}"
             )
+
+    def on_tree_view_clicked(self, index: QtCore.QModelIndex):
+        """Handle clicks in the settings tree.
+
+        Clicking the Help column (column 2) opens the corresponding
+        documentation section in the help browser when available.
+        """
+        try:
+            if not index.isValid():
+                return
+            if index.column() != 2:
+                return
+            topic = index.data(QtCore.Qt.UserRole)
+            if not topic:
+                return
+            self.open_help_topic(str(topic))
+        except Exception as e:
+            logging.log(1, f"Error handling help click: {e}")
+
+    def open_help_topic(self, topic: str) -> None:
+        """Open the help browser for a given topic string.
+
+        The topic is typically of the form "docs/chisurf_settings.md#anchor".
+        Preference is given to delegating to the main window's
+        ``open_context_help_for_reader`` when available; otherwise we
+        fall back to opening the help plugin directly.
+        """
+        if not topic:
+            return
+
+        txt = str(topic).strip()
+        if not txt:
+            return
+
+        # 1) Prefer delegating to the main window if available
+        try:
+            main_win = getattr(chisurf, "cs", None)
+            if main_win is not None and hasattr(main_win, "open_context_help_for_reader"):
+                try:
+                    main_win.open_context_help_for_reader(txt)
+                    return
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # 2) Fallback: directly use the help plugin
+        try:
+            import importlib
+            import pathlib as _pl
+
+            help_plugin = importlib.import_module("chisurf.plugins.help")
+
+            # Reuse a singleton window attached to the chisurf module
+            window = getattr(chisurf, "_settings_help_window", None)
+            if window is None or not isinstance(window, help_plugin.HelpWidget):
+                window = help_plugin.HelpWidget()
+                try:
+                    window.destroyed.connect(lambda _=None: setattr(chisurf, "_settings_help_window", None))
+                except Exception:
+                    pass
+                chisurf._settings_help_window = window
+
+            handled = False
+            try:
+                path_part = txt
+                anchor = None
+                if "#" in txt:
+                    path_part, frag = txt.split("#", 1)
+                    path_part = path_part.strip()
+                    anchor = frag.strip() or None
+
+                if path_part.lower().endswith(".md"):
+                    raw_path = _pl.Path(path_part)
+
+                    # Resolve relative paths against the project root (same
+                    # convention as the help plugin itself).
+                    if not raw_path.is_absolute():
+                        try:
+                            base = _pl.Path(chisurf.__file__).resolve().parent
+                            root = base.parent
+                            candidate = (root / raw_path).resolve()
+                        except Exception:
+                            candidate = raw_path
+                    else:
+                        candidate = raw_path
+
+                    if candidate.exists():
+                        try:
+                            window.open_markdown_path(candidate, anchor)
+                            handled = True
+                        except Exception:
+                            handled = False
+            except Exception:
+                handled = False
+
+            # If we could not resolve a concrete Markdown path, fall back to
+            # using the free-text filter.
+            if not handled and txt:
+                try:
+                    window.filter_line_edit.setText(txt)
+                except Exception:
+                    pass
+
+            window.show()
+            try:
+                window.raise_()
+                window.activateWindow()
+            except Exception:
+                pass
+        except Exception as e:
+            try:
+                QtWidgets.QMessageBox.critical(self, "Help Error", f"Could not open help: {e}")
+            except Exception:
+                logging.log(1, f"Could not open help: {e}")
 
     def show_help(self):
         """Show help information."""
