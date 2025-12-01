@@ -65,11 +65,11 @@ def read_burst_ids(
     Examples
     --------
 
-    >>> import chisurf.fio, glob
-    >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\BID"
-    >>> files = glob.glob(directory+'/*.bst')
-    >>> bids = chisurf.fio.photons.read_burst_ids(files)
-    >>> bids[1]
+    >>> import chisurf.fio, glob  # doctest: +SKIP
+    >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\\BID"  # doctest: +SKIP
+    >>> files = glob.glob(directory+'/*.bst')  # doctest: +SKIP
+    >>> bids = chisurf.fio.photons.read_burst_ids(files)  # doctest: +SKIP
+    >>> bids[1]  # doctest: +SKIP
     array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,
        20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,
        20402, 20403, 20404, 20405, 20406, 20407, 20408, 20409, 20410,
@@ -139,12 +139,11 @@ class Photons(object):
 
     Examples
     --------
-
-    >>> import chisurf.fio, glob
-    >>> directory = './test/data/tttr/BH/'
-    >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')
-    >>> photons = chisurf.fio.photons.Photons(spc_files, file_type="bh132")
-    >>> print(photons)
+    >>> import chisurf.fio, glob  # doctest: +SKIP
+    >>> directory = './test/data/tttr/BH/'  # doctest: +SKIP
+    >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')  # doctest: +SKIP
+    >>> photons = chisurf.fio.photons.Photons(spc_files, file_type="bh132")  # doctest: +SKIP
+    >>> print(photons)  # doctest: +SKIP
     File-type: bh132
     Filename(s):
             ./test/data/tttr/spc132/hGBP1_18D\m000.spc
@@ -155,7 +154,7 @@ class Photons(object):
     nROUT:  255
     MTCLK [ms]:     1.36000003815e-05
 
-    >>> print(photons[:10])
+    >>> print(photons[:10])  # doctest: +SKIP
     File-type: None
     Filename(s):    None
     nTAC:   4095
