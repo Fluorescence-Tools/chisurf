@@ -4,6 +4,7 @@ import chisurf.math.rand
 import chisurf.math.signal
 import chisurf.math.datatools
 import chisurf.math.functions
+import chisurf.math.regularization
 
 ## Moved back to chisurf
 #import scikit_fluorescence.math.functions as functions
