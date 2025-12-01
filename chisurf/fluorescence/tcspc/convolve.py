@@ -358,6 +358,12 @@ def convolve_decay_nb(
     return decay_out
 
 
+# Backwards-compatible alias: older code and doctests refer to
+# `convolve_decay`, which historically wrapped this Numba-accelerated
+# implementation.
+convolve_decay = convolve_decay_nb
+
+
 def convolve_lifetime_spectrum(
         output_decay: np.array,
         lifetime_spectrum: np.array,
