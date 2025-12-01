@@ -12,14 +12,19 @@ import chisurf.gui.widgets.fitting.widgets
 from chisurf.models.tcspc.lifetime import Lifetime, LifetimeModel
 from chisurf.fluorescence.general import distribution2rates, rates2lifetimes
 from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
+from chisurf.settings.settings_utils import build_fret_rda_axis
 
-
-rda_axis = np.logspace(
-    start=np.log10(chisurf.settings.fret['rda_min']),
-    stop=np.log10(chisurf.settings.fret['rda_max']),
-    num=chisurf.settings.fret['rda_resolution'],
-    dtype=np.float64
-)
+try:
+    # Prefer the central global R_DA axis defined in chisurf.fluorescence.
+    rda_axis = chisurf.fluorescence.rda_axis
+except Exception:
+    # Fallback: reconstruct from settings if the central axis is not available.
+    _fret_cfg = getattr(chisurf.settings, "fret", {}) or {}
+    _rda_min = _fret_cfg.get("rda_min", 1.0)
+    _rda_max = _fret_cfg.get("rda_max", 130.0)
+    _rda_res = _fret_cfg.get("rda_resolution", 96)
+    _rda_scale = _fret_cfg.get("rda_scale", "log")
+    rda_axis = build_fret_rda_axis(_rda_min, _rda_max, _rda_res, _rda_scale)
 
 
 class FRETParameters(FittingParameterGroup):
@@ -97,7 +102,7 @@ class FRETParameters(FittingParameterGroup):
             fixed=False,
             lb=0.0,
             ub=1.0,
-            bounds_on=False,
+            bounds_on=True,
             model=model
         )
 
@@ -601,6 +606,54 @@ class FRETModel(LifetimeModel):
         widgets = super().get_parameter_widgets() if hasattr(super(), 'get_parameter_widgets') else []
         return widgets
 
+    def get_state(self) -> dict:
+        state = super().get_state()
+        if not isinstance(state, dict):
+            state = {}
+        extra = state.get("extra")
+        if not isinstance(extra, dict):
+            extra = {}
+            state["extra"] = extra
+        donor = getattr(self, "donors", None)
+        try:
+            if donor is not None:
+                extra["donor_lifetimes_n"] = int(len(donor))
+        except Exception:
+            pass
+        return state
+
+    def set_state(self, state: dict) -> None:
+        if not isinstance(state, dict):
+            return
+        extra = state.get("extra") or {}
+        donor = getattr(self, "donor", None)
+        try:
+            target_n = extra.get("donor_lifetimes_n")
+            if donor is not None and target_n is not None:
+                target_n = int(target_n)
+                while True:
+                    try:
+                        current_n = int(len(donor))
+                    except Exception:
+                        break
+                    if current_n >= target_n:
+                        break
+                    try:
+                        donor.append()
+                    except TypeError:
+                        try:
+                            donor.append(amplitude=1.0, lifetime=4.0)
+                        except Exception:
+                            break
+                try:
+                    while len(donor) > target_n:
+                        donor.pop()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        super().set_state(state)
+
 
 class GaussianModel(FRETModel):
 
@@ -625,6 +678,54 @@ class GaussianModel(FRETModel):
     def __init__(self, fit: chisurf.fitting.fit.FitGroup, **kwargs):
         super().__init__(fit, **kwargs)
         self.gaussians = kwargs.get('gaussians', Gaussians(**kwargs))
+
+    def get_state(self) -> dict:
+        state = super().get_state()
+        if not isinstance(state, dict):
+            state = {}
+        extra = state.get("extra")
+        if not isinstance(extra, dict):
+            extra = {}
+            state["extra"] = extra
+        gaussians = getattr(self, "gaussians", None)
+        try:
+            if gaussians is not None:
+                extra["gaussians_n"] = int(len(gaussians))
+        except Exception:
+            pass
+        return state
+
+    def set_state(self, state: dict) -> None:
+        if not isinstance(state, dict):
+            return
+        extra = state.get("extra") or {}
+        gaussians = getattr(self, "gaussians", None)
+        try:
+            target_n = extra.get("gaussians_n")
+            if gaussians is not None and target_n is not None:
+                target_n = int(target_n)
+                while True:
+                    try:
+                        current_n = int(len(gaussians))
+                    except Exception:
+                        break
+                    if current_n >= target_n:
+                        break
+                    try:
+                        gaussians.append(mean=50.0, sigma=6.0, x=1.0)
+                    except TypeError:
+                        try:
+                            gaussians.append(50.0, 6.0, 1.0)
+                        except Exception:
+                            break
+                try:
+                    while len(gaussians) > target_n:
+                        gaussians.pop()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        super().set_state(state)
 
 
 class FRETrateModel(FRETModel):
