@@ -243,6 +243,25 @@ class MaxEntFCSModel(ModelCurve):
         except Exception as e2:
             print(f"MaxEntFCSModel.set_reg_from_lcurve_index: update_model() failed: {e2}")
 
+    def on_auto_fit_range_completed(self) -> None:
+        compute_l = getattr(self, "compute_l_curve", None)
+        corner_fn = getattr(self, "l_curve_corner_index", None)
+        set_from_idx = getattr(self, "set_reg_from_lcurve_index", None)
+        if not (callable(compute_l) and callable(corner_fn) and callable(set_from_idx)):
+            return
+        try:
+            compute_l(n_points=32, log10_min=-3.0, log10_max=3.0)
+            idx = corner_fn()
+            if idx is not None:
+                set_from_idx(int(idx))
+        except Exception as e:
+            try:
+                chisurf.logging.warning(
+                    f"MaxEntFCSModel.on_auto_fit_range_completed: auto L-curve sweep failed: {e}"
+                )
+            except Exception:
+                pass
+
     def update_model(self, **kwargs) -> None:
         """Run MaxEnt on the current FCS dataset and update the model curve.
 
