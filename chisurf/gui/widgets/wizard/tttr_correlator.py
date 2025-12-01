@@ -13,6 +13,7 @@ import chisurf.fio as io
 import chisurf.gui.decorators
 import chisurf.settings
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
+from chisurf.fluorescence.fcs.channel_setups import load_fcs_channel_setups
 
 colors = chisurf.settings.gui['plot']['colors']
 
@@ -740,8 +741,25 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         # Flag to track correlation status
         self.is_correlated = False
 
+        # FCS presets (from fcs_channel_setups.json)
+        self._fcs_presets = []
+        self._fcs_preset_detectors = {}
+        self._fcs_preset_corr = {}
+
         self.textEdit.setVisible(False)
         chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit_3, call=self.open_analysis_folder)
+
+        # Preset combobox is defined in the .ui (comboBox_fcs_preset) in a row
+        # directly above the "Correlation channels" group box.
+        cb = getattr(self, 'comboBox_fcs_preset', None)
+        if isinstance(cb, QtWidgets.QComboBox):
+            self.comboBox_fcs_preset = cb
+            self.comboBox_fcs_preset.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
+            self.comboBox_fcs_preset.clear()
+            self.comboBox_fcs_preset.addItem("")
+            self.comboBox_fcs_preset.currentIndexChanged.connect(self._on_fcs_preset_changed)
+        else:
+            self.comboBox_fcs_preset = None
 
         # Create plots
         self.pw_fcs = pg.PlotWidget()
@@ -790,6 +808,91 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
         # Ensure parameters are updated after setting them
         self.update_parameter()
+
+    # ---- FCS presets ----------------------------------------------
+
+    def load_fcs_presets(self, setup_name, detectors) -> None:
+        """Load presets for a detector setup into the preset combobox."""
+        if getattr(self, 'comboBox_fcs_preset', None) is None:
+            return
+        cfg = load_fcs_channel_setups()
+        setups = cfg.get('setups', {}) if isinstance(cfg, dict) else {}
+        block = setups.get(setup_name or "", {}) if isinstance(setups, dict) else {}
+        pairs = block.get('pairs', []) if isinstance(block, dict) else []
+        if not isinstance(pairs, list):
+            pairs = []
+        self._fcs_presets = pairs
+        self._fcs_preset_detectors = detectors or {}
+        self._fcs_preset_corr = block.get('correlator', {}) if isinstance(block, dict) else {}
+        cb = self.comboBox_fcs_preset
+        try:
+            cb.blockSignals(True)
+            cb.clear()
+            cb.addItem("")
+            for p in self._fcs_presets:
+                try:
+                    cha = str(p.get('channel_a', ''))
+                    chb = str(p.get('channel_b', ''))
+                    nm = str(p.get('name', ''))
+                except Exception:
+                    continue
+                if not nm:
+                    if cha and chb:
+                        nm = f"{cha}×{chb}" if cha != chb else f"{cha}_ACF"
+                    else:
+                        nm = "(unnamed)"
+                cb.addItem(nm)
+        finally:
+            try:
+                cb.blockSignals(False)
+            except Exception:
+                pass
+
+    def _on_fcs_preset_changed(self, index: int) -> None:
+        if index <= 0 or not self._fcs_presets:
+            return
+        try:
+            pair = self._fcs_presets[index - 1]
+        except Exception:
+            return
+        dets = self._fcs_preset_detectors or {}
+        try:
+            cha_name = str(pair.get('channel_a', ''))
+            chb_name = str(pair.get('channel_b', ''))
+        except Exception:
+            return
+        da = dets.get(cha_name, {}) if isinstance(dets, dict) else {}
+        db = dets.get(chb_name, {}) if isinstance(dets, dict) else {}
+        chs_a = da.get('chs', []) or []
+        chs_b = db.get('chs', []) or chs_a
+        if chs_a:
+            self.lineEdit.setText(','.join(map(str, chs_a)))
+        if chs_b:
+            self.lineEdit_2.setText(','.join(map(str, chs_b)))
+        mta = da.get('micro_time_ranges', []) or []
+        mtb = db.get('micro_time_ranges', []) or []
+        if mta:
+            self.lineEdit_6.setText(';'.join(f"{a}-{b}" for a, b in mta))
+        if mtb:
+            self.lineEdit_7.setText(';'.join(f"{a}-{b}" for a, b in mtb))
+        corr = dict(self._fcs_preset_corr)
+        pc = pair.get('correlator')
+        if isinstance(pc, dict):
+            corr.update(pc)
+        try:
+            if 'n_bins' in corr:
+                self.spinBox_2.setValue(int(corr['n_bins']))
+            if 'n_casc' in corr:
+                self.spinBox_3.setValue(int(corr['n_casc']))
+            if 'make_fine' in corr:
+                self.checkBox_2.setChecked(bool(corr['make_fine']))
+        except Exception:
+            pass
+        try:
+            self.update_parameter()
+            self.update_output_path()
+        except Exception:
+            pass
 
     def _apply_initial_parameters(
             self, ncasc, nbins, nsplits, is_fine, channel_a, channel_b,
@@ -859,6 +962,15 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         except Exception:
             channel_defs = {}
         self.populate_channel_combos(channel_defs)
+
+        # Load FCS presets for this detector setup, if available
+        try:
+            settings = detector_page.get_settings()
+            dets = settings.get('detectors', {}) or {}
+        except Exception:
+            dets = {}
+        setup_name = getattr(detector_page, 'current_setup_name', None)
+        self.load_fcs_presets(setup_name, dets)
 
     def populate_channel_combos(self, channel_defs: dict):
         """

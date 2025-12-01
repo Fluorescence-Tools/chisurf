@@ -69,6 +69,20 @@ p, li { white-space: pre-wrap; }
         <number>0</number>
        </property>
        <item row="1" column="0" colspan="2">
+        <layout class="QHBoxLayout" name="horizontalLayoutPreset">
+         <item>
+          <widget class="QLabel" name="label_preset">
+           <property name="text">
+            <string>Preset</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_fcs_preset"/>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
           <string>Correlation channels</string>
@@ -250,7 +264,7 @@ p, li { white-space: pre-wrap; }
          </layout>
         </widget>
        </item>
-       <item row="2" column="0" colspan="2">
+       <item row="3" column="0" colspan="2">
         <widget class="QGroupBox" name="groupBox_3">
          <property name="title">
           <string>Correlation settings</string>
@@ -285,7 +299,7 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="4" column="1">
            <widget class="QSpinBox" name="spinBox_2">
             <property name="suffix">
              <string> bins</string>
@@ -362,6 +376,20 @@ p, li { white-space: pre-wrap; }
              <string>Target path</string>
             </property>
            </widget>
+          </item>
+          <!-- Spacer to keep Correlation settings widgets packed towards the top -->
+          <item row="6" column="0" colspan="3">
+           <spacer name="verticalSpacer_corrSettings">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>
