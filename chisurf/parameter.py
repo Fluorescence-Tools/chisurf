@@ -15,6 +15,29 @@ T = typing.TypeVar('T', bound='Parameter')
 
 @chisurf.decorators.register
 class Parameter(chisurf.base.Base):
+    """Scalar parameter backed by a low-level :mod:`chinet` port.
+
+    A :class:`Parameter` represents a single scalar value used in a model
+    or fit. The value can be
+
+    - stored directly in an underlying :class:`chinet.Port`,
+    - computed dynamically from a Python callable, or
+    - linked to another :class:`Parameter`.
+
+    Bounds and a fixed flag are forwarded to the underlying port.
+
+    Examples
+    --------
+    Create a simple parameter and use it in arithmetic expressions:
+
+    >>> from chisurf.parameter import Parameter
+    >>> p = Parameter(name="amp", value=1.5)
+    >>> float(p)
+    1.5
+    >>> q = p + 2.0
+    >>> float(q)
+    3.5
+    """
 
     @staticmethod
     def check_recursive_link(current, target):
@@ -48,8 +71,9 @@ class Parameter(chisurf.base.Base):
 
     @property
     def bounds(self) -> typing.Tuple[float, float]:
-        """A tuple containing the values for the lower (first value) and
-        the upper (second value) of the bound.
+        """Lower and upper bounds of the parameter as a 2-tuple.
+
+        The values are stored on the underlying :class:`chinet.Port`.
         """
         return self._port.bounds
 
@@ -59,6 +83,7 @@ class Parameter(chisurf.base.Base):
 
     @property
     def bounds_on(self):
+        """Whether bounds are currently enforced on the parameter."""
         return self._port.bounded
 
     @bounds_on.setter
@@ -67,15 +92,15 @@ class Parameter(chisurf.base.Base):
 
     @property
     def value(self) -> float:
-        """
-        float: The current parameter value.
+        """Current scalar value of the parameter.
 
-        If a callable is set, it is evaluated every time this property is accessed.
-        The result is clamped to bounds if bounds are enabled, and if the parameter
-        is not fixed, it is written back to the underlying port.
+        If a callable was passed at construction time, it is evaluated each
+        time this property is accessed. The result is clamped to bounds (if
+        enabled) and, when the parameter is not fixed, written back to the
+        underlying port.
 
-        If the parameter is linked, the link takes precedence and the callable
-        is ignored.
+        If the parameter is linked to another :class:`Parameter`, the link
+        takes precedence and the callable is ignored.
         """
         # If linked, defer entirely to linked parameter's port value.
         if self.is_linked:
@@ -87,28 +112,37 @@ class Parameter(chisurf.base.Base):
                 v = float(self._callable())
             except Exception:
                 return self._port.value
-            if self.bounds_on:
-                lb, ub = self.bounds
-                if np.isfinite(lb):
-                    v = max(lb, v)
-                if np.isfinite(ub):
-                    v = min(ub, v)
-            if not self.fixed:
-                f = self._port.fixed
-                self._port.fixed = False
-                self._port.value = v
-                self._port.fixed = f
-            return v
+        else:
+            v = float(self._port.value)
 
-        return self._port.value
+        # Apply bounds on read for both callable and non-callable parameters
+        # if bounds are enabled. This matches the behaviour expected in the
+        # unit tests (``test_bounds``), where reading ``value`` after an
+        # out-of-bounds assignment should return the clamped value.
+        if self.bounds_on:
+            lb, ub = self.bounds
+            if np.isfinite(lb):
+                v = max(lb, v)
+            if np.isfinite(ub):
+                v = min(ub, v)
+
+        # Write the clamped value back to the port when the parameter is not
+        # fixed, so subsequent reads remain consistent.
+        if not self.fixed:
+            f = self._port.fixed
+            self._port.fixed = False
+            self._port.value = v
+            self._port.fixed = f
+
+        return v
 
     @value.setter
     def value(self, value: float):
-        """
-        Set the parameter value.
+        """Set the parameter value.
 
-        If the parameter is callable-backed, the setter is ignored to enforce
-        that the callable is always used.
+        When the parameter was constructed from a callable, the setter is
+        ignored to ensure that the callable remains the single source of
+        truth.
         """
         if self._callable:
             return
@@ -136,10 +170,12 @@ class Parameter(chisurf.base.Base):
 
     @property
     def is_linked(self) -> bool:
+        """Whether this parameter is linked to another parameter."""
         return self._port.is_linked
 
     @property
     def fixed(self):
+        """Boolean flag indicating whether the parameter is fixed."""
         return self._port.fixed
 
     @fixed.setter
@@ -219,8 +255,16 @@ class Parameter(chisurf.base.Base):
         return super().__hash__()
 
     def __repr__(self):
-        s = self.value.__repr__()
-        return s
+        """Return a compact string representation of the parameter value.
+
+        For integer-like values we avoid a trailing ``.0`` so that tests
+        expecting ``"22"`` rather than ``"22.0"`` continue to pass.
+        """
+
+        v = float(self.value)
+        if v.is_integer():
+            return str(int(v))
+        return repr(v)
 
     def __abs__(self):
         return self.__class__(
@@ -248,29 +292,63 @@ class Parameter(chisurf.base.Base):
 
     @abc.abstractmethod
     def update(self):
+        """Hook for subclasses to react to external changes.
+
+        The base :class:`Parameter` does not define an update strategy; this
+        method primarily exists so GUI-aware subclasses can synchronize their
+        controllers.
+        """
         pass
 
     def __init__(self, value: float = 1.0, link: 'Parameter' = None,
                  lb: float = float("-inf"), ub: float = float("inf"),
                  bounds_on: bool = False, *args, **kwargs):
-        """
-        Initialize a Parameter.
+        """Initialize a :class:`Parameter` instance.
 
         Parameters
         ----------
         value : float or callable
-            Initial value of the parameter, or a callable to compute it dynamically.
+            Initial value of the parameter, or a callable computing it
+            dynamically.
         link : Parameter, optional
-            Another parameter to link this parameter to.
-        lb : float
-            Lower bound for the parameter.
-        ub : float
-            Upper bound for the parameter.
-        bounds_on : bool
-            Whether bounds should be enforced.
+            Another parameter this one should be linked to.
+        lb, ub : float, optional
+            Lower and upper bounds for the value stored on the underlying
+            :class:`chinet.Port`.
+        bounds_on : bool, optional
+            If *True*, the bounds are enforced on the port.
         """
         super().__init__(*args, **kwargs)
         self._name = kwargs.pop('name', '')
+        # Optional free-form description used by fitting GUIs to show
+        # human-readable details for a parameter.
+        desc = kwargs.pop('description', "")
+        registry_id = kwargs.pop('registry_id', None)
+        if not desc:
+            try:
+                meta = getattr(chisurf.settings, "fitting_parameters", {})
+                params_meta = meta.get("parameters", meta) if isinstance(meta, dict) else {}
+                entry = None
+                if isinstance(params_meta, dict):
+                    if registry_id is not None:
+                        entry = params_meta.get(registry_id)
+                    if entry is None:
+                        entry = params_meta.get(self._name)
+                    if entry is None:
+                        for _key, _val in params_meta.items():
+                            if not isinstance(_val, dict):
+                                continue
+                            aliases = _val.get("aliases") or []
+                            if isinstance(aliases, list) and self._name in aliases:
+                                entry = _val
+                                break
+                if isinstance(entry, dict):
+                    d_reg = entry.get("description")
+                    if isinstance(d_reg, str) and d_reg:
+                        desc = d_reg
+            except Exception:
+                pass
+        self.description = desc
         port = kwargs.pop('port', None)
         if port is not None:
             self._port = port
@@ -293,8 +371,84 @@ class Parameter(chisurf.base.Base):
             self._port.link = link._port
         self.controller = None
 
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of this parameter's state.
+
+        The state is intentionally lightweight and focuses on the
+        high-level attributes expected to round-trip in tests and project
+        save/load: ``value``, ``bounds_on``, ``bounds`` and ``fixed``.
+        """
+
+        try:
+            lb, ub = self.bounds
+        except Exception:
+            lb, ub = float("-inf"), float("inf")
+        try:
+            desc = getattr(self, "description", "")
+        except Exception:
+            desc = ""
+        return {
+            "value": float(self.value),
+            "bounds_on": bool(self.bounds_on),
+            "bounds": [float(lb), float(ub)],
+            "fixed": bool(self.fixed),
+            "description": str(desc),
+        }
+
+    def set_state(self, state: dict) -> None:
+        """Restore parameter state from :meth:`get_state` output.
+
+        After restoring the core scalar attributes, :meth:`update` is called
+        so any attached GUI controller can refresh itself.
+        """
+
+        if not isinstance(state, dict):
+            return
+
+        try:
+            if "bounds" in state:
+                b = state["bounds"]
+                if isinstance(b, (list, tuple)) and len(b) == 2:
+                    self.bounds = (float(b[0]), float(b[1]))
+            if "bounds_on" in state:
+                self.bounds_on = bool(state["bounds_on"])
+            if "fixed" in state:
+                self.fixed = bool(state["fixed"])
+            if "value" in state:
+                self.value = float(state["value"])
+            if "description" in state:
+                try:
+                    self.description = str(state["description"])
+                except Exception:
+                    pass
+        except Exception:
+            return
+
+        try:
+            self.update()
+        except Exception:
+            # Parameters without a concrete update hook simply ignore this.
+            pass
+
 
 class ParameterGroup(chisurf.base.Base):
+    """Container for a list of :class:`Parameter` objects.
+
+    The group behaves like a light-weight collection that forwards attribute
+    access to contained parameters when appropriate. It is mainly used to
+    manage related parameters in a convenient way.
+
+    Examples
+    --------
+    >>> from chisurf.parameter import Parameter, ParameterGroup
+    >>> p1 = Parameter(name="a", value=1.0)
+    >>> p2 = Parameter(name="b", value=2.0)
+    >>> group = ParameterGroup(parameters=[p1, p2])
+    >>> group.parameter_names
+    ['a', 'b']
+    >>> sum(group.values)
+    3.0
+    """
 
     def __init__(
             self,
@@ -306,6 +460,40 @@ class ParameterGroup(chisurf.base.Base):
         if parameters is None:
             parameters = list()
         self._parameter = parameters
+
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of all contained parameters.
+
+        The structure mirrors :meth:`to_dict` but is intended specifically for
+        lightweight state transfer and testing.
+        """
+
+        try:
+            return self.to_dict()
+        except Exception:
+            return {}
+
+    def set_state(self, state: dict) -> None:
+        """Restore group/parameter state from :meth:`get_state` output.
+
+        This forwards to :meth:`from_dict` and then asks each contained
+        parameter to :meth:`update`, allowing any associated UI controllers to
+        refresh.
+        """
+
+        if not isinstance(state, dict):
+            return
+        try:
+            self.from_dict(state)
+        except Exception:
+            return
+        try:
+            for p in getattr(self, "parameters", []):
+                upd = getattr(p, "update", None)
+                if callable(upd):
+                    upd()
+        except Exception:
+            pass
 
     def __setattr__(
             self,
