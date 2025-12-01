@@ -23,6 +23,14 @@ import chisurf.math.optimization
 
 
 class Fit(chisurf.base.Base):
+    """Fit of a single data set with a single model.
+
+    The :class:`Fit` object owns a :class:`chisurf.data.DataCurve` instance
+    (accessible via :attr:`data`) and a :class:`chisurf.models.ModelCurve`
+    instance (via :attr:`model`). It provides convenience properties for
+    weighted residuals, chi² statistics, and running a local least-squares
+    optimization.
+    """
 
     @property
     def fit_idx(self) -> int:
@@ -101,6 +109,12 @@ class Fit(chisurf.base.Base):
         return get_chi2(list(), model=self.model)
 
     @property
+    def durbin_watson(self) -> float:
+        return chisurf.math.statistics.durbin_watson(
+            self.weighted_residuals.y
+        )
+
+    @property
     def name(self) -> str:
         try:
             return self.model.__class__.name + " - " + self._data.name
@@ -112,13 +126,88 @@ class Fit(chisurf.base.Base):
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(self, v: typing.Tuple[int, int]):
-        self.xmin, self.xmax = v
+    def fit_range(self, v):
+        vals = tuple(int(x) for x in v)
+        if len(vals) == 2:
+            # Backwards-compatible 1D range: do not touch any existing mask.
+            xmin1, xmax1 = vals
+            self.xmin, self.xmax = xmin1, xmax1
+
+            # Rebuild a simple 1D mask matching the fit range so that APIs
+            # like ``cs.current_fit.fit_range = i, j`` also update the mask
+            # used by residual-based tools and the Data table.
+            try:
+                y = getattr(self.data, "y", None)
+                n = int(len(y)) if y is not None else 0
+            except Exception:
+                n = 0
+            if n <= 0:
+                self.mask = None
+                return
+
+            lb1 = max(0, int(xmin1))
+            ub1 = max(lb1, min(int(xmax1), n))
+            mask = np.zeros(n, dtype=float)
+            if ub1 > lb1:
+                mask[lb1:ub1] = 1.0
+            self.mask = mask
+            return
+        if len(vals) != 4:
+            raise ValueError("fit_range must be a 2- or 4-tuple of integers")
+
+        xmin1, xmax1, xmin2, xmax2 = vals
+        # Primary 1D range still defined by the first interval
+        self.xmin, self.xmax = xmin1, xmax1
+
+        # Build a 1D mask as the union of [xmin1, xmax1) and [xmin2, xmax2)
+        # over the current data length.
+        try:
+            y = getattr(self.data, "y", None)
+            n = int(len(y)) if y is not None else 0
+        except Exception:
+            n = 0
+        if n <= 0:
+            # No data: clear mask but keep the primary range assignment.
+            self.mask = None
+            return
+
+        lb1 = max(0, int(xmin1))
+        ub1 = max(lb1, min(int(xmax1), n))
+        lb2 = max(0, int(xmin2))
+        ub2 = max(lb2, min(int(xmax2), n))
+        mask = np.zeros(n, dtype=float)
+        if ub1 > lb1:
+            mask[lb1:ub1] = 1.0
+        if ub2 > lb2:
+            mask[lb2:ub2] = 1.0
+        self.mask = mask
+
+    @property
+    def mask(self):
+        """Optional 1D mask or weights applied to weighted residuals.
+
+        If *mask* is boolean, False entries are excluded (residuals set to 0
+        effectively via a multiplicative 0/1 weight). If numeric, values are
+        treated as multiplicative weights on the residuals.
+        """
+
+        return getattr(self, "_mask", None)
+
+    @mask.setter
+    def mask(self, v):
+        if v is None:
+            self._mask = None
+            return
+        arr = np.asarray(v)
+        if arr.ndim != 1:
+            raise ValueError("fit.mask must be a 1D array or sequence")
+        self._mask = arr
 
     @property
     def grad(self) -> np.array:
-        """Get the approximate gradient at the current parameter values
-        :return:
+        """Approximate gradient of the residuals at current parameters.
+
+        The gradient is computed numerically via :func:`approx_grad`.
         """
         _, grad = approx_grad(
             self.model.parameter_values,
@@ -129,18 +218,16 @@ class Fit(chisurf.base.Base):
 
     @property
     def covariance_matrix(self) -> typing.Tuple[np.array, typing.typing.List[int]]:
-        """Returns the covariance matrix of the fit given the current
-        models parameter values and returns a list of the 'relevant' used
-        parameters.
+        """Approximate covariance matrix and indices of relevant parameters.
 
-        :return:
+        The matrix is computed from numerical partial derivatives obtained
+        via :func:`covariance_matrix`.
         """
         return covariance_matrix(self)
 
     @property
     def n_free(self) -> int:
-        """The number of free parameters of the models
-        """
+        """Number of free (non-fixed, non-linked) parameters in the model."""
         return self.model.n_free
 
 
@@ -154,10 +241,28 @@ class Fit(chisurf.base.Base):
             group: list = None,
             **kwargs
     ):
+        """Create a :class:`Fit` with a given model class and data.
+
+        Parameters
+        ----------
+        model_class : type
+            Model class to instantiate, typically a subclass of
+            :class:`chisurf.models.ModelCurve`.
+        data : chisurf.data.DataCurve, optional
+            Data to be fitted. If omitted, a dummy ramp is used.
+        xmin, xmax : int, optional
+            Initial fitting range indices.
+        model_kw : dict, optional
+            Keyword arguments forwarded to the model constructor.
+        group : list, optional
+            Optional list used to collect multiple :class:`Fit` instances
+            into a :class:`FitGroup`.
+        """
         super().__init__(**kwargs)
         self._model: chisurf.models.Model = None
         self._result_current = 0
         self.results = deque(maxlen=500)
+        self._mask = None
         if data is None:
             data = chisurf.data.DataCurve(
                 x=np.arange(10),
@@ -202,6 +307,58 @@ class Fit(chisurf.base.Base):
         self.model.finalize()
         self.update()
 
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of this fit's model state.
+
+        By default this delegates to :meth:`model.get_state` so that the
+        underlying model (and any nested parameter groups) control how their
+        state is serialized.
+        """
+
+        model = getattr(self, "model", None)
+        get_state = getattr(model, "get_state", None)
+        if callable(get_state):
+            try:
+                return get_state()
+            except Exception:
+                return {}
+        return {}
+
+    def set_state(self, state: dict) -> None:
+        """Restore model state from :meth:`get_state` output.
+
+        The provided ``state`` must be a dictionary produced by
+        :meth:`get_state` above. This updates parameter values, bounds,
+        fixed flags, links and any registered model-specific extras (e.g.
+        TCSPC IRF/linearization) but does not change the data object.
+        """
+
+        if not isinstance(state, dict):
+            return
+        model = getattr(self, "model", None)
+        set_state = getattr(model, "set_state", None)
+        if callable(set_state):
+            try:
+                set_state(state)
+            except Exception:
+                return
+        # After restoring the internal model/parameter state, trigger a
+        # standard fit update so that derived quantities, plots and any
+        # GUI widgets stay in sync.
+        try:
+            self.update()
+        except Exception:
+            pass
+        # Ask the model to finalize its parameter controllers so that all
+        # FittingParameter widgets refresh from the restored values.
+        try:
+            model = getattr(self, "model", None)
+            finalize = getattr(model, "finalize", None)
+            if callable(finalize):
+                finalize()
+        except Exception:
+            pass
+
     def __str__(self):
         s = "\nFitting:\n"
         s += "Dataset:\n"
@@ -216,6 +373,11 @@ class Fit(chisurf.base.Base):
         return s
 
     def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
+        """Return a mapping of named curves associated with this fit.
+
+        The dictionary typically contains entries for ``"model"``,
+        ``"data"``, ``"weighted residuals"`` and ``"autocorrelation"``.
+        """
         d = self.model.get_curves(
             copy_curves=copy_curves
         )
@@ -225,6 +387,13 @@ class Fit(chisurf.base.Base):
         return d
 
     def get_score(self, score_type: str = 'chi2'):
+        """Return a scalar goodness-of-fit score.
+
+        Parameters
+        ----------
+        score_type : {"chi2", "chi2r"}
+            Select unreduced or reduced chi².
+        """
         if score_type == 'chi2':
             return self.chi2
         elif score_type == 'chi2r':
@@ -236,6 +405,7 @@ class Fit(chisurf.base.Base):
             model: chisurf.models.Model = None,
             reduced: bool = True
     ) -> float:
+        """Convenience wrapper around :func:`get_chi2` using this fit."""
         if model is None:
             model = self.model
         return get_chi2(
@@ -250,12 +420,14 @@ class Fit(chisurf.base.Base):
             model=None,
             **kwargs
     ) -> np.ndarray:
+        """Return weighted residuals for a model attached to this fit."""
         if model is None:
             model = self.model
         if parameter is not None:
             model.parameter_values = parameter
             model.update_model()
-        return model.get_wres(self, **kwargs)
+        wres = model.get_wres(self, **kwargs)
+        return _apply_fit_mask(model, wres)
 
     def save(
             self,
@@ -265,6 +437,7 @@ class Fit(chisurf.base.Base):
             verbose: bool = False,
             **kwargs
     ) -> None:
+        """Save fit metadata and, optionally, all associated curves."""
         super().save(
             filename=filename,
             file_type=file_type,
@@ -283,6 +456,7 @@ class Fit(chisurf.base.Base):
                 )
 
     def run(self, *args, **kwargs) -> None:
+        """Run a local least-squares optimization on this fit."""
         fitting_options = chisurf.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
@@ -357,6 +531,11 @@ class Fit(chisurf.base.Base):
 
 
 class FitGroup(Fit):
+    """Group of :class:`Fit` objects that share a global model.
+
+    A :class:`FitGroup` manages multiple single-curve fits while exposing
+    an aggregate model for global optimization.
+    """
 
     @property
     def selected_fit(self) -> Fit:
@@ -401,14 +580,98 @@ class FitGroup(Fit):
         )
 
     @property
+    def mask(self):
+        """Optional global mask shared across all grouped fits.
+
+        This forwards to the currently selected fit's mask for reading and
+        propagates any assignment to all member fits, so that both the global
+        model and individual fits see the same residual weights.
+        """
+
+        return getattr(self.selected_fit, "mask", None)
+
+    @mask.setter
+    def mask(self, v):
+        for f in self:
+            setattr(f, "mask", v)
+
+    @property
     def fit_range(self) -> typing.Tuple[int, int]:
         return self.xmin, self.xmax
 
     @fit_range.setter
-    def fit_range(self, v: typing.Tuple[int, int]):
+    def fit_range(self, v):
+        vals = tuple(int(x) for x in v)
+        if len(vals) == 2:
+            # Backwards-compatible 1D range: propagate to all member fits.
+            xmin, xmax = vals
+            for f in self:
+                f.xmin, f.xmax = xmin, xmax
+            self.xmin, self.xmax = xmin, xmax
+
+            # Initialize or rebuild simple 1D masks per fit matching the
+            # common [xmin, xmax) range, clipped to each dataset length.
+            for f in self:
+                try:
+                    y = getattr(f.data, "y", None)
+                    n = int(len(y)) if y is not None else 0
+                except Exception:
+                    n = 0
+                if n <= 0:
+                    try:
+                        f.mask = None
+                    except Exception:
+                        pass
+                    continue
+                lb1 = max(0, int(xmin))
+                ub1 = max(lb1, min(int(xmax), n))
+                mask = np.zeros(n, dtype=float)
+                if ub1 > lb1:
+                    mask[lb1:ub1] = 1.0
+                try:
+                    f.mask = mask
+                except Exception:
+                    pass
+            return
+        if len(vals) != 4:
+            raise ValueError("FitGroup.fit_range must be a 2- or 4-tuple of integers")
+
+        xmin1, xmax1, xmin2, xmax2 = vals
+
+        # Primary 1D range still defined by the first interval; propagate to
+        # all member fits and to the group itself.
         for f in self:
-            f.xmin, f.xmax = v
-        self.xmin, self.xmax = v
+            f.xmin, f.xmax = xmin1, xmax1
+        self.xmin, self.xmax = xmin1, xmax1
+
+        # Build per-fit masks as the union of the two index intervals on
+        # each fit's data length so that all residuals see consistent
+        # weighting regardless of individual data sizes.
+        for f in self:
+            try:
+                y = getattr(f.data, "y", None)
+                n = int(len(y)) if y is not None else 0
+            except Exception:
+                n = 0
+            if n <= 0:
+                try:
+                    f.mask = None
+                except Exception:
+                    pass
+                continue
+            lb1 = max(0, int(xmin1))
+            ub1 = max(lb1, min(int(xmax1), n))
+            lb2 = max(0, int(xmin2))
+            ub2 = max(lb2, min(int(xmax2), n))
+            mask = np.zeros(n, dtype=float)
+            if ub1 > lb1:
+                mask[lb1:ub1] = 1.0
+            if ub2 > lb2:
+                mask[lb2:ub2] = 1.0
+            try:
+                f.mask = mask
+            except Exception:
+                pass
 
     @property
     def xmin(self) -> int:
@@ -429,6 +692,12 @@ class FitGroup(Fit):
             f.xmax = v
 
     def get_curves(self, copy_curves: bool = False, idx: int = None) -> typing.OrderedDict[str, chisurf.curve.Curve]:
+        """Return curves for one or all grouped fits.
+
+        If ``idx`` is ``None``, curves from :meth:`super().get_curves` are
+        returned. Otherwise curves are collected from the selected or all
+        grouped fits, with keys suffixed by ``"_%02d"``.
+        """
         curves = {}
         if idx is None:
             curves = super().get_curves()
@@ -462,6 +731,7 @@ class FitGroup(Fit):
             )
 
     def finalize(self):
+        """Finalize the global model and all grouped fits."""
         self.update()
         self._model.finalize()
 
@@ -470,6 +740,7 @@ class FitGroup(Fit):
             f.update()
 
     def run(self, local_first: bool = None, **kwargs):
+        """Run local fits followed by a global least-squares optimization."""
         fit: FitGroup = self
         if local_first is None:
             local_first = chisurf.settings.optimization['global_optimize_local_first']
@@ -498,6 +769,12 @@ class FitGroup(Fit):
             model_class: typing.Type[chisurf.models.Model] = type,
             model_kw: typing.Dict = None
     ):
+        """Create a :class:`FitGroup` over a :class:`DataGroup`.
+
+        One :class:`Fit` instance is created per entry in ``data`` and
+        collected into ``grouped_fits``. A global model is then constructed
+        from these.
+        """
         self._selected_fit_index = 0
         self.grouped_fits = list()
 
@@ -579,18 +856,19 @@ def sample_fit(
         temp: float = 1.0,
         **kwargs
 ):
-    """Samples the free paramter of a fit and writes the parameters with
-    corresponding chi2 to a text file.
+    """Sample free parameters of a fit and save the chain to disk.
 
-    :param fit:
-    :param filename:
-    :param method:
-    :param steps:
-    :param thin:
-    :param chi2max:
-    :param n_runs:
-    :param kwargs:
-    :return:
+    Parameters
+    ----------
+    fit : Fit
+        Fit whose parameters should be sampled.
+    filename : str
+        Output file stem for the chain; run indices are appended.
+    method : {"emcee", "mcmc"}, optional
+        Sampling backend to use.
+    steps, thin, chi2max, n_runs, step_size, temp : float or int, optional
+        Sampling configuration passed through to
+        :mod:`chisurf.fitting.sample`.
     """
     # save initial parameter values
     pv = fit.model.parameter_values
@@ -646,16 +924,26 @@ def approx_grad(
         args=(),
         f0=None
 ) -> typing.Tuple[float, np.array]:
-    """Approximate the derivative of a fit with respect to the parameters
-    xk. The return value of the function is an array.
+    """Approximate gradient of the weighted residuals with respect to ``xk``.
 
-    :param xk: values around which gradient is estimated. These values should
-    be an array of length of the free fitting parameters
-    :param fit: object of type 'Fit'
-    :param epsilon: differential change
-    :param args: additional arguments passed to 'Fit.get_wres'
-    :param f0: weighted residuals for the values xk
-    :return:
+    Parameters
+    ----------
+    xk : array_like
+        Parameter values around which the gradient is estimated.
+    fit : Fit
+        Fit providing :meth:`Fit.get_wres` and a model.
+    epsilon : float
+        Differential step size for the finite-difference approximation.
+    args : tuple, optional
+        Additional positional arguments forwarded to ``fit.get_wres``.
+    f0 : array_like, optional
+        Pre-computed weighted residuals at ``xk``.
+
+    Returns
+    -------
+    (numpy.ndarray, numpy.ndarray)
+        Tuple ``(f0, grad)`` where ``grad`` has shape
+        ``(len(xk), len(f0))``.
     """
     p0 = fit.model.parameter_values
     f = fit.get_wres
@@ -681,12 +969,21 @@ def covariance_matrix(
         epsilon: float = 1e-12, #chisurf.settings.eps,
         **kwargs
 ) -> typing.Tuple[np.array, typing.List[int]]:
-    """Calculate the covariance matrix
+    """Estimate the covariance matrix of the fit parameters.
 
-    :param fit:
-    :param kwargs:
-    :return: the covariance matrix and a list of of parameter indices which
-    are "important", i.e., have a partial derivative deviating from zero.
+    Parameters
+    ----------
+    fit : Fit
+        The fit whose model and residuals are used.
+    epsilon : float, optional
+        Step size for the numerical gradient.
+
+    Returns
+    -------
+    cov_m : numpy.ndarray
+        Approximate covariance matrix of important parameters.
+    important_parameters : list of int
+        Indices of parameters whose partial derivatives are non-zero.
     """
     model = fit.model
     xk = np.array(model.parameter_values)
@@ -718,22 +1015,60 @@ def covariance_matrix(
     return cov_m, important_parameters
 
 
+def _apply_fit_mask(
+        model: chisurf.models.Model,
+        wres: np.array
+) -> np.array:
+    """Apply an optional Fit-level mask to a residual vector.
+
+    The mask is taken from ``model.fit.mask`` if available. Boolean masks are
+    interpreted as 0/1 inclusion weights; numeric masks are used as
+    multiplicative weights. The mask is truncated to the residual length.
+    """
+
+    if wres is None:
+        return wres
+    fit = getattr(model, "fit", None)
+    if fit is None:
+        return wres
+    mask = getattr(fit, "mask", None)
+    if mask is None:
+        return wres
+    try:
+        m = np.asarray(mask)
+    except Exception:
+        return wres
+    if m.ndim != 1:
+        return wres
+    n = min(m.size, wres.size)
+    if n <= 0:
+        return wres
+    wres = np.array(wres, copy=True)
+    # Treat both boolean and numeric masks as multiplicative weights
+    w = m.astype(float)
+    wres[:n] *= w[:n]
+    return wres
+
+
 def get_wres(
         parameter_values: typing.List[float],
         model: chisurf.models.Model
 ) -> np.array:
-    """Returns the weighted residuals for a list of parameters of a models
+    """Return weighted residuals for a list of model parameters.
 
-    :param parameter_values: a list of the parameter values / or None. If None
-    the models is not updated.
-
-    :param model:
-    :return:
+    Parameters
+    ----------
+    parameter_values : list of float
+        Parameter values to assign before computing residuals. If the list
+        is empty, the model is not updated.
+    model : chisurf.models.Model
+        Model providing :attr:`weighted_residuals`.
     """
     if len(parameter_values) > 0:
         model.parameter_values = parameter_values
         model.update_model()
-    return model.weighted_residuals
+    wres = model.weighted_residuals
+    return _apply_fit_mask(model, wres)
 
 
 def get_chi2(
@@ -741,15 +1076,46 @@ def get_chi2(
         model: chisurf.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
-    """Returns either the reduced chi2 or the sum of squares (chi2)
+    """Return either the reduced chi² or the sum of squares (chi²).
 
-    :param parameter: a list of the parameter values or None. If None the models
-    is not updated
-    :param model:
-    :param reduced: If True the returned value is divided by
-    (n_points - n_free - 1.0) where n_points is the number of data points
-    and n_free is the number of model parameters
-    :return:
+    Parameters
+    ----------
+    parameter_values : list of float
+        Parameter values to apply before computing residuals. If the list
+        is empty, the model is not updated.
+    model : chisurf.models.ModelCurve
+        Model providing :attr:`weighted_residuals`, :attr:`n_points` and
+        :attr:`n_free`.
+    reduced : bool, optional
+        If *True*, return the reduced chi², i.e. chi² divided by
+        ``(n_points - n_free - 1)``.
+
+    Examples
+    --------
+    Use a tiny dummy model with three residuals:
+
+    >>> import numpy as np
+    >>> class _DummyModel:
+    ...     def __init__(self):
+    ...         self._wres = np.array([1.0, -1.0, 0.0])
+    ...         self.n_points = self._wres.size
+    ...         self.n_free = 1
+    ...     @property
+    ...     def weighted_residuals(self):
+    ...         return self._wres
+    ...     @property
+    ...     def parameter_values(self):
+    ...         return []
+    ...     @parameter_values.setter
+    ...     def parameter_values(self, v):
+    ...         pass
+    ...     def update_model(self):
+    ...         pass
+    >>> m = _DummyModel()
+    >>> round(get_chi2([], m, reduced=False), 1)
+    2.0
+    >>> round(get_chi2([], m, reduced=True), 1)
+    2.0
     """
     chi2 = (get_wres(parameter_values, model)**2.0).sum()
     chi2 = np.inf if np.isnan(chi2) else chi2
@@ -767,9 +1133,29 @@ def lnprior(
             typing.Tuple[float, float]
         ] = None
 ) -> float:
-    """The probability determined by the prior which is given by the bounds
-    of the models parameters. If the models parameters leave the bounds, the
-    ln of the probability is minus infinity otherwise it is zero.
+    """Log-prior probability induced by parameter bounds.
+
+    The prior is uniform inside the bounds and zero outside. This function
+    returns ``0`` inside the allowed region and ``-inf`` if any parameter
+    violates its bounds.
+
+    Parameters
+    ----------
+    parameter_values : list of float
+        Parameter values to be tested.
+    fit : Fit
+        Fit providing default bounds via ``fit.model.parameter_bounds`` if
+        ``bounds`` is *None*.
+    bounds : list of (float, float), optional
+        Explicit bounds to use instead of those from ``fit``.
+
+    Examples
+    --------
+    >>> bounds = [(0.0, 2.0), (None, 1.0)]
+    >>> round(lnprior([1.0, 0.5], fit=None, bounds=bounds), 1)
+    0.0
+    >>> lnprior([3.0, 0.5], fit=None, bounds=bounds)
+    -inf
     """
     if bounds is None:
         bounds = fit.model.parameter_bounds
@@ -792,13 +1178,55 @@ def lnprob(
             typing.Tuple[float, float]
         ] = None
 ) -> float:
-    """
+    """Log-posterior probability for use in MCMC sampling.
 
-    :param parameter_values:
-    :param bounds:
-    :param fit:
-    :param chi2max:
-    :return:
+    The posterior is given by ``lnprior + lnlikelihood`` where the
+    likelihood is assumed to be Gaussian in the residuals, i.e.
+
+    ``lnlikelihood = -0.5 * chi2``
+
+    and ``chi2`` is obtained from :func:`get_chi2`.
+
+    Parameters
+    ----------
+    parameter_values : list of float
+        Parameter values at which to evaluate the posterior.
+    fit : Fit
+        Fit providing the model and default bounds.
+    chi2max : float, optional
+        Hard cutoff on chi²; values above this threshold return ``-inf``.
+    bounds : list of (float, float), optional
+        Explicit bounds to use for the prior.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> class _DummyModel:
+    ...     def __init__(self):
+    ...         self._wres = np.array([1.0, -1.0, 0.0])
+    ...         self.n_points = self._wres.size
+    ...         self.n_free = 1
+    ...     @property
+    ...     def weighted_residuals(self):
+    ...         return self._wres
+    ...     @property
+    ...     def parameter_values(self):
+    ...         return []
+    ...     @parameter_values.setter
+    ...     def parameter_values(self, v):
+    ...         pass
+    ...     def update_model(self):
+    ...         pass
+    >>> class _DummyFit:
+    ...     def __init__(self):
+    ...         self.model = _DummyModel()
+    >>> fit = _DummyFit()
+    >>> bounds = [(0.0, 2.0)]
+    >>> val = lnprob([1.0], fit, chi2max=10.0, bounds=bounds)
+    >>> isinstance(val, float) and np.isfinite(val)
+    True
+    >>> lnprob([10.0], fit, chi2max=10.0, bounds=bounds)
+    -inf
     """
     lp = lnprior(
         parameter_values,
