@@ -87,3 +87,82 @@ def calc_lifetime_filter(
         w = np.array([np.dot(fi, experimental_decay) for fi in r]).sum()
         r /= w
     return r
+
+
+def calc_ffcs_filters(
+        experimental_decay,
+        species_decays,
+):
+    """Compute fFCS-style lifetime filters and reconstruction.
+
+    This helper mirrors the weighted least-squares scheme used in PAM's
+    ``Calc_fFCS_Filters`` implementation for filtered FCS/FLCS.
+
+    Parameters
+    ----------
+    experimental_decay : array_like
+        1D array with the total fluorescence decay (one value per TAC bin).
+    species_decays : sequence of array_like
+        Sequence of 1D arrays with species- (or pattern-) specific decays.
+        Each element must have the same length as ``experimental_decay``.
+
+    Returns
+    -------
+    filters : np.ndarray
+        2D array with shape ``(n_species, n_bins)`` containing the filters
+        (one row per species / pattern).
+    reconstruction : np.ndarray
+        1D array with the reconstructed total decay, obtained from the
+        normalized patterns and filter matrix.
+    weighted_residuals : np.ndarray
+        1D array with weighted residuals,
+
+        ``(experimental_decay - reconstruction) / sqrt(experimental_decay_safe)``.
+    """
+
+    import numpy as np
+
+    y = np.asarray(experimental_decay, dtype=float).copy()
+    if y.ndim != 1:
+        raise ValueError("experimental_decay must be a 1D array")
+
+    D = np.column_stack([np.asarray(v, dtype=float) for v in species_decays])
+    if D.ndim != 2:
+        raise ValueError("species_decays must form a 2D matrix (bins × species)")
+
+    # Normalize columns of D (Decay_par = Decay_par ./ sum(Decay_par,1))
+    col_sums = D.sum(axis=0)
+    col_sums[col_sums == 0.0] = 1.0
+    D_norm = D / col_sums
+
+    # Protect against zeros in the total decay before building the weights
+    y_safe = y.copy()
+    y_safe[y_safe == 0.0] = 1.0
+
+    # Weight vector w = 1 / y
+    w = 1.0 / y_safe
+
+    # Compute G = D^T W D efficiently without forming the full diagonal W
+    # DW = D^T * w  (each column j of D^T scaled by w_j)
+    DW = (D_norm.T * w)
+    G = DW @ D_norm  # shape: (n_species, n_species)
+
+    # Invert G robustly; fall back to pseudo-inverse on failure
+    try:
+        G_inv = np.linalg.inv(G)
+    except np.linalg.LinAlgError:
+        G_inv = np.linalg.pinv(G)
+
+    # Filters: F = G^{-1} D^T W = G_inv @ DW
+    filters = G_inv @ DW  # shape: (n_species, n_bins)
+
+    # Reconstruction and weighted residuals as in the PAM implementation
+    # reconstruction = sum( (D^T W D)^{-1} D^T , 1)
+    A = G_inv @ D_norm.T  # unweighted version for reconstruction
+    reconstruction = A.sum(axis=0)  # shape: (n_bins,)
+
+    # Weighted residuals = (total - reconstruction) ./ sqrt(total)
+    denom = np.sqrt(y_safe)
+    weighted_residuals = (y - reconstruction) / denom
+
+    return filters, reconstruction, weighted_residuals
