@@ -239,15 +239,39 @@ def calculate_fwhm(
     >>> fwhm
     1.1111111111111107
     """
-    y_values_bg = y_values - background
-    half_maximum = max(y_values_bg) / 2.0
-    smaller = np.where(y_values_bg > half_maximum)[0]
-    lb_i = smaller[0]
-    ub_i = smaller[-1]
 
-    x_left = x_values[lb_i]
-    x_right = x_values[ub_i]
-    fwhm = x_right - x_left
+    # Ensure array-like inputs and handle empty or mismatched lengths safely.
+    x_values = np.asarray(x_values)
+    y_values = np.asarray(y_values)
+
+    if x_values.size == 0 or y_values.size == 0:
+        return 0.0, (0, 0), (0.0, 0.0)
+
+    n = min(x_values.size, y_values.size)
+    x_values = x_values[:n]
+    y_values = y_values[:n]
+
+    y_values_bg = y_values - background
+
+    # If all values are at or below background, no FWHM can be defined.
+    if not np.any(y_values_bg > 0.0):
+        x0 = float(x_values[0])
+        return 0.0, (0, 0), (x0, x0)
+
+    half_maximum = float(np.max(y_values_bg)) / 2.0
+    smaller = np.where(y_values_bg > half_maximum)[0]
+
+    # Guard against degenerate cases where no samples exceed half-maximum.
+    if smaller.size == 0:
+        x0 = float(x_values[0])
+        return 0.0, (0, 0), (x0, x0)
+
+    lb_i = int(smaller[0])
+    ub_i = int(smaller[-1])
+
+    x_left = float(x_values[lb_i])
+    x_right = float(x_values[ub_i])
+    fwhm = float(x_right - x_left)
 
     if verbose:
         print("FWHM:")
