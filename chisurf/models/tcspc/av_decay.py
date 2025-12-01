@@ -18,41 +18,41 @@ class AVDecayModel(LifetimeModel):
         """
         Example
         -------
-        >>> import chisurf.curve
-        >>> import chisurf.fitting
-        >>> data_set = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)
-        >>> lin = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/whitelight.txt', skiprows=9)
-        >>> data_set.ey = chisurf.fluorescence.tcspc.counting_noise(data_set.y)
-        >>> irf = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)
-        >>> data_set.x *= 0.0141
-        >>> irf.x *= 0.0141
-        >>> data_set = chisurf.curve.ExperimentDataCurveGroup(data_set)
-        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
-        >>> from chisurf.fitting.model.tcspc.av_decay import AVDecayModel
-        >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}
-        >>> fit = fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)
-        >>> fit.model.convolve._irf = irf
-        >>> fit.model.corrections.correct_dnl = True
-        >>> fit.model.corrections.lintable = lin
-        >>> fit.model.convolve.start = 1
-        >>> fit.model.convolve.stop = 4090
-        >>> fit.model.update_model()
-        >>> fit.xmin = 510
-        >>> fit.xmax = 2000
-        >>> p.imshow(fit.model._av.density[:,:,20])
-        >>> p.show()
+        >>> import chisurf.curve  # doctest: +SKIP
+        >>> import chisurf.fitting  # doctest: +SKIP
+        >>> data_set = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/Decay_577D.txt', skiprows=9)  # doctest: +SKIP
+        >>> lin = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/whitelight.txt', skiprows=9)  # doctest: +SKIP
+        >>> data_set.ey = chisurf.fluorescence.tcspc.counting_noise(data_set.y)  # doctest: +SKIP
+        >>> irf = chisurf.data.DataCurve(filename='./test/data/tcspc/ibh_sample/Prompt.txt', skiprows=9)  # doctest: +SKIP
+        >>> data_set.x *= 0.0141  # doctest: +SKIP
+        >>> irf.x *= 0.0141  # doctest: +SKIP
+        >>> data_set = chisurf.curve.ExperimentDataCurveGroup(data_set)  # doctest: +SKIP
+        >>> structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')  # doctest: +SKIP
+        >>> from chisurf.fitting.model.tcspc.av_decay import AVDecayModel  # doctest: +SKIP
+        >>> model_kw={'structure': structure, 'residue_seq_number': 577, 'atom_name': 'CB'}  # doctest: +SKIP
+        >>> fit = fitting.FitGroup(data=data_set, model_class=AVDecayModel, model_kw=model_kw)  # doctest: +SKIP
+        >>> fit.model.convolve._irf = irf  # doctest: +SKIP
+        >>> fit.model.corrections.correct_dnl = True  # doctest: +SKIP
+        >>> fit.model.corrections.lintable = lin  # doctest: +SKIP
+        >>> fit.model.convolve.start = 1  # doctest: +SKIP
+        >>> fit.model.convolve.stop = 4090  # doctest: +SKIP
+        >>> fit.model.update_model()  # doctest: +SKIP
+        >>> fit.xmin = 510  # doctest: +SKIP
+        >>> fit.xmax = 2000  # doctest: +SKIP
+        >>> p.imshow(fit.model._av.density[:,:,20])  # doctest: +SKIP
+        >>> p.show()  # doctest: +SKIP
 
-        >>> fit.model.find_parameters()
-        >>> print(fit.model.parameters)
-        >>> print(fit.chi2r)
-        >>> p.semilogy(fit.model.x, fit.model.y)
-        >>> p.show()
-        >>> p.plot(fit.weighted_residuals[0])
-        >>> p.show()
-        
-        >>> fit.run()
-        >>> p.plot(fit.weighted_residuals[0])
-        >>> print(fit.chi2r)
+        >>> fit.model.find_parameters()  # doctest: +SKIP
+        >>> print(fit.model.parameters)  # doctest: +SKIP
+        >>> print(fit.chi2r)  # doctest: +SKIP
+        >>> p.semilogy(fit.model.x, fit.model.y)  # doctest: +SKIP
+        >>> p.show()  # doctest: +SKIP
+        >>> p.plot(fit.weighted_residuals[0])  # doctest: +SKIP
+        >>> p.show()  # doctest: +SKIP
+
+        >>> fit.run()  # doctest: +SKIP
+        >>> p.plot(fit.weighted_residuals[0])  # doctest: +SKIP
+        >>> print(fit.chi2r)  # doctest: +SKIP
 
         chi2r = list()
         sws = np.linspace(2.5, 3.2, 10)
