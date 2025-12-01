@@ -14,6 +14,12 @@ import chisurf.experiments
 
 
 class ExperimentalData(chisurf.base.Data):
+    """Base class for experimental datasets in ChiSurf.
+
+    Extends :class:`chisurf.base.Data` with optional links to an
+    experiment reader and an experiment description. Concrete curve
+    types such as :class:`DataCurve` derive from this class.
+    """
 
     meta_data: typing.Dict = None
     data_reader: chisurf.experiments.reader.ExperimentReader = None
@@ -98,6 +104,38 @@ class ExperimentalData(chisurf.base.Data):
 
 
 class DataCurve(chisurf.curve.Curve, ExperimentalData):
+    """One-dimensional experimental curve with error estimates.
+
+    Combines :class:`chisurf.curve.Curve` with :class:`ExperimentalData`
+    and adds error arrays ``ex`` and ``ey`` for the x- and y-values.
+
+    For flattened multi-dimensional datasets (e.g. 2D histograms or images
+    represented as 1D arrays), experiment readers may populate the generic
+    grid description ``meta_data['grid']`` with a dictionary containing
+    fields such as::
+
+        {
+            'ndim': 2,
+            'shape': (ny, nx),
+            'order': 'C' or 'F',  # NumPy-style memory order for flattening
+            # optional sparse/indexed representations:
+            'row_indices': np.ndarray,
+            'col_indices': np.ndarray,
+            'size': int,
+        }
+
+    GUI components (e.g. the fitting range controller and 2D residual plots)
+    can use this metadata to reconstruct logical grid coordinates and build
+    selection masks without needing experiment-specific knowledge.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from chisurf.data import DataCurve
+    >>> dc = DataCurve(x=np.array([0.0, 1.0]), y=np.array([1.0, 2.0]))
+    >>> dc.data.shape
+    (4, 2)
+    """
 
     @property
     def data(self) -> np.ndarray:
@@ -317,6 +355,11 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
 
 
 class DataGroup(list, chisurf.base.Base):
+    """Container for multiple experimental datasets.
+
+    Behaves like a list but tracks a *current* dataset and provides
+    helpers to export the group to YAML.
+    """
 
     @property
     def names(self) -> typing.List[str]:
@@ -374,6 +417,11 @@ class DataGroup(list, chisurf.base.Base):
 
 
 class DataCurveGroup(DataGroup):
+    """Data group whose elements are :class:`DataCurve` instances.
+
+    Convenience properties proxy ``x``, ``y``, ``ex`` and ``ey`` to the
+    current dataset.
+    """
 
     @property
     def x(self) -> np.array:
@@ -417,6 +465,7 @@ class DataCurveGroup(DataGroup):
 
 
 class ExperimentDataGroup(DataGroup):
+    """Data group specialized for experiment-based datasets."""
 
     @property
     def setup(self):
@@ -439,6 +488,7 @@ class ExperimentDataGroup(DataGroup):
 
 
 class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
+    """Hybrid group combining experimental metadata and curve access."""
 
     @property
     def setup(self):
@@ -461,8 +511,7 @@ def get_data(
 ) -> typing.List[
     chisurf.data.ExperimentalData
 ]:
-    """Returns all curves `chisurf.curve.DataCurve` except curve that are
-    excluded by their name
+    """Return experimental datasets, optionally excluding some by name.
 
     Parameters
     ----------
@@ -479,13 +528,17 @@ def get_data(
     Returns
     -------
     list
-        A list containing curves. If `curve_type` is 'experiment' only
-        curves that inherit from `experiments.data.ExperimentalData` or
-        groups inheriting from ExperimentDataGroup are returned.
+        A list containing datasets. If ``curve_type`` is ``'experiment'``
+        only objects inheriting from :class:`ExperimentalData` or
+        :class:`ExperimentDataGroup` are returned.
 
     Examples
     --------
-
+    >>> from chisurf.data import ExperimentalData, get_data
+    >>> d1 = ExperimentalData(name='A')
+    >>> d2 = ExperimentalData(name='Global-fit')
+    >>> [d.name for d in get_data(curve_type='experiment', data_set=[d1, d2])]
+    ['A']
 
     """
     if excludes_names is None:
