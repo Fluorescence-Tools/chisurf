@@ -186,7 +186,7 @@ def calculcate_spectrum(
     ...     l2=0.0
     ... )
     array([ 0. ,  4. ,  0. ,  0.8,  1.5,  4. , -3. ,  0.8])
-    >>> calculcate_spectrum(
+    >>> out = calculcate_spectrum(
     ...     lifetime_spectrum=lifetime_spectrum,
     ...     anisotropy_spectrum=anisotropy_spectrum,
     ...     polarization_type='VH',
@@ -194,7 +194,8 @@ def calculcate_spectrum(
     ...     l1=0.0,
     ...     l2=0.1
     ... )
-    array([ 0.1 ,  4.  ,  0.2 ,  0.8,  1.35,  4.  , -2.7 ,  0.8 ])
+    >>> out.tolist()
+    [0.1, 4.0, 0.2, 0.8, 1.35, 4.0, -2.7, 0.8]
 
     Notes
     -----
