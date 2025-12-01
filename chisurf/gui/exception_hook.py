@@ -9,7 +9,8 @@ handler = logging.StreamHandler(stream=sys.stdout)
 log.addHandler(handler)
 
 
-if QtCore.QT_VERSION >= 0x50501:
+_qt_version = getattr(QtCore, "QT_VERSION", None)
+if _qt_version is not None and _qt_version >= 0x50501:
     def excepthook(type_, value, traceback_):
         traceback.print_exception(type_, value, traceback_)
         QtCore.qFatal('')

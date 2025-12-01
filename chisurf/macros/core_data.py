@@ -92,11 +92,25 @@ def add_dataset(
             )
             return
 
-        # Normalize to a group without modifying global state yet
+        # Normalize to a group without modifying global state yet.
+        #
+        # Goal: imported_datasets should contain either plain
+        # ExperimentalData instances or ExperimentDataGroup instances, so
+        # that chisurf.data.get_data(curve_type='experiment', ...) and the
+        # ExperimentalDataSelector behave correctly. Some readers (e.g.
+        # TCSPCReader) return DataCurveGroup/DataGroup objects; those need
+        # to be converted so that the *elements* become group members,
+        # instead of wrapping the group itself as a single element.
         if isinstance(dataset, chisurf.data.ExperimentDataGroup):
+            # Already in the expected grouped form
             dataset_group = dataset
+        elif isinstance(dataset, (chisurf.data.DataGroup, list, tuple)):
+            # Flatten DataGroup/DataCurveGroup or simple sequences into an
+            # ExperimentDataCurveGroup of their elements.
+            dataset_group = chisurf.data.ExperimentDataCurveGroup(list(dataset))
         else:
-            dataset_group = chisurf.data.ExperimentDataCurveGroup(dataset)
+            # Single ExperimentalData object
+            dataset_group = chisurf.data.ExperimentDataCurveGroup([dataset])
 
         # Guard against empty groups which would break the UI (d[0])
         if len(dataset_group) == 0:
@@ -114,7 +128,7 @@ def add_dataset(
             chisurf.imported_datasets.append(dataset_group)
 
         # Update UI only after successful append
-        cs.update()
+        chisurf.gui.run_on_gui_thread(cs.update)
 
     except Exception as e:
         # Capture the full error trace
