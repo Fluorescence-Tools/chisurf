@@ -606,12 +606,12 @@ def spc2hdf(
     To an existing HDF-File simply a new group with the title will be created
     After finished work with the HDF-File it should be closed.
 
-    >>> import chisurf.fio.tttr
-    >>> import chisurf.fio.photons
-    >>> import glob
-    >>> spc_files = glob.glob('./test/data/tttr/BH/132/*.spc')
-    >>> h5 = chisurf.fio.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')
-    >>> h5.close()
+    >>> import chisurf.fio.tttr  # doctest: +SKIP
+    >>> import chisurf.fio.photons  # doctest: +SKIP
+    >>> import glob  # doctest: +SKIP
+    >>> spc_files = glob.glob('./test/data/tttr/BH/132/*.spc')  # doctest: +SKIP
+    >>> h5 = chisurf.fio.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')  # doctest: +SKIP
+    >>> h5.close()  # doctest: +SKIP
 
     """
     if isinstance(spc_files, str):
@@ -688,12 +688,12 @@ def read_header(
 
     Reading Seidel-BID files
 
-    >>> import glob, chisurf.fio.tttr
-    >>> directory = "./test/data/tttr/BH/hGBP1_18D"
-    >>> spc_files = glob.glob(directory+'/*.spc')
-    >>> b = np.fromfile(spc_files[0], dtype=np.uint8)
-    >>> header = chisurf.fio.tttr.read_header(b, 'bh132')
-    >>> print(header)
+    >>> import glob, chisurf.fio.tttr  # doctest: +SKIP
+    >>> directory = "./test/data/tttr/BH/hGBP1_18D"  # doctest: +SKIP
+    >>> spc_files = glob.glob(directory+'/*.spc')  # doctest: +SKIP
+    >>> b = np.fromfile(spc_files[0], dtype=np.uint8)  # doctest: +SKIP
+    >>> header = chisurf.fio.tttr.read_header(b, 'bh132')  # doctest: +SKIP
+    >>> print(header)  # doctest: +SKIP
     {'MTCLK': 13.6, 'DINV': 0, 'nEvents': 1200000}
 
     """
@@ -988,13 +988,13 @@ def read_ptu(
 
     Example
     -------
-    >>> import pylab as p
-    >>> filename = 'C://temp/PQSpcm_2017-04-20_13-23-53.ptu'
-    >>> filename = "N:/STED_microscope/2017/04/21/PQSpcm_2017-04-21_11-03-37.ptu"
-    >>> r = read_ptu(filename)
-    >>> y, x = np.histogram(r['micro_time'], bins=range(0, 4096))
-    >>> p.semilogy(x[1:], y+1)
-    >>> p.show()
+    >>> import pylab as p  # doctest: +SKIP
+    >>> filename = 'C://temp/PQSpcm_2017-04-20_13-23-53.ptu'  # doctest: +SKIP
+    >>> filename = "N:/STED_microscope/2017/04/21/PQSpcm_2017-04-21_11-03-37.ptu"  # doctest: +SKIP
+    >>> r = read_ptu(filename)  # doctest: +SKIP
+    >>> y, x = np.histogram(r['micro_time'], bins=range(0, 4096))  # doctest: +SKIP
+    >>> p.semilogy(x[1:], y+1)  # doctest: +SKIP
+    >>> p.show()  # doctest: +SKIP
 
     """
     with open(filename, 'rb') as fp:
