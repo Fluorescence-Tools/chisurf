@@ -9,6 +9,28 @@ from qtpy.QtCore import Qt
 import pymol2
 from chisurf.plots.plotbase import Plot
 
+try:
+    # Older Qt bindings expose QGLWidget/QGLFormat via QtOpenGL; this may be missing
+    from qtpy.QtOpenGL import QGLWidget, QGLFormat  # type: ignore[attr-defined]
+except Exception:
+    class QGLFormat:  # minimal stub used only when real GL format is unavailable
+        def setStencil(self, *args, **kwargs):
+            pass
+
+        def setRgba(self, *args, **kwargs):
+            pass
+
+        def setDepth(self, *args, **kwargs):
+            pass
+
+        def setDoubleBuffer(self, *args, **kwargs):
+            pass
+
+    class QGLWidget(QtWidgets.QWidget):  # type: ignore[misc]
+        def __init__(self, fmt=None, parent=None):
+            # Ignore the format object in environments without real QGL support
+            super().__init__(parent)
+
 
 # class EmittingStream(QtCore.QObject):
 #
