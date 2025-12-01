@@ -13,6 +13,8 @@ from chisurf.experiments.pda import PdaReader
 # Reuse the setups loader from the DetectorWizard
 from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
 
+_TTTR_INDEX_CACHE = {}
+
 
 class PdaTTTRWidget(
     QtWidgets.QWidget,
@@ -32,16 +34,35 @@ class PdaTTTRWidget(
             self.dir_resolver = dir_resolver
 
         def _maybe_add_path(self, file_path: str):
-            p = pathlib.Path(file_path)
-            # If a directory is dropped and a resolver is provided, try to expand it
-            if p.is_dir() and callable(self.dir_resolver):
-                try:
-                    expanded = self.dir_resolver(p)
-                    for fp in expanded or []:
-                        self._maybe_add_path(fp)
-                except Exception:
-                    pass
+            """Safely add a dropped path or expand a directory into files.
+
+            All errors are logged and swallowed so that a bad path or
+            unexpected directory layout cannot crash the GUI.
+            """
+            try:
+                p = pathlib.Path(file_path)
+            except Exception:
+                logging.warning("PDA: Invalid path dropped: %r", file_path)
                 return
+
+            # If a directory is dropped, add the folder itself as one entry.
+            # BUR file discovery is deferred to load time to keep UI load low.
+            if p.is_dir():
+                sp = str(p)
+                for i in range(self.count()):
+                    if self.item(i).text() == sp:
+                        return
+                try:
+                    item = QtWidgets.QListWidgetItem(sp)
+                    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                    item.setCheckState(QtCore.Qt.Checked)
+                    self.addItem(item)
+                except Exception:
+                    logging.warning(
+                        "PDA: Failed to add dropped folder to list: %s", sp, exc_info=True
+                    )
+                return
+
             # Accept only files with allowed extensions
             if not p.is_file():
                 return
@@ -49,13 +70,19 @@ class PdaTTTRWidget(
             if self.accept_exts and ext not in self.accept_exts:
                 return
             # Prevent duplicates
+            sp = str(p)
             for i in range(self.count()):
-                if self.item(i).text() == str(p):
+                if self.item(i).text() == sp:
                     return
-            item = QtWidgets.QListWidgetItem(str(p))
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Checked)
-            self.addItem(item)
+            try:
+                item = QtWidgets.QListWidgetItem(sp)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                item.setCheckState(QtCore.Qt.Checked)
+                self.addItem(item)
+            except Exception:
+                logging.warning(
+                    "PDA: Failed to add dropped file to list: %s", sp, exc_info=True
+                )
 
         def dragEnterEvent(self, event):
             if event.mimeData().hasUrls():
@@ -70,32 +97,54 @@ class PdaTTTRWidget(
                 event.ignore()
 
         def dropEvent(self, event):
-            if event.mimeData().hasUrls():
-                for url in event.mimeData().urls():
-                    file_path = url.toLocalFile()
-                    if file_path:
-                        self._maybe_add_path(file_path)
-                event.acceptProposedAction()
+            try:
+                if event.mimeData().hasUrls():
+                    for url in event.mimeData().urls():
+                        try:
+                            file_path = url.toLocalFile()
+                        except Exception:
+                            continue
+                        if file_path:
+                            try:
+                                self._maybe_add_path(file_path)
+                            except Exception:
+                                logging.warning(
+                                    "PDA: Error handling dropped path: %r", file_path, exc_info=True
+                                )
+                    event.acceptProposedAction()
 
-                # If the parent PDA widget has an "Auto load" checkbox
-                # enabled, automatically trigger loading of the newly
-                # dropped files, reusing the same routine as the "Load
-                # dropped files" button.
-                try:
-                    owner = self.parent()
-                    # Walk up a few levels in case the list is nested in
-                    # intermediate layouts/containers.
-                    steps = 0
-                    while owner is not None and not hasattr(owner, "_on_load_dropped_files_clicked") and steps < 4:
-                        owner = owner.parent()
-                        steps += 1
-                    if owner is not None and getattr(owner, "checkBox", None) is not None and owner.checkBox.isChecked():
-                        owner._on_load_dropped_files_clicked()
-                except Exception:
-                    # Auto-load on drop is best-effort and must not break
-                    # normal dragging behavior.
-                    pass
-            else:
+                    # If the parent PDA widget has an "Auto load" checkbox
+                    # enabled, automatically trigger loading of the newly
+                    # dropped files, reusing the same routine as the "Load
+                    # dropped files" button.
+                    try:
+                        owner = self.parent()
+                        # Walk up a few levels in case the list is nested in
+                        # intermediate layouts/containers.
+                        steps = 0
+                        while owner is not None and not hasattr(owner, "_on_load_dropped_files_clicked") and steps < 4:
+                            owner = owner.parent()
+                            steps += 1
+                        if owner is not None and getattr(owner, "checkBox", None) is not None and owner.checkBox.isChecked():
+                            # Schedule the heavy loading routine on the event
+                            # loop to avoid running it re-entrantly inside the
+                            # dropEvent handler, which can destabilize
+                            # QListWidget / drag-and-drop internals when many
+                            # items are dropped at once.
+                            QtCore.QTimer.singleShot(0, owner._on_load_dropped_files_clicked)
+                    except Exception:
+                        # Auto-load on drop is best-effort and must not break
+                        # normal dragging behavior.
+                        logging.warning(
+                            "PDA: Auto-load on drop failed; ignoring.", exc_info=True
+                        )
+                else:
+                    event.ignore()
+            except Exception:
+                logging.warning(
+                    "PDA: Unexpected error in DropFileList.dropEvent; ignoring drop.",
+                    exc_info=True
+                )
                 event.ignore()
 
         def remove_selected(self):
@@ -148,15 +197,32 @@ class PdaTTTRWidget(
         self._apply_current_setup_and_detectors()
         self.onParametersChanged()
 
+    def _get_tttr_supported_exts(self):
+        exts = set()
+        try:
+            if hasattr(tttrlib, "get_supported_filetypes"):
+                for e in tttrlib.get_supported_filetypes():
+                    s = str(e).strip().lower()
+                    if not s:
+                        continue
+                    if not s.startswith('.'):
+                        s = '.' + s
+                    exts.add(s)
+        except Exception:
+            exts = set()
+        if not exts:
+            exts = {'.ptu', '.ht3', '.spc', '.h5', '.hdf5'}
+        return exts
+
     def _init_filedrop_area(self):
         # Accepted extensions: BID and TTTR families (lowercase)
         bid_exts = {'.bid', '.bur', '.bst'}
-        tttr_exts = {'.ptu', '.ht3', '.spc'}
+        tttr_exts = set(e.lower() for e in self._get_tttr_supported_exts())
         self._accepted_exts = set(e.lower() for e in bid_exts | tttr_exts)
         self._tttr_exts = tttr_exts
-        # Label
-        self.drop_label = QtWidgets.QLabel("drop files or analysis folders here")
-        self.drop_label.setAlignment(QtCore.Qt.AlignCenter)
+        # Label describing the drop area (the list widget below)
+        self.drop_label = QtWidgets.QLabel("drop files or analysis folders below")
+        self.drop_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         # A subtle frame to indicate dropping area (no heavy styling)
         self.drop_label.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.drop_label.setToolTip("Drag and drop TTTR files, BID/BUR/BST files, or burst analysis folders (bi4_bur). Checked files are used.")
@@ -235,7 +301,12 @@ class PdaTTTRWidget(
         for bur_dir, bur_list in bur_cache.items():
             for bur_path in bur_list:
                 try:
-                    df = pd.read_csv(bur_path, sep='\t')
+                    required = {'first photon', 'last photon', 'first file', 'last file'}
+                    df = pd.read_csv(
+                        bur_path,
+                        sep='\t',
+                        usecols=lambda c: c.lower() in required
+                    )
                 except Exception:
                     continue
                 # Normalize columns to lower
@@ -262,6 +333,10 @@ class PdaTTTRWidget(
                                     first_file = name
                                     break
                             if first_file not in tttr_names:
+                                logging.debug(
+                                    "PDA: TTTR file referenced in BUR not found among selected TTTR files: %s (BUR: %s)",
+                                    first_file, str(bur_path)
+                                )
                                 continue
                         # parse indices (floats in BUR -> ints)
                         a = int(float(row[fp_col]))
@@ -317,12 +392,27 @@ class PdaTTTRWidget(
         stem_to_paths = defaultdict(list)
         for root in roots:
             try:
-                for ext in self._tttr_exts:
-                    for p in root.rglob(f"*{ext}"):
-                        if not p.is_file():
-                            continue
-                        name_to_paths[p.name].append(p)
-                        stem_to_paths[p.stem].append(p)
+                rs = str(root)
+                cached = _TTTR_INDEX_CACHE.get(rs)
+                if cached is not None:
+                    ncache, scache = cached
+                    for k, v in ncache.items():
+                        name_to_paths[k].extend(v)
+                    for k, v in scache.items():
+                        stem_to_paths[k].extend(v)
+                    continue
+                ncache = defaultdict(list)
+                scache = defaultdict(list)
+                for p in root.rglob("*"):
+                    if not p.is_file():
+                        continue
+                    if p.suffix.lower() not in self._tttr_exts:
+                        continue
+                    ncache[p.name].append(p)
+                    scache[p.stem].append(p)
+                    name_to_paths[p.name].append(p)
+                    stem_to_paths[p.stem].append(p)
+                _TTTR_INDEX_CACHE[rs] = (ncache, scache)
             except Exception:
                 continue
 
@@ -349,7 +439,12 @@ class PdaTTTRWidget(
                     continue
                 # Read BUR file (case-insensitive columns)
                 try:
-                    df = pd.read_csv(bur_path, sep='\t')
+                    required = {'first photon', 'last photon', 'first file', 'last file'}
+                    df = pd.read_csv(
+                        bur_path,
+                        sep='\t',
+                        usecols=lambda c: c.lower() in required
+                    )
                 except Exception:
                     continue
                 cols_map = {c.lower(): c for c in df.columns}
@@ -362,7 +457,8 @@ class PdaTTTRWidget(
                 lf_col = cols_map['last file']
                 # Filter rows: First File == Last File and non-empty
                 df = df.dropna(subset=[ff_col, lf_col])
-                same_file = df[ff_col].astype(str).str.strip() == df[lf_col].astype(str).str.strip()
+                file_series = df[ff_col].astype(str).str.strip()
+                same_file = file_series == df[lf_col].astype(str).str.strip()
                 df = df.loc[same_file]
                 if df.empty:
                     continue
@@ -385,13 +481,32 @@ class PdaTTTRWidget(
                         return cands[0]
                     return None
 
+                # Cache resolution of TTTR paths per unique file name to avoid
+                # repeated directory lookups for the same name within this BUR.
+                resolved_cache = {}
+                missing_logged = set()
+                for name_str in file_series.unique():
+                    if not name_str:
+                        resolved_cache[name_str] = None
+                        continue
+                    try:
+                        resolved_cache[name_str] = choose_path(name_str)
+                    except Exception:
+                        resolved_cache[name_str] = None
+
                 for _, row in df.iterrows():
                     try:
                         first_file = str(row[ff_col]).strip()
                         if not first_file:
                             continue
-                        resolved = choose_path(first_file)
+                        resolved = resolved_cache.get(first_file)
                         if resolved is None:
+                            if first_file not in missing_logged:
+                                logging.debug(
+                                    "PDA: Could not resolve TTTR file '%s' from BUR '%s'; skipping row.",
+                                    first_file, str(bur_path)
+                                )
+                                missing_logged.add(first_file)
                             continue
                         # slice indices (inclusive->exclusive)
                         a = int(float(row[fp_col]))
@@ -412,18 +527,21 @@ class PdaTTTRWidget(
         Previously this returned TTTR files; now we list the BUR files themselves.
         """
         try:
-            # Identify the folder that holds .bur files
-            if (base_dir / 'bi4_bur').is_dir():
-                bur_dir = base_dir / 'bi4_bur'
-            elif base_dir.name.lower() in ('bi4_bur', 'bur'):
-                bur_dir = base_dir
-            elif (base_dir / 'bur').is_dir():
-                bur_dir = base_dir / 'bur'
-            else:
+            try:
+                base_dir = base_dir.resolve()
+            except Exception:
+                pass
+            if not base_dir.exists() or not base_dir.is_dir():
                 return []
-            # Return absolute paths to .bur files found
-            return [str(p) for p in sorted(bur_dir.glob('*.bur')) if p.is_file()]
+            # Prefer .bur files directly in the folder; if none, search recursively
+            bur_files = [p for p in base_dir.glob('*.bur') if p.is_file()]
+            if not bur_files:
+                bur_files = [p for p in base_dir.rglob('*.bur') if p.is_file()]
+            return [str(p) for p in sorted(bur_files)]
         except Exception:
+            logging.warning(
+                "PDA: Error expanding burst folder: %s", str(base_dir), exc_info=True
+            )
             return []
 
     def _merge_intervals(self, mapping):
@@ -647,9 +765,68 @@ class PdaTTTRWidget(
                 logging.warning("PDA: No dropped files are checked to load.")
                 QtWidgets.QMessageBox.information(self, "No files", "No dropped files are checked to load.")
                 return
-            # Split files by type: bur and tttr
-            bur_files = [f for f in files if pathlib.Path(f).suffix.lower() == '.bur']
-            tttr_files = [f for f in files if pathlib.Path(f).suffix.lower() in self._tttr_exts]
+            # Resolve folders into BUR files only at load time; classify all paths
+            bur_files = []
+            tttr_files = []
+            for f in files:
+                try:
+                    p = pathlib.Path(f)
+                except Exception:
+                    logging.warning("PDA: Invalid dropped path in load: %r", f)
+                    continue
+                try:
+                    if p.is_dir():
+                        try:
+                            expanded = self._expand_burst_folder(p)
+                        except Exception:
+                            logging.warning(
+                                "PDA: Error expanding burst folder during load: %s", str(p), exc_info=True
+                            )
+                            expanded = []
+                        bur_files.extend(expanded or [])
+                    else:
+                        suffix = p.suffix.lower()
+                        if suffix == '.bur':
+                            bur_files.append(str(p))
+                        elif suffix in self._tttr_exts:
+                            tttr_files.append(str(p))
+                except Exception:
+                    logging.warning(
+                        "PDA: Error classifying dropped path during load: %r", f, exc_info=True
+                    )
+                    continue
+
+            # Deduplicate while keeping a deterministic ordering
+            bur_files = sorted(set(bur_files))
+            tttr_files = sorted(set(tttr_files))
+
+            max_bur_files = 1024
+            max_tttr_files = 1024
+            if len(bur_files) > max_bur_files:
+                logging.warning(
+                    "PDA: Too many BUR files selected (%d); aborting load.",
+                    len(bur_files)
+                )
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Too many BUR files",
+                    f"You selected {len(bur_files)} BUR files. "
+                    f"For stability, please process them in smaller batches (<= {max_bur_files} at once)."
+                )
+                return
+            if len(tttr_files) > max_tttr_files:
+                logging.warning(
+                    "PDA: Too many TTTR files selected (%d); limiting to first %d.",
+                    len(tttr_files), max_tttr_files
+                )
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Too many files",
+                    f"You selected {len(tttr_files)} TTTR files. "
+                    f"For stability, only the first {max_tttr_files} will be loaded.\n\n"
+                    "Consider using BUR tables or smaller batches if you need to process more files."
+                )
+                tttr_files = tttr_files[:max_tttr_files]
             if not bur_files and not tttr_files:
                 logging.warning("PDA: Dropped items contain neither BUR nor TTTR files to load.")
                 QtWidgets.QMessageBox.warning(
@@ -745,6 +922,21 @@ class PdaTTTRWidget(
                     except Exception:
                         pass
                 tttr_files = tttr_files_resolved
+                if len(tttr_files) > max_tttr_files:
+                    logging.warning(
+                        "PDA: Too many TTTR files resolved from BUR tables (%d); limiting to first %d.",
+                        len(tttr_files), max_tttr_files
+                    )
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Too many files",
+                        f"Burst tables reference {len(tttr_files)} TTTR files. "
+                        f"For stability, only the first {max_tttr_files} will be loaded."
+                    )
+                    tttr_files = tttr_files[:max_tttr_files]
+                    if burst_slices:
+                        keep = set(tttr_files)
+                        burst_slices = {k: v for k, v in burst_slices.items() if k in keep}
                 if not tttr_files:
                     logging.warning("PDA: No TTTR files could be resolved from selected BUR files.")
                     QtWidgets.QMessageBox.warning(self, "No TTTR files found", "Could not resolve any TTTR files from the selected BUR files.")

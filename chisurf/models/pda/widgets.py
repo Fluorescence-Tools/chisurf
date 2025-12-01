@@ -12,7 +12,7 @@ from chisurf.fluorescence.general import distance_to_fret_efficiency
 from chisurf.math.functions import distributions as distfuncs
 import chisurf.models.tcspc.fret as tcspc_fret
 from chisurf.models.tcspc.fret import rda_axis
-from chisurf.settings.settings_utils import set_fret_rda_axis
+from chisurf.settings.settings_utils import set_fret_rda_axis, build_fret_rda_axis
 
 from chisurf.models.model import ModelWidget
 from chisurf.gui import QtWidgets, QtGui, QtCore
@@ -98,6 +98,53 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
                 pass
 
 
+class PdaPhotonRangeWidget(QtWidgets.QGroupBox):
+
+    def __init__(
+            self,
+            nuisance: PdaFretNuisance,
+            *args,
+            **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.nuisance = nuisance
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.layout.setAlignment(QtCore.Qt.AlignTop)
+        self.setTitle("Photon-number range")
+
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self._nPh_min_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self.nuisance._nPh_min,
+            label_text='nPh_min',
+        )
+        self._nPh_max_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self.nuisance._nPh_max,
+            label_text='nPh_max',
+        )
+
+        layout.addWidget(self._nPh_min_widget, 0, 0)
+        layout.addWidget(self._nPh_max_widget, 0, 1)
+
+        self.layout.addLayout(layout)
+
+    def update(self, *__args):
+        QtWidgets.QGroupBox.update(self, *__args)
+        try:
+            self._nPh_min_widget.finalize()
+            self._nPh_max_widget.finalize()
+        except Exception:
+            try:
+                self._nPh_min_widget.setValue(self.nuisance.nPh_min)
+                self._nPh_max_widget.setValue(self.nuisance.nPh_max)
+            except Exception:
+                pass
+
+
 class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
 
     def __init__(
@@ -152,14 +199,6 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             self._QYA,
             label_text='QYA',
         )
-        self._nPh_min_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._nPh_min,
-            label_text='nPh_min',
-        )
-        self._nPh_max_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._nPh_max,
-            label_text='nPh_max',
-        )
 
         layout.addWidget(self._alpha_widget, 0, 0, 1, 2)
         layout.addWidget(self._bgG_widget, 1, 0)
@@ -168,8 +207,6 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         layout.addWidget(self._gR_widget, 2, 1)
         layout.addWidget(self._QYD_widget, 3, 0)
         layout.addWidget(self._QYA_widget, 3, 1)
-        layout.addWidget(self._nPh_min_widget, 4, 0)
-        layout.addWidget(self._nPh_max_widget, 4, 1)
 
         self.layout.addLayout(layout)
 
@@ -185,8 +222,6 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             self._gR_widget.finalize()
             self._QYD_widget.finalize()
             self._QYA_widget.finalize()
-            self._nPh_min_widget.finalize()
-            self._nPh_max_widget.finalize()
         except Exception:
             # Fallback: at least sync the numeric values
             try:
@@ -197,8 +232,6 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
                 self._gR_widget.setValue(self.gR)
                 self._QYD_widget.setValue(self.QYD)
                 self._QYA_widget.setValue(self.QYA)
-                self._nPh_min_widget.setValue(self.nPh_min)
-                self._nPh_max_widget.setValue(self.nPh_max)
             except Exception:
                 pass
 
@@ -715,24 +748,20 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
         chisurf.settings.fret["rda_scale"] = scale
 
         try:
-            if scale == "lin":
-                new_axis = np.linspace(
-                    chisurf.settings.fret["rda_min"],
-                    chisurf.settings.fret["rda_max"],
-                    chisurf.settings.fret["rda_resolution"],
-                    dtype=np.float64,
-                )
-            else:
-                new_axis = np.logspace(
-                    start=np.log10(chisurf.settings.fret["rda_min"]),
-                    stop=np.log10(chisurf.settings.fret["rda_max"]),
-                    num=chisurf.settings.fret["rda_resolution"],
-                    dtype=np.float64,
-                )
+            new_axis = build_fret_rda_axis(
+                chisurf.settings.fret["rda_min"],
+                chisurf.settings.fret["rda_max"],
+                chisurf.settings.fret["rda_resolution"],
+                chisurf.settings.fret.get("rda_scale", scale),
+            )
         except Exception:
             return
 
         try:
+            try:
+                chisurf.fluorescence.rda_axis = new_axis
+            except Exception:
+                pass
             tcspc_fret.rda_axis = new_axis
             globals()["rda_axis"] = new_axis
         except Exception:
@@ -1163,11 +1192,15 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
         res_layout.addStretch(1)
         layout.addLayout(res_layout)
 
+        nuisance = PdaFretNuisanceWidget(fit=fit, **kwargs)
+        photon_range = PdaPhotonRangeWidget(nuisance=nuisance)
         background = BackgroundWidget(fit=fit, **kwargs)
         pch0 = ProbCh0Widget(fit=fit, **kwargs)
 
+        layout.addWidget(photon_range)
         if not hide_nuisances:
             layout.addWidget(background)
+            layout.addWidget(nuisance)
         layout.addWidget(pch0)
 
         self.setLayout(layout)
@@ -1175,7 +1208,9 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        self.photon_range = photon_range
         self.background = background
+        self.nuisance = nuisance
         self.pch0 = pch0
 
     def onResidualModeChanged(self):
@@ -1288,6 +1323,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         # distance distribution, following the same pattern as the TCSPC
         # GaussianModelWidget.
         nuisance = PdaFretNuisanceWidget(fit=fit, **kwargs)
+        photon_range = PdaPhotonRangeWidget(nuisance=nuisance)
         distances = PdaGaussianDistancesWidget(fit=fit, **kwargs)
 
         # Generic widget for the shared FRET parameter group (R0, tau0, kappa2, ...)
@@ -1315,6 +1351,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         res_layout.addStretch(1)
         layout.addLayout(res_layout)
 
+        layout.addWidget(photon_range)
         if not hide_nuisances:
             layout.addWidget(nuisance)
         layout.addWidget(fret_parameters_widget)
@@ -1327,6 +1364,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.nuisance = nuisance
+        self.photon_range = photon_range
         self.distances = distances
         self.fret_parameters_widget = fret_parameters_widget
 

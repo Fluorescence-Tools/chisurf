@@ -30,6 +30,7 @@ import chisurf.math.datatools
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
 from chisurf.models.pda.nusiance import Background, PdaFretNuisance
+from .common import mask_zero_photon_bins, pda_1d_residuals_from_s1s2
 
 
 class ProbCh0(FittingParameterGroup):
@@ -312,57 +313,16 @@ class PdaSimpleModel(ModelCurve):
             self,
             fit: chisurf.fitting.fit.Fit,
     ) -> np.ndarray:
-        pda_meta = getattr(fit.data, "pda", None)
-        if not isinstance(pda_meta, dict):
-            return np.zeros(0, dtype=np.float64)
-        s1s2_experimental = pda_meta.get("s1s2")
-        if s1s2_experimental is None:
-            return np.zeros(0, dtype=np.float64)
-
-        kw_hist = {
-            "x_max": 1.0,
-            "x_min": 0.0,
-            "log_x": False,
-            "n_bins": 81,
-            "n_min": 10,
-        }
-
-        def _inner(ch1, ch2):
-            return ch2 / max(1, ch1 + ch2)
-
-        def histogram_function(ch1, ch2, _cb=_inner):
-            return _cb(ch2, ch1)
-
-        self.pda.histogram_function = histogram_function
-
+        wres = pda_1d_residuals_from_s1s2(
+            fit=fit,
+            pda_obj=self.pda,
+            nuisance=getattr(self, "nuisance", None),
+        )
         try:
-            s1s2_model = np.asarray(self.pda.get_S1S2_matrix(), dtype=float).flatten()
-            s1s2_data = np.asarray(s1s2_experimental, dtype=float).flatten()
-            model_x, model_y = self.pda.get_1dhistogram(
-                s1s2=s1s2_model,
-                **kw_hist
-            )
-            data_x, data_y = self.pda.get_1dhistogram(
-                s1s2=s1s2_data,
-                **kw_hist
-            )
+            self._last_1d_residual_size = int(wres.size)
         except Exception:
-            return np.zeros(0, dtype=np.float64)
-
-        try:
-            dy = np.asarray(data_y, dtype=float)
-            my = np.asarray(model_y, dtype=float)
-            if dy.shape != my.shape:
-                return np.zeros(0, dtype=np.float64)
-            sigma = np.sqrt(np.maximum(dy, 1.0))
-            wres = (dy - my) / sigma
-            try:
-                self._last_1d_residual_size = int(wres.size)
-            except Exception:
-                pass
-            return wres
-        except Exception:
-            return np.zeros(0, dtype=np.float64)
+            pass
+        return wres
 
     def get_wres(
             self,
@@ -381,12 +341,14 @@ class PdaSimpleModel(ModelCurve):
         if xmax is None:
             xmax = fit.xmax
 
-        return _fitting.calculate_weighted_residuals(
+        wres = _fitting.calculate_weighted_residuals(
             fit.data,
             self,
             xmin=xmin,
             xmax=xmax,
         )
+
+        return mask_zero_photon_bins(fit, xmin, wres)
 
     @property
     def n_points(self) -> int:

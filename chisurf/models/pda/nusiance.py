@@ -70,11 +70,17 @@ class Background(FittingParameterGroup):
         super().__init__(name=name, **kwargs)
         self._bg0 = FittingParameter(
             value=0.0,
-            name='bg0'
+            name='bg0',
+            lb=0.0,
+            ub=100.0,
+            bounds_on=True
         )
         self._bg1 = FittingParameter(
             value=0.0,
-            name='bg1'
+            name='bg1',
+            lb=0.0,
+            ub=100.0,
+            bounds_on=True
         )
 
 
@@ -185,15 +191,24 @@ class PdaFretNuisance(FittingParameterGroup):
         super().__init__(name=name, **kwargs)
         self._alpha = FittingParameter(
             value=0.0,
-            name='alpha'
+            name='alpha',
+            lb=0.0,
+            ub=1.0,
+            bounds_on=True
         )
         self._bgG = FittingParameter(
             value=0.0,
-            name='BG'
+            name='BG',
+            lb=0.0,
+            ub=100.0,
+            bounds_on=True
         )
         self._bgR = FittingParameter(
             value=0.0,
-            name='BR'
+            name='BR',
+            lb=0.0,
+            ub=100.0,
+            bounds_on=True
         )
         self._gG = FittingParameter(
             value=1.0,
@@ -218,23 +233,25 @@ class PdaFretNuisance(FittingParameterGroup):
         # Photon-number range for PDA scoring (nPh_min, nPh_max).
         # Defaults are taken from the attached dataset's PDA metadata if
         # available; otherwise they fall back to zero.
-        default_nmin = 0.0
+        default_nmin = 30.0
         default_nmax = 0.0
         try:
             fit = getattr(self, 'fit', None)
             data = getattr(fit, 'data', None) if fit is not None else None
             pda_meta = getattr(data, 'pda', None)
             if isinstance(pda_meta, dict):
-                default_nmin = float(pda_meta.get('minimum_number_of_photons', 0.0))
-                default_nmax = float(pda_meta.get('maximum_number_of_photons', 0.0))
+                default_nmin = float(pda_meta.get('minimum_number_of_photons', default_nmin))
+                default_nmax = float(pda_meta.get('maximum_number_of_photons', default_nmax))
         except Exception:
-            default_nmin = 0.0
+            default_nmin = 30.0
             default_nmax = 0.0
         self._nPh_min = FittingParameter(
             value=default_nmin,
-            name='nPh_min'
+            name='nPh_min',
+            fixed=True,
         )
         self._nPh_max = FittingParameter(
             value=default_nmax,
-            name='nPh_max'
+            name='nPh_max',
+            fixed=True,
         )
