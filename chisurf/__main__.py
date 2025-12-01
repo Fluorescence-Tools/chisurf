@@ -2,12 +2,61 @@ from __future__ import annotations
 
 import sys
 import traceback
+import pathlib
+
+try:
+    from PyQt5 import QtWidgets, uic
+except Exception:
+    QtWidgets = None
+    uic = None
+
+
+# Define a simplified dialog class for error handling
+class SimpleErrorDialog(QtWidgets.QDialog if QtWidgets is not None else object):
+    def __init__(self, exception_text, parent=None):
+        if QtWidgets is None or uic is None:
+            raise RuntimeError("Qt is not available for SimpleErrorDialog")
+
+        super().__init__(parent)
+
+        uic.loadUi(
+            pathlib.Path(__file__).parent / "gui" / "widgets" / "simple_error_dialog.ui",
+            self,
+        )
+
+        # Set the exception text
+        self.exception_text_box.setText(exception_text)
+
+        # Connect signals
+        self.clear_button.clicked.connect(self.clear_settings)
+        self.cancel_button.clicked.connect(self.reject)
+
+    def clear_settings(self):
+        if QtWidgets is None:
+            raise RuntimeError("Qt is not available for SimpleErrorDialog")
+        try:
+            # Import settings functions directly
+            from chisurf.settings import clear_settings_folder, clear_logging_files
+
+            clear_settings_folder()
+            clear_logging_files()
+            QtWidgets.QMessageBox.information(
+                self,
+                "Settings Cleared",
+                "User settings have been cleared. Please restart ChiSurf.",
+            )
+            self.accept()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to clear settings: {str(e)}",
+            )
 
 
 def main():
     try:
         # Import Qt and settings modules inside the try block to catch import errors
-        from PyQt5 import QtWidgets, QtCore
         from chisurf.settings import clear_settings_folder, clear_logging_files
         from chisurf.gui import get_app
 
@@ -25,8 +74,8 @@ def main():
     except Exception as e:
         # Handle the exception
         try:
-            # Try to use PyQt5 for the error dialog
-            from PyQt5 import QtWidgets
+            if QtWidgets is None:
+                raise RuntimeError("Qt is not available")
 
             # Create a basic QApplication if one doesn't exist yet
             if not QtWidgets.QApplication.instance():
@@ -34,42 +83,6 @@ def main():
 
             # Format the exception traceback
             exception_text = f"{str(e)}\n\n{traceback.format_exc()}"
-
-            # Define a simplified dialog class for error handling
-            class SimpleErrorDialog(QtWidgets.QDialog):
-                def __init__(self, exception_text, parent=None):
-                    super().__init__(parent)
-
-                    # Load the UI file
-                    import pathlib
-                    from PyQt5 import uic
-                    uic.loadUi(pathlib.Path(__file__).parent / "gui" / "widgets" / "simple_error_dialog.ui", self)
-
-                    # Set the exception text
-                    self.exception_text_box.setText(exception_text)
-
-                    # Connect signals
-                    self.clear_button.clicked.connect(self.clear_settings)
-                    self.cancel_button.clicked.connect(self.reject)
-
-                def clear_settings(self):
-                    try:
-                        # Import settings functions directly
-                        from chisurf.settings import clear_settings_folder, clear_logging_files
-                        clear_settings_folder()
-                        clear_logging_files()
-                        QtWidgets.QMessageBox.information(
-                            self, 
-                            "Settings Cleared", 
-                            "User settings have been cleared. Please restart ChiSurf."
-                        )
-                        self.accept()
-                    except Exception as e:
-                        QtWidgets.QMessageBox.critical(
-                            self, 
-                            "Error", 
-                            f"Failed to clear settings: {str(e)}"
-                        )
 
             # Show the dialog
             dialog = SimpleErrorDialog(exception_text)
