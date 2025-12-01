@@ -69,7 +69,7 @@ requirements:
     - click-didyoumean
     - qtpy
     - pyqt
-    - pyqtgraph
+    - pyqtgraph 0.13.*
     - matplotlib
     - scikit-image
     - deprecation
