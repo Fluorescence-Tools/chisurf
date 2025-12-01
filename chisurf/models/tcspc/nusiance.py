@@ -279,6 +279,78 @@ class Corrections(FittingParameterGroup):
             return decay * lintable
         return decay
 
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of linearization state.
+
+        This intentionally captures only lightweight, non-Qt attributes
+        that are not already handled via :class:`FittingParameter` (those
+        are serialized by the generic fit_state helpers).
+        """
+
+        state: dict = {
+            "correct_dnl": bool(self.correct_dnl),
+            "correct_pile_up": bool(self.correct_pile_up),
+            "reverse": bool(self.reverse),
+            "window_function": str(self.window_function),
+            "lin_auto_range": bool(getattr(self, "_auto_range", True)),
+        }
+
+        # Persist the linearization table itself if it has been computed.
+        # This allows project round-trips to reuse the same correction even
+        # if the underlying helper curve is no longer available.
+        try:
+            lt = getattr(self, "_lintable", None)
+            if isinstance(lt, np.ndarray) and lt.size > 0:
+                state["lintable"] = lt.tolist()
+        except Exception:
+            pass
+
+        return state
+
+    def set_state(self, state: dict) -> None:
+        """Restore linearization state from :meth:`get_state` output."""
+
+        if not isinstance(state, dict):
+            return
+
+        try:
+            self.correct_dnl = bool(state.get("correct_dnl", self.correct_dnl))
+        except Exception:
+            pass
+        try:
+            self.correct_pile_up = bool(state.get("correct_pile_up", self.correct_pile_up))
+        except Exception:
+            pass
+        try:
+            self.reverse = bool(state.get("reverse", self.reverse))
+        except Exception:
+            pass
+
+        wf = state.get("window_function")
+        if isinstance(wf, str):
+            try:
+                self.window_function = wf
+            except Exception:
+                pass
+
+        if "lin_auto_range" in state:
+            try:
+                self._auto_range = bool(state["lin_auto_range"])
+            except Exception:
+                pass
+
+        # Restore linearization table if present. We store the raw
+        # (non-reversed) table and let the ``lintable`` property handle
+        # orientation via the ``reverse`` flag.
+        lt = state.get("lintable")
+        if isinstance(lt, (list, tuple)):
+            try:
+                arr = np.asarray(lt, dtype=float)
+                if arr.size > 0:
+                    self._lintable = arr
+            except Exception:
+                pass
+
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
@@ -747,3 +819,88 @@ class Convolve(FittingParameterGroup):
         self.__irf = irf
         if self.__irf is not None:
             self._irf = self.__irf
+
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of convolution/IRF state.
+
+        Only small, non-Qt pieces of state are captured here. All scalar
+        parameters that are :class:`FittingParameter` instances are already
+        handled by the generic fit_state serializer.
+        """
+
+        state: dict = {
+            "do_convolution": bool(self.do_convolution),
+            "mode": str(getattr(self, "mode", "")),
+        }
+
+        # Persist the IRF curve (x/y) if available so TCSPC fits round-trip
+        # with their instrument response function.
+        try:
+            irf = getattr(self, "_irf", None)
+            if isinstance(irf, chisurf.curve.Curve):
+                x = getattr(irf, "x", None)
+                y = getattr(irf, "y", None)
+                if x is not None and y is not None:
+                    x_arr = np.asarray(x, dtype=float).ravel()
+                    y_arr = np.asarray(y, dtype=float).ravel()
+                    if x_arr.size and x_arr.size == y_arr.size:
+                        state["irf"] = {
+                            "x": x_arr.tolist(),
+                            "y": y_arr.tolist(),
+                        }
+            # If we are in the GUI widget subclass, also persist the IRF
+            # filename/label shown in the line edit so the user can see
+            # which IRF was selected after a project reload.
+            le = getattr(self, "lineEdit", None)
+            if le is not None:
+                try:
+                    txt = str(le.text())
+                except Exception:
+                    txt = ""
+                if txt:
+                    state["irf_name"] = txt
+        except Exception:
+            pass
+
+        return state
+
+    def set_state(self, state: dict) -> None:
+        """Restore convolution/IRF state from :meth:`get_state` output."""
+
+        if not isinstance(state, dict):
+            return
+
+        try:
+            self.do_convolution = bool(state.get("do_convolution", self.do_convolution))
+        except Exception:
+            pass
+
+        mode = state.get("mode")
+        if isinstance(mode, str) and mode:
+            try:
+                self.mode = mode
+            except Exception:
+                pass
+
+        irf_state = state.get("irf")
+        if isinstance(irf_state, dict):
+            try:
+                x = np.asarray(irf_state.get("x", []), dtype=float)
+                y = np.asarray(irf_state.get("y", []), dtype=float)
+                if x.size and x.size == y.size:
+                    curve = chisurf.curve.Curve(x=x, y=y)
+                    # Use the public setter so n0 and lamp background bounds
+                    # are updated consistently.
+                    self._irf = curve
+            except Exception:
+                pass
+
+        # Restore IRF filename label in the GUI, if present.
+        irf_name = state.get("irf_name")
+        if isinstance(irf_name, str) and irf_name:
+            le = getattr(self, "lineEdit", None)
+            if le is not None:
+                try:
+                    le.setText(irf_name)
+                except Exception:
+                    pass
