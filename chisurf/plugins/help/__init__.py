@@ -16,9 +16,9 @@ import re
 import html as _html
 import pkgutil
 import importlib
-
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QTextBrowser, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QPlainTextEdit, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtGui import QTextDocument, QImage
 
 import chisurf
 import chisurf.plugins
@@ -32,6 +32,32 @@ except Exception:
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Help:Documentation"
+
+class HelpTextBrowser(QTextBrowser):
+    def loadResource(self, type, name):  # type: ignore[override]
+        try:
+            if name.scheme() in ("http", "https"):
+                import urllib.request
+
+                try:
+                    with urllib.request.urlopen(name.toString()) as resp:  # nosec
+                        data = resp.read()
+                except Exception:
+                    return super().loadResource(type, name)
+
+                if type == QTextDocument.ImageResource:
+                    img = QImage()
+                    try:
+                        if img.loadFromData(data):
+                            return img
+                    except Exception:
+                        pass
+                    return super().loadResource(type, name)
+                return data
+        except Exception:
+            pass
+        return super().loadResource(type, name)
+
 
 class HelpWidget(QWidget):
     """
@@ -80,8 +106,10 @@ class HelpWidget(QWidget):
         self.tree.itemClicked.connect(self.on_item_clicked)
         splitter.addWidget(self.tree)
 
-        self.viewer = QTextBrowser()
-        self.viewer.setOpenExternalLinks(True)
+        self.viewer = HelpTextBrowser()
+        self.viewer.setOpenExternalLinks(False)
+        self.viewer.setOpenLinks(False)
+        self.viewer.anchorClicked.connect(self.on_anchor_clicked)
         self.viewer.setStyleSheet(
             "QTextBrowser {"
             " padding: 8px;"
@@ -145,10 +173,29 @@ class HelpWidget(QWidget):
     def populate_docs(self):
         self.tree.clear()
         self.docs_index = {}
+        manual_root = QTreeWidgetItem(self.tree, ["User manual"])
         core_root = QTreeWidgetItem(self.tree, ["Core"])
         plugins_root = QTreeWidgetItem(self.tree, ["Plugins"])
+        self.build_manual_docs(manual_root)
         self.build_core_docs(core_root)
         self.build_plugin_docs(plugins_root)
+
+    def build_manual_docs(self, parent_item):
+        base = pathlib.Path(chisurf.__file__).resolve().parent
+        root = base.parent
+        docs_dir = root / "docs"
+        if not docs_dir.exists():
+            return
+        for path in sorted(docs_dir.rglob("*.md")):
+            try:
+                rel = path.relative_to(docs_dir)
+            except ValueError:
+                rel = path.name
+            title = self._extract_markdown_title(path)
+            label = title if title else str(rel)
+            item = QTreeWidgetItem(parent_item, [label])
+            item.setData(0, Qt.UserRole, str(path))
+            self._index_document_item(item, path)
 
     def build_core_docs(self, parent_item):
         base = pathlib.Path(chisurf.__file__).resolve().parent
@@ -158,12 +205,15 @@ class HelpWidget(QWidget):
                 rel = path.relative_to(root)
             except ValueError:
                 continue
+            if rel.parts and rel.parts[0] == "docs":
+                continue
             if "plugins" in rel.parts:
                 continue
-            label = str(rel)
+            title = self._extract_markdown_title(path)
+            label = title if title else str(rel)
             item = QTreeWidgetItem(parent_item, [label])
             item.setData(0, Qt.UserRole, str(path))
-
+            self._index_document_item(item, path)
     def build_plugin_docs(self, parent_item):
         """Populate the Plugins section, sorted like the main GUI plugin menu.
 
@@ -220,15 +270,17 @@ class HelpWidget(QWidget):
                 if p.name.lower() in {"readme.md", "readme"}:
                     readme_path = p
                     break
-            title = self._extract_markdown_title(readme_path) if readme_path is not None else None
+            readme_title = self._extract_markdown_title(readme_path) if readme_path is not None else None
 
             # If there is only a single Markdown file for this plugin, show it as a leaf
             # directly under the Plugins node (no nested subtree).
             if len(markdown_files) == 1:
                 md_path = markdown_files[0]
-                # Use README title if we have one and the single file is the README.
-                if readme_path is not None and md_path == readme_path and title:
-                    label = title
+                doc_title = self._extract_markdown_title(md_path)
+                if doc_title:
+                    label = doc_title
+                elif readme_path is not None and md_path == readme_path and readme_title:
+                    label = readme_title
                 else:
                     # Fallback: clean plugin name (without submenu prefix) or module name.
                     clean_name = plugin_name.split(":")[-1].strip() if ":" in plugin_name else plugin_name
@@ -238,21 +290,26 @@ class HelpWidget(QWidget):
                         label = f"{label} ({md_path.name})"
                 item = QTreeWidgetItem(parent_item, [label])
                 item.setData(0, Qt.UserRole, str(md_path))
+                self._index_document_item(item, md_path)
             else:
                 # Group node: prefer README title, then clean plugin name, then directory name.
                 clean_name = plugin_name.split(":")[-1].strip() if ":" in plugin_name else plugin_name
-                plugin_label = title or clean_name or plugin_dir.name
+                plugin_label = readme_title or clean_name or plugin_dir.name
                 plugin_item = QTreeWidgetItem(parent_item, [plugin_label])
                 for md_path in markdown_files:
                     rel = md_path.relative_to(plugin_dir)
-                    file_item = QTreeWidgetItem(plugin_item, [str(rel)])
+                    doc_title = self._extract_markdown_title(md_path)
+                    file_label = doc_title if doc_title else str(rel)
+                    file_item = QTreeWidgetItem(plugin_item, [file_label])
                     file_item.setData(0, Qt.UserRole, str(md_path))
+                    self._index_document_item(file_item, md_path)
 
     def _extract_markdown_title(self, path: pathlib.Path):
-        """Return the first heading line from a README-style Markdown file, if any.
+        """Return the first heading line from a Markdown file, if any.
 
-        We look for the first non-empty line that starts with one or more '#' characters
-        followed by a space, and use the remainder as the title.
+        We look for the first line that starts with one or more '#' characters
+        followed by a space, and use the remainder as the title. Any trailing
+        '{#anchor}' marker is stripped.
         """
         if path is None or not path.exists():
             return None
@@ -266,12 +323,50 @@ class HelpWidget(QWidget):
             if not stripped:
                 continue
             m = re.match(r"^(#{1,6})\s+(.*)", stripped)
-            if m:
-                return m.group(2).strip()
-            # Only consider the first non-empty line; if it's not a heading,
-            # we treat the file as having no explicit title.
-            break
+            if not m:
+                continue
+            heading = m.group(2)
+            heading = re.sub(r"\{\s*#[-\w]+\s*\}\s*$", "", heading).strip()
+            if heading:
+                return heading
         return None
+
+    def _index_document_item(self, item, path: pathlib.Path):
+        key = str(path)
+        try:
+            text = path.read_text(encoding="utf-8")
+        except Exception:
+            text = ""
+        lower_text = text.lower()
+        headings = []
+        first_heading = None
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("#"):
+                continue
+            m = re.match(r"^(#{1,6})\s+(.*)", stripped)
+            if not m:
+                continue
+            heading = m.group(2)
+            heading = re.sub(r"\{\s*#[-\w]+\s*\}\s*$", "", heading).strip()
+            if not heading:
+                continue
+            headings.append(heading)
+            if first_heading is None:
+                first_heading = heading
+        headings_lc = "\n".join(h.lower() for h in headings) if headings else ""
+        title = first_heading.lower() if first_heading is not None else None
+        label = item.text(0).lower()
+        file_name = path.name.lower()
+        self.docs_index[key] = {
+            "item": item,
+            "path": path,
+            "label": label,
+            "file_name": file_name,
+            "title": title,
+            "headings": headings_lc,
+            "text": lower_text,
+        }
 
     def find_first_leaf(self, parent):
         for i in range(parent.childCount()):
@@ -298,7 +393,22 @@ class HelpWidget(QWidget):
                 child = item.child(i)
                 self._apply_filter(child, text)
             return True
-        matches_self = text in item.text(0).lower()
+        label_match = text in item.text(0).lower()
+        meta_match = False
+        path = item.data(0, Qt.UserRole)
+        if path:
+            info = self.docs_index.get(str(path))
+            if info is not None:
+                title = info.get("title") or ""
+                if text in title:
+                    meta_match = True
+                elif text in info.get("file_name", ""):
+                    meta_match = True
+                elif text in info.get("headings", ""):
+                    meta_match = True
+                elif text in info.get("text", ""):
+                    meta_match = True
+        matches_self = label_match or meta_match
         child_matches = False
         for i in range(item.childCount()):
             child = item.child(i)
@@ -313,6 +423,9 @@ class HelpWidget(QWidget):
         if not path:
             return
         file_path = pathlib.Path(path)
+        self.open_markdown_path(file_path)
+
+    def open_markdown_path(self, file_path: pathlib.Path, anchor: str | None = None):
         if not file_path.exists():
             return
         self.current_path = file_path
@@ -334,10 +447,37 @@ class HelpWidget(QWidget):
             if html is None:
                 self.viewer.setPlainText(text)
             else:
-                self.viewer.setHtml(html)
+                try:
+                    base_url = QUrl.fromLocalFile(str(file_path))
+                    self.viewer.setHtml(html, base_url)
+                except Exception:
+                    self.viewer.setHtml(html)
             self.viewer.show()
             self.editor.hide()
             self.save_button.setEnabled(False)
+            if anchor:
+                try:
+                    self.viewer.scrollToAnchor(anchor)
+                except Exception:
+                    pass
+
+    def on_anchor_clicked(self, url):
+        try:
+            if url.scheme() in ("http", "https"):
+                webbrowser.open(url.toString())
+                return
+            if not url.scheme() and not url.path() and url.fragment():
+                self.viewer.scrollToAnchor(url.fragment())
+                return
+            if url.isLocalFile() or url.scheme() == "file":
+                local_path = pathlib.Path(url.toLocalFile())
+                fragment = url.fragment() or None
+                if local_path.suffix.lower() == ".md":
+                    self.open_markdown_path(local_path, fragment)
+                    return
+            self.viewer.setSource(url)
+        except Exception:
+            pass
 
     def on_edit_toggled(self, checked):
         if self.current_path is None:
@@ -373,7 +513,11 @@ class HelpWidget(QWidget):
             if html is None:
                 self.viewer.setPlainText(text)
             else:
-                self.viewer.setHtml(html)
+                try:
+                    base_url = QUrl.fromLocalFile(str(self.current_path))
+                    self.viewer.setHtml(html, base_url)
+                except Exception:
+                    self.viewer.setHtml(html)
             self.viewer.show()
             self.editor.hide()
             self.save_button.setEnabled(False)
@@ -394,13 +538,25 @@ class HelpWidget(QWidget):
             if html is None:
                 self.viewer.setPlainText(text)
             else:
-                self.viewer.setHtml(html)
+                try:
+                    base_url = QUrl.fromLocalFile(str(self.current_path))
+                    self.viewer.setHtml(html, base_url)
+                except Exception:
+                    self.viewer.setHtml(html)
 
     def render_markdown(self, text):
+        prepared = self._prepare_markdown_with_heading_ids(text)
         if markdown is not None:
-            body = markdown.markdown(text, output_format="html5")
+            try:
+                body = markdown.markdown(
+                    prepared,
+                    output_format="html5",
+                    extensions=["attr_list"],
+                )
+            except Exception:
+                body = markdown.markdown(prepared, output_format="html5")
         else:
-            body = self._basic_markdown_to_html(text)
+            body = self._basic_markdown_to_html(prepared)
 
         css = (
             "<style>"
@@ -411,6 +567,29 @@ class HelpWidget(QWidget):
             "</style>"
         )
         return f"<html><head>{css}</head><body>{body}</body></html>"
+
+    def _prepare_markdown_with_heading_ids(self, text):
+        lines = text.splitlines()
+        out_lines = []
+        for line in lines:
+            m = re.match(r"^(#{1,6})\s+(.*)", line)
+            if not m:
+                out_lines.append(line)
+                continue
+            prefix, title = m.group(1), m.group(2)
+            if re.search(r"\{\s*#[-\w]+\s*\}\s*$", title):
+                out_lines.append(line)
+                continue
+            slug = self._slugify_heading(title)
+            out_lines.append(f"{prefix} {title} " + "{" + f"#{slug}" + "}")
+        return "\n".join(out_lines)
+
+    def _slugify_heading(self, text):
+        slug = text.strip().lower()
+        slug = re.sub(r"[^\w\s-]", "", slug)
+        slug = re.sub(r"\s+", "-", slug)
+        slug = re.sub(r"-+", "-", slug)
+        return slug or "section"
 
     def _basic_markdown_to_html(self, text):
         """Very simple Markdown-to-HTML converter used as a fallback.
@@ -423,6 +602,25 @@ class HelpWidget(QWidget):
 
         in_ul = False
         in_ol = False
+
+        def _process_inline_with_images(raw: str) -> str:
+            placeholders = {}
+
+            def _img_repl(m):
+                alt = m.group(1)
+                src = m.group(2).strip()
+                key = f"__CS_IMG_{len(placeholders)}__"
+                alt_esc = _html.escape(alt)
+                src_esc = _html.escape(src, quote=True)
+                placeholders[key] = f'<img src="{src_esc}" alt="{alt_esc}">'  # nosec
+                return key
+
+            tmp = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", _img_repl, raw)
+            escaped = _html.escape(tmp)
+            escaped = self._apply_inline_markdown(escaped)
+            for key, tag in placeholders.items():
+                escaped = escaped.replace(key, tag)
+            return escaped
 
         for line in lines:
             stripped = line.lstrip()
@@ -448,8 +646,7 @@ class HelpWidget(QWidget):
                 if not in_ul:
                     html_lines.append("<ul>")
                     in_ul = True
-                content = _html.escape(m_ul.group(1))
-                content = self._apply_inline_markdown(content)
+                content = _process_inline_with_images(m_ul.group(1))
                 html_lines.append(f"<li>{content}</li>")
                 continue
 
@@ -460,8 +657,7 @@ class HelpWidget(QWidget):
                 if not in_ol:
                     html_lines.append("<ol>")
                     in_ol = True
-                content = _html.escape(m_ol.group(2))
-                content = self._apply_inline_markdown(content)
+                content = _process_inline_with_images(m_ol.group(2))
                 html_lines.append(f"<li>{content}</li>")
                 continue
 
@@ -477,13 +673,21 @@ class HelpWidget(QWidget):
             m = re.match(r"^(#{1,6})\s+(.*)", stripped)
             if m:
                 level = len(m.group(1))
-                content = m.group(2)
-                content = _html.escape(content)
-                content = self._apply_inline_markdown(content)
-                html_lines.append(f"<h{level}>{content}</h{level}>")
+                raw_content = m.group(2)
+                anchor = None
+                m_id = re.search(r"\{\s*#([-\w]+)\s*\}\s*$", raw_content)
+                if m_id:
+                    anchor = m_id.group(1)
+                    raw_content = raw_content[:m_id.start()].rstrip()
+                else:
+                    anchor = self._slugify_heading(raw_content)
+                content = _process_inline_with_images(raw_content)
+                if anchor:
+                    html_lines.append(f'<h{level} id="{anchor}">{content}</h{level}>' )
+                else:
+                    html_lines.append(f"<h{level}>{content}</h{level}>")
             else:
-                content = _html.escape(line)
-                content = self._apply_inline_markdown(content)
+                content = _process_inline_with_images(line)
                 html_lines.append(f"<p>{content}</p>")
         if in_ul:
             html_lines.append("</ul>")
