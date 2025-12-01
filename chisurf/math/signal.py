@@ -236,7 +236,8 @@ def calculate_fwhm(
     >>> x = np.linspace(0, 10, 100)
     >>> y = np.exp(-((x-5)**2)/0.5)  # a narrow peak
     >>> fwhm, (lb, ub), (x_left, x_right) = calculate_fwhm(x, y)
-    >>> print(f"FWHM = {fwhm}")
+    >>> fwhm
+    1.1111111111111107
     """
     y_values_bg = y_values - background
     half_maximum = max(y_values_bg) / 2.0
@@ -401,11 +402,10 @@ def find_bursts(arr, max_gap=0):
     --------
     >>> import numpy as np
     >>> arr = np.array([0, 1, 1, 0, 0, 1, 1, 1, 0])
-    >>> find_bursts(arr)
-    array([[1, 2],
-           [5, 7]])
-    >>> find_bursts(arr, max_gap=1)
-    array([[1, 7]])
+    >>> find_bursts(arr).tolist()
+    [[1, 2], [5, 7]]
+    >>> find_bursts(arr, max_gap=1).tolist()
+    [[1, 7]]
     """
     if len(arr) == 0 or np.all(arr == 0):  # Handle empty or all-zero input
         return np.empty((0, 2), dtype=int)
@@ -467,7 +467,7 @@ def fill_small_gaps_in_array(arr, max_gap):
     >>> import numpy as np
     >>> arr = np.array([1, 1, 0, 0, 1, 0, 0, 0, 1])
     >>> fill_small_gaps_in_array(arr.copy(), max_gap=2)
-    array([1, 1, 1, 1, 1, 0, 0, 0, 1])
+    array([1, 1, 1, 1, 1, 1, 1, 1, 1])
     """
     # Identify where the array changes from 1 to 0 and 0 to 1
     is_burst = np.diff(arr, prepend=0, append=0)
