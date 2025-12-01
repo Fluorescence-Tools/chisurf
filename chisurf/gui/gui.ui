@@ -292,6 +292,7 @@
      </property>
      <addaction name="actionOpen_Project"/>
      <addaction name="actionSave_Project"/>
+     <addaction name="actionClose_Project"/>
     </widget>
     <widget class="QMenu" name="menuLoad_Fit_result">
      <property name="title">
@@ -629,14 +630,6 @@
      </item>
      <item>
       <widget class="QPlainTextEdit" name="plainTextEditHistory">
-       <property name="font">
-        <font>
-         <family>Courier New</family>
-         <pointsize>10</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="lineWrapMode">
         <enum>QPlainTextEdit::NoWrap</enum>
        </property>
@@ -829,6 +822,23 @@
        </property>
        <property name="toolButtonStyle">
         <enum>Qt::ToolButtonTextBesideIcon</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="5" rowspan="2">
+      <widget class="QToolButton" name="toolButton_reader_help">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="icon">
+        <iconset resource="resources/resource.qrc">
+         <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
+       </property>
+       <property name="toolTip">
+        <string>Help for current experiment / reader</string>
        </property>
       </widget>
      </item>
@@ -1526,6 +1536,11 @@
    </property>
    <property name="text">
     <string>Quenching Estimator</string>
+   </property>
+  </action>
+  <action name="actionClose_Project">
+   <property name="text">
+    <string>Close Project</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>
