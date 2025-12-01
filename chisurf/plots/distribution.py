@@ -252,6 +252,32 @@ class DistributionPlot(plotbase.Plot):
 
         # Get distribution
         ds = self.plot_controller.parameter_editor.dict
+
+        # Update x-axis label to reflect the currently used histogram axis /
+        # function. Prefer an explicit axis label or kw_hist['_axis_type']
+        # when configured; otherwise fall back to the distribution selector
+        # text (e.g. 'S1/(S0+S1)', 'S0/S1', 'Distance').
+        try:
+            axis_label = ds.get('axis_label')
+        except Exception:
+            axis_label = None
+        if not axis_label:
+            try:
+                kw_hist = ds.get('accessor_kwargs', {}).get('kw_hist', {})
+                axis_label = kw_hist.get('_axis_type')
+            except Exception:
+                axis_label = None
+        if not axis_label:
+            try:
+                axis_label = str(self.plot_controller.distribution_type)
+            except Exception:
+                axis_label = ''
+        try:
+            if axis_label:
+                self.distribution_plot.setLabel('bottom', axis_label)
+        except Exception:
+            pass
+
         # Update axis scaling based on the currently selected distribution
         try:
             scale_x = ds.get('scale_x', self._scale_x)
@@ -268,14 +294,29 @@ class DistributionPlot(plotbase.Plot):
             **ds['accessor_kwargs']
         )
 
+        # Helper to drop curves with no finite support. This prevents
+        # feeding all-NaN or empty arrays into pyqtgraph's ScatterPlotItem,
+        # which otherwise emits RuntimeWarnings.
+        def _sanitize_curve(y, x):
+            try:
+                x_arr = np.asarray(x, dtype=float).ravel()
+                y_arr = np.asarray(y, dtype=float).ravel()
+            except Exception:
+                return None
+            if x_arr.size == 0 or y_arr.size == 0:
+                return None
+            if not np.any(np.isfinite(x_arr)) or not np.any(np.isfinite(y_arr)):
+                return None
+            return y_arr, x_arr
+
         # Optionally derive weighted residuals and basic fit statistics from the
         # first two curves (data, model) using counting shot noise
         # sigma = sqrt(max(data, 1)). For PDA 1D histograms this matches the
         # definition used in chisurf.models.pda.widgets.get_distribution and
-        # allows us to define chi² and DW directly from the currently shown
-        # histogram rather than only from the global Fit object. Bins with
-        # zero experimental counts do not contribute to chi²/DW or the
-        # effective fit-range; we only use bins with at least one photon.
+        # allows us to define DW directly from the currently shown histogram
+        # rather than only from the global Fit object. Bins with zero
+        # experimental counts do not contribute to DW or the effective
+        # fit-range; we only use bins with at least one photon.
         wres_curve = None
         chi2r = None
         dw = None
@@ -298,10 +339,6 @@ class DistributionPlot(plotbase.Plot):
                         my_nz = my[mask]
                         sigma_nz = np.sqrt(np.maximum(dy_nz, 1.0))
                         resid_nz = (dy_nz - my_nz) / sigma_nz
-                        # chi²_red based on the current (non-empty) histogram
-                        chi2 = float(np.sum(resid_nz ** 2))
-                        dof = max(int(dy_nz.size - 1), 1)
-                        chi2r = chi2 / dof
                         # Durbin–Watson statistic for these residuals
                         if resid_nz.size > 1:
                             num = float(np.sum(np.diff(resid_nz) ** 2))
@@ -324,6 +361,23 @@ class DistributionPlot(plotbase.Plot):
             hist_i_max = None
 
         p = dict(ds.get('curve_options', {}))
+
+        # Normalize optional fill/line colors for single-curve distributions.
+        # If a fillBrush is provided, use the same RGB values for the line and
+        # make the fill about 50% transparent so that the histogram area is
+        # softly shaded but the outline remains fully opaque.
+        try:
+            if not p.get('multi_curve', False) and 'fillBrush' in p:
+                base = p['fillBrush']
+                col = pg.mkColor(base)
+                r_c, g_c, b_c, _ = col.getRgb()
+                alpha_fill = int(0.5 * 255)
+                p['fillBrush'] = (r_c, g_c, b_c, alpha_fill)
+                if 'pen' not in p:
+                    p['pen'] = (r_c, g_c, b_c, 255)
+        except Exception:
+            pass
+
         bar_mode = p.pop('bar_mode', None)
         multi_curve = p.get('multi_curve', False)
 
@@ -341,13 +395,6 @@ class DistributionPlot(plotbase.Plot):
             pens = p.pop('pen', ['r', 'b', 'g', 'y', 'c', 'm', 'k'])
             symbols = p.pop('symbol', ['o', 'x', 'v', '^', '<'])
 
-            # Remove any global stepMode/connect from p; we choose them per
-            # curve index below so that data/model remain stepped histograms
-            # while residuals and Gaussian components are smooth lines or
-            # discrete "sticks" when requested via bar_mode.
-            p.pop('stepMode', None)
-            p.pop('connect', None)
-
             # Normalize pens/symbols so they are lists of at least n_curves
             # elements. This avoids IndexError when more curves are returned
             # than there are explicit colors/symbols configured.
@@ -363,8 +410,40 @@ class DistributionPlot(plotbase.Plot):
                 base = symbols if symbols else ['o']
                 symbols = [base[i % len(base)] for i in range(n_curves)]
 
+            # Remove any global stepMode/connect from p; we choose them per
+            # curve index below so that data/model remain stepped histograms
+            # while residuals and Gaussian components are smooth lines or
+            # discrete "sticks" when requested via bar_mode.
+            p.pop('stepMode', None)
+            p.pop('connect', None)
+
+            # Optional filled-under-curve styling for multi-curve plots. When
+            # a fillBrush/fillLevel is provided in curve_options, apply it to
+            # the first curve only (typically the experimental PDA histogram).
+            # The fill uses the same RGB values as the data line but with
+            # ~50% transparency so that the line remains clearly visible.
+            fill_brush = None
+            fill_level = None
+            try:
+                if 'fillBrush' in p:
+                    fill_brush = p.pop('fillBrush')
+                    fill_level = p.pop('fillLevel', 0.0)
+                    if pens:
+                        base_col = pg.mkColor(pens[0])
+                        r_c, g_c, b_c, _ = base_col.getRgb()
+                        alpha_fill = int(0.5 * 255)
+                        fill_brush = (r_c, g_c, b_c, alpha_fill)
+                        pens[0] = (r_c, g_c, b_c, 255)
+            except Exception:
+                fill_brush = None
+                fill_level = None
+
             for i in range(n_curves):
-                y, x = r[i]
+                y_raw, x_raw = r[i]
+                cur = _sanitize_curve(y_raw, x_raw)
+                if cur is None:
+                    continue
+                y, x = cur
                 c, s = pens[i], symbols[i]
 
                 # Allow the plot controller to hide individual component
@@ -383,7 +462,7 @@ class DistributionPlot(plotbase.Plot):
                 if use_sticks:
                     x_arr = np.asarray(x, dtype=float)
                     y_arr = np.asarray(y, dtype=float)
-                    if x_arr.size == 0:
+                    if x_arr.size == 0 or not np.any(np.isfinite(x_arr)) or not np.any(np.isfinite(y_arr)):
                         continue
                     xs = np.empty(3 * x_arr.size, dtype=float)
                     ys = np.empty_like(xs)
@@ -428,17 +507,34 @@ class DistributionPlot(plotbase.Plot):
                         curve_step = False
                     curve_connect = 'all'
 
-                target_plot.plot(
-                    x_plot,
-                    y_plot,
-                    stepMode=curve_step,
-                    connect=curve_connect,
-                    **p,
-                    pen=pg.mkPen(c, width=lw),
-                    symbol=s,
-                )
+                if fill_brush is not None and i == 0:
+                    target_plot.plot(
+                        x_plot,
+                        y_plot,
+                        stepMode=curve_step,
+                        connect=curve_connect,
+                        **p,
+                        pen=pg.mkPen(c, width=lw),
+                        symbol=s,
+                        fillLevel=fill_level,
+                        fillBrush=fill_brush,
+                    )
+                else:
+                    target_plot.plot(
+                        x_plot,
+                        y_plot,
+                        stepMode=curve_step,
+                        connect=curve_connect,
+                        **p,
+                        pen=pg.mkPen(c, width=lw),
+                        symbol=s,
+                    )
         else:
-            y, x = r
+            y_raw, x_raw = r
+            cur = _sanitize_curve(y_raw, x_raw)
+            if cur is None:
+                return
+            y, x = cur
             c = p.pop('pen', 'b')
             s = p.pop('symbol', 'o')
             if bar_mode == 'sticks':
@@ -456,6 +552,8 @@ class DistributionPlot(plotbase.Plot):
                     ys[0::3] = 0.0
                     ys[1::3] = y_arr
                     ys[2::3] = np.nan
+                    p.pop('stepMode', None)
+                    p.pop('connect', None)
                     self.distribution_plot.plot(
                         xs,
                         ys,
@@ -479,7 +577,7 @@ class DistributionPlot(plotbase.Plot):
                     self._quality_text.updateTextPos()
                 except Exception:
                     pass
-                chi2_display = chi2r if chi2r is not None else getattr(fit, 'chi2r', None)
+                chi2_display = getattr(fit, 'chi2r', None)
                 dw_display = dw if dw is not None else getattr(fit, 'durbin_watson', None)
                 # Prefer the effective histogram fit-range (first/last non-empty
                 # bin) and fall back to the Fit object's xmin/xmax otherwise.
@@ -494,7 +592,7 @@ class DistributionPlot(plotbase.Plot):
                         f'<div style="name-align: center">'
                         f'     <span style="color: #FF0; font-size: 10pt;">'
                         f'{fit_range_line}'
-                        f'         &Chi;<sup>2</sup>={chi2_display:.4f} <br />'
+                        f'         &Chi;<sub>r</sub><sup>2</sup>={chi2_display:.4f} <br />'
                         f'         DW={dw_display: .4f}'
                         f'     </span>'
                         f'</div>'
