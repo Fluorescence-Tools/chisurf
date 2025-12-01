@@ -765,236 +765,271 @@ class PdaTTTRWidget(
                 logging.warning("PDA: No dropped files are checked to load.")
                 QtWidgets.QMessageBox.information(self, "No files", "No dropped files are checked to load.")
                 return
-            # Resolve folders into BUR files only at load time; classify all paths
-            bur_files = []
-            tttr_files = []
-            for f in files:
+            try:
+                cs = getattr(chisurf, 'cs', None)
+            except Exception:
+                cs = None
+            progress_bar = getattr(cs, 'progress_bar', None)
+            status_label = getattr(cs, 'status_label', None)
+            progress_backup = None
+            status_backup = None
+            if progress_bar is not None:
                 try:
-                    p = pathlib.Path(f)
-                except Exception:
-                    logging.warning("PDA: Invalid dropped path in load: %r", f)
-                    continue
-                try:
-                    if p.is_dir():
-                        try:
-                            expanded = self._expand_burst_folder(p)
-                        except Exception:
-                            logging.warning(
-                                "PDA: Error expanding burst folder during load: %s", str(p), exc_info=True
-                            )
-                            expanded = []
-                        bur_files.extend(expanded or [])
-                    else:
-                        suffix = p.suffix.lower()
-                        if suffix == '.bur':
-                            bur_files.append(str(p))
-                        elif suffix in self._tttr_exts:
-                            tttr_files.append(str(p))
-                except Exception:
-                    logging.warning(
-                        "PDA: Error classifying dropped path during load: %r", f, exc_info=True
+                    progress_backup = (
+                        progress_bar.minimum(),
+                        progress_bar.maximum(),
+                        progress_bar.value()
                     )
-                    continue
-
-            # Deduplicate while keeping a deterministic ordering
-            bur_files = sorted(set(bur_files))
-            tttr_files = sorted(set(tttr_files))
-
-            max_bur_files = 1024
-            max_tttr_files = 1024
-            if len(bur_files) > max_bur_files:
-                logging.warning(
-                    "PDA: Too many BUR files selected (%d); aborting load.",
-                    len(bur_files)
-                )
-                QtWidgets.QMessageBox.warning(
-                    self,
-                    "Too many BUR files",
-                    f"You selected {len(bur_files)} BUR files. "
-                    f"For stability, please process them in smaller batches (<= {max_bur_files} at once)."
-                )
-                return
-            if len(tttr_files) > max_tttr_files:
-                logging.warning(
-                    "PDA: Too many TTTR files selected (%d); limiting to first %d.",
-                    len(tttr_files), max_tttr_files
-                )
-                QtWidgets.QMessageBox.warning(
-                    self,
-                    "Too many files",
-                    f"You selected {len(tttr_files)} TTTR files. "
-                    f"For stability, only the first {max_tttr_files} will be loaded.\n\n"
-                    "Consider using BUR tables or smaller batches if you need to process more files."
-                )
-                tttr_files = tttr_files[:max_tttr_files]
-            if not bur_files and not tttr_files:
-                logging.warning("PDA: Dropped items contain neither BUR nor TTTR files to load.")
-                QtWidgets.QMessageBox.warning(
-                    self, "No files", "Please drop .bur burst files or TTTR files "
-                                      "(e.g., .ptu, .ht3, .spc, .sdt, .t3r, .t2r, .phu, .phd) to load.")
-                return
-
-            # Gather current PDA parameters from UI
-            # channels
-            ch0_text = self.lineEdit.text().strip()
-            ch1_text = self.lineEdit_4.text().strip()
-            ch0 = [int(k) for k in ch0_text.split(',')] if ch0_text else []
-            ch1 = [int(k) for k in ch1_text.split(',')] if ch1_text else []
-            # microtime ranges
-            def parse_mtr(s: str):
-                s = s.strip()
-                if not s:
-                    return []
-                parts = []
-                for seg in s.split(';'):
-                    seg = seg.strip()
-                    if not seg:
-                        continue
-                    ab = [int(j) for j in seg.split('-')]
-                    if len(ab) >= 2:
-                        parts.append((ab[0], ab[1]))
-                return parts
-            mt0 = parse_mtr(self.lineEdit_2.text())
-            mt1 = parse_mtr(self.lineEdit_3.text())
-            micro_time_ranges = [mt0, mt1]
-            maximum_number_of_photons = int(self.spinBox_2.value())
-            minimum_number_of_photons = int(self.spinBox.value())
-            minimum_time_window_length = float(self.doubleSpinBox.value()) / 1000.0  # UI is ms, reader expects seconds
-            reading_routine = self.comboBox.currentText()
-
-            # Create a PdaReader instance with current settings
-            logging.info(f"PDA: Preparing to load {len(tttr_files)} TTTR file(s) with routine '{reading_routine}'.")
-            logging.debug({
-                'channels': (ch0, ch1),
-                'micro_time_ranges': micro_time_ranges,
-                'max_photons': maximum_number_of_photons,
-                'min_photons': minimum_number_of_photons,
-                'min_time_window_s': minimum_time_window_length
-            })
-            pda_reader = PdaReader(
-                channels=(ch0, ch1),
-                micro_time_ranges=micro_time_ranges,
-                reading_routine=reading_routine,
-                maximum_number_of_photons=maximum_number_of_photons,
-                minimum_number_of_photons=minimum_number_of_photons,
-                minimum_time_window_length=minimum_time_window_length
-            )
-            # Attach the correct experiment to the reader so get_data can set d.experiment
-            try:
-                pda_reader.experiment = chisurf.experiments.types.get('pda') or chisurf.cs.current_experiment
-            except Exception:
-                # Fallback to current experiment if types lookup fails
-                pda_reader.experiment = getattr(chisurf.cs, 'current_experiment', None)
-            # Optionally link controller
-            try:
-                pda_reader.controller = self
-            except Exception:
-                pass
-
-            # Resolve TTTR files and burst slices
-            if bur_files:
-                logging.info(f"PDA: Resolving TTTR files and slices from {len(bur_files)} selected BUR file(s).")
-                # Progress dialog for resolving BUR files
-                progress = QtWidgets.QProgressDialog("Resolving BUR files...", "Cancel", 0, len(bur_files), self)
-                try:
-                    progress.setWindowModality(QtCore.Qt.WindowModal)
                 except Exception:
-                    pass
-                progress.setWindowTitle("PDA Loading")
-                progress.setAutoClose(True)
-                progress.setAutoReset(True)
-
-                def _progress_cb(i, total, current):
-                    try:
-                        progress.setLabelText(f"Resolving: {pathlib.Path(current).name} ({i}/{total})")
-                        progress.setValue(i)
-                        QtWidgets.QApplication.processEvents()
-                    except Exception:
-                        pass
-                    if progress.wasCanceled():
-                        raise RuntimeError("Operation canceled by user")
-
+                    progress_backup = None
+            if status_label is not None:
                 try:
-                    tttr_files_resolved, burst_slices = self._resolve_tttr_and_slices_from_bur(bur_files, progress_callback=_progress_cb)
-                finally:
+                    status_backup = status_label.text()
+                except Exception:
+                    status_backup = None
+            try:
+                bur_files = []
+                tttr_files = []
+                for f in files:
                     try:
-                        progress.close()
+                        p = pathlib.Path(f)
                     except Exception:
-                        pass
-                tttr_files = tttr_files_resolved
+                        logging.warning("PDA: Invalid dropped path in load: %r", f)
+                        continue
+                    try:
+                        if p.is_dir():
+                            try:
+                                expanded = self._expand_burst_folder(p)
+                            except Exception:
+                                logging.warning(
+                                    "PDA: Error expanding burst folder during load: %s", str(p), exc_info=True
+                                )
+                                expanded = []
+                            bur_files.extend(expanded or [])
+                        else:
+                            suffix = p.suffix.lower()
+                            if suffix == '.bur':
+                                bur_files.append(str(p))
+                            elif suffix in self._tttr_exts:
+                                tttr_files.append(str(p))
+                    except Exception:
+                        logging.warning(
+                            "PDA: Error classifying dropped path during load: %r", f, exc_info=True
+                        )
+                        continue
+
+                bur_files = sorted(set(bur_files))
+                tttr_files = sorted(set(tttr_files))
+
+                max_bur_files = 1024
+                max_tttr_files = 1024
+                if len(bur_files) > max_bur_files:
+                    logging.warning(
+                        "PDA: Too many BUR files selected (%d); aborting load.",
+                        len(bur_files)
+                    )
+                    QtWidgets.QMessageBox.warning(
+                        self,
+                        "Too many BUR files",
+                        f"You selected {len(bur_files)} BUR files. "
+                        f"For stability, please process them in smaller batches (<= {max_bur_files} at once)."
+                    )
+                    return
                 if len(tttr_files) > max_tttr_files:
                     logging.warning(
-                        "PDA: Too many TTTR files resolved from BUR tables (%d); limiting to first %d.",
+                        "PDA: Too many TTTR files selected (%d); limiting to first %d.",
                         len(tttr_files), max_tttr_files
                     )
                     QtWidgets.QMessageBox.warning(
                         self,
                         "Too many files",
-                        f"Burst tables reference {len(tttr_files)} TTTR files. "
-                        f"For stability, only the first {max_tttr_files} will be loaded."
+                        f"You selected {len(tttr_files)} TTTR files. "
+                        f"For stability, only the first {max_tttr_files} will be loaded.\n\n"
+                        "Consider using BUR tables or smaller batches if you need to process more files."
                     )
                     tttr_files = tttr_files[:max_tttr_files]
-                    if burst_slices:
-                        keep = set(tttr_files)
-                        burst_slices = {k: v for k, v in burst_slices.items() if k in keep}
-                if not tttr_files:
-                    logging.warning("PDA: No TTTR files could be resolved from selected BUR files.")
-                    QtWidgets.QMessageBox.warning(self, "No TTTR files found", "Could not resolve any TTTR files from the selected BUR files.")
+                if not bur_files and not tttr_files:
+                    logging.warning("PDA: Dropped items contain neither BUR nor TTTR files to load.")
+                    QtWidgets.QMessageBox.warning(
+                        self, "No files", "Please drop .bur burst files or TTTR files "
+                                          "(e.g., .ptu, .ht3, .spc, .sdt, .t3r, .t2r, .phu, .phd) to load.")
                     return
-            else:
-                # Try to derive burst slices from nearby BUR files if present
-                # show indeterminate progress during slice computation
-                progress2 = QtWidgets.QProgressDialog("Searching for nearby BUR files...", "Cancel", 0, 0, self)
-                progress2.setWindowTitle("PDA Loading")
-                progress2.setAutoClose(True)
-                progress2.setAutoReset(True)
-                progress2.show()
-                QtWidgets.QApplication.processEvents()
+
+                ch0_text = self.lineEdit.text().strip()
+                ch1_text = self.lineEdit_4.text().strip()
+                ch0 = [int(k) for k in ch0_text.split(',')] if ch0_text else []
+                ch1 = [int(k) for k in ch1_text.split(',')] if ch1_text else []
+                def parse_mtr(s: str):
+                    s = s.strip()
+                    if not s:
+                        return []
+                    parts = []
+                    for seg in s.split(';'):
+                        seg = seg.strip()
+                        if not seg:
+                            continue
+                        ab = [int(j) for j in seg.split('-')]
+                        if len(ab) >= 2:
+                            parts.append((ab[0], ab[1]))
+                    return parts
+                mt0 = parse_mtr(self.lineEdit_2.text())
+                mt1 = parse_mtr(self.lineEdit_3.text())
+                micro_time_ranges = [mt0, mt1]
+                maximum_number_of_photons = int(self.spinBox_2.value())
+                minimum_number_of_photons = int(self.spinBox.value())
+                minimum_time_window_length = float(self.doubleSpinBox.value()) / 1000.0  # UI is ms, reader expects seconds
+                reading_routine = self.comboBox.currentText()
+
+                logging.info(f"PDA: Preparing to load {len(tttr_files)} TTTR file(s) with routine '{reading_routine}'.")
+                logging.debug({
+                    'channels': (ch0, ch1),
+                    'micro_time_ranges': micro_time_ranges,
+                    'max_photons': maximum_number_of_photons,
+                    'min_photons': minimum_number_of_photons,
+                    'min_time_window_s': minimum_time_window_length
+                })
+                pda_reader = PdaReader(
+                    channels=(ch0, ch1),
+                    micro_time_ranges=micro_time_ranges,
+                    reading_routine=reading_routine,
+                    maximum_number_of_photons=maximum_number_of_photons,
+                    minimum_number_of_photons=minimum_number_of_photons,
+                    minimum_time_window_length=minimum_time_window_length
+                )
+                # Attach the correct experiment to the reader so get_data can set d.experiment
                 try:
+                    pda_reader.experiment = chisurf.experiments.types.get('pda') or chisurf.cs.current_experiment
+                except Exception:
+                    # Fallback to current experiment if types lookup fails
+                    pda_reader.experiment = getattr(chisurf.cs, 'current_experiment', None)
+                try:
+                    pda_reader.controller = self
+                except Exception:
+                    pass
+
+                if bur_files:
+                    logging.info(f"PDA: Resolving TTTR files and slices from {len(bur_files)} selected BUR file(s).")
+                    if progress_bar is not None:
+                        try:
+                            progress_bar.setMinimum(0)
+                            progress_bar.setMaximum(max(1, len(bur_files)))
+                            progress_bar.setValue(0)
+                        except Exception:
+                            pass
+                    if status_label is not None:
+                        try:
+                            status_label.setText("Resolving BUR files...")
+                        except Exception:
+                            pass
+
+                    def _progress_cb(i, total, current):
+                        try:
+                            if status_label is not None:
+                                status_label.setText(f"Resolving: {pathlib.Path(current).name} ({i}/{total})")
+                            if progress_bar is not None:
+                                try:
+                                    if total:
+                                        progress_bar.setMaximum(max(1, total))
+                                except Exception:
+                                    pass
+                                try:
+                                    progress_bar.setValue(i)
+                                except Exception:
+                                    pass
+                            QtWidgets.QApplication.processEvents()
+                        except Exception:
+                            pass
+
+                    tttr_files_resolved, burst_slices = self._resolve_tttr_and_slices_from_bur(
+                        bur_files,
+                        progress_callback=_progress_cb
+                    )
+                    tttr_files = tttr_files_resolved
+                    if len(tttr_files) > max_tttr_files:
+                        logging.warning(
+                            "PDA: Too many TTTR files resolved from BUR tables (%d); limiting to first %d.",
+                            len(tttr_files), max_tttr_files
+                        )
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Too many files",
+                            f"Burst tables reference {len(tttr_files)} TTTR files. "
+                            f"For stability, only the first {max_tttr_files} will be loaded."
+                        )
+                        tttr_files = tttr_files[:max_tttr_files]
+                        if burst_slices:
+                            keep = set(tttr_files)
+                            burst_slices = {k: v for k, v in burst_slices.items() if k in keep}
+                    if not tttr_files:
+                        logging.warning("PDA: No TTTR files could be resolved from selected BUR files.")
+                        QtWidgets.QMessageBox.warning(self, "No TTTR files found", "Could not resolve any TTTR files from the selected BUR files.")
+                        return
+                else:
+                    if progress_bar is not None:
+                        try:
+                            progress_bar.setMinimum(0)
+                            progress_bar.setMaximum(0)
+                            progress_bar.setValue(0)
+                        except Exception:
+                            pass
+                    if status_label is not None:
+                        try:
+                            status_label.setText("Searching for nearby BUR files...")
+                        except Exception:
+                            pass
+                    QtWidgets.QApplication.processEvents()
                     burst_slices = self._compute_burst_slices_for_files(tttr_files)
-                finally:
+
+                if burst_slices:
                     try:
-                        progress2.close()
+                        total_slices = sum(len(v) for v in burst_slices.values())
+                    except Exception:
+                        total_slices = 0
+                    logging.info(f"PDA: Applying burst slicing from BUR files: {total_slices} slices across {len(burst_slices)} file(s).")
+                    logging.debug({'burst_slices_keys': list(burst_slices.keys())})
+
+                filenames_arg = "|".join(tttr_files)
+                logging.debug({'tttr_files': tttr_files})
+                if progress_bar is not None:
+                    try:
+                        progress_bar.setMinimum(0)
+                        progress_bar.setMaximum(0)
+                        progress_bar.setValue(0)
                     except Exception:
                         pass
-
-            if burst_slices:
-                try:
-                    total_slices = sum(len(v) for v in burst_slices.values())
-                except Exception:
-                    total_slices = 0
-                logging.info(f"PDA: Applying burst slicing from BUR files: {total_slices} slices across {len(burst_slices)} file(s).")
-                logging.debug({'burst_slices_keys': list(burst_slices.keys())})
-
-            # Use macro to add dataset into ChiSurf
-            filenames_arg = "|".join(tttr_files)
-            logging.debug({'tttr_files': tttr_files})
-            # Show an indeterminate progress during actual data loading
-            progress3 = QtWidgets.QProgressDialog("Loading TTTR data and computing histograms...", "Cancel", 0, 0, self)
-            progress3.setWindowTitle("PDA Loading")
-            progress3.setAutoClose(True)
-            progress3.setAutoReset(True)
-            progress3.show()
-            QtWidgets.QApplication.processEvents()
-            try:
+                if status_label is not None:
+                    try:
+                        status_label.setText("Loading TTTR data and computing histograms...")
+                    except Exception:
+                        pass
+                QtWidgets.QApplication.processEvents()
                 if burst_slices:
                     core_data_macros.add_dataset(experiment_reader=pda_reader, filename=filenames_arg, burst_slices=burst_slices)
                 else:
                     core_data_macros.add_dataset(experiment_reader=pda_reader, filename=filenames_arg)
-            finally:
-                try:
-                    progress3.close()
-                except Exception:
-                    pass
 
-            logging.info(f"PDA: Loaded {len(tttr_files)} TTTR file(s).")
-            try:
-                if getattr(self, "checkBox", None) is not None and self.checkBox.isChecked():
-                    if hasattr(self, "file_list"):
-                        self.file_list.clear()
-                    self.actionParametersChanged.trigger()
-            except Exception:
-                logging.warning("PDA: Auto-clear after load failed.")
+                logging.info(f"PDA: Loaded {len(tttr_files)} TTTR file(s).")
+                try:
+                    if getattr(self, "checkBox", None) is not None and self.checkBox.isChecked():
+                        if hasattr(self, "file_list"):
+                            self.file_list.clear()
+                        self.actionParametersChanged.trigger()
+                except Exception:
+                    logging.warning("PDA: Auto-clear after load failed.")
+            finally:
+                if progress_bar is not None and progress_backup is not None:
+                    try:
+                        mn, mx, val = progress_backup
+                        progress_bar.setMinimum(mn)
+                        progress_bar.setMaximum(mx)
+                        progress_bar.setValue(val)
+                    except Exception:
+                        pass
+                if status_label is not None and status_backup is not None:
+                    try:
+                        status_label.setText(status_backup)
+                    except Exception:
+                        pass
         except Exception as e:
             # Show error message and log warning
             logging.warning(f"PDA: Failed to load files: {e}")
