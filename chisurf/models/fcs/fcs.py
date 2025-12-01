@@ -65,6 +65,7 @@ class ParseFCSWidget(ParseModelWidget):
         # amplitudes of bunching terms (parameters whose names start with 'ba').
         self._cpm_all = FittingParameter(
             name="cpm_all",
+            label_text="cpm<sub>all</sub>",
             value=float("nan"),
             lb=float("-inf"),
             ub=float("inf"),
