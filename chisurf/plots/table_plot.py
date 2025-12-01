@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, List
+from typing import Optional, List, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -108,7 +108,7 @@ class _FitTableModel(QtCore.QAbstractTableModel):
       3: weighted residuals (read-only)
     """
 
-    HEADERS = ["x", "data", "model", "w. res."]
+    HEADERS = ["x", "data", "model", "w. res.", "mask"]
 
     def __init__(self, parent_plot: "FitTablePlot"):
         super().__init__(parent_plot)
@@ -117,20 +117,30 @@ class _FitTableModel(QtCore.QAbstractTableModel):
         self._y = np.array([], dtype=float)
         self._ym = np.array([], dtype=float)
         self._wres = np.array([], dtype=float)
+        self._mask = np.array([], dtype=float)
+        self._support_headers: List[str] = []
+        self._support_arrays: List[np.ndarray] = []
 
     # ---- Required model API ----
     def rowCount(self, parent=QtCore.QModelIndex()) -> int:
         return 0 if parent.isValid() else self._x.size
 
     def columnCount(self, parent=QtCore.QModelIndex()) -> int:
-        return 0 if parent.isValid() else 4
+        if parent.isValid():
+            return 0
+        return len(self.HEADERS) + len(self._support_headers)
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = QtCore.Qt.DisplayRole):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
-            try:
-                return self.HEADERS[section]
-            except Exception:
-                return None
+            if section < len(self.HEADERS):
+                try:
+                    return self.HEADERS[section]
+                except Exception:
+                    return None
+            idx = section - len(self.HEADERS)
+            if 0 <= idx < len(self._support_headers):
+                return self._support_headers[idx]
+            return None
         return super().headerData(section, orientation, role)
 
     def data(self, index: QtCore.QModelIndex, role: int = QtCore.Qt.DisplayRole):
@@ -151,8 +161,15 @@ class _FitTableModel(QtCore.QAbstractTableModel):
                     v = self._ym[row]
                 elif col == 3:
                     v = self._wres[row]
+                elif col == 4:
+                    v = self._mask[row]
                 else:
-                    return None
+                    idx = col - len(self.HEADERS)
+                    if 0 <= idx < len(self._support_arrays):
+                        arr = self._support_arrays[idx]
+                        v = arr[row] if row < arr.size else np.nan
+                    else:
+                        return None
             except Exception:
                 return None
 
@@ -174,7 +191,7 @@ class _FitTableModel(QtCore.QAbstractTableModel):
         if not index.isValid():
             return QtCore.Qt.NoItemFlags
         base = QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
-        if index.column() in (0, 1):
+        if index.column() in (0, 1, 4):
             base |= QtCore.Qt.ItemIsEditable
         return base
 
@@ -183,7 +200,7 @@ class _FitTableModel(QtCore.QAbstractTableModel):
             return False
         row = index.row()
         col = index.column()
-        if row < 0 or row >= self._x.size or col not in (0, 1):
+        if row < 0 or row >= self._x.size or col not in (0, 1, 4):
             return False
         try:
             v = float(str(value))
@@ -192,27 +209,62 @@ class _FitTableModel(QtCore.QAbstractTableModel):
 
         if col == 0:
             self._x[row] = v
-        else:
+        elif col == 1:
             self._y[row] = v
+        else:
+            self._mask[row] = v
+            self._plot._set_mask(self._mask)
 
-        # Backpropagate to fit and recompute model/residuals
-        self._plot._set_arrays(self._x, self._y)
-        # Refresh arrays from updated fit
-        self._plot._refresh_arrays_into_model()
+        # Backpropagate to fit and recompute model/residuals when x or y changed
+        if col in (0, 1):
+            self._plot._set_arrays(self._x, self._y)
+            # Refresh arrays from updated fit
+            self._plot._refresh_arrays_into_model()
 
         # Emit dataChanged for whole row (all columns) for simplicity
         left = self.index(row, 0)
-        right = self.index(row, 3)
+        right = self.index(row, 4)
         self.dataChanged.emit(left, right, [QtCore.Qt.DisplayRole])
         return True
 
     # ---- Helpers called by parent plot ----
-    def set_arrays(self, x: np.ndarray, y: np.ndarray, ym: np.ndarray, wres: np.ndarray) -> None:
+    def set_arrays(
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        ym: np.ndarray,
+        wres: np.ndarray,
+        mask: np.ndarray,
+        support_arrays: Optional[Sequence[Tuple[str, np.ndarray]]] = None,
+    ) -> None:
         self.beginResetModel()
         self._x = np.asarray(x, dtype=float)
         self._y = np.asarray(y, dtype=float)
         self._ym = np.asarray(ym, dtype=float)
         self._wres = np.asarray(wres, dtype=float)
+        if mask is None:
+            self._mask = np.ones_like(self._x, dtype=float)
+        else:
+            m = np.asarray(mask, dtype=float).ravel()
+            n = self._x.size
+            if m.size == n:
+                self._mask = m
+            else:
+                self._mask = np.ones(n, dtype=float)
+                k = min(n, m.size)
+                if k > 0:
+                    self._mask[:k] = m[:k]
+        if support_arrays:
+            headers: List[str] = []
+            arrays: List[np.ndarray] = []
+            for header, arr in support_arrays:
+                headers.append(str(header))
+                arrays.append(np.asarray(arr, dtype=float))
+            self._support_headers = headers
+            self._support_arrays = arrays
+        else:
+            self._support_headers = []
+            self._support_arrays = []
         self.endResetModel()
 
 
@@ -310,7 +362,7 @@ class FitTablePlot(plotbase.Plot):
         y = np.asarray(data_curve.y, dtype=float)
         nd = min(len(x), len(y))
         if nd == 0:
-            return np.array([]), np.array([]), np.array([]), np.array([])
+            return np.array([]), np.array([]), np.array([]), np.array([]), None, []
         x = x[:nd].copy()
         y = y[:nd].copy()
 
@@ -336,7 +388,7 @@ class FitTablePlot(plotbase.Plot):
         except Exception:
             xmin, xmax = 0, nd - 1
         if nd <= 0:
-            return x, y, ym, np.array([])
+            return x, y, ym, np.array([]), None, []
         # Clip and normalize indices
         xmin = int(np.clip(xmin, 0, nd - 1))
         xmax = int(np.clip(xmax, 0, nd - 1))
@@ -351,7 +403,46 @@ class FitTablePlot(plotbase.Plot):
         except Exception:
             # If anything goes wrong, fall back to simple alignment
             wres = align(wres_raw, nd)
-        return x, y, ym, wres
+        mask = None
+        try:
+            mask_raw = getattr(self.fit, "mask", None)
+        except Exception:
+            mask_raw = None
+        if nd > 0:
+            if mask_raw is None:
+                mask = np.ones(nd, dtype=float)
+            else:
+                try:
+                    m = np.asarray(mask_raw, dtype=float).ravel()
+                except Exception:
+                    mask = np.ones(nd, dtype=float)
+                else:
+                    mask = np.ones(nd, dtype=float)
+                    k = min(nd, m.size)
+                    if k > 0:
+                        mask[:k] = m[:k]
+        if mask is not None and wres.size == nd:
+            try:
+                wres = wres * mask
+            except Exception:
+                pass
+        support_columns: List[Tuple[str, np.ndarray]] = []
+        try:
+            curves = self.fit.get_curves(copy_curves=True)
+        except Exception:
+            curves = {}
+        exclusion = {"data", "model", "weighted residuals", "autocorrelation"}
+        for name, curve in getattr(curves, 'items', lambda: [])():
+            if name in exclusion:
+                continue
+            try:
+                arr = np.asarray(getattr(curve, "y"), dtype=float)
+            except Exception:
+                continue
+            aligned = align(arr, nd)
+            support_columns.append((name, aligned))
+
+        return x, y, ym, wres, mask, support_columns
 
     def _set_arrays(self, x: np.ndarray, y: np.ndarray) -> None:
         """Write back x, y to fit.data and trigger recompute."""
@@ -378,9 +469,20 @@ class FitTablePlot(plotbase.Plot):
             except Exception:
                 pass
 
+    def _set_mask(self, mask: np.ndarray) -> None:
+        try:
+            m = np.asarray(mask, dtype=float).ravel()
+        except Exception:
+            return
+        try:
+            self.fit.mask = m
+        except Exception:
+            return
+        self._refresh_arrays_into_model()
+
     def _refresh_arrays_into_model(self) -> None:
-        x, y, ym, wres = self._get_arrays()
-        self._model.set_arrays(x, y, ym, wres)
+        x, y, ym, wres, mask, support = self._get_arrays()
+        self._model.set_arrays(x, y, ym, wres, mask, support)
         n = x.size
         self.lbl_info.setText(f"N={n}  |  chi2r={getattr(self.fit, 'chi2r', float('nan')):.4g}")
 
