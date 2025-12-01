@@ -113,3 +113,29 @@ def apply_dock_tab_colors(window) -> None:
                 except Exception:
                     pass
 
+
+def apply_pyqtgraph_autorange_compat(pg) -> None:
+    try:
+        from pyqtgraph.widgets.PlotWidget import PlotWidget as _CsPlotWidget
+    except Exception:
+        return
+    try:
+        if hasattr(_CsPlotWidget, "autoRangeEnabled"):
+            return
+
+        def _chisurf_pg_autorange_enabled_compat(self):
+            vb = None
+            try:
+                vb = self.getViewBox()
+            except Exception:
+                vb = None
+            if vb is not None and hasattr(vb, "autoRangeEnabled"):
+                try:
+                    return vb.autoRangeEnabled()
+                except Exception:
+                    pass
+            return (True, True)
+
+        _CsPlotWidget.autoRangeEnabled = _chisurf_pg_autorange_enabled_compat
+    except Exception:
+        return
