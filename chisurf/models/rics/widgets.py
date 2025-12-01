@@ -10,7 +10,7 @@ import chisurf.plots
 from chisurf.models.model import ModelCurve, ModelWidget
 from chisurf.fitting.parameter import FittingParameter
 
-from playground.rics_experiment.models import rics_simple, rics_diffusion_triplet
+from .models import rics_simple, rics_diffusion_triplet
 
 
 def _get_rics_meta(fit_group) -> dict:
