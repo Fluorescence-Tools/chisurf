@@ -520,9 +520,9 @@ def read_burst_analysis(
 
     Examples:
     --------
-    >>> df, tttrs = read_burst_analysis(pathlib.Path('/path/to/data'), 'PTU', pattern='data*')
-    >>> print(df.head())
-    >>> print(tttrs.keys())
+    >>> df, tttrs = read_burst_analysis(pathlib.Path('/path/to/data'), 'PTU', pattern='data*')  # doctest: +SKIP
+    >>> print(df.head())  # doctest: +SKIP
+    >>> print(tttrs.keys())  # doctest: +SKIP
     """
 
     def update_tttr_dict(data_path, tttrs: Dict[str, tttrlib.TTTR] = dict()):
