@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import pathlib
 import numpy as np
-from qtpy import QtGui
+from qtpy import QtGui, QtWidgets
 
 import chisurf
 import chisurf.fitting
@@ -11,25 +11,29 @@ from chisurf import plots
 from chisurf.models.parse.widget import ParseModelWidget
 from chisurf.fitting.parameter import FittingParameter
 import chisurf.gui.widgets.fitting.widgets as fitting_widgets
+from chisurf.fluorescence.fcs import background_factor_ac
 
 
 class ParseFCSWidget(ParseModelWidget):
 
-    plot_classes = [
-        (
-            plots.LinePlot, {
-                'scale_x': 'log',
-                'd_scaley': 'lin',
-                'r_scaley': 'lin',
-                'x_label': 't_c (ms)',
-                'y_label': 'G_c(t_c)'
-            }
-        ),
-        (plots.FitTablePlot, {}),
-        (plots.FitInfo, {}),
-        (plots.ParameterScanPlot, {}),
-        (chisurf.plots.ResidualPlot, {})
-    ]
+    try:
+        plot_classes = [
+            (
+                plots.LinePlot, {
+                    'scale_x': 'log',
+                    'd_scaley': 'lin',
+                    'r_scaley': 'lin',
+                    'x_label': 't_c (ms)',
+                    'y_label': 'G_c(t_c)'
+                }
+            ),
+            (plots.FitTablePlot, {}),
+            (plots.FitInfo, {}),
+            (plots.ParameterScanPlot, {}),
+            (chisurf.plots.ResidualPlot, {})
+        ]
+    except Exception:
+        plot_classes = []
 
     def __init__(
             self,
@@ -68,6 +72,32 @@ class ParseFCSWidget(ParseModelWidget):
             fixed=True,
         )
 
+        # Signal and background countrates (kHz). These are fixed fitting
+        # parameters that are populated from metadata (mean_count_rate) and
+        # optionally edited by the user via the GUI. They are not varied
+        # during fitting but are used for model-based background correction.
+        self._S = FittingParameter(
+            name="S",
+            value=float("nan"),
+            lb=float("-inf"),
+            ub=float("inf"),
+            bounds_on=False,
+            fixed=True,
+        )
+        self._B = FittingParameter(
+            name="B",
+            value=0.0,
+            lb=float("-inf"),
+            ub=float("inf"),
+            bounds_on=False,
+            fixed=True,
+        )
+
+        # Toggle for model-based background correction. When disabled, the
+        # analytical FCS model is used unchanged and only CPM is updated.
+        # Start with correction disabled; users can opt-in per curve.
+        self._bg_correction_enabled = False
+
         # Ensure derived CPM parameters are registered with the parameter
         # machinery so they show up
         # in parameters_all_dict and the parameter editor.
@@ -89,35 +119,82 @@ class ParseFCSWidget(ParseModelWidget):
             # Be forgiving during initialization if UI is not fully wired yet
             pass
 
-        # Add a read-only CPM parameter widget close to the other parameters.
-        # Prefer inserting into the parse parameter grid (gridLayout_1) so the
-        # alignment matches N, td, s, etc. Fall back to the outer layout only
-        # if the grid is not available.
+        # Add FCS-related parameter widgets (signal/background countrates,
+        # derived CPM values, and the background-correction toggle). Prefer
+        # inserting them into the dedicated FCS parameter groupbox
+        # (gridLayout_fcs) on the parse widget; fall back to the main parse
+        # parameter grid (gridLayout_1) or the outer layout if needed.
         try:
-            cpm_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm)
-            cpm_all_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm_all)
+            cpm_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm, suffix=" kHz")
+            cpm_all_widget = fitting_widgets.make_fitting_parameter_widget(self._cpm_all, suffix=" kHz")
+            S_widget = fitting_widgets.make_fitting_parameter_widget(self._S, suffix=" kHz")
+            B_widget = fitting_widgets.make_fitting_parameter_widget(self._B, suffix=" kHz")
+
+            self._bg_checkbox = QtWidgets.QCheckBox("Apply background correction")
+            self._bg_checkbox.setChecked(False)
+            self._bg_checkbox.toggled.connect(self._on_bg_correction_toggled)
+
             parse = getattr(self, "parse", None)
-            param_layout = getattr(parse, "gridLayout_1", None)
+            # Prefer the dedicated FCS layout if present. Try the layout of
+            # groupBox_fcs first (more robust against UI changes), then fall
+            # back to a named gridLayout_fcs attribute, and finally to the
+            # generic parse-parameter grid.
+            fcs_layout = None
+            if parse is not None:
+                try:
+                    fcs_box = getattr(parse, "groupBox_fcs", None)
+                except Exception:
+                    fcs_box = None
+                if fcs_box is not None:
+                    try:
+                        fcs_layout = fcs_box.layout()
+                    except Exception:
+                        fcs_layout = None
+                if fcs_layout is None:
+                    fcs_layout = getattr(parse, "gridLayout_fcs", None)
+
+            # Only place FCS widgets into the dedicated FCS layout; if that is
+            # unavailable, fall back to the outer widget layout (see below),
+            # not into the generic parse-parameter grid.
+            param_layout = fcs_layout
             if (
                 cpm_widget is not None
                 and cpm_all_widget is not None
+                and S_widget is not None
+                and B_widget is not None
                 and param_layout is not None
                 and hasattr(param_layout, "addWidget")
             ):
                 try:
-                    row = param_layout.rowCount() if hasattr(param_layout, "rowCount") else 1000
-                    col_span = param_layout.columnCount() if hasattr(param_layout, "columnCount") else 1
+                    base_row = param_layout.rowCount() if hasattr(param_layout, "rowCount") else 0
                 except Exception:
-                    row, col_span = 1000, 1
-                # Place CPM (bright molecules) and CPM_all (all molecules)
-                param_layout.addWidget(cpm_widget, row, 0, 1, col_span)
-                param_layout.addWidget(cpm_all_widget, row + 1, 0, 1, col_span)
+                    base_row = 0
+                # Arrange FCS parameters in a compact 2-column grid to save
+                # vertical space:
+                #   [ S        | B        ]
+                #   [ cpm      | cpm_all  ]
+                #   [ Apply background correction ] (spans both columns)
+                row0 = base_row
+                row1 = base_row + 1
+                row2 = base_row + 2
+
+                param_layout.addWidget(S_widget, row0, 0, 1, 1)
+                param_layout.addWidget(B_widget, row0, 1, 1, 1)
+                param_layout.addWidget(cpm_widget, row1, 0, 1, 1)
+                param_layout.addWidget(cpm_all_widget, row1, 1, 1, 1)
+                # Checkbox spans both columns
+                param_layout.addWidget(self._bg_checkbox, row2, 0, 1, 2)
             elif cpm_widget is not None:
                 lay = self.layout()
                 if lay is not None:
+                    if S_widget is not None:
+                        lay.addWidget(S_widget)
+                    if B_widget is not None:
+                        lay.addWidget(B_widget)
                     lay.addWidget(cpm_widget)
                     if cpm_all_widget is not None:
                         lay.addWidget(cpm_all_widget)
+                    lay.addWidget(self._bg_checkbox)
         except Exception:
             pass
 
@@ -133,6 +210,46 @@ class ParseFCSWidget(ParseModelWidget):
         # First update the underlying parse model (equation-based curve)
         super().update_model(**kwargs)
 
+        # Optionally apply model-based background correction: only the
+        # amplitude relative to the baseline is scaled; the raw data stays
+        # untouched. This mirrors the PyCorrFit/Thompson formulas but is
+        # implemented on the model side only.
+        try:
+            y = np.asarray(self.y, dtype=float)
+        except Exception:
+            y = None
+
+        if self._bg_correction_enabled and y is not None and y.size > 0:
+            # Estimate baseline from parameter "b" if present; otherwise from
+            # the tail of the model curve.
+            try:
+                b_param = self.parameters_all_dict.get("b", None)
+            except Exception:
+                b_param = None
+            try:
+                baseline = float(b_param.value) if b_param is not None else float("nan")
+            except Exception:
+                baseline = float("nan")
+            if not np.isfinite(baseline):
+                try:
+                    baseline = float(y[-1])
+                except Exception:
+                    baseline = 0.0
+
+            # Use S/B parameters (kHz) to compute the amplitude attenuation.
+            try:
+                S_val = float(self._S.value)
+                B_val = float(self._B.value)
+            except Exception:
+                S_val = B_val = None
+
+            if S_val is not None and B_val is not None:
+                k_bg = background_factor_ac(S_val, B_val)
+                if k_bg != 1.0:
+                    y_corr = baseline + k_bg * (y - baseline)
+                    self.y = y_corr
+                    y = y_corr
+
         # Derive CPM only if we have both metadata and an N parameter
         try:
             data = self.fit.data
@@ -141,6 +258,15 @@ class ParseFCSWidget(ParseModelWidget):
 
         meta = getattr(data, "meta_data", {}) or {}
         mean_cr = meta.get("mean_count_rate")
+
+        # Populate the signal countrate parameter from metadata if available.
+        if mean_cr is not None:
+            try:
+                self._S.value = float(mean_cr)
+                self._S.fixed = True
+            except Exception:
+                pass
+
         if mean_cr is None:
             return
 
@@ -205,6 +331,15 @@ class ParseFCSWidget(ParseModelWidget):
 
             self._cpm_all.value = cpm_all
             self._cpm_all.fixed = True
+        except Exception:
+            pass
+
+    def _on_bg_correction_toggled(self, checked: bool) -> None:
+        """Qt slot: toggle model-based background correction on/off."""
+
+        self._bg_correction_enabled = bool(checked)
+        try:
+            self.fit.update()
         except Exception:
             pass
 
