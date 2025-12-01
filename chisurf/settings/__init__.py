@@ -64,6 +64,16 @@ tcspc = dict()
 fps = dict()
 locals().update(cs_settings)
 
+# Load help mappings from the program's settings folder only. These are not
+# intended to be user-editable, so we always read them from the source folder
+# and do not look at (or copy into) the user settings directory.
+help_settings_file = chisurf_settings_path / 'help_mappings.yaml'
+_help_settings = get_chisurf_settings(help_settings_file, use_source_folder=True)
+if isinstance(_help_settings, dict):
+    help = _help_settings.get('help', _help_settings)
+else:
+    help = {}
+
 # Open color settings file
 color_settings_file = chisurf_settings_path / 'settings_colors.yaml'
 colors = get_chisurf_settings(color_settings_file)
@@ -80,6 +90,17 @@ structure_data = safe_open_file(
     processor=json.load,
     default_value={},
     error_message="Error opening structure.json file"
+)
+
+# Optional registry of fitting-parameter metadata used to enrich parameter
+# descriptions in the GUI. This is populated by the command
+# ``python -m chisurf.cmd_tools.export_fitting_parameters`` and can be
+# edited by the user.
+fitting_parameters = safe_open_file(
+    file_path=package_directory / 'constants' / 'fitting_parameters.json',
+    processor=json.load,
+    default_value={},
+    error_message="Error opening fitting_parameters.json file"
 )
 
 eps = sys.float_info.epsilon
