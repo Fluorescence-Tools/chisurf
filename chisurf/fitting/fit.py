@@ -22,6 +22,29 @@ import chisurf.math.statistics
 import chisurf.math.optimization
 
 
+def _raw_fit_name(f) -> str:
+    """Compute the base (non-unique) name for a Fit/FitGroup instance."""
+    try:
+        model = getattr(f, "model", None)
+        model_cls = getattr(model, "__class__", None)
+        model_name = getattr(model_cls, "name", None)
+        if model_name is None:
+            model_name = getattr(model_cls, "__name__", "no model")
+    except Exception:
+        model_name = "no model"
+
+    try:
+        data = getattr(f, "_data", None)
+        data_name = getattr(data, "name", None)
+    except Exception:
+        data_name = None
+
+    if not data_name:
+        data_name = "no data"
+
+    return f"{model_name} - {data_name}"
+
+
 class Fit(chisurf.base.Base):
     """Fit of a single data set with a single model.
 
@@ -116,10 +139,57 @@ class Fit(chisurf.base.Base):
 
     @property
     def name(self) -> str:
+        """Return a human-readable, *globally unique* fit name.
+
+        The base name is derived from the model class and attached data
+        ("ModelName - DataName"). If multiple active fits share the same
+        base name, a numeric suffix " (1)", " (2)", ... is appended based
+        on the order of appearance in ``chisurf.fits``.
+        """
+
         try:
-            return self.model.__class__.name + " - " + self._data.name
-        except AttributeError:
+            base_name = _raw_fit_name(self)
+        except Exception:
             return "no name"
+
+        # Try to enforce uniqueness across active fits tracked in chisurf.fits.
+        # On any error we simply fall back to the base name.
+        try:
+            all_fits = []
+            for fg in getattr(chisurf, "fits", []):
+                if isinstance(fg, Fit):
+                    all_fits.append(fg)
+                    grouped = getattr(fg, "grouped_fits", None)
+                    if isinstance(grouped, (list, tuple)):
+                        for lf in grouped:
+                            if isinstance(lf, Fit):
+                                all_fits.append(lf)
+
+            if not all_fits:
+                return base_name
+
+            # Collect all fits that share the same base name, using the
+            # raw-name helper to avoid recursion via the name property.
+            same_base = [f for f in all_fits if _raw_fit_name(f) == base_name]
+            if not same_base:
+                return base_name
+
+            try:
+                idx = same_base.index(self)
+            except ValueError:
+                # This fit is not registered in chisurf.fits; treat it as
+                # a standalone instance without suffix.
+                return base_name
+
+            if idx == 0:
+                # First fit with this base name keeps the plain name.
+                return base_name
+
+            # Subsequent fits with the same base name receive a numeric
+            # suffix reflecting their order of appearance.
+            return f"{base_name} ({idx})"
+        except Exception:
+            return base_name
 
     @property
     def fit_range(self) -> typing.Tuple[int, int]:
