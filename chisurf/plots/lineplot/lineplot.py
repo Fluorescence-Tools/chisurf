@@ -73,7 +73,8 @@ class LinePlotControl(QtWidgets.QWidget):
             'allow_reference_curve': True,
             'allow_shift': True,
             'allow_density': True,
-            'plot_only_region': False
+            'plot_only_region': False,
+            'auto_downsample': True,
         },
         'IRF': {
             'lw': 2.0,
@@ -101,7 +102,8 @@ class LinePlotControl(QtWidgets.QWidget):
             'allow_reference_curve': False,
             'allow_shift': True,
             'allow_density': False,
-            'plot_only_region': False
+            'plot_only_region': False,
+            'auto_downsample': True,
         },
         'autocorrelation': {
             'lw': 2.0,
@@ -111,7 +113,8 @@ class LinePlotControl(QtWidgets.QWidget):
             'allow_reference_curve': False,
             'allow_shift': True,
             'allow_density': False,
-            'plot_only_region': False
+            'plot_only_region': False,
+            'auto_downsample': True,
         },
         'default': {
             'lw': 2.0,
@@ -475,6 +478,7 @@ class LinePlot(plotbase.Plot):
         lw = chisurf.settings.gui['plot']['line_width']
 
         director = self.plot_controller.director
+
         if curve_key in director.keys():
             for ik in director.keys():
                 # if the curve name matches the template
@@ -486,14 +490,19 @@ class LinePlot(plotbase.Plot):
                     lw = curve_options.get('lw', lw)
                     pen_color = curve_options.get('color', pen_color)
                     label = curve_options.get('label', curve_key)
+                    auto_downsample = curve_options.get('auto_downsample', False)
+                    clip_to_view = curve_options.get('clip_to_view', auto_downsample)
                     if curve_key != ik:
                         # make the line half as wide, and transparent (30%)
                         lw *= 0.5
                         pen_color = '#4D' + pen_color.split('#')[1]
+                    pen = pg.mkPen(pen_color, width=lw)
                     return target_plot.plot(
                         x=[0.0], y=[0.0],
-                        pen=pg.mkPen(pen_color, width=lw),
-                        name=label
+                        pen=pen,
+                        name=label,
+                        autoDownsample=auto_downsample,
+                        clipToView=clip_to_view,
                     )
         else:
             curve = curves[curve_key]
@@ -502,10 +511,15 @@ class LinePlot(plotbase.Plot):
                 target_plot = plot_dict[
                     curve_options.get('target', 'main_plot')
                 ]
+                auto_downsample = curve_options.get('auto_downsample', False)
+                clip_to_view = curve_options.get('clip_to_view', auto_downsample)
+                pen = pg.mkPen(pen_color, width=lw)
                 return target_plot.plot(
                     x=[0.0], y=[0.0],
-                    pen=pg.mkPen(pen_color, width=lw),
-                    name=curve_key
+                    pen=pen,
+                    name=curve_key,
+                    autoDownsample=auto_downsample,
+                    clipToView=clip_to_view,
                 )
 
         return None
@@ -595,10 +609,15 @@ class LinePlot(plotbase.Plot):
                 y[1:] = y[1:] / np.diff(x)
 
             line: pg.PlotDataItem = self.lines[curve_key]
+            # Base data for plotting: either full curve or fit-range only
             if curve_settings['plot_only_region']:
-                line.setData(x=x[fit.xmin:fit.xmax], y=y[fit.xmin:fit.xmax])
+                x_plot = x[fit.xmin:fit.xmax]
+                y_plot = y[fit.xmin:fit.xmax]
             else:
-                line.setData(x=x, y=y)
+                x_plot = x
+                y_plot = y
+
+            line.setData(x=x_plot, y=y_plot)
             if not self.plot_controller.getCheckState(curve_key):
                 line.hide()
             else:
