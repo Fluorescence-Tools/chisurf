@@ -134,40 +134,6 @@ class FittingParameter(chisurf.parameter.Parameter):
         return s
 
 
-class GlobalFittingParameter(FittingParameter):
-
-    @property
-    def value(self) -> float:
-        g = self.g
-        f = self.f
-        r = eval(self.formula)
-        return r.value
-
-    @value.setter
-    def value(self, v: float):
-        pass
-
-    @property
-    def name(self) -> str:
-        return self.formula
-
-    @name.setter
-    def name(self, v: str):
-        pass
-
-    def __init__(
-            self,
-            f,
-            g,
-            formula,
-            **kwargs
-    ):
-        args = [f, g, formula]
-        super().__init__(*args, **kwargs)
-        self.f, self.g = f, g
-        self.formula = formula
-
-
 class FittingParameterGroup(chisurf.parameter.ParameterGroup):
     """Group of :class:`FittingParameter` objects used by a model or fit.
 
