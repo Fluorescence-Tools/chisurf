@@ -540,21 +540,28 @@ class DyeDecay(Model, Curve):
         self._y_values = decay
 
 
+MolViewPlot = getattr(chisurf.plots, "MolView", None)
+
+
 class TransientDecayGenerator(QtWidgets.QWidget, DyeDecay):
 
-    plot_classes = [(chisurf.plots.LinePlot, {'d_scalex': 'lin',
-                                                  'd_scaley': 'log',
-                                                  'r_scalex': 'lin',
-                                                  'r_scaley': 'lin',
-                                                  'x_label': 'time (ns)',
-                                                  'y_label': 'counts',
-                                                  }
-                    ),
-                    (chisurf.plots.SurfacePlot, {}),
-                    (chisurf.plots.MolView, {
-                        'quencher': chisurf.common.quencher_names
-                    })
+    plot_classes = [
+        (chisurf.plots.LinePlot, {
+            'd_scalex': 'lin',
+            'd_scaley': 'log',
+            'r_scalex': 'lin',
+            'r_scaley': 'lin',
+            'x_label': 'time (ns)',
+            'y_label': 'counts',
+        }),
+        (chisurf.plots.SurfacePlot, {}),
     ]
+    if MolViewPlot is not None:
+        plot_classes.append(
+            (MolViewPlot, {
+                'quencher': chisurf.common.quencher_names
+            })
+        )
 
     name = "Dye-diffusion"
 
