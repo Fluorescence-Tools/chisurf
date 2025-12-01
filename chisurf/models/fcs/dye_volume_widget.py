@@ -195,6 +195,7 @@ class DyeShapeFCSModel(ModelCurve):
 
         self._cpm_all = FittingParameter(
             name="cpm_all",
+            label_text="cpm<sub>all</sub>",
             value=float("nan"),
             lb=float("-inf"),
             ub=float("inf"),
