@@ -91,3 +91,17 @@ try:
 except Exception:
     # Last resort: basic stderr logging
     logging.basicConfig(level=logging.INFO)
+
+
+def __getattr__(name: str):
+    """Lazily resolve selected subpackages on first attribute access.
+
+    This allows references such as ``chisurf.plots`` in modules that are
+    imported during doctest collection or other partial initialization stages
+    before the submodule has been attached explicitly.
+    """
+    if name == "plots":
+        import importlib
+        mod = importlib.import_module("chisurf.plots")
+        return mod
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
