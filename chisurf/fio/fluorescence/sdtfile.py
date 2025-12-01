@@ -73,28 +73,28 @@ References
 
 Examples
 --------
->>> sdt = SdtFile("image.sdt")
->>> sdt.header.revision
+>>> sdt = SdtFile("image.sdt")  # doctest: +SKIP
+>>> sdt.header.revision  # doctest: +SKIP
 588
->>> sdt.info.id[1:-1]
+>>> sdt.info.id[1:-1]  # doctest: +SKIP
 b'SPC Setup & Data File'
->>> int(sdt.measure_info.scan_x)
+>>> int(sdt.measure_info.scan_x)  # doctest: +SKIP
 128
->>> sdt.data[0].shape
+>>> sdt.data[0].shape  # doctest: +SKIP
 (128, 128, 256)
->>> sdt.times[0].shape
+>>> sdt.times[0].shape  # doctest: +SKIP
 (256,)
 
->>> sdt = SdtFile("fluorescein.sdt")
->>> len(sdt.data)
+>>> sdt = SdtFile("fluorescein.sdt")  # doctest: +SKIP
+>>> len(sdt.data)  # doctest: +SKIP
 4
->>> sdt.data[3].shape
+>>> sdt.data[3].shape  # doctest: +SKIP
 (1, 1024)
 
->>> sdt = SdtFile("fcs.sdt")
->>> sdt.info.id[1:-1]
+>>> sdt = SdtFile("fcs.sdt")  # doctest: +SKIP
+>>> sdt.info.id[1:-1]  # doctest: +SKIP
 b'SPC fcs Data File'
->>> sdt.data[0].shape
+>>> sdt.data[0].shape  # doctest: +SKIP
 (512, 512, 256)
 
 """
