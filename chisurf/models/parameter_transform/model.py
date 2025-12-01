@@ -13,7 +13,6 @@ import chisurf.models
 
 from chisurf.curve import Curve
 from chisurf.models import model
-from chisurf.fitting.parameter import GlobalFittingParameter
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit

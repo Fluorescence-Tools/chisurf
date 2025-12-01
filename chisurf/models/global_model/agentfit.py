@@ -32,7 +32,6 @@ except ImportError:
 
 from chisurf.curve import Curve
 from chisurf.models import model
-from chisurf.fitting.parameter import GlobalFittingParameter
 from chisurf.models.global_model.globalfit import GlobalFitModel
 
 
