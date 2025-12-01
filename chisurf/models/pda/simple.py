@@ -6,14 +6,12 @@ This module contains discrete and Gaussian-distance PDA models that
 operate on S1S2 histograms produced by :mod:`tttrlib` and the
 ``chisurf.experiments.pda.PdaReader``. The models are built from
 small :class:`~chisurf.fitting.parameter.FittingParameterGroup`
-containers such as :class:`ProbCh0`, :class:`Background`, and
- :class:`PdaFretNuisance`.
+containers such as :class:`ProbCh0`, and
+ :class:`Background`.
 
 Only a subset of the functionality is exercised in doctests; all
 examples avoid real TTTR files and heavy computation.
 """
-
-from pygments.styles import vs
 
 from chisurf import typing
 
@@ -29,7 +27,7 @@ import chisurf.math.datatools
 
 from chisurf.fitting.parameter import FittingParameterGroup, FittingParameter
 from chisurf.models.model import ModelCurve
-from chisurf.models.pda.nusiance import Background, PdaFretNuisance
+from chisurf.models.pda.nusiance import Background
 from .common import mask_zero_photon_bins, pda_1d_residuals_from_s1s2
 
 

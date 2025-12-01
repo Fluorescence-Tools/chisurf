@@ -16,9 +16,14 @@ from chisurf.settings.settings_utils import set_fret_rda_axis, build_fret_rda_ax
 
 from chisurf.models.model import ModelWidget
 from chisurf.gui import QtWidgets, QtGui, QtCore
-from chisurf.models.pda.nusiance import Background, PdaFretNuisance
+from chisurf.models.pda.nusiance import Background, PdaFretNuisance, PdaPhotonRange
 from chisurf.models.pda.simple import ProbCh0, PdaSimpleModel
 from chisurf.models.pda.pdagauss import PdaGaussianDistances, PdaGaussianDistanceModel
+from chisurf.models.pda.anisotropy import (
+    PdaAnisotropyModel,
+    PdaAnisotropyNuisance,
+    PdaAnisotropySpecies,
+)
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit
@@ -102,7 +107,7 @@ class PdaPhotonRangeWidget(QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            nuisance: PdaFretNuisance,
+            nuisance,
             *args,
             **kwargs
     ):
@@ -636,6 +641,179 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         gb = self._gb.pop()
         self.grid_layout.removeWidget(gb)
         gb.close()
+
+
+class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
+
+    def update(self, *__args):
+        # Keep amplitudes normalized etc.
+        PdaAnisotropySpecies.finalize(self)
+        QtWidgets.QWidget.update(self, *__args)
+        try:
+            for w, v in zip(self._amp_widgets, self.amplitudes):
+                w.finalize()
+        except Exception:
+            try:
+                for w, v in zip(self._amp_widgets, self.amplitudes):
+                    w.setValue(v)
+            except Exception:
+                pass
+        try:
+            for w, v in zip(self._r_widgets, self.anisotropies):
+                w.finalize()
+        except Exception:
+            try:
+                for w, v in zip(self._r_widgets, self.anisotropies):
+                    w.setValue(v)
+            except Exception:
+                pass
+
+    @property
+    def parameter_widgets(self):
+        return self._amp_widgets + self._r_widgets
+
+    def __init__(self, title: str = "", **kwargs):
+        super().__init__(**kwargs)
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
+        self.gb = QtWidgets.QGroupBox()
+        if not title:
+            title = "Anisotropy species"
+        self.gb.setTitle(title)
+
+        self.lh = QtWidgets.QVBoxLayout()
+        self.lh.setContentsMargins(0, 0, 0, 0)
+        self.lh.setSpacing(0)
+
+        self.gb.setLayout(self.lh)
+        self.layout.addWidget(self.gb)
+
+        self._amp_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = []
+        self._r_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = []
+
+        # Header row with add/del buttons
+        lh = QtWidgets.QHBoxLayout()
+        lh.setContentsMargins(0, 0, 0, 0)
+        lh.setSpacing(0)
+
+        add_component = QtWidgets.QPushButton()
+        add_component.setText("add")
+        add_component.clicked.connect(self.onAddComponent)
+        lh.addWidget(add_component)
+
+        remove_component = QtWidgets.QPushButton()
+        remove_component.setText("del")
+        remove_component.clicked.connect(self.onRemoveComponent)
+        lh.addWidget(remove_component)
+        lh.addStretch(1)
+
+        self.lh.addLayout(lh)
+
+        # Container for per-species rows
+        self.rows_layout = QtWidgets.QVBoxLayout()
+        self.rows_layout.setContentsMargins(0, 0, 0, 0)
+        self.rows_layout.setSpacing(0)
+        self.lh.addLayout(self.rows_layout)
+
+        # Build parameter widgets for existing parameters if any; otherwise add one default species
+        n_existing = len(self._amplitudes) if hasattr(self, "_amplitudes") and self._amplitudes is not None else 0
+        if n_existing == 0:
+            self.append()
+        else:
+            for i in range(n_existing):
+                row_layout = QtWidgets.QHBoxLayout()
+                row_layout.setContentsMargins(0, 0, 0, 0)
+                row_layout.setSpacing(0)
+
+                self._amp_widgets.append(
+                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                        self._amplitudes[i],
+                        layout=row_layout,
+                        label_text=f"x<sub>A,{i + 1}</sub>",
+                    )
+                )
+                self._r_widgets.append(
+                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                        self._anisotropies[i],
+                        layout=row_layout,
+                        label_text=f"r<sub>A,{i + 1}</sub>",
+                    )
+                )
+                self.rows_layout.addLayout(row_layout)
+
+    def onAddComponent(self):
+        # Append new species to model-side group and create controllers
+        self.append()
+        try:
+            chisurf.run("cs.current_fit.update()")
+        except Exception:
+            pass
+
+    def onRemoveComponent(self):
+        # Remove last species if present
+        self.pop()
+        try:
+            chisurf.run("cs.current_fit.update()")
+        except Exception:
+            pass
+
+    def append(self, amplitude: float = 1.0, r: float = 0.3):
+        PdaAnisotropySpecies.append(self, amplitude=amplitude, r=r)
+        n = len(self._amplitudes)
+
+        row_layout = QtWidgets.QHBoxLayout()
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(0)
+
+        self._amp_widgets.append(
+            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                self._amplitudes[-1],
+                layout=row_layout,
+                label_text=f"x<sub>A,{n}</sub>",
+            )
+        )
+        self._r_widgets.append(
+            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                self._anisotropies[-1],
+                layout=row_layout,
+                label_text=f"r<sub>A,{n}</sub>",
+            )
+        )
+
+        self.rows_layout.addLayout(row_layout)
+
+    def pop(self):
+        if len(self._amplitudes) == 0:
+            return
+        PdaAnisotropySpecies.pop(self)
+        # Remove last row of widgets
+        amp_w = self._amp_widgets.pop()
+        r_w = self._r_widgets.pop()
+        try:
+            amp_w.close()
+        except Exception:
+            pass
+        try:
+            r_w.close()
+        except Exception:
+            pass
+        # Also remove the last layout from rows_layout
+        try:
+            count = self.rows_layout.count()
+            if count > 0:
+                last_item = self.rows_layout.takeAt(count - 1)
+                last_layout = last_item.layout()
+                if last_layout is not None:
+                    while last_layout.count():
+                        child = last_layout.takeAt(0)
+                        w = child.widget()
+                        if w is not None:
+                            w.setParent(None)
+        except Exception:
+            pass
 
 
 class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
@@ -1192,15 +1370,14 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
         res_layout.addStretch(1)
         layout.addLayout(res_layout)
 
-        nuisance = PdaFretNuisanceWidget(fit=fit, **kwargs)
-        photon_range = PdaPhotonRangeWidget(nuisance=nuisance)
+        photon_nuisance = PdaPhotonRange(name='pda_photon_range', fit=fit, **kwargs)
+        photon_range = PdaPhotonRangeWidget(nuisance=photon_nuisance)
         background = BackgroundWidget(fit=fit, **kwargs)
         pch0 = ProbCh0Widget(fit=fit, **kwargs)
 
         layout.addWidget(photon_range)
         if not hide_nuisances:
             layout.addWidget(background)
-            layout.addWidget(nuisance)
         layout.addWidget(pch0)
 
         self.setLayout(layout)
@@ -1210,8 +1387,200 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
 
         self.photon_range = photon_range
         self.background = background
-        self.nuisance = nuisance
+        self.nuisance = photon_nuisance
         self.pch0 = pch0
+
+    def onResidualModeChanged(self):
+      mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
+      self.residual_mode = mode
+      try:
+          chisurf.run("cs.current_fit.update()")
+      except Exception:
+          pass
+
+
+class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
+
+    plot_classes = [
+        (
+            chisurf.plots.DistributionPlot,
+            {
+                "with_residual_panel": True,
+                "distribution_options": {
+                    "S1/(S0+S1)": {
+                        "attribute": "fit",
+                        "accessor": get_distribution,
+                        "accessor_kwargs": {
+                            "kw_hist": {
+                                "x_max": 1.0,
+                                "x_min": 0.0,
+                                "log_x": False,
+                                "n_bins": 81,
+                                "n_min": 10,
+                                "histogram_function": lambda ch1, ch2: ch2 / max(1.0, ch2 + ch1),
+                            }
+                        },
+                        "scale_x": "lin",
+                        "curve_options": {
+                            "stepMode": False,
+                            "connect": "all",
+                            "multi_curve": True,
+                            "symbol": ["None", "None", "None"],
+                            "pen": ["b", "r", "k"],
+                            "fillLevel": 0.0,
+                            "fillBrush": chisurf.settings.gui["plot"]["colors"]["data"],
+                        },
+                    },
+                    "S0/S1": {
+                        "attribute": "fit",
+                        "accessor": get_distribution,
+                        "accessor_kwargs": {
+                            "kw_hist": {
+                                "x_max": 500.0,
+                                "x_min": 0.01,
+                                "log_x": True,
+                                "n_bins": 81,
+                                "n_min": 10,
+                                "histogram_function": lambda ch1, ch2: ch1 / max(1.0, ch2),
+                            }
+                        },
+                        "scale_x": "log",
+                        "curve_options": {
+                            "stepMode": False,
+                            "connect": "all",
+                            "multi_curve": True,
+                            "symbol": ["None", "None", "None"],
+                            "pen": ["b", "r", "k"],
+                            "fillLevel": 0.0,
+                            "fillBrush": chisurf.settings.gui["plot"]["colors"]["data"],
+                        },
+                    },
+                    # Raw polarization: (S0 - S1) / (S0 + S1)
+                    "Δ/(S0+S1)": {
+                        "attribute": "fit",
+                        "accessor": get_distribution,
+                        "accessor_kwargs": {
+                            "kw_hist": {
+                                "x_max": 0.5,
+                                "x_min": -0.5,
+                                "log_x": False,
+                                "n_bins": 81,
+                                "n_min": 10,
+                                "histogram_function": lambda ch1, ch2: (ch1 - ch2)
+                                / max(1.0, ch1 + ch2),
+                            }
+                        },
+                        "scale_x": "lin",
+                        "curve_options": {
+                            "stepMode": False,
+                            "connect": "all",
+                            "multi_curve": True,
+                            "symbol": ["None", "None", "None"],
+                            "pen": ["b", "r", "k"],
+                            "fillLevel": 0.0,
+                            "fillBrush": chisurf.settings.gui["plot"]["colors"]["data"],
+                        },
+                    },
+                    # Raw anisotropy-like quantity: (S0 - S1) / (S0 + 2*S1)
+                    "Δ/(S0+2*S1)": {
+                        "attribute": "fit",
+                        "accessor": get_distribution,
+                        "accessor_kwargs": {
+                            "kw_hist": {
+                                "x_max": 0.5,
+                                "x_min": -0.5,
+                                "log_x": False,
+                                "n_bins": 81,
+                                "n_min": 10,
+                                "histogram_function": lambda ch1, ch2: (ch1 - ch2)
+                                / max(1.0, ch1 + 2.0 * ch2),
+                            }
+                        },
+                        "scale_x": "lin",
+                        "curve_options": {
+                            "stepMode": False,
+                            "connect": "all",
+                            "multi_curve": True,
+                            "symbol": ["None", "None", "None"],
+                            "pen": ["b", "r", "k"],
+                            "fillLevel": 0.0,
+                            "fillBrush": chisurf.settings.gui["plot"]["colors"]["data"],
+                        },
+                    },
+                },
+            },
+        ),
+        (chisurf.plots.ResidualPlot, {}),
+        (
+            chisurf.plots.Residual2DPlot,
+            {
+                "accessor": get_pda_residual_image,
+                "accessor_kwargs": {
+                    "weighted": True,
+                },
+            },
+        ),
+        (chisurf.plots.FitInfo, {}),
+        (chisurf.plots.ParameterScanPlot, {}),
+    ]
+
+    def __init__(
+        self,
+        fit: "Fit",
+        icon: QtGui.QIcon | None = None,
+        hide_nuisances: bool = False,
+        **kwargs,
+    ):
+        if icon is None:
+            icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
+        super().__init__(fit=fit, icon=icon, **kwargs)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setAlignment(QtCore.Qt.AlignTop)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        res_layout = QtWidgets.QHBoxLayout()
+        res_layout.setContentsMargins(0, 0, 0, 0)
+        res_layout.setSpacing(0)
+
+        res_label = QtWidgets.QLabel("Residuals:")
+        self.rb_res_2d = QtWidgets.QRadioButton("2D")
+        self.rb_res_1d = QtWidgets.QRadioButton("1D proj")
+        self.rb_res_1d.setChecked(True)
+        self.rb_res_2d.toggled.connect(self.onResidualModeChanged)
+        self.rb_res_1d.toggled.connect(self.onResidualModeChanged)
+        res_layout.addWidget(res_label)
+        res_layout.addWidget(self.rb_res_2d)
+        res_layout.addWidget(self.rb_res_1d)
+        res_layout.addStretch(1)
+        layout.addLayout(res_layout)
+
+        # Nuisance parameter group (backgrounds, G, l1, l2)
+        nuisance_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.nuisance
+        )
+
+        # Anisotropy species (amplitude + r_i with add/del). We attach the
+        # widget instance directly to the model so that the same
+        # PdaAnisotropySpecies object is used for both GUI and backend,
+        # mirroring the pattern used by the discrete and Gaussian PDA
+        # models.
+        species_widget = PdaAnisotropySpeciesWidget(fit=fit, name="pda_aniso_species")
+        # Ensure the model sees the widget-backed species group.
+        self.species = species_widget
+
+        if not hide_nuisances:
+            layout.addWidget(nuisance_widget)
+        layout.addWidget(species_widget)
+
+        self.setLayout(layout)
+        self.layout = layout
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.nuisance_widget = nuisance_widget
+        self.species_widget = species_widget
 
     def onResidualModeChanged(self):
         mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
