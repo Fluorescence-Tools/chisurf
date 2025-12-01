@@ -103,6 +103,7 @@ gui:
   show_console: true
   show_macro_edit: true
   style_sheet: dark.qss
+  start_jupyter_on_startup: false
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
 log_level: 20
