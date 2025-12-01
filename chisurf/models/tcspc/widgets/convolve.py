@@ -106,6 +106,79 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             )
         )
 
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of this widget's state.
+
+        Delegates to :class:`Convolve.get_state`, which already captures the
+        IRF curve, convolution flags and the IRF label text shown in the
+        line edit.
+        """
+
+        try:
+            return Convolve.get_state(self)
+        except Exception:
+            return {}
+
+    def set_state(self, state: dict) -> None:
+        """Restore convolution/IRF state and synchronize the widget UI.
+
+        This uses the model-level :class:`Convolve.set_state` implementation
+        and then updates local controls (checkbox, radio buttons, FWHM
+        display) without emitting their change signals, to avoid triggering
+        global macros during project load.
+        """
+
+        if not isinstance(state, dict):
+            return
+
+        try:
+            Convolve.set_state(self, state)
+        except Exception:
+            return
+
+        # Sync "do_convolution" checkbox
+        try:
+            self.checkBox.blockSignals(True)
+            self.checkBox.setChecked(bool(getattr(self, "do_convolution", self.checkBox.isChecked())))
+        except Exception:
+            pass
+        finally:
+            try:
+                self.checkBox.blockSignals(False)
+            except Exception:
+                pass
+
+        # Sync mode radio buttons from the restored ``mode`` attribute
+        try:
+            mode = getattr(self, "mode", None)
+            self.radioButton.blockSignals(True)
+            self.radioButton_2.blockSignals(True)
+            self.radioButton_3.blockSignals(True)
+            if isinstance(mode, str):
+                if mode == "exp":
+                    self.radioButton_2.setChecked(True)
+                elif mode == "per":
+                    self.radioButton.setChecked(True)
+                elif mode == "full":
+                    self.radioButton_3.setChecked(True)
+        except Exception:
+            pass
+        finally:
+            try:
+                self.radioButton.blockSignals(False)
+                self.radioButton_2.blockSignals(False)
+                self.radioButton_3.blockSignals(False)
+            except Exception:
+                pass
+
+        # Update FWHM line edit if an IRF is present
+        try:
+            irf = self.irf
+            if irf is not None and hasattr(irf, "fwhm"):
+                self.fwhm = irf.fwhm
+        except Exception:
+            pass
+
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
