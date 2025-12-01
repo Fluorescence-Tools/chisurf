@@ -4,16 +4,21 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+import chisurf
+import chisurf.settings
 import chisurf.gui.widgets.fitting
 import chisurf.plots
 from chisurf.fluorescence.general import distance_to_fret_efficiency
 from chisurf.math.functions import distributions as distfuncs
+import chisurf.models.tcspc.fret as tcspc_fret
 from chisurf.models.tcspc.fret import rda_axis
+from chisurf.settings.settings_utils import set_fret_rda_axis
 
 from chisurf.models.model import ModelWidget
 from chisurf.gui import QtWidgets, QtGui, QtCore
 from chisurf.models.pda.nusiance import Background, PdaFretNuisance
-from chisurf.models.pda.simple import ProbCh0, PdaSimpleModel, PdaGaussianDistances, PdaGaussianDistanceModel
+from chisurf.models.pda.simple import ProbCh0, PdaSimpleModel
+from chisurf.models.pda.pdagauss import PdaGaussianDistances, PdaGaussianDistanceModel
 
 if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit
@@ -147,6 +152,14 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             self._QYA,
             label_text='QYA',
         )
+        self._nPh_min_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._nPh_min,
+            label_text='nPh_min',
+        )
+        self._nPh_max_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._nPh_max,
+            label_text='nPh_max',
+        )
 
         layout.addWidget(self._alpha_widget, 0, 0, 1, 2)
         layout.addWidget(self._bgG_widget, 1, 0)
@@ -155,6 +168,8 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         layout.addWidget(self._gR_widget, 2, 1)
         layout.addWidget(self._QYD_widget, 3, 0)
         layout.addWidget(self._QYA_widget, 3, 1)
+        layout.addWidget(self._nPh_min_widget, 4, 0)
+        layout.addWidget(self._nPh_max_widget, 4, 1)
 
         self.layout.addLayout(layout)
 
@@ -170,6 +185,8 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             self._gR_widget.finalize()
             self._QYD_widget.finalize()
             self._QYA_widget.finalize()
+            self._nPh_min_widget.finalize()
+            self._nPh_max_widget.finalize()
         except Exception:
             # Fallback: at least sync the numeric values
             try:
@@ -180,6 +197,8 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
                 self._gR_widget.setValue(self.gR)
                 self._QYD_widget.setValue(self.QYD)
                 self._QYA_widget.setValue(self.QYA)
+                self._nPh_min_widget.setValue(self.nPh_min)
+                self._nPh_max_widget.setValue(self.nPh_max)
             except Exception:
                 pass
 
@@ -446,6 +465,11 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         lh.setContentsMargins(0, 0, 0, 0)
         lh.setSpacing(0)
 
+        self.cb_limited_width = QtWidgets.QCheckBox("lim width (σ = p%·R)")
+        self.cb_limited_width.setChecked(getattr(self, "limited_width", False))
+        self.cb_limited_width.toggled.connect(self.onLimitedWidthToggled)
+        lh.addWidget(self.cb_limited_width)
+
         add_component = QtWidgets.QPushButton()
         add_component.setText("add")
         add_component.clicked.connect(self.onAddComponent)
@@ -455,6 +479,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         remove_component.setText("del")
         remove_component.clicked.connect(self.onRemoveComponent)
         lh.addWidget(remove_component)
+        lh.addStretch(1)
 
         self.lh.addLayout(lh)
 
@@ -503,6 +528,13 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
                 col = i % 2
                 self.grid_layout.addWidget(gb, row, col)
                 self._gb.append(gb)
+
+    def onLimitedWidthToggled(self, checked: bool):
+        self.limited_width = bool(checked)
+        try:
+            chisurf.run("cs.current_fit.update()")
+        except Exception:
+            pass
 
     def onAddComponent(self):
         # Add a new Gaussian component and update the current fit so that
@@ -573,6 +605,145 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         gb.close()
 
 
+class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle("R_DA axis (FRET distance)")
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        description = QtWidgets.QLabel(
+            "Distance axis used for FRET-related distance distributions.\n"
+            "These values control chisurf.settings.fret['rda_min'], "
+            "['rda_max'], ['rda_resolution'] and ['rda_scale'] which "
+            "define the grid chisurf.models.tcspc.fret.rda_axis (log or "
+            "linear spacing)."
+        )
+        description.setWordWrap(True)
+        layout.addWidget(description)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+
+        fret_cfg = getattr(chisurf.settings, "fret", {}) or {}
+        rda_min = float(fret_cfg.get("rda_min", 1.0))
+        rda_max = float(fret_cfg.get("rda_max", 130.0))
+        rda_res = int(fret_cfg.get("rda_resolution", 96))
+        rda_scale = str(fret_cfg.get("rda_scale", "log")).lower()
+
+        self.sb_min = QtWidgets.QDoubleSpinBox()
+        self.sb_min.setRange(0.01, 1.0e4)
+        self.sb_min.setDecimals(3)
+        self.sb_min.setValue(rda_min)
+        self.sb_min.setSuffix(" 	")
+
+        self.sb_max = QtWidgets.QDoubleSpinBox()
+        self.sb_max.setRange(0.01, 1.0e4)
+        self.sb_max.setDecimals(3)
+        self.sb_max.setValue(rda_max)
+        self.sb_max.setSuffix(" 	")
+
+        self.sb_n = QtWidgets.QSpinBox()
+        self.sb_n.setRange(4, 4096)
+        self.sb_n.setValue(rda_res)
+
+        self.cb_scale = QtWidgets.QComboBox()
+        self.cb_scale.addItems(["log", "lin"])
+        if rda_scale in ("log", "lin"):
+            try:
+                idx = self.cb_scale.findText(rda_scale)
+                if idx >= 0:
+                    self.cb_scale.setCurrentIndex(idx)
+            except Exception:
+                pass
+
+        form.addRow("R_DA min:", self.sb_min)
+        form.addRow("R_DA max:", self.sb_max)
+        form.addRow("N points:", self.sb_n)
+        form.addRow("Scale:", self.cb_scale)
+
+        layout.addLayout(form)
+
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.setSpacing(4)
+
+        save_btn = QtWidgets.QPushButton("Save axis")
+        save_btn.clicked.connect(self.on_save_clicked)
+        button_layout.addWidget(save_btn)
+        button_layout.addStretch(1)
+
+        layout.addLayout(button_layout)
+
+    def on_save_clicked(self):
+        rda_min = float(self.sb_min.value())
+        rda_max = float(self.sb_max.value())
+        n_points = int(self.sb_n.value())
+        scale = self.cb_scale.currentText().strip().lower() if hasattr(self, "cb_scale") else "log"
+        if scale not in ("log", "lin"):
+            scale = "log"
+
+        if rda_max <= rda_min:
+            tmp = rda_min
+            rda_min = rda_max
+            rda_max = tmp
+            self.sb_min.setValue(rda_min)
+            self.sb_max.setValue(rda_max)
+
+        ok = set_fret_rda_axis(
+            rda_min=rda_min,
+            rda_max=rda_max,
+            rda_resolution=n_points,
+            rda_scale=scale,
+        )
+        if not ok:
+            return
+
+        try:
+            if not isinstance(getattr(chisurf.settings, "fret", None), dict):
+                chisurf.settings.fret = {}
+        except Exception:
+            chisurf.settings.fret = {}
+
+        chisurf.settings.fret["rda_min"] = float(rda_min)
+        chisurf.settings.fret["rda_max"] = float(rda_max)
+        chisurf.settings.fret["rda_resolution"] = int(n_points)
+        chisurf.settings.fret["rda_scale"] = scale
+
+        try:
+            if scale == "lin":
+                new_axis = np.linspace(
+                    chisurf.settings.fret["rda_min"],
+                    chisurf.settings.fret["rda_max"],
+                    chisurf.settings.fret["rda_resolution"],
+                    dtype=np.float64,
+                )
+            else:
+                new_axis = np.logspace(
+                    start=np.log10(chisurf.settings.fret["rda_min"]),
+                    stop=np.log10(chisurf.settings.fret["rda_max"]),
+                    num=chisurf.settings.fret["rda_resolution"],
+                    dtype=np.float64,
+                )
+        except Exception:
+            return
+
+        try:
+            tcspc_fret.rda_axis = new_axis
+            globals()["rda_axis"] = new_axis
+        except Exception:
+            pass
+
+        try:
+            chisurf.run("cs.current_fit.update()")
+        except Exception:
+            pass
+
+
 def get_distribution(fit, kw_hist):
     pda = fit.model.pda
 
@@ -591,13 +762,78 @@ def get_distribution(fit, kw_hist):
         return _inner(ch2, ch1)
 
     pda.histogram_function = histogram_function
-    s1s2_experimental = fit.data.pda['s1s2']
+
+    data_obj = getattr(fit, 'data', None)
+    pda_meta = getattr(data_obj, 'pda', None)
+    if not isinstance(pda_meta, dict):
+        s1s2_experimental = getattr(getattr(fit.data, 'pda', None), 's1s2', None)
+        if s1s2_experimental is None:
+            return []
+        s1s2_shape = getattr(s1s2_experimental, 'shape', None)
+    else:
+        s1s2_experimental = pda_meta.get('s1s2')
+        if s1s2_experimental is None:
+            return []
+        s1s2_shape = pda_meta.get('shape')
+
+    s1s2_model = np.asarray(pda.get_S1S2_matrix(), dtype=float)
+    s1s2_data = np.asarray(s1s2_experimental, dtype=float)
+
+    try:
+        if s1s2_shape is not None and len(s1s2_shape) == 2:
+            ny, nx = int(s1s2_shape[0]), int(s1s2_shape[1])
+            s1s2_model = s1s2_model[:ny, :nx]
+            s1s2_data = s1s2_data[:ny, :nx]
+    except Exception:
+        pass
+
+    # Apply photon-number gating (nPh_min/nPh_max) if available on the model
+    # nuisance group. This mirrors the logic used in
+    # :meth:`PdaGaussianDistanceModel._get_1d_residuals` so that the
+    # displayed histograms follow the same N-range as the residuals.
+    try:
+        nuisance = getattr(fit.model, 'nuisance', None)
+        row_indices = np.asarray(pda_meta.get('row_indices'), dtype=np.int64) if isinstance(pda_meta, dict) else np.array([], dtype=np.int64)
+        col_indices = np.asarray(pda_meta.get('col_indices'), dtype=np.int64) if isinstance(pda_meta, dict) else np.array([], dtype=np.int64)
+        if (
+            nuisance is not None
+            and row_indices.size
+            and col_indices.size
+            and row_indices.size == col_indices.size
+        ):
+            pda_nmin = int(pda_meta.get('minimum_number_of_photons', 0) or 0)
+            pda_nmax = int(pda_meta.get('maximum_number_of_photons', 0) or 0)
+            try:
+                nmin_param = int(round(float(nuisance.nPh_min)))
+            except Exception:
+                nmin_param = 0
+            try:
+                nmax_param = int(round(float(nuisance.nPh_max)))
+            except Exception:
+                nmax_param = 0
+            if nmin_param != 0 or nmax_param != 0:
+                nmin = nmin_param if nmin_param > 0 else pda_nmin
+                nmax = nmax_param if nmax_param > 0 else pda_nmax
+                if nmax >= nmin:
+                    shp = getattr(s1s2_data, 'shape', None)
+                    if shp is not None and len(shp) == 2:
+                        ny, nx = int(shp[0]), int(shp[1])
+                        mask2d = np.zeros((ny, nx), dtype=bool)
+                        N = row_indices + col_indices
+                        sel = (N >= nmin) & (N <= nmax)
+                        if np.any(sel):
+                            mask2d[row_indices[sel], col_indices[sel]] = True
+                            s1s2_model = np.where(mask2d, s1s2_model, 0.0)
+                            s1s2_data = np.where(mask2d, s1s2_data, 0.0)
+    except Exception:
+        pass
+
     model_x, model_y = pda.get_1dhistogram(
-        s1s2=pda.get_S1S2_matrix().flatten(),
+        s1s2=s1s2_model.flatten(),
         **kw_hist
     )
     data_x, data_y = pda.get_1dhistogram(
-        s1s2=s1s2_experimental.flatten(),
+        s1s2=s1s2_data.flatten(),
         **kw_hist
     )
 
@@ -842,7 +1078,12 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
                             'multi_curve': True,
                             # data, model, residual
                             'symbol': ['None', 'None', 'None'],
-                            'pen': ['b', 'r', 'k']
+                            'pen': ['b', 'r', 'k'],
+                            # Shade the experimental PDA histogram under
+                            # the curve using the global data color, in the
+                            # same visual style as MaxEnt FCS distributions.
+                            'fillLevel': 0.0,
+                            'fillBrush': chisurf.settings.gui['plot']['colors']['data'],
                         }
                     },
                     'S0/S1': {
@@ -865,7 +1106,11 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
                             'multi_curve': True,
                             # data, model, residual
                             'symbol': ['None', 'None', 'None'],
-                            'pen': ['b', 'r', 'k']
+                            'pen': ['b', 'r', 'k'],
+                            # Shade the experimental PDA histogram under
+                            # the curve using the global data color.
+                            'fillLevel': 0.0,
+                            'fillBrush': chisurf.settings.gui['plot']['colors']['data'],
                         }
                     }
                 }
@@ -896,15 +1141,31 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         super().__init__(fit=fit, icon=icon, **kwargs)
 
-        background = BackgroundWidget(fit=fit, **kwargs)
-        pch0 = ProbCh0Widget(fit=fit, **kwargs)
-
         layout = QtWidgets.QVBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignTop)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
         ## add widgets
+        res_layout = QtWidgets.QHBoxLayout()
+        res_layout.setContentsMargins(0, 0, 0, 0)
+        res_layout.setSpacing(0)
+
+        res_label = QtWidgets.QLabel("Residuals:")
+        self.rb_res_2d = QtWidgets.QRadioButton("2D")
+        self.rb_res_1d = QtWidgets.QRadioButton("1D proj")
+        self.rb_res_1d.setChecked(True)
+        self.rb_res_2d.toggled.connect(self.onResidualModeChanged)
+        self.rb_res_1d.toggled.connect(self.onResidualModeChanged)
+        res_layout.addWidget(res_label)
+        res_layout.addWidget(self.rb_res_2d)
+        res_layout.addWidget(self.rb_res_1d)
+        res_layout.addStretch(1)
+        layout.addLayout(res_layout)
+
+        background = BackgroundWidget(fit=fit, **kwargs)
+        pch0 = ProbCh0Widget(fit=fit, **kwargs)
+
         if not hide_nuisances:
             layout.addWidget(background)
         layout.addWidget(pch0)
@@ -916,6 +1177,14 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
 
         self.background = background
         self.pch0 = pch0
+
+    def onResidualModeChanged(self):
+        mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
+        self.residual_mode = mode
+        try:
+            chisurf.run("cs.current_fit.update()")
+        except Exception:
+            pass
 
 
 class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
@@ -949,7 +1218,12 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
                             'multi_curve': True,
                             # data, model, residual, + per-Gaussian components
                             'symbol': ['None', 'None', 'None'],
-                            'pen': ['b', 'r', 'k', 'g', 'm', 'c', 'y']
+                            'pen': ['b', 'r', 'k', 'g', 'm', 'c', 'y'],
+                            # Shade the experimental PDA histogram (first
+                            # curve) under the line in the same style as the
+                            # MaxEnt FCS distributions.
+                            'fillLevel': 0.0,
+                            'fillBrush': chisurf.settings.gui['plot']['colors']['data'],
                         }
                     },
                     'S1/(S0+S1)': {
@@ -972,7 +1246,11 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
                             'multi_curve': True,
                             # data, model, residual, + per-Gaussian components
                             'symbol': ['None', 'None', 'None'],
-                            'pen': ['b', 'r', 'k', 'g', 'm', 'c', 'y']
+                            'pen': ['b', 'r', 'k', 'g', 'm', 'c', 'y'],
+                            # Shade the experimental PDA histogram under the
+                            # curve using the global data color.
+                            'fillLevel': 0.0,
+                            'fillBrush': chisurf.settings.gui['plot']['colors']['data'],
                         }
                     },
                 }
@@ -1021,10 +1299,26 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         layout.setAlignment(QtCore.Qt.AlignTop)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
+        res_layout = QtWidgets.QHBoxLayout()
+        res_layout.setContentsMargins(0, 0, 0, 0)
+        res_layout.setSpacing(0)
+
+        res_label = QtWidgets.QLabel("Residuals:")
+        self.rb_res_2d = QtWidgets.QRadioButton("2D")
+        self.rb_res_1d = QtWidgets.QRadioButton("1D")
+        self.rb_res_1d.setChecked(True)
+        self.rb_res_2d.toggled.connect(self.onResidualModeChanged)
+        self.rb_res_1d.toggled.connect(self.onResidualModeChanged)
+        res_layout.addWidget(res_label)
+        res_layout.addWidget(self.rb_res_2d)
+        res_layout.addWidget(self.rb_res_1d)
+        res_layout.addStretch(1)
+        layout.addLayout(res_layout)
 
         if not hide_nuisances:
             layout.addWidget(nuisance)
         layout.addWidget(fret_parameters_widget)
+
         layout.addWidget(distances)
 
         self.setLayout(layout)
@@ -1035,3 +1329,11 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         self.nuisance = nuisance
         self.distances = distances
         self.fret_parameters_widget = fret_parameters_widget
+
+    def onResidualModeChanged(self):
+        mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
+        self.residual_mode = mode
+        try:
+            chisurf.run("cs.current_fit.update()")
+        except Exception:
+            pass
