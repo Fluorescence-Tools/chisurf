@@ -83,9 +83,109 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
             )
         )
 
+    def get_state(self) -> dict:
+        """Return a JSON-serializable snapshot of this widget's state.
+
+        Delegates to :class:`Corrections.get_state` for the core linearization
+        state and additionally records the text shown in the line edit (name
+        of the lintable source) when available.
+        """
+
+        try:
+            state = Corrections.get_state(self)
+        except Exception:
+            return {}
+
+        try:
+            le = getattr(self, "lineEdit", None)
+            if le is not None:
+                txt = str(le.text())
+                if txt:
+                    state["lin_name"] = txt
+        except Exception:
+            pass
+
+        return state
+
+    def set_state(self, state: dict) -> None:
+        """Restore corrections state and synchronize the widget UI.
+
+        The underlying model attributes are restored via
+        :class:`Corrections.set_state`. Checkboxes and the window-function
+        combobox are then updated without emitting their signals so that
+        project load does not execute global macros.
+        """
+
+        if not isinstance(state, dict):
+            return
+
+        try:
+            Corrections.set_state(self, state)
+        except Exception:
+            return
+
+        # Sync DNL / reverse / pile-up checkboxes
+        try:
+            self.checkBox.blockSignals(True)
+            self.checkBox.setChecked(bool(getattr(self, "correct_dnl", self.checkBox.isChecked())))
+        except Exception:
+            pass
+        finally:
+            try:
+                self.checkBox.blockSignals(False)
+            except Exception:
+                pass
+
+        try:
+            self.checkBox_3.blockSignals(True)
+            self.checkBox_3.setChecked(bool(getattr(self, "correct_pile_up", self.checkBox_3.isChecked())))
+        except Exception:
+            pass
+        finally:
+            try:
+                self.checkBox_3.blockSignals(False)
+            except Exception:
+                pass
+
+        try:
+            self.checkBox_2.blockSignals(True)
+            self.checkBox_2.setChecked(bool(getattr(self, "reverse", self.checkBox_2.isChecked())))
+        except Exception:
+            pass
+        finally:
+            try:
+                self.checkBox_2.blockSignals(False)
+            except Exception:
+                pass
+
+        # Sync window-function combobox
+        try:
+            wf = getattr(self, "window_function", None)
+            self.comboBox.blockSignals(True)
+            if isinstance(wf, str):
+                idx = self.comboBox.findText(wf)
+                if idx >= 0:
+                    self.comboBox.setCurrentIndex(idx)
+        except Exception:
+            pass
+        finally:
+            try:
+                self.comboBox.blockSignals(False)
+            except Exception:
+                pass
+
+        # Restore lintable label text, if present
+        try:
+            lin_name = state.get("lin_name")
+            if isinstance(lin_name, str) and lin_name:
+                self.lineEdit.setText(lin_name)
+        except Exception:
+            pass
+
     def onChangeLin(self):
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
+
         chisurf.run(
             "chisurf.macros.model.set_linearization(%s, '%s')" %
             (idx, lin_name)
