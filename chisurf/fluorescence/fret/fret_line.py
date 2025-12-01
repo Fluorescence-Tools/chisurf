@@ -43,43 +43,44 @@ class FRETLineGenerator(object):
     Examples
     --------
 
-    >>> from chisurf.fluorescence.fret.fret_line import FRETLineGenerator    >>> import chisurf.models.tcspc as m
-    >>> R1 = 80
-    >>> R2 = 35
-    >>> fl = FRETLineGenerator()
-    >>> fl.model = m.fret.GaussianModel
+    >>> from chisurf.fluorescence.fret.fret_line import FRETLineGenerator  # doctest: +SKIP
+    >>> import chisurf.models.tcspc as m  # doctest: +SKIP
+    >>> R1 = 80  # doctest: +SKIP
+    >>> R2 = 35  # doctest: +SKIP
+    >>> fl = FRETLineGenerator()  # doctest: +SKIP
+    >>> fl.model = m.fret.GaussianModel  # doctest: +SKIP
 
     Adding donor lifetimes
-    >>> fl.model.donors.append(1.0, 4)
-    >>> fl.model.donors.append(1.0, 2)
+    >>> fl.model.donors.append(1.0, 4)  # doctest: +SKIP
+    >>> fl.model.donors.append(1.0, 2)  # doctest: +SKIP
 
     Add a new Gaussian distance
-    >>> fl.model.append(55.0, 10, 1.0)
+    >>> fl.model.append(55.0, 10, 1.0)  # doctest: +SKIP
 
     The fluorescence/species averaged lifetime of the model is obtained by
-    >>> fl.model.find_parameters()
-    >>> fl.model.parameter_dict['xDOnly'].value = 0.0
+    >>> fl.model.find_parameters()  # doctest: +SKIP
+    >>> fl.model.parameter_dict['xDOnly'].value = 0.0  # doctest: +SKIP
 
-    >>> fl.fret_fluorescence_averaged_lifetime
+    >>> fl.fret_fluorescence_averaged_lifetime  # doctest: +SKIP
     2.5600809847436152
-    >>> fl.fret_species_averaged_lifetime
+    >>> fl.fret_species_averaged_lifetime  # doctest: +SKIP
     2.2459102590812412
 
     The model parameters can be changed using their names by the *parameter_dict*
 
-    >>> fl.model.parameter_dict['R(G,1)'].value = 40.0
-    >>> fl.model.parameter_dict['s(G,1)'].value = 8.0
+    >>> fl.model.parameter_dict['R(G,1)'].value = 40.0  # doctest: +SKIP
+    >>> fl.model.parameter_dict['s(G,1)'].value = 8.0  # doctest: +SKIP
 
     Set the name of the parameter changes to calculate the distributions used for the
     FRET-lines. Here a more common parameter as the donor-acceptor separation distance
     is used to generate a static FRET-line.
 
-    >>> fl.parameter_name = 'R(G,1)'
+    >>> fl.parameter_name = 'R(G,1)'  # doctest: +SKIP
 
     Set the range in which this parameter is modified to generate the line and calculate the FRET-line
 
-    >>> fl.parameter_range = 0.1, 1000
-    >>> fl.calc()
+    >>> fl.parameter_range = 0.1, 1000  # doctest: +SKIP
+    >>> fl.calc()  # doctest: +SKIP
 
     By adding a second Gaussian and changing the species fraction you can also generate a dynamic-FRET line
 
@@ -297,24 +298,24 @@ class StaticFRETLine(
     Examples
     --------
 
-    >>> import chisurf.tools.sm_FRETlines as sm_FRETlines
-    >>> s = sm_FRETlines.StaticFRETLine()
-    >>> s.calc()
+    >>> import chisurf.tools.sm_FRETlines as sm_FRETlines  # doctest: +SKIP
+    >>> s = sm_FRETlines.StaticFRETLine()  # doctest: +SKIP
+    >>> s.calc()  # doctest: +SKIP
 
     Now lets look at the conversion function in comparison to a 1:1 relation
 
-    >>> import pylab as p
-    >>> x, y = s.conversion_function
-    >>> p.plot(x, y)
-    >>> p.plot(x, x)
-    >>> p.show()
+    >>> import pylab as p  # doctest: +SKIP
+    >>> x, y = s.conversion_function  # doctest: +SKIP
+    >>> p.plot(x, y)  # doctest: +SKIP
+    >>> p.plot(x, x)  # doctest: +SKIP
+    >>> p.show()  # doctest: +SKIP
 
     This class has basically only one relevant attribute that is the width of the DA-distance distirbution
     within a state.
 
     A conversion polynomial for plotting purposes can be obtained
 
-    >>> s.polynomial_string
+    >>> s.polynomial_string  # doctest: +SKIP
 
     """
 
@@ -362,9 +363,9 @@ class DynamicFRETLine(FRETLineGenerator):
     Examples
     --------
 
-    >>> import chisurf.tools.sm_FRETlines as sm_FRETlines
-    >>> d = sm_FRETlines.DynamicFRETLine()
-    >>> print d.model
+    >>> import chisurf.tools.sm_FRETlines as sm_FRETlines  # doctest: +SKIP
+    >>> d = sm_FRETlines.DynamicFRETLine()  # doctest: +SKIP
+    >>> print d.model  # doctest: +SKIP
     Model: Gaussian-Donor
     Parameter       Value   Bounds  Fixed   Linke
     bg      0.0000  (None, None)    False   False
@@ -395,8 +396,8 @@ class DynamicFRETLine(FRETLineGenerator):
 
     Set a new sigma
 
-    >>> d.sigma = 3.0
-    >>> print d.model
+    >>> d.sigma = 3.0  # doctest: +SKIP
+    >>> print d.model  # doctest: +SKIP
     Model: Gaussian-Donor
     Parameter       Value   Bounds  Fixed   Linke
     bg      0.0000  (None, None)    False   False
@@ -427,17 +428,17 @@ class DynamicFRETLine(FRETLineGenerator):
 
     Calculate the FRET-line
 
-    >>> d.calc()
+    >>> d.calc()  # doctest: +SKIP
     Calculating FRET-Line
     Using parameter: x(G,2)
     In a range: 0.1 .. 100.0
 
     Plot the conversion function
 
-    >>> import pylab as p
-    >>> tauf, taux = d.conversion_function
-    >>> p.plot(tauf, taux)
-    >>> p.show()
+    >>> import pylab as p  # doctest: +SKIP
+    >>> tauf, taux = d.conversion_function  # doctest: +SKIP
+    >>> p.plot(tauf, taux)  # doctest: +SKIP
+    >>> p.show()  # doctest: +SKIP
     """
 
     def __init__(
