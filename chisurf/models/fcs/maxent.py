@@ -12,9 +12,33 @@ def build_diffusion_kernel(
 ) -> np.ndarray:
     """Build a simple 3D Gaussian FCS diffusion kernel.
 
-    Each column k[:, i] is the normalized correlation shape for a given
-    diffusion time td_grid[i]. The overall amplitude (1/N) and offset (b)
-    are *not* included and should be handled separately if needed.
+    Each column ``k[:, i]`` contains the normalized correlation shape for a
+    diffusion time ``td_grid[i]``. The overall amplitude (``1/N``) and any
+    constant offset are *not* included and should be handled separately.
+
+    Parameters
+    ----------
+    tau : array_like
+        Correlation lag times.
+    td_grid : array_like
+        Diffusion times that define the MaxEnt grid.
+    s : float, optional
+        Axial-to-radial waist ratio ``z0 / w0`` in the 3D Gaussian model.
+
+    Returns
+    -------
+    numpy.ndarray
+        Kernel matrix of shape ``(tau.size, td_grid.size)``.
+
+    Examples
+    --------
+    Build a small kernel and check its shape:
+
+    >>> tau = np.logspace(-3, 1, 4)
+    >>> td = np.logspace(-2, 0, 3)
+    >>> k = build_diffusion_kernel(tau, td, s=3.5)
+    >>> k.shape
+    (4, 3)
     """
     tau = np.asarray(tau, dtype=float)
     td_grid = np.asarray(td_grid, dtype=float)
@@ -131,27 +155,54 @@ def fcs_maxent(
     Parameters
     ----------
     tau : array_like
-        Correlation lag times (same units as td_min/td_max).
+        Correlation lag times (same units as ``td_min`` / ``td_max``).
     g : array_like
-        Measured correlation amplitudes G(tau).
+        Measured correlation amplitudes :math:`G(\tau)`.
     td_min, td_max : float, optional
         Minimum and maximum diffusion times for the grid. If omitted,
-        they are estimated from the tau range.
+        they are estimated from the ``tau`` range.
     n_td : int, optional
-        Number of diffusion-time grid points (log-spaced).
+        Number of diffusion-time grid points (log-spaced) when
+        ``td_grid`` is not supplied.
     s : float, optional
-        Axial-to-radial waist ratio z0/w0 in the 3D Gaussian volume model.
-    regularization_factor : float, optional
-        Entropy weight parameter passed as ``nu`` to the MaxEnt solver.
+        Axial-to-radial waist ratio ``z0 / w0`` in the 3D Gaussian volume
+        model used to build the kernel.
+    reg : float, optional
+        Entropy regularization weight (``alpha`` in the underlying solver).
     weights : array_like, optional
-        Data weights (same length as tau). If None, all ones are used.
+        Data weights (same length as ``tau``). If *None*, all ones are used.
+        Internally these are converted into standard deviations.
     prior : array_like, optional
-        Prior distribution on the diffusion-time grid. If None, uniform.
+        Prior distribution on the diffusion-time grid. If *None*, a uniform
+        prior is used.
+    td_grid : array_like, optional
+        Explicit diffusion-time grid. If given, ``td_min``, ``td_max`` and
+        ``n_td`` are ignored.
+    **kwargs
+        Additional options forwarded to the internal solver. For historical
+        reasons ``regularization_factor`` is accepted as an alias for
+        ``reg``. The maximum number of iterations can be controlled via
+        ``num_iter`` or ``max_iter``.
 
     Returns
     -------
     dict
-        Dictionary with keys ``tau``, ``g``, ``g_fit``, ``td_grid``, ``p``.
+        Dictionary with keys ``"tau"``, ``"g"``, ``"g_fit"``,
+        ``"td_grid"`` and ``"p"`` (the MaxEnt distribution).
+
+    Examples
+    --------
+    Perform a tiny MaxEnt inversion on a synthetic single-component curve:
+
+    >>> tau = np.logspace(-3, 1, 16)
+    >>> g = np.exp(-tau / 0.05)
+    >>> result = fcs_maxent(tau, g, n_td=8, reg=0.1, num_iter=5)
+    >>> sorted(result.keys())
+    ['g', 'g_fit', 'p', 'tau', 'td_grid']
+    >>> result['g_fit'].shape == g.shape
+    True
+    >>> result['td_grid'].shape == result['p'].shape
+    True
     """
     tau = np.asarray(tau, dtype=float).ravel()
     g = np.asarray(g, dtype=float).ravel()
@@ -280,6 +331,30 @@ def _rh_grid_to_td_grid(
         temperature: float = 298.15,
         viscosity: float = 1.0e-3,
 ) -> np.ndarray:
+    """Convert a hydrodynamic-radius grid to a diffusion-time grid.
+
+    Parameters
+    ----------
+    rh_grid : array_like
+        Hydrodynamic radii in nanometers.
+    w0_um : float
+        Lateral waist radius of the observation volume in micrometers.
+    temperature : float, optional
+        Temperature in Kelvin.
+    viscosity : float, optional
+        Dynamic viscosity of the medium in Pa·s.
+
+    Returns
+    -------
+    numpy.ndarray
+        Diffusion times in milliseconds corresponding to ``rh_grid``.
+
+    Examples
+    --------
+    >>> td = _rh_grid_to_td_grid(np.array([1.0, 10.0]), w0_um=0.3)
+    >>> td.shape
+    (2,)
+    """
     rh = np.asarray(rh_grid, dtype=float).ravel()
     w0_m = float(w0_um) * 1.0e-6
     k_B = 1.380649e-23
@@ -310,6 +385,13 @@ def _water_viscosity_Pa_s(temperature: float) -> float:
         eta(T) = A * 10**(B / (T - C)),
 
     with A = 2.414e-5 Pa·s, B = 247.8 K, C = 140 K.
+
+    Examples
+    --------
+    The value at room temperature is on the order of 1 mPa·s:
+
+    >>> round(_water_viscosity_Pa_s(298.15), 4)
+    0.0009
     """
     A, B, C = 2.414e-5, 247.8, 140.0
     T = float(temperature)
@@ -333,6 +415,55 @@ def fcs_maxent_rh(
         prior: np.ndarray | None = None,
         **kwargs,
 ) -> dict:
+    """Run a MaxEnt inversion parameterized in hydrodynamic radius.
+
+    This convenience wrapper constructs a diffusion-time grid from a grid of
+    hydrodynamic radii using the Einstein–Stokes relation and then calls
+    :func:`fcs_maxent`.
+
+    Parameters
+    ----------
+    tau : array_like
+        Correlation lag times.
+    g : array_like
+        Measured correlation amplitudes :math:`G(\tau)`.
+    rh_min, rh_max : float, optional
+        Minimum and maximum hydrodynamic radius in nanometers.
+    n_rh : int, optional
+        Number of grid points between ``rh_min`` and ``rh_max``.
+    w0 : float, optional
+        Lateral beam waist in micrometers used for the diffusion-time
+        conversion.
+    s : float, optional
+        Axial-to-radial waist ratio passed to :func:`build_diffusion_kernel`.
+    reg : float, optional
+        Entropy regularization weight for :func:`fcs_maxent`.
+    temperature : float, optional
+        Temperature in Kelvin.
+    viscosity : float, optional
+        Dynamic viscosity in Pa·s. If *None*, the viscosity of water at the
+        given temperature is used.
+    weights, prior : array_like, optional
+        Forwarded to :func:`fcs_maxent`.
+    **kwargs
+        Additional keyword arguments forwarded to :func:`fcs_maxent`.
+
+    Returns
+    -------
+    dict
+        Dictionary returned by :func:`fcs_maxent` with an extra key
+        ``"rh_grid"`` containing the hydrodynamic-radius grid.
+
+    Examples
+    --------
+    >>> tau = np.logspace(-3, 1, 16)
+    >>> g = np.exp(-tau / 0.1)
+    >>> result = fcs_maxent_rh(tau, g, n_rh=8, w0=0.3, reg=0.1, num_iter=5)
+    >>> sorted(result.keys())
+    ['g', 'g_fit', 'p', 'rh_grid', 'tau', 'td_grid']
+    >>> result['rh_grid'].shape == result['p'].shape
+    True
+    """
     tau = np.asarray(tau, dtype=float).ravel()
     g = np.asarray(g, dtype=float).ravel()
     if tau.size != g.size:
@@ -341,7 +472,7 @@ def fcs_maxent_rh(
     rh_min_val = max(float(rh_min), 1.0e-3)
     rh_max_val = max(float(rh_max), rh_min_val * 1.001)
     n_rh_val = int(n_rh) if int(n_rh) > 2 else 3
-    rh_grid = np.linspace(rh_min_val, rh_max_val, n_rh_val)
+    rh_grid = np.logspace(np.log10(rh_min_val), np.log10(rh_max_val), n_rh_val)
 
     T = float(temperature)
     if viscosity is None:
