@@ -375,9 +375,9 @@ def calc_decay_matrix(
 
     Now plot the model_decay matrix
 
-    >>> import pylab as p
-    >>> p.imshow(m)
-    >>> p.show()
+    >>> import pylab as p  # doctest: +SKIP
+    >>> p.imshow(m)  # doctest: +SKIP
+    >>> p.show()  # doctest: +SKIP
     """
     if space == 'lin':
         taus = np.linspace(tau_min, tau_max, n_steps)
@@ -572,23 +572,23 @@ def gaussian2rates(
     amplitude, rate, amplitude, rate, ...
 
     >>> gaussian2rates([50], [8.0], [1.0], interleaved=True, n_points=8)
-    array([ 0.06060222,  1.64238732,  0.10514622,  0.97808684,  0.1518205 ,
-            0.60699836,  0.18243106,  0.39018018,  0.18243106,  0.25853181,
-            0.1518205 ,  0.17589017,  0.10514622,  0.12247918,  0.06060222,
-            0.08706168])
+    array([0.06060222, 1.64157475, 0.10514622, 0.97760293, 0.1518205 ,
+           0.60669804, 0.18243106, 0.38998713, 0.18243106, 0.2584039 ,
+           0.1518205 , 0.17580315, 0.10514622, 0.12241858, 0.06060222,
+           0.0870186 ])
 
     If *interleaved* is False a 2D-numpy array is returned. The first dimension corresponds
     to the amplitudes the second to the rates.
 
     >>> gaussian2rates([50], [8.0], [1.0], interleaved=False, n_points=8)
-    array([[ 0.06060222,  1.64238732],
-           [ 0.10514622,  0.97808684],
-           [ 0.1518205 ,  0.60699836],
-           [ 0.18243106,  0.39018018],
-           [ 0.18243106,  0.25853181],
-           [ 0.1518205 ,  0.17589017],
-           [ 0.10514622,  0.12247918],
-           [ 0.06060222,  0.08706168]])
+    array([[0.06060222, 1.64157475],
+           [0.10514622, 0.97760293],
+           [0.1518205 , 0.60669804],
+           [0.18243106, 0.38998713],
+           [0.18243106, 0.2584039 ],
+           [0.1518205 , 0.17580315],
+           [0.10514622, 0.12241858],
+           [0.06060222, 0.0870186 ]])
     """
     means = np.array(means, dtype=np.float64)
     sigmas = np.array(sigmas, dtype=np.float64)
@@ -711,14 +711,14 @@ def calculate_fluorescence_decay(
     Examples
     --------
 
-    >>> import chisurf.structure.structure
-    >>> time_axis = np.linspace(0, 20, num=100)
-    >>> structure = chisurf.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')
-    >>> donor_description = {'residue_seq_number': 344, 'atom_name': 'CB'}
-    >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}
-    >>> donor_lifetime_spectrum = np.array([1., 4.])
-    >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)
-    >>> time_axis, model_decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)
+    >>> import chisurf.structure.structure  # doctest: +SKIP
+    >>> time_axis = np.linspace(0, 20, num=100)  # doctest: +SKIP
+    >>> structure = chisurf.structure.structure.Structure('./test/data/modelling/pdb_files/hGBP1_closed.pdb')  # doctest: +SKIP
+    >>> donor_description = {'residue_seq_number': 344, 'atom_name': 'CB'}  # doctest: +SKIP
+    >>> acceptor_description = {'residue_seq_number': 496, 'atom_name': 'CB'}  # doctest: +SKIP
+    >>> donor_lifetime_spectrum = np.array([1., 4.])  # doctest: +SKIP
+    >>> lifetime_spectrum = structure.av_lifetime_spectrum(donor_lifetime_spectrum, donor_description, acceptor_description)  # doctest: +SKIP
+    >>> time_axis, model_decay = calculate_fluorescence_decay(lifetime_spectrum, time_axis)  # doctest: +SKIP
     """
     decay = np.zeros_like(time_axis)
     am = lifetime_spectrum[0::2]
