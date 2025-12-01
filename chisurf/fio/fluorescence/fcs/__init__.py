@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import logging
 
 import numpy as np
 
@@ -16,6 +17,9 @@ import chisurf.fio.fluorescence.fcs.kristine
 import chisurf.fio.fluorescence.fcs.pycorrfit
 import chisurf.fio.fluorescence.fcs.pq_dat
 import chisurf.fio.fluorescence.fcs.fcs_yaml
+import chisurf.fio.fluorescence.fcs.ries_mat
+import chisurf.fio.fluorescence.fcs.sin_correlator
+import chisurf.fluorescence.fcs as fcs_utils
 
 from chisurf import typing
 from chisurf.fio.fluorescence.fcs.definitions import FCSDataset
@@ -93,6 +97,11 @@ def read_fcs(
     """
 
     import chisurf.fio.fluorescence.pqres
+
+    # Optional re-weighting configuration. These keys are consumed here and
+    # not forwarded to the low-level readers to keep their signatures stable.
+    weight_mode = kwargs.pop('weight_mode', None)
+    weight_kwargs = kwargs.pop('weight_kwargs', None) or {}
     name_reader = {
         'confocor3': chisurf.fio.fluorescence.fcs.confocor3.read_zeiss_fcs,
         'china-mat': chisurf.fio.fluorescence.fcs.china.read_china_mat,
@@ -100,6 +109,8 @@ def read_fcs(
         'pq.dat': chisurf.fio.fluorescence.fcs.pq_dat.read_dat,
         'yaml': chisurf.fio.fluorescence.fcs.fcs_yaml.read_yaml,
         'kristine': chisurf.fio.fluorescence.fcs.kristine.read_kristine,
+        'sin': chisurf.fio.fluorescence.fcs.sin_correlator.read_sin,
+        'ries-mat': chisurf.fio.fluorescence.fcs.ries_mat.read_ries_mat,
         'pycorrfit': chisurf.fio.fluorescence.fcs.pycorrfit.read_pycorrfit,
         'pqres': chisurf.fio.fluorescence.pqres.read_pqres_fcs
     }
@@ -124,6 +135,8 @@ def read_fcs(
         'pq.dat',
         'yaml',
         'kristine',
+        'sin',
+        'ries-mat',
         'pycorrfit',
         'pqres'
     ]:
@@ -132,12 +145,150 @@ def read_fcs(
             filename=filename,
             verbose=verbose
         )
+
+    # Ensure that each dataset has correlation-amplitude weights. If the
+    # reader did not provide any (older files or formats without error
+    # columns), compute Suren photon-noise weights by default so that the
+    # downstream FCS tools always see a sensible noise model.
+    if ds:
+        log = logging.getLogger(__name__)
+        for r in ds:
+            has_weights = False
+            try:
+                if 'correlation_amplitude_weights' in r:
+                    w_existing = r.get('correlation_amplitude_weights')
+                    has_weights = w_existing is not None
+            except Exception:
+                has_weights = False
+
+            if has_weights:
+                continue
+
+            try:
+                times = np.asarray(r.get('correlation_times'), dtype=float)
+                corr = np.asarray(r.get('correlation_amplitudes'), dtype=float)
+            except Exception:
+                continue
+            if times.size == 0 or corr.size == 0:
+                continue
+
+            try:
+                acq = float(r.get('acquisition_time', 1.0))
+            except Exception:
+                acq = 1.0
+            try:
+                mean_cr = float(r.get('mean_count_rate', 1.0))
+            except Exception:
+                mean_cr = 1.0
+
+            try:
+                new_w = fcs_utils.compute_weights(
+                    times=times,
+                    correlation=corr,
+                    acquisition_time_s=acq,
+                    mean_count_rate_khz=mean_cr,
+                    mode="suren",
+                    existing_weights=None,
+                    noise_kwargs={},
+                )
+            except Exception:
+                # If even the fallback fails, skip silently to avoid
+                # breaking the import.
+                continue
+
+            try:
+                r['correlation_amplitude_weights'] = new_w.tolist()
+            except Exception:
+                try:
+                    r.correlation_amplitude_weights = new_w.tolist()  # type: ignore[attr-defined]
+                except Exception:
+                    continue
+
+            try:
+                log.info(
+                    "FCS: no noise weights found in file '%s' (measurement_id=%s); "
+                    "using Suren noise model as default.",
+                    r.get('filename', filename),
+                    r.get('measurement_id', None),
+                )
+            except Exception:
+                # Logging is non-critical; ignore any issues here.
+                pass
+
+    # Optionally recompute correlation-amplitude weights using a selected
+    # weighting mode from the GUI. Existing reader-provided (or Suren
+    # fallback) weights are kept when weight_mode is None or "file".
+    if ds and weight_mode is not None:
+        for r in ds:
+            try:
+                times = np.asarray(r.get('correlation_times'), dtype=float)
+                corr = np.asarray(r.get('correlation_amplitudes'), dtype=float)
+            except Exception:
+                continue
+            if times.size == 0 or corr.size == 0:
+                continue
+            try:
+                acq = float(r.get('acquisition_time', 1.0))
+            except Exception:
+                acq = 1.0
+            try:
+                mean_cr = float(r.get('mean_count_rate', 1.0))
+            except Exception:
+                mean_cr = 1.0
+            existing_w = r.get('correlation_amplitude_weights', None)
+            try:
+                if existing_w is not None:
+                    existing_w = np.asarray(existing_w, dtype=float)
+            except Exception:
+                existing_w = None
+
+            try:
+                new_w = fcs_utils.compute_weights(
+                    times=times,
+                    correlation=corr,
+                    acquisition_time_s=acq,
+                    mean_count_rate_khz=mean_cr,
+                    mode=weight_mode,
+                    existing_weights=existing_w,
+                    noise_kwargs=weight_kwargs,
+                )
+            except Exception:
+                # On failure, keep any existing weights as-is
+                continue
+
+            try:
+                r['correlation_amplitude_weights'] = new_w.tolist()
+            except Exception:
+                # Fallback for non-mutable FCSDataset implementations
+                try:
+                    r.correlation_amplitude_weights = new_w.tolist()
+                except Exception:
+                    pass
     for r in ds:
         data_sets.append(
             chisurf.data.DataCurve(
                 **make_curve_kwargs(r)
             )
         )
+
+    # Log summary of this FCS import, including effective noise model.
+    try:
+        log = logging.getLogger(__name__)
+        if weight_mode is None:
+            noise_label = "from file (default / Suren fallback)"
+        else:
+            noise_label = str(weight_mode)
+        log.info(
+            "FCS: loaded %d dataset(s) from file '%s' with reader '%s'; noise model=%s.",
+            len(ds),
+            filename,
+            reader_name,
+            noise_label,
+        )
+    except Exception:
+        # Logging is best-effort only.
+        pass
+
     return chisurf.data.ExperimentDataCurveGroup(data_sets)
 
 
