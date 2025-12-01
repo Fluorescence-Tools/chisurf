@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+"""Photon distribution analysis (PDA) experiment utilities.
+
+This module provides helper functions and the :class:`PdaReader` used
+to construct PDA histograms from time-tagged single-photon (TTTR) data.
+
+The central pieces are:
+
+* :func:`build_idx_map` – vectorized helper that expands per-file
+  index intervals into NumPy index arrays.
+* :class:`PdaReader` – experiment reader that uses :mod:`tttrlib` to
+  compute experimental S1S2 histograms and attach PDA metadata to
+  :class:`chisurf.data.DataCurve` objects.
+
+The examples in this module avoid touching real TTTR files; all
+heavy I/O and :mod:`tttrlib` calls are only shown in skipped doctests.
+"""
+
 import pathlib
 import numpy as np
 from typing import Dict, Sequence, Tuple
@@ -27,16 +44,43 @@ def build_idx_map(
     inclusive_stop: bool = True,     # True -> [start, stop]; False -> [start, stop)
     dtype=np.int64                   # use np.int32 if you want to save RAM
 ) -> Dict[str, np.ndarray]:
-    """
-    Return {filename: np.ndarray(indices)} where each array contains the stacked
-    indices of all (non-overlapping) ranges for that file.
+    """Build per-file index arrays from non-overlapping intervals.
 
-    This implementation vectorizes across all files at once to minimize Python
-    overhead. It builds one global expansion of all intervals, then groups the
-    expanded indices back by file using NumPy operations.
+    Parameters
+    ----------
+    intervals_by_file : dict
+        Mapping ``filename`` to a sequence of ``(start, stop)`` integer
+        pairs. Intervals are assumed to be non-overlapping and
+        ``start < stop``.
+    inclusive_stop : bool, optional
+        If ``True`` (default), the stop index is treated as inclusive,
+        i.e. an interval ``(0, 2)`` expands to indices ``[0, 1, 2]``.
+        If ``False``, the stop index is exclusive as in standard Python
+        slicing.
+    dtype : data-type, optional
+        Integer dtype for the resulting index arrays (default
+        ``numpy.int64``).
 
-    Assumes start < stop and bursts are non-overlapping. Keeps the original
-    file order of keys provided by `intervals_by_file`.
+    Returns
+    -------
+    dict
+        A dictionary mapping each input filename to a one-dimensional
+        :class:`numpy.ndarray` of indices. Files with no intervals are
+        mapped to empty arrays.
+
+    Examples
+    --------
+    Build index arrays for two files with simple intervals::
+
+        >>> from chisurf.experiments.pda import build_idx_map
+        >>> ivals = {"a": [(0, 2)], "b": [(5, 6)]}
+        >>> out = build_idx_map(ivals)
+        >>> sorted(out.keys())
+        ['a', 'b']
+        >>> out['a'].tolist()
+        [0, 1, 2]
+        >>> out['b'].tolist()
+        [5, 6]
     """
     if not intervals_by_file:
         return {}
@@ -115,14 +159,48 @@ def build_idx_map(
 
 class PdaReader(reader.ExperimentReader):
 
+    """Experiment reader for PDA TTTR data.
+
+    This reader uses :mod:`tttrlib` to construct experimental S1S2
+    histograms from TTTR files and attaches PDA metadata to
+    :class:`chisurf.data.DataCurve` objects.
+
+    Parameters
+    ----------
+    channels : tuple of list of int
+        Channel numbers for donor/acceptor detection (green, red).
+    micro_time_ranges : list of (int, int)
+        Micro-time windows used for photon selection.
+    reading_routine : str, optional
+        :mod:`tttrlib` reader type (e.g. ``'PTU'``, default).
+    maximum_number_of_photons : int, optional
+        Maximum photon number used for the S1S2 histogram support.
+    minimum_number_of_photons : int, optional
+        Minimum total photon number for bursts.
+    minimum_time_window_length : float, optional
+        Minimum time window length for bursts in seconds.
+
+    Notes
+    -----
+    The :meth:`read` method performs real file I/O and depends on
+    :mod:`tttrlib`. A minimal usage pattern (omitting real files) is::
+
+        >>> from chisurf.experiments.pda import PdaReader  # doctest: +SKIP
+        >>> r = PdaReader(  # doctest: +SKIP
+        ...     channels=([0], [1]),
+        ...     micro_time_ranges=[(0, 4096)],
+        ...     reading_routine='PTU'
+        ... )  # doctest: +SKIP
+    """
+
     def __init__(
             self,
             channels: typing.Tuple[typing.List[int], typing.List[int]],
             micro_time_ranges: typing.List[typing.Tuple[int, int]],
             reading_routine: str = 'PTU',
-            maximum_number_of_photons: int = 148,
-            minimum_number_of_photons: int = 20,
-            minimum_time_window_length: float = 1e-4,
+            maximum_number_of_photons: int = 150,
+            minimum_number_of_photons: int = 5,
+            minimum_time_window_length: float = 5e-4,
             *args,
             **kwargs
     ):
@@ -248,11 +326,23 @@ class PdaReader(reader.ExperimentReader):
             except Exception:
                 pass
 
-            row_indices, col_indices = list(), list()
-            for r in range(self.maximum_number_of_photons):
-                for c in range(self.maximum_number_of_photons - r):
-                    row_indices.append(r)
-                    col_indices.append(c)
+            # Attach PDA-specific metadata describing the 2D S1S2 grid and
+            # the 1D flattening used for fitting. We now use a standard
+            # row-major flattening of the full 2D support so that the
+            # resulting 1D vector can be treated in the same way as other
+            # grid-based datasets (e.g. RICS).
+            s1s2_shape = tuple(getattr(s1s2_e, 'shape', (0, 0)))
+            ny, nx = s1s2_shape if len(s1s2_shape) == 2 else (0, 0)
+
+            # Precompute row/column indices consistent with row-major
+            # flattening so PDA-specific code (e.g. photon-number gating)
+            # can still access N = row + col for each 1D bin.
+            if ny > 0 and nx > 0:
+                rr, cc = np.indices((ny, nx))
+                row_indices = rr.ravel().tolist()
+                col_indices = cc.ravel().tolist()
+            else:
+                row_indices, col_indices = [], []
 
             d = {
                 'maximum_number_of_photons': self.maximum_number_of_photons,
@@ -262,15 +352,43 @@ class PdaReader(reader.ExperimentReader):
                 's1s2': s1s2_e,
                 'ps': ps,
                 'row_indices': row_indices,
-                'col_indices': col_indices
+                'col_indices': col_indices,
+                # Dimensionality/meta for 2D handling (kept here for PDA-
+                # specific consumers, but GUI should prefer the generic
+                # meta_data['grid'] entry added below).
+                'ndim': 2,
+                'shape': s1s2_shape,
+                # Total number of 1D points in the PDA-specific flattening
+                'size': int(len(row_indices)),
             }
-            # Use s1s2 matrix as data only use upper left triangle of matrix
-            y = s1s2_e[row_indices, col_indices]
-            x = np.arange(len(y))
+
+            # Generic grid metadata describing the 2D S1S2 support and the
+            # mapping from the 2D grid to the 1D histogram used for fitting.
+            # This is consumed by GUI components in a model-agnostic manner
+            # and uses a standard NumPy-style row-major order ('C').
+            grid_meta = {
+                'ndim': 2,
+                'shape': s1s2_shape,
+                # NumPy-style order string: 'C' -> row-major, 'F' -> column-major
+                'order': 'C',
+                # Total number of 1D points in the flattened representation
+                'size': int(np.prod(s1s2_shape)) if len(s1s2_shape) == 2 else 0,
+            }
+
+            meta_all = {
+                'grid': grid_meta,
+            }
+
+            # Use the full S1S2 matrix as data, flattened in row-major
+            # order. Elements outside the physically populated triangular
+            # support (if any) will naturally carry zero counts.
+            y = np.asarray(s1s2_e, dtype=float).ravel(order='C')
+            x = np.arange(y.size)
             data = chisurf.data.DataCurve(
                 name=fn.stem,
                 data_reader=self,
                 pda=d,
+                meta_data=meta_all,
                 y=y, x=x,
                 ey=chisurf.fluorescence.tcspc.counting_noise(y)
             )
