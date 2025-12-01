@@ -82,16 +82,19 @@ class TCSPCReader(reader.ExperimentReader):
 
         Example
         -------
-        >>> import pylab as p
-        >>> import chisurf.experiments
-        >>> filename = "../test/data/tcspc/ibh_sample/Decay_577D.txt"
-        >>> ex = chisurf.experiments.experiment.Experiment('TCSPC')
-        >>> dt = 0.0141
-        >>> g1 = chisurf.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)
-        >>> data = g1.read(filename=filename)  # reading_routine will be guessed as 'csv' based on the .txt extension
-        >>> x = data.x
-        >>> y = data.y
-        >>> p.plot(x, y)
+        The following example performs real file I/O and is therefore
+        marked as skipped for doctest:
+
+        >>> import pylab as p  # doctest: +SKIP
+        >>> import chisurf.experiments  # doctest: +SKIP
+        >>> filename = "../test/data/tcspc/ibh_sample/Decay_577D.txt"  # doctest: +SKIP
+        >>> ex = chisurf.experiments.experiment.Experiment('TCSPC')  # doctest: +SKIP
+        >>> dt = 0.0141  # doctest: +SKIP
+        >>> g1 = chisurf.experiments.tcspc.TCSPCReader(experiment=ex, skiprows=8, rebin=(1, 8), dt=dt)  # doctest: +SKIP
+        >>> data = g1.read(filename=filename)  # doctest: +SKIP
+        >>> x = data.x  # doctest: +SKIP
+        >>> y = data.y  # doctest: +SKIP
+        >>> p.plot(x, y)  # doctest: +SKIP
         """
         super().__init__(*args, **kwargs)
         if dt is None:
@@ -156,6 +159,13 @@ class TCSPCReader(reader.ExperimentReader):
         str
             The guessed reading routine, or the default reading routine if the
             extension is not recognized or the filename is None
+        
+        Examples
+        --------
+        >>> from chisurf.experiments.tcspc import TCSPCReader
+        >>> r = TCSPCReader(reading_routine='auto')
+        >>> r._guess_reading_routine('decay_data.txt')
+        'csv'
         """
         if filename is None:
             return self.reading_routine
@@ -296,47 +306,131 @@ class TCSPCSimulatorSetup(TCSPCReader):
 
 class TCSPCTTTRReader(TCSPCReader):
 
-    def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
-        if os.path.isfile(filename):
-            tttr = tttrlib.TTTR(filename, self.reading_routine)
-            tttr_selected = tttr.get_tttr_by_channel(self.channel_numbers)
-            y, x = tttr_selected.get_microtime_histogram(self.micro_time_coarsening)
-            x *= 1.0e9  # decays in ns
-
-            y_pos = np.where(y > 0)[0]
-            i_y_max = y_pos[-1]
-            y = y[:i_y_max]
-            t = x[:i_y_max]
-
-            # Prepare name
-            fn, _ = os.path.splitext(filename)
-            name = fn + "_ch("
-            name += ",".join([str(i) for i in self.channel_numbers])
-            name += ")"
-
-            data_set = chisurf.data.DataCurve(
-                x=t, y=y, name=name,
-                experiment=self.experiment,
-                data_reader=self,
-                ey=chisurf.fluorescence.tcspc.counting_noise(y)
-            )
-            data_group = chisurf.data.DataGroup([data_set])
-            return data_group
-        else:
-            raise FileNotFoundError
-
-    def __int__(
+    def __init__(
             self,
-            tttr_filename: pathlib.Path,
-            channel_numbers=None,
-            reading_routine: str = 'PTU',
-            micro_time_coarsening: int = 1,
             *args,
+            channel_numbers=None,
+            channel: int = 0,
+            micro_time_coarsening: int = 1,
+            micro_time_shift: int = 0,
+            reading_routine: str | None = None,
             **kwargs
     ):
-        super().__int__(*args, **kwargs)
-        if channel_numbers is None:
-            channel_numbers = []
-        self.reading_routine = reading_routine
-        self.channel_numbers = channel_numbers
-        self.micro_time_coarsening = micro_time_coarsening
+        super().__init__(*args, **kwargs)
+        if reading_routine is not None:
+            self.reading_routine = reading_routine
+        if not hasattr(self, "channel_numbers"):
+            self.channel_numbers = None
+        if channel_numbers is not None:
+            try:
+                self.channel_numbers = list(channel_numbers)
+            except TypeError:
+                self.channel_numbers = [channel_numbers]
+        self.channel = int(channel)
+        try:
+            self.micro_time_coarsening = int(micro_time_coarsening)
+        except Exception:
+            self.micro_time_coarsening = 1
+        try:
+            self.micro_time_shift = int(micro_time_shift)
+        except Exception:
+            self.micro_time_shift = 0
+
+    def _get_channels(self) -> typing.Tuple[int, ...]:
+        chs = getattr(self, "channel_numbers", None)
+        if chs is None:
+            chs = [getattr(self, "channel", 0)]
+        try:
+            return tuple(sorted({int(c) for c in chs}))
+        except Exception:
+            return (int(getattr(self, "channel", 0) or 0),)
+
+    def _get_micro_time_coarsening(self) -> int:
+        try:
+            mtc = int(getattr(self, "micro_time_coarsening", 1) or 1)
+        except Exception:
+            mtc = 1
+        if mtc <= 0:
+            mtc = 1
+        return mtc
+
+    def _get_micro_time_shift(self) -> int:
+        try:
+            s = int(getattr(self, "micro_time_shift", 0) or 0)
+        except Exception:
+            s = 0
+        return s
+
+    def _apply_shift(self, y: np.ndarray, shift: int) -> np.ndarray:
+        arr = np.asarray(y, dtype=float)
+        if arr.size == 0 or shift == 0:
+            return arr
+        if shift > 0:
+            return np.pad(arr, (shift, 0), mode="constant")[:-shift]
+        step = abs(shift)
+        return np.pad(arr, (0, step), mode="constant")[step:]
+
+    def _compute_histogram(self, filename: str) -> typing.Tuple[np.ndarray, np.ndarray]:
+        routine = getattr(self, "reading_routine", None)
+        if routine:
+            tttr = tttrlib.TTTR(filename, routine)
+        else:
+            tttr = tttrlib.TTTR(filename)
+        chs = self._get_channels()
+        coarsening = self._get_micro_time_coarsening()
+        shift = self._get_micro_time_shift()
+        tttr_selected = tttr.get_tttr_by_channel(list(chs))
+        y_raw, x_raw = tttr_selected.get_microtime_histogram(coarsening)
+        y = np.asarray(y_raw, dtype=float)
+        x = np.asarray(x_raw, dtype=float)
+        if y.size == 0 or x.size == 0:
+            return np.zeros(0, dtype=float), np.zeros(0, dtype=float)
+        if shift != 0:
+            y = self._apply_shift(y, shift)
+        x = x * 1.0e9
+        n = int(min(y.size, x.size))
+        if n <= 0:
+            return np.zeros(0, dtype=float), np.zeros(0, dtype=float)
+        return y[:n].astype(float), x[:n].astype(float)
+
+    def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
+        if filename is None:
+            return chisurf.data.DataGroup([])
+        if isinstance(filename, (list, tuple)):
+            if not filename:
+                return chisurf.data.DataGroup([])
+            filename = filename[0]
+        if not os.path.isfile(filename):
+            return chisurf.data.DataGroup([])
+        try:
+            y, t = self._compute_histogram(filename)
+        except Exception:
+            return chisurf.data.DataGroup([])
+        if y.size == 0 or t.size == 0:
+            return chisurf.data.DataGroup([])
+        try:
+            y_pos = np.where(y > 0)[0]
+            if y_pos.size > 0:
+                i_y_max = int(y_pos[-1]) + 1
+                y = y[:i_y_max]
+                t = t[:i_y_max]
+        except Exception:
+            pass
+        fn, _ = os.path.splitext(filename)
+        try:
+            chs = self._get_channels()
+            ch_text = ",".join(str(int(c)) for c in chs)
+        except Exception:
+            ch_text = ""
+        name = f"{fn}_ch({ch_text})"
+        data_set = chisurf.data.DataCurve(
+            x=t,
+            y=y,
+            name=name,
+            experiment=self.experiment,
+            data_reader=self,
+            ey=chisurf.fluorescence.tcspc.counting_noise(y)
+        )
+        data_group = chisurf.data.DataGroup([data_set])
+        data_group.data_reader = self
+        return data_group
