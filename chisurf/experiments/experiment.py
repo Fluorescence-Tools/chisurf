@@ -7,11 +7,34 @@ import chisurf.experiments.reader
 
 
 class Experiment(chisurf.base.Base):
-    """
-    All information contained within `ChiSurf` is associated to an experiment.
-    Each experiment is associated with a list of models and a list of setups.
-    The list of models and the list of setups determine the applicable models
-    and loadable data-types respectively.
+    """Lightweight registry of models and readers for a ChiSurf experiment.
+
+    An :class:`Experiment` keeps track of which model classes and
+    :class:`chisurf.experiments.reader.ExperimentReader` instances belong to
+    a conceptual experiment type. Higher level GUIs use this information to
+    decide which data can be loaded and which models are applicable.
+
+    Attributes
+    ----------
+    model_classes : list of type[chisurf.models.Model]
+        Registered model classes associated with the experiment.
+    readers : list of chisurf.experiments.reader.ExperimentReader
+        Registered readers (possibly attached via controllers).
+    hidden : bool
+        If *True*, the experiment is hidden from interactive UIs.
+
+    Examples
+    --------
+    Create a minimal experiment without models or readers:
+
+    >>> from chisurf.experiments.experiment import Experiment
+    >>> exp = Experiment(name="Test")
+    >>> exp.name
+    'Test'
+    >>> exp.model_classes
+    []
+    >>> exp.readers
+    []
     """
 
     hidden: bool = False
@@ -74,6 +97,12 @@ class Experiment(chisurf.base.Base):
     def get_readers(self) -> typing.List[
         chisurf.experiments.reader.ExperimentReader
     ]:
+        """Return all :class:`ExperimentReader` instances for this experiment.
+
+        Internally, ``_readers`` may hold either readers directly or
+        :class:`ExperimentReaderController` objects; in the latter case the
+        underlying :attr:`experiment_reader` is returned.
+        """
         readers = list()
         for v in self._readers:
             if isinstance(
@@ -89,12 +118,14 @@ class Experiment(chisurf.base.Base):
         return readers
 
     def get_reader_names(self) -> typing.List[str]:
+        """Return the names of all registered readers."""
         names = list()
         for s in self.readers:
             names.append(s.name)
         return names
 
     def get_model_names(self) -> typing.List[str]:
+        """Return the names of all registered model classes."""
         names = list()
         for s in self.model_classes:
             names.append(str(s.name))
