@@ -43,7 +43,7 @@ def main():
                     # Load the UI file
                     import pathlib
                     from PyQt5 import uic
-                    uic.loadUi(pathlib.Path(__file__).parent / "gui" / "simple_error_dialog.ui", self)
+                    uic.loadUi(pathlib.Path(__file__).parent / "gui" / "widgets" / "simple_error_dialog.ui", self)
 
                     # Set the exception text
                     self.exception_text_box.setText(exception_text)
