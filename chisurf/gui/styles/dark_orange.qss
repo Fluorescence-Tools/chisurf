@@ -468,6 +468,13 @@ QTextEdit {
     selection-background-color: #767662;
 }
 
+/* Use a unified monospace font and size for the History / Log dock */
+QListWidget#plainTextEditLog,
+QPlainTextEdit#plainTextEditHistory {
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size: 9pt;
+}
+
 QHeaderView::section {
     background-color: QLinearGradient(
         x1: 0, y1: 0, x2: 0, y2: 1,
@@ -627,7 +634,7 @@ QTabBar::tab {
     color: #b1b1b1;
     border: 1px solid #444;
     border-bottom-style: none;
-    background-color: #3a3a3a; /* was #323232 */
+    background-color: #2c2c2c; /* slightly darker to let colored text stand out */
     padding-left: 10px;
     padding-right: 10px;
     padding-top: 3px;
@@ -656,8 +663,8 @@ QTabBar::tab:!selected {
     margin-top: 3px;
     background-color: QLinearGradient(
         x1: 0, y1: 0, x2: 0, y2: 1,
-        stop: 1 #2a2a2a, /* was #212121 */
-        stop: .4 #3f3f3f /* was #343434 */
+        stop: 1 #222222,
+        stop: .4 #363636
     );
 }
 
@@ -706,4 +713,34 @@ QToolButton {
     background-color: #694545; /* was #593535 */
     border: 1px solid #000000;
     border-radius: 3px;
+}
+
+QDockWidget#dockWidgetReadData::title {
+    background: #3b4a67;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetDatasets::title {
+    background: #3b674a;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetAnalysis::title {
+    background: #674a3b;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetPlot::title {
+    background: #5c3b67;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetScriptEdit::title {
+    background: #67613b;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetHistory::title {
+    background: #3b6767;
+    color: #f0f0f0;
 }
