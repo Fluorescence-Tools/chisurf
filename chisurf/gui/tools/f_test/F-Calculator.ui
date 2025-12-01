@@ -6,15 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>264</width>
-    <height>292</height>
+    <width>220</width>
+    <height>230</height>
    </rect>
-  </property>
-  <property name="font">
-   <font>
-    <pointsize>12</pointsize>
-    <kerning>true</kerning>
-   </font>
   </property>
   <property name="windowTitle">
    <string>F-Calculator</string>
@@ -52,13 +46,13 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>12</number>
+       <number>6</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>12</number>
+       <number>6</number>
       </property>
       <property name="horizontalSpacing">
        <number>1</number>
@@ -248,11 +242,6 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox">
-     <property name="font">
-      <font>
-       <pointsize>12</pointsize>
-      </font>
-     </property>
      <property name="title">
       <string>χ2 max</string>
      </property>
@@ -261,13 +250,13 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>12</number>
+       <number>6</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>12</number>
+       <number>6</number>
       </property>
       <property name="horizontalSpacing">
        <number>1</number>
