@@ -63,9 +63,35 @@ def find_fit_idx_of_parameter(
         fit_list = chisurf.fits
     fit_idx = list()
     for idx, fit in enumerate(fit_list):
-        for p in fit.model.parameters_all:
-            if id(p) == id(parameter):
-                fit_idx.append(idx)
+        models = []
+        model = getattr(fit, "model", None)
+        if model is not None:
+            models.append(model)
+
+        grouped_fits = getattr(fit, "grouped_fits", None)
+        if isinstance(grouped_fits, (list, tuple)):
+            for f_local in grouped_fits:
+                m_local = getattr(f_local, "model", None)
+                if m_local is not None and m_local not in models:
+                    models.append(m_local)
+
+        global_model = getattr(fit, "_model", None)
+        if global_model is not None and global_model not in models:
+            models.append(global_model)
+
+        found = False
+        for m in models:
+            try:
+                params = getattr(m, "parameters_all", [])
+            except Exception:
+                continue
+            for p in params:
+                if id(p) == id(parameter):
+                    fit_idx.append(idx)
+                    found = True
+                    break
+            if found:
+                break
     return fit_idx
 
 
