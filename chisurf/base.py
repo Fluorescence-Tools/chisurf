@@ -193,7 +193,7 @@ def clean_string(
 
     >>> import chisurf.base
     >>> chisurf.base.clean_string("kkl ss ##")
-    kkl_ss
+    'kkl_ss'
 
     """
     r = slugify(s, separator='_', regex_pattern=regex_pattern)
@@ -498,8 +498,8 @@ class Base(object):
 
         Examples
         --------
-        >>> import chisurf.experiments
-        >>> dc = chisurf.experiments.data.DataCurve()
+        >>> import chisurf.data
+        >>> dc = chisurf.data.DataCurve()
         >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
         """
         j = dict()
@@ -572,14 +572,14 @@ class Base(object):
         >>> bc.lol
         1
         >>> bc.parameter
-        ala
-        >>> bc.to_dict()
-        {'lol': 1, 'parameter': 'ala', 'verbose': False}
+        'ala'
+        >>> sorted(bc.to_dict().keys())
+        ['lol', 'meta_data', 'name', 'parameter']
         >>> bc.from_dict({'jj': 22, 'zu': "auf"})
         >>> bc.jj
         22
         >>> bc.zu
-        auf
+        'auf'
         """
         super().__init__()
         if len(args) > 0 and isinstance(args[0], dict):
