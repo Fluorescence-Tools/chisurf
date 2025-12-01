@@ -345,6 +345,54 @@ class LifetimeModel(ModelCurve):
         decay = self.corrections.linearize(decay)
         self.y = np.maximum(decay, 0)
 
+    def get_state(self) -> dict:
+        state = super().get_state()
+        if not isinstance(state, dict):
+            state = {}
+        extra = state.get("extra")
+        if not isinstance(extra, dict):
+            extra = {}
+            state["extra"] = extra
+        lifetimes = getattr(self, "lifetimes", None)
+        try:
+            if lifetimes is not None:
+                extra["lifetimes_n"] = int(len(lifetimes))
+        except Exception:
+            pass
+        return state
+
+    def set_state(self, state: dict) -> None:
+        if not isinstance(state, dict):
+            return
+        extra = state.get("extra") or {}
+        lifetimes = getattr(self, "lifetimes", None)
+        try:
+            target_n = extra.get("lifetimes_n")
+            if lifetimes is not None and target_n is not None:
+                target_n = int(target_n)
+                while True:
+                    try:
+                        current_n = int(len(lifetimes))
+                    except Exception:
+                        break
+                    if current_n >= target_n:
+                        break
+                    try:
+                        lifetimes.append()
+                    except TypeError:
+                        try:
+                            lifetimes.append(amplitude=1.0, lifetime=4.0)
+                        except Exception:
+                            break
+                try:
+                    while len(lifetimes) > target_n:
+                        lifetimes.pop()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        super().set_state(state)
+
 
 class LifetimeMixtureModel(LifetimeModel):
 
