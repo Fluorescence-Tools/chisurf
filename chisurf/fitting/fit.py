@@ -1098,25 +1098,44 @@ def _apply_fit_mask(
 
     if wres is None:
         return wres
+
     fit = getattr(model, "fit", None)
     if fit is None:
         return wres
+
     mask = getattr(fit, "mask", None)
     if mask is None:
         return wres
+
     try:
-        m = np.asarray(mask)
+        m = np.asarray(mask, dtype=float).ravel()
     except Exception:
         return wres
-    if m.ndim != 1:
+    if m.ndim != 1 or m.size == 0:
         return wres
-    n = min(m.size, wres.size)
-    if n <= 0:
+
+    try:
+        xmin = int(getattr(fit, "xmin", 0))
+        xmax = int(getattr(fit, "xmax", xmin + int(len(wres))))
+    except Exception:
         return wres
+
+    if xmax < xmin:
+        xmin, xmax = xmax, xmin
+
+    xmin = max(0, xmin)
+    xmax = min(m.size, max(xmin, xmax))
+    window_len = max(0, xmax - xmin)
+    if window_len == 0 or len(wres) == 0:
+        return wres
+
+    n = len(wres)
+    if window_len != n:
+        return wres
+
     wres = np.array(wres, copy=True)
-    # Treat both boolean and numeric masks as multiplicative weights
-    w = m.astype(float)
-    wres[:n] *= w[:n]
+    w_slice = m[xmin:xmax]
+    wres *= w_slice
     return wres
 
 
