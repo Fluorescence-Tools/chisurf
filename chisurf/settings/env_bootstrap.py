@@ -138,6 +138,8 @@ def _init_paths() -> None:
 def _init_qt_plugins() -> None:
     # Known Qt plugin layouts
     candidates: list[pathlib.Path] = [
+        APPROOT / "Qt6" / "plugins",
+        APPROOT / "Library" / "Qt6" / "plugins",
         APPROOT / "plugins",
         APPROOT / "Library" / "plugins",  # conda/Win
     ]
@@ -158,8 +160,8 @@ def _init_qt_plugins() -> None:
         for s in sp:
             base = pathlib.Path(s)
             candidates.extend([
-                base / "PyQt5" / "Qt5" / "plugins",
                 base / "PyQt6" / "Qt6" / "plugins",
+                base / "PyQt5" / "Qt5" / "plugins",
             ])
     except Exception:
         pass
@@ -177,7 +179,7 @@ def _init_qt_plugins() -> None:
 
 def _init_vispy() -> None:
     # Prefer a Qt backend for vispy; user can override
-    os.environ.setdefault("VISPY_APP", "PyQt5")
+    os.environ.setdefault("VISPY_APP", "PyQt6")
 
 
 def _preload_freetype() -> None:

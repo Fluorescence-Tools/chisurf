@@ -15,8 +15,8 @@ import pkgutil
 import importlib
 import chisurf.gui.gui_tweaks  # GUI tweaks (QT_OPENGL, etc.)
 
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from qtpy import QtWidgets, QtGui, QtCore, uic
+from qtpy.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 import pyqtgraph as pg
 
 import chisurf  # Ensure chisurf is available module-wide
@@ -961,11 +961,26 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     pixmap = QtGui.QPixmap(str(splash_path))
     splash = SplashScreen(pixmap)
 
-    # move splashscreen to center of active window
+    # move splashscreen to center of active window; be robust if Qt cannot
+    # determine the current screen (screenAt may return None in some setups)
     screen = QtGui.QGuiApplication.screenAt(QtGui.QCursor().pos())
-    fg = splash.frameGeometry()
-    fg.moveCenter(screen.geometry().center())
-    splash.move(fg.topLeft())
+    if screen is None:
+        try:
+            screen = QtWidgets.QApplication.primaryScreen()
+        except Exception:
+            screen = None
+    if screen is None:
+        try:
+            screens = QtGui.QGuiApplication.screens()
+            if screens:
+                screen = screens[0]
+        except Exception:
+            screen = None
+
+    if screen is not None:
+        fg = splash.frameGeometry()
+        fg.moveCenter(screen.geometry().center())
+        splash.move(fg.topLeft())
 
     splash.setContentsMargins(0, 0, 0, 100)
     splash.show()

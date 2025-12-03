@@ -14,21 +14,21 @@ import logging
 # Logger for the package manager dialog
 logger = logging.getLogger("chisurf.packagemanager")
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QLineEdit,
     QTabWidget, QWidget, QListWidget, QListWidgetItem, QTextEdit, QFileDialog,
     QMessageBox, QInputDialog, QTableWidget, QTableWidgetItem, QToolButton,
     QSpacerItem, QSizePolicy
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QTextCursor
+from qtpy.QtCore import Qt, QThread, Signal
+from qtpy.QtGui import QTextCursor
 
 from .conda_manager import CondaManager
 
 
 class CondaWorker(QThread):
-    finished = pyqtSignal(bool, object, str)
-    progress = pyqtSignal(str)
+    finished = Signal(bool, object, str)
+    progress = Signal(str)
 
     def __init__(self, fn, *args, **kwargs):
         super().__init__()
@@ -150,7 +150,7 @@ class CondaManagerDialog(QDialog):
         pk_lay.addLayout(srch_lay)
 
         # Packages table: [check, name, version, build, source]
-        from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+        from qtpy.QtWidgets import QTableWidget, QTableWidgetItem
         self.tbl_pkgs = QTableWidget(0, 5)
         self.tbl_pkgs.setHorizontalHeaderLabels(["✔", "Name", "Version", "Build", "Source"])
         try:

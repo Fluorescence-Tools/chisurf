@@ -5,7 +5,7 @@ import traceback
 import pathlib
 
 try:
-    from PyQt5 import QtWidgets, uic
+    from qtpy import QtWidgets, uic
 except Exception:
     QtWidgets = None
     uic = None
@@ -62,7 +62,7 @@ def main():
 
         # Start the application
         app = get_app()
-        exit_code = app.exec_()
+        exit_code = app.exec()
 
         # Hard-exit the process after the Qt event loop finishes. This avoids
         # running full Python interpreter finalization (Py_Finalize), which can
@@ -86,7 +86,7 @@ def main():
 
             # Show the dialog
             dialog = SimpleErrorDialog(exception_text)
-            result = dialog.exec_()
+            result = dialog.exec()
 
         except Exception as inner_e:
             # If PyQt5 fails, fall back to console output

@@ -8,17 +8,13 @@ import numpy as np
 import chisurf
 import urllib
 
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtWebEngineWidgets import *
-
-from PyQt5.QtCore import pyqtSlot, QSettings, QTimer, QUrl, Qt
-from PyQt5.QtGui import QCloseEvent
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QDockWidget, QPlainTextEdit, QTabWidget
-from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView, QWebEnginePage as QWebPage
-from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PyQt5.QtWebEngineWidgets import QWebEngineProfile
+from qtpy import QtCore, QtWidgets
+from qtpy.QtWebEngineCore import QWebEngineUrlRequestInterceptor
+from qtpy.QtWebEngineWidgets import (
+    QWebEnginePage as QWebPage,
+    QWebEngineProfile,
+    QWebEngineView as QWebView,
+)
 
 log = chisurf.logging.info
 
@@ -37,7 +33,7 @@ class CustomWebView(QWebView):
         self.loadedPage = None
         self.loadFinished.connect(self.onpagechange)
 
-    @pyqtSlot(bool)
+    @QtCore.Slot(bool)
     def onpagechange(self, ok):
         self.loadedPage = self.page()
         interceptor = MyUrlRequestInterceptor()
@@ -47,14 +43,14 @@ class CustomWebView(QWebView):
         self.loadedPage.urlChanged.connect(self.handlelink)
         self.setWindowTitle(self.title())
         if not ok:
-            QMessageBox.information(self, "Error", "Error loading page!", QMessageBox.Ok)
+            QtWidgets.QMessageBox.information(self, "Error", "Error loading page!", QtWidgets.QMessageBox.Ok)
 
-    @pyqtSlot(QUrl)
+    @QtCore.Slot(QtCore.QUrl)
     def handlelink(self, url):
         urlstr = url.toString()
         log("handling link : %s" % urlstr)
         # check if url is for the current page
-        if url.matches(self.url(), QUrl.RemoveFragment):
+        if url.matches(self.url(), QtCore.QUrl.RemoveFragment):
             # do nothing, probably a JS link
             return True
 
@@ -69,7 +65,7 @@ class CustomWebView(QWebView):
             log("disconnecting on close and linkClicked signals")
             self.loadedPage.windowCloseRequested.disconnect(self.close)
 
-class Browser(QMainWindow):
+class Browser(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -77,34 +73,34 @@ class Browser(QMainWindow):
 
         # Original URL - load the Processing sketch
         html_path = pathlib.Path(__file__).parent.absolute() / "pr_example.html"
-        self.original_url = QUrl().fromLocalFile(html_path.absolute().as_posix())
+        self.original_url = QtCore.QUrl.fromLocalFile(str(html_path.absolute()))
 
-        self.url_bar = QLineEdit()
+        self.url_bar = QtWidgets.QLineEdit()
         self.url_bar.setText(self.original_url.toString())
         self.url_bar.returnPressed.connect(self.navigate_to_url)
 
-        self.go_button = QPushButton('Go')
+        self.go_button = QtWidgets.QPushButton('Go')
         self.go_button.clicked.connect(self.navigate_to_url)
 
-        self.reload_button = QPushButton('Reload')
+        self.reload_button = QtWidgets.QPushButton('Reload')
         self.reload_button.clicked.connect(self.reload_page)
 
-        self.home_button = QPushButton('Home')
+        self.home_button = QtWidgets.QPushButton('Home')
         self.home_button.clicked.connect(self.go_home)
 
-        self.toolbar = QHBoxLayout()
+        self.toolbar = QtWidgets.QHBoxLayout()
         self.toolbar.addWidget(self.url_bar)
         self.toolbar.addWidget(self.go_button)
         self.toolbar.addWidget(self.reload_button)
         self.toolbar.addWidget(self.home_button)
 
-        self.browser_layout = QVBoxLayout()
+        self.browser_layout = QtWidgets.QVBoxLayout()
         self.browser_layout.addLayout(self.toolbar)
         self.browser_layout.addWidget(self.browser)
         self.browser_layout.setSpacing(0)  # Set spacing for main layout to 0
         self.browser_layout.setContentsMargins(0, 0, 0, 0)  # Set margins for the layout to 0
 
-        self.central_widget = QWidget()
+        self.central_widget = QtWidgets.QWidget()
         self.central_widget.setLayout(self.browser_layout)
         self.setCentralWidget(self.central_widget)
 
@@ -117,7 +113,7 @@ class Browser(QMainWindow):
 
     def navigate_to_url(self):
         url = self.url_bar.text()
-        self.browser.handlelink(QUrl(url))
+        self.browser.handlelink(QtCore.QUrl(url))
 
     def reload_page(self):
         self.browser.reload()
@@ -129,10 +125,10 @@ class Browser(QMainWindow):
         self.browser.setUrl(self.original_url)
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     wizard = Browser()
     wizard.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "plugin":
     wizard = Browser()

@@ -20,14 +20,8 @@ import sys
 import logging
 import html
 import yaml
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
-    QProgressDialog, QApplication, QComboBox, QTextEdit,
-    QMessageBox, QRadioButton, QLineEdit, QFileDialog, QGroupBox, QCheckBox,
-    QListWidget
-)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QFont
+import os
+from qtpy import QtWidgets, QtCore, QtGui
 
 from .updater import ChiSurfUpdater, check_for_updates, update_chisurf
 from .conda_widget import CondaManagerDialog
@@ -37,7 +31,11 @@ import chisurf.settings as _cs_settings_mod
 # Define the plugin name - this will appear in the Plugins menu
 name = "Help:Updates and Packages"
 
-class UpdaterWidget(QWidget):
+class UpdaterWorker(QtCore.QThread):
+    finished = QtCore.Signal(bool, object, str)
+    progress = QtCore.Signal(str)
+
+class UpdaterWidget(QtWidgets.QWidget):
     """
     A widget that provides a UI for checking for and installing updates.
 
@@ -106,8 +104,8 @@ class UpdaterWidget(QWidget):
 
         # Automatically check for updates shortly after the widget starts
         try:
-            from PyQt5.QtCore import QTimer
-            QTimer.singleShot(150, self._auto_check_on_start)
+            from qtpy import QtCore
+            QtCore.QTimer.singleShot(150, self._auto_check_on_start)
         except Exception:
             # Fallback: direct call if QTimer not available
             try:
@@ -117,23 +115,23 @@ class UpdaterWidget(QWidget):
 
     def setup_ui(self):
         """Set up the user interface."""
-        layout = QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
 
         # Current version info
-        version_layout = QHBoxLayout()
-        version_layout.addWidget(QLabel("Current Version:"))
-        version_layout.addWidget(QLabel(info.__version__))
+        version_layout = QtWidgets.QHBoxLayout()
+        version_layout.addWidget(QtWidgets.QLabel("Current Version:"))
+        version_layout.addWidget(QtWidgets.QLabel(info.__version__))
         version_layout.addStretch()
         layout.addLayout(version_layout)
 
         # Status label
-        self.status_label = QLabel("Click 'Check for Updates' to check for available updates.")
+        self.status_label = QtWidgets.QLabel("Click 'Check for Updates' to check for available updates.")
         self._update_status_tooltip()
         layout.addWidget(self.status_label)
 
         # Development branch checkbox (always on, disabled since no stable release exists)
-        dev_layout = QHBoxLayout()
-        self.dev_checkbox = QCheckBox("Development")
+        dev_layout = QtWidgets.QHBoxLayout()
+        self.dev_checkbox = QtWidgets.QCheckBox("Development")
         try:
             self.dev_checkbox.setChecked(True)
             self.dev_checkbox.setEnabled(False)  # user cannot uncheck for now
@@ -147,7 +145,7 @@ class UpdaterWidget(QWidget):
             pass
         dev_layout.addWidget(self.dev_checkbox)
         # Label to display the selected branch
-        self.branch_label = QLabel("")
+        self.branch_label = QtWidgets.QLabel("")
         dev_layout.addWidget(self.branch_label)
         dev_layout.addStretch()
         layout.addLayout(dev_layout)
@@ -158,23 +156,23 @@ class UpdaterWidget(QWidget):
             pass
 
         # Startup behavior group
-        startup_group = QGroupBox("Startup behavior")
-        sg_layout = QVBoxLayout()
+        startup_group = QtWidgets.QGroupBox("Startup behavior")
+        sg_layout = QtWidgets.QVBoxLayout()
         # Check on startup
-        self.cb_check_on_start = QCheckBox("Check for updates on startup")
+        self.cb_check_on_start = QtWidgets.QCheckBox("Check for updates on startup")
         try:
             self.cb_check_on_start.setToolTip("When enabled, ChiSurf will check for updates during startup.")
             self.cb_check_on_start.setChecked(bool(getattr(self, '_check_on_startup', True)))
-            self.cb_check_on_start.stateChanged.connect(lambda s: self._on_toggle_check_on_startup(s == Qt.Checked))
+            self.cb_check_on_start.stateChanged.connect(lambda s: self._on_toggle_check_on_startup(s == QtCore.Qt.CheckState.Checked))
         except Exception:
             pass
         sg_layout.addWidget(self.cb_check_on_start)
         # Ignore updates (suppress startup prompts)
-        self.cb_ignore_updates = QCheckBox("Ignore updates (do not prompt on startup)")
+        self.cb_ignore_updates = QtWidgets.QCheckBox("Ignore updates (do not prompt on startup)")
         try:
             self.cb_ignore_updates.setToolTip("If enabled, ChiSurf will not prompt about updates during startup.")
             self.cb_ignore_updates.setChecked(bool(getattr(self, '_ignore_updates', False)))
-            self.cb_ignore_updates.stateChanged.connect(lambda s: self._on_toggle_ignore_updates(s == Qt.Checked))
+            self.cb_ignore_updates.stateChanged.connect(lambda s: self._on_toggle_ignore_updates(s == QtCore.Qt.CheckState.Checked))
         except Exception:
             pass
         sg_layout.addWidget(self.cb_ignore_updates)
@@ -182,26 +180,26 @@ class UpdaterWidget(QWidget):
         layout.addWidget(startup_group)
 
         # Version dropdown
-        version_layout = QHBoxLayout()
-        version_layout.addWidget(QLabel("Available Versions:"))
-        self.version_dropdown = QComboBox()
+        version_layout = QtWidgets.QHBoxLayout()
+        version_layout.addWidget(QtWidgets.QLabel("Available Versions:"))
+        self.version_dropdown = QtWidgets.QComboBox()
         self.version_dropdown.setEnabled(False)  # Disabled until versions are available
         version_layout.addWidget(self.version_dropdown)
         layout.addLayout(version_layout)
 
         # Buttons
-        button_layout = QHBoxLayout()
-        self.check_button = QPushButton("Check for Updates")
+        button_layout = QtWidgets.QHBoxLayout()
+        self.check_button = QtWidgets.QPushButton("Check for Updates")
         self.check_button.clicked.connect(self.check_for_updates)
         button_layout.addWidget(self.check_button)
 
-        self.update_button = QPushButton("Update Now")
+        self.update_button = QtWidgets.QPushButton("Update Now")
         self.update_button.clicked.connect(self.update_chisurf)
         self.update_button.setEnabled(False)  # Disabled until updates are available
         button_layout.addWidget(self.update_button)
 
         # Open Package Manager button
-        self.conda_manager_button = QPushButton("Package Manager")
+        self.conda_manager_button = QtWidgets.QPushButton("Package Manager")
         try:
             self.conda_manager_button.setToolTip("Open the package manager to manage conda packages in your environment.")
             self.conda_manager_button.clicked.connect(self.open_conda_manager)
@@ -212,13 +210,13 @@ class UpdaterWidget(QWidget):
         layout.addLayout(button_layout)
 
         # Changelog area
-        layout.addWidget(QLabel("Changes since your installed version:"))
-        self.changelog_text = QTextEdit()
+        layout.addWidget(QtWidgets.QLabel("Changes since your installed version:"))
+        self.changelog_text = QtWidgets.QTextEdit()
         try:
             self.changelog_text.setReadOnly(True)
             # Enable line wrapping so long entries are easier to read
-            self.changelog_text.setLineWrapMode(QTextEdit.WidgetWidth)
-            font = QFont("Consolas")
+            self.changelog_text.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
+            font = QtGui.QFont("Consolas")
             font.setPointSize(9)
             self.changelog_text.setFont(font)
         except Exception:
@@ -301,10 +299,10 @@ class UpdaterWidget(QWidget):
         """Open the Conda Package Manager dialog."""
         try:
             dlg = CondaManagerDialog(self)
-            dlg.exec_()
+            dlg.exec()
         except Exception as e:
             try:
-                QMessageBox.critical(self, "Conda Manager", f"Failed to open Conda Manager:\n{e}")
+                QtWidgets.QMessageBox.critical(self, "Conda Manager", f"Failed to open Conda Manager:\n{e}")
             except Exception:
                 pass
 
@@ -441,11 +439,11 @@ class UpdaterWidget(QWidget):
                 # Inform the user with a non-intrusive prompt unless suppressed
                 if not getattr(self, "_suppress_initial_notification", False):
                     try:
-                        QMessageBox.information(
+                        QtWidgets.QMessageBox.information(
                             self,
                             "Update Available",
                             f"A new version of ChiSurf ({latest_version}) is available.",
-                            QMessageBox.Ok
+                            QtWidgets.QMessageBox.Ok
                         )
                     except Exception:
                         pass
@@ -663,9 +661,9 @@ class UpdaterWidget(QWidget):
         logging.debug(f"Selected version index: {selected_index}")
 
         # Create progress dialog
-        progress_dialog = QProgressDialog("Updating ChiSurf...", "Cancel", 0, 0, self)
+        progress_dialog = QtWidgets.QProgressDialog("Updating ChiSurf...", "Cancel", 0, 0, self)
         progress_dialog.setWindowTitle("Updating")
-        progress_dialog.setWindowModality(Qt.WindowModal)
+        progress_dialog.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
         progress_dialog.setMinimumDuration(0)
         progress_dialog.setValue(0)
         progress_dialog.show()
@@ -677,21 +675,21 @@ class UpdaterWidget(QWidget):
             progress_dialog.setLabelText(message)
 
             # Process UI events to keep the interface responsive
-            QApplication.processEvents()
+            QtWidgets.QApplication.processEvents()
 
         # Show a warning message before starting the update
         logging.info("Showing update warning dialog")
-        warning_result = QMessageBox.warning(
+        warning_result = QtWidgets.QMessageBox.warning(
             self,
             "Update Warning",
             "The update process will close all ChiSurf windows and continue in a separate window.\n\n"
             "All unsaved work will be lost. After the update completes, you will need to restart ChiSurf manually.\n\n"
             "Do you want to continue?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
         )
 
-        if warning_result != QMessageBox.Yes:
+        if warning_result != QtWidgets.QMessageBox.Yes:
             # User cancelled the update
             logging.info("Update cancelled by user")
             progress_dialog.close()

@@ -18,7 +18,7 @@ from typing import Dict
 import numpy as np
 import tttrlib
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication,
     QWidget,
     QVBoxLayout,
@@ -31,8 +31,8 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QMessageBox,
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QDragEnterEvent, QDropEvent
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QDragEnterEvent, QDropEvent
 
 from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
 import chisurf.fluorescence.burst
@@ -235,7 +235,7 @@ if __name__ == "__main__":  # pragma: no cover - manual GUI entry
     app = QApplication(sys.argv)
     window = BurstBackgroundEstimator()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 elif __name__ == "plugin":  # pragma: no cover - used by ChiSurf plugin loader
     window = BurstBackgroundEstimator()

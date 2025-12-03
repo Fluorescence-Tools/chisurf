@@ -17,13 +17,13 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import hashlib
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QTextEdit, QComboBox,
     QSpinBox, QSplitter, QMessageBox, QProgressDialog, QCheckBox
 )
-from PyQt5.QtCore import Qt, QEvent, QTimer
-from PyQt5.QtGui import QPixmap, QPainter, QColor, QFont, QPen
+from qtpy.QtCore import Qt, QEvent, QTimer
+from qtpy.QtGui import QPixmap, QPainter, QColor, QFont, QPen
 import pyqtgraph as pg
 
 try:
@@ -2085,12 +2085,11 @@ class TTTRImageBrowser(QWidget):
 
 if __name__ == "__main__":
     # Basic manual run to show the widget standalone
-    from PyQt5.QtWidgets import QApplication
     import sys
     app = QApplication(sys.argv)
     w = TTTRImageBrowser()
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed by the Plugin Manager

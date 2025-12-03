@@ -40,10 +40,10 @@ except Exception as e:
     raise SystemExit("ERROR: tttrlib is required. Install from conda/pip.") from e
 
 try:
-    from PyQt5 import QtWidgets as QtW, QtCore as QtC
+    from qtpy import QtWidgets as QtW, QtCore as QtC
     import pyqtgraph as pg
 except Exception as e:
-    raise SystemExit("ERROR: PyQt5 and pyqtgraph are required for GUI mode.") from e
+    raise SystemExit("ERROR: qtpy/pyqtgraph are required for GUI mode.") from e
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "TTTR:Compute Microtime LUT"
@@ -416,12 +416,12 @@ class TACLinearizationWidget(QtW.QMainWindow):
         plots_widget = QtW.QWidget()
         plots_layout = QtW.QVBoxLayout(plots_widget)
 
-        self.plt_raw = pg.PlotWidget(background='w')
+        self.plt_raw = pg.PlotWidget()
         self.plt_raw.setTitle("Raw TAC histogram (drag the orange region)")
         self.plt_raw.setLabel('left', 'Counts')
         self.plt_raw.setLabel('bottom', 'TAC bin')
 
-        self.plt_after = pg.PlotWidget(background='w')
+        self.plt_after = pg.PlotWidget()
         self.plt_after.setTitle("After linearization (actual corrected preview)")
         self.plt_after.setLabel('left', 'Counts')
         self.plt_after.setLabel('bottom', 'Equal-width bin within one SYNC')
@@ -744,7 +744,7 @@ class TACLinearizationWidget(QtW.QMainWindow):
             self.plt_raw.setLabel('left', 'Counts')
 
         x = np.arange(self.n_bins)
-        self.plt_raw.plot(x, y_disp, pen=pg.mkPen((0, 0, 0), width=1))
+        self.plt_raw.plot(x, y_disp, pen=pg.mkPen((255, 204, 0), width=1.5))
 
         # Add region
         self.plt_raw.addItem(self.region)
@@ -861,7 +861,11 @@ class TACLinearizationWidget(QtW.QMainWindow):
         nt_mod = (corr % self.sp_ntac.value()).astype(int)
         hist_corr, _ = np.histogram(nt_mod, bins=self.sp_ntac.value(), range=(0, self.sp_ntac.value()))
 
-        self.plt_after.plot(np.arange(self.sp_ntac.value()), hist_corr, pen=pg.mkPen((0, 0, 255), width=1))
+        self.plt_after.plot(
+            np.arange(self.sp_ntac.value()),
+            hist_corr,
+            pen=pg.mkPen((80, 200, 255), width=1.5),
+        )
         self.plt_after.setXRange(0, self.sp_ntac.value(), padding=0)
 
     def _save_lut(self):
