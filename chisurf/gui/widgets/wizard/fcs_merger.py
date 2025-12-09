@@ -357,4 +357,3 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         self.tableWidget.itemDoubleClicked.connect(self.onRowDoubleClicked)
         self.actionRowSingleClick.triggered.connect(self.update_plots)
         self.toolButton_3.clicked.connect(self.save_mean_correlation)
-        self.toolButton_add_to_chisurf.clicked.connect(self.add_to_chisurf)
