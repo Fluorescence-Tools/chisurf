@@ -84,7 +84,6 @@ requirements:
     - emcee
     - pyopengl
     - pytables
-    - pymol-open-source
     - guidata
     - guiqwt
     - python-docx

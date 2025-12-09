@@ -23,9 +23,7 @@ popd
 "$PY" -m pip install ./modules/labellib    --no-deps -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/clsmview    --no-deps -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/ndxplorer   --no-deps -vv --prefix="$PREFIX"
-"$PY" -m pip install ./modules/tttrconvert --no-deps -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/quest       --no-deps -vv --prefix="$PREFIX"
-"$PY" -m pip install ./modules/lltf        --no-deps -vv --prefix="$PREFIX"
 
 # 5) Build & install chinet (CMake+SWIG)
 pushd modules/chinet

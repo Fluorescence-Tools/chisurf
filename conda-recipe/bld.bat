@@ -94,9 +94,7 @@ cd ..\..
 :: Install Python modules
 pip install .\clsmview --no-deps --prefix=%PREFIX%
 pip install .\ndxplorer --no-deps --prefix=%PREFIX%
-pip install .\tttrconvert --no-deps --prefix=%PREFIX%
 pip install .\quest --no-deps --prefix=%PREFIX%
-pip install .\lltf --no-deps --prefix=%PREFIX%
 cd ..
 
 :: Clean pre-compiled Cython C++ files to force regeneration with current NumPy
