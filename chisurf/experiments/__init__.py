@@ -1,3 +1,4 @@
+import copy
 import pathlib
 import yaml
 
@@ -10,6 +11,28 @@ import chisurf.experiments.globalfit
 import chisurf.experiments.modelling
 from chisurf.experiments.experiment import Experiment
 from chisurf.settings import get_path
+
+
+def _load_yaml_config(path: pathlib.Path) -> dict:
+    try:
+        with open(str(path), 'r', encoding='utf-8') as fp:
+            return yaml.safe_load(fp) or {}
+    except Exception:
+        return {}
+
+
+def _deep_merge_dicts(base: dict, override: dict) -> dict:
+    """Recursively merge override into base without mutating the inputs."""
+    result = copy.deepcopy(base)
+    for key, value in (override or {}).items():
+        if (
+            isinstance(value, dict)
+            and isinstance(result.get(key), dict)
+        ):
+            result[key] = _deep_merge_dicts(result[key], value)
+        else:
+            result[key] = copy.deepcopy(value)
+    return result
 
 
 def load_experiment_types():
@@ -28,19 +51,18 @@ def load_experiment_types():
     entry.
     """
 
-    # Locate the configuration file, preferring the user settings copy.
     settings_path = get_path('settings')
-    experiment_configs_file = settings_path / 'experiment_configs.yaml'
-    if not experiment_configs_file.is_file():
-        package_path = pathlib.Path(__file__).parent.parent / 'settings'
-        experiment_configs_file = package_path / 'experiment_configs.yaml'
+    user_config_file = settings_path / 'experiment_configs.yaml'
+    package_path = pathlib.Path(__file__).parent.parent / 'settings'
+    default_config_file = package_path / 'experiment_configs.yaml'
 
-    # Load the YAML configuration (empty dict on error/empty file).
-    try:
-        with open(str(experiment_configs_file), 'r', encoding='utf-8') as fp:
-            config = yaml.safe_load(fp) or {}
-    except Exception:
-        config = {}
+    # Load packaged defaults and merge user overrides on top so that
+    # previously hidden experiments (like "structure") become visible
+    # unless the user explicitly hides them again.
+    config = _load_yaml_config(default_config_file)
+    if user_config_file.is_file():
+        user_config = _load_yaml_config(user_config_file)
+        config = _deep_merge_dicts(config, user_config)
 
     experiment_types: dict[str, Experiment] = {}
 
