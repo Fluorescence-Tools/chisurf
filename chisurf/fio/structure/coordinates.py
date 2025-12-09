@@ -29,6 +29,7 @@ Examples
 from __future__ import annotations
 
 import os
+import typing
 import urllib.request
 import numpy as np
 
@@ -105,6 +106,40 @@ keys_formats = [
 ]
 
 keys, formats = list(zip(*keys_formats))
+
+
+_STANDARD_RESIDUES = {
+    "ALA", "ARG", "ASN", "ASP", "CYS",
+    "GLN", "GLU", "GLY", "HIS", "ILE",
+    "LEU", "LYS", "MET", "PHE", "PRO",
+    "SER", "THR", "TRP", "TYR", "VAL",
+    "SEC", "PYL",
+}
+
+
+def _imp_keep_residue(res_name: str) -> bool:
+    """Return True if a residue should be kept by the IMP reader.
+
+    Controlled via ``structure.json`` (``structure_data['IMP']``):
+
+    - ``filter_non_standard_residues`` (bool): if true, only standard
+      amino-acid residue names are kept; everything else (e.g. ligands,
+      sugars, modified residues) is dropped from the returned atoms
+      array. Defaults to ``True`` when the key is missing.
+    """
+
+    try:
+        cfg = getattr(chisurf.settings, "structure_data", {})
+        imp_cfg = cfg.get("IMP", {})
+        filter_nonstd = bool(imp_cfg.get("filter_non_standard_residues", True))
+    except Exception:
+        filter_nonstd = True
+
+    if not filter_nonstd:
+        return True
+
+    name = str(res_name).strip().upper()
+    return name in _STANDARD_RESIDUES
 
 
 def find_atom_index(
@@ -311,7 +346,8 @@ def parse_string_pqr(
 
 def convert_atoms(
         ps: typing.List[IMP.atom.Hierarchy],
-        radius_no_interaction: bool = True
+        radius_no_interaction: bool = True,
+        only_standard_residues: bool = True
 ) -> np.ndarray:
     """Converts a list of IMP.atom.Hierarchy to a numpy record array
 
@@ -321,7 +357,7 @@ def convert_atoms(
 
     radius_no_interaction: bool
         If set to True the returned radii are the radii where the potential
-        energy is zero. Otherwise, the radii are correspond to the minimal
+        energy is zero. Otherwise, the radii correspond to the minimal
         distance Rmin in a 6-12 LJ potential
         :math:`E = eij ((Rmin/rij)**12 - 2*(Rmin/rij)**6))`
 
@@ -344,22 +380,28 @@ def convert_atoms(
         # The LJ radius is the distance where E = 0
         radius_scaleling = 2**(-1./6.)
     t = IMP.atom.get_element_table()
-    for i, atom in enumerate(ps):
+    j = 0
+    for atom in ps:
         a = IMP.atom.Atom(atom)
         r = IMP.atom.Residue(a.get_parent())
+
+        if not _imp_keep_residue(r.get_name()) and only_standard_residues:
+            continue
+
         c = IMP.atom.Chain(r.get_parent())
-        atoms[i]['i'] = i
-        atoms[i]['chain'] = c.get_id()
-        atoms[i]['res_id'] = r.get_index()
-        atoms[i]['res_name'] = r.get_name()
-        atoms[i]['atom_id'] = a.get_input_index()
-        atoms[i]['atom_name'] = str(a.get_atom_type())[1:-1]
-        atoms[i]['element'] = t.get_name(a.get_element())
-        atoms[i]['xyz'] = IMP.core.XYZR(atom).get_coordinates()
-        atoms[i]['radius'] = IMP.core.XYZR(atom).get_radius() * radius_scaleling
-        atoms[i]['bfactor'] = a.get_temperature_factor()
-        atoms[i]['mass'] = IMP.atom.Mass(atom).get_mass()
-    return atoms
+        atoms[j]['i'] = j
+        atoms[j]['chain'] = c.get_id()
+        atoms[j]['res_id'] = r.get_index()
+        atoms[j]['res_name'] = r.get_name()
+        atoms[j]['atom_id'] = a.get_input_index()
+        atoms[j]['atom_name'] = str(a.get_atom_type())[1:-1]
+        atoms[j]['element'] = t.get_name(a.get_element())
+        atoms[j]['xyz'] = IMP.core.XYZR(atom).get_coordinates()
+        atoms[j]['radius'] = IMP.core.XYZR(atom).get_radius() * radius_scaleling
+        atoms[j]['bfactor'] = a.get_temperature_factor()
+        atoms[j]['mass'] = IMP.atom.Mass(atom).get_mass()
+        j += 1
+    return atoms[:j]
 
 
 

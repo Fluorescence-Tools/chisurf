@@ -1,3 +1,4 @@
+.idea/*
 # pyx files have a tailing underscore ignore cpp files
 # of pyx
 *_.cpp 
@@ -43,7 +44,9 @@ doc/api/
 .*mypy*
 
 #plugins
-plugins/_dev_*
+chisurf/plugins/_dev*
+playground/*
+modules/*
 
 #Programming documentation
 _PROG
