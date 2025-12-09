@@ -10,7 +10,7 @@ import os
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from PyQt5.QtWidgets import QApplication, QWidget, QSpinBox
+from qtpy.QtWidgets import QApplication, QWidget, QSpinBox
 import chisurf.base
 
 # Configure logging

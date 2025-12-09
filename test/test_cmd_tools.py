@@ -1,12 +1,10 @@
 import utils
-import os
 import unittest
 import tempfile
-import argparse
 import numpy as np
 
 import chisurf.fio.fluorescence.fcs
-import chisurf.cmd_tools.fcs_convert
+from chisurf.plugins.fcs.fcs_convert import cli as fcs_convert_cli
 
 
 class Tests(unittest.TestCase):
@@ -29,16 +27,14 @@ class Tests(unittest.TestCase):
                 _, output_filename = tempfile.mkstemp(
                     suffix='.tmp'
                 )
-                args = {
-                        'input_filename': k['filename'],
-                        'input_type': k['reader_name'],
-                        'output_filename': output_filename,
-                        'output_type': dt,
-                        'skiprows': 0,
-                        'use_header': False
-                }
-                chisurf.cmd_tools.fcs_convert.main(
-                    args=argparse.Namespace(**args)
+                fcs_convert_cli.convert_fcs(
+                    input_filename=k['filename'],
+                    input_type=k['reader_name'],
+                    output_filename=output_filename,
+                    output_type=dt,
+                    skiprows=0,
+                    use_header=False,
+                    verbose=False,
                 )
 
                 args = dict()

@@ -1,0 +1,19 @@
+"""
+Test script to verify that the name conflict between bocpd.convert_bursts_to_start_stop
+and kalman.convert_bursts_to_start_stop has been resolved.
+"""
+
+import chisurf.fluorescence.burst
+
+# Test that both functions can be accessed via their module prefixes
+print("Testing access to convert_bursts_to_start_stop functions:")
+print("BOCPD function:", chisurf.fluorescence.burst.bocpd.convert_bursts_to_start_stop)
+print("Kalman function:", chisurf.fluorescence.burst.kalman.convert_bursts_to_start_stop)
+
+# Verify they are different functions
+print("\nVerifying they are different functions:")
+print("Are they the same object?", 
+      chisurf.fluorescence.burst.bocpd.convert_bursts_to_start_stop is 
+      chisurf.fluorescence.burst.kalman.convert_bursts_to_start_stop)
+
+print("\nTest completed successfully!")

@@ -289,6 +289,70 @@ class Tests(unittest.TestCase):
             p2.value
         )
 
+
+    def test_parameter_get_set_state_roundtrip(self):
+        """Parameter.get_state/set_state should round-trip basic port state."""
+
+        p1 = chisurf.parameter.Parameter(
+            value=2.0,
+            bounds_on=True,
+            lb=1.0,
+            ub=3.0
+        )
+        s = p1.get_state()
+
+        p2 = chisurf.parameter.Parameter()
+        # Ensure defaults differ
+        self.assertNotEqual(p2.value, 2.0)
+
+        p2.set_state(s)
+        self.assertEqual(p2.bounds_on, True)
+        self.assertAlmostEqual(p2.value, 2.0)
+
+
+    def test_parameter_group_get_set_state_does_not_crash(self):
+        """ParameterGroup.get_state/set_state should be callable and benign."""
+
+        p1 = chisurf.parameter.Parameter(value=11, name='p1')
+        p2 = chisurf.parameter.Parameter(value=22, name='p2')
+        pg = chisurf.parameter.ParameterGroup(parameters=[p1, p2])
+        state = pg.get_state()
+
+        # Re-apply to the same group; primarily a smoke test.
+        pg.set_state(state)
+        self.assertEqual(len(pg.parameters), 2)
+
+
+    def test_fitting_parameter_group_get_set_state_roundtrip(self):
+        """FittingParameterGroup.get_state/set_state should be JSON-safe.
+
+        The test focuses on ensuring that the returned state is
+        JSON-serializable and that calling :meth:`set_state` does not raise
+        and keeps the parameter structure intact. Detailed value round-trips
+        are covered at the individual :class:`Parameter` level.
+        """
+
+        import json
+
+        p1 = chisurf.fitting.parameter.FittingParameter(value=22, name='p1')
+        p2 = chisurf.fitting.parameter.FittingParameter(value=33, name='p2')
+        pg = chisurf.fitting.parameter.FittingParameterGroup(name="grp1")
+        pg.append(p1)
+        pg.append(p2)
+        pg.find_parameters(chisurf.fitting.parameter.FittingParameter)
+
+        state = pg.get_state()
+        # Must be JSON-serializable without custom encoders
+        json.dumps(state)
+
+        # Calling set_state on the same group should not crash and should
+        # preserve the parameter structure.
+        pg.set_state(state)
+        params2 = pg.parameters_all_dict
+        self.assertIn('p1', params2)
+        self.assertIn('p2', params2)
+
+
     def test_parameter_group(self):
 
         class A(chisurf.parameter.ParameterGroup):
