@@ -45,9 +45,9 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from dataclasses import dataclass, asdict, fields
 
-from PyQt5.QtCore import Qt, QUrl, QSettings
-from PyQt5.QtGui import QDesktopServices, QTextCursor
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt, QUrl, QSettings
+from qtpy.QtGui import QDesktopServices, QTextCursor
+from qtpy.QtWidgets import (
     QApplication,
     QFileDialog,
     QGridLayout,

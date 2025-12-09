@@ -33,17 +33,47 @@ import sys
 import chisurf
 from quest.lib.tools.dye_diffusion import TransientDecayGenerator
 
-from PyQt5.QtWidgets import *
+from qtpy import QtWidgets
 
 log = chisurf.logging.info
 
 
+class QuEstWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.dg = TransientDecayGenerator()
+        self.setCentralWidget(self.dg)
+        self._create_menus()
+        try:
+            self.resize(1000, 600)
+        except Exception:
+            pass
+
+    def _create_menus(self):
+        mbar = self.menuBar()
+        file_menu = mbar.addMenu("&File")
+
+        load_pdb_action = file_menu.addAction("Load PDB…")
+        load_pdb_action.triggered.connect(self.dg.onLoadPDB)
+
+        file_menu.addSeparator()
+        save_project_action = file_menu.addAction("Save project…")
+        save_project_action.triggered.connect(self.dg.onSaveProject)
+        load_project_action = file_menu.addAction("Load project…")
+        load_project_action.triggered.connect(self.dg.onLoadProject)
+
+        file_menu.addSeparator()
+        close_action = file_menu.addAction("Close")
+        close_action.triggered.connect(self.close)
+
+
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ndx = TransientDecayGenerator()
-    ndx.show()
-    sys.exit(app.exec_())
+    app = QtWidgets.QApplication(sys.argv)
+    win = QuEstWindow()
+    win.show()
+    sys.exit(app.exec())
 
 if __name__ == "plugin":
-    ndx = TransientDecayGenerator()
-    ndx.show()
+    win = QuEstWindow()
+    win.show()

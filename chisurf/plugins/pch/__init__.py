@@ -18,10 +18,24 @@ from scipy.stats import poisson
 from scipy.signal import fftconvolve
 from scipy.optimize import least_squares
 from numba import njit
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QGridLayout, QVBoxLayout,
-    QGroupBox, QPushButton, QFileDialog, QLabel, QMessageBox,
-    QSpinBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QScrollArea, QLineEdit, QTextEdit
+from qtpy.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QGridLayout,
+    QVBoxLayout,
+    QGroupBox,
+    QPushButton,
+    QFileDialog,
+    QLabel,
+    QMessageBox,
+    QSpinBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QHBoxLayout,
+    QScrollArea,
+    QLineEdit,
+    QTextEdit,
 )
 import pyqtgraph as pg
 
@@ -407,7 +421,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = PCHApp()
     win.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "plugin":
     window = PCHApp()
