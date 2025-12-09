@@ -39,12 +39,14 @@ notebook_path = get_path('chisurf') / "notebooks"
 # Copy settings files if not already present
 copy_settings_to_user_folder()
 
+import chisurf.info
+__version__ = chisurf.info.__version__
+
 # Open chisurf settings file
 chisurf_settings_file = chisurf_settings_path / 'settings_chisurf.yaml'
 # To use the settings in the home folder set to false
 # if set to true uses settings in source folder.
 cs_settings = get_chisurf_settings(chisurf_settings_file, use_source_folder=False)
-
 
 anisotropy = dict()
 anisotropy_data = safe_open_file(
@@ -94,7 +96,7 @@ structure_data = safe_open_file(
 
 # Optional registry of fitting-parameter metadata used to enrich parameter
 # descriptions in the GUI. This is populated by the command
-# ``python -m chisurf.cmd_tools.export_fitting_parameters`` and can be
+# ``python dev_tools/export_fitting_parameters.py`` and can be
 # edited by the user.
 fitting_parameters = safe_open_file(
     file_path=package_directory / 'constants' / 'fitting_parameters.json',
