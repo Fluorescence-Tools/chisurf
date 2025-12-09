@@ -231,14 +231,54 @@ class FittingControllerWidget(Controller):
     def n_runs(self) -> int:
         return self.spinBox_5.value()
 
+    def _format_dataset_label(self, name: str, max_length: int = 40) -> str:
+        try:
+            s = str(name)
+        except Exception:
+            return name
+        if not s:
+            return s
+        try:
+            max_len = int(max_length)
+        except Exception:
+            max_len = 40
+        if max_len < 7 or len(s) <= max_len:
+            return s
+        keep_total = max_len - 4  # reserve 4 characters for '....'
+        start_keep = keep_total // 2
+        end_keep = keep_total - start_keep
+        return f"{s[:start_keep]}....{s[-end_keep:]}"
+
+    def _update_combo_tooltip(self, index: int) -> None:
+        try:
+            full_name = self.comboBox.itemData(index, QtCore.Qt.ToolTipRole)
+        except Exception:
+            full_name = None
+        if not full_name:
+            try:
+                full_name = self.comboBox.itemText(index)
+            except Exception:
+                full_name = ""
+        try:
+            self.comboBox.setToolTip(str(full_name))
+        except Exception:
+            pass
+
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
         self.fit.data = dataset
         self.fit.update()
-        self.comboBox.setItemText(
-            self.comboBox.currentIndex(),
-            dataset.name
+        full_name = os.path.basename(
+            getattr(dataset, 'name', getattr(dataset, 'filename', ''))
         )
+        display_name = self._format_dataset_label(full_name)
+        idx = self.comboBox.currentIndex()
+        self.comboBox.setItemText(idx, display_name)
+        try:
+            self.comboBox.setItemData(idx, full_name, QtCore.Qt.ToolTipRole)
+        except Exception:
+            pass
+        self._update_combo_tooltip(idx)
 
     def show_selector(self):
         self.curve_select.show()
@@ -266,8 +306,27 @@ class FittingControllerWidget(Controller):
         uic.loadUi(pathlib.Path(__file__).parent / "fittingWidget.ui", self)
 
         self.curve_select.hide()
-        fit_names = [os.path.basename(f.data.name) for f in fit]
-        self.comboBox.addItems(fit_names)
+        if fit is not None:
+            for f in fit:
+                data = getattr(f, 'data', None)
+                try:
+                    base_name = os.path.basename(
+                        getattr(data, 'name', getattr(data, 'filename', ''))
+                    )
+                except Exception:
+                    base_name = getattr(data, 'name', 'Unknown')
+                display_name = self._format_dataset_label(base_name)
+                self.comboBox.addItem(display_name)
+                idx = self.comboBox.count() - 1
+                try:
+                    self.comboBox.setItemData(idx, base_name, QtCore.Qt.ToolTipRole)
+                except Exception:
+                    pass
+        try:
+            self.comboBox.currentIndexChanged.connect(self._update_combo_tooltip)
+            self._update_combo_tooltip(self.comboBox.currentIndex())
+        except Exception:
+            pass
 
         # decorate the update method of the fit
         # after decoration it should also call the update of
@@ -404,8 +463,12 @@ class FittingControllerWidget(Controller):
         self.fit.update()
 
     def onAutoFitRange(self):
+        data = getattr(self.fit, "data", None)
+        reader = getattr(data, "data_reader", None)
+        if reader is None or not hasattr(reader, "autofitrange"):
+            return
         try:
-            fit_range = self.fit.data.data_reader.autofitrange(self.fit.data)
+            fit_range = reader.autofitrange(data)
             chisurf.logging.info(f'onAutoFitRange: {fit_range}')
             xmin_1d, xmax_1d = fit_range
 
@@ -490,11 +553,8 @@ class FittingControllerWidget(Controller):
                     self._auto_fit_range_in_progress = False
                 except Exception:
                     pass
-        except AttributeError:
-            s = (f"Fit {self.__class__.__name__} "
-                 f"with model {self.fit.model.__class__.__name__} "
-                 f"does not have an attribute data.data_reader")
-            chisurf.logging.warning(s)
+        except Exception as e:
+            chisurf.logging.warning(f"onAutoFitRange failed: {e}")
 
     # ------------------------------------------------------------------
     # Dimensionality and 2D mask helpers
@@ -607,6 +667,8 @@ class FittingControllerWidget(Controller):
                 # suggesting a 2D selection.
                 self.spinBox_4.setEnabled(False)
                 self.spinBox_6.setEnabled(False)
+                self.spinBox_4.hide()
+                self.spinBox_6.hide()
         except Exception:
             pass
 
@@ -755,7 +817,10 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             container.layout().setContentsMargins(0, 0, 0, 0)
             container.layout().setSpacing(0)
             self._plot_containers.append(container)
-            self.plot_tab_widget.addTab(container, getattr(plot_class, 'name', plot_class.__name__))
+            tab_name = getattr(plot_class, 'name', None)
+            if not isinstance(tab_name, str):
+                tab_name = getattr(plot_class, '__name__', str(plot_class))
+            self.plot_tab_widget.addTab(container, tab_name)
         # Share created plot list with FitGroup and its member Fits
         fit.plots = self._created_plots
         for f in fit:

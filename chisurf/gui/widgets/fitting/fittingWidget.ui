@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>356</width>
-    <height>90</height>
+    <width>409</width>
+    <height>93</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -353,10 +353,10 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="4" rowspan="2">
+      <item row="0" column="3">
        <widget class="QPushButton" name="toolButton_2">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
