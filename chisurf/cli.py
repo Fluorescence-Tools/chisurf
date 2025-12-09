@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import ast
+import importlib
+import logging
 import os
+import pathlib
+import pkgutil
 import sys
-from typing import Optional
+from typing import Optional, Tuple, Dict, Iterable
 
 import click
 
@@ -12,306 +17,300 @@ import click
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(package_name="chisurf", prog_name="csc")
 def cli() -> None:
-    """Unified command-line interface for chisurf tools.
+    """Command-line interface for chisurf tools and plugins.
 
-    This entry point groups together various small utilities that were
-    previously exposed as separate console scripts (e.g. csc_fcs_convert).
+    Use this command as a single entry point to run the CLIs provided by
+    installed chisurf plugins. Each subcommand corresponds to one tool and
+    comes with its own help and options.
 
-    Example usage::
-
-        csc fcs-convert --help
-        csc fcs-convert -if in.fcs -it pq.dat -of out.fcs -ot pycorrfit
+    \b
+    Examples:
+      csc lltf --help
+      csc burst-background --help
+      csc count-rate analyze --help
     """
 
+    # Ensure plugin-provided CLIs are registered the first time the
+    # top-level CLI group is invoked, without doing any plugin discovery
+    # at import time.
+    _register_plugin_clis()
 
-@cli.command(name="fcs-convert")
-@click.option("-if", "--input-filename", required=True, type=click.Path(exists=True, dir_okay=False), help="Input FCS filename.")
-@click.option("-it", "--input-type", required=True, type=str, help="Input file type (kristine, alv, mat, confocor3, pycorrfit, csv, pq.dat).")
-@click.option("-of", "--output-filename", required=True, type=str, help="Output FCS filename.")
-@click.option("-ot", "--output-type", required=True, type=str, help="Output file type (kristine, alv, china-mat, confocor3, pycorrfit, pq.dat).")
-@click.option("-s", "--skiprows", default=0, type=int, show_default=True, help="Number of rows to skip in CSV input.")
-@click.option("-e", "--use-header", is_flag=True, default=False, show_default=True, help="Use CSV header row for column names.")
-def fcs_convert(
-    input_filename: str,
-    input_type: str,
-    output_filename: str,
-    output_type: str,
-    skiprows: int,
-    use_header: bool,
+
+_LOG = logging.getLogger(__name__)
+
+_PLUGINS_REGISTERED = False
+
+
+def _parse_cli_entrypoint(entrypoint: str) -> Tuple[str, str, str]:
+    """Parse strings of the form ``alias=module:attr``."""
+    spec = (entrypoint or "").strip()
+    if not spec or "=" not in spec:
+        raise ValueError("Entry point must be in the form 'alias=module[:attr]'")
+    alias, target = spec.split("=", 1)
+    alias = alias.strip()
+    if not alias:
+        raise ValueError("Alias (command name) is empty")
+    module_path, _, attr = target.partition(":")
+    module_path = module_path.strip()
+    attr = attr.strip() or "cli"
+    if not module_path:
+        raise ValueError("Module path is empty")
+    return alias, module_path, attr
+
+
+def _forward_plugin_cli(
+    ctx: click.Context,
+    *,
+    module_path: str,
+    attr_name: str,
+    friendly_name: Optional[str] = None,
+    command_name: Optional[str] = None,
 ) -> None:
-    """Convert FCS files using chisurf.cmd_tools.fcs_convert."""
-
-    # Import lazily so that importing chisurf.cli is cheap and has minimal
-    # side-effects when used from other tools.
+    """Import the plugin CLI object and forward the current args."""
     try:
-        from chisurf.cmd_tools import fcs_convert as _fcs_convert
-        import argparse
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(f"Failed to import chisurf.cmd_tools.fcs_convert: {exc}")
+        module = importlib.import_module(module_path)
+        target = getattr(module, attr_name)
+    except Exception as exc:
+        raise click.ClickException(
+            f"Failed to import plugin CLI '{friendly_name or module_path}:{attr_name}': {exc}"
+        )
 
-    ns = argparse.Namespace(
-        input_filename=input_filename,
-        input_type=input_type,
-        output_filename=output_filename,
-        output_type=output_type,
-        skiprows=skiprows,
-        use_header=use_header,
+    argv = list(ctx.args)
+    if not argv:
+        argv = ["--help"]
+
+    runner = getattr(target, "main", None)
+    if callable(runner):
+        try:
+            runner(args=argv, standalone_mode=True)
+        except SystemExit as exc:  # pragma: no cover - normal Click exit path
+            code = int(exc.code or 0)
+            if code != 0:
+                raise click.ClickException(
+                    f"{friendly_name or module_path} exited with status {code}"
+                )
+        return
+
+    # Fall back to calling the object directly if it behaves like a callable CLI.
+    if callable(target):
+        old_argv = list(sys.argv)
+        try:
+            # Simulate a classic ``if __name__ == '__main__'`` style CLI by
+            # injecting our arguments into ``sys.argv``. This allows us to
+            # wrap argparse-based entry points such as
+            # ``chisurf.plugins.tttr.microtime_histogram.__main__.main``.
+            prog = command_name or (friendly_name or module_path).split(".")[-1]
+            sys.argv = [prog, *argv]
+            target()  # type: ignore[call-arg]
+        finally:
+            sys.argv = old_argv
+        return
+
+    raise click.ClickException(
+        f"Plugin CLI target '{module_path}:{attr_name}' is not callable"
     )
-    _fcs_convert.main(args=ns)
 
 
-@cli.command(name="tttr-decay-hist")
-@click.option("-c", "--channel", default=1, show_default=True, type=int, help="Detection channel number.")
-@click.option("--coarse", default=2, show_default=True, type=int, help="Divider for the micro time (binning factor).")
-@click.option(
-    "-t",
-    "--file-type",
-    "file_type",
-    required=True,
-    type=str,
-    help=(
-        "TTTR file type (e.g. HT3, PTU, SPC-130, SPC-600_256, "
-        "SPC-600_4096, PHOTON-HDF5)."
-    ),
-)
-@click.option(
-    "-i",
-    "--input",
-    "filename",
-    required=True,
-    type=click.Path(exists=True, dir_okay=False),
-    help="TTTR input filename.",
-)
-@click.option(
-    "-o",
-    "--output",
-    "output",
-    type=str,
-    default=None,
-    help="Output CSV filename (default: <input>.csv).",
-)
-def tttr_decay_hist(
-    channel: int,
-    coarse: int,
-    file_type: str,
-    filename: str,
-    output: str | None,
-) -> None:
-    """Compute a decay histogram from TTTR data.
+def _read_plugin_metadata(init_py: pathlib.Path) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    if not init_py.exists():
+        return None, None, None
+    try:
+        source = init_py.read_text(encoding="utf-8")
+    except Exception:
+        return None, None, None
+    try:
+        tree = ast.parse(source, filename=str(init_py))
+    except Exception:
+        return None, None, None
+    description = ast.get_docstring(tree) or "No description available."
+    plugin_name = None
+    cli_entrypoint = None
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in getattr(node, "targets", []):
+            if isinstance(target, ast.Name) and target.id == "name":
+                value = node.value
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    plugin_name = value.value
+                elif isinstance(value, ast.Str):
+                    plugin_name = value.s
+            if isinstance(target, ast.Name) and target.id == "cli_entrypoint":
+                value = node.value
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    cli_entrypoint = value.value.strip()
+                elif isinstance(value, ast.Str):
+                    cli_entrypoint = value.s.strip()
+    return plugin_name, description, cli_entrypoint
 
-    This is a click-based version of chisurf.cmd_tools.tttr_decay_histogram.
+
+def _discover_plugin_metadata() -> Iterable[Dict[str, object]]:
+    """Yield metadata for built-in and user plugins **without importing packages**.
+
+    This function performs a pure filesystem + AST scan over the built-in
+    plugin tree (``chisurf/plugins``) and the user plugin directory
+    (``~/.chisurf/plugins``). It never imports ``chisurf.plugins`` or any
+    individual plugin modules, so CLI startup does not trigger any GUI
+    initialization or heavy dependencies.
     """
 
-    try:
-        import numpy as np  # type: ignore[import]
-        import tttrlib  # type: ignore[import]
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(f"Failed to import tttrlib/numpy: {exc}")
+    package_root = pathlib.Path(__file__).resolve().parent
+    built_in_root = package_root / "plugins"
+    user_root = pathlib.Path.home() / ".chisurf" / "plugins"
 
-    if output:
-        output_path = output
-    else:
-        root, _ext = os.path.splitext(os.path.abspath(filename))
-        output_path = root + ".csv"
+    search_roots = [
+        ("built-in", built_in_root),
+        ("user", user_root),
+    ]
 
-    click.echo("Make decay histogram from TTTR data")
-    click.echo("===================================")
-    click.echo(f"\tFilename: {filename}")
-    click.echo(f"\tFile type: {file_type}")
-    click.echo(f"\tCoarse :\t{coarse}")
-    click.echo(f"\tOutput file: {output_path}")
+    seen = set()
 
-    data = tttrlib.TTTR(filename, file_type)
+    for source, root in search_roots:
+        if not root.exists():
+            continue
+        try:
+            root_resolved = root.resolve()
+        except Exception:
+            root_resolved = root
 
-    channel_selection = data.get_selection_by_channel(np.array([channel]))
-    micro_time = data.get_micro_time()
-    mt_sel = micro_time[channel_selection]
-    counts = np.bincount(mt_sel // coarse)
-    header = data.get_header()
-    dt = header.micro_time_resolution
-    x_axis = np.arange(counts.shape[0]) * dt * coarse
+        # Each __init__.py below the root corresponds to a candidate plugin
+        # package under the chisurf.plugins.* namespace.
+        for init_py in root_resolved.rglob("__init__.py"):
+            try:
+                rel_dir = init_py.parent.relative_to(root_resolved)
+            except Exception:
+                # Outside of the root we care about.
+                continue
 
-    np.savetxt(fname=output_path, X=np.vstack([x_axis, counts]).T)
+            # Skip the root package itself (e.g. chisurf.plugins).
+            if str(rel_dir) == ".":
+                continue
+
+            parts = rel_dir.parts
+            module_name = ".".join(parts)
+            module_path = f"chisurf.plugins.{module_name}"
+
+            key = (module_path, str(init_py.parent))
+            if key in seen:
+                continue
+
+            plugin_name, description, cli_entrypoint = _read_plugin_metadata(init_py)
+
+            # For CLI purposes we only care about packages that either
+            # advertise a human-readable plugin name or explicitly opt into
+            # the CLI via ``cli_entrypoint``. Plain namespace packages are
+            # skipped entirely so they are never touched during CLI startup.
+            if not plugin_name and not cli_entrypoint:
+                continue
+
+            seen.add(key)
+
+            yield {
+                "module_path": module_path,
+                "module_name": parts[-1],
+                "package_dir": init_py.parent,
+                "source": source,
+                "plugin_name": plugin_name,
+                "description": description,
+                "cli_entrypoint": cli_entrypoint,
+            }
 
 
-@cli.command(
-    name="count-rate",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def count_rate(ctx: click.Context) -> None:
-    """Forward to the Count Rate Analysis CLI.
+def _register_plugin_clis() -> None:
+    """Discover plugin-provided CLI entry points and attach them to the main group.
 
-    All arguments after ``count-rate`` are passed through to
-    :mod:`chisurf.plugins.count_rate_analysis.cli`.
+    This function is idempotent and safe to call multiple times.
     """
+    global _PLUGINS_REGISTERED
+
+    if _PLUGINS_REGISTERED:
+        return
 
     try:
-        from chisurf.plugins.count_rate_analysis import cli as _cr_cli
+        plugins = list(_discover_plugin_metadata())
     except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(f"Failed to import count rate CLI: {exc}")
+        _LOG.warning("Unable to discover plugins for CLI registration: %s", exc)
+        return
 
-    argv = list(ctx.args)
-    if not argv:
-        argv = ["--help"]
+    registered_specs = []  # for logging
 
-    try:
-        _cr_cli.cli.main(args=argv, standalone_mode=True)
-    except SystemExit as exc:  # normal click exit path from nested CLI
-        code = int(exc.code or 0)
-        if code != 0:
-            raise click.ClickException(f"count-rate exited with status {code}")
+    for metadata in plugins:
+        entry_spec = metadata.get("cli_entrypoint")
+        if not entry_spec:
+            continue
+        try:
+            command_name, module_path, attr_name = _parse_cli_entrypoint(entry_spec)
+        except ValueError as exc:
+            _LOG.warning(
+                "Skipping CLI entrypoint for plugin '%s': %s",
+                metadata.get("module_path"),
+                exc,
+            )
+            continue
 
-@cli.command(
-    name="tttr-correlate",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def tttr_correlate(ctx: click.Context) -> None:
-    """Forward to ``chisurf.cmd_tools.tttr_correlate``."""
+        if command_name in cli.commands:
+            _LOG.debug(
+                "Skipping CLI entrypoint '%s' from plugin '%s' (command already defined)",
+                command_name,
+                metadata.get("module_path"),
+            )
+            continue
 
-    try:
-        from chisurf.cmd_tools import tttr_correlate as _tttr_correlate
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(
-            f"Failed to import chisurf.cmd_tools.tttr_correlate: {exc}"
+        # Derive a short help text from the plugin's docstring without
+        # importing the plugin. We use the first non-empty line of the
+        # description parsed from ``__init__.py``; if that is missing, fall
+        # back to the human-readable plugin name or the module name.
+        raw_desc = (metadata.get("description") or "").strip()
+        if raw_desc:
+            summary_line = raw_desc.splitlines()[0].strip()
+        else:
+            summary_line = ""
+
+        help_text = summary_line or str(
+            metadata.get("plugin_name") or metadata.get("module_name") or command_name
         )
 
-    argv = ["tttr_correlate", *ctx.args]
-    old_argv = list(sys.argv)
-    try:
-        sys.argv = argv
-        _tttr_correlate.main()
-    finally:
-        sys.argv = old_argv
+        def _callback(ctx: click.Context, _command_name: str = command_name,
+                      _module_path: str = module_path, _attr_name: str = attr_name,
+                      _plugin_label: Optional[str] = metadata.get("plugin_name")) -> None:
+            _forward_plugin_cli(
+                ctx,
+                module_path=_module_path,
+                attr_name=_attr_name,
+                friendly_name=_plugin_label or _module_path,
+                command_name=_command_name,
+            )
 
-
-@cli.command(
-    name="mrc2bvox",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def mrc2bvox(ctx: click.Context) -> None:
-    """Forward to ``chisurf.cmd_tools.mrc2bvox``."""
-
-    try:
-        from chisurf.cmd_tools import mrc2bvox as _mrc2bvox
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(
-            f"Failed to import chisurf.cmd_tools.mrc2bvox: {exc}"
+        command = click.Command(
+            name=command_name,
+            callback=click.pass_context(_callback),
+            context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
+            help=help_text,
         )
+        cli.add_command(command)
 
-    argv = ["mrc2bvox", *ctx.args]
-    old_argv = list(sys.argv)
-    try:
-        sys.argv = argv
-        _mrc2bvox.main()
-    finally:
-        sys.argv = old_argv
+        # Only record the public command alias for logging, not the full
+        # module path, to keep the startup message compact.
+        registered_specs.append(command_name)
+
+    _PLUGINS_REGISTERED = True
+
+    if registered_specs:
+        _LOG.debug("Registered plugin CLIs: %s", ", ".join(registered_specs))
 
 
-@cli.command(
-    name="protein-mc-fret",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def protein_mc_fret(ctx: click.Context) -> None:
-    """Forward to ``chisurf.cmd_tools.protein_mc_fret``."""
-
-    try:
-        from chisurf.cmd_tools import protein_mc_fret as _protein_mc_fret
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(
-            f"Failed to import chisurf.cmd_tools.protein_mc_fret: {exc}"
+def _log_preloaded_plugin_modules() -> None:
+    """Report any plugin modules that were already imported during CLI startup."""
+    preloaded = sorted(
+        name
+        for name in sys.modules
+        if name.startswith("chisurf.plugins.") and name.count(".") >= 2
+    )
+    if preloaded:
+        _LOG.info(
+            "Plugin modules already imported during chisurf.cli initialization: %s",
+            ", ".join(preloaded),
         )
-
-    argv = ["protein_mc_fret", *ctx.args]
-    old_argv = list(sys.argv)
-    try:
-        sys.argv = argv
-        _protein_mc_fret.main()
-    finally:
-        sys.argv = old_argv
-
-
-@cli.command(
-    name="sm-image-mle",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def sm_image_mle(ctx: click.Context) -> None:
-    """Forward to the sm_image_mle CLI."""
-
-    try:
-        from chisurf.plugins.sm_image_mle import sm_image_mle as _sm_image_mle
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(
-            f"Failed to import sm_image_mle CLI: {exc}"
-        )
-
-    argv = list(ctx.args)
-    if not argv:
-        argv = ["--help"]
-
-    try:
-        _sm_image_mle.cli.main(args=argv, standalone_mode=True)
-    except SystemExit as exc:  # normal click exit path from nested CLI
-        code = int(exc.code or 0)
-        if code != 0:
-            raise click.ClickException(f"sm-image-mle exited with status {code}")
-
-
-@cli.command(
-    name="microtime-histogram",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def microtime_histogram(ctx: click.Context) -> None:
-    """Launch the microtime_histogram helper."""
-
-    try:
-        from chisurf.plugins.microtime_histogram.__main__ import (  # type: ignore[import]
-            main as _microtime_main,
-        )
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(
-            f"Failed to import microtime_histogram entry point: {exc}"
-        )
-
-    argv = ["microtime_histogram", *ctx.args]
-    old_argv = list(sys.argv)
-    try:
-        sys.argv = argv
-        _microtime_main()
-    finally:
-        sys.argv = old_argv
-
-
-@cli.command(
-    name="burst-background",
-    context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
-)
-@click.pass_context
-def burst_background(ctx: click.Context) -> None:
-    """Forward to the Burst Background Estimation CLI."""
-
-    try:
-        from chisurf.plugins.burst_background import cli as _bb_cli
-    except Exception as exc:  # pragma: no cover - defensive
-        raise click.ClickException(
-            f"Failed to import burst background CLI: {exc}"
-        )
-
-    argv = list(ctx.args)
-    if not argv:
-        argv = ["--help"]
-
-    try:
-        _bb_cli.cli.main(args=argv, standalone_mode=True)
-    except SystemExit as exc:  # normal click exit path from nested CLI
-        code = int(exc.code or 0)
-        if code != 0:
-            raise click.ClickException(f"burst-background exited with status {code}")
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -322,6 +321,13 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if argv is None:
         argv = sys.argv[1:]
+
+    # When invoked via python -m chisurf.cli or the installed console
+    # script, register plugin CLIs and log any preloaded plugin modules
+    # before delegating to Click's main dispatcher.
+    _register_plugin_clis()
+    _log_preloaded_plugin_modules()
+
     try:
         cli.main(args=argv, standalone_mode=True)
     except SystemExit as exc:  # normal click exit path
