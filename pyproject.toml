@@ -2,7 +2,6 @@
 requires = [
     "setuptools>=64",
     "wheel",
-    "Cython>=0.29,<3.1",
     "numpy<2.0",
 ]
 build-backend = "_build_backend"
@@ -46,7 +45,6 @@ dependencies = [
     "numpy<2.0",
     "numexpr",
     "scipy",
-    "cython",
     "deprecation",
     "emcee",
     "PyYAML",
@@ -87,7 +85,6 @@ csg_fps_json_edit = "chisurf.gui.tools.structure.create_av_json.__main__:main"
 csg_calculator = "chisurf.plugins.fret_calculator.__main__:main"
 csg_f_test = "chisurf.gui.tools.f_test.__main__:main"
 csg_tttr_clsm_pixel_select = "chisurf.gui.tools.tttr.clsm_pixel_select.__main__:main"
-csg_tttr_convert = "chisurf.gui.tools.tttr.convert.__main__:main"
 csg_tttr_correlator = "chisurf.gui.tools.tttr.correlate.__main__:main"
 csg_tttr_decay_histogram = "chisurf.gui.tools.tttr.decay.__main__:main"
 csg_traj_align = "chisurf.gui.tools.structure.align_trajectory.__main__:main"
