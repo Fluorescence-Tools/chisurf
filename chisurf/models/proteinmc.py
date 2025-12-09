@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+from qtpy import QtWidgets
+
+import chisurf
+import chisurf.fitting
+import chisurf.plots
+
+from .model import ModelWidget
+
+
+MolViewPlot = getattr(chisurf.plots, "MolViewPlot", None)
+
+
+class ProteinMCModelWidget(ModelWidget):
+    name = "ProteinMC"
+
+    try:
+        plot_classes = [
+            (chisurf.plots.ProteinMCPlot, {}),
+        ]
+        if MolViewPlot is not None:
+            plot_classes.append((MolViewPlot, {}))
+    except Exception:
+        plot_classes = []
+
+    def __init__(
+            self,
+            fit: "chisurf.fitting.fit.Fit",
+            *args,
+            **kwargs
+    ):
+        super().__init__(fit=fit, *args, **kwargs)
+
+        self.structure = getattr(self.fit, "data", None)
+        try:
+            chisurf.logging.info(
+                "ProteinMCModelWidget.__init__: fit=%s data=%s type=%s",
+                getattr(self.fit, "name", "unknown"),
+                getattr(self.structure, "name", getattr(self.structure, "filename", "unknown")),
+                self.structure.__class__.__name__ if self.structure is not None else "None",
+            )
+        except Exception:
+            pass
+
+        self.rmsd = []
+        self.drmsd = []
+        self.energy = []
+        self.chi2r = []
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        label = QtWidgets.QLabel("ProteinMC structure model")
+        label.setWordWrap(True)
+        layout.addWidget(label)
+
+        self.setLayout(layout)
+        self.layout = layout
+
+    def update_model(self, **kwargs):
+        try:
+            chisurf.logging.info(
+                "ProteinMCModelWidget.update_model: len(rmsd)=%d len(drmsd)=%d len(energy)=%d len(chi2r)=%d",
+                len(self.rmsd),
+                len(self.drmsd),
+                len(self.energy),
+                len(self.chi2r),
+            )
+        except Exception:
+            pass
+        return
+
+    def update_widgets(self) -> None:
+        try:
+            chisurf.logging.info("ProteinMCModelWidget.update_widgets: called")
+        except Exception:
+            pass
+        super().update_widgets()
+
+    def update(self) -> None:
+        try:
+            chisurf.logging.info(
+                "ProteinMCModelWidget.update: before super.update len(rmsd)=%d len(drmsd)=%d len(energy)=%d len(chi2r)=%d",
+                len(self.rmsd),
+                len(self.drmsd),
+                len(self.energy),
+                len(self.chi2r),
+            )
+        except Exception:
+            pass
+        super().update()
+        try:
+            chisurf.logging.info(
+                "ProteinMCModelWidget.update: after super.update len(rmsd)=%d len(drmsd)=%d len(energy)=%d len(chi2r)=%d",
+                len(self.rmsd),
+                len(self.drmsd),
+                len(self.energy),
+                len(self.chi2r),
+            )
+        except Exception:
+            pass
