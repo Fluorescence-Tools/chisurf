@@ -6,6 +6,7 @@ import pyqtgraph as pg
 from qtpy import QtWidgets
 from pyqtgraph.dockarea import DockArea, Dock
 
+import chisurf
 import chisurf.settings
 from chisurf.plots.plotbase import Plot
 
@@ -58,21 +59,43 @@ class ProteinMCPlot(Plot):
         lw = chisurf.settings.gui['plot']['line_width']
         self.rmsd_curve = self.rmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['irf'], width=lw), name='rmsd')
         self.drmsd_curve = self.drmsd_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['data'], width=lw), name='drmsd')
-        self.energy_curve = self.energy_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='energy')
-        self.fret_curve = self.fret_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['models'], width=lw), name='fret')
+        self.energy_curve = self.energy_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='energy')
+        self.fret_curve = self.fret_plot.plot(x=[0.0], y=[0.0], pen=pg.mkPen(colors['model'], width=lw), name='fret')
+
+        try:
+            chisurf.logging.info(
+                "ProteinMCPlot: initialized for fit '%s' with model '%s'",
+                getattr(fit, 'name', 'unknown'),
+                getattr(fit.model.__class__, 'name', fit.model.__class__.__name__)
+            )
+        except Exception:
+            pass
 
     def update_all(self, *args, **kwargs):
 
-        rmsd = np.array(self.trajectory.rmsd)
-        drmsd = np.array(self.trajectory.drmsd)
-        energy = np.array(self.trajectory.energy)
-        energy_fret = np.array(self.trajectory.chi2r)
-        x = list(range(len(rmsd)))
+        try:
+            rmsd = np.array(self.trajectory.rmsd)
+            drmsd = np.array(self.trajectory.drmsd)
+            energy = np.array(self.trajectory.energy)
+            energy_fret = np.array(self.trajectory.chi2r)
+        except Exception as e:
+            chisurf.logging.warning(f"ProteinMCPlot.update_all: failed to read trajectory arrays: {e}")
+            return
+
+        x = list(range(len(rmsd))) if rmsd.size else []
 
         self.rmsd_curve.setData(x=x, y=rmsd)
         self.drmsd_curve.setData(x=x, y=drmsd)
         self.energy_curve.setData(x=x, y=energy)
         self.fret_curve.setData(x=x, y=energy_fret)
+
+        try:
+            chisurf.logging.info(
+                "ProteinMCPlot.update_all: updated trajectory curves with %d points",
+                len(x)
+            )
+        except Exception:
+            pass
 
 
 
