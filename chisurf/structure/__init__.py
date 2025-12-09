@@ -15,6 +15,6 @@ from chisurf.structure.trajectory import *
 from chisurf.structure.protein import *
 
 import chisurf.structure.av
-#from . import potential
-#from . import labeled_structure
+from . import potential
+from . import labeled_structure
 
