@@ -67,7 +67,7 @@ try:
     _png = _plugin_dir / "icon.png"
     _svg = _plugin_dir / "icon.svg"
     try:
-        from PyQt5.QtGui import QIcon as _QIcon  # type: ignore
+        from qtpy.QtGui import QIcon as _QIcon  # type: ignore
     except Exception:
         _QIcon = None  # type: ignore
     if '_QIcon' in globals() and _QIcon is not None:

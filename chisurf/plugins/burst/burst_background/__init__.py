@@ -11,6 +11,9 @@ so that the same setups can be shared with other TTTR tools.
 
 name = "Single-Molecule:Burst Background Estimation"
 
+# Expose the plugin CLI through chisurf.cli
+cli_entrypoint = "burst-background=chisurf.plugins.burst.burst_background.cli:cli"
+
 import os
 import sys
 from typing import Dict
