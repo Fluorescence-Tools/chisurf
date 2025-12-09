@@ -23,7 +23,7 @@ experiment_types:
     hidden: true
   structure:
     name: Modelling
-    hidden: true
+    hidden: false
 
 tcspc:
   readers:
@@ -56,7 +56,6 @@ tcspc:
     - chisurf.models.tcspc.widgets.ParseDecayModelWidget
     - chisurf.models.tcspc.widgets.LifetimeMixtureModelWidget
     - chisurf.models.tcspc.widgets.EtModelFreeWidget
-    - chisurf.models.tcspc.dye_diffusion.dye_diffusion.TransientDecayGenerator
 
 stopped_flow:
   readers:
@@ -192,7 +191,7 @@ structure:
       reader_params: {}
       controller_class: chisurf.gui.widgets.experiments.modelling.StructureReaderController
   models:
-    - chisurf.models.tcspc.widgets.LifetimeModelWidget
+    - chisurf.models.proteinmc.ProteinMCModelWidget
 
 global:
   name: Global
