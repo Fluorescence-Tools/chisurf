@@ -87,6 +87,15 @@ class ExperimentReader(chisurf.base.Base):
             for d in data:
                 d.experiment = self.experiment
                 d.setup = self
+                try:
+                    d.data_reader = self
+                except Exception:
+                    pass
+            try:
+                if not hasattr(data, "data_reader"):
+                    data.data_reader = self
+            except Exception:
+                pass
         return data
 
 
