@@ -6,13 +6,22 @@ from OpenGL.GL import *
 from qtpy.QtOpenGL import *
 from qtpy.QtCore import Qt
 
-import pymol2
+try:
+    import pymol2
+    _HAVE_PYMOL2 = True
+except Exception:
+    pymol2 = None
+    _HAVE_PYMOL2 = False
+import chisurf
 from chisurf.plots.plotbase import Plot
 
 try:
     # Older Qt bindings expose QGLWidget/QGLFormat via QtOpenGL; this may be missing
     from qtpy.QtOpenGL import QGLWidget, QGLFormat  # type: ignore[attr-defined]
+    _HAVE_QGL = True
 except Exception:
+    _HAVE_QGL = False
+
     class QGLFormat:  # minimal stub used only when real GL format is unavailable
         def setStencil(self, *args, **kwargs):
             pass
@@ -28,8 +37,16 @@ except Exception:
 
     class QGLWidget(QtWidgets.QWidget):  # type: ignore[misc]
         def __init__(self, fmt=None, parent=None):
-            # Ignore the format object in environments without real QGL support
+            # Ignore the format object in environments without real GL support
             super().__init__(parent)
+
+try:
+    if _HAVE_QGL:
+        chisurf.logging.info("MolView: using real QGLWidget backend")
+    else:
+        chisurf.logging.warning("MolView: using stub QGLWidget backend; PyMOL display may be disabled")
+except Exception:
+    pass
 
 
 # class EmittingStream(QtCore.QObject):
@@ -39,6 +56,83 @@ except Exception:
 #     def write(self, text):
 #         self.textWritten.emit(str(text))
 #
+
+_PYMOL_MISSING_HINT = (
+    "PyMOL is not available in this ChiSurf environment, so the 3D view is disabled.\n\n"
+    "To enable the 3D viewer, install ChiSurf (which bundles PyMOL) via the ChiSurf "
+    "Package Manager (Help → Updates and Packages → Package Manager) or through "
+    "`conda install chisurf -c conda-forge -c tpeulen` on the command line."
+)
+
+
+class _PymolCmdStub:
+
+    def __getattr__(self, name):
+        if name == "count_states":
+            def _count_states(*_, **__):
+                return 0
+            return _count_states
+
+        def _noop(*_, **__):
+            return None
+
+        return _noop
+
+    # Explicit helpers used in several places
+    def do(self, *_, **__):
+        return None
+
+    def set(self, *_, **__):
+        return None
+
+    def hide(self, *_, **__):
+        return None
+
+    def show(self, *_, **__):
+        return None
+
+    def delete(self, *_, **__):
+        return None
+
+    def read_pdbstr(self, *_, **__):
+        return None
+
+    def load(self, *_, **__):
+        return None
+
+    def alter(self, *_, **__):
+        return None
+
+    def set_color(self, *_, **__):
+        return None
+
+
+class _PymolStub:
+
+    def __init__(self):
+        self.cmd = _PymolCmdStub()
+
+    def start(self):
+        return None
+
+    def idle(self):
+        return False
+
+    def draw(self):
+        return None
+
+    def reshape(self, *_, **__):
+        return None
+
+    def drag(self, *_, **__):
+        return None
+
+    def button(self, *_, **__):
+        return None
+
+    def reinitialize(self):
+        return None
+
 
 class MolQtWidget(QGLWidget):
     """
@@ -60,11 +154,50 @@ class MolQtWidget(QGLWidget):
         self.nFrames = 0
         QGLWidget.__init__(self, f, parent=parent)
         self.setMinimumSize(200, 150)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.setStyleSheet("background-color: black; border: 1px solid red;")
+
+        if not _HAVE_PYMOL2:
+            self._enableUi = False
+            self.pymol = _PymolStub()
+            self.cmd = self.pymol.cmd
+            layout = QtWidgets.QVBoxLayout(self)
+            layout.setContentsMargins(16, 16, 16, 16)
+            layout.setSpacing(12)
+            icon = QtWidgets.QLabel("ℹ️", self)
+            font = icon.font()
+            font.setPointSize(font.pointSize() + 6)
+            icon.setFont(font)
+            icon.setAlignment(QtCore.Qt.AlignCenter)
+            label = QtWidgets.QLabel(_PYMOL_MISSING_HINT, self)
+            label.setWordWrap(True)
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            layout.addStretch(1)
+            layout.addWidget(icon)
+            layout.addSpacing(8)
+            layout.addWidget(label)
+            layout.addStretch(1)
+            return
+
         self._enableUi = enableUi
         self.pymol = pymol2.PyMOL()# _pymolPool.getInstance()
         self.pymol.start()
         self.cmd = self.pymol.cmd
-        self.toPymolName = self.pymol.toPymolName ### Attribute Error
+        try:
+            # Ensure a dark background so a successfully initialized viewer is visible
+            self.pymol.cmd.bg_color('black')
+        except Exception:
+            pass
+        try:
+            chisurf.logging.info(
+                "MolQtWidget.__init__: PyMOL started (enableUi=%s, sequence=%s)",
+                enableUi,
+                sequence
+            )
+        except Exception:
+            pass
+        if hasattr(self.pymol, 'toPymolName'):
+            self.toPymolName = self.pymol.toPymolName ### Attribute Error
         self._pymolProcess()
 
         if not self._enableUi:
@@ -155,6 +288,10 @@ class MolQtWidget(QGLWidget):
         self._timer.start(0)
 
     def resizeGL(self, w, h):
+        try:
+            chisurf.logging.info("MolQtWidget.resizeGL: w=%d h=%d", w, h)
+        except Exception:
+            pass
         self.pymol.reshape(w,h, True)
         self._pymolProcess()
 
@@ -335,11 +472,41 @@ class MolView(Plot):
         self.mode = mode
         self.plot_controller = ControlWidget(self)
         self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
 
         self.pymolWidget = MolQtWidget(self, play=False, sequence=sequence, enableUi=enableUi)
         self.layout.addWidget(self.pymolWidget)
-        self.open_structure(fit.model.structure)
-        self.structure = fit.model.structure
+        self.pymolWidget.show()
+
+        structure = None
+        try:
+            model = getattr(fit, 'model', None)
+            structure = getattr(model, 'structure', None)
+            if structure is None:
+                structure = getattr(fit, 'data', None)
+        except Exception:
+            structure = None
+
+        try:
+            chisurf.logging.info(
+                "MolView.__init__: fit=%s structure=%s type=%s",
+                getattr(fit, 'name', 'unknown'),
+                getattr(structure, 'name', getattr(structure, 'filename', 'unknown')) if structure is not None else 'None',
+                structure.__class__.__name__ if structure is not None else 'None',
+            )
+        except Exception:
+            pass
+
+        self.structure = structure
+        if structure is not None:
+            try:
+                self.open_structure(structure)
+            except Exception as e:
+                try:
+                    chisurf.logging.warning(f"MolView.__init__: open_structure failed: {e}")
+                except Exception:
+                    pass
 
     def open_file(self, filename, bfact=None):
         self.pymolWidget.openFile(filename, mode=self.mode)
