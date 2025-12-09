@@ -351,8 +351,19 @@ class Main(QtWidgets.QMainWindow):
                     parts = str(filename).split('\\plugins\\')
                     if len(parts) > 1:
                         plugin_path = parts[1].split('\\')
-                        if len(plugin_path) > 0:
-                            package_name = plugin_path[0]
+                        # plugin_path looks like [pkg, subpkg, ..., filename]
+                        # Use all path components except the filename to build the
+                        # full nested package name, falling back to the first
+                        # component for legacy single-level plugins.
+                        if len(plugin_path) > 1:
+                            module_parts = plugin_path[:-1]
+                        elif len(plugin_path) == 1:
+                            module_parts = plugin_path
+                        else:
+                            module_parts = []
+
+                        if module_parts:
+                            package_name = '.'.join(module_parts)
 
                             # Check if this is a user plugin (in home directory) or a built-in plugin
                             user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
@@ -387,7 +398,7 @@ class Main(QtWidgets.QMainWindow):
                                     except Exception as e:
                                         chisurf.logging.warning(f"Error extracting name from {user_plugin_path}: {e}")
                             else:
-                                # For built-in plugins, set the package name as before
+                                # For built-in plugins, set the full nested package name
                                 globals.update({"__package__": f"chisurf.plugins.{package_name}"})
 
                                 # Reload all modules related to this plugin to ensure full recompilation
@@ -967,7 +978,6 @@ class Main(QtWidgets.QMainWindow):
     def load_toolbar_plugins(self):
         """Load plugins into the toolbar based on toolbar_plugins setting."""
         import pathlib
-        import pkgutil
         import ast
 
         # Get the list of toolbar plugins from settings
@@ -986,9 +996,6 @@ class Main(QtWidgets.QMainWindow):
         # Determine built-in plugin directory
         plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
 
-        # Determine user plugin directory
-        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-
         # Helper function to read module docstring
         def read_module_docstring(package_path):
             init_py = package_path / "__init__.py"
@@ -1002,110 +1009,36 @@ class Main(QtWidgets.QMainWindow):
             tree = ast.parse(source, filename=str(init_py))
             return ast.get_docstring(tree)
 
-        # Helper function to get plugin name from module without importing
-        def get_plugin_name(plugin_dir, module_name, check_user_dir=True):
-            """Extract plugin name without importing the module."""
-            # Default value
-            name = module_name
+        # Build an index of available plugins using chisurf.plugins.iter_plugins
+        try:
+            plugin_infos = list(chisurf.plugins.iter_plugins())
+        except Exception:
+            plugin_infos = []
 
-            # Path to the __init__.py file
-            init_py = plugin_dir / module_name / "__init__.py"
-
-            # Check if the file exists in the built-in directory
-            if not init_py.exists() and check_user_dir:
-                # Try to find it in the user plugins directory
-                user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-                user_init_py = user_plugin_root / module_name / "__init__.py"
-                if user_init_py.exists():
-                    init_py = user_init_py
-                else:
-                    return name
-            elif not init_py.exists():
-                return name
-
-            try:
-                # Read the source
-                source = init_py.read_text(encoding="utf-8")
-
-                # Parse into an AST
-                tree = ast.parse(source, filename=str(init_py))
-
-                # Look for a name assignment
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.Assign):
-                        for target in node.targets:
-                            if isinstance(target, ast.Name) and target.id == 'name':
-                                if isinstance(node.value, ast.Str):
-                                    name = node.value.s
-                                elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
-                                    name = node.value.value
-
-                return name
-            except Exception as e:
-                chisurf.logging.warning(f"Error extracting name from {init_py}: {e}")
-                return name
+        def _find_plugin_info(target_name: str):
+            clean_target = target_name.split(':')[-1].strip() if ':' in target_name else target_name
+            for info in plugin_infos:
+                pname = info.get('plugin_name') or info.get('module_name') or ''
+                if not pname:
+                    continue
+                if pname == target_name:
+                    return info
+                clean = pname.split(':')[-1].strip() if ':' in pname else pname
+                if clean == clean_target:
+                    return info
+            return None
 
         # Load each toolbar plugin
         for plugin_name in toolbar_plugins:
             try:
-                # Find the module name for this plugin
-                module_name = None
-                for module_info in chisurf.plugins.__path__:
-                    for _, name, _ in pkgutil.iter_modules([module_info]):
-                        # Get the plugin name without importing
-                        extracted_name = get_plugin_name(plugin_root, name)
-                        # Check if the extracted name matches the plugin name
-                        # For user plugins, we need to check both with and without category prefix
-                        if extracted_name == plugin_name:
-                            module_name = name
-                            break
-                        # Also check if the clean name (without category) matches
-                        # This is for backward compatibility with plugins that don't use category prefix
-                        clean_extracted = extracted_name.split(':')[-1]
-                        clean_plugin = plugin_name.split(':')[-1]
-                        if clean_extracted == clean_plugin:
-                            module_name = name
-                            break
-                    if module_name:
-                        break
-
-                if not module_name:
-                    # Try to find the module in the user plugins directory
-                    user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-                    for name in os.listdir(user_plugin_root) if os.path.isdir(user_plugin_root) else []:
-                        if os.path.isdir(user_plugin_root / name):
-                            # Get the plugin name from the user directory
-                            extracted_name = get_plugin_name(user_plugin_root, name, check_user_dir=False)
-                            # Check if the extracted name matches the plugin name
-                            if extracted_name == plugin_name:
-                                module_name = name
-                                break
-                            # Also check if the clean name (without category) matches
-                            clean_extracted = extracted_name.split(':')[-1]
-                            clean_plugin = plugin_name.split(':')[-1]
-                            if clean_extracted == clean_plugin:
-                                module_name = name
-                                break
-
-                if not module_name:
+                info = _find_plugin_info(plugin_name)
+                if info is None:
                     chisurf.logging.warning(f"Could not find module for plugin: {plugin_name}")
                     continue
 
-                # Build the module path for later use with onRunMacro
-                module_path = f"chisurf.plugins.{module_name}"
-
-                # Check if this is a user plugin
-                user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-                user_plugin_dir = user_plugin_root / module_name
-                is_user_plugin = user_plugin_dir.exists()
-
-                # If it's a user plugin, get the name from the user plugin directory
-                if is_user_plugin:
-                    user_plugin_name = get_plugin_name(user_plugin_root, module_name, check_user_dir=False)
-                    if ":" in user_plugin_name:
-                        # Use the user plugin name if it has a category prefix
-                        plugin_name = user_plugin_name
-                        chisurf.logging.info(f"Using user plugin name: {plugin_name}")
+                module_path = info.get('module_path')
+                module_name = info.get('module_name') or ''
+                package_dir = pathlib.Path(info.get('package_dir'))
 
                 # Get the clean plugin name (without sorting prefix)
                 clean_name = plugin_name.split(':')[-1]
@@ -1114,26 +1047,14 @@ class Main(QtWidgets.QMainWindow):
                 action = QtWidgets.QAction("", self)
 
                 # Set icon if available
-                # Check both built-in and user plugin directories for icons
-                icon_path = plugin_root / module_name / 'icon.png'
-                user_icon_path = user_plugin_root / module_name / 'icon.png'
-
+                icon_path = package_dir / 'icon.png'
                 if icon_path.exists():
                     action.setIcon(QtGui.QIcon(str(icon_path)))
-                elif user_icon_path.exists():
-                    action.setIcon(QtGui.QIcon(str(user_icon_path)))
 
-                # Get plugin description from docstring
-                # Check both built-in and user plugin directories for docstrings
-                plugin_path = plugin_root / module_name
-                user_plugin_path = user_plugin_root / module_name
-
-                description = read_module_docstring(plugin_path)
-                if description is None:
-                    # Try user plugin path
-                    description = read_module_docstring(user_plugin_path)
-                    if description is None:
-                        description = "No description available."
+                # Get plugin description from metadata or docstring
+                description = info.get('description')
+                if not description:
+                    description = read_module_docstring(package_dir) or "No description available."
 
                 # Set tooltip to show plugin name followed by description
                 action.setToolTip(f"{clean_name}: {description}")
@@ -1150,44 +1071,18 @@ class Main(QtWidgets.QMainWindow):
             except Exception as e:
                 chisurf.logging.error(f"Error loading toolbar plugin {plugin_name}: {e}")
 
-    def load_and_show_plugin(self, module_path):
-        """Load and show a plugin from its module path."""
+    def _run_plugin_from_dir(self, plugin_dir_to_use):
+        """Helper to run a plugin given its directory."""
         try:
             import pathlib
             from functools import partial
 
-            # Extract the module name from the module path
-            module_name = module_path.split('.')[-1]
-
-            # Determine the built-in plugin directory
-            plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
-            plugin_dir = plugin_root / module_name
-
-            # Determine the user plugin directory
-            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-            user_plugin_dir = user_plugin_root / module_name
-
-            # Check if the plugin exists in the built-in directory
-            if plugin_dir.exists():
-                # Use the built-in plugin
-                plugin_dir_to_use = plugin_dir
-                is_user_plugin = False
-            # Check if the plugin exists in the user directory
-            elif user_plugin_dir.exists():
-                # Use the user plugin
-                plugin_dir_to_use = user_plugin_dir
-                is_user_plugin = True
-            else:
-                chisurf.logging.warning(f"Plugin directory not found in either built-in or user locations: {module_name}")
-                return
-
-            # Determine which file to run: wizard.py if it exists, else __init__.py
+            plugin_dir_to_use = pathlib.Path(plugin_dir_to_use)
             wizard_path = plugin_dir_to_use / "wizard.py"
             init_path = plugin_dir_to_use / "__init__.py"
 
             # Check if wizard.py exists
             if wizard_path.exists():
-                # Run the wizard.py with specific parameters
                 adr = "https://github.com/fluorescence-tools/chisurf"  # Default value
                 p = partial(
                     self.onRunMacro, wizard_path,
@@ -1195,16 +1090,51 @@ class Main(QtWidgets.QMainWindow):
                     globals={'__name__': 'plugin', 'adr': adr}
                 )
                 p()
-            # If no wizard.py, run the plugin's __init__.py using onRunMacro
             elif init_path.exists():
-                # Run the __init__.py with specific parameters
+                # If no wizard.py, run the plugin's __init__.py using onRunMacro
                 self.onRunMacro(
                     init_path,
                     executor='exec',
                     globals={'__name__': 'plugin'}
                 )
             else:
-                chisurf.logging.warning(f"No wizard.py or __init__.py found for plugin: {module_path}")
+                chisurf.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
+        except Exception as e:
+            chisurf.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")
+
+    def load_and_show_plugin(self, module_path):
+        """Load and show a plugin from its module path."""
+        try:
+            import pathlib
+
+            plugin_dir_to_use = None
+
+            # First try to resolve the plugin via chisurf.plugins.iter_plugins
+            try:
+                for info in chisurf.plugins.iter_plugins():
+                    if info.get('module_path') == module_path:
+                        plugin_dir_to_use = pathlib.Path(info.get('package_dir'))
+                        break
+            except Exception:
+                plugin_dir_to_use = None
+
+            # Fallback to legacy behavior using flat module names
+            if plugin_dir_to_use is None:
+                module_name = module_path.split('.')[-1]
+                plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+                plugin_dir = plugin_root / module_name
+                user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                user_plugin_dir = user_plugin_root / module_name
+
+                if plugin_dir.exists():
+                    plugin_dir_to_use = plugin_dir
+                elif user_plugin_dir.exists():
+                    plugin_dir_to_use = user_plugin_dir
+                else:
+                    chisurf.logging.warning(f"Plugin directory not found in either built-in or user locations: {module_path}")
+                    return
+
+            self._run_plugin_from_dir(plugin_dir_to_use)
 
         except Exception as e:
             chisurf.logging.error(f"Error loading plugin {module_path}: {e}")
@@ -1311,10 +1241,102 @@ class Main(QtWidgets.QMainWindow):
         """
         Initialize experiment setups based on configuration from YAML file.
         """
+        import copy
         import yaml
         import pathlib
         import shutil
         import chisurf.experiments
+
+        def _load_yaml_config(path: pathlib.Path) -> dict:
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    return yaml.safe_load(f) or {}
+            except Exception:
+                return {}
+
+        def _deep_merge_dicts(base: dict, override: dict) -> dict:
+            result = copy.deepcopy(base) if base else {}
+            for key, value in (override or {}).items():
+                if (
+                    isinstance(value, dict)
+                    and isinstance(result.get(key), dict)
+                ):
+                    result[key] = _deep_merge_dicts(result[key], value)
+                else:
+                    result[key] = copy.deepcopy(value)
+            return result
+
+        def _summarize_experiment_config_diff(default_cfg: dict, user_cfg: dict, max_lines: int = 10) -> str:
+            default_cfg = default_cfg or {}
+            user_cfg = user_cfg or {}
+            lines: list[str] = []
+
+            try:
+                default_keys = set(default_cfg.keys())
+                user_keys = set(user_cfg.keys())
+            except Exception:
+                default_keys = set()
+                user_keys = set()
+
+            added_sections = sorted(user_keys - default_keys)
+            removed_sections = sorted(default_keys - user_keys)
+            common_sections = default_keys & user_keys
+
+            if added_sections:
+                lines.append("  - Added sections: " + ", ".join(added_sections))
+            if removed_sections:
+                lines.append("  - Removed sections: " + ", ".join(removed_sections))
+
+            try:
+                default_types = default_cfg.get("experiment_types") or {}
+                user_types = user_cfg.get("experiment_types") or {}
+                if isinstance(default_types, dict) and isinstance(user_types, dict):
+                    def_type_keys = set(default_types.keys())
+                    user_type_keys = set(user_types.keys())
+                    added_types = sorted(user_type_keys - def_type_keys)
+                    removed_types = sorted(def_type_keys - user_type_keys)
+                    changed_types = []
+                    for key in sorted(def_type_keys & user_type_keys):
+                        d_val = default_types.get(key) or {}
+                        u_val = user_types.get(key) or {}
+                        if not isinstance(d_val, dict) or not isinstance(u_val, dict):
+                            if d_val != u_val:
+                                changed_types.append(key)
+                            continue
+                        name_changed = d_val.get("name", key) != u_val.get("name", key)
+                        hidden_changed = bool(d_val.get("hidden", False)) != bool(u_val.get("hidden", False))
+                        if name_changed or hidden_changed:
+                            changed_types.append(key)
+                    if added_types:
+                        lines.append("  - Added experiment types: " + ", ".join(added_types))
+                    if removed_types:
+                        lines.append("  - Removed experiment types: " + ", ".join(removed_types))
+                    if changed_types:
+                        lines.append("  - Modified experiment types: " + ", ".join(changed_types))
+            except Exception:
+                pass
+
+            changed_sections = []
+            for key in sorted(common_sections):
+                if key in ("experiment_types", "global"):
+                    continue
+                try:
+                    if default_cfg.get(key) != user_cfg.get(key):
+                        changed_sections.append(key)
+                except Exception:
+                    continue
+            if changed_sections:
+                lines.append("  - Modified experiment sections: " + ", ".join(changed_sections))
+
+            if not lines:
+                return ""
+
+            if len(lines) > max_lines:
+                extra = len(lines) - max_lines
+                lines = lines[:max_lines]
+                lines.append(f"  ... and {extra} more change(s).")
+
+            return "\n".join(lines)
 
         # Define paths for experiment configuration file
         source_config_file = pathlib.Path(chisurf.settings.get_path('chisurf')) / "settings" / "experiment_configs.yaml"
@@ -1340,14 +1362,33 @@ class Main(QtWidgets.QMainWindow):
                     app_running = False
 
                 if app_running:
+                    diff_summary = ""
+                    try:
+                        default_for_diff = _load_yaml_config(source_config_file)
+                        user_for_diff = _load_yaml_config(user_config_file)
+                        if isinstance(default_for_diff, dict) or isinstance(user_for_diff, dict):
+                            diff_summary = _summarize_experiment_config_diff(
+                                default_for_diff or {},
+                                user_for_diff or {}
+                            )
+                    except Exception:
+                        diff_summary = ""
+
                     msg = QtWidgets.QMessageBox(self)
                     msg.setWindowTitle("Experiment configuration update available")
                     msg.setIcon(QtWidgets.QMessageBox.Information)
                     msg.setText("The experiment configuration file in your settings folder differs from the latest shipped version.")
-                    msg.setInformativeText(
+                    base_info = (
                         "Do you want to update your experiment configuration to the new default?\n\n"
                         "This will overwrite your current user experiment configuration file."
                     )
+                    if diff_summary:
+                        msg.setInformativeText(
+                            base_info + "\n\nChanges detected compared to your current configuration:\n" +
+                            diff_summary
+                        )
+                    else:
+                        msg.setInformativeText(base_info)
                     yes_button = msg.addButton("Update", QtWidgets.QMessageBox.YesRole)
                     msg.addButton("Skip", QtWidgets.QMessageBox.NoRole)
                     try:
@@ -1385,14 +1426,17 @@ class Main(QtWidgets.QMainWindow):
                 chisurf.logging.warning(f"Experiment configuration file not found: {source_config_file}")
                 experiment_configs = {}
 
-        # Load experiment configurations from YAML file if it exists
-        if user_config_file.exists():
-            try:
-                with open(user_config_file, 'r') as f:
-                    experiment_configs = yaml.safe_load(f) or {}
-            except Exception as e:
-                chisurf.logging.error(f"Error loading experiment configurations: {e}")
-                experiment_configs = {}
+        # Load packaged defaults and user overrides (if any), then merge them so
+        # newly shipped experiments automatically appear unless the user
+        # explicitly overrides them.
+        default_configs = _load_yaml_config(source_config_file)
+        user_configs = _load_yaml_config(user_config_file) if user_config_file.exists() else {}
+        if default_configs and user_configs:
+            experiment_configs = _deep_merge_dicts(default_configs, user_configs)
+        elif default_configs:
+            experiment_configs = default_configs
+        else:
+            experiment_configs = user_configs
 
         # Set up each standard experiment based on its configuration
         if experiment_configs:
