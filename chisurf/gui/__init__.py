@@ -577,9 +577,11 @@ def setup_gui(
         # Store the plugin menu in a global variable so it can be accessed by populate_notebooks
         global plugin_menu_action
         plugin_menu_action = plugin_menu.menuAction()
-        plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
 
-        # Dictionary to store submenus
+        # Dedicated submenu for development plugins that live under chisurf.plugins._dev
+        dev_menu = plugin_menu.addMenu("Dev")
+
+        # Dictionary to store submenus for non-dev plugins
         submenus = {}
 
         # Get plugin settings
@@ -591,77 +593,70 @@ def setup_gui(
         # Check if we're in experimental mode
         experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
 
-        # Get all module names from built-in plugins
-        module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
-        module_names = [name for _, name, _ in module_infos]
+        # Discover plugins (built-in + user, including nested subpackages)
+        try:
+            plugin_infos = list(chisurf.plugins.iter_plugins())
+        except Exception:
+            plugin_infos = []
 
-        # Add user plugins
-        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-        if user_plugin_root.exists() and user_plugin_root.is_dir():
-            # Get all directories in the user plugin root
-            for item in user_plugin_root.iterdir():
-                if item.is_dir() and (item / "__init__.py").exists():
-                    # Add the directory name to the list of module names if it's not already there
-                    if item.name not in module_names:
-                        module_names.append(item.name)
+        # Resolve the built-in plugins root so we can detect the _dev subtree
+        try:
+            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent.resolve()
+        except Exception:
+            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent
 
-        # Create a list of (module_name, order) tuples
-        module_order_pairs = []
-        for module_name in module_names:
-            # Get plugin metadata without importing
-            name, _ = get_plugin_metadata(plugin_root, module_name)
+        # Resolve the built-in plugins root so we can detect the _dev subtree
+        try:
+            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent.resolve()
+        except Exception:
+            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent
 
-            # Check if this is a user plugin
-            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
-            user_plugin_dir = user_plugin_root / module_name
-            is_user_plugin = user_plugin_dir.exists() and (user_plugin_dir / "__init__.py").exists()
+        # Sort plugins by order (ascending) then by plugin name
+        ordered = []
+        for info in plugin_infos:
+            plugin_name = info.get('plugin_name') or info.get('module_name') or ''
+            order = plugin_order.get(plugin_name, 0)
+            ordered.append((order, plugin_name, info))
+        ordered.sort(key=lambda x: (x[0], x[1]))
 
-            # If it's a user plugin, get the name from the user plugin directory
-            if is_user_plugin:
-                # Try to get the name from the user plugin directory
-                try:
-                    # Read the source
-                    source = (user_plugin_dir / "__init__.py").read_text(encoding="utf-8")
+        for _order, plugin_name, info in ordered:
+            module_path = info.get('module_path')
+            module_name = info.get('module_name') or ''
+            package_dir = pathlib.Path(info.get('package_dir'))
+            source = info.get('source') or 'built-in'
 
-                    # Parse into an AST
-                    tree = ast.parse(source, filename=str(user_plugin_dir / "__init__.py"))
+            # Check disabled/broken status
+            clean_name = plugin_name.split(':')[-1].strip() if ':' in plugin_name else plugin_name
+            is_broken = (
+                plugin_name in disabled_plugins
+                or module_name in disabled_plugins
+                or clean_name in disabled_plugins
+            )
 
-                    # Look for a name assignment
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Assign):
-                            for target in node.targets:
-                                if isinstance(target, ast.Name) and target.id == 'name':
-                                    if isinstance(node.value, ast.Str):
-                                        user_name = node.value.s
-                                        chisurf.logging.info(f"User plugin name: {user_name} (module: {module_name})")
-                                        name = user_name
-                                    elif isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
-                                        user_name = node.value.value
-                                        chisurf.logging.info(f"User plugin name: {user_name} (module: {module_name})")
-                                        name = user_name
-                except Exception as e:
-                    chisurf.logging.warning(f"Error extracting name from {user_plugin_dir / '__init__.py'}: {e}")
+            # Detect built-in development plugins that live under the _dev package
+            is_dev = False
+            try:
+                rel = package_dir.resolve().relative_to(plugins_root)
+                if rel.parts and rel.parts[0] == "_dev":
+                    is_dev = True
+            except Exception:
+                is_dev = False
 
-            # Get the order from plugin_order, default to 0 if not set
-            order = plugin_order.get(name, 0)
-            module_order_pairs.append((module_name, order, name))
-
-        # Sort by order (ascending) and then by module_name (alphabetically)
-        module_order_pairs.sort(key=lambda x: (x[1], x[0]))
-
-        # Process modules in the sorted order
-        for module_name, _, name in module_order_pairs:
-            # Check if this plugin is marked as broken
-            # Handle broken plugins only by their name not location in menu
-            clean_name = name.split(":")[-1]
-            is_broken = name in disabled_plugins or module_name in disabled_plugins or clean_name in disabled_plugins
+            # Detect built-in development plugins that live under the _dev package
+            is_dev = False
+            try:
+                rel = package_dir.resolve().relative_to(plugins_root)
+                if rel.parts and rel.parts[0] == "_dev":
+                    is_dev = True
+            except Exception:
+                is_dev = False
 
             # Skip broken plugins if they should be hidden and we're not in experimental mode
             if is_broken and hide_disabled_plugins and not experimental_mode:
                 continue
 
             # Determine which file to run: wizard.py if it exists, else __init__.py
-            plugin_dir = plugin_root / module_name
+            plugin_dir = package_dir
             wizard_file = plugin_dir / "wizard.py"
             script_file = wizard_file if wizard_file.is_file() else (plugin_dir / "__init__.py")
 
@@ -675,47 +670,55 @@ def setup_gui(
 
             # Check for icon
             icon = None
-            # Look for icon in plugin directory (PNG preferred, fallback to SVG)
             for _icon_name in ("icon.png", "icon.svg"):
                 icon_path = plugin_dir / _icon_name
                 if icon_path.exists():
                     icon = QtGui.QIcon(str(icon_path))
                     break
 
-            # Get plugin description
-            _, description = get_plugin_metadata(plugin_root, module_name)
+            # Get plugin description from iter_plugins metadata or fallback to docstring
+            description = info.get('description') or "No description available."
+
+            # Route development plugins into the dedicated Dev submenu, using the clean
+            # name (without grouping prefix) as the visible label.
+            if is_dev:
+                display_name = clean_name or plugin_name
+                plugin_action = QtWidgets.QAction(f"{display_name}", window)
+                if icon:
+                    plugin_action.setIcon(icon)
+                plugin_action.triggered.connect(callback)
+                plugin_action.setToolTip(description)
+                if is_broken and experimental_mode:
+                    plugin_action.setText(f"{display_name} [BROKEN]")
+                dev_menu.addAction(plugin_action)
+                continue
 
             # Check if the name contains a colon to determine if it should go in a submenu
-            if ":" in name:
-                # Split the name into submenu name and plugin name
-                submenu_name, plugin_name = name.split(":", 1)
+            if ":" in plugin_name:
+                submenu_name, short_name = plugin_name.split(":", 1)
 
                 # Create submenu if it doesn't exist
                 if submenu_name not in submenus:
                     submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
 
                 # Add the plugin to the submenu
-                plugin_action = QtWidgets.QAction(f"{plugin_name.strip()}", window)
+                plugin_action = QtWidgets.QAction(f"{short_name.strip()}", window)
                 if icon:
                     plugin_action.setIcon(icon)
                 plugin_action.triggered.connect(callback)
-                # Set tooltip with plugin description
                 plugin_action.setToolTip(description)
-                # Add a visual indicator for broken plugins in experimental mode
                 if is_broken and experimental_mode:
-                    plugin_action.setText(f"{plugin_name.strip()} [BROKEN]")
+                    plugin_action.setText(f"{short_name.strip()} [BROKEN]")
                 submenus[submenu_name].addAction(plugin_action)
             else:
                 # Add the plugin directly to the main menu
-                plugin_action = QtWidgets.QAction(f"{name}", window)
+                plugin_action = QtWidgets.QAction(f"{plugin_name}", window)
                 if icon:
                     plugin_action.setIcon(icon)
                 plugin_action.triggered.connect(callback)
-                # Set tooltip with plugin description
                 plugin_action.setToolTip(description)
-                # Add a visual indicator for broken plugins in experimental mode
                 if is_broken and experimental_mode:
-                    plugin_action.setText(f"{name} [BROKEN]")
+                    plugin_action.setText(f"{plugin_name} [BROKEN]")
                 plugin_menu.addAction(plugin_action)
 
     def populate_notebooks():
@@ -834,8 +837,7 @@ def setup_gui(
             chisurf.logging.info("Startup update prompt suppressed by user settings.")
         else:
             from chisurf.plugins.updater import updater as _updater_mod
-            from PyQt5.QtWidgets import QMessageBox
-            
+
             def _startup_update_check():
                 update_available, latest_version, error = _updater_mod.check_for_updates()
                 if error:
@@ -858,14 +860,14 @@ def setup_gui(
                             )
                             + "Do you want to open the Updater now?"
                         )
-                        reply = QMessageBox.question(
+                        reply = QtWidgets.QMessageBox.question(
                             None,
                             "Update Available",
                             _msg,
-                            QMessageBox.Yes | QMessageBox.No,
-                            QMessageBox.Yes
+                            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                            QtWidgets.QMessageBox.Yes,
                         )
-                        if reply == QMessageBox.Yes:
+                        if reply == QtWidgets.QMessageBox.Yes:
                             import importlib
                             updater_plugin = importlib.import_module("chisurf.plugins.updater")
                             # Keep a strong reference to prevent garbage collection from closing the window
