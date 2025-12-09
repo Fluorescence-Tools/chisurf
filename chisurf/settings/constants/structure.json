@@ -16,6 +16,9 @@
             "CB": [1.5, 2.9]
         }
     },
+    "IMP": {
+        "filter_non_standard_residues": true
+    },
     "Periodic Table": {
         "Ru": {
             "Atomic weight": 101.07,
