@@ -109,7 +109,8 @@ gui:
     "History / Log": "#3b6767"
   show_console: true
   show_macro_edit: true
-  style_sheet: dark.qss
+  style_sheet: dark_blue_flat.qss
+  mol_viewer: pymol  # 3D molecule viewer backend: pymol (default) or chimol
   start_jupyter_on_startup: false
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
@@ -216,7 +217,7 @@ plugins:
   - Et-Model free
   - Dye-diffusion
   disabled_plugins:
-  - TTTR:Convert
+  - TTTR:Splitter
   - TTTR:Correlate
   - TTTR:Generate Decay
   - Tools:Bayesian FRET Analysis
