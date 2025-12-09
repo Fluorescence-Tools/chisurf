@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import os
 
-# Ensure Qt uses software OpenGL if nothing else is configured.
-if not os.environ.get("QT_OPENGL"):
-    os.environ["QT_OPENGL"] = "software"
-
 
 def apply_platform_window_tweaks(window) -> None:
     """Apply small, non-invasive tweaks to a top-level window frame.
