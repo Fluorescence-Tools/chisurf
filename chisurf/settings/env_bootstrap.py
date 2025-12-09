@@ -184,18 +184,36 @@ def _init_vispy() -> None:
 
 def _preload_freetype() -> None:
     # Preload FreeType to avoid lazy loader issues in some environments
+    if os.environ.get("CHISURF_SKIP_PRELOAD_FREETYPE", "").lower() in {"1", "true", "yes"}:
+        return
     if IS_WIN:
-        patterns = [str(APPROOT / "**" / "freetype*.dll")]
+        cand_dirs = [
+            APPROOT / "Library" / "bin",
+            APPROOT / "bin",
+        ]
+        patterns = [str(d / "freetype*.dll") for d in cand_dirs]
     elif IS_LNX:
-        patterns = [
-            str(APPROOT / "**" / "libfreetype.so"),
-            str(APPROOT / "**" / "libfreetype.so.*"),
+        cand_dirs = [
+            APPROOT / "lib",
+            APPROOT / "Library" / "lib",
         ]
+        patterns = []
+        for d in cand_dirs:
+            patterns.extend([
+                str(d / "libfreetype.so"),
+                str(d / "libfreetype.so.*"),
+            ])
     else:  # macOS
-        patterns = [
-            str(APPROOT / "**" / "libfreetype.dylib"),
-            str(APPROOT / "**" / "libfreetype*.dylib"),
+        cand_dirs = [
+            APPROOT / "lib",
+            APPROOT / "Library" / "lib",
         ]
+        patterns = []
+        for d in cand_dirs:
+            patterns.extend([
+                str(d / "libfreetype.dylib"),
+                str(d / "libfreetype*.dylib"),
+            ])
 
     ft = _glob_one(patterns)
     if not ft:
