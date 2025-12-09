@@ -14,7 +14,7 @@ from chisurf import plots
 import chisurf.gui.widgets.fitting.widgets as fitting_widgets
 
 # Reuse dye database and physical helpers from the FCS calculator plugin
-from chisurf.plugins.fcs_calculator.wizard import (
+from chisurf.plugins.fcs.fcs_calculator.wizard import (
     DYE_DATA,
     water_viscosity_Pa_s,
     stokes_einstein_D,
