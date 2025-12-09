@@ -155,22 +155,35 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         for nbr, d in enumerate(self.datasets):
             # If group of curves
             if isinstance(d, chisurf.data.ExperimentDataGroup):
-                experiment_type = d[0].experiment.name
-                widget_name = pathlib.Path(d[0].name).name
-                item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
-                for di in d:
-                    fn = di.name
+                if len(d) == 1:
+                    di = d[0]
+                    widget_name = pathlib.Path(di.name).name
                     experiment_type = di.experiment.name
-                    widget_name = pathlib.Path(fn).name
-                    i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
+                    item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
                     tooltip = di.filename
                     if tooltip == "None" or tooltip == "No file":
-                        tooltip = fn
-                    # Check if meta_data contains a filename
+                        tooltip = di.name
                     if hasattr(di, 'meta_data') and di.meta_data and 'filename' in di.meta_data:
                         tooltip = di.meta_data['filename']
-                    i2.setToolTip(1, tooltip)
-                    i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+                    item.setToolTip(1, tooltip)
+                    item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+                else:
+                    experiment_type = d[0].experiment.name
+                    widget_name = pathlib.Path(d[0].name).name
+                    item = QtWidgets.QTreeWidgetItem(self, [str(nbr), widget_name, experiment_type])
+                    for di in d:
+                        fn = di.name
+                        experiment_type = di.experiment.name
+                        widget_name = pathlib.Path(fn).name
+                        i2 = QtWidgets.QTreeWidgetItem(item, [str(nbr), widget_name, experiment_type])
+                        tooltip = di.filename
+                        if tooltip == "None" or tooltip == "No file":
+                            tooltip = fn
+                        # Check if meta_data contains a filename
+                        if hasattr(di, 'meta_data') and di.meta_data and 'filename' in di.meta_data:
+                            tooltip = di.meta_data['filename']
+                        i2.setToolTip(1, tooltip)
+                        i2.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
             else:
                 fn = d.name
                 widget_name = pathlib.Path(fn).name
