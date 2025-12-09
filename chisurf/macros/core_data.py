@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import pathlib
 import traceback
 
+import chisurf
 import chisurf.base
 import chisurf.data
+import chisurf.experiments
+import chisurf.experiments.modelling
 import chisurf.fitting
 import chisurf.gui
 import chisurf.gui.widgets
@@ -67,17 +71,33 @@ def add_dataset(
         **kwargs
 ) -> None:
     try:
-        cs = chisurf.cs
+        cs = getattr(chisurf, 'cs', None)
 
         filename = kwargs.get('filename', None)
-        if filename is not None:
-            filename = filename.split('|')
-            if len(filename) == 1:
-                filename = filename[0]
+        primary_filename = None
+        if isinstance(filename, (list, tuple)):
+            if filename:
+                primary_filename = filename[0]
+        elif isinstance(filename, str):
+            parts = filename.split('|')
+            if len(parts) == 1:
+                primary_filename = parts[0]
+                filename = parts[0]
+            else:
+                filename = parts
+                primary_filename = parts[0]
+        elif filename is not None:
+            primary_filename = str(filename)
         kwargs['filename'] = filename
 
         if experiment_reader is None:
-            experiment_reader = cs.current_experiment_reader
+            try:
+                experiment_reader = getattr(cs, 'current_experiment_reader')
+            except Exception:
+                experiment_reader = None
+
+        if experiment_reader is None and primary_filename:
+            experiment_reader = _auto_reader_from_filename(primary_filename)
 
         # Obtain dataset if not provided
         if dataset is None and experiment_reader is not None:
@@ -88,7 +108,11 @@ def add_dataset(
             chisurf.gui.widgets.msg_box = chisurf.gui.widgets.MyMessageBox(
                 label="Error",
                 info="No data could be read. Check reading settings and file.",
-                details="Reader returned no dataset."
+                details=(
+                    "Reader returned no dataset."
+                    if experiment_reader is not None
+                    else "No experiment reader available for the provided file."
+                )
             )
             return
 
@@ -101,7 +125,8 @@ def add_dataset(
         # TCSPCReader) return DataCurveGroup/DataGroup objects; those need
         # to be converted so that the *elements* become group members,
         # instead of wrapping the group itself as a single element.
-        if isinstance(dataset, chisurf.data.ExperimentDataGroup):
+        is_experiment_group = isinstance(dataset, chisurf.data.ExperimentDataGroup)
+        if is_experiment_group:
             # Already in the expected grouped form
             dataset_group = dataset
         elif isinstance(dataset, (chisurf.data.DataGroup, list, tuple)):
@@ -121,8 +146,12 @@ def add_dataset(
             )
             return
 
-        # Append valid data
-        if len(dataset_group) == 1:
+        # Append valid data. Preserve ExperimentDataGroup objects even when
+        # they currently hold a single entry so the GUI can still treat them
+        # as experiment datasets (e.g. structure modelling results).
+        if is_experiment_group:
+            chisurf.imported_datasets.append(dataset_group)
+        elif len(dataset_group) == 1:
             chisurf.imported_datasets.append(dataset_group[0])
         else:
             chisurf.imported_datasets.append(dataset_group)
@@ -139,3 +168,26 @@ def add_dataset(
             info="Error reading data. Check Reading settings and file.",
             details=error_trace
         )
+
+
+def _auto_reader_from_filename(filename: str):
+    """Return a best-effort experiment reader based on the filename."""
+    if not filename:
+        return None
+
+    suffix = pathlib.Path(filename).suffix.lower()
+    structure_ext = {'.pdb', '.cif', '.mmcif', '.gro', '.xyz'}
+    if suffix in structure_ext:
+        experiment = chisurf.experiment.get('Modelling')
+        if experiment is None:
+            experiment = chisurf.experiment.get('structure')
+        if experiment is None:
+            experiment = chisurf.experiments.types.get('structure')
+            if experiment is not None:
+                chisurf.experiment[experiment.name] = experiment
+        reader = chisurf.experiments.modelling.StructureReader(
+            name='Structure',
+            experiment=experiment
+        )
+        return reader
+    return None
