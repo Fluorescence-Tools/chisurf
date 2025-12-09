@@ -34,7 +34,7 @@ import sys
 import chisurf
 import ndxplorer
 
-from PyQt5.QtWidgets import *
+from qtpy.QtWidgets import QApplication
 
 log = chisurf.logging.info
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     ndx.show()
     ndx.raise_()
     ndx.activateWindow()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "plugin":
     ndx = ndxplorer.NDXplorer()
