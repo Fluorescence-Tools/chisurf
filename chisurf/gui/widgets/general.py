@@ -9,9 +9,6 @@ import pathlib
 from chisurf.gui import QtGui, QtWidgets, QtCore
 from io import BytesIO
 
-import pyqtgraph as pg
-import matplotlib.pyplot as plt
-
 import chisurf.fio
 import chisurf.settings
 import chisurf.curve
@@ -379,6 +376,9 @@ def make_widget_from_yaml(
     :param name: 
     :return: 
     """
+    
+    import pyqtgraph as pg
+
     def make_group(
             d,
             name: str = ''
@@ -422,6 +422,7 @@ def tex2svg(
     Returns:
         str: SVG render.
     """
+    import matplotlib.pyplot as plt
 
     fig = plt.figure(figsize=(0.01, 0.01))
     fig.text(0, 0, r'${}$'.format(formula), fontsize=fontsize)
