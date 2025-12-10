@@ -1,0 +1,44 @@
+# Default settings for ltf
+
+verbose: false
+
+estimate_background_parameter:
+  enabled: true
+  initial_irf_background: 0.0
+  fit_irf_background: true
+  average_window: 10
+
+analysis_range_parameter:
+  count_threshold: 10.0
+  area: 0.9999
+  start_at_peak: false
+  start_fraction: 0.005
+  skip_first_channels: 0
+  skip_last_channels: 0
+
+estimate_irf_shift_parameters:
+  enabled: true
+  apply_shift: true
+  irf_time_shift_scan_range: [-8.0, 8.0]
+  irf_time_shift_scan_n_steps: 20
+
+lifetime_fit_parameter:
+  find_optimal: false
+  maximum_number_of_lifetimes: 6
+  prob_threshold: 0.68
+  selection_mode: upper
+  plot_probabilities: true
+  plot_weighted_residuals: true
+  randomize_initial_values:
+    enabled: false
+    min_lifetime: 0.2
+    max_lifetime: 5.0
+    amplitude_variation: 0.5
+
+pile_up_correction:
+  enabled: false
+  rep_rate: 80.0
+  dead_time: 85.0
+  measurement_time: 60.0
+
+plot_resulting_fit: false

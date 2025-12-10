@@ -9,7 +9,7 @@ import json
 from typing import Optional, Dict, Any, List, Tuple
 
 import numpy as np
-from PyQt5 import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf.decorators
 import chisurf.gui.decorators
@@ -20,20 +20,21 @@ import chisurf.fio as io
 
 # Import matplotlib for plotting
 import matplotlib
-matplotlib.use('Qt5Agg')
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+matplotlib.use('QtAgg')
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-# Import lltf module
-import lltf
+from chisurf.plugins.lltf.core.settings import get_default_settings
+
+LLTF_MODULE_PATH = "chisurf.plugins.lltf.core"
 
 class QTextLogger(QtCore.QObject):
     """
     A QObject that you can assign to sys.stdout. It emits newText(str)
     whenever someone .write()s to it—and in the slot we update the QTextEdit.
     """
-    newText = QtCore.pyqtSignal(str)
+    newText = QtCore.Signal(str)
 
     def __init__(self, text_edit: QtWidgets.QPlainTextEdit):
         super().__init__()
@@ -47,7 +48,7 @@ class QTextLogger(QtCore.QObject):
     def flush(self):
         pass  # no‐op
 
-    @QtCore.pyqtSlot(str)
+    @QtCore.Slot(str)
     def _append_text(self, text: str):
         """
         Append text to the widget, handling carriage returns so the
@@ -96,7 +97,7 @@ class ProcessOutputWidget(QtWidgets.QWidget):
     """
 
     # Signal emitted when the process completes successfully
-    process_completed = QtCore.pyqtSignal(int)
+    process_completed = QtCore.Signal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -220,7 +221,7 @@ class ProcessOutputWidget(QtWidgets.QWidget):
                 QtCore.Q_ARG(int, -1)
             )
 
-    @QtCore.pyqtSlot(int)
+    @QtCore.Slot(int)
     def _process_finished(self, return_code: int):
         """Handle process completion."""
         self.running = False
@@ -532,61 +533,20 @@ class LLTFGUIWizard(QtWidgets.QMainWindow):
         """
         Set default configuration file from the lltf module.
         """
-        # Create a temporary config file if none exists
         temp_dir = tempfile.gettempdir()
         config_file = os.path.join(temp_dir, "lltf_config.yml")
 
-        # Default configuration
-        default_config = {
-            "verbose": True,
-            "estimate_background_parameter": {
-                "enabled": True,
-                "initial_irf_background": 0.0,
-                "fit_irf_background": True,
-                "average_window": 10
-            },
-            "analysis_range_parameter": {
-                "count_threshold": 10.0,
-                "area": 0.999,
-                "start_at_peak": False,
-                "start_fraction": 0.1,
-                "skip_first_channels": 0,
-                "skip_last_channels": 0
-            },
-            "estimate_irf_shift_parameters": {
-                "enabled": True,
-                "apply_shift": True,
-                "irf_time_shift_scan_range": [-8.0, 8.0],
-                "irf_time_shift_scan_n_steps": 20
-            },
-            "lifetime_fit_parameter": {
-                "find_optimal": False,
-                "maximum_number_of_lifetimes": 6,
-                "prob_threshold": 0.68,
-                "plot_probabilities": True,
-                "plot_weighted_residuals": True,
-                "randomize_initial_values": {
-                    "enabled": False,
-                    "min_lifetime": 0.5,
-                    "max_lifetime": 5.0,
-                    "amplitude_variation": 0.5
-                }
-            },
-            "pile_up_correction": {
-                "enabled": False,
-                "rep_rate": 80.0,
-                "dead_time": 85.0,
-                "measurement_time": 60.0
-            },
-            "plot_resulting_fit": False
-        }
+        try:
+            default_config = get_default_settings()
+        except Exception as exc:
+            # Fall back to an empty config if loading packaged defaults fails
+            default_config = {}
+            print(f"Failed to load LLTF default settings: {exc}")
 
-        # Write default config to file if it doesn't exist
         if not os.path.exists(config_file):
             with open(config_file, 'w') as f:
                 yaml.dump(default_config, f, default_flow_style=False)
 
-        # Set config file
         self.config_file = config_file
         self.config_file_edit.setText(config_file)
 
@@ -721,7 +681,7 @@ class LLTFGUIWizard(QtWidgets.QMainWindow):
         # Build command
         cmd = [
             sys.executable,
-            "-m", "lltf",
+            "-m", LLTF_MODULE_PATH,
             "fit",
             self.decay_file,
             self.irf_file,
