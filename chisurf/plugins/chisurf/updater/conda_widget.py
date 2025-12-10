@@ -293,7 +293,7 @@ class CondaManagerDialog(QDialog):
         except Exception:
             pass
         log_ctrl_lay.addWidget(QLabel("Output:"))
-        from PyQt5.QtWidgets import QComboBox
+        from qtpy.QtWidgets import QComboBox
         self.cmb_log_level = QComboBox()
         # Provide common levels
         self.cmb_log_level.addItems(["Debug", "Info", "Warning", "Error"])

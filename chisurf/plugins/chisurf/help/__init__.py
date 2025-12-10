@@ -16,9 +16,9 @@ import re
 import html as _html
 import pkgutil
 import importlib
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QTextBrowser, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QPlainTextEdit, QMessageBox
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QTextDocument, QImage
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QTextBrowser, QTreeWidget, QTreeWidgetItem, QSplitter, QLineEdit, QPlainTextEdit, QMessageBox
+from qtpy.QtCore import Qt, QUrl
+from qtpy.QtGui import QTextDocument, QImage
 
 import chisurf
 import chisurf.plugins
@@ -227,19 +227,20 @@ class HelpWidget(QWidget):
         plugin_order = plugin_settings.get('plugin_order', {})
         experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
 
-        # Discover plugin modules (built-in + user, via chisurf.plugins.__path__)
-        module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
-        module_names = [name for _, name, _ in module_infos]
+        # Discover plugin modules (built-in + user, including nested subpackages)
+        try:
+            plugin_infos = list(chisurf.plugins.iter_plugins())
+        except Exception:
+            plugin_infos = []
 
-        module_order_pairs = []  # (module_name, order, plugin_name, module)
+        module_order_pairs = []  # (order, plugin_name, info)
 
-        for module_name in module_names:
-            try:
-                module = importlib.import_module(f"chisurf.plugins.{module_name}")
-            except Exception:
+        for info in plugin_infos:
+            plugin_name = info.get('plugin_name') or info.get('module_name')
+            module_name = info.get('module_name') or ''
+            if not plugin_name:
                 continue
 
-            plugin_name = getattr(module, 'name', module_name)
             clean_name = plugin_name.split(":")[-1].strip() if ":" in plugin_name else plugin_name
 
             is_disabled = (
@@ -252,14 +253,14 @@ class HelpWidget(QWidget):
                 continue
 
             order = plugin_order.get(plugin_name, 0)
-            module_order_pairs.append((module_name, order, plugin_name, module))
+            module_order_pairs.append((order, plugin_name, info))
 
-        # Sort by order (ascending) and then by module_name (alphabetically),
-        # just like populate_plugins in the main GUI.
-        module_order_pairs.sort(key=lambda x: (x[1], x[0]))
+        # Sort by order (ascending) and then by plugin_name (alphabetically),
+        # mirroring populate_plugins in the main GUI.
+        module_order_pairs.sort(key=lambda x: (x[0], x[1]))
 
-        for module_name, _, plugin_name, module in module_order_pairs:
-            plugin_dir = pathlib.Path(module.__file__).resolve().parent
+        for _order, plugin_name, info in module_order_pairs:
+            plugin_dir = pathlib.Path(info.get('package_dir')).resolve()
             markdown_files = sorted(plugin_dir.rglob("*.md"))
             if not markdown_files:
                 continue

@@ -394,7 +394,10 @@ class GraphWizard(QtWidgets.QWidget):
         self.graph_widget = w
         return node_data
 
-    @chisurf.gui.decorators.init_with_ui("globalview.ui", path='chisurf/plugins/globalview/')
+    @chisurf.gui.decorators.init_with_ui(
+        "globalview.ui",
+        path=chisurf.settings.plugin_path / "chisurf" / "globalview"
+    )
     def __init__(
             self,
             fit_list: list[chisurf.fitting.FitGroup] = None,

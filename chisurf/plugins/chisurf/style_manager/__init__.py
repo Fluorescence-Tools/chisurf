@@ -14,13 +14,13 @@ import os
 import pathlib
 import shutil
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QComboBox, QMessageBox, QStatusBar,
-    QTextEdit, QPlainTextEdit, QInputDialog
+    QTextEdit, QPlainTextEdit, QInputDialog,
 )
-from PyQt5.QtCore import Qt, QRegExp
-from PyQt5.QtGui import QTextCharFormat, QFont, QColor, QSyntaxHighlighter
+from qtpy.QtCore import Qt, QRegExp
+from qtpy.QtGui import QTextCharFormat, QFont, QColor, QSyntaxHighlighter
 
 import chisurf
 import chisurf.settings

@@ -12,10 +12,10 @@ Features:
 
 import sys
 import pathlib
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QTextEdit, QSizePolicy
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5 import uic
+from qtpy.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QTextEdit, QSizePolicy
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QPixmap
+from qtpy import uic
 
 from chisurf import info
 

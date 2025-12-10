@@ -26,14 +26,14 @@ import platform
 import subprocess
 from typing import Optional
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QListWidget, QListWidgetItem, QCheckBox,
     QMessageBox, QGroupBox, QScrollArea, QSplitter, QTextEdit, QLineEdit,
-    QFileDialog, QInputDialog
+    QFileDialog, QInputDialog,
 )
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtGui import QIcon
 
 import chisurf
 import chisurf.plugins
@@ -210,71 +210,42 @@ class PluginManagerWidget(QMainWindow):
         # Store current filter text
         current_filter = self.filter_line_edit.text() if hasattr(self, 'filter_line_edit') else ""
 
-        # Determine built-in plugin directory
+        # Determine built-in plugin directory (used for backward-compatible paths)
         plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
 
-        # Determine user plugin directory
-        user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+        # Discover plugins (built-in + user, including nested subpackages)
+        try:
+            plugin_infos = list(chisurf.plugins.iter_plugins())
+        except Exception:
+            plugin_infos = []
 
-        # Find all module names from both built-in and user plugin directories
-        module_infos = list(pkgutil.iter_modules(chisurf.plugins.__path__))
-        module_names = [name for _, name, _ in module_infos]
-
-        # Add a label to indicate the source of each plugin (built-in or user)
-        module_sources = {name: 'built-in' for name in module_names}
-
-        # Create a list of (module_name, order, is_disabled) tuples
+        # Create a list of (info, order, is_disabled) tuples
         module_order_pairs = []
-        for module_name in module_names:
-            # Try to load the module to get its name
-            try:
-                module_path = f"chisurf.plugins.{module_name}"
-                module = importlib.import_module(module_path)
+        for info in plugin_infos:
+            module_path = info.get('module_path')
+            module_name = info.get('module_name') or ''
+            plugin_name = info.get('plugin_name') or module_name
+            source = info.get('source') or 'built-in'
 
-                # Import all submodules to ensure they're properly loaded
-                package_path = module.__path__ if hasattr(module, '__path__') else None
-                if package_path:
-                    # Temporarily add the plugin directory to sys.path for relative imports
-                    original_sys_path = sys.path.copy()
-                    for path in package_path:
-                        if path not in sys.path:
-                            sys.path.insert(0, path)
+            # Get the order from plugin_order, default to 0 if not set
+            order = self.plugin_order.get(plugin_name, 0)
 
-                    try:
-                        for _, submodule_name, is_pkg in pkgutil.walk_packages(package_path, f"{module_path}."):
-                            try:
-                                importlib.import_module(submodule_name)
-                            except Exception as sub_e:
-                                print(f"Error importing submodule {submodule_name}: {sub_e}")
-                    finally:
-                        # Restore the original sys.path
-                        sys.path = original_sys_path
+            # Check if this plugin is marked as disabled
+            clean_name = plugin_name.split(':')[-1].strip() if ':' in plugin_name else plugin_name
+            is_disabled = (
+                plugin_name in self.disabled_plugins
+                or module_name in self.disabled_plugins
+                or clean_name in self.disabled_plugins
+            )
 
-                name = getattr(module, 'name', module_name)
-                # Get the order from plugin_order, default to 0 if not set
-                order = self.plugin_order.get(name, 0)
+            module_order_pairs.append((info, order, is_disabled, plugin_name, module_name, source))
 
-                # Check if this plugin is marked as disabled
-                clean_name = name.split(':')[-1].strip() if ':' in name else name
-                is_disabled = (
-                        name in self.disabled_plugins
-                        or module_name in self.disabled_plugins
-                        or clean_name in self.disabled_plugins
-                )
+        # Sort by disabled status (enabled first), then by order (ascending), then by plugin_name (alphabetically)
+        module_order_pairs.sort(key=lambda x: (x[2], x[1], x[3]))
 
-                module_order_pairs.append((module_name, order, is_disabled))
-            except Exception:
-                # If module can't be loaded, use default order and mark as not disabled
-                module_order_pairs.append((module_name, 0, False))
-
-        # Sort by disabled status (enabled first), then by order (ascending), then by module_name (alphabetically)
-        module_order_pairs.sort(key=lambda x: (x[2], x[1], x[0]))
-
-        # Extract just the module names in the sorted order
-        module_names = [pair[0] for pair in module_order_pairs]
-
-        for module_name in module_names:
-            module_path = f"chisurf.plugins.{module_name}"
+        for info, _order, is_disabled, plugin_name, module_name, source in module_order_pairs:
+            module_path = info.get('module_path')
+            package_dir = info.get('package_dir') or plugin_root / module_name
             try:
                 module = importlib.import_module(module_path)
 
@@ -297,48 +268,40 @@ class PluginManagerWidget(QMainWindow):
                         # Restore the original sys.path
                         sys.path = original_sys_path
 
-                name = getattr(module, 'name', module_name)
+                name = getattr(module, 'name', plugin_name)
 
-                # Check if this plugin is marked as disabled
+                # Re-evaluate disabled status based on the resolved name
                 clean_name = name.split(':')[-1].strip() if ':' in name else name
                 is_disabled = (
-                        name in self.disabled_plugins
-                        or module_name in self.disabled_plugins
-                        or clean_name in self.disabled_plugins
+                    name in self.disabled_plugins
+                    or module_name in self.disabled_plugins
+                    or clean_name in self.disabled_plugins
                 )
 
                 # Create list item
-                # Add source indicator to the display name
-                source = module_sources.get(module_name, 'built-in')
                 display_name = f"{name} [{source}]"
                 item = QListWidgetItem(display_name)
-                item.setData(Qt.UserRole, module_name)
-                item.setData(Qt.UserRole + 1, source)  # Store the source for later use
+                # Track plugins by full module path so nested packages are unique
+                item.setData(Qt.UserRole, module_path)
+                item.setData(Qt.UserRole + 1, source)
 
-                # Set icon if available
-                # Check both built-in and user plugin directories for icons
-                icon_path = plugin_root / module_name / 'icon.png'
-                user_icon_path = user_plugin_root / module_name / 'icon.png'
-
+                # Set icon if available (prefer module-provided icon, then package_dir/icon.png)
+                icon_path = pathlib.Path(package_dir) / 'icon.png'
                 if hasattr(module, 'icon'):
                     item.setIcon(module.icon)
                 elif icon_path.exists():
                     item.setIcon(QIcon(str(icon_path)))
-                elif user_icon_path.exists():
-                    item.setIcon(QIcon(str(user_icon_path)))
 
                 # Mark plugins based on status
                 if is_disabled:
                     item.setForeground(Qt.gray)
-                    # Preserve the source indicator in the display name
-                    source = module_sources.get(module_name, 'built-in')
                     item.setText(f"{name} [DISABLED] [{source}]")
 
                 # Add to list widget
                 self.plugin_list.addItem(item)
 
                 # Store plugin metadata
-                plugin_path = plugin_root / module_name
+                plugin_path = pathlib.Path(package_dir)
                 doc = read_module_docstring(plugin_path)
                 if doc is None:
                     doc = "No description available."
@@ -349,9 +312,9 @@ class PluginManagerWidget(QMainWindow):
                     'path': str(plugin_path),
                     'doc': doc
                 }
-                self.plugins[module_name] = d
+                self.plugins[module_path] = d
             except Exception as e:
-                print(f"Error loading plugin {module_name}: {e}")
+                print(f"Error loading plugin {module_path}: {e}")
 
         # Apply current filter if any
         if hasattr(self, 'filter_line_edit') and current_filter:

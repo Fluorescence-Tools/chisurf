@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication
 
 
 def main():
@@ -16,11 +16,7 @@ def main():
     widget.show()
 
     # Start the Qt event loop
-    # Handle both PyQt5 exec_ and newer exec naming
-    if hasattr(app, 'exec_'):
-        sys.exit(app.exec_())
-    else:
-        sys.exit(app.exec())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

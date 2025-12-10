@@ -16,14 +16,14 @@ import importlib
 import yaml
 from typing import Optional, Dict, List, Type
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QListWidget, QListWidgetItem, QCheckBox,
     QMessageBox, QGroupBox, QScrollArea, QSplitter, QTextEdit, QLineEdit,
-    QTabWidget
+    QTabWidget,
 )
-from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon
+from qtpy.QtCore import Qt, QSize
+from qtpy.QtGui import QIcon
 
 import chisurf
 import chisurf.models

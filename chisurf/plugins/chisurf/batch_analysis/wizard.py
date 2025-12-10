@@ -6,13 +6,13 @@ import csv
 import tempfile
 import shutil
 
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets, QtCore
+from qtpy.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QPushButton, QProgressBar, QListWidget, QListWidgetItem, QFileDialog,
-    QMessageBox, QDialog, QTableWidget, QTableWidgetItem, QLineEdit, QAbstractItemView
+    QMessageBox, QDialog, QTableWidget, QTableWidgetItem, QLineEdit, QAbstractItemView,
 )
-from PyQt5.QtCore import Qt
+from qtpy.QtCore import Qt
 import chisurf  # your chisurf module with fits, macros, etc.
 
 
