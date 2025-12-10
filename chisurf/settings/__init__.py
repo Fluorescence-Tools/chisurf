@@ -32,9 +32,11 @@ _chisurf_user_cache_dir.mkdir(parents=True, exist_ok=True)
 
 # Path constants
 chisurf_settings_path = get_path('settings')
-macro_path = get_path('chisurf') / "macros"
-plugin_path = get_path('chisurf') / "plugins"
-notebook_path = get_path('chisurf') / "notebooks"
+chisurf_root = get_path('chisurf')
+macro_path = chisurf_root / "macros"
+plugin_path = chisurf_root / "plugins"
+_notebook_root = chisurf_root.parent / "notebooks"
+notebook_path = _notebook_root if _notebook_root.is_dir() else (chisurf_root / "notebooks")
 
 # Copy settings files if not already present
 copy_settings_to_user_folder()
