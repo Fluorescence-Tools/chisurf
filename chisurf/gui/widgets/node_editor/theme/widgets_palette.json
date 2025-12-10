@@ -1,0 +1,34 @@
+{
+  "groups": [
+    {
+      "title": "Numeric",
+      "items": [
+        {"node_type": "constant", "label": "Constant (slider)"},
+        {"node_type": "vector", "label": "Vector 1D"},
+        {"node_type": "controls", "label": "Controls panel"}
+      ]
+    },
+    {
+      "title": "Text",
+      "items": [
+        {"node_type": "text_entry", "label": "Text entry"},
+        {"node_type": "text_note", "label": "Text note"}
+      ]
+    },
+    {
+      "title": "Chinet / PT",
+      "items": [
+        {"node_type": "pt_constant", "label": "PT Constant"},
+        {"node_type": "pt_transform", "label": "PT Transform"},
+        {"node_type": "pt_output", "label": "PT Output"},
+        {"node_type": "pt_plot", "label": "PT Plot"}
+      ]
+    },
+    {
+      "title": "Output",
+      "items": [
+        {"node_type": "output", "label": "Output"}
+      ]
+    }
+  ]
+}

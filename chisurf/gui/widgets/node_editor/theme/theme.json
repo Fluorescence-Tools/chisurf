@@ -1,0 +1,99 @@
+{
+  "scene_background": [35, 35, 35],
+  "scene_gradient_top": [30, 30, 30],
+  "scene_gradient_bottom": [45, 45, 45],
+  "scene_grid_color": [60, 60, 60],
+  "scene_grid_enabled": true,
+  "scene_grid_step": 20,
+
+  "node_body_top": [62, 68, 74],
+  "node_body_bottom": [48, 52, 58],
+  "node_title_top": [70, 130, 175],
+  "node_title_bottom": [52, 105, 145],
+  "node_title_top_selected": [88, 156, 204],
+  "node_title_bottom_selected": [60, 120, 170],
+  "node_border": [20, 20, 20],
+  "node_border_selected": [90, 180, 255],
+
+  "port_neutral": [135, 135, 135],
+  "port_input_connected": [110, 170, 255],
+  "port_output_connected": [235, 205, 70],
+
+  "node_font_family": "Segoe UI",
+  "node_font_size": 9,
+  "node_button_height": 14,
+  "scrollbar_track": [40, 44, 52],
+  "scrollbar_handle": [120, 125, 135],
+  "scrollbar_handle_hover": [145, 155, 170],
+  "plot_foreground": [235, 235, 235],
+  "plot_background": [0, 0, 0],
+  "plot_background_opacity": 0.0,
+  "plot_line_width": 1.5,
+
+  "context_menu_bg_top": [46, 50, 56],
+  "context_menu_bg_bottom": [36, 40, 46],
+  "context_menu_border": [20, 20, 20],
+  "context_menu_text": [230, 230, 230],
+  "context_menu_highlight_top": [80, 130, 185],
+  "context_menu_highlight_bottom": [60, 110, 165],
+  "context_menu_separator": [70, 70, 70],
+  "context_menu_radius": 6,
+  "context_menu_padding": 2,
+  "context_menu_item_padding_h": 6,
+  "context_menu_item_padding_v": 2,
+  "context_menu_separator_margin_h": 6,
+  "context_menu_separator_margin_v": 3,
+
+  "node_content_margin_left": 12,
+  "node_content_margin_right": 6,
+  "node_content_top_offset": 3,
+  "node_default_width": 120,
+  "node_min_width": 120,
+  "node_resize_margin": 6,
+  "node_corner_radius": 3,
+
+  "node_title_height": 14,
+  "node_min_body_height": 20,
+
+  "node_layout_margin_h": 3,
+  "node_layout_margin_v_top": 1,
+  "node_layout_margin_v_bottom": 1,
+  "node_layout_spacing_small": 1,
+  "node_layout_spacing_default": 3,
+
+  "node_port_y_start": 8,
+  "node_port_y_start_collapsed": 4,
+  "node_port_y_step": 14,
+  "node_port_y_step_collapsed": 10,
+
+  "node_layout_v_top_output": 2,
+  "node_layout_v_bottom_output": 2,
+  "node_layout_v_top_controls": 2,
+  "node_layout_v_bottom_controls": 2,
+
+  "edge_normal": [160, 160, 160],
+  "edge_in_cycle": [200, 60, 60],
+  "arrow_normal": [220, 220, 220],
+  "arrow_in_cycle": [255, 160, 110],
+
+  "node_width_constant": 160,
+  "node_title_height_constant": 14,
+  "node_min_body_height_constant": 40,
+
+  "node_width_pt_constant": 180,
+  "node_title_height_pt_constant": 14,
+  "node_min_body_height_pt_constant": 40,
+
+  "node_width_pt_transform": 360,
+  "node_title_height_pt_transform": 14,
+  "node_min_body_height_pt_transform": 64,
+
+  "node_title_top_pt_transform": [90, 140, 210],
+  "node_title_bottom_pt_transform": [60, 100, 170],
+
+  "scrollbar_width": 1,
+  "scrollbar_handle_min_length": 1,
+
+  "context_menu_font_bold": true
+
+}

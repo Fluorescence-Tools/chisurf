@@ -1,0 +1,56 @@
+{
+  "nodes": [
+    {"id": "note1", "title": "Note", "type": "text_note", "config": {"label": "Note", "text": "Use this graph to explore math and PT nodes.", "title_color": [160, 160, 160], "body_color": [50, 50, 50]}, "inputs": [], "outputs": [], "pos": [-260, 360], "collapsed": false},
+    {"id": "txt1", "title": "Text entry", "type": "text_entry", "config": {"label": "Comment", "text": "This text hides when its input is wired.", "hide_value_when_connected": true, "title_color": [150, 150, 180], "body_color": [45, 45, 65]}, "inputs": ["Value"], "outputs": ["Value"], "pos": [40, 360], "collapsed": false},
+    {"id": "c1", "title": "Constant", "type": "constant", "config": {"label": "Value", "value": 10000.0, "title_color": [170, 80, 80], "body_color": [60, 40, 40], "border_color": [200, 110, 110]},   "inputs": [], "outputs": ["Value"], "pos": [-260, -80], "collapsed": false},
+    {"id": "c2", "title": "Constant", "type": "constant", "config": {"label": "Value", "value": 5000.0,  "title_color": [80, 150, 110], "body_color": [40, 60, 50]},   "inputs": [], "outputs": ["Value"], "pos": [-260, 0],   "collapsed": false},
+    {"id": "c3", "title": "Constant", "type": "constant", "config": {"label": "Value", "value": 50.0,    "title_color": [130, 100, 180], "body_color": [45, 45, 70]},  "inputs": [], "outputs": ["Value"], "pos": [-260, 100], "collapsed": true},
+
+    {"id": "sub1", "title": "Operation", "type": "binary_op", "config": {"op": "Subtract", "title_color": [90, 120, 190], "body_color": [50, 60, 90]},  "inputs": ["Value 1", "Value 2"], "outputs": ["Output"], "pos": [-40, -40], "collapsed": false},
+    {"id": "sub2", "title": "Operation", "type": "binary_op", "config": {"op": "Subtract", "title_color": [90, 120, 190]},  "inputs": ["Value 1", "Value 2"], "outputs": ["Output"], "pos": [-40, 80],  "collapsed": true},
+
+    {"id": "sqrt", "title": "Square root", "type": "generic",  "config": {"title_color": [150, 120, 70], "body_color": [65, 55, 40]},       "inputs": ["Value"], "outputs": ["Output"], "pos": [140, 80],  "collapsed": false},
+    {"id": "mul",  "title": "Operation",   "type": "binary_op", "config": {"op": "Multiply", "title_color": [200, 140, 80], "body_color": [70, 55, 35]}, "inputs": ["Value 1", "Value 2"], "outputs": ["Output"], "pos": [140, -40], "collapsed": false},
+    {"id": "ui",   "title": "Controls",    "type": "controls",  "config": {"title_color": [80, 140, 170]},      "inputs": [],        "outputs": [], "pos": [-260, 200], "collapsed": false},
+    {"id": "vec",  "title": "Vector",      "type": "vector",    "config": {"label": "Vector", "value": 1.0, "title_color": [70, 140, 200], "body_color": [40, 55, 75]}, "inputs": [], "outputs": ["Value"], "pos": [-260, 300], "collapsed": false},
+    {"id": "out",  "title": "Output",      "type": "output",    "config": {"text": "-", "title_color": [200, 90, 90], "body_color": [55, 45, 45], "border_color": [210, 120, 120]},      "inputs": ["Value"], "outputs": [], "pos": [340, -40], "collapsed": false},
+
+    {"id": "pt_c1", "title": "CN: alpha", "type": "pt_constant", "config": {"name": "alpha", "value": 1.5, "title_color": [100, 160, 200], "body_color": [40, 60, 80]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 200], "collapsed": false},
+    {"id": "pt_c2", "title": "CN: beta", "type": "pt_constant", "config": {"name": "beta",  "value": 2.0, "title_color": [120, 180, 160], "body_color": [40, 70, 65]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 280], "collapsed": false},
+    {"id": "pt_fn", "title": "PT Transform", "type": "pt_transform", "config": {"code": "def f(A=0.0, B=0.0):\n    return {'out_00': A + B, 'out_01': A - B, 'out_02': A * B}", "title_color": [170, 140, 210], "body_color": [55, 45, 80]}, "inputs": ["A", "B"], "outputs": ["out_00", "out_01", "out_02"], "pos": [180, 240], "collapsed": false},
+    {"id": "pt_out", "title": "PT Output", "type": "pt_output", "config": {"text": "-", "title_color": [210, 110, 160], "body_color": [60, 40, 60]}, "inputs": ["Value"], "outputs": [], "pos": [380, 240], "collapsed": false}
+  ],
+  "edges": [
+    {"source": "c1", "source_port": 0, "target": "sub1", "target_port": 0,
+     "config": {"arrow_color": [220, 220, 220]}},
+    {"source": "c2", "source_port": 0, "target": "sub1", "target_port": 1,
+     "config": {"arrow_color": [210, 235, 120]}},
+
+    {"source": "c2", "source_port": 0, "target": "sub2", "target_port": 0,
+     "config": {"arrow_color": [200, 210, 255]}},
+    {"source": "c3", "source_port": 0, "target": "sub2", "target_port": 1,
+     "config": {"arrow_color": [235, 200, 255]}},
+
+    {"source": "sub2", "source_port": 2, "target": "sqrt", "target_port": 0,
+     "config": {"color": [200, 180, 90], "arrow_color": [255, 240, 180]}},
+
+    {"source": "sub1", "source_port": 2, "target": "mul", "target_port": 0,
+     "config": {"arrow_color": [255, 210, 180]}},
+    {"source": "sqrt", "source_port": 1, "target": "mul", "target_port": 1,
+     "config": {"arrow_color": [210, 255, 210]}},
+
+    {"source": "mul", "source_port": 2, "target": "out", "target_port": 0,
+     "config": {"arrow_color": [255, 200, 200]}},
+
+    {"source": "vec", "source_port": 0, "target": "txt1", "target_port": 0,
+     "config": {"arrow_color": [200, 200, 255]}},
+
+    {"source": "pt_c1", "source_port": 0, "target": "pt_fn", "target_port": 0,
+     "config": {"arrow_color": [210, 235, 255]}},
+    {"source": "pt_c2", "source_port": 0, "target": "pt_fn", "target_port": 1,
+     "config": {"arrow_color": [235, 220, 255]}},
+    {"source": "pt_fn", "source_port": 2, "target": "pt_out", "target_port": 0,
+     "config": {"arrow_color": [255, 210, 235]}}
+  ],
+  "version": 1
+}

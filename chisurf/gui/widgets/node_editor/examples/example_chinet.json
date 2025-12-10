@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    {"id": "note_cn", "title": "Note", "type": "text_note", "config": {"label": "PT note", "text": "Damped sine demo.", "title_color": [160, 160, 160], "body_color": [50, 50, 50]}, "inputs": [], "outputs": [], "pos": [-260, 200], "collapsed": false},
+    {"id": "pt_c1", "title": "CN: amplitude", "type": "pt_constant", "config": {"name": "A", "value": 1.0, "title_color": [100, 160, 200], "body_color": [40, 60, 80]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 200], "collapsed": false},
+    {"id": "pt_c2", "title": "CN: damping", "type": "pt_constant", "config": {"name": "B",  "value": 0.15, "title_color": [120, 180, 160], "body_color": [40, 70, 65]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 280], "collapsed": false},
+    {"id": "pt_phase", "title": "CN: phase", "type": "pt_constant", "config": {"name": "phase", "value": 0.0, "title_color": [180, 150, 200], "body_color": [50, 45, 70]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 360], "collapsed": false},
+    {"id": "pt_span", "title": "CN: span", "type": "pt_constant", "config": {"name": "span", "value": 20.0, "title_color": [150, 150, 210], "body_color": [45, 55, 80]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 440], "collapsed": false},
+    {"id": "pt_freq", "title": "CN: freq", "type": "pt_constant", "config": {"name": "freq", "value": 1.0, "title_color": [190, 170, 210], "body_color": [55, 50, 80]}, "inputs": [], "outputs": ["Value"], "pos": [-40, 520], "collapsed": false},
+    {"id": "pt_fn", "title": "PT Transform", "type": "pt_transform", "config": {"code": "def f(A=1.0, B=0.15, phase=0.0, span=20.0, freq=1.0):\n    import math\n    N = 400\n    span = float(span)\n    if span <= 0:\n        span = 1.0\n    freq = float(freq)\n    xs = [-span + i * (2.0 * span / (N - 1)) for i in range(N)]\n    ys = [A * math.exp(-B * abs(x)) * math.sin(freq * x + phase) for x in xs]\n    return {'out_00': xs, 'out_01': ys}", "title_color": [170, 140, 210], "body_color": [55, 45, 80]}, "inputs": ["A", "B", "phase", "span", "freq"], "outputs": ["out_00", "out_01"], "pos": [180, 240], "collapsed": false},
+    {"id": "pt_plot", "title": "PT Plot", "type": "pt_plot", "config": {"title": "Damped sine", "title_color": [210, 110, 160], "body_color": [60, 40, 60]}, "inputs": ["X", "Y"], "outputs": [], "pos": [420, 240], "collapsed": false}
+  ],
+  "edges": [
+    {"source": "pt_c1", "source_port": 0, "target": "pt_fn", "target_port": 0,
+     "config": {"arrow_color": [210, 235, 255]}},
+    {"source": "pt_c2", "source_port": 0, "target": "pt_fn", "target_port": 1,
+     "config": {"arrow_color": [235, 220, 255]}},
+    {"source": "pt_phase", "source_port": 0, "target": "pt_fn", "target_port": 2,
+     "config": {"arrow_color": [235, 210, 255]}},
+    {"source": "pt_span", "source_port": 0, "target": "pt_fn", "target_port": 3,
+     "config": {"arrow_color": [220, 235, 255]}},
+    {"source": "pt_freq", "source_port": 0, "target": "pt_fn", "target_port": 4,
+     "config": {"arrow_color": [230, 220, 255]}},
+    {"source": "pt_fn", "source_port": 5, "target": "pt_plot", "target_port": 0,
+     "config": {"arrow_color": [255, 210, 235]}},
+    {"source": "pt_fn", "source_port": 6, "target": "pt_plot", "target_port": 1,
+     "config": {"arrow_color": [200, 220, 255]}}
+  ],
+  "version": 1
+}
