@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout
+from qtpy.QtWidgets import QMainWindow, QWidget, QVBoxLayout
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "PLUGIN_CATEGORY:PLUGIN_DISPLAY_NAME"
