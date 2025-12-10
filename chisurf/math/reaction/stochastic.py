@@ -280,60 +280,38 @@ class Model(object):
 
 
 def main():
+    """Simple demo to compare stochastic SSA performance.
+
+    This example uses :mod:`chisurf.math.reaction._reaction`, which
+    provides a Numba-accelerated ``Model`` replacement for the legacy
+    Cython extension.
     """
-    Main function to simulate a reaction model and measure execution time.
 
-    This function utilizes the `chisurf.math.reaction` module to configure and
-    run a stochastic simulation of a reaction network. It defines the variable
-    names, initial states, reaction rates, transition matrix, and propensity
-    functions for the simulation. The simulation is executed over a preset
-    duration and number of repetitions. The total execution time is printed
-    at the end.
-
-    Attributes:
-        vars (list of str): Names of the variables/states in the reaction model.
-        ini (np.ndarray of int): Initial quantities for each variable/state.
-        rates (np.ndarray of float): Reaction rates for the system.
-        tm (np.ndarray of int): Transition matrix defining state transitions.
-        prop (list of callable): List of propensity functions for the reactions.
-
-    Raises:
-        ImportError: If `chisurf.math.reaction._reaction` is not found or cannot 
-            be imported.
-        RuntimeError: If the model configuration or simulation execution fails.
-    """
-    import numpy as np
     import time
-
     import chisurf.math.reaction._reaction as reaction
-    vars = ['s','i','r']
-    ini= np.array([500, 1, 0], dtype=int)
-    rates = np.array([.001, .1], dtype=float)
+
+    vars = ['s', 'i', 'r']
+    ini = np.array([500, 1, 0], dtype=int)
+    rates = np.array([0.001, 0.1], dtype=float)
     tm = np.array(
         [
             [-1, 0],
             [1, -1],
-            [0, 1]
+            [0, 1],
         ]
     )
 
-    prop = [
-        reaction.l1,
-        reaction.l2
-    ]
+    prop = [reaction.l1, reaction.l2]
 
     M = reaction.Model(
         vnames=vars,
         rates=rates,
         inits=ini,
         tmat=tm,
-        propensity=prop
+        propensity=prop,
     )
     t0 = time.time()
-    M.run(
-        tmax=80,
-        reps=1000
-    )
-    print('total time: ', (time.time()-t0))
+    M.run(tmax=80, reps=1000)
+    print("total time:", (time.time() - t0))
 
 
