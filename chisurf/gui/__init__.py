@@ -797,10 +797,20 @@ def setup_gui(
 
         # Copy all notebooks from the package to the user's home directory
         # This ensures that all shipped notebooks are available to the user
-        notebook_path = chisurf_path / 'notebooks'
-        chisurf.logging.info(f"Checking for notebooks in: {notebook_path}")
-        for notebook_file in sorted(notebook_path.glob("*.ipynb")):
-            copy_notebook(notebook_file, chisurf_notebooks_dir)
+        notebook_source_dirs = []
+        # Note: deprecate latest on March 2026
+        legacy_dir = chisurf_path / 'notebooks'
+        if legacy_dir.is_dir():
+            notebook_source_dirs.append(legacy_dir)
+
+        repo_notebooks_dir = chisurf_path.parent / 'notebooks'
+        if repo_notebooks_dir.is_dir() and repo_notebooks_dir not in notebook_source_dirs:
+            notebook_source_dirs.append(repo_notebooks_dir)
+
+        for src_dir in notebook_source_dirs:
+            chisurf.logging.info(f"Checking for notebooks in: {src_dir}")
+            for notebook_file in sorted(src_dir.glob("*.ipynb")):
+                copy_notebook(notebook_file, chisurf_notebooks_dir)
 
         # Add the Jupyter root directory with `/tree/`
         add_notebook(home_dir)
