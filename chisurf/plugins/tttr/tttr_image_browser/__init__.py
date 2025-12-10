@@ -20,10 +20,10 @@ import hashlib
 from qtpy.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QTextEdit, QComboBox,
-    QSpinBox, QSplitter, QMessageBox, QProgressDialog, QCheckBox
+    QSpinBox, QSplitter, QMessageBox, QProgressDialog, QCheckBox,
 )
 from qtpy.QtCore import Qt, QEvent, QTimer
-from qtpy.QtGui import QPixmap, QPainter, QColor, QFont, QPen
+from qtpy.QtGui import QPixmap, QPainter, QColor, QFont, QPen, QImage
 import pyqtgraph as pg
 
 try:
@@ -1303,7 +1303,6 @@ class TTTRImageBrowser(QWidget):
 
         # Convert to colored QPixmap using magma LUT
         try:
-            from PyQt5.QtGui import QImage
             h, w = mosaic.shape
             lut = self._get_magma_lut(256)
             if lut is not None:

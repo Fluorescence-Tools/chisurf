@@ -32,18 +32,21 @@ Example:
 
 name = "TTTR:Count Rate Analysis"
 
+# Expose the plugin CLI through chisurf.cli
+cli_entrypoint = "count-rate=chisurf.plugins.tttr.tttr_count_rate_analysis.cli:cli"
+
 import sys
 import os
 import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QLabel, QFileDialog, QTableWidget, QTableWidgetItem,
     QHeaderView, QTabWidget, QMessageBox, QLineEdit, QSplitter, QToolButton
 )
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QDragEnterEvent, QDropEvent
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QDragEnterEvent, QDropEvent
 
 import pyqtgraph as pg
 import tttrlib
@@ -442,7 +445,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = CountRateAnalyzer()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 elif __name__ == "plugin":
     window = CountRateAnalyzer()

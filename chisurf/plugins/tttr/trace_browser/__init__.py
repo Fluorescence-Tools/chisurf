@@ -20,13 +20,35 @@ import numpy as np
 
 import pyqtgraph as pg
 
-from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QLabel,
-    QListWidget, QListWidgetItem, QSplitter, QTextEdit, QComboBox, QSpinBox,
-    QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QLineEdit, QMessageBox,
-    QSizePolicy, QCheckBox, QGroupBox, QGridLayout, QToolButton
+from qtpy.QtWidgets import (
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QFileDialog,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QSplitter,
+    QTextEdit,
+    QComboBox,
+    QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QAbstractItemView,
+    QHeaderView,
+    QLineEdit,
+    QMessageBox,
+    QSizePolicy,
+    QCheckBox,
+    QGroupBox,
+    QGridLayout,
+    QToolButton,
+    QProgressDialog,
 )
-from PyQt5.QtCore import Qt, QEvent, pyqtSignal, QSize, QTimer
+from qtpy.QtCore import Qt, QEvent, QSize, QTimer, Signal
+from qtpy.QtGui import QPainter, QColor, QFont
 
 # Logging
 from chisurf import logging
@@ -164,7 +186,7 @@ class StarCombo(QComboBox):
 
 
 class StarRatingWidget(QWidget):
-    ratingChanged = pyqtSignal(int)
+    ratingChanged = Signal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -292,10 +314,6 @@ class StarRatingWidget(QWidget):
         super().keyPressEvent(event)
 
     def paintEvent(self, event):
-        try:
-            from PyQt5.QtGui import QPainter, QColor, QFont
-        except Exception:
-            return super().paintEvent(event)
         painter = QPainter(self)
         try:
             painter.setRenderHint(QPainter.Antialiasing, True)
@@ -1493,7 +1511,6 @@ class TraceBrowser(QWidget):
             return
         # Show progress dialog only for files we are going to process
         try:
-            from PyQt5.QtWidgets import QProgressDialog
             dlg = QProgressDialog("Precomputing traces...", "Cancel", 0, len(files_to_process), self)
             dlg.setWindowTitle("Precomputing traces")
             dlg.setAutoClose(True)
@@ -2116,7 +2133,7 @@ class TraceBrowser(QWidget):
                 except Exception:
                     pass
             
-            # Connect the close event (this is a bit tricky with PyQt5, so we'll use a simple approach)
+            # Connect the close event (this is a bit tricky with Qt, so we'll use a simple approach)
             original_close_event = intensity_trace_window.closeEvent
 
             def close_event_wrapper(event):
@@ -2407,15 +2424,13 @@ class TraceBrowser(QWidget):
 
 if __name__ == "__main__":
     # Basic manual run to show the widget standalone
-    from PyQt5.QtWidgets import QApplication
     import sys
     app = QApplication(sys.argv)
     w = TraceBrowser()
     w.show()
-    sys.exit(app.exec_())
+    app.exec()
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed by the Plugin Manager
 if __name__ == "plugin":
     window = TraceBrowser()
-    window.show()

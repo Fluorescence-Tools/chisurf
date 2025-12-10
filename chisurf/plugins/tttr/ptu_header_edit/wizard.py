@@ -1,7 +1,7 @@
 import sys
 import json
 import tttrlib  # Import the tttrlib module
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QApplication,
     QMainWindow,
     QVBoxLayout,
@@ -334,4 +334,4 @@ if __name__ == '__main__':
     editor.setWindowTitle("PTU tag Editor")
     editor.resize(640, 480)
     editor.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

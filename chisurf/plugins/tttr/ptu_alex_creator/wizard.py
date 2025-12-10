@@ -1,13 +1,23 @@
 import sys
 import os
 import numpy as np
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLineEdit, QLabel, QFileDialog, QScrollArea, QSpinBox,
-    QComboBox, QCheckBox, QMessageBox
+from qtpy.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLineEdit,
+    QLabel,
+    QFileDialog,
+    QScrollArea,
+    QSpinBox,
+    QComboBox,
+    QCheckBox,
+    QMessageBox,
 )
-from PyQt5.QtCore import Qt
+from qtpy.QtCore import Qt
 import pyqtgraph as pg
 import tttrlib  # ensure tttrlib is in your PYTHONPATH
 
@@ -325,6 +335,6 @@ class AlexPTUCreator(QMainWindow):
 if __name__ == 'plugin':
     w = AlexPTUCreator(); w.show()
 elif __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = AlexPTUCreator(); w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

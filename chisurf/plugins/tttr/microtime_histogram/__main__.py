@@ -8,7 +8,7 @@ import pathlib
 from pathlib import Path
 import numpy as np
 
-from PyQt5 import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from chisurf.gui import get_app
 
 from .wizard import MicrotimeHistogram
@@ -118,7 +118,7 @@ def main():
         QtCore.QTimer.singleShot(500, process_bid_folder)
     
     # Start the application event loop
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
