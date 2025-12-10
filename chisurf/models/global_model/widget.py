@@ -49,10 +49,6 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.actionOnAddGlobalVariable.triggered.connect(self.onAddGlobalVariable)
 
     @property
-    def current_origin_formula(self) -> str:
-        return str(self.lineEdit_3.text())
-
-    @property
     def add_all_fits(self) -> bool:
         return bool(self.checkBox.isChecked())
 
@@ -130,14 +126,20 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def current_link_formula(self):
-        return "f[%s]['%s']" % (self.target_fit_number, self.target_parameter_name)
+        return f"f[{self.target_fit_number}]['{self.target_parameter_name}']"
+
+    @property
+    def current_target_formula(self) -> str:
+        if self.checkBox_4.isChecked():
+            return str(self.lineEdit_2.text())
+        return self.current_link_formula
 
     @property
     def current_origin_link_formula(self):
         if self.link_all_of_type:
-            return "f[i]['%s']" % (self.origin_parameter_name)
+            return f"f[i]['{self.origin_parameter_name}']"
         else:
-            return "f[%s]['%s']" % (self.origin_fit_number, self.origin_parameter_name)
+            return f"f[{self.origin_fit_number}]['{self.origin_parameter_name}']"
 
     @property
     def links(self):
@@ -164,13 +166,13 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             self.checkBoxLocal.setCheckState(0)
 
     def update_link_text(self):
-        self.lineEdit_2.setText(self.current_link_formula)
-        self.lineEdit_3.setText(self.current_origin_link_formula)
+        if not self.checkBox_4.isChecked():
+            self.lineEdit_2.setText(self.current_link_formula)
 
     def onRemoveLocalFit(self) -> None:
         row = self.tableWidget.currentRow()
         self.tableWidget.removeRow(row)
-        chisurf.run("cs.current_fit.model.remove_local_fit(%s)" % row)
+        chisurf.run(f"cs.current_fit.model.remove_local_fit({row})")
 
     def onClearLocalFits(self) -> None:
         chisurf.run("cs.current_fit.model.clear_local_fits()")
@@ -184,8 +186,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
             chisurf.run(
-                "cs.current_fit.model.append_global_parameter(chisurf.parameter.FittingParameterWidget(name='%s'))" %
-                self.current_global_variable_name
+                f"cs.current_fit.model.append_global_parameter(chisurf.parameter.FittingParameterWidget(name='{self.current_global_variable_name}'))"
             )
             layout = self.verticalLayout
             layout.addWidget(self._global_parameters.values()[-1])
@@ -205,7 +206,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
         for fitIndex in fit_indeces:
             chisurf.run(
-                "cs.current_fit.model.append_fit(chisurf.fits[%s])" % local_fits_idx[fitIndex]
+                f"cs.current_fit.model.append_fit(chisurf.fits[{local_fits_idx[fitIndex]}])"
             )
 
     def append_fit(self, fit: chisurf.fitting.fit):
@@ -234,7 +235,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         if links is None:
             links = []
             if self.link_all_of_type:
-                chisurf.logging.info("Link all of one kind: %s" % self.link_all_of_type)
+                chisurf.logging.info(f"Link all of one kind: {self.link_all_of_type}")
                 for fit_nbr, fit in enumerate(self.fits):
                     fit = self.fits[fit_nbr]
                     pn = [p.name for p in fit.model.parameters_all]
