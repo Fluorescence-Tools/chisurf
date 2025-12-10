@@ -230,20 +230,58 @@ class PdaGaussianDistanceModel(ModelCurve):
         R0 = self.fret_parameters.forster_radius
         E = distance_to_fret_efficiency(r, R0)
 
-        # nuisance parameters
-        alpha = self.nuisance.alpha
-        BG = self.nuisance.BG
-        BR = self.nuisance.BR
-        gG = self.nuisance.gG
-        gR = self.nuisance.gR
-        QYD = self.nuisance.QYD
-        QYA = self.nuisance.QYA
+        # Nuisance parameters
+        n = self.nuisance
+        BG = n.BG
+        BR = n.BR
+        QYD = n.QYD
+        QYA = n.QYA
 
-        gamma = (gR * QYA) / (gG * QYD)
+        # Excitation / emission description via absolute excitation
+        # probabilities and a full 2x2 emission/detection matrix g_{channel|species}.
+        ExDG = getattr(n, "ExDG", 0.0)
+        ExAG = getattr(n, "ExAG", 0.0)
+        gGD = getattr(n, "gGD", 0.0)
+        gGA = getattr(n, "gGA", 0.0)
+        gRD = getattr(n, "gRD", 0.0)
+        gRA = getattr(n, "gRA", 0.0)
+
         eps = 1e-12
-        E_safe = np.clip(E, 0.0 + eps, 1.0 - eps)
+        E_safe = np.clip(E, eps, 1.0 - eps)
 
-        p_G_bound = 1.0 / (1.0 + alpha + gamma * E_safe / (1.0 - E_safe))
+        ExDG_val = float(ExDG)
+        ExAG_val = float(ExAG)
+        gGD_val = float(gGD)
+        gGA_val = float(gGA)
+        gRD_val = float(gRD)
+        gRA_val = float(gRA)
+        QYD_val = float(QYD)
+        QYA_val = float(QYA)
+
+        # DA species: donor excitation weight ExDG·(1-E), acceptor excitation
+        # weight ExDG·E + ExAG (direct acceptor excitation). Quantum yields
+        # scale the donor/acceptor emission independently.
+        S_D = ExDG_val * (1.0 - E_safe)
+        S_A = ExDG_val * E_safe + ExAG_val
+        S_DQ = QYD_val * S_D
+        S_AQ = QYA_val * S_A
+
+        G_DA = gGD_val * S_DQ + gGA_val * S_AQ
+        R_DA = gRD_val * S_DQ + gRA_val * S_AQ
+        denom = G_DA + R_DA
+        with np.errstate(divide="ignore", invalid="ignore"):
+            p_G_bound = np.where(denom > 0.0, G_DA / denom, 0.5)
+
+        # Donor-only species: only donor emission contributes, scaled by QYD.
+        S_D0 = ExDG_val
+        S_D0Q = QYD_val * S_D0
+        G_D0 = gGD_val * S_D0Q
+        R_D0 = gRD_val * S_D0Q
+        denom0 = G_D0 + R_D0
+        if denom0 > 0.0:
+            p_ch1_d0 = float(G_D0 / denom0)
+        else:
+            p_ch1_d0 = 0.5
 
         xD0 = float(self.fret_parameters.xDOnly)
         xD0 = np.clip(xD0, 0.0, 1.0)
@@ -258,8 +296,6 @@ class PdaGaussianDistanceModel(ModelCurve):
             p_r_eff = p_r
 
         p_ch1_bound = p_G_bound.astype(np.float64)
-
-        p_ch1_d0 = 1.0 / (1.0 + alpha)
 
         n_bound = int(p_r_eff.size)
         prob_spectrum = np.empty((n_bound + 1) * 2, dtype=np.float64)
@@ -281,11 +317,8 @@ class PdaGaussianDistanceModel(ModelCurve):
                     "len_prob_spectrum": int(len(prob_spectrum)),
                     "first_entries": [float(x) for x in prob_spectrum[:8]],
                     "R0": float(R0),
-                    "alpha": float(alpha),
                     "BG": float(BG),
                     "BR": float(BR),
-                    "gG": float(gG),
-                    "gR": float(gR),
                     "QYD": float(QYD),
                     "QYA": float(QYA),
                     "E_min": float(E.min()),

@@ -17,6 +17,7 @@ import sympy
 
 
 import chisurf
+import chisurf.macros.model_parse as model_parse
 import chisurf.decorators
 import chisurf.fio as io
 import chisurf.fitting
@@ -228,7 +229,10 @@ class ParseFormulaWidget(QtWidgets.QWidget):
     def onUpdateFunc(self):
         fit_idx = chisurf.fitting.find_fit_idx_of_model(model=self.model)
         function_str = str(self.plainTextEdit.toPlainText()).strip()
-        chisurf.run(f"chisurf.macros.model_parse.change_model('{function_str}', {fit_idx})")
+        try:
+            model_parse.change_model(function_str=function_str, fit_idx=fit_idx)
+        except Exception:
+            pass
 
     def onModelChanged(self):
         func = self.models[self.model_name]['equation']

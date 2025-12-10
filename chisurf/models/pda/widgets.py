@@ -176,10 +176,6 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self._alpha_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._alpha,
-            label_text='alpha',
-        )
         self._bgG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bgG,
             label_text='BG',
@@ -187,14 +183,6 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         self._bgR_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bgR,
             label_text='BR',
-        )
-        self._gG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._gG,
-            label_text='gG',
-        )
-        self._gR_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._gR,
-            label_text='gR',
         )
         self._QYD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._QYD,
@@ -205,13 +193,51 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             label_text='QYA',
         )
 
-        layout.addWidget(self._alpha_widget, 0, 0, 1, 2)
-        layout.addWidget(self._bgG_widget, 1, 0)
-        layout.addWidget(self._bgR_widget, 1, 1)
-        layout.addWidget(self._gG_widget, 2, 0)
-        layout.addWidget(self._gR_widget, 2, 1)
-        layout.addWidget(self._QYD_widget, 3, 0)
-        layout.addWidget(self._QYA_widget, 3, 1)
+        # Absolute excitation probabilities (e.g. extinction coefficients).
+        self._ExDG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._ExDG,
+            label_text='ExDG',
+        )
+        self._ExAG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._ExAG,
+            label_text='ExAG',
+        )
+
+        # Emission / detection crosstalk matrix elements (g_{channel|species}).
+        self._gGD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._gGD,
+            label_text='gG|D',
+        )
+        self._gGA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._gGA,
+            label_text='gG|A',
+        )
+        self._gRD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._gRD,
+            label_text='gR|D',
+        )
+        self._gRA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._gRA,
+            label_text='gR|A',
+        )
+
+        # Backgrounds
+        layout.addWidget(self._bgG_widget, 0, 0)
+        layout.addWidget(self._bgR_widget, 0, 1)
+
+        # Quantum yields
+        layout.addWidget(self._QYD_widget, 1, 0)
+        layout.addWidget(self._QYA_widget, 1, 1)
+
+        # Excitation probabilities row
+        layout.addWidget(self._ExDG_widget, 2, 0)
+        layout.addWidget(self._ExAG_widget, 2, 1)
+
+        # Emission / detection matrix rows
+        layout.addWidget(self._gGD_widget, 3, 0)
+        layout.addWidget(self._gGA_widget, 3, 1)
+        layout.addWidget(self._gRD_widget, 4, 0)
+        layout.addWidget(self._gRA_widget, 4, 1)
 
         self.layout.addLayout(layout)
 
@@ -220,23 +246,29 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         QtWidgets.QGroupBox.update(self, *__args)
         # Synchronize UI widgets with underlying parameters
         try:
-            self._alpha_widget.finalize()
             self._bgG_widget.finalize()
             self._bgR_widget.finalize()
-            self._gG_widget.finalize()
-            self._gR_widget.finalize()
             self._QYD_widget.finalize()
             self._QYA_widget.finalize()
+            self._ExDG_widget.finalize()
+            self._ExAG_widget.finalize()
+            self._gGD_widget.finalize()
+            self._gGA_widget.finalize()
+            self._gRD_widget.finalize()
+            self._gRA_widget.finalize()
         except Exception:
             # Fallback: at least sync the numeric values
             try:
-                self._alpha_widget.setValue(self.alpha)
                 self._bgG_widget.setValue(self.BG)
                 self._bgR_widget.setValue(self.BR)
-                self._gG_widget.setValue(self.gG)
-                self._gR_widget.setValue(self.gR)
                 self._QYD_widget.setValue(self.QYD)
                 self._QYA_widget.setValue(self.QYA)
+                self._ExDG_widget.setValue(self.ExDG)
+                self._ExAG_widget.setValue(self.ExAG)
+                self._gGD_widget.setValue(self.gGD)
+                self._gGA_widget.setValue(self.gGA)
+                self._gRD_widget.setValue(self.gRD)
+                self._gRA_widget.setValue(self.gRA)
             except Exception:
                 pass
 
@@ -1126,22 +1158,53 @@ def _get_gaussian_component_curves_for_pda(
         return []
 
     # Map distance r to the 1D PDA axis using the same nuisance/FRET
-    # parameters as the Gaussian-distance model.
+    # parameters as the Gaussian-distance model. We reuse the excitation /
+    # emission matrix description (ExDG/ExAG, EmDG/EmAG/EmDR/EmRR) so that
+    # the per-Gaussian curves are consistent with the main PDA model.
     try:
         R0 = model.fret_parameters.forster_radius
         E = distance_to_fret_efficiency(r, R0)
 
         n = model.nuisance
-        alpha = n.alpha
-        gG = n.gG
-        gR = n.gR
-        QYD = n.QYD
-        QYA = n.QYA
+        ExDG = getattr(n, "ExDG", 0.0)
+        ExAG = getattr(n, "ExAG", 0.0)
+        gGD = getattr(n, "gGD", 0.0)
+        gGA = getattr(n, "gGA", 0.0)
+        gRD = getattr(n, "gRD", 0.0)
+        gRA = getattr(n, "gRA", 0.0)
+        QYD = getattr(n, "QYD", 1.0)
+        QYA = getattr(n, "QYA", 1.0)
 
-        gamma = (gR * QYA) / (gG * QYD)
+        use_matrix = any(float(abs(x)) > 0.0 for x in (ExDG, ExAG, gGD, gGA, gRD, gRA))
+        if not use_matrix:
+            return []
+
+        ExDG_val = float(ExDG)
+        ExAG_val = float(ExAG)
+        gGD_val = float(gGD)
+        gGA_val = float(gGA)
+        gRD_val = float(gRD)
+        gRA_val = float(gRA)
+        QYD_val = float(QYD)
+        QYA_val = float(QYA)
+
         eps = 1e-12
         E_safe = np.clip(E, eps, 1.0 - eps)
-        p_G = 1.0 / (1.0 + alpha + gamma * E_safe / (1.0 - E_safe))
+
+        # DA species: donor excitation weight ExDG·(1-E), acceptor excitation
+        # weight ExDG·E + ExAG (direct acceptor excitation). Quantum yields
+        # scale donor/acceptor emission independently, matching the main PDA
+        # model.
+        S_D = ExDG_val * (1.0 - E_safe)
+        S_A = ExDG_val * E_safe + ExAG_val
+        S_DQ = QYD_val * S_D
+        S_AQ = QYA_val * S_A
+
+        G_DA = gGD_val * S_DQ + gGA_val * S_AQ
+        R_DA = gRD_val * S_DQ + gRA_val * S_AQ
+        denom = G_DA + R_DA
+        with np.errstate(divide="ignore", invalid="ignore"):
+            p_G = np.where(denom > 0.0, G_DA / denom, 0.5)
 
         if axis_type == 'S0/S1':
             # Approximate S0/S1 as p_G / (1 - p_G).

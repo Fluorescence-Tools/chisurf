@@ -90,38 +90,15 @@ class PdaFretNuisance(FittingParameterGroup):
 
     This parameter group collects experimental factors that influence the
     shape of the 2D PDA histogram but are not part of the distance
-    distribution itself. The main parameters are:
-
-    - ``alpha`` – spectral crosstalk (red/green leakage).
-    - ``BG``, ``BR`` – background count rates in green and red channels.
-    - ``gG``, ``gR`` – detection efficiencies for the two channels.
-    - ``QYD``, ``QYA`` – donor and acceptor quantum yields.
-    - ``nPh_min``, ``nPh_max`` – photon-number range used for PDA scoring.
+    distribution itself. The main parameters are background count rates,
+    quantum yields, an optional excitation/emission description, and the
+    photon-number range used for PDA scoring.
 
     When a ``fit`` object with PDA metadata is attached, the constructor
     attempts to initialize ``nPh_min`` and ``nPh_max`` from the dataset's
     ``minimum_number_of_photons`` and ``maximum_number_of_photons``
     entries. Without such metadata the defaults are both zero.
-
-    Examples
-    --------
-    >>> from chisurf.models.pda.nusiance import PdaFretNuisance
-    >>> nu = PdaFretNuisance()
-    >>> float(nu.alpha)
-    0.0
-    >>> float(nu.QYD)
-    0.8
-    >>> (float(nu.nPh_min), float(nu.nPh_max))
-    (0.0, 0.0)
     """
-
-    @property
-    def alpha(self) -> float:
-        return self._alpha.value
-
-    @alpha.setter
-    def alpha(self, v: float):
-        self._alpha.value = v
 
     @property
     def BG(self) -> float:
@@ -140,22 +117,6 @@ class PdaFretNuisance(FittingParameterGroup):
         self._bgR.value = v
 
     @property
-    def gG(self) -> float:
-        return self._gG.value
-
-    @gG.setter
-    def gG(self, v: float):
-        self._gG.value = v
-
-    @property
-    def gR(self) -> float:
-        return self._gR.value
-
-    @gR.setter
-    def gR(self, v: float):
-        self._gR.value = v
-
-    @property
     def QYD(self) -> float:
         return self._QYD.value
 
@@ -170,6 +131,58 @@ class PdaFretNuisance(FittingParameterGroup):
     @QYA.setter
     def QYA(self, v: float):
         self._QYA.value = v
+
+    # --- Excitation probabilities (absolute, user-supplied) --------------
+
+    @property
+    def ExDG(self) -> float:
+        return self._ExDG.value
+
+    @ExDG.setter
+    def ExDG(self, v: float):
+        self._ExDG.value = v
+
+    @property
+    def ExAG(self) -> float:
+        return self._ExAG.value
+
+    @ExAG.setter
+    def ExAG(self, v: float):
+        self._ExAG.value = v
+
+    # --- Emission / detection crosstalk matrix ---------------------------
+
+    @property
+    def gGD(self) -> float:
+        return self._gGD.value
+
+    @gGD.setter
+    def gGD(self, v: float):
+        self._gGD.value = v
+
+    @property
+    def gGA(self) -> float:
+        return self._gGA.value
+
+    @gGA.setter
+    def gGA(self, v: float):
+        self._gGA.value = v
+
+    @property
+    def gRD(self) -> float:
+        return self._gRD.value
+
+    @gRD.setter
+    def gRD(self, v: float):
+        self._gRD.value = v
+
+    @property
+    def gRA(self) -> float:
+        return self._gRA.value
+
+    @gRA.setter
+    def gRA(self, v: float):
+        self._gRA.value = v
 
     @property
     def nPh_min(self) -> float:
@@ -189,13 +202,6 @@ class PdaFretNuisance(FittingParameterGroup):
 
     def __init__(self, name: str = 'PDA-FRET-nuisance', **kwargs):
         super().__init__(name=name, **kwargs)
-        self._alpha = FittingParameter(
-            value=0.0,
-            name='alpha',
-            lb=0.0,
-            ub=1.0,
-            bounds_on=True
-        )
         self._bgG = FittingParameter(
             value=0.0,
             name='BG',
@@ -210,16 +216,6 @@ class PdaFretNuisance(FittingParameterGroup):
             ub=100.0,
             bounds_on=True
         )
-        self._gG = FittingParameter(
-            value=1.0,
-            name='gG',
-            fixed=True
-        )
-        self._gR = FittingParameter(
-            value=1.0,
-            name='gR',
-            fixed=True
-        )
         self._QYD = FittingParameter(
             value=0.8,
             name='QYD',
@@ -229,6 +225,43 @@ class PdaFretNuisance(FittingParameterGroup):
             value=0.3,
             name='QYA',
             fixed=True
+        )
+        # Absolute excitation probabilities (e.g. extinction coefficients at
+        # the donor excitation wavelength). By default they are zero so that
+        # legacy alpha/gamma-based behaviour is preserved until explicitly
+        # configured by the user.
+        self._ExDG = FittingParameter(
+            value=1.0,
+            name='ExDG',
+            fixed=True,
+        )
+        self._ExAG = FittingParameter(
+            value=0.0,
+            name='ExAG',
+            fixed=True,
+        )
+        # Full emission / detection crosstalk matrix elements. These default
+        # to zero so that existing projects using alpha/gamma are unaffected
+        # unless the user explicitly supplies matrix entries.
+        self._gGD = FittingParameter(
+            value=1.0,
+            name='gGD',
+            fixed=True,
+        )
+        self._gGA = FittingParameter(
+            value=0.0,
+            name='gGA',
+            fixed=True,
+        )
+        self._gRD = FittingParameter(
+            value=0.02,
+            name='gRD',
+            fixed=True,
+        )
+        self._gRA = FittingParameter(
+            value=1.0,
+            name='gRA',
+            fixed=True,
         )
         # Photon-number range for PDA scoring (nPh_min, nPh_max).
         # Defaults are taken from the attached dataset's PDA metadata if
