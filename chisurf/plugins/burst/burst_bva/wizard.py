@@ -14,20 +14,17 @@ import json
 import numpy as np
 import pandas as pd
 
-# Import PyQt5 modules
-from PyQt5.QtWidgets import (
+# Import Qt modules via qtpy
+from qtpy.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QGroupBox, QFormLayout, QProgressBar
+    QPushButton, QFileDialog, QLabel, QLineEdit, QMessageBox, QGroupBox, QFormLayout, QProgressBar,
+    QDialog,
 )
-from PyQt5.QtCore import Qt
+from qtpy.QtCore import Qt, QCoreApplication
 
-# For embedding matplotlib plots in PyQt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+# For embedding matplotlib plots in Qt
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-
-
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QProgressBar, QLabel
-from PyQt5.QtCore import Qt, QCoreApplication
 
 class ProgressWindow(QDialog):
     def __init__(self, title="Progress", message="Processing...", max_value=100, parent=None):
