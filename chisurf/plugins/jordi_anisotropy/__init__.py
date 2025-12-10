@@ -24,14 +24,15 @@ This widget can run as a ChiSurf plugin (see chisurf.plugins.jordi_anisotropy.__
 
 import numpy as np
 from pathlib import Path
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QPushButton, QFileDialog, QLabel, QDoubleSpinBox, QLineEdit, QCheckBox,
     QListWidget, QListWidgetItem, QAbstractItemView, QTableWidget, QTableWidgetItem,
-    QHeaderView, QMessageBox
+    QHeaderView, QMessageBox,
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
+
 import pyqtgraph as pg
 
 try:
@@ -720,18 +721,15 @@ class JordiAnisotropyCalculator(QWidget):
             self.region.setRegion(self.region_bounds)
         except Exception:
             pass
-        # Enforce fixed y-range after replotting
-        self.r_plot.setYRange(0.0, 0.45)
-
 
 if __name__ == '__main__':
     # Simple manual test runner
-    from PyQt5.QtWidgets import QApplication
+    from qtpy.QtWidgets import QApplication
     import sys
     app = QApplication(sys.argv)
     w = JordiAnisotropyCalculator()
     w.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 elif __name__ == "plugin":
     window = JordiAnisotropyCalculator()
