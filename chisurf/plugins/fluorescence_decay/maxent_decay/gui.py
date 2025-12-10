@@ -5,10 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
+import datetime
 import json
+import sys
 import numpy as np
 
-from .fmem.core import mem_vin4_lifetime, mem_vin4_fret
+from .fmem import mem_vin4_lifetime, mem_vin4_fret, sample_mem_distribution_emcee
+from . import settings as maxent_settings
 
 # Lazy-loaded Qt stack ------------------------------------------------------
 pg = None
@@ -62,11 +65,25 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self._donly_vec: Optional[np.ndarray] = None
         self._dist_prior_vec: Optional[np.ndarray] = None
         self._last_result = None
+        self._sample_stats = None
 
         self._t_axis = None
         self._fit_range = None
 
         self._mode_fret = False
+
+        # Sampling worker/thread handles background MCMC so the UI remains
+        # responsive while sampling.
+        self._sampling_thread = None
+        self._sampling_worker = None
+
+        # Cached settings dict loaded from the user JSON file. This is used
+        # to initialize defaults and can later be edited via the JSON
+        # settings editor.
+        try:
+            self._settings = maxent_settings.load_maxent_settings()
+        except Exception:
+            self._settings = {}
 
         self._init_ui()
 
@@ -94,7 +111,7 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         ctrl_layout.setContentsMargins(0, 0, 0, 0)
         ctrl_layout.setSpacing(0)
 
-        data_group = QtWidgets.QGroupBox("Data", ctrl)
+        data_group = QtWidgets.QGroupBox("Data / IRF", ctrl)
         data_layout = QtWidgets.QVBoxLayout(data_group)
         data_layout.setContentsMargins(0, 0, 0, 0)
         data_layout.setSpacing(0)
@@ -103,7 +120,7 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
             "Using cs.current_fit.data (not yet checked)", data_group
         )
         self.btn_refresh_data = QtWidgets.QToolButton(data_group)
-        self.btn_refresh_data.setText("Refresh from current fit")
+        self.btn_refresh_data.setText("Read from fit")
         # Emphasize data refresh as a prominent action.
         try:
             self.btn_refresh_data.setStyleSheet(
@@ -115,34 +132,24 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
 
         data_layout.addWidget(self.label_data_source)
         data_layout.addWidget(self.btn_refresh_data)
-        ctrl_layout.addWidget(data_group)
-
-        irf_group = QtWidgets.QGroupBox("IRF", ctrl)
-        irf_layout = QtWidgets.QVBoxLayout(irf_group)
-        irf_layout.setContentsMargins(0, 0, 0, 0)
-        irf_layout.setSpacing(0)
-
-        self.label_irf_source = QtWidgets.QLabel("IRF: model.convolve.irf (default)", irf_group)
-        self.btn_select_irf = QtWidgets.QToolButton(irf_group)
+        # IRF controls live in the same group as the data controls so
+        # everything related to the current fit is in one place.
+        self.label_irf_source = QtWidgets.QLabel("IRF: model.convolve.irf (default)", data_group)
+        self.btn_select_irf = QtWidgets.QToolButton(data_group)
         self.btn_select_irf.setText("Select IRF dataset")
-        self.btn_clear_irf = QtWidgets.QToolButton(irf_group)
-        self.btn_clear_irf.setText("Clear IRF selection")
 
         # Make IRF selection buttons visually stand out.
         try:
             red_style = "QToolButton { background-color: #c67e3b; color: white; }"
             self.btn_select_irf.setStyleSheet(red_style)
-            self.btn_clear_irf.setStyleSheet(red_style)
         except Exception:
             pass
 
         self.btn_select_irf.clicked.connect(self._on_select_irf_clicked)
-        self.btn_clear_irf.clicked.connect(self._on_clear_irf_clicked)
-
-        irf_layout.addWidget(self.label_irf_source)
-        irf_layout.addWidget(self.btn_select_irf)
-        irf_layout.addWidget(self.btn_clear_irf)
-        ctrl_layout.addWidget(irf_group)
+        # IRF widgets stacked below the data controls.
+        data_layout.addWidget(self.label_irf_source)
+        data_layout.addWidget(self.btn_select_irf)
+        ctrl_layout.addWidget(data_group)
 
         mem_group = QtWidgets.QGroupBox("MEM settings", ctrl)
         mem_layout = QtWidgets.QFormLayout(mem_group)
@@ -181,7 +188,13 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self.spin_lcurve_dec_left.setDecimals(2)
         self.spin_lcurve_dec_left.setRange(0.0, 6.0)
         self.spin_lcurve_dec_left.setSingleStep(0.5)
-        self.spin_lcurve_dec_left.setValue(2.0)
+        try:
+            lc_left = float(
+                ((self._settings.get("lcurve_span_decades", {}) or {}).get("left", 2.0))
+            )
+        except Exception:
+            lc_left = 2.0
+        self.spin_lcurve_dec_left.setValue(lc_left)
         self.spin_lcurve_dec_left.setToolTip(
             "Decades below the current nu used when scanning the L-curve."
         )
@@ -189,7 +202,13 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self.spin_lcurve_dec_right.setDecimals(2)
         self.spin_lcurve_dec_right.setRange(0.0, 6.0)
         self.spin_lcurve_dec_right.setSingleStep(0.5)
-        self.spin_lcurve_dec_right.setValue(2.0)
+        try:
+            lc_right = float(
+                ((self._settings.get("lcurve_span_decades", {}) or {}).get("right", 2.0))
+            )
+        except Exception:
+            lc_right = 2.0
+        self.spin_lcurve_dec_right.setValue(lc_right)
         self.spin_lcurve_dec_right.setToolTip(
             "Decades above the current nu used when scanning the L-curve."
         )
@@ -203,15 +222,33 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self.spin_tau_min = QtWidgets.QDoubleSpinBox(mem_group)
         self.spin_tau_min.setDecimals(3)
         self.spin_tau_min.setRange(1e-3, 1e3)
-        self.spin_tau_min.setValue(0.001)
+        try:
+            tau_min = float(
+                ((self._settings.get("tau_grid", {}) or {}).get("min", 0.001))
+            )
+        except Exception:
+            tau_min = 0.001
+        self.spin_tau_min.setValue(tau_min)
         self.spin_tau_max = QtWidgets.QDoubleSpinBox(mem_group)
         self.spin_tau_max.setDecimals(3)
         self.spin_tau_max.setRange(1e-3, 1e3)
-        self.spin_tau_max.setValue(10.0)
+        try:
+            tau_max = float(
+                ((self._settings.get("tau_grid", {}) or {}).get("max", 10.0))
+            )
+        except Exception:
+            tau_max = 10.0
+        self.spin_tau_max.setValue(tau_max)
         self.spin_tau_step = QtWidgets.QDoubleSpinBox(mem_group)
         self.spin_tau_step.setDecimals(3)
         self.spin_tau_step.setRange(1e-4, 10.0)
-        self.spin_tau_step.setValue(0.02)
+        try:
+            tau_step = float(
+                ((self._settings.get("tau_grid", {}) or {}).get("step", 0.02))
+            )
+        except Exception:
+            tau_step = 0.02
+        self.spin_tau_step.setValue(tau_step)
 
         grid_tau = QtWidgets.QVBoxLayout()
         grid_tau.setContentsMargins(0, 0, 0, 0)
@@ -254,10 +291,26 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self.spin_period.setRange(0.1, 1000.0)
         self.spin_period.setSingleStep(1.0)
         self.spin_period.setValue(10.0)
+        # First take MaxEnt-specific settings from our JSON file; fall back
+        # to global chisurf.settings.fret when available.
+        try:
+            fret_cfg = (self._settings.get("fret", {}) or {})
+            if "tau0" in fret_cfg:
+                self.spin_tau0.setValue(float(fret_cfg["tau0"]))
+            if "R0" in fret_cfg:
+                self.spin_R0.setValue(float(fret_cfg["R0"]))
+            if "period_ns" in fret_cfg:
+                self.spin_period.setValue(float(fret_cfg["period_ns"]))
+            use_periodic = bool(fret_cfg.get("use_periodic", False))
+        except Exception:
+            fret_cfg = {}
+            use_periodic = False
         try:
             cfg = getattr(chisurf.settings, "fret", {}) or {}
-            self.spin_tau0.setValue(float(cfg.get("tau0", self.spin_tau0.value())))
-            self.spin_R0.setValue(float(cfg.get("forster_radius", self.spin_R0.value())))
+            if "tau0" not in fret_cfg:
+                self.spin_tau0.setValue(float(cfg.get("tau0", self.spin_tau0.value())))
+            if "R0" not in fret_cfg:
+                self.spin_R0.setValue(float(cfg.get("forster_radius", self.spin_R0.value())))
         except Exception:
             pass
         mem_layout.addRow("tau0 [ns]", self.spin_tau0)
@@ -279,13 +332,30 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         # Shared periodic-convolution toggle for both modes.
         self.chk_use_periodic = QtWidgets.QCheckBox("Periodic convolution", mem_group)
         # Disabled by default; user can enable periodic excitation explicitly.
-        self.chk_use_periodic.setChecked(False)
+        try:
+            self.chk_use_periodic.setChecked(bool(use_periodic))
+        except Exception:
+            self.chk_use_periodic.setChecked(False)
         # React to changes by updating which widgets are visible.
         try:
             self.chk_use_periodic.toggled.connect(lambda _checked: self._update_mode_ui())
         except Exception:
             pass
         mem_layout.addRow(self.chk_use_periodic)
+
+        # Button to edit the underlying JSON settings file with a simple
+        # text editor. This allows advanced users to tweak defaults that are
+        # not directly exposed in the GUI.
+        self.btn_edit_settings = QtWidgets.QToolButton(mem_group)
+        self.btn_edit_settings.setText("Edit JSON settings")
+        try:
+            self.btn_edit_settings.setToolTip(
+                f"Open MaxEnt JSON settings file:\n{maxent_settings.get_settings_file()}"
+            )
+        except Exception:
+            pass
+        self.btn_edit_settings.clicked.connect(self._on_edit_settings_clicked)
+        mem_layout.addRow(self.btn_edit_settings)
 
         # FRET distance range (RDA grid).
         r_min_default = 18.0
@@ -420,6 +490,70 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
 
         ctrl_layout.addWidget(mem_group)
 
+        sampling_group = QtWidgets.QGroupBox("Sampling", ctrl)
+        sampling_layout = QtWidgets.QFormLayout(sampling_group)
+        try:
+            sampling_layout.setContentsMargins(4, 4, 4, 4)
+            sampling_layout.setHorizontalSpacing(4)
+            sampling_layout.setVerticalSpacing(2)
+        except Exception:
+            pass
+
+        self.spin_sample_steps = QtWidgets.QSpinBox(sampling_group)
+        self.spin_sample_steps.setRange(10, 1000000)
+        self.spin_sample_steps.setSingleStep(100)
+        self.spin_sample_steps.setValue(500)
+        sampling_layout.addRow("Q-MCMC steps", self.spin_sample_steps)
+
+        self.spin_sample_thin = QtWidgets.QSpinBox(sampling_group)
+        self.spin_sample_thin.setRange(1, 1000)
+        self.spin_sample_thin.setSingleStep(1)
+        self.spin_sample_thin.setValue(5)
+        sampling_layout.addRow("Q-MCMC thinning", self.spin_sample_thin)
+
+        self.spin_sample_walkers = QtWidgets.QSpinBox(sampling_group)
+        self.spin_sample_walkers.setRange(0, 1000000)
+        self.spin_sample_walkers.setSingleStep(10)
+        self.spin_sample_walkers.setValue(0)
+        sampling_layout.addRow("Walkers (0=auto)", self.spin_sample_walkers)
+
+        self.spin_sample_substeps = QtWidgets.QSpinBox(sampling_group)
+        self.spin_sample_substeps.setRange(1, 1000000)
+        self.spin_sample_substeps.setSingleStep(10)
+        self.spin_sample_substeps.setValue(50)
+        sampling_layout.addRow("Chunk size (substeps)", self.spin_sample_substeps)
+
+        self.spin_sample_nprocs = QtWidgets.QSpinBox(sampling_group)
+        self.spin_sample_nprocs.setRange(0, 64)
+        self.spin_sample_nprocs.setSingleStep(1)
+        self.spin_sample_nprocs.setValue(0)
+        sampling_layout.addRow("CPUs (0=auto)", self.spin_sample_nprocs)
+
+        # Toggle between vectorized (single-process, NumPy/BLAS parallel) and
+        # multiprocessing-based sampling. On Windows the default is
+        # vectorized, which avoids the high IPC overhead of spawn-based
+        # multiprocessing.
+        self.chk_sample_vectorized = QtWidgets.QCheckBox(sampling_group)
+        try:
+            is_win = sys.platform.startswith("win")
+        except Exception:
+            is_win = False
+        self.chk_sample_vectorized.setChecked(bool(is_win))
+        sampling_layout.addRow("Vectorized sampling", self.chk_sample_vectorized)
+
+        self.btn_sample = QtWidgets.QToolButton(sampling_group)
+        self.btn_sample.setText("Sample Q-MCMC")
+        try:
+            self.btn_sample.setStyleSheet(
+                "QToolButton { background-color: #7b3fa7; color: white; }"
+            )
+        except Exception:
+            pass
+        self.btn_sample.clicked.connect(self._on_sample_clicked)
+        sampling_layout.addRow(self.btn_sample)
+
+        ctrl_layout.addWidget(sampling_group)
+
         self.btn_run = QtWidgets.QToolButton(ctrl)
         self.btn_run.setText("Run MEM")
         # Make Run MEM the primary, wide green button.
@@ -495,6 +629,10 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self.plot_dist = self.plot_widget.addPlot(row=2, col=0, title="Lifetime distribution")
         self.plot_dist.setLabel("bottom", "lifetime", units="ns")
         self.plot_dist.setLabel("left", "probability")
+        self._sample_band_lower = None
+        self._sample_band_upper = None
+        self._sample_band_fill = None
+        self._sample_hist_item = None
 
         self.plot_lcurve = self.plot_widget.addPlot(row=3, col=0, title="L-curve (chi² vs |p|)")
         self.plot_lcurve.setLabel("bottom", "chi²")
@@ -706,6 +844,11 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
             except Exception:
                 pass
         self._last_result = None
+        self._sample_stats = None
+        self._sample_band_lower = None
+        self._sample_band_upper = None
+        self._sample_band_fill = None
+        self._sample_hist_item = None
         if getattr(self, "btn_save", None) is not None:
             try:
                 self.btn_save.setEnabled(False)
@@ -722,6 +865,105 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
             context_menu_enabled=False,
         )
 
+    # ------------------------------------------------------------------
+    # JSON settings editor
+    # ------------------------------------------------------------------
+
+    def _on_edit_settings_clicked(self) -> None:
+        """Open a simple JSON editor for the MaxEnt settings file.
+
+        This loads the current settings JSON into a text editor with JSON
+        highlighting (when the generic ChiSurf text editor is available) or
+        a plain text fallback. On save, the JSON is validated and written
+        back to the MaxEnt settings file and ``self._settings`` is
+        reloaded. UI widgets keep their current values until the user
+        restarts the widget or re-opens it; the JSON mainly controls base
+        defaults.
+        """
+
+        _lazy_import_qt_stack()
+
+        # Load the raw file contents, creating the file from defaults if
+        # needed.
+        try:
+            path = maxent_settings.get_settings_file()
+        except Exception:
+            path = None
+
+        current_dict: dict = {}
+        if path is not None:
+            try:
+                current_dict = maxent_settings.load_maxent_settings()
+            except Exception:
+                current_dict = {}
+
+        # Serialize with nice formatting for editing.
+        try:
+            initial_text = json.dumps(current_dict, indent=2, sort_keys=True)
+        except Exception:
+            initial_text = "{}"
+
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("Edit MaxEnt JSON settings")
+        layout = QtWidgets.QVBoxLayout(dialog)
+
+        editor = None
+        try:
+            # Prefer the generic ChiSurf text editor with JSON highlighting
+            # if available.
+            import chisurf.gui.tools.code_editor.text_editor as _te  # type: ignore
+
+            editor = _te.TextEditor(dialog, language="json")
+            editor.setText(initial_text)
+        except Exception:
+            editor = QtWidgets.QPlainTextEdit(dialog)
+            editor.setPlainText(initial_text)
+
+        layout.addWidget(editor)
+
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Save | QtWidgets.QDialogButtonBox.Cancel,
+            parent=dialog,
+        )
+        layout.addWidget(buttons)
+
+        def _on_accept() -> None:
+            text = editor.text() if hasattr(editor, "text") else editor.toPlainText()
+            try:
+                data = json.loads(text)
+                if not isinstance(data, dict):
+                    raise ValueError("Top-level JSON value must be an object")
+            except Exception as exc:
+                QtWidgets.QMessageBox.critical(
+                    dialog,
+                    "Invalid JSON",
+                    f"The settings file must contain valid JSON object data.\n\nError: {exc}",
+                )
+                return
+
+            # Persist via helper so we reuse the same logic everywhere.
+            ok = maxent_settings.save_maxent_settings(data)
+            if not ok:
+                QtWidgets.QMessageBox.critical(
+                    dialog,
+                    "Save error",
+                    "Failed to write MaxEnt settings.json.",
+                )
+                return
+
+            # Refresh cached settings for future runs.
+            try:
+                self._settings = maxent_settings.load_maxent_settings()
+            except Exception:
+                self._settings = {}
+
+            dialog.accept()
+
+        buttons.accepted.connect(_on_accept)
+        buttons.rejected.connect(dialog.reject)
+
+        dialog.exec_()
+
     def _on_select_irf_clicked(self) -> None:
         self._ensure_irf_selector()
         try:
@@ -730,6 +972,7 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
             pass
 
     def _on_clear_irf_clicked(self) -> None:
+        _lazy_import_qt_stack()
         self._irf_dataset = None
         self.label_irf_source.setText("IRF: model.convolve.irf (default)")
 
@@ -1229,6 +1472,222 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
                 return
             QtWidgets.QMessageBox.critical(self, "MEM error", str(exc))
 
+    def _on_sample_clicked(self) -> None:
+        _lazy_import_qt_stack()
+        if self._last_result is None:
+            try:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "MEM sampling",
+                    "No MEM result available. Run MEM before sampling.",
+                )
+            except Exception:
+                pass
+            return
+
+        result = self._last_result
+
+        try:
+            decay, dt, t = self._get_decay_and_dt()
+        except Exception:
+            decay = None
+            dt = None
+            t = self._t_axis
+
+        start_dir = ""
+        try:
+            start_dir = str(getattr(chisurf, "working_path", "") or "")
+        except Exception:
+            start_dir = ""
+
+        target_dir = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Select folder for MEM sampling",
+            start_dir,
+        )
+        if not target_dir:
+            return
+
+        out_dir = Path(target_dir)
+        try:
+            out_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
+        h5_path = out_dir / "sampling.h5"
+        json_path = out_dir / "sampling_project.json"
+
+        steps_total = 500
+        thin_val = 5
+        walkers_val = None
+        substeps_val = 50
+        nprocs_val = None
+        vectorized_val = None
+        try:
+            steps_total = int(self.spin_sample_steps.value())
+        except Exception:
+            pass
+        try:
+            thin_val = int(self.spin_sample_thin.value())
+        except Exception:
+            pass
+        try:
+            w_raw = int(self.spin_sample_walkers.value())
+            walkers_val = None if w_raw <= 0 else w_raw
+        except Exception:
+            walkers_val = None
+        try:
+            substeps_val = int(self.spin_sample_substeps.value())
+        except Exception:
+            pass
+        try:
+            np_raw = int(self.spin_sample_nprocs.value())
+            nprocs_val = None if np_raw <= 0 else np_raw
+        except Exception:
+            nprocs_val = None
+        try:
+            vectorized_val = bool(self.chk_sample_vectorized.isChecked())
+        except Exception:
+            vectorized_val = None
+
+        # Background worker so the UI stays responsive while sampling.
+        class _SamplingWorker(QtCore.QObject):  # type: ignore[misc]
+            finished = QtCore.Signal(dict, str)  # stats, error_message ("" on success)
+            progress = QtCore.Signal(int, int)   # done, total
+
+            @QtCore.Slot()
+            def run(self):  # type: ignore[no-untyped-def]
+                try:
+                    # Best-effort multi-CPU usage for emcee. We keep the
+                    # number of worker processes moderate to avoid oversubscribing
+                    # the system.
+                    try:
+                        import multiprocessing as mp  # type: ignore
+
+                        cpu_total = mp.cpu_count() or 1
+                        if nprocs_val is None:
+                            # Use almost all available cores by default but
+                            # keep at least one core free for UI/OS work.
+                            nprocs_eff = max(1, cpu_total - 1)
+                        else:
+                            nprocs_eff = max(1, min(nprocs_val, cpu_total))
+                    except Exception:
+                        nprocs_eff = None
+
+                    def _progress_cb(done: int, total: int) -> bool:
+                        self.progress.emit(int(done), int(total))
+                        return False
+
+                    stats = sample_mem_distribution_emcee(
+                        result,
+                        nwalkers=walkers_val,
+                        filename=str(h5_path),
+                        steps_total=steps_total,
+                        thin=int(thin_val),
+                        substeps=int(substeps_val),
+                        progress_cb=_progress_cb,
+                        nprocs=nprocs_eff,
+                        csv_prefix=str(out_dir / "chisurf_sampling"),
+                        vectorized=vectorized_val,
+                    )
+                    self.finished.emit(stats, "")
+                except Exception as exc:  # pragma: no cover - GUI error path
+                    self.finished.emit({}, str(exc))
+
+        progress = QtWidgets.QProgressDialog(
+            "Sampling MEM distribution (emcee)...",
+            "Cancel",
+            0,
+            int(steps_total),
+            self,
+        )
+        # Non-modal so the rest of the UI remains usable while sampling.
+        progress.setWindowModality(QtCore.Qt.NonModal)
+        progress.setAutoClose(True)
+        progress.setAutoReset(True)
+        progress.setMinimumDuration(0)
+        progress.setValue(0)
+
+        worker = _SamplingWorker()
+        thread = QtCore.QThread(self)
+        worker.moveToThread(thread)
+
+        def _on_worker_progress(done: int, total: int) -> None:
+            try:
+                progress.setMaximum(int(total))
+                progress.setValue(int(done))
+            except Exception:
+                pass
+
+        def _on_worker_finished(stats: dict, error_message: str) -> None:
+            try:
+                progress.close()
+            except Exception:
+                pass
+            thread.quit()
+            thread.wait()
+
+            if error_message:
+                try:
+                    QtWidgets.QMessageBox.critical(self, "MEM sampling error", error_message)
+                except Exception:
+                    pass
+                return
+
+            self._sample_stats = stats
+
+            if decay is not None and t is not None:
+                try:
+                    self._update_plots_from_result(decay, t, result)
+                except Exception:
+                    pass
+
+            try:
+                meta = self._build_mem_meta(result, dt)
+            except Exception:
+                meta = {}
+
+            project = {
+                "schema": "chisurf.maxent_mem_sampling",
+                "schema_version": 1,
+                "created": datetime.datetime.now().isoformat(),
+                "mode": "FRET" if "R" in result else "lifetime",
+                "mem": meta,
+                "sampling": {
+                    "hdf5_file": h5_path.name,
+                    "nwalkers": int(stats.get("nwalkers", 0)),
+                    "steps_total": int(stats.get("steps_total", steps_total)),
+                    "thin": int(stats.get("thin", 1)),
+                    "substeps": int(stats.get("substeps", 1)),
+                    "ndim": int(stats.get("ndim", 0)),
+                    "vectorized": bool(stats.get("vectorized", False)),
+                    "n_samples": int(stats.get("n_samples", 0)),
+                },
+            }
+
+            try:
+                with json_path.open("w", encoding="utf-8") as f:
+                    json.dump(project, f, indent=2, sort_keys=True)
+            except Exception:
+                pass
+
+            try:
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "MEM sampling",
+                    f"Sampling completed. Saved {stats.get('n_samples', 0)} samples to folder:\n{out_dir}",
+                )
+            except Exception:
+                pass
+
+        worker.progress.connect(_on_worker_progress)
+        worker.finished.connect(_on_worker_finished)
+        thread.started.connect(worker.run)
+        thread.start()
+
+        self._sampling_thread = thread
+        self._sampling_worker = worker
+
     def _on_save_clicked(self) -> None:
         _lazy_import_qt_stack()
         if self._last_result is None or self._t_axis is None:
@@ -1296,28 +1755,7 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         except Exception:
             lamp = None
 
-        try:
-            meta = {
-                "mode": "FRET" if "R" in result else "lifetime",
-                "nu": float(result.get("nu", result.get("nu_input", 0.0))),
-                "chisq": float(result.get("chisq", 0.0)),
-                "S": float(result.get("S", 0.0)),
-                "Q": float(result.get("Q", 0.0)),
-                "fitrange": [int(x) for x in result.get("fitrange", (0, 0))],
-                "dt": float(result.get("dt", dt if dt is not None else 0.0)),
-                "tau0": float(result.get("tau0", self.spin_tau0.value())),
-                "R0": float(result.get("R0", self.spin_R0.value())),
-                "R_min": float(self.spin_R_min.value()),
-                "R_max": float(self.spin_R_max.value()),
-                "R_points": int(self.spin_R_points.value()),
-                "tau_min": float(self.spin_tau_min.value()),
-                "tau_max": float(self.spin_tau_max.value()),
-                "tau_step": float(self.spin_tau_step.value()),
-                "fit_start_fraction": float(self.spin_start_frac.value()),
-                "fit_nuisance": bool(self.chk_fit_nuisance.isChecked()),
-            }
-        except Exception:
-            meta = {}
+        meta = self._build_mem_meta(result, dt)
 
         try:
             if dist_axis.size and p.size:
@@ -1363,6 +1801,30 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
             pass
 
         QtWidgets.QMessageBox.information(self, "Save MEM result", f"Saved MEM result to:\n{out_dir}")
+
+    def _build_mem_meta(self, result, dt):
+        try:
+            return {
+                "mode": "FRET" if "R" in result else "lifetime",
+                "nu": float(result.get("nu", result.get("nu_input", 0.0))),
+                "chisq": float(result.get("chisq", 0.0)),
+                "S": float(result.get("S", 0.0)),
+                "Q": float(result.get("Q", 0.0)),
+                "fitrange": [int(x) for x in result.get("fitrange", (0, 0))],
+                "dt": float(result.get("dt", dt if dt is not None else 0.0)),
+                "tau0": float(result.get("tau0", self.spin_tau0.value())),
+                "R0": float(result.get("R0", self.spin_R0.value())),
+                "R_min": float(self.spin_R_min.value()),
+                "R_max": float(self.spin_R_max.value()),
+                "R_points": int(self.spin_R_points.value()),
+                "tau_min": float(self.spin_tau_min.value()),
+                "tau_max": float(self.spin_tau_max.value()),
+                "tau_step": float(self.spin_tau_step.value()),
+                "fit_start_fraction": float(self.spin_start_frac.value()),
+                "fit_nuisance": bool(self.chk_fit_nuisance.isChecked()),
+            }
+        except Exception:
+            return {}
 
     def _on_lcurve_clicked(self) -> None:
         try:
@@ -1475,12 +1937,18 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
                     raise RuntimeError("L-curve computation cancelled")
                 try:
                     if is_fret:
+                        # Map the periodic checkbox to the 'period' argument;
+                        # the core does not accept a separate 'use_periodic' flag.
+                        if use_periodic:
+                            period_arg = max(float(self.spin_period.value()), 1e-3)
+                        else:
+                            period_arg = None
+
                         res = mem_vin4_fret(
                             decay=decay,
                             lamp=lamp,
                             dt=dt,
-                            period=period_val,
-                            use_periodic=use_periodic,
+                            period=period_arg,
                             R=r_axis,
                             tau0=float(tau0_val),
                             R0=float(R0_val),
@@ -1494,13 +1962,14 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
                             progress_cb=None,
                         )
                     else:
+                        # Lifetime core does not support lamp_scatter or
+                        # use_periodic; we call it with the supported
+                        # arguments only.
                         res = mem_vin4_lifetime(
                             decay=decay,
                             lamp=lamp,
                             dt=dt,
                             tau=tau,
-                            lamp_scatter=float(self.spin_lamp_scatter.value()),
-                            use_periodic=use_periodic,
                             fitrange=fitrange_arg,
                             fit_start_fraction=fit_start_fraction,
                             nu=float(nu_val),
@@ -1706,12 +2175,17 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
                 else:
                     donly_vec = np.array([1.0, float(tau0_val)], dtype=float)
                 prior = self._dist_prior_vec if self._dist_prior_vec is not None and self._dist_prior_vec.size == r_axis.size else None
+
+                if use_periodic:
+                    period_arg = max(float(self.spin_period.value()), 1e-3)
+                else:
+                    period_arg = None
+
                 result = mem_vin4_fret(
                     decay=decay,
                     lamp=lamp,
                     dt=dt,
-                    period=period_val,
-                    use_periodic=use_periodic,
+                    period=period_arg,
                     R=r_axis,
                     tau0=float(tau0_val),
                     R0=float(R0_val),
@@ -1731,13 +2205,13 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
                 )
             else:
                 tau = self._build_tau_grid()
+                # Lifetime solver does not support lamp_scatter or a
+                # separate use_periodic flag; those are FRET-specific.
                 result = mem_vin4_lifetime(
                     decay=decay,
                     lamp=lamp,
                     dt=dt,
                     tau=tau,
-                    lamp_scatter=lamp_scatter_val,
-                    use_periodic=use_periodic,
                     timeshift=float(ts_val),
                     background=float(bg_val),
                     irf_background=irf_bg_arg,
@@ -1826,7 +2300,107 @@ class MaxentDecayWidget(QtWidgets.QMainWindow):  # type: ignore[misc]
         self.plot_wres.addLine(y=0.0, pen=pg.mkPen("w", width=1))
 
         self.plot_dist.clear()
+        self._sample_band_lower = None
+        self._sample_band_upper = None
+        self._sample_band_fill = None
+        self._sample_hist_item = None
+
+        # Base MEM distribution (normalized) as magenta line with points.
         self.plot_dist.plot(dist_axis, p_norm, pen="m", symbol="o", symbolSize=4)
+
+        stats = getattr(self, "_sample_stats", None)
+        if stats is None:
+            return
+
+        try:
+            axis_s = np.asarray(stats.get("axis", []), dtype=float).ravel()
+        except Exception:
+            return
+
+        if axis_s.size != dist_axis.size:
+            return
+        try:
+            if not np.allclose(axis_s, dist_axis):
+                return
+        except Exception:
+            return
+
+        try:
+            p_lo = np.asarray(stats.get("p_lo", []), dtype=float).ravel()
+            p_hi = np.asarray(stats.get("p_hi", []), dtype=float).ravel()
+            p_med = np.asarray(stats.get("p_med", []), dtype=float).ravel()
+            p_mean = np.asarray(stats.get("p_mean", []), dtype=float).ravel()
+            p_mem_s = np.asarray(stats.get("p_mem", []), dtype=float).ravel()
+        except Exception:
+            return
+        if p_lo.size != dist_axis.size or p_hi.size != dist_axis.size:
+            return
+
+        # Normalize sampled distributions independently so that each of
+        # ``p_lo``, ``p_med`` and ``p_hi`` represents a proper probability
+        # distribution (area ~= 1). This makes the blue band and histogram
+        # easier to compare visually with the normalized MEM curve.
+        def _norm_prob(v: np.ndarray) -> np.ndarray:
+            try:
+                s = float(np.sum(v))
+            except Exception:
+                s = 0.0
+            if not np.isfinite(s) or s <= 0.0:
+                return v
+            return v / s
+
+        p_lo_n = _norm_prob(p_lo)
+        p_hi_n = _norm_prob(p_hi)
+        if p_med.size == dist_axis.size:
+            p_med_n = _norm_prob(p_med)
+        elif p_mean.size == dist_axis.size:
+            p_med_n = _norm_prob(p_mean)
+        else:
+            p_med_n = p_lo_n * 0.0
+
+        lower_curve = self.plot_dist.plot(
+            dist_axis,
+            p_lo_n,
+            pen=pg.mkPen((80, 80, 200, 160)),
+        )
+        upper_curve = self.plot_dist.plot(
+            dist_axis,
+            p_hi_n,
+            pen=pg.mkPen((80, 80, 200, 160)),
+        )
+
+        fill_item = None
+        try:
+            fill_item = pg.FillBetweenItem(upper_curve, lower_curve, brush=(80, 80, 200, 80))
+            self.plot_dist.addItem(fill_item)
+        except Exception:
+            fill_item = None
+
+        self._sample_band_lower = lower_curve
+        self._sample_band_upper = upper_curve
+        self._sample_band_fill = fill_item
+
+        # Histogram-style view of the sampled distribution: use the median
+        # posterior distribution as bar heights, displayed underneath the
+        # MEM line and band.
+        try:
+            if dist_axis.size > 1:
+                dx = float(np.median(np.diff(dist_axis)))
+            else:
+                dx = 1.0
+            width = 0.9 * dx
+            # pyqtgraph BarGraphItem expects bar centers at x with given width.
+            hist_item = pg.BarGraphItem(
+                x=dist_axis,
+                height=p_med_n,
+                width=width,
+                brush=(100, 150, 255, 80),
+                pen=None,
+            )
+            self.plot_dist.addItem(hist_item)
+            self._sample_hist_item = hist_item
+        except Exception:
+            self._sample_hist_item = None
 
 
 __all__ = ["MaxentDecayWidget"]

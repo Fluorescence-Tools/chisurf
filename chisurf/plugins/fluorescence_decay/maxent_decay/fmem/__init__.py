@@ -25,6 +25,7 @@ from .api import (
     run_fret_mem_from_arrays,
     run_fret_mem_from_files,
 )
+from .sampling import sample_mem_distribution_emcee
 
 __all__ = [
     # Core-level symbols (re-exported from .core)
@@ -43,4 +44,5 @@ __all__ = [
     "run_lifetime_mem_from_files",
     "run_fret_mem_from_arrays",
     "run_fret_mem_from_files",
+    "sample_mem_distribution_emcee",
 ]
