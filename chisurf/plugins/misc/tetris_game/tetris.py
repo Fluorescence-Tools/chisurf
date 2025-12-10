@@ -1,8 +1,8 @@
 import sys
 import random
-from PyQt5.QtCore import Qt, QBasicTimer, QPoint
-from PyQt5.QtGui import QPainter, QColor
-from PyQt5.QtWidgets import QFrame, QApplication, QMainWindow
+from qtpy.QtCore import Qt, QBasicTimer, QPoint
+from qtpy.QtGui import QPainter, QColor
+from qtpy.QtWidgets import QFrame, QApplication, QMainWindow
 
 # Dimensions
 BoardWidth = 10
@@ -267,4 +267,4 @@ class Tetris(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     tetris = Tetris()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

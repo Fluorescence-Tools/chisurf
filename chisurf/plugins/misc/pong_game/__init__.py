@@ -18,7 +18,7 @@ using PyQt5 for creating interactive graphical applications.
 name = "Miscellaneous:Pong"
 
 import sys
-from PyQt5.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication
 
 from .pong_game import Pong
 
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     game = Pong()
     game.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "plugin":
     game = Pong()

@@ -1,8 +1,8 @@
 import sys
 import random
-from PyQt5.QtCore import Qt, QBasicTimer, QRectF, QPointF
-from PyQt5.QtGui import QPainter, QColor, QFont
-from PyQt5.QtWidgets import QFrame, QApplication, QMainWindow
+from qtpy.QtCore import Qt, QBasicTimer, QRectF, QPointF
+from qtpy.QtGui import QPainter, QColor, QFont
+from qtpy.QtWidgets import QFrame, QApplication, QMainWindow
 
 # Game constants
 WindowWidth = 800
@@ -222,4 +222,4 @@ class Pong(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     pong = Pong()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

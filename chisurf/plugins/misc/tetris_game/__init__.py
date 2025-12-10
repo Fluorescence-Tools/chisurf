@@ -25,7 +25,7 @@ creating responsive, event-driven graphical applications.
 name = "Miscellaneous:Tetris"
 
 import sys
-from PyQt5.QtWidgets import QApplication
+from qtpy.QtWidgets import QApplication
 
 from .tetris import Tetris
 
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     game = Tetris()
     game.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "plugin":
     game = Tetris()
