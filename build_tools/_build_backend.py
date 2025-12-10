@@ -53,23 +53,23 @@ def get_extensions():
             "chisurf.fluorescence.simulation.simulation_",
             sources=[
                 "chisurf/fluorescence/simulation/simulation_.pyx",
-                "chisurf/fluorescence/simulation/mt19937cok.cpp"
+                "chisurf/fluorescence/simulation/mt19937cok.cpp",
             ],
             include_dirs=[np.get_include()],
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
-            language="c++"
+            language="c++",
         ),
         Extension(
             "chisurf.structure.av.fps_",
             sources=[
                 "chisurf/structure/av/fps_.pyx",
-                "chisurf/structure/av/mt19937cok.cpp"
+                "chisurf/structure/av/mt19937cok.cpp",
             ],
             include_dirs=[np.get_include()],
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
-            language="c++"
+            language="c++",
         ),
         Extension(
             "chisurf.structure.potential.cPotentials_",
@@ -77,15 +77,7 @@ def get_extensions():
             include_dirs=[np.get_include()],
             extra_compile_args=extra_compile_args,
             extra_link_args=extra_link_args,
-            language="c++"
-        ),
-        Extension(
-            "chisurf.math.reaction.reaction_",
-            sources=["chisurf/math/reaction/reaction_.pyx"],
-            include_dirs=[np.get_include()],
-            extra_compile_args=extra_compile_args,
-            extra_link_args=extra_link_args,
-            language="c++"
+            language="c++",
         ),
     ]
     
