@@ -2,6 +2,8 @@ import os
 import sys
 import pathlib
 import ctypes
+import pkgutil
+import ast
 
 # Helper to set hidden attribute on Windows
 
@@ -41,24 +43,29 @@ if str(user_plugins_dir) not in __path__:
     __path__.append(str(user_plugins_dir))
 
 
-# --- Auto-rasterize plugin SVG icons to PNG (once per process) ---
+# --- Auto-rasterize plugin SVG icons to PNG (optional) ---
 _def_done_flag = '_chisurf_plugins_svg_rasterized'
-if not getattr(sys.modules.get(__name__), _def_done_flag, False):
+if (
+    os.environ.get("CHISURF_ENABLE_PLUGIN_ICON_RASTERIZE", "").lower()
+    in {"1", "true", "yes"}
+    and not getattr(sys.modules.get(__name__), _def_done_flag, False)
+):
     setattr(sys.modules.get(__name__), _def_done_flag, True)
     try:
         # Import QtSvg lazily to avoid hard dependency if GUI isn't used
-        from PyQt5.QtSvg import QSvgRenderer  # type: ignore
-        from PyQt5.QtGui import QImage, QPainter  # type: ignore
-        from PyQt5.QtCore import QSize  # type: ignore
-        # If Qt isn't set up (e.g., headless), this block may still work since QImage is offscreen.
-        def _rasterize_svg_to_png(svg_path: pathlib.Path, png_path: pathlib.Path, size: QSize = None) -> bool:
+        from qtpy.QtSvg import QSvgRenderer  # type: ignore
+        from qtpy.QtGui import QImage, QPainter  # type: ignore
+        from qtpy.QtCore import QSize  # type: ignore
+
+        def _rasterize_svg_to_png(
+            svg_path: pathlib.Path, png_path: pathlib.Path, size: QSize = None
+        ) -> bool:
             try:
                 renderer = QSvgRenderer(str(svg_path))
                 if not renderer.isValid():
                     return False
                 default_size = renderer.defaultSize()
                 if size is None:
-                    # Use SVG default size if available, else fall back to 128x128
                     if default_size.width() > 0 and default_size.height() > 0:
                         size = default_size
                     else:
@@ -70,25 +77,109 @@ if not getattr(sys.modules.get(__name__), _def_done_flag, False):
                     renderer.render(painter)
                 finally:
                     painter.end()
-                # Ensure parent dir exists
                 png_path.parent.mkdir(parents=True, exist_ok=True)
                 return img.save(str(png_path))
             except Exception:
                 return False
 
-        # Scan installed package plugins directory for icon.svg files
         pkg_plugins_dir = pathlib.Path(__file__).parent
         for d in pkg_plugins_dir.iterdir():
             try:
                 if not d.is_dir():
                     continue
-                svg = d / 'icon.svg'
-                png = d / 'icon.png'
+                svg = d / "icon.svg"
+                png = d / "icon.png"
                 if svg.exists() and not png.exists():
                     _rasterize_svg_to_png(svg, png)
             except Exception:
-                # Never fail import due to icon generation issues
                 pass
     except Exception:
-        # QtSvg not available or other import issue; skip rasterization silently
         pass
+
+
+def _read_plugin_metadata(init_py: pathlib.Path):
+    if not init_py.exists():
+        return None, None, None
+    try:
+        source = init_py.read_text(encoding="utf-8")
+    except Exception:
+        return None, None, None
+    try:
+        tree = ast.parse(source, filename=str(init_py))
+    except Exception:
+        return None, None, None
+    description = ast.get_docstring(tree) or "No description available."
+    plugin_name = None
+    cli_entrypoint = None
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in getattr(node, "targets", []):
+            if isinstance(target, ast.Name) and target.id == "name":
+                value = node.value
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    plugin_name = value.value
+                elif isinstance(value, ast.Str):
+                    plugin_name = value.s
+            if isinstance(target, ast.Name) and target.id == "cli_entrypoint":
+                value = node.value
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    cli_entrypoint = value.value.strip()
+                elif isinstance(value, ast.Str):
+                    cli_entrypoint = value.s.strip()
+    return plugin_name, description, cli_entrypoint
+
+
+def iter_plugins():
+    base_prefix = __name__ + "."
+    try:
+        user_root = user_plugins_dir.resolve()
+    except Exception:
+        user_root = user_plugins_dir
+    seen = set()
+    for finder, name, ispkg in pkgutil.walk_packages(__path__, prefix=base_prefix):
+        if not ispkg or not name.startswith(base_prefix):
+            continue
+        rel_name = name[len(base_prefix):]
+        parts = rel_name.split(".")
+        finder_path = getattr(finder, "path", None)
+        if not finder_path:
+            continue
+        try:
+            base_path = pathlib.Path(finder_path).resolve()
+        except Exception:
+            continue
+
+        # For nested packages, finder.path already points at the parent
+        # directory of the *first* package component. Joining all "parts"
+        # would therefore duplicate path segments (e.g. traj/traj_align
+        # under a finder.path of .../plugins/traj). Instead, only join the
+        # final component relative to finder.path.
+        local_name = parts[-1]
+        init_py = base_path.joinpath(local_name, "__init__.py")
+        if not init_py.exists():
+            continue
+        plugin_name, description, cli_entrypoint = _read_plugin_metadata(init_py)
+        if not plugin_name:
+            continue
+        package_dir = init_py.parent
+        key = (name, str(package_dir))
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            if hasattr(package_dir, "is_relative_to"):
+                is_user = package_dir.is_relative_to(user_root)
+            else:
+                is_user = str(package_dir).startswith(str(user_root))
+        except Exception:
+            is_user = str(package_dir).startswith(str(user_root))
+        yield {
+            "module_path": name,
+            "module_name": parts[-1],
+            "package_dir": package_dir,
+            "source": "user" if is_user else "built-in",
+            "plugin_name": plugin_name,
+            "description": description,
+            "cli_entrypoint": cli_entrypoint,
+        }
