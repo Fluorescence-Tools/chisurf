@@ -9,6 +9,7 @@ import chisurf
 from chisurf import logging
 from chisurf.macros import core_data as core_data_macros
 from chisurf.experiments.pda import PdaReader
+from chisurf.gui.widgets.progress import EnhancedProgressDialog
 
 # Reuse the setups loader from the DetectorWizard
 from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
@@ -361,10 +362,18 @@ class PdaTTTRWidget(
         except Exception:
             return [], {}
 
-        # Collect candidate roots to search (avoid duplicates)
-        roots = []
-        roots_seen = set()
+        # For each BUR file, determine the most likely TTTR folder(s) once.
+        # We follow the convention that BUR tables live in a "bi4_bur"/"bur" folder
+        # somewhere below the TTTR data. In practice, TTTR files are often stored in
+        # the parent or grand-parent folder (optionally in an 'hdf5' subfolder).
+        #
+        # We therefore, for each "analysis root" (one level above bi4_bur/bur),
+        # build a short ordered list of candidate TTTR roots by walking up at most
+        # three levels and, at each level, preferring a sibling 'hdf5' directory if
+        # present, then the directory itself. These roots are cached per analysis
+        # root so we do not recompute them for every BUR file.
         bur_to_roots = {}
+        root_hint_cache = {}
         for bur in bur_files:
             try:
                 bur_path = pathlib.Path(bur)
@@ -374,45 +383,60 @@ class PdaTTTRWidget(
                     root_hint = bur_path.parent.parent
                 else:
                     root_hint = bur_path.parent
-                roots_this_bur = []
-                for r in [root_hint, root_hint.parent if root_hint else None, root_hint.parent.parent if root_hint and root_hint.parent else None]:
-                    if r and r.exists():
-                        sr = str(r)
-                        roots_this_bur.append(r)
-                        if sr not in roots_seen:
-                            roots.append(r)
-                            roots_seen.add(sr)
-                bur_to_roots[bur] = roots_this_bur
-            except Exception:
-                continue
 
-        # Index TTTR files under all roots once
-        from collections import defaultdict
-        name_to_paths = defaultdict(list)
-        stem_to_paths = defaultdict(list)
-        for root in roots:
-            try:
-                rs = str(root)
-                cached = _TTTR_INDEX_CACHE.get(rs)
-                if cached is not None:
-                    ncache, scache = cached
-                    for k, v in ncache.items():
-                        name_to_paths[k].extend(v)
-                    for k, v in scache.items():
-                        stem_to_paths[k].extend(v)
+                if root_hint is None:
+                    bur_to_roots[bur] = []
                     continue
-                ncache = defaultdict(list)
-                scache = defaultdict(list)
-                for p in root.rglob("*"):
-                    if not p.is_file():
+
+                cache_key = str(root_hint)
+                cached_roots = root_hint_cache.get(cache_key)
+                if cached_roots is not None:
+                    bur_to_roots[bur] = cached_roots
+                    continue
+
+                roots_this_bur = []
+                seen = set()
+
+                # Walk up to three levels: analysis root, its parent, and grand-parent.
+                candidates = []
+                try:
+                    candidates.append(root_hint)
+                    parent1 = root_hint.parent
+                    if parent1 is not None:
+                        candidates.append(parent1)
+                        parent2 = parent1.parent
+                        if parent2 is not None:
+                            candidates.append(parent2)
+                except Exception:
+                    pass
+
+                for base in candidates:
+                    if base is None:
                         continue
-                    if p.suffix.lower() not in self._tttr_exts:
+                    try:
+                        if not base.exists():
+                            continue
+                    except Exception:
                         continue
-                    ncache[p.name].append(p)
-                    scache[p.stem].append(p)
-                    name_to_paths[p.name].append(p)
-                    stem_to_paths[p.stem].append(p)
-                _TTTR_INDEX_CACHE[rs] = (ncache, scache)
+
+                    # Prefer sibling 'hdf5' directory if present (typical MFD HDF5 layout)
+                    try:
+                        hdf5_dir = base / 'hdf5'
+                        if hdf5_dir.is_dir():
+                            key_hdf5 = str(hdf5_dir)
+                            if key_hdf5 not in seen:
+                                roots_this_bur.append(hdf5_dir)
+                                seen.add(key_hdf5)
+                    except Exception:
+                        pass
+
+                    key_base = str(base)
+                    if key_base not in seen:
+                        roots_this_bur.append(base)
+                        seen.add(key_base)
+
+                root_hint_cache[cache_key] = roots_this_bur
+                bur_to_roots[bur] = roots_this_bur
             except Exception:
                 continue
 
@@ -420,23 +444,75 @@ class PdaTTTRWidget(
         tttr_files_set = set()
         burst_slices = {}
 
+        # Cache of the preferred TTTR directory per analysis root. Once one
+        # BUR file from a given analysis root has been successfully mapped to
+        # a TTTR file, all subsequent BUR files from the same analysis root
+        # reuse that TTTR directory instead of walking multiple candidate
+        # roots again.
+        analysis_preferred_root = {}
+
         def add_tttr_file(p: pathlib.Path):
             sp = str(p)
             if sp not in tttr_files_set:
                 tttr_files_set.add(sp)
                 tttr_files_order.append(sp)
 
+        def _resolve_name_in_roots(name_str: str, roots_for_bur):
+            """Resolve a TTTR filename relative to a small set of roots.
+
+            The function tries, in order:
+            - absolute path in the filesystem
+            - direct join (root / name_str) for each candidate root
+            - same stem with any known TTTR extension in each root
+            """
+            if not name_str:
+                return None
+
+            # Absolute path reference
+            try:
+                candidate = pathlib.Path(name_str)
+                if candidate.is_absolute() and candidate.is_file():
+                    return candidate
+            except Exception:
+                candidate = None
+
+            # Relative name: search only the nearby roots, no recursion
+            stem = pathlib.Path(name_str).stem
+            for root in roots_for_bur or []:
+                try:
+                    # Direct join, preserving any subdirectories encoded in name_str
+                    cand = (root / name_str)
+                    if cand.is_file():
+                        return cand
+                except Exception:
+                    cand = None
+
+                # Fallback: same stem with any supported TTTR extension in this folder
+                try:
+                    for ext in self._tttr_exts:
+                        alt = (root / f"{stem}{ext}")
+                        if alt.is_file():
+                            return alt
+                except Exception:
+                    continue
+            return None
+
         total = len(bur_files) if isinstance(bur_files, (list, tuple)) else 0
         for idx, bur in enumerate(bur_files, start=1):
             try:
                 if callable(progress_callback):
                     try:
-                        progress_callback(idx, total, bur)
+                        # Allow the callback to request early abort by returning False
+                        if progress_callback(idx, total, bur) is False:
+                            break
                     except Exception:
+                        # Ignore callback errors; do not abort resolving
                         pass
+
                 bur_path = pathlib.Path(bur)
                 if not bur_path.is_file():
                     continue
+
                 # Read BUR file (case-insensitive columns)
                 try:
                     required = {'first photon', 'last photon', 'first file', 'last file'}
@@ -447,75 +523,170 @@ class PdaTTTRWidget(
                     )
                 except Exception:
                     continue
+
                 cols_map = {c.lower(): c for c in df.columns}
-                req = ['first photon','last photon','first file','last file']
+                req = ['first photon', 'last photon', 'first file', 'last file']
                 if not all(c in cols_map for c in req):
                     continue
+
                 fp_col = cols_map['first photon']
                 lp_col = cols_map['last photon']
                 ff_col = cols_map['first file']
                 lf_col = cols_map['last file']
+
                 # Filter rows: First File == Last File and non-empty
                 df = df.dropna(subset=[ff_col, lf_col])
+                if df.empty:
+                    continue
+
                 file_series = df[ff_col].astype(str).str.strip()
                 same_file = file_series == df[lf_col].astype(str).str.strip()
                 df = df.loc[same_file]
+                file_series = file_series.loc[df.index]
                 if df.empty:
                     continue
-                local_roots = set(bur_to_roots.get(bur, []))
 
-                def choose_path(name_str: str):
-                    # Prefer candidates within local roots
-                    cands = name_to_paths.get(name_str)
-                    if cands:
-                        for cand in cands:
-                            if cand.parent in local_roots:
-                                return cand
-                        return cands[0]
-                    stem = pathlib.Path(name_str).stem
-                    cands = stem_to_paths.get(stem)
-                    if cands:
-                        for cand in cands:
-                            if cand.parent in local_roots:
-                                return cand
-                        return cands[0]
-                    return None
+                # Pre-compute integer photon index ranges once per BUR
+                try:
+                    start_series = df[fp_col].astype(float).astype('int64')
+                    stop_series = df[lp_col].astype(float).astype('int64') + 1
+                except Exception:
+                    continue
+                df = df.copy()
+                df['_pda_start'] = start_series
+                df['_pda_stop'] = stop_series
 
-                # Cache resolution of TTTR paths per unique file name to avoid
-                # repeated directory lookups for the same name within this BUR.
+                # Determine analysis root for this BUR (one level above bi4_bur/bur
+                # if present, otherwise the BUR's parent directory).
+                analysis_root = None
+                try:
+                    if bur_path.parent.name.lower() in ('bi4_bur', 'bur'):
+                        analysis_root = bur_path.parent.parent
+                    else:
+                        analysis_root = bur_path.parent
+                except Exception:
+                    analysis_root = None
+                analysis_key = str(analysis_root) if analysis_root is not None else None
+
+                roots_for_bur = bur_to_roots.get(bur, [])
+                if analysis_key is not None and analysis_key in analysis_preferred_root:
+                    roots_for_bur = [analysis_preferred_root[analysis_key]]
+                if not roots_for_bur:
+                    logging.warning(
+                        "PDA: No TTTR search roots found for BUR file %s; skipping its bursts.",
+                        str(bur_path),
+                    )
+                    continue
+
+                # First try the simple 1:1 mapping: `<bur_stem>.bur` -> `<bur_stem>.<ext>`
+                # in the TTTR folder(s). This matches the typical MFD layout where each
+                # BUR file belongs to exactly one TTTR file with the same stem.
+                bur_tttr = None
+                for root in roots_for_bur:
+                    try:
+                        for ext in self._tttr_exts:
+                            cand = root / f"{bur_path.stem}{ext}"
+                            if cand.is_file():
+                                bur_tttr = cand
+                                break
+                    except Exception:
+                        continue
+                    if bur_tttr is not None:
+                        break
+
+                if bur_tttr is not None:
+                    if analysis_key is not None and analysis_key not in analysis_preferred_root:
+                        try:
+                            analysis_preferred_root[analysis_key] = bur_tttr.parent
+                        except Exception:
+                            pass
+                    key = str(bur_tttr)
+                    try:
+                        starts = df['_pda_start'].tolist()
+                        stops = df['_pda_stop'].tolist()
+                    except Exception:
+                        try:
+                            starts = start_series.tolist()
+                            stops = stop_series.tolist()
+                        except Exception:
+                            starts = stops = []
+                    if starts:
+                        burst_slices.setdefault(key, []).extend(zip(starts, stops))
+                        try:
+                            add_tttr_file(bur_tttr)
+                        except Exception:
+                            pass
+                    # Done with this BUR file; proceed to the next one.
+                    continue
+
+                # Fallback: resolve TTTR paths from the "First File" column contents.
+                # This covers less common layouts where a BUR file may reference
+                # multiple TTTR files.
                 resolved_cache = {}
                 missing_logged = set()
                 for name_str in file_series.unique():
                     if not name_str:
                         resolved_cache[name_str] = None
                         continue
-                    try:
-                        resolved_cache[name_str] = choose_path(name_str)
-                    except Exception:
+                    # Some external tools encode file indices like "0", "1", ... in
+                    # the First File column. Treat these as non-resolvable identifiers
+                    # instead of literal filenames.
+                    if str(name_str).strip().isdigit():
                         resolved_cache[name_str] = None
-
-                for _, row in df.iterrows():
+                        continue
                     try:
-                        first_file = str(row[ff_col]).strip()
-                        if not first_file:
-                            continue
-                        resolved = resolved_cache.get(first_file)
-                        if resolved is None:
-                            if first_file not in missing_logged:
-                                logging.debug(
-                                    "PDA: Could not resolve TTTR file '%s' from BUR '%s'; skipping row.",
-                                    first_file, str(bur_path)
-                                )
-                                missing_logged.add(first_file)
-                            continue
-                        # slice indices (inclusive->exclusive)
-                        a = int(float(row[fp_col]))
-                        b = int(float(row[lp_col])) + 1
-                        key = str(resolved)
-                        burst_slices.setdefault(key, []).append((a, b))
-                        add_tttr_file(resolved)
+                        resolved_path = _resolve_name_in_roots(name_str, roots_for_bur)
+                    except Exception:
+                        resolved_path = None
+                    resolved_cache[name_str] = str(resolved_path) if resolved_path is not None else None
+                    # As soon as we find a real TTTR file for this analysis root,
+                    # remember its parent directory as the preferred TTTR folder so
+                    # subsequent BUR files from the same root do not need to re-walk
+                    # all candidate ancestors.
+                    if (
+                        resolved_path is not None
+                        and analysis_key is not None
+                        and analysis_key not in analysis_preferred_root
+                    ):
+                        try:
+                            analysis_preferred_root[analysis_key] = resolved_path.parent
+                        except Exception:
+                            pass
+
+                # Map each row to its resolved TTTR file key (string path or None)
+                resolved_keys = file_series.map(lambda s: resolved_cache.get(s))
+                mask_valid = resolved_keys.notna()
+                if not mask_valid.any():
+                    # All referenced TTTRs missing for this BUR (ignoring pure indices)
+                    for missing_name, key in resolved_cache.items():
+                        if key is None and missing_name and not str(missing_name).strip().isdigit():
+                            logging.warning(
+                                "PDA: TTTR file '%s' referenced in BUR '%s' could not be found; skipping its bursts.",
+                                missing_name,
+                                str(bur_path),
+                            )
+                    continue
+
+                valid_df = df.loc[mask_valid]
+                valid_keys = resolved_keys.loc[mask_valid]
+
+                # Group by resolved TTTR file and aggregate slices vectorized per group
+                for key, group in valid_df.groupby(valid_keys):
+                    if not key:
+                        continue
+                    try:
+                        starts = group['_pda_start'].tolist()
+                        stops = group['_pda_stop'].tolist()
                     except Exception:
                         continue
+                    if not starts:
+                        continue
+                    burst_slices.setdefault(key, []).extend(zip(starts, stops))
+                    try:
+                        add_tttr_file(pathlib.Path(key))
+                    except Exception:
+                        # If the path string is malformed, keep slices but skip list entry
+                        pass
             except Exception:
                 continue
         return tttr_files_order, self._merge_intervals(burst_slices)
@@ -527,10 +698,9 @@ class PdaTTTRWidget(
         Previously this returned TTTR files; now we list the BUR files themselves.
         """
         try:
-            try:
-                base_dir = base_dir.resolve()
-            except Exception:
-                pass
+            # Do not call resolve() here; on Windows this may convert mapped-drive
+            # paths (e.g. "P:\\...") into UNC network paths ("\\\\server\\share\\..."),
+            # which is undesirable for logging and user-visible paths.
             if not base_dir.exists() or not base_dir.is_dir():
                 return []
             # Prefer .bur files directly in the folder; if none, search recursively
@@ -765,29 +935,58 @@ class PdaTTTRWidget(
                 logging.warning("PDA: No dropped files are checked to load.")
                 QtWidgets.QMessageBox.information(self, "No files", "No dropped files are checked to load.")
                 return
+
+            progress_dialog = None
             try:
-                cs = getattr(chisurf, 'cs', None)
+                parent = getattr(chisurf, 'cs', None)
             except Exception:
-                cs = None
-            progress_bar = getattr(cs, 'progress_bar', None)
-            status_label = getattr(cs, 'status_label', None)
-            progress_backup = None
-            status_backup = None
-            if progress_bar is not None:
+                parent = None
+            if not isinstance(parent, QtWidgets.QWidget):
                 try:
-                    progress_backup = (
-                        progress_bar.minimum(),
-                        progress_bar.maximum(),
-                        progress_bar.value()
-                    )
+                    parent = self.window()
                 except Exception:
-                    progress_backup = None
-            if status_label is not None:
-                try:
-                    status_backup = status_label.text()
-                except Exception:
-                    status_backup = None
+                    parent = self
             try:
+                progress_dialog = EnhancedProgressDialog(
+                    title="Loading PDA data",
+                    label_text="Preparing dropped files...",
+                    min_value=0,
+                    max_value=0,
+                    parent=parent,
+                )
+                progress_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+                progress_dialog.setMinimumDuration(0)
+                progress_dialog.setAutoClose(False)
+                progress_dialog.setAutoReset(False)
+                progress_dialog.show()
+                progress_dialog.update_progress(0, "Preparing dropped files...")
+            except Exception:
+                progress_dialog = None
+
+            try:
+                try:
+                    cs = getattr(chisurf, 'cs', None)
+                except Exception:
+                    cs = None
+                progress_bar = getattr(cs, 'progress_bar', None)
+                status_label = getattr(cs, 'status_label', None)
+                progress_backup = None
+                status_backup = None
+                if progress_bar is not None:
+                    try:
+                        progress_backup = (
+                            progress_bar.minimum(),
+                            progress_bar.maximum(),
+                            progress_bar.value()
+                        )
+                    except Exception:
+                        progress_backup = None
+                if status_label is not None:
+                    try:
+                        status_backup = status_label.text()
+                    except Exception:
+                        status_backup = None
+
                 bur_files = []
                 tttr_files = []
                 for f in files:
@@ -859,6 +1058,7 @@ class PdaTTTRWidget(
                 ch1_text = self.lineEdit_4.text().strip()
                 ch0 = [int(k) for k in ch0_text.split(',')] if ch0_text else []
                 ch1 = [int(k) for k in ch1_text.split(',')] if ch1_text else []
+
                 def parse_mtr(s: str):
                     s = s.strip()
                     if not s:
@@ -872,6 +1072,7 @@ class PdaTTTRWidget(
                         if len(ab) >= 2:
                             parts.append((ab[0], ab[1]))
                     return parts
+
                 mt0 = parse_mtr(self.lineEdit_2.text())
                 mt1 = parse_mtr(self.lineEdit_3.text())
                 micro_time_ranges = [mt0, mt1]
@@ -921,8 +1122,20 @@ class PdaTTTRWidget(
                             status_label.setText("Resolving BUR files...")
                         except Exception:
                             pass
+                    if progress_dialog is not None:
+                        try:
+                            progress_dialog.setRange(0, max(1, len(bur_files)))
+                            progress_dialog.update_progress(0, "Resolving BUR files...")
+                        except Exception:
+                            pass
 
                     def _progress_cb(i, total, current):
+                        """Progress callback for BUR resolving.
+
+                        Returns False when the user presses Cancel on the
+                        EnhancedProgressDialog so that the resolver can
+                        abort early.
+                        """
                         try:
                             if status_label is not None:
                                 status_label.setText(f"Resolving: {pathlib.Path(current).name} ({i}/{total})")
@@ -936,9 +1149,24 @@ class PdaTTTRWidget(
                                     progress_bar.setValue(i)
                                 except Exception:
                                     pass
+                            if progress_dialog is not None:
+                                try:
+                                    progress_dialog.update_progress(
+                                        i,
+                                        f"Resolving: {pathlib.Path(current).name} ({i}/{total})"
+                                    )
+                                except Exception:
+                                    pass
+                                # Honor Cancel so long-running BUR resolving can be aborted.
+                                try:
+                                    if progress_dialog.wasCanceled():
+                                        return False
+                                except Exception:
+                                    pass
                             QtWidgets.QApplication.processEvents()
                         except Exception:
                             pass
+                        return True
 
                     tttr_files_resolved, burst_slices = self._resolve_tttr_and_slices_from_bur(
                         bur_files,
@@ -977,6 +1205,12 @@ class PdaTTTRWidget(
                             status_label.setText("Searching for nearby BUR files...")
                         except Exception:
                             pass
+                    if progress_dialog is not None:
+                        try:
+                            progress_dialog.setRange(0, 0)
+                            progress_dialog.update_progress(0, "Searching for nearby BUR files...")
+                        except Exception:
+                            pass
                     QtWidgets.QApplication.processEvents()
                     burst_slices = self._compute_burst_slices_for_files(tttr_files)
 
@@ -1002,6 +1236,12 @@ class PdaTTTRWidget(
                         status_label.setText("Loading TTTR data and computing histograms...")
                     except Exception:
                         pass
+                if progress_dialog is not None:
+                    try:
+                        progress_dialog.setRange(0, 0)
+                        progress_dialog.update_progress(0, "Loading TTTR data and computing histograms...")
+                    except Exception:
+                        pass
                 QtWidgets.QApplication.processEvents()
                 if burst_slices:
                     core_data_macros.add_dataset(experiment_reader=pda_reader, filename=filenames_arg, burst_slices=burst_slices)
@@ -1017,6 +1257,14 @@ class PdaTTTRWidget(
                 except Exception:
                     logging.warning("PDA: Auto-clear after load failed.")
             finally:
+                if progress_dialog is not None:
+                    try:
+                        progress_dialog.finish(final_text=None, auto_close=True, close_delay_ms=0)
+                    except Exception:
+                        try:
+                            progress_dialog.finalize(force_auto_close=True)
+                        except Exception:
+                            pass
                 if progress_bar is not None and progress_backup is not None:
                     try:
                         mn, mx, val = progress_backup
