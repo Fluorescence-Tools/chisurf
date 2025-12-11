@@ -72,7 +72,7 @@
        <number>0</number>
       </property>
       <item row="0" column="1">
-       <widget class="QToolButton" name="pushButton">
+       <widget class="QToolButton" name="button_dataset_select">
         <property name="text">
          <string>...</string>
         </property>
@@ -165,7 +165,7 @@
        </widget>
       </item>
       <item row="0" column="1" colspan="2">
-       <widget class="QToolButton" name="toolButton_4">
+       <widget class="QToolButton" name="button_sample">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -177,9 +177,6 @@
           <weight>75</weight>
           <bold>true</bold>
          </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
         </property>
         <property name="text">
          <string>Sample</string>
@@ -243,7 +240,7 @@
        <widget class="QSpinBox" name="spinBox_3"/>
       </item>
       <item row="0" column="1">
-       <widget class="QToolButton" name="toolButton">
+       <widget class="QToolButton" name="button_fit">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -255,9 +252,6 @@
           <weight>75</weight>
           <bold>true</bold>
          </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
         </property>
         <property name="text">
          <string>Fit</string>
@@ -354,7 +348,7 @@
        </widget>
       </item>
       <item row="0" column="3">
-       <widget class="QPushButton" name="toolButton_2">
+       <widget class="QPushButton" name="button_auto_fit_range">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -421,7 +415,7 @@
  </resources>
  <connections>
   <connection>
-   <sender>pushButton</sender>
+   <sender>button_dataset_select</sender>
    <signal>clicked()</signal>
    <receiver>actionChange_dataset</receiver>
    <slot>trigger()</slot>
@@ -437,7 +431,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton_2</sender>
+   <sender>button_auto_fit_range</sender>
    <signal>clicked()</signal>
    <receiver>actionAutoFitRange</receiver>
    <slot>trigger()</slot>
@@ -501,7 +495,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton</sender>
+   <sender>button_fit</sender>
    <signal>clicked()</signal>
    <receiver>actionFit</receiver>
    <slot>trigger()</slot>
@@ -517,7 +511,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton_4</sender>
+   <sender>button_sample</sender>
    <signal>clicked()</signal>
    <receiver>actionErrorEstimate</receiver>
    <slot>trigger()</slot>

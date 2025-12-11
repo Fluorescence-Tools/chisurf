@@ -422,6 +422,14 @@ def setup_gui(
         except Exception:
             user_styles_path = None
 
+        widgets_package_path = package_styles_path / "widgets"
+        widgets_user_path = None
+        if user_styles_path is not None:
+            try:
+                widgets_user_path = user_styles_path / "widgets"
+            except Exception:
+                widgets_user_path = None
+
         def _apply_stylesheet(qss_text, fallback_path=None):
             try:
                 text = qss_text
@@ -429,6 +437,7 @@ def setup_gui(
                     text = fallback_path.read_text(encoding="utf-8")
                 if not text:
                     return False
+
                 app.setStyleSheet(text)
                 try:
                     chisurf.settings.style_sheet = text
@@ -437,6 +446,38 @@ def setup_gui(
                 return True
             except Exception:
                 return False
+
+        def _load_shared_widget_styles():
+            """Load shared widget styles from gui/styles/widgets.
+
+            We first load package-provided fragments, then optional user
+            overrides from the settings/styles/widgets folder. All .qss
+            files are concatenated in sorted order so the user can split
+            shared styles into multiple logical files if desired.
+            """
+
+            parts = []
+
+            def _append_from_dir(d):
+                try:
+                    if d is None or not d.is_dir():
+                        return
+                except Exception:
+                    return
+                try:
+                    for p in sorted(d.glob("*.qss")):
+                        try:
+                            parts.append(p.read_text(encoding="utf-8"))
+                        except Exception:
+                            # Ignore unreadable fragments but continue
+                            continue
+                except Exception:
+                    pass
+
+            _append_from_dir(widgets_package_path)
+            _append_from_dir(widgets_user_path)
+
+            return "\n\n".join([p for p in parts if p])
 
         def _resolve_style_path(name):
             if not name:
@@ -464,9 +505,13 @@ def setup_gui(
             if style_path is None:
                 return False
             try:
-                return _apply_stylesheet(style_path.read_text(encoding="utf-8"), style_path)
+                theme_text = style_path.read_text(encoding="utf-8")
             except Exception:
                 return False
+
+            shared_text = _load_shared_widget_styles()
+            combined = "\n\n".join(t for t in (shared_text, theme_text) if t)
+            return _apply_stylesheet(combined, style_path)
 
         if not style_name:
             logging.warning("No GUI style_sheet configured; using default Qt theme.")
@@ -596,7 +641,8 @@ def setup_gui(
         # Discover plugins (built-in + user, including nested subpackages)
         try:
             plugin_infos = list(chisurf.plugins.iter_plugins())
-        except Exception:
+        except Exception as e:
+            chisurf.logging.error(f"Failed to enumerate plugins via chisurf.plugins.iter_plugins(): {e}")
             plugin_infos = []
 
         # Resolve the built-in plugins root so we can detect the _dev subtree
@@ -619,107 +665,158 @@ def setup_gui(
             ordered.append((order, plugin_name, info))
         ordered.sort(key=lambda x: (x[0], x[1]))
 
+        added_main = 0
+        added_submenu = 0
+        added_dev = 0
+        skipped_hidden = 0
+        marked_broken = 0
+
+        chisurf.logging.info(
+            f"Populating plugin menu: {len(ordered)} plugin(s) discovered "
+            f"(experimental_mode={experimental_mode}, hide_disabled_plugins={hide_disabled_plugins})."
+        )
+
         for _order, plugin_name, info in ordered:
-            module_path = info.get('module_path')
-            module_name = info.get('module_name') or ''
-            package_dir = pathlib.Path(info.get('package_dir'))
-            source = info.get('source') or 'built-in'
-
-            # Check disabled/broken status
-            clean_name = plugin_name.split(':')[-1].strip() if ':' in plugin_name else plugin_name
-            is_broken = (
-                plugin_name in disabled_plugins
-                or module_name in disabled_plugins
-                or clean_name in disabled_plugins
-            )
-
-            # Detect built-in development plugins that live under the _dev package
-            is_dev = False
             try:
-                rel = package_dir.resolve().relative_to(plugins_root)
-                if rel.parts and rel.parts[0] == "_dev":
-                    is_dev = True
-            except Exception:
-                is_dev = False
+                module_path = info.get('module_path')
+                module_name = info.get('module_name') or ''
+                package_dir = pathlib.Path(info.get('package_dir'))
+                source = info.get('source') or 'built-in'
 
-            # Detect built-in development plugins that live under the _dev package
-            is_dev = False
-            try:
-                rel = package_dir.resolve().relative_to(plugins_root)
-                if rel.parts and rel.parts[0] == "_dev":
-                    is_dev = True
-            except Exception:
-                is_dev = False
+                # Check disabled/broken status
+                clean_name = plugin_name.split(':')[-1].strip() if ':' in plugin_name else plugin_name
+                is_broken = (
+                    plugin_name in disabled_plugins
+                    or module_name in disabled_plugins
+                    or clean_name in disabled_plugins
+                )
 
-            # Skip broken plugins if they should be hidden and we're not in experimental mode
-            if is_broken and hide_disabled_plugins and not experimental_mode:
+                # Detect built-in development plugins that live under the _dev package
+                is_dev = False
+                try:
+                    rel = package_dir.resolve().relative_to(plugins_root)
+                    if rel.parts and rel.parts[0] == "_dev":
+                        is_dev = True
+                except Exception:
+                    is_dev = False
+
+                # Detect built-in development plugins that live under the _dev package
+                is_dev = False
+                try:
+                    rel = package_dir.resolve().relative_to(plugins_root)
+                    if rel.parts and rel.parts[0] == "_dev":
+                        is_dev = True
+                except Exception:
+                    is_dev = False
+
+                # Skip broken plugins if they should be hidden and we're not in experimental mode
+                if is_broken and hide_disabled_plugins and not experimental_mode:
+                    skipped_hidden += 1
+                    chisurf.logging.info(
+                        f"Skipping disabled/broken plugin in menu: '{plugin_name}' "
+                        f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
+                    )
+                    continue
+
+                # Determine which file to run: wizard.py if it exists, else __init__.py
+                plugin_dir = package_dir
+                wizard_file = plugin_dir / "wizard.py"
+                script_file = wizard_file if wizard_file.is_file() else (plugin_dir / "__init__.py")
+
+                # Build the callback
+                callback = partial(
+                    window.onRunMacro,
+                    str(script_file),
+                    executor='exec',
+                    globals={'__name__': 'plugin'}
+                )
+
+                # Check for icon
+                icon = None
+                for _icon_name in ("icon.png", "icon.svg"):
+                    icon_path = plugin_dir / _icon_name
+                    if icon_path.exists():
+                        icon = QtGui.QIcon(str(icon_path))
+                        break
+
+                # Get plugin description from iter_plugins metadata or fallback to docstring
+                description = info.get('description') or "No description available."
+
+                status = "BROKEN" if is_broken else "ok"
+
+                # Route development plugins into the dedicated Dev submenu, using the clean
+                # name (without grouping prefix) as the visible label.
+                if is_dev:
+                    display_name = clean_name or plugin_name
+                    chisurf.logging.info(
+                        f"Adding plugin to Plugins->Dev menu: '{display_name}' "
+                        f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
+                        f"status={status}, script='{script_file}')"
+                    )
+                    plugin_action = QtWidgets.QAction(f"{display_name}", window)
+                    if icon:
+                        plugin_action.setIcon(icon)
+                    plugin_action.triggered.connect(callback)
+                    plugin_action.setToolTip(description)
+                    if is_broken and experimental_mode:
+                        plugin_action.setText(f"{display_name} [BROKEN]")
+                        marked_broken += 1
+                    added_dev += 1
+                    dev_menu.addAction(plugin_action)
+                    continue
+
+                # Check if the name contains a colon to determine if it should go in a submenu
+                if ":" in plugin_name:
+                    submenu_name, short_name = plugin_name.split(":", 1)
+
+                    # Create submenu if it doesn't exist
+                    if submenu_name not in submenus:
+                        submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
+
+                    # Add the plugin to the submenu
+                    chisurf.logging.info(
+                        f"Adding plugin to Plugins->{submenu_name} submenu: '{short_name.strip()}' "
+                        f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
+                        f"status={status}, script='{script_file}')"
+                    )
+                    plugin_action = QtWidgets.QAction(f"{short_name.strip()}", window)
+                    if icon:
+                        plugin_action.setIcon(icon)
+                    plugin_action.triggered.connect(callback)
+                    plugin_action.setToolTip(description)
+                    if is_broken and experimental_mode:
+                        plugin_action.setText(f"{short_name.strip()} [BROKEN]")
+                        marked_broken += 1
+                    added_submenu += 1
+                    submenus[submenu_name].addAction(plugin_action)
+                else:
+                    # Add the plugin directly to the main menu
+                    chisurf.logging.info(
+                        f"Adding plugin to Plugins menu: '{plugin_name}' "
+                        f"(module='{module_name}', source='{source}', status={status}, script='{script_file}')"
+                    )
+                    plugin_action = QtWidgets.QAction(f"{plugin_name}", window)
+                    if icon:
+                        plugin_action.setIcon(icon)
+                    plugin_action.triggered.connect(callback)
+                    plugin_action.setToolTip(description)
+                    if is_broken and experimental_mode:
+                        plugin_action.setText(f"{plugin_name} [BROKEN]")
+                        marked_broken += 1
+                    added_main += 1
+                    plugin_menu.addAction(plugin_action)
+            except Exception as e:
+                chisurf.logging.error(
+                    f"Error while adding plugin to plugin menu: '{plugin_name}' "
+                    f"(module='{info.get('module_name')}', source='{info.get('source')}'): {e}"
+                )
                 continue
 
-            # Determine which file to run: wizard.py if it exists, else __init__.py
-            plugin_dir = package_dir
-            wizard_file = plugin_dir / "wizard.py"
-            script_file = wizard_file if wizard_file.is_file() else (plugin_dir / "__init__.py")
-
-            # Build the callback
-            callback = partial(
-                window.onRunMacro,
-                str(script_file),
-                executor='exec',
-                globals={'__name__': 'plugin'}
-            )
-
-            # Check for icon
-            icon = None
-            for _icon_name in ("icon.png", "icon.svg"):
-                icon_path = plugin_dir / _icon_name
-                if icon_path.exists():
-                    icon = QtGui.QIcon(str(icon_path))
-                    break
-
-            # Get plugin description from iter_plugins metadata or fallback to docstring
-            description = info.get('description') or "No description available."
-
-            # Route development plugins into the dedicated Dev submenu, using the clean
-            # name (without grouping prefix) as the visible label.
-            if is_dev:
-                display_name = clean_name or plugin_name
-                plugin_action = QtWidgets.QAction(f"{display_name}", window)
-                if icon:
-                    plugin_action.setIcon(icon)
-                plugin_action.triggered.connect(callback)
-                plugin_action.setToolTip(description)
-                if is_broken and experimental_mode:
-                    plugin_action.setText(f"{display_name} [BROKEN]")
-                dev_menu.addAction(plugin_action)
-                continue
-
-            # Check if the name contains a colon to determine if it should go in a submenu
-            if ":" in plugin_name:
-                submenu_name, short_name = plugin_name.split(":", 1)
-
-                # Create submenu if it doesn't exist
-                if submenu_name not in submenus:
-                    submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
-
-                # Add the plugin to the submenu
-                plugin_action = QtWidgets.QAction(f"{short_name.strip()}", window)
-                if icon:
-                    plugin_action.setIcon(icon)
-                plugin_action.triggered.connect(callback)
-                plugin_action.setToolTip(description)
-                if is_broken and experimental_mode:
-                    plugin_action.setText(f"{short_name.strip()} [BROKEN]")
-                submenus[submenu_name].addAction(plugin_action)
-            else:
-                # Add the plugin directly to the main menu
-                plugin_action = QtWidgets.QAction(f"{plugin_name}", window)
-                if icon:
-                    plugin_action.setIcon(icon)
-                plugin_action.triggered.connect(callback)
-                plugin_action.setToolTip(description)
-                if is_broken and experimental_mode:
-                    plugin_action.setText(f"{plugin_name} [BROKEN]")
-                plugin_menu.addAction(plugin_action)
+        chisurf.logging.info(
+            f"Plugin menu populated: added {added_main} main, {added_submenu} submenu, "
+            f"{added_dev} dev plugin(s); {skipped_hidden} disabled/broken plugin(s) hidden; "
+            f"{marked_broken} plugin(s) marked as BROKEN."
+        )
 
     def populate_notebooks():
         # Find the Help menu to insert the Notebooks menu before it

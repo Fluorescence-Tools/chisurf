@@ -1,0 +1,18 @@
+/* Shared styles for core widgets across all themes */
+
+/* Fitting controller primary actions */
+QToolButton#button_fit {
+    /* Fit button: muted red, non-flashy */
+    background-color: #b33b3b;
+    color: #ffffff;
+    border-radius: 2px;
+    padding: 2px 6px;
+}
+
+QToolButton#button_sample {
+    /* Sample button: orange accent */
+    background-color: #f57c00;
+    color: #ffffff;
+    border-radius: 2px;
+    padding: 2px 6px;
+}

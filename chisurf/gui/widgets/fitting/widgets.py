@@ -362,9 +362,9 @@ class FittingControllerWidget(Controller):
         self._init_dimensionality()
 
         if hide_fit_button:
-            self.pushButton_fit.hide()
+            self.button_fit.hide()
         if hide_range:
-            self.toolButton_2.hide()
+            self.button_auto_fit_range.hide()
             self.spinBox.hide()
             self.spinBox_2.hide()
         if hide_fitting:
@@ -1681,19 +1681,56 @@ class FittingParameterWidget(Controller):
                 self.widget_link.setCheckState(QtCore.Qt.Unchecked)
                 self.widget_value.setEnabled(True)
 
-    def onLinkFitGroup(self):
-        self.blockSignals(True)
-        # Delegate link/unlink operations to the core macro, then resync the
-        # widget state from the underlying parameter flags.
-        self.widget_value.setEnabled(True)
-        chisurf.run(
-            f"chisurf.macros.link_fit_group('{self.fitting_parameter.name}', {self.widget_link.checkState()})"
-        )
         try:
-            self.finalize()
+            self._update_role_visuals()
         except Exception:
             pass
-        self.blockSignals(False)
+
+    def onLinkFitGroup(self):
+        # Clicking the link checkbox should have intuitive semantics:
+        #
+        # - If this parameter is currently a *follower* (linked to some
+        #   master), a click unlinks **only this parameter**.
+        # - Otherwise (unlinked or acting as fit-group master), we delegate
+        #   to the group-level macro so the user can establish or remove a
+        #   fit-group link.
+        fp = self.fitting_parameter
+        if getattr(self, "_is_output_param", False):
+            return
+
+        is_linked = bool(getattr(fp, "is_linked", False))
+        is_master = bool(getattr(fp, "is_link_master", False))
+
+        self.blockSignals(True)
+        try:
+            if is_linked and not is_master:
+                # Per-parameter unlink: this row was following another
+                # parameter via ``fp.link``. Clear the link so only this
+                # parameter becomes free again.
+                try:
+                    fp.link = None
+                except Exception:
+                    try:
+                        chisurf.logging.warning(
+                            f"FittingParameterWidget: failed to unlink parameter '{getattr(fp, 'name', '?')}'."
+                        )
+                    except Exception:
+                        pass
+            else:
+                # Group-level behaviour: interpret the current checkbox
+                # state as a request to link/unlink the whole fit group for
+                # this parameter name.
+                state = int(self.widget_link.checkState())
+                chisurf.run(
+                    f"chisurf.macros.link_fit_group('{fp.name}', {state})"
+                )
+
+            try:
+                self.finalize()
+            except Exception:
+                pass
+        finally:
+            self.blockSignals(False)
 
     def setValue(self, v):
         self.widget_value.setValue(v)
@@ -1826,8 +1863,25 @@ class FittingParameterWidget(Controller):
         else:
             tooltip_text = "bounds: off\n"
 
-        if self.fitting_parameter.is_linked and getattr(self.fitting_parameter, 'link', None) is not None:
-            tooltip_text += f"linked to: {self.fitting_parameter.link.name}"
+        link_param = getattr(self.fitting_parameter, 'link', None)
+        if self.fitting_parameter.is_linked and link_param is not None:
+            target_param_name = getattr(link_param, 'name', "?")
+            target_fit_label = "?"
+            try:
+                target_fit_idx = getattr(link_param, 'fit_idx', -1)
+            except Exception:
+                target_fit_idx = -1
+            try:
+                if isinstance(target_fit_idx, int) and target_fit_idx >= 0:
+                    fits = getattr(chisurf, 'fits', None)
+                    if fits is not None and 0 <= target_fit_idx < len(fits):
+                        target_fit = fits[target_fit_idx]
+                        target_fit_label = getattr(target_fit, 'name', str(target_fit_idx))
+                    else:
+                        target_fit_label = str(target_fit_idx)
+            except Exception:
+                pass
+            tooltip_text += f"linked to fit '{target_fit_label}', \n parameter '{target_param_name}'"
         self.widget_value.setToolTip(tooltip_text)
 
         # Error-estimate
@@ -1879,8 +1933,24 @@ class FittingParameterWidget(Controller):
                 self.lineEdit.setStyleSheet(f"background-color: {hex_color}; color: {text_color};")
 
         # Link
-        if self.fitting_parameter.link is not None:
-            tooltip = "linked to " + self.fitting_parameter.link.name
+        if link_param is not None:
+            target_param_name = getattr(link_param, 'name', "?")
+            target_fit_label = "?"
+            try:
+                target_fit_idx = getattr(link_param, 'fit_idx', -1)
+            except Exception:
+                target_fit_idx = -1
+            try:
+                if isinstance(target_fit_idx, int) and target_fit_idx >= 0:
+                    fits = getattr(chisurf, 'fits', None)
+                    if fits is not None and 0 <= target_fit_idx < len(fits):
+                        target_fit = fits[target_fit_idx]
+                        target_fit_label = getattr(target_fit, 'name', str(target_fit_idx))
+                    else:
+                        target_fit_label = str(target_fit_idx)
+            except Exception:
+                pass
+            tooltip = f"linked to fit '{target_fit_label}', parameter '{target_param_name}'"
             self.widget_link.setToolTip(tooltip)
             self.widget_value.setEnabled(False)
 
