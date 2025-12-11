@@ -18,6 +18,7 @@ import chisurf.settings
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets import Controller
+from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 
 parameter_settings = chisurf.settings.parameter
 
@@ -410,16 +411,34 @@ class FittingControllerWidget(Controller):
             except Exception:
                 dialog = None
 
-            def _on_progress(done: int, total: int) -> None:
+            def _on_progress(done: int, total: int, chi2=None, chi2r=None, **_kwargs) -> None:
                 """Update the progress dialog from least-squares callbacks.
 
                 The callback receives the number of completed residual
                 evaluations (done) and an estimated total evaluation
                 budget (total). It maps this to a 0–100 percentage.
+
+                When the user presses the Cancel button on the progress
+                dialog, this callback raises :class:`OptimizationCancelled`
+                so that the optimizer aborts cleanly while keeping the
+                current parameter values.
                 """
 
                 if dialog is None:
                     return
+
+                # Honour user cancellation as soon as possible. The
+                # least-squares wrapper treats this exception specially
+                # and propagates it back to :meth:`onRunFit`.
+                try:
+                    if dialog.wasCanceled():
+                        raise OptimizationCancelled()
+                except OptimizationCancelled:
+                    raise
+                except Exception:
+                    # Ignore unexpected UI errors when checking cancel state.
+                    pass
+
                 try:
                     total_val = float(total) if total else 0.0
                 except Exception:
@@ -436,35 +455,60 @@ class FittingControllerWidget(Controller):
                     if frac > 1.0:
                         frac = 1.0
                     value = int(round(100.0 * frac))
+                # Build an informative status line including objective values
+                # when available.
                 try:
-                    dialog.update_progress(value)
+                    base_label = f"Fitting {self.fit.name}..."
+                except Exception:
+                    base_label = "Fitting..."
+
+                parts = [base_label, f"eval {done}/{int(total) if total else '?'}"]
+                if chi2 is not None:
+                    try:
+                        parts.append(f"chi2={float(chi2):.3g}")
+                    except Exception:
+                        pass
+                if chi2r is not None:
+                    try:
+                        parts.append(f"chi2r={float(chi2r):.3g}")
+                    except Exception:
+                        pass
+
+                label_text = "  |  ".join(parts)
+
+                try:
+                    dialog.update_progress(value, text=label_text)
                 except Exception:
                     # Never let UI errors break the optimizer.
                     pass
 
             # Run the fit synchronously, allowing the optimizer to invoke
             # the progress callback from within the residual evaluations.
-            self.fit.run(
-                local_first=self.local_first,
-                progress_callback=_on_progress,
-            )
+            try:
+                self.fit.run(
+                    local_first=self.local_first,
+                    progress_callback=_on_progress,
+                )
+            except OptimizationCancelled:
+                chisurf.logging.info("Fitting cancelled by user.")
+                success = False
+            else:
+                # Finalize model and parameter controllers as before.
+                self.fit.model.finalize()
+                for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
+                    try:
+                        pa.controller.finalize()
+                    except (AttributeError, RuntimeError, TypeError):
+                        chisurf.logging.warning(
+                            f"Fitting parameter {pa.name} does not have a controller to update."
+                        )
+                chisurf.logging.info("Fitting finished!")
+                success = True
 
-            # Finalize model and parameter controllers as before.
-            self.fit.model.finalize()
-            for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
-                try:
-                    pa.controller.finalize()
-                except (AttributeError, RuntimeError, TypeError):
-                    chisurf.logging.warning(
-                        f"Fitting parameter {pa.name} does not have a controller to update."
-                    )
-            chisurf.logging.info("Fitting finished!")
-            success = True
-
-            # Update fit result selector
-            self.spinBox_3.setMaximum(len(self.fit.results))
-            self.spinBox_3.setMinimum(1)
-            self.spinBox_3.setValue(1)
+                # Update fit result selector
+                self.spinBox_3.setMaximum(len(self.fit.results))
+                self.spinBox_3.setMinimum(1)
+                self.spinBox_3.setValue(1)
         finally:
             if dialog is not None:
                 try:

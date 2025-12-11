@@ -12,6 +12,19 @@ except ImportError:
     from scipy.optimize._minpack_py import _check_func
 
 
+class OptimizationCancelled(Exception):
+    """Signal that a least-squares optimization was cancelled by the caller.
+
+    This exception is intended to be raised from a user-provided
+    ``progress_callback`` (for example, when a GUI progress dialog's Cancel
+    button is pressed). ``leastsqbound`` treats this exception specially and
+    will propagate it to the caller instead of swallowing it together with
+    other callback errors.
+    """
+
+    pass
+
+
 def _internal2external_grad(
         xi,
         bounds
@@ -259,6 +272,42 @@ References
     nfev = 0
     eff_total = progress_total if progress_total is not None else None
 
+    def _compute_objective(residuals, f_args):
+        """Return (chi2, chi2r) for the current residual vector.
+
+        chi2 is the sum of squared residuals. For chi2r we try to infer a
+        model instance from ``f_args`` that exposes ``n_points`` and
+        ``n_free`` and, if successful, apply the usual
+        ``chi2 / (n_points - n_free - 1)`` formula.
+        """
+
+        try:
+            r = array(residuals, ndmin=1).ravel()
+        except Exception:
+            return None, None
+
+        try:
+            chi2_val = float(dot(r, r))
+        except Exception:
+            chi2_val = None
+
+        chi2r_val = None
+        if chi2_val is not None:
+            model = None
+            for arg in f_args:
+                if hasattr(arg, "n_points") and hasattr(arg, "n_free"):
+                    model = arg
+                    break
+            if model is not None:
+                try:
+                    dof = float(model.n_points - getattr(model, "n_free", 0) - 1)
+                    if dof > 0:
+                        chi2r_val = chi2_val / dof
+                except Exception:
+                    pass
+
+        return chi2_val, chi2r_val
+
     # use leastsq if no bounds are present
     if bounds is None:
         if progress_callback is not None:
@@ -279,9 +328,16 @@ References
                 res = func(x, *f_args)
                 nfev += 1
                 if eff_total and eff_total > 0:
+                    chi2_val, chi2r_val = _compute_objective(res, f_args)
                     try:
-                        progress_callback(nfev, eff_total)
+                        progress_callback(nfev, eff_total, chi2=chi2_val, chi2r=chi2r_val)
+                    except OptimizationCancelled:
+                        # Propagate explicit cancellation so callers can
+                        # distinguish it from benign callback failures.
+                        raise
                     except Exception:
+                        # Ignore unexpected callback errors to preserve the
+                        # original robustness of the optimizer wrapper.
                         pass
                 return res
 
@@ -349,9 +405,16 @@ References
                 res = _base_wfunc(x, *f_args)
                 nfev += 1
                 if eff_total and eff_total > 0:
+                    chi2_val, chi2r_val = _compute_objective(res, f_args)
                     try:
-                        progress_callback(nfev, eff_total)
+                        progress_callback(nfev, eff_total, chi2=chi2_val, chi2r=chi2r_val)
+                    except OptimizationCancelled:
+                        # Allow callers to abort the optimization cleanly
+                        # from within a progress callback.
+                        raise
                     except Exception:
+                        # Preserve historical behavior for other callback
+                        # exceptions by ignoring them.
                         pass
                 return res
         else:

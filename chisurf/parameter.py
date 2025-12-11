@@ -160,13 +160,21 @@ class Parameter(chisurf.base.Base):
         if isinstance(link, Parameter):
             if Parameter.check_recursive_link(link, self):
                 raise ValueError("Cannot create a recursive link between parameters.")
+            # This parameter becomes a follower (slave) of the target.
             self._link = link
+            self.is_link_master = False
             if self.controller is not None:
-                self.controller.set_linked(link is not None)
+                # Followers show the partially-checked link state.
+                self.controller.set_linked(True)
             self._port.link = link._port
         elif link is None:
+            # Unlink this parameter from any target. The is_link_master flag
+            # is *not* modified here so that higher-level helpers (such as
+            # fit-group linking) can control master semantics explicitly.
             self._link = None
             self._port.unlink()
+            if self.controller is not None:
+                self.controller.set_linked(False)
 
     @property
     def is_linked(self) -> bool:
@@ -320,6 +328,12 @@ class Parameter(chisurf.base.Base):
         """
         super().__init__(*args, **kwargs)
         self._name = kwargs.pop('name', '')
+        self.is_output = bool(kwargs.pop('is_output', False))
+        # Hint for GUIs: parameters that serve as link targets for other
+        # parameters within a fit group are marked as "link masters".
+        # This is purely a visual/UI role and does not affect the core
+        # numerical behaviour of links handled by the underlying port.
+        self.is_link_master = bool(kwargs.pop('is_link_master', False))
         # Optional free-form description used by fitting GUIs to show
         # human-readable details for a parameter.
         desc = kwargs.pop('description', "")
