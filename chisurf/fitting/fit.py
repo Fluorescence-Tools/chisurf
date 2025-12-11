@@ -531,11 +531,13 @@ class Fit(chisurf.base.Base):
         self.model.find_parameters(
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
+        progress_callback = kwargs.get("progress_callback")
         chisurf.math.optimization.leastsqbound(
             get_wres,
             self.model.parameter_values,
             args=(self.model,),
             bounds=self.model.parameter_bounds,
+            progress_callback=progress_callback,
             **fitting_options
         )
         self.update()
@@ -822,11 +824,13 @@ class FitGroup(Fit):
         fit._model.find_parameters()
         fitting_options = chisurf.settings.optimization['leastsq']
         bounds = [pi.bounds for pi in fit._model.parameters]
+        progress_callback = kwargs.get("progress_callback")
         chisurf.math.optimization.leastsqbound(
             func=get_wres,
             x0=fit._model.parameter_values,
             args=(fit._model,),
             bounds=bounds,
+            progress_callback=progress_callback,
             **fitting_options
         )
         self.update()

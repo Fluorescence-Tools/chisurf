@@ -392,18 +392,89 @@ class FittingControllerWidget(Controller):
 
     def onRunFit(self):
         chisurf.logging.info(f"Please wait fitting: {self.fit.name}")
-        chisurf.run(f"cs.current_fit.run(local_first={self.local_first})")
-        self.fit.model.finalize()
-        for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
+
+        dialog = None
+        success = False
+        try:
+            # Create a modal progress dialog if the GUI helpers are available.
             try:
-                pa.controller.finalize()
-            except (AttributeError, RuntimeError, TypeError):
-                chisurf.logging.warning(f"Fitting parameter {pa.name} does not have a controller to update.")
-        chisurf.logging.info("Fitting finished!")
-        # Update fit result selector
-        self.spinBox_3.setMaximum(len(self.fit.results))
-        self.spinBox_3.setMinimum(1)
-        self.spinBox_3.setValue(1)
+                dialog = chisurf.gui.widgets.progress.EnhancedProgressDialog(
+                    title="Fitting",
+                    label_text=f"Fitting {self.fit.name}...",
+                    min_value=0,
+                    max_value=100,
+                    parent=self,
+                )
+                dialog.show()
+                dialog.update_progress(0)
+            except Exception:
+                dialog = None
+
+            def _on_progress(done: int, total: int) -> None:
+                """Update the progress dialog from least-squares callbacks.
+
+                The callback receives the number of completed residual
+                evaluations (done) and an estimated total evaluation
+                budget (total). It maps this to a 0–100 percentage.
+                """
+
+                if dialog is None:
+                    return
+                try:
+                    total_val = float(total) if total else 0.0
+                except Exception:
+                    total_val = 0.0
+                if total_val <= 0.0:
+                    value = 0
+                else:
+                    try:
+                        frac = float(done) / total_val
+                    except Exception:
+                        frac = 0.0
+                    if frac < 0.0:
+                        frac = 0.0
+                    if frac > 1.0:
+                        frac = 1.0
+                    value = int(round(100.0 * frac))
+                try:
+                    dialog.update_progress(value)
+                except Exception:
+                    # Never let UI errors break the optimizer.
+                    pass
+
+            # Run the fit synchronously, allowing the optimizer to invoke
+            # the progress callback from within the residual evaluations.
+            self.fit.run(
+                local_first=self.local_first,
+                progress_callback=_on_progress,
+            )
+
+            # Finalize model and parameter controllers as before.
+            self.fit.model.finalize()
+            for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
+                try:
+                    pa.controller.finalize()
+                except (AttributeError, RuntimeError, TypeError):
+                    chisurf.logging.warning(
+                        f"Fitting parameter {pa.name} does not have a controller to update."
+                    )
+            chisurf.logging.info("Fitting finished!")
+            success = True
+
+            # Update fit result selector
+            self.spinBox_3.setMaximum(len(self.fit.results))
+            self.spinBox_3.setMinimum(1)
+            self.spinBox_3.setValue(1)
+        finally:
+            if dialog is not None:
+                try:
+                    final_text = "Fitting finished!" if success else "Fitting aborted."
+                    dialog.finish(final_text=final_text, auto_close=True)
+                except Exception:
+                    try:
+                        dialog.finalize(force_auto_close=True)
+                    except Exception:
+                        pass
 
     @property
     def xmin(self):

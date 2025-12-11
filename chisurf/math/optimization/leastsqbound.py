@@ -98,18 +98,20 @@ parameter to a internal (unconstrained) parameter.
 
 def leastsqbound(
         func, x0,
-        args = (),
-        bounds = None,
-        Dfun = None,
-        full_output = 0,
-        col_deriv = 0,
-        ftol = 1.49012e-8,
-        xtol = 1.49012e-8,
-        gtol = 0.0,
-        maxfev = 0,
-        epsfcn = 0.0,
-        factor = 100,
-        diag = None
+        args=(),
+        bounds=None,
+        Dfun=None,
+        full_output=0,
+        col_deriv=0,
+        ftol=1.49012e-8,
+        xtol=1.49012e-8,
+        gtol=0.0,
+        maxfev=0,
+        epsfcn=0.0,
+        factor=100,
+        diag=None,
+        progress_callback=None,
+        progress_total=None
 ):
     """
 Bounded minimization of the sum of squares of a set of equations.
@@ -251,10 +253,68 @@ References
 * F. James and M. Winkler. MINUIT User's Guide, July 16, 2004.
 
 """
+    # Optional progress tracking state (best-effort only). When no callback
+    # is provided, these variables remain unused and the behavior matches
+    # the original implementation.
+    nfev = 0
+    eff_total = progress_total if progress_total is not None else None
+
     # use leastsq if no bounds are present
     if bounds is None:
-        return leastsq(func, x0, args, Dfun, full_output, col_deriv,
-                       ftol, xtol, gtol, maxfev, epsfcn, factor, diag)
+        if progress_callback is not None:
+            # Estimate a total evaluation budget similar to MINPACK defaults
+            # so that the callback can report a normalized progress fraction.
+            x0_arr = array(x0, ndmin=1)
+            n = len(x0_arr)
+            if eff_total is None:
+                if maxfev and maxfev > 0:
+                    eff_total = int(maxfev)
+                else:
+                    # Mirror the default used by MINPACK's lmdif for Dfun=None
+                    # as exposed via scipy.optimize.leastsq.
+                    eff_total = int(200 * (n + 1))
+
+            def _wrapped_func(x, *f_args):
+                nonlocal nfev, eff_total
+                res = func(x, *f_args)
+                nfev += 1
+                if eff_total and eff_total > 0:
+                    try:
+                        progress_callback(nfev, eff_total)
+                    except Exception:
+                        pass
+                return res
+
+            return leastsq(
+                _wrapped_func,
+                x0,
+                args,
+                Dfun,
+                full_output,
+                col_deriv,
+                ftol,
+                xtol,
+                gtol,
+                maxfev,
+                epsfcn,
+                factor,
+                diag,
+            )
+        return leastsq(
+            func,
+            x0,
+            args,
+            Dfun,
+            full_output,
+            col_deriv,
+            ftol,
+            xtol,
+            gtol,
+            maxfev,
+            epsfcn,
+            factor,
+            diag,
+        )
 
     # create function which convert between internal and external parameters
     i2e = _internal2external_func(bounds)
@@ -271,16 +331,45 @@ References
     if n > m[0]:
         raise TypeError('Improper input: N=%s must not exceed M=%s' % (n, m))
 
-    # define a wrapped func which accept internal parameters, converts them
-    # to external parameters and calls func
-    def wfunc(x, *args):
-        return func(i2e(x), *args)
+    # define a wrapped func which accepts internal parameters, converts them
+    # to external parameters and calls func. Progress reporting is layered on
+    # top of this base wrapper when a callback is provided.
+    def _base_wfunc(x, *f_args):
+        return func(i2e(x), *f_args)
 
     if Dfun is None:
         if (maxfev == 0):
             maxfev = 200 * (n + 1)
-        retval = _minpack._lmdif(wfunc, i0, args, full_output, ftol, xtol,
-                                 gtol, maxfev, epsfcn, factor, diag)
+        if progress_callback is not None and eff_total is None:
+            eff_total = int(maxfev)
+
+        if progress_callback is not None:
+            def wfunc(x, *f_args):
+                nonlocal nfev, eff_total
+                res = _base_wfunc(x, *f_args)
+                nfev += 1
+                if eff_total and eff_total > 0:
+                    try:
+                        progress_callback(nfev, eff_total)
+                    except Exception:
+                        pass
+                return res
+        else:
+            wfunc = _base_wfunc
+
+        retval = _minpack._lmdif(
+            wfunc,
+            i0,
+            args,
+            full_output,
+            ftol,
+            xtol,
+            gtol,
+            maxfev,
+            epsfcn,
+            factor,
+            diag,
+        )
     else:
         if col_deriv:
             _check_func('leastsq', 'Dfun', Dfun, x0, args, n, (n, m))
