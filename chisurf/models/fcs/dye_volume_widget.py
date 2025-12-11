@@ -169,6 +169,7 @@ class DyeShapeFCSModel(ModelCurve):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
 
         # Derived diffusion time tauD (ms) shown as a fixed parameter.
@@ -179,6 +180,7 @@ class DyeShapeFCSModel(ModelCurve):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
 
         # Derived CPM parameters (counts per molecule), analogous to
@@ -191,6 +193,7 @@ class DyeShapeFCSModel(ModelCurve):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
 
         self._cpm_all = FittingParameter(
@@ -201,6 +204,7 @@ class DyeShapeFCSModel(ModelCurve):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
 
         # Register parameters

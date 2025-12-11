@@ -58,6 +58,7 @@ class ParseFCSWidget(ParseModelWidget):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
 
         # Second derived CPM that accounts for dark/bunching states. This uses
@@ -71,6 +72,7 @@ class ParseFCSWidget(ParseModelWidget):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
 
         # Signal and background countrates (kHz). These are fixed fitting
@@ -84,6 +86,7 @@ class ParseFCSWidget(ParseModelWidget):
             ub=float("inf"),
             bounds_on=False,
             fixed=True,
+            is_output=True,
         )
         self._B = FittingParameter(
             name="B",
