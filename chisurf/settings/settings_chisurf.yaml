@@ -75,6 +75,7 @@ gui:
   fit_windows_size:
   - 350
   - 350
+  fit_progress_close_delay_ms: 500
   plot:
     colors:
       active_transparency: 1
@@ -208,6 +209,9 @@ parameter:
   hide_fix_checkbox: false
   hide_label: false
   hide_link: false
+  role_color_input: '#ffe0b2'
+  role_color_linked: ''
+  role_color_output: '#e0e0e0'
 photons:
   complevel: 9
   complib: blosc

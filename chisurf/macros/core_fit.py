@@ -93,7 +93,11 @@ def add_fit(
                 fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
                     fit=fit_group
                 )
-                cs.modelLayout.addWidget(fit_control_widget)
+                header_layout = getattr(cs, "analysisHeaderLayout", None)
+                if header_layout is not None:
+                    header_layout.addWidget(fit_control_widget)
+                else:
+                    cs.modelLayout.addWidget(fit_control_widget)
                 for fit in fit_group:
                     cs.modelLayout.addWidget(fit.model)
 
@@ -408,22 +412,50 @@ def link_fit_group(
     """
     cs = chisurf.cs
     if csi == 2:
+        # Establish a fit-group link: the parameter in the currently
+        # selected fit acts as the master, all other fits in the group
+        # link their parameter of the same name to this master.
         current_fit = cs.current_fit
-        parameter = current_fit.model.parameters_all_dict[fitting_parameter_name]
+        try:
+            parameter = current_fit.model.parameters_all_dict[fitting_parameter_name]
+        except Exception:
+            return
+
+        # Mark master for GUI purposes only; numerical behaviour is still
+        # governed by the underlying port links.
+        try:
+            parameter.is_link_master = True
+        except Exception:
+            pass
+
         for f in cs.current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]
-                if p is not parameter:
-                    p.link = parameter
             except KeyError:
                 chisurf.logging.warning(f"The fit {f.name} has no parameter {fitting_parameter_name}")
+                continue
+            if p is parameter:
+                # Master remains unlinked but flagged as such for the GUI.
+                continue
+            try:
+                p.is_link_master = False
+            except Exception:
+                pass
+            p.link = parameter
+
     if csi == 0:
+        # Unlink the entire fit group for this parameter name and clear any
+        # master flags so the GUI shows the unchecked state everywhere.
         for f in cs.current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]
-                p.link = None
             except KeyError:
+                continue
+            try:
+                p.is_link_master = False
+            except Exception:
                 pass
+            p.link = None
 
 
 def change_selected_fit_of_group(

@@ -469,7 +469,11 @@ class FittingControllerWidget(Controller):
             if dialog is not None:
                 try:
                     final_text = "Fitting finished!" if success else "Fitting aborted."
-                    dialog.finish(final_text=final_text, auto_close=True)
+                    try:
+                        delay_ms = int(chisurf.settings.gui.get('fit_progress_close_delay_ms', 500))
+                    except Exception:
+                        delay_ms = 500
+                    dialog.finish(final_text=final_text, auto_close=True, close_delay_ms=delay_ms)
                 except Exception:
                     try:
                         dialog.finalize(force_auto_close=True)
@@ -1021,6 +1025,9 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             if reply == QtWidgets.QMessageBox.Yes:
                 chisurf.console.execute('chisurf.macros.close_fit()')
                 chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.modelLayout)
+                header_layout = getattr(chisurf.cs, "analysisHeaderLayout", None)
+                if header_layout is not None:
+                    chisurf.gui.widgets.hide_items_in_layout(header_layout)
                 chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.plotOptionsLayout)
             else:
                 event.ignore()
@@ -1309,17 +1316,20 @@ class FittingParameterWidget(Controller):
                         f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}'] \n"
                         f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
                     )
+                    # Execute the link assignment in the global chisurf
+                    # context; the Parameter.link setter will update the
+                    # follower's controller state via set_linked(True).
                     chisurf.run(s)
-                    self.finalize()
 
-                    # Adjust widget of parameter that is linker
+                    # Refresh this widget from the underlying parameter so it
+                    # reflects the follower/linked role. The target parameter
+                    # (master) remains visually unchanged (no check mark), so
+                    # the user can always use this row's checkbox to unlink.
                     self.widget_link.setToolTip(tooltip)
-                    self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
-                    self.widget_value.setEnabled(False)
                     try:
-                        param_other.controller.widget_link.setCheckState(QtCore.Qt.Checked)
-                    except AttributeError:
-                        chisurf.logging.warning("Could not set widget properties of controller")
+                        self.finalize()
+                    except Exception:
+                        pass
 
             finally:
                 self.blockSignals(False)
@@ -1412,6 +1422,7 @@ class FittingParameterWidget(Controller):
         self.name = fitting_parameter.name
         self.fitting_parameter = fitting_parameter
         self._details_popup = None  # created lazily on first label click
+        self._is_output_param = bool(getattr(fitting_parameter, "is_output", False))
 
         # Allow HTML/RichText labels (e.g. "cpm<sub>all</sub>") so that
         # parameter names can be decorated with subscripts/superscripts
@@ -1449,6 +1460,48 @@ class FittingParameterWidget(Controller):
         self.widget_fix.setVisible(fixable or not hide_fix_checkbox)
         self.widget.setHidden(hide_bounds)
         self.widget_link.setDisabled(hide_link)
+
+        if self._is_output_param:
+            # Output parameters are displayed as read-only result cells.
+            # Keep the row layout identical (checkboxes stay visible) but
+            # prevent any user interaction and remove spin buttons so the
+            # value looks like a plain, non-editable field.
+            try:
+                # Try to hide spin buttons directly on the SpinBox.
+                self.widget_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+            except Exception:
+                # Fallback for pyqtgraph.SpinBox implementations that expose
+                # an inner "spin" widget.
+                try:
+                    spin = getattr(self.widget_value, "spin", None)
+                    if spin is not None and hasattr(spin, "setButtonSymbols"):
+                        spin.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+                except Exception:
+                    pass
+            try:
+                self.widget_value.setReadOnly(True)
+            except Exception:
+                pass
+            try:
+                # Avoid focus so wheel / keyboard cannot change the value.
+                self.widget_value.setFocusPolicy(QtCore.Qt.NoFocus)
+            except Exception:
+                pass
+            try:
+                self.widget_fix.setEnabled(False)
+            except Exception:
+                pass
+            try:
+                self.widget_bounds_on.setEnabled(False)
+            except Exception:
+                pass
+            try:
+                self.widget_link.setEnabled(False)
+            except Exception:
+                pass
+            # Hide the lower/upper bound spin boxes for outputs; only keep
+            # the (disabled) bounds checkbox for alignment.
+            self.widget.setHidden(True)
 
         # Make label interactive: clicking opens a details popup
         try:
@@ -1529,6 +1582,10 @@ class FittingParameterWidget(Controller):
 
         if isinstance(layout, QtWidgets.QLayout):
             layout.addWidget(self)
+        try:
+            self._update_role_visuals()
+        except Exception:
+            pass
 
 
     def _on_label_mouse_press(self, event: QtGui.QMouseEvent):
@@ -1542,6 +1599,8 @@ class FittingParameterWidget(Controller):
             pass
 
     def _open_details_popup(self):
+        if getattr(self, "_is_output_param", False):
+            return
         # Lazy-create popup
         if self._details_popup is None or not isinstance(self._details_popup, FittingParameterDetailPopup):
             self._details_popup = FittingParameterDetailPopup(self)
@@ -1570,24 +1629,78 @@ class FittingParameterWidget(Controller):
             # For other buttons, fall back to default behavior (e.g., open context menu on right click)
             super().mousePressEvent(event)
 
+    def _update_role_visuals(self):
+        try:
+            if getattr(self, "_is_output_param", False):
+                role = "output"
+            elif getattr(self.fitting_parameter, "is_linked", False):
+                role = "linked"
+            else:
+                role = "input"
+            bg_color = None
+            if role == "output":
+                bg_color = parameter_settings.get("role_color_output")
+            elif role == "linked":
+                bg_color = parameter_settings.get("role_color_linked")
+            else:
+                bg_color = parameter_settings.get("role_color_input")
+            parts = []
+            if bg_color:
+                parts.append(f"background-color: {bg_color};")
+            if role == "linked":
+                parts.append("text-decoration: underline;")
+            style = " ".join(parts)
+            self.widget_value.setStyleSheet(style)
+        except Exception:
+            pass
+
     def set_linked(self, is_linked: bool):
-        if is_linked:
-            self.widget_value.setEnabled(False)
-            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
-        else:
+        if getattr(self, "_is_output_param", False):
             self.widget_link.setCheckState(QtCore.Qt.Unchecked)
-            self.widget_value.setEnabled(True)
+            return
+        # Interpret linking state in terms of three visual roles:
+        #   - Unchecked: not linked at all.
+        #   - PartiallyChecked: this parameter follows another one (slave).
+        #   - Checked: this parameter is the master within a fit group.
+        is_master = bool(getattr(self.fitting_parameter, "is_link_master", False))
+
+        if is_linked:
+            # Follower: value is controlled by the master; disable editing
+            # and show a partially-checked box.
+            self.widget_link.setCheckState(QtCore.Qt.PartiallyChecked)
+            self.widget_value.setEnabled(False)
+        else:
+            if is_master:
+                # Master within the fit group: keep value editable but mark
+                # the checkbox as fully checked so the user sees it as the
+                # source of the group link.
+                self.widget_link.setCheckState(QtCore.Qt.Checked)
+                self.widget_value.setEnabled(True)
+            else:
+                # Not linked at all.
+                self.widget_link.setCheckState(QtCore.Qt.Unchecked)
+                self.widget_value.setEnabled(True)
 
     def onLinkFitGroup(self):
         self.blockSignals(True)
+        # Delegate link/unlink operations to the core macro, then resync the
+        # widget state from the underlying parameter flags.
         self.widget_value.setEnabled(True)
-        chisurf.run(f"chisurf.macros.link_fit_group('{self.fitting_parameter.name}', {self.widget_link.checkState()})")
+        chisurf.run(
+            f"chisurf.macros.link_fit_group('{self.fitting_parameter.name}', {self.widget_link.checkState()})"
+        )
+        try:
+            self.finalize()
+        except Exception:
+            pass
         self.blockSignals(False)
 
     def setValue(self, v):
         self.widget_value.setValue(v)
 
     def _on_main_value_changed(self):
+        if getattr(self, "_is_output_param", False):
+            return
         fp = self.fitting_parameter
         try:
             fit_idx = fp.fit_idx
@@ -1619,6 +1732,8 @@ class FittingParameterWidget(Controller):
         )
 
     def _on_main_bounds_on_toggled(self):
+        if getattr(self, "_is_output_param", False):
+            return
         fp = self.fitting_parameter
         checked = self.widget_bounds_on.isChecked()
         # Toggle bounds_on in the model
@@ -1780,6 +1895,11 @@ class FittingParameterWidget(Controller):
         try:
             if getattr(self, '_details_popup', None) is not None and self._details_popup.isVisible():
                 self._details_popup.refresh_from_model()
+        except Exception:
+            pass
+
+        try:
+            self._update_role_visuals()
         except Exception:
             pass
 

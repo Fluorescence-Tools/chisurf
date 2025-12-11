@@ -278,6 +278,9 @@ class Main(QtWidgets.QMainWindow):
         if sub_window is not None:
             # Clear existing widgets from layouts
             chisurf.gui.widgets.hide_items_in_layout(self.modelLayout)
+            header_layout = getattr(self, "analysisHeaderLayout", None)
+            if header_layout is not None:
+                chisurf.gui.widgets.hide_items_in_layout(header_layout)
             chisurf.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
 
             # Handle fit windows first
@@ -730,6 +733,9 @@ class Main(QtWidgets.QMainWindow):
 
         # Clear the analysis dock layouts
         chisurf.gui.widgets.clear_layout(self.modelLayout)
+        header_layout = getattr(self, "analysisHeaderLayout", None)
+        if header_layout is not None:
+            chisurf.gui.widgets.clear_layout(header_layout)
         chisurf.gui.widgets.clear_layout(self.plotOptionsLayout)
 
     def onAddDataset(self):
@@ -1497,6 +1503,23 @@ class Main(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
+        try:
+            self.analysisHeaderWidget = QtWidgets.QWidget(self.dockWidgetAnalysis)
+            self.analysisHeaderLayout = QtWidgets.QVBoxLayout(self.analysisHeaderWidget)
+            self.analysisHeaderLayout.setContentsMargins(0, 0, 0, 0)
+            self.analysisHeaderLayout.setSpacing(0)
+            try:
+                self.verticalLayout_3.insertWidget(0, self.analysisHeaderWidget)
+            except Exception:
+                try:
+                    layout = self.dockWidgetAnalysis.layout()
+                except Exception:
+                    layout = None
+                if layout is not None:
+                    layout.insertWidget(0, self.analysisHeaderWidget)
+        except Exception:
+            self.analysisHeaderWidget = None
+            self.analysisHeaderLayout = None
         try:
             self.toolButton_reader_help.clicked.connect(self._on_reader_help_clicked)
         except Exception:
