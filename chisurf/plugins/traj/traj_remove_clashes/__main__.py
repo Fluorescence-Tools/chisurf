@@ -1,5 +1,5 @@
 import sys
-from chisurf.gui.tools.structure.remove_clashed_frames import RemoveClashedFrames
+from .widget import RemoveClashedFrames
 from qtpy import QtWidgets
 
 

@@ -1,5 +1,5 @@
 import sys
-from chisurf.gui.tools.structure.join_trajectories import JoinTrajectoriesWidget
+from .widget import JoinTrajectoriesWidget
 from chisurf.gui import QtWidgets
 
 

@@ -96,7 +96,7 @@ class JoinTrajectoriesWidget(QtWidgets.QWidget):
 
         chunk_size = self.chunk_size
         table = tables.open_file(target_filename, 'a')
-        for i, (c1, c2) in enumerate(izip(md.iterload(fn1, chunk=chunk_size), md.iterload(fn2, chunk=chunk_size))):
+        for i, (c1, c2) in enumerate(zip(md.iterload(fn1, chunk=chunk_size), md.iterload(fn2, chunk=chunk_size))):
             xyz_1 = c1.xyz[::-1] if r1 else c1.xyz
             xyz_2 = c2.xyz[::-1] if r2 else c2.xyz
             xyz = np.concatenate((xyz_1, xyz_2), axis=axis)

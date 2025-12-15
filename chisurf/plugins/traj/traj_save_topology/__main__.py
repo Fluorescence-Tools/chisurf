@@ -1,5 +1,5 @@
 import sys
-from chisurf.gui.tools.structure.save_topology import SaveTopology
+from .widget import SaveTopology
 from qtpy import QtWidgets
 
 

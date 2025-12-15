@@ -1,12 +1,12 @@
 import sys
-from chisurf.gui.tools.structure.align_trajectory import AlignTrajectoryWidget
+from .widget import MDConverter
 from qtpy.QtWidgets import QApplication
 
 
 def main():
     app = QApplication(sys.argv)
-    win = AlignTrajectoryWidget()
-    win.show()
+    gui = MDConverter()
+    gui.show()
     app.exec_()
 
 

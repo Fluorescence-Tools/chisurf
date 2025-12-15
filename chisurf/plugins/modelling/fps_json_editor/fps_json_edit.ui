@@ -650,7 +650,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../../../resources/resource.qrc"/>
+  <include location="../../../gui/resources/resource.qrc"/>
  </resources>
  <connections>
   <connection>

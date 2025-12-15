@@ -15,8 +15,10 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.pdb
 import chisurf.gui.widgets.fluorescence.av
 import chisurf.decorators
+import chisurf.settings
 import chisurf.structure
 import chisurf.structure
+from chisurf.plugins.misc.code_editor import SimpleCodeEditor
 
 
 class LabelStructure(
@@ -38,7 +40,7 @@ class LabelStructure(
         self.av_properties = chisurf.gui.widgets.fluorescence.av.AVProperties()
         self.verticalLayout_4.addWidget(self.av_properties)
 
-        self.textEdit_2 = chisurf.gui.tools.code_editor.SimpleCodeEditor(
+        self.textEdit_2 = SimpleCodeEditor(
             language='JSON'
         )
         self.tab_2.layout().addWidget(self.textEdit_2)
@@ -111,11 +113,18 @@ class LabelStructure(
             event: QtCore.QEvent,
     ):
         item = self.listWidget.currentItem()
+        if item is None:
+            return
         label_name = str(item.text())
-        del self.positions[label_name]
-        for dist in list(self.distances.values()):
-            if dist['position1_name'] == label_name or dist['position1_name'] == label_name:
-                del dist
+        if label_name in self.positions:
+            del self.positions[label_name]
+
+        to_remove = []
+        for dist_name, dist in self.distances.items():
+            if dist.get('position1_name') == label_name or dist.get('position2_name') == label_name:
+                to_remove.append(dist_name)
+        for dist_name in to_remove:
+            del self.distances[dist_name]
         self.onUpdateInterface()
         self.onUpdateJSON()
 
@@ -124,12 +133,15 @@ class LabelStructure(
             event: QtCore.QEvent,
     ):
         item = self.listWidget_2.currentItem()
+        if item is None:
+            return
         distance_name = str(item.text())
-        del self.distances[distance_name]
+        if distance_name in self.distances:
+            del self.distances[distance_name]
         self.onUpdateInterface()
         self.onUpdateJSON()
 
-    def onSimulationTypeChanged(self):
+    def onSimulationTypeChanged(self, *args):
         self.av_properties.av_type = self.simulation_type
 
     def onUpdateInterface(self):
@@ -210,19 +222,28 @@ class LabelStructure(
 
     def onAddLabel(self):
         try:
+            allowed_sphere_radius = float(chisurf.settings.fps.get('allowed_sphere_radius', 1.5))
+            simulation_grid_resolution = float(self.av_properties.resolution)
             label = {
                 "atom_name": str(self.atom_select.atom_name),
                 "chain_identifier": str(self.atom_select.chain_id),
                 "residue_seq_number": int(self.atom_select.residue_id),
                 "residue_name": str(self.atom_select.residue_name),
                 "attachment_atom_index": int(self.atom_select.atom_number),
+                "allowed_sphere_radius": allowed_sphere_radius,
+                "anchor_atoms": "",
+                "chain_weighting": False,
+                "contact_volume_thickness": 0,
+                "contact_volume_trapped_fraction": -1,
                 "simulation_type": str(self.simulation_type),
                 "linker_length": float(self.av_properties.linker_length),
                 "linker_width": float(self.av_properties.linker_width),
+                "min_sphere_volume_fraction": 0,
                 "radius1": float(self.av_properties.radius_1),
                 "radius2": float(self.av_properties.radius_2),
                 "radius3": float(self.av_properties.radius_3),
-                "simulation_grid_resolution": float(self.av_properties.resolution)
+                "simulation_grid_resolution": simulation_grid_resolution,
+                "strip_mask": ""
             }
             if self.position_name != '' and self.position_name not in list(self.positions.keys()):
                 self.positions[self.position_name] = label
