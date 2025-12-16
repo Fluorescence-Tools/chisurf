@@ -645,6 +645,23 @@ def setup_gui(
             chisurf.logging.error(f"Failed to enumerate plugins via chisurf.plugins.iter_plugins(): {e}")
             plugin_infos = []
 
+        # Prefer the built-in updater plugin over any legacy user copy
+        try:
+            has_builtin_updater = any(
+                (info.get('module_name') == 'updater' and info.get('source') == 'built-in')
+                for info in plugin_infos
+            )
+            if has_builtin_updater:
+                plugin_infos = [
+                    info for info in plugin_infos
+                    if not (
+                        info.get('module_name') == 'updater'
+                        and info.get('source') == 'user'
+                    )
+                ]
+        except Exception:
+            pass
+
         # Resolve the built-in plugins root so we can detect the _dev subtree
         try:
             plugins_root = pathlib.Path(chisurf.plugins.__file__).parent.resolve()
@@ -682,6 +699,13 @@ def setup_gui(
                 module_name = info.get('module_name') or ''
                 package_dir = pathlib.Path(info.get('package_dir'))
                 source = info.get('source') or 'built-in'
+                is_cli_only = bool(info.get('cli_only'))
+                if bool(info.get('menu_hidden')):
+                    chisurf.logging.info(
+                        f"Skipping plugin marked as hidden from menu: '{plugin_name}' "
+                        f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
+                    )
+                    continue
 
                 # Check disabled/broken status
                 clean_name = plugin_name.split(':')[-1].strip() if ':' in plugin_name else plugin_name
@@ -716,7 +740,6 @@ def setup_gui(
                         f"Skipping disabled/broken plugin in menu: '{plugin_name}' "
                         f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
                     )
-                    continue
 
                 # Determine which file to run: wizard.py if it exists, else __init__.py
                 plugin_dir = package_dir
@@ -748,18 +771,22 @@ def setup_gui(
                 # name (without grouping prefix) as the visible label.
                 if is_dev:
                     display_name = clean_name or plugin_name
+                    label_base = display_name
+                    if is_cli_only:
+                        label_base = f"{label_base} (CLI)"
+                    label = f"{label_base} (BROKEN)" if is_broken else label_base
                     chisurf.logging.info(
-                        f"Adding plugin to Plugins->Dev menu: '{display_name}' "
+                        f"Adding plugin to Plugins->Dev menu: '{label}' "
                         f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
                         f"status={status}, script='{script_file}')"
                     )
-                    plugin_action = QtWidgets.QAction(f"{display_name}", window)
+                    plugin_action = QtWidgets.QAction(label, window)
                     if icon:
                         plugin_action.setIcon(icon)
                     plugin_action.triggered.connect(callback)
                     plugin_action.setToolTip(description)
-                    if is_broken and experimental_mode:
-                        plugin_action.setText(f"{display_name} [BROKEN]")
+                    if is_broken or is_cli_only:
+                        plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_dev += 1
                     dev_menu.addAction(plugin_action)
@@ -774,34 +801,43 @@ def setup_gui(
                         submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
 
                     # Add the plugin to the submenu
+                    short_label = short_name.strip()
+                    label_base = short_label
+                    if is_cli_only:
+                        label_base = f"{label_base} (CLI)"
+                    label = f"{label_base} (BROKEN)" if is_broken else label_base
                     chisurf.logging.info(
-                        f"Adding plugin to Plugins->{submenu_name} submenu: '{short_name.strip()}' "
+                        f"Adding plugin to Plugins->{submenu_name} submenu: '{label}' "
                         f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
                         f"status={status}, script='{script_file}')"
                     )
-                    plugin_action = QtWidgets.QAction(f"{short_name.strip()}", window)
+                    plugin_action = QtWidgets.QAction(label, window)
                     if icon:
                         plugin_action.setIcon(icon)
                     plugin_action.triggered.connect(callback)
                     plugin_action.setToolTip(description)
-                    if is_broken and experimental_mode:
-                        plugin_action.setText(f"{short_name.strip()} [BROKEN]")
+                    if is_broken or is_cli_only:
+                        plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_submenu += 1
                     submenus[submenu_name].addAction(plugin_action)
                 else:
                     # Add the plugin directly to the main menu
+                    label_base = plugin_name
+                    if is_cli_only:
+                        label_base = f"{label_base} (CLI)"
+                    label = f"{label_base} (BROKEN)" if is_broken else label_base
                     chisurf.logging.info(
-                        f"Adding plugin to Plugins menu: '{plugin_name}' "
+                        f"Adding plugin to Plugins menu: '{label}' "
                         f"(module='{module_name}', source='{source}', status={status}, script='{script_file}')"
                     )
-                    plugin_action = QtWidgets.QAction(f"{plugin_name}", window)
+                    plugin_action = QtWidgets.QAction(label, window)
                     if icon:
                         plugin_action.setIcon(icon)
                     plugin_action.triggered.connect(callback)
                     plugin_action.setToolTip(description)
-                    if is_broken and experimental_mode:
-                        plugin_action.setText(f"{plugin_name} [BROKEN]")
+                    if is_broken or is_cli_only:
+                        plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_main += 1
                     plugin_menu.addAction(plugin_action)
@@ -1187,8 +1223,36 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     return window
 
 
+def set_app_style(app: QtWidgets.QApplication):
+    try:
+        _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+        _fallback_style = "Windows" if sys.platform == "win32" else "Fusion"
+        _style_name = _gui_cfg.get('qt_style')
+        if _style_name is None:
+            _style_name = ""
+        _style_name = str(_style_name).strip()
+        if (not _style_name) or (_style_name.lower() in ("auto", "default", "system")):
+            _style_name = _fallback_style
+        try:
+            _available = set(QtWidgets.QStyleFactory.keys())
+        except Exception:
+            _available = set()
+        if _available and _style_name not in _available:
+            logging.warning(
+                f"Unknown Qt style '{_style_name}' (available: {sorted(_available)}); falling back to {_fallback_style}"
+            )
+            _style_name = _fallback_style
+        app.setStyle(_style_name)
+    except Exception:
+        try:
+            app.setStyle("Windows" if sys.platform == "win32" else "Fusion")
+        except Exception:
+            pass
+
+
 def get_app():
     app = QtWidgets.QApplication(sys.argv)
+    set_app_style(app)
     app.processEvents()
     win = get_win(app=app)
 
