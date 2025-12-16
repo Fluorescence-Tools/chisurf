@@ -10,66 +10,60 @@ Features:
 - Display developer contact details
 """
 
-import sys
-import pathlib
-from qtpy.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QTextEdit, QSizePolicy
-from qtpy.QtCore import Qt
-from qtpy.QtGui import QPixmap
-from qtpy import uic
+from __future__ import annotations
 
-from chisurf import info
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QGridLayout, QPushButton, QTextEdit, QSizePolicy, QLayout
+from qtpy.QtWidgets import QFrame
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Help:About ChiSurf"
 
+
 class AboutDialog(QDialog):
-    """
-    A dialog that displays information about ChiSurf.
-    """
-
     def __init__(self, parent=None):
-        """Initialize the about dialog."""
         super().__init__(parent)
-        self.setWindowTitle("About ChiSurf")
-        self.setup_ui()
 
-    def setup_ui(self):
-        """Set up the user interface."""
-        # Set dialog size
+        try:
+            import chisurf.gui.resources  # noqa: F401
+        except Exception:
+            pass
+
+        self.setWindowTitle("About")
         self.setMinimumSize(280, 370)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
 
-        # Create layout
-        layout = QVBoxLayout(self)
+        layout = QGridLayout(self)
+        layout.setSizeConstraint(QLayout.SetFixedSize)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Create text edit for content
-        self.text_edit = QTextEdit()
-        self.text_edit.setReadOnly(True)
-        self.text_edit.setFrameShape(QTextEdit.NoFrame)
-        self.text_edit.setLineWidth(0)
-        self.text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.text_edit.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.text_edit.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.text_edit.setMinimumSize(280, 340)
+        self.textEdit = QTextEdit(self)
+        self.textEdit.setEnabled(True)
+        self.textEdit.setMinimumSize(280, 340)
+        self.textEdit.setFrameShape(QFrame.NoFrame)
+        self.textEdit.setLineWidth(0)
+        self.textEdit.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.textEdit.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.textEdit.setReadOnly(True)
+        self.textEdit.setTextInteractionFlags(Qt.NoTextInteraction)
 
-        # Set HTML content
-        html_content = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+        self.textEdit.setHtml(
+            """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
 <html><head><meta name="qrichtext" content="1" /><style type="text/css">
-p, li {{ white-space: pre-wrap; }}
+p, li { white-space: pre-wrap; }
 </style></head><body style=" font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;">
 <p style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'Arial'; font-size:14pt; font-weight:600; color:#ff5500;">ChiSurf </span></p>
 <p align="center" style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src=":/icons/icons/cs_logo.png" /></p>
-<p style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'MS Shell Dlg 2'; font-size:8pt;">Version: {info.__version__}<br />Development: Thomas-Otavio Peulen <br />Email: thomas.otavio.peulen@gmail.com</span></p></body></html>"""
-        self.text_edit.setHtml(html_content)
+<p style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><span style=" font-family:'MS Shell Dlg 2'; font-size:8pt;">Development: Thomas-Otavio Peulen <br />Email: thomas.otavio.peulen@gmail.com</span></p></body></html>"""
+        )
 
-        # Add text edit to layout
-        layout.addWidget(self.text_edit)
+        self.toolButton = QPushButton(self)
+        self.toolButton.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.toolButton.setText("close")
+        self.toolButton.clicked.connect(self.hide)
 
-        # Create close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.hide)
-        layout.addWidget(close_button)
+        layout.addWidget(self.textEdit, 0, 0)
+        layout.addWidget(self.toolButton, 1, 0)
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed

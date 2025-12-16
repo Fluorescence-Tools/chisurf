@@ -3,9 +3,7 @@ from __future__ import annotations
 import os
 import ast
 import pathlib
-import webbrowser
 import traceback
-import sys
 
 import chisurf.gui
 import chisurf.macros.core_fit
@@ -13,7 +11,7 @@ from chisurf import typing
 
 import numpy as np
 from chisurf.gui import QtWidgets, QtGui, QtCore, uic
-from chisurf.gui.tools import system_info_watermark as _system_info_watermark
+from chisurf.gui.widgets import system_info_watermark as _system_info_watermark
 from chisurf.gui.gui_tweaks import apply_platform_window_tweaks, apply_dock_tab_colors
 
 
@@ -70,6 +68,7 @@ import chisurf.models
 import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
+import chisurf.plugins.misc.code_editor
 
 
 class Main(QtWidgets.QMainWindow):
@@ -619,6 +618,42 @@ class Main(QtWidgets.QMainWindow):
         chisurf.working_path = path
         chisurf.macros.core_fit.load_project(project_path=path.as_posix())
 
+    def reinitialize(self):
+        try:
+            self.onCloseAllFits()
+        except Exception:
+            pass
+        try:
+            for sub_window in list(self.mdiarea.subWindowList()):
+                try:
+                    sub_window.close()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        try:
+            chisurf.imported_datasets.clear()
+        except Exception:
+            pass
+        try:
+            self.dataset_selector.update()
+        except Exception:
+            pass
+        try:
+            self.fit_selector.update()
+        except Exception:
+            pass
+        try:
+            self._current_dataset = None
+            self._current_fit = None
+            self._fit_idx = 0
+        except Exception:
+            pass
+        try:
+            self.comboBox_Model.clear()
+        except Exception:
+            pass
+
     def onCloseProject(self, event: QtCore.QEvent = None):
         try:
             self.onCloseAllFits()
@@ -885,10 +920,12 @@ class Main(QtWidgets.QMainWindow):
         # Import the updater plugin
         import importlib
         try:
-            updater_plugin = importlib.import_module("chisurf.plugins.updater")
-            # Create an instance of the UpdaterWidget class
+            try:
+                updater_plugin = importlib.import_module("chisurf.plugins.chisurf.updater")
+            except ImportError:
+                updater_plugin = importlib.import_module("chisurf.plugins.updater")
+
             window = updater_plugin.UpdaterWidget()
-            # Show the window
             window.show()
         except Exception as e:
             # Show error message if plugin can't be loaded
@@ -900,19 +937,19 @@ class Main(QtWidgets.QMainWindow):
 
     def onOpenAbout(self):
         """Open the about plugin."""
-        # Import the about plugin
         import importlib
         try:
-            about_plugin = importlib.import_module("chisurf.plugins.about")
-            # Create an instance of the AboutDialog class
-            window = about_plugin.AboutDialog()
-            # Show the window
+            try:
+                about_plugin = importlib.import_module("chisurf.plugins.chisurf.about")
+            except ImportError:
+                about_plugin = importlib.import_module("chisurf.plugins.about")
+
+            window = about_plugin.AboutDialog(parent=self)
             window.show()
         except Exception as e:
-            # Show error message if plugin can't be loaded
             chisurf.gui.widgets.general.MyMessageBox(
                 label="About Plugin Error",
-                info=f"Error loading about plugin: {str(e)}",
+                info=f"Error opening About dialog: {str(e)}",
                 show_fortune=False
             )
 
@@ -1056,6 +1093,8 @@ class Main(QtWidgets.QMainWindow):
                 icon_path = package_dir / 'icon.png'
                 if icon_path.exists():
                     action.setIcon(QtGui.QIcon(str(icon_path)))
+                else:
+                    action.setText(clean_name)
 
                 # Get plugin description from metadata or docstring
                 description = info.get('description')
@@ -1891,7 +1930,7 @@ class Main(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = chisurf.gui.tools.code_editor.CodeEditor()
+        self.editor = chisurf.plugins.misc.code_editor.CodeEditor()
 
         self.verticalLayout_10.addWidget(self.editor)
 
@@ -2076,17 +2115,8 @@ class Main(QtWidgets.QMainWindow):
 
     def load_tools(self):
         import chisurf
-        import chisurf.gui
         import chisurf.gui.tools
 
-        ##########################################################
-        #      Fluorescence widgets                              #
-        #      (Commented widgets don't work at the moment       #
-        ##########################################################
-
-
-        self.f_test = chisurf.gui.tools.f_test.FTestWidget()
-        self.actionF_Test.triggered.connect(self.f_test.show)
 
         ##########################################################
         #      Load toolbar plugins                              #
