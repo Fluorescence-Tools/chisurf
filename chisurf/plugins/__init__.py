@@ -99,7 +99,7 @@ if (
 
 def _read_plugin_metadata(init_py: pathlib.Path):
     if not init_py.exists():
-        return None, None, None
+        return None, None, None, False, False
     try:
         source = init_py.read_text(encoding="utf-8")
     except Exception:
@@ -107,10 +107,12 @@ def _read_plugin_metadata(init_py: pathlib.Path):
     try:
         tree = ast.parse(source, filename=str(init_py))
     except Exception:
-        return None, None, None
+        return None, None, None, False, False
     description = ast.get_docstring(tree) or "No description available."
     plugin_name = None
     cli_entrypoint = None
+    cli_only = False
+    menu_hidden = False
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
@@ -127,7 +129,27 @@ def _read_plugin_metadata(init_py: pathlib.Path):
                     cli_entrypoint = value.value.strip()
                 elif isinstance(value, ast.Str):
                     cli_entrypoint = value.s.strip()
-    return plugin_name, description, cli_entrypoint
+            if isinstance(target, ast.Name) and target.id == "cli_only":
+                value = node.value
+                # Support simple boolean literals like ``cli_only = True``.
+                if isinstance(value, ast.Constant) and isinstance(value.value, bool):
+                    cli_only = bool(value.value)
+                else:
+                    # Fallback for older Python AST nodes
+                    if hasattr(ast, "NameConstant") and isinstance(value, ast.NameConstant):  # type: ignore[attr-defined]
+                        if isinstance(value.value, bool):
+                            cli_only = bool(value.value)
+            if isinstance(target, ast.Name) and target.id == "menu_hidden":
+                value = node.value
+                # Support simple boolean literals like ``menu_hidden = True``.
+                if isinstance(value, ast.Constant) and isinstance(value.value, bool):
+                    menu_hidden = bool(value.value)
+                else:
+                    # Fallback for older Python AST nodes
+                    if hasattr(ast, "NameConstant") and isinstance(value, ast.NameConstant):  # type: ignore[attr-defined]
+                        if isinstance(value.value, bool):
+                            menu_hidden = bool(value.value)
+    return plugin_name, description, cli_entrypoint, cli_only, menu_hidden
 
 
 def iter_plugins():
@@ -137,49 +159,75 @@ def iter_plugins():
     except Exception:
         user_root = user_plugins_dir
     seen = set()
-    for finder, name, ispkg in pkgutil.walk_packages(__path__, prefix=base_prefix):
-        if not ispkg or not name.startswith(base_prefix):
-            continue
-        rel_name = name[len(base_prefix):]
-        parts = rel_name.split(".")
-        finder_path = getattr(finder, "path", None)
-        if not finder_path:
+    search_paths = list(__path__)
+    for path_entry in search_paths:
+        try:
+            base_path = pathlib.Path(path_entry)
+        except Exception:
             continue
         try:
-            base_path = pathlib.Path(finder_path).resolve()
+            base_path = base_path.resolve()
+        except Exception:
+            pass
+        try:
+            if not base_path.exists() or not base_path.is_dir():
+                continue
         except Exception:
             continue
 
-        # For nested packages, finder.path already points at the parent
-        # directory of the *first* package component. Joining all "parts"
-        # would therefore duplicate path segments (e.g. traj/traj_align
-        # under a finder.path of .../plugins/traj). Instead, only join the
-        # final component relative to finder.path.
-        local_name = parts[-1]
-        init_py = base_path.joinpath(local_name, "__init__.py")
-        if not init_py.exists():
-            continue
-        plugin_name, description, cli_entrypoint = _read_plugin_metadata(init_py)
-        if not plugin_name:
-            continue
-        package_dir = init_py.parent
-        key = (name, str(package_dir))
-        if key in seen:
-            continue
-        seen.add(key)
-        try:
-            if hasattr(package_dir, "is_relative_to"):
-                is_user = package_dir.is_relative_to(user_root)
-            else:
-                is_user = str(package_dir).startswith(str(user_root))
-        except Exception:
-            is_user = str(package_dir).startswith(str(user_root))
-        yield {
-            "module_path": name,
-            "module_name": parts[-1],
-            "package_dir": package_dir,
-            "source": "user" if is_user else "built-in",
-            "plugin_name": plugin_name,
-            "description": description,
-            "cli_entrypoint": cli_entrypoint,
-        }
+        for root, dirs, files in os.walk(str(base_path)):
+            try:
+                if "__init__.py" not in files:
+                    continue
+                package_dir = pathlib.Path(root)
+
+                # For nested packages, finder.path already points at the parent
+                # directory of the *first* package component. Joining all "parts"
+                # would therefore duplicate path segments (e.g. traj/traj_align
+                # under a finder.path of .../plugins/traj). Instead, only join the
+                # final component relative to finder.path.
+                try:
+                    rel = package_dir.relative_to(base_path)
+                except Exception:
+                    continue
+                parts = rel.parts
+                if not parts:
+                    continue
+
+                local_name = parts[-1]
+                init_py = package_dir.joinpath("__init__.py")
+                if not init_py.exists():
+                    continue
+                plugin_name, description, cli_entrypoint, cli_only, menu_hidden = _read_plugin_metadata(init_py)
+                if not plugin_name:
+                    continue
+                module_path = base_prefix + ".".join(parts)
+                key = (module_path, str(package_dir))
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    if hasattr(package_dir, "is_relative_to"):
+                        is_user = package_dir.is_relative_to(user_root)
+                    else:
+                        is_user = str(package_dir).startswith(str(user_root))
+                except Exception:
+                    is_user = str(package_dir).startswith(str(user_root))
+
+                # Automatically hide the built-in cookiecutter template from the GUI menu
+                # while still allowing it to be managed as a plugin if needed.
+                if "cookiecutter-chisurf-plugin" in parts and "{{cookiecutter.plugin_name}}" in parts:
+                    menu_hidden = True
+                yield {
+                    "module_path": module_path,
+                    "module_name": local_name,
+                    "package_dir": package_dir,
+                    "source": "user" if is_user else "built-in",
+                    "plugin_name": plugin_name,
+                    "description": description,
+                    "cli_entrypoint": cli_entrypoint,
+                    "cli_only": bool(cli_only),
+                    "menu_hidden": bool(menu_hidden),
+                }
+            except Exception:
+                continue
