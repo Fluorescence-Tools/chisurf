@@ -14,7 +14,7 @@
    <string>F-Calculator</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../ui/resource.qrc">
+   <iconset resource="../../../gui/resources/resource.qrc">
     <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -439,7 +439,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../../ui/resource.qrc"/>
+  <include location="../../../gui/resources/resource.qrc"/>
  </resources>
  <connections>
   <connection>

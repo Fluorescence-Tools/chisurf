@@ -880,7 +880,6 @@
    <addaction name="actionStop"/>
    <addaction name="actionRecord"/>
    <addaction name="separator"/>
-   <addaction name="actionF_Test"/>
   </widget>
   <action name="actionExit">
    <property name="icon">
@@ -1403,15 +1402,6 @@
    </property>
    <property name="text">
     <string>Update</string>
-   </property>
-  </action>
-  <action name="actionF_Test">
-   <property name="icon">
-    <iconset resource="resources/resource.qrc">
-     <normaloff>:/icons/icons/1462894045_chart02_64.png</normaloff>:/icons/icons/1462894045_chart02_64.png</iconset>
-   </property>
-   <property name="text">
-    <string>F-Test</string>
    </property>
   </action>
   <action name="actionSettings">
