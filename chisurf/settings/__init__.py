@@ -116,3 +116,9 @@ logs_folder = chisurf_settings_path / "logs"
 logs_folder.mkdir(exist_ok=True)
 session_file = logs_folder / str(session_str + ".py")
 session_log = logs_folder / str(session_str + ".log")
+
+try:
+    import chisurf as _chisurf
+    _chisurf._apply_logging_settings(sys.modules[__name__])
+except Exception:
+    pass
