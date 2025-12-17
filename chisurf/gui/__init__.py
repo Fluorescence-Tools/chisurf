@@ -386,7 +386,6 @@ def setup_gui(
         import chisurf.fluorescence
         import chisurf.gui.decorators
         import chisurf.gui.widgets.ipython
-        import chisurf.gui.tools
         import chisurf.gui.widgets
         import chisurf.macros
         import chisurf.math
