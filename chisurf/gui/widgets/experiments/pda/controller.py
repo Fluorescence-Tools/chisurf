@@ -2,7 +2,7 @@ import pathlib
 import tttrlib
 
 import chisurf.gui
-from chisurf.experiments import reader
+from chisurf.experiments.core import reader
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
 import chisurf
@@ -33,6 +33,13 @@ class PdaTTTRWidget(
             self.accept_exts = set(accept_exts or [])
             # optional callable(pathlib.Path) -> List[str] to expand directories
             self.dir_resolver = dir_resolver
+            # Internal bookkeeping: keep a full list of dropped paths, but cap the
+            # number of QListWidgetItems we actually create so that dropping
+            # thousands of files cannot overload the widget or Qt internals.
+            self._max_visible_items = 128
+            self._visible_count = 0
+            self._all_paths = []  # all unique file/folder paths represented logically
+            self._overflow_item = None  # summary item for hidden entries
 
         def _maybe_add_path(self, file_path: str):
             """Safely add a dropped path or expand a directory into files.
@@ -46,22 +53,26 @@ class PdaTTTRWidget(
                 logging.warning("PDA: Invalid path dropped: %r", file_path)
                 return
 
-            # If a directory is dropped, add the folder itself as one entry.
+            sp = str(p)
+
+            # If a directory is dropped, add the folder itself as one logical entry.
             # BUR file discovery is deferred to load time to keep UI load low.
             if p.is_dir():
-                sp = str(p)
-                for i in range(self.count()):
-                    if self.item(i).text() == sp:
-                        return
+                if sp in self._all_paths:
+                    return
+                self._all_paths.append(sp)
                 try:
-                    item = QtWidgets.QListWidgetItem(sp)
-                    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                    item.setCheckState(QtCore.Qt.Checked)
-                    self.addItem(item)
+                    if self._visible_count < self._max_visible_items:
+                        item = QtWidgets.QListWidgetItem(sp)
+                        item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                        item.setCheckState(QtCore.Qt.Checked)
+                        self.addItem(item)
+                        self._visible_count += 1
                 except Exception:
                     logging.warning(
                         "PDA: Failed to add dropped folder to list: %s", sp, exc_info=True
                     )
+                self._update_overflow_item()
                 return
 
             # Accept only files with allowed extensions
@@ -70,20 +81,61 @@ class PdaTTTRWidget(
             ext = p.suffix.lower()
             if self.accept_exts and ext not in self.accept_exts:
                 return
-            # Prevent duplicates
-            sp = str(p)
-            for i in range(self.count()):
-                if self.item(i).text() == sp:
-                    return
+            # Prevent duplicates (based on logical list rather than widget items)
+            if sp in self._all_paths:
+                return
+            self._all_paths.append(sp)
             try:
-                item = QtWidgets.QListWidgetItem(sp)
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-                item.setCheckState(QtCore.Qt.Checked)
-                self.addItem(item)
+                if self._visible_count < self._max_visible_items:
+                    item = QtWidgets.QListWidgetItem(sp)
+                    item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+                    item.setCheckState(QtCore.Qt.Checked)
+                    self.addItem(item)
+                    self._visible_count += 1
             except Exception:
                 logging.warning(
                     "PDA: Failed to add dropped file to list: %s", sp, exc_info=True
                 )
+            self._update_overflow_item()
+
+        def _update_overflow_item(self):
+            """Ensure the summary item for hidden entries is up to date.
+
+            When more than _max_visible_items logical paths are present, we add
+            (or update) a non-interactive item at the bottom that summarizes
+            how many additional files are not shown individually.
+            """
+            try:
+                extra = max(0, len(self._all_paths) - self._max_visible_items)
+            except Exception:
+                extra = 0
+            # Remove summary item if no extra entries
+            if extra <= 0:
+                if self._overflow_item is not None:
+                    try:
+                        row = self.row(self._overflow_item)
+                        if row >= 0:
+                            self.takeItem(row)
+                    except Exception:
+                        pass
+                    self._overflow_item = None
+                return
+
+            text = f"... and {extra} more file(s) not shown"
+            if self._overflow_item is None:
+                try:
+                    summary = QtWidgets.QListWidgetItem(text)
+                    # No interaction with the summary item
+                    summary.setFlags(QtCore.Qt.NoItemFlags)
+                    self.addItem(summary)
+                    self._overflow_item = summary
+                except Exception:
+                    self._overflow_item = None
+            else:
+                try:
+                    self._overflow_item.setText(text)
+                except Exception:
+                    pass
 
         def dragEnterEvent(self, event):
             if event.mimeData().hasUrls():
@@ -149,11 +201,72 @@ class PdaTTTRWidget(
                 event.ignore()
 
         def remove_selected(self):
-            for item in self.selectedItems():
-                self.takeItem(self.row(item))
+            # Remove selected real items and update internal path list.
+            for item in list(self.selectedItems()):
+                if item is self._overflow_item:
+                    # Summary item is non-interactive; ignore
+                    continue
+                try:
+                    path = item.text()
+                except Exception:
+                    path = None
+                if path:
+                    try:
+                        self._all_paths.remove(path)
+                    except ValueError:
+                        pass
+                try:
+                    row = self.row(item)
+                    if row >= 0:
+                        self.takeItem(row)
+                        if self._visible_count > 0:
+                            self._visible_count -= 1
+                except Exception:
+                    continue
+            self._update_overflow_item()
 
         def clear_all(self):
+            # Clear both the widget and internal bookkeeping.
+            self._all_paths = []
+            self._visible_count = 0
+            self._overflow_item = None
             self.clear()
+
+        def get_all_paths(self):
+            """Return a copy of all logical paths currently stored."""
+            return list(self._all_paths)
+
+        def get_checked_paths(self):
+            """Return all paths that are considered "checked".
+
+            Visible items honor their individual check state. Paths that are
+            present only in the logical list (not rendered as individual
+            QListWidgetItems) are treated as checked by default.
+            """
+            visible_states = {}
+            try:
+                for i in range(self.count()):
+                    item = self.item(i)
+                    if item is None or item is self._overflow_item:
+                        continue
+                    try:
+                        path = item.text()
+                    except Exception:
+                        continue
+                    try:
+                        state = item.checkState()
+                    except Exception:
+                        state = QtCore.Qt.Checked
+                    visible_states[path] = state
+            except Exception:
+                visible_states = {}
+
+            checked = []
+            for path in self._all_paths:
+                state = visible_states.get(path, QtCore.Qt.Checked)
+                if state == QtCore.Qt.Checked:
+                    checked.append(path)
+            return checked
 
         def contextMenuEvent(self, event):
             menu = QtWidgets.QMenu(self)
@@ -173,6 +286,10 @@ class PdaTTTRWidget(
         self._windows = {}
         self._detectors = {}
         self._tttr_reading = {}
+        # Optional list of extra (min_photons, tw_seconds) configurations
+        # used for multi-TW PDA loading. The base TW from the main spin box
+        # is always included implicitly when building the final list.
+        self._tw_configs = []
 
         # Wire UI
         if hasattr(self, 'label_10'):
@@ -193,6 +310,31 @@ class PdaTTTRWidget(
         self.comboBox_setup.currentTextChanged.connect(self._on_setup_changed)
         self.comboBox_det1.currentTextChanged.connect(self._on_detector_combo_changed)
         self.comboBox_det2.currentTextChanged.connect(self._on_detector_combo_changed)
+
+        # Multi-TW controls: the "+" toolbutton appends a new TW entry using
+        # the current minimum-photons value and the main TW spinbox. Entries
+        # are stored as (n_photons, tw_seconds) and mirrored into the
+        # listWidget_tw for user feedback.
+        if hasattr(self, "toolButton_add_tw") and hasattr(self, "listWidget_tw"):
+            try:
+                self.toolButton_add_tw.clicked.connect(self._on_add_tw_clicked)
+                self.listWidget_tw.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+                self.listWidget_tw.customContextMenuRequested.connect(self._on_tw_list_context_menu)
+                self.listWidget_tw.itemDoubleClicked.connect(self._on_tw_item_double_clicked)
+            except Exception:
+                logging.warning("PDA: Failed to connect multi-TW controls.")
+            try:
+                if self.listWidget_tw.count() == 0:
+                    for n_ph, tw_ms in ((10, 1.0), (20, 2.0), (30, 3.0)):
+                        item = QtWidgets.QListWidgetItem(f"{n_ph} ph @ {tw_ms:g} ms")
+                        try:
+                            item.setData(QtCore.Qt.UserRole, (n_ph, tw_ms / 1000.0))
+                        except Exception:
+                            pass
+                        self.listWidget_tw.addItem(item)
+                    self._sync_tw_configs_from_list()
+            except Exception:
+                pass
 
         # Initialize from current selections
         self._apply_current_setup_and_detectors()
@@ -249,16 +391,52 @@ class PdaTTTRWidget(
             btn_row.addWidget(self.load_button)
             self.clear_button = QtWidgets.QPushButton("Clear")
             self.clear_button.setToolTip("Clear all dropped files from the list")
-            self.clear_button.clicked.connect(lambda: (self.file_list.clear(), self.actionParametersChanged.trigger()))
+            # Use the widget's clear_all helper when available so that both
+            # the visual items and the internal path cache are reset.
+            def _on_clear_clicked():
+                try:
+                    if hasattr(self.file_list, "clear_all"):
+                        self.file_list.clear_all()
+                    else:
+                        self.file_list.clear()
+                except Exception:
+                    try:
+                        self.file_list.clear()
+                    except Exception:
+                        pass
+                try:
+                    self.actionParametersChanged.trigger()
+                except Exception:
+                    pass
+
+            self.clear_button.clicked.connect(_on_clear_clicked)
             btn_row.addWidget(self.clear_button)
             btn_row.addStretch(1)
             self.verticalLayout.addLayout(btn_row)
         # Internal accessor for used files
-        self._get_used_files = lambda: [
-            self.file_list.item(i).text()
-            for i in range(self.file_list.count())
-            if self.file_list.item(i).checkState() == QtCore.Qt.Checked
-        ]
+        def _get_used_files_impl():
+            try:
+                if hasattr(self.file_list, "get_checked_paths"):
+                    return self.file_list.get_checked_paths()
+            except Exception:
+                pass
+            # Fallback: derive from visible items only
+            paths = []
+            try:
+                for i in range(self.file_list.count()):
+                    item = self.file_list.item(i)
+                    if item is None:
+                        continue
+                    try:
+                        if item.checkState() == QtCore.Qt.Checked:
+                            paths.append(item.text())
+                    except Exception:
+                        continue
+            except Exception:
+                paths = []
+            return paths
+
+        self._get_used_files = _get_used_files_impl
 
     def _compute_burst_slices_for_files(self, tttr_files):
         """
@@ -903,23 +1081,179 @@ class PdaTTTRWidget(
         mt1 = parse_mtr(self.lineEdit_3.text())
         micro_time_ranges = [mt0, mt1]
         channels = [ch0, ch1]
-        minimum_number_of_photons = self.spinBox.value()
-        maximum_number_of_photons = self.spinBox_2.value()
-        minimum_time_window_length = self.doubleSpinBox.value()
+        minimum_number_of_photons = int(self.spinBox.value())
+        maximum_number_of_photons = int(self.spinBox_2.value())
+        base_tw_ms = float(self.doubleSpinBox.value())
+        base_tw_s = base_tw_ms / 1000.0 if base_tw_ms > 0.0 else 0.0
+
+        # Synchronize internal TW configs from the list widget. If the list is
+        # empty, fall back to a single (nPh, TW) pair from the current
+        # spinbox values for backward compatibility.
+        self._sync_tw_configs_from_list()
+        tw_cfgs = list(getattr(self, "_tw_configs", []) or [])
+        if not tw_cfgs and minimum_number_of_photons > 0 and base_tw_s > 0.0:
+            tw_cfgs.append((minimum_number_of_photons, base_tw_s))
 
         reading_routine = self.comboBox.currentText()
-        chisurf.run(
-            "\n".join(
-                [
-                    f"cs.current_setup.reading_routine = '{reading_routine}'",
-                    f"cs.current_setup.channels = {channels}",
-                    f"cs.current_setup.micro_time_ranges = {micro_time_ranges}",
-                    f"cs.current_setup.minimum_number_of_photons = {minimum_number_of_photons}",
-                    f"cs.current_setup.maximum_number_of_photons = {maximum_number_of_photons}",
-                    f"cs.current_setup.minimum_time_window_length = {minimum_time_window_length / 1000.0}"
-                ]
+
+        # Apply settings directly to the current setup instead of routing
+        # through the embedded IPython console. This avoids spamming the
+        # console (especially when many files are dropped) and removes a
+        # potential source of instability from repeatedly executing CLI
+        # strings.
+        try:
+            cs = getattr(chisurf, "cs", None)
+            setup = getattr(cs, "current_setup", None) if cs is not None else None
+        except Exception:
+            setup = None
+
+        if setup is None:
+            return
+
+        try:
+            setup.reading_routine = reading_routine
+            setup.channels = channels
+            setup.micro_time_ranges = micro_time_ranges
+            setup.minimum_number_of_photons = minimum_number_of_photons
+            setup.maximum_number_of_photons = maximum_number_of_photons
+            setup.minimum_time_window_length = base_tw_s
+            if tw_cfgs:
+                try:
+                    setup.tw_configs = tw_cfgs
+                except Exception:
+                    pass
+        except Exception:
+            logging.warning(
+                "PDA: Failed to propagate parameter changes to cs.current_setup",
+                exc_info=True,
             )
-        )
+
+    def _sync_tw_configs_from_list(self):
+        tw = []
+        lw = getattr(self, "listWidget_tw", None)
+        if lw is not None:
+            for i in range(lw.count()):
+                item = lw.item(i)
+                if item is None:
+                    continue
+                try:
+                    data = item.data(QtCore.Qt.UserRole)
+                except Exception:
+                    data = None
+                if not data or len(data) != 2:
+                    continue
+                try:
+                    n_ph = int(data[0])
+                    tw_s = float(data[1])
+                except Exception:
+                    continue
+                if n_ph <= 0 or tw_s <= 0.0:
+                    continue
+                tw.append((n_ph, tw_s))
+        self._tw_configs = tw
+
+    def _add_tw_entry(self):
+        lw = getattr(self, "listWidget_tw", None)
+        if lw is None:
+            return
+        try:
+            n_ph = int(self.spinBox.value())
+            tw_ms = float(self.doubleSpinBox.value())
+        except Exception:
+            return
+        if n_ph <= 0 or tw_ms <= 0.0:
+            return
+        tw_s = tw_ms / 1000.0
+        # Avoid duplicate entries
+        try:
+            for i in range(lw.count()):
+                it = lw.item(i)
+                if it is None:
+                    continue
+                data = it.data(QtCore.Qt.UserRole)
+                if data and len(data) == 2 and int(data[0]) == n_ph and float(data[1]) == tw_s:
+                    return
+        except Exception:
+            pass
+        text = f"{n_ph} ph @ {tw_ms:g} ms"
+        item = QtWidgets.QListWidgetItem(text)
+        try:
+            item.setData(QtCore.Qt.UserRole, (n_ph, tw_s))
+        except Exception:
+            pass
+        lw.addItem(item)
+        self._sync_tw_configs_from_list()
+
+    def _on_add_tw_clicked(self):
+        try:
+            self._add_tw_entry()
+            try:
+                self.actionParametersChanged.trigger()
+            except Exception:
+                pass
+        except Exception:
+            logging.warning("PDA: Failed to add TW configuration.", exc_info=True)
+
+    def _remove_selected_tw_entries(self):
+        lw = getattr(self, "listWidget_tw", None)
+        if lw is None:
+            return
+        try:
+            selected = list(lw.selectedItems())
+        except Exception:
+            selected = []
+        for item in selected:
+            try:
+                lw.takeItem(lw.row(item))
+            except Exception:
+                continue
+        self._sync_tw_configs_from_list()
+        try:
+            self.actionParametersChanged.trigger()
+        except Exception:
+            pass
+
+    def _on_tw_item_double_clicked(self, item):
+        lw = getattr(self, "listWidget_tw", None)
+        if lw is None or item is None:
+            return
+        try:
+            lw.takeItem(lw.row(item))
+        except Exception:
+            return
+        self._sync_tw_configs_from_list()
+        try:
+            self.actionParametersChanged.trigger()
+        except Exception:
+            pass
+
+    def _on_tw_list_context_menu(self, pos):
+        lw = getattr(self, "listWidget_tw", None)
+        if lw is None:
+            return
+        try:
+            menu = QtWidgets.QMenu(lw)
+        except Exception:
+            return
+        act_remove = menu.addAction("Remove selected")
+        act_clear = menu.addAction("Clear all")
+        try:
+            global_pos = lw.mapToGlobal(pos)
+        except Exception:
+            return
+        chosen = menu.exec_(global_pos)
+        if chosen == act_remove:
+            self._remove_selected_tw_entries()
+        elif chosen == act_clear:
+            try:
+                lw.clear()
+            except Exception:
+                return
+            self._sync_tw_configs_from_list()
+            try:
+                self.actionParametersChanged.trigger()
+            except Exception:
+                pass
 
     def get_filename(self) -> pathlib.Path:
         return chisurf.gui.widgets.open_files(
@@ -931,6 +1265,10 @@ class PdaTTTRWidget(
     def _on_load_dropped_files_clicked(self):
         try:
             files = self._get_used_files() if hasattr(self, '_get_used_files') else []
+            try:
+                logging.info("PDA TRACE: _on_load_dropped_files_clicked: got %d dropped path(s)", len(files))
+            except Exception:
+                pass
             if not files:
                 logging.warning("PDA: No dropped files are checked to load.")
                 QtWidgets.QMessageBox.information(self, "No files", "No dropped files are checked to load.")
@@ -1019,6 +1357,13 @@ class PdaTTTRWidget(
 
                 bur_files = sorted(set(bur_files))
                 tttr_files = sorted(set(tttr_files))
+                try:
+                    logging.info(
+                        "PDA TRACE: classified dropped items -> %d BUR file(s), %d TTTR file(s)",
+                        len(bur_files), len(tttr_files)
+                    )
+                except Exception:
+                    pass
 
                 max_bur_files = 1024
                 max_tttr_files = 1024
@@ -1078,8 +1423,17 @@ class PdaTTTRWidget(
                 micro_time_ranges = [mt0, mt1]
                 maximum_number_of_photons = int(self.spinBox_2.value())
                 minimum_number_of_photons = int(self.spinBox.value())
-                minimum_time_window_length = float(self.doubleSpinBox.value()) / 1000.0  # UI is ms, reader expects seconds
+                base_tw_ms = float(self.doubleSpinBox.value())
+                minimum_time_window_length = base_tw_ms / 1000.0  # UI is ms, reader expects seconds
                 reading_routine = self.comboBox.currentText()
+
+                # Build TW configurations for the reader from the list widget.
+                # If the list is empty, fall back to a single (nPh, TW) derived
+                # from the current spinboxes for backward compatibility.
+                self._sync_tw_configs_from_list()
+                tw_cfgs = list(getattr(self, "_tw_configs", []) or [])
+                if not tw_cfgs and minimum_number_of_photons > 0 and minimum_time_window_length > 0.0:
+                    tw_cfgs.append((minimum_number_of_photons, minimum_time_window_length))
 
                 logging.info(f"PDA: Preparing to load {len(tttr_files)} TTTR file(s) with routine '{reading_routine}'.")
                 logging.debug({
@@ -1087,7 +1441,8 @@ class PdaTTTRWidget(
                     'micro_time_ranges': micro_time_ranges,
                     'max_photons': maximum_number_of_photons,
                     'min_photons': minimum_number_of_photons,
-                    'min_time_window_s': minimum_time_window_length
+                    'min_time_window_s': minimum_time_window_length,
+                    'tw_configs': tw_cfgs,
                 })
                 pda_reader = PdaReader(
                     channels=(ch0, ch1),
@@ -1095,7 +1450,8 @@ class PdaTTTRWidget(
                     reading_routine=reading_routine,
                     maximum_number_of_photons=maximum_number_of_photons,
                     minimum_number_of_photons=minimum_number_of_photons,
-                    minimum_time_window_length=minimum_time_window_length
+                    minimum_time_window_length=minimum_time_window_length,
+                    tw_configs=tw_cfgs
                 )
                 # Attach the correct experiment to the reader so get_data can set d.experiment
                 try:
@@ -1168,11 +1524,29 @@ class PdaTTTRWidget(
                             pass
                         return True
 
+                    try:
+                        logging.info(
+                            "PDA TRACE: starting _resolve_tttr_and_slices_from_bur for %d BUR file(s)",
+                            len(bur_files)
+                        )
+                    except Exception:
+                        pass
                     tttr_files_resolved, burst_slices = self._resolve_tttr_and_slices_from_bur(
                         bur_files,
                         progress_callback=_progress_cb
                     )
                     tttr_files = tttr_files_resolved
+                    try:
+                        n_slices_keys = len(burst_slices) if burst_slices else 0
+                    except Exception:
+                        n_slices_keys = 0
+                    try:
+                        logging.info(
+                            "PDA TRACE: _resolve_tttr_and_slices_from_bur finished -> %d TTTR file(s), %d slice file key(s)",
+                            len(tttr_files), n_slices_keys
+                        )
+                    except Exception:
+                        pass
                     if len(tttr_files) > max_tttr_files:
                         logging.warning(
                             "PDA: Too many TTTR files resolved from BUR tables (%d); limiting to first %d.",
@@ -1212,7 +1586,25 @@ class PdaTTTRWidget(
                         except Exception:
                             pass
                     QtWidgets.QApplication.processEvents()
+                    try:
+                        logging.info(
+                            "PDA TRACE: starting _compute_burst_slices_for_files for %d TTTR file(s)",
+                            len(tttr_files)
+                        )
+                    except Exception:
+                        pass
                     burst_slices = self._compute_burst_slices_for_files(tttr_files)
+                    try:
+                        n_slices_keys = len(burst_slices) if burst_slices else 0
+                    except Exception:
+                        n_slices_keys = 0
+                    try:
+                        logging.info(
+                            "PDA TRACE: _compute_burst_slices_for_files finished -> %d slice file key(s)",
+                            n_slices_keys
+                        )
+                    except Exception:
+                        pass
 
                 if burst_slices:
                     try:
@@ -1223,6 +1615,13 @@ class PdaTTTRWidget(
                     logging.debug({'burst_slices_keys': list(burst_slices.keys())})
 
                 filenames_arg = "|".join(tttr_files)
+                try:
+                    logging.info(
+                        "PDA TRACE: prepared filenames_arg for add_dataset with %d TTTR file(s); burst_slices_present=%s",
+                        len(tttr_files), bool(burst_slices)
+                    )
+                except Exception:
+                    pass
                 logging.debug({'tttr_files': tttr_files})
                 if progress_bar is not None:
                     try:
@@ -1243,12 +1642,19 @@ class PdaTTTRWidget(
                     except Exception:
                         pass
                 QtWidgets.QApplication.processEvents()
+                try:
+                    logging.info("PDA TRACE: calling core_data_macros.add_dataset (burst_slices=%s)", bool(burst_slices))
+                except Exception:
+                    pass
                 if burst_slices:
                     core_data_macros.add_dataset(experiment_reader=pda_reader, filename=filenames_arg, burst_slices=burst_slices)
                 else:
                     core_data_macros.add_dataset(experiment_reader=pda_reader, filename=filenames_arg)
 
-                logging.info(f"PDA: Loaded {len(tttr_files)} TTTR file(s).")
+                try:
+                    logging.info(f"PDA TRACE: add_dataset returned successfully; loaded {len(tttr_files)} TTTR file(s).")
+                except Exception:
+                    pass
                 try:
                     if getattr(self, "checkBox", None) is not None and self.checkBox.isChecked():
                         if hasattr(self, "file_list"):

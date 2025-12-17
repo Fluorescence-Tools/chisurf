@@ -63,7 +63,7 @@
       <number>9999</number>
      </property>
      <property name="value">
-      <number>5</number>
+      <number>15</number>
      </property>
     </widget>
    </item>
@@ -74,6 +74,13 @@
      </property>
     </widget>
    </item>
+   <item row="3" column="1">
+    <widget class="QToolButton" name="toolButton_add_tw">
+     <property name="text">
+      <string>+</string>
+     </property>
+    </widget>
+   </item>
    <item row="6" column="4">
     <widget class="QLineEdit" name="lineEdit_2">
      <property name="sizePolicy">
@@ -81,6 +88,9 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Microtime ranges for Ch0: use start:end or start-end; separate multiple ranges with ';' or ','; negative values allowed. New syntax: use ':' or '-' to separate start and end values, e.g. '1:16000' or '1-16000'. Range separators also support negatives, e.g. '-1:16000' or '-1-16000'.</string>
      </property>
      <property name="text">
       <string>1-16000</string>
@@ -157,6 +167,25 @@
      </property>
     </widget>
    </item>
+   <item row="8" column="0" colspan="5">
+    <widget class="QListWidget" name="listWidget_tw">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>80</height>
+      </size>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAsNeeded</enum>
+     </property>
+    </widget>
+   </item>
    <item row="4" column="0" colspan="5">
     <widget class="Line" name="line">
      <property name="orientation">
@@ -210,6 +239,9 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Microtime ranges for Ch1: use start:end or start-end; separate multiple ranges with ';' or ','; negative values allowed.</string>
      </property>
      <property name="text">
       <string>1-16000</string>
@@ -293,11 +325,11 @@
       <double>9999.000000000000000</double>
      </property>
      <property name="value">
-      <double>0.500000000000000</double>
+      <double>2.000000000000000</double>
      </property>
     </widget>
    </item>
-   <item row="8" column="0" colspan="5">
+   <item row="9" column="0" colspan="5">
     <layout class="QVBoxLayout" name="verticalLayout"/>
    </item>
    <item row="3" column="4">

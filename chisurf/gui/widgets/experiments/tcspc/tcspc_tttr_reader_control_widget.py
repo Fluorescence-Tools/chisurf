@@ -8,7 +8,7 @@ import numpy as np
 import pyqtgraph as pg
 
 import chisurf
-from chisurf.experiments import reader
+from chisurf.experiments.core import reader
 from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
 
 

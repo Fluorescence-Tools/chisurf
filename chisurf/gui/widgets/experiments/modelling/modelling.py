@@ -6,7 +6,7 @@ import chisurf.decorators
 import chisurf.experiments
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-from chisurf.experiments import reader
+from chisurf.experiments.core import reader
 from qtpy import QtWidgets
 
 

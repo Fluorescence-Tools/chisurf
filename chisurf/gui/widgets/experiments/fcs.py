@@ -6,7 +6,7 @@ from qtpy import QtWidgets
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fio
-from chisurf.experiments import reader
+from chisurf.experiments.core import reader
 
 
 class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
