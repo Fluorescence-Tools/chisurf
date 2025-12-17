@@ -326,7 +326,7 @@ class PTUSplitter(QtWidgets.QWidget):
                 mt, µt = chunk_tttr.macro_times, chunk_tttr.micro_times
                 rc, et = chunk_tttr.routing_channels, chunk_tttr.event_types
                 if self.reset_macro_times:
-                    mt0 = int(-1 * mt[0])
+                    mt0 = -int(mt[0]) if len(mt) else 0
                 else:
                     mt0 = 0
                 new_tttr = tttrlib.TTTR()
