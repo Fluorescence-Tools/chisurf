@@ -5,10 +5,10 @@ import chisurf.fio.fluorescence.fcs
 import chisurf.fluorescence.fcs
 import chisurf.data
 import chisurf.fio.fluorescence
-from . import reader
+from chisurf.experiments.core.reader import ExperimentReader
 
 
-class FCS(reader.ExperimentReader):
+class FCS(ExperimentReader):
     """Reader for fluorescence correlation spectroscopy (FCS) data.
 
     This reader wraps :func:`chisurf.fio.fluorescence.fcs.read_fcs` and

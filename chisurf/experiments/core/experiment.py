@@ -3,14 +3,15 @@ from chisurf import typing
 
 import chisurf.base
 import chisurf.models
-import chisurf.experiments.reader
+
+from chisurf.experiments.core.reader import ExperimentReader, ExperimentReaderController
 
 
 class Experiment(chisurf.base.Base):
     """Lightweight registry of models and readers for a ChiSurf experiment.
 
     An :class:`Experiment` keeps track of which model classes and
-    :class:`chisurf.experiments.reader.ExperimentReader` instances belong to
+    :class:`chisurf.experiments.core.reader.ExperimentReader` instances belong to
     a conceptual experiment type. Higher level GUIs use this information to
     decide which data can be loaded and which models are applicable.
 
@@ -18,7 +19,7 @@ class Experiment(chisurf.base.Base):
     ----------
     model_classes : list of type[chisurf.models.Model]
         Registered model classes associated with the experiment.
-    readers : list of chisurf.experiments.reader.ExperimentReader
+    readers : list of chisurf.experiments.core.reader.ExperimentReader
         Registered readers (possibly attached via controllers).
     hidden : bool
         If *True*, the experiment is hidden from interactive UIs.
@@ -27,7 +28,7 @@ class Experiment(chisurf.base.Base):
     --------
     Create a minimal experiment without models or readers:
 
-    >>> from chisurf.experiments.experiment import Experiment
+    >>> from chisurf.experiments.core.experiment import Experiment
     >>> exp = Experiment(name="Test")
     >>> exp.name
     'Test'
@@ -40,9 +41,7 @@ class Experiment(chisurf.base.Base):
     hidden: bool = False
 
     @property
-    def readers(self) -> typing.List[
-        chisurf.experiments.reader.ExperimentReader
-    ]:
+    def readers(self) -> typing.List[ExperimentReader]:
         return self.get_readers()
 
     @property
@@ -72,8 +71,8 @@ class Experiment(chisurf.base.Base):
 
     def add_reader(
             self,
-            reader: chisurf.experiments.reader.ExperimentReader,
-            controller: chisurf.experiments.reader.ExperimentReaderController = None
+            reader: ExperimentReader,
+            controller: ExperimentReaderController = None
     ):
         if reader not in self.readers:
             reader.controller = controller
@@ -83,8 +82,8 @@ class Experiment(chisurf.base.Base):
             self,
             readers: typing.List[
                 typing.Tuple[
-                    chisurf.experiments.reader.ExperimentReader,
-                    chisurf.experiments.reader.ExperimentReaderController
+                    ExperimentReader,
+                    ExperimentReaderController
                 ]
             ]
     ):
@@ -94,9 +93,7 @@ class Experiment(chisurf.base.Base):
                 controller
             )
 
-    def get_readers(self) -> typing.List[
-        chisurf.experiments.reader.ExperimentReader
-    ]:
+    def get_readers(self) -> typing.List[ExperimentReader]:
         """Return all :class:`ExperimentReader` instances for this experiment.
 
         Internally, ``_readers`` may hold either readers directly or
@@ -107,12 +104,12 @@ class Experiment(chisurf.base.Base):
         for v in self._readers:
             if isinstance(
                     v,
-                    chisurf.experiments.reader.ExperimentReader
+                    ExperimentReader
             ):
                 readers.append(v)
             elif isinstance(
                     v,
-                    chisurf.experiments.reader.ExperimentReaderController
+                    ExperimentReaderController
             ):
                 readers.append(v.experiment_reader)
         return readers

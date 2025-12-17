@@ -8,10 +8,10 @@ import numpy as np
 import tttrlib
 
 import chisurf.data
-from chisurf.experiments import reader
+from chisurf.experiments.core.reader import ExperimentReader
 
 
-class PCHReader(reader.ExperimentReader):
+class PCHReader(ExperimentReader):
     """Experiment reader for photon counting histograms (PCH).
 
     This reader turns TTTR containers (e.g. PTU/HT3) into a 1D P(k) dataset

@@ -15,7 +15,8 @@ from chisurf import typing
 import chisurf.base
 import chisurf.curve
 import chisurf.data
-import chisurf.experiments
+
+
 class ExperimentReader(chisurf.base.Base):
     """Abstract base class for loading experimental data.
 

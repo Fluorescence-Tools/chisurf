@@ -6,7 +6,7 @@ import numpy as np
 import tttrlib
 
 import chisurf.data
-from chisurf.experiments import reader
+from chisurf.experiments.core.reader import ExperimentReader
 from .data import RicsData, RicsSettings
 from .ics_core import compute_rics_from_images
 from .tttr_loader import load_clsm_from_tttr
@@ -21,7 +21,7 @@ except Exception:  # pragma: no cover - optional dependency
         imageio = None
 
 
-class RICSReader(reader.ExperimentReader):
+class RICSReader(ExperimentReader):
 
     name: str = "RICS (TTTR/ICS)"
 

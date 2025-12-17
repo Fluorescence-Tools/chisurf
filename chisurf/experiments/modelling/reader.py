@@ -8,11 +8,11 @@ import chisurf.base
 import chisurf.decorators
 import chisurf.fio
 import chisurf.structure
-from . import reader
+from chisurf.experiments.core.reader import ExperimentReader
 
 
 class StructureReader(
-    reader.ExperimentReader
+    ExperimentReader
 ):
 
     def __init__(

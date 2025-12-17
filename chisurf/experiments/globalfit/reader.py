@@ -1,9 +1,8 @@
 from __future__ import annotations
 from chisurf import typing
 
-import chisurf.experiments
 import chisurf.data
-from . reader import ExperimentReader
+from chisurf.experiments.core.reader import ExperimentReader
 
 
 class GlobalFitSetup(ExperimentReader):
