@@ -57,7 +57,6 @@ import chisurf.fio
 import chisurf.experiments
 import chisurf.macros
 
-import chisurf.gui.tools
 import chisurf.gui.widgets.settings_editor
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
@@ -91,13 +90,13 @@ class Main(QtWidgets.QMainWindow):
         The index of the experiment type currently selected in the UI out of
         the list all supported experiments. This corresponds to the index of
         the UI combo box used to select the experiment.
-    current_experiment : chisurf.experiments.Experiment
+    current_experiment : chisurf.experiments.core.Experiment
         The experiment currently selected in the GUI.
     current_setup_idx : int
         The index of the setup currently selected in the GUI.
     current_setup_name : str
         The name of the setup currently selected in the GUI.
-    current_setup : chisurf.experiments.reader.ExperimentReader
+    current_setup : chisurf.experiments.core.reader.ExperimentReader
         The current experiment setup / experiment reader selecetd in the GUI
     experiment_names : list
         A list containing the names of the experiments.
@@ -132,7 +131,7 @@ class Main(QtWidgets.QMainWindow):
         self.set_current_experiment_idx(v)
 
     @property
-    def current_experiment(self) -> chisurf.experiments.Experiment:
+    def current_experiment(self) -> chisurf.experiments.core.Experiment:
         return chisurf.experiment[self.comboBox_experimentSelect.currentText()]
 
     @current_experiment.setter
@@ -162,7 +161,7 @@ class Main(QtWidgets.QMainWindow):
         return self.current_setup.name
 
     @property
-    def current_setup(self) -> chisurf.experiments.reader.ExperimentReader:
+    def current_setup(self) -> chisurf.experiments.core.reader.ExperimentReader:
         readers = self.current_experiment.readers
         if not readers:
             raise IndexError("No experiment readers defined for the current experiment")
@@ -228,12 +227,12 @@ class Main(QtWidgets.QMainWindow):
     def current_experiment_reader(self):
         if isinstance(
             self.current_setup,
-            chisurf.experiments.reader.ExperimentReader
+            chisurf.experiments.core.reader.ExperimentReader
         ):
             return self.current_setup
         elif isinstance(
                 self.current_setup,
-                chisurf.experiments.reader.ExperimentReaderController
+                chisurf.experiments.core.reader.ExperimentReaderController
         ):
             return self.current_setup.experiment_reader
 
@@ -1499,7 +1498,7 @@ class Main(QtWidgets.QMainWindow):
 
         # Set up global dataset using configuration from YAML
         global_config = experiment_configs.get('global', {})
-        global_fit = chisurf.experiments.experiment.Experiment(
+        global_fit = chisurf.experiments.core.Experiment(
             name=global_config.get('name', 'Global'),
             hidden=global_config.get('hidden', True)
         )
@@ -2115,7 +2114,6 @@ class Main(QtWidgets.QMainWindow):
 
     def load_tools(self):
         import chisurf
-        import chisurf.gui.tools
 
 
         ##########################################################
