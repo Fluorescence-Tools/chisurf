@@ -543,6 +543,12 @@ QDockWidget {
     );
 }
 
+QDockWidget::title {
+    text-align: center;
+    spacing: 5px;
+    color: #ff9e28;
+}
+
 QDockWidget::close-button,
 QDockWidget::float-button {
     text-align: center;
@@ -566,7 +572,7 @@ QDockWidget::float-button:pressed {
     background-color: #aa3333;
 }
 
-QDockWidget::close-button {
+QDockWidget::title {
     font: bold;
     text-align: center;
     background: #2e2e2e; /* was #282828 */
@@ -707,4 +713,34 @@ QToolButton {
     background-color: #694545; /* was #593535 */
     border: 1px solid #000000;
     border-radius: 3px;
+}
+
+QDockWidget#dockWidgetReadData::title {
+    background: #3b4a67;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetDatasets::title {
+    background: #3b674a;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetAnalysis::title {
+    background: #674a3b;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetPlot::title {
+    background: #5c3b67;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetScriptEdit::title {
+    background: #67613b;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetHistory::title {
+    background: #3b6767;
+    color: #f0f0f0;
 }

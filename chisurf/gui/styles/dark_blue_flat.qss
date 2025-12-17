@@ -374,22 +374,19 @@ QCheckBox::indicator:checked:hover {
     background: #6a92d8;
 }
 
-QRadioButton::indicator:indeterminate,
-QCheckBox::indicator:indeterminate {
-    border: 1px solid #f57c00;
-    background: #f57c00;
-}
-
-QRadioButton::indicator:indeterminate:hover,
-QCheckBox::indicator:indeterminate:hover {
-    border: 1px solid #ffb74d;
-    background: #ff9800;
-}
-
 /* ===== Dock widgets ===== */
 
 QDockWidget {
     background-color: #3a3c3f;
+}
+
+QDockWidget::title {
+    font: bold 0.5em;
+    text-align: center;
+    spacing: 3px;
+    color: #ff9e28;
+    background: #2e2e2e;
+    padding: 2px 2px;
 }
 
 QDockWidget::close-button,
@@ -412,6 +409,38 @@ QDockWidget::float-button:hover {
 QDockWidget::close-button:pressed,
 QDockWidget::float-button:pressed {
     background-color: #aa3333;
+}
+
+/* Colored titles for specific docks, like before */
+
+QDockWidget#dockWidgetReadData::title {
+    background: #3b4a67;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetDatasets::title {
+    background: #3b674a;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetAnalysis::title {
+    background: #674a3b;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetPlot::title {
+    background: #5c3b67;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetScriptEdit::title {
+    background: #67613b;
+    color: #f0f0f0;
+}
+
+QDockWidget#dockWidgetHistory::title {
+    background: #3b6767;
+    color: #f0f0f0;
 }
 
 /* ===== Main window separators ===== */
@@ -534,4 +563,5 @@ QToolButton {
 QToolButton:hover {
     background-color: #855454;
 }
+
 /* Dock-specific titles already defined above */
