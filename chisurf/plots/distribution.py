@@ -5,7 +5,7 @@ import copy
 import numpy as np
 
 from chisurf.gui import QtWidgets
-from chisurf.gui.tools.parameter_editor import ParameterEditor
+from chisurf.gui.widgets.parameter_editor import ParameterEditor
 
 import chisurf.fitting
 import chisurf.fluorescence
