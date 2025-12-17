@@ -86,18 +86,15 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         self.append(1.0, 50.0, 6.0, 0.0)
 
     def onAddGaussian(self):
-        chisurf.run(
-            f"for f in cs.current_fit:\n"\
-            f"   f.model.{self.name}.append()\n"\
-            f"   f.model.update()"
-        )
+        # Add a new Gaussian distance component to all fits in the current
+        # fit group so that the FRET distance model stays structurally
+        # consistent across the group.
+        chisurf.run(f"chisurf.macros.model.add_component('{self.name}')")
 
     def onRemoveGaussian(self):
-        chisurf.run(
-            f"for f in cs.current_fit:\n"\
-            f"   f.model.{self.name}.pop()\n"\
-            f"   f.model.update()"
-        )
+        # Remove the last Gaussian distance component from all fits in the
+        # current fit group.
+        chisurf.run(f"chisurf.macros.model.remove_component('{self.name}')")
 
     def append(self, *args, **kwargs):
         super().append(50.0,6.0,1.0,)
