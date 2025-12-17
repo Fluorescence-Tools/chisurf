@@ -7,7 +7,6 @@ pg.setConfigOptions(
 
 import chisurf.plots.global_fit
 import chisurf.plots.global_tcspc
-import chisurf.plots.agent_fit
 from chisurf.plots.molview import *
 from chisurf.plots.distribution import DistributionPlot
 from chisurf.plots.fitinfo import *
@@ -19,3 +18,4 @@ from chisurf.plots.surfaceplot import SurfacePlot
 from chisurf.plots.wr_plot import ResidualPlot
 from chisurf.plots.table_plot import FitTablePlot
 from chisurf.plots.residual_image import Residual2DPlot
+
