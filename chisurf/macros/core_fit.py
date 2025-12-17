@@ -386,15 +386,68 @@ def save_fits(target_path: str, use_complex_name: bool = False):
 
 def close_fit(idx: int = None):
     cs = chisurf.cs
+
+    # Resolve index from current subwindow if not explicitly provided.
     if idx is None:
-        sub_window = cs.mdiarea.currentSubWindow()
-        for i, w in enumerate(chisurf.gui.fit_windows):
-            if w is sub_window:
-                idx = i
-    chisurf.fits.pop(idx)
-    sub_window = chisurf.gui.fit_windows.pop(idx)
-    sub_window.close()
-    cs.update()
+        sub_window = None
+        try:
+            mdi = getattr(cs, "mdiarea", None)
+            if mdi is not None:
+                sub_window = mdi.currentSubWindow()
+        except Exception:
+            sub_window = None
+
+        if sub_window is not None:
+            for i, w in enumerate(chisurf.gui.fit_windows):
+                if w is sub_window:
+                    idx = i
+                    break
+
+        # Fallback: try to resolve via cs.current_fit if available.
+        if idx is None:
+            current_fit = getattr(cs, "current_fit", None)
+            if current_fit is not None:
+                try:
+                    idx = chisurf.fits.index(current_fit)
+                except ValueError:
+                    idx = None
+
+    # If we still do not have a valid index, log and bail out gracefully.
+    try:
+        idx_int = int(idx) if idx is not None else None
+    except Exception:
+        idx_int = None
+
+    if idx_int is None:
+        chisurf.logging.warning("close_fit: no active fit to close (idx is None); ignoring request")
+        return
+
+    if idx_int < 0 or idx_int >= len(chisurf.fits) or idx_int >= len(chisurf.gui.fit_windows):
+        chisurf.logging.warning(f"close_fit: index {idx_int} out of range; ignoring request")
+        return
+
+    # Remove the fit object and its corresponding window.
+    try:
+        chisurf.fits.pop(idx_int)
+    except Exception as e:
+        chisurf.logging.warning(f"close_fit: failed to remove fit at index {idx_int}: {e}")
+
+    try:
+        sub_window = chisurf.gui.fit_windows.pop(idx_int)
+    except Exception as e:
+        chisurf.logging.warning(f"close_fit: failed to pop fit window at index {idx_int}: {e}")
+        sub_window = None
+
+    if sub_window is not None:
+        try:
+            sub_window.close()
+        except Exception:
+            pass
+
+    try:
+        cs.update()
+    except Exception:
+        pass
 
 
 def link_fit_group(
@@ -719,6 +772,30 @@ def load_project(project_path: str):
         log.error(f"load_project: failed to read project.json from {project_path}: {exc}")
         return
 
+    try:
+        reinit = getattr(cs, "reinitialize", None)
+        if callable(reinit):
+            reinit()
+        else:
+            try:
+                cs.onCloseAllFits()
+            except Exception:
+                pass
+            try:
+                chisurf.fits.clear()
+            except Exception:
+                pass
+            try:
+                chisurf.gui.fit_windows.clear()
+            except Exception:
+                pass
+            try:
+                chisurf.imported_datasets.clear()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
     # --- Restore experiment/setup state early so we can attach it to datasets
     ui_state = proj.ui_state or {}
 
@@ -738,15 +815,18 @@ def load_project(project_path: str):
     except Exception:
         pass
 
-    # Reset current fits and datasets
     try:
-        cs.onCloseAllFits()
+        chisurf.fits.clear()
     except Exception:
         pass
-
-    chisurf.fits = []
-    chisurf.gui.fit_windows = []
-    chisurf.imported_datasets = []
+    try:
+        chisurf.gui.fit_windows.clear()
+    except Exception:
+        pass
+    try:
+        chisurf.imported_datasets.clear()
+    except Exception:
+        pass
 
     # --- Reconstruct datasets ---------------------------------------------
     dataset_objects: typing.Dict[str, chisurf.data.DataCurve] = {}
@@ -794,6 +874,11 @@ def load_project(project_path: str):
         except Exception as exc:
             log.warning(f"load_project: could not reconstruct dataset {ds_id}: {exc}")
             continue
+
+    try:
+        cs.dataset_selector.update()
+    except Exception:
+        pass
 
     # --- Rebuild fit groups and restore their state -----------------------
     fits_map = proj.fits or {}
@@ -877,6 +962,11 @@ def load_project(project_path: str):
             cs.current_fit = chisurf.fits[current_fit_idx]
         except Exception:
             pass
+
+    try:
+        cs.fit_selector.update()
+    except Exception:
+        pass
 
     # Restore main-window and MDI geometry/state if present. This should be
     # done only after datasets and fits (and thus subwindows) have been
