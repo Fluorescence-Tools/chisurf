@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import chisurf
-from chisurf.gui import QtWidgets, QtCore, QtGui, uic
-import chisurf.gui.decorators
+from chisurf.gui import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 
 from chisurf.models.tcspc.pddem import PDDEM, PDDEMModel
@@ -22,12 +21,39 @@ from chisurf.models.tcspc.widgets import plot_cls_dist_default
 
 class PDDEMWidget(PDDEM, QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui("pddem.ui")
     def __init__(
             self,
             *args,
             **kwargs
     ):
+        PDDEM.__init__(self, *args, **kwargs)
+        parent = kwargs.get("parent")
+        if isinstance(parent, QtWidgets.QWidget):
+            QtWidgets.QWidget.__init__(self, parent)
+        else:
+            QtWidgets.QWidget.__init__(self)
+
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout_2.setSpacing(0)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
+
+        self.groupBox = QtWidgets.QGroupBox(self)
+        self.groupBox.setTitle("PDDEM")
+        self.gridLayout = QtWidgets.QGridLayout(self.groupBox)
+        self.gridLayout.setSpacing(0)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.gridLayout.addLayout(self.verticalLayout_3, 5, 1, 1, 1)
+
+        self.verticalLayout_2.addWidget(self.groupBox)
+
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.verticalLayout_2.addLayout(self.horizontalLayout)
+
+        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.addLayout(self.verticalLayout)
+
         layout = QtWidgets.QHBoxLayout()
         chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._fAB,
