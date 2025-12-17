@@ -203,4 +203,3 @@ global:
   models:
     - chisurf.models.global_model.GlobalFitModelWidget
     - chisurf.models.global_model.ParameterTransformWidget
-    - chisurf.models.global_model.AgentFitModelWidget
