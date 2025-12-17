@@ -20,6 +20,7 @@ import chisurf.fitting.support_plane
 import chisurf.models
 import chisurf.math.statistics
 import chisurf.math.optimization
+from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 
 
 def _raw_fit_name(f) -> str:
@@ -532,18 +533,26 @@ class Fit(chisurf.base.Base):
             parameter_type=chisurf.fitting.parameter.FittingParameter
         )
         progress_callback = kwargs.get("progress_callback")
-        chisurf.math.optimization.leastsqbound(
-            get_wres,
-            self.model.parameter_values,
-            args=(self.model,),
-            bounds=self.model.parameter_bounds,
-            progress_callback=progress_callback,
-            **fitting_options
-        )
+        cancelled = False
+        try:
+            chisurf.math.optimization.leastsqbound(
+                get_wres,
+                self.model.parameter_values,
+                args=(self.model,),
+                bounds=self.model.parameter_bounds,
+                progress_callback=progress_callback,
+                **fitting_options
+            )
+        except OptimizationCancelled:
+            cancelled = True
+        self._last_run_cancelled = cancelled
         self.update()
-        self.update_error_estimates()
-        self.results.append(self.model.__getstate__())
+        if not cancelled:
+            self.update_error_estimates()
+            self.results.append(self.model.__getstate__())
         self.model.finalize()
+        if cancelled:
+            raise OptimizationCancelled()
 
     def set_result_idx(self, idx: int):
         idx = np.clip(idx, 0, len(self.results) - 1)
@@ -816,26 +825,34 @@ class FitGroup(Fit):
         fit: FitGroup = self
         if local_first is None:
             local_first = chisurf.settings.optimization['global_optimize_local_first']
-        if local_first:
+        cancelled = False
+        try:
+            if local_first:
+                for f in fit:
+                    f.run(**kwargs)
             for f in fit:
-                f.run(**kwargs)
-        for f in fit:
-            f.model.find_parameters()
-        fit._model.find_parameters()
-        fitting_options = chisurf.settings.optimization['leastsq']
-        bounds = [pi.bounds for pi in fit._model.parameters]
-        progress_callback = kwargs.get("progress_callback")
-        chisurf.math.optimization.leastsqbound(
-            func=get_wres,
-            x0=fit._model.parameter_values,
-            args=(fit._model,),
-            bounds=bounds,
-            progress_callback=progress_callback,
-            **fitting_options
-        )
+                f.model.find_parameters()
+            fit._model.find_parameters()
+            fitting_options = chisurf.settings.optimization['leastsq']
+            bounds = [pi.bounds for pi in fit._model.parameters]
+            progress_callback = kwargs.get("progress_callback")
+            chisurf.math.optimization.leastsqbound(
+                func=get_wres,
+                x0=fit._model.parameter_values,
+                args=(fit._model,),
+                bounds=bounds,
+                progress_callback=progress_callback,
+                **fitting_options
+            )
+        except OptimizationCancelled:
+            cancelled = True
+        self._last_run_cancelled = cancelled
         self.update()
-        self.update_error_estimates()
-        self.results.append(self.model.__getstate__())
+        if not cancelled:
+            self.update_error_estimates()
+            self.results.append(self.model.__getstate__())
+        if cancelled:
+            raise OptimizationCancelled()
 
     def __init__(
             self,
