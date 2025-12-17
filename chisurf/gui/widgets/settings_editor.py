@@ -130,33 +130,6 @@ def _build_help_section_map_for_file(basename: str) -> dict[str, str]:
                     mapping[key] = top_flags
         return mapping
 
-    if basename == "agentfit_settings.yaml":
-        # Find the section that documents agentfit_settings.yaml
-        agent_heading: str | None = None
-        for h in headings:
-            if "`agentfit_settings.yaml`" in h:
-                agent_heading = h
-                break
-        if not agent_heading:
-            return {}
-
-        # Load the YAML to know which keys exist
-        from chisurf.settings.path_utils import get_path as _get_path
-
-        try:
-            src_dir = _get_path("chisurf") / "settings"
-            yml_path = src_dir / "agentfit_settings.yaml"
-            if not yml_path.is_file():
-                return {}
-            data = yaml.safe_load(yml_path.read_text(encoding="utf-8")) or {}
-            if not isinstance(data, dict):
-                return {}
-            for key in data.keys():
-                mapping[str(key)] = agent_heading
-        except Exception:
-            return {}
-        return mapping
-
     # Unknown YAML file: no mapping
     return {}
 
