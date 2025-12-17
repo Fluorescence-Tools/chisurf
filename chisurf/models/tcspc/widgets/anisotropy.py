@@ -205,26 +205,10 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             self.gb.show()
 
     def onAddRotation(self):
-        chisurf.run(
-            "\n".join(
-                [
-                    "for f in cs.current_fit:",
-                    "   f.model.anisotropy.add_rotation()",
-                    "cs.current_fit.update()"
-                ]
-            )
-        )
+        chisurf.run("chisurf.macros.model.add_component('anisotropy')")
 
     def onRemoveRotation(self):
-        chisurf.run(
-            "\n".join(
-                [
-                    "for f in cs.current_fit:",
-                    "   f.model.anisotropy.remove_rotation()",
-                    "cs.current_fit.update()"
-                ]
-            )
-        )
+        chisurf.run("chisurf.macros.model.remove_component('anisotropy')")
 
     def add_rotation(self, **kwargs):
         super().add_rotation(**kwargs)
@@ -253,3 +237,9 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         self._bs.pop()
         self._rho_widgets.pop().close()
         self._b_widgets.pop().close()
+
+    def append(self, *args, **kwargs):
+        self.add_rotation(*args, **kwargs)
+
+    def pop(self):
+        self.remove_rotation()
