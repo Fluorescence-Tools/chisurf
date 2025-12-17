@@ -145,8 +145,8 @@ class PQResReader:
         return "\n".join(lines)
 
 
-def read_pqres_fcs(filename: str, data_reader: chisurf.experiments.reader.ExperimentReader = None, 
-                  experiment: chisurf.experiments.experiment.Experiment = None, **kwargs) -> chisurf.data.DataCurveGroup:
+def read_pqres_fcs(filename: str, data_reader: chisurf.experiments.core.reader.ExperimentReader = None, 
+                  experiment: chisurf.experiments.core.experiment.Experiment = None, **kwargs) -> chisurf.data.DataCurveGroup:
     """
     Read a PicoQuant SymPhoTime .pqres FCS result file and return a DataCurveGroup.
 
@@ -154,9 +154,9 @@ def read_pqres_fcs(filename: str, data_reader: chisurf.experiments.reader.Experi
     ----------
     filename : str
         Path to the .pqres file
-    data_reader : chisurf.experiments.reader.ExperimentReader, optional
+    data_reader : chisurf.experiments.core.reader.ExperimentReader, optional
         Data reader to use for reading the file
-    experiment : chisurf.experiments.experiment.Experiment, optional
+    experiment : chisurf.experiments.core.experiment.Experiment, optional
         Experiment to associate with the data
     **kwargs
         Additional keyword arguments to pass to the DataCurve constructor
@@ -201,8 +201,8 @@ def read_pqres_fcs(filename: str, data_reader: chisurf.experiments.reader.Experi
     return curve_group
 
 
-def read_pqres_tcspc(filename: str, data_reader: chisurf.experiments.reader.ExperimentReader = None, 
-                    experiment: chisurf.experiments.experiment.Experiment = None, 
+def read_pqres_tcspc(filename: str, data_reader: chisurf.experiments.core.reader.ExperimentReader = None, 
+                    experiment: chisurf.experiments.core.experiment.Experiment = None, 
                     dt: float = 1.0, rebin: typing.Tuple[int, int] = (1, 1), **kwargs) -> chisurf.data.DataCurveGroup:
     """
     Read a PicoQuant SymPhoTime .pqres TCSPC result file and return a DataCurveGroup.
@@ -213,9 +213,9 @@ def read_pqres_tcspc(filename: str, data_reader: chisurf.experiments.reader.Expe
     ----------
     filename : str
         Path to the .pqres file
-    data_reader : chisurf.experiments.reader.ExperimentReader, optional
+    data_reader : chisurf.experiments.core.reader.ExperimentReader, optional
         Data reader to use for reading the file
-    experiment : chisurf.experiments.experiment.Experiment, optional
+    experiment : chisurf.experiments.core.experiment.Experiment, optional
         Experiment to associate with the data
     dt : float, optional
         Time resolution in nanoseconds, by default 1.0

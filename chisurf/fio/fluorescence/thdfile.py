@@ -95,7 +95,7 @@ def read_tcspc_thd(
         filename: str = None,
         dt: float = 1.0,
         rebin: typing.Tuple[int, int] = (1, 1),
-        experiment: chisurf.experiments.Experiment = None,
+        experiment: chisurf.experiments.core.Experiment = None,
         *args,
         **kwargs
 ) -> chisurf.data.DataCurveGroup:
@@ -109,7 +109,7 @@ def read_tcspc_thd(
         Time resolution in nanoseconds, by default 1.0
     rebin : tuple of int, optional
         Rebinning factors for x and y axes, by default (1, 1)
-    experiment : chisurf.experiments.Experiment, optional
+    experiment : chisurf.experiments.core.Experiment, optional
         Experiment object, by default None
     
     Returns

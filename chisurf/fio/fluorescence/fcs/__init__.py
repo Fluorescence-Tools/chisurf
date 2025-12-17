@@ -73,10 +73,10 @@ def make_curve_kwargs(
 
 def read_fcs(
         filename: str,
-        data_reader: chisurf.experiments.reader.ExperimentReader = None,
+        data_reader: chisurf.experiments.core.reader.ExperimentReader = None,
         reader_name: str = 'csv',
         verbose: bool = False,
-        experiment: chisurf.experiments.Experiment = None,
+        experiment: chisurf.experiments.core.experiment.Experiment = None,
         **kwargs
 ) -> chisurf.data.ExperimentDataCurveGroup:
     """

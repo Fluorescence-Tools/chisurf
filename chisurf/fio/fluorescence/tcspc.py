@@ -19,7 +19,7 @@ def read_tcspc_csv(
         is_jordi: bool = False,
         polarization: str = "vm",
         g_factor: float = 1.0,
-        experiment: chisurf.experiments.Experiment = None,
+        experiment: chisurf.experiments.core.Experiment = None,
         *args,
         **kwargs
 ) -> chisurf.data.DataCurveGroup:
