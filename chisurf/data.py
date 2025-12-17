@@ -10,7 +10,11 @@ import chisurf.base
 import chisurf.curve
 import chisurf.fio
 import chisurf.fio.ascii
-import chisurf.experiments
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from chisurf.experiments.core.experiment import Experiment
+    from chisurf.experiments.core.reader import ExperimentReader
 
 
 class ExperimentalData(chisurf.base.Data):
@@ -22,16 +26,17 @@ class ExperimentalData(chisurf.base.Data):
     """
 
     meta_data: typing.Dict = None
-    data_reader: chisurf.experiments.reader.ExperimentReader = None
-    _experiment: chisurf.experiments.experiment.Experiment = None
+    data_reader: "ExperimentReader" = None
+    _experiment: "Experiment" = None
 
     @property
-    def experiment(self) -> chisurf.experiments.experiment.Experiment:
+    def experiment(self) -> "Experiment":
         if self._experiment is None:
-            if isinstance(
-                self.data_reader,
-                chisurf.experiments.reader.ExperimentReader
-            ):
+            try:
+                from chisurf.experiments.core.reader import ExperimentReader
+            except Exception:
+                ExperimentReader = None
+            if ExperimentReader is not None and isinstance(self.data_reader, ExperimentReader):
                 return self.data_reader.experiment
         else:
             return self._experiment
@@ -39,7 +44,7 @@ class ExperimentalData(chisurf.base.Data):
     @experiment.setter
     def experiment(
             self,
-            v: chisurf.experiments.experiment.Experiment
+            v: "Experiment"
     ) -> None:
         self._experiment = v
 
@@ -49,12 +54,13 @@ class ExperimentalData(chisurf.base.Data):
 
     def __init__(
             self,
-            data_reader: chisurf.experiments.reader.ExperimentReader = None,
-            experiment: chisurf.experiments.experiment.Experiment = None,
+            data_reader: "ExperimentReader" = None,
+            experiment: "Experiment" = None,
             filename: str = "None",
             data: bytes = None,
             embed_data: bool = None,
             read_file_size_limit: int = None,
+
             name: object = None,
             verbose: bool = False,
             unique_identifier: str = None,
@@ -160,8 +166,8 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             ey: np.ndarray = None,
             copy_array: bool = True,
             filename: str = '',
-            data_reader: chisurf.experiments.reader.ExperimentReader = None,
-            experiment: chisurf.experiments.experiment.Experiment = None,
+            data_reader: "ExperimentReader" = None,
+            experiment: "Experiment" = None,
             load_filename_on_init: bool = True,
             *args,
             **kwargs
