@@ -14,11 +14,10 @@ The histogram generator is useful for time-resolved fluorescence spectroscopy an
 lifetime analysis.
 """
 import sys
-from chisurf.gui.tools.tttr.histogram import HistogramTTTR
+from chisurf.plugins.tttr.tttr_histogram.gui import HistogramTTTR
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "TTTR:Generate Decay"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
