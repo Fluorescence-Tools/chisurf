@@ -75,7 +75,7 @@ gui:
   fit_windows_size:
   - 350
   - 350
-  fit_progress_close_delay_ms: 500
+  fit_progress_close_delay_ms: 200
   plot:
     colors:
       active_transparency: 1
@@ -110,6 +110,7 @@ gui:
     "History / Log": "#3b6767"
   show_console: true
   show_macro_edit: true
+  qt_style: auto
   style_sheet: dark_blue_flat.qss
   mol_viewer: pymol  # 3D molecule viewer backend: pymol (default) or chimol
   start_jupyter_on_startup: false
@@ -238,6 +239,7 @@ plugins:
   - Single-Molecule:Burst MLE Lifetime Analysis
   - Tools:ndXplorer
   - Tools:Screenshot
+  - Miscellaneous:F-Test
   updater:
     ignore_updates_on_startup: false
     check_on_startup: true
