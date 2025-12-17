@@ -31,7 +31,7 @@ imported_datasets: typing.List["chisurf.data.DataGroup"] = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
 cs = object         # The current instance of ChiSurf
 console = object
-experiment: typing.Dict[str, "chisurf.experiments.experiment.Experiment"] = dict()
+experiment: typing.Dict[str, "chisurf.experiments.core.experiment.Experiment"] = dict()
 working_path = pathlib.Path().home()
 verbose = False  # Updated lazily when settings are loaded
 
