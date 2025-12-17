@@ -12,7 +12,7 @@ import chisurf.fitting
 import chisurf.gui
 import chisurf.gui.widgets
 
-from chisurf import typing
+from chisurf import typing, logging
 
 
 def group_datasets(dataset_indices: typing.List[int]) -> None:
@@ -66,12 +66,22 @@ def remove_datasets(dataset_indices: typing.List[int]) -> None:
 
 
 def add_dataset(
-        experiment_reader: chisurf.experiments.reader.ExperimentReader = None,
+        experiment_reader: chisurf.experiments.core.reader.ExperimentReader = None,
         dataset: chisurf.base.Data = None,
         **kwargs
 ) -> None:
     try:
         cs = getattr(chisurf, 'cs', None)
+
+        # High-level entry trace for PDA crash localization
+        try:
+            logging.info(
+                "PDA TRACE: core_data.add_dataset called (experiment_reader=%s, has_dataset=%s)",
+                getattr(experiment_reader, 'name', type(experiment_reader).__name__) if experiment_reader is not None else None,
+                dataset is not None,
+            )
+        except Exception:
+            pass
 
         filename = kwargs.get('filename', None)
         primary_filename = None
@@ -90,6 +100,15 @@ def add_dataset(
             primary_filename = str(filename)
         kwargs['filename'] = filename
 
+        try:
+            logging.info(
+                "PDA TRACE: core_data.add_dataset normalized filename=%r (primary=%r)",
+                filename,
+                primary_filename,
+            )
+        except Exception:
+            pass
+
         if experiment_reader is None:
             try:
                 experiment_reader = getattr(cs, 'current_experiment_reader')
@@ -99,12 +118,39 @@ def add_dataset(
         if experiment_reader is None and primary_filename:
             experiment_reader = _auto_reader_from_filename(primary_filename)
 
+        try:
+            logging.info(
+                "PDA TRACE: core_data.add_dataset using experiment_reader=%s",
+                getattr(experiment_reader, 'name', type(experiment_reader).__name__) if experiment_reader is not None else None,
+            )
+        except Exception:
+            pass
+
         # Obtain dataset if not provided
         if dataset is None and experiment_reader is not None:
+            try:
+                logging.info(
+                    "PDA TRACE: core_data.add_dataset calling experiment_reader.get_data(...)",
+                )
+            except Exception:
+                pass
             dataset = experiment_reader.get_data(**kwargs)
+            try:
+                logging.info(
+                    "PDA TRACE: core_data.add_dataset get_data returned object of type %s",
+                    type(dataset).__name__,
+                )
+            except Exception:
+                pass
 
         # If nothing was read, inform the user and exit safely
         if dataset is None:
+            try:
+                logging.info(
+                    "PDA TRACE: core_data.add_dataset received no dataset (dataset is None); showing error message box.",
+                )
+            except Exception:
+                pass
             chisurf.gui.widgets.msg_box = chisurf.gui.widgets.MyMessageBox(
                 label="Error",
                 info="No data could be read. Check reading settings and file.",
@@ -137,8 +183,23 @@ def add_dataset(
             # Single ExperimentalData object
             dataset_group = chisurf.data.ExperimentDataCurveGroup([dataset])
 
+        try:
+            logging.info(
+                "PDA TRACE: core_data.add_dataset normalized to dataset_group (is_experiment_group=%s, len=%d)",
+                is_experiment_group,
+                len(dataset_group),
+            )
+        except Exception:
+            pass
+
         # Guard against empty groups which would break the UI (d[0])
         if len(dataset_group) == 0:
+            try:
+                logging.info(
+                    "PDA TRACE: core_data.add_dataset found empty dataset_group; showing error message box.",
+                )
+            except Exception:
+                pass
             chisurf.gui.widgets.msg_box = chisurf.gui.widgets.MyMessageBox(
                 label="Error",
                 info="No data entries found in the selected file using the current reader.",
@@ -149,6 +210,16 @@ def add_dataset(
         # Append valid data. Preserve ExperimentDataGroup objects even when
         # they currently hold a single entry so the GUI can still treat them
         # as experiment datasets (e.g. structure modelling results).
+        try:
+            logging.info(
+                "PDA TRACE: core_data.add_dataset appending dataset_group (is_experiment_group=%s, len=%d, imported_before=%d)",
+                is_experiment_group,
+                len(dataset_group),
+                len(getattr(chisurf, 'imported_datasets', [])),
+            )
+        except Exception:
+            pass
+
         if is_experiment_group:
             chisurf.imported_datasets.append(dataset_group)
         elif len(dataset_group) == 1:
@@ -157,7 +228,19 @@ def add_dataset(
             chisurf.imported_datasets.append(dataset_group)
 
         # Update UI only after successful append
+        try:
+            logging.info(
+                "PDA TRACE: core_data.add_dataset calling run_on_gui_thread(cs.update); imported_after=%d",
+                len(getattr(chisurf, 'imported_datasets', [])),
+            )
+        except Exception:
+            pass
         chisurf.gui.run_on_gui_thread(cs.update)
+
+        try:
+            logging.info("PDA TRACE: core_data.add_dataset finished successfully")
+        except Exception:
+            pass
 
     except Exception as e:
         # Capture the full error trace
