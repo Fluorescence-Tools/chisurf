@@ -15,11 +15,10 @@ correlation spectroscopy (FCS) and related techniques.
 """
 
 import sys
-from chisurf.gui.tools.tttr.correlate import CorrelateTTTR
+from chisurf.plugins.tttr.tttr_correlate.gui import CorrelateTTTR
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "TTTR:Correlate"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
