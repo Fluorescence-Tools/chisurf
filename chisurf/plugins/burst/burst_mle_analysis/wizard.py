@@ -21,7 +21,7 @@ import chisurf
 import chisurf.gui.decorators
 import chisurf.settings
 import chisurf.gui.widgets.wizard
-from chisurf.gui.widgets.wizard.tttr_channel_definition import \
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import \
     load_detector_setups, save_detector_setups
 
 from pathlib import Path

@@ -17,7 +17,7 @@ import chisurf.fluorescence.burst as cs_burst
 
 # Import from chisurf if available, otherwise handle standalone usage
 try:  # pragma: no cover - convenience import
-    from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+    from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 except Exception:  # pragma: no cover - standalone / minimal environment
 
     def load_detector_setups(file_path: str) -> Dict[str, Any]:

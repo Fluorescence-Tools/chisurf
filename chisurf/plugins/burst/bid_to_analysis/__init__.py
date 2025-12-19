@@ -49,7 +49,7 @@ from chisurf.fio.fluorescence.burst import (
 from chisurf.fluorescence.burst.utils import create_array_with_ones
 # Detector setup wizard page for defining detectors/windows like the Trace Browser
 try:
-    from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage, DetectorWizard  # type: ignore
+    from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage, DetectorWizard  # type: ignore
 except Exception:
     DetectorWizardPage = None  # type: ignore
     DetectorWizard = None # type: ignore

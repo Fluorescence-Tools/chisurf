@@ -31,7 +31,7 @@ import pyqtgraph as pg
 from chisurf.gui import QtWidgets, QtCore
 from chisurf.models.fcs.maxent import fcs_maxent
 from chisurf.gui.widgets.wizard.tttr_correlator import WizardTTTRCorrelator
-from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 from chisurf.settings.path_utils import get_path as _get_settings_path
 from chisurf import settings as _cs_settings
 from .file_list import BurstFileListWidget

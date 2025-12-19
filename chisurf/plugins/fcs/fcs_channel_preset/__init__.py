@@ -40,7 +40,7 @@ from typing import Any, Dict, List
 from qtpy import QtWidgets, QtCore
 
 from chisurf.settings import cs_settings
-from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups, JsonEditorDialog
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups, JsonEditorDialog
 from chisurf.fluorescence.fcs.channel_setups import (
     FCS_CHANNEL_SETUPS_FILE,
     load_fcs_channel_setups,

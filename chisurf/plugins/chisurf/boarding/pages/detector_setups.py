@@ -47,7 +47,7 @@ class DetectorSetupsPage(QtWidgets.QWizardPage):
 
     def _open_detector_wizard(self):
         try:
-            from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizard
+            from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizard
             wiz = DetectorWizard()
             wiz.exec_()
         except Exception as e:
