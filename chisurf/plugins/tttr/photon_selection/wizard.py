@@ -1,12 +1,11 @@
 import sys
-from chisurf.gui import QtWidgets, QtGui, QtCore
+from chisurf.gui import QtWidgets
 
 import chisurf.gui
 import chisurf.gui.widgets.wizard
 import chisurf.gui.widgets
 import chisurf.gui.decorators
-import chisurf.gui.tools
-import chisurf.gui.tools.parameter_editor
+import chisurf.gui.widgets.parameter_editor
 
 import chisurf.data
 import chisurf.experiments
