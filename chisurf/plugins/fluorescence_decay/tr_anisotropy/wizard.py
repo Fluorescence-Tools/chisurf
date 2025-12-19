@@ -6,15 +6,14 @@ import typing
 import numpy as np
 import shutil
 
-from chisurf.gui import QtWidgets, QtGui, QtCore
+from chisurf.gui import QtWidgets
 from chisurf import logging
 
 import chisurf.gui
 import chisurf.gui.widgets
 import chisurf.gui.decorators
-import chisurf.gui.tools
 import chisurf.plugins
-import chisurf.gui.tools.parameter_editor
+import chisurf.gui.widgets.parameter_editor
 
 import chisurf.data
 import chisurf.experiments
@@ -710,7 +709,7 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         fn = chisurf.settings.chisurf_settings_path / "anisotropy_corrections.json"
         logging.info(f"anisotropy_corrections: {fn}")
-        self.conf_edit = chisurf.gui.tools.parameter_editor.ParameterEditor(
+        self.conf_edit = chisurf.gui.widgets.parameter_editor.ParameterEditor(
             target=self.correction_factors,
             json_file=fn
         )
