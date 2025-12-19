@@ -17,11 +17,10 @@ molecular dynamics simulations.
 """
 
 import sys
-from chisurf.gui.tools.structure.fret_trajectory.gui import Structure2Transfer
+from chisurf.plugins.traj.fret_trajectory.gui import Structure2Transfer
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:FRET from Trajectory"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
