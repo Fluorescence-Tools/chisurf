@@ -63,6 +63,31 @@ class PDDEM(FittingParameterGroup):
         return np.array([self.pmA, self.pmB], dtype=np.float64)
 
     @property
+    def alpha_A(self):
+        return self._alpha_A.value
+
+    @property
+    def alpha_B(self):
+        return self._alpha_B.value
+
+    def update(self):
+        denom = float(self._pmA.value) + float(self._pmB.value)
+        if denom > 0.0 and np.isfinite(denom):
+            alpha_a = float(self._pmA.value) / denom
+            alpha_b = float(self._pmB.value) / denom
+        else:
+            alpha_a = float('nan')
+            alpha_b = float('nan')
+        try:
+            self._alpha_A.value = alpha_a
+        except Exception:
+            pass
+        try:
+            self._alpha_B.value = alpha_b
+        except Exception:
+            pass
+
+    @property
     def pureA(self):
         """
         :return: float
@@ -124,6 +149,23 @@ class PDDEM(FittingParameterGroup):
 
         self._pmA = FittingParameter(value=0.02, name='mA', model=self.model, decimals=2, fixed=True)
         self._pmB = FittingParameter(value=0.98, name='mB', model=self.model, decimals=2, fixed=True)
+
+        self._alpha_A = FittingParameter(
+            value=float('nan'),
+            name='alpha_A',
+            model=self.model,
+            fixed=True,
+            is_output=True
+        )
+        self._alpha_B = FittingParameter(
+            value=float('nan'),
+            name='alpha_B',
+            model=self.model,
+            fixed=True,
+            is_output=True
+        )
+
+        self.update()
 
 
 class PDDEMModel(FRETModel):
