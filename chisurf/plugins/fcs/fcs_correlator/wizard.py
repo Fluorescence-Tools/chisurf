@@ -1,6 +1,6 @@
 import sys
 import pathlib
-from typing import List, Dict, Tuple, Optional
+from typing import List, Optional
 import typing
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
@@ -9,8 +9,7 @@ import chisurf
 import chisurf.gui
 import chisurf.gui.widgets.wizard
 import chisurf.gui.widgets
-import chisurf.gui.tools
-import chisurf.gui.tools.parameter_editor
+import chisurf.gui.widgets.parameter_editor
 
 import chisurf.data
 import chisurf.experiments
