@@ -5,6 +5,7 @@ import re
 import os
 import tempfile
 import io as python_io
+import importlib
 from chisurf import typing
 
 import yaml
@@ -25,8 +26,6 @@ import chisurf.gui.decorators
 import chisurf.models
 import chisurf.settings
 import chisurf.gui.widgets
-import chisurf.gui.tools
-
 
 class EquationDialog(QtWidgets.QDialog):
     """A dialog that displays a formatted equation."""
@@ -134,8 +133,23 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         except Exception:
             pass
 
-        self.editor = chisurf.gui.tools.code_editor.CodeEditor(None, language='yaml', can_load=False)
-        self.editor.hide()
+        self.editor = None
+        self._code_editor_available = False
+        try:
+            _code_editor_module = importlib.import_module("chisurf.plugins.misc.code_editor")
+            _CodeEditor = getattr(_code_editor_module, "CodeEditor", None)
+            if _CodeEditor is not None:
+                self.editor = _CodeEditor(None, language='yaml', can_load=False)
+                self.editor.hide()
+                self._code_editor_available = True
+        except Exception:
+            pass
+
+        try:
+            self.actionEdit_model_file.setVisible(self._code_editor_available)
+            self.actionEdit_model_file.setEnabled(self._code_editor_available)
+        except Exception:
+            pass
 
         # Initialize textEdit with description and equation
         func = self.models[self.model_name]['equation']
@@ -188,6 +202,8 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.load_model_file(filename)
 
     def onEdit_model_file(self):
+        if self.editor is None:
+            return
         self.editor.load_file(self._model_file)
         self.editor.show()
 
