@@ -14,11 +14,10 @@ multiple segments or for combining related simulations into a single dataset.
 """
 
 import sys
-from chisurf.gui.tools.structure.join_trajectories import JoinTrajectoriesWidget
+from chisurf.plugins.traj.traj_join.widget import JoinTrajectoriesWidget
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Join Trajectories"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

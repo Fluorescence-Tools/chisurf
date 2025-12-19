@@ -15,11 +15,10 @@ to interpret coordinate data correctly.
 """
 
 import sys
-from chisurf.gui.tools.structure.save_topology import SaveTopology
+from chisurf.plugins.traj.traj_save_topology.widget import SaveTopology
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Save Topology"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

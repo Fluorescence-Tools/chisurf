@@ -13,11 +13,10 @@ The converter is essential for working with trajectories from different
 simulation packages or for preparing data for specific analysis tools.
 """
 import sys
-from chisurf.gui.tools.structure.convert_trajectory import MDConverter
+from chisurf.plugins.traj.traj_convert.widget import MDConverter
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Trajectory Converter"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

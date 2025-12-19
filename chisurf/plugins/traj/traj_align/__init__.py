@@ -17,11 +17,10 @@ calculating order parameters, and comparing different simulations.
 """
 
 import sys
-from chisurf.gui.tools.structure.align_trajectory import AlignTrajectoryWidget
+from chisurf.plugins.traj.traj_align.widget import AlignTrajectoryWidget
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Trajectory Alignment"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

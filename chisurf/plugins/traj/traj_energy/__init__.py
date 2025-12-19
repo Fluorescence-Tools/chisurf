@@ -14,7 +14,7 @@ identifying potential issues in molecular models or simulation parameters.
 """
 
 import sys
-from chisurf.gui.tools.structure.potential_energy import PotentialEnergyWidget
+from chisurf.plugins.traj.potential_energy.widget import PotentialEnergyWidget
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Trajectory Energy Calculator"

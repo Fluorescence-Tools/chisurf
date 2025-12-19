@@ -15,11 +15,10 @@ molecular structures and identifying strained or unfavorable conformations.
 """
 
 import sys
-from chisurf.gui.tools.structure.potential_energy import PotentialEnergyWidget
+from chisurf.plugins.traj.potential_energy.widget import PotentialEnergyWidget
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Potential Energy Calculator"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

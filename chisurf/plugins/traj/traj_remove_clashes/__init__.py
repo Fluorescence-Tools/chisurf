@@ -15,11 +15,10 @@ trajectories from enhanced sampling methods.
 """
 
 import sys
-from chisurf.gui.tools.structure.remove_clashed_frames import RemoveClashedFrames
+from chisurf.plugins.traj.traj_remove_clashes.widget import RemoveClashedFrames
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:Remove Clashed Frames"
-
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
