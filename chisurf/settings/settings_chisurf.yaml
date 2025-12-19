@@ -38,7 +38,7 @@ fret:
   forster_radius: 52
   kappa2: 0.667
   lifetime_bins: 101
-  orientation_mode: slow_isotropic
+  orientation_mode: fast
   rda_max: 130
   rda_min: 1
   rda_resolution: 96
