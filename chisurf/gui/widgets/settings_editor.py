@@ -1104,7 +1104,10 @@ class SettingsEditor(QtWidgets.QWidget):
             import importlib
             import pathlib as _pl
 
-            help_plugin = importlib.import_module("chisurf.plugins.help")
+            try:
+                help_plugin = importlib.import_module("chisurf.plugins.chisurf.help")
+            except Exception:
+                help_plugin = importlib.import_module("chisurf.plugins.help")
 
             # Reuse a singleton window attached to the chisurf module
             window = getattr(chisurf, "_settings_help_window", None)
