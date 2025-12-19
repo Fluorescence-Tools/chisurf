@@ -5,7 +5,6 @@ import chisurf.gui
 import chisurf.gui.widgets.wizard
 import chisurf.gui.widgets
 import chisurf.gui.decorators
-import chisurf.gui.tools
 
 import chisurf.data
 import chisurf.experiments
