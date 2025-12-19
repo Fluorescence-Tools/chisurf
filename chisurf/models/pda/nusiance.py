@@ -132,6 +132,24 @@ class PdaFretNuisance(FittingParameterGroup):
     def QYA(self, v: float):
         self._QYA.value = v
 
+    # --- Detector efficiencies per channel (green/red) -------------------
+
+    @property
+    def gG(self) -> float:
+        return self._gG.value
+
+    @gG.setter
+    def gG(self, v: float):
+        self._gG.value = v
+
+    @property
+    def gR(self) -> float:
+        return self._gR.value
+
+    @gR.setter
+    def gR(self, v: float):
+        self._gR.value = v
+
     # --- Excitation probabilities (absolute, user-supplied) --------------
 
     @property
@@ -150,39 +168,77 @@ class PdaFretNuisance(FittingParameterGroup):
     def ExAG(self, v: float):
         self._ExAG.value = v
 
-    # --- Emission / detection crosstalk matrix ---------------------------
+    # --- Emission / detection crosstalk matrix (c_{channel|species}) ----
 
     @property
-    def gGD(self) -> float:
-        return self._gGD.value
+    def cGD(self) -> float:
+        return self._cGD.value
 
-    @gGD.setter
-    def gGD(self, v: float):
-        self._gGD.value = v
-
-    @property
-    def gGA(self) -> float:
-        return self._gGA.value
-
-    @gGA.setter
-    def gGA(self, v: float):
-        self._gGA.value = v
+    @cGD.setter
+    def cGD(self, v: float):
+        self._cGD.value = v
 
     @property
-    def gRD(self) -> float:
-        return self._gRD.value
+    def cGA(self) -> float:
+        return self._cGA.value
 
-    @gRD.setter
-    def gRD(self, v: float):
-        self._gRD.value = v
+    @cGA.setter
+    def cGA(self, v: float):
+        self._cGA.value = v
 
     @property
-    def gRA(self) -> float:
-        return self._gRA.value
+    def cRD(self) -> float:
+        return self._cRD.value
 
-    @gRA.setter
-    def gRA(self, v: float):
-        self._gRA.value = v
+    @cRD.setter
+    def cRD(self, v: float):
+        self._cRD.value = v
+
+    @property
+    def cRA(self) -> float:
+        return self._cRA.value
+
+    @cRA.setter
+    def cRA(self, v: float):
+        self._cRA.value = v
+
+    # --- Derived legacy-style crosstalk parameters (read-only) -----------
+
+    @property
+    def alpha(self) -> float:
+        """Donor bleed-through fraction into the red channel.
+
+        Defined for a donor-only sample as the fraction of donor photons
+        detected in the red channel,
+
+            alpha = R_D0 / (G_D0 + R_D0)
+
+        with G_D0 and R_D0 computed from gG/gR and cGD/cRD. The value is
+        populated by PDA models that use this nuisance group and is not
+        varied during fitting.
+        """
+        try:
+            return float(self._alpha.value)
+        except Exception:
+            return float("nan")
+
+    @property
+    def alpha_A(self) -> float:
+        """Acceptor bleed-through fraction into the green channel.
+
+        Defined for an acceptor-only sample as the fraction of acceptor
+        photons detected in the green channel,
+
+            alpha_A = G_A0 / (G_A0 + R_A0)
+
+        with G_A0 and R_A0 computed from gG/gR and cGA/cRA. The value is
+        populated by PDA models that use this nuisance group and is not
+        varied during fitting.
+        """
+        try:
+            return float(self._alpha_A.value)
+        except Exception:
+            return float("nan")
 
     @property
     def nPh_min(self) -> float:
@@ -226,6 +282,17 @@ class PdaFretNuisance(FittingParameterGroup):
             name='QYA',
             fixed=True
         )
+        # Per-channel detector efficiencies (green/red).
+        self._gG = FittingParameter(
+            value=1.0,
+            name='gG',
+            fixed=True,
+        )
+        self._gR = FittingParameter(
+            value=1.0,
+            name='gR',
+            fixed=True,
+        )
         # Absolute excitation probabilities (e.g. extinction coefficients at
         # the donor excitation wavelength). By default they are zero so that
         # legacy alpha/gamma-based behaviour is preserved until explicitly
@@ -243,25 +310,40 @@ class PdaFretNuisance(FittingParameterGroup):
         # Full emission / detection crosstalk matrix elements. These default
         # to zero so that existing projects using alpha/gamma are unaffected
         # unless the user explicitly supplies matrix entries.
-        self._gGD = FittingParameter(
+        self._cGD = FittingParameter(
             value=1.0,
-            name='gGD',
+            name='cGD',
             fixed=True,
         )
-        self._gGA = FittingParameter(
+        self._cGA = FittingParameter(
             value=0.0,
-            name='gGA',
+            name='cGA',
             fixed=True,
         )
-        self._gRD = FittingParameter(
+        self._cRD = FittingParameter(
             value=0.02,
-            name='gRD',
+            name='cRD',
             fixed=True,
         )
-        self._gRA = FittingParameter(
+        self._cRA = FittingParameter(
             value=1.0,
-            name='gRA',
+            name='cRA',
             fixed=True,
+        )
+        # Derived legacy-style crosstalk parameters. These are populated by
+        # PDA models that use this nuisance group and are shown as fixed,
+        # read-only parameters (analogous to CPM in FCS widgets).
+        self._alpha = FittingParameter(
+            value=float("nan"),
+            name='alpha',
+            fixed=True,
+            is_output=True,
+        )
+        self._alpha_A = FittingParameter(
+            value=float("nan"),
+            name='alpha_A',
+            fixed=True,
+            is_output=True,
         )
         # Photon-number range for PDA scoring (nPh_min, nPh_max).
         # Defaults are taken from the attached dataset's PDA metadata if
