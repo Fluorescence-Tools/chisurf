@@ -238,25 +238,69 @@ class PdaGaussianDistanceModel(ModelCurve):
         QYA = n.QYA
 
         # Excitation / emission description via absolute excitation
-        # probabilities and a full 2x2 emission/detection matrix g_{channel|species}.
+        # probabilities, per-channel detector efficiencies gG/gR and a
+        # full 2x2 emission/detection crosstalk matrix c_{channel|species}.
         ExDG = getattr(n, "ExDG", 0.0)
         ExAG = getattr(n, "ExAG", 0.0)
-        gGD = getattr(n, "gGD", 0.0)
-        gGA = getattr(n, "gGA", 0.0)
-        gRD = getattr(n, "gRD", 0.0)
-        gRA = getattr(n, "gRA", 0.0)
+        gG = getattr(n, "gG", 1.0)
+        gR = getattr(n, "gR", 1.0)
+        cGD = getattr(n, "cGD", 0.0)
+        cGA = getattr(n, "cGA", 0.0)
+        cRD = getattr(n, "cRD", 0.0)
+        cRA = getattr(n, "cRA", 0.0)
 
         eps = 1e-12
         E_safe = np.clip(E, eps, 1.0 - eps)
 
         ExDG_val = float(ExDG)
         ExAG_val = float(ExAG)
-        gGD_val = float(gGD)
-        gGA_val = float(gGA)
-        gRD_val = float(gRD)
-        gRA_val = float(gRA)
+        gG_val = float(gG)
+        gR_val = float(gR)
+        cGD_val = float(cGD)
+        cGA_val = float(cGA)
+        cRD_val = float(cRD)
+        cRA_val = float(cRA)
         QYD_val = float(QYD)
         QYA_val = float(QYA)
+
+        # Derived legacy-style crosstalk parameters (alpha-style), expressed
+        # as fractions in [0, 1]. These are analogous to the old PDA "alpha"
+        # parameters but computed from the more general detector-efficiency
+        # and crosstalk description. They are stored on the nuisance group as
+        # fixed, read-only FittingParameters, similar to CPM in FCS widgets.
+        try:
+            # Donor bleed-through into red for a donor-only sample:
+            #   alpha = R_D0 / (G_D0 + R_D0)
+            # with G_D0 ∝ gG * cGD and R_D0 ∝ gR * cRD.
+            num_d = gR_val * cRD_val
+            den_d = gG_val * cGD_val + num_d
+            if den_d > 0.0 and np.isfinite(den_d):
+                alpha_d = num_d / den_d
+            else:
+                alpha_d = float("nan")
+
+            # Acceptor bleed-through into green for an acceptor-only sample:
+            #   alpha_A = G_A0 / (G_A0 + R_A0)
+            # with G_A0 ∝ gG * cGA and R_A0 ∝ gR * cRA.
+            num_a = gG_val * cGA_val
+            den_a = gR_val * cRA_val + num_a
+            if den_a > 0.0 and np.isfinite(den_a):
+                alpha_a = num_a / den_a
+            else:
+                alpha_a = float("nan")
+
+            try:
+                n._alpha.value = alpha_d
+                n._alpha.fixed = True
+            except Exception:
+                pass
+            try:
+                n._alpha_A.value = alpha_a
+                n._alpha_A.fixed = True
+            except Exception:
+                pass
+        except Exception:
+            pass
 
         # DA species: donor excitation weight ExDG·(1-E), acceptor excitation
         # weight ExDG·E + ExAG (direct acceptor excitation). Quantum yields
@@ -266,8 +310,10 @@ class PdaGaussianDistanceModel(ModelCurve):
         S_DQ = QYD_val * S_D
         S_AQ = QYA_val * S_A
 
-        G_DA = gGD_val * S_DQ + gGA_val * S_AQ
-        R_DA = gRD_val * S_DQ + gRA_val * S_AQ
+        # Per-channel detection: green/red efficiencies gG/gR combined with
+        # crosstalk coefficients c_{channel|species}.
+        G_DA = gG_val * (cGD_val * S_DQ + cGA_val * S_AQ)
+        R_DA = gR_val * (cRD_val * S_DQ + cRA_val * S_AQ)
         denom = G_DA + R_DA
         with np.errstate(divide="ignore", invalid="ignore"):
             p_G_bound = np.where(denom > 0.0, G_DA / denom, 0.5)
@@ -275,8 +321,8 @@ class PdaGaussianDistanceModel(ModelCurve):
         # Donor-only species: only donor emission contributes, scaled by QYD.
         S_D0 = ExDG_val
         S_D0Q = QYD_val * S_D0
-        G_D0 = gGD_val * S_D0Q
-        R_D0 = gRD_val * S_D0Q
+        G_D0 = gG_val * (cGD_val * S_D0Q)
+        R_D0 = gR_val * (cRD_val * S_D0Q)
         denom0 = G_D0 + R_D0
         if denom0 > 0.0:
             p_ch1_d0 = float(G_D0 / denom0)
@@ -371,6 +417,96 @@ class PdaGaussianDistanceModel(ModelCurve):
             pass
         return wres
 
+    def _get_cached_photon_number_mask(
+        self,
+        fit: "chisurf.fitting.fit.Fit",
+    ) -> np.ndarray | None:
+        """Return a cached photon-number mask for 2D PDA residuals.
+
+        The mask encodes the nPh_min/nPh_max gating derived from the
+        nuisance group and PDA metadata. It is computed once per
+        dataset/gating combination and reused across residual
+        evaluations, since these parameters usually do not change
+        during a fit.
+        """
+        try:
+            data = getattr(fit, "data", None)
+            pda_meta = getattr(data, "pda", None)
+            if not isinstance(pda_meta, dict):
+                return None
+
+            row_indices = np.asarray(pda_meta.get("row_indices"), dtype=np.int64)
+            col_indices = np.asarray(pda_meta.get("col_indices"), dtype=np.int64)
+            if not row_indices.size or not col_indices.size:
+                return None
+
+            pda_nmin = int(pda_meta.get("minimum_number_of_photons", 0) or 0)
+            pda_nmax = int(pda_meta.get("maximum_number_of_photons", 0) or 0)
+
+            # Fallback if dataset does not specify an upper bound.
+            if pda_nmax <= 0:
+                N_full = row_indices + col_indices
+                pda_nmax = int(N_full.max()) if N_full.size > 0 else 0
+
+            try:
+                nmin_param = int(round(float(self.nuisance.nPh_min)))
+            except Exception:
+                nmin_param = 0
+            try:
+                nmax_param = int(round(float(self.nuisance.nPh_max)))
+            except Exception:
+                nmax_param = 0
+
+            if nmin_param == 0 and nmax_param == 0:
+                # Gating disabled: no photon-number mask needed.
+                try:
+                    self._cached_n_mask = None
+                    self._cached_n_mask_meta = None
+                except Exception:
+                    pass
+                return None
+
+            nmin = nmin_param if nmin_param > 0 else pda_nmin
+            nmax = nmax_param if nmax_param > 0 else pda_nmax
+            if nmax < nmin:
+                try:
+                    self._cached_n_mask = None
+                    self._cached_n_mask_meta = None
+                except Exception:
+                    pass
+                return None
+
+            key = (
+                id(pda_meta),
+                int(row_indices.size),
+                int(col_indices.size),
+                int(nmin),
+                int(nmax),
+            )
+
+            try:
+                cached_key = getattr(self, "_cached_n_mask_meta", None)
+                cached_mask = getattr(self, "_cached_n_mask", None)
+            except Exception:
+                cached_key = None
+                cached_mask = None
+
+            if cached_mask is not None and cached_key == key:
+                return cached_mask
+
+            N_full = row_indices + col_indices
+            mask_full = (N_full >= nmin) & (N_full <= nmax)
+
+            try:
+                self._cached_n_mask = mask_full
+                self._cached_n_mask_meta = key
+            except Exception:
+                pass
+
+            return mask_full
+        except Exception:
+            return None
+
     def get_wres(
         self,
         fit: "chisurf.fitting.fit.Fit",
@@ -398,44 +534,23 @@ class PdaGaussianDistanceModel(ModelCurve):
 
         masked = wres
 
-        # Apply photon-number mask based on nuisance parameters, if available
+        # Apply photon-number mask based on nuisance parameters, if available.
+        # The underlying full-length mask is cached per dataset/gating
+        # combination so it does not need to be recomputed on every residual
+        # evaluation.
         try:
-            pda_meta = getattr(fit.data, "pda", None)
-            if isinstance(pda_meta, dict):
-                row_indices = np.asarray(pda_meta.get("row_indices"), dtype=np.int64)
-                col_indices = np.asarray(pda_meta.get("col_indices"), dtype=np.int64)
-                if row_indices.size and col_indices.size:
-                    n_points = masked.size
-                    start = int(max(0, xmin))
-                    stop = int(min(start + n_points, row_indices.size))
-                    if stop > start:
-                        N = row_indices[start:stop] + col_indices[start:stop]
-
-                        # Dataset defaults
-                        pda_nmin = int(pda_meta.get("minimum_number_of_photons", 0) or 0)
-                        pda_nmax = int(pda_meta.get("maximum_number_of_photons", 0) or 0)
-                        if pda_nmax <= 0:
-                            pda_nmax = int(N.max()) if N.size > 0 else 0
-
-                        # Nuisance overrides (0 => use dataset default)
-                        try:
-                            nmin_param = int(round(float(self.nuisance.nPh_min)))
-                        except Exception:
-                            nmin_param = 0
-                        try:
-                            nmax_param = int(round(float(self.nuisance.nPh_max)))
-                        except Exception:
-                            nmax_param = 0
-
-                        if nmin_param != 0 or nmax_param != 0:
-                            nmin = nmin_param if nmin_param > 0 else pda_nmin
-                            nmax = nmax_param if nmax_param > 0 else pda_nmax
-                            if nmax >= nmin:
-                                mask = (N >= nmin) & (N <= nmax)
-                                mlen = min(mask.size, masked.size)
-                                if mlen > 0:
-                                    masked = np.array(masked, copy=True)
-                                    masked[:mlen][~mask[:mlen]] = 0.0
+            mask_full = self._get_cached_photon_number_mask(fit)
+            if mask_full is not None:
+                n_points = masked.size
+                start = int(max(0, xmin))
+                stop = int(min(start + n_points, mask_full.size))
+                if stop > start:
+                    slice_mask = mask_full[start:stop]
+                    mlen = min(slice_mask.size, masked.size)
+                    if mlen > 0:
+                        out = np.array(masked, copy=True)
+                        out[:mlen][~slice_mask[:mlen]] = 0.0
+                        masked = out
         except Exception:
             pass
 
