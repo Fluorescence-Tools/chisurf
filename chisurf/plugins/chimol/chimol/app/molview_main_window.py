@@ -229,6 +229,28 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.button_info.toggled.connect(self.on_toggle_info_panel)
         self.button_display_cfg.clicked.connect(self.on_open_display_config)
 
+        # Synchronize initial color-mode toggles with the viewer's default.
+        try:
+            mode = getattr(self.viewer, "_color_mode", "single") or "single"
+        except Exception:
+            mode = "single"
+        try:
+            self.button_color.blockSignals(True)
+            self.button_color_ss.blockSignals(True)
+            self.button_color_sequence.blockSignals(True)
+            self.button_color.setChecked(mode == "by_residue")
+            self.button_color_ss.setChecked(mode == "by_secondary_structure")
+            self.button_color_sequence.setChecked(mode == "by_sequence")
+        except Exception:
+            pass
+        finally:
+            try:
+                self.button_color.blockSignals(False)
+                self.button_color_ss.blockSignals(False)
+                self.button_color_sequence.blockSignals(False)
+            except Exception:
+                pass
+
         # Update system-info text when sequence selection changes.
         self.seq_list.itemSelectionChanged.connect(self.on_sequence_selection_changed)
 
