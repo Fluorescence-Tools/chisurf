@@ -17,7 +17,7 @@ and accessible volume simulations.
 """
 
 import sys
-from chisurf.gui.tools.structure.create_av_json.label_structure import LabelStructure
+from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Structure:FPS JSON Editor"
