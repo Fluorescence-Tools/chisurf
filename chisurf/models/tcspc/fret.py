@@ -143,9 +143,10 @@ class OrientationParameter(FittingParameterGroup):
 
     @property
     def orientation_spectrum(self):
-        if self.mode == 'fast_isotropic':
+        mode = str(self.mode).strip().lower()
+        if mode == 'fast':
             return self._k2_fast_iso
-        elif self.mode == 'slow_isotropic':
+        elif mode == 'slow':
             return self._k2_slow_iso
         return self._k2_fast_iso
 
@@ -154,14 +155,14 @@ class OrientationParameter(FittingParameterGroup):
         """Set the orientation-factor spectrum used for static averaging.
 
         Expects an interleaved (amplitude, k2, amplitude, k2, ...) 1D array or
-        sequence. This is primarily used in "slow_isotropic" mode, where
+        sequence. This is primarily used in "slow" mode, where
         ``FRETModel.fret_rate_spectrum`` consumes the full distribution via
         ``distribution2rates``.
         """
         arr = np.asarray(v, dtype=float).ravel()
         if arr.size < 2 or arr.size % 2 != 0:
             raise ValueError("orientation_spectrum must be an interleaved (amp, k2, ...) array")
-        # Store into the slow-isotropic spectrum; fast-isotropic uses scalar kappa2
+        # Store into the slow spectrum; fast uses scalar kappa2
         self._k2_slow_iso = arr
 
     @property
@@ -170,15 +171,33 @@ class OrientationParameter(FittingParameterGroup):
 
     @mode.setter
     def mode(self, v):
-        self._mode = v
+        if v is None:
+            self._mode = 'fast'
+            return
+        s = str(v).strip().lower()
+        s = {
+            'slow_isotropic': 'slow',
+            'slow_iso': 'slow',
+            'static': 'slow',
+            'static_isotropic': 'slow',
+            'fast_isotropic': 'fast',
+            'fast_iso': 'fast',
+            'dynamic': 'fast',
+            'dynamic_isotropic': 'fast',
+        }.get(s, s)
+        if s in {'fast', 'slow'}:
+            self._mode = s
+            return
+        raise ValueError(f"Invalid orientation mode {v!r}. Expected 'fast' or 'slow'.")
 
     def __init__(self, *args, **kwargs):
-        self._mode = kwargs.get('orientation_mode', 'fast_isotropic')
+        # Route through the property setter so aliases are normalized.
+        self.mode = kwargs.get('orientation_mode', 'fast')
 
-        # fast isotropic
+        # fast
         self._k2_fast_iso = [1., 0.666]
 
-        # slow isotropic
+        # slow
         k2s = np.linspace(0.01, 4, 50)
         pk2 = kapp2.p_isotropic_orientation_factor(
             k2s
@@ -451,8 +470,8 @@ class FRETModel(LifetimeModel):
         tauD0 = self.fret_parameters.tauD0
         kappa2_scalar = self.fret_parameters.kappa2
         forster_radius = self.fret_parameters.forster_radius
-        orientation_mode = getattr(self.orientation_parameter, "mode", "fast_isotropic")
-        if orientation_mode == "slow_isotropic":
+        orientation_mode = getattr(self.orientation_parameter, "mode", "fast")
+        if orientation_mode == "slow":
             kappa2s = self.orientation_parameter.orientation_spectrum
         else:
             kappa2s = kappa2_scalar

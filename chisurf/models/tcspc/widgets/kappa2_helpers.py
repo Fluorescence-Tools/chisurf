@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 
-from chisurf.gui import QtWidgets
+from chisurf.gui import QtWidgets, QtCore
 
 try:
     import pyqtgraph as pg
@@ -29,6 +29,8 @@ def setup_kappa2_controls(
     mode_layout.addWidget(dyn_radio)
     mode_layout.addWidget(stat_radio)
 
+    mode_layout.addStretch(1)
+
     show_btn = QtWidgets.QToolButton()
     show_btn.setText("show κ²")
     mode_layout.addWidget(show_btn)
@@ -45,8 +47,8 @@ def setup_kappa2_controls(
     group.setExclusive(True)
 
     orientation_param = getattr(owner, "orientation_parameter", None)
-    current_mode = getattr(orientation_param, "mode", "fast_isotropic") if orientation_param is not None else "fast_isotropic"
-    if current_mode == "slow_isotropic":
+    current_mode = getattr(orientation_param, "mode", "fast") if orientation_param is not None else "fast"
+    if current_mode == "slow":
         stat_radio.setChecked(True)
     else:
         dyn_radio.setChecked(True)
@@ -55,7 +57,7 @@ def setup_kappa2_controls(
         op = getattr(owner, "orientation_parameter", None)
         if op is None:
             return
-        op.mode = "slow_isotropic" if stat_radio.isChecked() else "fast_isotropic"
+        op.mode = "slow" if stat_radio.isChecked() else "fast"
         try:
             owner.update()
         except Exception:
@@ -94,11 +96,11 @@ def _extract_kappa2_pairs(orientation_parameter, fret_parameters):
     pairs = []
 
     if orientation_parameter is not None:
-        mode = getattr(orientation_parameter, "mode", "fast_isotropic")
+        mode = getattr(orientation_parameter, "mode", "fast")
     else:
-        mode = getattr(fret_parameters, "mode", "fast_isotropic") if fret_parameters is not None else "fast_isotropic"
+        mode = getattr(fret_parameters, "mode", "fast") if fret_parameters is not None else "fast"
 
-    if mode == "slow_isotropic" and orientation_parameter is not None:
+    if mode == "slow" and orientation_parameter is not None:
         spec = getattr(orientation_parameter, "orientation_spectrum", None)
         if spec is not None:
             arr = np.asarray(spec, dtype=float).ravel()
@@ -125,8 +127,8 @@ def show_kappa2_distribution_plot(
 ) -> None:
     """Show a simple dialog with the current orientation factor distribution.
 
-    This works both for the static distribution (slow_isotropic) and for the
-    dynamic scalar case (fast_isotropic, shown as a single spike at k2).
+    This works both for the static distribution (slow) and for the
+    dynamic scalar case (fast, shown as a single spike at k2).
     """
     if pg is None:
         QtWidgets.QMessageBox.warning(
@@ -138,7 +140,20 @@ def show_kappa2_distribution_plot(
 
     pairs, mode = _extract_kappa2_pairs(orientation_parameter, fret_parameters)
 
-    if not pairs:
+    static_pairs = []
+    if orientation_parameter is not None:
+        spec = getattr(orientation_parameter, "_k2_slow_iso", None)
+        if spec is None:
+            spec = getattr(orientation_parameter, "orientation_spectrum", None)
+        if spec is not None:
+            arr = np.asarray(spec, dtype=float).ravel()
+            if arr.size >= 2 and arr.size % 2 == 0:
+                static_pairs = list(zip(arr[0::2], arr[1::2]))
+
+    if not static_pairs:
+        static_pairs = list(pairs)
+
+    if not static_pairs:
         QtWidgets.QMessageBox.information(
             parent,
             "Orientation factor distribution",
@@ -146,29 +161,88 @@ def show_kappa2_distribution_plot(
         )
         return
 
+    try:
+        dynamic_k2 = float(getattr(fret_parameters, "kappa2", 0.666)) if fret_parameters is not None else 0.666
+    except Exception:
+        dynamic_k2 = 0.666
+
+    amps = np.asarray([a for (a, _) in static_pairs], dtype=float)
+    k2_vals = np.asarray([k for (_, k) in static_pairs], dtype=float)
+    finite = np.isfinite(amps) & np.isfinite(k2_vals)
+    amps = amps[finite]
+    k2_vals = k2_vals[finite]
+    if amps.size == 0:
+        QtWidgets.QMessageBox.information(
+            parent,
+            "Orientation factor distribution",
+            "No valid orientation factor distribution is available.",
+        )
+        return
+
+    total = float(np.sum(amps))
+    if total > 0:
+        amps = amps / total
+    static_mean = float(np.sum(amps * k2_vals))
+
     dialog = QtWidgets.QDialog(parent)
     dialog.setWindowTitle("Orientation factor distribution (k2)")
     layout = QtWidgets.QVBoxLayout(dialog)
 
-    info_label = QtWidgets.QLabel(f"Current orientation mode: {mode.replace('_', ' ')}")
+    mode_label = "slow" if mode == "slow" else "fast"
+    info_label = QtWidgets.QLabel(
+        f"Current orientation mode: {mode_label} | "
+        f"dynamic k2={dynamic_k2:.3f} | static avg={static_mean:.3f}"
+    )
     layout.addWidget(info_label)
 
     # Sort by k2 value to have a nice monotonic x-axis
-    pairs_sorted = sorted(pairs, key=lambda p: p[1])
-    k2_vals = [k2 for (_, k2) in pairs_sorted]
-    weights = [amp for (amp, _) in pairs_sorted]
+    order = np.argsort(k2_vals)
+    k2_vals_sorted = k2_vals[order]
+    weights_sorted = amps[order]
 
     plot_widget = pg.PlotWidget(dialog)
     plot_widget.showGrid(x=True, y=True, alpha=0.3)
     plot_widget.setLabel("bottom", "k2")
     plot_widget.setLabel("left", "Weight")
+    plot_widget.addLegend()
     plot_widget.plot(
-        k2_vals,
-        weights,
+        k2_vals_sorted,
+        weights_sorted,
         pen=pg.mkPen(width=2),
         symbol="o",
         symbolSize=6,
+        name="static distribution",
     )
+
+    y_max = float(np.max(weights_sorted)) if weights_sorted.size else 1.0
+    y_line = y_max * 1.05
+    plot_widget.plot(
+        [dynamic_k2, dynamic_k2],
+        [0.0, y_line],
+        pen=pg.mkPen(color=(80, 160, 255), width=2),
+        name="dynamic (k2)",
+    )
+    plot_widget.plot(
+        [static_mean, static_mean],
+        [0.0, y_line],
+        pen=pg.mkPen(color=(255, 160, 80), width=2, style=QtCore.Qt.DashLine),
+        name="static avg",
+    )
+
+    try:
+        dyn_label = pg.TextItem("dynamic", color=(80, 160, 255), anchor=(0.5, 1.0))
+        dyn_label.setPos(dynamic_k2, y_line)
+        plot_widget.addItem(dyn_label)
+    except Exception:
+        pass
+
+    try:
+        stat_label = pg.TextItem("static avg", color=(255, 160, 80), anchor=(0.5, 1.0))
+        stat_label.setPos(static_mean, y_line)
+        plot_widget.addItem(stat_label)
+    except Exception:
+        pass
+
     layout.addWidget(plot_widget)
 
     button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
@@ -185,8 +259,8 @@ def open_experimental_k2_dialog(
 ) -> None:
     """Open the Kappa2Dist plugin dialog and apply its distribution to a FRET model.
 
-    Dynamic mode (fast_isotropic): use mean k2 from the distribution as scalar kappa2.
-    Static mode (slow_isotropic): use full k2 distribution as orientation spectrum.
+    Fast mode: use mean k2 from the distribution as scalar kappa2.
+    Slow mode: use full k2 distribution as orientation spectrum.
     """
     try:
         from chisurf.plugins.kappa2_dist import Kappa2Dist
@@ -306,8 +380,8 @@ def open_experimental_k2_dialog(
         except Exception:
             # Only warn if static averaging is actually requested; in dynamic
             # mode the scalar kappa2 is sufficient and will still be updated.
-            orientation_mode = getattr(orientation_param, "mode", "fast_isotropic")
-            if orientation_mode == "slow_isotropic":
+            orientation_mode = getattr(orientation_param, "mode", "fast")
+            if orientation_mode == "slow":
                 QtWidgets.QMessageBox.warning(
                     parent,
                     "Experimental k2",

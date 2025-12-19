@@ -17,6 +17,7 @@ from chisurf.models.tcspc.widgets.lifetime import LifetimeWidget
 
 # Import plot_cls_dist_default from the original module
 from chisurf.models.tcspc.widgets import plot_cls_dist_default
+from chisurf.models.tcspc.widgets import kappa2_helpers
 
 
 class PDDEMWidget(PDDEM, QtWidgets.QWidget):
@@ -104,6 +105,19 @@ class PDDEMWidget(PDDEM, QtWidgets.QWidget):
         )
         self.verticalLayout_3.addLayout(layout)
 
+        layout = QtWidgets.QHBoxLayout()
+        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._alpha_B,
+            layout=layout,
+            label_text='&alpha;<sub>A&rarr;B</sub>'
+        )
+        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+            fitting_parameter=self._alpha_A,
+            layout=layout,
+            label_text='&alpha;<sub>B&rarr;A</sub>'
+        )
+        self.verticalLayout_3.addLayout(layout)
+
 
 class PDDEMModelWidget(ModelWidget, PDDEMModel):
 
@@ -169,11 +183,11 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
         self.layout.addWidget(self.fa)
         self.layout.addWidget(self.fb)
 
-        self.layout.addWidget(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
-                self.fret_parameters
-            )
+        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+            self.fret_parameters
         )
+        self.layout.addWidget(self._fret_parameters_widget)
+        kappa2_helpers.setup_kappa2_controls(self, self.layout)
 
         self.layout.addWidget(self.gaussians)
         self.layout.addWidget(self.anisotropy)
