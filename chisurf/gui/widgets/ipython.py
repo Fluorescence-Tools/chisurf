@@ -21,6 +21,7 @@ class QIPythonWidget(
 ):
 
     codeRequested = QtCore.Signal(str)
+    logRequested = QtCore.Signal(str)
 
     def start_recording(self):
         self._macro = ""
@@ -98,6 +99,11 @@ class QIPythonWidget(
         except Exception:
             pass
 
+        try:
+            self.logRequested.connect(self._log_from_signal)
+        except Exception:
+            pass
+
         # save nevertheless every input into a session file
         self.session_file = chisurf.settings.session_file
         self.set_default_style(chisurf.settings.gui['console_style'])
@@ -121,6 +127,38 @@ class QIPythonWidget(
         """Internal slot to execute code; runs on this widget's thread."""
         try:
             self.execute(code)
+        except Exception:
+            pass
+
+    def _log_code(self, code: str) -> None:
+        try:
+            code_str = str(code)
+        except Exception:
+            return
+        if not code_str:
+            return
+        if not code_str.endswith("\n"):
+            code_str += "\n"
+        try:
+            with open(self.session_file, 'a+', encoding='utf-8', errors='ignore') as fp:
+                fp.write(code_str)
+        except Exception:
+            pass
+        try:
+            if self.recording:
+                self._macro += code_str
+        except Exception:
+            pass
+        try:
+            if isinstance(self.history_widget, QtWidgets.QPlainTextEdit):
+                self.history_widget.insertPlainText(code_str)
+        except Exception:
+            pass
+
+    @QtCore.Slot(str)
+    def _log_from_signal(self, code: str) -> None:
+        try:
+            self._log_code(code)
         except Exception:
             pass
 
@@ -160,3 +198,36 @@ class QIPythonWidget(
             return self.execute(code_str)
         except Exception:
             return None
+
+    def log_on_gui_thread(self, code: str = None):
+        if code is None:
+            return None
+        try:
+            code_str = str(code)
+        except Exception:
+            return None
+        if not code_str:
+            return None
+
+        try:
+            if QtCore.QThread.currentThread() is self.thread():
+                self._log_code(code_str)
+                return None
+        except Exception:
+            try:
+                self._log_code(code_str)
+                return None
+            except Exception:
+                return None
+
+        try:
+            self.logRequested.emit(code_str)
+            return None
+        except Exception:
+            pass
+
+        try:
+            self._log_code(code_str)
+        except Exception:
+            pass
+        return None
