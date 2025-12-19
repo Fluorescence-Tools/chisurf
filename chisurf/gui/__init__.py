@@ -966,7 +966,7 @@ def setup_gui(
         if _ignore_updates or not _check_on_startup:
             chisurf.logging.info("Startup update prompt suppressed by user settings.")
         else:
-            from chisurf.plugins.updater import updater as _updater_mod
+            from chisurf.plugins.chisurf.updater import updater as _updater_mod
 
             def _startup_update_check():
                 update_available, latest_version, error = _updater_mod.check_for_updates()
@@ -976,7 +976,7 @@ def setup_gui(
                     chisurf.logging.info(f"Update available: {latest_version}")
                     # Prompt user to open the updater
                     try:
-                        from chisurf.plugins.updater import build_installed_vs_latest_changelog as _build_changes
+                        from chisurf.plugins.chisurf.updater import build_installed_vs_latest_changelog as _build_changes
                         try:
                             _installed_ver, _changes = _build_changes(str(latest_version))
                         except Exception:
@@ -1177,7 +1177,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         # After checking for updates, display version comparison on the splash
         if stage == "check_updates":
             try:
-                from chisurf.plugins.updater import updater as _updater_mod
+                from chisurf.plugins.chisurf.updater import updater as _updater_mod
                 from chisurf import info as _info
                 import time as _time
                 cur = getattr(_info, "__version__", "?")
@@ -1270,7 +1270,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
             pass
 
         try:
-            from chisurf.plugins._dev.init_chisurf import wizard as _wiz
+            from chisurf.plugins.chisurf.boarding import wizard as _wiz
             _wiz.show_onboarding(parent=window)
         except Exception as e:
             try:

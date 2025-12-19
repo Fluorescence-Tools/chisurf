@@ -843,7 +843,10 @@ class Main(QtWidgets.QMainWindow):
         import importlib
         import pathlib
         try:
-            help_plugin = importlib.import_module("chisurf.plugins.help")
+            try:
+                help_plugin = importlib.import_module("chisurf.plugins.chisurf.help")
+            except Exception:
+                help_plugin = importlib.import_module("chisurf.plugins.help")
             window = getattr(self, "_help_window", None)
             if window is None or not isinstance(window, help_plugin.HelpWidget):
                 window = help_plugin.HelpWidget()
@@ -1193,6 +1196,10 @@ class Main(QtWidgets.QMainWindow):
         chisurf.console.pushVariables({'QtGui': QtGui})
         chisurf.console.set_default_style('linux')
         chisurf.run = chisurf.console.execute_on_gui_thread
+        try:
+            chisurf.log = chisurf.console.log_on_gui_thread
+        except Exception:
+            pass
         chisurf.run(str(chisurf.settings.gui['console_init']))
 
     def _setup_experiment(self, exp_type, config):
@@ -2032,9 +2039,6 @@ class Main(QtWidgets.QMainWindow):
         self.actionCascade.triggered.connect(self.onCascadeWindows)
         self.mdiarea.subWindowActivated.connect(self.subWindowActivated)
         self.dockWidgetPlot.visibilityChanged.connect(self.onDockWidgetPlotVisibilityChanged)
-        self.actionAbout.triggered.connect(self.onOpenAbout)
-        self.actionHelp_2.triggered.connect(self.onOpenHelp)
-        self.actionUpdate.triggered.connect(self.onOpenUpdate)
 
         ##########################################################
         #      Record and run recorded macros                    #
