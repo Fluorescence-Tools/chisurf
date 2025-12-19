@@ -16,7 +16,7 @@ import chisurf.data
 import chisurf.fitting
 import chisurf.decorators
 from chisurf.experiments.core import reader
-from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 from .rics import RICSController
 from .pch import PCHController
 from .fcs import FCSController

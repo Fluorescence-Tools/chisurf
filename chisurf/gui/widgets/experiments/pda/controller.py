@@ -12,7 +12,7 @@ from chisurf.experiments.pda import PdaReader
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 
 # Reuse the setups loader from the DetectorWizard
-from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 
 _TTTR_INDEX_CACHE = {}
 
