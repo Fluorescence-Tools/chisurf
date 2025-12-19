@@ -607,16 +607,8 @@ def setup_gui(
             return name, description
 
     def populate_plugins():
-        # Find the Help menu to insert the Plugins menu before it
-        help_menu = None
-        for action in window.menuBar.actions():
-            if action.text() == 'Help':
-                help_menu = action
-                break
-
-        # Insert the Plugins menu before the Help menu
         plugin_menu = QtWidgets.QMenu('Plugins', window)
-        window.menuBar.insertMenu(help_menu, plugin_menu)
+        window.menuBar.addMenu(plugin_menu)
 
         # Store the plugin menu in a global variable so it can be accessed by populate_notebooks
         global plugin_menu_action
@@ -854,13 +846,6 @@ def setup_gui(
         )
 
     def populate_notebooks():
-        # Find the Help menu to insert the Notebooks menu before it
-        help_menu = None
-        for action in window.menuBar.actions():
-            if action.text() == 'Help':
-                help_menu = action
-                break
-
         # Create the Notebooks menu
         notebook_menu = QtWidgets.QMenu('Notebooks', window)
 
@@ -875,7 +860,10 @@ def setup_gui(
                 found_plugins = True
 
         # Insert the Notebooks menu after the Plugins menu
-        window.menuBar.insertMenu(next_action, notebook_menu)
+        if next_action is None:
+            window.menuBar.addMenu(notebook_menu)
+        else:
+            window.menuBar.insertMenu(next_action, notebook_menu)
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
@@ -1135,6 +1123,11 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         pass
     app.processEvents()
 
+    try:
+        chisurf.__startup_in_progress__ = True
+    except Exception:
+        pass
+
     # Update progress as the setup progresses
     try:
         _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
@@ -1208,9 +1201,12 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
             except Exception as e:
                 chisurf.logging.debug(f"Failed to update splash with version info: {e}")
 
-    # If startup was interrupted for updater, do not show the main window
     try:
         if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+            try:
+                chisurf.__startup_in_progress__ = False
+            except Exception:
+                pass
             splash.hide()
             return window
     except Exception:
@@ -1219,6 +1215,75 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     window.show()
     splash.hide()
     splash.finish(window)
+
+    try:
+        chisurf.__startup_in_progress__ = False
+    except Exception:
+        pass
+
+    def _should_open_onboarding() -> bool:
+        try:
+            if getattr(chisurf, "__startup_onboarding_shown__", False):
+                return False
+        except Exception:
+            pass
+
+        try:
+            if getattr(chisurf, "__pending_startup_onboarding__", False):
+                return True
+        except Exception:
+            pass
+
+        try:
+            from chisurf.settings import path_utils as _pu
+            existed_before = getattr(_pu, "USER_SETTINGS_EXISTED_BEFORE", True)
+            if existed_before is False:
+                return True
+        except Exception:
+            pass
+
+        try:
+            import json
+            settings_dir = chisurf.settings.get_path('settings')
+            det_file = settings_dir / 'detector_setups.json'
+            if not det_file.exists():
+                return True
+            with open(det_file, 'r', encoding='utf-8') as fh:
+                data = json.load(fh) or {}
+            setups = data.get('setups', {}) if isinstance(data, dict) else {}
+            if not isinstance(setups, dict) or len(setups) == 0:
+                return True
+        except Exception:
+            return True
+
+        return False
+
+    def _open_onboarding() -> None:
+        try:
+            if getattr(chisurf, "__startup_onboarding_shown__", False):
+                return
+        except Exception:
+            pass
+        try:
+            chisurf.__startup_onboarding_shown__ = True
+        except Exception:
+            pass
+
+        try:
+            from chisurf.plugins._dev.init_chisurf import wizard as _wiz
+            _wiz.show_onboarding(parent=window)
+        except Exception as e:
+            try:
+                logging.debug(f"Failed to open onboarding wizard: {e}")
+            except Exception:
+                pass
+
+    try:
+        if _should_open_onboarding():
+            QtCore.QTimer.singleShot(0, _open_onboarding)
+    except Exception:
+        pass
+
     return window
 
 
