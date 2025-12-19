@@ -15,7 +15,7 @@ from typing import List, Dict, Any, Optional, Tuple
 
 # Import from chisurf if available, otherwise handle standalone usage
 try:
-    from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+    from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 except ImportError:
     # Simplified version for standalone usage
     def load_detector_setups(file_path):

@@ -7,7 +7,7 @@ import numpy as np
 import tttrlib
 import chisurf.gui.decorators
 import chisurf.settings
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 VERBOSE = False
 
@@ -577,7 +577,7 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         setups_file = self.detector_wizard_page.current_setups_file
         
         # Load setups from the file
-        from chisurf.gui.widgets.wizard.tttr_channel_definition import load_detector_setups
+        from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
         setups = load_detector_setups(setups_file)
         
         # Add all setup names to the combobox

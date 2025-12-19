@@ -57,7 +57,7 @@ import tttrlib
 from hmmlearn.hmm import GaussianHMM
 
 # Chisurf imports for detector setup
-from chisurf.gui.widgets.wizard.tttr_channel_definition import (
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import (
     DetectorWizardPage, DetectorWizard, load_detector_setups
 )
 

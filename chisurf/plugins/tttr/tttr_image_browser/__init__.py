@@ -40,7 +40,7 @@ except Exception:
     Inches = None
 
 # Reuse widgets/utilities from existing plugins
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 from chisurf.plugins.trace_browser.__init__ import get_tttr_supported_exts, StarRatingWidget, NoHoverSelectTable
 
 # Logging

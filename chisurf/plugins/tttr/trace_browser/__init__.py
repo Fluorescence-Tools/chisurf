@@ -55,7 +55,7 @@ from chisurf import logging
 
 # Reuse existing widgets/utilities
 from chisurf.plugins.intensity_trace.__init__ import IntensityPlotWidget, IntensityTrace
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 # Import TTTR Time Window plugin
 try:

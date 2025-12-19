@@ -51,7 +51,7 @@ from qtpy.QtGui import QDragEnterEvent, QDropEvent
 import pyqtgraph as pg
 import tttrlib
 
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 class CountRateAnalyzer(QWidget):
     """Main widget for the Count Rate Analysis plugin."""
