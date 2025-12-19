@@ -11,7 +11,6 @@
 import sys
 import json
 import pathlib
-import tempfile
 import numpy as np
 from qtpy.QtWidgets import (
     QApplication, QWizard, QWizardPage, QVBoxLayout, QLabel, QLineEdit,
@@ -28,15 +27,17 @@ from qtpy import uic as _uic
 def qtpy_loadUi(path, baseinstance=None):
     return _uic.loadUi(path, baseinstance)
 
-from chisurf.settings.path_utils import get_path
-from chisurf.settings.file_utils import safe_open_file
+from .tttr_detector_setups import (
+    DETECTOR_SETUPS_FILE,
+    load_detector_setups,
+    save_detector_setups,
+)
 import tttrlib
-from chisurf.fio.fluorescence.bhfiles import BeckerHicklSetReader
-from chisurf.fio import write_jordi
-from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator, DataCurve
-
-# Path to the central detector setups file
-DETECTOR_SETUPS_FILE = get_path('settings') / 'detector_setups.json'
+from .tttr_channel_definition_json_dialog import JsonEditorDialog
+from .tttr_channel_definition_tttr_io import (
+    read_from_tttr_file as _read_from_tttr_file,
+    on_calc_g_factor as _on_calc_g_factor,
+)
 
 help_text = """You can either load an existing detector Pulsed-Interleaved Excitation (PIE) 
 window definition by clicking on the '...' button to define channels, or define your own PIE 
@@ -51,128 +52,6 @@ configuration as a new setup.
 The TTTR reading routine section allows you to specify the file type and time resolution 
 parameters used when reading TTTR files. These settings will be saved with your setup.
 """
-
-def load_detector_setups(file_path=None):
-    """Load detector setups from the central settings file or a custom file.
-
-    If the central setups file does not exist, inform the user how to create it
-    and allow suppressing this warning in the future.
-    """
-    path = pathlib.Path(file_path or DETECTOR_SETUPS_FILE)
-    # Read preference for showing the warning
-    try:
-        import chisurf.settings  # local import to avoid circulars at import time
-        show_warning = bool(chisurf.settings.cs_settings.get('warn_missing_detector_setups', True))
-    except Exception:
-        show_warning = True
-
-    if not path.exists():
-        # Show dialog only in GUI context and when using the default file
-        is_default = (file_path is None) or (path == DETECTOR_SETUPS_FILE)
-        app_running = False
-        try:
-            from qtpy.QtWidgets import QApplication  # local import
-            app_running = QApplication.instance() is not None
-        except Exception:
-            app_running = False
-
-        if show_warning and is_default and app_running:
-            msg = QMessageBox()
-            msg.setWindowTitle("Detector setups file not found")
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(f"Detector setups file was not found:\n{str(path)}")
-            msg.setInformativeText("You can create it by saving a setup from the Detector Wizard.\n"
-                                   "Use the 'Save Settings' button to store your configuration.\n"
-                                   "Alternatively, choose an existing JSON with the '...' button.")
-            try:
-                # Add 'Don't show again' checkbox
-                cb = QCheckBox("Don't show this warning again")
-                msg.setCheckBox(cb)
-            except Exception:
-                cb = None
-            # Add action button to open the Detector Wizard
-            open_btn = msg.addButton("Open Detector Wizard", QMessageBox.ActionRole)
-            ok_btn = msg.addButton(QMessageBox.Ok)
-            msg.exec_()
-            # Persist suppression if chosen
-            try:
-                if cb is not None and cb.isChecked():
-                    from chisurf.settings.settings_utils import set_warn_missing_detector_setups as _set_warn
-                    _set_warn(False)
-                    try:
-                        chisurf.settings.cs_settings['warn_missing_detector_setups'] = False
-                    except Exception:
-                        pass
-            except Exception:
-                pass
-            # If user chose to open the wizard, show it and then try to load again
-            try:
-                if msg.clickedButton() is open_btn:
-                    # DetectorWizard is defined in this module
-                    wiz = DetectorWizard()
-                    wiz.exec_()
-                    if path.exists():
-                        return safe_open_file(
-                            file_path=path,
-                            processor=json.load,
-                            default_value={"setups": {}}
-                        )
-            except Exception:
-                pass
-        # Return empty default
-        return {"setups": {}}
-
-    # File exists; load normally
-    return safe_open_file(
-        file_path=path,
-        processor=json.load,
-        default_value={"setups": {}}
-    )
-
-def save_detector_setups(setups_data, file_path=None, replace=False):
-    """Save detector setups to the central settings file or a custom file.
-
-    Args:
-        setups_data: The data to save
-        file_path: Optional custom path to save to. If None, uses DETECTOR_SETUPS_FILE.
-    """
-    try:
-        save_path = file_path or DETECTOR_SETUPS_FILE
-
-        # Try to load existing data to preserve unrelated keys when not replacing; with replace=True, write as-is
-        try:
-            if replace:
-                updated_data = setups_data
-            elif pathlib.Path(save_path).exists() and pathlib.Path(save_path).stat().st_size > 0:
-                existing_data = load_detector_setups(save_path)
-                # Start from existing data, then merge incoming setups (add/update only)
-                updated_data = existing_data if isinstance(existing_data, dict) else {}
-                if isinstance(setups_data, dict):
-                    for k, v in setups_data.items():
-                        if k == "setups":
-                            # Merge setups: add or update keys, keep others intact
-                            updated_data.setdefault("setups", {})
-                            if isinstance(v, dict):
-                                updated_data["setups"].update(v)
-                        else:
-                            updated_data[k] = v
-                else:
-                    updated_data = setups_data
-            else:
-                updated_data = setups_data
-        except Exception:
-            updated_data = setups_data
-
-        # Create directory if it doesn't exist
-        pathlib.Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-
-        # Write the updated data back to the file
-        with open(save_path, 'w') as f:
-            json.dump(updated_data, f, indent=4)
-        return True
-    except Exception as e:
-        print(f"Error saving detector setups: {e}")
-        return False
 
 # Initial PIE-Windows and Detectors
 _initial_windows = {
@@ -197,33 +76,6 @@ _initial_tttr_reading = {
     "l1": 0.03080,
     "l2": 0.03680
 }
-
-
-class JsonEditorDialog(QDialog):
-    def __init__(self, data, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Edit JSON Settings")
-        self.setGeometry(100, 100, 400, 300)
-
-        layout = QVBoxLayout(self)
-
-        self.json_editor = QTextEdit(self)
-        self.json_editor.setText(json.dumps(data, indent=4))
-        layout.addWidget(self.json_editor)
-
-        self.save_button = QPushButton("Save JSON", self)
-        self.save_button.clicked.connect(self._on_save)
-        layout.addWidget(self.save_button)
-
-    def _on_save(self):
-        try:
-            self.edited_data = json.loads(self.json_editor.toPlainText())
-            self.accept()
-        except json.JSONDecodeError:
-            QMessageBox.critical(self, "Error", "Invalid JSON format.")
-
-    def get_edited_data(self):
-        return getattr(self, "edited_data", None)
 
 
 class DetectorWizardPage(QWizardPage):
@@ -540,7 +392,7 @@ class DetectorWizardPage(QWizardPage):
             # populate detectors
             for name, props in data.get("detectors", {}).items():
                 chs = ", ".join(map(str, props["chs"]))
-                mtr = ", ".join(f"{s}-{e}" for s, e in props["micro_time_ranges"]) 
+                mtr = self._format_microtime_ranges(props.get("micro_time_ranges", []))
                 g_factor = str(props.get("g_factor", 1.00))
                 l1 = str(props.get("l1", 0.00))
                 l2 = str(props.get("l2", 0.00))
@@ -614,7 +466,7 @@ class DetectorWizardPage(QWizardPage):
         if any(self.detectors_form.item(r,0).text()==name for r in range(self.detectors_form.rowCount())):
             QMessageBox.warning(self, "Warning", "Detector name exists.")
             return
-        self._add_detector_row(name, "0, 1", "0-2048", gf_channels_text="")
+        self._add_detector_row(name, "0, 1", "0:2048", gf_channels_text="")
         self.new_detector_le.clear()
         self.detectorsChanged.emit()
 
@@ -634,6 +486,49 @@ class DetectorWizardPage(QWizardPage):
             if edited:
                 self._load_data(edited)
 
+    def _parse_microtime_ranges_text(self, text: str):
+        if not isinstance(text, str):
+            return []
+        txt = text.strip()
+        if not txt:
+            return []
+        segs = []
+        for item in txt.replace(";", ",").split(","):
+            item = item.strip()
+            if item:
+                segs.append(item)
+        ranges = []
+        for seg in segs:
+            if ":" in seg:
+                a_txt, b_txt = seg.split(":", 1)
+            else:
+                pos = seg.rfind("-")
+                if pos <= 0:
+                    a_txt = seg
+                    b_txt = seg
+                else:
+                    a_txt = seg[:pos]
+                    b_txt = seg[pos + 1 :]
+            try:
+                a = int(a_txt.strip())
+                b = int(b_txt.strip())
+            except Exception:
+                continue
+            if a <= b:
+                ranges.append((a, b))
+            else:
+                ranges.append((b, a))
+        return ranges
+
+    def _format_microtime_ranges(self, ranges):
+        r = []
+        try:
+            for s, e in ranges or []:
+                r.append(f"{int(s)}:{int(e)}")
+        except Exception:
+            pass
+        return ", ".join(r)
+
     def get_settings(self):
         # windows
         wins = {}
@@ -647,11 +542,18 @@ class DetectorWizardPage(QWizardPage):
         dets = {}
         for r in range(self.detectors_form.rowCount()):
             name = self.detectors_form.item(r,0).text().strip()
-            chs = list(map(int, self.detectors_form.cellWidget(r,1).text().split(',')))
-            mtr = [
-                tuple(map(int, seg.split('-')))
-                for seg in self.detectors_form.cellWidget(r,2).text().split(',')
-            ]
+            ch_text = self.detectors_form.cellWidget(r,1).text()
+            mtr_text = self.detectors_form.cellWidget(r,2).text()
+            chs = []
+            try:
+                parts = [p for p in str(ch_text).replace(";", ",").split(",")]
+                for p in parts:
+                    p = p.strip()
+                    if p:
+                        chs.append(int(p))
+            except Exception:
+                chs = []
+            mtr = self._parse_microtime_ranges_text(mtr_text)
             
             # Get the G-factor cell widget and its text
             g_factor_widget = self.detectors_form.cellWidget(r,3)
@@ -1079,387 +981,10 @@ class DetectorWizardPage(QWizardPage):
                 QMessageBox.critical(self, "Error", f"Failed to rename setup from '{old_name}' to '{new_name}'.")
 
     def _read_from_tttr_file(self):
-        """
-        Open a TTTR or SPC file and read its settings.
-        
-        Behavior depends on file type:
-        - .set files: Read only microtime calibration
-        - .spc files: Read only macrotime calibration
-        - Other TTTR files: Read both calibrations
-        """
-        path, _ = QFileDialog.getOpenFileName(
-            self, 
-            "Open TTTR or SPC File", 
-            "", 
-            "All Files (*);;TTTR Files (*.ptu *.ht3 *.pt3);;SPC Files (*.spc *.set)"
-        )
-        if not path:
-            return
-
-        try:
-            # Handle different file types
-            if path.lower().endswith('.set'):
-                # For .set files: Read only microtime calibration
-                reader = BeckerHicklSetReader(path)
-                
-                # Get only the microtime information
-                micro_time_res = reader.micro_time_resolution
-                
-                # Update only the microtime in the UI
-                if micro_time_res is not None:
-                    self.micro_time_le.setText(str(micro_time_res))  # Convert from ns to ps
-                
-                # Update the effective micro time resolution
-                self._update_effective_resolution()
-                
-                # Show a success message
-                QMessageBox.information(
-                    self, 
-                    "Success", 
-                    f"Successfully read microtime calibration from SET file: {path}"
-                )
-            elif path.lower().endswith('.spc'):
-                # For .spc files: Read only macrotime calibration
-                tttr = tttrlib.TTTR(path)
-                
-                # Get the header information
-                header = tttr.get_header()
-                
-                # Update only the macrotime in the UI
-                self.macro_time_le.setText(str(header.macro_time_resolution * 1e9))  # Convert to ns
-                
-                # Update the effective micro time resolution
-                self._update_effective_resolution()
-                
-                # Show a success message
-                QMessageBox.information(
-                    self, 
-                    "Success", 
-                    f"Successfully read macrotime calibration from SPC file: {path}"
-                )
-            else:
-                # For other TTTR files: Read both calibrations
-                tttr = tttrlib.TTTR(path)
-                
-                # Get the header information
-                header = tttr.get_header()
-                
-                # Update both calibrations in the UI
-                self.macro_time_le.setText(str(header.macro_time_resolution * 1e9))  # Convert to ns
-                self.micro_time_le.setText(str(header.micro_time_resolution * 1e9))  # Convert to ns
-                
-                # Update the effective micro time resolution
-                self._update_effective_resolution()
-                
-                # Show a success message
-                QMessageBox.information(
-                    self, 
-                    "Success", 
-                    f"Successfully read calibrations from TTTR file: {path}"
-                )
-
-        except Exception as e:
-            QMessageBox.critical(
-                self, 
-                "Error", 
-                f"Failed to read file: {e}"
-            )
+        _read_from_tttr_file(self)
 
     def _on_calc_g_factor(self):
-        """
-        Handle the click of the Calculate G-Factor button.
-        
-        This method:
-        1. Opens a file dialog for the user to select a TTTR file
-        2. Identifies parallel and perpendicular channels from the detector settings
-        3. Creates a Jordi file from the TTTR file using these channels
-        4. Opens the g-factor calculator plugin with the Jordi file
-        5. Updates the G-Factor value in the detectors table when the plugin closes
-        """
-        # Get the currently selected detector settings
-        settings = self.get_settings()
-        detectors = settings["detectors"]
-        
-        # We require at least two routing channels within the selected detector row.
-        # Validation for channel count happens after a row is selected and channels are parsed.
-        
-        # Open a file dialog to select a TTTR file
-        path, _ = QFileDialog.getOpenFileName(
-            self, 
-            "Open TTTR File for G-Factor Calculation", 
-            "", 
-            "All Files (*)"
-        )
-        if not path:
-            return
-            
-        try:
-            # Create a TTTR object
-            tttr = tttrlib.TTTR(path)
-            
-            # Get the micro time binning from the UI
-            micro_time_binning = int(self.micro_binning_combo.currentText())
-            
-            # Get the currently selected row in detectors_form
-            selected_rows = self.detectors_form.selectedIndexes()
-            if not selected_rows:
-                QMessageBox.warning(
-                    self,
-                    "Warning",
-                    "Please select a detector row first."
-                )
-                return
-                
-            # Get the row of the first selected cell
-            selected_row = selected_rows[0].row()
-            
-            # Get the detector name from the selected row
-            selected_detector = self.detectors_form.item(selected_row, 0).text().strip()
-            
-            # Get the routing channels from the selected row
-            channels_text = self.detectors_form.cellWidget(selected_row, 1).text()
-            all_channels = list(map(int, channels_text.split(',')))
-            
-            # Split channels into parallel and perpendicular (alternating pattern)
-            parallel_channels = all_channels[::2]  # Even indices (0, 2, 4, ...)
-            perpendicular_channels = all_channels[1::2]  # Odd indices (1, 3, 5, ...)
-            
-            # Validate that both parallel and perpendicular lists are non-empty
-            if len(all_channels) < 2 or len(parallel_channels) == 0 or len(perpendicular_channels) == 0:
-                QMessageBox.warning(
-                    self,
-                    "Warning",
-                    "Selected detector must contain at least two routing channels (parallel and perpendicular) to calculate G-Factor."
-                )
-                return
-            
-            # Store the selected detector information for later use
-            self.selected_detector = {
-                'row': selected_row,
-                'name': selected_detector,
-                'parallel_channels': parallel_channels,
-                'perpendicular_channels': perpendicular_channels
-            }
-            
-            # Extract microtime histograms for parallel and perpendicular channels
-            parallel_hist, _ = tttr.get_microtime_histogram(micro_time_binning, parallel_channels)
-            perpendicular_hist, _ = tttr.get_microtime_histogram(micro_time_binning, perpendicular_channels)
-            
-            # Find non-zero bins in both histograms
-            parallel_nonzero = np.where(parallel_hist > 0)[0]
-            perpendicular_nonzero = np.where(perpendicular_hist > 0)[0]
-            
-            # Find the common range to ensure both histograms are aligned
-            if len(parallel_nonzero) > 0 and len(perpendicular_nonzero) > 0:
-                start_idx = min(parallel_nonzero[0], perpendicular_nonzero[0])
-                end_idx = max(parallel_nonzero[-1], perpendicular_nonzero[-1]) + 1
-                
-                # Trim both histograms to the same range
-                parallel_hist_trimmed = parallel_hist[start_idx:end_idx]
-                perpendicular_hist_trimmed = perpendicular_hist[start_idx:end_idx]
-            else:
-                # If one or both histograms have no non-zero bins, use the original histograms
-                parallel_hist_trimmed = parallel_hist
-                perpendicular_hist_trimmed = perpendicular_hist
-            
-            # Create a temporary file for the Jordi data
-            fd, jordi_file = tempfile.mkstemp(suffix='.dat')
-            
-            # Concatenate the trimmed histograms and save to the Jordi file
-            jordi_data = np.concatenate([parallel_hist_trimmed, perpendicular_hist_trimmed])
-            write_jordi(jordi_data, jordi_file)
-            
-            # Create and show the g-factor calculator plugin
-            g_factor_calculator = JordiGFactorCalculator()
-            g_factor_calculator.setWindowModality(Qt.ApplicationModal)  # Make it modal
-            
-            # Pass routing channel info and context to the calculator for reference
-            try:
-                setattr(g_factor_calculator, 'parallel_channels', parallel_channels)
-                setattr(g_factor_calculator, 'perpendicular_channels', perpendicular_channels)
-                setattr(g_factor_calculator, 'micro_time_binning', micro_time_binning)
-                setattr(g_factor_calculator, 'detector_name', selected_detector)
-            except Exception:
-                pass
-            
-            # Store the calculator instance and file path for later use
-            self.g_factor_calculator = g_factor_calculator
-            self.jordi_file = jordi_file
-            
-            # Connect to the closeEvent to get the g-factor value when the calculator is closed
-            original_close_event = g_factor_calculator.closeEvent
-            
-            def custom_close_event(event):
-                # Call the original closeEvent first
-                if original_close_event:
-                    original_close_event(event)
-                
-                # Check if g_factor was calculated
-                if hasattr(g_factor_calculator, 'g_factor') and g_factor_calculator.g_factor is not None:
-                    # Get the selected detector information
-                    selected_detector_info = self.selected_detector
-                    print(f"Selected detector info: {selected_detector_info}")
-                    if selected_detector_info:
-                        # Update the G-Factor value in the selected row of the detectors table
-                        row = selected_detector_info['row']
-                        g_factor_value = f"{g_factor_calculator.g_factor:.3f}"
-                        print(f"Updating detectors table row {row} with g-factor value {g_factor_value}")
-                        
-                        # Get the existing cell widget and update its text
-                        existing_cell_widget = self.detectors_form.cellWidget(row, 3)
-                        if existing_cell_widget:
-                            # Use protected programmatic setter to update value
-                            self._set_g_factor_programmatically(row, g_factor_value)
-                        else:
-                            # If no widget exists yet, create a new one and wire protection
-                            new_cell_widget = QLineEdit(g_factor_value)
-                            self.detectors_form.setCellWidget(row, 3, new_cell_widget)
-                            self._wire_g_factor_cell(row, new_cell_widget)
-                        
-                        # Also capture the selection range (G-Factor Channels) from the calculator, if available
-                        gf_range_text = None
-                        try:
-                            rng = None
-                            if hasattr(g_factor_calculator, 'region') and g_factor_calculator.region is not None:
-                                try:
-                                    rng = g_factor_calculator.region.getRegion()
-                                except Exception:
-                                    rng = None
-                            if rng is None and hasattr(g_factor_calculator, 'region_bounds'):
-                                rng = getattr(g_factor_calculator, 'region_bounds', None)
-                            if isinstance(rng, (list, tuple)) and len(rng) == 2:
-                                s = int(float(rng[0]))
-                                e = int(float(rng[1]))
-                                if e < s:
-                                    s, e = e, s
-                                gf_range_text = f"{s}-{e}"
-                                # Update column 6 in the table
-                                try:
-                                    gf_widget = self.detectors_form.cellWidget(row, 6)
-                                    if gf_widget is None:
-                                        gf_widget = QLineEdit(gf_range_text)
-                                        self.detectors_form.setCellWidget(row, 6, gf_widget)
-                                    else:
-                                        gf_widget.setText(gf_range_text)
-                                except Exception:
-                                    pass
-                        except Exception:
-                            pass
-                                                
-                        # Save the updated setup automatically
-                        if self.current_setup_name:
-                            # Get current settings (now includes g_factor and g_factor_channels)
-                            data = self.get_settings()
-                            
-                            # Save to the current setups file
-                            setups = load_detector_setups(self.current_setups_file)
-                            setups.setdefault("setups", {})
-                            
-                            # If the setup already exists, preserve any additional fields
-                            if self.current_setup_name in setups["setups"]:
-                                existing_data = setups["setups"][self.current_setup_name]
-                                # Update only the fields we know about, preserving any other fields
-                                for key in data:
-                                    if key == 'detectors':
-                                        existing_data.setdefault('detectors', {})
-                                        # Merge per-detector entries
-                                        for det_name, det_info in data['detectors'].items():
-                                            if det_name in existing_data['detectors'] and isinstance(existing_data['detectors'][det_name], dict):
-                                                # Update known fields only, preserve anything else
-                                                existing_data['detectors'][det_name].update(det_info)
-                                            else:
-                                                existing_data['detectors'][det_name] = det_info
-                                        # Keep detectors present in existing_data but not in new data as-is
-                                    else:
-                                        existing_data[key] = data[key]
-                                # Use the updated existing data
-                                setups["setups"][self.current_setup_name] = existing_data
-                            else:
-                                # New setup, just use the data as is
-                                setups["setups"][self.current_setup_name] = data
-                                
-                            setups["last_used"] = self.current_setup_name
-                            save_detector_setups(setups, self.current_setups_file)
-                            
-                            # Show a success message with save confirmation
-                            msg = (
-                                f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
-                                f"Updated G-Factor for detector: {selected_detector_info['name']}\n"
-                            )
-                            if gf_range_text:
-                                msg += f"G-Factor Channels: {gf_range_text}\n"
-                            msg += f"Setup '{self.current_setup_name}' saved automatically."
-                            QMessageBox.information(self, "Success", msg)
-                        else:
-                            # Show a success message without save confirmation
-                            msg = (
-                                f"G-Factor calculated: {g_factor_calculator.g_factor:.4f}\n"
-                                f"Updated G-Factor for detector: {selected_detector_info['name']}\n"
-                            )
-                            if gf_range_text:
-                                msg += f"G-Factor Channels: {gf_range_text}\n"
-                            msg += "Note: No setup was selected, so changes were not saved automatically."
-                            QMessageBox.information(self, "Success", msg)
-            
-            # Override the closeEvent method
-            g_factor_calculator.closeEvent = custom_close_event
-            
-            # Show the calculator
-            g_factor_calculator.show()
-            
-            # Load the Jordi file using the calculator's load_jordi_file method
-            try:
-                # Set the effective micro time resolution for proper time axis scaling
-                effective_dt = self.effective_micro_time_resolution
-                
-                # Load the Jordi file
-                g_factor_calculator.load_jordi_file(jordi_file)
-
-                # If user specified a G-Factor Channels range in the table, pass it to the calculator
-                try:
-                    gf_widget = self.detectors_form.cellWidget(selected_row, 6)
-                    if gf_widget:
-                        txt = gf_widget.text().strip()
-                        if txt:
-                            parts = txt.replace(' ', '').split('-')
-                            if len(parts) == 2:
-                                s = int(float(parts[0]))
-                                e = int(float(parts[1]))
-                                # Ensure order and bounds are sane
-                                if e < s:
-                                    s, e = e, s
-                                # Apply to calculator
-                                if hasattr(g_factor_calculator, 'region'):
-                                    try:
-                                        g_factor_calculator.region.setRegion([s, e])
-                                    except Exception:
-                                        pass
-                                if hasattr(g_factor_calculator, 'region_bounds'):
-                                    try:
-                                        g_factor_calculator.region_bounds = [s, e]
-                                    except Exception:
-                                        pass
-                                # Recompute with new region
-                                try:
-                                    g_factor_calculator.calculate_g_factor()
-                                except Exception:
-                                    pass
-                except Exception:
-                    pass
-                
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Failed to load Jordi file: {str(e)}"
-                )
-            
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to calculate G-Factor: {str(e)}"
-            )
+        _on_calc_g_factor(self)
     
     def load_data_into_tables(self, data):
         """

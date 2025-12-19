@@ -14,6 +14,7 @@ import chisurf.gui.decorators
 import chisurf.settings
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.fluorescence.fcs.channel_setups import load_fcs_channel_setups
+from .tttr_correlator_ui import setup_ui as _setup_ui
 
 colors = chisurf.settings.gui['plot']['colors']
 
@@ -86,18 +87,57 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
     def get_microtime_ranges(self, s) -> typing.List[typing.Tuple[int, int]] | None:
         chisurf.logging.log(0, "WizardTTTRCorrelator::get_microtime_ranges")
-        # Check if the input string is empty
         if not s:
             chisurf.logging.log(0, "::microtime_ranges: Warning - Input string is empty.")
             return None
+
         try:
-            ranges = [tuple(map(int, item.split('-'))) for item in s.split(';')]
-            # Check if each range has exactly two values
-            if all(len(r) == 2 for r in ranges):
-                return ranges
-            else:
-                chisurf.logging.log(1, "::microtime_ranges: Invalid format for microsecond ranges.")
+            text = str(s).strip()
+            if not text:
                 return None
+
+            # Allow both ';' and ',' as range separators to be more user friendly.
+            segments = []
+            for item in text.replace(',', ';').split(';'):
+                item = item.strip()
+                if item:
+                    segments.append(item)
+
+            if not segments:
+                chisurf.logging.log(0, "::microtime_ranges: No usable ranges after parsing.")
+                return None
+
+            ranges: typing.List[typing.Tuple[int, int]] = []
+            for seg in segments:
+                seg = seg.strip()
+                if not seg:
+                    continue
+
+                # Support either ":" or "-" between min and max while allowing
+                # negative bounds such as "-1000:2000" or "-1000-2000".
+                if ':' in seg:
+                    a_txt, b_txt = seg.split(':', 1)
+                else:
+                    # Fallback for legacy "a-b" syntax; use the last '-' so that
+                    # leading '-' signs in negative numbers are preserved.
+                    pos = seg.rfind('-')
+                    if pos <= 0:
+                        # Single value like "-1000"  treat as [-1000, -1000]
+                        a_txt = seg
+                        b_txt = seg
+                    else:
+                        a_txt = seg[:pos]
+                        b_txt = seg[pos + 1 :]
+
+                a = int(a_txt.strip())
+                b = int(b_txt.strip())
+                if a <= b:
+                    ranges.append((a, b))
+                else:
+                    ranges.append((b, a))
+
+            return ranges if ranges else None
+
         except (ValueError, TypeError):
             chisurf.logging.log(1, "::microtime_ranges: Invalid values in microsecond ranges.")
             return None
@@ -746,52 +786,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self._fcs_preset_detectors = {}
         self._fcs_preset_corr = {}
 
-        self.textEdit.setVisible(False)
-        chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit_3, call=self.open_analysis_folder)
-
-        # Preset combobox is defined in the .ui (comboBox_fcs_preset) in a row
-        # directly above the "Correlation channels" group box.
-        cb = getattr(self, 'comboBox_fcs_preset', None)
-        if isinstance(cb, QtWidgets.QComboBox):
-            self.comboBox_fcs_preset = cb
-            self.comboBox_fcs_preset.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
-            self.comboBox_fcs_preset.clear()
-            self.comboBox_fcs_preset.addItem("")
-            self.comboBox_fcs_preset.currentIndexChanged.connect(self._on_fcs_preset_changed)
-        else:
-            self.comboBox_fcs_preset = None
-
-        # Create plots
-        self.pw_fcs = pg.PlotWidget()
-        self.pw_fcs.resize(150, 150)
-
-        self.plot_item_fcs = self.pw_fcs.getPlotItem()
-        self.plot_item_fcs.setLogMode(True, False)
-        self.plot_item_fcs.setLabel('bottom', 'Correlation time, t_c (ms)')
-        self.plot_item_fcs.setLabel('left', 'Correlation amplitude, G')
-        self.verticalLayout_2.addWidget(self.pw_fcs)
-
-        # Connect actions
-        self.actionUpdate_ouput_path.triggered.connect(self.update_output_path)
-        self.toolButton_3.clicked.connect(self.correlate_data)
-        self.toolButton_4.clicked.connect(self.onClearFiles)
-
-        # Optional: hook up detector-window combos if present in UI
-        self._channel_defs: dict = {}
-        try:
-            if hasattr(self, 'comboBox'):
-                self.comboBox.currentTextChanged.connect(lambda _=None: self._on_combo_changed('A'))
-            if hasattr(self, 'comboBox_2'):
-                self.comboBox_2.currentTextChanged.connect(lambda _=None: self._on_combo_changed('B'))
-        except Exception:
-            pass
-
-        # Update output filename when user edits channel fields manually
-        try:
-            self.lineEdit.textChanged.connect(self._on_channel_text_changed)
-            self.lineEdit_2.textChanged.connect(self._on_channel_text_changed)
-        except Exception:
-            pass
+        _setup_ui(self)
 
         # Apply UI modifications from arguments
         self._apply_initial_parameters(

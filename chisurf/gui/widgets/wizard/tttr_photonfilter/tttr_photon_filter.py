@@ -24,72 +24,17 @@ from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.math.signal import fill_small_gaps_in_array
 from chisurf.settings.path_utils import get_path
 from chisurf.settings.file_utils import safe_open_file
-from chisurf.gui.widgets.wizard.tttr_channel_definition import save_detector_setups, load_detector_setups
+from ..tttr_channeldefinition.tttr_detector_setups import save_detector_setups, load_detector_setups
+from .tttr_photon_filter_support import CommaSeparatedIntegersValidator
+from .tttr_photon_filter_mode import install_filter_mode_visibility
+from .tttr_photon_filter_file_drop import install_file_drop
+from .tttr_photon_filter_plots import create_plots, place_plots
+from .tttr_photon_filter_connections import setup_connections as _setup_connections
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 from chisurf.fluorescence.burst.utils import create_array_with_ones
 
 
-QValidator = QtGui.QValidator
 colors = chisurf.settings.gui['plot']['colors']
-
-
-
-
-class ProgressWindow(QtWidgets.QDialog):
-    def __init__(self, title="Processing Files", message="Loading files...", max_value=100, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
-        self.layout = QtWidgets.QVBoxLayout()
-        self.label = QtWidgets.QLabel(message)
-        self.progress_bar = QtWidgets.QProgressBar()
-        self.progress_bar.setRange(0, max_value)
-        self.layout.addWidget(self.label)
-        self.layout.addWidget(self.progress_bar)
-        self.setLayout(self.layout)
-
-    def set_value(self, value: int):
-        self.progress_bar.setValue(value)
-        QtWidgets.QApplication.processEvents()
-
-
-class CommaSeparatedIntegersValidator(QValidator):
-
-    """
-    QValidator to ensure input is a comma-separated list of valid
-    integers between 0 and 255.
-    """
-    def validate(self, input_str, pos):
-        if not input_str:
-            return QValidator.Intermediate, input_str, pos
-
-        parts = input_str.split(',')
-        for part in parts:
-            part = part.strip()
-            if part == '':
-                continue
-            if not part.isdigit():
-                return QValidator.Intermediate, input_str, pos
-            num = int(part)
-            if num < 0 or num > 255:
-                return QValidator.Invalid, input_str, pos
-
-        if input_str.endswith(','):
-            return QValidator.Intermediate, input_str, pos
-
-        return QValidator.Acceptable, input_str, pos
-
-    def fixup(self, input_str):
-        input_str = input_str.rstrip(',')
-        parts = input_str.split(',')
-        valid_parts = []
-        for part in parts:
-            part = part.strip()
-            if part.isdigit():
-                num = int(part)
-                if 0 <= num <= 255:
-                    valid_parts.append(str(num))
-        return ', '.join(valid_parts)
 
 
 class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
@@ -466,14 +411,47 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             return None
 
         try:
-            ranges = [tuple(map(int, item.split('-'))) for item in s.split(';')]
-
-            # Check if each range has exactly two values
-            if all(len(r) == 2 for r in ranges):
-                return ranges
-            else:
-                chisurf.logging.log(1, "::microtime_ranges: Invalid format for microsecond ranges.")
+            text = str(s).strip()
+            if not text:
                 return None
+
+            # Allow both ';' and ',' as range separators.
+            segments = []
+            for item in text.replace(',', ';').split(';'):
+                item = item.strip()
+                if item:
+                    segments.append(item)
+
+            if not segments:
+                chisurf.logging.log(0, "::microtime_ranges: No usable ranges after parsing.")
+                return None
+
+            ranges: typing.List[typing.Tuple[int, int]] = []
+            for seg in segments:
+                seg = seg.strip()
+                if not seg:
+                    continue
+
+                # Support ':' or '-' as min-max separator while allowing negative values.
+                if ':' in seg:
+                    a_txt, b_txt = seg.split(':', 1)
+                else:
+                    pos = seg.rfind('-')
+                    if pos <= 0:
+                        a_txt = seg
+                        b_txt = seg
+                    else:
+                        a_txt = seg[:pos]
+                        b_txt = seg[pos + 1 :]
+
+                a = int(a_txt.strip())
+                b = int(b_txt.strip())
+                if a <= b:
+                    ranges.append((a, b))
+                else:
+                    ranges.append((b, a))
+
+            return ranges if ranges else None
 
         except (ValueError, TypeError):
             chisurf.logging.log(1, "::microtime_ranges: Invalid values in microsecond ranges.")
@@ -1860,42 +1838,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self.spinBox_7.setEnabled(self.checkBox_5.isChecked())
 
     def setup_connections(self):
-        """
-        Set up all signal-slot connections for UI elements.
-        This centralizes all connections in one place for better maintainability.
-        """
-        # Action connections
-        self.actionUpdate_Values.triggered.connect(self.update_parameter)
-        self.actionUpdateUI.triggered.connect(self.updateUI)
-        self.actionFile_changed.triggered.connect(self.read_tttr)
-        self.actionRegionUpdate.triggered.connect(self.onRegionUpdate)
-
-        # Tool button connections
-        self.toolButton_2.toggled.connect(self.pw_mcs.setVisible)
-        self.toolButton_3.toggled.connect(self.pw_decay.setVisible)
-        self.toolButton_4.toggled.connect(self.pw_filter.setVisible)
-        self.toolButton_7.toggled.connect(self.pw_burst_histogram.setVisible)
-        self.toolButton_5.clicked.connect(self.save_selection)
-        self.toolButton_6.clicked.connect(self.onClearFiles)
-
-        # Combo box connections
-        self.comboBox_2.currentTextChanged.connect(self.update_detectors)
-        self.comboBox_3.currentTextChanged.connect(self.update_pie_windows)
-        self.comboBox.currentTextChanged.connect(self.update_micro_time_binning)
-        self.comboBox.currentTextChanged.connect(self.update_burst_selection_parameters)
-        self.comboBox.currentTextChanged.connect(self.update_channel_routing)
-        self.comboBox.currentTextChanged.connect(self.update_pie_windows_from_setup)
-
-        # BOCPD element connections
-        self.doubleSpinBox_5.valueChanged.connect(self.update_parameter)  # Alpha
-        self.doubleSpinBox_6.valueChanged.connect(self.update_parameter)  # Beta
-        self.doubleSpinBox_7.valueChanged.connect(self.update_parameter)  # Hazard
-
-        # Gap fill checkbox connection
-        self.checkBox_5.stateChanged.connect(self.update_spinbox_7_state)
-
-        # Save parameters button connection is already connected in the UI file
-        # Removing duplicate connection to prevent the save_burst_selection_parameters method from being called twice
+        _setup_connections(self)
 
     def update_burst_selection_parameters(self, setup_name=None):
         """
@@ -2105,179 +2048,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         # Cached resolved output directory for stable access across pages
         self._resolved_output_dir = None
 
-        # Find the layout containing the burst filter combobox
-        layout = self.comboBox_burst_filter.parentWidget().layout()
-
-        # Connect the burst filter combobox to the actionUpdate_Values action
-        self.comboBox_burst_filter.currentIndexChanged.connect(self.actionUpdate_Values.trigger)
-
-        # Function to update parameter visibility based on selected filter mode
-        def update_parameter_visibility(filter_mode):
-            is_kalman = filter_mode == "Kalman Burst"
-            is_bocpd = filter_mode == "BOCPD Burst"
-            is_count_rate_or_burst = filter_mode in ["Count rate", "Burst"]
-
-            # Show/hide Kalman filter parameters (label_15, label_16, label_17, doubleSpinBox_8, doubleSpinBox_9, doubleSpinBox_10)
-            self.label_15.setVisible(is_kalman)  # Q parameter
-            self.doubleSpinBox_8.setVisible(is_kalman)  # Q parameter
-            self.label_16.setVisible(is_kalman)  # R scale parameter
-            self.doubleSpinBox_9.setVisible(is_kalman)  # R scale parameter
-            self.label_17.setVisible(is_kalman)  # Z threshold parameter
-            self.doubleSpinBox_10.setVisible(is_kalman)  # Z threshold parameter
-            self.label_18.setVisible(is_kalman)  # Min length parameter
-            self.spinBox_9.setVisible(is_kalman)  # Min length parameter
-
-            # Show/hide BOCPD parameters (label_12, label_13, label_14, doubleSpinBox_5, doubleSpinBox_6, doubleSpinBox_7)
-            self.label_12.setVisible(is_bocpd)
-            self.label_13.setVisible(is_bocpd)
-            self.label_14.setVisible(is_bocpd)
-            self.doubleSpinBox_5.setVisible(is_bocpd)
-            self.doubleSpinBox_6.setVisible(is_bocpd)
-            self.doubleSpinBox_7.setVisible(is_bocpd)
-
-            # Show/hide count rate & burstwise parameters (label, label_11, spinBox, spinBox_8)
-            # label_2 and doubleSpinBox should be shown only for "Count rate"
-            is_count_rate = filter_mode == "Count rate"
-            self.label_2.setVisible(is_count_rate)
-            self.label.setVisible(is_count_rate_or_burst)
-            self.label_11.setVisible(is_count_rate_or_burst)
-            self.doubleSpinBox.setVisible(is_count_rate)
-            self.spinBox.setVisible(is_count_rate_or_burst)
-            self.spinBox_8.setVisible(is_count_rate_or_burst)
-
-        # Assign the function to the instance
-        self.update_parameter_visibility = update_parameter_visibility
-
-        # Set up connections to show/hide parameters based on the selected filter mode
-        self.comboBox_burst_filter.currentTextChanged.connect(self.update_parameter_visibility)
-
-        # Initialize parameter visibility based on current selection
-        self.update_parameter_visibility(self.comboBox_burst_filter.currentText())
-
-        # Set the default filter mode
-        if default_filter_mode == 'count_rate':
-            self.comboBox_burst_filter.setCurrentText("Count rate")
-        elif default_filter_mode == 'burst':
-            self.comboBox_burst_filter.setCurrentText("Burst")
-        elif default_filter_mode == 'bocpd':
-            self.comboBox_burst_filter.setCurrentText("BOCPD Burst")
-        elif default_filter_mode == 'kalman':
-            self.comboBox_burst_filter.setCurrentText("Kalman Burst")
-
-        def after_file_drop():
-            """
-            Callback to load *all* TTTR files after they're dropped or specified.
-            Ensures that files with restricted extensions require explicit file type selection.
-            If a folder is dropped, all files with supported extensions (found directly in that folder)
-            are added.
-            Uses tttrlib.inferTTTRFileType to automatically detect file types when possible.
-            """
-            # Generate allowed extensions dynamically from tttrlib
-            allowed_extensions = {
-                f".{ext.lower()}" if not ext.startswith('.') else ext.lower()
-                for ext in tttrlib.TTTR.get_supported_container_names()
-            }
-
-            # Expand directories: if an entry in tttr_filenames is a folder,
-            # replace it with all files (in that folder only) with allowed extensions.
-            expanded_files = []
-            for path_str in self.settings['tttr_filenames']:
-                p = pathlib.Path(path_str).resolve()
-                if p.is_dir():
-                    for child in p.iterdir():
-                        if child.is_file() and child.suffix.lower() in allowed_extensions:
-                            expanded_files.append(str(child.resolve()))
-                else:
-                    expanded_files.append(str(p))
-            # IMPORTANT: mutate the existing list in-place to preserve the drag/drop injector reference
-            lst = self.settings.get('tttr_filenames')
-            if isinstance(lst, list):
-                lst[:] = expanded_files
-
-            # List of restricted extensions requiring manual selection (if needed)
-            RESTRICTED_EXTENSIONS = [".spc"]  # Extend or modify as required
-
-            requires_filetype_selection = False
-            restricted_files = []
-
-            for fn in self.settings['tttr_filenames']:
-                p = pathlib.Path(fn).resolve()
-                file_extension = p.suffix.lower()
-
-                # Check if the file extension requires explicit selection
-                if file_extension in RESTRICTED_EXTENSIONS:
-                    if self.filetype == "Auto":  # Only warn if no file type is preselected
-                        requires_filetype_selection = True
-                        restricted_files.append(p.name)
-
-            if requires_filetype_selection:
-                QtWidgets.QMessageBox.warning(
-                    self, "File Type Required",
-                    "The following files require an explicit file type selection before loading:\n\n"
-                    + "\n".join(restricted_files)
-                    + "\n\nPlease select the correct file type from the dropdown menu."
-                )
-                self.onClearFiles()
-                return  # Prevent loading any files
-
-            # Get file type from the selected setup
-            file_type = self.filetype
-            # If no setup is selected or the setup doesn't have a file type,
-            # we've already shown a warning in the filetype property
-
-            # Proceed with loading the files and showing progress
-            total_files = len(self.settings['tttr_filenames'])
-            progress_window = ProgressWindow(title="Loading Files", message="Processing files...",
-                                             max_value=total_files, parent=self)
-            progress_window.show()
-
-            for i, fn in enumerate(self.settings['tttr_filenames'], start=1):
-                p = pathlib.Path(fn).resolve()
-                p_str = str(p)
-
-                if p_str not in self.tttr_objects:
-                    if p.exists() and p.is_file():
-                        file_type = self.filetype
-                        try:
-                            if isinstance(file_type, str):
-                                self.tttr_objects[p_str] = tttrlib.TTTR(p_str, file_type)
-                            elif p.suffix.lower() not in RESTRICTED_EXTENSIONS:
-                                # Use inferTTTRFileType for better auto-detection
-                                file_type_int = tttrlib.inferTTTRFileType(p_str)
-                                if file_type_int is not None and file_type_int >= 0:
-                                    self.tttr_objects[p_str] = tttrlib.TTTR(p_str, file_type_int)
-                                else:
-                                    # Fall back to default auto-detection if inference fails
-                                    self.tttr_objects[p_str] = tttrlib.TTTR(p_str)
-                        except Exception as e:
-                            progress_window.close()
-                            QtWidgets.QMessageBox.critical(
-                                self,
-                                "Error Loading File",
-                                f"Failed to load file '{p.name}' with the selected setup.\n\n"
-                                f"Error: {str(e)}\n\n"
-                                f"Please check that you have selected the correct setup for this file type."
-                            )
-                            self.onClearFiles()
-                            return  # Exit early to prevent undefined state
-
-                progress_window.set_value(i)
-
-            progress_window.close()
-
-            n_files = len(self.settings['tttr_filenames'])
-            self.spinBox_4.setMaximum(n_files - 1)
-            if n_files > 0:
-                self.spinBox_4.setValue(n_files - 1)
-            self.read_tttr()
-
-        # Inject file-drop logic
-        self.textEdit.setVisible(False)
-        # Expose the drop handler so external code (e.g., batch processing) can reuse the standard flow
-        self._after_file_drop = after_file_drop
-        chisurf.gui.decorators.lineEdit_dragFile_injector(
-            self.lineEdit, call=after_file_drop, target=self.settings['tttr_filenames']
-        )
+        install_filter_mode_visibility(self, default_filter_mode)
+        install_file_drop(self)
 
         sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding,
@@ -2292,87 +2064,8 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         self._dT_min = default_dT_min
         self._dT_max = default_dT_max
 
-        # Create & configure plots
-        self.pw_burst_histogram = pg.PlotWidget(parent=self, title="Burst histogram")
-        self.plot_burst_histogram = self.pw_burst_histogram.getPlotItem()
-        self.pw_burst_histogram.setLabel('left', 'Counts')
-        self.pw_burst_histogram.setLabel('bottom', 'Burst size (Nbr. Photons)')
-        self.pw_burst_histogram.resize(100, 80)
-
-        color_all = QtGui.QColor(255, 255, 0, 64)
-        color_selected = QtGui.QColor(0, 255, 255, 255)
-        pen2 = pg.mkPen(color_all, width=1, style=QtCore.Qt.SolidLine)
-        pen1 = pg.mkPen(color_selected, width=1, style=QtCore.Qt.SolidLine)
-
-        self.pw_dT = pg.PlotWidget(parent=self, title="Delta macro-time")
-        self.pw_dT.setLabel('left', 'dT (ms)')
-        self.pw_dT.setLabel('bottom', 'Photon Index')
-        self.plot_item_dt = self.pw_dT.getPlotItem()
-        self.plot_unselected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen2)
-        self.plot_selected = self.plot_item_dt.plot(x=[1.0], y=[1.0], pen=pen1)
-        self.pw_dT.resize(200, 40)
-
-        self.pw_mcs = pg.PlotWidget(parent=self, title="Count rate display")
-        self.pw_mcs.setLabel('left', 'Intensity (kHz)')
-        self.pw_mcs.setLabel('bottom', 'Time (s)')
-        self.plot_item_mcs = self.pw_mcs.getPlotItem()
-        self.plot_mcs_all = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen2)
-        self.plot_mcs_selected = self.plot_item_mcs.plot(x=[1.0], y=[1.0], pen=pen1)
-        self.pw_mcs.resize(200, 80)
-
-        self.pw_decay = pg.PlotWidget(parent=self, title="Microtime histogram")
-        self.pw_decay.setLabel('left', 'Counts')
-        self.pw_decay.setLabel('bottom', 'Microtime (ns)')
-        self.plot_item_decay = self.pw_decay.getPlotItem()
-        self.plot_decay_all = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen2)
-        self.plot_decay_selected = self.plot_item_decay.plot(x=[1.0], y=[1.0], pen=pen1)
-        self.pw_decay.resize(200, 80)
-
-        self.pw_filter = pg.PlotWidget(parent=self, title="Filter/selection")
-        self.pw_filter.setLabel('left', 'Selected (1) / Unselected (0)')
-        self.pw_filter.setLabel('bottom', 'Photon Index')
-        self.pw_filter.setXLink(self.pw_dT)
-        self.pw_dT.setMouseEnabled(x=False, y=False)
-        self.pw_filter.setMouseEnabled(x=False, y=False)
-        self.plot_item_sel = self.pw_filter.getPlotItem()
-        self.plot_select = self.plot_item_sel.plot(x=[1.0], y=[1.0])
-        self.pw_filter.resize(200, 20)
-
-        self.plot_item_dt.setLogMode(False, True)
-        self.plot_item_decay.setLogMode(False, True)
-        self.plot_item_sel.setLogMode(False, False)
-
-        ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
-        co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
-        self.region_selector = pg.LinearRegionItem(
-            brush=co, orientation='horizontal',
-            values=(np.log10(self._dT_min), np.log10(self._dT_max))
-        )
-        self.pw_dT.addItem(self.region_selector)
-
-        def onRegionUpdate(evt):
-            lb, ub = self.region_selector.getRegion()
-            if self.pw_dT.getAxis('left').logMode:
-                lb, ub = 10 ** lb, 10 ** ub
-            self._dT_min = lb
-            self._dT_max = ub
-            self.doubleSpinBox_2.blockSignals(True)
-            self.doubleSpinBox_3.blockSignals(True)
-            self.doubleSpinBox_2.setValue(lb)
-            self.doubleSpinBox_3.setValue(ub)
-            self.doubleSpinBox_2.blockSignals(False)
-            self.doubleSpinBox_3.blockSignals(False)
-            self.update_plots()
-            self.update_output_path()
-
-        self.region_selector.sigRegionChangeFinished.connect(onRegionUpdate)
-
-        # Place plots in layout
-        self.gridLayout_6.addWidget(self.pw_dT, 0, 0, 1, 3)
-        self.gridLayout_6.addWidget(self.pw_filter, 1, 0, 1, 3)
-        self.gridLayout_6.addWidget(self.pw_mcs, 2, 0, 1, 1)
-        self.gridLayout_6.addWidget(self.pw_decay, 2, 1, 1, 1)
-        self.gridLayout_6.addWidget(self.pw_burst_histogram, 0, 1, 2, 1)
+        create_plots(self, colors)
+        place_plots(self)
 
         # Setup all signal-slot connections
         self.setup_connections()

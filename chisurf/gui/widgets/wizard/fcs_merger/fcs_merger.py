@@ -12,6 +12,7 @@ import chisurf.data
 import chisurf.fluorescence.fcs
 import chisurf.gui.decorators
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
+from .fcs_merger_ui import setup_ui as _setup_ui
 
 colors = chisurf.settings.gui['plot']['colors']
 
@@ -326,34 +327,4 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
     @chisurf.gui.decorators.init_with_ui("fcs_merger.ui")
     def __init__(self, *args, **kwargs):
-        self.setTitle("Correlation merging")
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        self.setSizePolicy(sizePolicy)
-        self.textEdit.setVisible(False)
-
-        self.correlations: typing.List[dict] = list()
-
-        chisurf.gui.decorators.lineEdit_dragFile_injector(self.lineEdit, call=self.open_correlation_folder)
-
-        # Setup plots
-        self.pw_fcs = pg.PlotWidget(parent=self, title='FCS')
-        self.pw_fcs.resize(100, 150)
-        self.plot_item_fcs = self.pw_fcs.getPlotItem()
-        self.plot_item_fcs.setLogMode(True, False)
-        self.horizontalLayout_3.addWidget(self.pw_fcs)
-
-        self.pw_fcs_mean = pg.PlotWidget(parent=self, title='FCS Merged')
-        self.pw_fcs_mean.resize(100, 150)
-        self.plot_item_fcs_mean = self.pw_fcs_mean.getPlotItem()
-        self.plot_item_fcs_mean.setLogMode(True, False)
-        self.horizontalLayout_3.addWidget(self.pw_fcs_mean)
-
-        # Setup table widget with an extra column for the merge checkbox.
-        self.tableWidget.setColumnCount(5)
-        self.tableWidget.setHorizontalHeaderLabels(["Use", "File", "CR A (kHz)", "CR B (kHz)", "Duration (s)"])
-
-        # Remove the double-click deletion action and instead toggle the checkbox on double click.
-        # self.actionRowDoubleClicked.triggered.connect(self.onRemoveRow)  <-- Removed!
-        self.tableWidget.itemDoubleClicked.connect(self.onRowDoubleClicked)
-        self.actionRowSingleClick.triggered.connect(self.update_plots)
-        self.toolButton_3.clicked.connect(self.save_mean_correlation)
+        _setup_ui(self)

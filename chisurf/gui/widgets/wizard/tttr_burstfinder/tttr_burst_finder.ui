@@ -113,7 +113,7 @@ p, li { white-space: pre-wrap; }
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>Define tuple of micro time ranges separted by '-' and ';' (Example: 0-100;600-900)</string>
+             <string>Microtime ranges: use start:end or start-end; separate multiple ranges with ';' or ',' (e.g. -1000:0;0:300000).</string>
             </property>
             <property name="placeholderText">
              <string>Micro time range</string>

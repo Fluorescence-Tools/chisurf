@@ -376,6 +376,9 @@
          <height>150</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Routing Chs: comma-separated integers (e.g. &quot;0, 1&quot;). Microtimes: microtime ranges per detector in start:end or start-end form; separate multiple ranges with ';' or ','; negative values allowed.</string>
+       </property>
        <property name="autoScroll">
         <bool>true</bool>
        </property>
