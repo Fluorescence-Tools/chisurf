@@ -193,6 +193,16 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             label_text='QYA',
         )
 
+        # Detector efficiencies per channel (green/red).
+        self._gG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._gG,
+            label_text='gG',
+        )
+        self._gR_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._gR,
+            label_text='gR',
+        )
+
         # Absolute excitation probabilities (e.g. extinction coefficients).
         self._ExDG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._ExDG,
@@ -203,22 +213,34 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             label_text='ExAG',
         )
 
-        # Emission / detection crosstalk matrix elements (g_{channel|species}).
-        self._gGD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._gGD,
-            label_text='gG|D',
+        # Emission / detection crosstalk matrix elements (c_{channel|species}).
+        self._cGD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._cGD,
+            label_text='cG|D',
         )
-        self._gGA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._gGA,
-            label_text='gG|A',
+        self._cGA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._cGA,
+            label_text='cG|A',
         )
-        self._gRD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._gRD,
-            label_text='gR|D',
+        self._cRD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._cRD,
+            label_text='cR|D',
         )
-        self._gRA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
-            self._gRA,
-            label_text='gR|A',
+        self._cRA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._cRA,
+            label_text='cR|A',
+        )
+
+        # Derived legacy-style crosstalk fractions (read-only): alpha
+        # (donor bleed-through to red) and alpha_A (acceptor bleed-through
+        # to green). These are populated by the PDA model.
+        self._alpha_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._alpha,
+            label_text='&alpha;<sub>D</sub>',
+        )
+        self._alpha_A_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._alpha_A,
+            label_text='&alpha;<sub>A</sub>',
         )
 
         # Backgrounds
@@ -229,15 +251,23 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         layout.addWidget(self._QYD_widget, 1, 0)
         layout.addWidget(self._QYA_widget, 1, 1)
 
-        # Excitation probabilities row
-        layout.addWidget(self._ExDG_widget, 2, 0)
-        layout.addWidget(self._ExAG_widget, 2, 1)
+        # Detector efficiencies
+        layout.addWidget(self._gG_widget, 2, 0)
+        layout.addWidget(self._gR_widget, 2, 1)
 
-        # Emission / detection matrix rows
-        layout.addWidget(self._gGD_widget, 3, 0)
-        layout.addWidget(self._gGA_widget, 3, 1)
-        layout.addWidget(self._gRD_widget, 4, 0)
-        layout.addWidget(self._gRA_widget, 4, 1)
+        # Excitation probabilities row
+        layout.addWidget(self._ExDG_widget, 3, 0)
+        layout.addWidget(self._ExAG_widget, 3, 1)
+
+        # Emission / detection crosstalk matrix rows
+        layout.addWidget(self._cGD_widget, 4, 0)
+        layout.addWidget(self._cGA_widget, 4, 1)
+        layout.addWidget(self._cRD_widget, 5, 0)
+        layout.addWidget(self._cRA_widget, 5, 1)
+
+        # Derived legacy-style crosstalk parameters
+        layout.addWidget(self._alpha_widget, 6, 0)
+        layout.addWidget(self._alpha_A_widget, 6, 1)
 
         self.layout.addLayout(layout)
 
@@ -250,12 +280,16 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             self._bgR_widget.finalize()
             self._QYD_widget.finalize()
             self._QYA_widget.finalize()
+            self._gG_widget.finalize()
+            self._gR_widget.finalize()
             self._ExDG_widget.finalize()
             self._ExAG_widget.finalize()
-            self._gGD_widget.finalize()
-            self._gGA_widget.finalize()
-            self._gRD_widget.finalize()
-            self._gRA_widget.finalize()
+            self._cGD_widget.finalize()
+            self._cGA_widget.finalize()
+            self._cRD_widget.finalize()
+            self._cRA_widget.finalize()
+            self._alpha_widget.finalize()
+            self._alpha_A_widget.finalize()
         except Exception:
             # Fallback: at least sync the numeric values
             try:
@@ -263,12 +297,16 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
                 self._bgR_widget.setValue(self.BR)
                 self._QYD_widget.setValue(self.QYD)
                 self._QYA_widget.setValue(self.QYA)
+                self._gG_widget.setValue(self.gG)
+                self._gR_widget.setValue(self.gR)
                 self._ExDG_widget.setValue(self.ExDG)
                 self._ExAG_widget.setValue(self.ExAG)
-                self._gGD_widget.setValue(self.gGD)
-                self._gGA_widget.setValue(self.gGA)
-                self._gRD_widget.setValue(self.gRD)
-                self._gRA_widget.setValue(self.gRA)
+                self._cGD_widget.setValue(self.cGD)
+                self._cGA_widget.setValue(self.cGA)
+                self._cRD_widget.setValue(self.cRD)
+                self._cRA_widget.setValue(self.cRA)
+                self._alpha_widget.setValue(self.alpha)
+                self._alpha_A_widget.setValue(self.alpha_A)
             except Exception:
                 pass
 
@@ -607,22 +645,15 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
             pass
 
     def onAddComponent(self):
-        # Add a new Gaussian component and update the current fit so that
-        # the new parameters are associated with the model/fits.
-        self.append()
-        try:
-            chisurf.run("cs.current_fit.update()")
-        except Exception:
-            pass
+        # Add a new Gaussian distance component to all fits in the current
+        # fit group so that the PDA distance model stays structurally
+        # consistent across the group.
+        chisurf.run("chisurf.macros.model.add_component('distances')")
 
     def onRemoveComponent(self):
-        # Remove the last Gaussian component and update the current fit so
-        # parameter lists and controllers stay in sync.
-        self.pop()
-        try:
-            chisurf.run("cs.current_fit.update()")
-        except Exception:
-            pass
+        # Remove the last Gaussian distance component from all fits in the
+        # current fit group to keep models synchronized.
+        chisurf.run("chisurf.macros.model.remove_component('distances')")
 
     def append(self, mean: float = 50.0, sigma: float = 5.0, amplitude: float = 1.0):
         PdaGaussianDistances.append(self, mean=mean, sigma=sigma, amplitude=amplitude)
@@ -777,20 +808,14 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
                 self.rows_layout.addLayout(row_layout)
 
     def onAddComponent(self):
-        # Append new species to model-side group and create controllers
-        self.append()
-        try:
-            chisurf.run("cs.current_fit.update()")
-        except Exception:
-            pass
+        # Append a new anisotropy species to all fits in the current fit
+        # group so that the anisotropy-PDA model remains consistent.
+        chisurf.run("chisurf.macros.model.add_component('species')")
 
     def onRemoveComponent(self):
-        # Remove last species if present
-        self.pop()
-        try:
-            chisurf.run("cs.current_fit.update()")
-        except Exception:
-            pass
+        # Remove the last anisotropy species from all fits in the current
+        # fit group.
+        chisurf.run("chisurf.macros.model.remove_component('species')")
 
     def append(self, amplitude: float = 1.0, r: float = 0.3):
         PdaAnisotropySpecies.append(self, amplitude=amplitude, r=r)
@@ -1168,23 +1193,27 @@ def _get_gaussian_component_curves_for_pda(
         n = model.nuisance
         ExDG = getattr(n, "ExDG", 0.0)
         ExAG = getattr(n, "ExAG", 0.0)
-        gGD = getattr(n, "gGD", 0.0)
-        gGA = getattr(n, "gGA", 0.0)
-        gRD = getattr(n, "gRD", 0.0)
-        gRA = getattr(n, "gRA", 0.0)
+        gG = getattr(n, "gG", 1.0)
+        gR = getattr(n, "gR", 1.0)
+        cGD = getattr(n, "cGD", 0.0)
+        cGA = getattr(n, "cGA", 0.0)
+        cRD = getattr(n, "cRD", 0.0)
+        cRA = getattr(n, "cRA", 0.0)
         QYD = getattr(n, "QYD", 1.0)
         QYA = getattr(n, "QYA", 1.0)
 
-        use_matrix = any(float(abs(x)) > 0.0 for x in (ExDG, ExAG, gGD, gGA, gRD, gRA))
+        use_matrix = any(float(abs(x)) > 0.0 for x in (ExDG, ExAG, cGD, cGA, cRD, cRA))
         if not use_matrix:
             return []
 
         ExDG_val = float(ExDG)
         ExAG_val = float(ExAG)
-        gGD_val = float(gGD)
-        gGA_val = float(gGA)
-        gRD_val = float(gRD)
-        gRA_val = float(gRA)
+        gG_val = float(gG)
+        gR_val = float(gR)
+        cGD_val = float(cGD)
+        cGA_val = float(cGA)
+        cRD_val = float(cRD)
+        cRA_val = float(cRA)
         QYD_val = float(QYD)
         QYA_val = float(QYA)
 
@@ -1200,8 +1229,8 @@ def _get_gaussian_component_curves_for_pda(
         S_DQ = QYD_val * S_D
         S_AQ = QYA_val * S_A
 
-        G_DA = gGD_val * S_DQ + gGA_val * S_AQ
-        R_DA = gRD_val * S_DQ + gRA_val * S_AQ
+        G_DA = gG_val * (cGD_val * S_DQ + cGA_val * S_AQ)
+        R_DA = gR_val * (cRD_val * S_DQ + cRA_val * S_AQ)
         denom = G_DA + R_DA
         with np.errstate(divide="ignore", invalid="ignore"):
             p_G = np.where(denom > 0.0, G_DA / denom, 0.5)
