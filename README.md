@@ -117,6 +117,8 @@ Please submit feature requests, questions, and bugs as GitHub issues. General qu
 
 4. Kalinin S, Peulen T, Sindbert S, et al. A toolkit and benchmark study for FRET-restrained high-precision structural modeling. *Nat Methods*. 2012;9(12):1218-1225.
 
+5. Dimura M, Peulen T-O, Sanabria H, Rodnin D, Hemmen K, Hanke CA, Seidel CAM, Gohlke H. Automated and optimally FRET-assisted structural modeling. *Nat Commun*. 2020;11:5394. https://doi.org/10.1038/s41467-020-19023-1
+
 ---
 
 For more detailed information on ChiSurf's capabilities and applications, please refer to the full publication:
