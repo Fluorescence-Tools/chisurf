@@ -363,6 +363,11 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         self.grid_layout.setContentsMargins(0, 0, 0, 0)
         components_layout.addLayout(self.grid_layout)
 
+        # Expose a generic "components" handle so that global model macros
+        # can operate on PCH components in the same way as for lifetime,
+        # PDA and TCSPC Gaussian distance components.
+        self.components = self
+
         if self._make_fitting_parameter_widget is not None:
             try:
                 self._append_groupbox(1)
@@ -463,22 +468,18 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         self.remove_component()
 
     def onAddComponent(self) -> None:
+        # Add a new PCH component to all fits in the current fit group via
+        # the shared model macros.
         try:
-            chisurf.run(
-                "for f in cs.current_fit:\n"
-                "   f.model.append()\n"
-                "   f.model.update()"
-            )
+            chisurf.run("chisurf.macros.model.add_component('components')")
         except Exception:
             pass
 
     def onRemoveComponent(self) -> None:
+        # Remove the last PCH component from all fits in the current fit
+        # group.
         try:
-            chisurf.run(
-                "for f in cs.current_fit:\n"
-                "   f.model.pop()\n"
-                "   f.model.update()"
-            )
+            chisurf.run("chisurf.macros.model.remove_component('components')")
         except Exception:
             pass
 
