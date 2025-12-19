@@ -38,8 +38,18 @@ def normalize_amplitudes(
         cs = chisurf.cs
         fit = cs.current_fit
     for f in fit:
-        exec(f"f.model.{name}.normalize_amplitudes = {normalize}")
-        f.model.update()
+        try:
+            target = getattr(f.model, name)
+        except AttributeError:
+            continue
+        try:
+            setattr(target, "normalize_amplitudes", normalize)
+        except Exception:
+            continue
+        try:
+            f.model.update()
+        except Exception:
+            continue
 
 
 def absolute_amplitudes(
@@ -51,8 +61,18 @@ def absolute_amplitudes(
         cs = chisurf.cs
         fit = cs.current_fit
     for f in fit:
-        exec(f"f.model.{name}.absolute_amplitudes = {use_absolute_amplitudes}")
-        f.model.update()
+        try:
+            target = getattr(f.model, name)
+        except AttributeError:
+            continue
+        try:
+            setattr(target, "absolute_amplitudes", use_absolute_amplitudes)
+        except Exception:
+            continue
+        try:
+            f.model.update()
+        except Exception:
+            continue
 
 
 def remove_component(
@@ -63,8 +83,21 @@ def remove_component(
         cs = chisurf.cs
         fit = cs.current_fit
     for f in fit:
-        eval(f"f.model.{name}.pop()")
-        f.model.update()
+        try:
+            target = getattr(f.model, name)
+        except AttributeError:
+            continue
+        pop = getattr(target, "pop", None)
+        if not callable(pop):
+            continue
+        try:
+            pop()
+        except Exception:
+            continue
+        try:
+            f.model.update()
+        except Exception:
+            continue
 
 
 def change_irf(
@@ -92,7 +125,20 @@ def add_component(
         cs = chisurf.cs
         fit = cs.current_fit
     for f in fit:
-        eval(f"f.model.{name}.append()")
-        f.model.update()
+        try:
+            target = getattr(f.model, name)
+        except AttributeError:
+            continue
+        append = getattr(target, "append", None)
+        if not callable(append):
+            continue
+        try:
+            append()
+        except Exception:
+            continue
+        try:
+            f.model.update()
+        except Exception:
+            continue
 
 

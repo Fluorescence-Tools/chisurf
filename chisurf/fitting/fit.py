@@ -443,7 +443,12 @@ class Fit(chisurf.base.Base):
         s += str(self.model)
         return s
 
-    def get_curves(self, copy_curves: bool = False) -> typing.OrderedDict[str, chisurf.curve.Curve]:
+    def get_curves(
+            self,
+            copy_curves: bool = False,
+            *,
+            full_length: bool = False
+    ) -> typing.OrderedDict[str, chisurf.curve.Curve]:
         """Return a mapping of named curves associated with this fit.
 
         The dictionary typically contains entries for ``"model"``,
@@ -453,7 +458,53 @@ class Fit(chisurf.base.Base):
             copy_curves=copy_curves
         )
         d['data'] = self.data
-        d['weighted residuals'] = self.weighted_residuals
+        if full_length:
+            try:
+                x_full = np.asarray(getattr(self.data, 'x', []), dtype=float)
+            except Exception:
+                x_full = np.asarray([], dtype=float)
+            n = int(x_full.size)
+
+            try:
+                xmin = int(getattr(self, 'xmin', 0))
+            except Exception:
+                xmin = 0
+            if n <= 0:
+                xmin = 0
+            else:
+                xmin = int(np.clip(xmin, 0, n))
+
+            try:
+                wres_seg = self.get_wres(model=self.model, xmin=self.xmin, xmax=self.xmax)
+                wres_seg = np.asarray(wres_seg, dtype=float)
+            except Exception:
+                try:
+                    wres_seg = np.asarray(getattr(self.model, 'weighted_residuals', []), dtype=float)
+                except Exception:
+                    wres_seg = np.asarray([], dtype=float)
+
+            try:
+                _, mdl_seg = self.model[self.xmin:self.xmax]
+                mdl_seg = np.asarray(mdl_seg, dtype=float)
+            except Exception:
+                mdl_seg = np.asarray([], dtype=float)
+
+            window_len = int(min(wres_seg.size, mdl_seg.size))
+            if n > 0:
+                window_len = int(min(window_len, n - xmin))
+            else:
+                window_len = 0
+
+            y_wres = np.full(n, np.nan, dtype=float)
+            y_mdl = np.full(n, np.nan, dtype=float)
+            if window_len > 0:
+                y_wres[xmin:xmin + window_len] = wres_seg[:window_len]
+                y_mdl[xmin:xmin + window_len] = mdl_seg[:window_len]
+
+            d['weighted residuals'] = chisurf.curve.Curve(x=x_full, y=y_wres, copy_array=False)
+            d['model'] = chisurf.curve.Curve(x=x_full, y=y_mdl, copy_array=False)
+        else:
+            d['weighted residuals'] = self.weighted_residuals
         d['autocorrelation'] = self.autocorrelation
         return d
 
@@ -515,7 +566,7 @@ class Fit(chisurf.base.Base):
             verbose=verbose
         )
         if save_curves:
-            curve_dict = self.get_curves()
+            curve_dict = self.get_curves(full_length=True)
             with open(filename+'_info.txt', mode='w') as fp:
                 fp.write(str(self))
             for curve_key in curve_dict:
@@ -772,7 +823,13 @@ class FitGroup(Fit):
         for f in self:
             f.xmax = v
 
-    def get_curves(self, copy_curves: bool = False, idx: int = None) -> typing.OrderedDict[str, chisurf.curve.Curve]:
+    def get_curves(
+            self,
+            copy_curves: bool = False,
+            idx: int = None,
+            *,
+            full_length: bool = False
+    ) -> typing.OrderedDict[str, chisurf.curve.Curve]:
         """Return curves for one or all grouped fits.
 
         If ``idx`` is ``None``, curves from :meth:`super().get_curves` are
@@ -781,14 +838,14 @@ class FitGroup(Fit):
         """
         curves = {}
         if idx is None:
-            curves = super().get_curves()
+            curves = super().get_curves(copy_curves=copy_curves, full_length=full_length)
         else:
             if idx >= 0:
                 fit = self.grouped_fits[idx]
-                curves = fit.get_curves()
+                curves = fit.get_curves(copy_curves=copy_curves, full_length=full_length)
             else:
                 for i, f in enumerate(self.grouped_fits):
-                    fit_curves = f.get_curves(copy_curves)
+                    fit_curves = f.get_curves(copy_curves=copy_curves, full_length=full_length)
                     for curve_key in fit_curves:
                         new_curve_key = curve_key + "_%02d" % i
                         curves[new_curve_key] = fit_curves[curve_key]
