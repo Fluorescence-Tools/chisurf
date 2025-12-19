@@ -3,7 +3,7 @@
 This development plugin implements maximum-entropy (MaxEnt) analysis for
 TCSPC decays in two modes:
 
-- **Lifetime mode**: distribution of lifetimes `p(τ)` (mem\_vin4 analogue).
+- **Lifetime mode**: distribution of lifetimes `p(τ)`.
 - **FRET distance mode**: distribution of donor–acceptor distances `p(R)`
   with an explicit donor lifetime spectrum (me\_vin4\_E and
   me\_vin4\_E\_do analogues).
@@ -13,84 +13,14 @@ core `chisurf` models.
 
 ## Modules
 
-- `core.py`
-  - `mem_vin4_lifetime`: lifetime MaxEnt solver.
-  - `mem_vin4_fret`: FRET distance MaxEnt solver, supporting
-    donor-only spectra and lamp scatter.
-- `gui.py`
-  - `MaxentDecayWidget`: GUI for lifetime MEM on the current
-    `cs.current_fit` dataset (pyqtgraph plots, IRF selector,
-    prior loading, nuisance fitting switch).
-- `cli.py`
-  - Click-based CLI entrypoint used by `cli_entrypoint` from
-    `__init__.py`.
 - `__init__.py`
   - Plugin metadata and `load()` function returning `MaxentDecayWidget`.
-
-## CLI usage
-
-The plugin exposes a subcommand via the main `csc` CLI (see
-`chisurf/cli.py`). Example invocations assume the plugin has been
-installed and discovered as e.g. `maxent-decay`:
-
-### Lifetime mode (default)
-
-```bash
-csc maxent-decay \
-  --decay Decay_577D+577A+GTPgS.txt \
-  --irf   Prompt.txt \
-  --dt 0.0141 \
-  --nu 1e-3 \
-  --tau-min 0.001 --tau-max 10.0 --tau-step 0.02 \
-  --fit-nuisance \
-  --fit-start-fraction 0.9
-```
-
-Important options:
-
-- `--fit-nuisance/--no-fit-nuisance`: enable/disable internal
-  optimization of timeshift, decay background, and IRF background.
-- `--fit-start-fraction`: start of the auto fit range as fraction of
-  the peak (chisurf-like `initial_fit_range`).
-- `--prior`: external prior vector (must match the tau grid length).
-- `--lamp-background`: explicitly set the IRF background level; if
-  omitted, it is estimated from the IRF tail.
-
-### FRET distance mode
-
-```bash
-csc maxent-decay \
-  --mode fret \
-  --decay Decay_FRET.txt \
-  --irf   Prompt.txt \
-  --dt 0.0141 \
-  --nu 5e-2 \
-  --r-min 18.0 --r-max 180.0 --r-step 0.5 \
-  --tau0 4.1 --r0 52.0 \
-  --donor-spectrum donor_only.txt \
-  --lamp-scatter 0.001 \
-  --fit-start-fraction 0.9
-```
-
-In FRET mode the solver follows the Matlab scripts `me_vin4_E.m` and
-`me_vin4_E_do.m`:
-
-- `R` grid is defined by `--r-min`, `--r-max`, `--r-step` (Å).
-- `--tau0` is the donor lifetime in absence of FRET (ns).
-- `--r0` is the Förster radius `R0` (Å).
-- `--lamp-scatter` scales the lamp curve added to each basis column.
-- `--donor-spectrum` provides a donor-only spectrum as two columns
-  (amplitude, lifetime). The file is flattened into
-  `[a1, tau1, a2, tau2, ...]`.
-- If `--donor-spectrum` is **omitted**, a single-component donor-only
-  spectrum `[1, tau0]` is used.
-- `--fit-nuisance` is **not** supported in FRET mode (nuisance
-  optimization is lifetime-only).
-
-The donor-only case of `me_vin4_E_do.m` is supported by providing a
-multi-exponential donor spectrum via `--donor-spectrum` and choosing an
-appropriate `--lamp-scatter` and `--fitrange` (implicitly controlled by
-`--fit-start-fraction`).
+- `fmem/`
+  - `core.py`: numerical MaxEnt solvers (`solve_lifetime_mem`, `solve_fret_mem`).
+  - `api.py`: convenience helpers for scripts/notebooks (grid builders and `run_*` helpers).
+  - `gui.py`: Qt/pyqtgraph front-end (`MaxentDecayWidget`).
+  - `settings.py`: JSON-based user defaults.
+  - `sampling.py`: optional `emcee`-based sampling utilities.
 
 ## GUI usage
 
@@ -146,7 +76,7 @@ and four plots (decay, residuals, distribution, L‑curve) on the right.
 3. Set the excitation **Period [ns]**. When you refresh from a fit this
    is initialized from the decay time axis (acquisition window) but can
    be edited.
-4. Set the **RDA range [Å]** (min, max, #points) for the distance grid.
+4. Set the **R/R0 range** (min, max, #points) for the distance grid.
 5. Donor‑only spectrum:
    - Click **Load donor spectrum** to load `(amplitude, lifetime)`
      pairs from a text/CSV file, or
@@ -175,6 +105,18 @@ and four plots (decay, residuals, distribution, L‑curve) on the right.
     a regularization strength.
 11. Use **Save result** to export distance distribution, decay/fit,
     IRF, residuals and `meta.json` for further analysis.
+
+## Parameter conventions
+
+- **`dt`**
+  Time per detector channel (typically in ns).
+- **`timeshift`**
+  IRF shift in **detector channels (samples)** (fractional values allowed).
+- **`fitrange`**
+  `(start, stop)` indices in detector channels.
+- **FRET distance grid**
+  The solver uses `R` in Å, but the GUI defines the grid via **fractions of `R0`**:
+  `R = linspace(r_min_frac * R0, r_max_frac * R0, r_bins)`.
 
 ## Reference
 

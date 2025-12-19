@@ -25,9 +25,9 @@ except Exception:  # pragma: no cover - fallback when chisurf.settings is unavai
 # defaults in the GUI.
 _DEFAULT_SETTINGS: Dict[str, Any] = {
     "tau_grid": {
-        "min": 0.001,
-        "max": 10.0,
-        "step": 0.02,
+        "min": 0.01,
+        "max": 6.0,
+        "bins": 192,
     },
     "lcurve_span_decades": {
         "left": 2.0,
@@ -36,6 +36,9 @@ _DEFAULT_SETTINGS: Dict[str, Any] = {
     "fret": {
         "tau0": 4.1,
         "R0": 50.0,
+        "r_min_frac": 0.1,
+        "r_max_frac": 3.0,
+        "r_bins": 96,
         "period_ns": 10.0,
         "use_periodic": False,
     },
@@ -110,8 +113,16 @@ def load_maxent_settings() -> Dict[str, Any]:
         if not isinstance(data, dict):
             raise TypeError("settings JSON must contain an object at the top level")
         merged: Dict[str, Any] = dict(_DEFAULT_SETTINGS)
+        # Copy nested dicts so we can merge user overrides without mutating
+        # the module-level defaults.
+        for key, value in list(merged.items()):
+            if isinstance(value, dict):
+                merged[key] = dict(value)
         for key, value in data.items():
-            merged[key] = value
+            if isinstance(value, dict) and isinstance(merged.get(key), dict):
+                merged[key].update(value)
+            else:
+                merged[key] = value
         return merged
     except Exception:
         # On any error, do not break the plugin; just use defaults.

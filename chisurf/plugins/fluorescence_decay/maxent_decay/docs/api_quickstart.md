@@ -10,14 +10,11 @@ namespace via the `fmem` subpackage.
 ## Modules and layout
 
 - `chisurf.plugins.fluorescence_decay.maxent_decay.fmem.core`
-  Thin wrapper that re-exports the low-level solvers from `core.py`.
+  Numerical implementation of the low-level solvers.
 
 - `chisurf.plugins.fluorescence_decay.maxent_decay.fmem.api`
   Convenience helpers for calling the solvers from Python scripts or
   notebooks (grid builders and `run_*_mem_*` functions).
-
-- `chisurf.plugins.fluorescence_decay.maxent_decay.fmem.cli`
-  Click-based command-line interface used by the `csc maxent-decay` subcommand.
 
 - `chisurf.plugins.fluorescence_decay.maxent_decay.notebooks/`
   Example Jupyter notebooks that exercise the Python API:
@@ -48,10 +45,27 @@ from chisurf.plugins.fluorescence_decay.maxent_decay.fmem import (
     build_distance_grid,
     run_fret_mem_from_arrays,
 )
+
+R0 = 52.0
+R = build_distance_grid(R0=R0, r_min_frac=0.1, r_max_frac=3.0, r_bins=96)
 ```
 
+## Notes on units
+
+- **`dt`**
+  Time step per detector channel (typically in ns).
+- **`timeshift`**
+  Expressed in **detector channels (samples)**, not in time units. Fractional
+  values are allowed.
+- **`fitrange`**
+  A tuple `(start, stop)` of detector channel indices.
+- **FRET distance grid `R`**
+  Distances are in Å, but the grid is typically defined via
+  `r_min_frac`/`r_max_frac` as **fractions of `R0`** so that the same settings
+  remain meaningful when `R0` changes.
+
 The result dictionaries returned by these helpers follow the structure of
-`mem_vin4_lifetime` / `mem_vin4_fret` and contain, among others:
+`solve_lifetime_mem` / `solve_fret_mem` and contain, among others:
 
 - `p` – recovered distribution (over `tau` or `R`).
 - `tau` or `R` – lifetime or distance grid.

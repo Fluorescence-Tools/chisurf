@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-name = "Fluorescence decay: MaxEnt lifetime MEM"
-# Expose the Click CLI via chisurf.cli under the "maxent-decay" subcommand,
-# implemented in the fmem namespace.
-cli_entrypoint = "maxent-decay=chisurf.plugins.fluorescence_decay.maxent_decay.fmem.cli:cli"
+name = "Fluorescence decay: MaxEnt MEM"
 
 
 def load():
     """Return the plugin's main widget instance."""
-    from .gui import MaxentDecayWidget
+    from .fmem.gui import MaxentDecayWidget
 
     return MaxentDecayWidget()
 
@@ -48,4 +45,4 @@ if __name__ == "plugin":  # pragma: no cover - GUI bootstrap
     _bootstrap_plugin()
 
 
-__all__ = ["name", "cli_entrypoint", "load"]
+__all__ = ["name", "load"]
