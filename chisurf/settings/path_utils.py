@@ -6,6 +6,9 @@ import sys
 import ctypes
 
 
+USER_SETTINGS_EXISTED_BEFORE = None
+
+
 def _set_hidden_on_windows(path: pathlib.Path) -> None:
     """Set the hidden attribute on Windows for the given path.
 
@@ -44,11 +47,15 @@ def get_path(path_type: str = 'settings') -> pathlib.Path:
     if path_type == 'settings':
         path = pathlib.Path.home() / '.chisurf'
         existed_before = path.exists()
+        global USER_SETTINGS_EXISTED_BEFORE
+        if USER_SETTINGS_EXISTED_BEFORE is None:
+            USER_SETTINGS_EXISTED_BEFORE = bool(existed_before)
         path.mkdir(parents=True, exist_ok=True)
         # Only set hidden for the user settings dir, and only if we created it now
         if not existed_before:
             _set_hidden_on_windows(path)
         return path
+
     elif path_type == 'chisurf':
         # Return the module root without changing attributes
         return pathlib.Path(__file__).parent.parent
