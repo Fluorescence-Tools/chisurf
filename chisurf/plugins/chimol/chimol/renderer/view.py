@@ -261,6 +261,11 @@ class MolView(QtWidgets.QWidget):
             source_path=source_path,
             placeholder=placeholder,
         )
+        defaults = _DISPLAY_CONFIG.get("defaults", {})
+        try:
+            entry.state.color_mode = str(defaults.get("color_mode", "single"))
+        except Exception:
+            entry.state.color_mode = "single"
         self._objects[object_id] = entry
         self._active_object_id = object_id
         self._auto_create_enabled = True

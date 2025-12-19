@@ -24,6 +24,9 @@ def _load_display_config() -> dict:
 
     default = {
         "background": "k",
+        "defaults": {
+            "color_mode": "by_sequence",
+        },
         "grid": {"size": 20.0, "spacing": 1.0},
         "info_overlay": {
             "max_width": 260,
