@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import gc
 import shutil
+import json
+import pathlib
 import numpy as np
 
 import chisurf
@@ -128,9 +130,10 @@ def add_fit(
     cs.update()
 
 
-def save_fit(target_path: str = None,
-             use_complex_name: bool = False,
-             fit_window=None):
+def save_fit(
+        target_path: str = None,
+        use_complex_name: bool = False,
+        fit_window=None):
     log = chisurf.logging
     log.debug("save_fit: start (target_path=%r, use_complex_name=%r)",
               target_path, use_complex_name)
@@ -162,6 +165,68 @@ def save_fit(target_path: str = None,
     # 1) dump numeric data
     log.debug("Saving fit CSV and curves to %r.csv", basename)
     fit.save(basename, 'csv', save_curves=True)
+    # Also persist a fit.json (single-fit project-style state without global links)
+    try:
+        fg_key, fit_payload = _build_fitgroup_payload_from_window(
+            fit_window,
+            register_datacurve=lambda dc: "",
+            log=log,
+            group_index=0,
+            include_global_links=False,
+        )
+        # embed dataset in-place to avoid cross-fit collisions; reuse fit.data arrays
+        datasets: typing.Dict[str, typing.Dict] = {}
+        try:
+            data_obj = getattr(fit, "data", None)
+            if isinstance(data_obj, chisurf.data.DataCurve):
+                try:
+                    x = np.asarray(getattr(data_obj, "x", []), dtype=float)
+                    y = np.asarray(getattr(data_obj, "y", []), dtype=float)
+                    ex = np.asarray(getattr(data_obj, "ex", np.zeros_like(x)), dtype=float)
+                    ey = np.asarray(getattr(data_obj, "ey", np.ones_like(y)), dtype=float)
+                except Exception:
+                    x = np.asarray([], dtype=float)
+                    y = np.asarray([], dtype=float)
+                    ex = np.asarray([], dtype=float)
+                    ey = np.asarray([], dtype=float)
+                datasets["ds000"] = {
+                    "name": getattr(data_obj, "name", ""),
+                    "filename": getattr(data_obj, "filename", ""),
+                    "x": x.tolist(),
+                    "y": y.tolist(),
+                    "ex": ex.tolist(),
+                    "ey": ey.tolist(),
+                }
+                # attach dataset_id directly to the fit payload
+                if fit_payload and fit_payload.get("local_fits"):
+                    try:
+                        fit_payload["local_fits"][0]["dataset_id"] = "ds000"
+                    except Exception:
+                        pass
+        except Exception as exc:
+            log.warning(f"save_fit: could not build dataset payload for fit.json: {exc}")
+
+        if fit_payload:
+            proj = CSProject(
+                name=fit.name or save_name,
+                description=f"ChiSurf fit '{fit.name or save_name}'",
+                chisurf_version=getattr(chisurf.info, "__version__", None),
+                datasets=datasets,
+                experiments={},
+                fits={fg_key: fit_payload},
+                ui_state={"current_fit_index": getattr(cs, "fit_idx", 0)},
+            )
+            # Write fit.json using the base name without the original data extension
+            base_no_ext = os.path.join(target_path, os.path.splitext(save_name)[0])
+            fit_json_path = base_no_ext + ".fit.json"
+            try:
+                with open(fit_json_path, "w", encoding="utf-8") as f:
+                    json.dump(proj.to_dict(), f, indent=2, sort_keys=True)
+                log.info(f"Saved fit state to {fit_json_path}")
+            except Exception as exc:
+                log.warning(f"save_fit: could not write fit.json: {exc}")
+    except Exception as exc:
+        log.warning(f"save_fit: failed to build fit.json payload: {exc}")
     #log.debug("Saving fit data object to %r_data.pkl", basename)
     #fit.data.save(basename + "_data", 'pkl')
 
@@ -332,15 +397,15 @@ def save_fits(target_path: str, use_complex_name: bool = False):
             # Ensure per-fit directory handling with overwrite/skip/cancel dialog
             if os.path.exists(p2):
                 try:
-                    from PyQt5.QtWidgets import QMessageBox
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Question)
+                    from qtpy import QtWidgets
+                    msg = QtWidgets.QMessageBox()
+                    msg.setIcon(QtWidgets.QMessageBox.Question)
                     msg.setWindowTitle("Folder exists")
                     msg.setText(f"The folder '{p2}' already exists.")
                     msg.setInformativeText("Do you want to overwrite it?")
-                    overwrite_btn = msg.addButton("Overwrite", QMessageBox.AcceptRole)
-                    skip_btn = msg.addButton("Skip", QMessageBox.RejectRole)
-                    cancel_btn = msg.addButton("Cancel", QMessageBox.DestructiveRole)
+                    overwrite_btn = msg.addButton("Overwrite", QtWidgets.QMessageBox.AcceptRole)
+                    skip_btn = msg.addButton("Skip", QtWidgets.QMessageBox.RejectRole)
+                    cancel_btn = msg.addButton("Cancel", QtWidgets.QMessageBox.DestructiveRole)
                     msg.setDefaultButton(skip_btn)
                     msg.exec_()
                     clicked = msg.clickedButton()
@@ -531,9 +596,9 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     """Save the current state of the application as a project.
 
     This implementation writes a JSON ``project.json`` file using
-    :class:`chisurf.project.Project` together with a minimal snapshot of all
-    datasets, fits and UI state. It no longer creates per‑fit folders or
-    YAML/Word reports. Existing callers can keep using this macro unchanged.
+    :class:`chisurf.project.Project` together with a snapshot of all datasets,
+    fits and UI state. It no longer creates per-fit folders, screenshots or
+    DOCX reports; everything is embedded in ``project.json``.
 
     Parameters
     ----------
@@ -548,6 +613,14 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
 
     base_dir = os.path.abspath(str(target_path))
     project_dir = os.path.join(base_dir, project_name)
+
+    # Clean the target directory to avoid stale files from earlier saves
+    try:
+        if os.path.isdir(project_dir):
+            shutil.rmtree(project_dir)
+    except Exception as exc:
+        log.error(f"save_project: could not clean existing project directory {project_dir}: {exc}")
+        return
 
     try:
         os.makedirs(project_dir, exist_ok=True)
@@ -604,14 +677,17 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                     register_datacurve(dc)
 
     # --- Collect fits & global links --------------------------------------
-    fits_payload: typing.Dict[str, typing.Dict] = {}
+    manifest_fits: typing.List[typing.Dict[str, typing.Any]] = []
 
     for i, fit_window in enumerate(chisurf.gui.fit_windows):
         fit_group = getattr(fit_window, "fit", None)
         if fit_group is None:
             continue
 
-        local_fits_state = []
+        base_name = getattr(fit_group, "name", "") or f"fitgroup_{i:03d}"
+        fg_id = chisurf.base.clean_string(str(base_name)) or f"fitgroup_{i:03d}"
+
+        local_fits_state: typing.List[typing.Dict[str, typing.Any]] = []
         model_name = None
 
         grouped = getattr(fit_group, "grouped_fits", [])
@@ -637,8 +713,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                 except Exception:
                     pass
 
-            # Capture per-fit model state and current x-range so that a
-            # project round-trip restores both parameters and fit limits.
+            # Capture per-fit model state and current x-range
             try:
                 get_state = getattr(local_fit, "get_state", None)
                 if callable(get_state):
@@ -646,7 +721,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                 else:
                     fit_state = project_fit_state.fit_to_state(local_fit)
             except Exception as exc:
-                log.warning(f"save_project: could not serialize fit group #{i}: {exc}")
+                log.warning(f"save_project: could not serialize fit group {fg_id}: {exc}")
                 fit_state = {}
 
             try:
@@ -668,22 +743,21 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             local_fits_state.append(rec)
 
         # Capture global links if a GlobalFitModel is present
-        global_links_state: typing.Dict[str, typing.Any] = {}
         global_model = getattr(fit_group, "_model", None)
+        global_links_state: typing.Dict[str, typing.Any] = {}
         if global_model is not None:
             try:
                 global_links_state = project_fit_state.global_links_to_state(global_model)
             except Exception as exc:
-                log.warning(f"save_project: could not serialize global links for fit group #{i}: {exc}")
+                log.warning(f"save_project: could not serialize global links for {fg_id}: {exc}")
 
-        fg_key = f"fitgroup_{i:03d}"
-        fits_payload[fg_key] = {
-            "type": "fit_group",
-            "name": getattr(fit_group, "name", fg_key),
+        manifest_fits.append({
+            "id": fg_id,
+            "name": getattr(fit_group, "name", fg_id),
             "model_name": model_name,
             "local_fits": local_fits_state,
             "global_links": global_links_state,
-        }
+        })
 
     ui_state = {
         "current_fit_index": getattr(cs, "fit_idx", 0),
@@ -691,13 +765,8 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         "current_setup_idx": getattr(cs, "current_setup_idx", 0),
     }
 
-    # Optionally capture main-window and MDI layout geometry/state in a
-    # JSON-serializable form so that a reloaded project can restore the
-    # visual arrangement of windows. We keep this best-effort and guard
-    # against any Qt/UI issues so that project saving never fails because
-    # of GUI state.
+    # Optionally capture main-window and MDI layout geometry/state
     try:
-        # Main window geometry/state (toolbars, docks, splitter positions).
         mw_state = {}
         save_geom = getattr(cs, "saveGeometry", None)
         save_state = getattr(cs, "saveState", None)
@@ -716,7 +785,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         if mw_state:
             ui_state["main_window"] = mw_state
 
-        # MDI subwindow layout (tiling/cascading and tabbed layout state).
         mdi = getattr(cs, "mdiarea", None)
         if mdi is not None:
             save_mdi = getattr(mdi, "saveState", None)
@@ -727,7 +795,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                 except Exception:
                     pass
     except Exception:
-        # Geometry is a purely cosmetic extra; never fail project save.
         pass
 
     proj = CSProject(
@@ -736,12 +803,424 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         chisurf_version=getattr(chisurf.info, "__version__", None),
         datasets=datasets,
         experiments={},  # reserved for future structured experiment state
-        fits=fits_payload,
+        fits=manifest_fits,
         ui_state=ui_state,
     )
 
     project_save_json(proj, project_dir)
     log.info(f"Project saved to {project_dir}")
+
+
+def _write_fit_docx(
+        fit_window,
+        fit_group,
+        local_fit,
+        lf_dir: pathlib.Path,
+        clean_name: str,
+        fit_index: int,
+) -> pathlib.Path | None:
+    """Create a per-local-fit DOCX + screenshots inside the local-fit folder."""
+    log = chisurf.logging
+    try:
+        import docx
+        from docx.shared import Inches
+    except Exception as exc:
+        log.info(f"python-docx not available; skipping DOCX for {clean_name}: {exc}")
+        return None
+
+    widget = getattr(fit_window, "fit_widget", None)
+    if widget is None or fit_group is None or local_fit is None:
+        return None
+
+    lf_dir.mkdir(parents=True, exist_ok=True)
+    basename = lf_dir / clean_name
+
+    document = docx.Document()
+    document.add_heading(local_fit.name or clean_name, 0)
+
+    # One fit => single section
+    try:
+        widget.selected_fit = fit_index
+    except Exception:
+        pass
+
+    for suffix, source in (
+        ("_screenshot_fit.png", fit_window),
+        ("_screenshot_model.png", local_fit.model),
+    ):
+        png_path = basename.parent / f"{basename.name}{suffix}"
+        try:
+            pix = source.grab()
+            pix.save(str(png_path))
+            del pix
+            document.add_picture(str(png_path), width=Inches(2.0))
+        except Exception as exc:
+            log.debug(f"Could not add screenshot {png_path}: {exc}")
+
+    # Compact summary table for this fit only
+    document.add_heading('Summary', level=1)
+    p = document.add_paragraph("Parameters: fitted in ")
+    p.add_run('bold').bold = True
+    p.add_run(', linked in ')
+    p.add_run('italic.').italic = True
+    p.add_run(' Fixed are plain.')
+
+    table = document.add_table(rows=1, cols=2)
+    hdr = table.rows[0].cells
+    hdr[0].text = "Param"
+    hdr[1].text = "#1"
+
+    parameters = sorted(local_fit.model.parameters_all_dict.keys())
+    for k in parameters:
+        row = table.add_row().cells
+        row[0].text = k
+        try:
+            val = local_fit.model.parameters_all_dict[k]
+            run = row[1].paragraphs[0].add_run(f"{val.value:.3f}")
+            if val.fixed:
+                pass
+            elif val.link is not None:
+                run.italic = True
+            else:
+                run.bold = True
+        except Exception:
+            continue
+
+    chi_row = table.add_row().cells
+    chi_row[0].text = "Chi2r"
+    try:
+        chi_row[1].paragraphs[0].add_run(f"{local_fit.chi2r:.4f}")
+    except Exception:
+        pass
+
+    docx_path = basename.with_suffix(".docx")
+    document.save(str(docx_path))
+    return docx_path
+
+def _build_fitgroup_payload_from_window(
+        fit_window,
+        register_datacurve: typing.Callable[[chisurf.data.DataCurve], str],
+        log: typing.Any,
+        group_index: int = 0,
+        include_global_links: bool = True,
+) -> typing.Tuple[str, typing.Dict]:
+    """Helper to serialize a single FitSubWindow into the Project payload."""
+    fit_group = getattr(fit_window, "fit", None)
+    if fit_group is None:
+        return None, {}
+
+    local_fits_state = []
+    model_name = None
+
+    grouped = getattr(fit_group, "grouped_fits", [])
+    for local_fit in grouped:
+        data_obj = getattr(local_fit, "data", None)
+        ds_id = None
+        if isinstance(data_obj, chisurf.data.DataCurve):
+            ds_id = register_datacurve(data_obj)
+
+        # Derive human-readable model label from experiment, if available
+        if model_name is None and data_obj is not None:
+            try:
+                exp = getattr(data_obj, "experiment", None)
+                mn = getattr(exp, "model_names", [])
+                mc = getattr(exp, "model_classes", [])
+                for name, cls in zip(mn, mc):
+                    try:
+                        if isinstance(local_fit.model, cls):
+                            model_name = name
+                            break
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        # Capture per-fit model state and current x-range so that a
+        # round-trip restores both parameters and fit limits.
+        try:
+            get_state = getattr(local_fit, "get_state", None)
+            if callable(get_state):
+                fit_state = get_state()
+            else:
+                fit_state = project_fit_state.fit_to_state(local_fit)
+        except Exception as exc:
+            log.warning(f"save_fit: could not serialize fit group #{group_index}: {exc}")
+            fit_state = {}
+
+        try:
+            fr = getattr(local_fit, "fit_range", None)
+            if isinstance(fr, tuple) and len(fr) == 2:
+                fit_range = [int(fr[0]), int(fr[1])]
+            else:
+                fit_range = None
+        except Exception:
+            fit_range = None
+
+        rec = {
+            "dataset_id": ds_id,
+            "fit_state": fit_state,
+        }
+        if fit_range is not None:
+            rec["fit_range"] = fit_range
+
+        local_fits_state.append(rec)
+
+    # Capture global links if a GlobalFitModel is present and requested
+    global_links_state: typing.Dict[str, typing.Any] = {}
+    if include_global_links:
+        global_model = getattr(fit_group, "_model", None)
+        if global_model is not None:
+            try:
+                global_links_state = project_fit_state.global_links_to_state(global_model)
+            except Exception as exc:
+                log.warning(f"save_fit: could not serialize global links for fit group #{group_index}: {exc}")
+
+    fg_key = f"fitgroup_{group_index:03d}"
+    return fg_key, {
+        "type": "fit_group",
+        "name": getattr(fit_group, "name", fg_key),
+        "model_name": model_name,
+        "local_fits": local_fits_state,
+        "global_links": global_links_state,
+    }
+
+
+def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf_fit"):
+    """Save a single fit (data + model state + window) in the project format.
+
+    The output is a folder containing ``project.json`` so it can be reloaded
+    with :func:`load_fit_project` similarly to full projects, but without
+    touching other open fits.
+    """
+    log = chisurf.logging
+    cs = chisurf.cs
+
+    if fit_window is None:
+        fit_window = getattr(cs.mdiarea, "currentSubWindow", lambda: None)()
+    if fit_window is None:
+        log.error("save_fit_project: no fit window available")
+        return
+
+    base_dir = os.path.abspath(str(target_path))
+    project_dir = os.path.join(base_dir, fit_name)
+
+    try:
+        os.makedirs(project_dir, exist_ok=True)
+    except Exception as exc:
+        log.error(f"save_fit_project: could not create directory {project_dir}: {exc}")
+        return
+
+    datasets: typing.Dict[str, typing.Dict] = {}
+    dataset_id_by_obj: typing.Dict[int, str] = {}
+    ds_counter = 0
+
+    def register_datacurve(dc: chisurf.data.DataCurve) -> str:
+        nonlocal ds_counter
+        key = id(dc)
+        if key in dataset_id_by_obj:
+            return dataset_id_by_obj[key]
+        ds_id = f"ds{ds_counter:03d}"
+        ds_counter += 1
+        try:
+            x = np.asarray(getattr(dc, "x", []), dtype=float)
+            y = np.asarray(getattr(dc, "y", []), dtype=float)
+            ex = np.asarray(getattr(dc, "ex", np.zeros_like(x)), dtype=float)
+            ey = np.asarray(getattr(dc, "ey", np.ones_like(y)), dtype=float)
+        except Exception:
+            x = np.asarray([], dtype=float)
+            y = np.asarray([], dtype=float)
+            ex = np.asarray([], dtype=float)
+            ey = np.asarray([], dtype=float)
+        filename = getattr(dc, "filename", "")
+        datasets[ds_id] = {
+            "name": getattr(dc, "name", ""),
+            "filename": filename,
+            "x": x.tolist(),
+            "y": y.tolist(),
+            "ex": ex.tolist(),
+            "ey": ey.tolist(),
+        }
+        dataset_id_by_obj[key] = ds_id
+        return ds_id
+
+    fg_key, fit_payload = _build_fitgroup_payload_from_window(
+        fit_window, register_datacurve, log, group_index=0
+    )
+    if not fit_payload:
+        log.error("save_fit_project: fit payload empty; aborting")
+        return
+
+    proj = CSProject(
+        name=fit_name,
+        description=f"ChiSurf fit '{fit_name}'",
+        chisurf_version=getattr(chisurf.info, "__version__", None),
+        datasets=datasets,
+        experiments={},
+        fits={fg_key: fit_payload},
+        ui_state={"current_fit_index": getattr(cs, "fit_idx", 0)},
+    )
+
+    # Write both project.json (compat) and fit.json (explicit single-fit entry point)
+    project_save_json(proj, project_dir)
+    try:
+        fit_json_path = os.path.join(project_dir, "fit.json")
+        with open(fit_json_path, "w", encoding="utf-8") as f:
+            json.dump(proj.to_dict(), f, indent=2, sort_keys=True)
+    except Exception as exc:
+        log.warning(f"save_fit_project: could not write fit.json: {exc}")
+    log.info(f"Fit saved to {project_dir}")
+
+
+def load_fit_project(project_path: str):
+    """Load a single-fit project and append its fit/data to the current session.
+
+    Existing datasets and fits are left untouched. The stored dataset(s) are
+    appended, then the fit group is rebuilt and its state restored.
+    """
+    log = chisurf.logging
+    cs = chisurf.cs
+
+    proj = None
+    if project_path.endswith(".json") and os.path.isfile(project_path):
+        # Accept direct fit.json/project.json paths
+        try:
+            with open(project_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            proj = CSProject.from_dict(data)
+        except Exception as exc:
+            log.error(f"load_fit_project: failed to read {project_path}: {exc}")
+            return
+    else:
+        base_dir = project_path
+        if not os.path.isdir(base_dir):
+            log.error(f"load_fit_project: path {project_path} does not exist")
+            return
+        try:
+            proj = project_load_json(base_dir)
+        except Exception as exc:
+            log.error(f"load_fit_project: failed to read project.json from {base_dir}: {exc}")
+            return
+
+    # --- Reconstruct datasets and append to existing imports ---------------
+    dataset_objects: typing.Dict[str, chisurf.data.DataCurve] = {}
+    dataset_indices: typing.Dict[str, int] = {}
+
+    for ds_id, payload in (proj.datasets or {}).items():
+        try:
+            name = payload.get("name", ds_id)
+            filename = payload.get("filename", "")
+            x = np.asarray(payload.get("x", []), dtype=float)
+            y = np.asarray(payload.get("y", []), dtype=float)
+            ex = np.asarray(payload.get("ex", np.zeros_like(x)), dtype=float)
+            ey = np.asarray(payload.get("ey", np.ones_like(y)), dtype=float)
+            dc = chisurf.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
+
+            if filename:
+                try:
+                    dc.filename = filename
+                except Exception:
+                    pass
+
+            try:
+                exp_obj = getattr(cs, "current_experiment", None)
+            except Exception:
+                exp_obj = None
+            if exp_obj is not None:
+                try:
+                    dc.experiment = exp_obj
+                except Exception as e_exp:
+                    log.warning(f"load_fit_project: could not attach experiment to dataset {ds_id}: {e_exp}")
+
+            dataset_objects[ds_id] = dc
+            chisurf.imported_datasets.append(dc)
+            dataset_indices[ds_id] = len(chisurf.imported_datasets) - 1
+        except Exception as exc:
+            log.warning(f"load_fit_project: could not reconstruct dataset {ds_id}: {exc}")
+            continue
+
+    try:
+        cs.dataset_selector.update()
+    except Exception:
+        pass
+
+    # --- Rebuild fit groups and restore their state -----------------------
+    fits_map = proj.fits or {}
+    for key, rec in fits_map.items():
+        if not isinstance(rec, dict):
+            continue
+        if rec.get("type") != "fit_group":
+            continue
+
+        local_fits = rec.get("local_fits") or []
+        if not isinstance(local_fits, list) or not local_fits:
+            log.warning(f"load_fit_project: fit record {key} has no local_fits; skipping")
+            continue
+
+        group_indices: typing.List[int] = []
+        for lf in local_fits:
+            if not isinstance(lf, dict):
+                continue
+            ds_id = lf.get("dataset_id")
+            if not ds_id:
+                continue
+            idx = dataset_indices.get(ds_id)
+            if idx is not None:
+                group_indices.append(idx)
+
+        if not group_indices:
+            log.warning(f"load_fit_project: fit record {key} has no valid datasets; skipping")
+            continue
+
+        model_name = rec.get("model_name")
+        try:
+            add_fit(dataset_indices=group_indices, model_name=model_name)
+        except Exception as exc:
+            log.warning(f"load_fit_project: add_fit failed for record {key}: {exc}")
+            continue
+
+        # Newly created FitGroup is appended to chisurf.fits
+        try:
+            fit_group = chisurf.fits[-1]
+        except Exception:
+            continue
+
+        grouped_new = getattr(fit_group, "grouped_fits", [])
+        for lf_rec, new_fit in zip(local_fits, grouped_new):
+            state = lf_rec.get("fit_state") or {}
+            if isinstance(state, dict):
+                try:
+                    set_state = getattr(new_fit, "set_state", None)
+                    if callable(set_state):
+                        set_state(state)
+                    else:
+                        project_fit_state.apply_state_to_fit(new_fit, state)
+                except Exception as exc:
+                    log.warning(f"load_fit_project: could not restore state for local fit in {key}: {exc}")
+
+            fr = lf_rec.get("fit_range")
+            if isinstance(fr, (list, tuple)) and len(fr) == 2:
+                try:
+                    new_fit.fit_range = (int(fr[0]), int(fr[1]))
+                except Exception as exc:
+                    log.warning(f"load_fit_project: could not restore fit_range for local fit in {key}: {exc}")
+
+        global_links_state = rec.get("global_links") or {}
+        if isinstance(global_links_state, dict):
+            global_model = getattr(fit_group, "_model", None)
+            if global_model is not None:
+                try:
+                    project_fit_state.apply_global_links_state(global_model, global_links_state)
+                except Exception as exc:
+                    log.warning(f"load_fit_project: could not restore global links for {key}: {exc}")
+
+    # Best-effort: bring the newest fit window to front
+    try:
+        if chisurf.gui.fit_windows:
+            win = chisurf.gui.fit_windows[-1]
+            win.show()
+            win.setFocus()
+    except Exception:
+        pass
 
 
 def load_project(project_path: str):
@@ -881,13 +1360,12 @@ def load_project(project_path: str):
         pass
 
     # --- Rebuild fit groups and restore their state -----------------------
-    fits_map = proj.fits or {}
-    for key, rec in fits_map.items():
+    fits_list = proj.fits or []
+    fits_root = pathlib.Path(project_path)
+    for rec in fits_list:
         if not isinstance(rec, dict):
             continue
-        if rec.get("type") != "fit_group":
-            continue
-
+        key = rec.get("id") or rec.get("name")
         local_fits = rec.get("local_fits") or []
         if not isinstance(local_fits, list) or not local_fits:
             log.warning(f"load_project: fit record {key} has no local_fits; skipping")
@@ -924,7 +1402,9 @@ def load_project(project_path: str):
 
         grouped_new = getattr(fit_group, "grouped_fits", [])
         for lf_rec, new_fit in zip(local_fits, grouped_new):
+            # Load per-fit state directly from manifest (no external files)
             state = lf_rec.get("fit_state") or {}
+
             if isinstance(state, dict):
                 try:
                     set_state = getattr(new_fit, "set_state", None)
@@ -935,9 +1415,6 @@ def load_project(project_path: str):
                 except Exception as exc:
                     log.warning(f"load_project: could not restore state for local fit in {key}: {exc}")
 
-            # Restore per-fit x-range if stored. This must be applied after
-            # creating the FitGroup but before final GUI updates so that
-            # model curves and residuals use the intended window.
             fr = lf_rec.get("fit_range")
             if isinstance(fr, (list, tuple)) and len(fr) == 2:
                 try:
