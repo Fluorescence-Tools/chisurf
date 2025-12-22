@@ -23,6 +23,13 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
     model instance without requiring a full :class:`Fit` wrapper.
     """
 
+    try:
+        find_params = getattr(model, "find_parameters", None)
+        if callable(find_params):
+            find_params()
+    except Exception:
+        pass
+
     params = getattr(model, "parameters_all_dict", {}) or {}
 
     # First pass: basic scalar attributes

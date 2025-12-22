@@ -21,8 +21,8 @@ class Project:
     name: str = "untitled"
     description: str = ""
     chisurf_version: Optional[str] = None
-    # Schema / on-disk format version. Start at 1 for the new implementation.
-    project_format_version: int = 1
+    # Schema / on-disk format version. Version 2 stores per-fit folders.
+    project_format_version: int = 2
     # Creation timestamp (ISO 8601). Mainly for user information.
     created: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
 
@@ -30,7 +30,7 @@ class Project:
     # complemented by more structured experiment/model-specific state.
     datasets: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     experiments: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    fits: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    fits: list[Dict[str, Any]] = field(default_factory=list)
     ui_state: Dict[str, Any] = field(default_factory=dict)
     extra: Dict[str, Any] = field(default_factory=dict)
 
@@ -73,7 +73,7 @@ class Project:
             created=data.get("created") or datetime.datetime.now().isoformat(),
             datasets=data.get("datasets") or {},
             experiments=data.get("experiments") or {},
-            fits=data.get("fits") or {},
+            fits=data.get("fits") or [],
             ui_state=data.get("ui_state") or {},
             extra=data.get("extra") or {},
         )
