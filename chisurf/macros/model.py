@@ -134,6 +134,12 @@ def add_component(
             continue
         try:
             append()
+        except TypeError:
+            # Fallback for append signatures that expect amplitude/lifetime
+            try:
+                append(amplitude=1.0, lifetime=4.0)
+            except Exception:
+                continue
         except Exception:
             continue
         try:
