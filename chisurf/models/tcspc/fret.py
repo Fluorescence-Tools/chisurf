@@ -557,19 +557,17 @@ class FRETModel(LifetimeModel):
         self.convolve.n0 = n0
 
     @property
-    def donors(self) -> Lifetime:
-        return self._donors
-
-    @donors.setter
-    def donors(self, v: Lifetime):
-        self._donors = v
-
-    @property
     def reference(self):
         self._reference.update_model()
         ref = np.maximum(self._reference.y, 0)
-        scale = np.max(self.fit.data.y) / np.max(ref)
-        ref *= scale
+
+        ref_max = np.max(ref)
+        if ref_max > 0:
+            scale = np.max(self.fit.data.y) / ref_max
+            ref *= scale
+        else:
+            # Avoid divide-by-zero; return a ones reference with the same shape
+            ref = np.ones_like(ref)
         return ref
 
     def calc_fret_efficiency(self) -> float:
@@ -607,8 +605,9 @@ class FRETModel(LifetimeModel):
         )
         super().__init__(fit, **kwargs)
 
-        # self.lifetimes.append()
-        self._donors = self.lifetimes
+        # Ensure the canonical lifetime group is the donor widget
+        if getattr(self, "donor", None) is not None:
+            self.lifetimes = self.donor
         self._reference = LifetimeModel(fit, **kwargs)
         self._reference.lifetimes = self.donor
         self._reference.convolve = self.convolve
@@ -633,7 +632,7 @@ class FRETModel(LifetimeModel):
         if not isinstance(extra, dict):
             extra = {}
             state["extra"] = extra
-        donor = getattr(self, "donors", None)
+        donor = getattr(self, "lifetimes", None) or getattr(self, "donor", None)
         try:
             if donor is not None:
                 extra["donor_lifetimes_n"] = int(len(donor))
@@ -645,7 +644,7 @@ class FRETModel(LifetimeModel):
         if not isinstance(state, dict):
             return
         extra = state.get("extra") or {}
-        donor = getattr(self, "donor", None)
+        donor = getattr(self, "lifetimes", None) or getattr(self, "donor", None)
         try:
             target_n = extra.get("donor_lifetimes_n")
             if donor is not None and target_n is not None:
