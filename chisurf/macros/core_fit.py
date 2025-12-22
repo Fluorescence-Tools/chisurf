@@ -5,6 +5,7 @@ import gc
 import shutil
 import json
 import pathlib
+import importlib
 import numpy as np
 
 import chisurf
@@ -18,6 +19,90 @@ from chisurf import typing
 from chisurf import logging
 from chisurf.project import Project as CSProject, save_project as project_save_json, load_project as project_load_json
 from chisurf.project import fit_state as project_fit_state
+from chisurf.experiments.core.reader import ExperimentReader
+
+
+def _serialize_reader(reader: typing.Any) -> typing.Optional[typing.Dict[str, typing.Any]]:
+    """Serialize an ExperimentReader into a JSON-friendly dict.
+
+    We keep this minimal to avoid recursion loops (e.g. experiment._readers
+    holding the same reader). Only elementary attributes are retained; Qt
+    widgets, experiment references, and controllers are skipped.
+    """
+    if not isinstance(reader, ExperimentReader):
+        return None
+
+    def _is_basic(v: typing.Any) -> bool:
+        return isinstance(v, (str, int, float, bool, type(None)))
+
+    def _to_basic(v: typing.Any):
+        if _is_basic(v):
+            return v
+        if isinstance(v, np.integer):
+            return int(v)
+        if isinstance(v, np.floating):
+            return float(v)
+        if isinstance(v, np.ndarray):
+            return v.tolist()
+        if isinstance(v, (list, tuple)):
+            out = []
+            for item in v:
+                if _is_basic(item) or isinstance(item, (np.integer, np.floating)):
+                    out.append(_to_basic(item))
+                else:
+                    # skip non-basic entries in sequences
+                    continue
+            return out
+        return None
+
+    state: typing.Dict[str, typing.Any] = {}
+    banned_keys = {"experiment", "_experiment", "controller", "_readers", "setup"}
+    for k, v in getattr(reader, "__dict__", {}).items():
+        if k in banned_keys or (k.startswith("_") and k not in {"_irf"}):
+            continue
+        basic = _to_basic(v)
+        if basic is not None:
+            state[k] = basic
+
+    rec: typing.Dict[str, typing.Any] = {
+        "module": type(reader).__module__,
+        "class": type(reader).__name__,
+        "state": state,
+    }
+    return rec
+
+
+def _deserialize_reader(reader_info: typing.Dict[str, typing.Any]) -> typing.Optional[ExperimentReader]:
+    """Reconstruct an ExperimentReader from serialized info."""
+    if not isinstance(reader_info, dict):
+        return None
+    mod_name = reader_info.get("module")
+    cls_name = reader_info.get("class")
+    state = reader_info.get("state") or {}
+    if not mod_name or not cls_name:
+        return None
+    try:
+        mod = importlib.import_module(mod_name)
+        cls = getattr(mod, cls_name)
+    except Exception:
+        return None
+    try:
+        reader = cls.__new__(cls)
+    except Exception:
+        return None
+    try:
+        if isinstance(state, dict):
+            reader.__dict__.update(state)
+    except Exception:
+        pass
+    # Attach current experiment if available so autofitrange works
+    try:
+        exp_obj = getattr(chisurf.cs, "current_experiment", None)
+        if exp_obj is not None:
+            reader.experiment = exp_obj
+    except Exception:
+        pass
+    return reader
 
 
 def add_fit(
@@ -75,6 +160,27 @@ def add_fit(
                 data_group = chisurf.data.ExperimentDataCurveGroup([data_set])
             else:
                 data_group = data_set
+
+            # Propagate data_reader/experiment to the group for restored projects
+            try:
+                if getattr(data_group, "data_reader", None) is None:
+                    data_group.data_reader = getattr(data_set, "data_reader", None)
+            except Exception:
+                pass
+            try:
+                if getattr(data_group, "experiment", None) is None:
+                    data_group.experiment = getattr(data_set, "experiment", None)
+            except Exception:
+                pass
+            try:
+                # Ensure contained curves have the reader attached (legacy projects)
+                reader_obj = getattr(data_set, "data_reader", None)
+                if reader_obj is not None:
+                    for dc in data_group:
+                        if getattr(dc, "data_reader", None) is None:
+                            dc.data_reader = reader_obj
+            except Exception:
+                pass
 
             # Create the fit
             fit_group = chisurf.fitting.fit.FitGroup(
@@ -663,6 +769,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             "y": y.tolist(),
             "ex": ex.tolist(),
             "ey": ey.tolist(),
+            "data_reader": _serialize_reader(getattr(dc, "data_reader", None)),
         }
         dataset_id_by_obj[key] = ds_id
         return ds_id
@@ -1327,6 +1434,15 @@ def load_project(project_path: str):
             if filename:
                 try:
                     dc.filename = filename
+                except Exception:
+                    pass
+
+            # Rehydrate and attach the experiment reader if stored
+            reader_info = payload.get("data_reader")
+            reader_obj = _deserialize_reader(reader_info)
+            if reader_obj is not None:
+                try:
+                    dc.data_reader = reader_obj
                 except Exception:
                     pass
 
