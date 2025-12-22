@@ -4,6 +4,7 @@ import ast
 import importlib
 import os
 import pathlib
+from functools import partial
 
 import numpy as np
 
@@ -290,3 +291,43 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
         raise
     finally:
         sys.path = original_sys_path
+
+
+def run_plugin_from_dir(main_window, plugin_dir_to_use):
+    """Run a plugin given its directory using toolbar/menu logic."""
+    try:
+        plugin_dir_to_use = pathlib.Path(plugin_dir_to_use)
+        wizard_path = plugin_dir_to_use / "wizard.py"
+        init_path = plugin_dir_to_use / "__init__.py"
+
+        # Keep a persistent globals dict per plugin directory so plugin-created widgets
+        # (e.g. F-Test) are not garbage-collected immediately when launched from toolbar.
+        if not hasattr(main_window, "_plugin_contexts"):
+            main_window._plugin_contexts = {}
+        plugin_key = str(plugin_dir_to_use)
+        context = main_window._plugin_contexts.get(plugin_key)
+        if context is None:
+            context = {"__name__": "plugin"}
+            main_window._plugin_contexts[plugin_key] = context
+
+        # Check if wizard.py exists
+        if wizard_path.exists():
+            adr = "https://github.com/fluorescence-tools/chisurf"  # Default value
+            context.setdefault("adr", adr)
+            p = partial(
+                main_window.onRunMacro, str(wizard_path),
+                executor='exec',
+                globals=context
+            )
+            p()
+        elif init_path.exists():
+            # If no wizard.py, run the plugin's __init__.py using onRunMacro
+            main_window.onRunMacro(
+                str(init_path),
+                executor='exec',
+                globals=context
+            )
+        else:
+            chisurf.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
+    except Exception as e:
+        chisurf.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")

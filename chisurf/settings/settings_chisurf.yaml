@@ -117,6 +117,14 @@ gui:
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
 log_level: 20
+# Environment variables injected at startup (key: value). By default, these override
+# existing environment variables. Set env_override_existing: false to preserve
+# pre-set values in the OS.
+env:
+  # Example:
+  # QT_FATAL_WARNINGS: "1"
+  # PYTHONFAULTHANDLER: "1"
+env_override_existing: true
 # NDxplorer stability and crash mitigation
 #
 # The following thread/runtime options are applied very early at ChiSurf startup,

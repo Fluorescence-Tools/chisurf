@@ -305,9 +305,61 @@ def _apply_thread_env_from_settings() -> None:
         log.debug("Could not apply thread env from settings: %s", e)
 
 
+def _apply_custom_env_from_settings() -> None:
+    """Apply environment variables defined in settings_chisurf.yaml.
+
+    YAML shape:
+      env:
+        KEY: value
+      env_override_existing: false
+    """
+    try:
+        from .path_utils import get_path
+        from .settings_utils import get_chisurf_settings
+        import json as _json
+
+        settings_dir = get_path('settings')
+        settings_file = settings_dir / 'settings_chisurf.yaml'
+        cs_settings = get_chisurf_settings(settings_file, use_source_folder=False)
+        yaml_env_cfg = cs_settings.get('env', {}) if isinstance(cs_settings, dict) else {}
+
+        json_env_cfg = {}
+        try:
+            json_file = settings_dir / 'settings.json'
+            if json_file.is_file():
+                with open(json_file, 'r', encoding='utf-8') as fh:
+                    data = _json.load(fh)
+                    if isinstance(data, dict):
+                        je = data.get('env', {})
+                        if isinstance(je, dict):
+                            json_env_cfg = je
+        except Exception:
+            pass
+
+        env_cfg = {}
+        if isinstance(yaml_env_cfg, dict):
+            env_cfg.update(yaml_env_cfg)
+        if isinstance(json_env_cfg, dict):
+            env_cfg.update(json_env_cfg)
+
+        if not isinstance(env_cfg, dict) or not env_cfg:
+            return
+
+        override = bool(cs_settings.get('env_override_existing', True)) if isinstance(cs_settings, dict) else True
+
+        for key, val in env_cfg.items():
+            if key is None or val is None:
+                continue
+            if override or key not in os.environ or os.environ.get(key, "") == "":
+                os.environ[str(key)] = str(val)
+    except Exception as e:
+        log.debug("Could not apply custom env from settings: %s", e)
+
+
 # Execute at import time (idempotent and best-effort)
 try:
     _apply_thread_env_from_settings()
+    _apply_custom_env_from_settings()
     _init_paths()
     _init_qt_plugins()
     _init_vispy()

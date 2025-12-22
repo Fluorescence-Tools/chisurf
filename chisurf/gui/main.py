@@ -1042,37 +1042,6 @@ class Main(QtWidgets.QMainWindow):
             except Exception as e:
                 chisurf.logging.error(f"Error loading toolbar plugin {plugin_name}: {e}")
 
-    def _run_plugin_from_dir(self, plugin_dir_to_use):
-        """Helper to run a plugin given its directory."""
-        try:
-            import pathlib
-            from functools import partial
-
-            plugin_dir_to_use = pathlib.Path(plugin_dir_to_use)
-            wizard_path = plugin_dir_to_use / "wizard.py"
-            init_path = plugin_dir_to_use / "__init__.py"
-
-            # Check if wizard.py exists
-            if wizard_path.exists():
-                adr = "https://github.com/fluorescence-tools/chisurf"  # Default value
-                p = partial(
-                    self.onRunMacro, wizard_path,
-                    executor='exec',
-                    globals={'__name__': 'plugin', 'adr': adr}
-                )
-                p()
-            elif init_path.exists():
-                # If no wizard.py, run the plugin's __init__.py using onRunMacro
-                self.onRunMacro(
-                    init_path,
-                    executor='exec',
-                    globals={'__name__': 'plugin'}
-                )
-            else:
-                chisurf.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
-        except Exception as e:
-            chisurf.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")
-
     def load_and_show_plugin(self, module_path):
         """Load and show a plugin from its module path."""
         try:
@@ -1105,7 +1074,7 @@ class Main(QtWidgets.QMainWindow):
                     chisurf.logging.warning(f"Plugin directory not found in either built-in or user locations: {module_path}")
                     return
 
-            self._run_plugin_from_dir(plugin_dir_to_use)
+            misc_helpers.run_plugin_from_dir(self, plugin_dir_to_use)
 
         except Exception as e:
             chisurf.logging.error(f"Error loading plugin {module_path}: {e}")

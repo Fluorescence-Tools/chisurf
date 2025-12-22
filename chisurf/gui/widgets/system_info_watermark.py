@@ -212,6 +212,37 @@ def build_system_info_text() -> str:
         thread_block = "Threads:\n  " + "\n  ".join(thread_parts)
         lines.append(thread_block)
 
+    # Custom environment variables injected from settings (env)
+    try:
+        cs_cfg = getattr(chisurf.settings, "cs_settings", {})  # type: ignore[attr-defined]
+        env_cfg = cs_cfg.get("env", {}) if isinstance(cs_cfg, dict) else {}
+        if isinstance(env_cfg, dict) and env_cfg:
+            injected_parts: list[str] = []
+            for key, configured_val in env_cfg.items():
+                # Skip control flag if present
+                if key in ("env_override_existing", None):
+                    continue
+                try:
+                    key_str = str(key)
+                except Exception:
+                    continue
+                current_val = os.getenv(key_str)
+                display_val = current_val if current_val is not None else "<unset>"
+                try:
+                    configured_str = str(configured_val)
+                except Exception:
+                    configured_str = "<unreadable>"
+                if current_val is None:
+                    injected_parts.append(f"{key_str}={display_val} (configured {configured_str})")
+                elif configured_str and current_val != configured_str:
+                    injected_parts.append(f"{key_str}={display_val} (configured {configured_str})")
+                else:
+                    injected_parts.append(f"{key_str}={display_val}")
+            if injected_parts:
+                lines.append("Env(custom):\n  " + "\n  ".join(injected_parts))
+    except Exception:
+        pass
+
     # Current logging/debug level
     try:
         root_logger = logging.getLogger()
