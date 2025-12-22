@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import ast
+import json
 import pathlib
 import traceback
 
@@ -68,6 +69,9 @@ import chisurf.plugins
 import chisurf.fitting
 import chisurf.gui.resources
 import chisurf.plugins.misc.code_editor
+import chisurf.gui.project_helpers as project_helpers
+import chisurf.gui.fit_helpers as fit_helpers
+import chisurf.gui.misc_helpers as misc_helpers
 
 
 class Main(QtWidgets.QMainWindow):
@@ -540,47 +544,232 @@ class Main(QtWidgets.QMainWindow):
         self._current_experiment_idx = self.comboBox_experimentSelect.currentIndex()
         self.onSetupChanged()
 
-    def onLoadFitResults(self, **kwargs):
+    def onLoadFit(self, **kwargs):
         filename = chisurf.gui.widgets.get_filename(
-            file_type="*.json",
-            description="Load results into fit-models",
+            file_type="*.fit.json",
+            description="Load fit (fit.json)",
             **kwargs
         )
-        chisurf.run(f"chisurf.macros.load_fit_result({self.fit_idx}, {filename})")
+        if not filename:
+            return
+        chisurf.run(f"chisurf.macros.core_fit.load_fit_project(r\"{filename}\")")
+
+    def _recent_projects_file(self) -> pathlib.Path:
+        try:
+            return chisurf.settings.get_path('settings') / 'recent_projects.json'
+        except Exception:
+            return pathlib.Path.home() / '.chisurf' / 'recent_projects.json'
+
+    def _load_recent_projects(self) -> list[str]:
+        fp = self._recent_projects_file()
+        try:
+            if not fp.is_file():
+                return []
+        except Exception:
+            return []
+        try:
+            data = json.loads(fp.read_text(encoding='utf-8'))
+        except Exception:
+            return []
+        if isinstance(data, dict):
+            items = data.get('projects', [])
+        else:
+            items = data
+        if not isinstance(items, list):
+            return []
+        out: list[str] = []
+        for it in items:
+            try:
+                s = str(it)
+            except Exception:
+                continue
+            if s:
+                out.append(s)
+        return out
+
+    def _store_recent_projects(self, projects: list[str]) -> None:
+        fp = self._recent_projects_file()
+        try:
+            fp.parent.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+        payload = {'projects': list(projects or [])}
+        try:
+            fp.write_text(json.dumps(payload, indent=2), encoding='utf-8')
+        except Exception:
+            try:
+                chisurf.logging.exception(f"Failed to write recent projects file: {fp}")
+            except Exception:
+                pass
+
+    def _set_recent_projects(self, projects: list[str]) -> None:
+        try:
+            self._recent_projects = list(projects or [])
+        except Exception:
+            self._recent_projects = []
+
+    def add_recent_project(self, project_path) -> None:
+        try:
+            p = os.path.abspath(os.path.normpath(str(project_path)))
+        except Exception:
+            return
+        if not p:
+            return
+
+        try:
+            current = list(getattr(self, '_recent_projects', []) or [])
+        except Exception:
+            current = []
+
+        def _key(s: str) -> str:
+            try:
+                s2 = os.path.normpath(str(s))
+            except Exception:
+                s2 = str(s)
+            return s2.lower() if os.name == 'nt' else s2
+
+        seen = set()
+        new_list: list[str] = []
+        for item in [p] + current:
+            if not item:
+                continue
+            k = _key(item)
+            if k in seen:
+                continue
+            seen.add(k)
+            new_list.append(item)
+
+        max_n = 10
+        new_list = new_list[:max_n]
+        self._set_recent_projects(new_list)
+        self._store_recent_projects(new_list)
+        self._refresh_recent_projects_menu()
+
+    def _clear_recent_projects(self) -> None:
+        self._set_recent_projects([])
+        self._store_recent_projects([])
+        self._refresh_recent_projects_menu()
+
+    def _open_recent_project(self, project_dir: str) -> None:
+        try:
+            path = pathlib.Path(project_dir)
+        except Exception:
+            return
+
+        try:
+            project_file = path / 'project.json'
+            if not project_file.exists():
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    'Invalid Project',
+                    'The selected folder does not contain a valid project file (project.json).'
+                )
+                try:
+                    current = list(getattr(self, '_recent_projects', []) or [])
+                    current = [p for p in current if os.path.normpath(p) != os.path.normpath(project_dir)]
+                    self._set_recent_projects(current)
+                    self._store_recent_projects(current)
+                    self._refresh_recent_projects_menu()
+                except Exception:
+                    pass
+                return
+        except Exception:
+            return
+
+        try:
+            chisurf.working_path = path
+        except Exception:
+            pass
+
+        try:
+            chisurf.macros.core_fit.load_project(project_path=path.as_posix())
+        except Exception:
+            try:
+                chisurf.logging.exception(f"Failed to load recent project: {path}")
+            except Exception:
+                pass
+            return
+
+        try:
+            self._current_project_dir = path
+        except Exception:
+            pass
+
+        self.add_recent_project(path)
+
+    def _refresh_recent_projects_menu(self) -> None:
+        menu = getattr(self, '_menu_recent_projects', None)
+        if menu is None:
+            return
+        try:
+            menu.clear()
+        except Exception:
+            return
+
+        try:
+            projects = list(getattr(self, '_recent_projects', []) or [])
+        except Exception:
+            projects = []
+
+        if not projects:
+            try:
+                a = QtWidgets.QAction('No recent projects', self)
+                a.setEnabled(False)
+                menu.addAction(a)
+            except Exception:
+                pass
+        else:
+            for i, p in enumerate(projects):
+                try:
+                    label = f"&{i + 1} {p}"
+                    a = QtWidgets.QAction(label, self)
+                    a.triggered.connect(lambda _checked=False, pp=p: self._open_recent_project(pp))
+                    menu.addAction(a)
+                except Exception:
+                    continue
+
+        try:
+            menu.addSeparator()
+        except Exception:
+            pass
+        try:
+            clear_action = QtWidgets.QAction('Clear Recent Projects', self)
+            clear_action.triggered.connect(self._clear_recent_projects)
+            menu.addAction(clear_action)
+        except Exception:
+            pass
+
+    def _init_recent_projects_menu(self) -> None:
+        if getattr(self, '_menu_recent_projects', None) is not None:
+            self._refresh_recent_projects_menu()
+            return
+
+        try:
+            recent_menu = QtWidgets.QMenu('Recent Projects', self)
+            self._menu_recent_projects = recent_menu
+        except Exception:
+            return
+
+        try:
+            self.menuProject.insertMenu(self.actionClose_Project, recent_menu)
+        except Exception:
+            try:
+                self.menuProject.addMenu(recent_menu)
+            except Exception:
+                pass
+
+        try:
+            self._set_recent_projects(self._load_recent_projects())
+        except Exception:
+            self._set_recent_projects([])
+
+        self._refresh_recent_projects_menu()
 
     def onSaveProject(self, event: QtCore.QEvent = None):
-        """
-        Save the current state of the application as a project.
+        project_helpers.save_project(self, event=event)
 
-        This method prompts the user for a directory and project name, then calls
-        the save_project function to save the project.
-        """
-        # Inform user about experimental status
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="Project Save",
-            info="Saving current session as a project. This feature is experimental.",
-            show_fortune=False
-        )
-
-        # Get directory to save project
-        path, _ = chisurf.gui.widgets.get_directory()
-        if not path:
-            return
-
-        # Get project name
-        project_name, ok = QtWidgets.QInputDialog.getText(
-            self,
-            "Save Project",
-            "Project name:",
-            QtWidgets.QLineEdit.Normal,
-            "chisurf_project"
-        )
-        if not ok or not project_name:
-            return
-
-        # Save project
-        chisurf.working_path = path
-        chisurf.macros.core_fit.save_project(target_path=path.as_posix(), project_name=project_name)
+    def onSaveProjectAs(self, event: QtCore.QEvent = None):
+        project_helpers.save_project_as(self, event=event)
 
     def onLoadProject(self, event: QtCore.QEvent = None):
         """
@@ -615,65 +804,76 @@ class Main(QtWidgets.QMainWindow):
 
         # Load project
         chisurf.working_path = path
-        chisurf.macros.core_fit.load_project(project_path=path.as_posix())
+        try:
+            chisurf.macros.core_fit.load_project(project_path=path.as_posix())
+        except Exception:
+            try:
+                chisurf.logging.exception(f"Project load failed: {path}")
+            except Exception:
+                pass
+            return
+
+        try:
+            self._current_project_dir = path
+        except Exception:
+            pass
+
+        try:
+            self.add_recent_project(path)
+        except Exception:
+            pass
 
     def reinitialize(self):
-        try:
-            self.onCloseAllFits()
-        except Exception:
-            pass
-        try:
-            for sub_window in list(self.mdiarea.subWindowList()):
+        log = getattr(chisurf, 'logging', None)
+
+        def _log_exception(step: str) -> None:
+            try:
+                exc_fn = getattr(log, 'exception', None)
+                if callable(exc_fn):
+                    exc_fn(f"reinitialize: {step} failed")
+            except Exception:
+                pass
+
+        def _run(step: str, fn) -> None:
+            try:
+                fn()
+            except Exception:
+                _log_exception(step)
+
+        def _close_subwindows() -> None:
+            for sw in list(self.mdiarea.subWindowList()):
                 try:
-                    sub_window.close()
+                    sw.close()
                 except Exception:
-                    pass
-        except Exception:
-            pass
-        try:
-            chisurf.imported_datasets.clear()
-        except Exception:
-            pass
-        try:
-            self.dataset_selector.update()
-        except Exception:
-            pass
-        try:
-            self.fit_selector.update()
-        except Exception:
-            pass
-        try:
+                    try:
+                        title = sw.windowTitle()
+                    except Exception:
+                        title = None
+                    step = f"close subwindow {title}" if title else "close subwindow"
+                    _log_exception(step)
+
+        _run('onCloseAllFits', self.onCloseAllFits)
+        _run('close subwindows', _close_subwindows)
+        _run('clear imported_datasets', chisurf.imported_datasets.clear)
+        _run('dataset_selector.update', self.dataset_selector.update)
+        _run('fit_selector.update', self.fit_selector.update)
+
+        def _reset_state():
             self._current_dataset = None
             self._current_fit = None
             self._fit_idx = 0
-        except Exception:
-            pass
-        try:
-            self.comboBox_Model.clear()
-        except Exception:
-            pass
+
+        _run('reset current state', _reset_state)
+        _run('comboBox_Model.clear', self.comboBox_Model.clear)
 
     def onCloseProject(self, event: QtCore.QEvent = None):
         try:
-            self.onCloseAllFits()
+            self.reinitialize()
         except Exception:
             pass
+
         try:
-            chisurf.imported_datasets = []
-        except Exception:
-            pass
-        try:
-            self.dataset_selector.update()
-        except Exception:
-            pass
-        try:
-            self._current_dataset = None
-            self._current_fit = None
-            self._fit_idx = 0
-        except Exception:
-            pass
-        try:
-            self.comboBox_Model.clear()
+            self._current_project_dir = None
         except Exception:
             pass
 
@@ -728,106 +928,20 @@ class Main(QtWidgets.QMainWindow):
             pass
 
     def onCloseAllFits(self):
-        # Close all existing fit windows directly, suppressing any per-fit
-        # confirmation dialogs. This mirrors the original implementation and
-        # avoids repeated cs.update() calls during shutdown.
-        old_confirm = chisurf.settings.gui.get('confirm_close_fit', True)
-        try:
-            chisurf.settings.gui['confirm_close_fit'] = False
-        except Exception:
-            old_confirm = None
-
-        try:
-            for sub_window in list(chisurf.gui.fit_windows):
-                try:
-                    # Disable any per-window confirmation flags
-                    setattr(sub_window, 'close_confirm', False)
-                except Exception:
-                    pass
-                try:
-                    w = sub_window.widget()
-                    if w is not None:
-                        setattr(w, 'close_confirm', False)
-                except Exception:
-                    pass
-                try:
-                    sub_window.close()
-                except Exception:
-                    pass
-
-            # Clear Python-side tracking lists
-            chisurf.fits.clear()
-            chisurf.gui.fit_windows.clear()
-        finally:
-            if old_confirm is not None:
-                try:
-                    chisurf.settings.gui['confirm_close_fit'] = old_confirm
-                except Exception:
-                    pass
-
-        # Clear the analysis dock layouts
-        chisurf.gui.widgets.clear_layout(self.modelLayout)
-        header_layout = getattr(self, "analysisHeaderLayout", None)
-        if header_layout is not None:
-            chisurf.gui.widgets.clear_layout(header_layout)
-        chisurf.gui.widgets.clear_layout(self.plotOptionsLayout)
+        fit_helpers.close_all_fits(self)
 
     def onAddDataset(self):
-        filename = self.current_setup.controller.get_filename()
-        if isinstance(filename, list):
-            l = [r"{}".format(pathlib.Path(f).as_posix()) for f in filename]
-            s = '|'.join(l)
-        elif isinstance(filename, pathlib.Path):
-            s = r"{}".format(filename.as_posix())
-        else:
-            s = r"{}".format(filename)
-        s = s.replace("\\", "/")
-        chisurf.run(f'chisurf.macros.add_dataset(filename=r"{s}")')
+        misc_helpers.add_dataset(self)
 
     def onSaveFits(self, event: QtCore.QEvent = None):
-        path, _ = chisurf.gui.widgets.get_directory()
-        if not path:
-            return
-        chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.save_fits(target_path=r"{path.as_posix()}")')
+        fit_helpers.save_fits(self, event=event)
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):
-        # Prefer default directory from the current fit's data filename, if available
-        try:
-            default_dir = None
-            fit = getattr(self, 'current_fit', None)
-            data_obj = getattr(fit, 'data', None) if fit is not None else None
-            filename = getattr(data_obj, 'filename', None) if data_obj is not None else None
-            if isinstance(filename, str):
-                fn = filename.strip()
-                if fn and fn.lower() != 'none':
-                    p = pathlib.Path(fn)
-                    # Use parent folder only for absolute paths
-                    if p.is_absolute():
-                        default_dir = p.parent
-            # Only set the directory if the caller did not specify one
-            if ('directory' not in kwargs or kwargs.get('directory') is None) and default_dir is not None:
-                kwargs['directory'] = default_dir
-        except Exception as e:
-            chisurf.logging.warning(f"onSaveFit: could not infer data folder from fit.data.filename: {e}")
-
-        path, _ = chisurf.gui.widgets.get_directory(**kwargs)
-        if not path:
-            return
-        # Keep behavior: user chooses where to save; update working path accordingly
-        chisurf.working_path = path
-        chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
+        fit_helpers.save_fit(self, event=event, **kwargs)
 
     def onOpenHelp(self):
         """Open the help plugin."""
-        try:
-            self.open_context_help_for_reader(None)
-        except Exception as e:
-            chisurf.gui.widgets.general.MyMessageBox(
-                label="Help Plugin Error",
-                info=f"Error loading help plugin: {str(e)}",
-                show_fortune=False
-            )
+        misc_helpers.open_help(self)
 
     def open_context_help_for_reader(self, topic: str | None = None) -> None:
         """Open the help plugin, optionally with a filter for a given topic.
@@ -840,160 +954,23 @@ class Main(QtWidgets.QMainWindow):
             relevant documentation entries are highlighted.
         """
 
-        import importlib
-        import pathlib
-        try:
-            try:
-                help_plugin = importlib.import_module("chisurf.plugins.chisurf.help")
-            except Exception:
-                help_plugin = importlib.import_module("chisurf.plugins.help")
-            window = getattr(self, "_help_window", None)
-            if window is None or not isinstance(window, help_plugin.HelpWidget):
-                window = help_plugin.HelpWidget()
-                try:
-                    window.destroyed.connect(lambda _=None: setattr(self, "_help_window", None))
-                except Exception:
-                    pass
-                self._help_window = window
-
-            try:
-                if topic:
-                    txt = str(topic).strip()
-                    if txt:
-                        handled = False
-                        # Allow topics like "some/doc.md#section-id" to open
-                        # a specific Markdown file and subsection directly in
-                        # the help browser. If parsing fails, fall back to the
-                        # existing filter behavior.
-                        try:
-                            path_part = txt
-                            anchor = None
-                            if "#" in txt:
-                                path_part, frag = txt.split("#", 1)
-                                path_part = path_part.strip()
-                                anchor = frag.strip() or None
-
-                            if path_part.lower().endswith(".md"):
-                                raw_path = pathlib.Path(path_part)
-
-                                # Resolve relative paths against the project
-                                # root (same root used by the help plugin for
-                                # core docs discovery).
-                                if not raw_path.is_absolute():
-                                    try:
-                                        base = pathlib.Path(chisurf.__file__).resolve().parent
-                                        root = base.parent
-                                        candidate = (root / raw_path).resolve()
-                                    except Exception:
-                                        candidate = raw_path
-                                else:
-                                    candidate = raw_path
-
-                                if candidate.exists():
-                                    try:
-                                        window.open_markdown_path(candidate, anchor)
-                                        handled = True
-                                    except Exception:
-                                        handled = False
-
-                        except Exception:
-                            handled = False
-
-                        if not handled:
-                            window.filter_line_edit.setText(txt)
-            except Exception:
-                pass
-
-            window.show()
-            try:
-                window.raise_()
-                window.activateWindow()
-            except Exception:
-                pass
-        except Exception as e:
-            chisurf.gui.widgets.general.MyMessageBox(
-                label="Help Plugin Error",
-                info=f"Error loading help plugin: {str(e)}",
-                show_fortune=False
-            )
+        misc_helpers.open_help(self, topic=topic)
 
     def onOpenUpdate(self):
         """Open the updater plugin."""
-        # Import the updater plugin
-        import importlib
-        try:
-            try:
-                updater_plugin = importlib.import_module("chisurf.plugins.chisurf.updater")
-            except ImportError:
-                updater_plugin = importlib.import_module("chisurf.plugins.updater")
-
-            window = updater_plugin.UpdaterWidget()
-            window.show()
-        except Exception as e:
-            # Show error message if plugin can't be loaded
-            chisurf.gui.widgets.general.MyMessageBox(
-                label="Updater Plugin Error",
-                info=f"Error loading updater plugin: {str(e)}",
-                show_fortune=False
-            )
+        misc_helpers.open_updater(self)
 
     def onOpenAbout(self):
         """Open the about plugin."""
-        import importlib
-        try:
-            try:
-                about_plugin = importlib.import_module("chisurf.plugins.chisurf.about")
-            except ImportError:
-                about_plugin = importlib.import_module("chisurf.plugins.about")
-
-            window = about_plugin.AboutDialog(parent=self)
-            window.show()
-        except Exception as e:
-            chisurf.gui.widgets.general.MyMessageBox(
-                label="About Plugin Error",
-                info=f"Error opening About dialog: {str(e)}",
-                show_fortune=False
-            )
+        misc_helpers.open_about(self)
 
     def onClearLocalSettings(self):
         """Reset local settings and show a confirmation popup."""
-        # Clear the settings folder
-        chisurf.settings.clear_settings_folder()
-
-        # Show a confirmation popup
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="Settings Reset",
-            info="Local settings have been reset successfully.",
-            show_fortune=False
-        )
+        misc_helpers.clear_local_settings(self)
 
     def onClearUserStyles(self):
         """Clear user style files (QSS) and show a confirmation popup."""
-        # Get the path to the user styles folder
-        user_styles_path = chisurf.settings.get_path('settings') / 'styles'
-
-        # Check if the folder exists
-        if user_styles_path.exists() and user_styles_path.is_dir():
-            # Delete all QSS files in the folder
-            for file in user_styles_path.glob('*.qss'):
-                try:
-                    file.unlink()
-                except Exception as e:
-                    chisurf.logging.warning(f"Could not delete style file {file}: {e}")
-
-            # Show a confirmation popup
-            chisurf.gui.widgets.general.MyMessageBox(
-                label="Styles Reset",
-                info="User style files have been cleared successfully. Restart the application to apply default styles.",
-                show_fortune=False
-            )
-        else:
-            # Show a message if the folder doesn't exist
-            chisurf.gui.widgets.general.MyMessageBox(
-                label="Styles Reset",
-                info="No user style files found.",
-                show_fortune=False
-            )
+        misc_helpers.clear_user_styles(self)
 
     def onClearUserPlugins(self):
         """Clear user plugin folder and show a confirmation popup."""
@@ -1625,6 +1602,7 @@ class Main(QtWidgets.QMainWindow):
         self._fit_idx = 0
         self._current_setup_idx = 0
         self._system_info_watermark = None
+        self._current_project_dir = None
 
         self.experiment_names = list()
         self.dataset_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
@@ -2065,16 +2043,34 @@ class Main(QtWidgets.QMainWindow):
         self.actionClose_Fit.triggered.connect(chisurf.macros.core_fit.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
-        self.actionLoad_result_in_current_fit.triggered.connect(self.onLoadFitResults)
+        self.actionLoad_Fit.triggered.connect(self.onLoadFit)
 
         # Use actions from .ui file for saving and loading projects
         # Now enabled by default and backed by the JSON-based project macros.
         self.actionSave_Project.triggered.connect(self.onSaveProject)
         self.actionSave_Project.setEnabled(True)
+
+        try:
+            action = QtWidgets.QAction("Save Project As...", self)
+            action.setShortcut("Ctrl+Shift+S")
+            action.triggered.connect(self.onSaveProjectAs)
+            self.actionSave_Project_As = action
+            try:
+                self.menuProject.insertAction(self.actionClose_Project, action)
+            except Exception:
+                self.menuProject.addAction(action)
+        except Exception:
+            pass
+
         self.actionOpen_Project.triggered.connect(self.onLoadProject)
         self.actionOpen_Project.setEnabled(True)
         self.actionClose_Project.triggered.connect(self.onCloseProject)
         self.actionClose_Project.setEnabled(True)
+
+        try:
+            self._init_recent_projects_menu()
+        except Exception:
+            pass
 
     def onOpenFretRdaAxisSettings(self):
         """Open a dialog for global FRET R_DA axis settings."""
