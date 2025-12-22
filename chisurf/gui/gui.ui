@@ -268,44 +268,29 @@
     <property name="title">
      <string>File</string>
     </property>
-    <widget class="QMenu" name="menuSave_Fit_results">
-     <property name="title">
-      <string>Save Fit-results</string>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>:/icons/icons/Document-save.svg</normaloff>:/icons/icons/Document-save.svg</iconset>
-     </property>
-     <addaction name="actionSaveCurrentFit"/>
-     <addaction name="actionSaveAllFits"/>
-    </widget>
-    <widget class="QMenu" name="menuClose_fit">
-     <property name="title">
-      <string>Close fit</string>
-     </property>
-     <addaction name="actionClose_Fit"/>
-     <addaction name="actionClose_all_fits"/>
-    </widget>
     <widget class="QMenu" name="menuProject">
      <property name="title">
       <string>Project</string>
      </property>
      <addaction name="actionOpen_Project"/>
      <addaction name="actionSave_Project"/>
-     <addaction name="actionClose_Project"/>
     </widget>
-    <widget class="QMenu" name="menuLoad_Fit_result">
+    <widget class="QMenu" name="menuFits">
      <property name="title">
-      <string>Load Fit-result</string>
+      <string>Fits</string>
      </property>
-     <addaction name="actionLoad_result_in_current_fit"/>
+     <addaction name="actionLoad_Fit"/>
+     <addaction name="separator"/>
+     <addaction name="actionSaveCurrentFit"/>
+     <addaction name="actionSaveAllFits"/>
+     <addaction name="separator"/>
+     <addaction name="actionClose_Fit"/>
+     <addaction name="actionClose_all_fits"/>
     </widget>
-    <addaction name="menuProject"/>
     <addaction name="actionLoad_Data"/>
-    <addaction name="menuLoad_Fit_result"/>
-    <addaction name="menuSave_Fit_results"/>
-    <addaction name="menuClose_fit"/>
-    <addaction name="actionPrint"/>
+    <addaction name="menuProject"/>
+    <addaction name="menuFits"/>
+    <addaction name="actionClose_Project"/>
     <addaction name="separator"/>
     <addaction name="actionExit_2"/>
    </widget>
@@ -989,18 +974,6 @@
     <string>Save All Fit-results</string>
    </property>
   </action>
-  <action name="actionPrint">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="resources/resource.qrc">
-     <normaloff>:/icons/icons/Document-print.svg</normaloff>:/icons/icons/Document-print.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Print</string>
-   </property>
-  </action>
   <action name="actionLoading">
    <property name="checkable">
     <bool>true</bool>
@@ -1010,10 +983,10 @@
    </property>
    <property name="icon">
     <iconset resource="resources/resource.qrc">
-     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+     <normaloff>:/icons/icons/list-add.png</normaloff>:/icons/icons/list-add.png</iconset>
    </property>
    <property name="text">
-    <string>Datasets</string>
+    <string>Dataset</string>
    </property>
   </action>
   <action name="actionPlot_options">
@@ -1021,6 +994,7 @@
     <bool>true</bool>
    </property>
    <property name="checked">
+    <bool>false</bool>
     <bool>true</bool>
    </property>
    <property name="text">
@@ -1324,6 +1298,15 @@
   <action name="actionCurrent_fit">
    <property name="text">
     <string>Load in current fit</string>
+   </property>
+  </action>
+  <action name="actionLoad_Fit">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/document-open.svg</normaloff>:/icons/icons/document-open.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Load Fit</string>
    </property>
   </action>
   <action name="actionLoad_result_in_current_fit">
