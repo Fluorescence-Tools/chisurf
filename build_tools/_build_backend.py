@@ -47,19 +47,8 @@ def get_extensions():
         extra_compile_args = []
         extra_link_args = []
     
-    # Define extension modules
+    # Define extension modules (only include sources that still exist)
     extensions = [
-        Extension(
-            "chisurf.fluorescence.simulation.simulation_",
-            sources=[
-                "chisurf/fluorescence/simulation/simulation_.pyx",
-                "chisurf/fluorescence/simulation/mt19937cok.cpp",
-            ],
-            include_dirs=[np.get_include()],
-            extra_compile_args=extra_compile_args,
-            extra_link_args=extra_link_args,
-            language="c++",
-        ),
         Extension(
             "chisurf.structure.av.fps_",
             sources=[
