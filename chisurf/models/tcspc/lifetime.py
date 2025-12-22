@@ -102,7 +102,28 @@ class Lifetime(FittingParameterGroup):
 
     @property
     def n(self) -> int:
-        return len(self._amplitudes)
+        count = 0
+        try:
+            amplitudes = getattr(self, "_amplitudes", None)
+            if amplitudes is not None:
+                count = len(amplitudes)
+        except Exception:
+            pass
+        # Fallback: infer component count from parameter names if the internal
+        # lists are missing or empty (can happen after partial GUI construction).
+        params = getattr(self, "parameters_all_dict", {}) or {}
+        if not params:
+            try:
+                self.find_parameters()
+                params = getattr(self, "parameters_all_dict", {}) or {}
+            except Exception:
+                params = {}
+        short = getattr(self, "short", "")
+        x_prefix = f"x{short}"
+        t_prefix = f"t{short}"
+        n_x = len([name for name in params if name.startswith(x_prefix)])
+        n_t = len([name for name in params if name.startswith(t_prefix)])
+        return max(count, n_x, n_t, 0)
 
     @property
     def link(self) -> chisurf.fitting.parameter.FittingParameter:
@@ -236,16 +257,24 @@ class LifetimeModel(ModelCurve):
         if anisotropy is None:
             anisotropy = Anisotropy(name='anisotropy', **kwargs)
         self.anisotropy = anisotropy
-
         # Automatically set polarization type for fits
         logging.info("Checking for polarization type setup.")
         # Use the unified method to set polarization based on group position
         polarization_set = self.anisotropy.set_polarization_by_group_position(fit, self)
         if polarization_set:
             logging.info(f"Polarization type set to {self.anisotropy.polarization_type}")
+        if anisotropy is None:
+            anisotropy = Anisotropy(name='anisotropy', **kwargs)
+        self.anisotropy = anisotropy
 
         if lifetimes is None:
-            lifetimes = Lifetime(name='lifetimes', fit=fit, **kwargs)
+            # Preserve an existing lifetimes object (e.g. injected by a widget)
+            # instead of overwriting it with a fresh instance.
+            existing = getattr(self, "lifetimes", None)
+            if isinstance(existing, Lifetime):
+                lifetimes = existing
+            else:
+                lifetimes = Lifetime(name='lifetimes', fit=fit, **kwargs)
         self.lifetimes = lifetimes
 
         if convolve is None:
