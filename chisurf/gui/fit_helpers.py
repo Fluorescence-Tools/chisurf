@@ -1,82 +1,39 @@
 from __future__ import annotations
 
-import pathlib
-from typing import Optional, Any
+import traceback
 
 import chisurf
 from chisurf.gui import QtCore
 
 
-def close_all_fits(main_window) -> None:
-    """Close all fit windows and clear related UI layouts."""
-    old_confirm = chisurf.settings.gui.get('confirm_close_fit', True)
-    try:
-        chisurf.settings.gui['confirm_close_fit'] = False
-    except Exception:
-        old_confirm = None
-
-    try:
-        for sub_window in list(chisurf.gui.fit_windows):
-            try:
-                setattr(sub_window, 'close_confirm', False)
-            except Exception:
-                pass
-            try:
-                widget = sub_window.widget()
-                if widget is not None:
-                    setattr(widget, 'close_confirm', False)
-            except Exception:
-                pass
-            try:
-                sub_window.close()
-            except Exception:
-                pass
-
-        chisurf.fits.clear()
-        chisurf.gui.fit_windows.clear()
-    finally:
-        if old_confirm is not None:
-            try:
-                chisurf.settings.gui['confirm_close_fit'] = old_confirm
-            except Exception:
-                pass
-
-    chisurf.gui.widgets.clear_layout(main_window.modelLayout)
-    header_layout = getattr(main_window, "analysisHeaderLayout", None)
-    if header_layout is not None:
-        chisurf.gui.widgets.clear_layout(header_layout)
-    chisurf.gui.widgets.clear_layout(main_window.plotOptionsLayout)
-
-
-def save_fits(main_window, event: Optional[QtCore.QEvent] = None) -> None:
-    """Prompt for a directory and save all fits via the macro."""
-    path, _ = chisurf.gui.widgets.get_directory()
-    if not path:
+def add_fits_for_datasets(window, data_idx, model_name: str):
+    """Add fits for the provided dataset indices, mirroring onAddFit."""
+    if not data_idx:
         return
-    chisurf.working_path = path
-    chisurf.run(f'chisurf.macros.save_fits(target_path=r"{path.as_posix()}")')
 
+    indices = list(data_idx)
 
-def save_fit(main_window, event: Optional[QtCore.QEvent] = None, **kwargs: Any) -> None:
-    """Prompt for a directory and save the current fit via the macro."""
-    try:
-        default_dir = None
-        fit = getattr(main_window, 'current_fit', None)
-        data_obj = getattr(fit, 'data', None) if fit is not None else None
-        filename = getattr(data_obj, 'filename', None) if data_obj is not None else None
-        if isinstance(filename, str):
-            fn = filename.strip()
-            if fn and fn.lower() != 'none':
-                p = pathlib.Path(fn)
-                if p.is_absolute():
-                    default_dir = p.parent
-        if ('directory' not in kwargs or kwargs.get('directory') is None) and default_dir is not None:
-            kwargs['directory'] = default_dir
-    except Exception as e:
-        chisurf.logging.warning(f"save_fit: could not infer data folder from fit.data.filename: {e}")
+    def _create_next_fit():
+        if not indices:
+            return
+        idx = indices.pop(0)
+        try:
+            chisurf.macros.core_fit.add_fit(
+                dataset_indices=[idx],
+                model_name=model_name,
+            )
+        except Exception as e:
+            msg = f"Add fit failed for dataset index {idx} with model '{model_name}': {e}"
+            try:
+                chisurf.logging.error(msg)
+                chisurf.logging.error(traceback.format_exc())
+            except Exception:
+                pass
+            try:
+                window.status.showMessage(msg, 10000)
+            except Exception:
+                pass
+        if indices:
+            QtCore.QTimer.singleShot(0, _create_next_fit)
 
-    path, _ = chisurf.gui.widgets.get_directory(**kwargs)
-    if not path:
-        return
-    chisurf.working_path = path
-    chisurf.run(f'chisurf.macros.save_fit(target_path=r"{path.as_posix()}")')
+    _create_next_fit()

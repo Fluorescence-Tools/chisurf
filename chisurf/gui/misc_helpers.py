@@ -1,147 +1,292 @@
 from __future__ import annotations
 
+import ast
 import importlib
+import os
 import pathlib
-from typing import Optional
+
+import numpy as np
 
 import chisurf
-from chisurf.gui import QtWidgets, QtCore
+from chisurf import logging
+from chisurf.gui import QtWidgets, QtGui, QtCore
+from chisurf.gui.gui_tweaks import apply_platform_window_tweaks
+from chisurf.gui.widgets.general import LogListWidget
+from chisurf.gui.widgets import system_info_watermark as _system_info_watermark
 
 
-def add_dataset(main_window) -> None:
-    filename = main_window.current_setup.controller.get_filename()
-    if isinstance(filename, list):
-        parts = [pathlib.Path(f).as_posix() for f in filename]
-        s = '|'.join(parts)
-    elif isinstance(filename, pathlib.Path):
-        s = filename.as_posix()
-    else:
-        s = f"{filename}"
-    s = s.replace("\\", "/")
-    chisurf.run(f'chisurf.macros.add_dataset(filename=r"{s}")')
+class TruncatingStatusBar(QtWidgets.QStatusBar):
+    """QStatusBar that truncates overly long messages by keeping the start and end
+    and inserting ellipsis in the middle."""
 
+    def __init__(self, *args, max_message_length: int = 160, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._max_message_length = max(7, int(max_message_length))  # minimum to allow x...y
 
-def open_help(main_window, topic: Optional[str] = None) -> None:
-    """Open the help plugin with optional topic filter or markdown path."""
-    try:
+    def setMaxMessageLength(self, n: int):
         try:
-            help_plugin = importlib.import_module("chisurf.plugins.chisurf.help")
-        except Exception:
-            help_plugin = importlib.import_module("chisurf.plugins.help")
-        window = getattr(main_window, "_help_window", None)
-        if window is None or not isinstance(window, help_plugin.HelpWidget):
-            window = help_plugin.HelpWidget()
-            try:
-                window.destroyed.connect(lambda _=None: setattr(main_window, "_help_window", None))
-            except Exception:
-                pass
-            main_window._help_window = window
-
-        try:
-            if topic:
-                txt = str(topic).strip()
-                if txt:
-                    handled = False
-                    try:
-                        path_part = txt
-                        anchor = None
-                        if "#" in txt:
-                            path_part, frag = txt.split("#", 1)
-                            path_part = path_part.strip()
-                            anchor = frag.strip() or None
-
-                        if path_part.lower().endswith(".md"):
-                            raw_path = pathlib.Path(path_part)
-                            if not raw_path.is_absolute():
-                                try:
-                                    base = pathlib.Path(chisurf.__file__).resolve().parent
-                                    root = base.parent
-                                    candidate = (root / raw_path).resolve()
-                                except Exception:
-                                    candidate = raw_path
-                            else:
-                                candidate = raw_path
-
-                            if candidate.exists():
-                                try:
-                                    window.open_markdown_path(candidate, anchor)
-                                    handled = True
-                                except Exception:
-                                    handled = False
-                    except Exception:
-                        handled = False
-
-                    if not handled:
-                        window.filter_line_edit.setText(txt)
+            self._max_message_length = max(7, int(n))
         except Exception:
             pass
 
-        window.show()
+    def _format_message(self, message: str) -> str:
         try:
-            window.raise_()
-            window.activateWindow()
+            s = str(message)
+        except Exception:
+            return message
+        max_len = self._max_message_length
+        if not s or len(s) <= max_len:
+            return s
+        keep_total = max_len - 3
+        start_keep = keep_total // 2
+        end_keep = keep_total - start_keep
+        return f"{s[:start_keep]}...{s[-end_keep:]}"
+
+    def showMessage(self, message: str, timeout: int = 0):  # type: ignore[override]
+        super().showMessage(self._format_message(message), timeout)
+
+
+def warmup_imports():
+    """Preload heavy modules to improve first-use responsiveness."""
+    try:
+        import pyqtgraph as _pg  # noqa: F401
+        from matplotlib import colors as _mcolors  # noqa: F401
+        import scipy.linalg as _sl  # noqa: F401
+        import scipy.stats as _sstats  # noqa: F401
+        import chisurf.gui.widgets.fitting as _fitwidgets  # noqa: F401
+        _ = getattr(_fitwidgets, "FittingControllerWidget", None)
+        _ = importlib.import_module("chisurf.models.global_model.globalfit")
+    except Exception as e:
+        try:
+            logging.debug(f"warmup_imports encountered: {e}")
         except Exception:
             pass
-    except Exception as e:
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="Help Plugin Error",
-            info=f"Error loading help plugin: {str(e)}",
-            show_fortune=False,
-        )
 
 
-def open_updater(main_window) -> None:
+def apply_window_tweaks(window) -> None:
+    """Apply small, non-invasive tweaks to the main window frame."""
+    apply_platform_window_tweaks(window)
+
+
+def init_system_info_watermark(parent, label=None):
     try:
-        try:
-            updater_plugin = importlib.import_module("chisurf.plugins.chisurf.updater")
-        except ImportError:
-            updater_plugin = importlib.import_module("chisurf.plugins.updater")
-        window = updater_plugin.UpdaterWidget()
-        window.show()
-    except Exception as e:
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="Updater Plugin Error",
-            info=f"Error loading updater plugin: {str(e)}",
-            show_fortune=False,
-        )
+        return _system_info_watermark.ensure_watermark(parent, label)
+    except Exception:
+        return label
 
 
-def open_about(main_window) -> None:
+def update_system_info_watermark_geometry(label) -> None:
     try:
+        _system_info_watermark.update_geometry(label)
+    except Exception:
+        pass
+
+
+def setup_log_list_widget(window) -> None:
+    """Replace the plainTextEditLog with a LogListWidget while preserving items."""
+    existing_items = []
+    if hasattr(window, "plainTextEditLog"):
         try:
-            about_plugin = importlib.import_module("chisurf.plugins.chisurf.about")
-        except ImportError:
-            about_plugin = importlib.import_module("chisurf.plugins.about")
-        window = about_plugin.AboutDialog(parent=main_window)
-        window.show()
+            for i in range(window.plainTextEditLog.count()):
+                existing_items.append(window.plainTextEditLog.item(i).text())
+        except Exception:
+            existing_items = []
+
+    try:
+        parent_widget = window.plainTextEditLog.parent()
+        layout = parent_widget.layout()
+    except Exception:
+        return
+
+    layout_index = None
+    for i in range(layout.count()):
+        if layout.itemAt(i).widget() == window.plainTextEditLog:
+            layout_index = i
+            break
+    if layout_index is None:
+        return
+
+    window.plainTextEditLog.setParent(None)
+    window.plainTextEditLog = LogListWidget(parent_widget)
+    window.plainTextEditLog.setObjectName("plainTextEditLog")
+    layout.insertWidget(layout_index, window.plainTextEditLog)
+
+    for item_text in existing_items:
+        window.plainTextEditLog.addItem(item_text)
+
+
+def filter_log_content(window):
+    """Filter log list widget based on filter text and hide checkbox state."""
+    try:
+        filter_text = window.lineEdit_LogFilter.text().strip().lower()
+    except Exception:
+        filter_text = ""
+    try:
+        hide_non_matching = window.checkBox_filter_hide.isChecked()
+    except Exception:
+        hide_non_matching = False
+
+    if not hasattr(window, "_original_log_items"):
+        window._original_log_items = []
+        try:
+            for i in range(window.plainTextEditLog.count()):
+                window._original_log_items.append(window.plainTextEditLog.item(i).text())
+        except Exception:
+            window._original_log_items = []
+
+    if not filter_text:
+        try:
+            window.plainTextEditLog.clear()
+            for item_text in window._original_log_items:
+                item = QtWidgets.QListWidgetItem(item_text)
+                window.plainTextEditLog.addItem(item)
+        except Exception:
+            pass
+        return
+
+    try:
+        window.plainTextEditLog.clear()
+        if window._original_log_items:
+            for item_text in window._original_log_items:
+                if filter_text in item_text.lower():
+                    item = QtWidgets.QListWidgetItem(item_text)
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
+                    item.setBackground(QtGui.QBrush(QtGui.QColor(255, 255, 0, 50)))
+                    font = item.font()
+                    font.setBold(True)
+                    item.setFont(font)
+                    window.plainTextEditLog.addItem(item)
+                elif not hide_non_matching:
+                    item = QtWidgets.QListWidgetItem(item_text)
+                    item.setForeground(QtGui.QBrush(QtGui.QColor(150, 150, 150)))
+                    window.plainTextEditLog.addItem(item)
+
+            if window.plainTextEditLog.count() == 0:
+                window.plainTextEditLog.addItem("No matching log entries found.")
+        else:
+            window.plainTextEditLog.addItem("No log entries found.")
+    except Exception:
+        pass
+
+
+def update_log_filter(window):
+    """Update log filtering when new entries are added."""
+    try:
+        if window.plainTextEditLog.count() > 0:
+            latest_item = window.plainTextEditLog.item(window.plainTextEditLog.count() - 1).text()
+            if hasattr(window, "_original_log_items"):
+                window._original_log_items.append(latest_item)
+    except Exception:
+        pass
+
+    filter_log_content(window)
+
+
+def run_macro(filename=None, executor: str = "console", globals=None, locals=None, main_window=None):
+    """Run a macro file via console or exec."""
+    if filename is None and main_window is not None:
+        filename = chisurf.gui.widgets.get_filename("Python macros", file_type="Python file (*.py)")
+    if filename is None:
+        return
+    chisurf.logging.info(f"Running script: {filename}")
+
+    if executor == "console":
+        chisurf.console.run_macro(filename=pathlib.Path(filename).as_posix())
+        return
+
+    # executor == exec
+    if globals is None:
+        globals = {
+            "__name__": "__main__",
+            "chisurf": chisurf,
+            "np": np,
+            "os": os,
+            "QtCore": QtCore,
+            "QtGui": QtGui,
+            "cs": main_window,
+        }
+    globals.update({"__file__": filename})
+
+    import sys
+    import importlib
+
+    macro_dir = str(pathlib.Path(filename).parent)
+    original_sys_path = sys.path.copy()
+    if macro_dir not in sys.path:
+        sys.path.insert(0, macro_dir)
+
+    try:
+        # Detect plugin package context for reload behavior
+        if str(filename).find("\\plugins\\") > -1:
+            parts = str(filename).split("\\plugins\\")
+            if len(parts) > 1:
+                plugin_path = parts[1].split("\\")
+                if len(plugin_path) > 1:
+                    module_parts = plugin_path[:-1]
+                elif len(plugin_path) == 1:
+                    module_parts = plugin_path
+                else:
+                    module_parts = []
+
+                if module_parts:
+                    package_name = ".".join(module_parts)
+                    user_plugin_root = pathlib.Path.home() / ".chisurf" / "plugins"
+                    is_user_plugin = str(filename).startswith(str(user_plugin_root))
+                    if is_user_plugin:
+                        globals.update({"__package__": None})
+                        user_plugin_path = user_plugin_root / package_name / "__init__.py"
+                        if user_plugin_path.exists():
+                            try:
+                                source = user_plugin_path.read_text(encoding="utf-8")
+                                tree = ast.parse(source, filename=str(user_plugin_path))
+                                for node in ast.walk(tree):
+                                    if isinstance(node, ast.Assign):
+                                        for target in node.targets:
+                                            if isinstance(target, ast.Name) and target.id == "name":
+                                                if isinstance(node.value, ast.Str):
+                                                    plugin_name = node.value.s
+                                                    chisurf.logging.info(f"User plugin name: {plugin_name}")
+                                                elif isinstance(node.value, ast.Constant) and isinstance(
+                                                    node.value.value, str
+                                                ):
+                                                    plugin_name = node.value.value
+                                                    chisurf.logging.info(f"User plugin name: {plugin_name}")
+                            except Exception as e:
+                                chisurf.logging.warning(f"Error extracting name from {user_plugin_path}: {e}")
+                    else:
+                        globals.update({"__package__": f"chisurf.plugins.{package_name}"})
+                        plugin_module_prefix = f"chisurf.plugins.{package_name}"
+                        for module_name in list(sys.modules.keys()):
+                            if module_name.startswith(plugin_module_prefix):
+                                try:
+                                    chisurf.logging.info(f"Reloading module: {module_name}")
+                                    importlib.reload(sys.modules[module_name])
+                                except Exception as e:
+                                    chisurf.logging.warning(f"Failed to reload module {module_name}: {e}")
+
+        # Resolve missing user plugin file
+        if not pathlib.Path(filename).exists():
+            user_plugin_root = pathlib.Path.home() / ".chisurf" / "plugins"
+            if "\\plugins\\" in str(filename):
+                parts = str(filename).split("\\plugins\\")
+                if len(parts) > 1:
+                    plugin_path = parts[1]
+                    user_plugin_path = user_plugin_root / plugin_path
+                    if user_plugin_path.exists():
+                        filename = user_plugin_path
+                        chisurf.logging.info(f"Found file in user plugins directory: {filename}")
+                    else:
+                        chisurf.logging.error(f"File not found: {filename}")
+                        chisurf.logging.error(f"Also checked user plugin path: {user_plugin_path}")
+                        raise FileNotFoundError(f"File not found: {filename}")
+            else:
+                chisurf.logging.error(f"File not found: {filename}")
+                raise FileNotFoundError(f"File not found: {filename}")
+
+        with open(filename, "rb") as file:
+            exec(compile(file.read(), filename, "exec"), globals, locals)
     except Exception as e:
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="About Plugin Error",
-            info=f"Error opening About dialog: {str(e)}",
-            show_fortune=False,
-        )
-
-
-def clear_local_settings(main_window) -> None:
-    chisurf.settings.clear_settings_folder()
-    chisurf.gui.widgets.general.MyMessageBox(
-        label="Settings Reset",
-        info="Local settings have been reset successfully.",
-        show_fortune=False,
-    )
-
-
-def clear_user_styles(main_window) -> None:
-    user_styles_path = chisurf.settings.get_path('settings') / 'styles'
-    if user_styles_path.exists() and user_styles_path.is_dir():
-        for file in user_styles_path.glob('*.qss'):
-            try:
-                file.unlink()
-            except Exception:
-                pass
-
-    chisurf.gui.widgets.general.MyMessageBox(
-        label="User Styles Cleared",
-        info="All user style files (QSS) have been removed.",
-        show_fortune=False,
-    )
+        chisurf.logging.error(f"Error executing macro: {e}")
+        raise
+    finally:
+        sys.path = original_sys_path
