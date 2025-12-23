@@ -19,10 +19,11 @@ import chisurf.settings
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets import Controller
+from chisurf.gui.widgets.mdi_custom_titlebar import CustomMdiSubWindow
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 
 
-class FitSubWindow(QtWidgets.QMdiSubWindow):
+class FitSubWindow(CustomMdiSubWindow):
 
     def update(self, *args):
         super().update(self, *args)
@@ -36,18 +37,20 @@ class FitSubWindow(QtWidgets.QMdiSubWindow):
             *args,
             **kwargs
     ):
-        super().__init__(*args,  **kwargs)
+        # Initialize with fit name as title
+        title = getattr(fit, 'name', 'Fit Window')
+        super().__init__(title=title, *args,  **kwargs)
 
         self.fit = fit
         self.fit_widget = fit_widget
-        w = QtWidgets.QWidget(None)
-        self.setWidget(w)
 
+        # Use the content_layout from CustomMdiSubWindow instead of creating new widget
         # Set the focus policy of the subwindow
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
-        w.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.content_widget.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        layout = QtWidgets.QVBoxLayout(w)
+        # Use the existing content_layout from CustomMdiSubWindow
+        layout = self.content_layout
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 

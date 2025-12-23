@@ -1,3 +1,4 @@
+/* ===== Standard MDI subwindows (fallback) ===== */
 QMdiSubWindow::close-button,
 QMdiSubWindow::minimize-button,
 QMdiSubWindow::maximize-button {
@@ -57,4 +58,114 @@ QToolButton#qt_mdi_closebutton:hover {
 
 QToolButton#qt_mdi_closebutton:pressed {
     background-color: rgba(220, 60, 60, 0.95) !important;
+}
+
+/* ===== Custom MDI title bar styling ===== */
+
+/* Custom title bar widget */
+QWidget#customTitleBar {
+    background-color: #2e2e2e;
+    border-bottom: 1px solid #5a6b9a;
+    min-height: 24px;
+    max-height: 24px;
+}
+
+/* Title label */
+QLabel#titleLabel {
+    font: bold 8pt;
+    padding: 0 5px;
+    background-color: transparent;
+}
+
+/* Title icon */
+QLabel#titleIcon {
+    background-color: transparent;
+    padding: 0 2px;
+}
+
+/* Window control buttons base style */
+QPushButton#minimizeButton,
+QPushButton#maximizeButton,
+QPushButton#closeButton {
+    background-color: transparent;
+    border: none;
+    color: #d0d0d0;
+    font: bold 8pt;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
+    padding: 0;
+    margin: 0;
+    border-radius: 2px;
+}
+
+/* Minimize and maximize button hover */
+QPushButton#minimizeButton:hover,
+QPushButton#maximizeButton:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+}
+
+/* Close button hover */
+QPushButton#closeButton:hover {
+    background-color: #cc4444;
+    color: #ffffff;
+}
+
+/* Minimize and maximize button pressed */
+QPushButton#minimizeButton:pressed,
+QPushButton#maximizeButton:pressed {
+    background-color: #2f2f2f;
+}
+
+/* Close button pressed */
+QPushButton#closeButton:pressed {
+    background-color: #aa3333;
+}
+
+/* Window container frame */
+QFrame#windowContainer {
+    border: 2px solid #5a6b9a;
+    background-color: #303336;
+}
+
+/* ===== Minimized window icon styling ===== */
+
+/* Minimized icon container */
+QWidget#minimizedIcon {
+    background-color: #3a3a3a;
+    border: 1px solid #5a6b9a;
+    border-radius: 3px;
+}
+
+/* Minimized window title */
+QLabel#minimizedTitle {
+    color: #d0d0d0;
+    font: bold 8pt;
+    background-color: transparent;
+}
+
+/* Restore button on minimized icon */
+QPushButton#restoreButton {
+    background-color: transparent;
+    border: none;
+    color: #d0d0d0;
+    font: bold 10pt;
+    min-width: 16px;
+    max-width: 16px;
+    min-height: 16px;
+    max-height: 16px;
+    padding: 0;
+    margin: 0;
+    border-radius: 2px;
+}
+
+QPushButton#restoreButton:hover {
+    background-color: #4a4a4a;
+    color: #ffffff;
+}
+
+QPushButton#restoreButton:pressed {
+    background-color: #2f2f2f;
 }
