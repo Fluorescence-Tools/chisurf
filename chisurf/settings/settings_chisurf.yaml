@@ -124,6 +124,11 @@ env:
   # Example:
   # QT_FATAL_WARNINGS: "1"
   # PYTHONFAULTHANDLER: "1"
+  # QT_DEBUG_PLUGINS: "1"
+  # QT_LOGGING_RULES: "qt.core.*=true;qt.qpa.*=true;qt.gui.*=true"
+  # QT_OPENGL: "software"
+  # QT_ASSUME_STDERR_HAS_CONSOLE: "1"
+  # PYTHONFAULTHANDLER: "1"
 env_override_existing: true
 # NDxplorer stability and crash mitigation
 #
@@ -218,9 +223,9 @@ parameter:
   hide_fix_checkbox: false
   hide_label: false
   hide_link: false
-  role_color_input: '#ffe0b2'
+  role_color_input: ''
   role_color_linked: ''
-  role_color_output: '#e0e0e0'
+  role_color_output: ''
 photons:
   complevel: 9
   complib: blosc
