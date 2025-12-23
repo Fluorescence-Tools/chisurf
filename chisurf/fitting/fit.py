@@ -159,12 +159,15 @@ class Fit(chisurf.base.Base):
             all_fits = []
             for fg in getattr(chisurf, "fits", []):
                 if isinstance(fg, Fit):
-                    all_fits.append(fg)
                     grouped = getattr(fg, "grouped_fits", None)
-                    if isinstance(grouped, (list, tuple)):
+                    if isinstance(grouped, (list, tuple)) and grouped:
+                        # FitGroup: only add grouped_fits, not the FitGroup itself
                         for lf in grouped:
                             if isinstance(lf, Fit):
                                 all_fits.append(lf)
+                    else:
+                        # Plain Fit: add directly
+                        all_fits.append(fg)
 
             if not all_fits:
                 return base_name

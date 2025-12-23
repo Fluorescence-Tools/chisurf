@@ -182,10 +182,14 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         except Exception:
             pass
 
-        self.actionFormulaChanged.triggered.connect(self.onEquationChanged)
-        self.actionModelChanged.triggered.connect(self.onModelChanged)
-        self.actionLoadModelFile.triggered.connect(self.onLoadModelFile)
-        self.actionEdit_model_file.triggered.connect(self.onEdit_model_file)
+        # Use QueuedConnection to prevent segfaults during widget destruction.
+        # With DirectConnection (default), signals firing during Qt cleanup can
+        # invoke slots on partially-destroyed C++ objects. QueuedConnection defers
+        # slot calls to the event loop which validates receivers before invoking.
+        self.actionFormulaChanged.triggered.connect(self.onEquationChanged, QtCore.Qt.QueuedConnection)
+        self.actionModelChanged.triggered.connect(self.onModelChanged, QtCore.Qt.QueuedConnection)
+        self.actionLoadModelFile.triggered.connect(self.onLoadModelFile, QtCore.Qt.QueuedConnection)
+        self.actionEdit_model_file.triggered.connect(self.onEdit_model_file, QtCore.Qt.QueuedConnection)
 
         # Connect to the destroyed signal to clean up temp files
         self.destroyed.connect(self.cleanup_temp_files)
