@@ -93,6 +93,7 @@ csg_traj_remove_clashed_frames = "chisurf.plugins.traj.traj_remove_clashes.__mai
 csg_traj_rotate_translate = "chisurf.plugins.traj.traj_rotate_translate.__main__:main"
 csg_traj_save_topology = "chisurf.plugins.traj.traj_save_topology.__main__:main"
 csg_quest = "quest.quest_gui:start_gui"
+csg_ndxplorer = "ndxplorer.__main__:main"
 csg_trace_browser = "chisurf.plugins.trace_browser.__main__:main"
 csg_tttr_image_browser = "chisurf.plugins.tttr_image_browser.__main__:main"
 chisurf_update = "chisurf.plugins.updater.__main__:main"
