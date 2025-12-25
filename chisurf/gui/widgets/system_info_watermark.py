@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import collections
 import os
 import sys
 import platform
 import datetime
 import logging
+from typing import Deque
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf
 
@@ -255,6 +257,157 @@ def build_system_info_text() -> str:
     return "\n".join(lines)
 
 
+def _get_memory_usage_mb() -> float | None:
+    """Return current process memory usage in MB (including children), or None if unavailable."""
+    try:
+        import psutil
+        process = psutil.Process()
+        mem = process.memory_info().rss
+        # Include child processes
+        try:
+            for child in process.children(recursive=True):
+                try:
+                    mem += child.memory_info().rss
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+        except Exception:
+            pass
+        return mem / (1024.0 * 1024.0)
+    except Exception:
+        return None
+
+
+def _get_cpu_usage_percent() -> float | None:
+    """Return CPU usage percentage for ChiSurf process and children.
+    
+    Returns combined CPU percent across all cores (0-100 * num_cores).
+    """
+    try:
+        import psutil
+        process = psutil.Process()
+        # Get CPU percent for main process (non-blocking with interval=None uses cached value)
+        cpu = process.cpu_percent(interval=None)
+        # Include child processes
+        try:
+            for child in process.children(recursive=True):
+                try:
+                    cpu += child.cpu_percent(interval=None)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+        except Exception:
+            pass
+        return cpu
+    except Exception:
+        return None
+
+
+def _get_total_memory_mb() -> float | None:
+    """Return total system memory in MB, or None if unavailable."""
+    try:
+        import psutil
+        mem = psutil.virtual_memory()
+        return mem.total / (1024.0 * 1024.0)
+    except Exception:
+        return None
+
+
+def _get_update_interval_ms() -> int:
+    """Get memory update interval from settings (default 5000ms)."""
+    try:
+        cs_settings = getattr(chisurf.settings, "cs_settings", {})
+        gui_settings = cs_settings.get("gui", {}) if isinstance(cs_settings, dict) else {}
+        return int(gui_settings.get("memory_widget_update_interval_ms", 5000))
+    except Exception:
+        return 5000
+
+
+class _Sparkline(QtWidgets.QWidget):
+    """A small sparkline widget showing value history as a thin line."""
+
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None = None,
+        max_samples: int = 40,
+        width: int = 80,
+        height: int = 16,
+        color: QtGui.QColor | None = None,
+        fixed_max: float | None = None,
+        tooltip: str = "Usage history",
+    ):
+        super().__init__(parent)
+        self._max_samples = max_samples
+        self._width = width
+        self._height = height
+        self._values: Deque[float] = collections.deque(maxlen=max_samples)
+        self._color = color or QtGui.QColor(100, 200, 100)
+        self._fixed_max = fixed_max  # If set, use fixed max for scaling
+
+        self.setFixedSize(width, height)
+        self.setToolTip(tooltip)
+
+    def set_color(self, color: QtGui.QColor) -> None:
+        """Update the line color."""
+        self._color = color
+        self.update()
+
+    def add_value(self, value: float) -> None:
+        """Add a new value to the history."""
+        self._values.append(value)
+        self.update()
+
+    def paintEvent(self, event: QtGui.QPaintEvent) -> None:
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        if len(self._values) < 2:
+            painter.end()
+            return
+
+        # Dynamic range based on actual values with 10% padding
+        min_val = min(self._values)
+        max_val = max(self._values)
+        
+        if self._fixed_max is not None:
+            # Use fixed max (e.g., 100% for CPU)
+            plot_min = 0
+            plot_max = self._fixed_max
+        else:
+            val_range = max_val - min_val
+            if val_range < 1.0:
+                val_range = max(1.0, max_val * 0.1)
+            padding = val_range * 0.1
+            plot_min = max(0, min_val - padding)
+            plot_max = max_val + padding
+        
+        plot_range = plot_max - plot_min
+
+        usable_height = self._height - 4
+        usable_width = self._width - 4
+        step = usable_width / (self._max_samples - 1)
+
+        # Build path
+        path = QtGui.QPainterPath()
+        values_list = list(self._values)
+
+        for i, value in enumerate(values_list):
+            ratio = (value - plot_min) / plot_range if plot_range > 0 else 0.5
+            ratio = max(0, min(1, ratio))  # Clamp to [0, 1]
+            x = 2 + i * step
+            y = self._height - 2 - int(ratio * usable_height)
+
+            if i == 0:
+                path.moveTo(x, y)
+            else:
+                path.lineTo(x, y)
+
+        pen = QtGui.QPen(self._color)
+        pen.setWidthF(1.2)
+        painter.setPen(pen)
+        painter.drawPath(path)
+
+        painter.end()
+
+
 class _WatermarkLabel(QtWidgets.QLabel):
 
     def __init__(self, *args, **kwargs):
@@ -291,7 +444,7 @@ class _WatermarkLabel(QtWidgets.QLabel):
                 text = self._full_text
             super().setText(text)
             try:
-                update_geometry(self)
+                update_geometry(self.parent())
             except Exception:
                 self.adjustSize()
         except Exception:
@@ -302,54 +455,186 @@ class _WatermarkLabel(QtWidgets.QLabel):
             pass
 
 
-def ensure_watermark(
-    mdiarea: "QtWidgets.QMdiArea | None", existing_label: QtWidgets.QLabel | None = None
-) -> QtWidgets.QLabel | None:
-    """Create or update the watermark label for the given QMdiArea.
+class _WatermarkWidget(QtWidgets.QWidget):
+    """Composite watermark widget with system info text, memory and CPU sparklines."""
 
-    Returns the label instance (existing or newly created) or None if mdiarea
-    is not available. The label text and geometry are set.
+    def __init__(self, parent: QtWidgets.QWidget | None = None):
+        super().__init__(parent)
+        self.setObjectName("widget_system_info_watermark")
+        self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
+
+        # Main layout
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(6, 4, 6, 4)
+        layout.setSpacing(2)
+
+        # CPU usage row (sparkline + label)
+        self._cpu_row = QtWidgets.QWidget(self)
+        cpu_layout = QtWidgets.QHBoxLayout(self._cpu_row)
+        cpu_layout.setContentsMargins(0, 0, 0, 0)
+        cpu_layout.setSpacing(4)
+
+        self._cpu_sparkline = _Sparkline(
+            self._cpu_row,
+            color=QtGui.QColor(100, 180, 220),  # Blue
+            fixed_max=100.0,  # CPU percentage 0-100
+            tooltip="CPU usage history",
+        )
+        cpu_layout.addWidget(self._cpu_sparkline)
+
+        self._cpu_label = QtWidgets.QLabel("CPU: --", self._cpu_row)
+        self._cpu_label.setStyleSheet(
+            "color: rgba(255,255,255,200); font-size: 9px; background: transparent;"
+        )
+        cpu_layout.addWidget(self._cpu_label)
+        cpu_layout.addStretch()
+
+        layout.addWidget(self._cpu_row)
+
+        # Memory usage row (sparkline + label)
+        self._mem_row = QtWidgets.QWidget(self)
+        mem_layout = QtWidgets.QHBoxLayout(self._mem_row)
+        mem_layout.setContentsMargins(0, 0, 0, 0)
+        mem_layout.setSpacing(4)
+
+        self._mem_sparkline = _Sparkline(
+            self._mem_row,
+            color=QtGui.QColor(100, 200, 100),  # Green
+            tooltip="Memory usage history",
+        )
+        mem_layout.addWidget(self._mem_sparkline)
+
+        self._mem_label = QtWidgets.QLabel("Mem: --", self._mem_row)
+        self._mem_label.setStyleSheet(
+            "color: rgba(255,255,255,200); font-size: 9px; background: transparent;"
+        )
+        mem_layout.addWidget(self._mem_label)
+        mem_layout.addStretch()
+
+        layout.addWidget(self._mem_row)
+
+        # System info label
+        self._info_label = _WatermarkLabel(self)
+        self._info_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+        self._info_label.setStyleSheet(
+            "color: rgba(255,255,255,190); background: transparent; font-size: 9px;"
+        )
+        layout.addWidget(self._info_label)
+
+        # Widget styling
+        self.setStyleSheet(
+            "background-color: rgba(0,0,0,96); border-radius: 3px;"
+        )
+
+        # Total memory for percentage calculation
+        self._total_mem_mb = _get_total_memory_mb() or 16000.0
+        
+        # Get CPU count for percentage normalization
+        try:
+            import psutil
+            self._cpu_count = psutil.cpu_count() or 1
+        except Exception:
+            self._cpu_count = 1
+
+        # Timer for usage updates
+        self._timer = QtCore.QTimer(self)
+        self._timer.timeout.connect(self._update_usage)
+        interval = _get_update_interval_ms()
+        self._timer.start(interval)
+
+        # Initial update
+        QtCore.QTimer.singleShot(100, self._update_usage)
+
+    def set_info_text(self, text: str) -> None:
+        """Set the system info text."""
+        self._info_label.setText(text)
+
+    def _update_usage(self) -> None:
+        """Fetch current CPU and memory usage and update display."""
+        # Update CPU
+        cpu_pct = _get_cpu_usage_percent()
+        if cpu_pct is not None:
+            # Normalize to per-core percentage for display
+            cpu_per_core = cpu_pct / self._cpu_count if self._cpu_count > 0 else cpu_pct
+            self._cpu_sparkline.add_value(cpu_per_core)
+            
+            # Color based on usage
+            if cpu_per_core < 50:
+                color = QtGui.QColor(100, 180, 220)  # Blue
+            elif cpu_per_core < 80:
+                color = QtGui.QColor(220, 180, 50)  # Yellow
+            else:
+                color = QtGui.QColor(220, 80, 80)  # Red
+            self._cpu_sparkline.set_color(color)
+            
+            self._cpu_label.setText(f"CPU: {cpu_per_core:.0f}%")
+        else:
+            self._cpu_label.setText("CPU: N/A")
+
+        # Update Memory
+        mem_mb = _get_memory_usage_mb()
+        if mem_mb is not None:
+            self._mem_sparkline.add_value(mem_mb)
+
+            # Color based on memory usage percentage
+            pct = (mem_mb / self._total_mem_mb) * 100 if self._total_mem_mb > 0 else 0
+            if pct < 50:
+                color = QtGui.QColor(100, 200, 100)  # Green
+            elif pct < 75:
+                color = QtGui.QColor(220, 180, 50)  # Yellow
+            else:
+                color = QtGui.QColor(220, 80, 80)  # Red
+            self._mem_sparkline.set_color(color)
+
+            if mem_mb >= 1024:
+                mem_str = f"{mem_mb / 1024:.1f} GB"
+            else:
+                mem_str = f"{mem_mb:.0f} MB"
+
+            self._mem_label.setText(f"Mem: {mem_str} ({pct:.0f}%)")
+        else:
+            self._mem_label.setText("Mem: N/A")
+
+
+def ensure_watermark(
+    mdiarea: "QtWidgets.QMdiArea | None", existing_widget: QtWidgets.QWidget | None = None
+) -> QtWidgets.QWidget | None:
+    """Create or update the watermark widget for the given QMdiArea.
+
+    Returns the widget instance (existing or newly created) or None if mdiarea
+    is not available. The widget text and geometry are set.
     """
     if mdiarea is None:
-        return existing_label
+        return existing_widget
 
-    label = existing_label
-    if label is None:
+    widget = existing_widget
+    if widget is None:
         try:
             viewport = mdiarea.viewport()
         except Exception:
             viewport = mdiarea
-        label = _WatermarkLabel(viewport)
-        label.setObjectName("label_system_info_watermark")
-        label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-        label.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
-        label.setStyleSheet(
-            "color: rgba(255,255,255,190);"
-            "background-color: rgba(0,0,0,96);"
-            "padding: 2px 6px;"
-            "font-size: 9px;"
-        )
+        widget = _WatermarkWidget(viewport)
 
     try:
-        label.setText(build_system_info_text())
+        widget.set_info_text(build_system_info_text())
     except Exception:
         pass
 
-    update_geometry(label)
-    return label
+    update_geometry(widget)
+    return widget
 
 
-def update_geometry(label: QtWidgets.QLabel | None) -> None:
-    """Position the watermark label in the top-right corner of its parent."""
-    if label is None:
+def update_geometry(widget: QtWidgets.QWidget | None) -> None:
+    """Position the watermark widget in the top-right corner of its parent."""
+    if widget is None:
         return
     try:
-        parent = label.parent()
+        parent = widget.parent()
         if parent is None:
             return
         rect = parent.rect()
-        label.adjustSize()
-        size = label.sizeHint()
+        widget.adjustSize()
+        size = widget.sizeHint()
         margin = 10
         x = rect.right() - size.width() - margin
         y = rect.top() + margin
@@ -373,7 +658,7 @@ def update_geometry(label: QtWidgets.QLabel | None) -> None:
                     subwindows = []
 
                 if subwindows:
-                    label_rect = QtCore.QRect(x, y, size.width(), size.height())
+                    widget_rect = QtCore.QRect(x, y, size.width(), size.height())
 
                     def _overlaps_any(r: QtCore.QRect) -> bool:
                         for sw in subwindows:
@@ -386,7 +671,7 @@ def update_geometry(label: QtWidgets.QLabel | None) -> None:
                                 continue
                         return False
 
-                    if _overlaps_any(label_rect):
+                    if _overlaps_any(widget_rect):
                         positions = [
                             (rect.right() - size.width() - margin, rect.top() + margin),
                             (rect.left() + margin, rect.top() + margin),
@@ -402,7 +687,7 @@ def update_geometry(label: QtWidgets.QLabel | None) -> None:
                                 break
 
                         if chosen_rect is None:
-                            label.hide()
+                            widget.hide()
                             return
 
                         x = chosen_rect.x()
@@ -410,8 +695,8 @@ def update_geometry(label: QtWidgets.QLabel | None) -> None:
         except Exception:
             pass
 
-        label.setGeometry(x, y, size.width(), size.height())
-        label.lower()
-        label.show()
+        widget.setGeometry(x, y, size.width(), size.height())
+        widget.lower()
+        widget.show()
     except Exception:
         pass

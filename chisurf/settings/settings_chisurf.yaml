@@ -113,6 +113,7 @@ gui:
   qt_style: auto
   style_sheet: dark_blue_flat.qss
   mol_viewer: pymol  # 3D molecule viewer backend: pymol (default) or chimol
+  memory_widget_update_interval_ms: 5000  # Memory usage widget update interval in milliseconds
   start_jupyter_on_startup: false
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
