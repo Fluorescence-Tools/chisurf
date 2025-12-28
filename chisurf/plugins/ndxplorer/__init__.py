@@ -29,17 +29,14 @@ spectroscopic properties.
 
 name = "Tools:ndXplorer"
 
-import sys
-
 import chisurf
-import ndxplorer
-
-from qtpy.QtWidgets import QApplication
-
 log = chisurf.logging.info
 
 
 if __name__ == '__main__':
+    import sys
+    from qtpy.QtWidgets import QApplication
+    import ndxplorer
     app = QApplication(sys.argv)
     ndx = ndxplorer.NDXplorer()
     ndx.show()
@@ -48,6 +45,7 @@ if __name__ == '__main__':
     sys.exit(app.exec())
 
 if __name__ == "plugin":
+    import ndxplorer
     ndx = ndxplorer.NDXplorer()
     ndx.show()
     ndx.raise_()
