@@ -194,6 +194,200 @@ def distance_to_fret_rate_constant(
     return 3. / 2. * kappa2 * 1. / tau0 * (forster_radius / r) ** 6.0
 
 
+def kappa2_to_distance_ratio(k2_amp: np.ndarray, k2_val: np.ndarray, n_bins: int = 32) -> tuple:
+    """Transform κ² distribution to R_app/R_DA distance ratio distribution.
+
+    This transformation is used for FFT-based convolution in static κ² averaging.
+    The relationship is: R_app/R_DA = (⟨κ²⟩/κ²)^(1/6)
+
+    Lower κ² → larger apparent distance (R_app > R_DA)
+    Higher κ² → smaller apparent distance (R_app < R_DA)
+
+    Parameters
+    ----------
+    k2_amp : array-like
+        Amplitudes/weights of the κ² distribution (must be non-negative).
+    k2_val : array-like
+        κ² values (must be strictly positive).
+    n_bins : int
+        Number of bins for output linear axis (default 32).
+
+    Returns
+    -------
+    tuple of (r_ratio, weights, k2_mean)
+        r_ratio : array
+            R_app/R_DA linearly spaced ratio bin centers.
+        weights : array
+            Interpolated weights on linear axis.
+        k2_mean : float
+            Mean κ² value ⟨κ²⟩.
+
+    Raises
+    ------
+    ValueError
+        If inputs are invalid (e.g., κ² ≤ 0 or mismatched shapes).
+    """
+    import numpy as np
+    from scipy.interpolate import interp1d
+
+    k2_amp = np.asarray(k2_amp, dtype=float)
+    k2_val = np.asarray(k2_val, dtype=float)
+
+    # Input validation
+    if k2_amp.shape != k2_val.shape:
+        raise ValueError("k2_amp and k2_val must have the same shape.")
+    if np.any(k2_val <= 0):
+        raise ValueError("k2_val must be strictly positive (κ² > 0).")
+    if np.any(k2_amp < 0):
+        raise ValueError("k2_amp must be non-negative.")
+
+    # Normalize amplitudes
+    total = np.sum(k2_amp)
+    if total <= 0:
+        raise ValueError("Total amplitude must be positive.")
+    weights = k2_amp / total
+
+    # Compute mean kappa2
+    k2_mean = float(np.sum(weights * k2_val))
+
+    # Transform to R_app/R_DA ratio: r = (<k2>/k2)^(1/6)
+    r_ratio_points = (k2_mean / k2_val) ** (1.0/6.0)
+
+    # Apply Jacobian transformation
+    jacobian = 6.0 * k2_mean / (r_ratio_points**7)
+    weights_jacobian = weights * jacobian
+
+    # Renormalize the weights
+    total_jacobian = np.sum(weights_jacobian)
+    if total_jacobian > 0:
+        weights_jacobian /= total_jacobian
+
+    # Sort points for interpolation (r_ratio_points may not be sorted)
+    sort_idx = np.argsort(r_ratio_points)
+    r_ratio_points_sorted = r_ratio_points[sort_idx]
+    weights_jacobian_sorted = weights_jacobian[sort_idx]
+
+    # Create a linearly spaced axis for R_app/R_DA
+    r_min = np.min(r_ratio_points_sorted)
+    r_max = np.max(r_ratio_points_sorted)
+    r_range = r_max - r_min
+    r_min = max(0.0, r_min - 0.05 * r_range)  # Ensure non-negative
+    r_max = r_max + 0.05 * r_range
+
+    r_ratio = np.linspace(r_min, r_max, n_bins)
+
+    # Interpolate the transformed weights onto the linear axis
+    interp_func = interp1d(
+        r_ratio_points_sorted, weights_jacobian_sorted,
+        bounds_error=False,
+        fill_value=0.0
+    )
+    interpolated_weights = interp_func(r_ratio)
+
+    # Renormalize the interpolated weights
+    total_interp = np.sum(interpolated_weights)
+    if total_interp > 0:
+        interpolated_weights /= total_interp
+
+    return r_ratio, interpolated_weights, k2_mean
+
+
+@nb.jit(nopython=True)
+def _fast_convolve_loop(r_da, amp_r_da, r_ratio, weights_ratio, r_edges):
+    """Numba-optimized loop for fast convolution.
+    
+    Accumulates shifted distance histograms weighted by ratio distribution.
+    """
+    n_bins = len(r_edges) - 1
+    r_app_hist = np.zeros(n_bins)
+    
+    # Loop over ratio curve elements
+    for i in range(len(r_ratio)):
+        ratio = r_ratio[i]
+        weight = weights_ratio[i]
+        
+        if weight > 0:
+            # Shift distances by this ratio value
+            # Manually bin the shifted distances
+            for j in range(len(r_da)):
+                r_shifted = r_da[j] * ratio
+                amp = amp_r_da[j] * weight
+                
+                # Find which bin this shifted distance belongs to
+                if r_shifted >= r_edges[0] and r_shifted <= r_edges[-1]:
+                    # Binary search for bin
+                    bin_idx = np.searchsorted(r_edges, r_shifted) - 1
+                    if bin_idx >= 0 and bin_idx < n_bins:
+                        r_app_hist[bin_idx] += amp
+    
+    return r_app_hist
+
+
+def convolve_distance_with_k2_ratio(
+    r_da: np.ndarray,
+    amp_r_da: np.ndarray,
+    r_ratio: np.ndarray,
+    weights_ratio: np.ndarray,
+    n_bins: int = 256,
+    use_fast: bool = True
+) -> tuple:
+    """Convolve distance distribution with κ² ratio distribution.
+    
+    Computes R_app = R_DA × (R_app/R_DA) via multiplicative convolution.
+    
+    Parameters
+    ----------
+    r_da : array
+        R_DA distance values
+    amp_r_da : array
+        Amplitudes/weights for R_DA distribution
+    r_ratio : array
+        R_app/R_DA ratio values
+    weights_ratio : array
+        Weights for ratio distribution
+    n_bins : int
+        Number of bins for output histogram
+    use_fast : bool
+        Use fast numba-optimized loop vs outer product (exact)
+        
+    Returns
+    -------
+    tuple of (r_app, amp_app)
+        r_app : array
+            Apparent distance values
+        amp_app : array
+            Amplitudes for apparent distance distribution
+    """
+    if use_fast and len(r_da) * len(r_ratio) > 1000:
+        # Fast numba-optimized approach
+        r_min = np.min(r_da) * np.min(r_ratio)
+        r_max = np.max(r_da) * np.max(r_ratio)
+        r_edges = np.linspace(r_min, r_max, n_bins + 1)
+        
+        # Call numba-optimized loop
+        r_app_hist = _fast_convolve_loop(r_da, amp_r_da, r_ratio, weights_ratio, r_edges)
+        
+        r_app_centers = 0.5 * (r_edges[:-1] + r_edges[1:])
+        
+        # Filter non-zero bins
+        mask = r_app_hist > 1e-10 * np.max(r_app_hist)
+        return r_app_centers[mask], r_app_hist[mask]
+    else:
+        # Outer product approach - exact but slower
+        r_app_2d = r_da[:, None] * r_ratio[None, :]
+        amp_2d = amp_r_da[:, None] * weights_ratio[None, :]
+        
+        r_app_flat = r_app_2d.ravel()
+        amp_flat = amp_2d.ravel()
+        
+        # Bin onto uniform grid
+        r_app_hist, r_app_edges = np.histogram(r_app_flat, bins=n_bins, weights=amp_flat)
+        r_app_centers = 0.5 * (r_app_edges[:-1] + r_app_edges[1:])
+        
+        # Filter non-zero bins
+        mask = r_app_hist > 1e-10 * np.max(r_app_hist)
+        return r_app_centers[mask], r_app_hist[mask]
+
 
 @nb.jit(nopython=True)
 def distance_to_fret_efficiency(distance: float, forster_radius: float) -> float:
@@ -459,7 +653,9 @@ def distribution2rates(
         tau0: float,
         kappa2: float = 0.66667,
         forster_radius: float = 50.0,
-        remove_negative: bool = False
+        remove_negative: bool = False,
+        use_fast: bool = True,
+        k2_transform_cache: tuple = None
 ):
     """
     gets distribution in form: (1,2,3)
@@ -476,6 +672,7 @@ def distribution2rates(
     :param tau0:
     :param kappa2: an interleaved list of orientation factors (orientation factor spectrum)
     :param forster_radius:
+    :param use_fast: Use fast loop-based convolution for static kappa2 distributions (faster for large distributions)
     """
 
     n_dist, n_ampl, n_points = distribution.shape
@@ -494,20 +691,36 @@ def distribution2rates(
         amp_r = rate_dist[:, 0, :].reshape(-1)
         dist = rate_dist[:, 1, :].reshape(-1)
 
-        # Base rate for kappa2 = 1.0 from the compiled helper
-        base = distance_to_fret_rate_constant(
-            dist,
-            forster_radius,
-            tau0,
-            1.0,
-        )
-
-        # For arbitrary kappa2 the rate scales linearly with kappa2
-        rates_2d = k2_val[:, None] * base[None, :]
-        amps_2d = k2_amp[:, None] * amp_r[None, :]
-
-        amplitudes = amps_2d.ravel()
-        rates = rates_2d.ravel()
+        # Fast loop-based convolution: convolve distance distribution with kappa2 distribution
+        # to get apparent distance distribution, then convert to rates
+        if use_fast and len(k2_val) * len(dist) > 100:
+            # Use cached transformation if provided, otherwise compute it
+            n_k2_bins = 256
+            if k2_transform_cache is not None:
+                r_ratio, k2_weights, k2_mean = k2_transform_cache
+            else:
+                r_ratio, k2_weights, k2_mean = kappa2_to_distance_ratio(k2_amp, k2_val, n_bins=n_k2_bins)
+            
+            # Use shared convolution function
+            r_app, amplitudes = convolve_distance_with_k2_ratio(
+                dist, amp_r, r_ratio, k2_weights, n_bins=512, use_fast=True
+            )
+            
+            # Normalize amplitudes
+            if np.sum(amplitudes) > 0:
+                amplitudes = amplitudes / np.sum(amplitudes)
+            
+            # Convert apparent distances to FRET rates using mean kappa2
+            rates = distance_to_fret_rate_constant(r_app, forster_radius, tau0, k2_mean)
+            
+        else:
+            # Original outer product method for small distributions
+            rates_2d = k2_val[:, None] * distance_to_fret_rate_constant(
+                dist[None, :], forster_radius, tau0, 1.0
+            )
+            amps_2d = k2_amp[:, None] * amp_r[None, :]
+            amplitudes = amps_2d.ravel()
+            rates = rates_2d.ravel()
 
         c = np.empty((1, 2, amplitudes.size), dtype=np.float64)
         c[0, 0, :] = amplitudes
