@@ -12,6 +12,9 @@ package:
 
 source:
   path: ..
+  excludes:
+    - playground/*
+    - chisurf/plugins/_dev/*
 
 build:
   number: 0

@@ -20,3 +20,6 @@ global-exclude *.py[co]
 global-exclude .DS_Store
 exclude .gitignore
 exclude .gitmodules
+
+# Exclude development and playground directories
+prune playground
