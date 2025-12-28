@@ -36,7 +36,7 @@ class PCHReader(ExperimentReader):
         super().__init__(*args, **kwargs)
         self.name = name
         self.reading_routine = reading_routine
-        # Optional list of routing channels defining the logical detector. If
+        # Optional list of routing channels defining the logical tttr_channeldefinition. If
         # not provided, fall back to a single channel index.
         self.channel = int(channel)
         self.channel_numbers: Optional[Sequence[int]] = channels
