@@ -5,6 +5,55 @@ from __future__ import annotations
 from qtpy import QtWidgets, QtCore, QtGui
 
 
+def shorten_text_middle(text: str, font_metrics: QtGui.QFontMetrics, max_width: int, min_chars: int = 10) -> str:
+    """Shorten text with ellipsis in the middle to fit within max_width.
+    
+    Args:
+        text: The text to shorten
+        font_metrics: QFontMetrics to measure text width
+        max_width: Maximum width in pixels
+        min_chars: Minimum number of characters to show (won't shorten below this)
+    
+    Returns:
+        Shortened text with '...' in the middle if needed
+    """
+    if not text:
+        return text
+    
+    # Check if text already fits
+    if font_metrics.horizontalAdvance(text) <= max_width:
+        return text
+    
+    # Don't shorten very short text
+    if len(text) <= min_chars:
+        return text
+    
+    ellipsis = "..."
+    ellipsis_width = font_metrics.horizontalAdvance(ellipsis)
+    
+    # Binary search for the right amount of text to keep
+    left = 1
+    right = len(text) - 1
+    best_text = text[:min_chars // 2] + ellipsis + text[-(min_chars // 2):]
+    
+    while left <= right:
+        mid = (left + right) // 2
+        # Keep mid characters from start and mid from end
+        start_chars = mid
+        end_chars = mid
+        
+        shortened = text[:start_chars] + ellipsis + text[-end_chars:] if end_chars > 0 else text[:start_chars] + ellipsis
+        width = font_metrics.horizontalAdvance(shortened)
+        
+        if width <= max_width:
+            best_text = shortened
+            left = mid + 1
+        else:
+            right = mid - 1
+    
+    return best_text
+
+
 class CustomTitleBar(QtWidgets.QWidget):
     """Custom title bar for MDI sub-windows that is fully stylable via QSS
     
@@ -25,6 +74,7 @@ class CustomTitleBar(QtWidgets.QWidget):
         self.parent_window = parent
         self.dragging = False
         self.offset = QtCore.QPoint()
+        self._full_title = "Document"  # Store the full title
 
         self.setObjectName("customTitleBar")
         self.setFixedHeight(28)
@@ -79,7 +129,38 @@ class CustomTitleBar(QtWidgets.QWidget):
 
     def set_title(self, title: str):
         """Set window title"""
-        self.title_label.setText(title)
+        self._full_title = title
+        self._update_title_display()
+    
+    def _update_title_display(self):
+        """Update the displayed title based on available width"""
+        if not hasattr(self, 'title_label') or not hasattr(self, '_full_title'):
+            return
+        
+        # Calculate available width for title
+        # Account for: icon, buttons, margins, and spacing
+        total_width = self.width()
+        icon_width = self.icon_label.width() + 5 if self.icon_label.isVisible() else 0
+        buttons_width = (self.minimize_btn.width() + self.maximize_btn.width() + 
+                        self.close_btn.width() + 3 * 2)  # 3 buttons + spacing
+        margins = 10  # Left and right margins
+        available_width = total_width - icon_width - buttons_width - margins - 20  # Extra padding
+        
+        # Ensure we have some minimum width
+        if available_width < 50:
+            available_width = 50
+        
+        # Shorten the title if needed
+        font_metrics = self.title_label.fontMetrics()
+        shortened_title = shorten_text_middle(self._full_title, font_metrics, available_width)
+        
+        self.title_label.setText(shortened_title)
+        
+        # Set tooltip to show full title if shortened
+        if shortened_title != self._full_title:
+            self.title_label.setToolTip(self._full_title)
+        else:
+            self.title_label.setToolTip("")
 
     def set_icon(self, icon: QtGui.QIcon):
         """Set window icon"""
@@ -110,6 +191,11 @@ class CustomTitleBar(QtWidgets.QWidget):
         """Toggle maximize on double click"""
         if event.button() == QtCore.Qt.LeftButton:
             self.toggle_maximize()
+    
+    def resizeEvent(self, event):
+        """Update title display when title bar is resized"""
+        super().resizeEvent(event)
+        self._update_title_display()
 
     def minimize_window(self):
         """Minimize the window"""
@@ -196,12 +282,15 @@ class CustomMdiSubWindow(QtWidgets.QMdiSubWindow):
         self._last_view_mode = None
 
     def resizeEvent(self, event):
-        """Position size grip in bottom right corner"""
+        """Position size grip in bottom right corner and update title"""
         super().resizeEvent(event)
         self.size_grip.move(
             self.container.width() - self.size_grip.width(),
             self.container.height() - self.size_grip.height()
         )
+        # Update title bar display when window is resized
+        if hasattr(self, 'title_bar'):
+            self.title_bar._update_title_display()
 
     def set_content(self, widget):
         """Set the content widget"""
