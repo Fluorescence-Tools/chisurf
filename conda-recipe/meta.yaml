@@ -96,6 +96,8 @@ requirements:
     - libcxx   # [osx]
     - micromamba
     - pygments
+    - pyarrow
+    - boost-histogram
 
 app:
   entry: chisurf
