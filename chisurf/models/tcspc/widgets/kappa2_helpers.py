@@ -30,6 +30,17 @@ def setup_kappa2_controls(
     mode_layout.addWidget(stat_radio)
 
     mode_layout.addStretch(1)
+    
+    # Fast optimization checkbox for static kappa2 convolution
+    fast_checkbox = QtWidgets.QCheckBox("Fast")
+    fast_checkbox.setChecked(True)
+    fast_checkbox.setToolTip(
+        "Use fast loop-based convolution for static κ² distributions.\n"
+        "Provides speedup for large κ² distributions by looping over\n"
+        "ratio values and accumulating shifted distance histograms.\n"
+        "Disable for exact outer product."
+    )
+    mode_layout.addWidget(fast_checkbox)
 
     show_btn = QtWidgets.QToolButton()
     show_btn.setText("show κ²")
@@ -65,23 +76,33 @@ def setup_kappa2_controls(
 
     dyn_radio.toggled.connect(on_mode_changed)
     stat_radio.toggled.connect(on_mode_changed)
+    
+    def on_fft_changed() -> None:
+        """Trigger model update when FFT checkbox state changes."""
+        try:
+            owner.update()
+        except Exception:
+            pass
+    
+    fast_checkbox.stateChanged.connect(on_fft_changed)
 
-    def on_show_distribution() -> None:
-        show_kappa2_distribution_plot(
+    def on_show_combined() -> None:
+        show_rapp_rda_distribution_plot(
             parent=owner,
             orientation_parameter=getattr(owner, "orientation_parameter", None),
-            fret_parameters=getattr(owner, "fret_parameters", None),
+            fret_model=owner,
         )
 
     def on_open_experimental() -> None:
         open_experimental_k2_dialog(parent=owner, fret_model=owner)
 
-    show_btn.clicked.connect(on_show_distribution)
+    show_btn.clicked.connect(on_show_combined)
     exp_btn.clicked.connect(on_open_experimental)
 
     # Expose on owner for potential introspection / testing
     owner._kappa2_dynamic_radio = dyn_radio
     owner._kappa2_static_radio = stat_radio
+    owner._kappa2_fft_checkbox = fast_checkbox
     owner._kappa2_show_distribution_button = show_btn
     owner._kappa2_experimental_button = exp_btn
     owner._kappa2_mode_group = group
@@ -244,6 +265,222 @@ def show_kappa2_distribution_plot(
         pass
 
     layout.addWidget(plot_widget)
+
+    button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+    button_box.accepted.connect(dialog.accept)
+    layout.addWidget(button_box)
+
+    dialog.resize(500, 400)
+    dialog.exec_()
+
+
+def show_rapp_rda_distribution_plot(
+    parent: Optional[QtWidgets.QWidget] = None,
+    orientation_parameter=None,
+    fret_model=None,
+) -> None:
+    """Show the κ² distribution transformed to R_app/R_DA ratio scale.
+    
+    This displays the distribution used for FFT convolution:
+    R_app/R_DA = (κ²/⟨κ²⟩)^(1/6)
+    """
+    if pg is None:
+        QtWidgets.QMessageBox.warning(
+            parent,
+            "R_app/R_DA distribution",
+            "pyqtgraph is not available, cannot plot distribution.",
+        )
+        return
+
+    # Get fret_parameters from fret_model if available
+    fret_parameters = getattr(fret_model, "fret_parameters", None) if fret_model is not None else None
+    pairs, mode = _extract_kappa2_pairs(orientation_parameter, fret_parameters)
+
+    static_pairs = []
+    if orientation_parameter is not None:
+        spec = getattr(orientation_parameter, "_k2_slow_iso", None)
+        if spec is None:
+            spec = getattr(orientation_parameter, "orientation_spectrum", None)
+        if spec is not None:
+            arr = np.asarray(spec, dtype=float).ravel()
+            if arr.size >= 2 and arr.size % 2 == 0:
+                static_pairs = list(zip(arr[0::2], arr[1::2]))
+
+    if not static_pairs:
+        static_pairs = list(pairs)
+
+    if not static_pairs:
+        QtWidgets.QMessageBox.information(
+            parent,
+            "R_app/R_DA distribution",
+            "No orientation factor distribution is available.",
+        )
+        return
+
+    amps = np.asarray([a for (a, _) in static_pairs], dtype=float)
+    k2_vals = np.asarray([k for (_, k) in static_pairs], dtype=float)
+    finite = np.isfinite(amps) & np.isfinite(k2_vals)
+    amps = amps[finite]
+    k2_vals = k2_vals[finite]
+    
+    if amps.size == 0:
+        QtWidgets.QMessageBox.information(
+            parent,
+            "R_app/R_DA distribution",
+            "No valid orientation factor distribution is available.",
+        )
+        return
+
+    # Use shared transformation function from chisurf.fluorescence.general
+    from chisurf.fluorescence.general import kappa2_to_distance_ratio
+    r_ratio, weights, k2_mean = kappa2_to_distance_ratio(amps, k2_vals, n_bins=256)
+    
+    dialog = QtWidgets.QDialog(parent)
+    dialog.setWindowTitle("κ² & Rₐₚₚ/Rᴅᴀ distributions")
+    layout = QtWidgets.QVBoxLayout(dialog)
+
+    info_label = QtWidgets.QLabel(
+        f"Transformation: Rₐₚₚ/Rᴅᴀ = (⟨κ²⟩/κ²)^(1/6) | ⟨κ²⟩ = {k2_mean:.3f}"
+    )
+    layout.addWidget(info_label)
+
+    # First plot: κ² distribution
+    plot_k2 = pg.PlotWidget(dialog)
+    plot_k2.showGrid(x=True, y=True, alpha=0.3)
+    plot_k2.setLabel("bottom", "κ²")
+    plot_k2.setLabel("left", "Probability")
+    plot_k2.addLegend()
+    plot_k2.plot(
+        k2_vals,
+        amps / np.sum(amps) if np.sum(amps) > 0 else amps,
+        pen=pg.mkPen(width=2, color=(255, 100, 100)),
+        symbol='o',
+        symbolSize=5,
+        name="ρ(κ²)",
+    )
+    # Mark mean κ²
+    k2_max_y = float(np.max(amps / np.sum(amps))) if np.sum(amps) > 0 else 1.0
+    plot_k2.plot(
+        [k2_mean, k2_mean],
+        [0.0, k2_max_y * 1.05],
+        pen=pg.mkPen(color=(255, 160, 80), width=2, style=QtCore.Qt.DashLine),
+        name=f"⟨κ²⟩ = {k2_mean:.3f}",
+    )
+    layout.addWidget(plot_k2)
+
+    # Second plot: R_app/R_DA ratio distribution
+    plot_widget = pg.PlotWidget(dialog)
+    plot_widget.showGrid(x=True, y=True, alpha=0.3)
+    plot_widget.setLabel("bottom", "Rₐₚₚ/Rᴅᴀ")
+    plot_widget.setLabel("left", "Probability Density")
+    plot_widget.addLegend()
+    plot_widget.plot(
+        r_ratio,
+        weights,
+        pen=pg.mkPen(width=2, color=(80, 160, 255)),
+        name="ρ(Rₐₚₚ/Rᴅᴀ)",
+    )
+
+    # Mark the mean ratio (should be 1.0 by definition)
+    y_max = float(np.max(weights)) if weights.size else 1.0
+    y_line = y_max * 1.05
+    plot_widget.plot(
+        [1.0, 1.0],
+        [0.0, y_line],
+        pen=pg.mkPen(color=(255, 160, 80), width=2, style=QtCore.Qt.DashLine),
+        name="mean (1.0)",
+    )
+
+    try:
+        mean_label = pg.TextItem("(2/3)^(1/6)", color=(255, 160, 80), anchor=(0.5, 1.0))
+        mean_label.setPos(1.0, y_line)
+        plot_widget.addItem(mean_label)
+    except Exception:
+        pass
+
+    layout.addWidget(plot_widget)
+    
+    # Second plot: R_DA and R_app distributions after convolution
+    # Get distance distribution from fret_model
+    distance_dist = None
+    if fret_model is not None:
+        # Try to get distance distribution directly from the model
+        try:
+            distance_dist = getattr(fret_model, "distance_distribution", None)
+        except Exception:
+            pass
+    
+    if distance_dist is not None:
+        try:
+            # Extract R_DA distribution
+            dist_array = np.asarray(distance_dist, dtype=float)
+            if dist_array.ndim == 3 and dist_array.shape[0] > 0:
+                # Shape is (n_dist, 2, n_points) - extract first distribution
+                amp_r = dist_array[0, 0, :]
+                r_da = dist_array[0, 1, :]
+                
+                # Filter valid points
+                valid = (amp_r > 0) & np.isfinite(r_da) & (r_da > 0)
+                amp_r = amp_r[valid]
+                r_da = r_da[valid]
+                
+                if len(r_da) > 0:
+                    # Get Fast setting from UI checkbox
+                    use_fast = True
+                    if fret_model is not None:
+                        fast_checkbox = getattr(fret_model, "_kappa2_fft_checkbox", None)
+                        if fast_checkbox is not None:
+                            use_fast = fast_checkbox.isChecked()
+                    
+                    # Compute R_app distribution via convolution using shared function
+                    from chisurf.fluorescence.general import convolve_distance_with_k2_ratio
+                    r_app_centers, r_app_hist = convolve_distance_with_k2_ratio(
+                        r_da, amp_r, r_ratio, weights, n_bins=256, use_fast=use_fast
+                    )
+                    
+                    # Normalize both distributions to max=1.0 for comparison
+                    max_amp_r = np.max(amp_r)
+                    max_r_app = np.max(r_app_hist)
+                    
+                    if max_amp_r > 0:
+                        amp_r_norm = amp_r / max_amp_r
+                    else:
+                        amp_r_norm = amp_r
+                    
+                    if max_r_app > 0:
+                        r_app_hist_norm = r_app_hist / max_r_app
+                    else:
+                        r_app_hist_norm = r_app_hist
+                    
+                    # Create second plot
+                    plot_widget2 = pg.PlotWidget(dialog)
+                    plot_widget2.showGrid(x=True, y=True, alpha=0.3)
+                    plot_widget2.setLabel("bottom", "Distance (Å)")
+                    plot_widget2.setLabel("left", "Normalized Intensity")
+                    plot_widget2.addLegend()
+                    
+                    # Plot R_DA
+                    plot_widget2.plot(
+                        r_da,
+                        amp_r_norm,
+                        pen=pg.mkPen(width=2, color=(80, 255, 160)),
+                        symbol='o',
+                        symbolSize=4,
+                        name="ρ(Rᴅᴀ)",
+                    )
+                    
+                    # Plot R_app
+                    plot_widget2.plot(
+                        r_app_centers,
+                        r_app_hist_norm,
+                        pen=pg.mkPen(width=2, color=(255, 80, 160)),
+                        name="ρ(Rₐₚₚ)",
+                    )
+                    
+                    layout.addWidget(plot_widget2)
+        except Exception as e:
+            # Silently skip if distance distribution cannot be processed
+            pass
 
     button_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
     button_box.accepted.connect(dialog.accept)

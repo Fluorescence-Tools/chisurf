@@ -164,6 +164,8 @@ class OrientationParameter(FittingParameterGroup):
             raise ValueError("orientation_spectrum must be an interleaved (amp, k2, ...) array")
         # Store into the slow spectrum; fast uses scalar kappa2
         self._k2_slow_iso = arr
+        # Invalidate cached transformation
+        self._cached_k2_transform = None
 
     @property
     def mode(self):
@@ -198,15 +200,64 @@ class OrientationParameter(FittingParameterGroup):
         self._k2_fast_iso = [1., 0.666]
 
         # slow
-        k2s = np.linspace(0.01, 4, 50)
+        k2s = np.linspace(0.01, 4, 128)
         pk2 = kapp2.p_isotropic_orientation_factor(
             k2s
         )
         self._k2_slow_iso = chisurf.math.datatools.two_column_to_interleaved(
             pk2, k2s
         )
+        
+        # Cache for R_app/R_DA transformation
+        self._cached_k2_transform = None
 
         FittingParameterGroup.__init__(self, *args, **kwargs)
+    
+    def get_k2_distance_ratio_transform(self, n_bins: int = 256):
+        """Get cached R_app/R_DA transformation of κ² distribution.
+        
+        This caches the transformation to avoid recomputing it on every update.
+        The cache is invalidated when the orientation_spectrum is changed.
+        
+        Parameters
+        ----------
+        n_bins : int
+            Number of bins for the output distribution
+            
+        Returns
+        -------
+        tuple or None
+            (r_ratio, weights, k2_mean) if in slow mode, None otherwise
+        """
+        if self.mode != 'slow':
+            return None
+            
+        # Check if cache is valid
+        if self._cached_k2_transform is not None:
+            cached_bins, cached_data = self._cached_k2_transform
+            if cached_bins == n_bins:
+                return cached_data
+        
+        # Compute transformation
+        from chisurf.fluorescence.general import kappa2_to_distance_ratio
+        
+        k2_array = np.asarray(self._k2_slow_iso, dtype=float).ravel()
+        if k2_array.size < 2 or k2_array.size % 2 != 0:
+            return None
+            
+        k2 = k2_array.reshape((-1, 2))
+        k2_amp = k2[:, 0]
+        k2_val = k2[:, 1]
+        
+        try:
+            r_ratio, weights, k2_mean = kappa2_to_distance_ratio(k2_amp, k2_val, n_bins=n_bins)
+            result = (r_ratio, weights, k2_mean)
+            
+            # Cache the result
+            self._cached_k2_transform = (n_bins, result)
+            return result
+        except Exception:
+            return None
 
 
 class Gaussians(FittingParameterGroup):
@@ -475,11 +526,25 @@ class FRETModel(LifetimeModel):
             kappa2s = self.orientation_parameter.orientation_spectrum
         else:
             kappa2s = kappa2_scalar
+        
+        # Check if Fast optimization is enabled via UI checkbox
+        use_fast = True
+        fast_checkbox = getattr(self, "_kappa2_fft_checkbox", None)
+        if fast_checkbox is not None:
+            use_fast = fast_checkbox.isChecked()
+        
+        # Get cached κ² transformation if in slow mode and using fast convolution
+        k2_transform_cache = None
+        if use_fast and orientation_mode == "slow":
+            k2_transform_cache = self.orientation_parameter.get_k2_distance_ratio_transform(n_bins=256)
+        
         rs = distribution2rates(
             self.distance_distribution,
             tauD0,
             kappa2s,
-            forster_radius
+            forster_radius,
+            use_fast=use_fast,
+            k2_transform_cache=k2_transform_cache
         )
         r = np.hstack(rs).reshape(-1, order='F')
         return r
