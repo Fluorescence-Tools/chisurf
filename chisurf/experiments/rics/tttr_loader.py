@@ -52,7 +52,7 @@ def load_clsm_from_tttr(
         Optional explicit TTTR container type (e.g. "PTU", "HT3").
         If omitted, it is guessed from the file extension.
     channels:
-        Sequence of detector channels to include. Defaults to ``[0]``.
+        Sequence of tttr_channeldefinition channels to include. Defaults to ``[0]``.
     reading_routine:
         tttrlib CLSM reading routine ("default", "SP5", "SP8", ...).
     fill:

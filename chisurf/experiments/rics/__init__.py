@@ -53,9 +53,9 @@ class RICSReader(ExperimentReader):
         self.pixel_duration = pixel_duration
         self.line_duration = line_duration
         # Optional list of TTTR routing channels defining this logical
-        # detector. When present, the TTTR reader will use all of these
+        # tttr_channeldefinition. When present, the TTTR reader will use all of these
         # channels instead of the single "channel" index. This attribute
-        # is typically populated from the GUI (e.g. detector setups).
+        # is typically populated from the GUI (e.g. tttr_channeldefinition setups).
         if not hasattr(self, "channel_numbers"):
             self.channel_numbers = None
         self.micro_time_ranges = micro_time_ranges
