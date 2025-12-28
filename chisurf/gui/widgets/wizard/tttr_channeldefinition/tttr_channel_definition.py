@@ -191,15 +191,25 @@ class DetectorWizardPage(QWizardPage):
         # Improve table space usage: adaptive column widths and stretch
         try:
             from qtpy.QtWidgets import QHeaderView, QSizePolicy
-            # Make tables expand within layouts
-            for table in (self.windows_form, self.detectors_form):
-                table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-                table.setWordWrap(False)
-                table.horizontalHeader().setHighlightSections(False)
-                table.horizontalHeader().setStretchLastSection(False)
-                table.horizontalHeader().setMinimumSectionSize(60)
-                table.verticalHeader().setVisible(False)
-                table.setAlternatingRowColors(False)
+            # Windows table: fixed vertical size, horizontal expanding
+            self.windows_form.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            self.windows_form.setWordWrap(False)
+            self.windows_form.horizontalHeader().setHighlightSections(False)
+            self.windows_form.horizontalHeader().setMinimumSectionSize(60)
+            self.windows_form.verticalHeader().setVisible(False)
+            self.windows_form.setAlternatingRowColors(False)
+
+            # Detectors table: expanding both directions to fill available space
+            self.detectors_form.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.detectors_form.setWordWrap(False)
+            self.detectors_form.horizontalHeader().setHighlightSections(False)
+            self.detectors_form.horizontalHeader().setMinimumSectionSize(60)
+            self.detectors_form.verticalHeader().setVisible(False)
+            self.detectors_form.setAlternatingRowColors(False)
+
+            # Set maximum height for windows_form to 3 lines (approximately)
+            # Use a reasonable estimate: 25px per row + header height + margin
+            self.windows_form.setMaximumHeight(3 * 25 + 25 + 8)  # ~108px total
 
             # Windows table: Name stretches, Start/End resize to contents but user-resizable
             wh = self.windows_form.horizontalHeader()
