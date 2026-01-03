@@ -5,6 +5,7 @@
 # Ignore files in broken folder
 broken*
 broken
+.vscode
 
 # Build artifacts
 ########################
