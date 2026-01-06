@@ -243,12 +243,17 @@ class ChiSurfRibbonIntegration(QObject):
             # Additional fix for title widget and empty space issues
             self._apply_title_widget_fix()
 
-            # Update the internal max rows value and set to dark bg
-            # Read max_rows from settings
+            # Read max_rows and ribbon_height from settings
             import chisurf
             gui_settings = chisurf.settings.cs_settings.get('gui', {})
             ribbon_settings = gui_settings.get('ribbon', {})
-            max_rows = ribbon_settings.get('max_rows', 4)  # Default to 2 rows for reduced height
+            max_rows = ribbon_settings.get('max_rows', 3)  # Default to 3 rows for reduced height
+            ribbon_height = ribbon_settings.get('ribbon_height', 110)  # Default to 110px for reduced height
+
+            # Apply ribbon height setting
+            if hasattr(self.ribbon_bar, 'setRibbonHeight'):
+                self.ribbon_bar.setRibbonHeight(ribbon_height)
+                self.logger.info(f"Set ribbon height to {ribbon_height}px")
 
             if hasattr(self.ribbon_bar, '_maxRows'):
                 self.ribbon_bar._maxRows = max_rows
@@ -310,6 +315,9 @@ class ChiSurfRibbonIntegration(QObject):
             # Apply global alignment fix to all panels after everything is created
             from qtpy import QtCore
             QtCore.QTimer.singleShot(200, self._fix_all_panel_alignments)
+
+            # Set the ribbon to always start on the Main tab
+            QtCore.QTimer.singleShot(300, self._set_main_tab_as_default)
 
             self.logger.info("Ribbon interface setup completed successfully")
             return True
@@ -523,6 +531,27 @@ class ChiSurfRibbonIntegration(QObject):
 
         except Exception as e:
             self.logger.error(f"Failed to set ribbon max rows: {e}")
+
+    def _set_main_tab_as_default(self):
+        """Set the Main tab as the default ribbon tab"""
+        try:
+            if self.ribbon_bar and hasattr(self.ribbon_bar, '_titleWidget'):
+                tab_bar = self.ribbon_bar._titleWidget.tabBar()
+                if tab_bar:
+                    # Find the index of the Main tab
+                    main_tab_index = tab_bar.indexOf('Main')
+                    if main_tab_index >= 0:
+                        tab_bar.setCurrentIndex(main_tab_index)
+                        self.ribbon_bar.showCategoryByIndex(main_tab_index)
+                        self.logger.info(f"Set Main tab as default (index {main_tab_index})")
+                    else:
+                        self.logger.warning("Main tab not found in ribbon")
+                else:
+                    self.logger.warning("Ribbon tab bar not available")
+            else:
+                self.logger.warning("Ribbon bar not available")
+        except Exception as e:
+            self.logger.error(f"Failed to set Main tab as default: {e}")
 
     def set_ribbon_dark_theme(self, enabled=True):
         """

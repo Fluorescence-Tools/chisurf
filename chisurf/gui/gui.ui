@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
+    <width>1024</width>
     <height>700</height>
    </rect>
   </property>
@@ -251,7 +251,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1000</width>
+     <width>1024</width>
      <height>21</height>
     </rect>
    </property>
@@ -1518,7 +1518,7 @@
   </action>
   <action name="actionReinitialize">
    <property name="icon">
-    <iconset resource="resources/resource.qrc">
+    <iconset>
      <normaloff>:/icons/icons/view-refresh.png</normaloff>:/icons/icons/view-refresh.png</iconset>
    </property>
    <property name="text">

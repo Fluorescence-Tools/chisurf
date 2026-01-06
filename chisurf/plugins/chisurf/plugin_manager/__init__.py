@@ -40,7 +40,7 @@ import chisurf.plugins
 import chisurf.settings
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Setup:Plugin Manager"
+name = "Setup:Plugins"
 
 
 def read_module_docstring(package_path: pathlib.Path) -> Optional[str]:

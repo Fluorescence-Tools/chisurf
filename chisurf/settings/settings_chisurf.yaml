@@ -120,6 +120,7 @@ gui:
     auto_fold_delay_ms: 1000  # Delay before auto-folding starts (milliseconds)
     auto_fold_speed_ms: 500  # Speed of folding animation (milliseconds)
     max_rows: 3  # Maximum number of rows for ribbon panels (reduces ribbon height)
+    ribbon_height: 110
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
 log_level: 20

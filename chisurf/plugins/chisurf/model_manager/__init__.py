@@ -31,7 +31,7 @@ import chisurf.experiments
 import chisurf.settings
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Setup:Model Manager"
+name = "Setup:Models"
 
 
 class ModelManagerWidget(QMainWindow):

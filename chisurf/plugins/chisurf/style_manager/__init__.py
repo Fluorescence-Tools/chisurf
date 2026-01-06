@@ -26,7 +26,7 @@ import chisurf
 import chisurf.settings
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Setup:Style Manager"
+name = "Setup:Styles"
 
 
 def copy_styles_to_user_folder():

@@ -5,10 +5,12 @@ ChiSurf Ribbon Integration - File Category Module
 This module contains the File category creation methods for the ribbon interface.
 """
 
+from qtpy import QtWidgets
 from qtpy.QtWidgets import QStyle
 from qtpy.QtCore import Qt
 from chisurf import logging
-
+from .panel import RibbonPanel
+from .separator import RibbonSeparator
 
 class FileCategoryMixin:
     """Mixin class containing File category creation methods for ChiSurfRibbonIntegration"""
@@ -16,6 +18,10 @@ class FileCategoryMixin:
     def _create_file_category(self):
         """Create File category with all file menu actions organized into logical groups"""
         category = self.ribbon_bar.addCategory('File')
+
+        # Allow the scroll area contents to expand so stretch items take effect
+        if hasattr(category, '_categoryScrollArea'):
+            category._categoryScrollArea.setWidgetResizable(True)
         
         # Define action groups with their standard icons
         action_groups = {
@@ -48,6 +54,22 @@ class FileCategoryMixin:
                 if hasattr(self.main_window, action_name):
                     action = getattr(self.main_window, action_name)
                     self._add_action_button(panel, action, standard_icon)
+        
+        # Insert stretch + separator between Application panels and setup plugins
+        if hasattr(category, '_categoryLayout'):
+            category._categoryLayout.addItem(
+                QtWidgets.QSpacerItem(
+                    0,
+                    0,
+                    QtWidgets.QSizePolicy.Policy.Expanding,
+                    QtWidgets.QSizePolicy.Policy.Minimum
+                )
+            )
+            separator = RibbonSeparator()
+            category._categoryLayout.addWidget(separator)
+        
+        # Add Setup plugins to File category
+        self._add_setup_plugins_to_main(category)
         
         return category
     

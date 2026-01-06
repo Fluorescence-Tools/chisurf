@@ -48,7 +48,7 @@ class RibbonBar(QtWidgets.QMenuBar):
     _ribbonVisible = True
 
     #: heights of the ribbon elements
-    _ribbonHeight = 150
+    _ribbonHeight = 110
 
     #: current tab index
     _currentTabIndex = 0

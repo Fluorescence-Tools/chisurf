@@ -112,9 +112,6 @@ class CategoryMethodsMixin:
             # Fallback: add basic actions without toolbar
             self._add_fallback_main_actions(category)
 
-        # Add Setup plugins to Main category
-        self._add_setup_plugins_to_main(category)
-
         # Add Help plugins to Main category
         self._add_help_plugins_to_main(category)
 
@@ -262,8 +259,9 @@ class CategoryMethodsMixin:
                             plugin_info['label'],
                             icon=plugin_info['icon'],
                             showText=True,
-                            slot=plugin_info['callback']
-                        , alignment=Qt.AlignLeft | Qt.AlignTop)
+                            slot=plugin_info['callback'],
+                            alignment=Qt.AlignRight | Qt.AlignTop
+                        )
                         btn.setEnabled(plugin_info['enabled'])
                         btn.setToolTip(plugin_info['description'])
 
@@ -334,7 +332,7 @@ class CategoryMethodsMixin:
                     icon=plugin_info['icon'],
                     showText=True,
                     slot=plugin_info['callback'],
-                    alignment=Qt.AlignLeft | Qt.AlignTop
+                    alignment=Qt.AlignRight | Qt.AlignTop
                 )
                 btn.setEnabled(plugin_info['enabled'])
                 btn.setToolTip(plugin_info['description'])
