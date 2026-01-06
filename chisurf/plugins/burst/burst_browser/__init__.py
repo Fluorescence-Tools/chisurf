@@ -9,7 +9,7 @@ from chisurf import logging
 from chisurf.fio.fluorescence import burst as burstio
 
 
-name = "Single-Molecule:Burst Browser"
+name = "Spectroscopy:Single-Molecule:Burst Browser"
 
 
 class BurstTableModel(QtCore.QAbstractTableModel):

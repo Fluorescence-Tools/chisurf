@@ -14,5 +14,5 @@ FRET experiments. It can fit multiple Gaussian components to identify different
 conformational states or populations in the data.
 """
 
-name = "Single-Molecule:Burst-Selection"
+name = "Spectroscopy:Single-Molecule:Burst-Selection"
 

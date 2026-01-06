@@ -9,7 +9,7 @@ It uses the detector and PIE-window definitions from the
 so that the same setups can be shared with other TTTR tools.
 """
 
-name = "Single-Molecule:Burst Background Estimation"
+name = "Spectroscopy:Single-Molecule:Burst Background Estimation"
 
 # Expose the plugin CLI through chisurf.cli
 cli_entrypoint = "burst-background=chisurf.plugins.burst.burst_background.cli:cli"

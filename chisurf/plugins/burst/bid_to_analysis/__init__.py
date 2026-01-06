@@ -56,7 +56,7 @@ except Exception:
 
 
 # Plugin name in menu
-name = "Single-Molecule: BID→Analysis"
+name = "Tools:Converter:BID→Analysis"
 
 # Optional icon exposed for the plugin manager/UI
 icon = None

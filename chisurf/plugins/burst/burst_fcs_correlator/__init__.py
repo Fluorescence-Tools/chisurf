@@ -12,7 +12,7 @@ from .wizard import BurstWiseFCSWizard
 
 
 # Plugin category/name for the ChiSurf menu
-name = "Single-Molecule:Burst-wise FCS Correlator"
+name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Burst-wise FCS"
 
 
 if __name__ == "plugin":  # pragma: no cover

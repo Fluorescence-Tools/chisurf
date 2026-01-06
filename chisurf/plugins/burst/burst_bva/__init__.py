@@ -16,5 +16,5 @@ BVA is particularly useful for identifying conformational dynamics in biomolecul
 that occur on timescales comparable to the burst duration.
 """
 
-name = "Single-Molecule:Burst-Variance Analysis"
+name = "Spectroscopy:Single-Molecule:BVA"
 
