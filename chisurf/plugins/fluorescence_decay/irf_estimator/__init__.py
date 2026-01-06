@@ -24,7 +24,7 @@ Reference:
     identification from fluorescence decays." Biophysical Reports, 4(2), 100155.
 """
 
-name = "Fluorescence decay:IRF Estimator"
+name = "Spectroscopy:Fluorescence decay:IRF Estimator"
 
 import sys
 import os

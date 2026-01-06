@@ -19,6 +19,6 @@ making it suitable for analyzing complex systems with heterogeneous rotational
 dynamics or multiple fluorophore populations.
 """
 
-name = "Fluorescence decay:Anisotropy-Wizard"
+name = "Spectroscopy:Fluorescence decay:Anisotropy-Wizard"
 
 from .wizard import *

@@ -24,7 +24,7 @@ import sys
 from chisurf.plugins.lltf.lltf_gui import LLTFGUIWizard
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Fluorescence decay:Lazy Lifetime Analysis"
+name = "Spectroscopy:Fluorescence decay:Lazy Lifetime Analysis"
 
 # Expose the plugin CLI through chisurf.cli
 cli_entrypoint = "lltf=chisurf.plugins.lltf.core.cli:cli"
