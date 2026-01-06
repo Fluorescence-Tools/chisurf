@@ -362,7 +362,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             self.update_histogram()
 
 
-    @chisurf.gui.decorators.init_with_ui("burst_selection/gui.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("gui.ui", path=chisurf.settings.plugin_path / "burst" / "burst_selection")
     def __init__(self, *args, 
                  show_channel_selection=True,
                  show_clear_button=False, 

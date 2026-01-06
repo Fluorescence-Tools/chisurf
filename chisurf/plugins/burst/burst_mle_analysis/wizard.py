@@ -1,9 +1,9 @@
 import typing
 import faulthandler
 
-from chisurf.plugins.burst_mle_analysis.utils import \
+from chisurf.plugins.burst.burst_mle_analysis.utils import \
     LazyTTTRDict, NumpyEncoder, FileListWidget, random_search_hpo
-from chisurf.plugins.burst_mle_analysis.interpolate import interpolate_shift
+from chisurf.plugins.burst.burst_mle_analysis.interpolate import interpolate_shift
 
 faulthandler.enable(all_threads=True)
 
@@ -1364,7 +1364,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             self.burst_layout.nextRow()
 
     @chisurf.gui.decorators.init_with_ui(
-        "burst_mle_analysis/wizard.ui",
+        "burst/burst_mle_analysis/wizard.ui",
         path=chisurf.settings.plugin_path
     )
     def __init__(self, *args, **kwargs):

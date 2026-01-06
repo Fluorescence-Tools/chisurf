@@ -4,7 +4,7 @@ import pathlib
 from typing import List
 
 from chisurf.gui import QtWidgets
-from chisurf.plugins.fcs_correlator.wizard import FileListWidget
+from chisurf.plugins.fcs.fcs_correlator.wizard import FileListWidget
 
 
 class BurstFileListWidget(FileListWidget):
