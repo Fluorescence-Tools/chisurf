@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import pathlib
 
 from .path_utils import get_path
 
@@ -55,6 +56,50 @@ def clear_settings_folder():
             chisurf.logging.warning(f"Skipping locked file or folder: {path}")
         except OSError as e:
             # e.errno==ENOTEMPTY can happen if subdir isn't empty (due to skips)
+            chisurf.logging.warning(f"Couldn't remove {path}")
+
+
+def clear_user_plugins_folder():
+    """
+    Remove all contents of the user plugins folder (~/.chisurf/plugins).
+
+    This function removes all files and directories inside the user plugins
+    directory but leaves the directory itself intact.
+
+    Raises:
+        None. All deletion errors are caught and logged.
+    """
+    import chisurf
+
+    user_plugins_dir = pathlib.Path.home() / '.chisurf' / 'plugins'
+
+    # If the user plugins directory doesn't exist, nothing to do
+    if not user_plugins_dir.is_dir():
+        return
+
+    # Helper to warn on failed removals inside rmtree()
+    def _handle_remove_error(func, path, exc_info):
+        ex = exc_info[1]
+        # Only skip PermissionErrors (file-in-use, etc.)
+        if isinstance(ex, PermissionError):
+            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
+            return
+        # Propagate everything else
+        raise ex
+
+    # Iterate through *direct* children of user plugins directory
+    for entry in os.scandir(user_plugins_dir):
+        path = entry.path
+        try:
+            if entry.is_dir(follow_symlinks=False):
+                # Recursively remove this subfolder entirely (with our onerror)
+                shutil.rmtree(path, onerror=_handle_remove_error)
+            else:
+                # Remove a single file
+                os.unlink(path)
+        except PermissionError as e:
+            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
+        except OSError as e:
             chisurf.logging.warning(f"Couldn't remove {path}")
 
 
