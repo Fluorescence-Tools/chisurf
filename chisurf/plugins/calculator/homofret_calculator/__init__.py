@@ -21,7 +21,7 @@ from qtpy import QtWidgets
 from .homofret import HomoFRETCalculator
 
 # Plugin display name
-name = "Tools:HomoFRET Calculator"
+name = "Main:Tools:HomoFRET Calculator"
 
 if __name__ == "plugin":
     window = HomoFRETCalculator()
