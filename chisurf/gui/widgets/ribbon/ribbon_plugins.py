@@ -86,7 +86,7 @@ class PluginMethodsMixin:
         """
         Create hierarchical menu structure from nested plugin data.
 
-        Since pyqtribbon doesn't support true nested subcategories, this implementation
+        Since ribbon doesn't support true nested subcategories, this implementation
         uses the first hierarchy level as the main category and organizes remaining
         levels within panels and subpanels.
 
@@ -109,10 +109,14 @@ class PluginMethodsMixin:
         failed_plugins = 0
         skipped_categories = 0
 
-        for category_name, category_data in structure.items():
-            if category_name.startswith('_'):  # Skip metadata keys
-                continue
-
+        # Sort categories to ensure 'Dev' is always last
+        sorted_categories = sorted(
+            [(category_name, category_data) for category_name, category_data in structure.items() 
+             if not category_name.startswith('_')],
+            key=lambda x: (1 if x[0] == 'Dev' else 0, x[0])
+        )
+        
+        for category_name, category_data in sorted_categories:
             # Check if category already exists and use it, or create a new one
             if category_name in self.categories:
                 category = self.categories[category_name]
@@ -148,8 +152,41 @@ class PluginMethodsMixin:
         total_plugins = successful_plugins + failed_plugins
         if total_plugins > 0:
             self.logger.info(f"Hierarchical menu summary: {successful_plugins} plugins created successfully, {failed_plugins} failed, {skipped_categories} categories reused")
+        
+        # Ensure Dev category is always the last tab
+        self._move_dev_category_to_end()
 
         return created_categories
+    
+    def _move_dev_category_to_end(self):
+        """Move the Dev category to be the last tab in the ribbon."""
+        try:
+            if 'Dev' in self.categories and hasattr(self.ribbon_bar, '_titleWidget'):
+                # Get the tab bar
+                title_widget = self.ribbon_bar._titleWidget
+                if hasattr(title_widget, 'tabBar'):
+                    tab_bar = title_widget.tabBar()
+                    
+                    # Find the current index of the Dev tab
+                    dev_index = tab_bar.indexOf('Dev')
+                    
+                    # Move Dev tab to the end if it's not already there
+                    if dev_index >= 0 and dev_index < tab_bar.count() - 1:
+                        # Move the tab
+                        tab_bar.moveTab(dev_index, tab_bar.count() - 1)
+                        
+                        # Also need to move the corresponding widget in the stacked widget
+                        if hasattr(self.ribbon_bar, '_stackedWidget'):
+                            stacked_widget = self.ribbon_bar._stackedWidget
+                            # Remove and re-insert the widget at the new position
+                            widget = stacked_widget.widget(dev_index)
+                            if widget:
+                                stacked_widget.removeWidget(widget)
+                                stacked_widget.insertWidget(tab_bar.count() - 1, widget)
+                        
+                        self.logger.info(f"Moved Dev category from index {dev_index} to the last position")
+        except Exception as e:
+            self.logger.warning(f"Failed to move Dev category to end: {e}")
 
     def _fix_panel_alignment(self, panel):
         """
@@ -252,7 +289,7 @@ class PluginMethodsMixin:
                 try:
                     # Create a panel for this subcategory
                     panel_name = subcat_name
-                    panel = category.addPanel(panel_name)
+                    panel = category.addPanel(panel_name, showPanelOptionButton=False)
 
                     # Add plugins directly as small buttons for better size control
                     for plugin_info in plugins:
@@ -299,7 +336,7 @@ class PluginMethodsMixin:
                         try:
                             # Create descriptive panel name
                             panel_name = f"{subcat_name} > {deeper_name}"
-                            panel = category.addPanel(panel_name)
+                            panel = category.addPanel(panel_name, showPanelOptionButton=False)
 
                             # Add plugins directly as small buttons for better size control
                             for plugin_info in deeper_plugins:
@@ -365,7 +402,7 @@ class PluginMethodsMixin:
             panel_name = f"Gallery {gallery_number}" if len(plugins) > gallery_size else "Plugins"
 
             # Create panel first
-            panel = category.addPanel(panel_name)
+            panel = category.addPanel(panel_name, showPanelOptionButton=False)
 
             # Add plugins directly as small buttons for better size control
             for plugin_info in gallery_plugins:

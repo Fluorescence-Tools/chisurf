@@ -34,7 +34,7 @@ class CategoryMethodsMixin:
                 save_button.setAutoRaise(True)
                 self.ribbon_bar.addQuickAccessButton(save_button)
 
-            # Add separator - pyqtribbon may handle this differently
+            # Add separator - ribbon may handle this differently
             # For now, we'll skip separators as they may not be directly supported
 
             # Add undo action if available
@@ -98,7 +98,7 @@ class CategoryMethodsMixin:
                                 if action and not action.isSeparator()]
 
             if remaining_actions:
-                panel_other = category.addPanel('Other Tools')
+                panel_other = category.addPanel('Other Tools', showPanelOptionButton=False)
                 for action in remaining_actions[:8]:  # Limit to 8 actions
                     # Use small action for text below icon layout
                     btn = panel_other.addSmallButton(action.text(), icon=action.icon() if action.icon() else None, showText=True, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
@@ -251,10 +251,10 @@ class CategoryMethodsMixin:
 
                     # Create hierarchical menu within the Setup Plugins panel
                     # Since we're within Main category, we'll organize by subpanels
-                    self._add_hierarchical_plugins_to_panel(category, setup_plugins, 'Setup Plugins')
+                    self._add_hierarchical_plugins_to_panel(category, setup_plugins, 'Setup')
                 else:
                     # No hierarchy - use simple flat gallery organization
-                    panel_setup = category.addPanel('Setup Plugins')
+                    panel_setup = category.addPanel('Setup', showPanelOptionButton=False)
                     # Add plugins directly as small buttons for better size control
                     for plugin_info in setup_plugins:
                         # Add as small button with text below icon for compact display
@@ -321,7 +321,7 @@ class CategoryMethodsMixin:
                 panel_name = f"{base_panel_name} - {group_name}"
 
             # Create panel first
-            panel = category.addPanel(panel_name)
+            panel = category.addPanel(panel_name, showPanelOptionButton=False)
 
             # Add plugins directly as small buttons for better size control
             for plugin_info in group_plugins:
@@ -476,10 +476,10 @@ class CategoryMethodsMixin:
 
                     # Create hierarchical menu within the Help Plugins panel
                     # Since we're within Main category, we'll organize by subpanels
-                    self._add_hierarchical_plugins_to_panel(category, help_plugins, 'Help Plugins')
+                    self._add_hierarchical_plugins_to_panel(category, help_plugins, 'Help')
                 else:
                     # No hierarchy - use simple flat gallery organization
-                    panel_help = category.addPanel('Help Plugins')
+                    panel_help = category.addPanel('Help', showPanelOptionButton=False)
                     # Add plugins directly as small buttons for better size control
                     for plugin_info in help_plugins:
                         # Add as small button with text below icon for compact display
@@ -507,7 +507,7 @@ class CategoryMethodsMixin:
         """Add basic main actions when toolbar is not available"""
 
         # View panel
-        panel_view = category.addPanel('View')
+        panel_view = category.addPanel('View', showPanelOptionButton=False)
         # Theme actions removed - only window actions added
 
         # Add window actions if available
@@ -518,66 +518,12 @@ class CategoryMethodsMixin:
                 # Use small action for text below icon layout
                 panel_view.addSmallButton(action.text(), icon=action.icon() if action.icon() else None, showText=True, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
 
-    def _create_file_category(self):
-        """Create File category with file operations"""
-        category = self.ribbon_bar.addCategory('File')
-
-        # Common operations panel
-        panel = category.addPanel('Common')
-
-        # Load Data action
-        if hasattr(self.main_window, 'actionLoad_Data'):
-            action = self.main_window.actionLoad_Data
-            # Add better icon if available
-            try:
-                # Use generic icon since pyqtribbon doesn't have built-in icons
-                action.setIcon(QIcon.fromTheme('document-open'))
-            except Exception:
-                pass
-            panel.addLargeButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
-
-        # Save Data action
-        if hasattr(self.main_window, 'actionSave_Data'):
-            action = self.main_window.actionSave_Data
-            # Add better icon if available
-            try:
-                # Use generic icon since pyqtribbon doesn't have built-in icons
-                action.setIcon(QIcon.fromTheme('document-save'))
-            except Exception:
-                pass
-            panel.addLargeButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
-
-        # Import/Export panel
-        panel_io = category.addPanel('Import/Export')
-
-        # Import action
-        if hasattr(self.main_window, 'actionImport'):
-            action = self.main_window.actionImport
-            # Add folder icon for import
-            try:
-                action.setIcon(QIcon.fromTheme('folder'))
-            except Exception:
-                pass
-            panel_io.addMediumButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
-
-        # Export action
-        if hasattr(self.main_window, 'actionExport'):
-            action = self.main_window.actionExport
-            # Add export icon
-            try:
-                action.setIcon(QIcon.fromTheme('document-save-as'))
-            except Exception:
-                pass
-            panel_io.addMediumButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
-
-        return category
-
     def _create_edit_category(self):
         """Create Edit category with editing operations"""
         category = self.ribbon_bar.addCategory('Edit')
 
         # Basic operations panel
-        panel = category.addPanel('Basic')
+        panel = category.addPanel('Basic', showPanelOptionButton=False)
 
         # Undo action
         if hasattr(self.main_window, 'actionUndo'):
@@ -600,7 +546,7 @@ class CategoryMethodsMixin:
             panel.addLargeButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
 
         # Clipboard panel
-        panel_clip = category.addPanel('Clipboard')
+        panel_clip = category.addPanel('Clipboard', showPanelOptionButton=False)
 
         # Copy action
         if hasattr(self.main_window, 'actionCopy'):
@@ -633,7 +579,7 @@ class CategoryMethodsMixin:
             panel.addMediumButton(action.text(), icon=action.icon() if action.icon() else None, slot=action.trigger, alignment=Qt.AlignLeft | Qt.AlignTop)
 
         # Fitting panel
-        panel_fit = category.addPanel('Fitting')
+        panel_fit = category.addPanel('Fitting', showPanelOptionButton=False)
 
         # Start fit action
         if hasattr(self.main_window, 'actionStart_Fit'):
@@ -657,7 +603,7 @@ class CategoryMethodsMixin:
         category = self.ribbon_bar.addCategory('Tools')
 
         # Utilities panel
-        panel = category.addPanel('Utilities')
+        panel = category.addPanel('Utilities', showPanelOptionButton=False)
 
         # Settings action
         if hasattr(self.main_window, 'actionSettings'):

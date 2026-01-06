@@ -106,14 +106,16 @@ class AutoFoldMethodsMixin:
                         if not icon.isNull():
                             help_button.setIcon(icon)
                             icon_set = True
+                            # Apply red color styling for theme icons
+                            help_button.setStyleSheet("QToolButton { color: red; }")
                             break
                     except Exception:
                         continue
                 
                 # If no theme icon works, create a simple text-based question mark
                 if not icon_set:
-                    help_button.setText("?")
-                    help_button.setStyleSheet("font-weight: bold; font-size: 14px;")
+                    help_button.setText("❓")
+                    help_button.setStyleSheet("font-weight: bold; font-size: 14px; color: red;")
                 
                 help_button.setToolTip("Open Help Plugin")
                 help_button.clicked.connect(self.main_window.onOpenHelp)

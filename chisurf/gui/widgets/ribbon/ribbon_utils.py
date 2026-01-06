@@ -53,7 +53,7 @@ class UtilityMethodsMixin:
         )
 
     def _fix_ribbon_fonts(self):
-        """Fix font sizes for pyqtribbon to match normal application fonts"""
+        """Fix font sizes for ribbon to match normal application fonts"""
         try:
             # Get the default application font
             app_font = QtWidgets.QApplication.font()
@@ -92,7 +92,7 @@ class UtilityMethodsMixin:
 
     def _add_ribbon_style_actions(self, panel):
         """Add ribbon style selection actions"""
-        # pyqtribbon uses different style system - for now we'll skip style switching
+        # Ribbon uses different style system - for now we'll skip style switching
         # This functionality can be added later if needed
         pass
 
@@ -156,16 +156,16 @@ class UtilityMethodsMixin:
     def _cleanup_ribbon_actions(self):
         """Clean up ribbon actions to prevent disconnect errors"""
         try:
-            # pyqtribbon doesn't seem to have the same cleanup API as SARibbon
-            # For now, we'll skip the complex cleanup since pyqtribbon should handle this better
-            self.logger.info("Ribbon actions cleanup skipped (pyqtribbon handles this internally)")
+            # Ribbon doesn't seem to have the same cleanup API as SARibbon
+            # For now, we'll skip the complex cleanup since Ribbon should handle this better
+            self.logger.info("Ribbon actions cleanup skipped (ribbon handles this internally)")
 
         except Exception as e:
             self.logger.warning(f"Failed to cleanup ribbon actions: {e}")
 
     def _cleanup_category_actions(self, category):
         """Clean up actions in a specific category"""
-        # Simplified cleanup for pyqtribbon
+        # Simplified cleanup for ribbon
         pass
 
     def _cleanup_panel_actions(self, panel):
@@ -232,14 +232,14 @@ class UtilityMethodsMixin:
     def _add_standard_help_actions(self, category):
         """Add standard help actions to Help category"""
         # Documentation panel
-        panel = category.addPanel('Documentation')
+        panel = category.addPanel('Documentation', showPanelOptionButton=False)
 
         # About action
         if hasattr(self.main_window, 'actionAbout'):
             action = self.main_window.actionAbout
             # Add info icon
             try:
-                # Use generic icon since pyqtribbon doesn't have built-in icons
+                # Use generic icon since ribbon doesn't have built-in icons
                 action.setIcon(QIcon.fromTheme('help-about'))
             except Exception:
                 pass

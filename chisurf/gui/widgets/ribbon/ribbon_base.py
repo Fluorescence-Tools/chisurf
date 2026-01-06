@@ -12,21 +12,18 @@ import json
 import functools
 from math import ceil
 
-from PyQt5.QtCore import Qt, QSize, QTimer, QEvent, QObject
-from PyQt5.QtGui import QIcon, QKeySequence, QFont
-from PyQt5.QtWidgets import QAction, QMessageBox
-from PyQt5 import QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
+from qtpy.QtCore import QObject
 
-from pyqtribbon import RibbonBar
+from .ribbonbar import RibbonBar
+from .constants import RibbonStyle
+from .logger import logging
 
-import chisurf
-from chisurf import logging
-
-# Monkey patch to disable problematic window dragging in pyqtribbon title widget
+# Monkey patch to disable problematic window dragging in ribbon title widget
 def _disable_title_widget_dragging():
-    """Monkey patch pyqtribbon title widget to prevent window movement issues"""
+    """Monkey patch ribbon title widget to prevent window movement issues"""
     try:
-        from pyqtribbon.titlewidget import RibbonTitleWidget
+        from .titlewidget import RibbonTitleWidget
 
         # Replace the problematic mouse event methods with no-ops
         def noop_mousePressEvent(self, e):
@@ -43,10 +40,10 @@ def _disable_title_widget_dragging():
         RibbonTitleWidget.mouseMoveEvent = noop_mouseMoveEvent
         RibbonTitleWidget.mouseDoubleClickEvent = noop_mouseDoubleClickEvent
 
-        logging.info("Applied monkey patch to disable pyqtribbon title widget dragging")
+        logging.info("Applied monkey patch to disable ribbon title widget dragging")
 
     except ImportError as e:
-        logging.warning(f"Failed to apply pyqtribbon monkey patch: {e}")
+        logging.warning(f"Failed to apply ribbon monkey patch: {e}")
     except Exception as e:
         logging.warning(f"Unexpected error applying monkey patch: {e}")
 
@@ -77,7 +74,7 @@ class ChiSurfRibbonIntegration(QObject):
         self.original_menubar = None
         self.original_toolbar = None
         # Create a hidden widget to preserve the menu bar
-        from PyQt5.QtWidgets import QWidget
+        from qtpy.QtWidgets import QWidget
         self.menu_preserve_widget = QWidget()
         self.menu_preserve_widget.hide()
         # Create a hidden widget to preserve the ribbon bar
@@ -86,12 +83,12 @@ class ChiSurfRibbonIntegration(QObject):
         self.logger = logging.getLogger('chisurf.gui.widgets.ribbon')
 
         # Auto-fold functionality
-        self.auto_fold_timer = QTimer()
+        self.auto_fold_timer = QtCore.QTimer()
         self.auto_fold_timer.setSingleShot(True)
         self.auto_fold_timer.timeout.connect(self._auto_fold_ribbon)
         msg = "Auto-fold timer created and connected"
         self.logger.info(msg)
-        self.last_activity_time = QTimer()
+        self.last_activity_time = QtCore.QTimer()
         self.last_activity_time.start()
         self.is_folded = False
 
@@ -129,7 +126,7 @@ class ChiSurfRibbonIntegration(QObject):
         """
         # Handle auto-fold events for ribbon and tab bar
         if (obj == self.ribbon_bar or (hasattr(self.ribbon_bar, 'tabBar') and obj == self.ribbon_bar.tabBar())) and self.auto_fold_enabled:
-            if event.type() == QEvent.Enter:
+            if event.type() == QtCore.QEvent.Enter:
                 # Mouse entered ribbon - stop auto-fold timer but DON'T auto-unfold
                 self.mouse_over_ribbon = True
                 msg = "MOUSE ENTERED RIBBON - stopping auto-fold timer (hover unfold disabled)"
@@ -137,14 +134,14 @@ class ChiSurfRibbonIntegration(QObject):
                 self.auto_fold_timer.stop()
                 # NOTE: Removed auto-unfold on hover - now requires click to uncollapse
                 return False
-            elif event.type() == QEvent.Leave:
+            elif event.type() == QtCore.QEvent.Leave:
                 # Mouse left ribbon - start auto-fold timer
                 self.mouse_over_ribbon = False
                 msg = "MOUSE LEFT RIBBON - starting auto-fold timer"
                 self.logger.debug(msg)
                 self._restart_auto_fold_timer()
                 return False
-            elif event.type() == QEvent.MouseButtonPress:
+            elif event.type() == QtCore.QEvent.MouseButtonPress:
                 # Mouse clicked on ribbon - unfold if folded
                 self.logger.debug(f"Mouse button press on {type(obj).__name__}: folded={self.is_folded}, pinned={self.is_pinned}")
                 if self.is_folded and not self.is_pinned:
@@ -162,14 +159,14 @@ class ChiSurfRibbonIntegration(QObject):
                 # Log other events for debugging
                 self.logger.debug(f"Other event on ribbon: {event.type()}")
                 # Additional debugging for mouse events
-                if event.type() in [QEvent.MouseButtonPress, QEvent.MouseButtonRelease, QEvent.MouseMove]:
+                if event.type() in [QtCore.QEvent.MouseButtonPress, QtCore.QEvent.MouseButtonRelease, QtCore.QEvent.MouseMove]:
                     self.logger.debug(f"Mouse event on ribbon: {event.type()}, folded={self.is_folded}, pinned={self.is_pinned}")
 
         # Handle resize events for main window
-        elif obj == self.main_window and event.type() == QEvent.Resize:
+        elif obj == self.main_window and event.type() == QtCore.QEvent.Resize:
             # Fix white background issues on resize
-            QTimer.singleShot(100, self._apply_background_fix)
-            QTimer.singleShot(200, self._apply_title_widget_fix)
+            QtCore.QTimer.singleShot(100, self._apply_background_fix)
+            QtCore.QTimer.singleShot(200, self._apply_title_widget_fix)
             return False
 
         return False  # Don't block the event
@@ -183,9 +180,10 @@ class ChiSurfRibbonIntegration(QObject):
         Parameters
         ----------
         ribbon_style : int, optional
-            Ribbon style to use (pyqtribbon uses RibbonStyle constants)
+            Ribbon style to use (ribbon uses RibbonStyle constants)
             If None, uses default style
         """
+        logging.info(f"DEBUG: setup_ribbon_interface called with ribbon_style={ribbon_style}")
         try:
             # Store original components for reference only
             # Handle both cases where menuBar is a method or property
@@ -221,11 +219,12 @@ class ChiSurfRibbonIntegration(QObject):
                 self.logger.info("Ribbon bar restored from hidden widget")
             else:
                 # Create ribbon bar
+                logging.info("DEBUG: About to create RibbonBar")
                 self.ribbon_bar = RibbonBar()
+                logging.info("DEBUG: RibbonBar created successfully")
 
-                # Set ribbon style - pyqtribbon uses different style constants
+                # Set ribbon style - ribbon uses different style constants
                 # For now, we'll use the default style
-                from pyqtribbon.constants import RibbonStyle
                 if ribbon_style is not None:
                     # Convert old style constants to new ones if needed
                     self.ribbon_bar.setRibbonStyle(RibbonStyle.Default)
@@ -299,24 +298,26 @@ class ChiSurfRibbonIntegration(QObject):
             # Setup quick access bar
             self._setup_quick_access_bar()
 
-            # Setup resize event handler to catch white background issues
-            self._setup_resize_handler()
-
             # Create ribbon categories
             self.categories = {}
+            # Create File category first (as the first tab)
+            self.categories['File'] = self._create_file_category()
             # Create Main category with default actions
             self.categories['Main'] = self._create_main_category()
             # Plugin categories are created dynamically in _create_plugins_category
             self._create_plugins_category()
 
             # Apply global alignment fix to all panels after everything is created
-            QTimer.singleShot(200, self._fix_all_panel_alignments)
+            from qtpy import QtCore
+            QtCore.QTimer.singleShot(200, self._fix_all_panel_alignments)
 
             self.logger.info("Ribbon interface setup completed successfully")
             return True
 
         except Exception as e:
+            import traceback
             self.logger.error(f"Failed to setup ribbon interface: {e}")
+            self.logger.error(f"DEBUG: Exception traceback: {traceback.format_exc()}")
             return False
 
     def _apply_background_fix(self):
@@ -453,8 +454,8 @@ class ChiSurfRibbonIntegration(QObject):
     def _apply_dark_palette(self):
         """Apply dark palette to the application like the demo"""
         try:
-            from PyQt5.QtGui import QPalette, QColor
-            from PyQt5.QtCore import Qt
+            from qtpy.QtGui import QPalette, QColor
+            from qtpy.QtCore import Qt
 
             app = QtWidgets.QApplication.instance()
             if app is None:
