@@ -11,7 +11,7 @@ import chisurf.parameter
 
 from chisurf.gui import QtWidgets, QtCore, QtGui
 from chisurf import logging
-from chisurf.plugins.globalview.graphplotwidget import GraphPlotWidget
+from chisurf.plugins.chisurf.globalview.graphplotwidget import GraphPlotWidget
 
 
 class GraphWizard(QtWidgets.QWidget):
