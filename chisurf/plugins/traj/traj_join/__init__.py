@@ -17,7 +17,7 @@ import sys
 from chisurf.plugins.traj.traj_join.widget import JoinTrajectoriesWidget
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Join Trajectories"
+name = "Structure:Trajectory:Join"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

@@ -39,7 +39,7 @@ from qtpy.QtWidgets import (
 )
 import pyqtgraph as pg
 
-name = "Single-Molecule:Photon Counting Histogram"
+name = "Spectroscopy:Single-Molecule:PCH"
 
 
 @njit(fastmath=True)

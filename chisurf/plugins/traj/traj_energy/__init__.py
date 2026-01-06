@@ -17,7 +17,7 @@ import sys
 from chisurf.plugins.traj.potential_energy.widget import PotentialEnergyWidget
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory Energy Calculator"
+name = "Structure:Trajectory:Trajectory Energy"
 
 
 

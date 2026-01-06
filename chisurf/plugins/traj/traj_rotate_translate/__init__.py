@@ -18,7 +18,7 @@ import sys
 from chisurf.plugins.traj.traj_rotate_translate.widget import RotateTranslateTrajectoryWidget
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Rotate/Translate Trajectory"
+name = "Structure:Trajectory:Rotate/Translate"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

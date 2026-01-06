@@ -18,7 +18,7 @@ import sys
 from chisurf.plugins.traj.traj_remove_clashes.widget import RemoveClashedFrames
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Remove Clashed Frames"
+name = "Structure:Trajectory:Remove Clashed"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

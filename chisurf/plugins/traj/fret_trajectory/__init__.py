@@ -20,7 +20,7 @@ import sys
 from chisurf.plugins.traj.fret_trajectory.gui import Structure2Transfer
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:FRET from Trajectory"
+name = "Structure:Trajectory:FRET"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

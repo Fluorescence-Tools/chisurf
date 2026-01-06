@@ -26,7 +26,7 @@ The plugin provides a graphical interface for setting up and running these simul
 as well as for analyzing and visualizing the results.
 """
 
-name = "Tools:QuEst (Quenching estimator)"
+name = "Structure:Computation:QuEst"
 
 import sys
 

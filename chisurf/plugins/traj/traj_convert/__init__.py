@@ -16,7 +16,7 @@ import sys
 from chisurf.plugins.traj.traj_convert.widget import MDConverter
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory Converter"
+name = "Structure:Trajectory:Convert"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

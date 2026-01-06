@@ -20,7 +20,7 @@ import sys
 from chisurf.plugins.traj.traj_align.widget import AlignTrajectoryWidget
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Trajectory Alignment"
+name = "Structure:Trajectory:Align"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

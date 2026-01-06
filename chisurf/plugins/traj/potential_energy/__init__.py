@@ -18,7 +18,7 @@ import sys
 from chisurf.plugins.traj.potential_energy.widget import PotentialEnergyWidget
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Potential Energy Calculator"
+name = "Structure:Trajectory:Energy Calculator"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

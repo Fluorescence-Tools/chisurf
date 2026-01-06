@@ -18,7 +18,7 @@ import sys
 from chisurf.plugins.traj.traj_save_topology.widget import SaveTopology
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:Save Topology"
+name = "Structure:Trajectory:Save Topol"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
