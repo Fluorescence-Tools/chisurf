@@ -189,3 +189,52 @@ def set_check_experiment_config_updates_on_startup(check_updates: bool) -> bool:
         return True
     except Exception:
         return False
+
+
+def set_use_ribbon_interface(use_ribbon: bool) -> bool:
+    """Persist the ribbon interface state in the user's settings YAML.
+
+    Args:
+        use_ribbon: If True, the ribbon interface will be enabled on startup.
+                   If False, the traditional menu bar will be used.
+    Returns:
+        True if the setting was saved successfully, False otherwise.
+    """
+    try:
+        settings_file = get_path('settings') / 'settings_chisurf.yaml'
+        
+        # Create settings file if it doesn't exist
+        if not settings_file.is_file():
+            # Copy from package settings if available
+            package_path = pathlib.Path(__file__).parent
+            original_settings = package_path / 'settings_chisurf.yaml'
+            if original_settings.is_file():
+                import shutil
+                shutil.copyfile(original_settings, settings_file)
+            else:
+                # Create empty settings file
+                settings_file.parent.mkdir(parents=True, exist_ok=True)
+                with open(settings_file, 'w', encoding='utf-8') as fh:
+                    yaml.safe_dump({}, fh)
+        
+        data = safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}"
+        )
+        if not isinstance(data, dict):
+            data = {}
+        
+        # Ensure gui section exists
+        gui_cfg = data.get('gui', {})
+        if not isinstance(gui_cfg, dict):
+            gui_cfg = {}
+            data['gui'] = gui_cfg
+        
+        gui_cfg['use_ribbon_interface'] = bool(use_ribbon)
+        with open(settings_file, 'w', encoding='utf-8') as fh:
+            yaml.safe_dump(data, fh, default_flow_style=False)
+        return True
+    except Exception:
+        return False
