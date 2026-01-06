@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="icons">
-    <file>icon.svg</file>
+    <file>icons/cs_icon.svg</file>
     <file>icons/splashscreen.png</file>
     <file>icons/printer-3-xxl.png</file>
     <file>icons/available-updates-xxl.png</file>
@@ -56,7 +56,7 @@
     <file>icons/FRET-Lines.png</file>
     <file>icons/FRET.png</file>
     <file>icons/Cone.png</file>
-    <file>icons/help-browser.png</file>
+    <file>icons/documentation.png</file>
     <file>icons/document-open.svg</file>
     <file>icons/Document-print.svg</file>
     <file>icons/Document-print-preview.svg</file>
