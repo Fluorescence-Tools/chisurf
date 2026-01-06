@@ -246,7 +246,6 @@ def _apply_thread_env_from_settings() -> None:
         from .settings_utils import get_chisurf_settings
         import sys as _sys
         import os as _os
-        import pathlib as _pl
 
         settings_dir = get_path('settings')
         # YAML source (existing behavior)
@@ -305,6 +304,30 @@ def _apply_thread_env_from_settings() -> None:
         log.debug("Could not apply thread env from settings: %s", e)
 
 
+def _init_local_python_modules() -> None:
+    """Best-effort: add in-tree third-party modules to sys.path for dev.
+
+    Specifically ensure the SARibbon-pyqt5 submodule (if present) is importable
+    without a separate installation by appending its ``src`` folder to
+    ``sys.path``. This enables ``import PySARibbon`` during development.
+    """
+    try:
+        # Project root is two levels up from this file: chisurf/settings/...
+        project_root = pathlib.Path(__file__).resolve().parents[2]
+        saribbon_src = project_root / "modules" / "SARibbon-pyqt5" / "src"
+        if saribbon_src.is_dir():
+            p = str(saribbon_src)
+            if p not in sys.path:
+                sys.path.append(p)
+                try:
+                    log.debug("Added SARibbon-pyqt5 src to sys.path: %s", p)
+                except Exception:
+                    pass
+    except Exception:
+        # Never fail startup because of path tweaks
+        pass
+
+
 def _apply_custom_env_from_settings() -> None:
     """Apply environment variables defined in settings_chisurf.yaml.
 
@@ -361,6 +384,7 @@ try:
     _apply_thread_env_from_settings()
     _apply_custom_env_from_settings()
     _init_paths()
+    _init_local_python_modules()
     _init_qt_plugins()
     _init_vispy()
     _preload_freetype()
