@@ -1,0 +1,787 @@
+/* Ribbon styles - Consolidated from separate ribbon style files */
+
+/* IMPORTANT: RibbonBar inherits from QtWidgets.QMenuBar, so we need to target both */
+
+/* ===== BASE STYLES ===== */
+
+/* Application button menu indicator */
+RibbonApplicationButton::menu-indicator {
+    image: none;
+}
+
+/* Category and scroll area base styles */
+RibbonCategory, RibbonCategoryScrollArea, RibbonCategoryScrollAreaContents {
+    border: none;
+    background-color: transparent;
+}
+
+/* Tab bar base styling */
+RibbonTabBar::tab {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+RibbonTabBar::tab:selected {
+    border-bottom: 3px solid blue;
+}
+
+RibbonTabBar::tab:!selected {
+    border-bottom: none;
+}
+
+RibbonTabBar::tab:hover:!selected {
+    padding-left: 10px;
+    border-bottom: 3px solid gray;
+}
+
+/* Popup widgets and menus */
+RibbonPopupWidget {
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: white;
+}
+
+QMenu {
+    border: none;
+    border-radius: 5px;
+    background-color: white;
+}
+
+QMenu:selected {
+    background-color: #e0e0e0;
+}
+
+/* Gallery styling */
+RibbonGallery {
+    border: 1px solid gray;
+    border-radius: 5px;
+}
+
+RibbonGalleryButton {
+    border: 1px solid gray;
+    border-radius: 5px;
+}
+
+RibbonGalleryListWidget {
+    border: none;
+}
+
+/* ===== DEFAULT THEME STYLES ===== */
+
+RibbonBar {
+    border: none;
+    background-color: transparent;
+}
+
+RibbonTitleWidget {
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+RibbonStackedWidget {
+    border: none;
+    border-radius: 10px;
+    background-color: white;
+}
+
+/* ===== DARK THEME STYLES (Main ChiSurf Theme) ===== */
+
+/* Remove ALL borders and outlines from ribbon buttons */
+RibbonToolButton {
+    border: none !important;
+    outline: none !important;
+    border-radius: 4px;
+    padding: 2px;
+    margin: 1px;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+/* Also target QToolButton in case pyqtribbon uses that */
+RibbonBar QToolButton {
+    border: none !important;
+    outline: none !important;
+    border-radius: 4px;
+    padding: 2px;
+    margin: 1px;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+RibbonToolButton:hover {
+    border: none !important;
+    outline: none !important;
+    background-color: #404040;
+    color: #ffffff;
+}
+
+RibbonBar QToolButton:hover {
+    border: none !important;
+    outline: none !important;
+    background-color: #404040;
+    color: #ffffff;
+}
+
+RibbonToolButton:pressed {
+    border: none !important;
+    outline: none !important;
+    background-color: #505050;
+    color: #ffffff;
+}
+
+RibbonBar QToolButton:pressed {
+    border: none !important;
+    outline: none !important;
+    background-color: #505050;
+    color: #ffffff;
+}
+
+RibbonToolButton:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QToolButton:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonToolButton:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QToolButton:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonToolButton:selected {
+    border: none !important;
+    outline: none !important;
+    background-color: palette(highlight);
+    color: palette(highlighted-text);
+}
+
+RibbonBar QToolButton:selected {
+    border: none !important;
+    outline: none !important;
+    background-color: palette(highlight);
+    color: palette(highlighted-text);
+}
+
+/* Remove ALL borders from ribbon bar tabs */
+RibbonTabBar::tab {
+    border: none !important;
+    outline: none !important;
+    padding: 8px 16px;
+    margin-right: 2px;
+    background-color: #2a2a2a;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+RibbonTabBar::tab:hover {
+    border: none !important;
+    outline: none !important;
+    background-color: #404040;
+}
+
+RibbonTabBar::tab:selected {
+    border: none !important;
+    outline: none !important;
+    background-color: #404040;
+    border-bottom: 2px solid palette(highlight);
+}
+
+RibbonTabBar::tab:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonTabBar::tab:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Panel styles - remove all borders and add proper alignment */
+RibbonPanel {
+    border: none !important;
+    outline: none !important;
+    background-color: #353535;
+}
+
+/* Target the panel title widget and layout */
+RibbonPanel QWidget {
+    background-color: #353535;
+}
+
+/* Force panel item widgets to align to top-left */
+RibbonPanelItemWidget {
+    background-color: #353535;
+}
+
+/* Override the center alignment in panel item layouts */
+RibbonPanelItemWidget QVBoxLayout {
+    background-color: #353535;
+    alignment: top left !important;
+}
+
+/* Target all layouts within panels to use top-left alignment */
+RibbonPanel QLayout {
+    background-color: #353535;
+    alignment: top left !important;
+}
+
+/* Ensure grid layout within panels aligns to top-left */
+RibbonPanel QGridLayout {
+    border: none !important;
+    outline: none !important;
+    alignment: top left !important;
+}
+
+/* Force all child widgets in panel items to top-left alignment */
+RibbonPanelItemWidget * {
+    background-color: #353535;
+}
+
+/* Aggressive: Target any possible layout that might be causing centering */
+RibbonPanel * {
+    background-color: #353535;
+}
+
+RibbonPanel QVBoxLayout {
+    alignment: top left !important;
+}
+
+RibbonPanel QHBoxLayout {
+    alignment: top left !important;
+}
+
+/* Target any widget that might contain layouts */
+RibbonPanel QWidget {
+    background-color: #353535;
+}
+
+RibbonPanel QWidget QLayout {
+    alignment: top left !important;
+}
+
+RibbonPanelTitle {
+    background-color: #353535;
+    color: #ffffff;
+}
+
+/* Target the panel item widgets */
+RibbonPanelItemWidget {
+    background-color: #353535;
+}
+
+/* Force all child widgets in panel items to top-left alignment */
+RibbonPanelItemWidget * {
+    background-color: #353535;
+}
+
+/* Target gallery widgets */
+RibbonGallery {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonGalleryListWidget {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonPopupWidget {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Target the grid layout used by RibbonPanel */
+RibbonPanel QGridLayout {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Target all widgets in the grid layout */
+RibbonPanel QGridLayout QWidget {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonPanel QWidget {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Force buttons to align properly */
+RibbonPanel QToolButton {
+    border: none !important;
+    outline: none !important;
+    margin: 1px;
+    padding: 1px;
+}
+
+RibbonPanel RibbonToolButton {
+    border: none !important;
+    outline: none !important;
+    margin: 1px;
+    padding: 1px;
+}
+
+/* Category styles - remove all borders */
+RibbonCategory {
+    border: none !important;
+    outline: none !important;
+    background-color: #353535;
+}
+
+/* Target the scroll area and contents that hold the panels */
+RibbonCategoryScrollArea {
+    border: none !important;
+    outline: none !important;
+    background-color: #353535;
+}
+
+RibbonCategoryScrollAreaContents {
+    border: none !important;
+    outline: none !important;
+    background-color: #353535;
+}
+
+/* Target the category layout widget */
+RibbonCategoryLayoutWidget {
+    border: none !important;
+    outline: none !important;
+    background-color: #353535;
+}
+
+/* Quick access toolbar - remove all borders */
+QToolBar#quickAccessToolBar {
+    border: none !important;
+    outline: none !important;
+    background-color: #353535;
+}
+
+QToolBar#quickAccessToolBar QToolButton {
+    border: none !important;
+    outline: none !important;
+    padding: 2px;
+    border-radius: 2px;
+}
+
+QToolBar#quickAccessToolBar QToolButton:hover {
+    border: none !important;
+    outline: none !important;
+    background-color: palette(alternate-base);
+}
+
+QToolBar#quickAccessToolBar QToolButton:pressed {
+    border: none !important;
+    outline: none !important;
+    background-color: palette(mid);
+}
+
+QToolBar#quickAccessToolBar QToolButton:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+QToolBar#quickAccessToolBar QToolButton:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Remove ALL focus rectangles from EVERY ribbon widget */
+RibbonBar * {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Also target QMenuBar since RibbonBar inherits from it */
+QMenuBar {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar * {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar *:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar *:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QWidget {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QWidget:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QWidget:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar *:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar *:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar QWidget {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar QWidget:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar QWidget:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Remove focus from any child widgets */
+RibbonBar QToolButton {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QToolButton:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonBar QToolButton:focus-visible {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Button text styling - force smaller fonts */
+RibbonToolButton QLabel {
+    color: #ffffff;
+    font-size: 8pt !important;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonToolButton:hover QLabel {
+    color: #ffffff;
+}
+
+RibbonToolButton:pressed QLabel {
+    color: #ffffff;
+}
+
+RibbonToolButton:selected QLabel {
+    color: #ffffff;
+}
+
+/* Force smaller fonts on all ribbon widgets */
+RibbonBar * {
+    font-size: 8pt !important;
+}
+
+RibbonPanel * {
+    font-size: 8pt !important;
+}
+
+RibbonCategory * {
+    font-size: 8pt !important;
+}
+
+/* RibbonBar main background - darker than default window */
+RibbonBar {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Target the stacked widget that contains all categories */
+RibbonStackedWidget {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Also target QMenuBar since RibbonBar inherits from it */
+QMenuBar {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Universal removal - catch any widget type in ribbon */
+QMenuBar * {
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar QWidget * {
+    border: none !important;
+    outline: none !important;
+}
+
+/* Target the main window areas that might be causing white backgrounds */
+QMdiArea {
+    background-color: #353535;
+    border: none;
+}
+
+QWidget#centralwidget {
+    background-color: #353535;
+}
+
+/* Target all possible container widgets that could be white */
+QFrame {
+    background-color: #353535;
+}
+
+QWidget {
+    background-color: #353535;
+}
+
+/* But exclude specific widgets that should be transparent */
+RibbonToolButton {
+    background-color: transparent;
+}
+
+RibbonBar QToolButton {
+    background-color: transparent;
+}
+
+QLabel {
+    background-color: transparent;
+}
+
+/* AGGRESSIVE: Target any potential empty space or resize widgets */
+RibbonBar QWidget {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+QMenuBar QWidget {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Target any potential spacer or stretch items */
+QSpacerItem {
+    background-color: #353535;
+}
+
+/* Target layout widgets */
+QHBoxLayout {
+    background-color: #353535;
+}
+
+QVBoxLayout {
+    background-color: #353535;
+}
+
+QGridLayout {
+    background-color: #353535;
+}
+
+/* Target any potential resize handles or corner widgets */
+QWidget#qt_scrollarea_viewport {
+    background-color: #353535;
+}
+
+QScrollBar {
+    background-color: #353535;
+}
+
+QScrollBar::handle {
+    background-color: #505050;
+}
+
+/* Target any potential empty widget areas */
+QWidget[accessibleName=""] {
+    background-color: #353535;
+}
+
+QWidget[objectName=""] {
+    background-color: #353535;
+}
+
+/* Target title widget and its components */
+RibbonTitleWidget {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonTitleLabel {
+    background-color: #353535;
+    color: #ffffff;
+}
+
+/* Target the title widget layout components */
+RibbonTitleWidget QToolBar {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonTitleWidget QToolButton {
+    background-color: transparent;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonTitleWidget QToolButton:hover {
+    background-color: #404040;
+    border: none !important;
+    outline: none !important;
+}
+
+RibbonTitleWidget QTabBar {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* Target all child widgets of title widget */
+RibbonTitleWidget * {
+    background-color: #353535;
+    border: none !important;
+    outline: none !important;
+}
+
+/* But allow buttons to be transparent when not hovered */
+RibbonTitleWidget QToolButton {
+    background-color: transparent;
+}
+
+RibbonTitleWidget QToolButton:hover {
+    background-color: #404040;
+}
+
+/* Ensure the title label doesn't create white space */
+RibbonTitleLabel {
+    background-color: #353535;
+    color: #ffffff;
+}
+
+/* ===== DEBUG STYLES (Commented out - uncomment for debugging) ===== */
+
+/*
+RibbonApplicationButton, RibbonPanelOptionButton {
+    border: 2px solid blue;
+    border-radius: 5px;
+}
+
+QToolBar {
+    border: 2px solid blue;
+    border-radius: 5px;
+}
+
+RibbonTabBar {
+    border: 2px solid purple;
+    border-radius: 20px;
+}
+
+RibbonTitleLabel {
+    border: 2px solid purple;
+    border-radius: 20px;
+}
+
+RibbonBar {
+    border: 2px solid red;
+    border-radius: 20px;
+}
+
+RibbonCategory {
+    border: 2px solid green;
+    border-radius: 20px;
+}
+
+RibbonPanel {
+    border: 2px solid brown;
+    border-radius: 20px;
+}
+
+RibbonSeparator {
+    border: 2px solid black;
+    border-radius: 20px;
+}
+
+RibbonPanelTitle {
+    border: 2px solid green;
+    border-radius: 20px;
+}
+
+RibbonPanelItemWidget {
+    border: 0px solid black;
+    border-radius: 20px;
+}
+
+QTabBar {
+    background-color: transparent;
+}
+
+QTabBar QToolButton {
+    background-color: transparent;
+}
+
+QTabBar::tab {
+    color: gray;
+    border: none;
+    background: transparent;
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-left: 6px;
+    margin-bottom: 0px;
+    min-width: 100px;
+    max-width: 250px;
+    min-height: 25px;
+    max-height: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 10px;
+    padding-bottom: 2px;
+}
+
+QTabBar::tab:selected, QTabBar::tab:hover {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+}
+
+QTabBar::tab:selected {
+    color: blue;
+    background: transparent;
+    border-bottom: 3px solid blue;
+}
+
+QToolButton::menu-button {
+    border: 2px solid transparent;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    width: 16px;
+}
+*/
