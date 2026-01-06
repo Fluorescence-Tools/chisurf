@@ -22,4 +22,4 @@ Once the selection is complete, the filtered photon data can be used in
 subsequent analysis steps within the ChiSurf application.
 """
 
-name = "TTTR:Photon/Burst Selection"
+name = "TTTR:Analysis:Photon/Burst Selection"

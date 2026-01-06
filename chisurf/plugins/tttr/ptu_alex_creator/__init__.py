@@ -23,4 +23,4 @@ The conversion process preserves all event data while transforming the time info
 to make ALEX data compatible with PIE analysis workflows.
 """
 
-name = "TTTR:ALEX Creator"
+name = "Tools:Converter:ALEX Creator"

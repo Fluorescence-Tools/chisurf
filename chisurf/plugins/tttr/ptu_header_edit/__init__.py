@@ -25,4 +25,4 @@ The plugin preserves all event data from the original file while allowing
 complete customization of the header information.
 """
 
-name = "TTTR:PTU Header editor"
+name = "TTTR:Editor:PTU Header editor"

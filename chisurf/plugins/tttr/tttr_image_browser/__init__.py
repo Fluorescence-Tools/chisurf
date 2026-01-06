@@ -46,7 +46,7 @@ from chisurf.plugins.trace_browser.__init__ import get_tttr_supported_exts, Star
 # Logging
 from chisurf import logging
 
-name = "TTTR:Image Browser"
+name = "Imaging:Tools:Image Browser"
 
 META_FILENAME = ".image_browser_meta.json"
 CACHE_DIR_NAME = ".tttr_image_cache"

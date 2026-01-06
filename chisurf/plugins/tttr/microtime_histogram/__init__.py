@@ -23,7 +23,7 @@ temporal information about photon arrival is critical for understanding molecula
 properties and dynamics.
 """
 
-name = "Fluorescence decay:Histogram-Microtime"
+name = "Spectroscopy:Fluorescence decay:Histogram-Microtime"
 
 # Expose the plugin's CLI helper through chisurf.cli. This forwards to the
 # argparse-based entry point defined in ``__main__.py``.

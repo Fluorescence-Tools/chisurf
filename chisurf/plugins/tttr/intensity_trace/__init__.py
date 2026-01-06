@@ -31,7 +31,7 @@ observed in fluorescence intensity traces. The HMM approach is particularly powe
 for detecting states in noisy data with overlapping distributions.
 """
 
-name = "Single-Molecule:Intensity trace"
+name = "Spectroscopy:Single-Molecule:Intensity trace"
 
 
 import sys

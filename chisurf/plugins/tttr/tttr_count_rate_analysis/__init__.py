@@ -30,7 +30,7 @@ Example:
     csc_count_rate analyze data/*.ptu --setup-file detector_setups.json --output results.txt
 """
 
-name = "TTTR:Count Rate Analysis"
+name = "TTTR:Analysis:Count Rate Analysis"
 
 # Expose the plugin CLI through chisurf.cli
 cli_entrypoint = "count-rate=chisurf.plugins.tttr.tttr_count_rate_analysis.cli:cli"

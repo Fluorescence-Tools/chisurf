@@ -19,5 +19,5 @@ This tool is particularly valuable for multi-color FRET experiments where precis
 temporal alignment of detection channels is critical for accurate analysis.
 """
 
-name = "TTTR:Microtime Shifter"
+name = "TTTR:Editor:Microtime Shifter"
 
