@@ -535,61 +535,60 @@ class Main(QtWidgets.QMainWindow):
             pass
 
     def reinitialize(self):
-        log = getattr(chisurf, 'logging', None)
+        """Reinitialize ChiSurf application with user confirmation and feedback"""
+        # Show confirmation dialog first
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Confirm Reinitialization",
+            "This will completely reset ChiSurf and clear all data:\n\n"
+            "• All loaded datasets will be removed\n"
+            "• All fits and results will be deleted\n"
+            "• All open windows will be closed\n"
+            "• Memory will be cleaned up\n\n"
+            "This action cannot be undone. Continue?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
+        )
+        
+        if reply != QtWidgets.QMessageBox.Yes:
+            return
+        
+        # Show progress dialog to user
+        progress_dialog = QtWidgets.QProgressDialog(
+            "Reinitializing ChiSurf...", "Cancel", 0, 10, self
+        )
+        progress_dialog.setWindowTitle("Reinitializing")
+        progress_dialog.setWindowModality(QtCore.Qt.WindowModal)
+        progress_dialog.setMinimumDuration(0)
+        progress_dialog.setValue(0)
 
-        def _log_exception(step: str) -> None:
-            try:
-                exc_fn = getattr(log, 'exception', None)
-                if callable(exc_fn):
-                    exc_fn(f"reinitialize: {step} failed")
-            except Exception:
-                pass
+        def progress_callback(step_name: str, progress_value: int):
+            progress_dialog.setLabelText(f"Reinitializing ChiSurf...\n{step_name}")
+            progress_dialog.setValue(progress_value)
+            QtWidgets.QApplication.processEvents()
 
-        def _run(step: str, fn) -> None:
-            try:
-                fn()
-            except Exception:
-                _log_exception(step)
+        try:
+            # Call the helper function from macros
+            import chisurf.macros
+            chisurf.macros.reinitialize_application(
+                main_window=self,
+                progress_callback=progress_callback
+            )
 
-        def _close_subwindows() -> None:
-            for sw in list(self.mdiarea.subWindowList()):
-                try:
-                    sw.close()
-                except Exception:
-                    try:
-                        title = sw.windowTitle()
-                    except Exception:
-                        title = None
-                    step = f"close subwindow {title}" if title else "close subwindow"
-                    _log_exception(step)
-
-        _run('onCloseAllFits', self.onCloseAllFits)
-        _run('close subwindows', _close_subwindows)
-        def _clear_imported_datasets_keep_global():
-            try:
-                global_datasets = [
-                    d for d in chisurf.imported_datasets
-                    if getattr(d, 'name', None) == 'Global Dataset'
-                ]
-            except Exception:
-                global_datasets = []
-            try:
-                chisurf.imported_datasets.clear()
-                chisurf.imported_datasets.extend(global_datasets)
-            except Exception:
-                _log_exception('clear imported_datasets')
-
-        _run('clear imported_datasets', _clear_imported_datasets_keep_global)
-        _run('dataset_selector.update', self.dataset_selector.update)
-        _run('fit_selector.update', self.fit_selector.update)
-
-        def _reset_state():
-            self._current_dataset = None
-            self._current_fit = None
-            self._fit_idx = 0
-
-        _run('reset current state', _reset_state)
-        _run('comboBox_Model.clear', self.comboBox_Model.clear)
+            # Close progress dialog and show completion message
+            progress_dialog.close()
+            QtWidgets.QMessageBox.information(
+                self,
+                "Reinitialization Complete",
+                "ChiSurf has been successfully reinitialized.\nAll data has been cleared, memory freed, and the application reset to initial state."
+            )
+        except Exception as e:
+            progress_dialog.close()
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Reinitialization Error",
+                f"An error occurred during reinitialization:\n{str(e)}"
+            )
 
     def onCloseProject(self, event: QtCore.QEvent = None):
         try:
@@ -1872,6 +1871,8 @@ class Main(QtWidgets.QMainWindow):
         self.actionOpen_Project.setEnabled(True)
         self.actionClose_Project.triggered.connect(self.onCloseProject)
         self.actionClose_Project.setEnabled(True)
+        self.actionReinitialize.triggered.connect(self.reinitialize)
+        self.actionReinitialize.setEnabled(True)
 
         try:
             self._init_recent_projects_menu()

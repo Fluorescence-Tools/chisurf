@@ -253,6 +253,187 @@ def add_dataset(
         )
 
 
+def reinitialize_application(
+        main_window=None,
+        progress_callback=None
+) -> None:
+    """
+    Reinitialize ChiSurf application by clearing all data and resetting state.
+    Performs safe cleanup without affecting Python built-ins.
+    
+    Parameters
+    ----------
+    main_window : QtWidgets.QMainWindow, optional
+        Main window instance for UI operations
+    progress_callback : callable, optional
+        Callback function for progress updates with signature (step_name, progress_value)
+    """
+    import gc
+    
+    log = getattr(chisurf, 'logging', None)
+
+    def _log_exception(step: str) -> None:
+        try:
+            exc_fn = getattr(log, 'exception', None)
+            if callable(exc_fn):
+                exc_fn(f"reinitialize: {step} failed")
+        except Exception:
+            pass
+
+    def _run(step: str, fn, progress_value: int) -> None:
+        try:
+            if progress_callback:
+                progress_callback(step, progress_value)
+            fn()
+        except Exception as e:
+            _log_exception(f"{step}: {str(e)}")
+
+    def _close_subwindows() -> None:
+        if main_window and hasattr(main_window, 'mdiarea'):
+            for sw in list(main_window.mdiarea.subWindowList()):
+                try:
+                    sw.close()
+                except Exception:
+                    pass
+
+    def _clear_imported_datasets_keep_global():
+        try:
+            global_datasets = [
+                d for d in chisurf.imported_datasets
+                if hasattr(d, 'name') and d.name == 'Global Dataset'
+            ]
+        except Exception:
+            global_datasets = []
+        try:
+            chisurf.imported_datasets.clear()
+            chisurf.imported_datasets.extend(global_datasets)
+        except Exception:
+            _log_exception('clear imported_datasets')
+
+    def _clear_fit_windows():
+        """Close and clean up all fit windows"""
+        try:
+            if hasattr(chisurf.gui, 'fit_windows'):
+                fit_windows = list(chisurf.gui.fit_windows)
+                chisurf.gui.fit_windows.clear()
+                
+                for fw in fit_windows:
+                    try:
+                        if hasattr(fw, 'close_confirm'):
+                            fw.close_confirm = False
+                        fw.close()
+                    except Exception:
+                        pass
+        except Exception:
+            _log_exception('clear fit windows')
+
+    def _clear_global_caches():
+        """Clear specific chisurf caches safely"""
+        try:
+            # Only clear specific known caches, don't iterate over all attributes
+            cache_modules = [
+                ('chisurf.experiments', 'types'),
+                ('chisurf.fitting', None)  # None means clear all callable clear methods
+            ]
+            
+            for module_path, attr_name in cache_modules:
+                try:
+                    module_parts = module_path.split('.')
+                    module = chisurf
+                    for part in module_parts[:-1]:
+                        if hasattr(module, part):
+                            module = getattr(module, part)
+                        else:
+                            break
+                    else:
+                        if hasattr(module, module_parts[-1]):
+                            target = getattr(module, module_parts[-1])
+                            if attr_name and hasattr(target, attr_name):
+                                attr = getattr(target, attr_name)
+                                if hasattr(attr, 'clear_cache') and callable(attr.clear_cache):
+                                    attr.clear_cache()
+                            elif hasattr(target, 'clear') and callable(target.clear):
+                                target.clear()
+                except Exception:
+                    pass
+                            
+        except Exception:
+            _log_exception('clear global caches')
+
+    def _force_garbage_collection():
+        """Perform safe garbage collection"""
+        try:
+            collected = gc.collect()
+            if progress_callback:
+                progress_callback(f"Garbage collection (collected {collected} objects)", 10)
+        except Exception:
+            _log_exception('garbage collection')
+
+    def _cleanup_specific_references():
+        """Clean only specific chisurf references safely"""
+        try:
+            # Only clean specific, known chisurf attributes
+            refs_to_clean = ['cs', 'current_dataset', 'current_fit']
+            for ref_name in refs_to_clean:
+                if hasattr(chisurf, ref_name):
+                    try:
+                        attr = getattr(chisurf, ref_name)
+                        # Only delete if it's a data object, not a function or type
+                        if not callable(attr) and not isinstance(attr, type) and not isinstance(attr, (int, float, str, bool, list, dict)):
+                            delattr(chisurf, ref_name)
+                    except Exception:
+                        pass
+        except Exception:
+            _log_exception('cleanup specific references')
+
+    def _reset_gui_components():
+        """Reset GUI components to clean state"""
+        if main_window is None:
+            return
+            
+        try:
+            # Clear model selector
+            if hasattr(main_window, 'comboBox_Model'):
+                main_window.comboBox_Model.clear()
+                
+            # Reset data selectors
+            if hasattr(main_window, 'dataset_selector'):
+                if hasattr(main_window.dataset_selector, 'clear'):
+                    main_window.dataset_selector.clear()
+                if hasattr(main_window.dataset_selector, 'update'):
+                    main_window.dataset_selector.update()
+                    
+            # Reset fit selectors
+            if hasattr(main_window, 'fit_selector'):
+                if hasattr(main_window.fit_selector, 'clear'):
+                    main_window.fit_selector.clear()
+                if hasattr(main_window.fit_selector, 'update'):
+                    main_window.fit_selector.update()
+                    
+        except Exception:
+            _log_exception('reset GUI components')
+
+    # Execute reinitialization steps
+    _run('Closing all fits', lambda: main_window.onCloseAllFits() if main_window else None, 1)
+    _run('Closing subwindows', _close_subwindows, 2)
+    _run('Clearing fit windows', _clear_fit_windows, 3)
+    _run('Clearing datasets', _clear_imported_datasets_keep_global, 4)
+    _run('Clearing global caches', _clear_global_caches, 5)
+    _run('Updating dataset selector', lambda: main_window.dataset_selector.update() if main_window else None, 6)
+    _run('Updating fit selector', lambda: main_window.fit_selector.update() if main_window else None, 7)
+
+    def _reset_state():
+        if main_window:
+            main_window._current_dataset = None
+            main_window._current_fit = None
+            main_window._fit_idx = 0
+
+    _run('Resetting application state', _reset_state, 8)
+    _run('Cleaning up references', _cleanup_specific_references, 9)
+    _run('Force garbage collection', _force_garbage_collection, 10)
+    _run('Resetting GUI components', _reset_gui_components, 10)
+
+
 def _auto_reader_from_filename(filename: str):
     """Return a best-effort experiment reader based on the filename."""
     if not filename:

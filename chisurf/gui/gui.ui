@@ -291,6 +291,7 @@
     <addaction name="menuProject"/>
     <addaction name="menuFits"/>
     <addaction name="actionClose_Project"/>
+    <addaction name="actionReinitialize"/>
     <addaction name="separator"/>
     <addaction name="actionExit_2"/>
    </widget>
@@ -818,12 +819,12 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="icon">
-        <iconset resource="resources/resource.qrc">
-         <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
-       </property>
        <property name="toolTip">
         <string>Help for current experiment / reader</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources/resource.qrc">
+         <normaloff>:/icons/icons/documentation.png</normaloff>:/icons/icons/documentation.png</iconset>
        </property>
       </widget>
      </item>
@@ -905,7 +906,7 @@
   <action name="actionHelp">
    <property name="icon">
     <iconset resource="resources/resource.qrc">
-     <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
+     <normaloff>:/icons/icons/documentation.png</normaloff>:/icons/icons/documentation.png</iconset>
    </property>
    <property name="text">
     <string>Help</string>
@@ -959,7 +960,7 @@
    </property>
    <property name="icon">
     <iconset resource="resources/resource.qrc">
-     <normaloff>:/icons/icons/help-browser.png</normaloff>:/icons/icons/help-browser.png</iconset>
+     <normaloff>:/icons/icons/documentation.png</normaloff>:/icons/icons/documentation.png</iconset>
    </property>
    <property name="text">
     <string>Help</string>
@@ -994,7 +995,6 @@
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>false</bool>
     <bool>true</bool>
    </property>
    <property name="text">
@@ -1194,7 +1194,7 @@
      <normaloff>:/icons/icons/window-layout-xxl.png</normaloff>:/icons/icons/window-layout-xxl.png</iconset>
    </property>
    <property name="text">
-    <string>Tile Fit Windows</string>
+    <string>Tile Windows</string>
    </property>
   </action>
   <action name="actionTab_windows">
@@ -1203,7 +1203,7 @@
      <normaloff>:/icons/icons/window-multi-xxl.png</normaloff>:/icons/icons/window-multi-xxl.png</iconset>
    </property>
    <property name="text">
-    <string>Tab Fit Windows</string>
+    <string>Tab Windows</string>
    </property>
    <property name="toolTip">
     <string>Tab windows</string>
@@ -1514,6 +1514,21 @@
   <action name="actionClose_Project">
    <property name="text">
     <string>Close Project</string>
+   </property>
+  </action>
+  <action name="actionReinitialize">
+   <property name="icon">
+    <iconset resource="resources/resource.qrc">
+     <normaloff>:/icons/icons/view-refresh.png</normaloff>:/icons/icons/view-refresh.png</iconset>
+   </property>
+   <property name="text">
+    <string>Reinitialize</string>
+   </property>
+   <property name="toolTip">
+    <string>Reinitialize ChiSurf - clear all data and reset to initial state</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
   <zorder>dockWidgetDatasets</zorder>
