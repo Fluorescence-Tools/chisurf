@@ -17,7 +17,7 @@ from .settings_utils import (
     copy_settings_to_user_folder,
     copy_styles_to_user_folder
 )
-from .cleanup import clear_settings_folder, clear_logging_files
+from .cleanup import clear_settings_folder, clear_logging_files, clear_user_plugins_folder
 from .path_utils import get_path  # Needed early
 
 # Define Chisurf cache path inside user settings folder
