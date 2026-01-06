@@ -5,6 +5,7 @@ from qtpy import QtWidgets
 
 import chisurf.gui.widgets
 import chisurf.structure
+from chisurf.settings.path_utils import get_path
 from chisurf.structure.potential.potentials import CEPotential
 
 
@@ -13,10 +14,15 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
     def __init__(
             self,
             structure: chisurf.structure.Structure,
-            potential: str = './mfm/structure/potential/database/unres.npy',
-            ca_cutoff: float = 25.0
+            potential: str = None,
+            ca_cutoff: float = 25.0,
+            parent=None
     ):
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self, parent=parent)
+        
+        # Set default potential path if not provided
+        if potential is None:
+            potential = str(get_path('chisurf') / 'structure/potential/database/unres.npy')
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -60,7 +66,26 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
     @potential.setter
     def potential(self, v):
         self.lineEdit.setText(str(v))
-        self._potential = np.load(v)
+        try:
+            self._potential = np.load(v)
+        except (FileNotFoundError, IOError) as e:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "Missing Potential File",
+                f"Potential file not found: {v}\n\n"
+                f"The UNRES potential file should be located at:\n"
+                f"{v}\n\n"
+                f"Please check if the file exists or use the '...' button\n"
+                f"to select a different potential file."
+            )
+            self._potential = np.zeros((20, 20))
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "Potential File Error",
+                f"Error loading potential file {v}:\n{str(e)}"
+            )
+            self._potential = np.zeros((20, 20))
 
     @property
     def ca_cutoff(self):

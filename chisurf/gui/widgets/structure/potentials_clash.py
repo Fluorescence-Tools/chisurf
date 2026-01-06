@@ -13,7 +13,7 @@ class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
             structure: chisurf.structure.Structure = None,
             **kwargs
     ):
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self, parent=kwargs.get('parent'))
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

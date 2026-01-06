@@ -7,6 +7,7 @@ from .potentials_clash import ClashPotentialWidget
 from .potentials_go import GoPotentialWidget
 from .potentials_hbond import HPotentialWidget
 from .potentials_mj import MJPotentialWidget
+from .potentials_rama import RamachandranWidget
 from .potentials_rg import RadiusGyrationWidget
 
 
@@ -18,5 +19,6 @@ __all__ = [
     'GoPotentialWidget',
     'HPotentialWidget',
     'MJPotentialWidget',
+    'RamachandranWidget',
     'RadiusGyrationWidget',
 ]

@@ -13,7 +13,7 @@ class GoPotentialWidget(GoPotential, QtWidgets.QWidget):
             structure: chisurf.structure.Structure = None,
             **kwargs
     ):
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self, parent=kwargs.get('parent'))
         GoPotential.__init__(self, structure=structure)
 
         layout = QtWidgets.QVBoxLayout(self)

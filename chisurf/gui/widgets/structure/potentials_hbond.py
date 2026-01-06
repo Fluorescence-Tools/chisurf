@@ -4,6 +4,7 @@ import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.gui.widgets
+from chisurf.settings.path_utils import get_path
 from chisurf.structure.potential.potentials import HPotential
 
 
@@ -14,9 +15,14 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             structure,
             parent,
             cutoff_ca=8.0,
-            cutoff_hbond=3.0
+            cutoff_hbond=3.0,
+            potential=None
     ):
         QtWidgets.QWidget.__init__(self, parent=parent)
+        
+        # Set default potential path if not provided
+        if potential is None:
+            potential = str(get_path('chisurf') / 'structure/potential/database/hb.npy')
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -99,6 +105,9 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             cutoff_ca,
             cutoff_hbond
         )
+        
+        # Set initial potential
+        self.potential = potential
 
     def onOpenFile(self):
         filename = chisurf.gui.widgets.get_filename(
@@ -113,14 +122,39 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
 
     @potential.setter
     def potential(self, v):
-        self._hPot = np.load(v)
-        # self._hPot = np.load(
-        #     v,
-        #     skiprows=1,
-        #     dtype=np.float64
-        # ).T[1:, :]
-        self.hPot = self._hPot
-        self.lineEdit_3.setText(str(v))
+        try:
+            self._hPot = np.load(v)
+            # self._hPot = np.load(
+            #     v,
+            #     skiprows=1,
+            #     dtype=np.float64
+            # ).T[1:, :]
+            self.hPot = self._hPot
+            self.lineEdit_3.setText(str(v))
+        except (FileNotFoundError, IOError) as e:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "Missing H-Bond Potential File",
+                f"H-bond potential file not found: {v}\n\n"
+                f"The H-bond potential file should be located at:\n"
+                f"{v}\n\n"
+                f"Please check if the file exists or use the '...' button\n"
+                f"to select a different potential file."
+            )
+            # Create a dummy potential to prevent crashes
+            self._hPot = np.zeros((20, 20))  # Minimal dummy potential
+            self.hPot = self._hPot
+            self.lineEdit_3.setText(str(v))
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "H-Bond Potential File Error",
+                f"Error loading H-bond potential file {v}:\n{str(e)}"
+            )
+            # Create a dummy potential to prevent crashes
+            self._hPot = np.zeros((20, 20))  # Minimal dummy potential
+            self.hPot = self._hPot
+            self.lineEdit_3.setText(str(v))
 
     @property
     def oh(self):

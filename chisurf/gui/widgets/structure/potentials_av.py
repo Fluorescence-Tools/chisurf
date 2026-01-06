@@ -15,9 +15,8 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
             structure: chisurf.structure.Structure = None,
             parent=None
     ):
-        super(AvPotentialWidget, self).__init__()
         QtWidgets.QWidget.__init__(self, parent=parent)
-
+        
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -64,6 +63,9 @@ class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
         self.actionOpenLabeling = QtWidgets.QAction("OpenLabeling", self)
         self.actionOpenLabeling.triggered.connect(self.onLoadAvJSON)
         self.toolButton.clicked.connect(self.actionOpenLabeling.trigger)
+        
+        # Now initialize the parent class after Qt widgets are set up
+        AvPotential.__init__(self)
 
     def onLoadAvJSON(self):
         self.labeling_file = chisurf.gui.widgets.get_filename(
