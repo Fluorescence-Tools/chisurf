@@ -21,4 +21,4 @@ source and target nodes, and adjust the graph's appearance to better visualize t
 relationships between fits and parameters.
 """
 
-name = "Tools:Global View"
+name = "Main:Tools:Global View"

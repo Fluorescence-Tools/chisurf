@@ -50,7 +50,7 @@ from chisurf.fluorescence.fcs.channel_setups import (
 
 
 # Plugin category/name for the ChiSurf menu
-name = "Fluorescence Correlation Spectroscopy:Channel Definitions"
+name = "Setup:FCS Channel Definitions"
 
 
 class FCSChannelDialog(QtWidgets.QDialog):

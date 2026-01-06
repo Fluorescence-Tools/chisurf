@@ -21,5 +21,5 @@ Core model (same as spec)
 Units: τ [ms], D [µm²/s], r_h [nm], η [mPa·s], Veff [fL]
 """
 
-name = "Fluorescence Correlation Spectroscopy:Diffusion/Volume Calculator"
+name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Diffusion/Volume Calculator"
 

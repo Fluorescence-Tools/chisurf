@@ -58,7 +58,7 @@ __all__ = [
 
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Fluorescence Correlation Spectroscopy:Lifetime Filter Calculator"
+name = "Spectroscopy:Fluorescence Correlation Spectroscopy:FCS Filter Calculator"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",

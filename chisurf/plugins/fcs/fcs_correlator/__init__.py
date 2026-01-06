@@ -14,5 +14,5 @@ processes in fluorescence correlation spectroscopy experiments.
 """
 
 
-name = "Fluorescence Correlation Spectroscopy:Correlator"
+name = "Spectroscopy:Fluorescence Correlation Spectroscopy:Correlator"
 

@@ -1,1 +1,1 @@
-name = "Onboarding:Welcome to ChiSurf"
+name = "Help:Boarding Wizard"

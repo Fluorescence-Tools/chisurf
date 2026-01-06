@@ -13,5 +13,5 @@ you should manually optimize the parameters of this template fit using data simi
 the files you plan to process to ensure reliable and meaningful results.
 """
 
-name = "Tools:Batch-Analysis"
+name = "Main:Tools:Batch-Analysis"
 

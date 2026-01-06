@@ -19,7 +19,7 @@ from qtpy import QtWidgets
 from .tau2r import FRETCalculator
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Tools:FRET Calculator"
+name = "Main:Tools:FRET-Calculator"
 
 
 # When the plugin is loaded as a module with __name__ == "plugin",
