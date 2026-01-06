@@ -24,7 +24,7 @@ Fluorescence Lifetime Analysis of Single Molecules.
 Analytical Chemistry, 73(9), 2078-2086. https://doi.org/10.1021/ac000877g
 """
 
-name = "Imaging:Pixel-wise lifetime MLE"
+name = "Imaging:Lifetime:Pixel-wise lifetime MLE"
 
 from .imgmle import LifetimeMleAnalysisWizard
 

@@ -47,7 +47,7 @@ except Exception:
     _write_jordi = None
 
 
-name = "Fluorescence decay:Jordi Anisotropy Decay"
+name = "Spectroscopy:Fluorescence decay:Jordi Anisotropy Decay"
 
 # Plugin icon used by the Plugin Manager and window decoration
 try:

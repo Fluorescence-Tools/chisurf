@@ -29,7 +29,7 @@ import sys
 from .k2dgui import Kappa2Dist
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Tools:Kappa2 Distribution"
+name = "Structure:FRET:Kappa2 Distribution"
 
 # When the plugin is loaded as a module with __name__ == "plugin",
 # this code will be executed

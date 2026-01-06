@@ -766,5 +766,5 @@ if __name__ == "plugin":
     window = MainWindow()
     window.show()
 
-name = "Imaging:Single-Molecule MLE"
+name = "Imaging:Lifetime:Molecule-wise MLE"
 cli_entrypoint = "sm-image-mle=chisurf.plugins.microscopy.sm_image_mle.sm_image_mle:cli"
