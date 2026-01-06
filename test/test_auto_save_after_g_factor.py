@@ -9,7 +9,7 @@ from qtpy.QtCore import Qt
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizard, load_detector_setups, save_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizard, load_detector_setups, save_detector_setups
 
 # Mock the JordiGFactorCalculator to avoid actual calculation
 class MockJordiGFactorCalculator:
@@ -94,7 +94,7 @@ def test_auto_save_after_g_factor():
         chisurf.plugins.jordi_g_factor.JordiGFactorCalculator = MockJordiGFactorCalculator
         
         try:
-            # Select the first detector row
+            # Select the first tttr_channeldefinition row
             page.detectors_form.selectRow(0)
             
             # Store the original g-factor value if the cell widget exists
@@ -132,7 +132,7 @@ def test_auto_save_after_g_factor():
             np.savetxt = lambda *args, **kwargs: None
             
             try:
-                # Simulate selecting a detector and calculating G-factor
+                # Simulate selecting a tttr_channeldefinition and calculating G-factor
                 page.selected_detector = {
                     'row': 0,
                     'name': 'test_detector',
@@ -149,7 +149,7 @@ def test_auto_save_after_g_factor():
                 
                 # Create a custom close event function similar to what's in the actual code
                 def custom_close_event(event):
-                    # Get the selected detector information
+                    # Get the selected tttr_channeldefinition information
                     selected_detector_info = page.selected_detector
                     if selected_detector_info:
                         # Update the G-Factor value in the selected row of the detectors table
