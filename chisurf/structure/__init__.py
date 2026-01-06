@@ -14,7 +14,14 @@ from chisurf.structure.structure import *
 from chisurf.structure.trajectory import *
 from chisurf.structure.protein import *
 
-import chisurf.structure.av
 from . import potential
 from . import labeled_structure
+
+
+def __getattr__(name: str):
+    """Lazy-load heavy submodules on first access."""
+    if name == "av":
+        import chisurf.structure.av
+        return chisurf.structure.av
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 

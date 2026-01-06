@@ -302,9 +302,8 @@ class Ramachandran(object):
         :return:
         """
         if filename is None:
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), './database/rama_ala_pro_gly.npy'
-            )
+            from chisurf.settings.path_utils import get_path
+            filename = str(get_path('chisurf') / 'structure/potential/database/rama_ala_pro_gly.npy')
         self.structure = structure
         self.name = 'rama'
         self.filename = filename
@@ -372,11 +371,8 @@ class HPotential(object):
             **kwargs
     ):
         if potential is None:
-            potential = os.path.join(
-                os.path.dirname(
-                    os.path.abspath(__file__)),
-                './database/hb.npy'
-            )
+            from chisurf.settings.path_utils import get_path
+            potential = str(get_path('chisurf') / 'structure/potential/database/hb.npy')
         self.structure = structure
         self.cutoffH = cutoff_hbond
         self.cutoffCA = cutoff_ca
@@ -482,9 +478,8 @@ class MJPotential(object):
             ca_cutcoff: float = 6.5
     ):
         if filename is None:
-            filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), './database/mj.npy'
-            )
+            from chisurf.settings.path_utils import get_path
+            filename = str(get_path('chisurf') / 'structure/potential/database/mj.npy')
         self.filename = filename
         self.structure = structure
         self.potential = filename
@@ -541,9 +536,8 @@ class CEPotential(object):
         self._potential = None
 
         if potential is None:
-            potential = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), './database/unres.npy'
-            )
+            from chisurf.settings.path_utils import get_path
+            potential = str(get_path('chisurf') / 'structure/potential/database/unres.npy')
 
         self.potential = potential
         self.scaling_factor = scaling_factor
