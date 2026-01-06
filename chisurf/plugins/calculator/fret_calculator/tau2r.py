@@ -13,7 +13,7 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
-    @chisurf.gui.decorators.init_with_ui("fret_calculator/calc_tau2r.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("calculator/fret_calculator/calc_tau2r.ui", path=chisurf.settings.plugin_path)
     def __init__(self, kappa2=0.667, *args, **kwargs):
         self.kappa2 = kappa2
 
