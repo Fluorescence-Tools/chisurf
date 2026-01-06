@@ -10,7 +10,7 @@ Behavior:
 """
 
 # Display name used by the Plugins menu (category: name)
-name = "Tools:Screenshot"
+name = "Main:Tools:Screenshot"
 
 import pathlib
 

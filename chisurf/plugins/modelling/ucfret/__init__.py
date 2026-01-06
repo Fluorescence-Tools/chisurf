@@ -7,7 +7,7 @@ of time-resolved FRET data.
 from .wizard import UCFRETWizard
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Tools:ucFRET"
+name = "Dev:Spectroscopy:ucFRET"
 
 
 if __name__ == "plugin":

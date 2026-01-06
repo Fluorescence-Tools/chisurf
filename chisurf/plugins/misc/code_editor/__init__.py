@@ -16,7 +16,7 @@ from chisurf.plugins.misc.code_editor.text_editor import (
 # For backward compatibility
 SimpleCodeEditor = TextEditor
 
-name = "Miscellaneous:Code Editor"
+name = "Tools:Miscellaneous:Code Editor"
 
 if __name__ == "plugin":
     window = CodeEditor()

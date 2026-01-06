@@ -15,4 +15,4 @@ without leaving the ChiSurf environment.
 
 from .wizard import *
 
-name = "Miscellaneous:Browser"
+name = "Tools:Miscellaneous:Browser"

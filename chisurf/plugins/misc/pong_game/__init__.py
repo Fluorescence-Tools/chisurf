@@ -15,7 +15,7 @@ The game serves as both a fun diversion and a demonstration of
 using PyQt5 for creating interactive graphical applications.
 """
 
-name = "Miscellaneous:Pong"
+name = "Tools:Miscellaneous:Pong"
 
 import sys
 from qtpy.QtWidgets import QApplication

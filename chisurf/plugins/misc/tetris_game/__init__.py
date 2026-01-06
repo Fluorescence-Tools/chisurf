@@ -22,7 +22,7 @@ The game is both a challenging puzzle and a demonstration of using PyQt5 for
 creating responsive, event-driven graphical applications.
 """
 
-name = "Miscellaneous:Tetris"
+name = "Tools:Miscellaneous:Tetris"
 
 import sys
 from qtpy.QtWidgets import QApplication

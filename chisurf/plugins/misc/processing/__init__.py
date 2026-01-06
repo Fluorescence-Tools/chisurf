@@ -18,4 +18,4 @@ sketches to visualize scientific data in novel ways.
 
 from .wizard import *
 
-name = "Miscellaneous:Processing"
+name = "Dev:Miscellaneous:Processing"

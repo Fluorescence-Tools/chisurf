@@ -20,7 +20,7 @@ import sys
 from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
 
 # Define the plugin name - this will appear in the Plugins menu
-name = "Structure:FPS JSON Editor"
+name = "Structure:FRET:FPS JSON Editor"
 
 
 
