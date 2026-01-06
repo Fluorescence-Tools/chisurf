@@ -54,7 +54,7 @@ from qtpy.QtGui import QPainter, QColor, QFont
 from chisurf import logging
 
 # Reuse existing widgets/utilities
-from chisurf.plugins.intensity_trace.__init__ import IntensityPlotWidget, IntensityTrace
+from chisurf.plugins.tttr.intensity_trace.__init__ import IntensityPlotWidget, IntensityTrace
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 # Import TTTR Time Window plugin
@@ -89,7 +89,7 @@ except Exception:
     Document = None
     Inches = None
 
-name = "TTTR:Trace Browser"
+name = "Spectroscopy:Single-Molecule:Trace Browser"
 
 META_FILENAME = ".trace_browser_meta.json"
 # Determine supported extensions strictly via tttrlib.get_supported_filetypes()

@@ -84,7 +84,7 @@ def enable_folder_drop(line_edit: QtWidgets.QLineEdit):
 
 class PTUSplitter(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui("tttr_splitter/wizard.ui",
+    @chisurf.gui.decorators.init_with_ui("tttr/tttr_splitter/wizard.ui",
                                          path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         # NO super() call here (the decorator handles it).
