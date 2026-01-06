@@ -25,6 +25,8 @@ name = "Setup:Menu Switch"
 # Import the main functionality
 from .menu_switch import run, MenuSwitchWidget
 
-# Note: The plugin no longer auto-executes when loaded.
-# Users should explicitly call the menu switch functionality through the GUI
-# or by importing and calling run() manually.
+# When the plugin is loaded as a module with __name__ == "plugin",
+# this code will be executed
+if __name__ == "plugin":
+    # Execute the menu switch functionality
+    run()
