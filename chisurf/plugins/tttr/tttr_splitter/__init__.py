@@ -21,5 +21,5 @@ This tool is particularly valuable for handling large datasets from long-duratio
 single-molecule or imaging experiments, making them more manageable for subsequent analysis.
 """
 
-name = "TTTR:Splitter"
+name = "TTTR:Editor:Split/Convert"
 
