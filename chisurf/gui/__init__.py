@@ -606,6 +606,41 @@ def setup_gui(
             chisurf.logging.warning(f"Error extracting metadata from {init_py}: {e}")
             return name, description
 
+    def parse_hierarchical_plugin_name(plugin_name):
+        """Parse hierarchical plugin name into components."""
+        if ':' in plugin_name:
+            parts = [part.strip() for part in plugin_name.split(':')]
+            if len(parts) > 1:
+                hierarchy_parts = parts[:-1]  # All parts except the last
+                display_name = parts[-1]      # The last part is the display name
+                return hierarchy_parts, display_name
+        
+        # No hierarchy, return as single category
+        return ['Main'], plugin_name.strip()
+
+    def create_nested_menu_structure(menu, hierarchy_parts, submenu_cache):
+        """Create nested menu structure from hierarchy parts."""
+        current_menu = menu
+        
+        for i, part in enumerate(hierarchy_parts):
+            # Build the path key for caching
+            path_key = " > ".join(hierarchy_parts[:i+1])
+            
+            if path_key not in submenu_cache:
+                if i == 0:
+                    # First level - create submenu directly under main menu
+                    submenu = current_menu.addMenu(part)
+                else:
+                    # Nested level - create submenu under current submenu
+                    submenu = current_menu.addMenu(part)
+                submenu_cache[path_key] = submenu
+            else:
+                submenu = submenu_cache[path_key]
+            
+            current_menu = submenu
+        
+        return current_menu
+
     def populate_plugins():
         plugin_menu = QtWidgets.QMenu('Plugins', window)
         window.menuBar.addMenu(plugin_menu)
@@ -617,8 +652,8 @@ def setup_gui(
         # Dedicated submenu for development plugins that live under chisurf.plugins._dev
         dev_menu = plugin_menu.addMenu("Dev")
 
-        # Dictionary to store submenus for non-dev plugins
-        submenus = {}
+        # Cache for submenus to avoid duplicates
+        submenu_cache = {}
 
         # Get plugin settings
         plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
@@ -659,12 +694,6 @@ def setup_gui(
         except Exception:
             plugins_root = pathlib.Path(chisurf.plugins.__file__).parent
 
-        # Resolve the built-in plugins root so we can detect the _dev subtree
-        try:
-            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent.resolve()
-        except Exception:
-            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent
-
         # Sort plugins by order (ascending) then by plugin name
         ordered = []
         for info in plugin_infos:
@@ -698,22 +727,16 @@ def setup_gui(
                     )
                     continue
 
-                # Check disabled/broken status
-                clean_name = plugin_name.split(':')[-1].strip() if ':' in plugin_name else plugin_name
+                # Parse hierarchical plugin name
+                hierarchy_parts, display_name = parse_hierarchical_plugin_name(plugin_name)
+                
+                # Check disabled/broken status using display name
+                clean_name = display_name
                 is_broken = (
                     plugin_name in disabled_plugins
                     or module_name in disabled_plugins
                     or clean_name in disabled_plugins
                 )
-
-                # Detect built-in development plugins that live under the _dev package
-                is_dev = False
-                try:
-                    rel = package_dir.resolve().relative_to(plugins_root)
-                    if rel.parts and rel.parts[0] == "_dev":
-                        is_dev = True
-                except Exception:
-                    is_dev = False
 
                 # Detect built-in development plugins that live under the _dev package
                 is_dev = False
@@ -731,6 +754,7 @@ def setup_gui(
                         f"Skipping disabled/broken plugin in menu: '{plugin_name}' "
                         f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
                     )
+                    continue
 
                 # Determine which file to run: wizard.py if it exists, else __init__.py
                 plugin_dir = package_dir
@@ -758,10 +782,8 @@ def setup_gui(
 
                 status = "BROKEN" if is_broken else "ok"
 
-                # Route development plugins into the dedicated Dev submenu, using the clean
-                # name (without grouping prefix) as the visible label.
+                # Route development plugins into the dedicated Dev submenu
                 if is_dev:
-                    display_name = clean_name or plugin_name
                     label_base = display_name
                     if is_cli_only:
                         label_base = f"{label_base} (CLI)"
@@ -783,24 +805,21 @@ def setup_gui(
                     dev_menu.addAction(plugin_action)
                     continue
 
-                # Check if the name contains a colon to determine if it should go in a submenu
-                if ":" in plugin_name:
-                    submenu_name, short_name = plugin_name.split(":", 1)
-
-                    # Create submenu if it doesn't exist
-                    if submenu_name not in submenus:
-                        submenus[submenu_name] = plugin_menu.addMenu(submenu_name)
-
-                    # Add the plugin to the submenu
-                    short_label = short_name.strip()
-                    label_base = short_label
+                # Handle hierarchical plugins
+                if len(hierarchy_parts) > 1 or hierarchy_parts[0] != 'Main':
+                    # Create nested menu structure
+                    target_menu = create_nested_menu_structure(plugin_menu, hierarchy_parts, submenu_cache)
+                    
+                    # Use only the display name for the label
+                    label_base = display_name
                     if is_cli_only:
                         label_base = f"{label_base} (CLI)"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
+                    
                     chisurf.logging.info(
-                        f"Adding plugin to Plugins->{submenu_name} submenu: '{label}' "
+                        f"Adding plugin to hierarchical menu: '{label}' "
                         f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
-                        f"status={status}, script='{script_file}')"
+                        f"status={status}, script='{script_file}', hierarchy={hierarchy_parts})"
                     )
                     plugin_action = QtWidgets.QAction(label, window)
                     if icon:
@@ -811,16 +830,18 @@ def setup_gui(
                         plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_submenu += 1
-                    submenus[submenu_name].addAction(plugin_action)
+                    target_menu.addAction(plugin_action)
                 else:
-                    # Add the plugin directly to the main menu
-                    label_base = plugin_name
+                    # Add directly to main plugins menu
+                    label_base = display_name
                     if is_cli_only:
                         label_base = f"{label_base} (CLI)"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
+                    
                     chisurf.logging.info(
-                        f"Adding plugin to Plugins menu: '{label}' "
-                        f"(module='{module_name}', source='{source}', status={status}, script='{script_file}')"
+                        f"Adding plugin to Plugins main menu: '{label}' "
+                        f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
+                        f"status={status}, script='{script_file}')"
                     )
                     plugin_action = QtWidgets.QAction(label, window)
                     if icon:

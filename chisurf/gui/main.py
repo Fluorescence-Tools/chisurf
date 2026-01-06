@@ -23,6 +23,7 @@ import chisurf.base
 import chisurf.fio
 import chisurf.experiments
 import chisurf.macros
+import chisurf.settings
 
 import chisurf.gui.widgets.settings_editor
 import chisurf.gui.widgets
@@ -1441,6 +1442,18 @@ class Main(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
+        
+        # Set window icon to ChiSurf logo
+        try:
+            self.setWindowIcon(QtGui.QIcon(":/icons/icons/cs_logo.png"))
+        except Exception:
+            # Fallback to file-based icon if resource not available
+            try:
+                icon_path = pathlib.Path(__file__).parent.parent.parent / "icon.png"
+                if icon_path.exists():
+                    self.setWindowIcon(QtGui.QIcon(str(icon_path)))
+            except Exception:
+                pass
         try:
             self.analysisHeaderWidget = QtWidgets.QWidget(self.dockWidgetAnalysis)
             self.analysisHeaderLayout = QtWidgets.QVBoxLayout(self.analysisHeaderWidget)
@@ -1946,8 +1959,78 @@ class Main(QtWidgets.QMainWindow):
         self.actionClear_user_plugins.triggered.connect(self.onClearUserPlugins)
         self.menuSettings.addAction(self.actionClear_user_plugins)
 
-
         ##########################################################
         #      Initialize                                        #
         ##########################################################
+        
+        # Initialize ribbon interface (optional - can be enabled via settings)
+        self._ribbon_integration = None
+        
+        # Restore ribbon interface state from settings
+        try:
+            import chisurf
+            gui_settings = chisurf.settings.cs_settings.get('gui', {})
+            use_ribbon = gui_settings.get('use_ribbon_interface', False)
+            
+            if use_ribbon:
+                # Enable ribbon if it was saved in settings
+                self.toggle_ribbon_interface(True)
+                chisurf.logging.info("Ribbon interface restored from settings")
+        except Exception as e:
+            chisurf.logging.warning(f"Failed to restore ribbon interface state: {e}")
+        
         self.onExperimentChanged()
+
+    def toggle_ribbon_interface(self, enabled=None):
+        """
+        Toggle or set the ribbon interface.
+        
+        Parameters
+        ----------
+        enabled : bool, optional
+            If True, enable ribbon; if False, disable ribbon; 
+            if None, toggle current state.
+        """
+        try:
+            from chisurf.gui.widgets.ribbon import setup_chisurf_ribbon
+            
+            if enabled is None:
+                # Toggle current state
+                enabled = self._ribbon_integration is None
+            
+            if enabled and self._ribbon_integration is None:
+                # Enable ribbon with style from settings
+                import chisurf
+                gui_settings = chisurf.settings.cs_settings.get('gui', {})
+                ribbon_style = gui_settings.get('ribbon_style', None)
+                
+                # Hide plugin toolbar when switching to ribbon
+                if hasattr(self, 'plugins_toolbar'):
+                    self.plugins_toolbar.hide()
+                    chisurf.logging.info("Plugin toolbar hidden for ribbon mode")
+                
+                self._ribbon_integration = setup_chisurf_ribbon(self, ribbon_style=ribbon_style)
+                if self._ribbon_integration:
+                    chisurf.logging.info("Ribbon interface enabled")
+                    # Save to settings persistently
+                    from chisurf.settings.settings_utils import set_use_ribbon_interface
+                    set_use_ribbon_interface(True)
+                else:
+                    chisurf.logging.warning("Failed to setup ribbon interface")
+            elif not enabled and self._ribbon_integration is not None:
+                # Disable ribbon
+                self._ribbon_integration.restore_original_interface()
+                self._ribbon_integration = None
+                chisurf.logging.info("Ribbon interface disabled")
+                
+                # Show plugin toolbar when switching back to menu mode
+                if hasattr(self, 'plugins_toolbar'):
+                    self.plugins_toolbar.show()
+                    chisurf.logging.info("Plugin toolbar restored for menu mode")
+                
+                # Save to settings persistently
+                from chisurf.settings.settings_utils import set_use_ribbon_interface
+                set_use_ribbon_interface(False)
+            
+        except Exception as e:
+            chisurf.logging.error(f"Failed to toggle ribbon interface: {e}")
