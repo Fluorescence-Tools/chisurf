@@ -11,7 +11,7 @@ and save them as BID files (start, stop photon indices). The wizard has three pa
 The resulting BID files are saved in the chosen output folder, one per TTTR input file.
 """
 
-name = "Single-Molecule:TTTR→Time-Window BIDs"
+name = "Tools:Converter:TTTR→Time-Window BIDs"
 
 # Optional icon, if available later we can set it here
 icon = None
