@@ -27,7 +27,7 @@ of multiparameter fluorescence information, enabling spatial correlation of
 spectroscopic properties.
 """
 
-name = "Tools:ndXplorer"
+name = "Main:Tools:ndXplorer"
 
 import chisurf
 log = chisurf.logging.info
