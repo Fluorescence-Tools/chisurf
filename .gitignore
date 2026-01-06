@@ -6,6 +6,7 @@
 broken*
 broken
 .vscode
+.ipynb_checkpoints
 
 # Build artifacts
 ########################
