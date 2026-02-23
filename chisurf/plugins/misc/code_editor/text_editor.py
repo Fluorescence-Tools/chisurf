@@ -419,45 +419,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
 
 
 class CodeEditor(QtWidgets.QWidget):
-    """Widget that combines a text editor with load, save, and run buttons."""
-
-    def load_file_event(self, event, filename: str = None, **kwargs):
-        self.load_file(filename)
-
-    def load_file(self, filename: str = None, **kwargs):
-        """Load a file into the editor."""
-        filename = filename or chisurf.gui.widgets.get_filename()
-        if not filename:
-            return
-        try:
-            logging.log(0, f"Loading file: {filename}")
-            with open(filename, encoding="utf-8") as file:
-                self.editor.setText(file.read())
-            self.line_edit.setText(str(filename))
-            self.filename = filename
-        except IOError as e:
-            logging.log(1, f"Error loading file {filename}: {e}")
-
-    def run_macro(self, event):
-        """Execute the currently loaded Python script."""
-        if not self.filename:
-            logging.log(1, "No file to run.")
-            return
-        self.save_text()
-        chisurf.console.run_macro(filename=self.filename)
-
-    def save_text(self, event = None):
-        """Save the current text to a file."""
-        if not self.filename:
-            self.filename = chisurf.gui.widgets.save_file(file_type="Python script (*.py)")
-            if not self.filename:
-                return
-        try:
-            with io.zipped.open_maybe_zipped(self.filename, "w") as file:
-                file.write(self.editor.text())
-            self.line_edit.setText(str(pathlib.Path(self.filename).as_posix()))
-        except IOError as e:
-            logging.log(1, f"Error saving file {self.filename}: {e}")
+    """Widget that combines a tabbed text editor with load, save, and run buttons."""
 
     def __init__(
         self,
@@ -474,15 +436,19 @@ class CodeEditor(QtWidgets.QWidget):
         layout.setSpacing(0)
 
         self.filename = filename
+        self._open_files: dict = {}  # path -> tab_index
         self.setLayout(layout)
-        self.line_edit = QtWidgets.QLineEdit()
-        self.editor = TextEditor(
-            parent=self,
-            language=language
-        )
-        layout.addWidget(self.editor)
 
-        # Button layout
+        self.tab_widget = QtWidgets.QTabWidget()
+        self.tab_widget.setTabsClosable(True)
+        self.tab_widget.tabCloseRequested.connect(self._close_tab)
+        self.tab_widget.setDocumentMode(True)
+        layout.addWidget(self.tab_widget)
+
+        self._create_editor_tab(filename=filename, language=language)
+
+        self.line_edit = QtWidgets.QLineEdit()
+
         button_layout = QtWidgets.QHBoxLayout()
         self.load_button = QtWidgets.QPushButton("Load")
         self.save_button = QtWidgets.QPushButton("Save")
@@ -494,20 +460,187 @@ class CodeEditor(QtWidgets.QWidget):
         button_layout.addWidget(self.run_button)
         layout.addLayout(button_layout)
 
-        # Connect buttons to actions
         self.save_button.clicked.connect(self.save_text)
         self.load_button.clicked.connect(self.load_file_event)
         self.run_button.clicked.connect(self.run_macro)
 
-        # Handle initial file loading
-        if pathlib.Path(filename).is_file():
-            self.load_file(filename=filename)
-
-        if isinstance(language, str) and language.lower() != "python":
-            self.run_button.hide()
-
         if not can_load:
             self.load_button.hide()
+
+    def _create_editor_tab(self, filename: str = None, language: str = "Python"):
+        """Create a new editor tab."""
+        editor = TextEditor(parent=self, language=language)
+        tab_index = self.tab_widget.addTab(editor, filename or "Untitled")
+        return editor, tab_index
+
+    def _get_current_editor(self):
+        """Get the current editor widget."""
+        return self.tab_widget.currentWidget()
+
+    def _get_current_filename(self):
+        """Get the filename of the current tab."""
+        idx = self.tab_widget.currentIndex()
+        if idx >= 0:
+            return self.tab_widget.tabText(idx)
+        return None
+
+    def _close_tab(self, index: int):
+        """Close a tab at the given index."""
+        if self.tab_widget.count() <= 1:
+            return
+
+        widget = self.tab_widget.widget(index)
+        filename = self.tab_widget.tabText(index)
+        if filename in self._open_files:
+            del self._open_files[filename]
+        self.tab_widget.removeTab(index)
+        if widget:
+            widget.deleteLater()
+
+    def load_file_event(self, event, filename: str = None, **kwargs):
+        self.load_file(filename)
+
+    def load_file(self, filename: str = None, **kwargs):
+        """Load a file into the current or a new tab."""
+        filename = filename or chisurf.gui.widgets.get_filename()
+        if not filename:
+            return
+
+        filename_str = str(filename)
+
+        if filename_str in self._open_files:
+            tab_idx = self._open_files[filename_str]
+            self.tab_widget.setCurrentIndex(tab_idx)
+            self._update_line_edit()
+            return
+
+        try:
+            logging.log(0, f"Loading file: {filename_str}")
+            with open(filename_str, encoding="utf-8") as file:
+                content = file.read()
+        except IOError as e:
+            logging.log(1, f"Error loading file {filename_str}: {e}")
+            return
+
+        editor, tab_idx = self._create_editor_tab(filename=filename_str)
+        editor.setText(content)
+        self._open_files[filename_str] = tab_idx
+        self.tab_widget.setCurrentIndex(tab_idx)
+        self._update_line_edit()
+
+    def _update_line_edit(self):
+        """Update the line edit with current file path."""
+        filename = self._get_current_filename()
+        if filename:
+            self.line_edit.setText(filename)
+
+    def open_file(self, path: str, line: int = None, col: int = None):
+        """Open a file in a new tab or switch to existing tab, optionally jump to line."""
+        path_str = str(path)
+
+        if path_str in self._open_files:
+            tab_idx = self._open_files[path_str]
+            self.tab_widget.setCurrentIndex(tab_idx)
+        else:
+            try:
+                with open(path_str, encoding="utf-8") as file:
+                    content = file.read()
+            except IOError as e:
+                logging.log(1, f"Error opening file {path_str}: {e}")
+                return
+
+            editor, tab_idx = self._create_editor_tab(filename=path_str)
+            editor.setText(content)
+            self._open_files[path_str] = tab_idx
+            self.tab_widget.setCurrentIndex(tab_idx)
+
+        self._update_line_edit()
+
+        if line and line > 0:
+            self.goto_line(line)
+
+    def goto_line(self, line: int):
+        """Move the cursor to a specific line number in the current editor."""
+        editor = self._get_current_editor()
+        if editor is None:
+            return
+
+        if line < 1:
+            return
+
+        doc = editor.document()
+        block = doc.findBlockByNumber(line - 1)
+        if block.isValid():
+            cursor = editor.textCursor()
+            cursor.setPosition(block.position())
+            editor.setTextCursor(cursor)
+            editor.ensureCursorVisible()
+
+            self._highlight_line_temporarily(editor, line)
+
+    def _highlight_line_temporarily(self, editor, line: int, duration_ms: int = 2000):
+        """Temporarily highlight a line in the given editor."""
+        doc = editor.document()
+        block = doc.findBlockByNumber(line - 1)
+        if not block.isValid():
+            return
+
+        selection = QtWidgets.QTextEdit.ExtraSelection()
+        selection.format.setBackground(QtGui.QColor(255, 255, 0, 100))
+        selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
+        selection.cursor = editor.textCursor()
+        selection.cursor.setPosition(block.position())
+        selection.cursor.movePosition(
+            QtGui.QTextCursor.EndOfBlock,
+            QtGui.QTextCursor.KeepAnchor
+        )
+
+        extra_selections = editor.extraSelections() + [selection]
+        editor.setExtraSelections(extra_selections)
+
+        QtCore.QTimer.singleShot(
+            duration_ms,
+            lambda: self._clear_temporary_highlight(editor, selection)
+        )
+
+    def _clear_temporary_highlight(self, editor, selection: QtWidgets.QTextEdit.ExtraSelection):
+        """Clear a temporary line highlight."""
+        extra_selections = editor.extraSelections()
+        if selection in extra_selections:
+            extra_selections.remove(selection)
+            editor.setExtraSelections(extra_selections)
+
+    def run_macro(self, event):
+        """Execute the currently loaded Python script."""
+        filename = self._get_current_filename()
+        if not filename or filename == "Untitled":
+            logging.log(1, "No file to run. Save the file first.")
+            return
+        self.save_text()
+        chisurf.console.run_macro(filename=filename)
+
+    def save_text(self, event=None):
+        """Save the current tab's text to a file."""
+        editor = self._get_current_editor()
+        if editor is None:
+            return
+
+        filename = self._get_current_filename()
+        if filename == "Untitled" or not filename:
+            new_filename = chisurf.gui.widgets.save_file(file_type="Python script (*.py)")
+            if not new_filename:
+                return
+            filename = new_filename
+            idx = self.tab_widget.currentIndex()
+            self.tab_widget.setTabText(idx, filename)
+            self._open_files[str(filename)] = idx
+
+        try:
+            with io.zipped.open_maybe_zipped(filename, "w") as file:
+                file.write(editor.text())
+            self.line_edit.setText(str(pathlib.Path(filename).as_posix()))
+        except IOError as e:
+            logging.log(1, f"Error saving file {filename}: {e}")
 
 
 if __name__ == "__main__":

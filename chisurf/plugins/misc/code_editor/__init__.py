@@ -17,6 +17,14 @@ from chisurf.plugins.misc.code_editor.text_editor import (
 SimpleCodeEditor = TextEditor
 
 name = "Tools:Miscellaneous:Code Editor"
+icon = "📝"  # Memo/notepad emoji for editor
+
+def load():
+    """Return the plugin's main widget instance."""
+    from .text_editor import CodeEditor
+    return CodeEditor()
+
+__all__ = ["name", "load", "icon", "CodeEditor", "TextEditor", "SyntaxHighlighter"]
 
 if __name__ == "plugin":
     window = CodeEditor()
