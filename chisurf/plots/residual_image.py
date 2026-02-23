@@ -6,6 +6,7 @@ from qtpy import QtWidgets, QtCore
 
 import chisurf.fitting
 from chisurf.plots import plotbase
+from chisurf.runtime.actions import record_action
 
 
 class _DraggableTextItem(pg.TextItem):
@@ -767,6 +768,28 @@ class Residual2DPlot(plotbase.Plot):
             import chisurf
 
             chisurf.run(f"cs.current_fit.fit_range = {int(xmin_idx)}, {int(xmax_idx)}")
+            try:
+                fit_group_name = str(getattr(self.fit, "name", ""))
+                local_fit_name = ""
+                local_fit = getattr(self.fit, "selected_fit", None)
+                if local_fit is not None:
+                    local_fit_name = str(getattr(local_fit, "name", ""))
+                record_action(
+                    action_type="fit_range_set",
+                    summary=(
+                        f"set fit range for '{fit_group_name}' to [{int(xmin_idx)}, {int(xmax_idx)}) "
+                        "from residual image"
+                    ),
+                    payload={
+                        "fit_group": fit_group_name,
+                        "local_fit": local_fit_name,
+                        "xmin": int(xmin_idx),
+                        "xmax": int(xmax_idx),
+                        "source": "residual_image_roi",
+                    },
+                )
+            except Exception:
+                pass
         except Exception:
             pass
 

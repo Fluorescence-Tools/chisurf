@@ -9,6 +9,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf.fitting
 from chisurf.plots import plotbase
+from chisurf.runtime.actions import record_action
 
 
 class NoBackgroundProxy(QtCore.QIdentityProxyModel):
@@ -120,6 +121,7 @@ class _FitTableModel(QtCore.QAbstractTableModel):
         self._mask = np.array([], dtype=float)
         self._support_headers: List[str] = []
         self._support_arrays: List[np.ndarray] = []
+        self._column_count: int = len(self.HEADERS)
 
     # ---- Required model API ----
     def rowCount(self, parent=QtCore.QModelIndex()) -> int:
@@ -128,7 +130,7 @@ class _FitTableModel(QtCore.QAbstractTableModel):
     def columnCount(self, parent=QtCore.QModelIndex()) -> int:
         if parent.isValid():
             return 0
-        return len(self.HEADERS) + len(self._support_headers)
+        return self._column_count
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = QtCore.Qt.DisplayRole):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
@@ -237,7 +239,14 @@ class _FitTableModel(QtCore.QAbstractTableModel):
         mask: np.ndarray,
         support_arrays: Optional[Sequence[Tuple[str, np.ndarray]]] = None,
     ) -> None:
-        self.beginResetModel()
+        new_column_count = len(self.HEADERS)
+        if support_arrays:
+            new_column_count += len(support_arrays)
+        if new_column_count != self._column_count:
+            self.beginResetModel()
+            reset_model = True
+        else:
+            reset_model = False
         self._x = np.asarray(x, dtype=float)
         self._y = np.asarray(y, dtype=float)
         self._ym = np.asarray(ym, dtype=float)
@@ -265,7 +274,19 @@ class _FitTableModel(QtCore.QAbstractTableModel):
         else:
             self._support_headers = []
             self._support_arrays = []
-        self.endResetModel()
+        try:
+            self.headerDataChanged.emit(QtCore.Qt.Horizontal, 0, max(0, self._column_count - 1))
+        except Exception:
+            pass
+        if reset_model:
+            self._column_count = new_column_count
+            self.endResetModel()
+        else:
+            rows = self._x.size
+            if rows > 0 and self._column_count > 0:
+                top_left = self.index(0, 0)
+                bottom_right = self.index(rows - 1, self._column_count - 1)
+                self.dataChanged.emit(top_left, bottom_right, [QtCore.Qt.DisplayRole])
 
 
 class FitTablePlot(plotbase.Plot):
@@ -314,17 +335,26 @@ class FitTablePlot(plotbase.Plot):
         self.table = QtWidgets.QTableView(self)
         self._model = _FitTableModel(self)
         self.table.setModel(self._model)
+        self._refresh_pending = False
 
         hh = self.table.horizontalHeader()
         hh.setStretchLastSection(False)
         try:
-            hh.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+            hh.setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
         except Exception:
             try:
-                hh.setResizeMode(QtWidgets.QHeaderView.ResizeToContents)  # Qt4 fallback
+                hh.setResizeMode(QtWidgets.QHeaderView.Interactive)  # Qt4 fallback
             except Exception:
                 pass
         hh.setMinimumSectionSize(20)
+        try:
+            self.table.setColumnWidth(0, 80)
+            self.table.setColumnWidth(1, 90)
+            self.table.setColumnWidth(2, 90)
+            self.table.setColumnWidth(3, 90)
+            self.table.setColumnWidth(4, 55)
+        except Exception:
+            pass
 
         self.table.setAlternatingRowColors(False)
         self.table.setWordWrap(False)
@@ -428,7 +458,7 @@ class FitTablePlot(plotbase.Plot):
                 pass
         support_columns: List[Tuple[str, np.ndarray]] = []
         try:
-            curves = self.fit.get_curves(copy_curves=True)
+            curves = self.fit.get_curves(copy_curves=False)
         except Exception:
             curves = {}
         exclusion = {"data", "model", "weighted residuals", "autocorrelation"}
@@ -478,13 +508,36 @@ class FitTablePlot(plotbase.Plot):
             self.fit.mask = m
         except Exception:
             return
+        try:
+            fit_group_name = str(getattr(self.fit, "name", ""))
+            record_action(
+                action_type="fit_mask_set",
+                summary=f"set fit mask for '{fit_group_name}' ({int(np.count_nonzero(m))}/{int(m.size)} active)",
+                payload={
+                    "fit_group": fit_group_name,
+                    "mask_size": int(m.size),
+                    "mask_active": int(np.count_nonzero(m)),
+                    "source": "table_plot",
+                },
+            )
+        except Exception:
+            pass
         self._refresh_arrays_into_model()
 
     def _refresh_arrays_into_model(self) -> None:
+        if not self.isVisible():
+            self._refresh_pending = True
+            return
         x, y, ym, wres, mask, support = self._get_arrays()
         self._model.set_arrays(x, y, ym, wres, mask, support)
         n = x.size
         self.lbl_info.setText(f"N={n}  |  chi2r={getattr(self.fit, 'chi2r', float('nan')):.4g}")
+        self._refresh_pending = False
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if getattr(self, "_refresh_pending", False):
+            self._refresh_arrays_into_model()
 
     def on_copy_table_to_clipboard(self) -> None:
         """Copy the current Data table (x, data, model, w. res.) to the clipboard.

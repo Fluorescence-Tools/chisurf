@@ -92,6 +92,16 @@
           </property>
          </widget>
         </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="checkBox_9">
+          <property name="text">
+           <string>display group</string>
+          </property>
+          <property name="toolTip">
+           <string>Display all fits in the group. Current fit is highlighted, others are transparent.</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
@@ -445,6 +455,22 @@
     <hint type="sourcelabel">
      <x>210</x>
      <y>81</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_9</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>actionUpdate_Plot</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>105</y>
     </hint>
     <hint type="destinationlabel">
      <x>-1</x>
