@@ -1,6 +1,16 @@
 from __future__ import annotations
 
+import os
+import sys
 import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import utils
+
+TOPDIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')
+)
+utils.set_search_paths(TOPDIR)
 
 from qtpy.QtTest import QTest
 from qtpy.QtCore import Qt

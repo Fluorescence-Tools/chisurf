@@ -1,17 +1,20 @@
-import utils
 import os
 import sys
 import unittest
-from qtpy.QtWidgets import QApplication
-from qtpy.QtTest import QTest
-from qtpy.QtCore import Qt
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import utils
 
 TOPDIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')
 )
 utils.set_search_paths(TOPDIR)
+
+from qtpy.QtWidgets import QApplication
+from qtpy.QtTest import QTest
+from qtpy.QtCore import Qt
+
 import chisurf.fio
-import chisurf.gui.tools
 
 
 app = QApplication(sys.argv)
@@ -26,7 +29,8 @@ class Tests(unittest.TestCase):
         """
         Create the GUI
         """
-        self.form = chisurf.gui.tools.broken.correlate.correlate.CorrelateTTTR()
+        from chisurf.plugins.tttr.tttr_correlate.gui import CorrelateTTTR
+        self.form = CorrelateTTTR()
 
     def test_defaults(self):
         self.assertEqual(self.form.doubleSpinBox_2.value(), 0.380)
@@ -56,3 +60,7 @@ class Tests(unittest.TestCase):
         self.assertAlmostEqual(self.form.doubleSpinBox_9.value(), 0.1398, places=2)
         self.assertAlmostEqual(self.form.doubleSpinBox_6.value(), 0.9951, places=2)
         self.assertAlmostEqual(self.form.doubleSpinBox_8.value(), 0.0363, places=2)
+
+
+if __name__ == "__main__":
+    unittest.main()
