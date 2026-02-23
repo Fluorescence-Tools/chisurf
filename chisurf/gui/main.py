@@ -24,10 +24,13 @@ import chisurf.fio
 import chisurf.experiments
 import chisurf.macros
 import chisurf.settings
+import chisurf.history_replay
+from chisurf.runtime.actions import record_action
 
 import chisurf.gui.widgets.settings_editor
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
+import chisurf.gui.widgets.history_browser
 import chisurf.gui.widgets.experiments.modelling
 
 import chisurf.models
@@ -230,6 +233,11 @@ class Main(QtWidgets.QMainWindow):
             if reply != QtWidgets.QMessageBox.Yes:
                 event.ignore()
                 return
+        # Save setup defaults before closing
+        try:
+            self._save_setup_defaults()
+        except Exception:
+            pass
         # Controlled spin-down: close all fits before the main window exits.
         try:
             self.onCloseAllFits()
@@ -237,6 +245,33 @@ class Main(QtWidgets.QMainWindow):
             pass
 
         event.accept()
+
+    def _restore_setup_defaults(self) -> None:
+        """Restore saved setup defaults from user settings."""
+        try:
+            from chisurf.gui.widgets.experiments.setup_persistence import (
+                load_setup_defaults,
+                apply_setup_defaults,
+            )
+            defaults = load_setup_defaults()
+            if defaults.get("experiments"):
+                apply_setup_defaults(self, defaults)
+                chisurf.logging.info("Restored setup defaults from user settings")
+        except Exception as e:
+            chisurf.logging.warning(f"Failed to restore setup defaults: {e}")
+
+    def _save_setup_defaults(self) -> None:
+        """Save current setup defaults to user settings."""
+        try:
+            from chisurf.gui.widgets.experiments.setup_persistence import (
+                collect_setup_defaults,
+                save_setup_defaults,
+            )
+            defaults = collect_setup_defaults(self)
+            if save_setup_defaults(defaults):
+                chisurf.logging.info("Saved setup defaults to user settings")
+        except Exception as e:
+            chisurf.logging.warning(f"Failed to save setup defaults: {e}")
 
     def subWindowActivated(self):
         sub_window = self.mdiarea.currentSubWindow()
@@ -339,7 +374,10 @@ class Main(QtWidgets.QMainWindow):
 
     def onExperimentChanged(self):
         experiment_name = self.comboBox_experimentSelect.currentText()
-        chisurf.run(f"cs.current_experiment = '{experiment_name}'")
+        chisurf.action_controller.execute(
+            name="experiment.set",
+            payload={"name": str(experiment_name)},
+        )
 
         # Add setups for selected experiment
         self.comboBox_setupSelect.blockSignals(True)
@@ -392,13 +430,6 @@ class Main(QtWidgets.QMainWindow):
         This method prompts the user for a directory and project name, then calls
         the save_project function to save the project.
         """
-        # Inform user about experimental status
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="Project Save",
-            info="Saving current session as a project. This feature is experimental.",
-            show_fortune=False
-        )
-
         current_dir = getattr(self, "_current_project_dir", None)
         if isinstance(current_dir, pathlib.Path) and current_dir.is_dir():
             try:
@@ -407,9 +438,12 @@ class Main(QtWidgets.QMainWindow):
                 pass
 
             try:
-                chisurf.macros.core_fit.save_project(
-                    target_path=current_dir.parent.as_posix(),
-                    project_name=current_dir.name,
+                chisurf.action_controller.execute(
+                    name="project.save",
+                    payload={
+                        "target_path": current_dir.parent.as_posix(),
+                        "project_name": current_dir.name,
+                    },
                 )
             except Exception:
                 return
@@ -468,7 +502,13 @@ class Main(QtWidgets.QMainWindow):
             pass
 
         try:
-            chisurf.macros.core_fit.save_project(target_path=path.as_posix(), project_name=project_name)
+            chisurf.action_controller.execute(
+                name="project.save",
+                payload={
+                    "target_path": path.as_posix(),
+                    "project_name": project_name,
+                },
+            )
         except Exception:
             return
         try:
@@ -489,13 +529,6 @@ class Main(QtWidgets.QMainWindow):
         This method prompts the user for a project folder, then calls
         the load_project function to load the project.
         """
-        # Inform user about experimental status
-        chisurf.gui.widgets.general.MyMessageBox(
-            label="Project Load",
-            info="Loading a saved project. This feature is experimental.",
-            show_fortune=False
-        )
-
         # Get project directory
         path, _ = chisurf.gui.widgets.get_directory(
             caption="Select Project Folder"
@@ -516,7 +549,12 @@ class Main(QtWidgets.QMainWindow):
         # Load project
         chisurf.working_path = path
         try:
-            chisurf.macros.core_fit.load_project(project_path=path.as_posix())
+            chisurf.action_controller.execute(
+                name="project.load",
+                payload={
+                    "project_path": path.as_posix(),
+                },
+            )
         except Exception:
             try:
                 chisurf.logging.exception(f"Project load failed: {path}")
@@ -592,12 +630,13 @@ class Main(QtWidgets.QMainWindow):
 
     def onCloseProject(self, event: QtCore.QEvent = None):
         try:
-            self.reinitialize()
-        except Exception:
-            pass
-
-        try:
-            self._current_project_dir = None
+            chisurf.action_controller.execute(
+                name="project.close",
+                payload={
+                    "main_window": self,
+                    "current_project_dir": str(getattr(self, "_current_project_dir", "") or ""),
+                },
+            )
         except Exception:
             pass
 
@@ -706,7 +745,10 @@ class Main(QtWidgets.QMainWindow):
         else:
             s = r"{}".format(filename)
         s = s.replace("\\", "/")
-        chisurf.run(f'chisurf.macros.add_dataset(filename=r"{s}")')
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload={"filename": s},
+        )
 
     def onSaveFits(self, event: QtCore.QEvent = None):
         path, _ = chisurf.gui.widgets.get_directory()
@@ -1083,17 +1125,680 @@ class Main(QtWidgets.QMainWindow):
         self.verticalLayout_4.addWidget(chisurf.console)
         chisurf.console.pushVariables({'cs': self})
         chisurf.console.pushVariables({'chisurf': chisurf})
+        try:
+            chisurf.console.pushVariables({'history': chisurf.history})
+        except Exception:
+            pass
         chisurf.console.pushVariables({'np': np})
         chisurf.console.pushVariables({'os': os})
         chisurf.console.pushVariables({'QtCore': QtCore})
         chisurf.console.pushVariables({'QtGui': QtGui})
         chisurf.console.set_default_style('linux')
-        chisurf.run = chisurf.console.execute_on_gui_thread
+
+        def _run_with_history(code: str = None):
+            if code is None:
+                return None
+            try:
+                code_str = str(code)
+            except Exception:
+                return None
+            try:
+                lines = code_str.splitlines()
+                first_line = lines[0] if lines else code_str
+                record_action(
+                    action_type="run_command",
+                    summary=f"run command: {first_line[:120]}",
+                    payload={"code": code_str},
+                )
+            except Exception:
+                pass
+            return chisurf.console.execute_on_gui_thread(code_str)
+
+        chisurf.run = _run_with_history
         try:
             chisurf.log = chisurf.console.log_on_gui_thread
         except Exception:
             pass
         chisurf.run(str(chisurf.settings.gui['console_init']))
+
+    def _init_history_browser(self) -> None:
+        try:
+            placeholder = getattr(self, "historyBrowserContainer", None)
+            if placeholder is None:
+                return
+            parent = placeholder.parent()
+            if parent is None:
+                return
+            parent_layout = parent.layout()
+            if parent_layout is None:
+                return
+            idx = parent_layout.indexOf(placeholder)
+            if idx < 0:
+                return
+            browser = chisurf.gui.widgets.history_browser.HistoryBrowserWidget(parent)
+            browser.setObjectName("historyBrowser")
+            browser.set_history(chisurf.history)
+            try:
+                browser.cursorChanged.connect(self._on_history_cursor_changed)
+            except Exception:
+                pass
+            try:
+                chisurf.history.set_checkpoint_capture(
+                    chisurf.history_replay.capture_domain_snapshot
+                )
+            except Exception:
+                pass
+            parent_layout.removeWidget(placeholder)
+            placeholder.setParent(None)
+            parent_layout.insertWidget(idx, browser)
+            self.historyBrowser = browser
+            self._sync_history_navigation_actions()
+        except Exception:
+            self.historyBrowser = None
+
+    @staticmethod
+    def _focus_widget_has_native_undo_redo() -> bool:
+        widget = QtWidgets.QApplication.focusWidget()
+        if widget is None:
+            return False
+        return isinstance(
+            widget,
+            (
+                QtWidgets.QTextEdit,
+                QtWidgets.QPlainTextEdit,
+            ),
+        )
+
+    def _history_undo(self) -> None:
+        if self._focus_widget_has_native_undo_redo():
+            chisurf.logging.info("HISTNAV: undo ignored (native text undo context)")
+            return
+        browser = getattr(self, "historyBrowser", None)
+        if browser is None or not hasattr(browser, "undo_step"):
+            chisurf.logging.info("HISTNAV: undo ignored (no history browser)")
+            return
+        try:
+            event = browser.undo_step()
+            if isinstance(event, dict):
+                chisurf.logging.info(
+                    f"HISTNAV: undo -> event={event.get('action_type','?')} id={str(event.get('event_id',''))[:8]}"
+                )
+            else:
+                chisurf.logging.info("HISTNAV: undo produced no event")
+        except Exception:
+            pass
+        self._sync_history_navigation_actions()
+
+    def _history_redo(self) -> None:
+        if self._focus_widget_has_native_undo_redo():
+            chisurf.logging.info("HISTNAV: redo ignored (native text undo context)")
+            return
+        browser = getattr(self, "historyBrowser", None)
+        if browser is None or not hasattr(browser, "redo_step"):
+            chisurf.logging.info("HISTNAV: redo ignored (no history browser)")
+            return
+        try:
+            event = browser.redo_step()
+            if isinstance(event, dict):
+                chisurf.logging.info(
+                    f"HISTNAV: redo -> event={event.get('action_type','?')} id={str(event.get('event_id',''))[:8]}"
+                )
+            else:
+                chisurf.logging.info("HISTNAV: redo produced no event")
+        except Exception:
+            pass
+        self._sync_history_navigation_actions()
+
+    def _sync_history_navigation_actions(self) -> None:
+        browser = getattr(self, "historyBrowser", None)
+        can_undo = bool(browser is not None and hasattr(browser, "can_undo") and browser.can_undo())
+        can_redo = bool(browser is not None and hasattr(browser, "can_redo") and browser.can_redo())
+        for name, enabled in (("actionHistoryUndo", can_undo), ("actionHistoryRedo", can_redo)):
+            action = getattr(self, name, None)
+            if action is not None:
+                try:
+                    action.setEnabled(bool(enabled))
+                except Exception:
+                    pass
+        try:
+            chisurf.logging.info(f"HISTNAV: action states undo={can_undo} redo={can_redo}")
+        except Exception:
+            pass
+
+    def _apply_parameter_state(
+            self,
+            parameter_state: typing.Dict[typing.Tuple[str, str, str], typing.Dict[str, typing.Any]],
+            force_unlink_keys: typing.Optional[typing.Set[typing.Tuple[str, str, str]]] = None,
+    ) -> None:
+        def format_key(key: typing.Tuple[str, str, str]) -> str:
+            return f"{key[0]}/{key[1]}/{key[2]}"
+
+        def resolve_param(
+                key: typing.Tuple[str, str, str],
+                state: typing.Optional[typing.Dict[str, typing.Any]] = None,
+                link_uid: typing.Optional[typing.Tuple[str, str, str]] = None,
+        ):
+            state = state or {}
+            src_param_uid = str(state.get("source_parameter_uid") or "")
+            if src_param_uid:
+                for fit_group in getattr(chisurf, "fits", []):
+                    for local_fit in fit_group:
+                        model = getattr(local_fit, "model", None)
+                        if model is None:
+                            continue
+                        params = getattr(model, "parameters_all", [])
+                        for p in params:
+                            if str(getattr(p, "unique_identifier", "")) == src_param_uid:
+                                return p
+
+            if isinstance(link_uid, tuple):
+                target_param_uid = str(link_uid[2] or "")
+                if target_param_uid:
+                    for fit_group in getattr(chisurf, "fits", []):
+                        for local_fit in fit_group:
+                            model = getattr(local_fit, "model", None)
+                            if model is None:
+                                continue
+                            params = getattr(model, "parameters_all", [])
+                            for p in params:
+                                if str(getattr(p, "unique_identifier", "")) == target_param_uid:
+                                    return p
+
+            fit_group_name, local_fit_name, parameter_name = key
+            for fit_group in getattr(chisurf, "fits", []):
+                if str(getattr(fit_group, "name", "")) != str(fit_group_name):
+                    continue
+                for local_fit in fit_group:
+                    if str(getattr(local_fit, "name", "")) != str(local_fit_name):
+                        continue
+                    model = getattr(local_fit, "model", None)
+                    if model is None:
+                        return None
+                    params = getattr(model, "parameters_all_dict", {})
+                    return params.get(parameter_name)
+            return None
+
+        force_unlink_keys = force_unlink_keys or set()
+        touched_fit_groups: typing.Set[typing.Any] = set()
+        applied_scalar = 0
+        applied_links = 0
+        applied_unlinks = 0
+        unresolved = 0
+        unresolved_keys: typing.List[str] = []
+
+        # First apply scalar state
+        for key, state in parameter_state.items():
+            param = resolve_param(key, state=state)
+            if param is None:
+                unresolved += 1
+                unresolved_keys.append(format_key(key))
+                continue
+            fit_group_name = key[0]
+            for fg in getattr(chisurf, "fits", []):
+                if str(getattr(fg, "name", "")) == fit_group_name:
+                    touched_fit_groups.add(fg)
+                    break
+            try:
+                if "fixed" in state:
+                    param.fixed = bool(state["fixed"])
+                    applied_scalar += 1
+            except Exception:
+                pass
+            try:
+                if "bounds_on" in state:
+                    param.bounds_on = bool(state["bounds_on"])
+                    applied_scalar += 1
+            except Exception:
+                pass
+            try:
+                if "bounds" in state:
+                    lb, ub = state["bounds"]
+                    param.bounds = (float(lb), float(ub))
+                    applied_scalar += 1
+            except Exception:
+                pass
+            try:
+                if "value" in state:
+                    was_fixed = bool(getattr(param, "fixed", False))
+                    param.fixed = False
+                    param.value = state["value"]
+                    param.fixed = was_fixed
+                    applied_scalar += 1
+            except Exception:
+                pass
+
+        # Explicit unlink for touched keys not currently linked in replay state
+        for key in force_unlink_keys:
+            if key in parameter_state and "link" in parameter_state[key]:
+                continue
+            param = resolve_param(key, state=parameter_state.get(key, {}))
+            if param is None:
+                unresolved += 1
+                unresolved_keys.append(format_key(key))
+                continue
+            try:
+                param.link = None
+                applied_unlinks += 1
+            except Exception:
+                pass
+
+        # Then apply links after all parameters are available
+        for key, state in parameter_state.items():
+            if "link" not in state:
+                continue
+            param = resolve_param(key, state=state)
+            if param is None:
+                unresolved += 1
+                unresolved_keys.append(format_key(key))
+                continue
+            target_key = state.get("link")
+            target_uid = state.get("link_uid")
+            try:
+                if target_key is None:
+                    param.link = None
+                    applied_unlinks += 1
+                else:
+                    target_param = resolve_param(target_key, link_uid=target_uid)
+                    if target_param is not None and target_param is not param:
+                        param.link = target_param
+                        applied_links += 1
+            except Exception:
+                pass
+
+        # Refresh GUI/model for touched fit groups
+        for fg in touched_fit_groups:
+            try:
+                finalize = getattr(fg, "finalize", None)
+                if callable(finalize):
+                    finalize()
+            except Exception:
+                pass
+
+        try:
+            unresolved_preview = ", ".join(unresolved_keys[:5])
+            if len(unresolved_keys) > 5:
+                unresolved_preview += ", ..."
+            chisurf.logging.info(
+                "HISTNAV: parameter replay apply "
+                f"keys={len(parameter_state)} scalar_ops={applied_scalar} "
+                f"links={applied_links} unlinks={applied_unlinks} "
+                f"touched_fit_groups={len(touched_fit_groups)} unresolved={unresolved} "
+                f"unresolved_keys=[{unresolved_preview}]"
+            )
+        except Exception:
+            pass
+
+        for fg in touched_fit_groups:
+            try:
+                update = getattr(fg, "update", None)
+                if callable(update):
+                    update()
+            except Exception:
+                pass
+
+        self._refresh_parameter_widgets()
+        self._refresh_plots()
+
+    def _refresh_parameter_widgets(self) -> None:
+        try:
+            for fit_group in getattr(chisurf, "fits", []):
+                for local_fit in fit_group:
+                    model = getattr(local_fit, "model", None)
+                    if model is None:
+                        continue
+                    for param in getattr(model, "parameters_all", []):
+                        controller = getattr(param, "controller", None)
+                        if controller is not None and hasattr(controller, "finalize"):
+                            try:
+                                controller.finalize()
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+
+    def _refresh_plots(self) -> None:
+        try:
+            for fit_window in getattr(chisurf.gui, "fit_windows", []):
+                try:
+                    plot = getattr(fit_window, "plot_tab_widget", None)
+                    if plot is not None and hasattr(plot, "update"):
+                        plot.update()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    def _apply_fit_range_state(
+            self,
+            fit_range_state: typing.Dict[str, typing.Dict[str, typing.Any]],
+    ) -> None:
+        if not isinstance(fit_range_state, dict) or not fit_range_state:
+            return
+
+        applied = 0
+        unresolved_fit_groups: typing.List[str] = []
+
+        for fit_group_name, state in fit_range_state.items():
+            try:
+                xmin = int(state.get("xmin"))
+                xmax = int(state.get("xmax"))
+            except Exception:
+                continue
+
+            target_fit = None
+            for fg in getattr(chisurf, "fits", []):
+                if str(getattr(fg, "name", "")) == str(fit_group_name):
+                    target_fit = fg
+                    break
+            if target_fit is None:
+                unresolved_fit_groups.append(str(fit_group_name))
+                continue
+
+            try:
+                target_fit.fit_range = (xmin, xmax)
+                applied += 1
+            except Exception:
+                continue
+
+            try:
+                update = getattr(target_fit, "update", None)
+                if callable(update):
+                    update()
+            except Exception:
+                pass
+
+            try:
+                for fit_window in getattr(chisurf.gui, "fit_windows", []):
+                    if getattr(fit_window, "fit", None) is not target_fit:
+                        continue
+                    fit_widget = getattr(fit_window, "fit_widget", None)
+                    if fit_widget is None:
+                        continue
+                    fit_widget.blockSignals(True)
+                    fit_widget.xmin = xmin
+                    fit_widget.xmax = xmax
+                    fit_widget.blockSignals(False)
+                    break
+            except Exception:
+                pass
+
+        try:
+            unresolved_preview = ", ".join(unresolved_fit_groups[:5])
+            if len(unresolved_fit_groups) > 5:
+                unresolved_preview += ", ..."
+            chisurf.logging.info(
+                "HISTNAV: fit-range replay apply "
+                f"keys={len(fit_range_state)} applied={applied} "
+                f"unresolved={len(unresolved_fit_groups)} "
+                f"unresolved_fit_groups=[{unresolved_preview}]"
+            )
+        except Exception:
+            pass
+
+    def _apply_setup_state(
+            self,
+            setup_state: typing.Dict[str, typing.Any],
+    ) -> None:
+        if not isinstance(setup_state, dict) or not setup_state:
+            return
+
+        experiment_name = str(setup_state.get("experiment") or "")
+        setup_name = str(setup_state.get("setup") or "")
+        params = setup_state.get("params") or {}
+        if not isinstance(params, dict):
+            params = {}
+
+        applied_params = 0
+
+        if experiment_name:
+            try:
+                combo = self.comboBox_experimentSelect
+                idx = combo.findText(experiment_name)
+                if idx >= 0 and combo.currentIndex() != idx:
+                    combo.blockSignals(True)
+                    combo.setCurrentIndex(idx)
+                    combo.blockSignals(False)
+                    self._current_experiment_idx = idx
+                    self.comboBox_setupSelect.blockSignals(True)
+                    self.comboBox_setupSelect.clear()
+                    self.comboBox_setupSelect.addItems(self.current_experiment.reader_names)
+                    self.comboBox_setupSelect.blockSignals(False)
+            except Exception:
+                pass
+
+        if setup_name:
+            try:
+                combo = self.comboBox_setupSelect
+                idx = combo.findText(setup_name)
+                if idx >= 0 and combo.currentIndex() != idx:
+                    combo.blockSignals(True)
+                    combo.setCurrentIndex(idx)
+                    combo.blockSignals(False)
+                    self._current_setup_idx = idx
+                    self.onSetupChanged()
+            except Exception:
+                pass
+
+        if params:
+            try:
+                setup_obj = self.current_setup
+            except Exception:
+                setup_obj = None
+            if setup_obj is not None:
+                for key, value in params.items():
+                    path = str(key)
+                    if not path:
+                        continue
+                    parts = path.split(".")
+                    target = setup_obj
+                    try:
+                        for part in parts[:-1]:
+                            target = getattr(target, part)
+                        setattr(target, parts[-1], value)
+                        applied_params += 1
+                    except Exception:
+                        continue
+
+        try:
+            chisurf.logging.info(
+                "HISTNAV: setup replay apply "
+                f"experiment={experiment_name or '-'} setup={setup_name or '-'} "
+                f"params={applied_params}/{len(params)}"
+            )
+        except Exception:
+            pass
+
+    def _on_history_cursor_changed(self, event: typing.Any) -> None:
+        if not isinstance(event, dict):
+            return
+
+        try:
+            chisurf.logging.info(
+                f"HISTNAV: cursor changed to action={event.get('action_type','?')} id={str(event.get('event_id',''))[:8]}"
+            )
+        except Exception:
+            pass
+
+        try:
+            browser = getattr(self, "historyBrowser", None)
+            events = [event]
+            all_events = [event]
+            cursor_index = -1
+            if browser is not None and hasattr(browser, "events_upto_cursor"):
+                events = list(browser.events_upto_cursor())
+            if browser is not None and hasattr(browser, "all_events"):
+                all_events = list(browser.all_events())
+            if browser is not None and hasattr(browser, "cursor_index"):
+                cursor_index = browser.cursor_index()
+
+            checkpoint_snapshot = None
+            events_to_replay = events
+            try:
+                if cursor_index >= 0:
+                    checkpoint_snapshot, events_to_replay = chisurf.history.get_events_from_checkpoint(cursor_index)
+                    if checkpoint_snapshot is not None:
+                        chisurf.logging.info(
+                            f"HISTNAV: using checkpoint at index {cursor_index}, replaying {len(events_to_replay)} events"
+                        )
+            except Exception:
+                pass
+
+            try:
+                chisurf.logging.info(
+                    f"HISTNAV: replay window size upto={len(events)} total={len(all_events)} checkpoint={checkpoint_snapshot is not None}"
+                )
+            except Exception:
+                pass
+
+            if checkpoint_snapshot is not None:
+                replay_state = chisurf.history_replay.snapshot_to_replay_state(checkpoint_snapshot)
+                nav_state = replay_state.get("navigation", {})
+                parameter_state = replay_state.get("parameters", {})
+                fit_range_state = replay_state.get("fit_ranges", {})
+                setup_state = replay_state.get("setup", {})
+                nav_delta = chisurf.history_replay.reconstruct_navigation_state(events_to_replay)
+                param_delta = chisurf.history_replay.reconstruct_parameter_state(events_to_replay)
+                range_delta = chisurf.history_replay.reconstruct_fit_range_state(events_to_replay)
+                setup_delta = chisurf.history_replay.reconstruct_setup_state(events_to_replay)
+                for key in ["datasets", "dataset_uids", "fits", "fit_uids"]:
+                    if key in nav_delta:
+                        nav_state[key] = nav_delta[key]
+                if nav_delta.get("selected_dataset"):
+                    nav_state["selected_dataset"] = nav_delta["selected_dataset"]
+                if nav_delta.get("selected_dataset_uid"):
+                    nav_state["selected_dataset_uid"] = nav_delta["selected_dataset_uid"]
+                if nav_delta.get("selected_fit"):
+                    nav_state["selected_fit"] = nav_delta["selected_fit"]
+                if nav_delta.get("selected_fit_uid"):
+                    nav_state["selected_fit_uid"] = nav_delta["selected_fit_uid"]
+                parameter_state.update(param_delta)
+                fit_range_state.update(range_delta)
+                setup_state.update(setup_delta)
+            else:
+                nav_state = chisurf.history_replay.reconstruct_navigation_state(events)
+                parameter_state = chisurf.history_replay.reconstruct_parameter_state(events)
+                fit_range_state = chisurf.history_replay.reconstruct_fit_range_state(events)
+                setup_state = chisurf.history_replay.reconstruct_setup_state(events)
+            link_touched = chisurf.history_replay.touched_parameter_keys(
+                all_events,
+                include_actions={"parameter_link", "parameter_unlink"},
+            )
+            selected_dataset = nav_state.get("selected_dataset")
+            selected_dataset_uid = nav_state.get("selected_dataset_uid")
+            selected_fit = nav_state.get("selected_fit")
+            selected_fit_uid = nav_state.get("selected_fit_uid")
+            self._apply_setup_state(setup_state)
+            if selected_dataset or selected_dataset_uid:
+                self._select_dataset_by_identity(
+                    names=[str(selected_dataset)] if selected_dataset else [],
+                    dataset_uid=str(selected_dataset_uid) if selected_dataset_uid else "",
+                )
+            if selected_fit or selected_fit_uid:
+                self._select_fit_by_identity(
+                    fit_name=str(selected_fit) if selected_fit else "",
+                    fit_uid=str(selected_fit_uid) if selected_fit_uid else "",
+                )
+            self._apply_parameter_state(parameter_state, force_unlink_keys=link_touched)
+            self._apply_fit_range_state(fit_range_state)
+            try:
+                chisurf.logging.info(
+                    "HISTNAV: applied replay state "
+                    f"selected_dataset={selected_dataset} selected_dataset_uid={selected_dataset_uid} selected_fit={selected_fit} selected_fit_uid={selected_fit_uid} "
+                    f"parameter_keys={len(parameter_state)} fit_ranges={len(fit_range_state)} "
+                    f"link_touched={len(link_touched)}"
+                )
+            except Exception:
+                pass
+            try:
+                self.update()
+            except Exception:
+                pass
+        except Exception:
+            pass
+        self._sync_history_navigation_actions()
+
+    def _select_dataset_by_identity(self, names: typing.List[str], dataset_uid: str = "") -> None:
+        try:
+            target = [str(n) for n in names if n]
+            target_uid = str(dataset_uid or "")
+            if not target and not target_uid:
+                return
+            datasets = list(getattr(chisurf, "imported_datasets", []))
+            for idx, dataset in enumerate(datasets):
+                if target_uid and str(getattr(dataset, "unique_identifier", "")) == target_uid:
+                    self.dataset_selector.selected_curve_index = idx
+                    self.onCurrentDatasetChanged()
+                    return
+                dataset_name = str(getattr(dataset, "name", ""))
+                if dataset_name in target:
+                    self.dataset_selector.selected_curve_index = idx
+                    self.onCurrentDatasetChanged()
+                    return
+        except Exception:
+            pass
+
+    def _select_fit_by_identity(self, fit_name: str = "", fit_uid: str = "") -> None:
+        try:
+            for idx, fit_group in enumerate(getattr(chisurf, "fits", [])):
+                current_uid = str(getattr(fit_group, "unique_identifier", ""))
+                name = str(getattr(fit_group, "name", ""))
+                if fit_uid:
+                    if current_uid != fit_uid:
+                        continue
+                elif name != fit_name:
+                    continue
+                try:
+                    chisurf.logging.info(
+                        f"HISTNAV: selecting fit '{name}' uid={current_uid} at index {idx}"
+                    )
+                except Exception:
+                    pass
+                try:
+                    self.fit_selector.selected_fit_index = idx
+                except Exception:
+                    pass
+                try:
+                    self.current_fit = fit_group
+                    self._fit_idx = idx
+                    setattr(chisurf, "current_fit", fit_group)
+                    setattr(chisurf, "current_fit_idx", idx)
+                except Exception:
+                    pass
+                activated = False
+                try:
+                    for fit_window in getattr(chisurf.gui, "fit_windows", []):
+                        if getattr(fit_window, "fit", None) is fit_group:
+                            try:
+                                fit_window.show()
+                            except Exception:
+                                pass
+                            try:
+                                fit_window.raise_()
+                            except Exception:
+                                pass
+                            self.mdiarea.setActiveSubWindow(fit_window)
+                            activated = True
+                            break
+                except Exception:
+                    pass
+                if activated:
+                    try:
+                        self.subWindowActivated()
+                    except Exception:
+                        pass
+                try:
+                    chisurf.logging.info(
+                        f"HISTNAV: fit activation for '{fit_name}' success={activated} current_fit_idx={getattr(self, '_fit_idx', '?')}"
+                    )
+                except Exception:
+                    pass
+                return
+            try:
+                chisurf.logging.info(f"HISTNAV: fit not found name='{fit_name}' uid='{fit_uid}'")
+            except Exception:
+                pass
+        except Exception:
+            pass
 
     def _setup_experiment(self, exp_type, config):
         """
@@ -1426,7 +2131,13 @@ class Main(QtWidgets.QMainWindow):
 
         chisurf.experiment[global_fit.name] = global_fit
 
-        chisurf.macros.add_dataset(global_setup, name="Global Dataset")
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload={
+                "experiment_reader": global_setup,
+                "name": "Global Dataset",
+            },
+        )
 
         # Update UI
         # Filter out hidden experiments
@@ -1495,6 +2206,7 @@ class Main(QtWidgets.QMainWindow):
             pass
 
         misc_helpers.setup_log_list_widget(self)
+        self._init_history_browser()
 
         self.current_fit_widget = None
         self._current_fit = None
@@ -1578,6 +2290,246 @@ class Main(QtWidgets.QMainWindow):
         label = getattr(self, "_system_info_watermark", None)
         misc_helpers.update_system_info_watermark_geometry(label)
 
+    def _install_dev_mode_code_badges(self) -> None:
+        """Install code badge buttons on docks and key widgets when dev mode is enabled."""
+        if not chisurf.settings.is_dev_mode():
+            return
+
+        try:
+            from chisurf.gui.widgets.code_badge import (
+                install_code_badge,
+                make_widget_source_resolver,
+            )
+            from chisurf.gui.devtools.source_jump import (
+                make_widget_resolver,
+            )
+        except ImportError:
+            chisurf.logging.debug("Code badge module not available")
+            return
+
+        dev_settings = chisurf.settings.dev_mode_settings()
+        badge_locations = dev_settings.get('badge_locations', {})
+
+        if not dev_settings.get('show_code_badge', True):
+            return
+
+        dock_badges = badge_locations.get('docks', True)
+        if dock_badges:
+            dock_widgets = [
+                ('dockWidgetReadData', 'Read Data'),
+                ('dockWidgetDatasets', 'Datasets'),
+                ('dockWidgetAnalysis', 'Analysis'),
+                ('dockWidgetPlot', 'Plot Settings'),
+                ('dockWidgetHistory', 'History'),
+                ('dockWidgetScriptEdit', 'Code'),
+            ]
+
+            for attr_name, _label in dock_widgets:
+                dock = getattr(self, attr_name, None)
+                if dock is None:
+                    continue
+                widget = dock.widget()
+                if widget is None:
+                    continue
+                resolver = make_widget_source_resolver(widget)
+                install_code_badge(widget, resolver, corner='top-right', margin=4)
+
+        if badge_locations.get('parameter_groups', True):
+            try:
+                self._install_parameter_badges()
+            except Exception:
+                pass
+
+        if badge_locations.get('experiment_panels', True):
+            try:
+                self._install_experiment_panel_badges()
+            except Exception:
+                pass
+
+        if badge_locations.get('mdi_windows', True):
+            try:
+                self.mdiarea.subWindowActivated.connect(self._on_mdi_window_activated_for_code_badge)
+            except Exception:
+                pass
+
+    def _install_parameter_badges(self) -> None:
+        """Install code badges on parameter group widgets."""
+        try:
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import (
+                resolve_parameter_group_source,
+                make_widget_resolver,
+            )
+        except ImportError:
+            return
+
+        try:
+            for fit in chisurf.fits:
+                try:
+                    model = getattr(fit, 'model', None)
+                    if model is None:
+                        continue
+                    for param in getattr(model, 'parameters_all', []):
+                        try:
+                            widget = getattr(param, '_widget', None)
+                            if widget is None or hasattr(widget, '_chisurf_code_badge_installed'):
+                                continue
+                            resolver = make_widget_resolver(widget)
+                            install_code_badge(widget, resolver, corner='top-right', margin=4)
+                            widget._chisurf_code_badge_installed = True
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+    def _install_experiment_panel_badges(self) -> None:
+        """Install code badges on experiment panel widgets."""
+        try:
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import (
+                resolve_experiment_panel_source,
+                make_widget_resolver,
+            )
+        except ImportError:
+            return
+
+        try:
+            experiment_panels = [
+                'comboBox_experimentSelect',
+                'comboBox_setupSelect',
+                'comboBox_Model',
+            ]
+            for attr_name in experiment_panels:
+                widget = getattr(self, attr_name, None)
+                if widget is None or hasattr(widget, '_chisurf_code_badge_installed'):
+                    continue
+                resolver = make_widget_resolver(widget)
+                install_code_badge(widget, resolver, corner='top-right', margin=4)
+                widget._chisurf_code_badge_installed = True
+        except Exception:
+            pass
+
+    def _on_mdi_window_activated_for_code_badge(self, sub_window) -> None:
+        """Install code badge on newly activated MDI windows."""
+        if not chisurf.settings.is_dev_mode():
+            return
+
+        if sub_window is None:
+            return
+
+        try:
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import resolve_fit_window_source
+        except ImportError:
+            return
+
+        if hasattr(sub_window, '_chisurf_code_badge_installed'):
+            return
+
+        try:
+            widget = sub_window.widget() if hasattr(sub_window, 'widget') else sub_window
+
+            def resolver():
+                return resolve_fit_window_source(sub_window)
+
+            install_code_badge(widget, resolver, corner='top-right', margin=4)
+            sub_window._chisurf_code_badge_installed = True
+        except Exception:
+            pass
+
+    def _init_developer_menu(self) -> None:
+        """Initialize the Developer menu with dev mode tools."""
+        if not chisurf.settings.is_dev_mode():
+            return
+
+        try:
+            dev_menu = QtWidgets.QMenu("Developer", self)
+            self.menuBar().addMenu(dev_menu)
+
+            action_open_source = QtWidgets.QAction("Open Source for Focus", self)
+            action_open_source.setShortcut(QtGui.QKeySequence("Ctrl+Alt+J"))
+            action_open_source.setShortcutContext(QtCore.Qt.ApplicationShortcut)
+            action_open_source.triggered.connect(self._on_open_source_for_focus)
+            action_open_source.setToolTip("Open source file for the currently focused widget")
+            dev_menu.addAction(action_open_source)
+            self.addAction(action_open_source)
+
+            dev_menu.addSeparator()
+
+            action_refresh_badges = QtWidgets.QAction("Refresh Code Badges", self)
+            action_refresh_badges.triggered.connect(self._on_refresh_code_badges)
+            dev_menu.addAction(action_refresh_badges)
+
+            dev_menu.addSeparator()
+
+            action_dev_settings = QtWidgets.QAction("Dev Mode Settings...", self)
+            action_dev_settings.triggered.connect(self._on_open_dev_settings)
+            dev_menu.addAction(action_dev_settings)
+
+            self._dev_menu = dev_menu
+
+        except Exception as e:
+            chisurf.logging.debug(f"Could not initialize Developer menu: {e}")
+
+    def _on_open_source_for_focus(self) -> None:
+        """Open source for the currently focused widget."""
+        try:
+            from chisurf.gui.devtools.source_jump import (
+                resolve_focused_widget_source,
+                open_in_editor,
+            )
+            result = resolve_focused_widget_source()
+            if result is None:
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "No Source Target",
+                    "Could not resolve a source file for the currently focused widget.",
+                )
+                return
+
+            path, line = result
+            open_in_editor(self, path, line)
+        except ImportError:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Dev Mode Error",
+                "Source jump module not available.",
+            )
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Dev Mode Error",
+                f"Could not open source: {e}",
+            )
+
+    def _on_refresh_code_badges(self) -> None:
+        """Refresh all code badges visibility."""
+        try:
+            from chisurf.gui.widgets.code_badge import get_badge_manager
+            get_badge_manager().refresh_all()
+            self._install_dev_mode_code_badges()
+        except ImportError:
+            pass
+
+    def _on_open_dev_settings(self) -> None:
+        """Open dev mode settings dialog."""
+        try:
+            from chisurf.gui.widgets.settings_editor import SettingsEditor
+            if not hasattr(self, '_dev_settings_editor') or self._dev_settings_editor is None:
+                self._dev_settings_editor = SettingsEditor(
+                    filename=chisurf.settings.chisurf_settings_file,
+                    window_title="Dev Mode Settings"
+                )
+            self._dev_settings_editor.show()
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Dev Mode Settings",
+                f"Could not open settings: {e}",
+            )
+
     def showEvent(self, event: QtGui.QShowEvent) -> None:  # type: ignore[override]
         super().showEvent(event)
         try:
@@ -1615,17 +2567,11 @@ class Main(QtWidgets.QMainWindow):
                         paths = [p for p in paths if p]
                         if paths:
                             paths.sort()
-                            # Same behavior as dropping on the dataset selector
-                            command = "\n".join([f"chisurf.macros.add_dataset(filename=r'{p}')" for p in paths])
-                            try:
-                                chisurf.run(command)
-                            except Exception:
-                                # Fallback: call directly without chisurf.run
-                                for p in paths:
-                                    try:
-                                        chisurf.macros.add_dataset(filename=rf"{p}")
-                                    except Exception:
-                                        pass
+                            for p in paths:
+                                chisurf.action_controller.execute(
+                                    name="dataset.add",
+                                    payload={"filename": str(p)},
+                                )
                             event.acceptProposedAction()
                             try:
                                 self.status.showMessage(f"Added {len(paths)} file(s)", 3000)
@@ -1794,6 +2740,8 @@ class Main(QtWidgets.QMainWindow):
 
         apply_dock_tab_colors(self)
 
+        self._install_dev_mode_code_badges()
+
     def filter_log_content(self):
         """
         Filter log content based on filter text and hide checkbox state.
@@ -1845,6 +2793,12 @@ class Main(QtWidgets.QMainWindow):
         self.actionAdd_fit.triggered.connect(self.onAddFit)
         self.actionSaveAllFits.triggered.connect(self.onSaveFits)
         self.actionSaveCurrentFit.triggered.connect(self.onSaveFit)
+        try:
+            self.actionSaveCurrentFit.setShortcut(QtGui.QKeySequence("Ctrl+S"))
+            self.actionSaveCurrentFit.setShortcutContext(QtCore.Qt.ApplicationShortcut)
+            self.addAction(self.actionSaveCurrentFit)
+        except Exception:
+            pass
         self.actionClose_Fit.triggered.connect(chisurf.macros.core_fit.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
@@ -1875,9 +2829,36 @@ class Main(QtWidgets.QMainWindow):
         self.actionReinitialize.setEnabled(True)
 
         try:
+            self.actionHistoryUndo = QtWidgets.QAction("Undo", self)
+            self.actionHistoryUndo.setShortcut(QtGui.QKeySequence("Ctrl+Z"))
+            self.actionHistoryUndo.setShortcutContext(QtCore.Qt.ApplicationShortcut)
+            self.actionHistoryUndo.triggered.connect(self._history_undo)
+            self.addAction(self.actionHistoryUndo)
+            try:
+                self.menuView.addAction(self.actionHistoryUndo)
+            except Exception:
+                pass
+
+            self.actionHistoryRedo = QtWidgets.QAction("Redo", self)
+            self.actionHistoryRedo.setShortcut(QtGui.QKeySequence("Ctrl+Y"))
+            self.actionHistoryRedo.setShortcutContext(QtCore.Qt.ApplicationShortcut)
+            self.actionHistoryRedo.triggered.connect(self._history_redo)
+            self.addAction(self.actionHistoryRedo)
+            try:
+                self.menuView.addAction(self.actionHistoryRedo)
+            except Exception:
+                pass
+
+            self._sync_history_navigation_actions()
+        except Exception:
+            pass
+
+        try:
             self._init_recent_projects_menu()
         except Exception:
             pass
+
+        self._init_developer_menu()
 
     def onOpenFretRdaAxisSettings(self):
         """Open a dialog for global FRET R_DA axis settings."""
@@ -1971,7 +2952,7 @@ class Main(QtWidgets.QMainWindow):
         try:
             import chisurf
             gui_settings = chisurf.settings.cs_settings.get('gui', {})
-            use_ribbon = gui_settings.get('use_ribbon_interface', False)
+            use_ribbon = gui_settings.get('use_ribbon_interface', True)
             
             if use_ribbon:
                 # Enable ribbon if it was saved in settings

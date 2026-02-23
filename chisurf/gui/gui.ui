@@ -508,13 +508,13 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidgetScriptEdit">
-   <property name="floating">
-    <bool>false</bool>
-   </property>
-   <property name="windowTitle">
-    <string>Macro</string>
-   </property>
+   <widget class="QDockWidget" name="dockWidgetScriptEdit">
+    <property name="floating">
+     <bool>false</bool>
+    </property>
+    <property name="windowTitle">
+     <string>Code</string>
+    </property>
    <attribute name="dockWidgetArea">
     <number>8</number>
    </attribute>
@@ -615,14 +615,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPlainTextEdit" name="plainTextEditHistory">
-       <property name="lineWrapMode">
-        <enum>QPlainTextEdit::NoWrap</enum>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
+      <widget class="QWidget" name="historyBrowserContainer"/>
      </item>
     </layout>
    </widget>

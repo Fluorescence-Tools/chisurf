@@ -1,11 +1,25 @@
 import inspect
 import os
 import pathlib
+from functools import lru_cache
 
 import chisurf
 from chisurf import typing
 
 from qtpy import QtWidgets, uic
+
+
+@lru_cache(maxsize=512)
+def _resolve_ui_path_cached(base_path: str, ui_filename: str) -> pathlib.Path:
+    path = pathlib.Path(base_path) / ui_filename
+    if not path.exists():
+        raise FileNotFoundError(f"UI file not found: {path}")
+    return path
+
+
+def resolve_ui_path(ui_filename: str, path: os.PathLike | str) -> pathlib.Path:
+    base = pathlib.Path(path)
+    return _resolve_ui_path_cached(str(base), ui_filename)
 
 
 class init_with_ui(object):
@@ -32,8 +46,9 @@ class init_with_ui(object):
     def __call__(self, f: typing.Callable):
 
         def load_ui(target: QtWidgets.QWidget, ui_filename: str, path: str):
-            path = pathlib.Path(path) / ui_filename
-            uic.loadUi(path, target)
+            ui_path = resolve_ui_path(ui_filename=ui_filename, path=path)
+            uic.loadUi(ui_path, target)
+            target._chisurf_ui_path = str(ui_path)
 
         def wrapped(cls: QtWidgets.QWidget, *args, **kwargs):
             if self.path is None:

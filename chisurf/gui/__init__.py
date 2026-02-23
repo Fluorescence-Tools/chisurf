@@ -403,7 +403,7 @@ def setup_gui(
         from chisurf.gui.main import Main
         import chisurf
         window = Main()
-        chisurf.console.history_widget = window.plainTextEditHistory
+        chisurf.console.history_widget = None
         chisurf.cs = window
         return window
 
@@ -782,11 +782,17 @@ def setup_gui(
 
                 status = "BROKEN" if is_broken else "ok"
 
+                # Skip CLI-only tools from ribbon menu
+                if is_cli_only:
+                    chisurf.logging.info(
+                        f"Skipping CLI-only plugin from ribbon menu: '{plugin_name}' "
+                        f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
+                    )
+                    continue
+
                 # Route development plugins into the dedicated Dev submenu
                 if is_dev:
                     label_base = display_name
-                    if is_cli_only:
-                        label_base = f"{label_base} (CLI)"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     chisurf.logging.info(
                         f"Adding plugin to Plugins->Dev menu: '{label}' "
@@ -798,7 +804,7 @@ def setup_gui(
                         plugin_action.setIcon(icon)
                     plugin_action.triggered.connect(callback)
                     plugin_action.setToolTip(description)
-                    if is_broken or is_cli_only:
+                    if is_broken:
                         plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_dev += 1
@@ -812,8 +818,6 @@ def setup_gui(
                     
                     # Use only the display name for the label
                     label_base = display_name
-                    if is_cli_only:
-                        label_base = f"{label_base} (CLI)"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     
                     chisurf.logging.info(
@@ -826,7 +830,7 @@ def setup_gui(
                         plugin_action.setIcon(icon)
                     plugin_action.triggered.connect(callback)
                     plugin_action.setToolTip(description)
-                    if is_broken or is_cli_only:
+                    if is_broken:
                         plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_submenu += 1
@@ -834,8 +838,6 @@ def setup_gui(
                 else:
                     # Add directly to main plugins menu
                     label_base = display_name
-                    if is_cli_only:
-                        label_base = f"{label_base} (CLI)"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     
                     chisurf.logging.info(
@@ -848,7 +850,7 @@ def setup_gui(
                         plugin_action.setIcon(icon)
                     plugin_action.triggered.connect(callback)
                     plugin_action.setToolTip(description)
-                    if is_broken or is_cli_only:
+                    if is_broken:
                         plugin_action.setEnabled(False)
                         marked_broken += 1
                     added_main += 1
@@ -1048,6 +1050,9 @@ def setup_gui(
         window.arrange_widgets()
     elif stage == "init_setups":
         window.init_setups()
+    elif stage == "restore_setup_defaults":
+        # Restore saved setup defaults after readers/controllers are created
+        window._restore_setup_defaults()
     elif stage == "load_tools":
         window.load_tools()
         # In your setup_gui function:
@@ -1163,6 +1168,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ("Starting interface", "startup_interface", 40),
         ("Setup logging", "setup_logging", 45),
         ("Initialize setups", "init_setups", 50),
+        ("Restore setup defaults", "restore_setup_defaults", 52),
         ("Defining actions", "define_actions", 55),
         ("Loading tools", "load_tools", 65),
         ("Arrange widgets", "arrange_widgets", 70),
