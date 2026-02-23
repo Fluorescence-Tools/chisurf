@@ -106,7 +106,7 @@ gui:
     "Datasets": "#3b674a"
     "Analysis": "#674a3b"
     "Plot settings": "#5c3b67"
-    "Macro": "#67613b"
+    "Code": "#67613b"
     "History / Log": "#3b6767"
   show_console: true
   show_macro_edit: true
@@ -119,8 +119,18 @@ gui:
     auto_fold: true  # Enable automatic ribbon folding after inactivity
     auto_fold_delay_ms: 1000  # Delay before auto-folding starts (milliseconds)
     auto_fold_speed_ms: 500  # Speed of folding animation (milliseconds)
+    pinned: true  # Pin ribbon open (disable auto-fold on startup)
     max_rows: 3  # Maximum number of rows for ribbon panels (reduces ribbon height)
     ribbon_height: 110
+  use_ribbon_interface: true  # Enable ribbon interface by default
+  dev_mode:
+    show_code_badge: true
+    badge_locations:
+      docks: true
+      mdi_windows: true
+      parameter_groups: true
+      experiment_panels: true
+    default_editor_line: true
 hidden_execute: true
 # Log level: 10=DEBUG, 20=INFO, 30=WARNING, 40=ERROR, 50=CRITICAL
 log_level: 20
@@ -244,9 +254,6 @@ plugins:
   disabled_plugins:
   - TTTR:Correlate
   - TTTR:Generate Decay
-  - Tools:Bayesian FRET Analysis
-  - Single-Molecule:FIDA-2D
-  - Single-Molecule:FIDA
   hide_disabled_plugins: true
   icons_enabled: true
   plugin_order: {}

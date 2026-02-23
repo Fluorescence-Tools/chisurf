@@ -68,6 +68,21 @@ tcspc = dict()
 fps = dict()
 locals().update(cs_settings)
 
+
+def is_dev_mode() -> bool:
+    """Return True if dev mode is enabled (experimental mode).
+
+    Dev mode enables developer features like code badge buttons
+    for jumping to source locations in the embedded editor.
+    """
+    return bool(cs_settings.get('enable_experimental', False))
+
+
+def dev_mode_settings() -> dict:
+    """Return dev_mode settings dict from gui.dev_mode."""
+    gui_settings = cs_settings.get('gui', {})
+    return gui_settings.get('dev_mode', {})
+
 # Load help mappings from the program's settings folder only. These are not
 # intended to be user-editable, so we always read them from the source folder
 # and do not look at (or copy into) the user settings directory.
