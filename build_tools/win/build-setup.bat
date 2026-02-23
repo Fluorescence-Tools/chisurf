@@ -23,6 +23,47 @@ echo CONDA_RECIPE_FOLDER=%CONDA_RECIPE_FOLDER%
 :: Default: Build the Conda package
 set "BUILD_CONDA_PACKAGE=1"
 
+:: Compute CHISURF_VERSION early for conda build (PEP 440 compatible)
+:: If already set in the environment, keep it.
+if "%CHISURF_VERSION%"=="" (
+     for /f "delims=" %%v in ('python -c "import datetime,re,subprocess,sys;\
+try:\
+ d=subprocess.check_output(['git','describe','--tags','--long','--match','v[0-9]*'],stderr=subprocess.DEVNULL,text=True).strip();\
+except Exception:\
+ d='';\
+m=re.match(r'^(v[0-9.]+)-(\\d+)-g[0-9a-f]+$', d);\
+def norm(tag):\
+ tag=tag.lstrip('v');\
+ parts=tag.split('.');\
+ out=[];\
+ for p in parts:\
+  if not p.isdigit():\
+   return None;\
+  out.append(str(int(p)));\
+ return '.'.join(out);\
+if m:\
+ base=norm(m.group(1));\
+ dist=int(m.group(2));\
+ if base is None:\
+  ver=None;\
+ elif dist==0:\
+  ver=base;\
+ else:\
+  # Extract year from base tag for dev version\
+  base_parts=base.split('.');\
+  if len(base_parts)>=1:\
+   year=base_parts[0];\
+   ver=f'{year}.dev{dist}';\
+  else:\
+   ver=None;\
+else:\
+ ver=None;\
+if not ver:\
+ ver=datetime.datetime.now().strftime('%y.dev0');\
+print(ver)"') do set "CHISURF_VERSION=%%v"
+)
+echo CHISURF_VERSION=%CHISURF_VERSION%
+
 :: Check command-line arguments: If /nobuild is passed, skip building Conda package
 if /I "%1"=="/nobuild" (
     set "BUILD_CONDA_PACKAGE=0"
@@ -83,8 +124,9 @@ python make_inno_setup.py
 echo Running Inno Setup...
 "C:\Program Files (x86)\Inno Setup 6\Compil32.exe" /cc setup.iss
 
-:: Get the version number from chisurf
-for /f "delims=" %%v in ('"%APP_PATH%\python.exe" -c "import chisurf.info; print(chisurf.info.__version__)"') do set "CHISURF_VERSION=%%v"
+:: Get the version number from chisurf (optional diagnostics)
+for /f "delims=" %%v in ('"%APP_PATH%\python.exe" -c "import chisurf.info; print(chisurf.info.__version__)"') do set "CHISURF_VERSION_BUILT=%%v"
+echo CHISURF_VERSION_BUILT=%CHISURF_VERSION_BUILT%
 
 :: Optional: Clean up the extracted environment
 echo Cleaning up APP_PATH: %APP_PATH%...

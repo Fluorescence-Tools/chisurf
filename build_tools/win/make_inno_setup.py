@@ -40,6 +40,7 @@ vc_runtimes = [os.path.basename(f) for f in glob.glob(vc_runtime_path+"/*.exe")]
 parameters = {
     "AppId": info.__app_id__,
     "AppName": info.__name__,
+    "AppVerName": f"{info.__name__} {info.__version__}" + (" (Dev)" if getattr(info, "__status__", "Dev") == "Dev" else ""),
     "AppVersion": info.__version__,
     "AppPublisher": info.__author__,
     "AppURL": info.__url__,
@@ -53,7 +54,8 @@ parameters = {
     "vc_runtime_path": vc_runtime_path,
     "vc_runtimes": vc_runtimes,
     "SetupIconFile": icon_file,
-    "gui_entry_points": gui_scripts
+    "gui_entry_points": gui_scripts,
+    "IsDev": getattr(info, "__status__", "Dev") == "Dev",
 }
 
 

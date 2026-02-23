@@ -1,6 +1,7 @@
 [Setup]
 AppId={{ AppId }}
 AppName={{ AppName }}
+AppVerName={{ AppVerName }}
 AppVersion={{ AppVersion }}
 AppPublisher={{ AppPublisher }}
 AppPublisherURL={{ AppURL }}
@@ -10,7 +11,7 @@ UsePreviousAppDir=no
 DefaultGroupName={{ AppName }}
 LicenseFile={{ LicenseFile }}
 OutputDir={{ Output_dir }}
-OutputBaseFilename=chisurf_windows_setup_{{ AppVersion }}
+OutputBaseFilename=chisurf_windows_setup_{{ AppVersion }}{% if IsDev %}_dev{% endif %}
 SetupIconFile={{ SetupIconFile }}
 Compression=lzma2/ultra64
 SolidCompression=yes
