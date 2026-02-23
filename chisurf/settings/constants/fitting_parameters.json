@@ -628,6 +628,180 @@
         }
       ]
     },
+    "nPh_bg": {
+      "aliases": [],
+      "description": "Output: estimated number of background photons in the TCSPC trace based on background level and measurement timing settings.",
+      "keywords": [
+        "TCSPC",
+        "background",
+        "photons",
+        "output"
+      ],
+      "label_texts": [
+        "nPh(Bg)"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "GenericWidget",
+          "description_in_code": null,
+          "file": "chisurf/models/tcspc/widgets/generic.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "nPh(Bg)",
+          "lb": null,
+          "line": 120,
+          "module": "chisurf.models.tcspc.widgets.generic",
+          "ub": null
+        }
+      ],
+      "symbol": "nPh_bg"
+    },
+    "nPh_fl": {
+      "aliases": [],
+      "description": "Output: estimated number of fluorescence photons (after background subtraction) in the TCSPC trace.",
+      "keywords": [
+        "TCSPC",
+        "fluorescence",
+        "photons",
+        "output"
+      ],
+      "label_texts": [
+        "nPh(Fl)"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "GenericWidget",
+          "description_in_code": null,
+          "file": "chisurf/models/tcspc/widgets/generic.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "nPh(Fl)",
+          "lb": null,
+          "line": 127,
+          "module": "chisurf.models.tcspc.widgets.generic",
+          "ub": null
+        }
+      ],
+      "symbol": "nPh_fl"
+    },
+    "r_ss_i": {
+      "aliases": [],
+      "description": "Intensity-domain steady-state anisotropy. For dual-channel data, ChiSurf background-corrects VV and VH (per-channel metadata when available), compensates objective mixing via l1/l2, and evaluates rS,I from channel sums using the ChiSurf convention r = (VV - VH) / (g*VV + 2*VH). For single-channel fallback, VM is reconstructed from the active anisotropy model before summation.",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "steady state",
+        "intensity"
+      ],
+      "label_texts": [
+        "r<sub>S,I</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/models/tcspc/widgets/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "r<sub>S,I</sub>",
+          "lb": null,
+          "line": 313,
+          "module": "chisurf.models.tcspc.widgets.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "r_S,I"
+    },
+    "r_ss_l": {
+      "aliases": [],
+      "description": "Lifetime-domain steady-state anisotropy derived from the model lifetime spectrum and rotational spectrum. This value is model-predicted (spectrum/integral domain) and does not depend on direct VV/VH channel integration.",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "steady state",
+        "lifetime"
+      ],
+      "label_texts": [
+        "r<sub>S,L</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/models/tcspc/widgets/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "r<sub>S,L</sub>",
+          "lb": null,
+          "line": 297,
+          "module": "chisurf.models.tcspc.widgets.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "r_S,L"
+    },
+    "vh_bg_int": {
+      "aliases": [],
+      "description": "Background-corrected summed VH intensity used by anisotropy diagnostics. Derived after channel/background extraction and channel-wise summation over the active trace.",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "background",
+        "VH"
+      ],
+      "label_texts": [
+        "VH<sub>bg-corr</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/models/tcspc/widgets/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "VH<sub>bg-corr</sub>",
+          "lb": null,
+          "line": 514,
+          "module": "chisurf.models.tcspc.widgets.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "VH_bg-corr"
+    },
+    "vv_bg_int": {
+      "aliases": [],
+      "description": "Background-corrected summed VV intensity used by anisotropy diagnostics. Derived after channel/background extraction and channel-wise summation over the active trace.",
+      "keywords": [
+        "TCSPC",
+        "anisotropy",
+        "background",
+        "VV"
+      ],
+      "label_texts": [
+        "VV<sub>bg-corr</sub>"
+      ],
+      "sources": [
+        {
+          "bounds_on": false,
+          "class": "AnisotropyWidget",
+          "description_in_code": null,
+          "file": "chisurf/models/tcspc/widgets/anisotropy.py",
+          "fixed": true,
+          "function": "__init__",
+          "label_text": "VV<sub>bg-corr</sub>",
+          "lb": null,
+          "line": 500,
+          "module": "chisurf.models.tcspc.widgets.anisotropy",
+          "ub": null
+        }
+      ],
+      "symbol": "VV_bg-corr"
+    },
     "dt": {
       "aliases": [],
       "description": "Time bin width of the TCSPC histogram (time per channel).",
