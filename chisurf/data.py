@@ -373,6 +373,8 @@ class DataGroup(list, chisurf.base.Base):
 
     @property
     def current_dataset(self) -> chisurf.base.Data:
+        if len(self) == 0:
+            raise IndexError("Empty DataGroup has no current dataset")
         return self[self._current_dataset]
 
     @current_dataset.setter
@@ -384,7 +386,19 @@ class DataGroup(list, chisurf.base.Base):
         try:
             return self.__dict__['name']
         except KeyError:
+            if len(self) == 0:
+                return "Empty group"
             return self.names[self._current_dataset]
+
+    @property
+    def filename(self) -> str:
+        if len(self) == 0:
+            return "Empty group"
+        first = self[0]
+        fn = getattr(first, '_filename', None)
+        if fn:
+            return fn
+        return getattr(first, 'filename', str(first.name))
 
     def to_yaml(
             self,
@@ -419,7 +433,8 @@ class DataGroup(list, chisurf.base.Base):
             **kwargs
     ):
         self._current_dataset: int = 0
-        super().__init__(seq)
+        list.__init__(self, seq)
+        chisurf.base.Base.__init__(self, *args, **kwargs)
 
 
 class DataCurveGroup(DataGroup):
