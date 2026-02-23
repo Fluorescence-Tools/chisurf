@@ -1,5 +1,10 @@
 {% set name = "chisurf" %}
-{% set version = environ.get("CHISURF_VERSION") or datetime.datetime.now().strftime("%y.%m.%d") %}
+{#
+  Versioning policy (PEP 440 compatible):
+  - Prefer explicit override via CHISURF_VERSION (e.g. set from git tag)
+  - Fallback to dev-style YY.dev0 for local builds
+#}
+{% set version = environ.get("CHISURF_VERSION") or datetime.datetime.now().strftime("%y.dev0") %}
 
 {# Read entry points from pyproject.toml #}
 {% set pyproject = load_file_data('../pyproject.toml', from_recipe_dir=True) %}
@@ -100,6 +105,9 @@ requirements:
     - pygments
     - pyarrow
     - boost-histogram
+
+    # Windows-only: if you rely on system tttrlib there, keep hdf5 here
+    - hdf5  # [win]
 
 app:
   entry: chisurf
