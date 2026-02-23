@@ -3,7 +3,7 @@ from __future__ import annotations
 import os.path
 import pathlib
 
-import chisurf.fio.fluorescence.tcspc
+import chisurf.fio.fluorescence.tcspc as tcspc_io
 from chisurf import typing
 
 import numpy as np
@@ -14,28 +14,95 @@ import chisurf.fluorescence.tcspc
 import chisurf.base
 import chisurf.fluorescence
 import chisurf.data
-import chisurf.fio.fluorescence
 
 from chisurf.experiments.core.reader import ExperimentReader
 
 
 class TCSPCReader(ExperimentReader):
 
+    @staticmethod
+    def _safe_float(value: typing.Any, default: typing.Any):
+        try:
+            if value is None:
+                return float(default)
+            return float(value)
+        except Exception:
+            return float(default)
+
+    @classmethod
+    def _default_anisotropy_calibration(cls):
+        anisotropy_settings = getattr(chisurf.settings, 'anisotropy', {})
+        tcspc_settings = getattr(chisurf.settings, 'tcspc', {})
+        g_factor = cls._safe_float(
+            anisotropy_settings.get('g_factor', tcspc_settings.get('g_factor', 1.0)),
+            1.0
+        )
+        l1 = cls._safe_float(anisotropy_settings.get('l1', 0.0), 0.0)
+        l2 = cls._safe_float(anisotropy_settings.get('l2', 0.0), 0.0)
+        return {
+            'g_factor': g_factor,
+            'l1': l1,
+            'l2': l2,
+        }
+
+    def _reader_calibration(self):
+        return {
+            'g_factor': self._safe_float(getattr(self, 'g_factor', 1.0), 1.0),
+            'l1': self._safe_float(getattr(self, 'l1', 0.0), 0.0),
+            'l2': self._safe_float(getattr(self, 'l2', 0.0), 0.0),
+            'source': 'tcspc_reader'
+        }
+
+    def _annotate_anisotropy_calibration(self, data_group) -> None:
+        calibration = self._reader_calibration()
+
+        group_meta = getattr(data_group, 'meta_data', None)
+        if not isinstance(group_meta, dict):
+            group_meta = {}
+            data_group.meta_data = group_meta
+        group_meta.setdefault('g_factor', calibration['g_factor'])
+        group_meta.setdefault('l1', calibration['l1'])
+        group_meta.setdefault('l2', calibration['l2'])
+        group_meta.setdefault('anisotropy_calibration_source', calibration['source'])
+
+        try:
+            for curve in data_group:
+                try:
+                    if getattr(curve, 'data_reader', None) is None:
+                        curve.data_reader = self
+                except Exception:
+                    pass
+                curve_meta = getattr(curve, 'meta_data', None)
+                if not isinstance(curve_meta, dict):
+                    curve_meta = {}
+                    curve.meta_data = curve_meta
+                curve_meta.setdefault('g_factor', group_meta.get('g_factor', calibration['g_factor']))
+                curve_meta.setdefault('l1', group_meta.get('l1', calibration['l1']))
+                curve_meta.setdefault('l2', group_meta.get('l2', calibration['l2']))
+                curve_meta.setdefault(
+                    'anisotropy_calibration_source',
+                    group_meta.get('anisotropy_calibration_source', calibration['source'])
+                )
+        except Exception:
+            pass
+
     def __init__(
             self,
-            dt: float = None,
-            rep_rate: float = None,
+            dt: typing.Optional[float] = None,
+            rep_rate: typing.Optional[float] = None,
             is_jordi: bool = False,
             mode: str = 'vm',
-            g_factor: float = None,
+            g_factor: typing.Optional[float] = None,
+            l1: typing.Optional[float] = None,
+            l2: typing.Optional[float] = None,
             rebin: typing.Tuple[int, int] = (1, 1),
             matrix_columns: typing.Tuple[int, int] = (0, 1),
             skiprows: int = 8,
             polarization: str = 'vm',
             use_header: bool = True,
-            fit_area: float = None,
-            fit_start_fraction: float = None,
-            fit_count_threshold: float = None,
+            fit_area: typing.Optional[float] = None,
+            fit_start_fraction: typing.Optional[float] = None,
+            fit_count_threshold: typing.Optional[float] = None,
             reading_routine: str = 'auto',
             vh_shift: int = 0,
             *args,
@@ -52,9 +119,13 @@ class TCSPCReader(ExperimentReader):
         is_jordi : bool, optional
             Whether the file is in Jordi format
         mode : str, optional
-            Polarization mode
+            Polarization mode. Use 'vv/vh' for stacked VV,VH jordi files
         g_factor : float, optional
             G-factor for anisotropy calculations
+        l1 : float, optional
+            Polarization correction factor l1
+        l2 : float, optional
+            Polarization correction factor l2
         rebin : tuple of int, optional
             Rebinning factors for x and y axes
         matrix_columns : tuple of int, optional
@@ -62,7 +133,7 @@ class TCSPCReader(ExperimentReader):
         skiprows : int, optional
             Number of rows to skip at the beginning of the file
         polarization : str, optional
-            Polarization mode
+            Polarization mode (alias for mode parameter)
         use_header : bool, optional
             Whether to use the header in the file
         fit_area : float, optional
@@ -98,8 +169,13 @@ class TCSPCReader(ExperimentReader):
         super().__init__(*args, **kwargs)
         if dt is None:
             dt = chisurf.settings.tcspc['dt']
+        calibration_defaults = self._default_anisotropy_calibration()
         if g_factor is None:
-            g_factor = chisurf.settings.anisotropy['g_factor']
+            g_factor = calibration_defaults['g_factor']
+        if l1 is None:
+            l1 = calibration_defaults['l1']
+        if l2 is None:
+            l2 = calibration_defaults['l2']
         if rep_rate is None:
             rep_rate = chisurf.settings.tcspc['rep_rate']
         if fit_area is None:
@@ -111,13 +187,15 @@ class TCSPCReader(ExperimentReader):
         self.dt = dt
         self.excitation_repetition_rate = rep_rate
         self.is_jordi = is_jordi
-        self.polarization = mode
-        self.g_factor = g_factor
+        # Use mode parameter, but allow polarization as alias for backward compatibility
+        self.polarization = mode if mode != 'vm' else polarization
+        self.g_factor = self._safe_float(g_factor, calibration_defaults['g_factor'])
+        self.l1 = self._safe_float(l1, calibration_defaults['l1'])
+        self.l2 = self._safe_float(l2, calibration_defaults['l2'])
         self.rep_rate = rep_rate
         self.rebin = rebin
         self.matrix_columns = matrix_columns
         self.skiprows = skiprows
-        self.polarization = polarization
         self.use_header = use_header
         self.matrix_columns = matrix_columns
         self.fit_area = fit_area
@@ -135,7 +213,7 @@ class TCSPCReader(ExperimentReader):
             verbose=chisurf.settings.cs_settings['verbose']
         )
 
-    def _guess_reading_routine(self, filename: str) -> str:
+    def _guess_reading_routine(self, filename: typing.Optional[str]) -> str:
         """Guess the reading routine based on the filename extension.
 
         This method extracts the file extension from the filename and maps it to
@@ -188,10 +266,13 @@ class TCSPCReader(ExperimentReader):
         # Return the reading routine for the extension, or the default if not found
         return extension_map.get(ext, self.reading_routine)
 
-    def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
+    def read(self, filename: typing.Optional[str] = None, *args, **kwargs) -> typing.Any:
         import chisurf.fio.fluorescence.thdfile
         import chisurf.fio.fluorescence.pqres
         import chisurf.data
+
+        if filename is None:
+            raise ValueError("filename must be provided")
 
         # Guess the reading routine if not explicitly overridden in kwargs
         reading_routine = kwargs.get('reading_routine', self.reading_routine)
@@ -201,7 +282,7 @@ class TCSPCReader(ExperimentReader):
             reading_routine = self._guess_reading_routine(filename)
 
         if reading_routine == 'csv':
-            data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
+            data_group = tcspc_io.read_tcspc_csv(
                 filename=filename,
                 skiprows=self.skiprows,
                 rebin=self.rebin,
@@ -211,11 +292,13 @@ class TCSPCReader(ExperimentReader):
                 is_jordi=self.is_jordi,
                 polarization=self.polarization,
                 g_factor=self.g_factor,
+                l1=self.l1,
+                l2=self.l2,
                 experiment=self.experiment,
                 data_reader=self
             )
         elif reading_routine == 'thd':
-            data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.thdfile.read_tcspc_thd(
+            data_group = chisurf.fio.fluorescence.thdfile.read_tcspc_thd(
                 filename=filename,
                 rebin=self.rebin,
                 dt=self.dt,
@@ -223,7 +306,7 @@ class TCSPCReader(ExperimentReader):
                 data_reader=self
             )
         elif reading_routine == 'pqres':
-            data_group: chisurf.data.DataCurveGroup = chisurf.fio.fluorescence.pqres.read_pqres_tcspc(
+            data_group = chisurf.fio.fluorescence.pqres.read_pqres_tcspc(
                 filename=filename,
                 rebin=self.rebin,
                 dt=self.dt,
@@ -246,5 +329,6 @@ class TCSPCReader(ExperimentReader):
                     "Created empty DataGroup" % reading_routine
                 )
                 data_group = chisurf.data.DataGroup([])
+        self._annotate_anisotropy_calibration(data_group)
         data_group.data_reader = self
         return data_group
