@@ -38,6 +38,37 @@ def _decode(line) -> str:
     return str(line)
 
 
+def _windows_extended_path(filename: str) -> str:
+    """Return a Windows long-path compatible path when needed.
+
+    On Windows, deep project/data folder structures can exceed the traditional
+    MAX_PATH limit and trigger ``FileNotFoundError`` even when parent folders
+    exist. Prefixing absolute paths with ``\\?\`` opts into extended-length
+    path handling.
+    """
+
+    if os.name != "nt":
+        return filename
+
+    try:
+        path = os.path.abspath(str(filename))
+    except Exception:
+        return filename
+
+    if path.startswith("\\\\?\\"):
+        return path
+
+    # UNC path (\\server\share\...) must use \\?\UNC\server\share\...
+    if path.startswith("\\\\"):
+        return "\\\\?\\UNC\\" + path.lstrip("\\")
+
+    # Keep a small safety margin below 260 for file API internals.
+    if len(path) >= 240:
+        return "\\\\?\\" + path
+
+    return filename
+
+
 def _tokenize(line: str, delimiter_hint: str | None) -> list[str]:
     if delimiter_hint is None:
         return line.strip().split()
@@ -477,6 +508,7 @@ class Csv(object):
             header: str = ''
     ):
         self._data = data
+        filename = _windows_extended_path(filename)
         if self.verbose:
             shape = getattr(data, 'shape', None)
             s = """Saving
