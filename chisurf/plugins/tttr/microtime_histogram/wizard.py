@@ -472,7 +472,7 @@ class MicrotimeHistogram(QtWidgets.QWidget):
     def selected_files(self):
         return self.listWidget.get_selected_files()
 
-    @chisurf.gui.decorators.init_with_ui("microtime_histogram/wizard.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("tttr/microtime_histogram/wizard.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         self._tttr = None
         self.tttr_folder = None  # Store the folder where TTTR files are found
@@ -816,26 +816,37 @@ class MicrotimeHistogram(QtWidgets.QWidget):
             )
             return
 
-        from chisurf import cs
-
         # Get polarization from UI and g-factor from attribute
         polarization = self.comboBox_polarization.currentText()
         # Use the g_factor attribute directly
         g_factor = self.g_factor
 
         # Set the current experiment to TCSPC
-        cs.current_experiment = 'TCSPC'
-        cs.current_setup.is_jordi = True
-        cs.current_setup.use_header = False
-        cs.current_setup.matrix_columns = []
-        cs.current_setup.g_factor = g_factor
-        cs.current_setup.polarization = polarization
-        cs.current_setup.rep_rate = 10.0
-        cs.current_setup.rebin = (1, 1)
-        cs.current_setup.dt = self.time_step
+        chisurf.action_controller.execute(
+            name="experiment.set",
+            payload={"name": "TCSPC"},
+        )
+        chisurf.action_controller.execute(
+            name="setup.params.set",
+            payload={
+                "params": {
+                    "is_jordi": True,
+                    "use_header": False,
+                    "matrix_columns": [],
+                    "g_factor": g_factor,
+                    "polarization": polarization,
+                    "rep_rate": 10.0,
+                    "rebin": (1, 1),
+                    "dt": self.time_step,
+                }
+            },
+        )
 
         # Add dataset to chisurf using the standard approach
-        chisurf.macros.add_dataset(filename=str(save_path))
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload={"filename": str(save_path)},
+        )
 
         # Show success message
         chisurf.logging.info(f"Added microtime histogram to ChiSurf: {save_path.name}")
