@@ -4,6 +4,7 @@ from chisurf import typing
 from collections import deque
 
 import os
+import re
 import numpy as np
 import scipy.linalg
 import scipy.stats
@@ -862,10 +863,83 @@ class FitGroup(Fit):
             **kwargs
     ) -> None:
         root, ext = os.path.splitext(filename)
+        member_bases = []
+        for fit in self:
+            data_name = str(getattr(getattr(fit, "data", None), "name", ""))
+            base = os.path.splitext(os.path.basename(data_name))[0].strip()
+            member_bases.append(base)
+
+        token_lists = [
+            [t for t in re.split(r"[\s_\-]+", b) if t]
+            for b in member_bases
+        ]
+
+        # Token-aware common prefix/suffix to avoid character-level artifacts
+        # like VV/VH collapsing to V/H.
+        prefix_len = 0
+        if token_lists:
+            min_len = min(len(toks) for toks in token_lists)
+            for i in range(min_len):
+                tok = token_lists[0][i]
+                if all(len(toks) > i and toks[i] == tok for toks in token_lists[1:]):
+                    prefix_len += 1
+                else:
+                    break
+
+        suffix_len = 0
+        if token_lists:
+            min_len = min(max(0, len(toks) - prefix_len) for toks in token_lists)
+            for i in range(1, min_len + 1):
+                tok = token_lists[0][-i]
+                if all(len(toks) - i >= prefix_len and toks[-i] == tok for toks in token_lists[1:]):
+                    suffix_len += 1
+                else:
+                    break
+
+        pol_re = re.compile(r"^(VV|VH|HV|HH)$", re.IGNORECASE)
+        used_suffixes = set()
         for i, fit in enumerate(self):
-            root += "_%02d" % i
+            suffix = ""
+            try:
+                base = member_bases[i]
+                tokens = token_lists[i]
+            except Exception:
+                base = ""
+                tokens = []
+
+            if base:
+                # Prefer explicit polarization/channel tokens where available.
+                pol_tokens = [t for t in tokens if pol_re.match(t)]
+                if pol_tokens:
+                    suffix = pol_tokens[-1].upper()
+
+                # Otherwise use the token-difference core.
+                if not suffix:
+                    start = min(prefix_len, len(tokens))
+                    end = len(tokens) - suffix_len if suffix_len > 0 else len(tokens)
+                    if end < start:
+                        end = start
+                    core_tokens = tokens[start:end]
+                    if core_tokens:
+                        suffix = "_".join(core_tokens)
+
+            # If no meaningful per-fit suffix is available, fall back to index.
+            if not suffix:
+                suffix = f"{i:02d}"
+
+            # Keep filesystem-friendly suffixes.
+            suffix = re.sub(r'[\\/:*?"<>|]+', '_', suffix)
+            suffix = re.sub(r'\s+', ' ', suffix).strip()
+
+            # Ensure uniqueness even for duplicate labels.
+            if suffix in used_suffixes:
+                suffix = f"{suffix}_{i:02d}"
+            used_suffixes.add(suffix)
+
+            fit_root = f"{root}_{suffix}"
+            fit_filename = fit_root + ext if ext else fit_root
             fit.save(
-                filename=filename,
+                filename=fit_filename,
                 file_type=file_type,
                 verbose=verbose,
                 **kwargs
