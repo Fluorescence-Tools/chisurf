@@ -493,7 +493,9 @@ class Convolve(FittingParameterGroup):
             x = np.copy(self.data.x)
             x_min = np.where(self.data.y > start_fraction * np.max(self.data.y))[0][0]
             loc = self.data.x[x_min]
-            scale = self._iw.value
+            # Width is magnitude-only: sign in IRF asymmetry is controlled by
+            # kappa/shape (ik), not by width (iw).
+            scale = max(abs(float(self._iw.value)), np.finfo(float).eps)
             shape = self._ik.value
             y = chisurf.math.functions.distributions.generalized_normal_distribution(x, loc, scale, shape, True)
             y *= np.sum(self.data.y)
@@ -681,6 +683,11 @@ class Convolve(FittingParameterGroup):
 
         # Make sure used IRF is of same size as data-array
         irf_y = np.resize(irf.y, self.data.y.shape)
+        
+        # Normalize IRF to unity before convolution
+        if np.sum(irf_y) > 0:
+            irf_y = irf_y / np.sum(irf_y)
+        
         n_points = irf_y.shape[0]
         stop = min(self.stop, n_points)
         start = min(0, self.start)

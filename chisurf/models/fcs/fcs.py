@@ -16,6 +16,36 @@ from chisurf.fluorescence.fcs import background_factor_ac
 
 class ParseFCSWidget(ParseModelWidget):
 
+    @staticmethod
+    def _to_float_or_none(value):
+        try:
+            v = float(value)
+        except Exception:
+            return None
+        if not np.isfinite(v):
+            return None
+        return v
+
+    def _resolve_total_mean_count_rate(self, meta):
+        if not isinstance(meta, dict):
+            return None
+
+        total = self._to_float_or_none(meta.get("mean_count_rate_total"))
+        if total is not None:
+            return total
+
+        mean_cr = self._to_float_or_none(meta.get("mean_count_rate"))
+        if mean_cr is None:
+            return None
+
+        semantics = str(meta.get("mean_count_rate_semantics", "")).strip().lower()
+        if "per_detector" in semantics:
+            detector_count = self._to_float_or_none(meta.get("detector_count"))
+            if detector_count is not None and detector_count > 1.0:
+                return mean_cr * detector_count
+
+        return mean_cr
+
     try:
         plot_classes = [
             (
@@ -261,17 +291,17 @@ class ParseFCSWidget(ParseModelWidget):
             return
 
         meta = getattr(data, "meta_data", {}) or {}
-        mean_cr = meta.get("mean_count_rate")
+        mean_cr_total = self._resolve_total_mean_count_rate(meta)
 
         # Populate the signal countrate parameter from metadata if available.
-        if mean_cr is not None:
+        if mean_cr_total is not None:
             try:
-                self._S.value = float(mean_cr)
+                self._S.value = float(mean_cr_total)
                 self._S.fixed = True
             except Exception:
                 pass
 
-        if mean_cr is None:
+        if mean_cr_total is None:
             return
 
         try:
@@ -281,7 +311,7 @@ class ParseFCSWidget(ParseModelWidget):
 
         try:
             N = float(N_param.value)
-            cr = float(mean_cr)
+            cr = float(mean_cr_total)
         except Exception:
             return
 

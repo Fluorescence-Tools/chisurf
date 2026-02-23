@@ -12,6 +12,46 @@ from chisurf.fitting.parameter import FittingParameterGroup
 
 class Anisotropy(FittingParameterGroup):
 
+    @staticmethod
+    def _link_group_anisotropy_parameters(group) -> None:
+        """Link anisotropy calibration parameters from first fit to others.
+
+        Intended default for dual VV/VH fit groups: downstream fits inherit
+        `g`, `l1`, and `l2` from the first (top) fit.
+        """
+        try:
+            if group is None or len(group) < 2:
+                return
+            source_fit = group[0]
+            source_model = getattr(source_fit, 'model', None)
+            source_aniso = getattr(source_model, 'anisotropy', None)
+            if source_aniso is None:
+                return
+
+            source_params = {
+                'g': getattr(source_aniso, '_g', None),
+                'l1': getattr(source_aniso, '_l1', None),
+                'l2': getattr(source_aniso, '_l2', None),
+            }
+            if any(v is None for v in source_params.values()):
+                return
+
+            for local_fit in group[1:]:
+                local_model = getattr(local_fit, 'model', None)
+                local_aniso = getattr(local_model, 'anisotropy', None)
+                if local_aniso is None:
+                    continue
+                for key, source_param in source_params.items():
+                    local_param = getattr(local_aniso, f'_{key}', None)
+                    if local_param is None:
+                        continue
+                    try:
+                        local_param.link = source_param
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
     @property
     def r0(self) -> float:
         return self._r0.value
@@ -126,6 +166,14 @@ class Anisotropy(FittingParameterGroup):
                         # current model (not yet added to fit)
                         model = model_instance
 
+                    # Check if this is a stacked VV,VH dataset (2 curves in group)
+                    if len(group) == 2 and hasattr(f, 'data') and hasattr(f.data, 'y'):
+                        # For stacked VV,VH data, both curves should use 'vv/vh' mode
+                        if f.data.y.shape[0] == 2:  # Stacked data
+                            logging.info(f"Setting polarization to 'vv/vh' for stacked data at index {i}")
+                            model.anisotropy.polarization_type = 'vv/vh'
+                            continue
+                    
                     # Set polarization type based on index (even indices get 'vv', odd indices get 'vh')
                     if i % 2 == 0:
                         logging.info(f"Setting polarization to 'vv' for fit at index {i}")
@@ -133,6 +181,10 @@ class Anisotropy(FittingParameterGroup):
                     else:
                         logging.info(f"Setting polarization to 'vh' for fit at index {i}")
                         model.anisotropy.polarization_type = 'vh'
+
+                # Default-link anisotropy calibration parameters across the group
+                # (equivalent to linking via middle-click in UI).
+                self._link_group_anisotropy_parameters(group)
 
                 return True
 

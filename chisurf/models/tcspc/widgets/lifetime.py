@@ -24,6 +24,21 @@ if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit, FitGroup
 
 
+ADD_BUTTON_STYLE = (
+    "QPushButton { background-color: #1f7a1f; color: white; border: 1px solid #166016; "
+    "border-radius: 3px; padding: 2px 8px; }"
+    "QPushButton:hover { background-color: #249124; }"
+    "QPushButton:pressed { background-color: #155815; }"
+)
+
+REMOVE_BUTTON_STYLE = (
+    "QPushButton { background-color: #a82020; color: white; border: 1px solid #7d1717; "
+    "border-radius: 3px; padding: 2px 8px; }"
+    "QPushButton:hover { background-color: #bf2626; }"
+    "QPushButton:pressed { background-color: #7d1717; }"
+)
+
+
 class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     def update(self, *__args):
@@ -116,11 +131,13 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
         addLifetime = QtWidgets.QPushButton()
         addLifetime.setText("add")
+        addLifetime.setStyleSheet(ADD_BUTTON_STYLE)
         addLifetime.clicked.connect(self.onAddLifetime)
         lh.addWidget(addLifetime)
 
         removeLifetime = QtWidgets.QPushButton()
         removeLifetime.setText("del")
+        removeLifetime.setStyleSheet(REMOVE_BUTTON_STYLE)
         removeLifetime.clicked.connect(self.onRemoveLifetime)
         lh.addWidget(removeLifetime)
 
@@ -321,6 +338,8 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
         anisotropy = AnisotropyWidget(
             name='anisotropy',
             short='rL',
+            fit=fit,
+            model=self,
             **kwargs
         )
         self.anisotropy = anisotropy
@@ -412,6 +431,27 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
 
         self.layout_fractions = QtWidgets.QGridLayout()
         self.layout.addLayout(self.layout_fractions)
+
+        try:
+            self._install_code_badge()
+        except Exception:
+            pass
+
+    def _install_code_badge(self):
+        """Install a code badge for dev mode source jumping."""
+        try:
+            import chisurf.settings
+            if not chisurf.settings.is_dev_mode():
+                return
+            if hasattr(self, '_chisurf_code_badge_installed'):
+                return
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import resolve_object_source
+            resolver = lambda: resolve_object_source(self)
+            install_code_badge(self, resolver, corner='top-right', margin=4)
+            self._chisurf_code_badge_installed = True
+        except Exception:
+            pass
 
     def onRemoveFit(self):
         idx = self.fit_list.currentRow()

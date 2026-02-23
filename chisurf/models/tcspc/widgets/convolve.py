@@ -94,6 +94,27 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.radioButton.clicked.connect(self.onConvolutionModeChanged)
         self.checkBox.clicked.connect(self.onConvolutionModeChanged)
 
+        try:
+            self._install_code_badge()
+        except Exception:
+            pass
+
+    def _install_code_badge(self):
+        """Install a code badge for dev mode source jumping."""
+        try:
+            import chisurf.settings
+            if not chisurf.settings.is_dev_mode():
+                return
+            if hasattr(self, '_chisurf_code_badge_installed'):
+                return
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import resolve_object_source
+            resolver = lambda: resolve_object_source(self)
+            install_code_badge(self, resolver, corner='top-right', margin=4)
+            self._chisurf_code_badge_installed = True
+        except Exception:
+            pass
+
     def onConvolutionModeChanged(self):
         chisurf.run(
             "\n".join(

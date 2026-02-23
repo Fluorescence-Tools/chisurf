@@ -18,6 +18,21 @@ if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit
 
 
+ADD_BUTTON_STYLE = (
+    "QPushButton { background-color: #1f7a1f; color: white; border: 1px solid #166016; "
+    "border-radius: 3px; padding: 2px 8px; }"
+    "QPushButton:hover { background-color: #249124; }"
+    "QPushButton:pressed { background-color: #155815; }"
+)
+
+REMOVE_BUTTON_STYLE = (
+    "QPushButton { background-color: #a82020; color: white; border: 1px solid #7d1717; "
+    "border-radius: 3px; padding: 2px 8px; }"
+    "QPushButton:hover { background-color: #bf2626; }"
+    "QPushButton:pressed { background-color: #7d1717; }"
+)
+
+
 class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
 
     def __init__(
@@ -70,10 +85,12 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
 
         addGaussian = QtWidgets.QPushButton()
         addGaussian.setText("add")
+        addGaussian.setStyleSheet(ADD_BUTTON_STYLE)
         layout.addWidget(addGaussian)
 
         removeGaussian = QtWidgets.QPushButton()
         removeGaussian.setText("del")
+        removeGaussian.setStyleSheet(REMOVE_BUTTON_STYLE)
         layout.addWidget(removeGaussian)
         self.lh.addLayout(layout)
 
@@ -84,6 +101,27 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
 
         # add some initial distance
         self.append(1.0, 50.0, 6.0, 0.0)
+
+        try:
+            self._install_code_badge()
+        except Exception:
+            pass
+
+    def _install_code_badge(self):
+        """Install a code badge for dev mode source jumping."""
+        try:
+            import chisurf.settings
+            if not chisurf.settings.is_dev_mode():
+                return
+            if hasattr(self, '_chisurf_code_badge_installed'):
+                return
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import resolve_object_source
+            resolver = lambda: resolve_object_source(self)
+            install_code_badge(self, resolver, corner='top-right', margin=4)
+            self._chisurf_code_badge_installed = True
+        except Exception:
+            pass
 
     def onAddGaussian(self):
         # Add a new Gaussian distance component to all fits in the current
@@ -222,6 +260,8 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         anisotropy = AnisotropyWidget(
             name='anisotropy',
             short='rL',
+            fit=fit,
+            model=self,
             **kwargs
         )
         self.anisotropy = anisotropy

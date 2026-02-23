@@ -4,11 +4,24 @@ import chisurf
 from chisurf.gui import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments
+from chisurf.fitting.parameter import FittingParameter
 
 from chisurf.models.tcspc.nusiance import Generic
 
 
 class GenericWidget(QtWidgets.QGroupBox, Generic):
+
+    def _compute_n_ph_bg(self) -> float:
+        try:
+            return float(self.n_ph_bg)
+        except Exception:
+            return float('nan')
+
+    def _compute_n_ph_fl(self) -> float:
+        try:
+            return float(self.n_ph_fl)
+        except Exception:
+            return float('nan')
 
     def change_bg_curve(self, background_index: int = None):
         if isinstance(background_index, int):
@@ -27,8 +40,6 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
 
     def update(self):
         super().update()
-        self.lineedit_nphBg.setText("%i" % self.n_ph_bg)
-        self.lineedit_nphFl.setText("%i" % self.n_ph_fl)
 
     def __init__(
             self,
@@ -100,14 +111,30 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         )
         open_bg.clicked.connect(self.background_select.show)
 
-        a = QtWidgets.QHBoxLayout()
-        a.addWidget(QtWidgets.QLabel('nPh(Bg)'))
-        self.lineedit_nphBg = QtWidgets.QLineEdit()
-        a.addWidget(self.lineedit_nphBg)
-        layout.addLayout(a, 3, 0, 1, 1)
+        self._nph_bg_out = FittingParameter(
+            name='nPh_bg',
+            value=self._compute_n_ph_bg,
+            fixed=True,
+            is_output=True,
+            label_text='#PhB'
+        )
+        self._nph_fl_out = FittingParameter(
+            name='nPh_fl',
+            value=self._compute_n_ph_fl,
+            fixed=True,
+            is_output=True,
+            label_text='#PhF'
+        )
 
-        a = QtWidgets.QHBoxLayout()
-        a.addWidget(QtWidgets.QLabel('nPh(Fl)'))
-        self.lineedit_nphFl = QtWidgets.QLineEdit()
-        a.addWidget(self.lineedit_nphFl)
-        layout.addLayout(a, 3, 1, 1, 1)
+        nph_bg_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._nph_bg_out,
+            label_text='#PhB',
+            decimals=1
+        )
+        nph_fl_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            self._nph_fl_out,
+            label_text='#PhF',
+            decimals=1
+        )
+        layout.addWidget(nph_bg_w, 3, 0)
+        layout.addWidget(nph_fl_w, 3, 1)
