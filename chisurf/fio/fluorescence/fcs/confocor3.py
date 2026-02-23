@@ -428,8 +428,10 @@ def read_zeiss_fcs(
             aquisition_time_ch2 = intensity_time_ch2[-1]
             mean_count_rate_ch2 = np.sum(intensity_ch2) / aquisition_time_ch2
 
-            # Mean intensity
+            # Mean intensity per detector (legacy quantity).
             mean_count_rate = 0.5 * (mean_count_rate_ch1 + mean_count_rate_ch2)
+            # Total count rate across both detectors.
+            mean_count_rate_total = mean_count_rate_ch1 + mean_count_rate_ch2
 
             # Mean aquisition time
             aquisition_time = 0.5 * (aquisition_time_ch1 + aquisition_time_ch2) / 1000.0
@@ -447,6 +449,9 @@ def read_zeiss_fcs(
                     'measurement_id': "%s_%s" % (d['Filename'][i], i),
                     'acquisition_time': aquisition_time,
                     'mean_count_rate': mean_count_rate,
+                    'mean_count_rate_total': mean_count_rate_total,
+                    'mean_count_rate_semantics': 'per_detector_mean',
+                    'detector_count': 2,
                     'correlation_times': correlation_time.tolist(),
                     'correlation_amplitudes': correlation_amplitude.tolist(),
                     'correlation_amplitude_weights': w.tolist(),
