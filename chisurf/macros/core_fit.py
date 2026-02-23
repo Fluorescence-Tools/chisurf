@@ -14,12 +14,339 @@ import chisurf.data
 import chisurf.fitting
 import chisurf.gui
 import chisurf.gui.widgets
+from chisurf.runtime.actions import record_action, get_action_catalog
 
 from chisurf import typing
 from chisurf import logging
 from chisurf.project import Project as CSProject, save_project as project_save_json, load_project as project_load_json
 from chisurf.project import fit_state as project_fit_state
 from chisurf.experiments.core.reader import ExperimentReader
+
+
+def _iter_group_members(group):
+    if isinstance(group, (list, tuple)):
+        yield from group
+    else:
+        yield group
+
+
+def _coerce_finite_float(value: typing.Any) -> typing.Optional[float]:
+    try:
+        v = float(value)
+    except Exception:
+        return None
+    if not np.isfinite(v):
+        return None
+    return v
+
+
+def _resolve_dataset_anisotropy_calibration(data_group):
+    calibration: typing.Dict[str, typing.Optional[float]] = {
+        'g_factor': None,
+        'l1': None,
+        'l2': None,
+    }
+
+    reader = getattr(data_group, 'data_reader', None)
+    if reader is None:
+        for member in _iter_group_members(data_group):
+            reader = getattr(member, 'data_reader', None)
+            if reader is not None:
+                break
+    if reader is not None:
+        for key in ('g_factor', 'l1', 'l2'):
+            value = getattr(reader, key, None)
+            if value is None:
+                continue
+            v = _coerce_finite_float(value)
+            if v is not None:
+                calibration[key] = v
+
+    metas = []
+    meta_data = getattr(data_group, 'meta_data', None)
+    if isinstance(meta_data, dict):
+        metas.append(meta_data)
+    for member in _iter_group_members(data_group):
+        meta = getattr(member, 'meta_data', None)
+        if isinstance(meta, dict):
+            metas.append(meta)
+    for meta in metas:
+        for key in ('g_factor', 'l1', 'l2'):
+            if calibration.get(key) is not None:
+                continue
+            if key not in meta:
+                continue
+            v = _coerce_finite_float(meta[key])
+            if v is not None:
+                calibration[key] = v
+    return calibration
+
+
+def _resolve_dataset_g_factor(data_group):
+    calibration = _resolve_dataset_anisotropy_calibration(data_group)
+    return calibration.get('g_factor')
+
+
+def _apply_g_factor_to_fit(fit_group, g_factor: float) -> None:
+    _apply_anisotropy_calibration_to_fit(fit_group, {'g_factor': g_factor})
+
+
+def _apply_anisotropy_calibration_to_fit(fit_group, calibration: typing.Dict[str, typing.Any]) -> None:
+    if not isinstance(calibration, dict):
+        return
+
+    resolved = {}
+    for source_key in ('g_factor', 'l1', 'l2'):
+        value = _coerce_finite_float(calibration.get(source_key))
+        if value is None:
+            continue
+        resolved[source_key] = value
+    if not resolved:
+        return
+
+    mapping = {
+        'g_factor': ('_g', 'g'),
+        'l1': ('_l1', 'l1'),
+        'l2': ('_l2', 'l2'),
+    }
+
+    def _set_anisotropy(anisotropy):
+        if anisotropy is None:
+            return
+        params = getattr(anisotropy, 'parameters_all_dict', None)
+        for source_key, value in resolved.items():
+            private_name, public_name = mapping[source_key]
+            private_param = getattr(anisotropy, private_name, None)
+            applied = False
+            if private_param is not None and hasattr(private_param, 'value'):
+                private_param.value = value
+                applied = True
+            elif isinstance(private_param, (int, float, np.floating)):
+                setattr(anisotropy, private_name, value)
+                applied = True
+            if (not applied) and isinstance(params, dict):
+                param_entry = params.get(public_name)
+                if param_entry is not None and hasattr(param_entry, 'value'):
+                    param_entry.value = value
+                    applied = True
+            if not applied:
+                try:
+                    setattr(anisotropy, public_name, value)
+                except Exception:
+                    pass
+
+    _set_anisotropy(getattr(getattr(fit_group, 'model', None), 'anisotropy', None))
+    for member in getattr(fit_group, 'grouped_fits', []):
+        _set_anisotropy(getattr(member.model, 'anisotropy', None))
+
+
+def _collect_group_nuisance_parameter_names(model: typing.Any) -> typing.Set[str]:
+    names: typing.Set[str] = set()
+    if model is None:
+        return names
+    for attr_name, attr_value in getattr(model, "__dict__", {}).items():
+        lname = str(attr_name).lower()
+        is_nuisance_attr = (
+            lname in {"nuisance", "nusiance", "generic", "corrections", "convolve"}
+            or "nuisance" in lname
+            or "nusiance" in lname
+        )
+        if not is_nuisance_attr:
+            continue
+        try:
+            params = getattr(attr_value, "parameters_all", None)
+            if isinstance(params, (list, tuple)):
+                for p in params:
+                    pname = str(getattr(p, "name", ""))
+                    if pname:
+                        names.add(pname)
+                continue
+            params_dict = getattr(attr_value, "parameters_all_dict", None)
+            if isinstance(params_dict, dict):
+                for pname in params_dict.keys():
+                    if pname:
+                        names.add(str(pname))
+        except Exception:
+            continue
+    return names
+
+
+def _auto_link_non_nuisance_group_parameters(fit_group) -> typing.Tuple[int, int]:
+    grouped_fits = list(getattr(fit_group, "grouped_fits", []) or [])
+    if len(grouped_fits) <= 1:
+        return 0, 0
+
+    master_fit = grouped_fits[0]
+    master_model = getattr(master_fit, "model", None)
+    master_params = getattr(master_model, "parameters_all_dict", None)
+    if not isinstance(master_params, dict) or not master_params:
+        return 0, 0
+
+    nuisance_names = _collect_group_nuisance_parameter_names(master_model)
+    linked_master_parameters = 0
+    linked_followers = 0
+
+    for parameter_name, master_parameter in master_params.items():
+        if parameter_name in nuisance_names:
+            continue
+        if bool(getattr(master_parameter, "is_output", False)):
+            continue
+        if not hasattr(master_parameter, "link"):
+            continue
+
+        try:
+            master_parameter.is_link_master = True
+        except Exception:
+            pass
+
+        linked_this_parameter = False
+        for local_fit in grouped_fits[1:]:
+            try:
+                local_params = getattr(getattr(local_fit, "model", None), "parameters_all_dict", None)
+                if not isinstance(local_params, dict):
+                    continue
+                follower_parameter = local_params.get(parameter_name)
+                if follower_parameter is None:
+                    continue
+                try:
+                    follower_parameter.is_link_master = False
+                except Exception:
+                    pass
+                follower_parameter.link = master_parameter
+                linked_followers += 1
+                linked_this_parameter = True
+            except Exception:
+                continue
+
+        if linked_this_parameter:
+            linked_master_parameters += 1
+
+    return linked_master_parameters, linked_followers
+
+HISTORY_FILENAME = "history.jsonl"
+
+
+def _save_history_snapshot(project_dir: typing.Union[str, pathlib.Path]) -> typing.Optional[pathlib.Path]:
+    try:
+        history_obj = getattr(chisurf, "history", None)
+        if history_obj is None or not hasattr(history_obj, "save_jsonl"):
+            return None
+        history_path = pathlib.Path(project_dir).resolve() / HISTORY_FILENAME
+        return history_obj.save_jsonl(history_path)
+    except Exception:
+        return None
+
+
+def _load_history_snapshot(
+        project_dir: typing.Union[str, pathlib.Path],
+        replace: bool = True,
+) -> bool:
+    try:
+        history_obj = getattr(chisurf, "history", None)
+        if history_obj is None or not hasattr(history_obj, "load_jsonl"):
+            return False
+        history_path = pathlib.Path(project_dir).resolve() / HISTORY_FILENAME
+        if not history_path.exists():
+            return False
+        history_obj.load_jsonl(history_path, replace=replace)
+        return True
+    except Exception:
+        return False
+
+
+def _refresh_history_browser() -> None:
+    try:
+        cs = getattr(chisurf, "cs", None)
+        browser = getattr(cs, "historyBrowser", None)
+        if browser is not None and hasattr(browser, "reload"):
+            browser.reload()
+    except Exception:
+        pass
+
+
+def _record_history(
+        action_type: str,
+        summary: str,
+        payload: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        source_uid: str = "",
+        target_uid: str = "",
+) -> None:
+    try:
+        record_action(
+            action_type=action_type,
+            summary=summary,
+            payload=payload,
+            source_uid=source_uid or "",
+            target_uid=target_uid or "",
+        )
+        return
+    except Exception:
+        pass
+
+
+def _history_event_count() -> int:
+    try:
+        history_obj = getattr(chisurf, "history", None)
+        if history_obj is not None and hasattr(history_obj, "list_events"):
+            return int(len(history_obj.list_events()))
+    except Exception:
+        pass
+    return 0
+
+
+def export_action_catalog(
+        target_path: str = "",
+        file_type: str = "yaml",
+) -> pathlib.Path:
+    catalog = get_action_catalog()
+
+    def _normalize_format(path_obj: pathlib.Path, raw: str) -> str:
+        value = str(raw or "").strip().lower()
+        if value in {"yml", "yaml"}:
+            return "yaml"
+        if value == "json":
+            return "json"
+        suffix = path_obj.suffix.lower().lstrip(".")
+        if suffix in {"yml", "yaml"}:
+            return "yaml"
+        if suffix == "json":
+            return "json"
+        return "yaml"
+
+    out_path: pathlib.Path
+    if target_path:
+        out_path = pathlib.Path(str(target_path))
+    else:
+        working = getattr(chisurf, "working_path", None)
+        base_dir = pathlib.Path(working) if working else pathlib.Path.cwd()
+        out_path = base_dir / "action_catalog"
+
+    fmt = _normalize_format(out_path, file_type)
+    if out_path.suffix == "":
+        out_path = out_path.with_suffix(".yaml" if fmt == "yaml" else ".json")
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if fmt == "json":
+        out_path.write_text(json.dumps(catalog, indent=2), encoding="utf-8")
+    else:
+        import yaml
+
+        out_path.write_text(
+            yaml.safe_dump(catalog, sort_keys=False, allow_unicode=False),
+            encoding="utf-8",
+        )
+
+    _record_history(
+        action_type="action_catalog_export",
+        summary=f"export action catalog to '{out_path.as_posix()}'",
+        payload={
+            "target_path": out_path.as_posix(),
+            "format": fmt,
+            "action_count": int(len(catalog)),
+        },
+    )
+
+    return out_path
 
 
 def _serialize_reader(reader: typing.Any) -> typing.Optional[typing.Dict[str, typing.Any]]:
@@ -108,16 +435,50 @@ def _deserialize_reader(reader_info: typing.Dict[str, typing.Any]) -> typing.Opt
 def add_fit(
         dataset_indices: typing.List[int] = None,
         model_name: str = None,
-        model_kw: typing.Dict = None
+        model_kw: typing.Dict = None,
+        _defer_cs_update: bool = False,
+        _ui_updates_frozen: bool = False,
 ):
-    cs = chisurf.cs
+    def _resolve_model_name_from_cs(main_window) -> str:
+        try:
+            v = str(getattr(main_window, "current_model_name", "") or "").strip()
+            if v:
+                return v
+        except Exception:
+            pass
+
+        try:
+            mc = getattr(main_window, "current_model_class", None)
+            if mc is not None:
+                v = str(getattr(mc, "name", "") or "").strip()
+                if v:
+                    return v
+        except Exception:
+            pass
+
+        try:
+            exp = getattr(main_window, "current_experiment", None)
+            models = list(getattr(exp, "models", []) or [])
+            if models:
+                v = str(getattr(models[0], "name", "") or "").strip()
+                if v:
+                    return v
+        except Exception:
+            pass
+
+        return ""
+
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        chisurf.logging.error("add_fit: no active main window (chisurf.cs is missing)")
+        return
     # Process inputs of macro and replace None
     # with more sensible values that are read
     # from the GUI
     if dataset_indices is None:
         dataset_indices = [cs.dataset_selector.selected_curve_index]
     if model_name is None:
-        model_name = cs.current_model_name
+        model_name = _resolve_model_name_from_cs(cs)
 
     # Do nothing of no dataset is selected
     if len(dataset_indices) == 0:
@@ -126,11 +487,36 @@ def add_fit(
     # If multiple datasets were requested, build each fit independently
     # using the already-stable single-dataset code path.
     if len(dataset_indices) > 1:
-        for idx in dataset_indices:
-            try:
-                add_fit(dataset_indices=[idx], model_name=model_name, model_kw=model_kw)
-            except Exception as e:
-                chisurf.logging.warning(f"add_fit: failed for dataset index {idx}: {e}")
+        mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
+        plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
+        batched_frozen = bool(_ui_updates_frozen)
+        try:
+            if not batched_frozen:
+                if mdl_parent:
+                    mdl_parent.setUpdatesEnabled(False)
+                if plo_parent:
+                    plo_parent.setUpdatesEnabled(False)
+                cs.mdiarea.setUpdatesEnabled(False)
+            for idx in dataset_indices:
+                try:
+                    add_fit(
+                        dataset_indices=[idx],
+                        model_name=model_name,
+                        model_kw=model_kw,
+                        _defer_cs_update=True,
+                        _ui_updates_frozen=True,
+                    )
+                except Exception as e:
+                    chisurf.logging.warning(f"add_fit: failed for dataset index {idx}: {e}")
+        finally:
+            if not batched_frozen:
+                cs.mdiarea.setUpdatesEnabled(True)
+                if mdl_parent:
+                    mdl_parent.setUpdatesEnabled(True)
+                if plo_parent:
+                    plo_parent.setUpdatesEnabled(True)
+        if not _defer_cs_update:
+            cs.update()
         return
 
     # create a list of data sets to which a fit with
@@ -152,6 +538,8 @@ def add_fit(
         if mn == model_name:
             model_class = exp.model_classes[model_idx]
             break
+
+    base_model_kw = dict(model_kw or {})
 
     for data_set in data_sets:
         if data_set.experiment is data_sets[0].experiment:
@@ -182,21 +570,75 @@ def add_fit(
             except Exception:
                 pass
 
+            _record_history(
+                action_type="fit_add_start",
+                summary=(
+                    f"start add fit for dataset '{getattr(data_set, 'name', '')}' "
+                    f"with model '{model_name}'"
+                ),
+                payload={
+                    "dataset_name": str(getattr(data_set, "name", "")),
+                    "model_name": str(model_name),
+                    "dataset_indices": [int(i) for i in dataset_indices],
+                },
+            )
+
+            dataset_model_kw = dict(base_model_kw)
+            dataset_calibration = _resolve_dataset_anisotropy_calibration(data_group)
+            for key in ('g_factor', 'l1', 'l2'):
+                value = _coerce_finite_float(dataset_calibration.get(key))
+                if value is not None and key not in dataset_model_kw:
+                    dataset_model_kw[key] = value
+
             # Create the fit
             fit_group = chisurf.fitting.fit.FitGroup(
                 data=data_group,
                 model_class=model_class,
-                model_kw=model_kw
+                model_kw=dataset_model_kw
             )
+            _apply_anisotropy_calibration_to_fit(fit_group, dataset_calibration)
+            linked_masters, linked_followers = _auto_link_non_nuisance_group_parameters(fit_group)
             chisurf.fits.append(fit_group)
+            _record_history(
+                action_type="fit_add",
+                summary=(
+                    f"add fit group '{getattr(fit_group, 'name', '')}' for dataset "
+                    f"'{getattr(data_set, 'name', '')}' with model '{model_name}'"
+                ),
+                payload={
+                    "fit_group_name": str(getattr(fit_group, "name", "")),
+                    "dataset_name": str(getattr(data_set, "name", "")),
+                    "model_name": str(model_name),
+                    "dataset_indices": [int(i) for i in dataset_indices],
+                },
+                source_uid=str(getattr(fit_group, "unique_identifier", "")) or None,
+            )
+            if linked_followers > 0:
+                _record_history(
+                    action_type="fit_group_auto_link",
+                    summary=(
+                        f"auto-link non-nuisance parameters for fit group '{getattr(fit_group, 'name', '')}' "
+                        f"({linked_masters} master parameter(s), {linked_followers} follower link(s))"
+                    ),
+                    payload={
+                        "fit_group_name": str(getattr(fit_group, "name", "")),
+                        "linked_master_parameters": int(linked_masters),
+                        "linked_followers": int(linked_followers),
+                        "policy": "non_nuisance_default_link",
+                    },
+                    source_uid=str(getattr(fit_group, "unique_identifier", "")) or "",
+                )
 
             # Batch UI updates to avoid repeated repaints while constructing widgets
             mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
             plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
             try:
-                if mdl_parent: mdl_parent.setUpdatesEnabled(False)
-                if plo_parent: plo_parent.setUpdatesEnabled(False)
-                cs.mdiarea.setUpdatesEnabled(False)
+                if not _ui_updates_frozen:
+                    if mdl_parent:
+                        mdl_parent.setUpdatesEnabled(False)
+                    if plo_parent:
+                        plo_parent.setUpdatesEnabled(False)
+                    cs.mdiarea.setUpdatesEnabled(False)
 
                 fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
                     fit=fit_group
@@ -228,12 +670,16 @@ def add_fit(
                     pass
             finally:
                 # Re-enable updates and show
-                cs.mdiarea.setUpdatesEnabled(True)
-                if mdl_parent: mdl_parent.setUpdatesEnabled(True)
-                if plo_parent: plo_parent.setUpdatesEnabled(True)
+                if not _ui_updates_frozen:
+                    cs.mdiarea.setUpdatesEnabled(True)
+                    if mdl_parent:
+                        mdl_parent.setUpdatesEnabled(True)
+                    if plo_parent:
+                        plo_parent.setUpdatesEnabled(True)
                 fit_window.show()
 
-    cs.update()
+    if not _defer_cs_update:
+        cs.update()
 
 
 def save_fit(
@@ -244,7 +690,10 @@ def save_fit(
     log.debug("save_fit: start (target_path=%r, use_complex_name=%r)",
               target_path, use_complex_name)
 
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        log.error("save_fit: no active main window (chisurf.cs is missing)")
+        return
     if fit_window is None:
         log.debug("No fit_window passed—taking current MDI subwindow")
         fit_window = cs.mdiarea.currentSubWindow()
@@ -265,7 +714,10 @@ def save_fit(
         save_name = os.path.basename(fit.data.name)
         log.debug("Using simple data name → %r", save_name)
 
-    basename = os.path.join(target_path, save_name)
+    # Keep output filenames readable by dropping any trailing source extension
+    # from dataset-based names (e.g. "*.dat VV" -> "* VV").
+    save_stem = os.path.splitext(save_name)[0]
+    basename = os.path.join(target_path, save_stem)
     log.info("Will write files with base %r", basename)
 
     # 1) dump numeric data
@@ -313,17 +765,26 @@ def save_fit(
             log.warning(f"save_fit: could not build dataset payload for fit.json: {exc}")
 
         if fit_payload:
+            fit_ui_state = {"current_fit_index": getattr(cs, "fit_idx", 0)}
+            try:
+                history_browser = getattr(cs, "historyBrowser", None)
+                get_hist_state = getattr(history_browser, "get_ui_state", None)
+                if callable(get_hist_state):
+                    fit_ui_state["history_browser"] = get_hist_state()
+            except Exception:
+                pass
+
             proj = CSProject(
-                name=fit.name or save_name,
-                description=f"ChiSurf fit '{fit.name or save_name}'",
+                name=fit.name or save_stem,
+                description=f"ChiSurf fit '{fit.name or save_stem}'",
                 chisurf_version=getattr(chisurf.info, "__version__", None),
                 datasets=datasets,
                 experiments={},
                 fits={fg_key: fit_payload},
-                ui_state={"current_fit_index": getattr(cs, "fit_idx", 0)},
+                ui_state=fit_ui_state,
             )
             # Write fit.json using the base name without the original data extension
-            base_no_ext = os.path.join(target_path, os.path.splitext(save_name)[0])
+            base_no_ext = os.path.join(target_path, save_stem)
             fit_json_path = base_no_ext + ".fit.json"
             try:
                 with open(fit_json_path, "w", encoding="utf-8") as f:
@@ -348,25 +809,30 @@ def save_fit(
         return
 
     document.add_heading('Fit‑Results', level=1)
-    for i, f in enumerate(fit):
-        widget.selected_fit = i
-        log.debug("Adding screenshots for fit #%d", i+1)
-        document.add_paragraph(f"Fit #{i+1}", style='ListNumber')
+    overlay_prev = bool(getattr(chisurf, "_suspend_plot_metrics_overlay", False))
+    setattr(chisurf, "_suspend_plot_metrics_overlay", True)
+    try:
+        for i, f in enumerate(fit):
+            widget.selected_fit = i
+            log.debug("Adding screenshots for fit #%d", i+1)
+            document.add_paragraph(f"Fit #{i+1}", style='ListNumber')
 
-        for suffix, source in (
-            ("_screenshot_fit.png",   fit_window),
-            ("_screenshot_model.png", f.model),
-        ):
-            png_path = basename + suffix
-            log.debug(" Grabbing %r → %r", source, png_path)
+            for suffix, source in (
+                ("_screenshot_fit.png",   fit_window),
+                ("_screenshot_model.png", f.model),
+            ):
+                png_path = basename + suffix
+                log.debug(" Grabbing %r → %r", source, png_path)
 
-            pix = source.grab()
-            pix.save(png_path)
-            del pix
-            log.debug("  Saved and deleted QPixmap")
+                pix = source.grab()
+                pix.save(png_path)
+                del pix
+                log.debug("  Saved and deleted QPixmap")
 
-            document.add_picture(png_path, width=Inches(2.0))
-            log.debug("  Embedded picture %r", png_path)
+                document.add_picture(png_path, width=Inches(2.0))
+                log.debug("  Embedded picture %r", png_path)
+    finally:
+        setattr(chisurf, "_suspend_plot_metrics_overlay", overlay_prev)
 
     # 3) summary table
     log.debug("Adding summary table for %d grouped fits", len(fit_group.grouped_fits))
@@ -496,9 +962,10 @@ def save_fits(target_path: str, use_complex_name: bool = False):
                 save_name = chisurf.base.clean_string(fit.name)
             else:
                 save_name = os.path.basename(fit.data.name)
+            save_stem = os.path.splitext(save_name)[0]
 
             fit_name = fit.name
-            p2 = os.path.join(target_path, save_name)
+            p2 = os.path.join(target_path, save_stem)
 
             # Ensure per-fit directory handling with overwrite/skip/cancel dialog
             if os.path.exists(p2):
@@ -541,7 +1008,7 @@ def save_fits(target_path: str, use_complex_name: bool = False):
             save_fit(target_path=p2, fit_window=fit_window)
 
             # Track created per-fit DOCX path for merging
-            per_fit_docx = os.path.join(p2, f"{save_name}.docx")
+            per_fit_docx = os.path.join(p2, f"{save_stem}.docx")
             if os.path.exists(per_fit_docx):
                 created_docx.append(per_fit_docx)
 
@@ -556,7 +1023,10 @@ def save_fits(target_path: str, use_complex_name: bool = False):
 
 
 def close_fit(idx: int = None):
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        chisurf.logging.error("close_fit: no active main window (chisurf.cs is missing)")
+        return
 
     # Resolve index from current subwindow if not explicitly provided.
     if idx is None:
@@ -597,6 +1067,26 @@ def close_fit(idx: int = None):
         chisurf.logging.warning(f"close_fit: index {idx_int} out of range; ignoring request")
         return
 
+    fit_name = ""
+    fit_uid = None
+    try:
+        fit_obj = chisurf.fits[idx_int]
+        fit_name = str(getattr(fit_obj, "name", ""))
+        uid = str(getattr(fit_obj, "unique_identifier", ""))
+        fit_uid = uid or None
+    except Exception:
+        pass
+
+    _record_history(
+        action_type="fit_close",
+        summary=f"close fit '{fit_name}'",
+        payload={
+            "fit_index": int(idx_int),
+            "fit_name": str(fit_name),
+        },
+        source_uid=fit_uid or "",
+    )
+
     # Remove the fit object and its corresponding window.
     try:
         chisurf.fits.pop(idx_int)
@@ -634,25 +1124,51 @@ def link_fit_group(
     :param csi:
     :return:
     """
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        chisurf.logging.error("add_fit: no active main window (chisurf.cs is missing)")
+        return
+    linked_count = 0
+    unlinked_count = 0
+    master_uid = None
     if csi == 2:
-        # Establish a fit-group link: the parameter in the currently
-        # selected fit acts as the master, all other fits in the group
-        # link their parameter of the same name to this master.
+        # Establish a fit-group link with a stable master: always use the
+        # first local fit in the group as the master parameter source.
         current_fit = cs.current_fit
+        grouped_fits = list(getattr(current_fit, "grouped_fits", []))
+        if grouped_fits:
+            master_fit = grouped_fits[0]
+        else:
+            master_fit = current_fit
         try:
-            parameter = current_fit.model.parameters_all_dict[fitting_parameter_name]
+            parameter = master_fit.model.parameters_all_dict[fitting_parameter_name]
         except Exception:
+            chisurf.logging.warning(
+                f"link_fit_group: first fit has no parameter '{fitting_parameter_name}', cannot link group"
+            )
             return
+        try:
+            uid = str(getattr(parameter, "unique_identifier", ""))
+            master_uid = uid or None
+        except Exception:
+            master_uid = None
 
-        # Mark master for GUI purposes only; numerical behaviour is still
-        # governed by the underlying port links.
+        # Reset all master flags first to avoid stale GUI state.
+        for f in current_fit:
+            try:
+                p_reset = f.model.parameters_all_dict[fitting_parameter_name]
+                p_reset.is_link_master = False
+            except Exception:
+                continue
+
+        # Mark master for GUI purposes only; numerical behaviour is governed
+        # by the underlying parameter links.
         try:
             parameter.is_link_master = True
         except Exception:
             pass
 
-        for f in cs.current_fit:
+        for f in current_fit:
             try:
                 p = f.model.parameters_all_dict[fitting_parameter_name]
             except KeyError:
@@ -666,6 +1182,7 @@ def link_fit_group(
             except Exception:
                 pass
             p.link = parameter
+            linked_count += 1
 
     if csi == 0:
         # Unlink the entire fit group for this parameter name and clear any
@@ -680,6 +1197,35 @@ def link_fit_group(
             except Exception:
                 pass
             p.link = None
+            unlinked_count += 1
+
+    if csi == 2:
+        _record_history(
+            action_type="fit_group_link",
+            summary=(
+                f"link fit group parameter '{fitting_parameter_name}' across "
+                f"{linked_count} follower(s)"
+            ),
+            payload={
+                "parameter_name": str(fitting_parameter_name),
+                "linked_followers": int(linked_count),
+                "mode": int(csi),
+            },
+            source_uid=master_uid,
+        )
+    elif csi == 0:
+        _record_history(
+            action_type="fit_group_unlink",
+            summary=(
+                f"unlink fit group parameter '{fitting_parameter_name}' across "
+                f"{unlinked_count} local fit(s)"
+            ),
+            payload={
+                "parameter_name": str(fitting_parameter_name),
+                "unlinked": int(unlinked_count),
+                "mode": int(csi),
+            },
+        )
 
 
 def change_selected_fit_of_group(
@@ -691,11 +1237,46 @@ def change_selected_fit_of_group(
     :param selected_fit:
     :return:
     """
-    cs = chisurf.cs
-    cs.current_fit.model.hide()
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        chisurf.logging.error("change_selected_fit_of_group: no active main window (chisurf.cs is missing)")
+        return
+
+    # Switching local fits changes the underlying model/parameter objects.
+    # Ensure any derived output parameters are recomputed and the parameter
+    # widgets refresh accordingly.
+    try:
+        cs.current_fit.model.hide()
+    except Exception:
+        pass
+
     cs.current_fit.selected_fit = selected_fit
     cs.current_fit.update()
-    cs.current_fit.model.show()
+    try:
+        cs.current_fit.model.finalize()
+    except Exception:
+        pass
+
+    # Refresh parameter controllers for the associated (selected) fit/model only
+    # (includes output/result parameters).
+    try:
+        model = getattr(cs.current_fit, "model", None)
+        params = getattr(model, "parameters_all", None)
+        if isinstance(params, (list, tuple)):
+            for p in params:
+                try:
+                    ctrl = getattr(p, "controller", None)
+                    if ctrl is not None and hasattr(ctrl, "finalize"):
+                        ctrl.finalize()
+                except (AttributeError, RuntimeError, TypeError):
+                    continue
+    except Exception:
+        pass
+
+    try:
+        cs.current_fit.model.show()
+    except Exception:
+        pass
 
 
 def save_project(target_path: str, project_name: str = "chisurf_project"):
@@ -715,7 +1296,10 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     """
 
     log = chisurf.logging
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        log.error("save_project: no active main window (chisurf.cs is missing)")
+        return
 
     base_dir = os.path.abspath(str(target_path))
     project_dir = os.path.join(base_dir, project_name)
@@ -782,6 +1366,43 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             for dc in item:
                 if isinstance(dc, chisurf.data.DataCurve):
                     register_datacurve(dc)
+
+    dataset_layout: typing.List[typing.Dict[str, typing.Any]] = []
+    for item in chisurf.imported_datasets:
+        if isinstance(item, chisurf.data.DataCurve):
+            ds_id = register_datacurve(item)
+            dataset_layout.append({
+                "kind": "dataset",
+                "dataset_id": ds_id,
+            })
+            continue
+
+        if isinstance(item, chisurf.data.DataGroup):
+            member_ids: typing.List[str] = []
+            for dc in item:
+                if isinstance(dc, chisurf.data.DataCurve):
+                    member_ids.append(register_datacurve(dc))
+            if not member_ids:
+                continue
+
+            rec: typing.Dict[str, typing.Any] = {
+                "kind": "group",
+                "group_type": type(item).__name__,
+                "dataset_ids": member_ids,
+            }
+            try:
+                group_name = getattr(item, "name", "")
+                if group_name:
+                    rec["name"] = str(group_name)
+            except Exception:
+                pass
+            try:
+                current_dataset_idx = int(getattr(item, "_current_dataset", 0))
+                if 0 <= current_dataset_idx < len(member_ids):
+                    rec["current_dataset_index"] = current_dataset_idx
+            except Exception:
+                pass
+            dataset_layout.append(rec)
 
     # --- Collect fits & global links --------------------------------------
     manifest_fits: typing.List[typing.Dict[str, typing.Any]] = []
@@ -871,6 +1492,8 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         "current_experiment_idx": getattr(cs, "current_experiment_idx", 0),
         "current_setup_idx": getattr(cs, "current_setup_idx", 0),
     }
+    if dataset_layout:
+        ui_state["dataset_layout"] = dataset_layout
 
     # Optionally capture main-window and MDI layout geometry/state
     try:
@@ -901,6 +1524,14 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                     ui_state["mdi_area"] = {"state": bytes(ba).hex()}
                 except Exception:
                     pass
+
+        history_browser = getattr(cs, "historyBrowser", None)
+        get_hist_state = getattr(history_browser, "get_ui_state", None)
+        if callable(get_hist_state):
+            try:
+                ui_state["history_browser"] = get_hist_state()
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -914,7 +1545,34 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         ui_state=ui_state,
     )
 
+    try:
+        proj.extra["history"] = {
+            "filename": HISTORY_FILENAME,
+            "event_count": _history_event_count(),
+        }
+    except Exception:
+        pass
+
+    try:
+        proj.extra["action_catalog"] = {
+            "entries": get_action_catalog(),
+        }
+    except Exception:
+        pass
+
     project_save_json(proj, project_dir)
+    hist_path = _save_history_snapshot(project_dir)
+    _record_history(
+        action_type="project_save",
+        summary=f"save project '{project_name}' to '{project_dir}'",
+        payload={
+            "project_dir": project_dir,
+            "project_name": project_name,
+            "history_file": str(hist_path) if hist_path is not None else None,
+        },
+    )
+    if hist_path is not None:
+        _save_history_snapshot(project_dir)
     log.info(f"Project saved to {project_dir}")
 
 
@@ -1100,7 +1758,10 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
     touching other open fits.
     """
     log = chisurf.logging
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        log.error("save_fit_project: no active main window (chisurf.cs is missing)")
+        return
 
     if fit_window is None:
         fit_window = getattr(cs.mdiarea, "currentSubWindow", lambda: None)()
@@ -1157,6 +1818,17 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
         log.error("save_fit_project: fit payload empty; aborting")
         return
 
+    fit_ui_state = {
+        "current_fit_index": getattr(cs, "fit_idx", 0),
+    }
+    try:
+        history_browser = getattr(cs, "historyBrowser", None)
+        get_hist_state = getattr(history_browser, "get_ui_state", None)
+        if callable(get_hist_state):
+            fit_ui_state["history_browser"] = get_hist_state()
+    except Exception:
+        pass
+
     proj = CSProject(
         name=fit_name,
         description=f"ChiSurf fit '{fit_name}'",
@@ -1164,11 +1836,38 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
         datasets=datasets,
         experiments={},
         fits={fg_key: fit_payload},
-        ui_state={"current_fit_index": getattr(cs, "fit_idx", 0)},
+        ui_state=fit_ui_state,
     )
+
+    try:
+        proj.extra["history"] = {
+            "filename": HISTORY_FILENAME,
+            "event_count": _history_event_count(),
+        }
+    except Exception:
+        pass
+
+    try:
+        proj.extra["action_catalog"] = {
+            "entries": get_action_catalog(),
+        }
+    except Exception:
+        pass
 
     # Write both project.json (compat) and fit.json (explicit single-fit entry point)
     project_save_json(proj, project_dir)
+    hist_path = _save_history_snapshot(project_dir)
+    _record_history(
+        action_type="fit_save",
+        summary=f"save fit '{fit_name}' to '{project_dir}'",
+        payload={
+            "project_dir": project_dir,
+            "fit_name": fit_name,
+            "history_file": str(hist_path) if hist_path is not None else None,
+        },
+    )
+    if hist_path is not None:
+        _save_history_snapshot(project_dir)
     try:
         fit_json_path = os.path.join(project_dir, "fit.json")
         with open(fit_json_path, "w", encoding="utf-8") as f:
@@ -1185,15 +1884,20 @@ def load_fit_project(project_path: str):
     appended, then the fit group is rebuilt and its state restored.
     """
     log = chisurf.logging
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        log.error("load_fit_project: no active main window (chisurf.cs is missing)")
+        return
 
     proj = None
+    history_base_dir = None
     if project_path.endswith(".json") and os.path.isfile(project_path):
         # Accept direct fit.json/project.json paths
         try:
             with open(project_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             proj = CSProject.from_dict(data)
+            history_base_dir = os.path.dirname(project_path)
         except Exception as exc:
             log.error(f"load_fit_project: failed to read {project_path}: {exc}")
             return
@@ -1204,9 +1908,18 @@ def load_fit_project(project_path: str):
             return
         try:
             proj = project_load_json(base_dir)
+            history_base_dir = base_dir
         except Exception as exc:
             log.error(f"load_fit_project: failed to read project.json from {base_dir}: {exc}")
             return
+
+    # Append project-local history to current session history (fit import is additive).
+    history_loaded = False
+    try:
+        if history_base_dir:
+            history_loaded = bool(_load_history_snapshot(history_base_dir, replace=False))
+    except Exception:
+        pass
 
     # --- Reconstruct datasets and append to existing imports ---------------
     dataset_objects: typing.Dict[str, chisurf.data.DataCurve] = {}
@@ -1329,6 +2042,26 @@ def load_fit_project(project_path: str):
     except Exception:
         pass
 
+    try:
+        fit_ui_state = proj.ui_state or {}
+        history_browser_state = fit_ui_state.get("history_browser") or {}
+        history_browser = getattr(cs, "historyBrowser", None)
+        set_hist_state = getattr(history_browser, "set_ui_state", None)
+        if callable(set_hist_state) and isinstance(history_browser_state, dict):
+            set_hist_state(history_browser_state)
+    except Exception:
+        pass
+
+    _refresh_history_browser()
+    _record_history(
+        action_type="fit_load",
+        summary=f"load fit project from '{project_path}'",
+        payload={
+            "project_path": str(project_path),
+            "history_loaded": bool(history_loaded),
+        },
+    )
+
 
 def load_project(project_path: str):
     """Load a project from a JSON-based project folder.
@@ -1346,7 +2079,10 @@ def load_project(project_path: str):
     """
 
     log = chisurf.logging
-    cs = chisurf.cs
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        log.error("load_project: no active main window (chisurf.cs is missing)")
+        return
 
     if not os.path.isdir(project_path):
         log.error(f"Project path {project_path} does not exist")
@@ -1357,6 +2093,13 @@ def load_project(project_path: str):
     except Exception as exc:
         log.error(f"load_project: failed to read project.json from {project_path}: {exc}")
         return
+
+    # Full project load replaces current operation history when available.
+    history_loaded = False
+    try:
+        history_loaded = bool(_load_history_snapshot(project_path, replace=True))
+    except Exception:
+        pass
 
     try:
         reinit = getattr(cs, "reinitialize", None)
@@ -1460,15 +2203,76 @@ def load_project(project_path: str):
                 except Exception as e_exp:
                     log.warning(f"load_project: could not attach experiment to dataset {ds_id}: {e_exp}")
 
-            # Register datasets directly; we avoid calling core_data.add_dataset
-            # here to keep project loading independent of per-reader grouping
-            # logic and to prevent creation of tuple-based ExperimentDataGroups.
             dataset_objects[ds_id] = dc
-            chisurf.imported_datasets.append(dc)
-            dataset_indices[ds_id] = len(chisurf.imported_datasets) - 1
         except Exception as exc:
             log.warning(f"load_project: could not reconstruct dataset {ds_id}: {exc}")
             continue
+
+    # Rebuild dataset tree/list (including grouped datasets) if a layout
+    # snapshot is available; otherwise fall back to plain flat curves.
+    dataset_layout = ui_state.get("dataset_layout")
+    restored_datasets: typing.List[typing.Any] = []
+    used_dataset_ids: typing.Set[str] = set()
+
+    if isinstance(dataset_layout, list) and dataset_layout:
+        for rec in dataset_layout:
+            if not isinstance(rec, dict):
+                continue
+            kind = rec.get("kind")
+
+            if kind == "dataset":
+                ds_id = rec.get("dataset_id")
+                dc = dataset_objects.get(ds_id)
+                if dc is None:
+                    continue
+                dataset_indices[ds_id] = len(restored_datasets)
+                restored_datasets.append(dc)
+                used_dataset_ids.add(ds_id)
+                continue
+
+            if kind == "group":
+                member_ids = rec.get("dataset_ids")
+                if not isinstance(member_ids, list):
+                    continue
+                members = [dataset_objects.get(ds_id) for ds_id in member_ids]
+                members = [dc for dc in members if dc is not None]
+                if not members:
+                    continue
+
+                group_class = chisurf.data.ExperimentDataCurveGroup
+                if rec.get("group_type") == "ExperimentDataGroup":
+                    group_class = chisurf.data.ExperimentDataGroup
+                try:
+                    group_obj = group_class(members)
+                except Exception:
+                    group_obj = chisurf.data.ExperimentDataCurveGroup(members)
+
+                group_name = rec.get("name")
+                if isinstance(group_name, str) and group_name:
+                    group_obj.__dict__["name"] = group_name
+
+                try:
+                    current_idx = int(rec.get("current_dataset_index", 0))
+                except Exception:
+                    current_idx = 0
+                if 0 <= current_idx < len(group_obj):
+                    group_obj._current_dataset = current_idx
+
+                dataset_idx = len(restored_datasets)
+                restored_datasets.append(group_obj)
+                for ds_id in member_ids:
+                    if ds_id in dataset_objects:
+                        dataset_indices[ds_id] = dataset_idx
+                        used_dataset_ids.add(ds_id)
+
+    # Append any datasets missing from layout (backstop for partial records).
+    for ds_id, dc in dataset_objects.items():
+        if ds_id in used_dataset_ids:
+            continue
+        dataset_indices[ds_id] = len(restored_datasets)
+        restored_datasets.append(dc)
+
+    chisurf.imported_datasets[:] = restored_datasets
 
     try:
         cs.dataset_selector.update()
@@ -1498,6 +2302,17 @@ def load_project(project_path: str):
             idx = dataset_indices.get(ds_id)
             if idx is not None:
                 group_indices.append(idx)
+
+        # Keep first occurrence order while removing duplicates; grouped
+        # datasets intentionally map multiple local fits to one dataset index.
+        deduped_indices: typing.List[int] = []
+        seen_indices: typing.Set[int] = set()
+        for idx in group_indices:
+            if idx in seen_indices:
+                continue
+            seen_indices.add(idx)
+            deduped_indices.append(idx)
+        group_indices = deduped_indices
 
         if not group_indices:
             log.warning(f"load_project: fit record {key} has no valid datasets; skipping")
@@ -1592,6 +2407,15 @@ def load_project(project_path: str):
                     restore_mdi(ba)
                 except Exception:
                     pass
+
+        history_browser_state = ui_state.get("history_browser") or {}
+        history_browser = getattr(cs, "historyBrowser", None)
+        set_hist_state = getattr(history_browser, "set_ui_state", None)
+        if callable(set_hist_state) and isinstance(history_browser_state, dict):
+            try:
+                set_hist_state(history_browser_state)
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -1600,5 +2424,15 @@ def load_project(project_path: str):
         cs.update()
     except Exception:
         pass
+
+    _refresh_history_browser()
+    _record_history(
+        action_type="project_load",
+        summary=f"load project from '{project_path}'",
+        payload={
+            "project_path": str(project_path),
+            "history_loaded": bool(history_loaded),
+        },
+    )
 
     log.info(f"Project loaded from {project_path}")

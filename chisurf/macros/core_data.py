@@ -13,9 +13,68 @@ import chisurf.gui
 import chisurf.gui.widgets
 
 from chisurf import typing, logging
+from chisurf.data import DataGroup, ExperimentDataGroup, ExperimentDataCurveGroup
+from chisurf.runtime.actions import record_action
 
 
-def group_datasets(dataset_indices: typing.List[int]) -> None:
+def _record_history(
+        action_type: str,
+        summary: str,
+        payload: typing.Optional[typing.Dict[str, typing.Any]] = None,
+) -> None:
+    try:
+        record_action(action_type=action_type, summary=summary, payload=payload)
+    except Exception:
+        pass
+
+
+def _flatten_dataset(dataset: chisurf.base.Data) -> typing.List[chisurf.base.Data]:
+    result: typing.List[chisurf.base.Data] = []
+    seen: typing.Set[int] = set()
+    stack = [dataset]
+    while stack:
+        current = stack.pop()
+        if current is None:
+            continue
+        uid = id(current)
+        if uid in seen:
+            continue
+        seen.add(uid)
+        result.append(current)
+        if isinstance(current, (DataGroup, ExperimentDataGroup, ExperimentDataCurveGroup)):
+            stack.extend(current)
+    return result
+
+
+def _fit_uses_dataset(fit: chisurf.fitting.fit.Fit, datasets: typing.List[chisurf.base.Data]) -> bool:
+    dataset_ids = {id(d) for d in datasets}
+    for data_obj in _iter_fit_data(fit):
+        if data_obj is None:
+            continue
+        if id(data_obj) in dataset_ids:
+            return True
+    return False
+
+
+def _iter_fit_data(fit: chisurf.fitting.fit.Fit) -> typing.Iterator[chisurf.base.Data | None]:
+    grouped = getattr(fit, 'grouped_fits', None)
+    if isinstance(grouped, (list, tuple)):
+        for member in grouped:
+            yield getattr(member, 'data', None)
+    yield getattr(fit, 'data', None)
+
+
+def group_datasets(
+        dataset_indices: typing.List[int],
+        _from_controller: bool = False,
+) -> None:
+    if not _from_controller:
+        chisurf.action_controller.execute(
+            name="dataset.group",
+            payload={"dataset_indices": [int(i) for i in dataset_indices]},
+        )
+        return
+
     selected_data = [
         chisurf.imported_datasets[i] for i in dataset_indices
     ]
@@ -39,37 +98,211 @@ def group_datasets(dataset_indices: typing.List[int]) -> None:
             dn.append(d)
     dn.append(dg)
     chisurf.imported_datasets = dn
+    _record_history(
+        action_type="dataset_group",
+        summary=f"group datasets into '{getattr(dg, 'name', 'Data-Group')}'",
+        payload={
+            "dataset_indices": [int(i) for i in dataset_indices],
+            "group_size": int(len(dg)),
+            "group_name": str(getattr(dg, "name", "Data-Group")),
+            "group_uid": str(getattr(dg, "unique_identifier", "")),
+            "member_uids": [str(getattr(d, "unique_identifier", "")) for d in list(selected_data)],
+        },
+    )
 
 
-def remove_datasets(dataset_indices: typing.List[int]) -> None:
+def ungroup_datasets(
+        dataset_indices: typing.List[int],
+        _from_controller: bool = False,
+) -> None:
+    if not _from_controller:
+        chisurf.action_controller.execute(
+            name="dataset.ungroup",
+            payload={"dataset_indices": [int(i) for i in list(dataset_indices or [])]},
+        )
+        return
+
+    if not isinstance(dataset_indices, list):
+        dataset_indices = [dataset_indices]
+    idx_set = {int(i) for i in dataset_indices if isinstance(i, (int, float))}
+    if not idx_set:
+        return
+
+    new_imported: typing.List[chisurf.base.Data] = []
+    group_names: typing.List[str] = []
+    group_uids: typing.List[str] = []
+    expanded_members = 0
+    expanded_names: typing.List[str] = []
+    expanded_uids: typing.List[str] = []
+
+    for i, d in enumerate(chisurf.imported_datasets):
+        if i in idx_set and isinstance(d, chisurf.data.ExperimentDataGroup):
+            try:
+                group_names.append(str(getattr(d, "name", f"group_{i}")))
+            except Exception:
+                group_names.append(f"group_{i}")
+            try:
+                group_uids.append(str(getattr(d, "unique_identifier", "")))
+            except Exception:
+                group_uids.append("")
+            members = list(d)
+            expanded_members += len(members)
+            for member in members:
+                try:
+                    member_name = str(getattr(member, "name", ""))
+                except Exception:
+                    member_name = ""
+                if member_name:
+                    expanded_names.append(member_name)
+                try:
+                    expanded_uids.append(str(getattr(member, "unique_identifier", "")))
+                except Exception:
+                    expanded_uids.append("")
+            new_imported.extend(members)
+        else:
+            new_imported.append(d)
+
+    if not group_names:
+        return
+
+    chisurf.imported_datasets = new_imported
+    _record_history(
+        action_type="dataset_ungroup",
+        summary=f"ungroup {len(group_names)} dataset group(s)",
+        payload={
+            "dataset_indices": sorted(idx_set),
+            "group_names": group_names,
+            "group_uids": group_uids,
+            "group_count": int(len(group_names)),
+            "expanded_member_count": int(expanded_members),
+            "expanded_names": expanded_names,
+            "expanded_uids": expanded_uids,
+        },
+    )
+
+
+def remove_datasets(
+        dataset_indices: typing.List[int],
+        _from_controller: bool = False,
+) -> None:
+    if not _from_controller:
+        chisurf.action_controller.execute(
+            name="dataset.remove",
+            payload={"dataset_indices": [int(i) for i in list(dataset_indices or [])]},
+        )
+        return
+
     if not isinstance(dataset_indices, list):
         dataset_indices = [dataset_indices]
 
-    imported_datasets = list()
-    for i, d in enumerate(chisurf.imported_datasets):
-        if d.name == 'Global Dataset':
-            imported_datasets.append(d)
+    dataset_indices = sorted(set(dataset_indices))
+    actual_indices: typing.List[int] = []
+    removed_names: typing.List[str] = []
+    removed_uids: typing.List[str] = []
+    to_remove: typing.List[chisurf.base.Data] = []
+    for i in dataset_indices:
+        if i < 0 or i >= len(chisurf.imported_datasets):
             continue
-        if i not in dataset_indices:
-            imported_datasets.append(d)
-        else:
-            fw = list()
-            for fit_window in chisurf.gui.fit_windows:
-                if fit_window.fit.data is d:
-                    fit_window.close_confirm = False
-                    fit_window.close()
-                else:
-                    fw.append(fit_window)
-            chisurf.gui.fit_windows = fw
+        d = chisurf.imported_datasets[i]
+        if getattr(d, 'name', '') == 'Global Dataset':
+            continue
+        actual_indices.append(i)
+        to_remove.append(d)
+        try:
+            removed_names.append(str(getattr(d, "name", f"dataset_{i}")))
+        except Exception:
+            removed_names.append(f"dataset_{i}")
+        try:
+            removed_uids.append(str(getattr(d, "unique_identifier", "")))
+        except Exception:
+            removed_uids.append("")
 
-    chisurf.imported_datasets = imported_datasets
+    if not actual_indices:
+        return
+
+    datasets_to_remove: typing.List[chisurf.base.Data] = []
+    seen_ids: typing.Set[int] = set()
+    for dataset in to_remove:
+        for entry in _flatten_dataset(dataset):
+            uid = id(entry)
+            if uid in seen_ids:
+                continue
+            seen_ids.add(uid)
+            datasets_to_remove.append(entry)
+
+    dependent_fit_indices = [
+        idx for idx, fit in enumerate(list(chisurf.fits))
+        if _fit_uses_dataset(fit, datasets_to_remove)
+    ]
+
+    message = (
+        f"Remove {len(actual_indices)} dataset(s)?"
+        f"\nDependent fits to close: {len(dependent_fit_indices)}."
+        f"\nPlease confirm to proceed."
+    )
+    cs = getattr(chisurf, 'cs', None)
+    proceed = True
+    if cs is not None:
+        reply = chisurf.gui.QtWidgets.QMessageBox.question(
+            cs,
+            "Remove dataset(s)",
+            message,
+            chisurf.gui.QtWidgets.QMessageBox.Yes | chisurf.gui.QtWidgets.QMessageBox.No,
+            chisurf.gui.QtWidgets.QMessageBox.No,
+        )
+        proceed = reply == chisurf.gui.QtWidgets.QMessageBox.Yes
+    else:
+        logging.info("""Removing datasets without GUI confirmation: %s""", message)
+
+    if not proceed:
+        return
+
+    if dependent_fit_indices:
+        old_confirm = chisurf.settings.gui.get('confirm_close_fit', True)
+        chisurf.settings.gui['confirm_close_fit'] = False
+        try:
+            for idx in sorted(dependent_fit_indices, reverse=True):
+                chisurf.action_controller.execute(
+                    name="fit.close",
+                    payload={"idx": int(idx)},
+                )
+        finally:
+            chisurf.settings.gui['confirm_close_fit'] = old_confirm
+
+    actual_idx_set = set(actual_indices)
+    new_imported = []
+    for i, d in enumerate(chisurf.imported_datasets):
+        if i not in actual_idx_set:
+            new_imported.append(d)
+    chisurf.imported_datasets = new_imported
+    _record_history(
+        action_type="dataset_remove",
+        summary=f"remove {len(removed_names)} dataset(s)",
+        payload={
+            "dataset_indices": [int(i) for i in actual_indices],
+            "removed_names": removed_names,
+            "removed_uids": removed_uids,
+            "removed_count": int(len(removed_names)),
+        },
+    )
 
 
 def add_dataset(
         experiment_reader: chisurf.experiments.core.reader.ExperimentReader = None,
         dataset: chisurf.base.Data = None,
+        _from_controller: bool = False,
         **kwargs
 ) -> None:
+    if not _from_controller:
+        payload = dict(kwargs)
+        payload["experiment_reader"] = experiment_reader
+        payload["dataset"] = dataset
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload=payload,
+        )
+        return
+
     try:
         cs = getattr(chisurf, 'cs', None)
 
@@ -242,6 +475,36 @@ def add_dataset(
         except Exception:
             pass
 
+        loaded_names: typing.List[str] = []
+        loaded_uids: typing.List[str] = []
+        try:
+            if is_experiment_group:
+                loaded_names.append(str(getattr(dataset_group, "name", "ExperimentDataGroup")))
+                loaded_uids.append(str(getattr(dataset_group, "unique_identifier", "")))
+            elif len(dataset_group) == 1:
+                loaded_names.append(str(getattr(dataset_group[0], "name", "dataset")))
+                loaded_uids.append(str(getattr(dataset_group[0], "unique_identifier", "")))
+            else:
+                for d in dataset_group:
+                    loaded_names.append(str(getattr(d, "name", "dataset")))
+                    loaded_uids.append(str(getattr(d, "unique_identifier", "")))
+        except Exception:
+            loaded_names = []
+            loaded_uids = []
+
+        _record_history(
+            action_type="dataset_add",
+            summary=f"add dataset(s): {', '.join(loaded_names) if loaded_names else 'unknown'}",
+            payload={
+                "filename": primary_filename,
+                "reader": getattr(experiment_reader, "name", type(experiment_reader).__name__) if experiment_reader is not None else None,
+                "loaded_names": loaded_names,
+                "loaded_uids": loaded_uids,
+                "loaded_count": int(len(loaded_names)),
+                "is_experiment_group": bool(is_experiment_group),
+            },
+        )
+
     except Exception as e:
         # Capture the full error trace
         error_trace = traceback.format_exc()
@@ -269,6 +532,14 @@ def reinitialize_application(
         Callback function for progress updates with signature (step_name, progress_value)
     """
     import gc
+
+    _record_history(
+        action_type="app_reinitialize_start",
+        summary="start application reinitialize",
+        payload={
+            "has_main_window": bool(main_window is not None),
+        },
+    )
     
     log = getattr(chisurf, 'logging', None)
 
@@ -373,7 +644,9 @@ def reinitialize_application(
         """Clean only specific chisurf references safely"""
         try:
             # Only clean specific, known chisurf attributes
-            refs_to_clean = ['cs', 'current_dataset', 'current_fit']
+            # Keep `cs` alive: it is the main-window anchor used by project
+            # save/load and many macros. Removing it breaks close->open cycles.
+            refs_to_clean = ['current_dataset', 'current_fit']
             for ref_name in refs_to_clean:
                 if hasattr(chisurf, ref_name):
                     try:
@@ -430,8 +703,17 @@ def reinitialize_application(
 
     _run('Resetting application state', _reset_state, 8)
     _run('Cleaning up references', _cleanup_specific_references, 9)
+    _run('Restoring main window reference', lambda: setattr(chisurf, 'cs', main_window) if main_window is not None else None, 9)
     _run('Force garbage collection', _force_garbage_collection, 10)
     _run('Resetting GUI components', _reset_gui_components, 10)
+
+    _record_history(
+        action_type="app_reinitialize_finish",
+        summary="finish application reinitialize",
+        payload={
+            "has_main_window": bool(main_window is not None),
+        },
+    )
 
 
 def _auto_reader_from_filename(filename: str):

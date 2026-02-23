@@ -140,7 +140,10 @@ def open_recent_project(window, project_dir: str) -> None:
         pass
 
     try:
-        chisurf.macros.core_fit.load_project(project_path=path.as_posix())
+        chisurf.action_controller.execute(
+            name="project.load",
+            payload={"project_path": path.as_posix()},
+        )
     except Exception:
         try:
             logging.exception(f"Failed to load recent project: {path}")
