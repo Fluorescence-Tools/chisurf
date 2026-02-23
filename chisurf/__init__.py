@@ -129,4 +129,34 @@ def __getattr__(name: str):
         value = getattr(settings_module, "verbose", verbose)
         globals()["verbose"] = value
         return value
+    if name == "history":
+        mod = importlib.import_module("chisurf.history")
+        value = mod.OperationHistory()
+        globals()["history"] = value
+        return value
+    if name == "action_dispatcher":
+        mod = importlib.import_module("chisurf.runtime.actions")
+        value = mod.build_default_dispatcher(history_provider=lambda: getattr(sys.modules[__name__], "history", None))
+        globals()["action_dispatcher"] = value
+        return value
+    if name == "action_registry":
+        dispatcher = __getattr__("action_dispatcher")
+        value = getattr(dispatcher, "registry", None)
+        globals()["action_registry"] = value
+        return value
+    if name == "action_catalog":
+        mod = importlib.import_module("chisurf.runtime.actions")
+        value = mod.get_action_catalog
+        globals()["action_catalog"] = value
+        return value
+    if name == "action_execute":
+        mod = importlib.import_module("chisurf.runtime.actions")
+        value = mod.invoke_action
+        globals()["action_execute"] = value
+        return value
+    if name == "action_controller":
+        mod = importlib.import_module("chisurf.controllers.action_controller")
+        value = mod.ActionController()
+        globals()["action_controller"] = value
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
