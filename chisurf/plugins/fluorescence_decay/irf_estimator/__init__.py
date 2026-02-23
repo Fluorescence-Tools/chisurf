@@ -24,7 +24,7 @@ Reference:
     identification from fluorescence decays." Biophysical Reports, 4(2), 100155.
 """
 
-name = "Spectroscopy:Fluorescence decay:IRF Estimator"
+name = "Spectroscopy:Fluorescence decay:IRF Extraction"
 
 import sys
 import os
@@ -1030,21 +1030,32 @@ class IRFEstimatorPlugin(QWidget):
 
         # Set up ChiSurf experiment settings for TCSPC data
         if CHISURF_AVAILABLE and hasattr(chisurf, 'cs'):
-            cs = chisurf.cs
-
             # Configure the current setup for IRF data
-            cs.current_experiment = 'TCSPC'
-            cs.current_setup.is_jordi = True
-            cs.current_setup.use_header = False
-            cs.current_setup.matrix_columns = []
-            cs.current_setup.g_factor = 1.0  # Default g-factor for IRF
-            cs.current_setup.polarization = 'V'  # Default polarization for IRF
-            cs.current_setup.rep_rate = 10.0  # Will be updated by ChiSurf
-            cs.current_setup.rebin = (1, 1)  # No rebinning
-            cs.current_setup.dt = float(self.dt)  # Ensure dt is a float
+            chisurf.action_controller.execute(
+                name="experiment.set",
+                payload={"name": "TCSPC"},
+            )
+            chisurf.action_controller.execute(
+                name="setup.params.set",
+                payload={
+                    "params": {
+                        "is_jordi": True,
+                        "use_header": False,
+                        "matrix_columns": [],
+                        "g_factor": 1.0,
+                        "polarization": "V",
+                        "rep_rate": 10.0,
+                        "rebin": (1, 1),
+                        "dt": float(self.dt),
+                    }
+                },
+            )
 
             # Add the IRF dataset to ChiSurf
-            chisurf.macros.add_dataset(filename=tmp_path)
+            chisurf.action_controller.execute(
+                name="dataset.add",
+                payload={"filename": tmp_path},
+            )
 
             # Show success message
             QMessageBox.information(

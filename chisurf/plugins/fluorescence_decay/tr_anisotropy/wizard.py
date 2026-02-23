@@ -434,10 +434,13 @@ class ChisurfWizard(QtWidgets.QWizard):
         model_kw = dict()
         model_kw.update(self.correction_factors)
 
-        chisurf.macros.core_fit.add_fit(
-            model_name='Lifetime fit',
-            dataset_indices=[n - 2, n - 1],
-            model_kw=model_kw
+        chisurf.action_controller.execute(
+            name="fit.add",
+            payload={
+                "model_name": "Lifetime fit",
+                "dataset_indices": [n - 2, n - 1],
+                "model_kw": model_kw,
+            },
         )
         self.fit_vv = chisurf.fits[-2]
         self.fit_vh = chisurf.fits[-1]
@@ -478,7 +481,13 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         # Create Global fit and add vv, vh fit
         #######################################
-        chisurf.macros.core_fit.add_fit(model_name='Global fit', dataset_indices=[0])
+        chisurf.action_controller.execute(
+            name="fit.add",
+            payload={
+                "model_name": "Global fit",
+                "dataset_indices": [0],
+            },
+        )
 
         self.global_fit = chisurf.fits[-1]
         self.global_fit.model.append_fit(self.fit_vv)
@@ -696,7 +705,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.actionRemove_Lifetime.triggered.connect(self.wizardPageComponents.completeChanged.emit)
         self.actionRemove_Rotation.triggered.connect(self.wizardPageComponents.completeChanged.emit)
 
-    @chisurf.gui.decorators.init_with_ui("tr_anisotropy/wizard.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("fluorescence_decay/tr_anisotropy/wizard.ui", path=chisurf.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         self.irf_bg_range_plot = pg.PlotWidget()
         self.region = pg.LinearRegionItem()

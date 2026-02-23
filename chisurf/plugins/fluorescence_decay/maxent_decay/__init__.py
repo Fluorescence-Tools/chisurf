@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-name = "Spectroscopy:Fluorescence decay:MEM"
+name = "Spectroscopy:Fluorescence decay:MaxEnt Method"
 
 
 def load():
