@@ -18,9 +18,12 @@ def add_fits_for_datasets(window, data_idx, model_name: str):
             return
         idx = indices.pop(0)
         try:
-            chisurf.macros.core_fit.add_fit(
-                dataset_indices=[idx],
-                model_name=model_name,
+            chisurf.action_controller.execute(
+                name="fit.add",
+                payload={
+                    "dataset_indices": [idx],
+                    "model_name": model_name,
+                },
             )
         except Exception as e:
             msg = f"Add fit failed for dataset index {idx} with model '{model_name}': {e}"

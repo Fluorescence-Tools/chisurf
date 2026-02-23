@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 import typing
 import pathlib
 import textwrap
@@ -20,9 +21,95 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets import Controller
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
+from chisurf.runtime.actions import record_action
 
 
 class FittingControllerWidget(Controller):
+
+    def _collect_parameter_snapshot(self) -> typing.List[typing.Dict[str, typing.Any]]:
+        snapshot: typing.List[typing.Dict[str, typing.Any]] = []
+        try:
+            fit_group_name = str(getattr(self.fit, "name", ""))
+            local_fits = list(getattr(self.fit, "grouped_fits", []))
+            if not local_fits:
+                local_fits = [self.fit]
+            for local_fit in local_fits:
+                local_fit_name = str(getattr(local_fit, "name", ""))
+                model = getattr(local_fit, "model", None)
+                if model is None:
+                    continue
+                for param in getattr(model, "parameters_all", []):
+                    try:
+                        bounds = getattr(param, "bounds", None)
+                        if isinstance(bounds, (tuple, list)) and len(bounds) == 2:
+                            lb = float(bounds[0])
+                            ub = float(bounds[1])
+                        else:
+                            lb = None
+                            ub = None
+                    except Exception:
+                        lb = None
+                        ub = None
+                    snapshot.append({
+                        "fit_group": fit_group_name,
+                        "local_fit": local_fit_name,
+                        "parameter_name": str(getattr(param, "name", "")),
+                        "value": float(getattr(param, "value", 0.0)),
+                        "fixed": bool(getattr(param, "fixed", False)),
+                        "bounds_on": bool(getattr(param, "bounds_on", False)),
+                        "lower": lb,
+                        "upper": ub,
+                    })
+        except Exception:
+            return []
+        return snapshot
+
+    def _collect_fit_range_snapshot(self) -> typing.List[typing.Dict[str, typing.Any]]:
+        snapshot: typing.List[typing.Dict[str, typing.Any]] = []
+        try:
+            fit_group_name = str(getattr(self.fit, "name", ""))
+            local_fits = list(getattr(self.fit, "grouped_fits", []))
+            if not local_fits:
+                local_fits = [self.fit]
+            for local_fit in local_fits:
+                xmin, xmax = getattr(local_fit, "fit_range", (None, None))
+                snapshot.append({
+                    "fit_group": fit_group_name,
+                    "local_fit": str(getattr(local_fit, "name", "")),
+                    "xmin": int(xmin),
+                    "xmax": int(xmax),
+                })
+        except Exception:
+            return []
+        return snapshot
+
+    def _record_history(self, action_type: str, summary: str, payload: typing.Optional[typing.Dict[str, typing.Any]] = None) -> None:
+        try:
+            source_uid = str(getattr(self.fit, "unique_identifier", ""))
+            if str(action_type) in {"fit_run_start", "fit_run_finish", "fit_run_abort"}:
+                chisurf.action_controller.execute(
+                    name=str(action_type).replace("_", "."),
+                    payload=payload or {},
+                    context={
+                        "action_type": str(action_type),
+                        "summary": str(summary),
+                        "source_uid": source_uid or None,
+                    },
+                )
+                return
+            record_action(
+                action_type=action_type,
+                summary=summary,
+                payload=payload,
+                source_uid=source_uid or None,
+            )
+            return
+        except Exception:
+            pass
+        try:
+            chisurf.logging.info(f"# HIST {action_type}: {summary}")
+        except Exception:
+            pass
 
     @property
     def selected_fit(self) -> int:
@@ -86,8 +173,19 @@ class FittingControllerWidget(Controller):
 
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
-        self.fit.data = dataset
-        self.fit.update()
+        try:
+            fit_index = chisurf.fits.index(self.fit)
+            dataset_index = chisurf.imported_datasets.index(dataset)
+            chisurf.action_controller.execute(
+                name="fit.set_dataset",
+                payload={
+                    "fit_index": int(fit_index),
+                    "dataset_index": int(dataset_index),
+                },
+            )
+        except Exception:
+            self.fit.data = dataset
+            self.fit.update()
         full_name = os.path.basename(
             getattr(dataset, 'name', getattr(dataset, 'filename', ''))
         )
@@ -190,6 +288,27 @@ class FittingControllerWidget(Controller):
         if hide_fitting:
             self.hide()
 
+        try:
+            self._install_code_badge()
+        except Exception:
+            pass
+
+    def _install_code_badge(self):
+        """Install a code badge for dev mode source jumping."""
+        try:
+            import chisurf.settings
+            if not chisurf.settings.is_dev_mode():
+                return
+            if hasattr(self, '_chisurf_code_badge_installed'):
+                return
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import resolve_fit_window_source
+            resolver = lambda: resolve_fit_window_source(self)
+            install_code_badge(self, resolver, corner='top-right', margin=4)
+            self._chisurf_code_badge_installed = True
+        except Exception:
+            pass
+
     def _result_changed(self):
         result_idx = self.spinBox_3.value() - 1
         chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].set_result_idx({result_idx})")
@@ -210,8 +329,36 @@ class FittingControllerWidget(Controller):
             chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
             chisurf.logging.info("Sampling done!")
 
-    def onRunFit(self):
-        chisurf.logging.info(f"Please wait fitting: {self.fit.name}")
+    def _run_fit_impl(self):
+        try:
+            fit_name = str(getattr(self.fit, "name", ""))
+        except Exception:
+            fit_name = ""
+        chisurf.logging.info(f"Please wait fitting: {fit_name}")
+
+        try:
+            wrapped_name = chisurf.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
+        except Exception:
+            wrapped_name = fit_name
+        if "\n" in wrapped_name:
+            base_label = f"Fitting:\n{wrapped_name}"
+        else:
+            base_label = f"Fitting {wrapped_name}..." if wrapped_name else "Fitting..."
+        t0 = time.perf_counter()
+        before_snapshot = self._collect_parameter_snapshot()
+        before_fit_range = self._collect_fit_range_snapshot()
+        self._record_history(
+            action_type="fit_run_start",
+            summary=f"start fit run: {fit_name}",
+            payload={
+                "fit_name": fit_name,
+                "local_first": bool(self.local_first),
+                "n_steps": int(self.n_steps),
+                "n_runs": int(self.n_runs),
+                "parameter_snapshot_before": before_snapshot,
+                "fit_range_snapshot_before": before_fit_range,
+            },
+        )
 
         dialog = None
         success = False
@@ -220,7 +367,7 @@ class FittingControllerWidget(Controller):
             try:
                 dialog = chisurf.gui.widgets.progress.EnhancedProgressDialog(
                     title="Fitting",
-                    label_text=f"Fitting {self.fit.name}...",
+                    label_text=base_label,
                     min_value=0,
                     max_value=100,
                     parent=self,
@@ -276,12 +423,7 @@ class FittingControllerWidget(Controller):
                     value = int(round(100.0 * frac))
                 # Build an informative status line including objective values
                 # when available.
-                try:
-                    base_label = f"Fitting {self.fit.name}..."
-                except Exception:
-                    base_label = "Fitting..."
-
-                parts = [base_label, f"eval {done}/{int(total) if total else '?'}"]
+                parts = [f"eval {done}/{int(total) if total else '?'}"]
                 if chi2 is not None:
                     try:
                         parts.append(f"chi2={float(chi2):.3g}")
@@ -293,7 +435,7 @@ class FittingControllerWidget(Controller):
                     except Exception:
                         pass
 
-                label_text = "  |  ".join(parts)
+                label_text = base_label + "\n" + "  |  ".join(parts)
 
                 try:
                     dialog.update_progress(value, text=label_text)
@@ -332,16 +474,42 @@ class FittingControllerWidget(Controller):
             if dialog is not None:
                 try:
                     final_text = "Fitting finished!" if success else "Fitting aborted."
+                    # Close immediately by default; user can override via settings.
                     try:
-                        delay_ms = int(chisurf.settings.gui.get('fit_progress_close_delay_ms', 500))
+                        delay_ms = int(chisurf.settings.gui.get('fit_progress_close_delay_ms', 0))
                     except Exception:
-                        delay_ms = 500
+                        delay_ms = 0
                     dialog.finish(final_text=final_text, auto_close=True, close_delay_ms=delay_ms)
                 except Exception:
                     try:
                         dialog.finalize(force_auto_close=True)
                     except Exception:
                         pass
+
+        elapsed_ms = int(round((time.perf_counter() - t0) * 1000.0))
+        after_snapshot = self._collect_parameter_snapshot()
+        after_fit_range = self._collect_fit_range_snapshot()
+        self._record_history(
+            action_type="fit_run_finish" if success else "fit_run_abort",
+            summary=(
+                f"fit {'finished' if success else 'aborted'}: {self.fit.name} "
+                f"({elapsed_ms} ms)"
+            ),
+            payload={
+                "fit_name": str(getattr(self.fit, "name", "")),
+                "success": bool(success),
+                "elapsed_ms": int(elapsed_ms),
+                "result_count": int(len(getattr(self.fit, "results", []))),
+                "parameter_snapshot_after": after_snapshot,
+                "fit_range_snapshot_after": after_fit_range,
+            },
+        )
+
+    def onRunFit(self):
+        chisurf.action_controller.execute(
+            name="fit.run.execute",
+            payload={"fit_controller": self},
+        )
 
     @property
     def xmin(self):
@@ -399,6 +567,28 @@ class FittingControllerWidget(Controller):
         if getattr(self, '_auto_fit_range_in_progress', False):
             return
         self.fit.update()
+        try:
+            payload = {
+                "fit_group": str(getattr(self.fit, "name", "")),
+                "xmin": int(self.xmin),
+                "xmax": int(self.xmax),
+                "source": "fit_controller",
+                "is_2d": bool(getattr(self, "_is_2d_dataset", False)),
+            }
+            if bool(getattr(self, "_is_2d_dataset", False)):
+                payload.update({
+                    "x_min": int(self.xmin),
+                    "x_max": int(self.xmin2),
+                    "y_min": int(self.xmax),
+                    "y_max": int(self.xmax2),
+                })
+            self._record_history(
+                action_type="fit_range_set",
+                summary=f"set fit range for '{getattr(self.fit, 'name', '')}' to [{int(self.xmin)}, {int(self.xmax)})",
+                payload=payload,
+            )
+        except Exception:
+            pass
 
     def onAutoFitRange(self):
         data = getattr(self.fit, "data", None)
@@ -466,6 +656,28 @@ class FittingControllerWidget(Controller):
 
                 # Trigger a single fit update for the new range / mask
                 self.fit.update()
+                try:
+                    payload = {
+                        "fit_group": str(getattr(self.fit, "name", "")),
+                        "xmin": int(self.xmin),
+                        "xmax": int(self.xmax),
+                        "source": "auto_fit_range",
+                        "is_2d": bool(getattr(self, "_is_2d_dataset", False)),
+                    }
+                    if bool(getattr(self, "_is_2d_dataset", False)):
+                        payload.update({
+                            "x_min": int(self.xmin),
+                            "x_max": int(self.xmin2),
+                            "y_min": int(self.xmax),
+                            "y_max": int(self.xmax2),
+                        })
+                    self._record_history(
+                        action_type="fit_range_set",
+                        summary=f"auto fit range for '{getattr(self.fit, 'name', '')}' to [{int(self.xmin)}, {int(self.xmax)})",
+                        payload=payload,
+                    )
+                except Exception:
+                    pass
                 # Allow models to react to the completed auto-fit range via
                 # an optional hook. This keeps the controller generic while
                 # enabling model-specific post-processing (e.g. MaxEnt L-curves).

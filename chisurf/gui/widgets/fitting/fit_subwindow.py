@@ -206,7 +206,10 @@ class FitSubWindow(CustomMdiSubWindow):
                 QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
             )
             if reply == QtWidgets.QMessageBox.Yes:
-                chisurf.console.execute('chisurf.macros.close_fit()')
+                try:
+                    chisurf.action_controller.execute(name="fit.close", payload={})
+                except Exception:
+                    pass
                 chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.modelLayout)
                 header_layout = getattr(chisurf.cs, "analysisHeaderLayout", None)
                 if header_layout is not None:

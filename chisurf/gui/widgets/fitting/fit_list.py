@@ -71,7 +71,13 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
     def onRemoveFit(self):
         fit_idxs = [selected_index.row() for selected_index in self.selectedIndexes()]
         for fit_idx in fit_idxs:
-            chisurf.run(f'chisurf.macros.close_fit({fit_idx})')
+            try:
+                chisurf.action_controller.execute(
+                    name="fit.close",
+                    payload={"idx": int(fit_idx)},
+                )
+            except Exception:
+                pass
         self.update(update_others=True)
 
     def onSaveFit(self, event: QtCore.QEvent = None, **kwargs):

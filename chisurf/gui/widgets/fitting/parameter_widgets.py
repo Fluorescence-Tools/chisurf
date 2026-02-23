@@ -20,6 +20,7 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets import Controller
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
+from chisurf.runtime.actions import record_action
 
 parameter_settings = chisurf.settings.parameter
 
@@ -167,27 +168,51 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
 
     def _on_unlink(self):
         fp = self.controller.fitting_parameter
-        chisurf.run(
-            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].link = None\n"
-            f"chisurf.fits[{fp.fit_idx}].update()"
+        source = self.controller._parameter_context(fp)
+        fp.link = None
+        self.controller._trace_operation(
+            "parameter_unlink",
+            f"unlink parameter '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                **source,
+            },
         )
         self.controller.finalize()
+        # Update the unlinked parameter to show its own value again
+        self.controller._update_linked_parameters()
         self.refresh_from_model()
 
     def _on_fixed_toggled(self):
         fp = self.controller.fitting_parameter
-        chisurf.run(
-            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].fixed = {self.cb_fixed.isChecked()}\n"
-            f"chisurf.fits[{fp.fit_idx}].update()"
+        new_fixed = self.cb_fixed.isChecked()
+        fp.fixed = new_fixed
+        source = self.controller._parameter_context(fp)
+        self.controller._trace_operation(
+            "parameter_fixed",
+            f"set fixed={new_fixed} for parameter '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "fixed": bool(new_fixed),
+                **source,
+            },
         )
         self.controller.finalize()
+        self.refresh_from_model()
 
     def _on_bounds_on_toggled(self):
         fp = self.controller.fitting_parameter
         checked = self.cb_bounds_on.isChecked()
-        # Toggle bounds_on in the model
-        chisurf.run(
-            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds_on = {checked}"
+        fp.bounds_on = checked
+        source = self.controller._parameter_context(fp)
+        self.controller._trace_operation(
+            "parameter_bounds_on",
+            f"set bounds_on={checked} for parameter '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "bounds_on": bool(checked),
+                **source,
+            },
         )
         # Enable/disable editors immediately for better UX
         self.sb_lb.setEnabled(checked)
@@ -201,8 +226,16 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
             except Exception:
                 bounds_valid = False
             if not bounds_valid:
-                chisurf.run(
-                    f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds = ({self.sb_lb.value()}, {self.sb_ub.value()})"
+                fp.bounds = (self.sb_lb.value(), self.sb_ub.value())
+                self.controller._trace_operation(
+                    "parameter_bounds_set",
+                    f"initialize bounds for parameter '{fp.name}' to ({self.sb_lb.value()}, {self.sb_ub.value()})",
+                    {
+                        "parameter_name": str(fp.name),
+                        "lower": float(self.sb_lb.value()),
+                        "upper": float(self.sb_ub.value()),
+                        **source,
+                    },
                 )
         # Refresh UI/model without risking unpack errors
         self.controller.finalize()
@@ -210,23 +243,44 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
 
     def _on_bounds_changed(self):
         fp = self.controller.fitting_parameter
-        chisurf.run(
-            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds = ({self.sb_lb.value()}, {self.sb_ub.value()})"
+        fp.bounds = (self.sb_lb.value(), self.sb_ub.value())
+        source = self.controller._parameter_context(fp)
+        self.controller._trace_operation(
+            "parameter_bounds_set",
+            f"set bounds for parameter '{fp.name}' to ({self.sb_lb.value()}, {self.sb_ub.value()}) in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "lower": float(self.sb_lb.value()),
+                "upper": float(self.sb_ub.value()),
+                **source,
+            },
         )
         self.controller.finalize()
         self.refresh_from_model()
 
     def _on_value_changed(self):
         fp = self.controller.fitting_parameter
-        chisurf.run(
-            f"parameter = chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}']\n"
-            f"fixed = parameter.fixed \n"
-            f"parameter.fixed = False\n"
-            f"parameter.value = {self.sb_value.value()} \n"
-            f"parameter.fixed = fixed\n"
-            f"chisurf.fits[{fp.fit_idx}].finalize()"
+        old_value = float(fp.value)
+        fixed = bool(getattr(fp, "fixed", False))
+        fp.fixed = False
+        fp.value = self.sb_value.value()
+        fp.fixed = fixed
+        source = self.controller._parameter_context(fp)
+        self.controller._trace_operation(
+            "parameter_value",
+            f"set value for parameter '{fp.name}' from {old_value} to {self.sb_value.value()} in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "old_value": float(old_value),
+                "new_value": float(self.sb_value.value()),
+                **source,
+            },
         )
         self.controller.finalize()
+        # Update all linked parameters to show the new value
+        self.controller._update_linked_parameters()
+        # Trigger model update to refresh plots
+        self.controller._trigger_model_update()
 
     def refresh_from_model(self):
         fp = self.controller.fitting_parameter
@@ -240,7 +294,10 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
             self.lbl_description.setText(str(desc))
         # Update link label
         if getattr(fp, 'link', None) is not None:
-            self.lbl_link.setText(f"Linked to: {fp.link.name}")
+            target_group, target_local = self.controller._locate_parameter(fp.link)
+            self.lbl_link.setText(
+                f"Linked to: {fp.link.name} ({target_group} / {target_local})"
+            )
             self.btn_unlink.setEnabled(True)
         else:
             self.lbl_link.setText("Not linked")
@@ -280,9 +337,98 @@ class FittingParameterDetailPopup(QtWidgets.QDialog):
 
 class FittingParameterWidget(Controller):
 
+    def _locate_parameter(self, parameter) -> typing.Tuple[str, str]:
+        fit_group_label = "?"
+        local_fit_label = "?"
+        try:
+            fits = getattr(chisurf, "fits", [])
+            for fit_group_idx, fit_group in enumerate(fits):
+                group_name = str(getattr(fit_group, "name", f"fit_group_{fit_group_idx}"))
+                for local_idx, local_fit in enumerate(fit_group):
+                    local_name = str(getattr(local_fit, "name", f"local_fit_{local_idx}"))
+                    model = getattr(local_fit, "model", None)
+                    if model is None:
+                        continue
+                    params = getattr(model, "parameters_all", [])
+                    for p in params:
+                        if p is parameter:
+                            return group_name, local_name
+                        try:
+                            if getattr(p, "_port", None) is getattr(parameter, "_port", object()):
+                                return group_name, local_name
+                        except Exception:
+                            pass
+            return fit_group_label, local_fit_label
+        except Exception:
+            return fit_group_label, local_fit_label
+
+    def _locate_parameter_uids(self, parameter) -> typing.Tuple[str, str, str]:
+        fit_group_uid = ""
+        local_fit_uid = ""
+        parameter_uid = str(getattr(parameter, "unique_identifier", ""))
+        try:
+            fits = getattr(chisurf, "fits", [])
+            for fit_group in fits:
+                fg_uid = str(getattr(fit_group, "unique_identifier", ""))
+                for local_fit in fit_group:
+                    lf_uid = str(getattr(local_fit, "unique_identifier", ""))
+                    model = getattr(local_fit, "model", None)
+                    if model is None:
+                        continue
+                    params = getattr(model, "parameters_all", [])
+                    for p in params:
+                        if p is parameter:
+                            return fg_uid, lf_uid, parameter_uid
+                        try:
+                            if getattr(p, "_port", None) is getattr(parameter, "_port", object()):
+                                return fg_uid, lf_uid, parameter_uid
+                        except Exception:
+                            pass
+            return fit_group_uid, local_fit_uid, parameter_uid
+        except Exception:
+            return fit_group_uid, local_fit_uid, parameter_uid
+
+    def _parameter_context(self, parameter) -> typing.Dict[str, str]:
+        group_name, local_name = self._locate_parameter(parameter)
+        group_uid, local_uid, param_uid = self._locate_parameter_uids(parameter)
+        return {
+            "fit_group": str(group_name),
+            "local_fit": str(local_name),
+            "fit_uid": str(group_uid),
+            "local_fit_uid": str(local_uid),
+            "parameter_uid": str(param_uid),
+        }
+
+    def _trace_operation(self, action_type: str, summary: str, payload: typing.Dict[str, typing.Any] = None) -> None:
+        payload_data = payload or {}
+        try:
+            source_uid = str(getattr(self.fitting_parameter, "unique_identifier", ""))
+            event = record_action(
+                action_type=str(action_type),
+                summary=str(summary),
+                payload=payload_data,
+                source_uid=source_uid,
+            )
+            if event is not None:
+                return
+        except Exception:
+            pass
+        line = f"# HIST {str(action_type)}: {str(summary)}"
+        try:
+            log_fn = getattr(chisurf, "log", None)
+            if callable(log_fn):
+                log_fn(line)
+            else:
+                chisurf.logging.info(line)
+        except Exception:
+            pass
+
     def _build_details_tooltip_text(self) -> str:
         fp = self.fitting_parameter
+        source_group, source_local = self._locate_parameter(fp)
         lines = [str(getattr(fp, 'name', ''))+":"]
+        lines.append(f"Fit: {source_group}")
+        lines.append(f"Local fit: {source_local}")
 
         try:
             desc = getattr(fp, 'description', "")
@@ -302,13 +448,10 @@ class FittingParameterWidget(Controller):
         link_param = getattr(fp, 'link', None)
         if bool(getattr(fp, 'is_linked', False)) and link_param is not None:
             target_param_name = getattr(link_param, 'name', "?")
-            try:
-                target_fit_idx = getattr(link_param, 'fit_idx', "?")
-            except Exception:
-                target_fit_idx = "?"
+            target_group, target_local = self._locate_parameter(link_param)
             lines.append("")
             lines.append(textwrap.fill(
-                f"Linked to fit '{target_fit_idx}', parameter '{target_param_name}'",
+                f"Linked to fit '{target_group}', local fit '{target_local}', parameter '{target_param_name}'",
                 width=60
             ))
         else:
@@ -335,14 +478,16 @@ class FittingParameterWidget(Controller):
 
         return "\n".join([l for l in lines if l is not None])
 
-    def make_linkcall(self, fit_idx: int, parameter_name: str):
+    def make_linkcall(self, target_parameter: chisurf.fitting.parameter.FittingParameter):
         def linkcall():
             try:
                 self.blockSignals(True)
 
-                # Fetch current and target parameters
-                param_self = chisurf.fits[self.fitting_parameter.fit_idx].model.parameters_all_dict[self.fitting_parameter.name]
-                param_other = chisurf.fits[fit_idx].model.parameters_all_dict[parameter_name]
+                param_self = self.fitting_parameter
+                param_other = target_parameter
+
+                if param_other is param_self:
+                    return
 
                 # Check for recursion using the Parameter class method
                 if param_self.check_recursive_link(param_other, param_self):
@@ -353,16 +498,33 @@ class FittingParameterWidget(Controller):
                         QtWidgets.QMessageBox.Ok
                     )
                 else:
-                    tooltip = " linked to " + parameter_name
-                    s = (
-                        f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{self.fitting_parameter.name}'].link = "
-                        f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{parameter_name}'] \n"
-                        f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()"
+                    tooltip = " linked to " + str(getattr(param_other, "name", "?"))
+                    param_self.link = param_other
+                    source_group, source_local = self._locate_parameter(param_self)
+                    target_group, target_local = self._locate_parameter(param_other)
+                    source_group_uid, source_local_uid, source_param_uid = self._locate_parameter_uids(param_self)
+                    target_group_uid, target_local_uid, target_param_uid = self._locate_parameter_uids(param_other)
+                    self._trace_operation(
+                        "parameter_link",
+                        (
+                            f"link '{param_self.name}' ({source_group}/{source_local}) -> "
+                            f"'{param_other.name}' ({target_group}/{target_local})"
+                        ),
+                        {
+                            "source_parameter": str(param_self.name),
+                            "target_parameter": str(param_other.name),
+                            "source_fit_group": source_group,
+                            "source_local_fit": source_local,
+                            "target_fit_group": target_group,
+                            "target_local_fit": target_local,
+                            "source_fit_uid": source_group_uid,
+                            "source_local_fit_uid": source_local_uid,
+                            "source_parameter_uid": source_param_uid,
+                            "target_fit_uid": target_group_uid,
+                            "target_local_fit_uid": target_local_uid,
+                            "target_parameter_uid": target_param_uid,
+                        },
                     )
-                    # Execute the link assignment in the global chisurf
-                    # context; the Parameter.link setter will update the
-                    # follower's controller state via set_linked(True).
-                    chisurf.run(s)
 
                     # Refresh this widget from the underlying parameter so it
                     # reflects the follower/linked role. The target parameter
@@ -371,6 +533,8 @@ class FittingParameterWidget(Controller):
                     self.widget_link.setToolTip(tooltip)
                     try:
                         self.finalize()
+                        # Update the linked parameter to show master's value
+                        self._update_linked_parameters()
                     except Exception:
                         pass
 
@@ -385,7 +549,7 @@ class FittingParameterWidget(Controller):
             "Link " + self.fitting_parameter.name + " to:"
         )
 
-        for fit_idx, f in enumerate(chisurf.fits):
+        for f in chisurf.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -400,7 +564,7 @@ class FittingParameterWidget(Controller):
                         if p is not self.fitting_parameter:
                             Action = action_submenu.addAction(p.name)
                             Action.triggered.connect(
-                                self.make_linkcall(fit_idx, p.name)
+                                self.make_linkcall(p)
                             )
                     submenu.addMenu(action_submenu)
                 action_submenu = QtWidgets.QMenu(submenu)
@@ -411,9 +575,9 @@ class FittingParameterWidget(Controller):
                 sorted_keys = sorted(keys)
                 for key in sorted_keys:
                     p = fs.model.parameters_all_dict[key]
-                    if p is not self:
+                    if p is not self.fitting_parameter:
                         Action = action_submenu.addAction(p.name)
-                        Action.triggered.connect(self.make_linkcall(fit_idx, p.name))
+                        Action.triggered.connect(self.make_linkcall(p))
                 submenu.addMenu(action_submenu)
 
                 menu.addMenu(submenu)
@@ -466,6 +630,24 @@ class FittingParameterWidget(Controller):
         self.fitting_parameter = fitting_parameter
         self._details_popup = None  # created lazily on first label click
         self._is_output_param = bool(getattr(fitting_parameter, "is_output", False))
+        
+        # Capture absolute fit index at creation time to avoid dynamic lookup issues
+        try:
+            self._absolute_fit_idx = fitting_parameter.fit_idx
+            # Validate the fit index
+            if not isinstance(self._absolute_fit_idx, int) or self._absolute_fit_idx < 0:
+                try:
+                    n_fits = len(chisurf.fits)
+                    if self._absolute_fit_idx == -1 and n_fits > 0:
+                        # Parameter not found in fits, use current fit as fallback
+                        self._absolute_fit_idx = getattr(chisurf, 'current_fit_idx', 0)
+                        if self._absolute_fit_idx >= n_fits:
+                            self._absolute_fit_idx = 0
+                except Exception:
+                    self._absolute_fit_idx = 0
+        except Exception:
+            self._absolute_fit_idx = 0
+        self._absolute_fit_idx = self._resolve_fit_idx(default=self._absolute_fit_idx)
 
         # Allow HTML/RichText labels (e.g. "cpm<sub>all</sub>") so that
         # parameter names can be decorated with subscripts/superscripts
@@ -595,37 +777,14 @@ class FittingParameterWidget(Controller):
         if callback:
             self.widget_value.editingFinished.connect(self.callback)
 
-        self.widget_fix.toggled.connect(
-            lambda: chisurf.run(
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['{fitting_parameter.name}'].fixed = "
-                f"{self.widget_fix.isChecked()} \n"
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].update()")
-        )
+        self.widget_fix.toggled.connect(self._on_main_fixed_toggled)
 
         # Variable is bounded
         self.widget_bounds_on.toggled.connect(self._on_main_bounds_on_toggled)
 
-        self.widget_lower_bound.editingFinished.connect(
-            lambda: chisurf.run(
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['%s'].bounds = (%s, %s)" %
-                (
-                    fitting_parameter.name,
-                    self.widget_lower_bound.value(),
-                    self.widget_upper_bound.value()
-                )
-            )
-        )
+        self.widget_lower_bound.editingFinished.connect(self._on_main_bounds_changed)
 
-        self.widget_upper_bound.editingFinished.connect(
-            lambda: chisurf.run(
-                f"chisurf.fits[{self.fitting_parameter.fit_idx}].model.parameters_all_dict['%s'].bounds = (%s, %s)" %
-                (
-                    fitting_parameter.name,
-                    self.widget_lower_bound.value(),
-                    self.widget_upper_bound.value()
-                )
-            )
-        )
+        self.widget_upper_bound.editingFinished.connect(self._on_main_bounds_changed)
 
         self.widget_link.clicked.connect(self.onLinkFitGroup)
 
@@ -633,6 +792,27 @@ class FittingParameterWidget(Controller):
             layout.addWidget(self)
         try:
             self._update_role_visuals()
+        except Exception:
+            pass
+
+        try:
+            self._install_code_badge()
+        except Exception:
+            pass
+
+    def _install_code_badge(self):
+        """Install a code badge for dev mode source jumping."""
+        try:
+            import chisurf.settings
+            if not chisurf.settings.is_dev_mode():
+                return
+            if hasattr(self, '_chisurf_code_badge_installed'):
+                return
+            from chisurf.gui.widgets.code_badge import install_code_badge
+            from chisurf.gui.devtools.source_jump import resolve_parameter_group_source
+            resolver = lambda: resolve_parameter_group_source(self)
+            install_code_badge(self, resolver, corner='top-right', margin=4)
+            self._chisurf_code_badge_installed = True
         except Exception:
             pass
 
@@ -693,13 +873,33 @@ class FittingParameterWidget(Controller):
                 bg_color = parameter_settings.get("role_color_linked")
             else:
                 bg_color = parameter_settings.get("role_color_input")
-            parts = []
-            if bg_color:
-                parts.append(f"background-color: {bg_color};")
-            if role == "linked":
-                parts.append("text-decoration: underline;")
-            style = " ".join(parts)
-            self.widget_value.setStyleSheet(style)
+
+            value_parts = []
+            label_parts = []
+
+            # Output parameters should be visually distinct even when no color
+            # is configured in settings.
+            if role == "output":
+                # Only highlight text (not the whole cell background) to avoid
+                # overly strong emphasis in dense parameter tables.
+                text_color = bg_color if bg_color else "#caa200"
+                value_parts.append(f"color: {text_color};")
+                value_parts.append("font-weight: 600;")
+                label_parts.append(f"color: {text_color};")
+                label_parts.append("font-weight: 600;")
+            elif role == "linked":
+                if bg_color:
+                    value_parts.append(f"background-color: {bg_color};")
+                value_parts.append("text-decoration: underline;")
+            else:
+                if bg_color:
+                    value_parts.append(f"background-color: {bg_color};")
+
+            self.widget_value.setStyleSheet(" ".join(value_parts))
+            try:
+                self.label.setStyleSheet(" ".join(label_parts))
+            except Exception:
+                pass
         except Exception:
             pass
 
@@ -757,7 +957,34 @@ class FittingParameterWidget(Controller):
                 # parameter via ``fp.link``. Clear the link so only this
                 # parameter becomes free again.
                 try:
+                    source_group, source_local = self._locate_parameter(fp)
+                    source_group_uid, source_local_uid, source_param_uid = self._locate_parameter_uids(fp)
+                    old_link = getattr(fp, "link", None)
+                    old_target_parameter = str(getattr(old_link, "name", "")) if old_link is not None else ""
+                    old_target_group, old_target_local = self._locate_parameter(old_link) if old_link is not None else ("", "")
+                    old_target_group_uid, old_target_local_uid, old_target_param_uid = self._locate_parameter_uids(old_link) if old_link is not None else ("", "", "")
                     fp.link = None
+                    self._trace_operation(
+                        "parameter_unlink",
+                        f"unlink parameter '{fp.name}' in fit '{source_group}' / local '{source_local}'",
+                        {
+                            "parameter_name": str(fp.name),
+                            "fit_group": source_group,
+                            "local_fit": source_local,
+                            "fit_uid": source_group_uid,
+                            "local_fit_uid": source_local_uid,
+                            "parameter_uid": source_param_uid,
+                            "old_target_parameter": old_target_parameter,
+                            "old_target_fit_group": old_target_group,
+                            "old_target_local_fit": old_target_local,
+                            "old_target_fit_uid": old_target_group_uid,
+                            "old_target_local_fit_uid": old_target_local_uid,
+                            "old_target_parameter_uid": old_target_param_uid,
+                        },
+                    )
+                    # Update link/value state and role visuals for all related rows.
+                    self._update_linked_parameters()
+                    self._refresh_group_link_visuals()
                 except Exception:
                     try:
                         chisurf.logging.warning(
@@ -770,9 +997,26 @@ class FittingParameterWidget(Controller):
                 # state as a request to link/unlink the whole fit group for
                 # this parameter name.
                 state = int(self.widget_link.checkState())
+                source_group, source_local = self._locate_parameter(fp)
+                self._trace_operation(
+                    "fit_group_link_toggle",
+                    (
+                        f"toggle fit-group linking for parameter '{fp.name}' to state={state} "
+                        f"from fit '{source_group}' / local '{source_local}'"
+                    ),
+                    {
+                        "parameter_name": str(fp.name),
+                        "state": int(state),
+                        "fit_group": source_group,
+                        "local_fit": source_local,
+                    },
+                )
                 chisurf.run(
                     f"chisurf.macros.link_fit_group('{fp.name}', {state})"
                 )
+                # After group linking/unlinking, update all affected parameters.
+                QtCore.QTimer.singleShot(100, self._update_linked_parameters)
+                QtCore.QTimer.singleShot(100, self._refresh_group_link_visuals)
 
             try:
                 self.finalize()
@@ -784,47 +1028,148 @@ class FittingParameterWidget(Controller):
     def setValue(self, v):
         self.widget_value.setValue(v)
 
+    def _update_linked_parameters(self):
+        """Update all parameters that are linked to this parameter's master."""
+        try:
+            if not self.fitting_parameter.is_linked:
+                # This is a master parameter - find and update all followers
+                master_param = self.fitting_parameter
+                # Search through all fits to find parameters linked to this master
+                for fit_idx, fit in enumerate(chisurf.fits):
+                    for model_fit in fit:
+                        if hasattr(model_fit, 'model') and model_fit.model:
+                            for param in model_fit.model.parameters_all:
+                                if (hasattr(param, 'link') and param.link is not None and 
+                                    id(param.link) == id(master_param)):
+                                    # Found a linked parameter - update its controller
+                                    if hasattr(param, 'controller') and param.controller:
+                                        param.controller.finalize()
+        except Exception:
+            pass
+
+    def _refresh_group_link_visuals(self):
+        """Refresh link-role visuals for same-named parameters in current fit group."""
+        try:
+            fp_name = getattr(self.fitting_parameter, "name", None)
+            cs = getattr(chisurf, "cs", None)
+            current_fit = getattr(cs, "current_fit", None) if cs is not None else None
+            if not fp_name or current_fit is None:
+                return
+
+            for local_fit in current_fit:
+                try:
+                    params = getattr(getattr(local_fit, "model", None), "parameters_all_dict", None)
+                    if not isinstance(params, dict):
+                        continue
+                    p = params.get(fp_name)
+                    if p is None:
+                        continue
+                    controller = getattr(p, "controller", None)
+                    if controller is not None and hasattr(controller, "finalize"):
+                        controller.finalize()
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
     def _on_main_value_changed(self):
         if getattr(self, "_is_output_param", False):
             return
         fp = self.fitting_parameter
-        try:
-            fit_idx = fp.fit_idx
-        except Exception:
-            fit_idx = -1
-        # Guard against invalid indices so we never accidentally target chisurf.fits[-1]
-        try:
-            n_fits = len(chisurf.fits)
-        except Exception:
-            n_fits = 0
-        if not isinstance(fit_idx, int) or fit_idx < 0 or fit_idx >= n_fits:
-            try:
-                chisurf.logging.warning(
-                    f"FittingParameterWidget: invalid fit_idx {fit_idx} for parameter '{getattr(fp, 'name', '?')}', "
-                    f"skipping value change."
-                )
-            except Exception:
-                pass
-            return
-
         value = self.widget_value.value()
-        chisurf.run(
-            f"parameter = chisurf.fits[{fit_idx}].model.parameters_all_dict['{fp.name}']\n"
-            f"fixed = parameter.fixed \n"
-            f"parameter.fixed = False\n"
-            f"parameter.value = {value} \n"
-            f"parameter.fixed = fixed\n"
-            f"chisurf.fits[{fit_idx}].finalize()"
+        old_value = float(fp.value)
+        fixed = bool(getattr(fp, "fixed", False))
+        fp.fixed = False
+        fp.value = value
+        fp.fixed = fixed
+        source = self._parameter_context(fp)
+        self._trace_operation(
+            "parameter_value",
+            f"set value for '{fp.name}' from {old_value} to {value} in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "old_value": float(old_value),
+                "new_value": float(value),
+                **source,
+            },
         )
+        self.finalize()
+        
+        # Update all linked parameters to show the new value
+        self._update_linked_parameters()
+        
+        # Trigger model update to refresh plots
+        self._trigger_model_update()
+
+    def _trigger_model_update(self):
+        try:
+            fit_idx = self._resolve_fit_idx()
+            if fit_idx is not None and 0 <= fit_idx < len(chisurf.fits):
+                fit = chisurf.fits[fit_idx]
+                fit.update()
+
+                # Recompute and refresh any output/result parameters that depend
+                # on the updated model/parameter state (e.g. TCSPC anisotropy
+                # rS,I depends on g).
+                try:
+                    model = getattr(fit, "model", None)
+                    finalize = getattr(model, "finalize", None)
+                    if callable(finalize):
+                        finalize()
+                except Exception:
+                    pass
+
+                try:
+                    model = getattr(fit, "model", None)
+                    params = getattr(model, "parameters_all", None)
+                    if isinstance(params, (list, tuple)):
+                        for p in params:
+                            try:
+                                if not bool(getattr(p, "is_output", False)):
+                                    continue
+                                ctrl = getattr(p, "controller", None)
+                                if ctrl is not None and hasattr(ctrl, "finalize"):
+                                    ctrl.finalize()
+                            except Exception:
+                                continue
+                except Exception:
+                    pass
+
+                # Fallback (UI-scoped): refresh visible output parameter widgets
+                # in the same fit window. This catches output parameters that
+                # are displayed in the active UI but are not exposed through
+                # model.parameters_all in some model/widget compositions.
+                try:
+                    root = self.window()
+                    if root is not None:
+                        for w in root.findChildren(QtWidgets.QWidget):
+                            try:
+                                if not bool(getattr(w, "_is_output_param", False)):
+                                    continue
+                                if hasattr(w, "finalize"):
+                                    w.finalize()
+                            except Exception:
+                                continue
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     def _on_main_bounds_on_toggled(self):
         if getattr(self, "_is_output_param", False):
             return
         fp = self.fitting_parameter
         checked = self.widget_bounds_on.isChecked()
-        # Toggle bounds_on in the model
-        chisurf.run(
-            f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds_on = {checked}"
+        fp.bounds_on = checked
+        source = self._parameter_context(fp)
+        self._trace_operation(
+            "parameter_bounds_on",
+            f"set bounds_on={checked} for '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "bounds_on": bool(checked),
+                **source,
+            },
         )
         # If turning ON and current bounds are invalid/missing, initialize them from the UI spin boxes
         if checked:
@@ -835,10 +1180,90 @@ class FittingParameterWidget(Controller):
             except Exception:
                 bounds_valid = False
             if not bounds_valid:
-                chisurf.run(
-                    f"chisurf.fits[{fp.fit_idx}].model.parameters_all_dict['{fp.name}'].bounds = ({self.widget_lower_bound.value()}, {self.widget_upper_bound.value()})"
+                fp.bounds = (self.widget_lower_bound.value(), self.widget_upper_bound.value())
+                self._trace_operation(
+                    "parameter_bounds_set",
+                    f"initialize bounds for '{fp.name}' to ({self.widget_lower_bound.value()}, {self.widget_upper_bound.value()})",
+                    {
+                        "parameter_name": str(fp.name),
+                        "lower": float(self.widget_lower_bound.value()),
+                        "upper": float(self.widget_upper_bound.value()),
+                        **source,
+                    },
                 )
         # Refresh UI/model without risking unpack errors
+        self.finalize()
+
+    def _resolve_fit_idx(self, default: int = 0):
+        try:
+            n_fits = len(chisurf.fits)
+        except Exception:
+            n_fits = 0
+        if n_fits <= 0:
+            return None
+
+        idx = getattr(self, "_absolute_fit_idx", default)
+        if isinstance(idx, int) and 0 <= idx < n_fits:
+            return idx
+
+        try:
+            idxs = chisurf.fitting.find_fit_idx_of_parameter(self.fitting_parameter)
+            if idxs:
+                idx = int(idxs[0])
+        except Exception:
+            idx = default
+
+        if not isinstance(idx, int) or idx < 0 or idx >= n_fits:
+            try:
+                idx = int(getattr(chisurf, "current_fit_idx", 0))
+            except Exception:
+                idx = 0
+            if idx < 0:
+                idx = 0
+            if idx >= n_fits:
+                idx = n_fits - 1
+
+        self._absolute_fit_idx = idx
+        return idx
+
+    def _on_main_fixed_toggled(self):
+        if getattr(self, "_is_output_param", False):
+            return
+        fp = self.fitting_parameter
+        new_fixed = self.widget_fix.isChecked()
+        fp.fixed = new_fixed
+        source = self._parameter_context(fp)
+        self._trace_operation(
+            "parameter_fixed",
+            f"set fixed={new_fixed} for '{fp.name}' in fit '{source['fit_group']}' / local '{source['local_fit']}'",
+            {
+                "parameter_name": str(fp.name),
+                "fixed": bool(new_fixed),
+                **source,
+            },
+        )
+        self.finalize()
+
+    def _on_main_bounds_changed(self):
+        if getattr(self, "_is_output_param", False):
+            return
+        fp = self.fitting_parameter
+        fp.bounds = (self.widget_lower_bound.value(), self.widget_upper_bound.value())
+        source = self._parameter_context(fp)
+        self._trace_operation(
+            "parameter_bounds_set",
+            (
+                f"set bounds for '{fp.name}' to "
+                f"({self.widget_lower_bound.value()}, {self.widget_upper_bound.value()}) "
+                f"in fit '{source['fit_group']}' / local '{source['local_fit']}'"
+            ),
+            {
+                "parameter_name": str(fp.name),
+                "lower": float(self.widget_lower_bound.value()),
+                "upper": float(self.widget_upper_bound.value()),
+                **source,
+            },
+        )
         self.finalize()
 
     def finalize(self, *args):
@@ -863,9 +1288,14 @@ class FittingParameterWidget(Controller):
         except Exception:
             pass
 
-        # Update value of widget (guard against None)
+        # Update value of widget - for linked parameters, show master's value
         try:
-            _v = float(self.fitting_parameter.value)
+            if self.fitting_parameter.is_linked and hasattr(self.fitting_parameter, 'link') and self.fitting_parameter.link is not None:
+                # This is a linked parameter - show the master's value
+                _v = float(self.fitting_parameter.link.value)
+            else:
+                # This is a master or unlinked parameter - show its own value
+                _v = float(self.fitting_parameter.value)
         except Exception:
             _v = self.widget_value.value()
         self.widget_value.setValue(_v)
@@ -915,22 +1345,17 @@ class FittingParameterWidget(Controller):
         link_param = getattr(self.fitting_parameter, 'link', None)
         if self.fitting_parameter.is_linked and link_param is not None:
             target_param_name = getattr(link_param, 'name', "?")
-            target_fit_label = "?"
-            try:
-                target_fit_idx = getattr(link_param, 'fit_idx', -1)
-            except Exception:
-                target_fit_idx = -1
-            try:
-                if isinstance(target_fit_idx, int) and target_fit_idx >= 0:
-                    fits = getattr(chisurf, 'fits', None)
-                    if fits is not None and 0 <= target_fit_idx < len(fits):
-                        target_fit = fits[target_fit_idx]
-                        target_fit_label = getattr(target_fit, 'name', str(target_fit_idx))
-                    else:
-                        target_fit_label = str(target_fit_idx)
-            except Exception:
-                pass
-            tooltip_text += f"linked to fit '{target_fit_label}', \n parameter '{target_param_name}'"
+            source_group, source_local = self._locate_parameter(self.fitting_parameter)
+            target_group, target_local = self._locate_parameter(link_param)
+            tooltip_text += (
+                f"source: fit '{source_group}', local '{source_local}', parameter '{self.fitting_parameter.name}'\n"
+                f"linked to: fit '{target_group}', local '{target_local}', parameter '{target_param_name}'"
+            )
+        else:
+            source_group, source_local = self._locate_parameter(self.fitting_parameter)
+            tooltip_text += (
+                f"source: fit '{source_group}', local '{source_local}', parameter '{self.fitting_parameter.name}'"
+            )
         self.widget_value.setToolTip(tooltip_text)
 
         try:
@@ -999,24 +1424,18 @@ class FittingParameterWidget(Controller):
         # Link
         if link_param is not None:
             target_param_name = getattr(link_param, 'name', "?")
-            target_fit_label = "?"
-            try:
-                target_fit_idx = getattr(link_param, 'fit_idx', -1)
-            except Exception:
-                target_fit_idx = -1
-            try:
-                if isinstance(target_fit_idx, int) and target_fit_idx >= 0:
-                    fits = getattr(chisurf, 'fits', None)
-                    if fits is not None and 0 <= target_fit_idx < len(fits):
-                        target_fit = fits[target_fit_idx]
-                        target_fit_label = getattr(target_fit, 'name', str(target_fit_idx))
-                    else:
-                        target_fit_label = str(target_fit_idx)
-            except Exception:
-                pass
-            tooltip = f"linked to fit '{target_fit_label}', parameter '{target_param_name}'"
+            target_group, target_local = self._locate_parameter(link_param)
+            tooltip = (
+                f"source parameter '{self.fitting_parameter.name}'\n"
+                f"linked to fit '{target_group}', local fit '{target_local}', parameter '{target_param_name}'"
+            )
             self.widget_link.setToolTip(tooltip)
             self.widget_value.setEnabled(False)
+        else:
+            source_group, source_local = self._locate_parameter(self.fitting_parameter)
+            self.widget_link.setToolTip(
+                f"source fit '{source_group}', local fit '{source_local}', parameter '{self.fitting_parameter.name}'"
+            )
 
         # If the details popup is open, refresh its contents to reflect latest model state
         try:
