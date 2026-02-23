@@ -82,3 +82,20 @@ class StructureReaderController(
                 ]
             )
         )
+
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        import chisurf
+        try:
+            setup = chisurf.cs.current_setup
+        except Exception:
+            return
+
+        # compute_internal_coordinates
+        try:
+            cic = getattr(setup, 'compute_internal_coordinates', False)
+            self.checkBox.blockSignals(True)
+            self.checkBox.setChecked(bool(cic))
+            self.checkBox.blockSignals(False)
+        except Exception:
+            pass

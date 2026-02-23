@@ -706,10 +706,10 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
         # Normalize path like the main window's onAddDataset implementation
         s = p.as_posix().replace("\\", "/")
-        try:
-            chisurf.run(f"chisurf.macros.add_dataset(filename=r\"{s}\")")
-        except Exception:
-            pass
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload={"filename": s},
+        )
 
     def _load_preview_from_file(self, path: pathlib.Path) -> None:
         """Load RICS/intensity preview for a dropped TTTR/TIFF file."""

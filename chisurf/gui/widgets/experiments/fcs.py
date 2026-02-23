@@ -97,13 +97,30 @@ class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
         import chisurf
-        # Get the current setup
-        setup = chisurf.cs.current_setup
+        try:
+            setup = chisurf.cs.current_setup
+        except Exception:
+            return
 
-        # Update any UI elements based on setup properties
-        # For now, this is a placeholder implementation
-        # If there are specific properties that need to be updated,
-        # they can be added here in the future
+        # Sync noise model combo from reader's weight_mode
+        try:
+            weight_mode = getattr(setup, 'weight_mode', None)
+            for i in range(self.noise_model_combo.count()):
+                if self.noise_model_combo.itemData(i) == weight_mode:
+                    self.noise_model_combo.blockSignals(True)
+                    self.noise_model_combo.setCurrentIndex(i)
+                    self.noise_model_combo.blockSignals(False)
+                    break
+        except Exception:
+            pass
+
+    def onParametersChanged(self):
+        """Push current parameters into cs.current_setup.
+
+        This is a pass-through to _on_noise_model_changed since the FCS
+        controller only has one interactive parameter.
+        """
+        self._on_noise_model_changed(self.noise_model_combo.currentIndex())
 
 
 __all__ = ["FCSController"]

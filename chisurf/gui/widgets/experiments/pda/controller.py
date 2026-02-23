@@ -1057,6 +1057,66 @@ class PdaTTTRWidget(
         if file_type in supported:
             self.comboBox.setCurrentText(file_type)
 
+    def updateUI(self):
+        """Update UI elements based on current_setup properties."""
+        import chisurf
+        try:
+            setup = chisurf.cs.current_setup
+        except Exception:
+            return
+
+        # reading routine
+        try:
+            rr = getattr(setup, 'reading_routine', None)
+            if isinstance(rr, str) and rr:
+                self.comboBox.setCurrentText(rr)
+        except Exception:
+            pass
+
+        # channels [ch0, ch1]
+        try:
+            channels = getattr(setup, 'channels', None)
+            if channels and len(channels) >= 1:
+                ch0 = channels[0] if channels[0] else []
+                ch1 = channels[1] if len(channels) > 1 and channels[1] else []
+                self.lineEdit.setText(", ".join(str(c) for c in ch0))
+                self.lineEdit_4.setText(", ".join(str(c) for c in ch1))
+        except Exception:
+            pass
+
+        # micro_time_ranges [mt0, mt1]
+        try:
+            mtr = getattr(setup, 'micro_time_ranges', None)
+            if mtr and len(mtr) >= 1:
+                mt0 = mtr[0] if mtr[0] else []
+                mt1 = mtr[1] if len(mtr) > 1 and mtr[1] else []
+                self.lineEdit_2.setText(self._format_window_value(mt0))
+                self.lineEdit_3.setText(self._format_window_value(mt1))
+        except Exception:
+            pass
+
+        # minimum/maximum number of photons
+        try:
+            min_photons = int(getattr(setup, 'minimum_number_of_photons', 0) or 0)
+            if min_photons > 0:
+                self.spinBox.setValue(min_photons)
+        except Exception:
+            pass
+        try:
+            max_photons = int(getattr(setup, 'maximum_number_of_photons', 0) or 0)
+            if max_photons > 0:
+                self.spinBox_2.setValue(max_photons)
+        except Exception:
+            pass
+
+        # base time window (convert from seconds to ms)
+        try:
+            tw_s = float(getattr(setup, 'minimum_time_window_length', 0.0) or 0.0)
+            if tw_s > 0.0:
+                self.doubleSpinBox.setValue(tw_s * 1000.0)
+        except Exception:
+            pass
+
     def onParametersChanged(self):
         # Parse channels
         ch0_text = self.lineEdit.text().strip()

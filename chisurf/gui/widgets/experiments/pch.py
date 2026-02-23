@@ -770,21 +770,15 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         except Exception:
             pass
 
-        commands = []
         for p in path_list:
             try:
                 s = p.as_posix().replace("\\", "/")
             except Exception:
                 continue
-            commands.append(f"chisurf.macros.add_dataset(filename=r\"{s}\")")
-
-        if not commands:
-            return
-
-        try:
-            chisurf.run("\n".join(commands))
-        except Exception:
-            pass
+            chisurf.action_controller.execute(
+                name="dataset.add",
+                payload={"filename": s},
+            )
 
 
 __all__ = ["PCHController"]
