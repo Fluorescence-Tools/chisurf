@@ -462,9 +462,21 @@ class AnalysisPage(QWizardPage):
         This function calls chisurf to load the file and update the chosen fit's data.
         """
         file_path = pathlib.Path(file).as_posix().replace("\\", "/")
-        chisurf.run(f'chisurf.macros.add_dataset(filename=r"{file_path}")')
-        chisurf.run(f'chisurf.fits[{fit_idx}].data = chisurf.imported_datasets[-1]')
-        chisurf.run(f'chisurf.fits[{fit_idx}].run()')
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload={"filename": file_path},
+        )
+        chisurf.action_controller.execute(
+            name="fit.set_dataset",
+            payload={
+                "fit_index": int(fit_idx),
+                "dataset_index": -1,
+            },
+        )
+        chisurf.action_controller.execute(
+            name="fit.run",
+            payload={"fit_index": int(fit_idx)},
+        )
         print(f"Running fit on: {file}")
 
     def _get_or_create_temp_dir(self) -> str:
@@ -661,9 +673,18 @@ class AnalysisPage(QWizardPage):
             try:
                 if item["kind"] == "dataset":
                     ds = item["value"]
-                    # Directly assign and run
-                    fit.data = ds
-                    fit.run()
+                    ds_idx = chisurf.imported_datasets.index(ds)
+                    chisurf.action_controller.execute(
+                        name="fit.set_dataset",
+                        payload={
+                            "fit_index": int(fit_idx),
+                            "dataset_index": int(ds_idx),
+                        },
+                    )
+                    chisurf.action_controller.execute(
+                        name="fit.run",
+                        payload={"fit_index": int(fit_idx)},
+                    )
                 else:
                     # Reuse existing file-based loader
                     self.dummy_run_fit(display_name, fit_idx)
