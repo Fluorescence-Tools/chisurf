@@ -316,11 +316,20 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
         # Use the standard approach as specified in the issue description
         # Set the current experiment and setup using the global cs instance
-        chisurf.cs.current_experiment = 'FCS'
-        chisurf.cs.current_setup = 'Seidel Kristine'
+        chisurf.action_controller.execute(
+            name="experiment.set",
+            payload={"name": "FCS"},
+        )
+        chisurf.action_controller.execute(
+            name="setup.select",
+            payload={"name": "Seidel Kristine"},
+        )
 
         # Add dataset to chisurf using the standard approach
-        chisurf.macros.add_dataset(filename=cor_file.as_posix())
+        chisurf.action_controller.execute(
+            name="dataset.add",
+            payload={"filename": cor_file.as_posix()},
+        )
 
         # Show success message
         chisurf.logging.info(f"Added correlation to ChiSurf: {cor_file.name}")

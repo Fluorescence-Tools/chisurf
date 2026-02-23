@@ -240,9 +240,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 try:
                     ca = float(cor.get('channel_a', {}).get('counts', 0.0))
                     cb = float(cor.get('channel_b', {}).get('counts', 0.0))
-                    # Mean count rate in kHz (kristine format expects kHz)
-                    # Average count rate per channel: (total photons / 2) / duration / 1000
-                    count_rate = (ca + cb) / 2.0 / duration / 1000.0 if duration > 0 else 0.0
+                    # Mean count rate in kHz (kristine format expects kHz).
+                    # Use total detector count rate for downstream CPM display.
+                    count_rate = (ca + cb) / duration / 1000.0 if duration > 0 else 0.0
                     print(f"Chunk {i}: duration={duration}s, counts={ca+cb}, count_rate={count_rate}kHz")
                 except Exception:
                     count_rate = 0.0
