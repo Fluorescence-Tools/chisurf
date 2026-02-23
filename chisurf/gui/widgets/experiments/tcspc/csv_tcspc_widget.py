@@ -4,10 +4,44 @@ from chisurf.gui import QtWidgets
 
 import chisurf
 import chisurf.gui.decorators
+import chisurf.gui.widgets
 from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator
 
 
 class CsvTCSPCWidget(QtWidgets.QWidget):
+
+    @staticmethod
+    def _safe_float(value, default: float = 0.0) -> float:
+        try:
+            return float(value)
+        except Exception:
+            return float(default)
+
+    def _sync_l2_from_l1(self) -> None:
+        if not hasattr(self, 'checkBox_link_l1_l2') or not self.checkBox_link_l1_l2.isChecked():
+            return
+        if not hasattr(self, 'doubleSpinBox_l1') or not hasattr(self, 'doubleSpinBox_l2'):
+            return
+        l1 = self._safe_float(self.doubleSpinBox_l1.value(), 0.0)
+        if abs(self._safe_float(self.doubleSpinBox_l2.value(), 0.0) - l1) > 1e-15:
+            self.doubleSpinBox_l2.blockSignals(True)
+            self.doubleSpinBox_l2.setValue(l1)
+            self.doubleSpinBox_l2.blockSignals(False)
+
+    def _update_l2_enabled_state(self) -> None:
+        if not hasattr(self, 'doubleSpinBox_l2'):
+            return
+        jordi_enabled = True
+        if hasattr(self, 'checkBox_3'):
+            jordi_enabled = bool(self.checkBox_3.isChecked())
+        linked = bool(getattr(self, 'checkBox_link_l1_l2', None) and self.checkBox_link_l1_l2.isChecked())
+        self.doubleSpinBox_l2.setEnabled(jordi_enabled and (not linked))
+
+    def _on_link_l1_l2_toggled(self, checked: bool) -> None:
+        self._update_l2_enabled_state()
+        if checked:
+            self._sync_l2_from_l1()
+            self.onParametersChanged()
 
     @chisurf.gui.decorators.init_with_ui("tcspc_csv.ui")
     def __init__(self, *args, **kwargs):
@@ -16,6 +50,15 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         self.actionRepratechange.triggered.connect(self.onParametersChanged)
         self.actionPolarizationChange.triggered.connect(self.onParametersChanged)
         self.actionGfactorChanged.triggered.connect(self.onParametersChanged)
+        if hasattr(self, 'actionL1L2Changed'):
+            self.actionL1L2Changed.triggered.connect(self.onParametersChanged)
+        if hasattr(self, 'checkBox_link_l1_l2'):
+            self.checkBox_link_l1_l2.setChecked(False)
+            self.checkBox_link_l1_l2.toggled.connect(self._on_link_l1_l2_toggled)
+        if hasattr(self, 'checkBox_3'):
+            self.checkBox_3.toggled.connect(lambda *_: self._update_l2_enabled_state())
+        if hasattr(self, 'doubleSpinBox_l1'):
+            self.doubleSpinBox_l1.valueChanged.connect(lambda *_: self._sync_l2_from_l1())
         self.actionIsjordiChanged.triggered.connect(self.onParametersChanged)
         self.actionMatrixColumnsChanged.triggered.connect(self.onParametersChanged)
         self.actionVhShiftChanged.triggered.connect(self.onParametersChanged)
@@ -35,6 +78,23 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
 
         # Update g_factor spin box
         self.doubleSpinBox_3.setValue(setup.g_factor)
+
+        # Update l1/l2 controls
+        try:
+            l1 = float(getattr(setup, 'l1', 0.0) or 0.0)
+        except Exception:
+            l1 = 0.0
+        try:
+            l2 = float(getattr(setup, 'l2', 0.0) or 0.0)
+        except Exception:
+            l2 = 0.0
+        if hasattr(self, 'doubleSpinBox_l1'):
+            self.doubleSpinBox_l1.setValue(l1)
+        if hasattr(self, 'doubleSpinBox_l2'):
+            self.doubleSpinBox_l2.setValue(l2)
+        if hasattr(self, 'checkBox_link_l1_l2') and self.checkBox_link_l1_l2.isChecked():
+            self._sync_l2_from_l1()
+        self._update_l2_enabled_state()
 
         # Update polarization radio buttons
         pol = setup.polarization
@@ -85,20 +145,13 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         """
         try:
             # 1) Ask for Jordi file
-            # Use ChiSurf working directory if available
-            try:
-                import chisurf as _cs
-                start_dir = str(getattr(_cs, 'working_path', '') or '')
-            except Exception:
-                start_dir = ""
-            file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
-                self,
-                "Open Jordi VV/VH file (fast rotating dye)",
-                start_dir,
-                "Data Files (*.dat *.txt *.csv);;All Files (*)"
+            file_path = chisurf.gui.widgets.get_filename(
+                description="Open Jordi VV/VH file (fast rotating dye)",
+                file_type="Data Files (*.dat *.txt *.csv);;All Files (*)",
             )
-            if not file_path:
+            if not file_path or not getattr(file_path, 'name', ''):
                 return
+            file_path = str(file_path)
 
             # 2) Create plugin widget and load file
             plugin = JordiGFactorCalculator()
@@ -160,6 +213,15 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         except ValueError:
             matrix_columns = []
         gfactor = float(self.doubleSpinBox_3.value())
+        l1 = self._safe_float(getattr(chisurf.cs.current_setup, 'l1', 0.0), 0.0)
+        l2 = self._safe_float(getattr(chisurf.cs.current_setup, 'l2', 0.0), 0.0)
+        if hasattr(self, 'doubleSpinBox_l1'):
+            l1 = self._safe_float(self.doubleSpinBox_l1.value(), l1)
+        if hasattr(self, 'doubleSpinBox_l2'):
+            l2 = self._safe_float(self.doubleSpinBox_l2.value(), l2)
+        if hasattr(self, 'checkBox_link_l1_l2') and self.checkBox_link_l1_l2.isChecked():
+            l2 = l1
+            self._sync_l2_from_l1()
         pol = 'vm'
         if self.radioButton_3.isChecked():
             pol = 'vv'
@@ -183,6 +245,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
                     f"cs.current_setup.use_header = {(not is_jordi)}",
                     f"cs.current_setup.matrix_columns = {matrix_columns}",
                     f"cs.current_setup.g_factor = {gfactor:f}",
+                    f"cs.current_setup.l1 = {l1:f}",
+                    f"cs.current_setup.l2 = {l2:f}",
                     f"cs.current_setup.polarization = '{pol}'",
                     f"cs.current_setup.rep_rate = {rep_rate}",
                     f"cs.current_setup.rebin = ({rebin_x}, {rebin_y})",

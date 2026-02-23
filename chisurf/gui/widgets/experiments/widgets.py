@@ -87,7 +87,10 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
         ]
-        chisurf.run(f'chisurf.macros.remove_datasets({dataset_idx})')
+        chisurf.action_controller.execute(
+            name="dataset.remove",
+            payload={"dataset_indices": [int(i) for i in dataset_idx]},
+        )
         self.update(update_others=True)
 
     def onSaveDataset(self):
@@ -112,18 +115,18 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        chisurf.run(f"chisurf.macros.group_datasets({dg})")
+        chisurf.action_controller.execute(
+            name="dataset.group",
+            payload={"dataset_indices": [int(i) for i in dg]},
+        )
         self.update()
 
     def onUnGroupDatasets(self):
-        dg = chisurf.data.ExperimentDataGroup(self.selected_datasets)[0]
-        dn = list()
-        for d in chisurf.imported_datasets:
-            if d is not dg:
-                dn.append(d)
-            else:
-                dn += dg
-        chisurf.imported_datasets = dn
+        dg = self.selected_dataset_idx
+        chisurf.action_controller.execute(
+            name="dataset.ungroup",
+            payload={"dataset_indices": [int(i) for i in dg]},
+        )
         self.update()
 
     def contextMenuEvent(self, event):
@@ -222,8 +225,11 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         if event.mimeData().hasUrls():
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
-            command = "\n".join([f"chisurf.macros.add_dataset(filename=r'{p}')" for p in paths])
-            chisurf.run(command)
+            for p in paths:
+                chisurf.action_controller.execute(
+                    name="dataset.add",
+                    payload={"filename": str(p)},
+                )
             event.acceptProposedAction()
         else:
             super().dropEvent(event)

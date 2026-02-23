@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>423</width>
-    <height>92</height>
+    <width>398</width>
+    <height>105</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -50,107 +50,16 @@
       <property name="spacing">
        <number>0</number>
       </property>
-      <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="decimals">
-         <number>6</number>
-        </property>
-        <property name="maximum">
-         <double>120.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.000100000000000</double>
-        </property>
-        <property name="value">
-         <double>0.014100000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="checkBox_3">
-        <property name="toolTip">
-         <string>If this checkbox is checked the data is expected to be a &quot;Jordi&quot; file. This means
-that the count in the VV and the VH detection channels data are stacked vertically.</string>
-        </property>
-        <property name="text">
-         <string>VV/VH(Jordi)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>rep.rate</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3" colspan="2">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="singleStep">
-         <double>0.010000000000000</double>
-        </property>
-        <property name="value">
-         <double>1.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QLabel" name="label_4">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>g-factor</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3" colspan="2">
-       <widget class="QDoubleSpinBox" name="doubleSpinBox">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>The repetition rate of the laser in MHz</string>
-        </property>
-        <property name="maximum">
-         <double>120.000000000000000</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="value">
-         <double>10.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
+      <item row="1" column="1" colspan="2">
        <widget class="QGroupBox" name="groupBox_2">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="title">
          <string/>
@@ -195,13 +104,6 @@ that the count in the VV and the VH detection channels data are stacked vertical
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="radioButton_4">
-           <property name="text">
-            <string>VV,VH</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QRadioButton" name="radioButton">
            <property name="text">
             <string>VM</string>
@@ -211,7 +113,49 @@ that the count in the VV and the VH detection channels data are stacked vertical
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QRadioButton" name="radioButton_4">
+           <property name="text">
+            <string>VV,VH</string>
+           </property>
+          </widget>
+         </item>
         </layout>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="decimals">
+         <number>6</number>
+        </property>
+        <property name="maximum">
+         <double>120.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.000100000000000</double>
+        </property>
+        <property name="value">
+         <double>0.014100000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLabel" name="label_4">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>g-factor</string>
+        </property>
        </widget>
       </item>
       <item row="0" column="0">
@@ -224,76 +168,99 @@ that the count in the VV and the VH detection channels data are stacked vertical
         </property>
        </widget>
       </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_vh_shift">
+      <item row="1" column="4">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>VH shift [ch]</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QSpinBox" name="spinBox_vh_shift">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="minimum">
-         <number>-150</number>
-        </property>
-        <property name="maximum">
-         <number>150</number>
         </property>
         <property name="singleStep">
-         <number>1</number>
+         <double>0.010000000000000</double>
         </property>
         <property name="value">
-         <number>0</number>
+         <double>1.000000000000000</double>
         </property>
        </widget>
       </item>
-      <item row="2" column="4">
-       <widget class="QPushButton" name="pushButton_inspect">
-        <property name="enabled">
-         <bool>false</bool>
+      <item row="4" column="2">
+       <widget class="QComboBox" name="comboBox_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>Use reference dye to adjust shift and G-Factor.</string>
+         <string>If the rebin option is set to a value greater than &quot;1&quot; the 
+two neighboring values are added. For instance, for the
+array &quot;1, 2, 3, 4, 5, 6, 7, 8&quot; a rebin value of &quot;2&quot; results in
+the array &quot;3, 7, 11, 15&quot;.</string>
         </property>
-        <property name="text">
-         <string>Reference</string>
+        <item>
+         <property name="text">
+          <string>1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>2</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>4</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>8</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="0" column="4" colspan="2">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>The repetition rate of the laser in MHz</string>
+        </property>
+        <property name="maximum">
+         <double>120.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.100000000000000</double>
+        </property>
+        <property name="value">
+         <double>10.000000000000000</double>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="checkBox_3">
+        <property name="toolTip">
+         <string>If this checkbox is checked the data is expected to be a &quot;Jordi&quot; file. This means
+that the count in the VV and the VH detection channels data are stacked vertically.</string>
+        </property>
+        <property name="text">
+         <string>VV/VH(Jordi)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
          <string>Columns</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="lineEdit">
-        <property name="toolTip">
-         <string>This specifies which column numbers from the matrix are used.
-The columns numbers should be seperated by spaces, e.g.:
-
-1 2 11 15
-
-After editing this input the return key should be pressed. The
-first column in the list is always assumed to be the x-axis unless
-the file is a Jordi-file (stacked vv and vh measurement)
-
-The data is binned first. Thus, the colums correspond to the 
-columns of the BINNED data.</string>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_3">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -306,7 +273,7 @@ columns of the BINNED data.</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QComboBox" name="comboBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -342,8 +309,21 @@ the array &quot;3, 7, 11, 15&quot;.</string>
         </item>
        </widget>
       </item>
-      <item row="3" column="2" colspan="3">
-       <widget class="QComboBox" name="comboBox_2">
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>rep.rate</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" colspan="2">
+       <widget class="QLineEdit" name="lineEdit">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -351,31 +331,155 @@ the array &quot;3, 7, 11, 15&quot;.</string>
          </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>If the rebin option is set to a value greater than &quot;1&quot; the 
-two neighboring values are added. For instance, for the
-array &quot;1, 2, 3, 4, 5, 6, 7, 8&quot; a rebin value of &quot;2&quot; results in
-the array &quot;3, 7, 11, 15&quot;.</string>
+         <string>This specifies which column numbers from the matrix are used.
+The columns numbers should be seperated by spaces, e.g.:
+
+1 2 11 15
+
+After editing this input the return key should be pressed. The
+first column in the list is always assumed to be the x-axis unless
+the file is a Jordi-file (stacked vv and vh measurement)
+
+The data is binned first. Thus, the colums correspond to the 
+columns of the BINNED data.</string>
         </property>
-        <item>
-         <property name="text">
-          <string>1</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>2</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>4</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>8</string>
-         </property>
-        </item>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_vh_shift">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>VH shift [ch]</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spinBox_vh_shift">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="minimum">
+         <number>-150</number>
+        </property>
+        <property name="maximum">
+         <number>150</number>
+        </property>
+        <property name="singleStep">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="label_l2">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Polarization leakage correction l2.</string>
+        </property>
+        <property name="text">
+         <string>l2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="4">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_l2">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="decimals">
+         <number>6</number>
+        </property>
+        <property name="minimum">
+         <double>-10.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="label_l1_l2">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>l1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="4">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_l1">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="decimals">
+         <number>6</number>
+        </property>
+        <property name="minimum">
+         <double>-10.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>10.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.001000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QPushButton" name="pushButton_inspect">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Use reference dye to adjust shift and G-Factor.</string>
+        </property>
+        <property name="text">
+         <string>Reference</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="4">
+       <widget class="QCheckBox" name="checkBox_link_l1_l2">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>link</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
      </layout>
@@ -420,6 +524,11 @@ the array &quot;3, 7, 11, 15&quot;.</string>
   <action name="actionVhShiftChanged">
    <property name="text">
     <string>VhShiftChanged</string>
+   </property>
+  </action>
+  <action name="actionL1L2Changed">
+   <property name="text">
+    <string>L1L2Changed</string>
    </property>
   </action>
  </widget>
@@ -714,6 +823,54 @@ the array &quot;3, 7, 11, 15&quot;.</string>
    </hints>
   </connection>
   <connection>
+   <sender>doubleSpinBox_l1</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>actionL1L2Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>274</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>doubleSpinBox_l2</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>actionL1L2Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>366</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_link_l1_l2</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionL1L2Changed</receiver>
+   <slot>trigger()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>318</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
    <sender>checkBox_3</sender>
    <signal>toggled(bool)</signal>
    <receiver>label_4</receiver>
@@ -725,6 +882,86 @@ the array &quot;3, 7, 11, 15&quot;.</string>
     </hint>
     <hint type="destinationlabel">
      <x>274</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_l1_l2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>42</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>250</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_l1</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>42</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>274</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBox_link_l1_l2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>42</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>318</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_l2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>42</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>366</x>
+     <y>32</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_3</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_l2</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>42</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>415</x>
      <y>32</y>
     </hint>
    </hints>

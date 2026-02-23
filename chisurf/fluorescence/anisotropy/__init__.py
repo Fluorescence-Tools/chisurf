@@ -1,5 +1,6 @@
 from chisurf.fluorescence.intensity import nusiance
 import chisurf.fluorescence.anisotropy.decay
+import chisurf.fluorescence.anisotropy.integrals
 
 # Global constants (normally defined elsewhere)
 Bp = 10.0     # Background for parallel signal correction

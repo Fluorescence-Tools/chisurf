@@ -112,7 +112,7 @@ def calculcate_spectrum(
     Generates a joint spectrum from a lifetime and an anisotropy spectrum for a specified polarization.
 
     This function converts a lifetime spectrum and an anisotropy spectrum into a
-    joint spectrum for either the 'VV' or 'VH' detection channels. The relative
+    joint spectrum for either the 'VV', 'VH', or 'VV/VH' detection channels. The relative
     sensitivity of the channels is adjusted via the g_factor, while l1 and l2
     describe the mixing between the VV and VH channels.
 
@@ -139,7 +139,8 @@ def calculcate_spectrum(
         Interleaved amplitudes and depolarization times
         (amplitude 1, rho 1, amplitude 2, rho 2, ...).
     polarization_type : str
-        'VV' or 'VH'. If neither, the lifetime spectrum is returned unmodified.
+        'VV', 'VH', or 'VV/VH'. If neither, the lifetime spectrum is returned unmodified.
+        For 'VV/VH', returns stacked VV and VH spectra for joint fitting.
     g_factor : float, optional
         Correction factor for the detection channel sensitivity (default is 1.0).
     l1 : float, optional
@@ -151,6 +152,7 @@ def calculcate_spectrum(
     -------
     numpy.array
         The combined spectrum for the specified detection channel.
+        For 'VV/VH', returns stacked VV and VH spectra concatenated.
 
     Examples
     --------
@@ -199,7 +201,7 @@ def calculcate_spectrum(
 
     Notes
     -----
-    If the polarization_type is neither 'VV' nor 'VH', the function simply
+    If the polarization_type is neither 'VV', 'VH', nor 'VV/VH', the function simply
     returns the input lifetime spectrum without modifications.
 
     References
@@ -212,23 +214,24 @@ def calculcate_spectrum(
     polarization_type = polarization_type.upper()
     f = lifetime_spectrum
     a = anisotropy_spectrum
-    if (polarization_type == "VV") or (polarization_type == "VH"):
+    if (polarization_type == "VV") or (polarization_type == "VH") or (polarization_type == "VV/VH"):
         d = chisurf.math.datatools.elte2(a, f)
         vv = np.hstack([f, chisurf.math.datatools.e1tn(d, 2)])
         vh = chisurf.math.datatools.e1tn(
             np.hstack([f, chisurf.math.datatools.e1tn(d, -1)]),
             g_factor
         )
+        
+        # Apply mixing
+        vv_mixed = chisurf.math.datatools.e1tn(vv, 1 - l1) + chisurf.math.datatools.e1tn(vh, l1)
+        vh_mixed = chisurf.math.datatools.e1tn(vv, l2) + chisurf.math.datatools.e1tn(vh, 1 - l2)
+        
         if polarization_type == 'VH':
-            return np.hstack(
-                [chisurf.math.datatools.e1tn(vv, l2),
-                 chisurf.math.datatools.e1tn(vh, 1 - l2)]
-            )
+            return vh_mixed
         elif polarization_type == 'VV':
-            r = np.hstack(
-                [chisurf.math.datatools.e1tn(vv, 1 - l1),
-                 chisurf.math.datatools.e1tn(vh, l1)]
-            )
-            return r
+            return vv_mixed
+        elif polarization_type == 'VV/VH':
+            # Return stacked VV and VH spectra for joint fitting
+            return np.hstack([vv_mixed, vh_mixed])
     else:
         return f
