@@ -39,6 +39,22 @@ import chisurf
 import chisurf.plugins
 import chisurf.settings
 
+# Import enhanced icon utilities
+try:
+    from ..icon_utils import create_plugin_icon_with_fallback
+except ImportError:
+    # Fallback if icon_utils is not available
+    def create_plugin_icon_with_fallback(module, package_dir, size=64):
+        """Fallback icon creation using existing system"""
+        from pathlib import Path
+        package_dir = Path(package_dir)
+        if hasattr(module, 'icon') and isinstance(module.icon, QIcon):
+            return module.icon
+        icon_path = package_dir / 'icon.png'
+        if icon_path.exists():
+            return QIcon(str(icon_path))
+        return QIcon()
+
 # Define the plugin name - this will appear in the Plugins menu
 name = "Setup:Plugins"
 
@@ -285,12 +301,50 @@ class PluginManagerWidget(QMainWindow):
                 item.setData(Qt.UserRole, module_path)
                 item.setData(Qt.UserRole + 1, source)
 
-                # Set icon if available (prefer module-provided icon, then package_dir/icon.png)
-                icon_path = pathlib.Path(package_dir) / 'icon.png'
-                if hasattr(module, 'icon'):
-                    item.setIcon(module.icon)
-                elif icon_path.exists():
-                    item.setIcon(QIcon(str(icon_path)))
+                # Set icon using enhanced icon system
+                try:
+                    icon = create_plugin_icon_with_fallback(module, package_dir, size=32)
+                    item.setIcon(icon)
+                except Exception as e:
+                    # Fallback to original system if enhanced system fails
+                    try:
+                        if hasattr(module, 'icon'):
+                            if isinstance(module.icon, QIcon):
+                                item.setIcon(module.icon)
+                            elif isinstance(module.icon, str):
+                                # Try to create a simple text icon as fallback
+                                from qtpy.QtGui import QPixmap, QPainter, QFont, QColor
+                                from qtpy.QtCore import Qt
+                                
+                                pm = QPixmap(32, 32)
+                                pm.fill(Qt.transparent)
+                                painter = QPainter(pm)
+                                painter.setRenderHint(QPainter.Antialiasing, True)
+                                painter.setRenderHint(QPainter.TextAntialiasing, True)
+                                
+                                # Check if it's an emoji
+                                if any(ord(char) > 0x1F000 for char in module.icon):
+                                    font = QFont("Segoe UI Emoji", 16)
+                                else:
+                                    font = QFont("Arial", 12, QFont.Bold)
+                                
+                                painter.setFont(font)
+                                painter.setPen(QColor(0, 0, 0))
+                                rect = pm.rect()
+                                painter.drawText(rect, Qt.AlignCenter, module.icon)
+                                painter.end()
+                                
+                                item.setIcon(QIcon(pm))
+                            else:
+                                item.setIcon(QIcon())
+                        else:
+                            # Check for icon.png file
+                            icon_path = pathlib.Path(package_dir) / 'icon.png'
+                            if icon_path.exists():
+                                item.setIcon(QIcon(str(icon_path)))
+                    except Exception:
+                        # Ultimate fallback - empty icon
+                        item.setIcon(QIcon())
 
                 # Mark plugins based on status
                 if is_disabled:
