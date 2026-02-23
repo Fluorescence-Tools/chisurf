@@ -52,9 +52,7 @@ class Parameter(chisurf.base.Base):
         import chisurf.fitting
         idxs = chisurf.fitting.find_fit_idx_of_parameter(self)
         if len(idxs) == 0:
-            # Parameter is not associated with any fit
-            chisurf.logging.warning(f"Parameter {self.name} is not associated with any fit")
-            return -1  # Return a default value indicating no fit
+            return -1
         if len(idxs) > 1:
             chisurf.logging.warning("Ambiguous link call. Fitting parameter used in multiple fits")
         fit_idx_self = idxs[0]
