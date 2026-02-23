@@ -12,7 +12,7 @@ import sys
 from qtpy import QtWidgets, QtCore
 
 # Import the module to test
-from chisurf.gui.widgets.wizard.tttr_photon_filter import WizardTTTRPhotonFilter
+from chisurf.gui.widgets.wizard.tttr_photonfilter import WizardTTTRPhotonFilter
 
 def test_parameter_collection():
     """Test that all parameters are correctly collected."""

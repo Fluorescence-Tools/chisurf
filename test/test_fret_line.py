@@ -103,6 +103,15 @@ class Tests(unittest.TestCase):
             fl.fdfa_string
         )
 
+    def test_orientation_mode_aliases(self):
+        from chisurf.models.tcspc.fret import OrientationParameter
+
+        op = OrientationParameter(orientation_mode='slow_isotropic')
+        self.assertEqual(op.mode, 'slow')
+
+        op = OrientationParameter(orientation_mode='fast_isotropic')
+        self.assertEqual(op.mode, 'fast')
+
     def test_fret_line_2(self):
         chisurf.models.tcspc.fret.rda_axis = np.logspace(
             start=np.log(1),

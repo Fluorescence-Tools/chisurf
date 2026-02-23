@@ -15,7 +15,7 @@ import shutil
 from qtpy import QtWidgets
 
 # Import the module to test
-from chisurf.gui.widgets.wizard.tttr_photon_filter import WizardTTTRPhotonFilter
+from chisurf.gui.widgets.wizard.tttr_photonfilter import WizardTTTRPhotonFilter
 
 def test_unique_folder_paths():
     """Test the get_unique_folder_path method with various scenarios."""

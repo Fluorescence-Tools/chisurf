@@ -20,7 +20,7 @@ from datetime import datetime
 from qtpy import QtWidgets
 
 # Import the module to test
-from chisurf.gui.widgets.wizard.tttr_photon_filter import WizardTTTRPhotonFilter
+from chisurf.gui.widgets.wizard.tttr_photonfilter import WizardTTTRPhotonFilter
 
 def test_datetime_file():
     """Test that a separate datetime file is created."""

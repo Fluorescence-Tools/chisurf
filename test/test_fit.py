@@ -171,6 +171,77 @@ class FitTests(unittest.TestCase):
 
         curves = fit.get_curves()
 
+    def test_fit_save_full_length_curves_have_nan_padding(self):
+        a_value = 1.2
+        c_value = 3.1
+
+        x_data, y_data = get_data_values(
+            a_value=a_value,
+            c_value=c_value
+        )
+        data = chisurf.data.DataCurve(
+            x=x_data,
+            y=y_data,
+            ey=np.ones_like(y_data)
+        )
+        fit = chisurf.fitting.fit.FitGroup(
+            data=chisurf.data.DataGroup(
+                [data]
+            ),
+            model_class=chisurf.models.parse.ParseModel
+        )
+        fit.model.func = 'c+a*x**2'
+
+        # Use a fit range that exercises the xmax-exclusive behaviour
+        fit.fit_range = 0, len(fit.model.y) - 1
+        fit.model.update_model()
+
+        # Full-length curves should match the original data length and contain NaNs outside the fit range.
+        curves_full = fit.get_curves(full_length=True)
+        self.assertIn('model', curves_full)
+        self.assertIn('weighted residuals', curves_full)
+        self.assertEqual(len(curves_full['model'].y), len(data.x))
+        self.assertEqual(len(curves_full['weighted residuals'].y), len(data.x))
+
+        # Outside of the fit window, values should be NaN (no shifts / no length changes)
+        self.assertTrue(np.all(np.isnan(curves_full['model'].y[fit.xmax:])))
+        self.assertTrue(np.all(np.isnan(curves_full['weighted residuals'].y[fit.xmax:])))
+
+        # Inside the fit window, values should match the cropped arrays used for fitting
+        expected_wres = fit.get_wres(model=fit.model, xmin=fit.xmin, xmax=fit.xmax)
+        expected_wres = np.asarray(expected_wres, dtype=float)
+        self.assertTrue(
+            np.allclose(
+                curves_full['weighted residuals'].y[fit.xmin:fit.xmin + expected_wres.size],
+                expected_wres,
+                equal_nan=False
+            )
+        )
+        self.assertTrue(
+            np.allclose(
+                curves_full['model'].y[fit.xmin:fit.xmax],
+                fit.model.y[fit.xmin:fit.xmax],
+                equal_nan=False
+            )
+        )
+
+        # Saving should write the full-length model and wres curves to disk as CSV.
+        with tempfile.TemporaryDirectory() as td:
+            base = os.path.join(td, 'fit')
+            fit.save(base, 'csv', save_curves=True)
+
+            fn_model = base + '_model.csv'
+            fn_wres = base + '_weighted residuals.csv'
+            self.assertTrue(os.path.isfile(fn_model))
+            self.assertTrue(os.path.isfile(fn_wres))
+
+            arr_model = np.loadtxt(fn_model)
+            arr_wres = np.loadtxt(fn_wres)
+            self.assertEqual(arr_model.shape[0], len(data.x))
+            self.assertEqual(arr_wres.shape[0], len(data.x))
+            self.assertTrue(np.all(np.isnan(arr_model[fit.xmax:, 1])))
+            self.assertTrue(np.all(np.isnan(arr_wres[fit.xmax:, 1])))
+
     def test_fit_data_setter(self):
         c_value = 3.1
         a_value = 1.2

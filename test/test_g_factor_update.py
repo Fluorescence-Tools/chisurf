@@ -7,7 +7,7 @@ from qtpy.QtCore import Qt
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizard
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizard
 
 def test_g_factor_update():
     """Test that G-factor values can be set correctly for all rows, including the first row."""

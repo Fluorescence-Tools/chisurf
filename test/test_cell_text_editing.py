@@ -7,7 +7,7 @@ from qtpy.QtCore import Qt
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizard
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizard
 
 def test_cell_text_editing():
     """Test that cell text can be edited directly without replacing widgets."""
@@ -20,7 +20,7 @@ def test_cell_text_editing():
     # Get the DetectorWizardPage instance
     page = wizard.page(0)
     
-    # Add a test detector
+    # Add a test tttr_channeldefinition
     page.new_detector_le.setText("test_detector")
     page._add_detector()
     

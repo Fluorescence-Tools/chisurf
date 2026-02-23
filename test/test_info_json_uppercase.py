@@ -21,7 +21,7 @@ from datetime import datetime
 from qtpy import QtWidgets
 
 # Import the module to test
-from chisurf.gui.widgets.wizard.tttr_photon_filter import WizardTTTRPhotonFilter, load_detector_setups
+from chisurf.gui.widgets.wizard.tttr_photonfilter import WizardTTTRPhotonFilter, load_detector_setups
 
 def test_info_json_uppercase():
     """Test that the info directory is created with uppercase 'I' and setup info is included."""

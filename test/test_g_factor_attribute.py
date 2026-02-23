@@ -82,7 +82,7 @@ def main():
     print("3. Added on_gfactor_changed method to update g_factor when lineEdit_gfactor changes")
     print("4. Modified update_timeshifts to use g_factor attribute instead of reading from UI")
     print("5. Modified add_to_chisurf to use g_factor attribute instead of reading from UI")
-    print("6. Modified on_detector_selection_changed to update g_factor attribute when a detector is selected")
+    print("6. Modified on_detector_selection_changed to update g_factor attribute when a tttr_channeldefinition is selected")
     
     print("\nTest completed!")
 

@@ -15,7 +15,7 @@ class FitTests(unittest.TestCase):
 
     def test_data_group(self):
         dt = 0.0141
-        tcspc_experiment = chisurf.experiments.Experiment(
+        tcspc_experiment = chisurf.experiments.core.Experiment(
             name='TCSPC'
         )
         tcspc_reader = chisurf.experiments.tcspc.TCSPCReader(

@@ -18,7 +18,7 @@ import chisurf.fio
 class Tests(unittest.TestCase):
 
     def test_experiment(self):
-        experiment = chisurf.experiments.experiment.Experiment(
+        experiment = chisurf.experiments.core.Experiment(
             name="AAA"
         )
         self.assertEqual(
@@ -27,7 +27,7 @@ class Tests(unittest.TestCase):
         )
 
         experiment_json = experiment.to_json()
-        e2 = chisurf.experiments.experiment.Experiment(name=None)
+        e2 = chisurf.experiments.core.Experiment(name=None)
         e2.from_json(
             experiment_json
         )
@@ -65,7 +65,7 @@ class Tests(unittest.TestCase):
             ['Model name not available']
         )
 
-        experiment_reader = chisurf.experiments.reader.ExperimentReader(
+        experiment_reader = chisurf.experiments.core.ExperimentReader(
             name="ExperimentReaderName_A",
             experiment=experiment
         )
@@ -85,10 +85,10 @@ class Tests(unittest.TestCase):
         )
 
     def test_experimental_data(self):
-        experiment = chisurf.experiments.experiment.Experiment(
+        experiment = chisurf.experiments.core.Experiment(
             name="Experiment Type"
         )
-        data_reader = chisurf.experiments.reader.ExperimentReader(
+        data_reader = chisurf.experiments.core.ExperimentReader(
             experiment=experiment
         )
         experiment.add_reader(
@@ -137,7 +137,7 @@ class Tests(unittest.TestCase):
 
     def test_TCSPCReader(self):
         filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
-        ex = chisurf.experiments.experiment.Experiment(
+        ex = chisurf.experiments.core.Experiment(
             'TCSPC'
         )
         dt = 0.0141
@@ -179,7 +179,7 @@ class Tests(unittest.TestCase):
     def test_TCSPCReader_auto_routine(self):
         """Test automatic detection of reading routine based on file extension."""
         # Create a TCSPCReader with default settings (reading_routine='auto')
-        ex = chisurf.experiments.experiment.Experiment('TCSPC')
+        ex = chisurf.experiments.core.Experiment('TCSPC')
         reader = chisurf.experiments.tcspc.TCSPCReader(experiment=ex)
 
         # Test guessing reading routine for different file extensions
@@ -219,7 +219,7 @@ class Tests(unittest.TestCase):
                 filename
             )
         )
-        ex = chisurf.experiments.experiment.Experiment(
+        ex = chisurf.experiments.core.Experiment(
             'FCS'
         )
         g1 = chisurf.experiments.fcs.FCS(

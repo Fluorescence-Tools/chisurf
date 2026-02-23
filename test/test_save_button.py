@@ -6,7 +6,7 @@ This script imports the necessary modules and creates a simple UI to test the bu
 
 import sys
 from qtpy import QtWidgets, QtCore
-import chisurf.gui.widgets.wizard.tttr_photon_filter as tttr_photon_filter
+import chisurf.gui.widgets.wizard.tttr_photonfilter.tttr_photon_filter as tttr_photon_filter
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

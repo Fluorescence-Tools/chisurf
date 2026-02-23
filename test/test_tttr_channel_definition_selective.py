@@ -22,7 +22,7 @@ import tempfile
 sys.path.insert(0, os.path.abspath('..'))
 
 from qtpy.QtWidgets import QApplication, QWizard, QLabel, QVBoxLayout, QWidget
-from chisurf.gui.widgets.wizard.tttr_channel_definition import DetectorWizardPage
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 def main():
     """Create a simple application with a DetectorWizardPage and test files."""

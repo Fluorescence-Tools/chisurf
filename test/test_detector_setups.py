@@ -7,7 +7,7 @@ import sys
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-from chisurf.gui.widgets.wizard.tttr_channel_definition import save_detector_setups, load_detector_setups
+from chisurf.gui.widgets.wizard.tttr_channeldefinition import save_detector_setups, load_detector_setups
 
 def test_save_detector_setups():
     """Test that save_detector_setups updates the file instead of overwriting it."""

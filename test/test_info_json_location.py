@@ -18,7 +18,7 @@ import json
 from datetime import datetime
 
 # Import the module to test
-from chisurf.gui.widgets.wizard.tttr_photon_filter import WizardTTTRPhotonFilter
+from chisurf.gui.widgets.wizard.tttr_photonfilter import WizardTTTRPhotonFilter
 
 def test_info_json_location():
     """Test that the info JSON is saved in the original folder name without suffix."""
