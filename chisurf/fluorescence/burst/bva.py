@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 from typing import List, Tuple, Dict
 import tqdm
@@ -9,6 +8,9 @@ def compute_static_bva_line(
         number_of_photons_per_slice: int = 4,
         n_samples: int = 10_000
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute static BVA line"""
+    # Lazy import pandas to avoid circular import during initialization
+    import pandas as pd
     """
     Simulates fluorescence burst variance analysis (BVA) by calculating the mean
     and standard deviation of proximity ratios for a static species based on the
@@ -60,7 +62,7 @@ def compute_static_bva_line(
 
 
 def compute_bva(
-        df: pd.DataFrame,  # Target data frame
+        df,  # Target data frame
         tttrs: Dict[str, 'tttrlib.TTTR'],  # Dictionary of TTTR data indexed by 'First File'
         donor_channels: List[int] = [0, 8],  # Channels for donor fluorescence detection
         donor_micro_time_ranges: List[Tuple[int, int]] = [(0, 4096)],  # Microtime ranges for donor photons
@@ -68,7 +70,7 @@ def compute_bva(
         acceptor_micro_time_ranges: List[Tuple[int, int]] = [(0, 4096)],  # Microtime ranges for acceptor photons
         minimum_window_length: float = 0.01,  # Minimum time window length within burst
         number_of_photons_per_slice: int = -1  # Number of photons per time slice (-1 to use time windows)
-) -> pd.DataFrame:
+):
     """
     Computes proximity ratio statistics (mean and standard deviation) for fluorescence bursts using
     Burst Variance Analysis (BVA). The proximity ratio compares the number of photons detected from
@@ -95,7 +97,7 @@ def compute_bva(
     acceptor_micro_time_ranges : List[Tuple[int, int]], optional
         Microtime ranges for acceptor photons. Default is [(0, 4096)].
     minimum_window_length : float, optional
-        Minimum time window length within a burst for dividing photon events into slices. Default is 0.01.
+        Minimum time window length within burst for dividing photon events into slices. Default is 0.01.
     number_of_photons_per_slice : int, optional
         If set to a positive value, divides bursts into slices containing a fixed number of photons.
         If set to -1, divides bursts based on time windows of `minimum_window_length`. Default is -1.
@@ -106,7 +108,8 @@ def compute_bva(
         Updated DataFrame with added columns for proximity ratio mean ('Proximity Ratio Mean') and
         standard deviation ('Proximity Ratio Std') for each burst.
     """
-
+    # Lazy import pandas to avoid circular import during initialization
+    import pandas as pd
 
     # Initialize lists to store the proximity ratio statistics
     proximity_ratios_mean, proximity_ratios_sd = list(), list()
