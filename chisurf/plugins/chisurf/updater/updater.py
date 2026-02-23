@@ -144,11 +144,19 @@ class ChiSurfUpdater:
 
         def _parse_version(v: str) -> Tuple:
             """Parse version string into a tuple for robust comparison.
-            Supports semantic versions like '1.10.2' and date-like '25.08.14'.
+            Supports semantic versions like '1.10.2', date-like '25.08.14', and dev versions like '26.dev123'.
             Falls back to extracting integers; non-numeric parts are ignored.
             """
             try:
-                # Normalize separators to dots and split
+                # Handle dev versions like '26.dev123' - treat as lower than any release
+                dev_match = re.match(r'^(\d+)\.dev(\d+)$', v)
+                if dev_match:
+                    year = int(dev_match.group(1))
+                    dev_num = int(dev_match.group(2))
+                    # Return as (year, 0, dev_num, 0) so it sorts below releases
+                    return (year, 0, dev_num, 0)
+                
+                # Normalize separators to dots and split for regular versions
                 parts = re.split(r"[^0-9]+", v)
                 nums = [int(p) for p in parts if p != ""]
                 # Pad to 3 for common semver comparisons
@@ -456,28 +464,21 @@ class ChiSurfUpdater:
         """
         file_name = file.name.lower()
 
-        # Try to extract version from filename
-        # First try the standard format (X.Y.Z)
         version_match = re.search(r'(\d+\.\d+\.\d+)', file_name)
-
-        # If that doesn't work, try the date format (YY.MM.DD)
         if not version_match:
             version_match = re.search(r'(\d{2}\.\d{2}\.\d{2})', file_name)
-
-        # If that doesn't work, try just finding any sequence of digits
+        if not version_match:
+            version_match = re.search(r'(\d+\.dev\d+)', file_name)
         if not version_match:
             version_match = re.search(r'(\d+)', file_name)
-
         if not version_match:
             return []
 
         version = version_match.group(1)
-
-        # Return version information
         return [{
             "version": version,
             "file_path": str(file),
-            "file_name": file.name
+            "file_name": file.name,
         }]
 
     def _list_available_versions(self) -> List[Dict[str, Any]]:
@@ -490,34 +491,33 @@ class ChiSurfUpdater:
         if not self._is_local_folder():
             return []
 
+        def _parse_version(v: str) -> Tuple:
+            try:
+                dev_match = re.match(r'^(\d+)\.dev(\d+)$', v)
+                if dev_match:
+                    return (int(dev_match.group(1)), 0, int(dev_match.group(2)), 0)
+                parts = re.split(r"[^0-9]+", v)
+                nums = [int(p) for p in parts if p != ""]
+                while len(nums) < 3:
+                    nums.append(0)
+                return tuple(nums[:4])
+            except Exception:
+                return (0,)
+
         try:
-            # Convert the update URL to a Path object
             update_path = pathlib.Path(self.update_url)
-
-            # Check if the path exists
-            if not update_path.exists():
+            if not update_path.exists() or not update_path.is_dir():
                 return []
 
-            if not update_path.is_dir():
-                return []
-
-            # Get the current OS
             current_os = self.system
-
-            # List of supported OS names to look for in filenames
             os_names = {
                 "windows": ["win", "windows"],
                 "darwin": ["mac", "macos", "darwin"],
-                "linux": ["linux"]
+                "linux": ["linux"],
             }
-
-            # Get the OS-specific names to look for
             os_specific_names = os_names.get(current_os, [current_os])
 
-            # List all files in the directory and subdirectories
             versions = []
-
-            # First, check if there are OS-specific subdirectories
             os_subdirs = []
             for subdir in update_path.glob("*"):
                 if subdir.is_dir():
@@ -525,40 +525,27 @@ class ChiSurfUpdater:
                     if any(os_name in subdir_name for os_name in os_specific_names):
                         os_subdirs.append(subdir)
 
-            # If we found OS-specific subdirectories, scan them
             if os_subdirs:
                 for subdir in os_subdirs:
                     for file in subdir.glob("*"):
                         if file.is_file():
-                            # Skip files that don't contain "chisurf"
                             file_name = file.name.lower()
                             if "chisurf" not in file_name:
                                 continue
                             versions.extend(self._process_update_file(file))
 
-            # Also scan the main directory
             for file in update_path.glob("*"):
-                # Skip directories
                 if file.is_dir():
                     continue
-
-                # Skip files that don't match the current OS
                 file_name = file.name.lower()
                 if not any(os_name in file_name for os_name in os_specific_names):
                     continue
-
-                # Skip files that don't contain "chisurf"
                 if "chisurf" not in file_name:
                     continue
+                versions.extend(self._process_update_file(file))
 
-                # Process the file to extract version information
-                file_versions = self._process_update_file(file)
-                versions.extend(file_versions)
-
-            # Sort versions by version number (newest first)
-            versions.sort(key=lambda x: x["version"], reverse=True)
+            versions.sort(key=lambda x: _parse_version(x["version"]), reverse=True)
             return versions
-
         except Exception as e:
             logging.error(f"Error listing available versions: {str(e)}")
             return []
@@ -573,90 +560,73 @@ class ChiSurfUpdater:
         if self._is_local_folder():
             return []
 
-        try:
-            # Get the current OS
-            current_os = self.system
+        def _parse_version(v: str) -> Tuple:
+            try:
+                dev_match = re.match(r'^(\d+)\.dev(\d+)$', v)
+                if dev_match:
+                    return (int(dev_match.group(1)), 0, int(dev_match.group(2)), 0)
+                parts = re.split(r"[^0-9]+", v)
+                nums = [int(p) for p in parts if p != ""]
+                while len(nums) < 3:
+                    nums.append(0)
+                return tuple(nums[:4])
+            except Exception:
+                return (0,)
 
-            # List of supported OS names to look for in filenames
+        try:
+            current_os = self.system
             os_names = {
                 "windows": ["win", "windows"],
                 "darwin": ["mac", "macos", "darwin"],
-                "linux": ["linux"]
+                "linux": ["linux"],
             }
-
-            # Get the OS-specific names to look for
             os_specific_names = os_names.get(current_os, [current_os])
 
-            # Ensure the URL ends with a slash
             url = self.update_url
             if not url.endswith('/'):
                 url += '/'
 
-            # Function to extract version from filename
             def extract_version(filename):
-                # First try the standard format (X.Y.Z)
                 version_match = re.search(r'(\d+\.\d+\.\d+)', filename)
-
-                # If that doesn't work, try the date format (YY.MM.DD)
                 if not version_match:
                     version_match = re.search(r'(\d{2}\.\d{2}\.\d{2})', filename)
-
-                # If that doesn't work, try just finding any sequence of digits
+                if not version_match:
+                    version_match = re.search(r'(\d+\.dev\d+)', filename)
                 if not version_match:
                     version_match = re.search(r'(\d+)', filename)
-
                 if not version_match:
                     return None
-
                 return version_match.group(1)
 
-            # Function to process a file link
             def process_file_link(link, base_url, skip_os_check=False):
-                # Skip if it's a directory link (ends with /)
                 if link.endswith('/'):
                     return None
-
-                # Skip if it doesn't match the current OS (unless skip_os_check is True)
                 link_lower = link.lower()
                 if not skip_os_check and not any(os_name in link_lower for os_name in os_specific_names):
                     return None
-
-                # Skip if it doesn't contain "chisurf"
                 if "chisurf" not in link_lower:
                     return None
-
-                # Try to extract version from filename
                 version = extract_version(link_lower)
                 if not version:
                     return None
-
-                # Return version information
                 return {
                     "version": version,
                     "file_path": base_url + link,
-                    "file_name": link
+                    "file_name": link,
                 }
 
-            # Function to fetch and parse HTML from a URL
-            def fetch_and_parse_html(url):
+            def fetch_and_parse_html(fetch_url):
                 try:
-                    with urllib.request.urlopen(url) as response:
+                    with urllib.request.urlopen(fetch_url) as response:
                         html = response.read().decode('utf-8')
-
-                    # Look for href attributes in the HTML
-                    links = re.findall(r'href=[\'"]?([^\'" >]+)', html)
-                    return links
+                    return re.findall(r'href=[\'\"]?([^\'\" >]+)', html)
                 except urllib.error.URLError as e:
-                    logging.error(f"Error fetching directory listing from {url}: {e}")
+                    logging.error(f"Error fetching directory listing from {fetch_url}: {e}")
                     return []
 
-            # List to store all versions
             versions = []
-
-            # First, fetch the main directory
             main_links = fetch_and_parse_html(url)
 
-            # Check for OS-specific subdirectories
             os_subdirs = []
             for link in main_links:
                 if link.endswith('/') and not link.startswith('..'):
@@ -664,27 +634,21 @@ class ChiSurfUpdater:
                     if any(os_name in link_lower for os_name in os_specific_names):
                         os_subdirs.append(link)
 
-            # Process files in the main directory
             for link in main_links:
                 version_info = process_file_link(link, url)
                 if version_info:
                     versions.append(version_info)
 
-            # Process files in OS-specific subdirectories
             for subdir in os_subdirs:
                 subdir_url = url + subdir
                 subdir_links = fetch_and_parse_html(subdir_url)
-
                 for link in subdir_links:
-                    # Skip OS check for files in OS-specific subdirectories
                     version_info = process_file_link(link, subdir_url, skip_os_check=True)
                     if version_info:
                         versions.append(version_info)
 
-            # Sort versions by version number (newest first)
-            versions.sort(key=lambda x: x["version"], reverse=True)
+            versions.sort(key=lambda x: _parse_version(x["version"]), reverse=True)
             return versions
-
         except Exception as e:
             logging.error(f"Error listing remote versions: {str(e)}")
             return []
