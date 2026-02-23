@@ -30,7 +30,7 @@ class AutoFoldMethodsMixin:
 
             self.mouse_over_ribbon = False  # Track if mouse is over ribbon
 
-            self.logger.info(f"Auto-fold setup: enabled={self.auto_fold_enabled}, delay={self.auto_fold_delay_ms}ms, speed={self.auto_fold_speed_ms}ms")
+            self.logger.debug(f"Auto-fold setup: enabled={self.auto_fold_enabled}, delay={self.auto_fold_delay_ms}ms, speed={self.auto_fold_speed_ms}ms")
 
             if self.auto_fold_enabled and self.ribbon_bar:
                 # Install event filter to track mouse enter/leave on ribbon
@@ -48,10 +48,10 @@ class AutoFoldMethodsMixin:
                 # Start/restart the timer with the correct delay
                 self._restart_auto_fold_timer()
 
-                self.logger.info(f"Auto-fold enabled: {self.auto_fold_delay_ms}ms delay, {self.auto_fold_speed_ms}ms speed")
-                self.logger.info("Auto-fold will trigger when mouse leaves ribbon area")
+                self.logger.debug(f"Auto-fold enabled: {self.auto_fold_delay_ms}ms delay, {self.auto_fold_speed_ms}ms speed")
+                self.logger.debug("Auto-fold will trigger when mouse leaves ribbon area")
             else:
-                self.logger.info("Auto-fold disabled")
+                self.logger.debug("Auto-fold disabled")
 
         except Exception as e:
             self.logger.warning(f"Failed to setup auto-fold: {e}")
@@ -93,6 +93,12 @@ class AutoFoldMethodsMixin:
                 # Add pin button to the ribbon bar using the proper API
                 self.ribbon_bar.addRightToolButton(self.pin_button)
 
+                # Synchronize auto-fold state with pin state
+                # If pinned (default), disable auto-fold; if unpinned, enable it
+                if self.is_pinned:
+                    self.auto_fold_timer.stop()
+                    self.logger.debug("Ribbon starts pinned - auto-fold timer stopped")
+
                 # Create and add help button
                 help_button = QToolButton()
                 help_button.setIconSize(QSize(20, 20))
@@ -121,8 +127,8 @@ class AutoFoldMethodsMixin:
                 help_button.clicked.connect(self.main_window.onOpenHelp)
                 self.ribbon_bar.addRightToolButton(help_button)
 
-                self.logger.info(f"Pin button added to ribbon bar (pinned: {self.is_pinned})")
-                self.logger.info("Help button added to ribbon bar")
+                self.logger.debug(f"Pin button added to ribbon bar (pinned: {self.is_pinned})")
+                self.logger.debug("Help button added to ribbon bar")
             else:
                 self.logger.warning("Could not setup pin button - ribbon bar not available")
 
@@ -171,14 +177,14 @@ class AutoFoldMethodsMixin:
             settings_file = chisurf.settings.chisurf_settings_path / 'settings_chisurf.yaml'
             with open(settings_file, 'w', encoding='utf-8') as fh:
                 yaml.safe_dump(chisurf.settings.cs_settings, fh, default_flow_style=False)
-            self.logger.info(f"Saved pin state ({self.is_pinned}) to user settings file")
+            self.logger.debug(f"Saved pin state ({self.is_pinned}) to user settings file")
         except Exception as e:
             self.logger.warning(f"Failed to save pin state to settings: {e}")
 
         if self.is_pinned:
             # Pin the ribbon - disable auto-fold
             self.toggle_auto_fold(enabled=False)
-            self.logger.info("Ribbon pinned - auto-fold disabled")
+            self.logger.debug("Ribbon pinned - auto-fold disabled")
 
             # Show ribbon if currently hidden
             if self.is_folded:
@@ -186,7 +192,7 @@ class AutoFoldMethodsMixin:
         else:
             # Unpin the ribbon - enable auto-fold
             self.toggle_auto_fold(enabled=True)
-            self.logger.info("Ribbon unpinned - auto-fold enabled")
+            self.logger.debug("Ribbon unpinned - auto-fold enabled")
 
     def _restart_auto_fold_timer(self):
         """Restart the auto-fold timer"""
@@ -195,28 +201,28 @@ class AutoFoldMethodsMixin:
             self.auto_fold_timer.start(self.auto_fold_delay_ms)
             self.last_activity_time.start()
             msg = f"Timer STARTED: {self.auto_fold_delay_ms}ms until auto-fold"
-            self.logger.info(msg)
+            self.logger.debug(msg)
 
     def _auto_fold_ribbon(self):
         """Automatically hide the ribbon (like collapse button)"""
         try:
             msg = f"Auto-fold timer expired - checking conditions"
-            self.logger.info(msg)
+            self.logger.debug(msg)
 
             # Don't auto-fold if ribbon is pinned
             if self.is_pinned:
                 msg = "Auto-fold skipped - ribbon is pinned"
-                self.logger.info(msg)
+                self.logger.debug(msg)
                 return
 
             if self.ribbon_bar and not self.is_folded and not self.mouse_over_ribbon:
                 msg = "Auto-fold triggered - hiding ribbon"
-                self.logger.info(msg)
+                self.logger.debug(msg)
                 # Use the same mechanism as the collapse button
                 self.ribbon_bar.hideRibbon()
                 self.is_folded = True
                 msg = "Ribbon auto-folded (hidden)"
-                self.logger.info(msg)
+                self.logger.debug(msg)
             else:
                 msg = f"Auto-fold skipped: ribbon_bar={self.ribbon_bar is not None}, is_folded={self.is_folded}, mouse_over_ribbon={self.mouse_over_ribbon}, is_pinned={self.is_pinned}"
                 self.logger.debug(msg)
@@ -231,7 +237,7 @@ class AutoFoldMethodsMixin:
                 # Use animation timer for smooth unfolding, then show ribbon
                 QTimer.singleShot(self.auto_fold_speed_ms, self.ribbon_bar.showRibbon)
                 self.is_folded = False
-                self.logger.info("Ribbon unfolded (shown)")
+                self.logger.debug("Ribbon unfolded (shown)")
         except Exception as e:
             self.logger.error(f"Failed to unfold ribbon: {e}")
 
@@ -277,7 +283,9 @@ class AutoFoldMethodsMixin:
                 self.logger.debug("Connected tab bar signal")
             except Exception:
                 pass
-            self.logger.info("Auto-fold enabled - tracking mouse enter/leave on ribbon")
+            # Start the auto-fold timer
+            self._restart_auto_fold_timer()
+            self.logger.debug("Auto-fold enabled - tracking mouse enter/leave on ribbon")
         else:
             if self.ribbon_bar:
                 self.ribbon_bar.removeEventFilter(self)
@@ -285,7 +293,7 @@ class AutoFoldMethodsMixin:
                 if tab_bar:
                     tab_bar.removeEventFilter(self)
             self.auto_fold_timer.stop()
-            self.logger.info("Auto-fold disabled")
+            self.logger.debug("Auto-fold disabled")
 
             # Show ribbon if currently hidden
             if self.is_folded:
@@ -311,7 +319,7 @@ class AutoFoldMethodsMixin:
         if self.auto_fold_enabled:
             self._restart_auto_fold_timer()
 
-        self.logger.info(f"Auto-fold settings updated: delay={self.auto_fold_delay_ms}ms, speed={self.auto_fold_speed_ms}ms")
+        self.logger.debug(f"Auto-fold settings updated: delay={self.auto_fold_delay_ms}ms, speed={self.auto_fold_speed_ms}ms")
 
     def _on_tab_changed(self, index):
         """Handle tab bar changes - show ribbon when user switches tabs (like collapse button)"""

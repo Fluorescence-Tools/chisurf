@@ -16,6 +16,22 @@ from PyQt5 import QtWidgets
 import chisurf
 from chisurf import logging
 
+# Import enhanced icon utilities for emoji support
+try:
+    from chisurf.plugins.icon_utils import create_plugin_icon_with_fallback
+except ImportError:
+    # Fallback if icon_utils is not available
+    def create_plugin_icon_with_fallback(module, package_dir, size=64):
+        """Fallback icon creation using existing system"""
+        from pathlib import Path
+        package_dir = Path(package_dir)
+        if hasattr(module, 'icon') and isinstance(module.icon, QIcon):
+            return module.icon
+        icon_path = package_dir / 'icon.png'
+        if icon_path.exists():
+            return QIcon(str(icon_path))
+        return QIcon()
+
 
 class PluginMethodsMixin:
     """Mixin class containing all plugin-related methods for ChiSurfRibbonIntegration"""
@@ -541,13 +557,21 @@ class PluginMethodsMixin:
                         globals={'__name__': 'plugin'}
                     )
 
-                    # Check for icon
-                    icon = None
-                    for _icon_name in ("icon.png", "icon.svg"):
-                        icon_path = plugin_dir / _icon_name
-                        if icon_path.exists():
-                            icon = QIcon(str(icon_path))
-                            break
+                    # Get icon using enhanced icon system
+                    try:
+                        # Try to import the module to access its icon attribute
+                        import importlib
+                        plugin_module = importlib.import_module(module_path)
+                        icon = create_plugin_icon_with_fallback(plugin_module, package_dir, size=32)
+                    except Exception as e:
+                        # Fallback to traditional icon loading
+                        self.logger.debug(f"Enhanced icon system failed for '{plugin_name}': {e}, using fallback")
+                        icon = None
+                        for _icon_name in ("icon.png", "icon.svg"):
+                            icon_path = plugin_dir / _icon_name
+                            if icon_path.exists():
+                                icon = QIcon(str(icon_path))
+                                break
 
                     # Get description
                     description = info.get('description') or "No description available."

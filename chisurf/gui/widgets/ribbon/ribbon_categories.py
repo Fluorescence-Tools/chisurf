@@ -55,7 +55,7 @@ class CategoryMethodsMixin:
                 redo_button.setAutoRaise(True)
                 self.ribbon_bar.addQuickAccessButton(redo_button)
 
-            self.logger.info("Quick access bar setup completed")
+            self.logger.debug("Quick access bar setup completed")
 
         except Exception as e:
             self.logger.warning(f"Failed to setup quick access bar: {e}")

@@ -102,11 +102,8 @@ class ChiSurfRibbonIntegration(QObject):
         self.pin_button = None
         self.is_pinned = False
 
-        # Start the timer immediately - it will be managed by mouse events
-        if self.auto_fold_enabled:
-            self.auto_fold_timer.start(self.auto_fold_delay_ms)
-            msg = f"Timer STARTED on init: {self.auto_fold_delay_ms}ms until auto-fold"
-            self.logger.info(msg)
+        # Note: Timer will be started by _setup_auto_fold() if auto-fold is enabled
+        # and not overridden by pin state in _setup_pin_button()
 
     def eventFilter(self, obj, event):
         """
@@ -280,11 +277,11 @@ class ChiSurfRibbonIntegration(QObject):
 
             # Apply dark theme using palette approach like the demo
             self._apply_dark_palette()
-            self.logger.info("Applied dark palette to application")
+            self.logger.debug("Applied dark palette to application")
 
             # Apply compact spacing to reduce ribbon item spacing
             self.apply_compact_spacing()
-            self.logger.info("Applied compact spacing to ribbon items")
+            self.logger.debug("Applied compact spacing to ribbon items")
 
             # Setup hover tab switching - DISABLED
             # if hasattr(self.ribbon_bar, 'tabBar'):
@@ -486,7 +483,7 @@ class ChiSurfRibbonIntegration(QObject):
             dark_palette.setColor(QPalette.HighlightedText, Qt.black)
 
             app.setPalette(dark_palette)
-            self.logger.info("Applied dark palette successfully")
+            self.logger.debug("Applied dark palette successfully")
 
         except Exception as e:
             self.logger.error(f"Failed to apply dark palette: {e}")
@@ -625,7 +622,7 @@ class ChiSurfRibbonIntegration(QObject):
                 existing_stylesheet = self.ribbon_bar.styleSheet() or ""
                 self.ribbon_bar.setStyleSheet(existing_stylesheet + compact_stylesheet)
 
-                self.logger.info("Applied compact spacing to ribbon (text readable)")
+                self.logger.debug("Applied compact spacing to ribbon (text readable)")
 
         except Exception as e:
             self.logger.error(f"Failed to apply compact spacing: {e}")
