@@ -41,9 +41,14 @@ located in the folder `conda-recipe` of the project root. The `chisurf` package
 is installed to the conda environment in `dist/win`. Next, using `jinja2`, the 
 file `setup_template.iss` is written to the file `setup.iss` using
 `make_inno_setup.py`. The script `make_inno_setup.py` will read details from 
-the setup file `setup.py`, i.e., the version number, the entry points, etc. 
+`pyproject.toml` and `chisurf/info.py` (version number, entry points, etc.).
 Finally, Inno Setup reads `setup.iss` and writes an installation file
 `setup_version_number.exe` to `dist/`.
+
+### Versioning
+
+- The recommended build-time override is `CHISURF_VERSION` (PEP 440 compatible).
+- If unset, the conda recipe falls back to a dev-style version `YY.dev0`.
 
 ## Linux
 

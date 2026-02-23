@@ -9,7 +9,9 @@ from setuptools.command.build_py import build_py
 import sys
 import os
 import datetime
+import pathlib
 import re
+import subprocess
 
 
 # Re-export the standard backend functions
@@ -93,28 +95,85 @@ class CustomBuildPy(build_py):
     """
     
     def run(self):
-        # Get the path to the info.py file
-        info_file = os.path.join(os.path.dirname(__file__), 'chisurf', 'info.py')
-        
-        # Get the current date and format it as yy.mm.dd
-        today = datetime.datetime.now()
-        version = today.strftime('%y.%m.%d')
+        # Get the path to the info.py file (project root / chisurf / info.py)
+        project_root = pathlib.Path(__file__).resolve().parent.parent
+        info_file = project_root / 'chisurf' / 'info.py'
+
+        # Determine the version to bake into the built package.
+        # Prefer explicit override; otherwise derive from git tags.
+        version = os.environ.get('CHISURF_VERSION')
+        if version:
+            version = version.strip()
+        else:
+            try:
+                desc = subprocess.check_output(
+                    [
+                        'git', 'describe', '--tags', '--long',
+                        '--match', 'v[0-9]*',
+                    ],
+                    cwd=str(project_root),
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                ).strip()
+            except Exception:
+                desc = ''
+
+        # Expected: vX.Y.Z-N-g<sha>
+        m = re.match(r'^(v[0-9.]+)-(\d+)-g([0-9a-f]+)$', desc)
+        if m:
+            tag = m.group(1).lstrip('v')
+            # PEP 440: remove leading zeros from dot-separated numeric segments
+            parts = tag.split('.')
+            norm = []
+            for p in parts:
+                if not p.isdigit():
+                    norm = []
+                    break
+                norm.append(str(int(p)))
+            base = '.'.join(norm) if norm else None
+            if base is not None:
+                distance = int(m.group(2))
+                if distance == 0:
+                    version = base
+                else:
+                    # Extract year from base tag for dev version
+                    base_parts = base.split(".")
+                    if len(base_parts) >= 1:
+                        year = base_parts[0]
+                        version = f'{year}.dev{distance}'
+                    else:
+                        # Fallback to current year if tag format is unexpected
+                        today = datetime.datetime.now()
+                        version = f"{today.strftime('%y')}.dev{distance}"
+
+        if not version:
+            # Final fallback: deterministic dev-style version at build time.
+            today = datetime.datetime.now()
+            version = today.strftime('%y.dev0')
         
         # Read the current content of info.py
-        with open(info_file, 'r') as f:
+        with open(info_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Store original content for restoration
         original_content = content
         
-        # Replace the dynamic version with the hardcoded version
-        # This ensures that the installed package has a fixed version number
-        pattern = r'__version__ = str\(today\.strftime\("%y\.%m\.%d"\)\)'
+        # Replace the dynamic version computation with the hardcoded version.
+        # This ensures that the installed package has a fixed version string.
         replacement = f'__version__ = "{version}"'
-        content = re.sub(pattern, replacement, content)
+        content, n = re.subn(
+            r'^__version__\s*=\s*_compute_version\(\)\s*$',
+            replacement,
+            content,
+            flags=re.MULTILINE,
+        )
+        if n == 0:
+            # Fallback for older layouts.
+            pattern = r'__version__\s*=\s*str\(today\.strftime\("%y\.%m\.%d"\)\)'
+            content = re.sub(pattern, replacement, content)
         
         # Write the modified content back to info.py
-        with open(info_file, 'w') as f:
+        with open(info_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
         try:
@@ -123,7 +182,7 @@ class CustomBuildPy(build_py):
         finally:
             # After the build is complete, restore the original dynamic version
             # This ensures that the source code remains unchanged
-            with open(info_file, 'w') as f:
+            with open(info_file, 'w', encoding='utf-8') as f:
                 f.write(original_content)
 
 
