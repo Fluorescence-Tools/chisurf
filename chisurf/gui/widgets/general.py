@@ -247,7 +247,11 @@ def get_filename(
         file_type
     )
     filename = pathlib.Path(filename_str)
-    chisurf.working_path = pathlib.Path(filename).parent
+    try:
+        if filename_str:
+            chisurf.working_path = filename.parent
+    except Exception:
+        pass
     return filename
 
 
