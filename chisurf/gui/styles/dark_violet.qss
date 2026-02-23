@@ -470,7 +470,9 @@ QTextEdit {
 
 /* Use a unified monospace font and size for the History / Log dock */
 QListWidget#plainTextEditLog,
-QPlainTextEdit#plainTextEditHistory {
+QWidget#historyBrowser,
+QWidget#historyBrowser QTreeWidget,
+QWidget#historyBrowser QPlainTextEdit {
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
     font-size: 9pt;
 }
