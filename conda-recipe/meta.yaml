@@ -1,10 +1,11 @@
 {% set name = "chisurf" %}
-{#
-  Versioning policy (PEP 440 compatible):
-  - Prefer explicit override via CHISURF_VERSION (e.g. set from git tag)
-  - Fallback to dev-style YY.dev0 for local builds
-#}
-{% set version = environ.get("CHISURF_VERSION") or datetime.datetime.now().strftime("%y.dev0") %}
+{% set version = os.environ.get("CHISURF_VERSION") %}
+{% if not version %}
+  {% set version = os.popen("python -c \"import sys, os; sys.path.insert(0, os.path.abspath(os.path.join(r'" ~ RECIPE_DIR ~ "', '..'))); from chisurf.info import __version__; print(__version__)\"").read().strip() %}
+{% endif %}
+{% if not version %}
+  {% set version = datetime.datetime.now().strftime("%y.dev0") %}
+{% endif %}
 
 {# Read entry points from pyproject.toml #}
 {% set pyproject = load_file_data('../pyproject.toml', from_recipe_dir=True) %}
@@ -16,9 +17,7 @@ package:
   version: {{ version }}
 
 source:
-  path: ..
-  excludes:
-    - playground/*
+  path: ../
 
 build:
   number: 0
@@ -54,11 +53,9 @@ requirements:
     - llvm-openmp  # [osx]
     - libcxx       # [osx]
     - libgomp      # [linux]
-    - pyyaml
-    # Needed for chinet
+    - boost-cpp    # Needed for chinet
     - doxygen
-    - boost-cpp
-    - pyqt             # provides pyrcc5 for resource build
+    - pyqt         # provides pyrcc5 for resource build
     - pybind11
     - eigen
 
@@ -121,7 +118,7 @@ test:
 
 about:
   home: https://github.com/Fluorescence-Tools/ChiSurf
-  license: GPL-2.1
+  license: GPL-2.0
   license_file: LICENSE
   summary: ChiSurf - an interactive global analysis platform for fluorescence data
   description: >

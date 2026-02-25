@@ -1,8 +1,5 @@
-:: Define ENV variables
-:: Call Python with the --version flag to get the version information
-for /f "tokens=2 delims= " %%v in ('%PYTHON% --version 2^>^&1') do set PYTHON_VERSION=%%v
-:: Extract only the numeric part of the version
-for /f "tokens=1-3 delims=." %%a in ("%PYTHON_VERSION%") do set PYTHON_VERSION_NUMERIC=%%a.%%b.%%c
+@echo off
+setlocal
 
 :: Generate Python resources
 call pyrcc5 chisurf\gui\resources\resource.qrc -o chisurf\gui\resources\resource.py
