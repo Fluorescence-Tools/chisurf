@@ -16,7 +16,13 @@ import importlib
 import chisurf.gui.gui_tweaks  # GUI tweaks (QT_OPENGL, etc.)
 
 from qtpy import QtWidgets, QtGui, QtCore, uic
-from qtpy.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+try:
+    from qtpy.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+except (ImportError, RuntimeError):
+    QWebEngineView = None
+    QWebEnginePage = None
+    import logging
+    logging.getLogger("chisurf").debug("QtWebEngineWidgets not available - some browser features will be disabled.")
 import pyqtgraph as pg
 
 import chisurf  # Ensure chisurf is available module-wide
@@ -643,7 +649,11 @@ def setup_gui(
 
     def populate_plugins():
         plugin_menu = QtWidgets.QMenu('Plugins', window)
-        window.menuBar.addMenu(plugin_menu)
+        try:
+            window.menuBar.addMenu(plugin_menu)
+        except RuntimeError:
+            chisurf.logging.debug("Original menu bar deleted; skipping plugin menu addition.")
+
 
         # Store the plugin menu in a global variable so it can be accessed by populate_notebooks
         global plugin_menu_action
@@ -875,18 +885,21 @@ def setup_gui(
         # Get the next action after the Plugins menu
         next_action = None
         found_plugins = False
-        for action in window.menuBar.actions():
-            if found_plugins:
-                next_action = action
-                break
-            if action == plugin_menu_action:
-                found_plugins = True
+        try:
+            for action in window.menuBar.actions():
+                if found_plugins:
+                    next_action = action
+                    break
+                if action == plugin_menu_action:
+                    found_plugins = True
 
-        # Insert the Notebooks menu after the Plugins menu
-        if next_action is None:
-            window.menuBar.addMenu(notebook_menu)
-        else:
-            window.menuBar.insertMenu(next_action, notebook_menu)
+            # Insert the Notebooks menu after the Plugins menu
+            if next_action is None:
+                window.menuBar.addMenu(notebook_menu)
+            else:
+                window.menuBar.insertMenu(next_action, notebook_menu)
+        except RuntimeError:
+            chisurf.logging.debug("Original menu bar deleted; skipping notebook menu addition.")
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
