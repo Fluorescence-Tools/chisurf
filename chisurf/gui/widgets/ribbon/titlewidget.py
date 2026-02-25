@@ -93,6 +93,9 @@ class RibbonTitleWidget(QtWidgets.QFrame):
 
         # right toolbar
         self._rightToolBar = QtWidgets.QToolBar()
+        self._rightToolBar.setContentsMargins(5, 0, 5, 0)
+        if self._rightToolBar.layout():
+            self._rightToolBar.layout().setSpacing(5)
         self._rightToolBar.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self._rightToolBar.setIconSize(QtCore.QSize(self._rightButtonHeight, self._rightButtonHeight))
         self._collapseRibbonButton = QtWidgets.QToolButton(self)

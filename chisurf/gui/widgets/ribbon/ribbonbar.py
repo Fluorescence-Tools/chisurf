@@ -92,12 +92,82 @@ class RibbonBar(QtWidgets.QMenuBar):
         self._mainLayout.addWidget(self._stackedWidget, 1)
         self._mainLayout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetMinAndMaxSize)
 
+        # Search functionality
+        self._searchField = QtWidgets.QLineEdit(self)
+        self._searchField.setPlaceholderText("Search...")
+        self._searchField.setClearButtonEnabled(True)
+        self._searchField.setFixedWidth(150)
+        self._searchField.setStyleSheet("""
+            QLineEdit {
+                background-color: #454545;
+                color: white;
+                border: 1px solid #666;
+                border-radius: 3px;
+                padding: 2px 5px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #1e90ff;
+            }
+        """)
+        self._searchField.textChanged.connect(self._onSearchChanged)
+        
+        # Add search field to right toolbar (to the left of other buttons)
+        # Use insertWidget before the collapse button
+        self._titleWidget.rightToolBar().insertWidget(self._titleWidget._collapseRibbonButtonAction, self._searchField)
+
         # Connect signals
         self._titleWidget.helpButtonClicked.connect(self.helpButtonClicked)
         self._titleWidget.collapseRibbonButtonClicked.connect(self._collapseButtonClicked)
         self._titleWidget.tabBar().currentChanged.connect(self.showCategoryByIndex)  # type: ignore
         self._titleWidget.tabBar().doubleClicked.connect(self._onTabBarDoubleClicked)  # type: ignore
         self.setRibbonStyle(RibbonStyle.Default)
+
+    def _onSearchChanged(self, text: str):
+        """Handle search field text changes."""
+        text = text.lower().strip()
+        first_match_category = None
+        
+        for category_name, category in self._categories.items():
+            category_has_match = False
+            for panel_name, panel in category.panels().items():
+                for widget in panel.widgets():
+                    matches = False
+                    if text:
+                        # Check text and tooltip
+                        widget_text = ""
+                        if hasattr(widget, 'text'):
+                            widget_text = widget.text().lower()
+                        elif hasattr(widget, 'title'):
+                            widget_text = widget.title().lower()
+                        
+                        tooltip = widget.toolTip().lower()
+                        
+                        if text in widget_text or text in tooltip:
+                            matches = True
+                            category_has_match = True
+                            if first_match_category is None:
+                                first_match_category = category
+                    
+                    # Apply highlighting
+                    if matches:
+                        widget.setStyleSheet("border: 2px solid orange; border-radius: 3px;")
+                    else:
+                        widget.setStyleSheet("")
+            
+            # Highlight category tab if it has matches
+            tab_bar = self._titleWidget.tabBar()
+            index = tab_bar.indexOf(category_name)
+            if index >= 0:
+                if text and category_has_match:
+                    tab_bar.setTabTextColor(index, QtGui.QColor("orange"))
+                else:
+                    tab_bar.setTabTextColor(index, QtGui.QColor("white"))
+
+        # Switch to the first category with a match and show ribbon if folded
+        if first_match_category:
+            self.setCurrentCategory(first_match_category)
+            if not self.ribbonVisible():
+                self.showRibbon()
 
     def autoHideRibbon(self) -> bool:
         """Return whether the ribbon bar is automatically hidden when the mouse is pressed outside the ribbon bar.

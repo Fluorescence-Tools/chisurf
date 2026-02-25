@@ -210,25 +210,26 @@ class ChiSurfRibbonIntegration(QObject):
                 self.logger.info("Plugin toolbar hidden for ribbon mode")
 
             # Restore or create ribbon bar
-            if self.ribbon_bar:
-                # Move ribbon bar back from hidden widget
-                self.ribbon_bar.setParent(self.main_window)
-                self.logger.info("Ribbon bar restored from hidden widget")
-            else:
-                # Create ribbon bar
-                logging.info("DEBUG: About to create RibbonBar")
-                self.ribbon_bar = RibbonBar()
-                logging.info("DEBUG: RibbonBar created successfully")
+            try:
+                if self.ribbon_bar:
+                    # Move ribbon bar back from hidden widget
+                    self.ribbon_bar.setParent(self.main_window)
+                    self.logger.info("Ribbon bar restored from hidden widget")
+                else:
+                    # Create ribbon bar
+                    self.ribbon_bar = RibbonBar()
 
-                # Set ribbon style - ribbon uses different style constants
-                # For now, we'll use the default style
-                if ribbon_style is not None:
-                    # Convert old style constants to new ones if needed
-                    self.ribbon_bar.setRibbonStyle(RibbonStyle.Default)
+                    # Set ribbon style - ribbon uses different style constants
+                    # For now, we'll use the default style
+                    if ribbon_style is not None:
+                        # Convert old style constants to new ones if needed
+                        self.ribbon_bar.setRibbonStyle(RibbonStyle.Default)
 
-                # Layout fixes removed - they cause window movement issues
-
-                self.logger.info(f"New ribbon bar created with style {ribbon_style}")
+                    self.logger.info(f"New ribbon bar created with style {ribbon_style}")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize RibbonBar: {e}")
+                self.restore_original_interface()
+                return False
 
             # Set ribbon bar as menu widget (safe since menu bar is preserved)
             self.main_window.setMenuWidget(self.ribbon_bar)
