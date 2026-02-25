@@ -11,6 +11,7 @@ import chisurf.fio as io
 from chisurf import logging
 import chisurf.gui.widgets
 import chisurf.settings
+from chisurf.plugins.misc.code_editor.agent_panel import AgentPanelWidget
 
 
 class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
@@ -431,21 +432,33 @@ class CodeEditor(QtWidgets.QWidget):
     ):
         super().__init__(*args, **kwargs)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
         self.filename = filename
-        self._open_files: dict = {}  # path -> tab_index
-        self.setLayout(layout)
+        self._open_files: dict = {}
+        self._agent_panel_visible = False
+        self.setLayout(main_layout)
+
+        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        main_layout.addWidget(self.splitter)
 
         self.tab_widget = QtWidgets.QTabWidget()
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.tabCloseRequested.connect(self._close_tab)
         self.tab_widget.setDocumentMode(True)
-        layout.addWidget(self.tab_widget)
+        self.splitter.addWidget(self.tab_widget)
 
         self._create_editor_tab(filename=filename, language=language)
+
+        self.agent_panel = AgentPanelWidget(
+            self,
+            get_context_callback=self._get_editor_context
+        )
+        self.splitter.addWidget(self.agent_panel)
+        self.agent_panel.hide()
+        self.splitter.setSizes([800, 0])
 
         self.line_edit = QtWidgets.QLineEdit()
 
@@ -453,16 +466,19 @@ class CodeEditor(QtWidgets.QWidget):
         self.load_button = QtWidgets.QPushButton("Load")
         self.save_button = QtWidgets.QPushButton("Save")
         self.run_button = QtWidgets.QPushButton("Run")
+        self.agent_button = QtWidgets.QPushButton("Agent")
 
         button_layout.addWidget(self.line_edit)
         button_layout.addWidget(self.load_button)
         button_layout.addWidget(self.save_button)
         button_layout.addWidget(self.run_button)
-        layout.addLayout(button_layout)
+        button_layout.addWidget(self.agent_button)
+        main_layout.addLayout(button_layout)
 
         self.save_button.clicked.connect(self.save_text)
         self.load_button.clicked.connect(self.load_file_event)
         self.run_button.clicked.connect(self.run_macro)
+        self.agent_button.clicked.connect(self._toggle_agent_panel)
 
         if not can_load:
             self.load_button.hide()
@@ -483,6 +499,28 @@ class CodeEditor(QtWidgets.QWidget):
         if idx >= 0:
             return self.tab_widget.tabText(idx)
         return None
+
+    def _toggle_agent_panel(self):
+        """Toggle the AI agent panel visibility."""
+        if self._agent_panel_visible:
+            self.agent_panel.hide()
+            self.splitter.setSizes([self.width(), 0])
+            self._agent_panel_visible = False
+        else:
+            self.agent_panel.show()
+            self.splitter.setSizes([int(self.width() * 0.6), int(self.width() * 0.4)])
+            self._agent_panel_visible = True
+
+    def _get_editor_context(self) -> str:
+        """Get the current editor content for the agent context."""
+        editor = self._get_current_editor()
+        if editor is None:
+            return ""
+
+        filename = self._get_current_filename() or "Untitled"
+        content = editor.toPlainText()
+
+        return f"File: {filename}\n\n```{content}\n```"
 
     def _close_tab(self, index: int):
         """Close a tab at the given index."""
