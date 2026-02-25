@@ -221,6 +221,38 @@ class LogListWidget(QtWidgets.QListWidget):
         chisurf.logging.info(f"Copied {len(selected_items)} log entries to clipboard")
 
 
+
+class EnterAwarePlainTextEdit(QtWidgets.QPlainTextEdit):
+    """
+    A QPlainTextEdit that emits a signal when Enter is pressed (without Shift).
+    Also supports history navigation with Up/Down arrow keys.
+    """
+    sendRequested = QtCore.Signal()
+    historyPrevRequested = QtCore.Signal()
+    historyNextRequested = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def keyPressEvent(self, event):
+        if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+            if event.modifiers() & QtCore.Qt.ShiftModifier:
+                super().keyPressEvent(event)
+            else:
+                self.sendRequested.emit()
+            return
+
+        if event.key() == QtCore.Qt.Key_Up:
+            self.historyPrevRequested.emit()
+            return
+
+        if event.key() == QtCore.Qt.Key_Down:
+            self.historyNextRequested.emit()
+            return
+
+        super().keyPressEvent(event)
+
+
 def get_filename(
         description: str = '',
         file_type: str = 'All files (*.*)',
