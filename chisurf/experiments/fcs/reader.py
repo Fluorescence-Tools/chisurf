@@ -79,3 +79,12 @@ class FCS(ExperimentReader):
         r.current_dataset.data_reader = self
         r.data_reader = self
         return r
+
+    def autofitrange(
+            self,
+            data: chisurf.base.Data,
+            **kwargs
+    ) -> typing.Tuple[int, int]:
+        if isinstance(data, (chisurf.data.DataCurve, chisurf.data.DataCurveGroup)):
+            return 0, len(data.y)
+        return 0, 0
