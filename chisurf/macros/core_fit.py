@@ -1495,45 +1495,14 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     if dataset_layout:
         ui_state["dataset_layout"] = dataset_layout
 
-    # Optionally capture main-window and MDI layout geometry/state
+    # Use centralized UI 1:1 state capture 
     try:
-        mw_state = {}
-        save_geom = getattr(cs, "saveGeometry", None)
-        save_state = getattr(cs, "saveState", None)
-        if callable(save_geom):
-            try:
-                ba = save_geom()
-                mw_state["geometry"] = bytes(ba).hex()
-            except Exception:
-                pass
-        if callable(save_state):
-            try:
-                ba = save_state()
-                mw_state["state"] = bytes(ba).hex()
-            except Exception:
-                pass
-        if mw_state:
-            ui_state["main_window"] = mw_state
-
-        mdi = getattr(cs, "mdiarea", None)
-        if mdi is not None:
-            save_mdi = getattr(mdi, "saveState", None)
-            if callable(save_mdi):
-                try:
-                    ba = save_mdi()
-                    ui_state["mdi_area"] = {"state": bytes(ba).hex()}
-                except Exception:
-                    pass
-
-        history_browser = getattr(cs, "historyBrowser", None)
-        get_hist_state = getattr(history_browser, "get_ui_state", None)
-        if callable(get_hist_state):
-            try:
-                ui_state["history_browser"] = get_hist_state()
-            except Exception:
-                pass
-    except Exception:
-        pass
+        from chisurf.project.ui_state import get_ui_state
+        gui_state = get_ui_state(cs)
+        if gui_state:
+            ui_state.update(gui_state)
+    except Exception as exc:
+        log.warning(f"save_project: could not capture UI state: {exc}")
 
     proj = CSProject(
         name=project_name,
@@ -2380,44 +2349,10 @@ def load_project(project_path: str):
     # done only after datasets and fits (and thus subwindows) have been
     # recreated so that Qt has matching widgets to apply the layout to.
     try:
-        mw_state = ui_state.get("main_window") or {}
-        geom_hex = mw_state.get("geometry")
-        state_hex = mw_state.get("state")
-        if geom_hex:
-            try:
-                ba = chisurf.gui.QtCore.QByteArray.fromHex(geom_hex.encode("ascii"))
-                cs.restoreGeometry(ba)
-            except Exception:
-                pass
-        if state_hex:
-            try:
-                ba = chisurf.gui.QtCore.QByteArray.fromHex(state_hex.encode("ascii"))
-                cs.restoreState(ba)
-            except Exception:
-                pass
-
-        mdi_info = ui_state.get("mdi_area") or {}
-        mdi_hex = mdi_info.get("state")
-        mdi = getattr(cs, "mdiarea", None)
-        if mdi is not None and mdi_hex:
-            restore_mdi = getattr(mdi, "restoreState", None)
-            if callable(restore_mdi):
-                try:
-                    ba = chisurf.gui.QtCore.QByteArray.fromHex(mdi_hex.encode("ascii"))
-                    restore_mdi(ba)
-                except Exception:
-                    pass
-
-        history_browser_state = ui_state.get("history_browser") or {}
-        history_browser = getattr(cs, "historyBrowser", None)
-        set_hist_state = getattr(history_browser, "set_ui_state", None)
-        if callable(set_hist_state) and isinstance(history_browser_state, dict):
-            try:
-                set_hist_state(history_browser_state)
-            except Exception:
-                pass
-    except Exception:
-        pass
+        from chisurf.project.ui_state import set_ui_state
+        set_ui_state(cs, ui_state)
+    except Exception as exc:
+        log.warning(f"load_project: could not restore UI state from dict: {exc}")
 
     # Trigger a single GUI refresh now that datasets, fits and layout are consistent.
     try:
