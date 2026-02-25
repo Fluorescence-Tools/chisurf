@@ -481,6 +481,11 @@ class DataCurveGroup(DataGroup):
     def __str__(self):
         return [str(d) + "\n------\n" for d in self]
 
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return self.x[key], self.y[key], self.ex[key], self.ey[key]
+        return super().__getitem__(key)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
