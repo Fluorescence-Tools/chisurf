@@ -80,7 +80,7 @@ def group_datasets(
     ]
     if isinstance(
             selected_data[0],
-            chisurf.data.DataCurve
+            (chisurf.data.DataCurve, chisurf.data.DataCurveGroup)
     ):
         # TODO: check for double names!!!
         dg = chisurf.data.ExperimentDataCurveGroup(
