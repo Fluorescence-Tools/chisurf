@@ -625,3 +625,130 @@ def snapshot_to_replay_state(
     result["setup"] = snapshot.get("setup", {})
 
     return result
+
+
+def sync_domain_entities(
+        target_nav_state: typing.Dict[str, typing.Any],
+        all_events: typing.List[typing.Dict[str, typing.Any]],
+) -> None:
+    """Synchronize live domain entities (datasets, fits) with the target state.
+
+    This identifies missing or extra entities by UID and uses action services
+    to reconcile them, with history recording suppressed.
+    """
+    import chisurf
+    from chisurf.controllers.services import dataset_service, fit_service
+
+    target_ds_uids = set(target_nav_state.get("dataset_uids", []))
+    target_fit_uids = set(target_nav_state.get("fit_uids", []))
+
+    current_ds_uids = {
+        str(getattr(ds, "unique_identifier", ""))
+        for ds in getattr(chisurf, "imported_datasets", [])
+    }
+    current_fit_uids = {
+        str(getattr(f, "unique_identifier", ""))
+        for f in getattr(chisurf, "fits", [])
+    }
+
+    # Identify missing UIDs
+    missing_ds = target_ds_uids - current_ds_uids
+    missing_fits = target_fit_uids - current_fit_uids
+
+    # Identify extra UIDs
+    extra_ds_indices = [
+        i for i, ds in enumerate(getattr(chisurf, "imported_datasets", []))
+        if str(getattr(ds, "unique_identifier", "")) not in target_ds_uids
+        and str(getattr(ds, "name", "")) != "Global Dataset"
+    ]
+    extra_fit_indices = [
+        i for i, f in enumerate(getattr(chisurf, "fits", []))
+        if str(getattr(f, "unique_identifier", "")) not in target_fit_uids
+    ]
+
+    history = getattr(chisurf, "history", None)
+    if history is None:
+        return
+
+    with history.suppress_recording():
+        # 1. Remove extra entities (reverse order to keep indices valid)
+        if extra_fit_indices:
+            for idx in sorted(extra_fit_indices, reverse=True):
+                fit_service.close_fit(idx=idx)
+
+        if extra_ds_indices:
+            # dataset_service.remove_datasets takes a list
+            dataset_service.remove_datasets(dataset_indices=extra_ds_indices)
+
+            # 2a. Build UID -> Current Index map for resolving dependencies
+            uid_to_idx = {
+                str(getattr(ds, "unique_identifier", "")): i
+                for i, ds in enumerate(getattr(chisurf, "imported_datasets", []))
+            }
+
+            # Map UID -> Event for creation actions
+            creation_map: typing.Dict[str, typing.Dict[str, typing.Any]] = {}
+            uid_to_event_uids: typing.Dict[str, typing.List[str]] = {} # Map UID to all UIDs created in same event
+
+            for event in all_events:
+                atype = str(event.get("action_type", ""))
+                payload = event.get("payload", {}) or {}
+                if atype == "dataset_add":
+                    uids = [str(u) for u in payload.get("loaded_uids", [])]
+                    for uid in uids:
+                        creation_map[uid] = event
+                        uid_to_event_uids[uid] = uids
+                elif atype == "fit_add":
+                    uid = str(event.get("target_uid") or payload.get("fit_uid") or "")
+                    if uid:
+                        creation_map[uid] = event
+                elif atype == "dataset_group":
+                    uid = str(payload.get("group_uid", ""))
+                    if uid:
+                        creation_map[uid] = event
+
+            def resolve_indices(old_indices: list, creator_event: dict) -> list:
+                # This is tricky: old events have indices valid at that time.
+                # We need to find the UIDs of the datasets at those indices in the past.
+                # But history events don't usually store the FULL state of indices.
+                # However, many events store 'loaded_uids'.
+                # For now, we'll try to use the most recent uid_to_idx.
+                # If the payload has 'member_uids', we use those.
+                payload = creator_event.get("payload", {})
+                member_uids = payload.get("member_uids", [])
+                if member_uids:
+                    return [uid_to_idx[str(u)] for u in member_uids if str(u) in uid_to_idx]
+                return [int(i) for i in old_indices]
+
+            # Replay missing datasets
+            processed_events: typing.Set[str] = set()
+            for uid in sorted(missing_ds): # Deterministic order
+                event = creation_map.get(uid)
+                if event and event["event_id"] not in processed_events:
+                    atype = str(event.get("action_type", ""))
+                    if atype == "dataset_add":
+                        dataset_service.add_dataset(payload=event.get("payload", {}))
+                    elif atype == "dataset_group":
+                        payload = event.get("payload", {})
+                        new_indices = resolve_indices(payload.get("dataset_indices", []), event)
+                        dataset_service.group_datasets(dataset_indices=new_indices)
+                    processed_events.add(event["event_id"])
+                    
+                    # Update uid_to_idx after adding
+                    uid_to_idx = {
+                        str(getattr(ds, "unique_identifier", "")): i
+                        for i, ds in enumerate(getattr(chisurf, "imported_datasets", []))
+                    }
+
+            # Replay missing fits
+            for uid in sorted(missing_fits):
+                event = creation_map.get(uid)
+                if event and event["event_id"] not in processed_events:
+                    payload = event.get("payload", {})
+                    new_indices = resolve_indices(payload.get("dataset_indices", []), event)
+                    fit_service.add_fit(
+                        dataset_indices=new_indices,
+                        model_name=payload.get("model_name"),
+                        model_kw=payload.get("model_kw"),
+                    )
+                    processed_events.add(event["event_id"])

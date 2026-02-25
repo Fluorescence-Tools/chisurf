@@ -21,6 +21,7 @@ class OperationHistory:
         self._checkpoints: typing.Dict[int, typing.Dict[str, typing.Any]] = {}
         self._checkpoint_interval = max(1, int(checkpoint_interval))
         self._checkpoint_capture_fn: typing.Optional[typing.Callable[[], typing.Dict[str, typing.Any]]] = None
+        self._recording_suppressed = False
 
     def record(
             self,
@@ -30,6 +31,9 @@ class OperationHistory:
             source_uid: typing.Optional[str] = None,
             target_uid: typing.Optional[str] = None,
     ) -> typing.Dict[str, typing.Any]:
+        with self._lock:
+            if self._recording_suppressed:
+                return {}
         event = {
             "event_id": str(uuid.uuid4()),
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -51,6 +55,17 @@ class OperationHistory:
                 pass
         self._emit_log(event)
         return event
+
+    from contextlib import contextmanager
+    @contextmanager
+    def suppress_recording(self):
+        """Context manager to temporarily disable operation recording."""
+        was_suppressed = self._recording_suppressed
+        self._recording_suppressed = True
+        try:
+            yield
+        finally:
+            self._recording_suppressed = was_suppressed
 
     def clear(self) -> None:
         with self._lock:
