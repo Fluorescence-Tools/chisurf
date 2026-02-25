@@ -45,6 +45,17 @@ def get_extensions():
     if platform.system() == "Darwin":
         extra_compile_args = ["-O3", "-stdlib=libc++"]
         extra_link_args = ["-stdlib=libc++"]
+    elif platform.system() == "Windows":
+        import shutil
+        if not shutil.which("cl.exe"):
+            print("\n" + "!" * 80)
+            print("ERROR: C++ compiler (cl.exe) not found.")
+            print("To build ChiSurf extensions on Windows, you need Visual Studio Build Tools.")
+            print("Please install them and ensure they are in your PATH.")
+            print("Download here: https://visualstudio.microsoft.com/visual-cpp-build-tools/")
+            print("!" * 80 + "\n")
+        extra_compile_args = []
+        extra_link_args = []
     else:
         extra_compile_args = []
         extra_link_args = []

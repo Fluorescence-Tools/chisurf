@@ -13,6 +13,7 @@ path = pathlib.Path(module_path)
 
 import info
 
+
 # Read GUI scripts from pyproject.toml instead of setup.py
 pyproject_path = setup_path / "pyproject.toml"
 with open(pyproject_path, 'rb') as f:
@@ -22,13 +23,15 @@ gui_scripts = pyproject.get("project", {}).get("gui-scripts", {})
 # append the relative location you want to import from
 # import your module stored in '../common'
 source_dir = pathlib.Path("../../").resolve()
-output_dir = pathlib.Path("../../dist/").resolve()
+output_dir = pathlib.Path(os.environ.get("DIST_PATH", "../../dist")).resolve()
+app_dir = pathlib.Path(os.environ.get("APP_PATH", "../../dist/win")).resolve()
 license_file = str((source_dir / "LICENSE").resolve())
 icon_file = str(path) + info.setup_icon
 
 print("module_path:", module_path.resolve())
 print("source_dir:", source_dir.resolve())
 print("output_dir:", output_dir.resolve())
+print("app_dir:", app_dir.resolve())
 print("license_file:", license_file)
 print("icon_file:", icon_file)
 
@@ -50,6 +53,7 @@ parameters = {
     "DefaultGroupName": info.__name__,
     "SourceDir": source_dir,
     "Output_dir": output_dir,
+    "App_dir": app_dir,
     "LicenseFile": license_file,
     "vc_runtime_path": vc_runtime_path,
     "vc_runtimes": vc_runtimes,
@@ -57,8 +61,6 @@ parameters = {
     "gui_entry_points": gui_scripts,
     "IsDev": getattr(info, "__status__", "Dev") == "Dev",
 }
-
-
 inno_template = ""
 with open('setup_template.jinja2', 'r') as fp:
     inno_template += fp.read()
@@ -69,5 +71,5 @@ print("------ BEGIN INNO SETUP FILE ------")
 print(inno_script)
 print("------  END  INNO SETUP FILE ------")
 
-with open('setup.iss', 'w') as fp:
+with open('installer_config.iss', 'w') as fp:
     fp.write(inno_script)

@@ -11,7 +11,7 @@ UsePreviousAppDir=no
 DefaultGroupName={{ AppName }}
 LicenseFile={{ LicenseFile }}
 OutputDir={{ Output_dir }}
-OutputBaseFilename=chisurf_windows_setup_{{ AppVersion }}{% if IsDev %}_dev{% endif %}
+OutputBaseFilename=chisurf_windows_setup_{{ AppVersion }}
 SetupIconFile={{ SetupIconFile }}
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -37,7 +37,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ; Icon files must be explicitely included
 Source: ".\icons\*.ico"; DestDir: "{app}\icons"
-Source: "{{ SourceDir }}\dist\win\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{{ App_dir }}\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "fix_shebangs.py"; DestDir: "{app}"
 
