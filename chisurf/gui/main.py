@@ -40,6 +40,76 @@ import chisurf.gui.resources
 import chisurf.plugins.misc.code_editor
 
 
+class _MdiDropEventFilter(QtCore.QObject):
+    def __init__(self, mdiarea):
+        super().__init__(mdiarea)
+        self.mdiarea = mdiarea
+
+    def eventFilter(self, obj, event):
+        event_types = (3, 175)
+        if hasattr(QtCore.QEvent, 'NonClientAreaMouseButtonRelease'):
+            event_types = event_types + (QtCore.QEvent.NonClientAreaMouseButtonRelease,)
+            
+        if event.type() in event_types:
+            if isinstance(obj, QtWidgets.QDockWidget) and obj.isFloating():
+                pos = QtGui.QCursor.pos()
+                try:
+                    mdi_rect = self.mdiarea.rect()
+                    top_left = self.mdiarea.mapToGlobal(mdi_rect.topLeft())
+                    bottom_right = self.mdiarea.mapToGlobal(mdi_rect.bottomRight())
+                    global_rect = QtCore.QRect(top_left, bottom_right)
+                except Exception:
+                    global_rect = None
+                
+                if global_rect is not None and global_rect.contains(pos):
+                    widget = obj.widget()
+                    if widget is not None:
+                        title = obj.windowTitle()
+                        size = obj.size()
+                        
+                        # Tag widget with original dock name for re-docking
+                        widget.setProperty("_original_dock_name", obj.objectName())
+                        
+                        # Unparent carefully to prevent deletion on dock close
+                        widget.setParent(None)
+                        obj.close()
+                        
+                        try:
+                            chisurf.logging.info(f"Converting dock '{title}' to MDI subwindow")
+                        except Exception:
+                            pass
+                        
+                        sub = self.mdiarea.addSubWindow(widget)
+                        sub.setWindowTitle(title)
+                        sub.resize(size)
+                        
+                        # Explicitly show both the inner widget and the subwindow wrapper
+                        widget.show()
+                        sub.show()
+                        return True
+        
+        # Handle re-docking when the dock is re-enabled/shown
+        if event.type() == 17: # QEvent.Show
+            if isinstance(obj, QtWidgets.QDockWidget) and obj.widget() is None:
+                dock_name = obj.objectName()
+                if dock_name:
+                    for sub in self.mdiarea.subWindowList():
+                        w = sub.widget()
+                        if w and w.property("_original_dock_name") == dock_name:
+                            try:
+                                chisurf.logging.info(f"Restoring dock '{dock_name}' from MDI")
+                            except Exception:
+                                pass
+                            # Move back to dock
+                            sub.setWidget(None)
+                            sub.close()
+                            obj.setWidget(w)
+                            w.show()
+                            return True
+
+        return super().eventFilter(obj, event)
+
+
 class Main(QtWidgets.QMainWindow):
     """
 
@@ -1679,6 +1749,10 @@ class Main(QtWidgets.QMainWindow):
                 parameter_state = chisurf.history_replay.reconstruct_parameter_state(events)
                 fit_range_state = chisurf.history_replay.reconstruct_fit_range_state(events)
                 setup_state = chisurf.history_replay.reconstruct_setup_state(events)
+            
+            # Sync domain entities (create missing, remove extra)
+            chisurf.history_replay.sync_domain_entities(nav_state, all_events)
+
             link_touched = chisurf.history_replay.touched_parameter_keys(
                 all_events,
                 include_actions={"parameter_link", "parameter_unlink"},
@@ -2153,6 +2227,13 @@ class Main(QtWidgets.QMainWindow):
         super().__init__(*args, **kwargs)
         uic.loadUi(pathlib.Path(__file__).parent / "gui.ui", self)
         
+        try:
+            self._mdi_drop_filter = _MdiDropEventFilter(self.mdiarea)
+            QtWidgets.QApplication.instance().installEventFilter(self._mdi_drop_filter)
+        except Exception:
+            pass
+
+
         # Set window icon to ChiSurf logo
         try:
             self.setWindowIcon(QtGui.QIcon(":/icons/icons/cs_logo.png"))
