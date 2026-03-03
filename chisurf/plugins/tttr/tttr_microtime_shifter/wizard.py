@@ -9,6 +9,39 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import Qt
 import pyqtgraph as pg
 import tttrlib  # ensure tttrlib is in your PYTHONPATH
+import contextlib
+import shutil
+import uuid
+
+@contextlib.contextmanager
+def safe_tttr_path(path):
+    """
+    Context manager to handle non-ASCII paths for tttrlib on Windows.
+    Renames the file to a temporary ASCII name if necessary and renames it back afterwards.
+    """
+    if sys.platform != 'win32' or all(ord(c) < 128 for c in path):
+        yield path
+        return
+
+    path = os.path.abspath(path)
+    folder = os.path.dirname(path)
+    ext = os.path.splitext(path)[1]
+    temp_path = os.path.join(folder, f"tttr_{uuid.uuid4().hex}{ext}")
+    
+    try:
+        os.rename(path, temp_path)
+    except Exception:
+        yield path
+        return
+
+    try:
+        yield temp_path
+    finally:
+        try:
+            os.rename(temp_path, path)
+        except Exception:
+            pass
+
 
 class FileLineEdit(QLineEdit):
     def __init__(self, parent=None):
@@ -99,7 +132,8 @@ class MicroTimeShifter(QMainWindow):
 
     def load_file(self, path):
         try:
-            tt = tttrlib.TTTR(path)
+            with safe_tttr_path(path) as safe_path:
+                tt = tttrlib.TTTR(safe_path)
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Cannot load file:\n{e}")
             return
@@ -124,13 +158,24 @@ class MicroTimeShifter(QMainWindow):
             self.save_file(sp)
 
     def save_file(self, sp):
-        tt = tttrlib.TTTR(self.tttr_path)
+        # Load existing file via safe path
+        with safe_tttr_path(self.tttr_path) as safe_in:
+            tt = tttrlib.TTTR(safe_in)
+        
         for ch, sv in self.shifts.items():
             tot = (self.global_shift + sv) % self.n_mt
             if tot:
                 tt.shift_micro_time_by_channel(ch, tot)
+        
         try:
-            tt.write(sp)
+            # For saving, write to a temp ASCII file in the target directory and move
+            target_dir = os.path.dirname(sp)
+            target_ext = os.path.splitext(sp)[1]
+            temp_out = os.path.join(target_dir, f"save_{uuid.uuid4().hex}{target_ext}")
+            tt.write(temp_out)
+            if os.path.exists(sp):
+                os.remove(sp)
+            shutil.move(temp_out, sp)
             QtWidgets.QMessageBox.information(self, "Saved", f"Saved to:\n{sp}")
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "Error", f"Cannot save:\n{e}")
