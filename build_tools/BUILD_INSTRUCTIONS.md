@@ -25,7 +25,7 @@ in a .dmg image that is placed in the ``dist`` folder.
 
 The Windows installation of ChiSurf is effectively a conda environment with
 an installed ChiSurf conda package. The ChiSurf conda package is built with
-``conda build``.
+`rattler-build`.
 
 Windows versions are bundled in setup.exe files created using Inno Setup. The
 setup files will install a conda environment that is used to run the chisurf
@@ -36,8 +36,8 @@ build-setup.bat
 ```
 
 The script will create a new conda environment in `dist/win` for a compatible Python version. 
-Next, a conda package of `chisurf` is built using the `conda-recipe`
-located in the folder `conda-recipe` of the project root. The `chisurf` package
+Next, a conda package of `chisurf` is built using the `rattler-recipe`
+located in the folder `rattler-recipe` of the project root. The `chisurf` package
 is installed to the conda environment in `dist/win`. Next, using `jinja2`, the 
 file `setup_template.iss` is written to the file `setup.iss` using
 `make_inno_setup.py`. The script `make_inno_setup.py` will read details from 

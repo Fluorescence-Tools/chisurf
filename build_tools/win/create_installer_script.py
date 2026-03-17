@@ -3,18 +3,38 @@ import os
 import glob
 import jinja2
 import pathlib
+import json
 import tomli
 
-module_path = pathlib.Path("../../chisurf").absolute().resolve()
-setup_path = pathlib.Path("../..").absolute().resolve()
-sys.path.append(str(module_path.resolve()))
-sys.path.append(str(setup_path.resolve()))
-path = pathlib.Path(module_path)
+script_dir = pathlib.Path(__file__).parent.absolute()
+module_path = (script_dir / ".." / ".." / "chisurf").resolve()
+setup_path = (script_dir / ".." / "..").resolve()
+sys.path.append(str(module_path))
+sys.path.append(str(setup_path))
 
 import info
 
 
-# Read GUI scripts from pyproject.toml instead of setup.py
+# Read all entry points (static + dynamic from plugins)
+entry_points_json = setup_path / "rattler-recipe" / "entry_points.json"
+if entry_points_json.exists():
+    with open(entry_points_json, 'r') as f:
+        ep_data = json.load(f)
+        all_entry_points = ep_data.get("entry_points", [])
+else:
+    # Fallback: read from pyproject.toml only if entry_points.json doesn't exist
+    print(f"WARNING: {entry_points_json} not found. Using pyproject.toml only.")
+    pyproject_path = setup_path / "pyproject.toml"
+    with open(pyproject_path, 'rb') as f:
+        pyproject = tomli.load(f)
+    scripts = pyproject.get("project", {}).get("scripts", {})
+    gui_scripts = pyproject.get("project", {}).get("gui-scripts", {})
+    all_entry_points = [f"{k} = {v}" for k, v in scripts.items()] + [f"{k} = {v}" for k, v in gui_scripts.items()]
+
+# Extract GUI scripts from the full list for Inno Setup
+# GUI scripts are those that map to GUI entry points (typically those in project.gui-scripts)
+# For now, we'll parse them as name=module:func and determine which are GUI vs CLI
+gui_scripts = {}
 pyproject_path = setup_path / "pyproject.toml"
 with open(pyproject_path, 'rb') as f:
     pyproject = tomli.load(f)
@@ -26,6 +46,7 @@ source_dir = pathlib.Path("../../").resolve()
 output_dir = pathlib.Path(os.environ.get("DIST_PATH", "../../dist")).resolve()
 app_dir = pathlib.Path(os.environ.get("APP_PATH", "../../dist/win")).resolve()
 license_file = str((source_dir / "LICENSE").resolve())
+path = module_path
 icon_file = str(path) + info.setup_icon
 
 print("module_path:", module_path.resolve())

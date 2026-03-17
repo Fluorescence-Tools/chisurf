@@ -26,6 +26,8 @@ __pycache__/
 *.pyd
 # macOS app building
 /build_tools/osx/resources/
+# Generated entry points (rattler-build)
+rattler-recipe/entry_points.json
 
 # Tests
 ###########################

@@ -1,0 +1,74 @@
+[workspace]
+name = "chisurf"
+version = "26.dev0"
+description = "ChiSurf: an interactive global analysis platform for fluorescence data."
+authors = ["Thomas-Otavio Peulen <thomas@peulen.xyz>"]
+channels = ["conda-forge", "bioconda"]
+platforms = ["win-64", "linux-64", "osx-arm64"]
+
+[dependencies]
+python = "3.10.*"
+numpy = "<2.0"
+typing-extensions = ">=4.14"
+pytools = ">=2024.0"
+pyyaml = "*"
+markdown = "*"
+click = "*"
+click-didyoumean = "*"
+qtpy = "<2.0"
+pyqt = "*"
+pyqtgraph = "0.13.*"
+matplotlib = "*"
+scikit-image = "*"
+deprecation = "*"
+pandas = "*"
+scipy = "*"
+numba = "*"
+boost-cpp = "*"
+mdtraj = "<1.10"
+ipython = "*"
+notebook = "*"
+emcee = "*"
+pyopengl = "*"
+pytables = "*"
+guidata = "*"
+guiqwt = "*"
+python-docx = "*"
+qtconsole = "*"
+hmmlearn = "*"
+sympy = "*"
+zeus-mcmc = "*"
+pygments = "*"
+pyarrow = "*"
+boost-histogram = "*"
+fastmcp = "*"
+
+[feature.build.dependencies]
+rattler-build = ">=0.58.0"
+cmake = "<4"
+ninja = "*"
+swig = "<4.3.0"
+cython = ">=0.29,<3"
+setuptools = ">=61"
+wheel = "*"
+pip = "*"
+git = "*"
+rattler-index = "*"
+jinja2 = "*"
+tomli = "*"
+micromamba = "*"
+
+[feature.build.tasks]
+collect-entry-points = { cmd = "python rattler-recipe/collect_entry_points.py" }
+build-pkg = { cmd = "python rattler-recipe/build_pkg.py", depends-on = ["collect-entry-points"] }
+build-setup = { cmd = "python build_tools/win/build_setup.py", depends-on = ["collect-entry-points"] }
+
+[environments]
+default = []
+build = ["build"]
+
+[target.win-64.dependencies]
+hdf5 = "*"
+
+[tasks]
+test-app = "python -c \"import chisurf; print('ChiSurf imported successfully')\""
