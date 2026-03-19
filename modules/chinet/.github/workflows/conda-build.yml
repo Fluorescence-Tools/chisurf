@@ -1,0 +1,56 @@
+name: Conda Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+      - main
+  release:
+    types: ['released', 'prereleased']
+  schedule:
+    # Every Monday at 11PM UTC
+    - cron: "0 11 * * 1"
+
+jobs:
+  build-linux:
+    name: CondaBuild (${{ matrix.python-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest"]
+        python-version: ["3.10"]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: "Set SDK on MacOS (if needed)"
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          git submodule update --recursive --init --remote
+          tools/install_macos_sdk.sh
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: "latest"
+          channels: conda-forge,defaults
+          channel-priority: true
+
+      - name: Display Conda Settings
+        shell: bash -el {0}
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+          printenv | sort
+
+      - name: Build Conda Package
+        uses: aganders3/headless-gui@v1
+        with:
+          shell: bash -el {0}
+          run: |
+            conda install conda-build boa
+            conda mambabuild conda-recipe

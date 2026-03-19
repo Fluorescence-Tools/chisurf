@@ -102,7 +102,7 @@ class CustomBuildPy(build_py):
     This approach ensures that:
     - The installed package has a fixed version number (the date at build time)
     - The source code remains unchanged after the build process
-    - The behavior is consistent with the conda build process
+    - The behavior is consistent with the Pixi build process
     """
     
     def run(self):

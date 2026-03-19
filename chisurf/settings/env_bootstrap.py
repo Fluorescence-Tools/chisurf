@@ -42,7 +42,7 @@ def _get_approot() -> pathlib.Path:
         if p.is_dir():
             return _norm(p)
 
-    # 2) Conda/mamba prefix
+    # 2) Environment prefix (e.g. CONDA_PREFIX)
     conda = os.environ.get("CONDA_PREFIX") or os.environ.get("MAMBA_ROOT_PREFIX")
     if conda and pathlib.Path(conda).is_dir():
         return _norm(pathlib.Path(conda))
@@ -116,17 +116,17 @@ def _glob_one(patterns: Iterable[str]) -> Optional[str]:
 
 
 def _init_paths() -> None:
-    # Common candidate folders (conda/pip layouts)
+    # Common candidate folders (environment layouts)
     cand_bin = [
         APPROOT / "bin",
-        APPROOT / "Scripts",               # Windows/pip
-        APPROOT / "Library" / "bin",      # Windows/conda
+        APPROOT / "Scripts",               # Windows
+        APPROOT / "Library" / "bin",      # Windows
         APPROOT / "Library" / "usr" / "bin",
     ]
     cand_lib = [
         APPROOT / "lib",
-        APPROOT / "Library" / "lib",     # Windows/conda
-        APPROOT / "DLLs",                  # Windows/pip
+        APPROOT / "Library" / "lib",     # Windows
+        APPROOT / "DLLs",                  # Windows
     ]
 
     for p in cand_bin:

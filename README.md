@@ -1,5 +1,5 @@
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
-[![Conda Build](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/conda-release.yml/badge.svg?branch=development)](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/conda-release.yml)
+[![Pixi Build](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml/badge.svg?branch=development)](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml)
 
 # ChiSurf
 
@@ -64,18 +64,32 @@ ChiSurf is available as a compiled Windows installation file. By downloading and
 
 #### Linux & macOS
 
-Install `chisurf` using `conda` or `mamba`:
+The recommended way to install and run `chisurf` is using [pixi](https://pixi.sh/):
 
 ```bash
-mamba create -n chisurf chisurf -c conda-forge -c bioconda -c tpeulen
-conda activate chisurf
+git clone https://github.com/Fluorescence-Tools/chisurf.git
+cd chisurf
+pixi run chisurf
 ```
 
-Launch ChiSurf GUI:
+#### Docker (Linux)
 
-```bash
-chisurf
-```
+For Linux users, ChiSurf can be built and run using Docker. This ensures all system dependencies and C++ extensions are correctly configured.
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t chisurf-linux -f Dockerfile.linux .
+   ```
+
+2. **Run import verification**:
+   ```bash
+   docker run --rm chisurf-linux
+   ```
+
+3. **Run unittests**:
+   ```bash
+   docker run --rm chisurf-linux pixi run test
+   ```
 
 #### Windows
 

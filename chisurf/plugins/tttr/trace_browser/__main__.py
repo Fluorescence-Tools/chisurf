@@ -2,11 +2,11 @@
 Entry point for running the Trace Browser directly.
 
 Usage:
-  python -m chisurf.plugins.trace_browser
+  python -m chisurf.plugins.tttr.trace_browser
 """
 import sys
 from qtpy.QtWidgets import QApplication
-from chisurf.plugins.trace_browser.__init__ import TraceBrowser
+from chisurf.plugins.tttr.trace_browser.__init__ import TraceBrowser
 
 
 def main():

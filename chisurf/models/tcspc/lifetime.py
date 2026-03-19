@@ -102,15 +102,15 @@ class Lifetime(FittingParameterGroup):
 
     @property
     def n(self) -> int:
-        count = 0
         try:
             amplitudes = getattr(self, "_amplitudes", None)
             if amplitudes is not None:
-                count = len(amplitudes)
+                return len(amplitudes)
         except Exception:
             pass
-        # Fallback: infer component count from parameter names if the internal
-        # lists are missing or empty (can happen after partial GUI construction).
+            
+        # Fallback: infer component count from parameter names only if the
+        # internal lists are missing (can happen after partial GUI construction).
         params = getattr(self, "parameters_all_dict", {}) or {}
         if not params:
             try:
@@ -123,7 +123,7 @@ class Lifetime(FittingParameterGroup):
         t_prefix = f"t{short}"
         n_x = len([name for name in params if name.startswith(x_prefix)])
         n_t = len([name for name in params if name.startswith(t_prefix)])
-        return max(count, n_x, n_t, 0)
+        return max(n_x, n_t, 0)
 
     @property
     def link(self) -> chisurf.fitting.parameter.FittingParameter:
@@ -176,6 +176,9 @@ class Lifetime(FittingParameterGroup):
         )
         self._amplitudes.append(amplitude)
         self._lifetimes.append(lifetime)
+        if getattr(self, "_parameters", None) is not None:
+            self.append_parameter(amplitude)
+            self.append_parameter(lifetime)
 
     def pop(self) -> typing.Tuple[
         chisurf.fitting.parameter.FittingParameter,
@@ -183,6 +186,11 @@ class Lifetime(FittingParameterGroup):
     ]:
         amplitude = self._amplitudes.pop()
         lifetime = self._lifetimes.pop()
+        if getattr(self, "_parameters", None) is not None:
+            self._parameters = [
+                p for p in self._parameters 
+                if p is not amplitude and p is not lifetime
+            ]
         return amplitude, lifetime
 
     def __init__(

@@ -127,12 +127,18 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         # Add a new Gaussian distance component to all fits in the current
         # fit group so that the FRET distance model stays structurally
         # consistent across the group.
-        chisurf.run(f"chisurf.macros.model.add_component('{self.name}')")
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": str(self.name)},
+        )
 
     def onRemoveGaussian(self):
         # Remove the last Gaussian distance component from all fits in the
         # current fit group.
-        chisurf.run(f"chisurf.macros.model.remove_component('{self.name}')")
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": str(self.name)},
+        )
 
     def append(self, *args, **kwargs):
         super().append(50.0,6.0,1.0,)
@@ -178,11 +184,16 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
             Whether the checkbox is checked
         """
         setattr(self, 'is_distance_between_gaussians', checked)
-        # Update the model
-        chisurf.run(
-            f"for f in cs.current_fit:\n"
-            f"   f.model.update()"
-        )
+        # Update the model for all fits in the current fit group
+        try:
+            import chisurf
+            for fit_obj in chisurf.fits:
+                chisurf.actions.dispatch(
+                    name="model.update",
+                    payload={},
+                )
+        except Exception:
+            pass
 
     def pop(self) -> None:
         super().pop()
@@ -226,11 +237,21 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
             short='G',
             **kwargs
         )
+        anisotropy = AnisotropyWidget(
+            name='anisotropy',
+            short='rL',
+            fit=fit,
+            model=self,
+            **kwargs
+        )
+        kwargs['anisotropy'] = anisotropy
+
         fret.GaussianModel.__init__(
             self,
             fit=fit,
             lifetimes=self.donor,
-            gaussians=gaussians
+            gaussians=gaussians,
+            **kwargs
         )
 
         LifetimeModelWidgetBase.__init__(
@@ -257,12 +278,5 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
 
         self.layout.addWidget(gaussians)
 
-        anisotropy = AnisotropyWidget(
-            name='anisotropy',
-            short='rL',
-            fit=fit,
-            model=self,
-            **kwargs
-        )
         self.anisotropy = anisotropy
         self.layout.addWidget(self.anisotropy)

@@ -443,11 +443,11 @@ class SelectionMixin(BaseCmd):
 
         raise ValueError(f"Usage: {cmd} {pattern}")
 
-    def _resolve_selection_to_residue_indices(
+    def _resolve_selection_to_atom_mask(
         self,
         viewer,
         expr: str,
-    ) -> tuple[str, str, List[int]]:
+    ) -> tuple[str, str, np.ndarray]:
         text = (expr or "").strip()
         if not text:
             raise ValueError("Empty selection")
@@ -461,13 +461,10 @@ class SelectionMixin(BaseCmd):
             raise ValueError("Empty selection")
 
         obj_info = None
-        idx = 0
         first = tokens[0]
         t0 = first.lower()
-        if t0 not in ("res", "resi", "residue", "name", "and", "or", "not"):
+        if t0 not in ("all", "none", "res", "resi", "residue", "name", "and", "or", "not", "within", "around", "expand", "byres", "bymol", "byobj"):
             obj_info = self._find_object_by_name(viewer, first)
-            if obj_info is not None:
-                idx = 1
 
         if obj_info is None:
             try:
@@ -483,115 +480,92 @@ class SelectionMixin(BaseCmd):
         obj_id = str(obj_info.get("id"))
         obj_name = str(obj_info.get("name") or obj_id)
 
-        # Optional PDB residue numbers aligned with the CA trace.
+        from .sele_parser import Evaluator, ParserError
         try:
-            residue_numbers = viewer.get_residue_numbers(obj_id)
-        except Exception:
-            residue_numbers = None
+            evaluator = Evaluator(viewer, obj_id)
+            atom_mask = evaluator.evaluate(text)
+        except ParserError as exc:
+            raise ValueError(f"Selection parse error: {exc}")
+        except NotImplementedError as exc:
+            raise ValueError(f"Selection evaluation error: {exc}")
 
-        res_indices: List[int] = []
-        atom_name: Optional[str] = None
+        return obj_id, obj_name, atom_mask
 
-        n_tokens = len(tokens)
-        while idx < n_tokens:
-            tok = tokens[idx].lower()
-            if tok in ("and", "&"):
-                idx += 1
-                continue
-            if tok in ("res", "resi", "residue"):
-                if idx + 1 >= n_tokens:
-                    raise ValueError("res expects an index or range")
-                res_expr = tokens[idx + 1]
-                partial = self._parse_residue_indices(
-                    res_expr,
-                    residue_numbers=residue_numbers,
-                )
-                if not partial:
-                    raise ValueError(f"Invalid residue expression: {res_expr!r}")
-                res_indices.extend(int(i) for i in partial)
-                idx += 2
-                continue
-            if tok == "name":
-                if idx + 1 >= n_tokens:
-                    raise ValueError("name expects an atom name")
-                atom_name = tokens[idx + 1]
-                idx += 2
-                continue
-            raise ValueError(f"Unsupported selection token: {tokens[idx]!r}")
 
-        # If no residue filter was given, this is an object-only selection.
-        if not res_indices:
+    def _resolve_selection_to_residue_indices(
+        self,
+        viewer,
+        expr: str,
+    ) -> tuple[str, str, List[int]]:
+        text = (expr or "").strip()
+        if not text:
+            raise ValueError("Empty selection")
+
+        # Basic object resolution (first token might be the object name if not a standard token)
+        try:
+            tokens = shlex_split(text)
+        except Exception as exc:
+            raise ValueError(f"Could not parse selection {expr!r}: {exc}")
+
+        if not tokens:
+            raise ValueError("Empty selection")
+
+        obj_info = None
+        first = tokens[0]
+        t0 = first.lower()
+        if t0 not in ("all", "none", "res", "resi", "residue", "name", "and", "or", "not", "within", "around", "expand", "byres", "bymol", "byobj"):
+            obj_info = self._find_object_by_name(viewer, first)
+
+        if obj_info is None:
+            try:
+                active_id = viewer.get_active_object_id()
+            except Exception:
+                active_id = None
+            if active_id is None:
+                raise ValueError("No active object for selection")
+            obj_info = self._find_object_by_name(viewer, str(active_id))
+            if obj_info is None:
+                obj_info = {"id": active_id, "name": str(active_id)}
+
+        obj_id = str(obj_info.get("id"))
+        obj_name = str(obj_info.get("name") or obj_id)
+
+        from .sele_parser import Evaluator, ParserError
+        try:
+            evaluator = Evaluator(viewer, obj_id)
+            atom_mask = evaluator.evaluate(text)
+        except ParserError as exc:
+            raise ValueError(f"Selection parse error: {exc}")
+        except NotImplementedError as exc:
+            raise ValueError(f"Selection evaluation error: {exc}")
+
+        if not np.any(atom_mask):
             return obj_id, obj_name, []
 
-        # Normalize and deduplicate indices
-        res_indices = sorted({int(i) for i in res_indices if int(i) >= 0})
-
-        # Optionally filter by atom name, keeping only residues that contain that atom.
-        if atom_name is not None:
-            try:
-                entry = viewer._objects.get(obj_id)  # type: ignore[attr-defined]
-            except Exception:
-                entry = None
-            if entry is None:
-                raise ValueError(f"Unknown object in selection: {obj_name}")
-
+        try:
+            entry = viewer._objects.get(obj_id)
             state = getattr(entry, "state", None)
-            atoms = getattr(state, "atoms", None)
             all_atom_res_ids = getattr(state, "all_atom_res_ids", None)
             residue_ids = getattr(state, "residue_ids", None)
-
-            if atoms is None or all_atom_res_ids is None or residue_ids is None:
-                raise ValueError(
-                    f"Object {obj_name} does not expose atom-level coordinates for 'name' selections"
-                )
-
-            try:
-                atom_res_ids_arr = np.asarray(all_atom_res_ids)
-                res_ids_arr = np.asarray(residue_ids)
-                atom_names_arr = np.char.strip(atoms["atom_name"].astype(str))
-            except Exception:
-                raise ValueError(f"Could not access atom data for object {obj_name}")
-
-            name_norm = atom_name.strip()
-            if name_norm:
-                keep: List[int] = []
-                for ri in res_indices:
-                    if ri < 0 or ri >= res_ids_arr.shape[0]:
-                        continue
-                    rid = res_ids_arr[ri]
-                    try:
-                        mask = (atom_res_ids_arr == rid) & (
-                            np.char.lower(atom_names_arr) == name_norm.lower()
-                        )
-                    except Exception:
-                        continue
-                    if np.any(mask):
-                        keep.append(ri)
-
-                if not keep:
-                    raise ValueError(
-                        f"No residues with atom named {name_norm!r} matched selection on {obj_name}"
-                    )
-                res_indices = sorted({int(i) for i in keep})
-
-        # Validate indices against current coords if available.
-        try:
-            entry = viewer._objects.get(obj_id)  # type: ignore[attr-defined]
-        except Exception:
-            entry = None
-        if entry is not None:
-            state = getattr(entry, "state", None)
-            coords = getattr(state, "coords", None)
-            if coords is not None:
-                try:
-                    arr = np.asarray(coords, dtype=float)
-                    n = int(arr.shape[0]) if arr.ndim == 2 else 0
-                except Exception:
-                    n = 0
-                if n > 0:
-                    res_indices = sorted(
-                        {i for i in res_indices if 0 <= int(i) < n}
-                    )
+            
+            if all_atom_res_ids is None or residue_ids is None:
+                raise ValueError(f"Object {obj_name} missing data for residue conversion")
+                
+            res_ids_arr = np.asarray(residue_ids)
+            atom_res_ids_arr = np.asarray(all_atom_res_ids)
+            
+            # Find which globally unique residue IDs have at least one selected atom
+            selected_res_ids = np.unique(atom_res_ids_arr[atom_mask])
+            
+            # Map selected global residue IDs back to their 0-based index in the 'residue_ids' array
+            # We assume res_ids_arr contains ALL the unique global residue IDs in order.
+            
+            # Using np.isin and np.where
+            mask = np.isin(res_ids_arr, selected_res_ids)
+            res_indices = np.where(mask)[0].tolist()
+            
+        except Exception as exc:
+            raise ValueError(f"Failed to extract residue indices: {exc}")
 
         return obj_id, obj_name, res_indices
 
@@ -604,6 +578,7 @@ class SelectionMixin(BaseCmd):
         if not text:
             raise ValueError("Empty selection")
 
+        # Basic object resolution
         try:
             tokens = shlex_split(text)
         except Exception as exc:
@@ -613,13 +588,10 @@ class SelectionMixin(BaseCmd):
             raise ValueError("Empty selection")
 
         obj_info = None
-        idx = 0
         first = tokens[0]
         t0 = first.lower()
-        if t0 not in ("res", "resi", "residue", "name", "and", "or", "not"):
+        if t0 not in ("all", "none", "res", "resi", "residue", "name", "and", "or", "not", "within", "around", "expand", "byres", "bymol", "byobj"):
             obj_info = self._find_object_by_name(viewer, first)
-            if obj_info is not None:
-                idx = 1
 
         if obj_info is None:
             try:
@@ -635,135 +607,48 @@ class SelectionMixin(BaseCmd):
         obj_id = str(obj_info.get("id"))
         obj_name = str(obj_info.get("name") or obj_id)
 
+        from .sele_parser import Evaluator, ParserError
         try:
-            residue_numbers = viewer.get_residue_numbers(obj_id)
-        except Exception:
-            residue_numbers = None
+            evaluator = Evaluator(viewer, obj_id)
+            atom_mask = evaluator.evaluate(text)
+        except ParserError as exc:
+            raise ValueError(f"Selection parse error: {exc}")
+        except NotImplementedError as exc:
+            raise ValueError(f"Selection evaluation error: {exc}")
 
-        res_indices: Optional[List[int]] = None
-        atom_name: Optional[str] = None
+        if not np.any(atom_mask):
+            raise ValueError(f"Selection {expr!r} matched no atoms")
 
-        n_tokens = len(tokens)
-        while idx < n_tokens:
-            tok = tokens[idx].lower()
-            if tok in ("and", "&"):
-                idx += 1
-                continue
-            if tok in ("res", "resi", "residue"):
-                if idx + 1 >= n_tokens:
-                    raise ValueError("res expects an index or range")
-                res_expr = tokens[idx + 1]
-                res_indices = self._parse_residue_indices(
-                    res_expr,
-                    residue_numbers=residue_numbers,
-                )
-                if not res_indices:
-                    raise ValueError(f"Invalid residue expression: {res_expr!r}")
-                idx += 2
-                continue
-            if tok == "name":
-                if idx + 1 >= n_tokens:
-                    raise ValueError("name expects an atom name")
-                atom_name = tokens[idx + 1]
-                idx += 2
-                continue
-            raise ValueError(f"Unsupported selection token: {tokens[idx]!r}")
-
-        if res_indices is None:
-            raise ValueError("Selection must specify residues using 'res'")
-        if len(res_indices) != 1:
-            raise ValueError("Selection must resolve to a single residue index")
-        res_index = res_indices[0]
+        # Pick the first matching atom
         try:
-            entry = viewer._objects.get(obj_id)  # type: ignore[attr-defined]
-        except Exception:
-            entry = None
-        if entry is None:
-            raise ValueError(f"Unknown object in selection: {obj_name}")
+            entry = viewer._objects.get(obj_id)
+            state = getattr(entry, "state", None)
+            all_coords = getattr(state, "all_atom_coords", None)
+            all_res_ids = getattr(state, "all_atom_res_ids", None)
+            residue_ids = getattr(state, "residue_ids", None)
+            atoms = getattr(state, "atoms", None)
 
-        state = getattr(entry, "state", None)
-        coords = getattr(state, "coords", None)
-        if coords is None:
-            raise ValueError(f"Object {obj_name} has no coordinates")
+            if all_coords is None:
+                raise ValueError(f"Object {obj_name} missing coordinate data")
 
-        try:
-            ca_arr = np.asarray(coords, dtype=float)
-        except Exception:
-            raise ValueError(f"Could not access coordinates for object {obj_name}")
+            # Get first index where mask is True
+            first_idx = np.where(atom_mask)[0][0]
+            
+            coord = all_coords[first_idx]
+            
+            # Map back to residue index
+            res_idx = -1
+            if all_res_ids is not None and residue_ids is not None:
+                rid = all_res_ids[first_idx]
+                res_indices = np.where(residue_ids == rid)[0]
+                if len(res_indices) > 0:
+                    res_idx = int(res_indices[0])
+            
+            atom_name = None
+            if atoms is not None:
+                 atom_name = str(atoms["atom_name"][first_idx]).strip()
 
-        if ca_arr.ndim != 2 or ca_arr.shape[1] != 3:
-            raise ValueError(f"Invalid coordinate array for object {obj_name}")
+            return obj_id, obj_name, res_idx, atom_name, coord
 
-        if res_index < 0 or res_index >= ca_arr.shape[0]:
-            raise ValueError(
-                f"Residue index {res_index + 1} out of range for object {obj_name}"
-            )
-
-        atoms = getattr(state, "atoms", None)
-        all_atom_coords = getattr(state, "all_atom_coords", None)
-        all_atom_res_ids = getattr(state, "all_atom_res_ids", None)
-        residue_ids = getattr(state, "residue_ids", None)
-
-        if atom_name is None:
-            coord = ca_arr[res_index]
-            return obj_id, obj_name, res_index, None, coord
-
-        if (
-            atoms is None
-            or all_atom_coords is None
-            or all_atom_res_ids is None
-            or residue_ids is None
-        ):
-            raise ValueError(
-                f"Object {obj_name} does not expose atom-level coordinates for 'name' selections"
-            )
-
-        try:
-            atom_res_ids_arr = np.asarray(all_atom_res_ids)
-            atom_coords_arr = np.asarray(all_atom_coords, dtype=float)
-        except Exception:
-            raise ValueError(f"Could not access atom coordinates for object {obj_name}")
-
-        try:
-            res_ids_arr = np.asarray(residue_ids)
-        except Exception:
-            raise ValueError(f"Could not access residue ids for object {obj_name}")
-
-        if res_index < 0 or res_index >= res_ids_arr.shape[0]:
-            raise ValueError(
-                f"Residue index {res_index + 1} out of range for object {obj_name}"
-            )
-
-        target_res_id = res_ids_arr[res_index]
-
-        try:
-            atom_names_arr = np.char.strip(atoms["atom_name"].astype(str))
-        except Exception:
-            raise ValueError(f"Could not access atom names for object {obj_name}")
-
-        name_norm = atom_name.strip()
-        if not name_norm:
-            coord = ca_arr[res_index]
-            return obj_id, obj_name, res_index, None, coord
-
-        try:
-            mask = (atom_res_ids_arr == target_res_id) & (
-                np.char.lower(atom_names_arr) == name_norm.lower()
-            )
-        except Exception:
-            raise ValueError(f"Failed to match atom name {atom_name!r} on object {obj_name}")
-
-        if not np.any(mask):
-            raise ValueError(
-                f"No atom named {name_norm!r} found at residue index {res_index + 1} on {obj_name}"
-            )
-
-        idx_arr = np.nonzero(mask)[0]
-        atom_idx = int(idx_arr[0])
-        if atom_idx < 0 or atom_idx >= atom_coords_arr.shape[0]:
-            raise ValueError(
-                f"Atom index out of range for object {obj_name}"
-            )
-
-        coord = atom_coords_arr[atom_idx]
-        return obj_id, obj_name, res_index, name_norm, coord
+        except Exception as exc:
+            raise ValueError(f"Failed to resolve atom coordinate: {exc}")

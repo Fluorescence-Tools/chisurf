@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import numpy as np
+import pytest
+
+pytest.importorskip("chinet")
 
 from chisurf.data import DataCurve
 from chisurf.fitting.fit import Fit
@@ -71,12 +74,13 @@ def test_project_fits_roundtrip_with_single_fit(tmp_path):
     params["p1"].fixed = True
 
     fit_record = make_fit_record(
-        fit_id="fit1",
+        fit_id="fit-uid-1",
         fit=fit,
         dataset_id="ds1",
         experiment_id="exp1",
     )
-    p.fits["fit1"] = fit_record
+    fit_record["uid"] = "fit-uid-1"
+    p.fits.append(fit_record)
 
     project_json_path = save_project(p, project_dir)
     assert project_json_path.is_file()
@@ -86,8 +90,8 @@ def test_project_fits_roundtrip_with_single_fit(tmp_path):
         raw = json.load(f)
 
     assert "fits" in raw
-    assert "fit1" in raw["fits"]
-    raw_fit = raw["fits"]["fit1"]
+    assert len(raw["fits"]) == 1
+    raw_fit = raw["fits"][0]
     assert raw_fit["dataset_id"] == "ds1"
     assert raw_fit["experiment_id"] == "exp1"
     assert "fit_state" in raw_fit
@@ -95,9 +99,9 @@ def test_project_fits_roundtrip_with_single_fit(tmp_path):
     # Reload project and reconstruct a new Fit from the stored record
     loaded_project = load_project(project_dir)
     assert isinstance(loaded_project, Project)
-    assert "fit1" in loaded_project.fits
+    assert len(loaded_project.fits) == 1
 
-    loaded_record = loaded_project.fits["fit1"]
+    loaded_record = loaded_project.fits[0]
 
     # Make a fresh fit with default parameters and apply the stored record
     fit2 = _make_dummy_fit()

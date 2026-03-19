@@ -94,12 +94,18 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         # Append a new discrete FRET-rate component to all fits in the
         # current fit group. The backend FRETrateModel exposes the
         # component group on the 'fret_rates' attribute.
-        chisurf.run("chisurf.macros.model.add_component('fret_rates')")
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": "fret_rates"},
+        )
 
     def onRemoveFRETrate(self):
         # Remove the last discrete FRET-rate component from all fits in the
         # current fit group.
-        chisurf.run("chisurf.macros.model.remove_component('fret_rates')")
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": "fret_rates"},
+        )
 
     def append(self, *args, **kwargs):
         super().append(50., 1.0)

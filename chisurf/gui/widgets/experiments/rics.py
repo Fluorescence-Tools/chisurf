@@ -706,9 +706,9 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
         # Normalize path like the main window's onAddDataset implementation
         s = p.as_posix().replace("\\", "/")
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.add",
-            payload={"filename": s},
+            payload={"filename": s, "experiment_reader": None},
         )
 
     def _load_preview_from_file(self, path: pathlib.Path) -> None:

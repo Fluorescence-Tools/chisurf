@@ -434,7 +434,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         model_kw = dict()
         model_kw.update(self.correction_factors)
 
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="fit.add",
             payload={
                 "model_name": "Lifetime fit",
@@ -481,7 +481,7 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         # Create Global fit and add vv, vh fit
         #######################################
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="fit.add",
             payload={
                 "model_name": "Global fit",

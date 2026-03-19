@@ -401,6 +401,14 @@ class RibbonPanel(QtWidgets.QFrame):
         """
         rowSpan = self.defaultRowSpan(rowSpan)
         self._widgets.append(widget)
+        
+        # Save layout metadata for reflowing
+        widget._ribbon_rowSpan = rowSpan
+        widget._ribbon_colSpan = colSpan
+        widget._ribbon_mode = mode
+        widget._ribbon_alignment = alignment
+        widget._ribbon_fixedHeight = fixedHeight
+        
         row, col = self._gridLayoutManager.request_cells(rowSpan, colSpan, mode)
         maximumHeight = self.rowHeight() * rowSpan + self._actionsLayout.verticalSpacing() * (rowSpan - 2)
         widget.setMaximumHeight(maximumHeight)
@@ -415,11 +423,68 @@ class RibbonPanel(QtWidgets.QFrame):
         item = RibbonPanelItemWidget(self)
         item.addWidget(widget)
         self._actionsLayout.addWidget(item, row, col, rowSpan, colSpan, alignment)  # type: ignore
+        
+        # Register for hiding/QAT tracking with the RibbonBar
+        ribbon = self
+        while ribbon is not None and ribbon.__class__.__name__ != 'RibbonBar':
+            ribbon = ribbon.parent()
+        if ribbon is not None and hasattr(ribbon, 'registerTargetButton'):
+            ribbon.registerTargetButton(widget)
+            
         return widget
 
     addSmallWidget = functools.partialmethod(addWidget, rowSpan=Small)
     addMediumWidget = functools.partialmethod(addWidget, rowSpan=Medium)
     addLargeWidget = functools.partialmethod(addWidget, rowSpan=Large)
+
+    def reflow(self):
+        """Reflow the remaining visible widgets to fill any gaps left by hidden widgets."""
+        # Clean current layout but preserve widgets
+        
+        # We must pull the source widgets out of the RibbonPanelItemWidget containers
+        for i in reversed(range(self._actionsLayout.count())):
+            item = self._actionsLayout.takeAt(i)
+            container = item.widget()
+            if container is not None and isinstance(container, RibbonPanelItemWidget):
+                # The actual button is inside the container
+                button_item = container.layout().takeAt(0)
+                if button_item:
+                    button = button_item.widget()
+                    if button:
+                        button.setParent(self) # Keep alive
+                container.deleteLater()
+                
+        # Reset grid layout manager
+        self._gridLayoutManager = RibbonGridLayoutManager(self._maxRows)
+        
+        ribbon = self
+        while ribbon is not None and ribbon.__class__.__name__ != 'RibbonBar':
+            ribbon = ribbon.parent()
+            
+        hidden_ids = getattr(ribbon, '_hidden_button_ids', []) if ribbon else []
+            
+        # Re-add all widgets sequentially
+        for widget in self._widgets:
+            btn_id = getattr(widget, '_ribbon_btn_id', None)
+            if btn_id in hidden_ids:
+                # Explicitly hide
+                widget.hide()
+                continue
+                
+            # If visible, request new cells and re-add
+            rowSpan = getattr(widget, '_ribbon_rowSpan', self.defaultRowSpan(Small))
+            colSpan = getattr(widget, '_ribbon_colSpan', 1)
+            mode = getattr(widget, '_ribbon_mode', ColumnWise)
+            alignment = getattr(widget, '_ribbon_alignment', QtCore.Qt.AlignmentFlag.AlignCenter)
+            
+            row, col = self._gridLayoutManager.request_cells(rowSpan, colSpan, mode)
+            
+            # Wrap to item again
+            item = RibbonPanelItemWidget(self)
+            item.addWidget(widget)
+            item.show()
+            widget.show()
+            self._actionsLayout.addWidget(item, row, col, rowSpan, colSpan, alignment)  # type: ignore
 
     def removeWidget(self, widget: QtWidgets.QWidget):
         """Remove a widget from the panel."""
@@ -481,6 +546,15 @@ class RibbonPanel(QtWidgets.QFrame):
         button.setShortcut(shortcut) if shortcut else None
         button.setToolTip(tooltip) if tooltip else None
         button.setStatusTip(statusTip) if statusTip else None
+        
+        button._ribbon_text = text
+        button._ribbon_icon = icon
+        button._ribbon_slot = slot
+        button._ribbon_shortcut = shortcut
+        button._ribbon_tooltip = tooltip
+        button._ribbon_statusTip = statusTip
+        button._ribbon_checkable = checkable
+        
         maximumHeight = (
             self.height()
             - self._titleLabel.sizeHint().height()
@@ -553,6 +627,13 @@ class RibbonPanel(QtWidgets.QFrame):
         button.setToolTip(tooltip) if tooltip else None
         button.setStatusTip(statusTip) if statusTip else None
         
+        button._ribbon_text = text
+        button._ribbon_icon = icon
+        button._ribbon_slot = slot
+        button._ribbon_shortcut = shortcut
+        button._ribbon_tooltip = tooltip
+        button._ribbon_statusTip = statusTip
+        
         maximumHeight = (
             self.height()
             - self._titleLabel.sizeHint().height()
@@ -617,6 +698,13 @@ class RibbonPanel(QtWidgets.QFrame):
         button.setToolTip(tooltip) if tooltip else None
         button.setStatusTip(statusTip) if statusTip else None
         
+        button._ribbon_text = text
+        button._ribbon_icon = icon
+        button._ribbon_slot = slot
+        button._ribbon_shortcut = shortcut
+        button._ribbon_tooltip = tooltip
+        button._ribbon_statusTip = statusTip
+        
         maximumHeight = (
             self.height()
             - self._titleLabel.sizeHint().height()
@@ -678,6 +766,13 @@ class RibbonPanel(QtWidgets.QFrame):
         button.actionClicked.connect(slot) if slot else None  # type: ignore
         button.setToolTip(tooltip) if tooltip else None
         button.setStatusTip(statusTip) if statusTip else None
+        
+        button._ribbon_text = text
+        button._ribbon_icon = icon
+        button._ribbon_slot = slot
+        button._ribbon_shortcut = shortcut
+        button._ribbon_tooltip = tooltip
+        button._ribbon_statusTip = statusTip
         
         # Configure action button
         action_button = button.actionButton()

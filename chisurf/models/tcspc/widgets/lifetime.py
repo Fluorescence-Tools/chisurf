@@ -59,9 +59,18 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
                 p = target.parameters_all_dict[key]
-                chisurf.run(f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{key}'].value = {p.value}")
-                chisurf.run(f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{key}'].controller.finalize()")
-            chisurf.run("cs.current_fit.update()")
+                chisurf.actions.dispatch(
+                    name="parameter.value",
+                    payload={
+                        "parameter_name": str(key),
+                        "value": float(p.value),
+                        "fit_index": int(fit_idx),
+                    },
+                )
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_idx)},
+            )
 
         return linkcall
 
@@ -81,14 +90,44 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
     def link_values(self, target):
         def linkcall():
             self._link = target
-            chisurf.run("cs.current_fit.update()")
+            # Find the correct fit index for this model
+            fit_index = 0
+            try:
+                import chisurf
+                # Try to find which fit contains this model
+                for i, fit_obj in enumerate(chisurf.fits):
+                    if hasattr(fit_obj, 'model') and fit_obj.model is self:
+                        fit_index = i
+                        break
+            except Exception:
+                pass
+            
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
             self.gb.setChecked(False)
         return linkcall
 
     def onLinkToggeled(self, checked):
         if checked:
             self._link = None
-            chisurf.run("cs.current_fit.update()")
+            # Find the correct fit index for this model
+            fit_index = 0
+            try:
+                import chisurf
+                # Try to find which fit contains this model
+                for i, fit_obj in enumerate(chisurf.fits):
+                    if hasattr(fit_obj, 'model') and fit_obj.model is self:
+                        fit_index = i
+                        break
+            except Exception:
+                pass
+            
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
 
     def link_menu(self):
         menu = self.linkFrom_menu
@@ -184,16 +223,38 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         super().__setstate__(state)
 
     def onNormalizeAmplitudes(self):
-        chisurf.run(f"chisurf.macros.model.normalize_amplitudes('{self.name}', {self.normalize_amplitude.isChecked()})")
+        chisurf.actions.dispatch(
+            name="model.normalize_amplitudes",
+            payload={
+                "component_name": str(self.name),
+                "normalize": bool(self.normalize_amplitude.isChecked()),
+            },
+        )
+        chisurf.actions.dispatch(
+            name="model.absolute_amplitudes",
+            payload={
+                "component_name": str(self.name),
+                "absolute": bool(self.absolute_amplitude.isChecked()),
+            },
+        )
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": str(self.name)},
+        )
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": str(self.name)},
+        )
 
     def onAbsoluteAmplitudes(self):
-        chisurf.run(f"chisurf.macros.model.absolute_amplitudes('{self.name}', {self.absolute_amplitude.isChecked()})")
+        self.onNormalizeAmplitudes()
 
     def onAddLifetime(self):
-        chisurf.run(f"chisurf.macros.model.add_component('{self.name}')")
+        self.append()
 
     def onRemoveLifetime(self):
-        chisurf.run(f"chisurf.macros.model.remove_component('{self.name}')")
+        if len(self._lifetimes) > 1:
+            self.pop()
 
     def append(self, *args, **kwargs):
         Lifetime.append(self, *args, **kwargs)

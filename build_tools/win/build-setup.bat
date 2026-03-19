@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 :: ---------------------------------------------------------------------------
 :: build-setup.bat
 ::
-:: Builds the ChiSurf conda package (via rattler-build) and then creates a
+:: Builds the ChiSurf package (via rattler-build) and then creates a
 :: self-contained Windows installer (via Inno Setup).
 ::
 :: Prerequisites (all handled through pixi -e build):
@@ -20,8 +20,8 @@ setlocal enabledelayedexpansion
 ::   build-setup.bat [/nobuild] [--output-dir <path>]
 ::
 :: Flags:
-::   /nobuild       Skip rattler-build package build (use existing conda-bld)
-::   --output-dir   Override output directory for conda packages
+::   /nobuild       Skip package build (use existing packages)
+::   --output-dir   Override output directory for packages
 :: ---------------------------------------------------------------------------
 
 :: Resolve script and project root paths
@@ -123,25 +123,25 @@ if errorlevel 1 (
 )
 
 :: -----------------------------------------------------------------------
-:: Build conda package via rattler-build (pixi build env)
+:: Build package via rattler-build (pixi build env)
 :: -----------------------------------------------------------------------
 if "%BUILD_RATTLER_PACKAGE%"=="1" (
     echo.
-    echo [1/4] Building conda package via rattler-build ...
+    echo [1/4] Building package ...
     pixi run -e build --manifest-path "%PIXI_MANIFEST%" build-pkg
     if errorlevel 1 (
-        echo ERROR: rattler-build failed
+        echo ERROR: Package build failed
         exit /b 1
     )
 ) else (
-    echo [1/4] Skipping conda package build ^(--nobuild^)
+    echo [1/4] Skipping package build ^(--nobuild^)
 )
 
 :: -----------------------------------------------------------------------
-:: Index the local channel so micromamba can find the package
+:: Index the local channel so it can be used for installation
 :: -----------------------------------------------------------------------
 echo.
-echo [2/4] Indexing local channel at %OUTPUT_DIR% ...
+echo [2/4] Indexing local repository at %OUTPUT_DIR% ...
 pixi run -e build --manifest-path "%PIXI_MANIFEST%" rattler-index fs "%OUTPUT_DIR%"
 if errorlevel 1 (
     echo ERROR: rattler-index failed
@@ -149,7 +149,7 @@ if errorlevel 1 (
 )
 
 :: -----------------------------------------------------------------------
-:: Create the distribution conda environment from the local channel
+:: Create the distribution environment from the local channel
 :: -----------------------------------------------------------------------
 echo.
 echo [3/4] Creating distribution environment at %APP_PATH% ...

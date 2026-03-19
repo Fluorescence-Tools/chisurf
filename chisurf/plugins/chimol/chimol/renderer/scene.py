@@ -15,12 +15,14 @@ class Geometry:
     Moview to a specific library.
     """
 
-    kind: str  # "mesh" | "line" | "points"
+    kind: str  # "mesh" | "line" | "points" | "text"
     positions: np.ndarray
     indices: Optional[np.ndarray] = None
     normals: Optional[np.ndarray] = None
     colors: Optional[np.ndarray] = None
+    radii: Optional[np.ndarray] = None
     meta: Dict[str, Any] = field(default_factory=dict)
+    # meta["labels"] -> list[str] for kind == "text"
 
 
 @dataclass

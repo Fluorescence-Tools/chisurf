@@ -1,4 +1,5 @@
 import tempfile
+import importlib
 
 import numpy as np
 import tttrlib
@@ -8,8 +9,15 @@ from qtpy.QtWidgets import QFileDialog, QMessageBox, QLineEdit
 
 from chisurf.fio.fluorescence.bhfiles import BeckerHicklSetReader
 from chisurf.fio import write_jordi
-from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator
 from .tttr_detector_setups import load_detector_setups, save_detector_setups
+
+
+def _load_jordi_gfactor_calculator_class():
+    mod = importlib.import_module("chisurf.plugins.jordi_g_factor")
+    cls = getattr(mod, "JordiGFactorCalculator", None)
+    if cls is None:
+        raise ImportError("JordiGFactorCalculator not found in chisurf.plugins.jordi_g_factor")
+    return cls
 
 
 def read_from_tttr_file(page):
@@ -132,6 +140,7 @@ def on_calc_g_factor(page):
         jordi_data = np.concatenate([parallel_hist_trimmed, perpendicular_hist_trimmed])
         write_jordi(jordi_data, jordi_file)
 
+        JordiGFactorCalculator = _load_jordi_gfactor_calculator_class()
         g_factor_calculator = JordiGFactorCalculator()
         g_factor_calculator.setWindowModality(Qt.ApplicationModal)
 
@@ -140,6 +149,12 @@ def on_calc_g_factor(page):
             setattr(g_factor_calculator, 'perpendicular_channels', perpendicular_channels)
             setattr(g_factor_calculator, 'micro_time_binning', micro_time_binning)
             setattr(g_factor_calculator, 'detector_name', selected_detector)
+            setattr(g_factor_calculator, 'effective_micro_time_resolution_ps', float(page.effective_micro_time_resolution))
+            if hasattr(g_factor_calculator, 'fp_dt_spinbox') and g_factor_calculator.fp_dt_spinbox is not None:
+                try:
+                    g_factor_calculator.fp_dt_spinbox.setValue(float(page.effective_micro_time_resolution) * 1e-3)
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -167,6 +182,29 @@ def on_calc_g_factor(page):
                         new_cell_widget = QLineEdit(g_factor_value)
                         page.detectors_form.setCellWidget(row, 3, new_cell_widget)
                         page._wire_g_factor_cell(row, new_cell_widget)
+
+                    # Optional l1/l2 estimates from FP calibration mode
+                    try:
+                        l1_val = getattr(g_factor_calculator, 'l1_estimate', None)
+                        l2_val = getattr(g_factor_calculator, 'l2_estimate', None)
+                        if l1_val is not None and np.isfinite(float(l1_val)):
+                            l1_text = f"{float(l1_val):.5f}"
+                            l1_widget = page.detectors_form.cellWidget(row, 4)
+                            if l1_widget is None:
+                                l1_widget = QLineEdit(l1_text)
+                                page.detectors_form.setCellWidget(row, 4, l1_widget)
+                            else:
+                                l1_widget.setText(l1_text)
+                        if l2_val is not None and np.isfinite(float(l2_val)):
+                            l2_text = f"{float(l2_val):.5f}"
+                            l2_widget = page.detectors_form.cellWidget(row, 5)
+                            if l2_widget is None:
+                                l2_widget = QLineEdit(l2_text)
+                                page.detectors_form.setCellWidget(row, 5, l2_widget)
+                            else:
+                                l2_widget.setText(l2_text)
+                    except Exception:
+                        pass
 
                     gf_range_text = None
                     try:

@@ -1,0 +1,12 @@
+build/
+dist/
+*.egg-info/
+cmake-build-*/
+.vscode/
+.history/
+# Documentation and tools
+/doc/_build/
+/doc/example/
+documentation.i
+__pycache__
+bld-dir/

@@ -25,9 +25,9 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from chisurf.plugins.lltf.core.settings import get_default_settings
+from chisurf.plugins.fluorescence_decay.lltf.core.settings import get_default_settings
 
-LLTF_MODULE_PATH = "chisurf.plugins.lltf.core"
+LLTF_MODULE_PATH = "chisurf.plugins.fluorescence_decay.lltf.core"
 
 class QTextLogger(QtCore.QObject):
     """

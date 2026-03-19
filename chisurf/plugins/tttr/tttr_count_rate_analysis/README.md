@@ -54,9 +54,9 @@ csc_count_rate analyze data/*.ptu --setup-file detector_setups.json --output res
 The CLI can also be used programmatically:
 
 ```python
-from chisurf.plugins.count_rate_analysis.cli import cli
+from chisurf.plugins.tttr.tttr_count_rate_analysis.cli import cli
 from click.testing import CliRunner
-
+```
 # Create a runner
 runner = CliRunner()
 

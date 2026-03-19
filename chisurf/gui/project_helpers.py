@@ -140,7 +140,7 @@ def open_recent_project(window, project_dir: str) -> None:
         pass
 
     try:
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="project.load",
             payload={"project_path": path.as_posix()},
         )

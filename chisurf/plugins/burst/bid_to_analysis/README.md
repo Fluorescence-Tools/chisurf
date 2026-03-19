@@ -21,7 +21,7 @@ Usage:
 
 Programmatic usage:
 ```python
-from chisurf.plugins.bid_to_analysis import convert_bid_file, convert_many
+from chisurf.plugins.burst.bid_to_analysis import convert_bid_file, convert_many
 
 # Convert single BID file
 bur_path = convert_bid_file(r"C:\data\dataset.bst")

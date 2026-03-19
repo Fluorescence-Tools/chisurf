@@ -1,12 +1,12 @@
 """Entry point for running the Burst Browser widget directly.
 
 Usage:
-  python -m chisurf.plugins.burst_browser
+  python -m chisurf.plugins.burst.burst_browser
 """
 import sys
 from qtpy.QtWidgets import QApplication
 
-from chisurf.plugins.burst_browser import BurstBrowserWidget
+from chisurf.plugins.burst.burst_browser import BurstBrowserWidget
 
 
 def main():

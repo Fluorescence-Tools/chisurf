@@ -9,12 +9,20 @@ import chisurf
 import urllib
 
 from qtpy import QtCore, QtWidgets
-from qtpy.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from qtpy.QtWebEngineWidgets import (
-    QWebEnginePage as QWebPage,
-    QWebEngineProfile,
-    QWebEngineView as QWebView,
-)
+try:
+    from qtpy.QtWebEngineCore import QWebEngineUrlRequestInterceptor
+    from qtpy.QtWebEngineWidgets import (
+        QWebEnginePage as QWebPage,
+        QWebEngineProfile,
+        QWebEngineView as QWebView,
+    )
+    _HAS_WEBENGINE = True
+except ImportError:
+    _HAS_WEBENGINE = False
+    QWebEngineUrlRequestInterceptor = object
+    QWebPage = QtWidgets.QWidget
+    QWebEngineProfile = object
+    QWebView = QtWidgets.QWidget
 
 log = chisurf.logging.info
 
@@ -68,6 +76,13 @@ class CustomWebView(QWebView):
 class Browser(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if not _HAS_WEBENGINE:
+            label = QtWidgets.QLabel("QtWebEngine is not installed. This plugin requires 'pyqtwebengine'.")
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            self.setCentralWidget(label)
+            self.show()
+            return
 
         self.browser = CustomWebView(self)
 

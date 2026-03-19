@@ -50,8 +50,13 @@ for script in sys.argv[1:]:
 
     new_shebang = '#!"{}"\n'.format(os.path.join(currentDir, interp))
 
-    log.write("New shebang for {}: {}\n".format(script, new_shebang))
-    scriptLines[0] = new_shebang
+    if scriptLines and scriptLines[0].startswith('#!'):
+        log.write("Replacing shebang for {}: {}\n".format(script, new_shebang))
+        scriptLines[0] = new_shebang
+    else:
+        log.write("Inserting shebang for {}: {}\n".format(script, new_shebang))
+        scriptLines.insert(0, new_shebang)
+
     # Writing here may require administrator access!
     with open(scriptFile, 'w') as sh:
         sh.writelines(scriptLines)

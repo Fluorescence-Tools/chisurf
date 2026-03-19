@@ -5,32 +5,31 @@ import logging
 import os
 import pathlib
 import sys
-
-try:
-    if sys.version_info >= (3, 8):
-        import typing
-    elif sys.version_info >= (3, 7):
-        import typing_extensions
-        import typing
-        for key in typing_extensions.__dict__.keys():
-            f = typing_extensions.__dict__[key]
-            if callable(f):
-                typing.__dict__[key] = f
-    else:
-        import typing_extensions as typing
-except ModuleNotFoundError:
-    print("WARNING typing_extensions not found", file=sys.stderr)
-    typing = None
+import typing
 
 import chisurf.info
+
+# Monkeypatch guidata.utils for compatibility with newer versions
+try:
+    import guidata.utils
+    if not hasattr(guidata.utils, 'update_dataset'):
+        try:
+            from guidata.dataset import update_dataset
+            guidata.utils.update_dataset = update_dataset
+            # Also ensure it's in sys.modules if needed for 'from guidata.utils import ...'
+            sys.modules['guidata.utils'].update_dataset = update_dataset
+        except ImportError:
+            pass
+except ImportError:
+    pass
 
 __version__ = chisurf.info.__version__
 
 fits: typing.List["chisurf.fitting.fit.FitGroup"] = list()
 imported_datasets: typing.List["chisurf.data.DataGroup"] = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
-cs = object         # The current instance of ChiSurf
-console = object
+cs = None         # The current instance of ChiSurf
+console = None
 experiment: typing.Dict[str, "chisurf.experiments.core.experiment.Experiment"] = dict()
 working_path = pathlib.Path().home()
 verbose = False  # Updated lazily when settings are loaded
@@ -134,6 +133,10 @@ def __getattr__(name: str):
         value = mod.OperationHistory()
         globals()["history"] = value
         return value
+    if name == "actions":
+        mod = importlib.import_module("chisurf.actions")
+        globals()["actions"] = mod
+        return mod
     if name == "action_dispatcher":
         mod = importlib.import_module("chisurf.runtime.actions")
         value = mod.build_default_dispatcher(history_provider=lambda: getattr(sys.modules[__name__], "history", None))
@@ -153,10 +156,5 @@ def __getattr__(name: str):
         mod = importlib.import_module("chisurf.runtime.actions")
         value = mod.invoke_action
         globals()["action_execute"] = value
-        return value
-    if name == "action_controller":
-        mod = importlib.import_module("chisurf.controllers.action_controller")
-        value = mod.ActionController()
-        globals()["action_controller"] = value
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

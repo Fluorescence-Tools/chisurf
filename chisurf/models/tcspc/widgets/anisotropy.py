@@ -1215,10 +1215,16 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             self.gb.show()
 
     def onAddRotation(self):
-        chisurf.run("chisurf.macros.model.add_component('anisotropy')")
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": "anisotropy"},
+        )
 
     def onRemoveRotation(self):
-        chisurf.run("chisurf.macros.model.remove_component('anisotropy')")
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": "anisotropy"},
+        )
 
     def add_rotation(self, **kwargs):
         super().add_rotation(**kwargs)

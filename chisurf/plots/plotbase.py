@@ -8,7 +8,7 @@ import chisurf.fitting
 import chisurf.gui
 import chisurf.gui.widgets
 
-from chisurf.gui.widgets import View
+from chisurf.gui.widgets.general import View
 
 
 class Plot(View):

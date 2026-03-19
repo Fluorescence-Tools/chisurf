@@ -7,11 +7,14 @@ from .loader import LoaderCommands
 from .selection import SelectionMixin
 from .rendering import RenderingMixin
 from .measurements import MeasurementMixin
+from .editing import EditingMixin
+from .animation import AnimationMixin
+from .rmf import RmfMixin
 
 MixinType = Type[BaseCmd]
 
 
-class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, MeasurementMixin, BaseCmd):
+class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMixin, MeasurementMixin, EditingMixin, BaseCmd):
     """Thin aggregator that wires together all command mixins."""
 
     def _builtin_commands(self) -> Dict[str, Callable[[List[str]], object]]:
@@ -21,6 +24,9 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, MeasurementMixin, Base
             SelectionMixin,
             RenderingMixin,
             MeasurementMixin,
+            EditingMixin,
+            AnimationMixin,
+            RmfMixin,
         ):
             helper = getattr(mixin, "_mixin_commands", None)
             if callable(helper):
@@ -95,18 +101,38 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, MeasurementMixin, Base
     def rms(self, *args: str) -> None:
         self._cmd_rms(list(args))
 
+    def rms_cur(self, *args: str) -> None:
+        self._cmd_rms(list(args))
+
+    def align(self, *args: str) -> None:
+        self._cmd_align(list(args))
+
+    def super(self, *args: str) -> None:
+        self._cmd_super(list(args))
+
     def split_chains(self, prefix: str | None = None) -> None:
         args: list[str] = []
         if prefix:
             args.append(str(prefix))
         self._cmd_split_chains(args)
 
+    def mset(self, *args: str) -> None:
+        self._cmd_mset(list(args))
+
+    def mplay(self, *args: str) -> None:
+        self._cmd_mplay(list(args))
+
+    def mpause(self, *args: str) -> None:
+        self._cmd_mpause(list(args))
+
+    def mstop(self, *args: str) -> None:
+        self._cmd_mstop(list(args))
+
+    def mclear(self, *args: str) -> None:
+        self._cmd_mclear(list(args))
+
     def frame(self, index: int) -> None:
         self._cmd_frame([str(index)])
-        self._cmd_frame_next([])
-
-    def frame_prev(self) -> None:
-        self._cmd_frame_prev([])
 
     def select(self, *tokens: str) -> None:
         self._cmd_select(list(tokens))
@@ -128,6 +154,15 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, MeasurementMixin, Base
 
     def deselect(self) -> None:
         self._cmd_deselect([])
+
+    def iterate(self, *args: str) -> None:
+        self._cmd_iterate(list(args))
+
+    def alter(self, *args: str) -> None:
+        self._cmd_alter(list(args))
+
+    def remove(self, *args: str) -> None:
+        self._cmd_remove(list(args))
 
     def quit(self) -> None:
         self._cmd_quit([])

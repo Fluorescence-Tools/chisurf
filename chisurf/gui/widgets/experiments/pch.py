@@ -775,9 +775,9 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
                 s = p.as_posix().replace("\\", "/")
             except Exception:
                 continue
-            chisurf.action_controller.execute(
+            chisurf.actions.dispatch(
                 name="dataset.add",
-                payload={"filename": s},
+                payload={"filename": s, "experiment_reader": None},
             )
 
 

@@ -172,10 +172,16 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onRemoveLocalFit(self) -> None:
         row = self.tableWidget.currentRow()
         self.tableWidget.removeRow(row)
-        chisurf.run(f"cs.current_fit.model.remove_local_fit({row})")
+        chisurf.actions.dispatch(
+            name="model.remove_local_fit",
+            payload={"row": int(row)},
+        )
 
     def onClearLocalFits(self) -> None:
-        chisurf.run("cs.current_fit.model.clear_local_fits()")
+        chisurf.actions.dispatch(
+            name="model.clear_local_fits",
+            payload={},
+        )
         self.tableWidget.setRowCount(0)
 
     def onTableGlobalLinksDoubleClicked(self) -> None:
@@ -185,8 +191,9 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def onAddGlobalVariable(self) -> None:
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
-            chisurf.run(
-                f"cs.current_fit.model.append_global_parameter(chisurf.parameter.FittingParameterWidget(name='{self.current_global_variable_name}'))"
+            chisurf.actions.dispatch(
+                name="model.append_global_parameter",
+                payload={"parameter_name": str(self.current_global_variable_name)},
             )
             layout = self.verticalLayout
             layout.addWidget(self._global_parameters.values()[-1])
@@ -205,8 +212,9 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         local_fits_idx = self.local_fit_idx
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
         for fitIndex in fit_indeces:
-            chisurf.run(
-                f"cs.current_fit.model.append_fit(chisurf.fits[{local_fits_idx[fitIndex]}])"
+            chisurf.actions.dispatch(
+                name="model.append_fit",
+                payload={"fit_index": int(local_fits_idx[fitIndex])},
             )
 
     def append_fit(self, fit: chisurf.fitting.fit):

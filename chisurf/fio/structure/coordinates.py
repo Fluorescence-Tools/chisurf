@@ -35,12 +35,16 @@ import numpy as np
 
 import chisurf.fio as io
 
-import IMP
-import IMP.core
-import IMP.atom
-
 import chisurf
 import chisurf.common
+
+try:
+    import IMP
+    import IMP.core
+    import IMP.atom
+    _HAS_IMP = True
+except ImportError:
+    _HAS_IMP = False
 
 
 
@@ -345,7 +349,7 @@ def parse_string_pqr(
 
 
 def convert_atoms(
-        ps: typing.List[IMP.atom.Hierarchy],
+        ps: typing.List['IMP.atom.Hierarchy'],
         radius_no_interaction: bool = True,
         only_standard_residues: bool = True
 ) -> np.ndarray:
@@ -366,6 +370,9 @@ def convert_atoms(
     atoms: numpy array containing the atom information
 
     """
+    if not _HAS_IMP:
+        raise ImportError("IMP is required for convert_atoms")
+        
     atoms = np.zeros(
         len(ps),
         dtype={
@@ -375,9 +382,6 @@ def convert_atoms(
     )
     radius_scaleling = 1.0
     if radius_no_interaction:
-        # IMP uses the CHARM force field radius Rmin
-        # E = eij ((Rmin/rij)**12 - 2*(Rmin/rij)**6))
-        # The LJ radius is the distance where E = 0
         radius_scaleling = 2**(-1./6.)
     t = IMP.atom.get_element_table()
     j = 0
@@ -419,6 +423,9 @@ def read_coordinates(
     :param filename:
     :return:
     """
+    if not _HAS_IMP:
+        raise ImportError("IMP is required to read coordinates. Try installing it.")
+        
     model = IMP.Model()
     if not os.path.isfile(filename):
         raise FileNotFoundError("The file %s could not be found." % filename)

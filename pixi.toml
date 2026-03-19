@@ -17,6 +17,7 @@ click = "*"
 click-didyoumean = "*"
 qtpy = "<2.0"
 pyqt = "*"
+pyqtwebengine = "*"
 pyqtgraph = "0.13.*"
 matplotlib = "*"
 scikit-image = "*"
@@ -42,6 +43,8 @@ pygments = "*"
 pyarrow = "*"
 boost-histogram = "*"
 fastmcp = "*"
+setuptools = ">=61,<70"
+pytest = "*"
 
 [feature.build.dependencies]
 rattler-build = ">=0.58.0"
@@ -49,7 +52,7 @@ cmake = "<4"
 ninja = "*"
 swig = "<4.3.0"
 cython = ">=0.29,<3"
-setuptools = ">=61"
+setuptools = ">=61,<70"
 wheel = "*"
 pip = "*"
 git = "*"
@@ -63,12 +66,37 @@ collect-entry-points = { cmd = "python rattler-recipe/collect_entry_points.py" }
 build-pkg = { cmd = "python rattler-recipe/build_pkg.py", depends-on = ["collect-entry-points"] }
 build-setup = { cmd = "python build_tools/win/build_setup.py", depends-on = ["collect-entry-points"] }
 
+[feature.docs.dependencies]
+sphinx = "*"
+sphinx_rtd_theme = "*"
+sphinx_bootstrap_theme = "*"
+numpydoc = "*"
+sphinx-autodoc-typehints = "*"
+make = "*"
+
+[feature.docs.tasks]
+docs-html = { cmd = "make html", cwd = "docs" }
+docs-clean = { cmd = "make clean", cwd = "docs" }
+
 [environments]
-default = []
+default = ["build"]
 build = ["build"]
+docs = ["docs"]
 
 [target.win-64.dependencies]
 hdf5 = "*"
 
 [tasks]
+# Linux/macOS/Windows extension builds
+build-chinet = { cmd = "cmake -S modules/chinet -B modules/chinet/build -G Ninja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY=OFF -DBUILD_PYTHON_DOCS=OFF -DWITH_AVX=OFF -DWITH_MONGODB=OFF && cmake --build modules/chinet/build --config Release --target install" }
+build-tttrlib = { cmd = "cmake -S modules/tttrlib -B modules/tttrlib/b2 -G Ninja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY=OFF -DBUILD_PYTHON_DOCS=OFF -DWITH_AVX=OFF && cmake --build modules/tttrlib/b2 --config Release --target install" }
+build-labellib = { cmd = "cmake -S modules/labellib -B modules/labellib/build -G Ninja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_BUILD_TYPE=Release -DPYTHON_LIBRARY_OUTPUT_DIRECTORY=$CONDA_PREFIX/Lib/site-packages && cmake --build modules/labellib/build --config Release --target install" }
+build-ndxplorer = { cmd = "python -m pip install -e modules/ndxplorer --no-deps" }
+build-clsmview = { cmd = "python -m pip install -e modules/clsmview --no-deps" }
+build-quest = { cmd = "python -m pip install -e modules/quest --no-deps" }
+build-extensions = { depends-on = ["build-chinet", "build-tttrlib", "build-labellib", "build-ndxplorer", "build-clsmview", "build-quest"] }
+
+chisurf = { cmd = "python -m chisurf", depends-on = ["build-extensions"], env = { PYTHONPATH = "." } }
 test-app = "python -c \"import chisurf; print('ChiSurf imported successfully')\""
+test = { cmd = "pytest unittests -k 'not gui and not widget and not window'", env = { PYTHONPATH = "." } }
+test-linux = { cmd = "docker build -t chisurf-linux -f Dockerfile.linux . && docker run --rm chisurf-linux" }

@@ -192,8 +192,14 @@ class CategoryMethodsMixin:
                     except Exception:
                         is_dev = False
 
-                    # Skip broken if hidden and not experimental
-                    if is_broken and hide_disabled_plugins and not experimental_mode:
+                    # In normal mode, hide broken and CLI-only plugins.
+                    # In dev/experimental mode, keep them visible for diagnostics.
+                    if (is_broken or is_cli_only) and not experimental_mode:
+                        continue
+
+                    # Optional compatibility behavior: allow explicit hiding of
+                    # broken plugins even in experimental mode.
+                    if is_broken and hide_disabled_plugins and experimental_mode:
                         continue
 
                     # Determine script file
@@ -418,8 +424,14 @@ class CategoryMethodsMixin:
                     except Exception:
                         is_dev = False
 
-                    # Skip broken if hidden and not experimental
-                    if is_broken and hide_disabled_plugins and not experimental_mode:
+                    # In normal mode, hide broken and CLI-only plugins.
+                    # In dev/experimental mode, keep them visible for diagnostics.
+                    if (is_broken or is_cli_only) and not experimental_mode:
+                        continue
+
+                    # Optional compatibility behavior: allow explicit hiding of
+                    # broken plugins even in experimental mode.
+                    if is_broken and hide_disabled_plugins and experimental_mode:
                         continue
 
                     # Determine script file

@@ -27,15 +27,24 @@ This plugin can run independently of ChiSurf or as a ChiSurf plugin.
 name = "Spectroscopy:Fluorescence decay:Jordi G-Factor Calculator"
 
 import sys
+import csv
 import numpy as np
 import warnings
+from pathlib import Path
+from qtpy import uic
 from qtpy.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QFileDialog, QLabel, QGridLayout,
-    QDoubleSpinBox, QLineEdit, QCheckBox
+    QApplication, QWidget,
+    QFileDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+    QListWidget, QListWidgetItem, QAbstractItemView,
+    QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QDialog
 )
 from qtpy.QtCore import Qt
 import pyqtgraph as pg
+
+try:
+    _DASH_LINE_STYLE = Qt.PenStyle.DashLine
+except Exception:
+    _DASH_LINE_STYLE = getattr(Qt, "DashLine", 2)
 
 # Optional ChiSurf I/O import for Jordi reading (keeps standalone capability)
 try:
@@ -53,6 +62,230 @@ class DataCurve:
         self.name = name
 
 
+class FileDropList(QListWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAcceptDrops(True)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+
+    def add_files(self, paths):
+        existing = {self.item(i).text() for i in range(self.count())}
+        for p in paths:
+            if p and p not in existing:
+                self.addItem(QListWidgetItem(p))
+                existing.add(p)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            paths = []
+            for url in event.mimeData().urls():
+                local = url.toLocalFile()
+                if local:
+                    paths.append(local)
+            self.add_files(paths)
+            event.acceptProposedAction()
+        else:
+            super().dropEvent(event)
+
+
+class JordiDecayBatchWindow(QDialog):
+    def __init__(self, settings_snapshot: dict, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Jordi G-Factor Batch Decays")
+        self.setWindowModality(Qt.ApplicationModal)
+        self.snapshot = dict(settings_snapshot)
+        self.results = []
+        self._init_ui()
+
+    def _init_ui(self):
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Drop Jordi files here or use Add..."))
+
+        self.file_list = FileDropList()
+        layout.addWidget(self.file_list)
+
+        buttons = QHBoxLayout()
+        self.add_btn = QPushButton("Add...")
+        self.add_btn.clicked.connect(self._on_add)
+        self.remove_btn = QPushButton("Remove")
+        self.remove_btn.clicked.connect(self._on_remove)
+        self.clear_btn = QPushButton("Clear")
+        self.clear_btn.clicked.connect(self._on_clear)
+        self.run_btn = QPushButton("Run Batch")
+        self.run_btn.clicked.connect(self._on_run)
+        self.save_btn = QPushButton("Save CSV...")
+        self.save_btn.clicked.connect(self._on_save)
+        buttons.addWidget(self.add_btn)
+        buttons.addWidget(self.remove_btn)
+        buttons.addWidget(self.clear_btn)
+        buttons.addStretch(1)
+        buttons.addWidget(self.run_btn)
+        buttons.addWidget(self.save_btn)
+        layout.addLayout(buttons)
+
+        self.table = QTableWidget(0, 7)
+        self.table.setHorizontalHeaderLabels([
+            "filename", "r_inf", "region_min", "region_max", "bg_vv", "bg_vh", "g_factor"
+        ])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        layout.addWidget(self.table)
+
+        self.setLayout(layout)
+        self.resize(1000, 640)
+
+    @staticmethod
+    def _shift_interp_on_axis(t: np.ndarray, y: np.ndarray, shift: float) -> np.ndarray:
+        if shift == 0.0:
+            return np.asarray(y, dtype=float).copy()
+        xq = t - shift
+        out = np.full_like(y, np.nan, dtype=float)
+        mask = (xq >= t[0]) & (xq <= t[-1])
+        if np.any(mask):
+            out[mask] = np.interp(xq[mask], t, y)
+        return out
+
+    @staticmethod
+    def _compute_rt(vv, vh, g, l1=0.0, l2=0.0):
+        vv = np.asarray(vv, dtype=float)
+        vh = np.asarray(vh, dtype=float)
+        gg = float(g)
+        if not np.isfinite(gg) or gg <= 0.0:
+            return np.full_like(vv, np.nan, dtype=float)
+        num = gg * vv - vh
+        den = (1.0 - 3.0 * float(l2)) * gg * vv + (2.0 - 3.0 * float(l1)) * vh
+        with np.errstate(divide='ignore', invalid='ignore'):
+            return np.divide(num, den, out=np.full_like(vv, np.nan), where=(np.isfinite(den) & (den != 0.0)))
+
+    def _compute_file_result(self, file_path: str):
+        try:
+            if _read_jordi is not None:
+                vv, vh = _read_jordi(file_path, split=True)
+            else:
+                vec = np.loadtxt(file_path)
+                half = len(vec) // 2
+                vv, vh = vec[:half], vec[half:]
+            vv = np.asarray(vv, dtype=float)
+            vh = np.asarray(vh, dtype=float)
+            n = min(len(vv), len(vh))
+            vv = vv[:n]
+            vh = vh[:n]
+            t = np.arange(n, dtype=float)
+
+            if bool(self.snapshot.get('flip', False)):
+                vv, vh = vh, vv
+
+            g_raw = float(self.snapshot.get('g_raw', np.nan))
+            g_corr = float(self.snapshot.get('g_corr', np.nan))
+            l1 = float(self.snapshot.get('l1', 0.0))
+            l2 = float(self.snapshot.get('l2', 0.0))
+            shift = float(self.snapshot.get('shift', 0.0))
+            bg_vv = float(self.snapshot.get('bg_vv', 0.0))
+            bg_vh = float(self.snapshot.get('bg_vh', 0.0))
+            apply_bg = bool(self.snapshot.get('apply_bg', False))
+            region_min = float(self.snapshot.get('region_min', 0.0))
+            region_max = float(self.snapshot.get('region_max', float(max(0, n - 1))))
+
+            if not apply_bg:
+                bg_vv = 0.0
+                bg_vh = 0.0
+
+            vv_corr = np.maximum(vv - bg_vv, 0.0)
+            vh_corr = np.maximum(vh - bg_vh, 0.0)
+            vh_corr_shifted = self._shift_interp_on_axis(t, vh_corr, shift)
+            r_corr = self._compute_rt(vv_corr, vh_corr_shifted, g_corr, l1=l1, l2=l2)
+
+            # r_inf from selected region (same output concept as Jordi anisotropy batch)
+            rmin = max(float(t[0]), min(region_min, float(t[-1])))
+            rmax = max(float(t[0]), min(region_max, float(t[-1])))
+            if rmax < rmin:
+                rmin, rmax = rmax, rmin
+            if rmax <= rmin:
+                rmax = min(float(t[-1]), rmin + 1.0)
+            i0 = int(np.argmin(np.abs(t - rmin)))
+            i1 = int(np.argmin(np.abs(t - rmax)))
+            if i1 <= i0:
+                i1 = min(len(t), i0 + 1)
+            r_region = r_corr[i0:i1]
+            r_region = r_region[np.isfinite(r_region)]
+            r_inf = float(np.nanmean(r_region)) if r_region.size > 0 else np.nan
+
+            return (Path(file_path).name, r_inf, rmin, rmax, bg_vv, bg_vh, g_corr)
+        except Exception:
+            return (
+                Path(file_path).name,
+                np.nan,
+                float(self.snapshot.get('region_min', 0.0)),
+                float(self.snapshot.get('region_max', 0.0)),
+                float(self.snapshot.get('bg_vv', 0.0)),
+                float(self.snapshot.get('bg_vh', 0.0)),
+                float(self.snapshot.get('g_corr', np.nan)),
+            )
+
+    def _append_result_row(self, row_tuple):
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        for c, value in enumerate(row_tuple):
+            item = QTableWidgetItem(str(value))
+            item.setFlags(item.flags() ^ Qt.ItemIsEditable)
+            self.table.setItem(r, c, item)
+        self.results.append(row_tuple)
+
+    def _clear_results(self):
+        self.table.setRowCount(0)
+        self.results = []
+
+    def _on_add(self):
+        files, _ = QFileDialog.getOpenFileNames(self, "Add Jordi Files", "", "Data Files (*.dat *.txt *.csv);;All Files (*)")
+        if files:
+            self.file_list.add_files(files)
+
+    def _on_remove(self):
+        for item in self.file_list.selectedItems():
+            self.file_list.takeItem(self.file_list.row(item))
+
+    def _on_clear(self):
+        self.file_list.clear()
+        self._clear_results()
+
+    def _on_run(self):
+        paths = [self.file_list.item(i).text() for i in range(self.file_list.count())]
+        if not paths:
+            QMessageBox.information(self, "Batch", "No files to process.")
+            return
+        self._clear_results()
+        for p in paths:
+            self._append_result_row(self._compute_file_result(p))
+        QMessageBox.information(self, "Batch", f"Processed {len(paths)} file(s).")
+
+    def _on_save(self):
+        if not self.results:
+            QMessageBox.information(self, "Save CSV", "No results to save.")
+            return
+        out_path, _ = QFileDialog.getSaveFileName(self, "Save CSV", "", "CSV Files (*.csv);;All Files (*)")
+        if not out_path:
+            return
+        try:
+            with open(out_path, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["filename", "r_inf", "region_min", "region_max", "bg_vv", "bg_vh", "g_factor"])
+                writer.writerows(self.results)
+            QMessageBox.information(self, "Save CSV", f"Saved: {out_path}")
+        except Exception as e:
+            QMessageBox.critical(self, "Save CSV", f"Failed to save CSV: {e}")
+
+
 class JordiGFactorCalculator(QWidget):
     """Main widget for the Jordi G-Factor Calculator plugin."""
     
@@ -67,6 +300,26 @@ class JordiGFactorCalculator(QWidget):
         self.perpendicular_data = None
         self.g_factor = None
         self.g_factor_stddev = None
+        self.g_factor_uncorrected = None
+        self.g_factor_corrected = None
+        self.g_factor_manual_value = None
+        self.manual_g_override = False
+        self.l1_estimate = None
+        self.l2_estimate = None
+        self.fp_manual_l1_override = False
+        self.fp_manual_tau_override = False
+        self.fp_manual_rs_override = False
+        self._updating_fp_l1_value = False
+        self._updating_fp_tau_value = False
+        self._updating_fp_rs_value = False
+        self._updating_g_value = False
+        self.fp_tau_estimate_ns = None
+        self.fp_rs_expected = None
+        self.fp_estimate_available = False
+        self.fp_file_path = None
+        self.fp_parallel_data = None
+        self.fp_perpendicular_data = None
+        self._batch_window = None
         self.region_bounds = [0, 100]  # Default region bounds
         self.bg_region_bounds = [0, 100]  # Default background region bounds
         self.use_background_correction = False
@@ -77,55 +330,35 @@ class JordiGFactorCalculator(QWidget):
         
     def init_ui(self):
         """Initialize the user interface."""
-        main_layout = QVBoxLayout()
-        
-        # Controls layout
-        controls_layout = QGridLayout()
-        
-        # File loading
-        self.load_button = QPushButton("Load Jordi File")
+        uic.loadUi(str(Path(__file__).with_name("wizard.ui")), self)
+
         self.load_button.clicked.connect(self.load_jordi_file)
-        self.file_label = QLineEdit("No file loaded")
-        self.file_label.setReadOnly(True)  # Make it non-editable
-        controls_layout.addWidget(self.load_button, 0, 0)
-        controls_layout.addWidget(self.file_label, 0, 1, 1, 3)
-        
-        # G-factor display
-        self.g_factor_label = QLabel("G-Factor: ")
-        self.g_factor_value = QLineEdit("N/A")
-        self.g_factor_value.setReadOnly(True)  # Make it non-editable
-        self.g_factor_stddev_label = QLabel("StdDev: ")
-        self.g_factor_stddev_value = QLineEdit("N/A")
-        self.g_factor_stddev_value.setReadOnly(True)  # Make it non-editable
-        controls_layout.addWidget(self.g_factor_label, 1, 0)
-        controls_layout.addWidget(self.g_factor_value, 1, 1)
-        controls_layout.addWidget(self.g_factor_stddev_label, 1, 2)
-        controls_layout.addWidget(self.g_factor_stddev_value, 1, 3)
-        
-        # Corrected G-factor display (initially hidden)
-        self.corrected_g_factor_label = QLabel("Corrected G-Factor: ")
-        self.corrected_g_factor_value = QLineEdit("N/A")
-        self.corrected_g_factor_value.setReadOnly(True)
-        self.corrected_g_factor_stddev_label = QLabel("Corrected StdDev: ")
-        self.corrected_g_factor_stddev_value = QLineEdit("N/A")
-        self.corrected_g_factor_stddev_value.setReadOnly(True)
-        controls_layout.addWidget(self.corrected_g_factor_label, 3, 0)
-        controls_layout.addWidget(self.corrected_g_factor_value, 3, 1)
-        controls_layout.addWidget(self.corrected_g_factor_stddev_label, 3, 2)
-        controls_layout.addWidget(self.corrected_g_factor_stddev_value, 3, 3)
-        
-        # Background values display (initially hidden)
-        self.bg_parallel_label = QLabel("BG Parallel: ")
-        self.bg_parallel_value = QLineEdit("N/A")
-        self.bg_parallel_value.setReadOnly(True)
-        self.bg_perpendicular_label = QLabel("BG Perpendicular: ")
-        self.bg_perpendicular_value = QLineEdit("N/A")
-        self.bg_perpendicular_value.setReadOnly(True)
-        controls_layout.addWidget(self.bg_parallel_label, 4, 0)
-        controls_layout.addWidget(self.bg_parallel_value, 4, 1)
-        controls_layout.addWidget(self.bg_perpendicular_label, 4, 2)
-        controls_layout.addWidget(self.bg_perpendicular_value, 4, 3)
-        
+        self.batch_button.clicked.connect(self.open_batch_window)
+        self.bg_correction_checkbox.stateChanged.connect(self.on_bg_correction_changed)
+        self.flip_checkbox.stateChanged.connect(lambda *_: (self.update_plot(), self.calculate_g_factor()))
+        self.shift_spinbox.valueChanged.connect(self.on_shift_changed)
+        self.fp_load_button.clicked.connect(self.load_fp_jordi_file)
+        self.fp_rho_spinbox.valueChanged.connect(self.calculate_fp_mixing_estimate)
+        self.fp_r0_spinbox.valueChanged.connect(self.calculate_fp_mixing_estimate)
+        self.fp_dt_spinbox.valueChanged.connect(self.calculate_fp_mixing_estimate)
+        self.fp_tau_value.valueChanged.connect(self.on_fp_tau_value_changed)
+        self.fp_rs_value.valueChanged.connect(self.on_fp_rs_value_changed)
+        self.fp_l1_value.valueChanged.connect(self.on_fp_l1_value_changed)
+        self.g_factor_value.textChanged.connect(self.on_g_factor_text_changed)
+        self.g_factor_value.editingFinished.connect(self.on_g_factor_value_changed)
+        self.show_fast_checkbox.stateChanged.connect(self.on_plot_visibility_changed)
+        self.show_slow_checkbox.stateChanged.connect(self.on_plot_visibility_changed)
+        self.show_raw_checkbox.stateChanged.connect(self.on_plot_visibility_changed)
+        self.show_corrected_checkbox.stateChanged.connect(self.on_plot_visibility_changed)
+
+        self.shift_spinbox.setValue(self.decay_shift)
+        self.fp_rho_spinbox.setValue(16.0)
+        self.fp_r0_spinbox.setValue(0.38)
+        self.fp_dt_spinbox.setValue(1.0)
+        self._updating_fp_l1_value = True
+        self.fp_l1_value.setValue(0.0)
+        self._updating_fp_l1_value = False
+
         # Initially hide corrected g-factor and background displays
         self.corrected_g_factor_label.setVisible(False)
         self.corrected_g_factor_value.setVisible(False)
@@ -135,32 +368,7 @@ class JordiGFactorCalculator(QWidget):
         self.bg_parallel_value.setVisible(False)
         self.bg_perpendicular_label.setVisible(False)
         self.bg_perpendicular_value.setVisible(False)
-        
-        # Background correction checkbox
-        self.bg_correction_checkbox = QCheckBox("Background Correction")
-        self.bg_correction_checkbox.setChecked(False)
-        self.bg_correction_checkbox.stateChanged.connect(self.on_bg_correction_changed)
-        controls_layout.addWidget(self.bg_correction_checkbox, 2, 0, 1, 4)
-        
-        # Flip VV<->VH checkbox
-        self.flip_checkbox = QCheckBox("Flip VV↔VH (data swapped in Jordi)")
-        self.flip_checkbox.setChecked(False)
-        self.flip_checkbox.stateChanged.connect(lambda *_: (self.update_plot(), self.calculate_g_factor()))
-        controls_layout.addWidget(self.flip_checkbox, 5, 0, 1, 2)
-        
-        # Decay shift controls
-        self.shift_label = QLabel("Shift Perpendicular Decay (channels):")
-        self.shift_spinbox = QDoubleSpinBox()
-        self.shift_spinbox.setRange(-150.0, 150.0)  # Allow shift of ±5 ns
-        self.shift_spinbox.setSingleStep(1.0)  # Fine control with 0.01 ns steps
-        self.shift_spinbox.setDecimals(3)  # Show 3 decimal places
-        self.shift_spinbox.setValue(self.decay_shift)  # Set initial value
-        self.shift_spinbox.valueChanged.connect(self.on_shift_changed)
-        controls_layout.addWidget(self.shift_label, 5, 2, 1, 1)
-        controls_layout.addWidget(self.shift_spinbox, 5, 3, 1, 1)
-        
-        main_layout.addLayout(controls_layout)
-        
+
         # Main plot widget for full decay curves
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setLabel('left', 'Intensity')
@@ -188,23 +396,59 @@ class JordiGFactorCalculator(QWidget):
         
         # Second plot widget for tail-matched decays
         self.tail_plot_widget = pg.PlotWidget()
-        self.tail_plot_widget.setLabel('left', 'Intensity')
+        self.tail_plot_widget.setLabel('left', 'r(t)')
         self.tail_plot_widget.setLabel('bottom', 'Channel')
-        self.tail_plot_widget.setTitle('Tail-Matched Decays')
+        self.tail_plot_widget.setTitle('Time-Resolved Anisotropy r(t)')
         self.tail_plot_widget.addLegend()
-        # Set y-axis to logarithmic scale
-        self.tail_plot_widget.setLogMode(x=False, y=True)
-        
-        # Create a layout for plots side by side
-        plots_layout = QHBoxLayout()
-        plots_layout.addWidget(self.plot_widget)
-        plots_layout.addWidget(self.tail_plot_widget)
-        
-        # Add plots layout to main layout
-        main_layout.addLayout(plots_layout)
-        
-        self.setLayout(main_layout)
-        self.resize(1000, 600)
+        self.tail_plot_widget.setLogMode(x=False, y=False)
+
+        self.plotContainerLayout.addWidget(self.plot_widget)
+        self.tailPlotContainerLayout.addWidget(self.tail_plot_widget)
+        self.resize(1200, 760)
+
+    def _build_batch_snapshot(self) -> dict:
+        g_raw = float(self.g_factor_uncorrected) if self.g_factor_uncorrected is not None else np.nan
+        if self.g_factor is not None and np.isfinite(self.g_factor) and float(self.g_factor) > 0.0:
+            g_corr = float(self.g_factor)
+        elif self.g_factor_corrected is not None and np.isfinite(self.g_factor_corrected):
+            g_corr = float(self.g_factor_corrected)
+        else:
+            g_corr = g_raw
+        l1 = float(self.l1_estimate) if self.l1_estimate is not None and np.isfinite(self.l1_estimate) else 0.0
+        l2 = float(self.l2_estimate) if self.l2_estimate is not None and np.isfinite(self.l2_estimate) else l1
+
+        bg_vv = 0.0
+        bg_vh = 0.0
+        if self.time_axis is not None:
+            par_arr, perp_arr = self._get_par_perp()
+            if par_arr is not None and perp_arr is not None:
+                time_axis = np.asarray(self.time_axis, dtype=float)
+                shifted_time_axis = time_axis + float(self.decay_shift)
+                bg_vv, bg_vh = self._compute_background_levels(
+                    np.asarray(par_arr, dtype=float),
+                    np.asarray(perp_arr, dtype=float),
+                    time_axis,
+                    shifted_time_axis,
+                )
+
+        return {
+            'g_raw': g_raw,
+            'g_corr': g_corr,
+            'l1': l1,
+            'l2': l2,
+            'shift': float(self.decay_shift),
+            'flip': bool(self.flip_checkbox.isChecked()),
+            'bg_vv': float(bg_vv),
+            'bg_vh': float(bg_vh),
+            'apply_bg': bool(self.bg_correction_checkbox.isChecked()),
+            'region_min': float(min(self.region_bounds)),
+            'region_max': float(max(self.region_bounds)),
+        }
+
+    def open_batch_window(self):
+        snap = self._build_batch_snapshot()
+        self._batch_window = JordiDecayBatchWindow(snap, self)
+        self._batch_window.exec_()
     
     def load_jordi_file(self, file_path=None):
         """Load a Jordi file and display it.
@@ -239,19 +483,9 @@ class JordiGFactorCalculator(QWidget):
         
         # Load the Jordi file using central reader if available (fallback to numpy)
         try:
-            if _read_jordi is not None:
-                vv_data, vh_data = _read_jordi(file_path, split=True)
-            else:
-                warnings.warn(
-                    "Direct Jordi reading via numpy.loadtxt is deprecated. Use chisurf.fio.read_jordi instead.",
-                    DeprecationWarning,
-                    stacklevel=2
-                )
-                jordi_data = np.loadtxt(file_path)
-                # Split the data into two equal chunks for VV and VH channels
-                half_length = len(jordi_data) // 2
-                vv_data = jordi_data[:half_length]  # Parallel (VV)
-                vh_data = jordi_data[half_length:]  # Perpendicular (VH)
+            vv_data, vh_data = self._load_jordi_channels(file_path)
+            vv_data = np.asarray(vv_data, dtype=float)
+            vh_data = np.asarray(vh_data, dtype=float)
             
             # Create channel axis (0..N-1)
             self.time_axis = np.arange(len(vv_data), dtype=float)
@@ -279,6 +513,8 @@ class JordiGFactorCalculator(QWidget):
         self.plot_widget.addItem(self.region)
         
         # Set initial region to the last 20% of the data
+        if self.time_axis is None:
+            return
         data_length = len(self.time_axis)
         self.region_bounds = [
             self.time_axis[int(data_length * 0.7)],
@@ -299,6 +535,288 @@ class JordiGFactorCalculator(QWidget):
         
         # Calculate initial g-factor
         self.calculate_g_factor()
+
+    @staticmethod
+    def _load_jordi_channels(file_path):
+        if _read_jordi is not None:
+            return _read_jordi(file_path, split=True)
+        warnings.warn(
+            "Direct Jordi reading via numpy.loadtxt is deprecated. Use chisurf.fio.read_jordi instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        jordi_data = np.loadtxt(file_path)
+        half_length = len(jordi_data) // 2
+        return jordi_data[:half_length], jordi_data[half_length:]
+
+    def load_fp_jordi_file(self, file_path=None):
+        self.fp_estimate_available = False
+        if isinstance(file_path, bool):
+            file_path = None
+        if file_path is None:
+            try:
+                import chisurf as _cs
+                start_dir = str(getattr(_cs, 'working_path', '') or '')
+            except Exception:
+                start_dir = ""
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, "Load FP Jordi File", start_dir, "Data Files (*.dat);;All Files (*)"
+            )
+            if not file_path:
+                return
+
+        self.fp_file_label.setText(str(file_path))
+        try:
+            vv_data, vh_data = self._load_jordi_channels(file_path)
+            vv_data = np.asarray(vv_data, dtype=float)
+            vh_data = np.asarray(vh_data, dtype=float)
+            n = min(len(vv_data), len(vh_data))
+            vv_data = vv_data[:n]
+            vh_data = vh_data[:n]
+            self.fp_file_path = str(file_path)
+            self.fp_parallel_data = vv_data
+            self.fp_perpendicular_data = vh_data
+        except Exception as e:
+            self.fp_file_label.setText(f"Error loading FP file: {str(e)}")
+            self.fp_file_path = None
+            self.fp_parallel_data = None
+            self.fp_perpendicular_data = None
+
+        self.calculate_fp_mixing_estimate()
+
+    @staticmethod
+    def _perrin_steady_state_anisotropy(tau_ns, rho_ns, r0=0.38):
+        tau = float(tau_ns)
+        rho = float(rho_ns)
+        if rho <= 0.0:
+            return np.nan
+        return float(float(r0) / (1.0 + tau / rho))
+
+    @staticmethod
+    def _estimate_lifetime_first_moment(time_axis, intensity):
+        t = np.asarray(time_axis, dtype=float)
+        i = np.asarray(intensity, dtype=float)
+        valid = np.isfinite(t) & np.isfinite(i) & (i > 0.0)
+        if not np.any(valid):
+            return np.nan
+        tv = t[valid]
+        iv = i[valid]
+        w = float(np.sum(iv))
+        if w <= 0.0:
+            return np.nan
+        t0 = float(tv[0])
+        return float(np.sum((tv - t0) * iv) / w)
+
+    @staticmethod
+    def _solve_linked_l_from_steady_state(sp, ss, g_factor, r_target):
+        sp = float(sp)
+        ss = float(ss)
+        g = float(g_factor)
+        r = float(r_target)
+        if not np.isfinite(sp) or not np.isfinite(ss) or not np.isfinite(g) or not np.isfinite(r):
+            return np.nan
+        if abs(r) < 1e-15:
+            return np.nan
+        num = g * sp - ss
+        d0 = g * sp + 2.0 * ss
+        s = g * sp + ss
+        den = 3.0 * s
+        if abs(den) < 1e-15:
+            return np.nan
+        return float((d0 - num / r) / den)
+
+    def _set_fp_outputs(self, tau_ns=np.nan, rs_expected=np.nan, l1=np.nan, l2=np.nan, warning_text=None):
+        self.fp_tau_estimate_ns = float(tau_ns) if np.isfinite(tau_ns) else None
+        self.fp_rs_expected = float(rs_expected) if np.isfinite(rs_expected) else None
+
+        auto_l = float(l1) if np.isfinite(l1) else np.nan
+        manual_l = float(self.fp_l1_value.value()) if self.fp_manual_l1_override else np.nan
+        final_l = manual_l if np.isfinite(manual_l) else auto_l
+
+        self.l1_estimate = float(final_l) if np.isfinite(final_l) else None
+        self.l2_estimate = self.l1_estimate
+        self.fp_estimate_available = bool(
+            self.fp_file_path
+            and self.l1_estimate is not None
+            and np.isfinite(self.l1_estimate)
+        )
+
+        if not self.fp_manual_tau_override:
+            self._updating_fp_tau_value = True
+            self.fp_tau_value.blockSignals(True)
+            self.fp_tau_value.setValue(float(tau_ns) if np.isfinite(tau_ns) else 0.0)
+            self.fp_tau_value.blockSignals(False)
+            self._updating_fp_tau_value = False
+        if not self.fp_manual_rs_override:
+            self._updating_fp_rs_value = True
+            self.fp_rs_value.blockSignals(True)
+            self.fp_rs_value.setValue(float(rs_expected) if np.isfinite(rs_expected) else 0.0)
+            self.fp_rs_value.blockSignals(False)
+            self._updating_fp_rs_value = False
+        if not self.fp_manual_l1_override:
+            self._updating_fp_l1_value = True
+            self.fp_l1_value.setValue(float(auto_l) if np.isfinite(auto_l) else 0.0)
+            self._updating_fp_l1_value = False
+
+        if warning_text:
+            self.fp_warning_label.setText(warning_text)
+        else:
+            self.fp_warning_label.setText(
+                "Warning: FP l1/l2 from steady-state anisotropy is an estimate; with one steady-state observable only one linked parameter can be determined."
+            )
+
+    def on_fp_l1_value_changed(self, _value):
+        if self._updating_fp_l1_value:
+            return
+        self.fp_manual_l1_override = True
+        v = float(self.fp_l1_value.value())
+        self.l1_estimate = v
+        self.l2_estimate = v
+        self.update_rt_plot()
+        self.calculate_fp_mixing_estimate()
+
+    def on_fp_tau_value_changed(self, _value):
+        if self._updating_fp_tau_value:
+            return
+        self.fp_manual_tau_override = True
+        self.calculate_fp_mixing_estimate()
+
+    def on_fp_rs_value_changed(self, _value):
+        if self._updating_fp_rs_value:
+            return
+        self.fp_manual_rs_override = True
+        self.calculate_fp_mixing_estimate()
+
+    def on_g_factor_value_changed(self):
+        self._apply_manual_g_from_text()
+
+    def on_g_factor_text_changed(self, _text):
+        self._apply_manual_g_from_text()
+
+    def _apply_manual_g_from_text(self):
+        if self._updating_g_value:
+            return
+        txt = str(self.g_factor_value.text()).strip()
+        try:
+            v = float(txt)
+        except Exception:
+            return
+        if not np.isfinite(v) or v <= 0.0:
+            return
+        self.manual_g_override = True
+        self.g_factor_manual_value = float(v)
+        self.g_factor = float(v)
+        self.update_plot()
+        self.update_rt_plot()
+        self.calculate_fp_mixing_estimate()
+
+    def calculate_fp_mixing_estimate(self):
+        if self.fp_parallel_data is None or self.fp_perpendicular_data is None:
+            self._set_fp_outputs(
+                warning_text="Warning: Load FP Jordi data to estimate l1/l2."
+            )
+            return
+        if self.g_factor is None or not np.isfinite(self.g_factor) or float(self.g_factor) <= 0.0:
+            self._set_fp_outputs(
+                warning_text="Warning: Determine a valid g-factor first using the fast-rotating dye tail match."
+            )
+            return
+
+        n = min(len(self.fp_parallel_data), len(self.fp_perpendicular_data))
+        if n < 3:
+            self._set_fp_outputs(
+                warning_text="Warning: FP file is too short for robust lifetime/mixing estimation."
+            )
+            return
+
+        t = np.arange(n, dtype=float)
+        par = np.asarray(self.fp_parallel_data[:n], dtype=float)
+        perp = np.asarray(self.fp_perpendicular_data[:n], dtype=float)
+
+        if self.flip_checkbox.isChecked():
+            par, perp = perp, par
+
+        shifted_t = t + float(self.decay_shift)
+        perp_on_t = np.interp(t, shifted_t, perp, left=0.0, right=0.0)
+
+        bg_par = 0.0
+        bg_perp = 0.0
+        if self.use_background_correction:
+            bg_min_time, bg_max_time = self.bg_region_bounds
+            bg_min_idx_parallel = np.argmin(np.abs(t - bg_min_time))
+            bg_max_idx_parallel = np.argmin(np.abs(t - bg_max_time))
+            bg_min_idx_perp = np.argmin(np.abs(shifted_t - bg_min_time))
+            bg_max_idx_perp = np.argmin(np.abs(shifted_t - bg_max_time))
+            if bg_max_idx_parallel > bg_min_idx_parallel:
+                bg_par = float(np.mean(par[bg_min_idx_parallel:bg_max_idx_parallel]))
+            if bg_max_idx_perp > bg_min_idx_perp:
+                bg_perp = float(np.mean(perp[bg_min_idx_perp:bg_max_idx_perp]))
+
+        par_corr = np.clip(par - bg_par, 0.0, None)
+        perp_corr = np.clip(perp_on_t - bg_perp, 0.0, None)
+
+        sp = float(np.sum(par_corr))
+        ss = float(np.sum(perp_corr))
+        if sp <= 0.0 or ss < 0.0:
+            self._set_fp_outputs(
+                warning_text="Warning: FP integrals are invalid after correction; adjust background/shift or use a different region/file."
+            )
+            return
+
+        intensity = par_corr + 2.0 * float(self.g_factor) * perp_corr
+        tau_channels = self._estimate_lifetime_first_moment(t, intensity)
+        dt_ns = float(self.fp_dt_spinbox.value())
+        tau_est_ns = float(tau_channels * dt_ns) if np.isfinite(tau_channels) else np.nan
+        if self.fp_manual_tau_override:
+            tau_ns = float(self.fp_tau_value.value())
+        else:
+            tau_ns = tau_est_ns
+        rs_from_perrin = self._perrin_steady_state_anisotropy(
+            tau_ns=tau_ns,
+            rho_ns=float(self.fp_rho_spinbox.value()),
+            r0=float(self.fp_r0_spinbox.value()),
+        )
+        if self.fp_manual_rs_override:
+            rs_expected = float(self.fp_rs_value.value())
+        else:
+            rs_expected = rs_from_perrin
+        l_est = self._solve_linked_l_from_steady_state(
+            sp=sp,
+            ss=ss,
+            g_factor=float(self.g_factor),
+            r_target=rs_expected,
+        )
+
+        if self.fp_manual_l1_override:
+            self._set_fp_outputs(
+                tau_ns=tau_est_ns,
+                rs_expected=rs_expected,
+                l1=float(self.fp_l1_value.value()),
+                l2=float(self.fp_l1_value.value()),
+                warning_text="Warning: Manual l1/l2 override active; entered value is used directly.",
+            )
+            return
+
+        if not np.isfinite(l_est):
+            self._set_fp_outputs(
+                tau_ns=tau_est_ns,
+                rs_expected=rs_expected,
+                warning_text="Warning: Could not solve linked l1=l2 from FP steady-state estimate (degenerate numeric condition).",
+            )
+            return
+
+        if l_est < 0.0 or l_est > 0.5:
+            self._set_fp_outputs(
+                tau_ns=tau_est_ns,
+                rs_expected=rs_expected,
+                warning_text=(
+                    f"Warning: linked l1=l2 estimate {l_est:.5f} is outside expected range [0, 0.5]. "
+                    "Estimate shown for diagnostics only and will not be auto-applied."
+                ),
+            )
+            return
+
+        self._set_fp_outputs(tau_ns=tau_est_ns, rs_expected=rs_expected, l1=l_est, l2=l_est)
     
     def _get_par_perp(self):
         """Return parallel (VV) and perpendicular (VH) arrays, applying VV↔VH flip if requested."""
@@ -311,73 +829,146 @@ class JordiGFactorCalculator(QWidget):
             return perp, par
         return par, perp
 
+    def _get_fp_par_perp(self):
+        if self.fp_parallel_data is None or self.fp_perpendicular_data is None:
+            return None, None
+        par = self.fp_parallel_data
+        perp = self.fp_perpendicular_data
+        flip = getattr(self, 'flip_checkbox', None)
+        if flip is not None and flip.isChecked():
+            return perp, par
+        return par, perp
+
+    @staticmethod
+    def _compute_rt(par, perp, g_factor, l1=0.0, l2=0.0):
+        g = float(g_factor)
+        if not np.isfinite(g) or g <= 0.0:
+            return np.full_like(np.asarray(par, dtype=float), np.nan, dtype=float)
+        p = np.asarray(par, dtype=float)
+        s = np.asarray(perp, dtype=float)
+        num = g * p - s
+        den = (1.0 - 3.0 * float(l2)) * g * p + (2.0 - 3.0 * float(l1)) * s
+        with np.errstate(divide='ignore', invalid='ignore'):
+            return np.divide(num, den, out=np.full_like(num, np.nan), where=(np.isfinite(den) & (den != 0.0)))
+
+    def _compute_background_levels(self, par_raw, perp_raw, time_axis, shifted_time_axis):
+        bg_min_time, bg_max_time = self.bg_region_bounds
+        bg_min_idx_parallel = np.argmin(np.abs(time_axis - bg_min_time))
+        bg_max_idx_parallel = np.argmin(np.abs(time_axis - bg_max_time))
+        bg_min_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_min_time))
+        bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
+        bg_parallel = par_raw[bg_min_idx_parallel:bg_max_idx_parallel]
+        bg_perpendicular = perp_raw[bg_min_idx_perp:bg_max_idx_perp]
+        bg_parallel_avg = float(np.mean(bg_parallel)) if bg_parallel.size else 0.0
+        bg_perpendicular_avg = float(np.mean(bg_perpendicular)) if bg_perpendicular.size else 0.0
+        return bg_parallel_avg, bg_perpendicular_avg
+
+    @staticmethod
+    def _plot_decay_set(plot_widget, time_axis, shifted_time_axis, par_raw, perp_raw, bg_par, bg_perp, g_unc, g_cor, prefix, show_raw=True, show_corrected=True):
+        par_corr = np.maximum(par_raw - bg_par, 0.0)
+        perp_corr = np.maximum(perp_raw - bg_perp, 0.0)
+
+        is_fast = str(prefix).lower().startswith('fast')
+        if is_fast:
+            vv_raw_color = (31, 119, 180, 90)
+            vh_raw_color = (214, 39, 40, 90)
+            vv_cor_color = (23, 190, 207, 220)
+            vh_cor_color = (255, 127, 14, 220)
+            vhg_raw_color = (148, 103, 189, 90)
+            vhg_cor_color = (140, 86, 75, 220)
+        else:
+            vv_raw_color = (44, 160, 44, 90)
+            vh_raw_color = (255, 152, 0, 90)
+            vv_cor_color = (46, 204, 113, 220)
+            vh_cor_color = (241, 196, 15, 220)
+            vhg_raw_color = (22, 160, 133, 90)
+            vhg_cor_color = (127, 179, 213, 220)
+
+        # Raw traces intentionally more transparent than corrected traces.
+        if show_raw:
+            plot_widget.plot(time_axis, par_raw, pen=pg.mkPen(vv_raw_color, width=1.6), name=f'{prefix} VV raw')
+            plot_widget.plot(shifted_time_axis, perp_raw, pen=pg.mkPen(vh_raw_color, width=1.6), name=f'{prefix} VH raw')
+        if show_corrected:
+            plot_widget.plot(time_axis, par_corr, pen=pg.mkPen(vv_cor_color, width=1.6), name=f'{prefix} VV corr')
+
+        # Raw means truly raw: no G-scaling/background correction.
+        if show_corrected and np.isfinite(g_cor) and g_cor > 0.0:
+            plot_widget.plot(
+                shifted_time_axis,
+                perp_corr * g_cor,
+                pen=pg.mkPen(vhg_cor_color, width=1.4, style=_DASH_LINE_STYLE),
+                name=f'{prefix} VH*G corr/active ({g_cor:.4f})'
+            )
+
+    def on_plot_visibility_changed(self, *_args):
+        self.update_plot()
+        self.update_rt_plot()
+
     def update_plot(self):
         """Update the plot with current data."""
-        if self.parallel_data is None or self.perpendicular_data is None:
-            return
-        
         # Clear the plot but remember if regions were there
         had_region = self.region in self.plot_widget.items()
         had_bg_region = hasattr(self, 'bg_region') and self.bg_region in self.plot_widget.items()
         self.plot_widget.clear()
-        
-        # Create shifted time axis for perpendicular data
-        shifted_time_axis = self.time_axis + self.decay_shift
-        
-        # Get possibly flipped arrays
-        par_arr, perp_arr = self._get_par_perp()
-        if par_arr is None or perp_arr is None:
-            return
-        
-        # Determine if background correction should be applied to full decays
-        if self.use_background_correction:
-            # Compute background averages from selected background region
-            bg_min_time, bg_max_time = self.bg_region_bounds
-            # Indices for parallel
-            bg_min_idx_parallel = np.argmin(np.abs(self.time_axis - bg_min_time))
-            bg_max_idx_parallel = np.argmin(np.abs(self.time_axis - bg_max_time))
-            # Indices for perpendicular (account shift on x-axis)
-            bg_min_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_min_time))
-            bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
-            
-            bg_parallel = par_arr[bg_min_idx_parallel:bg_max_idx_parallel]
-            bg_perpendicular = perp_arr[bg_min_idx_perp:bg_max_idx_perp]
-            bg_parallel_avg = float(np.mean(bg_parallel)) if bg_parallel.size else 0.0
-            bg_perpendicular_avg = float(np.mean(bg_perpendicular)) if bg_perpendicular.size else 0.0
-            
-            # Subtract from full arrays and mask non-positive for log plotting
-            parallel_plot = par_arr.astype(float) - bg_parallel_avg
-            perpendicular_plot = perp_arr.astype(float) - bg_perpendicular_avg
-            parallel_plot = np.where(parallel_plot > 0, parallel_plot, np.nan)
-            perpendicular_plot = np.where(perpendicular_plot > 0, perpendicular_plot, np.nan)
-            
-            # Plot corrected decays
-            self.plot_widget.plot(
-                self.time_axis,
-                parallel_plot,
-                pen=pg.mkPen('b', width=2),
-                name='Parallel (BG corrected)'
-            )
-            self.plot_widget.plot(
-                shifted_time_axis,
-                perpendicular_plot,
-                pen=pg.mkPen('r', width=2),
-                name=f'Perpendicular (Shift: {self.decay_shift:.3f} ch, BG corrected)'
-            )
-        else:
-            # Plot uncorrected decays
-            self.plot_widget.plot(
-                self.time_axis, 
-                par_arr, 
-                pen=pg.mkPen('b', width=2),
-                name='Parallel'
-            )
-            self.plot_widget.plot(
-                shifted_time_axis, 
-                perp_arr, 
-                pen=pg.mkPen('r', width=2),
-                name=f'Perpendicular (Shift: {self.decay_shift:.3f} ch)'
-            )
+
+        g_unc = float(self.g_factor_uncorrected) if self.g_factor_uncorrected is not None else np.nan
+        # Use active G for corrected overlays (includes manual override when set).
+        g_cor = float(self.g_factor) if (self.g_factor is not None and np.isfinite(self.g_factor) and float(self.g_factor) > 0.0) else np.nan
+        show_fast = bool(self.show_fast_checkbox.isChecked())
+        show_slow = bool(self.show_slow_checkbox.isChecked())
+        show_raw = bool(self.show_raw_checkbox.isChecked())
+        show_corr = bool(self.show_corrected_checkbox.isChecked())
+
+        # Fast rotating dye data
+        if show_fast and self.time_axis is not None:
+            par_arr, perp_arr = self._get_par_perp()
+            if par_arr is not None and perp_arr is not None:
+                time_axis = np.asarray(self.time_axis, dtype=float)
+                shifted_time_axis = time_axis + self.decay_shift
+                par_raw = np.asarray(par_arr, dtype=float)
+                perp_raw = np.asarray(perp_arr, dtype=float)
+                bg_par, bg_perp = self._compute_background_levels(par_raw, perp_raw, time_axis, shifted_time_axis)
+                self._plot_decay_set(
+                    self.plot_widget,
+                    time_axis,
+                    shifted_time_axis,
+                    par_raw,
+                    perp_raw,
+                    bg_par,
+                    bg_perp,
+                    g_unc,
+                    g_cor,
+                    prefix='fast',
+                    show_raw=show_raw,
+                    show_corrected=show_corr,
+                )
+
+        # Slow rotating dye (FP) data
+        fp_par, fp_perp = self._get_fp_par_perp()
+        if show_slow and fp_par is not None and fp_perp is not None:
+            n_fp = min(len(fp_par), len(fp_perp))
+            if n_fp > 0:
+                fp_time = np.arange(n_fp, dtype=float)
+                fp_shifted_time = fp_time + self.decay_shift
+                fp_par_raw = np.asarray(fp_par[:n_fp], dtype=float)
+                fp_perp_raw = np.asarray(fp_perp[:n_fp], dtype=float)
+                bg_par_fp, bg_perp_fp = self._compute_background_levels(fp_par_raw, fp_perp_raw, fp_time, fp_shifted_time)
+                self._plot_decay_set(
+                    self.plot_widget,
+                    fp_time,
+                    fp_shifted_time,
+                    fp_par_raw,
+                    fp_perp_raw,
+                    bg_par_fp,
+                    bg_perp_fp,
+                    g_unc,
+                    g_cor,
+                    prefix='slow',
+                    show_raw=show_raw,
+                    show_corrected=show_corr,
+                )
+
+        self.plot_widget.setTitle(f'All Decays: fast+slow, raw+corr, VH*G (Shift: {self.decay_shift:.3f} ch)')
         
         # Re-add region selectors if they were there before
         if had_region:
@@ -439,6 +1030,9 @@ class JordiGFactorCalculator(QWidget):
         """Calculate the g-factor based on the selected region."""
         if self.parallel_data is None or self.perpendicular_data is None:
             return
+        if self.time_axis is None:
+            return
+        time_axis = np.asarray(self.time_axis, dtype=float)
         
         # Get possibly flipped arrays
         par_full, perp_full = self._get_par_perp()
@@ -449,11 +1043,11 @@ class JordiGFactorCalculator(QWidget):
         min_time, max_time = self.region_bounds
         
         # Find indices corresponding to the region for parallel data
-        min_idx_parallel = np.argmin(np.abs(self.time_axis - min_time))
-        max_idx_parallel = np.argmin(np.abs(self.time_axis - max_time))
+        min_idx_parallel = np.argmin(np.abs(time_axis - min_time))
+        max_idx_parallel = np.argmin(np.abs(time_axis - max_time))
         
         # Create shifted time axis for perpendicular data
-        shifted_time_axis = self.time_axis + self.decay_shift
+        shifted_time_axis = time_axis + self.decay_shift
         
         # Find indices corresponding to the region for perpendicular data (accounting for shift)
         min_idx_perp = np.argmin(np.abs(shifted_time_axis - min_time))
@@ -462,21 +1056,19 @@ class JordiGFactorCalculator(QWidget):
         # Extract data in the region
         parallel_region = par_full[min_idx_parallel:max_idx_parallel]
         perpendicular_region = perp_full[min_idx_perp:max_idx_perp]
-        time_region = self.time_axis[min_idx_parallel:max_idx_parallel]
+        time_region = time_axis[min_idx_parallel:max_idx_parallel]
         
         # If the shifted indices result in different array lengths, interpolate to match
         if len(parallel_region) != len(perpendicular_region):
-            # Create interpolation function for perpendicular data
-            from scipy.interpolate import interp1d
-            perp_interp = interp1d(
-                shifted_time_axis[min_idx_perp:max_idx_perp],
-                perpendicular_region,
-                bounds_error=False,
-                fill_value="extrapolate"
-            )
-            
-            # Interpolate perpendicular data to match parallel time points
-            perpendicular_region = perp_interp(time_region)
+            src_t = shifted_time_axis[min_idx_perp:max_idx_perp]
+            if len(src_t) >= 2:
+                perpendicular_region = np.interp(
+                    time_region,
+                    src_t,
+                    perpendicular_region,
+                    left=perpendicular_region[0],
+                    right=perpendicular_region[-1],
+                )
         
         # Calculate uncorrected g-factor using safe division to avoid runtime warnings
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -493,31 +1085,41 @@ class JordiGFactorCalculator(QWidget):
             # Calculate mean and standard deviation for uncorrected g-factor
             g_factor_uncorrected = np.mean(valid_g_factors_uncorrected)
             g_factor_stddev_uncorrected = np.std(valid_g_factors_uncorrected)
+            self.g_factor_uncorrected = float(g_factor_uncorrected)
             
             # Update uncorrected g-factor display
-            self.g_factor_value.setText(f"{g_factor_uncorrected:.4f}")
+            if not self.manual_g_override:
+                self._updating_g_value = True
+                self.g_factor_value.setText(f"{g_factor_uncorrected:.4f}")
+                self._updating_g_value = False
             self.g_factor_stddev_value.setText(f"{g_factor_stddev_uncorrected:.4f}")
             
             # Select all text to make it easy to copy
             self.g_factor_value.selectAll()
             self.g_factor_value.clearFocus()
         else:
-            self.g_factor_value.setText("N/A")
+            if not self.manual_g_override:
+                self._updating_g_value = True
+                self.g_factor_value.setText("N/A")
+                self._updating_g_value = False
             self.g_factor_stddev_value.setText("N/A")
             g_factor_uncorrected = np.nan
+            self.g_factor_uncorrected = None
         
         # Apply background correction if enabled
         if self.use_background_correction:
             # Get background region bounds
             bg_min_time, bg_max_time = self.bg_region_bounds
             
-            # Find indices corresponding to the background region (no shift here, consistent with original logic)
-            bg_min_idx = np.argmin(np.abs(self.time_axis - bg_min_time))
-            bg_max_idx = np.argmin(np.abs(self.time_axis - bg_max_time))
-            
-            # Extract background data from full arrays
+            # Find indices corresponding to the background region.
+            bg_min_idx = np.argmin(np.abs(time_axis - bg_min_time))
+            bg_max_idx = np.argmin(np.abs(time_axis - bg_max_time))
+            bg_min_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_min_time))
+            bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
+
+            # Extract background data from full arrays (perpendicular uses shifted axis).
             bg_parallel = par_full[bg_min_idx:bg_max_idx]
-            bg_perpendicular = perp_full[bg_min_idx:bg_max_idx]
+            bg_perpendicular = perp_full[bg_min_idx_perp:bg_max_idx_perp]
             
             # Calculate average background levels
             bg_parallel_avg = np.mean(bg_parallel) if bg_parallel.size else 0.0
@@ -556,112 +1158,100 @@ class JordiGFactorCalculator(QWidget):
                 # Update corrected g-factor display
                 self.corrected_g_factor_value.setText(f"{g_factor_corrected:.4f}")
                 self.corrected_g_factor_stddev_value.setText(f"{g_factor_stddev_corrected:.4f}")
+                self.g_factor_corrected = float(g_factor_corrected)
                 
-                # Store the corrected g-factor for the tail plot
+                # Store the corrected g-factor as active
                 self.g_factor = g_factor_corrected
-                
-                # Update tail-matched decay plot with corrected data
-                self.update_tail_plot(time_region, parallel_region_corrected, perpendicular_region_corrected)
             else:
                 self.corrected_g_factor_value.setText("N/A")
                 self.corrected_g_factor_stddev_value.setText("N/A")
+                self.g_factor_corrected = None
                 
-                # Use uncorrected g-factor for the tail plot
+                # Use uncorrected g-factor as active
                 self.g_factor = g_factor_uncorrected
-                
-                # Update tail-matched decay plot with uncorrected data
-                self.update_tail_plot(time_region, parallel_region, perpendicular_region)
         else:
-            # Use uncorrected g-factor for the tail plot
+            # Use uncorrected g-factor as active
             self.g_factor = g_factor_uncorrected
-            
-            # Update tail-matched decay plot with uncorrected data
-            self.update_tail_plot(time_region, parallel_region, perpendicular_region)
-            
-    def update_tail_plot(self, time_region, parallel_region, perpendicular_region):
-        """Update the tail-matched decay plot with the entire range data."""
+            self.g_factor_corrected = None
+
+        if self.manual_g_override and self.g_factor_manual_value is not None and np.isfinite(self.g_factor_manual_value) and self.g_factor_manual_value > 0.0:
+            self.g_factor = float(self.g_factor_manual_value)
+            self._updating_g_value = True
+            self.g_factor_value.setText(f"{self.g_factor:.4f}")
+            self._updating_g_value = False
+
+        self.update_plot()
+        self.update_rt_plot()
+
+        self.calculate_fp_mixing_estimate()
+
+    def update_rt_plot(self):
+        """Update the time-resolved anisotropy r(t) plot (uncorrected/corrected)."""
         self.tail_plot_widget.clear()
-        
-        # Create shifted time axis for perpendicular data
-        shifted_time_axis = self.time_axis + self.decay_shift
-        
-        # Get possibly flipped arrays
-        par_full, perp_full = self._get_par_perp()
-        if par_full is None or perp_full is None:
-            return
-        
-        # Apply background correction to the entire dataset if enabled
-        if self.use_background_correction:
-            # Get background region bounds
-            bg_min_time, bg_max_time = self.bg_region_bounds
-            
-            # Find indices corresponding to the background region for parallel data
-            bg_min_idx_parallel = np.argmin(np.abs(self.time_axis - bg_min_time))
-            bg_max_idx_parallel = np.argmin(np.abs(self.time_axis - bg_max_time))
-            
-            # Find indices corresponding to the background region for perpendicular data (accounting for shift)
-            bg_min_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_min_time))
-            bg_max_idx_perp = np.argmin(np.abs(shifted_time_axis - bg_max_time))
-            
-            # Extract background data
-            bg_parallel = par_full[bg_min_idx_parallel:bg_max_idx_parallel]
-            bg_perpendicular = perp_full[bg_min_idx_perp:bg_max_idx_perp]
-            
-            # Calculate average background levels
-            bg_parallel_avg = np.mean(bg_parallel) if bg_parallel.size else 0.0
-            bg_perpendicular_avg = np.mean(bg_perpendicular) if bg_perpendicular.size else 0.0
-            
-            # Update background value display
-            self.bg_parallel_value.setText(f"{bg_parallel_avg:.4f}")
-            self.bg_perpendicular_value.setText(f"{bg_perpendicular_avg:.4f}")
-            
-            # Subtract background from the entire dataset
-            parallel_corrected = np.maximum(par_full - bg_parallel_avg, 0)
-            perpendicular_corrected = np.maximum(perp_full - bg_perpendicular_avg, 0)
-            
-            # Scale background-corrected perpendicular data by g-factor
-            scaled_perpendicular = perpendicular_corrected * self.g_factor
-            
-            # Plot background-corrected parallel data
-            self.tail_plot_widget.plot(
-                self.time_axis, 
-                parallel_corrected, 
-                pen=pg.mkPen('b', width=2),
-                name='Parallel (BG corrected)'
-            )
-            
-            # Plot scaled background-corrected perpendicular data with shifted time axis
-            self.tail_plot_widget.plot(
-                shifted_time_axis, 
-                scaled_perpendicular, 
-                pen=pg.mkPen('r', width=2, style=Qt.DashLine),
-                name=f'Perpendicular × G ({self.g_factor:.4f}) (Shift: {self.decay_shift:.3f} ch) (BG corrected)'
-            )
-            
-            # Update the plot title to indicate background correction and shift
-            self.tail_plot_widget.setTitle(f'Background-Corrected Tail-Matched Decays (Shift: {self.decay_shift:.3f} ch)')
+
+        l1_corr = float(self.l1_estimate) if self.l1_estimate is not None and np.isfinite(self.l1_estimate) else 0.0
+        l2_corr = float(self.l2_estimate) if self.l2_estimate is not None and np.isfinite(self.l2_estimate) else l1_corr
+        g_unc = float(self.g_factor_uncorrected) if self.g_factor_uncorrected is not None else np.nan
+        if self.g_factor is not None and np.isfinite(self.g_factor) and float(self.g_factor) > 0.0:
+            g_cor = float(self.g_factor)
         else:
-            # Scale perpendicular data by g-factor without background correction
-            scaled_perpendicular = perp_full * self.g_factor
-            
-            # Plot parallel data for the entire range
-            self.tail_plot_widget.plot(
-                self.time_axis, 
-                par_full, 
-                pen=pg.mkPen('b', width=2),
-                name='Parallel'
-            )
-            
-            # Plot scaled perpendicular data for the entire range with shifted time axis
-            self.tail_plot_widget.plot(
-                shifted_time_axis, 
-                scaled_perpendicular, 
-                pen=pg.mkPen('r', width=2, style=Qt.DashLine),
-                name=f'Perpendicular × G ({self.g_factor:.4f}) (Shift: {self.decay_shift:.3f} ch)'
-            )
-            
-            # Update the plot title to indicate the entire range is being displayed and the shift
-            self.tail_plot_widget.setTitle(f'Tail-Matched Decays (Entire Range) (Shift: {self.decay_shift:.3f} ch)')
+            g_cor = float(self.g_factor_corrected) if self.g_factor_corrected is not None else np.nan
+        show_fast = bool(self.show_fast_checkbox.isChecked())
+        show_slow = bool(self.show_slow_checkbox.isChecked())
+        show_raw = bool(self.show_raw_checkbox.isChecked())
+        show_corr = bool(self.show_corrected_checkbox.isChecked())
+
+        def _plot_dataset_rt(prefix, time_axis, par_raw, perp_raw):
+            shifted_time_axis = time_axis + self.decay_shift
+            # Raw means no shift/background/l-mixing correction.
+            perp_on_t_raw = np.asarray(perp_raw, dtype=float)
+            bg_par, bg_perp = self._compute_background_levels(par_raw, perp_raw, time_axis, shifted_time_axis)
+            par_corr = np.maximum(par_raw - bg_par, 0.0)
+            perp_corr_raw = np.maximum(perp_raw - bg_perp, 0.0)
+            perp_on_t_corr = np.interp(time_axis, shifted_time_axis, perp_corr_raw, left=0.0, right=0.0)
+
+            is_fast = str(prefix).lower().startswith('fast')
+            if is_fast:
+                rt_raw_color = (0, 200, 255, 95)
+                rt_cor_color = (255, 215, 0, 230)
+            else:
+                rt_raw_color = (120, 255, 120, 95)
+                rt_cor_color = (0, 255, 120, 230)
+
+            if show_raw and np.isfinite(g_unc) and g_unc > 0.0:
+                r_unc = self._compute_rt(par_raw, perp_on_t_raw, g_unc, l1=0.0, l2=0.0)
+                r_unc = np.clip(r_unc, -0.5, 1.5)
+                self.tail_plot_widget.plot(
+                    time_axis,
+                    r_unc,
+                    pen=pg.mkPen(rt_raw_color, width=1.8),
+                    name=f'{prefix} r(t) raw, G={g_unc:.4f}'
+                )
+            if show_corr and np.isfinite(g_cor) and g_cor > 0.0:
+                r_cor = self._compute_rt(par_corr, perp_on_t_corr, g_cor, l1=l1_corr, l2=l2_corr)
+                r_cor = np.clip(r_cor, -0.5, 1.5)
+                self.tail_plot_widget.plot(
+                    time_axis,
+                    r_cor,
+                    pen=pg.mkPen(rt_cor_color, width=1.8, style=_DASH_LINE_STYLE),
+                    name=f'{prefix} r(t) corr, G={g_cor:.4f}, l1={l1_corr:.4f}, l2={l2_corr:.4f}'
+                )
+
+        if show_fast and self.time_axis is not None:
+            par_full, perp_full = self._get_par_perp()
+            if par_full is not None and perp_full is not None:
+                fast_time = np.asarray(self.time_axis, dtype=float)
+                _plot_dataset_rt('fast', fast_time, np.asarray(par_full, dtype=float), np.asarray(perp_full, dtype=float))
+
+        fp_par, fp_perp = self._get_fp_par_perp()
+        if show_slow and fp_par is not None and fp_perp is not None:
+            n_fp = min(len(fp_par), len(fp_perp))
+            if n_fp > 0:
+                fp_time = np.arange(n_fp, dtype=float)
+                _plot_dataset_rt('slow', fp_time, np.asarray(fp_par[:n_fp], dtype=float), np.asarray(fp_perp[:n_fp], dtype=float))
+
+        self.tail_plot_widget.setTitle(f'r(t): fast+slow, raw+corr (Shift: {self.decay_shift:.3f} ch)')
+        self.tail_plot_widget.setYRange(-0.5, 1.5, padding=0.0)
 
 
 if __name__ == "__main__":

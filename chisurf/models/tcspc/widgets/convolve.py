@@ -17,6 +17,21 @@ if TYPE_CHECKING:
 
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
+    def _resolve_fit_group_index(self):
+        try:
+            target = getattr(self.fit, "fit_group", None) or self.fit
+            for idx, fit_group in enumerate(list(getattr(chisurf, "fits", []) or [])):
+                if fit_group is target:
+                    return int(idx)
+                try:
+                    if target in fit_group:
+                        return int(idx)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return None
+
     @property
     def fwhm(self) -> float:
         return self.irf.fwhm
@@ -24,6 +39,14 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
     @fwhm.setter
     def fwhm(self, v: float):
         self.lineEdit_2.setText("%.3f" % v)
+
+    def _refresh_fwhm_display(self):
+        try:
+            irf = self.irf
+            if irf is not None and hasattr(irf, "fwhm"):
+                self.fwhm = float(irf.fwhm)
+        except Exception:
+            pass
 
     @property
     def gui_mode(self):
@@ -99,6 +122,8 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         except Exception:
             pass
 
+        self._refresh_fwhm_display()
+
     def _install_code_badge(self):
         """Install a code badge for dev mode source jumping."""
         try:
@@ -116,16 +141,20 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             pass
 
     def onConvolutionModeChanged(self):
-        chisurf.run(
-            "\n".join(
-                [
-                    f"for f in cs.current_fit:",
-                    f"   f.model.convolve.mode = '{self.gui_mode}'",
-                    f"cs.current_fit.model.convolve.do_convolution = {self.checkBox.isChecked()}",
-                    f"cs.current_fit.update()"
-                ]
+        # This complex operation sets multiple properties and updates the model
+        # For now, we'll use the existing model update action and handle the
+        # property changes through the model's own methods
+        try:
+            import chisurf
+            for f in chisurf.fits:
+                f.model.convolve.mode = self.gui_mode
+            chisurf.fits[0].model.convolve.do_convolution = self.checkBox.isChecked()
+            chisurf.actions.dispatch(
+                name="model.update",
+                payload={},
             )
-        )
+        except Exception:
+            pass
 
     def get_state(self) -> dict:
         """Return a JSON-serializable snapshot of this widget's state.
@@ -192,23 +221,35 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             except Exception:
                 pass
 
-        # Update FWHM line edit if an IRF is present
-        try:
-            irf = self.irf
-            if irf is not None and hasattr(irf, "fwhm"):
-                self.fwhm = irf.fwhm
-        except Exception:
-            pass
+        self._refresh_fwhm_display()
 
     def change_irf(self):
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
-        chisurf.run(f"chisurf.macros.model.change_irf({idx}, r'{name}')")
-        self.fwhm = self.irf.fwhm
+        payload = {
+            "irf_idx": int(idx),
+            "irf_name": str(name),
+        }
+        fit_index = self._resolve_fit_group_index()
+        if fit_index is not None:
+            payload["fit_index"] = int(fit_index)
+        chisurf.actions.dispatch(
+            name="model.change_irf",
+            payload=payload,
+        )
+        self._refresh_fwhm_display()
 
     def onUnloadIRF(self):
-        """Unload the IRF and reset it to default (None)
-        """
-        chisurf.run("cs.current_fit.model.convolve.unload_irf()")
-        self.lineEdit.setText("")
-        chisurf.run("cs.current_fit.model.update()")
+        payload = {}
+        fit_index = self._resolve_fit_group_index()
+        if fit_index is not None:
+            payload["fit_index"] = int(fit_index)
+        chisurf.actions.dispatch(
+            name="model.unload_irf",
+            payload=payload,
+        )
+        chisurf.actions.dispatch(
+            name="model.update",
+            payload={},
+        )
+        self._refresh_fwhm_display()

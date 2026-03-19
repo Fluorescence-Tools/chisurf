@@ -2,10 +2,6 @@
 	path = modules/clsmview
 	url = https://github.com/fluorescence-tools/clsmview
 	branch = main
-[submodule "modules/chinet"]
-	path = modules/chinet
-	url = https://github.com/tpeulen/chinet
-	branch = development
 [submodule "modules/tttrlib"]
 	path = modules/tttrlib
 	url = https://github.com/fluorescence-tools/tttrlib

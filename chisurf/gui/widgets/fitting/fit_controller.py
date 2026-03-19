@@ -19,7 +19,7 @@ import chisurf.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
-from chisurf.gui.widgets import Controller
+from chisurf.gui.widgets.general import Controller
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 from chisurf.runtime.actions import record_action
 
@@ -87,14 +87,9 @@ class FittingControllerWidget(Controller):
         try:
             source_uid = str(getattr(self.fit, "unique_identifier", ""))
             if str(action_type) in {"fit_run_start", "fit_run_finish", "fit_run_abort"}:
-                chisurf.action_controller.execute(
+                chisurf.actions.dispatch(
                     name=str(action_type).replace("_", "."),
                     payload=payload or {},
-                    context={
-                        "action_type": str(action_type),
-                        "summary": str(summary),
-                        "source_uid": source_uid or None,
-                    },
                 )
                 return
             record_action(
@@ -176,7 +171,7 @@ class FittingControllerWidget(Controller):
         try:
             fit_index = chisurf.fits.index(self.fit)
             dataset_index = chisurf.imported_datasets.index(dataset)
-            chisurf.action_controller.execute(
+            chisurf.actions.dispatch(
                 name="fit.set_dataset",
                 payload={
                     "fit_index": int(fit_index),
@@ -506,7 +501,7 @@ class FittingControllerWidget(Controller):
         )
 
     def onRunFit(self):
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="fit.run.execute",
             payload={"fit_controller": self},
         )
@@ -567,28 +562,7 @@ class FittingControllerWidget(Controller):
         if getattr(self, '_auto_fit_range_in_progress', False):
             return
         self.fit.update()
-        try:
-            payload = {
-                "fit_group": str(getattr(self.fit, "name", "")),
-                "xmin": int(self.xmin),
-                "xmax": int(self.xmax),
-                "source": "fit_controller",
-                "is_2d": bool(getattr(self, "_is_2d_dataset", False)),
-            }
-            if bool(getattr(self, "_is_2d_dataset", False)):
-                payload.update({
-                    "x_min": int(self.xmin),
-                    "x_max": int(self.xmin2),
-                    "y_min": int(self.xmax),
-                    "y_max": int(self.xmax2),
-                })
-            self._record_history(
-                action_type="fit_range_set",
-                summary=f"set fit range for '{getattr(self.fit, 'name', '')}' to [{int(self.xmin)}, {int(self.xmax)})",
-                payload=payload,
-            )
-        except Exception:
-            pass
+
 
     def onAutoFitRange(self):
         data = getattr(self.fit, "data", None)

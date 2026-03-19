@@ -46,7 +46,16 @@ class NodeView(QtWidgets.QGraphicsView):
         event.accept()
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == QtCore.Qt.MiddleButton:
+        item = self.itemAt(event.pos())
+        if event.button() == QtCore.Qt.LeftButton and item is None:
+            # Switch to hand-drag mode for panning
+            self._prev_drag_mode = self.dragMode()
+            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+            self.setCursor(QtCore.Qt.ClosedHandCursor)
+            super().mousePressEvent(event)
+            return
+
+        elif event.button() == QtCore.Qt.MiddleButton:
             # Switch to hand-drag mode for panning
             self._prev_drag_mode = self.dragMode()
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
@@ -65,7 +74,16 @@ class NodeView(QtWidgets.QGraphicsView):
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == QtCore.Qt.MiddleButton:
+        if event.button() == QtCore.Qt.LeftButton and self.dragMode() == QtWidgets.QGraphicsView.ScrollHandDrag:
+            super().mouseReleaseEvent(event)
+            if self._prev_drag_mode is not None:
+                self.setDragMode(self._prev_drag_mode)
+            else:
+                self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+            self.unsetCursor()
+            return
+
+        elif event.button() == QtCore.Qt.MiddleButton:
             fake_event = QtGui.QMouseEvent(
                 QtCore.QEvent.MouseButtonRelease,
                 event.localPos(),

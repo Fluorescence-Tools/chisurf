@@ -537,8 +537,18 @@ class PluginMethodsMixin:
                     except Exception:
                         is_dev = False
 
-                    # Skip broken if hidden and not experimental
-                    if is_broken and hide_disabled_plugins and not experimental_mode:
+                    # In normal mode, hide broken and CLI-only plugins.
+                    # In dev/experimental mode, keep them visible for diagnostics.
+                    if (is_broken or is_cli_only) and not experimental_mode:
+                        self.logger.info(
+                            f"Skipping plugin '{plugin_name}' (module='{module_name}', source='{source}'): "
+                            f"hidden in normal mode (is_broken={is_broken}, is_cli_only={is_cli_only})"
+                        )
+                        continue
+
+                    # Optional compatibility behavior: allow explicit hiding of
+                    # broken plugins even in experimental mode.
+                    if is_broken and hide_disabled_plugins and experimental_mode:
                         self.logger.info(f"Skipping plugin '{plugin_name}' (module='{module_name}', source='{source}'): disabled/broken and hide_disabled_plugins=True")
                         continue
 

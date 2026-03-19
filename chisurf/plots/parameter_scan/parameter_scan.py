@@ -67,14 +67,40 @@ class ParameterScanWidget(
         v_min = (1. - p_min) * v
         v_max = (1. + p_max) * v
         n_steps = int(self.spinBox.value())
-        chisurf.run(
-            f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
-                self.parameter.name,
-                v_min,
-                v_max,
-                n_steps
+        
+        # Use action controller if available, otherwise fall back to chisurf.run
+        import chisurf
+        controller = getattr(chisurf, "action_controller", None)
+        if controller is not None:
+            try:
+                controller.execute(
+                    name="parameter.scan",
+                    payload={
+                        "parameter_name": name,
+                        "fit_index": self.parameter.fit_idx,
+                        "scan_range": (v_min, v_max),
+                        "n_steps": n_steps,
+                    },
+                )
+            except Exception:
+                # Fall back to chisurf.run if action controller fails
+                chisurf.run(
+                    f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
+                        self.parameter.name,
+                        v_min,
+                        v_max,
+                        n_steps
+                    )
+                )
+        else:
+            chisurf.run(
+                f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
+                    self.parameter.name,
+                    v_min,
+                    v_max,
+                    n_steps
+                )
             )
-        )
         self.parent.update()
 
     @property

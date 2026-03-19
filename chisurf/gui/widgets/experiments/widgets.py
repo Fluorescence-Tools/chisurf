@@ -87,7 +87,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
         ]
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.remove",
             payload={"dataset_indices": [int(i) for i in dataset_idx]},
         )
@@ -115,7 +115,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.group",
             payload={"dataset_indices": [int(i) for i in dg]},
         )
@@ -123,7 +123,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def onUnGroupDatasets(self):
         dg = self.selected_dataset_idx
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.ungroup",
             payload={"dataset_indices": [int(i) for i in dg]},
         )
@@ -226,9 +226,9 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
             for p in paths:
-                chisurf.action_controller.execute(
+                chisurf.actions.dispatch(
                     name="dataset.add",
-                    payload={"filename": str(p)},
+                    payload={"filename": str(p), "experiment_reader": None},
                 )
             event.acceptProposedAction()
         else:

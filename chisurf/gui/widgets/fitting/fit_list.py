@@ -18,7 +18,6 @@ import chisurf.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
-from chisurf.gui.widgets import Controller
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 
 
@@ -72,7 +71,7 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         fit_idxs = [selected_index.row() for selected_index in self.selectedIndexes()]
         for fit_idx in fit_idxs:
             try:
-                chisurf.action_controller.execute(
+                chisurf.actions.dispatch(
                     name="fit.close",
                     payload={"idx": int(fit_idx)},
                 )

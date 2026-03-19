@@ -27,6 +27,8 @@ from ..io import (
     MdtrajNotAvailableError,
     load_mrc_as_points,
     load_rmf_frames,
+    load_rmf_full,
+    RmfHierarchyNode,
     RmfNotAvailableError,
 )
 from ..renderer.view import MolView
@@ -36,9 +38,12 @@ from ..analysis import (
     assign_ss_c3_from_file,
 )
 from .command_dock import CommandDock
+from .timeline_panel import TimelineDock
 from .controls_panel import ControlsDock
+from .state_control_panel import StateControlDock
 from .objects_panel import ObjectsDock
 from .sequence_dock import SequenceDock
+from .hierarchy_panel import HierarchyDock
 from .config_editor import MolViewConfigEditor
 from ..cmd import cmd as _cmd
 
@@ -131,7 +136,13 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.object_list.customContextMenuRequested.connect(
             self._on_object_list_context_menu
         )
-        self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.objects_dock)
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.objects_dock)
+
+        self.hierarchy = HierarchyDock(self)
+        self.hierarchy_dock = self.hierarchy
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.hierarchy_dock)
+        self.tabifyDockWidget(self.objects_dock, self.hierarchy_dock)
+        self.objects_dock.raise_()
 
         try:
             self.resizeDocks(
@@ -161,7 +172,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self._sequence_number_font = self.sequence.sequence_number_font
         self._sequence_number_bold_font = self.sequence.sequence_number_bold_font
         self._sequence_font = self.sequence.sequence_font
-        self.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.sequence_dock)
+        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.sequence_dock)
 
         self.command_panel = CommandDock(
             self,
@@ -169,22 +180,61 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             spacing=spacing,
         )
         self.addDockWidget(
-            QtCore.Qt.BottomDockWidgetArea, self.command_panel.dock_widget
+            QtCore.Qt.TopDockWidgetArea, self.command_panel.dock_widget
+        )
+        
+        self.timeline = TimelineDock(
+            self,
+            self.viewer,
+            _cmd,
+            margins=dock_margins,
+            spacing=spacing,
+        )
+        self.addDockWidget(
+            QtCore.Qt.BottomDockWidgetArea, self.timeline.dock_widget
+        )
+
+        self.state_control = StateControlDock(
+            self,
+            self.viewer,
+            _cmd,
+            margins=dock_margins,
+            spacing=spacing,
+        )
+        self.addDockWidget(
+            QtCore.Qt.RightDockWidgetArea, self.state_control.dock_widget
         )
         try:
+            # Stack Controls, Sequence, Command at the Top
+            self.splitDockWidget(
+                self.controls_dock,
+                self.sequence_dock,
+                QtCore.Qt.Vertical,
+            )
             self.splitDockWidget(
                 self.sequence_dock,
                 self.command_panel.dock_widget,
                 QtCore.Qt.Vertical,
+            )
+            # Put state control below/tabbed with objects on the right
+            self.splitDockWidget(
+                self.objects_dock,
+                self.state_control.dock_widget,
+                QtCore.Qt.Vertical
             )
         except Exception:
             pass
 
         try:
             self.resizeDocks(
-                [self.sequence_dock, self.command_panel.dock_widget],
-                [260, 10],
+                [self.controls_dock, self.sequence_dock, self.command_panel.dock_widget],
+                [40, 200, 60],
                 QtCore.Qt.Vertical,
+            )
+            self.resizeDocks(
+                [self.objects_dock, self.state_control.dock_widget],
+                [400, 300],
+                QtCore.Qt.Vertical
             )
         except Exception:
             pass
@@ -880,6 +930,19 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                 f"Radius of gyration: {r_g}",
             ]
 
+            # RMF specifics
+            try:
+                state = self.viewer._get_active_state()
+                if state and getattr(state, "restraints", None):
+                    lines.append(f"Restraints: {len(state.restraints)}")
+                if state and getattr(state, "rmf_provenance", None):
+                    lines.append("")
+                    lines.append("RMF Provenance:")
+                    for prov in state.rmf_provenance:
+                        lines.append(f"  {prov.get('name', '?')}: {prov.get('value', '?')}")
+            except Exception:
+                pass
+
             try:
                 n_frames = self.viewer.get_frame_count(active_id)
             except Exception:
@@ -1060,6 +1123,47 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             self._add_object_list_item(object_id, entry)
             self._select_object_in_ui(object_id)
             return object_id
+
+        if name_lower.endswith((".rmf", ".rmf3")):
+            try:
+                data = load_rmf_full(path)
+                hierarchy = data["hierarchy"]
+                frames = data["frames"]
+                radii = data["radii"]
+                restraints = data.get("restraints")
+                rmf_provenance = data.get("rmf_provenance")
+                bond_pairs = data.get("bond_pairs")
+                
+                object_id = self.viewer._create_object(name=display_name, source_path=source_path).object_id
+                self.viewer.set_rmf_data(
+                    hierarchy=hierarchy,
+                    frames=frames,
+                    radii=radii,
+                    restraints=restraints,
+                    rmf_provenance=rmf_provenance,
+                    bond_pairs=bond_pairs,
+                    object_id=object_id
+                )
+                
+                n_atoms = int(frames.shape[1])
+                entry: dict[str, Any] = {
+                    "name": display_name,
+                    "path": source_path,
+                    "visible": True,
+                    "n_atoms": n_atoms,
+                    "rmf_hierarchy": hierarchy,
+                }
+                self._object_store[object_id] = entry
+                self._add_object_list_item(object_id, entry)
+                self._select_object_in_ui(object_id)
+                self.hierarchy.set_hierarchy(hierarchy)
+                return object_id
+            except RmfNotAvailableError as e:
+                QtWidgets.QMessageBox.warning(self, "RMF Not Available", str(e))
+                raise
+            except Exception as e:
+                QtWidgets.QMessageBox.warning(self, "RMF Load Error", f"Failed to load RMF: {e}")
+                raise
 
         # First try the standard IMP/Structure-based loader for static files.
         try:
@@ -1282,6 +1386,8 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             self._active_object_id = None
             self._update_sequence_view(None)
             self._update_system_info(None)
+            if hasattr(self, "hierarchy"):
+                self.hierarchy.set_hierarchy(None)
             return
 
         self._active_object_id = object_id
@@ -1292,6 +1398,14 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
 
         self._update_sequence_view(object_id)
         self._update_system_info(object_id)
+
+        # Update hierarchy dock
+        if hasattr(self, "hierarchy"):
+            try:
+                state = self.viewer._get_active_state()
+                self.hierarchy.set_hierarchy(state.rmf_hierarchy)
+            except Exception:
+                self.hierarchy.set_hierarchy(None)
 
     def on_object_selection_changed(self) -> None:
         if self._block_object_list_signals:

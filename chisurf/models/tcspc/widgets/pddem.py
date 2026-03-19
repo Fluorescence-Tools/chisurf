@@ -124,6 +124,9 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
     plot_classes = plot_cls_dist_default
 
     def __init__(self, fit, **kwargs):
+        anisotropy = AnisotropyWidget(model=self, short='rL', fit=fit, **kwargs)
+        kwargs['anisotropy'] = anisotropy
+        
         # First call super().__init__ to initialize PDDEMModel
         super().__init__(
             fit,
@@ -163,7 +166,7 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
 
         self.corrections = CorrectionsWidget(fit=fit, model=self, **kwargs)
         self.generic = GenericWidget(fit=fit, model=self, parent=self, **kwargs)
-        self.anisotropy = AnisotropyWidget(model=self, short='rL', **kwargs)
+        self.anisotropy = anisotropy
         self.pddem = PDDEMWidget(parent=self, model=self, short='P')
         self.gaussians = GaussianWidget(
             donors=None,

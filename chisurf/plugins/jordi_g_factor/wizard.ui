@@ -2,12 +2,38 @@
 <ui version="4.0">
  <class>JordiGFactorCalculator</class>
  <widget class="QWidget" name="JordiGFactorCalculator">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>549</width>
+    <height>329</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Jordi G-Factor Calculator</string>
   </property>
   <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item>
     <layout class="QGridLayout" name="controlsLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <item row="0" column="0">
       <widget class="QPushButton" name="load_button">
        <property name="text">
@@ -15,80 +41,368 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1" colspan="4">
-      <widget class="QLineEdit" name="file_label">
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
+     <item row="1" column="0">
+      <widget class="QLabel" name="g_factor_label">
        <property name="text">
-        <string>No file loaded</string>
+        <string>G-Factor:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="5">
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="g_factor_value">
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="readOnly">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="g_factor_stddev_label">
+       <property name="text">
+        <string>StdDev:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QLineEdit" name="g_factor_stddev_value">
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="4">
+      <widget class="QCheckBox" name="bg_correction_checkbox">
+       <property name="text">
+        <string>Background Correction</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="corrected_g_factor_label">
+       <property name="text">
+        <string>Corrected G-Factor:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="corrected_g_factor_value">
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QLabel" name="corrected_g_factor_stddev_label">
+       <property name="text">
+        <string>Corrected StdDev:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="3">
+      <widget class="QLineEdit" name="corrected_g_factor_stddev_value">
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="bg_parallel_label">
+       <property name="text">
+        <string>BG Parallel:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="bg_parallel_value">
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QLabel" name="bg_perpendicular_label">
+       <property name="text">
+        <string>BG Perpendicular:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="3">
+      <widget class="QLineEdit" name="bg_perpendicular_value">
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="2">
+      <widget class="QCheckBox" name="flip_checkbox">
+       <property name="text">
+        <string>Flip VV&lt;-&gt;VH (data swapped in Jordi)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QLabel" name="shift_label">
+       <property name="text">
+        <string>Shift Perpendicular Decay (channels):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="3">
+      <widget class="QDoubleSpinBox" name="shift_spinbox">
+       <property name="decimals">
+        <number>3</number>
+       </property>
+       <property name="minimum">
+        <double>-150.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>150.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QPushButton" name="fp_load_button">
+       <property name="text">
+        <string>Load FP Jordi File</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1" colspan="4">
+      <widget class="QLineEdit" name="fp_file_label">
+       <property name="text">
+        <string>No FP file loaded</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="fp_rho_label">
+       <property name="text">
+        <string>rho [ns]:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QDoubleSpinBox" name="fp_rho_spinbox">
+       <property name="decimals">
+        <number>4</number>
+       </property>
+       <property name="minimum">
+        <double>0.010000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>100000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.100000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="fp_dt_label">
+       <property name="text">
+        <string>dt [ns/ch]:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QDoubleSpinBox" name="fp_dt_spinbox">
+       <property name="decimals">
+        <number>6</number>
+       </property>
+       <property name="minimum">
+        <double>0.000001000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="2">
+      <widget class="QLabel" name="fp_tau_label">
+       <property name="text">
+        <string>tau [ns]:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="3">
+      <widget class="QDoubleSpinBox" name="fp_tau_value">
+       <property name="decimals">
+        <number>6</number>
+       </property>
+       <property name="minimum">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="fp_rs_label">
+       <property name="text">
+        <string>Target rS:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QDoubleSpinBox" name="fp_rs_value">
+       <property name="decimals">
+        <number>6</number>
+       </property>
+       <property name="minimum">
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="2">
+      <widget class="QLabel" name="fp_l1_label">
+       <property name="text">
+        <string>l1/l2:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="3">
+      <widget class="QDoubleSpinBox" name="fp_l1_value">
+       <property name="decimals">
+        <number>6</number>
+       </property>
+       <property name="minimum">
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.001000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QCheckBox" name="show_fast_checkbox">
+       <property name="text">
+        <string>Show fast dye</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QCheckBox" name="show_slow_checkbox">
+       <property name="text">
+        <string>Show slow dye</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="2">
+      <widget class="QCheckBox" name="show_raw_checkbox">
+       <property name="text">
+        <string>Show raw</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="3">
+      <widget class="QCheckBox" name="show_corrected_checkbox">
+       <property name="text">
+        <string>Show corrected</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0" colspan="5">
+      <widget class="QLabel" name="fp_warning_label">
+       <property name="text">
+        <string>Warning: FP l1/l2 from steady-state anisotropy is an estimate; with one steady-state observable only one linked parameter can be determined.</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="2">
+      <widget class="QLabel" name="fp_r0_label">
+       <property name="text">
+        <string>r0:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="3">
+      <widget class="QDoubleSpinBox" name="fp_r0_spinbox">
+       <property name="decimals">
+        <number>4</number>
+       </property>
+       <property name="minimum">
+        <double>0.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.010000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="2">
+      <widget class="QLineEdit" name="file_label">
+       <property name="text">
+        <string>No file loaded</string>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
       <widget class="QPushButton" name="batch_button">
        <property name="text">
         <string>Batch...</string>
        </property>
-      </widget>
-     </item>
-
-     <item row="1" column="0"><widget class="QLabel" name="g_factor_label"><property name="text"><string>G-Factor:</string></property></widget></item>
-     <item row="1" column="1"><widget class="QLineEdit" name="g_factor_value"><property name="readOnly"><bool>false</bool></property><property name="text"><string>N/A</string></property></widget></item>
-     <item row="1" column="2"><widget class="QLabel" name="g_factor_stddev_label"><property name="text"><string>StdDev:</string></property></widget></item>
-     <item row="1" column="3"><widget class="QLineEdit" name="g_factor_stddev_value"><property name="readOnly"><bool>true</bool></property><property name="text"><string>N/A</string></property></widget></item>
-
-     <item row="2" column="0" colspan="4">
-      <widget class="QCheckBox" name="bg_correction_checkbox">
-       <property name="text"><string>Background Correction</string></property>
-      </widget>
-     </item>
-
-     <item row="3" column="0"><widget class="QLabel" name="corrected_g_factor_label"><property name="text"><string>Corrected G-Factor:</string></property></widget></item>
-     <item row="3" column="1"><widget class="QLineEdit" name="corrected_g_factor_value"><property name="readOnly"><bool>true</bool></property><property name="text"><string>N/A</string></property></widget></item>
-     <item row="3" column="2"><widget class="QLabel" name="corrected_g_factor_stddev_label"><property name="text"><string>Corrected StdDev:</string></property></widget></item>
-     <item row="3" column="3"><widget class="QLineEdit" name="corrected_g_factor_stddev_value"><property name="readOnly"><bool>true</bool></property><property name="text"><string>N/A</string></property></widget></item>
-
-     <item row="4" column="0"><widget class="QLabel" name="bg_parallel_label"><property name="text"><string>BG Parallel:</string></property></widget></item>
-     <item row="4" column="1"><widget class="QLineEdit" name="bg_parallel_value"><property name="readOnly"><bool>true</bool></property><property name="text"><string>N/A</string></property></widget></item>
-     <item row="4" column="2"><widget class="QLabel" name="bg_perpendicular_label"><property name="text"><string>BG Perpendicular:</string></property></widget></item>
-     <item row="4" column="3"><widget class="QLineEdit" name="bg_perpendicular_value"><property name="readOnly"><bool>true</bool></property><property name="text"><string>N/A</string></property></widget></item>
-
-     <item row="5" column="0" colspan="2">
-      <widget class="QCheckBox" name="flip_checkbox">
-       <property name="text"><string>Flip VV&lt;-&gt;VH (data swapped in Jordi)</string></property>
-      </widget>
-     </item>
-     <item row="5" column="2"><widget class="QLabel" name="shift_label"><property name="text"><string>Shift Perpendicular Decay (channels):</string></property></widget></item>
-     <item row="5" column="3"><widget class="QDoubleSpinBox" name="shift_spinbox"><property name="decimals"><number>3</number></property><property name="minimum"><double>-150.0</double></property><property name="maximum"><double>150.0</double></property><property name="singleStep"><double>1.0</double></property></widget></item>
-
-     <item row="6" column="0"><widget class="QPushButton" name="fp_load_button"><property name="text"><string>Load FP Jordi File</string></property></widget></item>
-     <item row="6" column="1" colspan="4"><widget class="QLineEdit" name="fp_file_label"><property name="readOnly"><bool>true</bool></property><property name="text"><string>No FP file loaded</string></property></widget></item>
-
-     <item row="7" column="0"><widget class="QLabel" name="fp_rho_label"><property name="text"><string>rho [ns]:</string></property></widget></item>
-     <item row="7" column="1"><widget class="QDoubleSpinBox" name="fp_rho_spinbox"><property name="decimals"><number>4</number></property><property name="minimum"><double>0.01</double></property><property name="maximum"><double>100000.0</double></property><property name="singleStep"><double>0.1</double></property></widget></item>
-     <item row="7" column="3"><widget class="QLabel" name="fp_r0_label"><property name="text"><string>r0:</string></property></widget></item>
-     <item row="7" column="4"><widget class="QDoubleSpinBox" name="fp_r0_spinbox"><property name="decimals"><number>4</number></property><property name="minimum"><double>0.0</double></property><property name="maximum"><double>1.0</double></property><property name="singleStep"><double>0.01</double></property></widget></item>
-
-     <item row="8" column="0"><widget class="QLabel" name="fp_dt_label"><property name="text"><string>dt [ns/ch]:</string></property></widget></item>
-     <item row="8" column="1"><widget class="QDoubleSpinBox" name="fp_dt_spinbox"><property name="decimals"><number>6</number></property><property name="minimum"><double>0.000001</double></property><property name="maximum"><double>1000.0</double></property><property name="singleStep"><double>0.001</double></property></widget></item>
-     <item row="8" column="2"><widget class="QLabel" name="fp_tau_label"><property name="text"><string>tau [ns]:</string></property></widget></item>
-     <item row="8" column="3"><widget class="QDoubleSpinBox" name="fp_tau_value"><property name="decimals"><number>6</number></property><property name="minimum"><double>0.0</double></property><property name="maximum"><double>1000000.0</double></property><property name="singleStep"><double>0.01</double></property></widget></item>
-
-     <item row="9" column="0"><widget class="QLabel" name="fp_rs_label"><property name="text"><string>Target rS:</string></property></widget></item>
-     <item row="9" column="1"><widget class="QDoubleSpinBox" name="fp_rs_value"><property name="decimals"><number>6</number></property><property name="minimum"><double>-1.0</double></property><property name="maximum"><double>1.0</double></property><property name="singleStep"><double>0.001</double></property></widget></item>
-     <item row="9" column="2"><widget class="QLabel" name="fp_l1_label"><property name="text"><string>l1/l2:</string></property></widget></item>
-     <item row="9" column="3"><widget class="QDoubleSpinBox" name="fp_l1_value"><property name="decimals"><number>6</number></property><property name="minimum"><double>-1.0</double></property><property name="maximum"><double>1.0</double></property><property name="singleStep"><double>0.001</double></property><property name="value"><double>0.0</double></property></widget></item>
-
-     <item row="10" column="0"><widget class="QCheckBox" name="show_fast_checkbox"><property name="text"><string>Show fast dye</string></property><property name="checked"><bool>true</bool></property></widget></item>
-     <item row="10" column="1"><widget class="QCheckBox" name="show_slow_checkbox"><property name="text"><string>Show slow dye</string></property><property name="checked"><bool>true</bool></property></widget></item>
-     <item row="10" column="2"><widget class="QCheckBox" name="show_raw_checkbox"><property name="text"><string>Show raw</string></property><property name="checked"><bool>true</bool></property></widget></item>
-     <item row="10" column="3"><widget class="QCheckBox" name="show_corrected_checkbox"><property name="text"><string>Show corrected</string></property><property name="checked"><bool>true</bool></property></widget></item>
-
-     <item row="11" column="0" colspan="5">
-      <widget class="QLabel" name="fp_warning_label">
-       <property name="wordWrap"><bool>true</bool></property>
-       <property name="text"><string>Warning: FP l1/l2 from steady-state anisotropy is an estimate; with one steady-state observable only one linked parameter can be determined.</string></property>
       </widget>
      </item>
     </layout>
@@ -96,14 +410,10 @@
    <item>
     <layout class="QHBoxLayout" name="plotsLayout">
      <item>
-      <widget class="QWidget" name="plotContainerWidget">
-       <layout class="QVBoxLayout" name="plotContainerLayout"/>
-      </widget>
+      <layout class="QVBoxLayout" name="plotContainerLayout"/>
      </item>
      <item>
-      <widget class="QWidget" name="tailPlotContainerWidget">
-       <layout class="QVBoxLayout" name="tailPlotContainerLayout"/>
-      </widget>
+      <layout class="QVBoxLayout" name="tailPlotContainerLayout"/>
      </item>
     </layout>
    </item>

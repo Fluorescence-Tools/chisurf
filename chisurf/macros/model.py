@@ -14,7 +14,14 @@ def set_linearization(
         cs = chisurf.cs
         fit = cs.current_fit
 
-    lin_table = fit.model.corrections.lin_select.datasets[idx]
+    if fit is None or idx is None:
+        return
+
+    try:
+        lin_table = fit.model.corrections.lin_select.datasets[idx]
+    except Exception:
+        return
+
     for f in fit[fit.selected_fit_index:]:
         f.model.corrections.lintable = chisurf.data.DataCurve(
             x=lin_table.x,
@@ -24,19 +31,59 @@ def set_linearization(
 
     lin_name = curve_name
     for f in fit[fit.selected_fit_index:]:
-        f.model.corrections.lineEdit.setText(lin_name)
+        f.model.corrections.lineEdit.setText(str(lin_name or ""))
         f.model.corrections.checkBox.setChecked(True)
     fit.update()
 
 
+def unload_lintable(
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+
+    if fit is None:
+        return
+
+    for f in fit[fit.selected_fit_index:]:
+        try:
+            f.model.corrections.unload_lintable()
+        except Exception:
+            pass
+    fit.update()
+
+
+def set_correction(
+        correction_type: str,
+        value: typing.Any,
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+
+    if fit is None:
+        return
+
+    for f in fit[fit.selected_fit_index:]:
+        try:
+            setattr(f.model.corrections, correction_type, value)
+        except Exception:
+            pass
+    fit.update()
+
+
 def normalize_amplitudes(
-        name: str,
-        normalize: bool,
+        normalize: bool = True,
+        name: str = "amplitudes",
         fit: chisurf.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
         cs = chisurf.cs
         fit = cs.current_fit
+    if fit is None:
+        return
     for f in fit:
         try:
             target = getattr(f.model, name)
@@ -53,13 +100,15 @@ def normalize_amplitudes(
 
 
 def absolute_amplitudes(
-        name: str,
-        use_absolute_amplitudes: bool,
+        use_absolute_amplitudes: bool = True,
+        name: str = "amplitudes",
         fit: chisurf.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
         cs = chisurf.cs
         fit = cs.current_fit
+    if fit is None:
+        return
     for f in fit:
         try:
             target = getattr(f.model, name)
@@ -109,12 +158,99 @@ def change_irf(
         cs = chisurf.cs
         fit = cs.current_fit
 
-    irf = fit.model.convolve.irf_select.datasets[dataset_idx]
+    irf_curve = None
+
+    try:
+        selector_datasets = list(getattr(fit.model.convolve.irf_select, "datasets", []) or [])
+    except Exception:
+        selector_datasets = []
+
+    if 0 <= int(dataset_idx) < len(selector_datasets):
+        irf_curve = selector_datasets[int(dataset_idx)]
+
+    if irf_curve is None:
+        try:
+            imported = list(getattr(chisurf, "imported_datasets", []) or [])
+        except Exception:
+            imported = []
+
+        name = str(irf_name or "").strip()
+        if name:
+            basename = name.replace("\\", "/").split("/")[-1]
+            for ds in imported:
+                ds_name = str(getattr(ds, "name", "") or "")
+                if ds_name == name or ds_name.endswith(name) or ds_name.endswith(basename):
+                    irf_curve = ds
+                    break
+
+        if irf_curve is None and 0 <= int(dataset_idx) < len(imported):
+            irf_curve = imported[int(dataset_idx)]
+
+    if irf_curve is None:
+        return
+
     for f in fit[fit.selected_fit_index:]:
-        f.model.convolve._irf = chisurf.data.DataCurve(x=irf.x, y=irf.y)
+        f.model.convolve._irf = chisurf.data.DataCurve(x=irf_curve.x, y=irf_curve.y)
+
     fit.update()
     for f in fit[fit.selected_fit_index:]:
-        f.model.convolve.lineEdit.setText(irf_name)
+        f.model.convolve.lineEdit.setText(str(irf_name or getattr(irf_curve, "name", "")))
+
+
+def unload_irf(
+        fit: chisurf.fitting.fit.FitGroup = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+
+    if fit is None:
+        return
+
+    for f in fit[fit.selected_fit_index:]:
+        try:
+            f.model.convolve.unload_irf()
+        except Exception:
+            pass
+        try:
+            f.model.convolve.lineEdit.setText("")
+        except Exception:
+            pass
+    try:
+        fit.update()
+    except Exception:
+        pass
+
+
+def unload_background_curve(
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+
+    if fit is None:
+        return
+
+    for f in fit[fit.selected_fit_index:]:
+        try:
+            f.model.nuisance.unload_background_curve()
+        except Exception:
+            pass
+    fit.update()
+
+
+def update_model(
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+
+    if fit is None:
+        return
+
+    fit.update()
 
 
 def add_component(
@@ -146,5 +282,66 @@ def add_component(
             f.model.update()
         except Exception:
             continue
+
+
+def remove_local_fit(
+        row: int,
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+    if fit is None:
+        return
+    try:
+        fit.remove_local_fit(row)
+    except Exception:
+        pass
+
+
+def clear_local_fits(
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+    if fit is None:
+        return
+    try:
+        fit.clear_local_fits()
+    except Exception:
+        pass
+
+
+def append_global_parameter(
+        parameter_name: str,
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+    if fit is None:
+        return
+    try:
+        fit.append_global_parameter(parameter_name)
+    except Exception:
+        pass
+
+
+def append_fit(
+        fit_index: int,
+        fit: 'chisurf.fitting.fit.FitGroup' = None
+) -> None:
+    if fit is None:
+        cs = chisurf.cs
+        fit = cs.current_fit
+    if fit is None:
+        return
+    try:
+        import chisurf
+        target_fit = chisurf.fits[fit_index]
+        fit.append_fit(target_fit)
+    except Exception:
+        pass
 
 

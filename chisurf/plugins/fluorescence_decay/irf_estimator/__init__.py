@@ -1031,11 +1031,11 @@ class IRFEstimatorPlugin(QWidget):
         # Set up ChiSurf experiment settings for TCSPC data
         if CHISURF_AVAILABLE and hasattr(chisurf, 'cs'):
             # Configure the current setup for IRF data
-            chisurf.action_controller.execute(
+            chisurf.actions.dispatch(
                 name="experiment.set",
                 payload={"name": "TCSPC"},
             )
-            chisurf.action_controller.execute(
+            chisurf.actions.dispatch(
                 name="setup.params.set",
                 payload={
                     "params": {
@@ -1052,9 +1052,9 @@ class IRFEstimatorPlugin(QWidget):
             )
 
             # Add the IRF dataset to ChiSurf
-            chisurf.action_controller.execute(
+            chisurf.actions.dispatch(
                 name="dataset.add",
-                payload={"filename": tmp_path},
+                payload={"filename": tmp_path, "experiment_reader": None},
             )
 
             # Show success message

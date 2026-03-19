@@ -56,30 +56,42 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
         self.checkBox_3.toggled.connect(
-            lambda: chisurf.run(
-                "cs.current_fit.model.corrections.correct_pile_up = %s\n" %
-                self.checkBox_3.isChecked()
+            lambda: chisurf.actions.dispatch(
+                name="model.set_correction",
+                payload={
+                    "correction_type": "correct_pile_up",
+                    "value": bool(self.checkBox_3.isChecked()),
+                },
             )
         )
 
         self.checkBox_2.toggled.connect(
-            lambda: chisurf.run(
-                "cs.current_fit.model.corrections.reverse = %s" %
-                self.checkBox_2.isChecked()
+            lambda: chisurf.actions.dispatch(
+                name="model.set_correction",
+                payload={
+                    "correction_type": "reverse",
+                    "value": bool(self.checkBox_2.isChecked()),
+                },
             )
         )
 
         self.checkBox.toggled.connect(
-            lambda: chisurf.run(
-                "cs.current_fit.model.corrections.correct_dnl = %s" %
-                self.checkBox.isChecked()
+            lambda: chisurf.actions.dispatch(
+                name="model.set_correction",
+                payload={
+                    "correction_type": "correct_dnl",
+                    "value": bool(self.checkBox.isChecked()),
+                },
             )
         )
 
         self.comboBox.currentIndexChanged.connect(
-            lambda: chisurf.run(
-                "cs.current_fit.model.corrections.window_function = '%s'" %
-                self.comboBox.currentText()
+            lambda: chisurf.actions.dispatch(
+                name="model.set_correction",
+                payload={
+                    "correction_type": "window_function",
+                    "value": str(self.comboBox.currentText()),
+                },
             )
         )
 
@@ -207,14 +219,23 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
 
-        chisurf.run(
-            "chisurf.macros.model.set_linearization(%s, '%s')" %
-            (idx, lin_name)
+        chisurf.actions.dispatch(
+            name="model.set_linearization",
+            payload={
+                "idx": int(idx),
+                "lin_name": str(lin_name),
+            },
         )
 
     def onUnloadLin(self):
         """Unload the linearization table and reset it to default (array of ones)
         """
-        chisurf.run("cs.current_fit.model.corrections.unload_lintable()")
+        chisurf.actions.dispatch(
+            name="model.unload_lintable",
+            payload={},
+        )
         self.lineEdit.setText("")
-        chisurf.run("cs.current_fit.model.update()")
+        chisurf.actions.dispatch(
+            name="model.update",
+            payload={},
+        )

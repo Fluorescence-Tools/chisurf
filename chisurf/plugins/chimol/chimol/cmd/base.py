@@ -163,8 +163,21 @@ class BaseCmd:
     # Common command
     # ------------------------------------------------------------------ #
     def _cmd_help(self, args: List[str]) -> str:
-        names = sorted(self._commands.keys())
-        return "Available commands: " + ", ".join(names)
+        """Show available commands or detailed help for a specific command."""
+        if not args:
+            names = sorted(self._commands.keys())
+            return "Available commands: " + ", ".join(names)
+
+        target = args[0].lower()
+        handler = self._commands.get(target)
+        if handler is None:
+            return f"No help available for unknown command: {target}"
+
+        doc = getattr(handler, "__doc__", None)
+        if not doc:
+            return f"No detailed help available for '{target}'"
+
+        return f"Help for '{target}':\n" + "-" * 20 + "\n" + doc.strip()
 
     def _cmd_quit(self, args: List[str]) -> None:
         window = self.window

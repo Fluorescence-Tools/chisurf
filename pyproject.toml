@@ -13,7 +13,7 @@ dynamic = ["version"]
 description = "ChiSurf: an interactive global analysis platform for fluorescence data."
 readme = "README.md"
 requires-python = ">=3.7"
-license = {text = "GPL-2.1"}
+license = {text = "GPL-2.0"}
 authors = [
     {name = "Thomas-Otavio Peulen", email = "thomas@peulen.xyz"}
 ]
@@ -68,6 +68,9 @@ dev = [
     "flake8",
     "mypy",
 ]
+mcp = [
+    "fastmcp",
+]
 
 [project.urls]
 Homepage = "https://www.peulen.xyz/downloads/chisurf"
@@ -120,4 +123,6 @@ namespaces = true
 version = {attr = "chisurf.info.__version__"}
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --ignore-glob=**/_old --ignore-glob=**/_dev_* --ignore-glob=**/_broken"
+addopts = "--doctest-modules --ignore-glob=**/_old --ignore-glob=**/_dev_* --ignore-glob=**/_broken --ignore-glob=chisurf/* --ignore-glob=rattler-recipe/* --ignore-glob=build_tools/* --ignore-glob=**/test_gui_*.py --ignore-glob=**/test_widget_*.py --ignore-glob=**/test_all_plugins.py"
+norecursedirs = ["build_tools", "modules", "conda-bld", ".pixi", "dist", "chisurf", "rattler-recipe"]
+testpaths = ["unittests", "test"]

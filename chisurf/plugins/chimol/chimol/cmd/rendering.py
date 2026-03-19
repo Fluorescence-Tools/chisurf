@@ -34,9 +34,9 @@ class RenderingMixin(BaseCmd):
         window, viewer = self._require_window_and_viewer()
         if viewer is None:
             return
-        color = args[0]
         try:
-            viewer.set_background_color(color)
+            rgba = self._parse_color_spec(" ".join(args))
+            viewer.set_background_color(rgba)
         except Exception as exc:
             self._emit_error(f"Failed to set background color: {exc}")
 
@@ -81,17 +81,30 @@ class RenderingMixin(BaseCmd):
 
     def _cmd_toggle_representation(self, args: List[str], *, visible: bool) -> None:
         if not args:
-            self._emit_error("Usage: show/hide <cartoon|trace|atoms|sticks|dots|surface|plane>")
+            self._emit_error("Usage: show/hide <rep>[, selection]")
             return
 
         window, viewer = self._require_window_and_viewer()
         if viewer is None:
             return
 
-        rep = (args[0] or "").strip().lower()
+        joined = " ".join(args).strip()
+        rep_target = ""
+        selection = None
+
+        if "," in joined:
+             parts = [p.strip() for p in joined.split(",", 1)]
+             rep_target = parts[0].lower()
+             selection = parts[1]
+        else:
+             rep_target = (args[0] or "").lower()
+             if len(args) > 1:
+                  selection = " ".join(args[1:])
+
         vis = bool(visible)
 
-        if rep in ("all", "*"):
+        if rep_target in ("all", "*"):
+            # If selection given, maybe support it? For now, object-level visibility
             try:
                 objects = viewer.list_objects()
             except Exception as exc:
@@ -110,54 +123,154 @@ class RenderingMixin(BaseCmd):
                     continue
             return
 
+        if selection:
+            # 1. Handle cartoon/ribbon (residue-level)
+            if rep_target in ("cartoon", "ribbon"):
+                try:
+                    obj_id, obj_name, res_indices = self._resolve_selection_to_residue_indices(
+                        viewer, selection
+                    )
+                    entry = viewer._objects.get(obj_id)
+                    mask = np.asarray(getattr(entry.state, "cartoon_mask"), dtype=bool).copy()
+                    for ri in res_indices:
+                         if 0 <= ri < mask.shape[0]:
+                            mask[ri] = vis
+                    entry.state.cartoon_mask = mask
+                    viewer._update_view()
+                    return
+                except Exception as exc:
+                    self._emit_error(str(exc))
+                    return
+
+            # 2. Handle balls/sticks (atom-level)
+            if rep_target in ("atoms", "spheres", "balls", "ball", "sticks", "bonds"):
+                try:
+                    obj_id, obj_name, atom_mask = self._resolve_selection_to_atom_mask(
+                        viewer, selection
+                    )
+                    entry = viewer._objects.get(obj_id)
+                    field = "ball_mask" if rep_target not in ("sticks", "bonds") else "sticks_mask"
+                    
+                    cur_mask = getattr(entry.state, field)
+                    if cur_mask is None or len(cur_mask) != len(atom_mask):
+                         cur_mask = np.zeros(len(atom_mask), dtype=bool)
+                    else:
+                         cur_mask = cur_mask.copy()
+                    
+                    if vis:
+                        cur_mask |= atom_mask
+                    else:
+                        cur_mask &= ~atom_mask
+                    
+                    setattr(entry.state, field, cur_mask)
+                    viewer._update_view()
+                    return
+                except Exception as exc:
+                    self._emit_error(str(exc))
+                    return
+
+        # Fallback to global representation toggle
         try:
-            if rep in ("cartoon", "ribbon"):
+            if rep_target in ("cartoon", "ribbon"):
                 viewer.set_cartoon_visible(vis)
-            elif rep in ("trace", "ca_trace", "lines"):
+            elif rep_target in ("trace", "ca_trace", "lines"):
                 viewer.set_trace_visible(vis)
-            elif rep in ("atoms", "spheres", "balls", "ball"):
+            elif rep_target in ("atoms", "spheres", "balls", "ball"):
                 viewer.set_atoms_visible_all(vis)
-            elif rep in ("sticks", "bonds"):
+            elif rep_target in ("sticks", "bonds"):
                 viewer.set_sticks_visible(vis)
-            elif rep in ("dots", "points"):
+            elif rep_target in ("dots", "points"):
                 viewer.set_dots_visible(vis)
-            elif rep in ("surface", "surf"):
+            elif rep_target in ("surface", "surf"):
                 viewer.set_surface_visible(vis)
-            elif rep in ("plane", "grid"):
+            elif rep_target in ("plane", "grid"):
                 viewer.set_plane_visible(vis)
             else:
                 self._emit_error(
-                    f"Unsupported representation for show/hide: {rep}"
+                    f"Unsupported representation for show/hide: {rep_target}"
                 )
                 return
         except Exception as exc:
-            self._emit_error(f"Failed to update representation '{rep}': {exc}")
+            self._emit_error(f"Failed to update representation '{rep_target}': {exc}")
 
     def _cmd_center(self, args: List[str]) -> None:
-        """Center view on all visible objects (currently same as reset)."""
-
+        """Center view on selection or all objects."""
         _, viewer = self._require_window_and_viewer()
         if viewer is None:
             return
-        try:
-            viewer.reset_view()
-        except Exception as exc:
-            self._emit_error(f"Failed to center view: {exc}")
+
+        selection = " ".join(args).strip() or None
+        if selection:
+            try:
+                # Note: this helper is available when mixed into Cmd
+                obj_id, _, res_indices = self._resolve_selection_to_residue_indices(viewer, selection) # type: ignore
+                if obj_id:
+                    viewer.center(res_indices, object_id=obj_id)
+                else:
+                    self._emit_error(f"Selection '{selection}' did not resolve.")
+            except Exception as exc:
+                self._emit_error(f"Failed to center: {exc}")
+        else:
+            viewer.center()
 
     def _cmd_orient(self, args: List[str]) -> None:
-        """Orient view (alias of center/reset for now)."""
+        """Orient view on selection."""
+        _, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return
 
-        self._cmd_center(args)
+        selection = " ".join(args).strip() or None
+        if selection:
+            try:
+                obj_id, _, res_indices = self._resolve_selection_to_residue_indices(viewer, selection) # type: ignore
+                if obj_id:
+                    viewer.orient(res_indices, object_id=obj_id)
+                else:
+                    self._emit_error(f"Selection '{selection}' did not resolve.")
+            except Exception as exc:
+                self._emit_error(f"Failed to orient: {exc}")
+        else:
+            viewer.orient()
 
     def _cmd_zoom(self, args: List[str]) -> None:
-        """Zoom view (alias of center/reset for now)."""
+        """Zoom view to fit selection."""
+        _, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return
 
-        self._cmd_center(args)
+        # zoom [selection], [buffer]
+        joined = " ".join(args)
+        buffer = 2.0
+        selection = None
+
+        if "," in joined:
+            parts = [p.strip() for p in joined.split(",", 1)]
+            selection = parts[0] or None
+            try:
+                buffer = float(parts[1])
+            except (ValueError, IndexError):
+                pass
+        else:
+            selection = joined.strip() or None
+
+        if selection:
+            try:
+                obj_id, _, res_indices = self._resolve_selection_to_residue_indices(viewer, selection) # type: ignore
+                if obj_id:
+                    viewer.zoom(res_indices, buffer=buffer, object_id=obj_id)
+                else:
+                    self._emit_error(f"Selection '{selection}' did not resolve.")
+            except Exception as exc:
+                self._emit_error(f"Failed to zoom: {exc}")
+        else:
+            viewer.zoom(buffer=buffer)
 
     def _cmd_reset(self, args: List[str]) -> None:
-        """Reset view (alias of center for now)."""
-
-        self._cmd_center(args)
+        """Reset view to default orientation and center."""
+        _, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return
+        viewer.reset_view()
 
     # ------------------------------------------------------------------ #
     # Color handling
@@ -265,6 +378,10 @@ class RenderingMixin(BaseCmd):
             except Exception:
                 pass
 
+    def _cmd_spectrum(self, args: List[str]) -> None:
+        """Color by a spectrum (rainbow). Alias for 'color spectrum'."""
+        self._cmd_color(["spectrum"] + args)
+
     def _normalize_color_mode(self, raw: str) -> str:
         token = (raw or "").strip().lower()
         if token in ("single", "uniform"):
@@ -280,9 +397,15 @@ class RenderingMixin(BaseCmd):
             return "by_secondary_structure"
         if token in ("by_sequence", "sequence", "seq"):
             return "by_sequence"
+        if token in ("by_element", "element", "elem", "cpk", "by_elem"):
+            return "by_element"
+        if token in ("by_chain", "chain"):
+            return "by_chain"
+        if token in ("spectrum", "rainbow"):
+            return "spectrum"
         raise ValueError(
             "Unsupported color mode. Use one of: "
-            "single, by_residue, by_ss, by_sequence."
+            "single, by_residue, by_ss, by_sequence, by_element, by_chain, spectrum."
         )
 
     def _apply_color_mode(self, viewer, mode: str, *, selection: Optional[str]) -> None:
@@ -398,14 +521,14 @@ class RenderingMixin(BaseCmd):
         sele_expr: str,
         rgba: np.ndarray,
     ) -> None:
-        obj_id, obj_name, res_indices = self._resolve_selection_to_residue_indices(
+        obj_id, obj_name, atom_mask = self._resolve_selection_to_atom_mask(
             viewer, sele_expr
         )
         if not obj_id:
             raise ValueError("Selection did not resolve to an object")
 
         try:
-            entry = viewer._objects.get(obj_id)  # type: ignore[attr-defined]
+            entry = viewer._objects.get(obj_id)
         except Exception:
             entry = None
         if entry is None:
@@ -429,15 +552,13 @@ class RenderingMixin(BaseCmd):
             )
 
         try:
-            atom_res_ids_arr = np.asarray(all_atom_res_ids)
-            res_ids_arr = np.asarray(residue_ids)
-        except Exception:
-            raise ValueError(f"Could not access atom/residue ids for object {obj_name}")
-
-        try:
             n_atoms = int(np.asarray(all_atom_coords).shape[0])
-        except Exception:
-            raise ValueError(f"Invalid atom coordinate array on object {obj_name}")
+            atom_mask = np.asarray(atom_mask, dtype=bool)
+            if atom_mask.shape[0] != n_atoms:
+                 # This shouldn't happen if Evaluator is correct
+                 raise ValueError("Internal error: atom mask size mismatch")
+        except Exception as exc:
+            raise ValueError(f"Invalid atom data for coloring: {exc}")
 
         # Build/extend per-atom override array with NaN -> no override.
         try:
@@ -449,39 +570,32 @@ class RenderingMixin(BaseCmd):
 
         rgba4 = np.asarray(rgba, dtype=float).reshape(4)
 
-        for ri in res_indices:
-            if ri < 0 or ri >= res_ids_arr.shape[0]:
-                continue
-            rid = res_ids_arr[ri]
-            try:
-                mask = atom_res_ids_arr == rid
-            except Exception:
-                continue
-            if not np.any(mask):
-                continue
-            cur_atom[mask, :] = rgba4
-
+        # Apply to atoms
+        cur_atom[atom_mask, :] = rgba4
         state.colors_per_atom_override = cur_atom
 
-        # Also update per-residue override array so CA-based colors match.
+        # Update per-residue override for residues where atoms were colored.
+        # This keeps the cartoon view mostly consistent with the atom view.
         try:
-            n_res = int(res_ids_arr.shape[0])
+            n_res = int(residue_ids.shape[0])
+            cur_res = np.asarray(state.colors_per_residue_override, dtype=float)
         except Exception:
-            n_res = 0
-        if n_res > 0:
-            try:
-                cur_res = np.asarray(state.colors_per_residue_override, dtype=float)
-            except Exception:
-                cur_res = None
-            if cur_res is None or cur_res.ndim != 2 or cur_res.shape[0] != n_res:
-                cur_res = np.full((n_res, 4), np.nan, dtype=float)
-            for ri in res_indices:
-                if 0 <= ri < n_res:
-                    cur_res[ri, :] = rgba4
-            state.colors_per_residue_override = cur_res
+            cur_res = None
+        if cur_res is None or cur_res.ndim != 2 or cur_res.shape[0] != n_res:
+            cur_res = np.full((n_res, 4), np.nan, dtype=float)
+            
+        # Find which residue IDs have at least one colored atom
+        res_ids_arr = np.asarray(residue_ids)
+        atom_res_ids_arr = np.asarray(all_atom_res_ids)
+        affected_rid = np.unique(atom_res_ids_arr[atom_mask])
+        
+        # Map affected global residue IDs to indices
+        affected_res_mask = np.isin(res_ids_arr, affected_rid)
+        cur_res[affected_res_mask, :] = rgba4
+        state.colors_per_residue_override = cur_res
 
         try:
-            viewer._update_view()  # type: ignore[attr-defined]
+            viewer._update_view()
         except Exception:
             pass
 

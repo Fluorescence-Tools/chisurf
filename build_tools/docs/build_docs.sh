@@ -1,24 +1,13 @@
 #!/usr/bin/env bash
+# Build documentation using pixi
 
-# save the current directory and use this variable
-# this variable is used at the end of the script
-# to return to the original script directoy
-export SCRIPT_DIR="."
-SCRIPT_DIR=$("pwd")
+# Get repo root
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+REPO_ROOT=$(readlink -f "$SCRIPT_DIR/../..")
+cd "$REPO_ROOT"
 
-echo "Creating an environemnt that will build the docs..."
-conda env create -f ../../environment.yml --force -n build_doc
-conda activate build_doc
-echo "Installing the conda packages necessary to compile the documentation..."
-conda install -y sphinx_bootstrap_theme sphinx sphinx_rtd_theme numpydoc sphinx-autodoc-typehints matplotlib=2.2.3
-cd ../../docs
+echo "Building ChiSurf documentation via pixi..."
+pixi run -e docs docs-clean
+pixi run -e docs docs-html
 
-make clean
-make html
-make latex
-
-cd _latex
-make
-conda deactivate
-conda remove -y --name build_doc --all
-cd $SCRIPT_DIR
+echo "Done."

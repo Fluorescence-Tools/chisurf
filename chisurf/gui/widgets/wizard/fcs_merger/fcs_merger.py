@@ -316,19 +316,19 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
         # Use the standard approach as specified in the issue description
         # Set the current experiment and setup using the global cs instance
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="experiment.set",
             payload={"name": "FCS"},
         )
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="setup.select",
             payload={"name": "Seidel Kristine"},
         )
 
         # Add dataset to chisurf using the standard approach
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.add",
-            payload={"filename": cor_file.as_posix()},
+            payload={"filename": cor_file.as_posix(), "experiment_reader": None},
         )
 
         # Show success message

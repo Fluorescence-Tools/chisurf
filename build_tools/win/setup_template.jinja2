@@ -13,12 +13,12 @@ LicenseFile={{ LicenseFile }}
 OutputDir={{ Output_dir }}
 OutputBaseFilename=chisurf_windows_setup_{{ AppVersion }}
 SetupIconFile={{ SetupIconFile }}
-Compression=lzma2/ultra64
+Compression=lzma2/fast
 SolidCompression=yes
 CompressionThreads=auto
 UninstallLogMode=overwrite
 DirExistsWarning=yes
-UninstallDisplayIcon="{app}\{{ AppName }}"
+UninstallDisplayIcon="{app}\icons\icon.ico"
 DisableProgramGroupPage=no
 
 ; IMPORTANT: built-in scope dialog + per-user default
@@ -44,11 +44,7 @@ Source: "fix_shebangs.py"; DestDir: "{app}"
 [Icons]
 ; --- Start Menu: all entry points ---
 {% for entry_point in gui_entry_points -%}
-  {% if entry_point|lower == 'chisurf' -%}
-Name: "{group}\chisurf"; Filename: "{app}\chisurf.exe"; IconFilename: "{app}\icons\icon.ico"
-  {% else -%}
 Name: "{group}\{{ entry_point|lower }}"; Filename: "{app}\Scripts\{{ entry_point }}.exe"; IconFilename: "{app}\icons\icon.ico"
-  {% endif -%}
 {% endfor %}
 
 ; --- Desktop: ONLY chisurf.exe ---
@@ -59,8 +55,8 @@ Name: "{userdesktop}\chisurf";   Filename: "{app}\Scripts\chisurf.exe"; Tasks: d
 Type: files; Name: "{app}\install.log"
 
 [Run]
-; Example: VC runtimes if you add them
-;Filename: "{tmp}\vcredist_x64.exe"; Parameters: "/quiet"; Check: IsAdminInstallMode
+; Fix shebangs for all entry points
+Filename: "{app}\python.exe"; Parameters: "fix_shebangs.py {{ all_entry_names|join(' ') }}"; StatusMsg: "Optimizing executables..."; Flags: runhidden
 
 [Code]
 function GetInstallDir(Param: string): string;

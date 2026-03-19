@@ -68,9 +68,9 @@ class HistoryBrowserWidget(QtWidgets.QWidget):
         source_uid = str(event.get("source_uid") or "")
 
         completion_map = {
-            "fit_add_start": {"fit_add"},
-            "fit_run_start": {"fit_run_finish", "fit_run_abort"},
-            "app_reinitialize_start": {"app_reinitialize_finish"},
+            "fit.add.start": {"fit.add"},
+            "fit.run.start": {"fit.run.finish", "fit.run.abort"},
+            "app.reinitialize.start": {"app.reinitialize.finish"},
         }
         completions = completion_map.get(action)
         if not completions:
@@ -92,27 +92,43 @@ class HistoryBrowserWidget(QtWidgets.QWidget):
     @staticmethod
     def _is_state_action(action_type: str) -> bool:
         return action_type in {
-            "dataset_add",
-            "dataset_remove",
-            "dataset_group",
-            "fit_add_start",
-            "fit_add",
-            "fit_close",
-            "fit_run_start",
-            "fit_run_finish",
-            "fit_run_abort",
-            "parameter_value",
-            "parameter_fixed",
-            "parameter_bounds_set",
-            "parameter_bounds_on",
-            "parameter_link",
-            "parameter_unlink",
-            "fit_range_set",
-            "project_save",
-            "project_load",
-            "project_close",
-            "app_reinitialize_start",
-            "app_reinitialize_finish",
+            "dataset.add",
+            "dataset.remove",
+            "dataset.group",
+            "fit.add.start",
+            "fit.add",
+            "fit.close",
+            "fit.run.start",
+            "fit.run.finish",
+            "fit.run.abort",
+            "parameter.value",
+            "parameter.fixed",
+            "parameter.bounds.set",
+            "parameter.bounds.on",
+            "parameter.link",
+            "parameter.unlink",
+            "fit.range.set",
+            "project.save",
+            "project.load",
+            "project.close",
+            "app.reinitialize.start",
+            "app.reinitialize.finish",
+            # Model actions
+            "model.add_component",
+            "model.remove_component",
+            "model.normalize_amplitudes",
+            "model.absolute_amplitudes",
+            "model.change_irf",
+            "model.unload_irf",
+            "model.update",
+            "model.set_correction",
+            "model.set_linearization",
+            "model.unload_lintable",
+            "model.unload_background_curve",
+            "model.remove_local_fit",
+            "model.clear_local_fits",
+            "model.append_global_parameter",
+            "model.append_fit",
         }
 
     @staticmethod

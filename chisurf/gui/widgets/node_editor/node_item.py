@@ -92,11 +92,16 @@ class NodeGraphicsItem(QtWidgets.QGraphicsPathItem):
         if self.collapsed:
             body_height = 18
         else:
-            # Base height determined by minimum height and content widget
+            # Base height and width determined by minimums and content widget
             base_height = self.min_body_height
+            min_width = float(theme_metric("node_min_width", 150))
             if self.content_widget is not None:
                 hint = self.content_widget.sizeHint()
                 base_height = max(base_height, hint.height() + 8)
+                # Ensure width is at least large enough to fit content plus margins
+                left_margin = float(theme_metric("node_content_margin_left", 8.0))
+                right_margin = float(theme_metric("node_content_margin_right", 8.0))
+                self.width = max(self.width, hint.width() + left_margin + right_margin)
 
             if self._manual_body_height is not None:
                 body_height = max(base_height, float(self._manual_body_height))

@@ -17,11 +17,29 @@ class MeasurementMixin(BaseCmd):
             "angle": self._cmd_angle,
             "dihedral": self._cmd_dihedral,
             "rms": self._cmd_rms,
+            "rms_cur": self._cmd_rms,  # alias
             "align": self._cmd_align,
+            "super": self._cmd_super,
             "frame": self._cmd_frame,
             "frame_next": self._cmd_frame_next,
             "frame_prev": self._cmd_frame_prev,
         }
+
+    def _add_measurement(self, viewer, name: str, kind: str, positions: np.ndarray, label: str):
+        if not name:
+            name = f"{kind}_{len(viewer._measurements)}"
+        
+        mdata = {
+            "kind": kind,
+            "positions": positions,
+            "label": label,
+            "color": [1.0, 1.0, 0.0, 1.0]
+        }
+        
+        cur = dict(viewer._measurements)
+        cur[name] = mdata
+        viewer._measurements = cur
+        viewer._update_view()
 
     # ------------------------------------------------------------------ #
     # Frames
@@ -200,7 +218,11 @@ class MeasurementMixin(BaseCmd):
         if meas_name:
             prefix += f"{meas_name} "
 
-        self._emit_message(f"{prefix}{label1} - {label2}: {dist:.3f}")
+        dist_val = f"{dist:.3f}"
+        self._emit_message(f"{prefix}{label1} - {label2}: {dist_val}")
+        
+        positions = np.array([v1, v2])
+        self._add_measurement(viewer, meas_name, "distance", positions, dist_val)
 
     def _cmd_angle(self, args: List[str]) -> None:
         window, viewer = self._require_window_and_viewer()
@@ -277,9 +299,13 @@ class MeasurementMixin(BaseCmd):
         if meas_name:
             prefix += f"{meas_name} "
 
+        val_str = f"{value:.3f}"
         self._emit_message(
-            f"{prefix}{label1} - {label2} - {label3}: {value:.3f}"
+            f"{prefix}{label1} - {label2} - {label3}: {val_str}"
         )
+        
+        positions = np.array([v1, v2, v3])
+        self._add_measurement(viewer, meas_name, "angle", positions, val_str)
 
     def _cmd_dihedral(self, args: List[str]) -> None:
         window, viewer = self._require_window_and_viewer()
@@ -373,9 +399,13 @@ class MeasurementMixin(BaseCmd):
         if meas_name:
             prefix += f"{meas_name} "
 
+        val_str = f"{value:.3f}"
         self._emit_message(
-            prefix + f"{label1} - {label2} - {label3} - {label4}: {value:.3f}"
+            prefix + f"{label1} - {label2} - {label3} - {label4}: {val_str}"
         )
+        
+        positions = np.array([v1, v2, v3, v4])
+        self._add_measurement(viewer, meas_name, "dihedral", positions, val_str)
 
     # ------------------------------------------------------------------ #
     # RMS / Align
@@ -470,23 +500,57 @@ class MeasurementMixin(BaseCmd):
         self._emit_message(msg)
 
     def _cmd_align(self, args: List[str]) -> None:
+        """Usage: align mobile_selection, target_selection [, cutoff [, cycles]]"""
+        self._cmd_align_or_super(args, cmd="align")
+
+    def _cmd_super(self, args: List[str]) -> None:
+        """Usage: super mobile_selection, target_selection [, cutoff [, cycles]]"""
+        self._cmd_align_or_super(args, cmd="super")
+
+    def _cmd_align_or_super(self, args: List[str], cmd: str = "align") -> None:
         window, viewer = self._require_window_and_viewer()
         if viewer is None:
             return
 
         if not args:
-            self._emit_error("Usage: align mobile_selection, target_selection")
+            self._emit_error(f"Usage: {cmd} mobile_selection, target_selection [, cutoff [, cycles]]")
             return
 
-        try:
-            _, parts = self._parse_measurement_selections(
-                args, expected_count=2, cmd="align"
-            )
-        except ValueError as exc:
-            self._emit_error(str(exc))
-            return
+        # Parse arguments: mobile, target [, cutoff [, cycles]]
+        joined = " ".join(args).strip()
+        raw_parts = [p.strip() for p in joined.split(",") if p.strip()]
+        
+        if len(raw_parts) < 2:
+            raw_parts = shlex_split(joined)
+            if len(raw_parts) < 2:
+                self._emit_error(f"Usage: {cmd} mobile_selection, target_selection")
+                return
 
-        mobile_expr, target_expr = parts
+        mobile_expr = raw_parts[0]
+        target_expr = raw_parts[1]
+        
+        # Default values
+        cutoff = 2.0
+        cycles = 5
+        
+        # Parse extra parts as either positional or keyword
+        for i, part in enumerate(raw_parts[2:]):
+             if "=" in part:
+                  key, val = [p.strip() for p in part.split("=", 1)]
+                  if key.lower() == "cutoff":
+                       try: cutoff = float(val)
+                       except ValueError: pass
+                  elif key.lower() == "cycles":
+                       try: cycles = int(val)
+                       except ValueError: pass
+             else:
+                  # Positional fallback
+                  if i == 0: # cutoff
+                       try: cutoff = float(part)
+                       except ValueError: pass
+                  elif i == 1: # cycles
+                       try: cycles = int(part)
+                       except ValueError: pass
 
         try:
             mob_obj, mob_name, mob_indices = self._resolve_selection_to_residue_indices(
@@ -499,6 +563,10 @@ class MeasurementMixin(BaseCmd):
             self._emit_error(str(exc))
             return
 
+        # For super, we might want to match by name if indices differ?
+        # For now, let's assume sequence-based matching (by index in the selection)
+        # but only if number of residues is compatible.
+        
         try:
             mob_coords = viewer.get_residue_positions(
                 mob_indices if mob_indices else None, object_id=mob_obj
@@ -507,36 +575,79 @@ class MeasurementMixin(BaseCmd):
                 tgt_indices if tgt_indices else None, object_id=tgt_obj
             )
         except Exception as exc:
-            self._emit_error(f"Failed to access coordinates for alignment: {exc}")
+            self._emit_error(f"Failed to access coordinates for {cmd}: {exc}")
             return
 
         if mob_coords.size == 0 or tgt_coords.size == 0:
-            self._emit_error("Selections must contain at least one residue")
+            self._emit_error("Selections must contain at least one residue (CA)")
             return
 
         count = min(mob_coords.shape[0], tgt_coords.shape[0])
         if count < 3:
-            self._emit_error("Alignment requires at least three residues in each selection")
+            self._emit_error(f"{cmd} requires at least three residues in each selection")
             return
 
-        mob_coords = mob_coords[:count]
-        tgt_coords = tgt_coords[:count]
+        # Subset to matching count
+        m_coords = mob_coords[:count]
+        t_coords = tgt_coords[:count]
+        
+        # Iterative outlier rejection
+        current_mask = np.ones(count, dtype=bool)
+        final_rmsd = 0.0
+        final_rot = np.eye(3)
+        final_trans = np.zeros(3)
+        final_count = count
+
+        for i in range(cycles + 1):
+            subset_count = np.sum(current_mask)
+            if subset_count < 3:
+                break
+                
+            m_sub = m_coords[current_mask]
+            t_sub = t_coords[current_mask]
+            
+            try:
+                rot, trans, rmsd = compute_kabsch(m_sub, t_sub)
+            except ValueError as exc:
+                self._emit_error(f"Fit failed on cycle {i}: {exc}")
+                return
+            
+            final_rmsd = rmsd
+            final_rot = rot
+            final_trans = trans
+            final_count = int(subset_count)
+
+            if i < cycles:
+                # Calculate all distances after this fit
+                m_aligned = (m_coords @ rot) + trans
+                dists = np.linalg.norm(m_aligned - t_coords, axis=1)
+                new_mask = dists <= cutoff
+                
+                # If no change in mask, we converged
+                if np.array_equal(new_mask, current_mask):
+                    break
+                
+                # Ensure we have enough points left
+                if np.sum(new_mask) < 3:
+                    # Maybe too aggressive? Keep top 50%?
+                    sorted_indices = np.argsort(dists)
+                    new_mask = np.zeros(count, dtype=bool)
+                    half = max(3, count // 2)
+                    new_mask[sorted_indices[:half]] = True
+                
+                current_mask = new_mask
+            else:
+                break
 
         try:
-            rot, trans, rmsd = compute_kabsch(mob_coords, tgt_coords)
-        except ValueError as exc:
-            self._emit_error(str(exc))
-            return
-
-        try:
-            viewer.apply_transform_to_object(rot.T, trans, object_id=mob_obj)
+            viewer.apply_transform_to_object(final_rot.T, final_trans, object_id=mob_obj)
         except Exception as exc:
-            self._emit_error(f"Failed to apply alignment transform: {exc}")
+            self._emit_error(f"Failed to apply {cmd} transform: {exc}")
             return
 
         self._emit_message(
-            f"Aligned {mob_name} onto {tgt_name} using {count} residues "
-            f"(fit RMSD over selection: {rmsd:.3f} Å)"
+            f"{cmd.capitalize()}: aligned {mob_name} onto {tgt_name} using {final_count}/{count} atoms "
+            f"(RMSD: {final_rmsd:.3f} Å)"
         )
 
     # ------------------------------------------------------------------ #

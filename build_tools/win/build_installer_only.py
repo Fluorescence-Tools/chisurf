@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Build Inno Setup installer directly without full environment creation.
-Uses the already-built conda package.
+Uses the already-built package.
 """
 import subprocess
 import os

@@ -18,7 +18,7 @@ def add_fits_for_datasets(window, data_idx, model_name: str):
             return
         idx = indices.pop(0)
         try:
-            chisurf.action_controller.execute(
+            chisurf.actions.dispatch(
                 name="fit.add",
                 payload={
                     "dataset_indices": [idx],

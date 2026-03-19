@@ -6,7 +6,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from chisurf.plugins.lltf.core.cli import cli
+from chisurf.plugins.fluorescence_decay.lltf.core.cli import cli
 
 
 HERE = Path(__file__).parent

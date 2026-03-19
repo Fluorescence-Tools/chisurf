@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import importlib
+
 from chisurf.gui import QtWidgets
 
 import chisurf
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-from chisurf.plugins.jordi_g_factor import JordiGFactorCalculator
+
+
+def _load_jordi_gfactor_calculator_class():
+    mod = importlib.import_module("chisurf.plugins.jordi_g_factor")
+    cls = getattr(mod, "JordiGFactorCalculator", None)
+    if cls is None:
+        raise ImportError("JordiGFactorCalculator not found in chisurf.plugins.jordi_g_factor")
+    return cls
 
 
 class CsvTCSPCWidget(QtWidgets.QWidget):
@@ -153,8 +162,21 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
                 return
             file_path = str(file_path)
 
-            # 2) Create plugin widget and load file
+            # 2) Create plugin widget dynamically and load file
+            JordiGFactorCalculator = _load_jordi_gfactor_calculator_class()
             plugin = JordiGFactorCalculator()
+
+            # Pre-fill FP dt [ns/ch] from current CSV reader settings.
+            try:
+                dt_base = float(self.doubleSpinBox_2.value()) if hasattr(self, 'doubleSpinBox_2') else float(getattr(chisurf.cs.current_setup, 'dt', 1.0))
+                rebin_y = int(self.comboBox.currentText()) if hasattr(self, 'comboBox') else 1
+                use_scaled_dt = bool(self.checkBox_2.isChecked()) if hasattr(self, 'checkBox_2') else False
+                dt_ns = dt_base * rebin_y if use_scaled_dt else dt_base
+                if hasattr(plugin, 'fp_dt_spinbox') and plugin.fp_dt_spinbox is not None:
+                    plugin.fp_dt_spinbox.setValue(float(dt_ns))
+            except Exception:
+                pass
+
             plugin.load_jordi_file(file_path)
 
             # 3) Embed in dialog with OK/Cancel
@@ -184,6 +206,26 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
                     if hasattr(self, 'spinBox_vh_shift'):
                         self.spinBox_vh_shift.setValue(vh_shift)
 
+                    # Optional l1/l2 estimate propagation from plugin (if determined)
+                    try:
+                        fp_ready = bool(getattr(plugin, 'fp_estimate_available', False))
+                        if fp_ready:
+                            l1_est = getattr(plugin, 'l1_estimate', None)
+                            l2_est = getattr(plugin, 'l2_estimate', None)
+                            l1_val = float(l1_est) if l1_est is not None else None
+                            l2_val = float(l2_est) if l2_est is not None else None
+                            if l1_val is not None and hasattr(self, 'doubleSpinBox_l1'):
+                                self.doubleSpinBox_l1.setValue(l1_val)
+                            if hasattr(self, 'doubleSpinBox_l2'):
+                                if l2_val is not None:
+                                    self.doubleSpinBox_l2.setValue(l2_val)
+                                elif l1_val is not None:
+                                    self.doubleSpinBox_l2.setValue(l1_val)
+                            if l1_val is not None:
+                                self._sync_l2_from_l1()
+                    except Exception:
+                        pass
+
                     # Ensure parameter propagation if signals are blocked
                     try:
                         self.actionGfactorChanged.trigger()
@@ -191,6 +233,11 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
                         pass
                     try:
                         self.actionVhShiftChanged.trigger()
+                    except Exception:
+                        pass
+                    try:
+                        if hasattr(self, 'actionL1L2Changed'):
+                            self.actionL1L2Changed.trigger()
                     except Exception:
                         pass
                 except Exception:
@@ -235,9 +282,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         rebin_y = int(self.comboBox.currentText())
         rebin_x = int(self.comboBox_2.currentText())
         rebin = int(self.comboBox.currentText())
-        dt = float(
-            self.doubleSpinBox_2.value()
-        ) * rebin if self.checkBox_2.isChecked() else 1.0 * rebin
+        dt_base = float(self.doubleSpinBox_2.value())
+        dt = dt_base * rebin if self.checkBox_2.isChecked() else dt_base
         chisurf.run(
             "\n".join(
                 [

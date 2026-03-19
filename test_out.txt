@@ -1,0 +1,22 @@
+Trying to open string path: test_╡_file.ptu
+Success with string path
+Trying to open unicode path: test_╡_file.ptu
+Success with unicode
+Trying to open utf-8 encoded path
+Failed with utf-8 encoded bytes: Cannot create TTTR object from first argument of type <class 'bytes'>. Expected a filename (str/Path) or TTTR object. Error: Wrong number or type of arguments for overloaded function 'new_TTTR'.
+  Possible C/C++ prototypes are:
+    TTTR::TTTR()
+    TTTR::TTTR(TTTR const &)
+    TTTR::TTTR(char const *,int,bool)
+    TTTR::TTTR(char const *)
+    TTTR::TTTR(char const *,int,std::map< int,std::vector< float,std::allocator< float > >,std::less< int >,std::allocator< std::pair< int const,std::vector< float,std::allocator< float > > > > > const &,std::map< signed char,int,std::less< signed char >,std::allocator< std::pair< signed char const,int > > > const &,bool)
+    TTTR::TTTR(char const *,char const *,bool)
+    TTTR::TTTR(char const *,char const *)
+    TTTR::TTTR(unsigned long long *,int,unsigned short *,int,signed char *,int,signed char *,int,bool)
+    TTTR::TTTR(TTTR const &,int *,int,bool)
+
+Done
+Error reading the Magic header: test_┬╡_file.ptu
+File test_┬╡_file.ptu not supported.
+Error reading the Magic header: test_┬╡_file.ptu
+File test_┬╡_file.ptu not supported.

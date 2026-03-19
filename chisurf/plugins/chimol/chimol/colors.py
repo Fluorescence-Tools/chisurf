@@ -170,3 +170,70 @@ def _build_sequence_gradient_colors(n_points: int) -> np.ndarray:
     colors = np.clip(colors, 0.0, 1.0)
     return colors
 
+
+def _build_element_color_array(
+    elements: Optional[np.ndarray], n_points: int
+) -> np.ndarray:
+    """Color atoms by element (CPK style)."""
+    if elements is None or n_points <= 0:
+        base = np.array([0.8, 0.8, 1.0, 1.0], dtype=float)
+        return np.tile(base, (max(n_points, 1), 1))
+
+    colors_cfg = _DISPLAY_CONFIG.get("colors", {})
+    cpk_cfg = colors_cfg.get("element_cpk", {})
+
+    default_color = np.asarray(cpk_cfg.get("default", [0.8, 0.8, 0.8, 1.0]), dtype=float)
+    
+    colors = np.zeros((n_points, 4), dtype=float)
+    m = min(len(elements), n_points)
+
+    for i in range(m):
+        el = str(elements[i]).strip().upper()
+        col = cpk_cfg.get(el)
+        if col is not None:
+            colors[i, :] = col
+        else:
+            colors[i, :] = default_color
+
+    if m < n_points:
+        colors[m:, :] = default_color
+    return colors
+
+
+def _build_chain_color_array(
+    chains: Optional[np.ndarray], n_points: int
+) -> np.ndarray:
+    """Color atoms by chain ID."""
+    if chains is None or n_points <= 0:
+        base = np.array([0.8, 0.8, 1.0, 1.0], dtype=float)
+        return np.tile(base, (max(n_points, 1), 1))
+
+    # A pleasant multi-color palette
+    palette = [
+        [0.3, 0.3, 0.9, 1.0], # Blue
+        [0.9, 0.3, 0.3, 1.0], # Red
+        [0.3, 0.8, 0.3, 1.0], # Green
+        [0.9, 0.9, 0.3, 1.0], # Yellow
+        [0.9, 0.3, 0.9, 1.0], # Magenta
+        [0.3, 0.9, 0.9, 1.0], # Cyan
+        [0.9, 0.6, 0.3, 1.0], # Orange
+        [0.6, 0.3, 0.9, 1.0], # Purple
+    ]
+
+    chain_map = {}
+    next_col = 0
+    
+    colors = np.zeros((n_points, 4), dtype=float)
+    m = min(len(chains), n_points)
+    
+    for i in range(m):
+        chid = str(chains[i]).strip()
+        if chid not in chain_map:
+            chain_map[chid] = palette[next_col % len(palette)]
+            next_col += 1
+        colors[i, :] = chain_map[chid]
+
+    if m < n_points:
+        colors[m:, :] = colors[m - 1, :]
+    return colors
+

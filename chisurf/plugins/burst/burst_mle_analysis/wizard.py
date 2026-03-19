@@ -2349,7 +2349,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         from concurrent.futures import ProcessPoolExecutor, as_completed
         import multiprocessing as mp
         from multiprocessing import shared_memory
-        from chisurf.plugins.burst_mle_analysis._mp_worker import process_one_file_worker
+        from chisurf.plugins.burst.burst_mle_analysis._mp_worker import process_one_file_worker
 
         if self.df_bursts is None or not self.tttrs:
             QtWidgets.QMessageBox.warning(self, "No Data", "No burst data loaded.")
@@ -2850,7 +2850,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     ):
         """Delegate to external HPO function to keep this file lean."""
         try:
-            from chisurf.plugins.burst_mle_analysis.utils import optimize_hyperparameters as _opt_hpo
+            from chisurf.plugins.burst.burst_mle_analysis.utils import optimize_hyperparameters as _opt_hpo
             return _opt_hpo(self, n_iter=n_iter, bounds=bounds, seed=seed, weights=weights)
         except Exception as e:
             QMessageBox.critical(self, "HPO error", f"{e}")

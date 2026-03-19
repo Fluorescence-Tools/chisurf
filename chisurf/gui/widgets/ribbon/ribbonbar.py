@@ -120,8 +120,190 @@ class RibbonBar(QtWidgets.QMenuBar):
         self._titleWidget.collapseRibbonButtonClicked.connect(self._collapseButtonClicked)
         self._titleWidget.tabBar().currentChanged.connect(self.showCategoryByIndex)  # type: ignore
         self._titleWidget.tabBar().doubleClicked.connect(self._onTabBarDoubleClicked)  # type: ignore
+        
+        # Ribbon state
+        self._qat_button_ids = []
+        self._hidden_button_ids = []
+        self._qat_buttons = {}  # btn_id -> QToolButton
+        
+        self._loadRibbonState()
+        
+        # Add context menu to ribbon bar itself to unhide items
+        self.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        self.customContextMenuRequested.connect(self._showRibbonContextMenu)
+        
         self.setRibbonStyle(RibbonStyle.Default)
 
+    def _loadRibbonState(self):
+        """Load QAT and Hidden state from QSettings."""
+        settings = QtCore.QSettings("ChiSurf", "RibbonState")
+        val = settings.value("qat_buttons", [])
+        self._qat_button_ids = val if isinstance(val, list) else [val] if val else []
+        val2 = settings.value("hidden_buttons", [])
+        self._hidden_button_ids = val2 if isinstance(val2, list) else [val2] if val2 else []
+            
+    def _saveRibbonState(self):
+        """Save QAT and Hidden state to QSettings."""
+        settings = QtCore.QSettings("ChiSurf", "RibbonState")
+        settings.setValue("qat_buttons", self._qat_button_ids)
+        settings.setValue("hidden_buttons", self._hidden_button_ids)
+
+    def registerTargetButton(self, button: QtWidgets.QWidget):
+        """Called when a panel adds a button. Process hiding and QAT."""
+        btn_id = getattr(button, '_ribbon_btn_id', None)
+        if btn_id is None:
+            # Calculate it dynamically
+            panel = button
+            while panel is not None and panel.__class__.__name__ != 'RibbonPanel':
+                panel = panel.parent()
+                
+            category = button
+            while category is not None and 'Category' not in category.__class__.__name__:
+                category = category.parent()
+                
+            panel_title = getattr(panel, 'title', lambda: "UnknownPanel")() if panel else "UnknownPanel"
+            category_title = getattr(category, 'title', lambda: "UnknownCategory")() if category else "UnknownCategory"
+            
+            if hasattr(button, 'text'):
+                text = button.text()
+            elif hasattr(button, '_actionButton'):
+                text = button._actionButton.text()
+            else:
+                text = ""
+            text = text.replace('\n', ' ').strip()
+            
+            btn_id = f"{category_title}::{panel_title}::{text}"
+            button._ribbon_btn_id = btn_id
+            
+        if btn_id in self._hidden_button_ids:
+            # Hide the RibbonPanelItemWidget parent
+            parent = button.parent()
+            if parent and parent.__class__.__name__ == 'RibbonPanelItemWidget':
+                parent.hide()
+            else:
+                button.hide()
+                
+            panel = button
+            while panel is not None and panel.__class__.__name__ != 'RibbonPanel':
+                panel = panel.parent()
+            if panel and hasattr(panel, 'reflow'):
+                panel.reflow()
+            
+        if btn_id in self._qat_button_ids:
+            if btn_id not in self._qat_buttons:
+                self.addButtonToQuickAccess(btn_id, button, save=False)
+
+    def addButtonToQuickAccess(self, btn_id: str, source_button: QtWidgets.QWidget, save=True):
+        """Replicate a button and add it to the quick access toolbar."""
+        if btn_id in self._qat_buttons:
+            return
+            
+        qat_button = QtWidgets.QToolButton()
+        
+        # Pull properties
+        icon = getattr(source_button, '_ribbon_icon', None) or (source_button.icon() if hasattr(source_button, 'icon') else None)
+        text = getattr(source_button, '_ribbon_text', None) or (source_button.text() if hasattr(source_button, 'text') else "")
+        tooltip = getattr(source_button, '_ribbon_tooltip', None) or (source_button.toolTip() if hasattr(source_button, 'toolTip') else "")
+        slot = getattr(source_button, '_ribbon_slot', None)
+        
+        if icon:
+            qat_button.setIcon(icon)
+        else:
+            qat_button.setText(text)
+            
+        if tooltip:
+            qat_button.setToolTip(tooltip)
+        else:
+            qat_button.setToolTip(text)
+            
+        if slot:
+            qat_button.clicked.connect(slot)
+            
+        qat_button.setAutoRaise(True)
+        qat_button.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        
+        def qat_context_menu(pos):
+            menu = QtWidgets.QMenu(qat_button)
+            remove_action = menu.addAction("Remove from Quick Access Toolbar")
+            action = menu.exec_(qat_button.mapToGlobal(pos))
+            if action == remove_action:
+                self.removeButtonFromQuickAccess(btn_id)
+                
+        qat_button.customContextMenuRequested.connect(qat_context_menu)
+        
+        self.addQuickAccessButton(qat_button)
+        self._qat_buttons[btn_id] = qat_button
+        
+        if btn_id not in self._qat_button_ids:
+            self._qat_button_ids.append(btn_id)
+            
+        if save:
+            self._saveRibbonState()
+
+    def removeButtonFromQuickAccess(self, btn_id: str):
+        """Remove a previously added button from QAT."""
+        if btn_id in self._qat_button_ids:
+            self._qat_button_ids.remove(btn_id)
+            self._saveRibbonState()
+            
+        if btn_id in self._qat_buttons:
+            qat_button = self._qat_buttons.pop(btn_id)
+            # Remove action from toolbar
+            self._titleWidget.quickAccessToolBar().removeAction(qat_button.defaultAction())
+            action = getattr(qat_button, 'defaultAction', lambda: None)()
+            if action:
+                self._titleWidget.quickAccessToolBar().removeAction(action)
+            else:
+                 # Workaround: find the layout and remove it, or use setParent(None)
+                 qat_button.setParent(None)
+            qat_button.deleteLater()
+
+    def hideButton(self, btn_id: str, button: QtWidgets.QWidget):
+        """Hide a button from the ribbon."""
+        if btn_id not in self._hidden_button_ids:
+            self._hidden_button_ids.append(btn_id)
+            self._saveRibbonState()
+            
+        parent = button.parent()
+        if parent and parent.__class__.__name__ == 'RibbonPanelItemWidget':
+            parent.hide()
+        else:
+            button.hide()
+            
+        panel = button
+        while panel is not None and panel.__class__.__name__ != 'RibbonPanel':
+            panel = panel.parent()
+        if panel and hasattr(panel, 'reflow'):
+            panel.reflow()
+
+    def _showRibbonContextMenu(self, pos: QtCore.QPoint):
+        """Context menu for the ribbon bar background."""
+        if not self._hidden_button_ids:
+            return
+            
+        menu = QtWidgets.QMenu(self)
+        reset_action = menu.addAction("Show All Hidden Items")
+        
+        action = menu.exec_(self.mapToGlobal(pos))
+        if action == reset_action:
+            self._hidden_button_ids.clear()
+            self._saveRibbonState()
+            
+            for category in self._categories.values():
+                for panel in category.panels().values():
+                    for widget in panel.widgets():
+                        parent = widget.parent()
+                        if parent and parent.__class__.__name__ == 'RibbonPanelItemWidget':
+                            parent.show()
+                        widget.show()
+                        
+                        btn_id = getattr(widget, '_ribbon_btn_id', None)
+                        if btn_id in self._hidden_button_ids:
+                            self._hidden_button_ids.remove(btn_id)
+                            
+                    if hasattr(panel, 'reflow'):
+                        panel.reflow()
+                        
     def _onSearchChanged(self, text: str):
         """Handle search field text changes."""
         text = text.lower().strip()

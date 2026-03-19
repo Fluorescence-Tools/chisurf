@@ -4,6 +4,66 @@ from .constants import RibbonButtonStyle
 from .menu import RibbonMenu
 
 
+def handle_ribbon_context_menu(widget: QtWidgets.QWidget, event: QtGui.QContextMenuEvent):
+    """Handle right-click context menu for ribbon buttons."""
+    # Find ribbon bar
+    ribbon = widget
+    while ribbon is not None and ribbon.__class__.__name__ != 'RibbonBar':
+        ribbon = ribbon.parent()
+        
+    if ribbon is None:
+        if isinstance(widget, QtWidgets.QToolButton):
+            QtWidgets.QToolButton.contextMenuEvent(widget, event)
+        else:
+            QtWidgets.QWidget.contextMenuEvent(widget, event)
+        return
+        
+    # Find panel and category
+    panel = widget
+    while panel is not None and panel.__class__.__name__ != 'RibbonPanel':
+        panel = panel.parent()
+        
+    category = widget
+    while category is not None and 'Category' not in category.__class__.__name__:
+        category = category.parent()
+        
+    panel_title = getattr(panel, 'title', lambda: "UnknownPanel")() if panel else "UnknownPanel"
+    category_title = getattr(category, 'title', lambda: "UnknownCategory")() if category else "UnknownCategory"
+    
+    # RibbonSplitButton text logic
+    if hasattr(widget, 'text'):
+        text = widget.text()
+    elif hasattr(widget, '_actionButton'):
+        text = widget._actionButton.text()
+    else:
+        text = ""
+    text = text.replace('\n', ' ').strip()
+    
+    # Calculate Button ID
+    btn_id = f"{category_title}::{panel_title}::{text}"
+    
+    menu = QtWidgets.QMenu(widget)
+    
+    # Status
+    is_in_qat = hasattr(ribbon, '_qat_button_ids') and btn_id in ribbon._qat_button_ids
+    
+    qat_action = menu.addAction("Remove from Quick Access Toolbar" if is_in_qat else "Add to Quick Access Toolbar")
+    menu.addSeparator()
+    hide_action = menu.addAction("Hide this item")
+    
+    action = menu.exec_(event.globalPos())
+    
+    if action == qat_action:
+        if is_in_qat:
+            if hasattr(ribbon, 'removeButtonFromQuickAccess'):
+                ribbon.removeButtonFromQuickAccess(btn_id)
+        else:
+            if hasattr(ribbon, 'addButtonToQuickAccess'):
+                ribbon.addButtonToQuickAccess(btn_id, widget)
+    elif action == hide_action:
+        if hasattr(ribbon, 'hideButton'):
+            ribbon.hideButton(btn_id, widget)
+
 class RibbonMenuButton(QtWidgets.QToolButton):
     """Menu button with dropdown arrow for ribbon."""
     
@@ -26,6 +86,9 @@ class RibbonMenuButton(QtWidgets.QToolButton):
         # Ensure proper styling for menu indicator
         self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.MenuButtonPopup)
 
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent):
+        handle_ribbon_context_menu(self, event)
+
 
 class RibbonDelayedMenuButton(QtWidgets.QToolButton):
     """Delayed popup menu button for ribbon."""
@@ -47,6 +110,9 @@ class RibbonDelayedMenuButton(QtWidgets.QToolButton):
         """
         super().setMenu(menu)
         self.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.DelayedPopup)
+
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent):
+        handle_ribbon_context_menu(self, event)
 
 
 class RibbonSplitButton(QtWidgets.QWidget):
@@ -136,6 +202,9 @@ class RibbonSplitButton(QtWidgets.QWidget):
         """
         return self._menuButton
 
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent):
+        handle_ribbon_context_menu(self, event)
+
 
 class RibbonToolButton(QtWidgets.QToolButton):
     """Tool button that is showed in the ribbon."""
@@ -159,6 +228,9 @@ class RibbonToolButton(QtWidgets.QToolButton):
         self.setButtonStyle(RibbonButtonStyle.Large)
         self.setAutoRaise(True)
         self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
+
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent):
+        handle_ribbon_context_menu(self, event)
 
     def setMaximumIconSize(self, size: int):
         """Set the maximum icon size of the button.

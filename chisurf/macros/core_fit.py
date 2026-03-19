@@ -1111,6 +1111,24 @@ def close_fit(idx: int = None):
         pass
 
 
+def close_all_fits():
+    """Close all currently active fits."""
+    import chisurf
+    cs = getattr(chisurf, "cs", None)
+    if cs is None:
+        chisurf.logging.error("close_all_fits: no active main window (chisurf.cs is missing)")
+        return
+    for fit_window in list(chisurf.gui.fit_windows):
+        try:
+            fit_window.close_confirm = False
+            fit_window.close()
+        except Exception:
+            pass
+    chisurf.fits.clear()
+    chisurf.gui.fit_windows.clear()
+    cs.update()
+
+
 def link_fit_group(
         fitting_parameter_name: str,
         csi: int = 0

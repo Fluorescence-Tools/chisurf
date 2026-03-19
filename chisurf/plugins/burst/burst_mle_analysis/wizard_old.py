@@ -654,7 +654,7 @@ class OldStuff:
         from concurrent.futures import ProcessPoolExecutor, as_completed
         import multiprocessing as mp
         from multiprocessing import shared_memory
-        from chisurf.plugins.burst_mle_analysis._mp_worker import process_one_file_worker
+        from chisurf.plugins.burst.burst_mle_analysis._mp_worker import process_one_file_worker
 
         if self.df_bursts is None or not self.tttrs:
             QtWidgets.QMessageBox.warning(self, "No Data", "No burst data loaded.")

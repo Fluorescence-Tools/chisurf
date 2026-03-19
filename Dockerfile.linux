@@ -1,0 +1,41 @@
+# Use a slim Debian base
+FROM debian:12-slim
+
+# Avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    git \
+    build-essential \
+    cmake \
+    ninja-build \
+    libgl1-mesa-glx \
+    libx11-6 \
+    libfontconfig1 \
+    libdbus-1-3 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pixi
+RUN curl -fsSL https://pixi.sh/install.sh | bash
+ENV PATH="/root/.pixi/bin:${PATH}"
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . .
+
+# Set PYTHONPATH to include the current directory
+ENV PYTHONPATH="/app"
+
+# Initialize the 'build' environment and compile extensions using Pixi tasks
+RUN pixi install --environment build && \
+    pixi run -e build build-extensions
+
+# Set entry point to run tests
+# We also sanitize sys.path to ensure no Path objects are present (which crashes pkg_resources)
+CMD ["pixi", "run", "-e", "build", "bash", "-c", "python -c 'import chisurf; import chinet; import tttrlib; print(\"ChiSurf and extensions loaded successfully on Linux!\")' && python -c 'import sys; from pathlib import Path; sys.path = [str(p) if isinstance(p, Path) else p for p in sys.path]; import pytest; sys.exit(pytest.main([\"unittests\", \"-k\", \"not gui and not widget and not window\"]))'"]

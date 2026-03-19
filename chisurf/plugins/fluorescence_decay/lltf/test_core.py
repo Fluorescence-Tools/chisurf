@@ -6,7 +6,7 @@ import json
 import pytest
 import yaml
 
-from chisurf.plugins.lltf.core.fitter import fit_lifetime
+from chisurf.plugins.fluorescence_decay.lltf.core.fitter import fit_lifetime
 
 
 HERE = Path(__file__).parent

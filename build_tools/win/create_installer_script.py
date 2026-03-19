@@ -31,10 +31,15 @@ else:
     gui_scripts = pyproject.get("project", {}).get("gui-scripts", {})
     all_entry_points = [f"{k} = {v}" for k, v in scripts.items()] + [f"{k} = {v}" for k, v in gui_scripts.items()]
 
-# Extract GUI scripts from the full list for Inno Setup
-# GUI scripts are those that map to GUI entry points (typically those in project.gui-scripts)
-# For now, we'll parse them as name=module:func and determine which are GUI vs CLI
+# Extract GUI scripts and collect all entry point names for shebang fixing
 gui_scripts = {}
+all_entry_names = []
+
+for ep in all_entry_points:
+    if '=' in ep:
+        name = ep.split('=')[0].strip()
+        all_entry_names.append(name)
+
 pyproject_path = setup_path / "pyproject.toml"
 with open(pyproject_path, 'rb') as f:
     pyproject = tomli.load(f)
@@ -80,6 +85,7 @@ parameters = {
     "vc_runtimes": vc_runtimes,
     "SetupIconFile": icon_file,
     "gui_entry_points": gui_scripts,
+    "all_entry_names": all_entry_names,
     "IsDev": getattr(info, "__status__", "Dev") == "Dev",
 }
 inno_template = ""

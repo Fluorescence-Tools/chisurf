@@ -8,7 +8,7 @@ import os
 import yaml
 import pkg_resources
 
-PACKAGE_NAME = "chisurf.plugins.lltf.core"
+PACKAGE_NAME = "chisurf.plugins.fluorescence_decay.lltf.core"
 
 def get_default_settings():
     """

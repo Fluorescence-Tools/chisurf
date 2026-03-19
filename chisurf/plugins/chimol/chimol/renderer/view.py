@@ -32,6 +32,8 @@ from ..colors import (
     _build_residue_color_array,
     _build_ss_color_array,
     _build_sequence_gradient_colors,
+    _build_element_color_array,
+    _build_chain_color_array,
 )
 
 
@@ -111,70 +113,6 @@ def _apply_rigid_transform(data, rotation, translation):
     return arr
 
 
-@dataclass
-class _MolViewObjectState:
-    coords: Optional[np.ndarray] = None
-    center: Optional[np.ndarray] = None
-    radius: float = 1.0
-    atoms: Optional[np.ndarray] = None
-    all_atom_coords: Optional[np.ndarray] = None
-    all_atom_res_ids: Optional[np.ndarray] = None
-    all_atom_radii: Optional[np.ndarray] = None
-    atom_features: dict[str, object] = field(default_factory=dict)
-    atom_feature_meta: dict[str, dict] = field(default_factory=dict)
-    residue_ids: Optional[np.ndarray] = None
-    residue_names: Optional[np.ndarray] = None
-    residue_oneletter: Optional[np.ndarray] = None
-    residue_chain_ids: Optional[np.ndarray] = None
-    selected_residues: list[int] = field(default_factory=list)
-    color_mode: str = "single"
-    colors_per_ca: Optional[np.ndarray] = None
-    # Optional per-residue RGBA overrides (len == len(residue_ids)).
-    colors_per_residue_override: Optional[np.ndarray] = None
-    # Optional per-atom RGBA overrides (len == len(all_atom_coords)).
-    colors_per_atom_override: Optional[np.ndarray] = None
-    secondary_structure: Optional[np.ndarray] = None
-    representation_mode: str = "cartoon"
-    trace_ups: Optional[np.ndarray] = None
-    show_cartoon: bool = True
-    show_trace: bool = False
-    show_atoms: bool = False
-    show_dots: bool = False
-    show_sticks: bool = False
-    sidechains_visible: bool = True
-    show_atom_gaussians: bool = False
-    cartoon_mask: Optional[np.ndarray] = None
-    ball_mask: Optional[np.ndarray] = None
-    bond_pairs: Optional[np.ndarray] = None
-    surface_visible: bool = False
-    point_overlays: dict[str, dict] = field(default_factory=dict)
-    frames: Optional[np.ndarray] = None
-    active_frame: int = 0
-
-
-@dataclass
-class _MolViewObjectEntry:
-    object_id: str
-    name: str
-    state: _MolViewObjectState = field(default_factory=_MolViewObjectState)
-    visible: bool = True
-    source_path: Optional[str] = None
-    placeholder: bool = False
-
-
-class _StateField:
-    def __init__(self, attr_name: str):
-        self.attr_name = attr_name
-
-    def __get__(self, instance: "MolView", owner):  # type: ignore[name-defined]
-        if instance is None:
-            return self
-        state = instance._get_active_state()
-        return getattr(state, self.attr_name)
-
-    def __set__(self, instance: "MolView", value):  # type: ignore[name-defined]
-        state = instance._get_active_state()
-        setattr(state, self.attr_name, value)
 
 
 class MolView(QtWidgets.QWidget):
@@ -227,9 +165,54 @@ class MolView(QtWidgets.QWidget):
     _show_atom_gaussians = _StateField("show_atom_gaussians")
     _cartoon_mask = _StateField("cartoon_mask")
     _ball_mask = _StateField("ball_mask")
+    _sticks_mask = _StateField("sticks_mask")
     _bond_pairs = _StateField("bond_pairs")
     _surface_visible = _StateField("surface_visible")
     _point_overlays = _StateField("point_overlays")
+    _measurements = _StateField("measurements")
+    _bead_radii = _StateField("bead_radii")
+    _rmf_hierarchy = _StateField("rmf_hierarchy")
+    _restraints = _StateField("restraints")
+    _rmf_provenance = _StateField("rmf_provenance")
+
+    def set_rmf_data(
+        self,
+        hierarchy: object,
+        frames: np.ndarray,
+        radii: np.ndarray,
+        restraints: list[dict] = None,
+        rmf_provenance: list[dict] = None,
+        bond_pairs: Optional[np.ndarray] = None,
+        *,
+        object_id: Optional[str] = None
+    ) -> None:
+        """Load full RMF data (hierarchy, trajectory, radii) into an object."""
+        with self._activate_object(object_id):
+            state = self._get_active_state()
+            state.rmf_hierarchy = hierarchy
+            state.frames = frames
+            state.bead_radii = radii
+            if restraints:
+                state.restraints = restraints
+            if rmf_provenance:
+                state.rmf_provenance = rmf_provenance
+            if bond_pairs is not None:
+                state.bond_pairs = bond_pairs
+                state.show_sticks = True
+            # If we have frames, set the first one as active
+            if frames is not None and len(frames) > 0:
+                state.all_atom_coords = frames[0]
+                state.coords = frames[0]
+                state.active_frame = 0
+                self._total_frames = max(self._total_frames, len(frames))
+            
+            # If we have radii, we likely want to show beads (mode 'spheres')
+            if radii is not None and np.any(radii > 0):
+                state.show_atoms = True  # We use the atoms/spheres path for beads
+                state.show_cartoon = False
+                state.show_trace = False
+                
+        self._update_view()
 
     def _prune_placeholders(self) -> None:
         """Drop any placeholder-only entries."""
@@ -473,6 +456,44 @@ class MolView(QtWidgets.QWidget):
         self._update_view()
         return True
 
+    # ------------------------------------------------------------------
+    # Animation API
+    # ------------------------------------------------------------------
+    def get_total_frames(self) -> int:
+        return self._total_frames
+
+    def set_total_frames(self, count: int) -> None:
+        self._total_frames = max(1, int(count))
+        if self._current_frame >= self._total_frames:
+            self._current_frame = self._total_frames - 1
+        self._update_view()
+
+    def get_current_frame(self) -> int:
+        return self._current_frame
+
+    def set_current_frame(self, frame_idx: int) -> None:
+        new_idx = max(0, min(int(frame_idx), self._total_frames - 1))
+        if new_idx == self._current_frame:
+            return
+        self._current_frame = new_idx
+        self._apply_frame_states()
+        self._update_view(fit_camera=False)
+
+    def _apply_frame_states(self) -> None:
+        """Update scene objects based on the current frame index."""
+        # For objects with 'frames' coordinate sets, update their active_frame
+        for entry in self._objects.values():
+            state = entry.state
+            if state.frames is not None and state.frames.ndim == 3:
+                # If the object has frames, map the global timeline to its states.
+                # Simplest mapping: state_idx = global_idx % n_states
+                n_states = state.frames.shape[0]
+                state.active_frame = self._current_frame % n_states
+                state.all_atom_coords = state.frames[state.active_frame]
+                state.coords = state.all_atom_coords
+                # Also update center/radius if needed, but maybe defer for performance?
+                # PyMOL usually doesn't re-center automatically during movie playback.
+
     def list_objects(self) -> list[dict]:
         objects: list[dict] = []
         for entry in self._objects.values():
@@ -633,6 +654,14 @@ class MolView(QtWidgets.QWidget):
         self._object_counter: int = 0
         # Allow creating an initial entry during startup; turned off when last object is deleted.
         self._auto_create_enabled: bool = True
+        
+        # Animation / Timeline state
+        self._total_frames: int = 1
+        self._current_frame: int = 0  # 0-indexed internally
+        self._keyframes: dict[int, dict] = {}
+        self._animation_running: bool = False
+        self._animation_timer: Optional[QtCore.QTimer] = None
+        self.selection_mode: str = "Residues"
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -957,9 +986,13 @@ class MolView(QtWidgets.QWidget):
                     except Exception:
                         self._secondary_structure = None
 
-            n = self._coords.shape[0]
-            self._cartoon_mask = np.ones(n, dtype=bool)
-            self._ball_mask = np.zeros(n, dtype=bool)
+            n_res = self._coords.shape[0]
+            self._cartoon_mask = np.ones(n_res, dtype=bool)
+            
+            n_atoms = self._all_atom_coords.shape[0] if self._all_atom_coords is not None else 0
+            self._ball_mask = np.zeros(n_atoms, dtype=bool)
+            self._sticks_mask = np.zeros(n_atoms, dtype=bool)
+            
             self._update_view()
             return
 
@@ -1060,7 +1093,7 @@ class MolView(QtWidgets.QWidget):
             state.active_frame = idx
             self._coords = arr[idx]
             try:
-                self._update_view()
+                self._update_view(fit_camera=False)
             except Exception:
                 pass
 
@@ -1117,42 +1150,63 @@ class MolView(QtWidgets.QWidget):
             pass
 
     def reset_view(self) -> None:
-        """Reset the camera to show all visible objects.
-
-        This uses the current scene radius when available and otherwise falls
-        back to the internally stored radius. If no radius is available yet,
-        it triggers a view update.
-        """
-
-        try:
-            scene = self._scene
-        except Exception:
-            scene = None
-
-        radius = 0.0
-        if scene is not None:
-            try:
-                radius = float(getattr(scene, "radius", 0.0))
-            except Exception:
-                radius = 0.0
-
-        if radius <= 0.0:
-            try:
-                radius = float(getattr(self, "_radius", 0.0))
-            except Exception:
-                radius = 0.0
-
-        if radius <= 0.0:
-            try:
-                self._update_view()
-            except Exception:
-                pass
+        """Reset the camera to show all visible objects at default orientation."""
+        if self._renderer is None:
             return
 
+        radius = 0.0
         try:
-            self._fit_camera_to_radius(radius)
+            scene = self._scene
+            if scene is not None:
+                radius = float(getattr(scene, "radius", 0.0))
         except Exception:
             pass
+
+        if radius <= 0.0:
+            radius = float(getattr(self, "_radius", 10.0))
+
+        # Use defaults
+        self._renderer.reset_view(
+            distance=max(radius * 3.0, 5.0),
+            elevation=float(self._default_elevation),
+            azimuth=float(self._default_azimuth)
+        )
+        self._renderer.fit_to_radius(radius)
+
+    def center(self, indices: Optional[Sequence[int]] = None, *, object_id: Optional[str] = None) -> None:
+        """Center camera on the geometric center of target residues."""
+        coords = self.get_residue_positions(indices, object_id=object_id)
+        if coords.size == 0 or self._renderer is None:
+            return
+        center = coords.mean(axis=0)
+        self._renderer.look_at(center)
+
+    def zoom(self, indices: Optional[Sequence[int]] = None, *, buffer: float = 2.0, object_id: Optional[str] = None) -> None:
+        """Zoom camera to fit target residues."""
+        coords = self.get_residue_positions(indices, object_id=object_id)
+        if coords.size == 0:
+            self.reset_view()
+            return
+
+        # Attempt to use geometry utils if reachable, else use simple bounds
+        try:
+            from ..geometry import _compute_center_radius
+            center, radius = _compute_center_radius(coords)
+        except ImportError:
+            # Fallback to simple mean/std or box-center
+            mn, mx = coords.min(axis=0), coords.max(axis=0)
+            center = (mn + mx) * 0.5
+            radius = np.linalg.norm(mx - mn) * 0.5
+
+        if self._renderer is not None:
+            self._renderer.look_at(center)
+            self._renderer.fit_to_radius(radius + float(buffer))
+
+    def orient(self, indices: Optional[Sequence[int]] = None, *, object_id: Optional[str] = None) -> None:
+        """Orient view to principal axes of target residues."""
+        # TODO: Implement PCA-based alignment once QtGLRenderer supports arbitrary rotation matrices.
+        # For now, zoom to fit provides the best "orient" approximation.
+        self.zoom(indices, object_id=object_id)
 
     # ------------------------------------------------------------------
     # Representation / interaction helpers
@@ -1275,11 +1329,19 @@ class MolView(QtWidgets.QWidget):
             secondary-structure state.
         """
 
-        if mode not in ("single", "by_residue", "by_secondary_structure", "by_sequence"):
+        if mode not in (
+            "single",
+            "by_residue",
+            "by_secondary_structure",
+            "by_sequence",
+            "by_element",
+            "by_chain",
+            "spectrum",
+        ):
             return
         self._color_mode = mode
         if self._coords is not None:
-            self._update_view()
+            self._update_view(fit_camera=False)
 
     def set_representation(self, mode: str) -> None:
         """Legacy mode-style API (cartoon / ca_trace / atoms).
@@ -1349,7 +1411,7 @@ class MolView(QtWidgets.QWidget):
 
         state = self._get_active_state()
         self._set_state_atoms_visible(state, bool(visible))
-        self._update_view()
+        self._update_view(fit_camera=False)
 
     def set_atom_gaussians_visible(self, visible: bool) -> None:
         self._show_atom_gaussians = bool(visible)
@@ -1954,114 +2016,130 @@ class MolView(QtWidgets.QWidget):
                     atom_names = None
 
             if atom_xyz is not None and atom_res_id is not None:
-                sel_idx = np.nonzero(self._ball_mask)[0]
-                if sel_idx.size:
+                n_atoms_total = atom_xyz.shape[0]
+                
+                if self._ball_mask is not None and len(self._ball_mask) == n_atoms_total:
+                    # Per-atom mask
+                    atom_mask = self._ball_mask.astype(bool)
+                elif self._ball_mask is not None and len(self._ball_mask) == n_points:
+                    # Legacy: residue-level mask
+                    sel_idx = np.nonzero(self._ball_mask)[0]
                     sel_res_ids = np.unique(self._residue_ids[sel_idx])
                     atom_mask = np.isin(atom_res_id, sel_res_ids)
+                else:
+                    atom_mask = np.zeros(n_atoms_total, dtype=bool)
 
-                    # Optionally hide sidechains and keep only backbone atoms
-                    # in the atoms/ball representation.
-                    if not getattr(self, "_sidechains_visible", True) and atom_names is not None:
-                        backbone_names = np.array(["N", "CA", "C", "O", "CB"], dtype=atom_names.dtype)
-                        backbone_mask = np.isin(atom_names, backbone_names)
-                        atom_mask = atom_mask & backbone_mask
-                    pts = atom_xyz[atom_mask]
-                    if pts.size:
-                        pts = np.asarray(pts, dtype=float)
-                        radii_sel: Optional[np.ndarray]
-                        if (
-                            self._all_atom_radii is not None
-                            and len(self._all_atom_radii) == atom_xyz.shape[0]
-                        ):
-                            try:
-                                radii_sel = np.asarray(self._all_atom_radii, dtype=float)[atom_mask]
-                            except Exception:
-                                radii_sel = None
-                        else:
-                            radii_sel = None
-
-                        colors = np.zeros((pts.shape[0], 4), dtype=float)
-                        colors[:] = np.asarray(self._base_color_single, dtype=float)
-
-                        # Start from per-residue colors_per_ca if present.
-                        if (
-                            colors_per_ca is not None
-                            and len(colors_per_ca) == len(self._residue_ids)
-                        ):
-                            color_map = {rid: colors_per_ca[i_res] for i_res, rid in enumerate(self._residue_ids)}
-                        else:
-                            color_map = {}
-
-                        sel_atom_res = atom_res_id[atom_mask]
-                        for i_atom, rid in enumerate(sel_atom_res):
-                            base_col = color_map.get(rid, self._base_color_single)
-                            colors[i_atom, :] = base_col
-
-                        # Apply per-atom override if present.
-                        if (
-                            getattr(self, "_colors_per_atom_override", None) is not None
-                            and len(self._colors_per_atom_override) == atom_res_id.shape[0]
-                        ):
-                            ov = np.asarray(self._colors_per_atom_override, dtype=float)
-                            ov_sel = ov[atom_mask]
-                            for i_atom in range(pts.shape[0]):
-                                col_ov = ov_sel[i_atom]
-                                if np.isfinite(col_ov).all():
-                                    colors[i_atom, :] = col_ov
-
-                        # Make balls fully opaque
-                        colors[:, 3] = 1.0
-
-                        # Lightweight ambient-occlusion style darkening to
-                        # improve depth perception in ball view.
+                # Optionally hide sidechains and keep only backbone atoms
+                if not getattr(self, "_sidechains_visible", True) and atom_names is not None:
+                    backbone_names = np.array(["N", "CA", "C", "O", "CB"], dtype=atom_names.dtype)
+                    backbone_mask = np.isin(atom_names, backbone_names)
+                    atom_mask = atom_mask & backbone_mask
+                
+                pts = atom_xyz[atom_mask]
+                if pts.size:
+                    pts = np.asarray(pts, dtype=float)
+                    radii_sel: Optional[np.ndarray]
+                    if (
+                        self._all_atom_radii is not None
+                        and len(self._all_atom_radii) == atom_xyz.shape[0]
+                    ):
                         try:
-                            occ_balls = _estimate_ambient_occlusion(
-                                pts,
-                                radius=balls_ao_radius,
-                                max_neighbors=balls_ao_max,
-                            )
+                            radii_sel = np.asarray(self._all_atom_radii, dtype=float)[atom_mask]
                         except Exception:
-                            occ_balls = None
+                            radii_sel = None
+                    else:
+                        radii_sel = None
+
+                    colors = np.zeros((pts.shape[0], 4), dtype=float)
+                    colors[:] = np.asarray(self._base_color_single, dtype=float)
+
+                    # Start from per-residue colors_per_ca if present.
+                    if (
+                        colors_per_ca is not None
+                        and len(colors_per_ca) == len(self._residue_ids)
+                    ):
+                        color_map = {rid: colors_per_ca[i_res] for i_res, rid in enumerate(self._residue_ids)}
+                    else:
+                        color_map = {}
+
+                    sel_atom_res = atom_res_id[atom_mask]
+                    for i_atom, rid in enumerate(sel_atom_res):
+                        base_col = color_map.get(rid, self._base_color_single)
+                        colors[i_atom, :] = base_col
+
+                    # Apply per-atom override if present.
+                    if (
+                        getattr(self, "_colors_per_atom_override", None) is not None
+                        and len(self._colors_per_atom_override) == atom_res_id.shape[0]
+                    ):
+                        ov = np.asarray(self._colors_per_atom_override, dtype=float)
+                        ov_sel = ov[atom_mask]
+                        for i_atom in range(pts.shape[0]):
+                            col_ov = ov_sel[i_atom]
+                            if np.isfinite(col_ov).all():
+                                colors[i_atom, :] = col_ov
+
+                    # Make balls fully opaque
+                    colors[:, 3] = 1.0
+
+                    # Lightweight ambient-occlusion style darkening to
+                    # improve depth perception in ball view.
+                    try:
+                        occ_balls = _estimate_ambient_occlusion(
+                            pts,
+                            radius=balls_ao_radius,
+                            max_neighbors=balls_ao_max,
+                        )
+                    except Exception:
+                        occ_balls = None
+                    if (
+                        occ_balls is not None
+                        and np.asarray(occ_balls).shape[0] == pts.shape[0]
+                    ):
+                        occ_b = np.asarray(occ_balls, dtype=float)
+                        shade_balls = (1.0 - balls_ao_strength) + (
+                            balls_ao_strength * (1.0 - occ_b)
+                        )
+                        colors[:, :3] *= shade_balls.reshape(-1, 1)
+                        colors = np.clip(colors, 0.0, 1.0)
+
+                    max_atoms = max(1, balls_max_atoms)
+                    if pts.shape[0] > max_atoms:
+                        step = max(1, pts.shape[0] // max_atoms)
+                        pts = pts[::step]
+                        colors = colors[::step]
+                        if radii_sel is not None and radii_sel.shape[0] >= pts.shape[0]:
+                            radii_sel = radii_sel[::step]
+
+                    if radii_sel is not None and radii_sel.shape[0] == pts.shape[0]:
+                        radii_for_mesh = radii_sel * balls_radius_multiplier
+                    else:
+                        radii_for_mesh = np.full(
+                            pts.shape[0], base_global_radius, dtype=float
+                        )
+
+                    invalid_r = (~np.isfinite(radii_for_mesh)) | (radii_for_mesh <= 0.0)
+                    if invalid_r.any():
+                        radii_for_mesh[invalid_r] = base_global_radius
+                    radii_for_mesh = np.maximum(radii_for_mesh, balls_min_size)
+
+                    # Render all balls for the current selection as a
+                    # single merged mesh. This is much faster than
+                    # creating one GLMeshItem per atom while still
+                    # providing proper shaded spheres, similar to pyball.
+                    sphere_mesh = _build_sphere_mesh(radius=1.0)
+                    if sphere_mesh is not None and pts.shape[0] > 0:
+                        base_verts = sphere_mesh.get("vertices")
+                        base_norms = sphere_mesh.get("normals")
+                        base_faces = sphere_mesh.get("faces")
                         if (
-                            occ_balls is not None
-                            and np.asarray(occ_balls).shape[0] == pts.shape[0]
+                            base_verts is not None
+                            and base_faces is not None
+                            and base_norms is not None
+                            and base_verts.size
+                            and base_faces.size
+                            and base_norms.size
                         ):
-                            occ_b = np.asarray(occ_balls, dtype=float)
-                            shade_balls = (1.0 - balls_ao_strength) + (
-                                balls_ao_strength * (1.0 - occ_b)
-                            )
-                            colors[:, :3] *= shade_balls.reshape(-1, 1)
-                            colors = np.clip(colors, 0.0, 1.0)
-
-                        max_atoms = max(1, balls_max_atoms)
-                        if pts.shape[0] > max_atoms:
-                            step = max(1, pts.shape[0] // max_atoms)
-                            pts = pts[::step]
-                            colors = colors[::step]
-                            if radii_sel is not None and radii_sel.shape[0] >= pts.shape[0]:
-                                radii_sel = radii_sel[::step]
-
-                        if radii_sel is not None and radii_sel.shape[0] == pts.shape[0]:
-                            radii_for_mesh = radii_sel * balls_radius_multiplier
-                        else:
-                            radii_for_mesh = np.full(
-                                pts.shape[0], base_global_radius, dtype=float
-                            )
-
-                        invalid_r = (~np.isfinite(radii_for_mesh)) | (radii_for_mesh <= 0.0)
-                        if invalid_r.any():
-                            radii_for_mesh[invalid_r] = base_global_radius
-                        radii_for_mesh = np.maximum(radii_for_mesh, balls_min_size)
-
-                        # Render all balls for the current selection as a
-                        # single merged mesh. This is much faster than
-                        # creating one GLMeshItem per atom while still
-                        # providing proper shaded spheres, similar to pyball.
-                        sphere_mesh = _build_sphere_mesh(radius=1.0)
-                        if sphere_mesh is not None and pts.shape[0] > 0:
-                            base_verts = sphere_mesh.get("vertices")
-                            base_norms = sphere_mesh.get("normals")
-                            base_faces = sphere_mesh.get("faces")
                             if (
                                 base_verts is not None
                                 and base_faces is not None
@@ -2151,10 +2229,16 @@ class MolView(QtWidgets.QWidget):
                 point_colors.append(color_local)
 
             if point_positions:
+                radii_vals = None
+                beads = getattr(self, "_bead_radii", None)
+                if beads is not None and len(beads) == len(indices):
+                    radii_vals = np.asarray(beads[indices], dtype=float)
+
                 geom = Geometry(
                     kind="points",
                     positions=np.asarray(point_positions, dtype=float),
                     colors=np.asarray(point_colors, dtype=float),
+                    radii=radii_vals,
                     meta={"glyph": "sphere", "radius": sphere_radius},
                 )
                 scene_objects.append(
@@ -2338,6 +2422,10 @@ class MolView(QtWidgets.QWidget):
             )
             bonds = bonds[mask_valid]
 
+            if self._sticks_mask is not None and len(self._sticks_mask) == n_atoms_all:
+                 mask_bonds = self._sticks_mask[bonds[:, 0]] & self._sticks_mask[bonds[:, 1]]
+                 bonds = bonds[mask_bonds]
+
             if bonds.size:
                 # Optional bond downsampling for performance.
                 if sticks_max_bonds > 0 and bonds.shape[0] > sticks_max_bonds:
@@ -2375,8 +2463,8 @@ class MolView(QtWidgets.QWidget):
                             atom_colors[i_atom, :] = col_ov
 
                 n_bonds = bonds.shape[0]
-                seg_pos = np.empty((n_bonds * 2, 3), dtype=float)
-                seg_col = np.empty((n_bonds * 2, 4), dtype=float)
+                seg_pos = np.empty((n_bonds * 2, 3), dtype=np.float32)
+                seg_col = np.empty((n_bonds * 2, 4), dtype=np.float32)
 
                 seg_pos[0::2, :] = pts_all[bonds[:, 0]]
                 seg_pos[1::2, :] = pts_all[bonds[:, 1]]
@@ -2390,6 +2478,30 @@ class MolView(QtWidgets.QWidget):
                 return [scene_obj]
 
         return None
+
+    def _update_restraints(self, state: _MolViewObjectState) -> Optional[list[SceneObject]]:
+        """Build geometry for RMF restraint pseudobonds."""
+        if not state.restraints or state.all_atom_coords is None:
+            return None
+        
+        pts = state.all_atom_coords
+        n_restraints = len(state.restraints)
+        seg_pos = np.empty((n_restraints * 2, 3), dtype=np.float32)
+        
+        for i, r in enumerate(state.restraints):
+            idx1, idx2 = r["indices"]
+            if idx1 < pts.shape[0] and idx2 < pts.shape[0]:
+                seg_pos[i*2] = pts[idx1]
+                seg_pos[i*2 + 1] = pts[idx2]
+            else:
+                seg_pos[i*2] = [0, 0, 0]
+                seg_pos[i*2 + 1] = [0, 0, 0]
+            
+        geom = Geometry(kind="line", positions=seg_pos)
+        # Warm orange/yellow for restraints
+        geom.colors = np.tile([1.0, 0.6, 0.2, 1.0], (n_restraints * 2, 1)).astype(np.float32)
+        
+        return [SceneObject(id="restraints", geometry=geom, render_mode="opaque")]
 
     def _update_surface(
         self, 
@@ -2674,6 +2786,53 @@ class MolView(QtWidgets.QWidget):
 
         return scene_objects
 
+    def _update_measurements(self) -> list[SceneObject]:
+        measurements = getattr(self, "_measurements", None)
+        if not measurements:
+            return []
+            
+        scene_objects = []
+        for mid, mdata in measurements.items():
+            kind = mdata.get("kind", "distance")
+            coords = np.asarray(mdata.get("positions", []), dtype=float)
+            if coords.size == 0: continue
+            
+            color = np.asarray(mdata.get("color", [1.0, 1.0, 1.0, 1.0]), dtype=float)
+            label = str(mdata.get("label", ""))
+            
+            if kind == "distance" and coords.shape[0] >= 2:
+                 # Line between two points
+                 line_geom = Geometry(kind="line", positions=coords[:2], colors=np.tile(color, (2, 1)))
+                 scene_objects.append(SceneObject(id=f"meas_line_{mid}", geometry=line_geom, render_mode="overlay"))
+                 
+                 # Label at midpoint
+                 midpoint = np.mean(coords[:2], axis=0)
+                 label_geom = Geometry(kind="text", positions=midpoint.reshape(1, 3), colors=color.reshape(1, 4), meta={"labels": [label]})
+                 scene_objects.append(SceneObject(id=f"meas_text_{mid}", geometry=label_geom, render_mode="overlay"))
+            
+            elif kind == "angle" and coords.shape[0] >= 3:
+                 # Lines 0-1, 1-2
+                 line_coords = np.array([coords[0], coords[1], coords[1], coords[2]])
+                 line_geom = Geometry(kind="line", positions=line_coords, colors=np.tile(color, (4, 1)))
+                 scene_objects.append(SceneObject(id=f"meas_line_{mid}", geometry=line_geom, render_mode="overlay"))
+                 
+                 # Label at center point (1)
+                 label_geom = Geometry(kind="text", positions=coords[1].reshape(1, 3), colors=color.reshape(1, 4), meta={"labels": [label]})
+                 scene_objects.append(SceneObject(id=f"meas_text_{mid}", geometry=label_geom, render_mode="overlay"))
+
+            elif kind == "dihedral" and coords.shape[0] >= 4:
+                 # Lines 0-1, 1-2, 2-3
+                 line_coords = np.array([coords[0], coords[1], coords[1], coords[2], coords[2], coords[3]])
+                 line_geom = Geometry(kind="line", positions=line_coords, colors=np.tile(color, (6, 1)))
+                 scene_objects.append(SceneObject(id=f"meas_line_{mid}", geometry=line_geom, render_mode="overlay"))
+                 
+                 # Label at midpoint of central bond (1-2)
+                 midpoint = np.mean(coords[1:3], axis=0)
+                 label_geom = Geometry(kind="text", positions=midpoint.reshape(1, 3), colors=color.reshape(1, 4), meta={"labels": [label]})
+                 scene_objects.append(SceneObject(id=f"meas_text_{mid}", geometry=label_geom, render_mode="overlay"))
+
+        return scene_objects
+
     def _update_selection_highlight(self, coords: np.ndarray) -> Optional[list[SceneObject]]:
         sel = getattr(self, "_selected_residues", None)
         if not sel or self._coords is None:
@@ -2771,7 +2930,7 @@ class MolView(QtWidgets.QWidget):
 
         return None
 
-    def _update_view(self) -> None:
+    def _update_view(self, fit_camera: bool = True) -> None:
         if self._renderer is None:
             return
 
@@ -2821,7 +2980,8 @@ class MolView(QtWidgets.QWidget):
         except Exception:
             center = np.zeros(3, dtype=float)
 
-        self._fit_camera_to_radius(radius)
+        if fit_camera:
+            self._fit_camera_to_radius(radius)
 
         self._scene = Scene(objects=scene_objects, center=center, radius=radius)
         try:
@@ -2853,6 +3013,18 @@ class MolView(QtWidgets.QWidget):
                 self._residue_names, n_points
             )
         elif self._color_mode == "by_sequence":
+            self._colors_per_ca = _build_sequence_gradient_colors(n_points)
+        elif self._color_mode == "by_element":
+            elements = None
+            if self._atoms is not None and "element" in self._atoms.dtype.names:
+                elements = self._atoms["element"]
+            self._colors_per_ca = _build_element_color_array(elements, n_points)
+        elif self._color_mode == "by_chain":
+            self._colors_per_ca = _build_chain_color_array(self._residue_chain_ids, n_points)
+        elif self._color_mode == "spectrum":
+            # PyMOL 'spectrum' usually defaults to b-factor or sequence.
+            # For now, let's use sequence gradient if no values provided.
+            # In a fuller impl, we'd check for B-factor data.
             self._colors_per_ca = _build_sequence_gradient_colors(n_points)
         else:
             base = np.asarray(self._base_color_single, dtype=float)
@@ -2897,6 +3069,8 @@ class MolView(QtWidgets.QWidget):
         scene_objects += self._update_surface(coords, surface_cfg, self._colors_per_ca) or []
         scene_objects += self._update_dots(coords, self._colors_per_ca) or []
         scene_objects += self._update_custom_overlays(surface_cfg) or []
+        scene_objects += self._update_measurements() or []
+        scene_objects += self._update_restraints(self._get_active_state()) or []
         scene_objects += self._update_selection_highlight(coords) or []
 
         if object_prefix:

@@ -10,9 +10,13 @@ broken
 
 # Build artifacts
 ########################
+*.log
+*.json
 # setup.py
 build/
 dist/
+conda-bld/
+rattler-build-log.txt
 # cmake
 cmake-build-*/
 build_tools/win/VC++*
@@ -28,6 +32,7 @@ __pycache__/
 /build_tools/osx/resources/
 # Generated entry points (rattler-build)
 rattler-recipe/entry_points.json
+.pixi
 
 # Tests
 ###########################
@@ -50,7 +55,11 @@ doc/api/
 #plugins
 chisurf/plugins/_dev*
 playground/*
-modules/*
+# Allow modules but ignore specific build directories
+/modules/*/build/
+/modules/*/b2/
+/modules/*/.git/
+
 
 #Programming documentation
 _PROG

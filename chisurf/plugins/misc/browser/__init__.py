@@ -16,3 +16,9 @@ without leaving the ChiSurf environment.
 from .wizard import *
 
 name = "Tools:Miscellaneous:Browser"
+menu_hidden = True
+deprecated = True
+deprecation_message = (
+    "The embedded Browser plugin is deprecated. "
+    "Notebook/help links now open in the system browser."
+)

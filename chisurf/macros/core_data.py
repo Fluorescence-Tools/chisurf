@@ -17,6 +17,56 @@ from chisurf.data import DataGroup, ExperimentDataGroup, ExperimentDataCurveGrou
 from chisurf.runtime.actions import record_action
 
 
+def _is_global_fit_dataset(dataset: typing.Any) -> bool:
+    try:
+        name = str(getattr(dataset, "name", "") or "").strip().lower()
+    except Exception:
+        name = ""
+    return name in {"global-fit", "global dataset", "global-fit dataset"}
+
+
+def restore_global_fit_dataset(
+        _from_controller: bool = False,
+) -> typing.Dict[str, typing.Any]:
+    if not _from_controller:
+        return chisurf.actions.dispatch(name="dataset.restore_global_fit", payload={})
+
+    for i, d in enumerate(list(getattr(chisurf, "imported_datasets", []) or [])):
+        if _is_global_fit_dataset(d):
+            return {"ok": True, "restored": False, "index": int(i)}
+
+    try:
+        from chisurf.experiments.globalfit.reader import GlobalFitSetup
+
+        setup = GlobalFitSetup(name="Global-Fit")
+        dataset = setup.read(name="Global-fit")
+        try:
+            exp = getattr(setup, "experiment", None)
+            if exp is None:
+                exp = getattr(getattr(chisurf, "cs", None), "current_experiment", None)
+            if exp is not None:
+                dataset.experiment = exp
+        except Exception:
+            pass
+        chisurf.imported_datasets.append(dataset)
+        cs = getattr(chisurf, 'cs', None)
+        if cs is not None:
+            chisurf.gui.run_on_gui_thread(cs.update)
+        _record_history(
+            action_type="dataset_restore_global_fit",
+            summary="restore global-fit dataset",
+            payload={"dataset_name": str(getattr(dataset, "name", "Global-fit"))},
+        )
+        return {
+            "ok": True,
+            "restored": True,
+            "index": int(len(chisurf.imported_datasets) - 1),
+            "name": str(getattr(dataset, "name", "Global-fit")),
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 def _record_history(
         action_type: str,
         summary: str,
@@ -69,7 +119,7 @@ def group_datasets(
         _from_controller: bool = False,
 ) -> None:
     if not _from_controller:
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.group",
             payload={"dataset_indices": [int(i) for i in dataset_indices]},
         )
@@ -116,7 +166,7 @@ def ungroup_datasets(
         _from_controller: bool = False,
 ) -> None:
     if not _from_controller:
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.ungroup",
             payload={"dataset_indices": [int(i) for i in list(dataset_indices or [])]},
         )
@@ -186,7 +236,7 @@ def remove_datasets(
         _from_controller: bool = False,
 ) -> None:
     if not _from_controller:
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.remove",
             payload={"dataset_indices": [int(i) for i in list(dataset_indices or [])]},
         )
@@ -204,7 +254,7 @@ def remove_datasets(
         if i < 0 or i >= len(chisurf.imported_datasets):
             continue
         d = chisurf.imported_datasets[i]
-        if getattr(d, 'name', '') == 'Global Dataset':
+        if _is_global_fit_dataset(d):
             continue
         actual_indices.append(i)
         to_remove.append(d)
@@ -262,7 +312,7 @@ def remove_datasets(
         chisurf.settings.gui['confirm_close_fit'] = False
         try:
             for idx in sorted(dependent_fit_indices, reverse=True):
-                chisurf.action_controller.execute(
+                chisurf.actions.dispatch(
                     name="fit.close",
                     payload={"idx": int(idx)},
                 )
@@ -297,7 +347,7 @@ def add_dataset(
         payload = dict(kwargs)
         payload["experiment_reader"] = experiment_reader
         payload["dataset"] = dataset
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.add",
             payload=payload,
         )
@@ -468,7 +518,8 @@ def add_dataset(
             )
         except Exception:
             pass
-        chisurf.gui.run_on_gui_thread(cs.update)
+        if cs is not None:
+            chisurf.gui.run_on_gui_thread(cs.update)
 
         try:
             logging.info("PDA TRACE: core_data.add_dataset finished successfully")

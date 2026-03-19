@@ -59,6 +59,15 @@ class _DrawData:
     width: float = 2.0
     depth_test: bool = True
     glyph: Optional[str] = None
+    radii: Optional[np.ndarray] = None
+
+
+@dataclass
+class _LabelData:
+    pos: np.ndarray
+    text: str
+    color: QtGui.QColor
+    depth_test: bool = True
 
 
 @dataclass
@@ -73,6 +82,7 @@ class _GpuDrawCall:
     width: float
     depth_test: bool
     glyph: Optional[str] = None
+    radii_vbo: Optional[QtGui.QOpenGLBuffer] = None
 
 
 class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
@@ -94,6 +104,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._scene: Optional[Scene] = None
         self._draw_data: list[_DrawData] = []
         self._gpu_calls: list[_GpuDrawCall] = []
+        self._labels: list[_LabelData] = []
         self._needs_upload: bool = False
         self._program: Optional[QtGui.QOpenGLShaderProgram] = None
         self._pos_attr = -1
@@ -112,6 +123,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._fog_color_uniform = -1
         self._glyph_mode_uniform = -1
         self._point_size_uniform = -1
+        self._radius_attr = -1
         self._background = (0.0, 0.0, 0.0, 1.0)
 
         lighting_cfg = (_DISPLAY_CONFIG.get("lighting") or {})
@@ -230,6 +242,31 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._distance = max(float(distance), 1.0)
         self._elevation = float(elevation)
         self._azimuth = float(azimuth)
+        self._pan_offset = np.zeros(3, dtype=float)
+        self._update_center_opt()
+        self.update()
+
+    def look_at(self, target: np.ndarray) -> None:
+        """Set the camera to look at the given world-space coordinate."""
+        center = np.zeros(3, dtype=float)
+        if self._scene is not None:
+            try:
+                center = np.asarray(self._scene.center, dtype=float)
+            except Exception:
+                center = np.zeros(3, dtype=float)
+        self._pan_offset = np.asarray(target, dtype=float) - center
+        self._update_center_opt()
+        self.update()
+
+    def set_distance(self, distance: float) -> None:
+        """Set the distance from the target point."""
+        self._distance = max(float(distance), 0.1)
+        self.update()
+
+    def set_orientation(self, elevation: float, azimuth: float) -> None:
+        """Set camera elevation and azimuth."""
+        self._elevation = float(elevation)
+        self._azimuth = float(azimuth)
         self.update()
 
     # Compatibility helpers -------------------------------------------------
@@ -265,13 +302,12 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         gl.glViewport(0, 0, width, max(height, 1))
 
     def paintGL(self) -> None:
-        gl = self._gl
-        if gl is None:
+        if GL is None:
             return
 
         r, g_col, b, a = self._background
-        gl.glClearColor(r, g_col, b, a)
-        gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        GL.glClearColor(r, g_col, b, a)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
 
         if self._program is None:
             return
@@ -348,13 +384,14 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             )
 
             call.normals_vbo.bind()
-            self._program.enableAttributeArray(self._normal_attr)
-            self._program.setAttributeBuffer(
-                self._normal_attr,
-                GL_FLOAT,
-                0,
-                3,
-            )
+            if self._radius_attr != -1:
+                if call.radii_vbo is not None:
+                    call.radii_vbo.bind()
+                    self._program.enableAttributeArray(self._radius_attr)
+                    self._program.setAttributeBuffer(self._radius_attr, GL_FLOAT, 0, 1)
+                else:
+                    self._program.disableAttributeArray(self._radius_attr)
+                    self._program.setAttributeValue(self._radius_attr, 0.0)
 
             gl.glDrawArrays(call.primitive, 0, call.vertex_count)
 
@@ -365,11 +402,16 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             call.positions_vbo.release()
             call.colors_vbo.release()
             call.normals_vbo.release()
+            if call.radii_vbo is not None:
+                call.radii_vbo.release()
             self._program.disableAttributeArray(self._pos_attr)
             self._program.disableAttributeArray(self._color_attr)
             self._program.disableAttributeArray(self._normal_attr)
+            if self._radius_attr != -1:
+                self._program.disableAttributeArray(self._radius_attr)
 
         self._program.release()
+        self._render_labels()
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -387,6 +429,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         attribute vec3 position;
         attribute vec4 color;
         attribute vec3 normal;
+        attribute float radius;
         uniform mat4 mvp;
         uniform mat4 normalMatrix;
         uniform mat4 viewMatrix;
@@ -403,7 +446,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             vec4 viewPos = viewMatrix * worldPos;
             v_viewPos = viewPos.xyz;
             if (glyphMode != 0) {
-                gl_PointSize = pointSize;
+                gl_PointSize = (radius > 0.0) ? radius : pointSize;
             }
         }
         """
@@ -480,6 +523,46 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._fog_color_uniform = program.uniformLocation("fogColor")
         self._glyph_mode_uniform = program.uniformLocation("glyphMode")
         self._point_size_uniform = program.uniformLocation("pointSize")
+        self._radius_attr = program.attributeLocation("radius")
+
+    def _render_labels(self) -> None:
+        if not self._labels:
+            return
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        
+        font = painter.font()
+        font.setPointSize(10)
+        font.setBold(True)
+        painter.setFont(font)
+
+        mvp, _ = self._build_matrices()
+        w = self.width()
+        h = self.height()
+
+        for label in self._labels:
+            # Project 3D to 2D
+            pos4 = QtGui.QVector4D(float(label.pos[0]), float(label.pos[1]), float(label.pos[2]), 1.0)
+            clip_pos = mvp * pos4
+            if clip_pos.w() <= 0:
+                continue
+            
+            ndc = QtGui.QVector3D(clip_pos.x() / clip_pos.w(), clip_pos.y() / clip_pos.w(), clip_pos.z() / clip_pos.w())
+            if ndc.x() < -1 or ndc.x() > 1 or ndc.y() < -1 or ndc.y() > 1 or ndc.z() < -1 or ndc.z() > 1:
+                continue
+            
+            win_x = (ndc.x() + 1.0) * 0.5 * w
+            win_y = (1.0 - ndc.y()) * 0.5 * h
+            
+            painter.setPen(label.color)
+            # Draw shadow for readability
+            painter.setPen(QtGui.QColor(0, 0, 0, 150))
+            painter.drawText(int(win_x) + 1, int(win_y) + 1, label.text)
+            painter.setPen(label.color)
+            painter.drawText(int(win_x), int(win_y), label.text)
+
+        painter.end()
 
     def _build_matrices(self) -> tuple[QtGui.QMatrix4x4, QtGui.QMatrix4x4]:
         width = max(self.width(), 1)
@@ -524,10 +607,14 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
     def _prepare_draw_data(self, scene: Optional[Scene]) -> None:
         """Convert Scene objects into CPU-side arrays ready for VBO upload."""
         self._draw_data = []
+        self._labels = []
         if scene is None:
             self._needs_upload = True
             return
         for obj in scene.objects:
+            if obj.geometry.kind == "text":
+                self._prepare_labels(obj)
+                continue
             draw = self._geometry_to_draw_data(obj)
             if draw is not None:
                 self._draw_data.append(draw)
@@ -536,6 +623,26 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             if grid_draw is not None:
                 self._draw_data.insert(0, grid_draw)
         self._needs_upload = True
+
+    def _prepare_labels(self, obj: SceneObject) -> None:
+        geom = obj.geometry
+        labels = geom.meta.get("labels", [])
+        positions = np.asarray(geom.positions, dtype=float)
+        colors = geom.colors
+        
+        n = min(len(labels), positions.shape[0])
+        for i in range(n):
+            col = QtGui.QColor(255, 255, 255)
+            if colors is not None and i < colors.shape[0]:
+                c = colors[i]
+                col = QtGui.QColor(int(c[0]*255), int(c[1]*255), int(c[2]*255), int(c[3]*255))
+            
+            self._labels.append(_LabelData(
+                pos=positions[i],
+                text=str(labels[i]),
+                color=col,
+                depth_test=obj.render_mode != "overlay"
+            ))
 
     def _geometry_to_draw_data(self, obj: SceneObject) -> Optional[_DrawData]:
         geom = obj.geometry
@@ -611,10 +718,10 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             colors=colors,
             normals=normals,
             render_mode=obj.render_mode,
-            size=size,
             width=width,
             depth_test=depth_test,
             glyph=glyph,
+            radii=np.asarray(geom.radii, dtype=np.float32) if geom.radii is not None else None,
         )
 
     def _primitive_for_geometry(self, geom: Geometry) -> Optional[int]:
@@ -696,6 +803,15 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 glyph=draw.glyph,
             )
             self._gpu_calls.append(gpu_call)
+
+            if draw.radii is not None and draw.radii.size == draw.positions.shape[0]:
+                vbo_rad = QtGui.QOpenGLBuffer(QtGui.QOpenGLBuffer.VertexBuffer)
+                vbo_rad.create()
+                vbo_rad.bind()
+                vbo_rad.allocate(draw.radii.tobytes(), draw.radii.nbytes)
+                vbo_rad.release()
+                gpu_call.radii_vbo = vbo_rad
+
         self._needs_upload = False
 
     def _release_gpu_calls(self) -> None:

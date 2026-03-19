@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 from typing import Optional
+
+from chisurf.models.tcspc.widgets.forster_helpers import open_forster_calculator
 
 import numpy as np
 
@@ -49,6 +49,12 @@ def setup_kappa2_controls(
     exp_btn = QtWidgets.QToolButton()
     exp_btn.setText("compute κ²")
     mode_layout.addWidget(exp_btn)
+
+    calc_r0_btn = QtWidgets.QToolButton()
+    calc_r0_btn.setText("calc R0")
+    calc_r0_btn.setToolTip("Open the Spectra Viewer plugin to calculate the Förster radius (R0) from spectra")
+    mode_layout.addWidget(calc_r0_btn)
+    calc_r0_btn.clicked.connect(lambda: open_forster_calculator(owner))
 
     parent_layout.addLayout(mode_layout)
 
@@ -105,6 +111,7 @@ def setup_kappa2_controls(
     owner._kappa2_fft_checkbox = fast_checkbox
     owner._kappa2_show_distribution_button = show_btn
     owner._kappa2_experimental_button = exp_btn
+    owner._forster_calculator_button = calc_r0_btn
     owner._kappa2_mode_group = group
 
 

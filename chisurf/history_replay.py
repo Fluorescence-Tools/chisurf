@@ -25,7 +25,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
         action_type = str(event.get("action_type", ""))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "dataset_add":
+        if action_type == "dataset.add":
             loaded = payload.get("loaded_names", [])
             loaded_uids = payload.get("loaded_uids", [])
             if isinstance(loaded, list):
@@ -39,7 +39,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if loaded_uids:
                     selected_dataset_uid = str(loaded_uids[-1])
 
-        elif action_type == "dataset_group":
+        elif action_type == "dataset.group":
             name = str(payload.get("group_name", ""))
             uid = str(payload.get("group_uid", ""))
             if name:
@@ -49,7 +49,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 append_unique(dataset_uids, uid)
                 selected_dataset_uid = uid
 
-        elif action_type == "dataset_remove":
+        elif action_type == "dataset.remove":
             removed = payload.get("removed_names", [])
             removed_uids = payload.get("removed_uids", [])
             if isinstance(removed, list):
@@ -63,7 +63,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if selected_dataset_uid in removed_uid_set:
                     selected_dataset_uid = dataset_uids[-1] if dataset_uids else None
 
-        elif action_type == "dataset_ungroup":
+        elif action_type == "dataset.ungroup":
             group_names = payload.get("group_names", [])
             group_uids = payload.get("group_uids", [])
             expanded_names = payload.get("expanded_names", [])
@@ -89,7 +89,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if expanded_uids:
                     selected_dataset_uid = str(expanded_uids[-1])
 
-        elif action_type == "fit_add":
+        elif action_type == "fit.add":
             fit_name = str(payload.get("fit_group_name") or payload.get("fit_name") or "")
             fit_uid = str(event.get("source_uid") or payload.get("fit_uid") or "")
             if fit_name:
@@ -99,7 +99,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 append_unique(fit_uids, fit_uid)
                 selected_fit_uid = fit_uid
 
-        elif action_type == "fit_close":
+        elif action_type == "fit.close":
             fit_name = str(payload.get("fit_name") or "")
             fit_uid = str(event.get("source_uid") or payload.get("fit_uid") or "")
             if fit_name:
@@ -111,7 +111,7 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 if selected_fit_uid == fit_uid:
                     selected_fit_uid = fit_uids[-1] if fit_uids else None
 
-        elif action_type in {"fit_run_start", "fit_run_finish", "fit_run_abort"}:
+        elif action_type in {"fit.run.start", "fit.run.finish", "fit.run.abort"}:
             fit_name = str(payload.get("fit_name") or "")
             fit_uid = str(event.get("source_uid") or payload.get("fit_uid") or "")
             if fit_name:
@@ -120,14 +120,14 @@ def reconstruct_navigation_state(events: typing.List[typing.Dict[str, typing.Any
                 selected_fit_uid = fit_uid
 
         elif action_type in {
-            "parameter_value",
-            "parameter_fixed",
-            "parameter_bounds_set",
-            "parameter_bounds_on",
-            "parameter_link",
-            "parameter_unlink",
-            "fit_range_set",
-            "fit_mask_set",
+            "parameter.value",
+            "parameter.fixed",
+            "parameter.bounds.set",
+            "parameter.bounds.on",
+            "parameter.link",
+            "parameter.unlink",
+            "fit.range.set",
+            "fit.mask.set",
         }:
             fit_name = str(payload.get("fit_group") or payload.get("source_fit_group") or "")
             if fit_name:
@@ -194,10 +194,10 @@ def reconstruct_parameter_state(
         action_type = str(event.get("action_type", ""))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "fit_run_start":
+        if action_type == "fit.run.start":
             apply_snapshot_rows(payload.get("parameter_snapshot_before"))
             continue
-        if action_type in {"fit_run_finish", "fit_run_abort"}:
+        if action_type in {"fit.run.finish", "fit.run.abort"}:
             apply_snapshot_rows(payload.get("parameter_snapshot_after"))
             continue
 
@@ -216,19 +216,19 @@ def reconstruct_parameter_state(
         if src_param_uid:
             entry["source_parameter_uid"] = src_param_uid
 
-        if action_type == "parameter_value":
+        if action_type == "parameter.value":
             if "new_value" in payload:
                 entry["value"] = payload.get("new_value")
 
-        elif action_type == "parameter_fixed":
+        elif action_type == "parameter.fixed":
             if "fixed" in payload:
                 entry["fixed"] = bool(payload.get("fixed"))
 
-        elif action_type == "parameter_bounds_on":
+        elif action_type == "parameter.bounds.on":
             if "bounds_on" in payload:
                 entry["bounds_on"] = bool(payload.get("bounds_on"))
 
-        elif action_type == "parameter_bounds_set":
+        elif action_type == "parameter.bounds.set":
             lower = payload.get("lower")
             upper = payload.get("upper")
             if lower is not None and upper is not None:
@@ -237,7 +237,7 @@ def reconstruct_parameter_state(
                 except Exception:
                     pass
 
-        elif action_type == "parameter_link":
+        elif action_type == "parameter.link":
             target_fit_group = str(payload.get("target_fit_group") or "")
             target_local_fit = str(payload.get("target_local_fit") or "")
             target_parameter = str(payload.get("target_parameter") or "")
@@ -249,7 +249,7 @@ def reconstruct_parameter_state(
             if target_fit_uid or target_local_uid or target_param_uid:
                 entry["link_uid"] = (target_fit_uid, target_local_uid, target_param_uid)
 
-        elif action_type == "parameter_unlink":
+        elif action_type == "parameter.unlink":
             entry["link"] = None
 
     return state
@@ -287,14 +287,14 @@ def reconstruct_fit_range_state(
         action_type = str(event.get("action_type", ""))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "fit_run_start":
+        if action_type == "fit.run.start":
             apply_range_rows(payload.get("fit_range_snapshot_before"))
             continue
-        if action_type in {"fit_run_finish", "fit_run_abort"}:
+        if action_type in {"fit.run.finish", "fit.run.abort"}:
             apply_range_rows(payload.get("fit_range_snapshot_after"))
             continue
 
-        if action_type == "fit_range_set":
+        if action_type == "fit.range.set":
             fit_group = str(payload.get("fit_group") or "")
             xmin = payload.get("xmin")
             xmax = payload.get("xmax")
@@ -316,12 +316,12 @@ def touched_parameter_keys(
 ) -> typing.Set[typing.Tuple[str, str, str]]:
     keys: typing.Set[typing.Tuple[str, str, str]] = set()
     default_actions = {
-        "parameter_value",
-        "parameter_fixed",
-        "parameter_bounds_set",
-        "parameter_bounds_on",
-        "parameter_link",
-        "parameter_unlink",
+        "parameter.value",
+        "parameter.fixed",
+        "parameter.bounds.set",
+        "parameter.bounds.on",
+        "parameter.link",
+        "parameter.unlink",
     }
     actions = include_actions or default_actions
 
@@ -349,19 +349,19 @@ def reconstruct_setup_state(
         action_type = str(event.get("action_type", ""))
         payload = event.get("payload", {}) or {}
 
-        if action_type == "experiment_set":
+        if action_type == "experiment.set":
             name = str(payload.get("name") or "")
             if name:
                 experiment_name = name
             continue
 
-        if action_type == "setup_select":
+        if action_type == "setup.select":
             name = str(payload.get("name") or "")
             if name:
                 setup_name = name
             continue
 
-        if action_type == "setup_params_set":
+        if action_type == "setup.params.set":
             values = payload.get("params") or {}
             if isinstance(values, dict):
                 for key, value in values.items():
@@ -376,6 +376,143 @@ def reconstruct_setup_state(
     }
 
 
+def reconstruct_model_state(
+        events: typing.List[typing.Dict[str, typing.Any]],
+) -> typing.Dict[str, typing.Any]:
+    """Build model state map up to cursor from history events.
+    
+    Returns a dict with model configuration and component state.
+    """
+    state: typing.Dict[str, typing.Any] = {}
+
+    for event in events:
+        action_type = str(event.get("action_type", ""))
+        payload = event.get("payload", {}) or {}
+        source_uid = str(event.get("source_uid", ""))
+        target_uid = str(event.get("target_uid", ""))
+
+        # Determine which fit group this event applies to
+        fit_group_uid = source_uid or target_uid
+        if not fit_group_uid:
+            # Try to get from payload
+            fit_group_uid = str(payload.get("fit_group_uid") or payload.get("fit_uid") or "")
+        
+        if not fit_group_uid:
+            continue
+
+        # Initialize fit group entry if not exists
+        if fit_group_uid not in state:
+            state[fit_group_uid] = {
+                "fit_group_uid": fit_group_uid,
+                "local_fits": {}
+            }
+
+        # Determine which local fit this applies to (default to first local fit)
+        local_fit_uid = str(payload.get("local_fit_uid") or "")
+        if not local_fit_uid:
+            # For some model operations, we need to find the local fit
+            # This is a simplification - in a full implementation, we'd track this properly
+            local_fit_uid = "local_0"  # Default assumption
+
+        # Initialize local fit entry if not exists
+        fg_state = state[fit_group_uid]
+        if local_fit_uid not in fg_state["local_fits"]:
+            fg_state["local_fits"][local_fit_uid] = {
+                "local_fit_uid": local_fit_uid,
+                "components": [],
+                "config": {}
+            }
+
+        local_state = fg_state["local_fits"][local_fit_uid]
+
+        if action_type == "model_add_component":
+            component_name = str(payload.get("component_name", ""))
+            if component_name:
+                if component_name not in [c.get("name", "") for c in local_state["components"]]:
+                    local_state["components"].append({
+                        "name": component_name,
+                        "action": "add"
+                    })
+
+        elif action_type == "model_remove_component":
+            component_name = str(payload.get("component_name", ""))
+            if component_name:
+                # Mark component for removal
+                for comp in local_state["components"]:
+                    if comp.get("name") == component_name:
+                        comp["action"] = "remove"
+                        break
+                else:
+                    # Component not found, add removal marker
+                    local_state["components"].append({
+                        "name": component_name,
+                        "action": "remove"
+                    })
+
+        elif action_type == "model_normalize_amplitudes":
+            component_name = str(payload.get("component_name", ""))
+            if component_name:
+                local_state["config"]["normalize_amplitudes"] = component_name
+
+        elif action_type == "model_absolute_amplitudes":
+            component_name = str(payload.get("component_name", ""))
+            if component_name:
+                local_state["config"]["absolute_amplitudes"] = component_name
+
+        elif action_type == "model_change_irf":
+            irf_idx = payload.get("irf_idx")
+            irf_name = str(payload.get("irf_name", ""))
+            if irf_idx is not None and irf_name:
+                local_state["config"][f"irf_{irf_idx}"] = irf_name
+
+        elif action_type == "model_unload_irf":
+            local_state["config"]["unload_irf"] = True
+
+        elif action_type == "model_update":
+            # Generic model update - store payload
+            local_state["config"]["update"] = payload
+
+        elif action_type == "model_set_correction":
+            correction_type = str(payload.get("correction_type", ""))
+            value = payload.get("value")
+            if correction_type:
+                local_state["config"][f"correction_{correction_type}"] = value
+
+        elif action_type == "model_set_linearization":
+            idx = payload.get("idx")
+            lin_name = str(payload.get("lin_name", ""))
+            if idx is not None and lin_name:
+                local_state["config"][f"linearization_{idx}"] = lin_name
+
+        elif action_type == "model_unload_lintable":
+            local_state["config"]["unload_lintable"] = True
+
+        elif action_type == "model_unload_background_curve":
+            local_state["config"]["unload_background_curve"] = True
+
+        elif action_type == "model_remove_local_fit":
+            row = payload.get("row")
+            if row is not None:
+                local_state["config"]["remove_local_fit"] = row
+
+        elif action_type == "model_clear_local_fits":
+            local_state["config"]["clear_local_fits"] = True
+
+        elif action_type == "model_append_global_parameter":
+            parameter_name = str(payload.get("parameter_name", ""))
+            if parameter_name:
+                if "global_parameters" not in local_state["config"]:
+                    local_state["config"]["global_parameters"] = []
+                local_state["config"]["global_parameters"].append(parameter_name)
+
+        elif action_type == "model_append_fit":
+            fit_index = payload.get("fit_index")
+            if fit_index is not None:
+                local_state["config"]["append_fit"] = fit_index
+
+    return state
+
+
 def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
     """Capture current domain state for checkpoint storage.
 
@@ -384,6 +521,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
     - parameters: all parameter values, bounds, fixed, links
     - fit_ranges: fit range state per fit group
     - setup: experiment and setup state
+    - models: model component and configuration state
     """
     import chisurf
 
@@ -392,6 +530,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         "parameters": {},
         "fit_ranges": {},
         "setup": {},
+        "models": {},
     }
 
     try:
@@ -520,6 +659,79 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
+        # Capture model state
+        fits = list(getattr(chisurf, "fits", []))
+        model_state: typing.Dict[str, typing.Dict[str, typing.Any]] = {}
+        for fg in fits:
+            fg_name = str(getattr(fg, "name", ""))
+            fg_uid = str(getattr(fg, "unique_identifier", ""))
+            if not fg_name and not fg_uid:
+                continue
+
+            key = fg_name or fg_uid
+            fg_model_state: typing.Dict[str, typing.Any] = {
+                "fit_group": fg_name,
+                "fit_group_uid": fg_uid,
+                "local_fits": {}
+            }
+
+            local_fits = list(getattr(fg, "local_fits", []))
+            for local in local_fits:
+                local_name = str(getattr(local, "name", ""))
+                local_uid = str(getattr(local, "unique_identifier", ""))
+                if not local_name and not local_uid:
+                    continue
+
+                local_key = local_name or local_uid
+                model = getattr(local, "model", None)
+                if model is None:
+                    continue
+
+                local_model_state: typing.Dict[str, typing.Any] = {
+                    "local_fit": local_name,
+                    "local_fit_uid": local_uid,
+                    "model_class": str(getattr(model, "__class__.__name__", "")),
+                    "components": [],
+                    "config": {}
+                }
+
+                # Capture model-specific state if available
+                try:
+                    if hasattr(model, "get_state"):
+                        model_state_dict = model.get_state()
+                        if isinstance(model_state_dict, dict):
+                            local_model_state["config"] = model_state_dict
+                except Exception:
+                    pass
+
+                # Capture component information
+                try:
+                    if hasattr(model, "components"):
+                        components = getattr(model, "components", [])
+                        for comp in components:
+                            comp_state = {
+                                "name": str(getattr(comp, "name", "")),
+                                "type": str(getattr(comp, "__class__.__name__", "")),
+                            }
+                            # Capture component-specific state if available
+                            try:
+                                if hasattr(comp, "get_state"):
+                                    comp_state["state"] = comp.get_state()
+                            except Exception:
+                                pass
+                            local_model_state["components"].append(comp_state)
+                except Exception:
+                    pass
+
+                fg_model_state["local_fits"][local_key] = local_model_state
+
+            model_state[key] = fg_model_state
+
+        snapshot["models"] = model_state
+    except Exception:
+        pass
+
+    try:
         fits = list(getattr(chisurf, "fits", []))
         fit_range_state: typing.Dict[str, typing.Dict[str, int]] = {}
         for fg in fits:
@@ -561,12 +773,14 @@ def snapshot_to_replay_state(
     - parameters: same as reconstruct_parameter_state output
     - fit_ranges: same as reconstruct_fit_range_state output
     - setup: same as reconstruct_setup_state output
+    - models: same as captured model state
     """
     result: typing.Dict[str, typing.Any] = {
         "navigation": {},
         "parameters": {},
         "fit_ranges": {},
         "setup": {},
+        "models": {},
     }
 
     nav = snapshot.get("navigation", {})
@@ -624,6 +838,8 @@ def snapshot_to_replay_state(
 
     result["setup"] = snapshot.get("setup", {})
 
+    result["models"] = snapshot.get("models", {})
+
     return result
 
 
@@ -637,7 +853,7 @@ def sync_domain_entities(
     to reconcile them, with history recording suppressed.
     """
     import chisurf
-    from chisurf.controllers.services import dataset_service, fit_service
+    import chisurf.actions as actions
 
     target_ds_uids = set(target_nav_state.get("dataset_uids", []))
     target_fit_uids = set(target_nav_state.get("fit_uids", []))
@@ -674,11 +890,11 @@ def sync_domain_entities(
         # 1. Remove extra entities (reverse order to keep indices valid)
         if extra_fit_indices:
             for idx in sorted(extra_fit_indices, reverse=True):
-                fit_service.close_fit(idx=idx)
+                actions.dispatch("fit.close", {"idx": idx})
 
         if extra_ds_indices:
             # dataset_service.remove_datasets takes a list
-            dataset_service.remove_datasets(dataset_indices=extra_ds_indices)
+            actions.dispatch("dataset.remove", {"dataset_indices": extra_ds_indices})
 
             # 2a. Build UID -> Current Index map for resolving dependencies
             uid_to_idx = {
@@ -688,7 +904,7 @@ def sync_domain_entities(
 
             # Map UID -> Event for creation actions
             creation_map: typing.Dict[str, typing.Dict[str, typing.Any]] = {}
-            uid_to_event_uids: typing.Dict[str, typing.List[str]] = {} # Map UID to all UIDs created in same event
+            # uid_to_event_uids: typing.Dict[str, typing.List[str]] = {} # Map UID to all UIDs created in same event
 
             for event in all_events:
                 atype = str(event.get("action_type", ""))
@@ -697,7 +913,7 @@ def sync_domain_entities(
                     uids = [str(u) for u in payload.get("loaded_uids", [])]
                     for uid in uids:
                         creation_map[uid] = event
-                        uid_to_event_uids[uid] = uids
+                        # uid_to_event_uids[uid] = uids
                 elif atype == "fit_add":
                     uid = str(event.get("target_uid") or payload.get("fit_uid") or "")
                     if uid:
@@ -708,12 +924,6 @@ def sync_domain_entities(
                         creation_map[uid] = event
 
             def resolve_indices(old_indices: list, creator_event: dict) -> list:
-                # This is tricky: old events have indices valid at that time.
-                # We need to find the UIDs of the datasets at those indices in the past.
-                # But history events don't usually store the FULL state of indices.
-                # However, many events store 'loaded_uids'.
-                # For now, we'll try to use the most recent uid_to_idx.
-                # If the payload has 'member_uids', we use those.
                 payload = creator_event.get("payload", {})
                 member_uids = payload.get("member_uids", [])
                 if member_uids:
@@ -727,11 +937,15 @@ def sync_domain_entities(
                 if event and event["event_id"] not in processed_events:
                     atype = str(event.get("action_type", ""))
                     if atype == "dataset_add":
-                        dataset_service.add_dataset(payload=event.get("payload", {}))
+                        payload = event.get("payload", {})
+                        if "experiment_reader" not in payload:
+                            payload = dict(payload)
+                            payload["experiment_reader"] = None
+                        actions.dispatch("dataset.add", payload)
                     elif atype == "dataset_group":
                         payload = event.get("payload", {})
                         new_indices = resolve_indices(payload.get("dataset_indices", []), event)
-                        dataset_service.group_datasets(dataset_indices=new_indices)
+                        actions.dispatch("dataset.group", {"dataset_indices": new_indices})
                     processed_events.add(event["event_id"])
                     
                     # Update uid_to_idx after adding
@@ -746,9 +960,9 @@ def sync_domain_entities(
                 if event and event["event_id"] not in processed_events:
                     payload = event.get("payload", {})
                     new_indices = resolve_indices(payload.get("dataset_indices", []), event)
-                    fit_service.add_fit(
-                        dataset_indices=new_indices,
-                        model_name=payload.get("model_name"),
-                        model_kw=payload.get("model_kw"),
-                    )
+                    actions.dispatch("fit.add", {
+                        "dataset_indices": new_indices,
+                        "model_name": payload.get("model_name"),
+                        "model_kw": payload.get("model_kw"),
+                    })
                     processed_events.add(event["event_id"])

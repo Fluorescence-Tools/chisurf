@@ -1,85 +1,247 @@
 from __future__ import annotations
-
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Sequence
-
+from typing import Optional, Sequence, List, Dict, Any, Tuple
 import numpy as np
+import copy
 
+try:
+    import RMF
+except ImportError:
+    RMF = None
 
 class RmfNotAvailableError(RuntimeError):
     pass
 
+@dataclass
+class RmfHierarchyNode:
+    name: str
+    rmf_index: int
+    node_type: str  # e.g., 'STATE', 'CHAIN', 'RESIDUE', 'PARTICLE'
+    children: List["RmfHierarchyNode"] = field(default_factory=list)
+    parent: Optional["RmfHierarchyNode"] = field(default=None, repr=False)
+    parent_index: Optional[int] = None
+    
+    # Structural metadata
+    chain_id: Optional[str] = None
+    res_num: Optional[int] = None
+    res_type: Optional[str] = None
+    copy_index: Optional[int] = None
+    radius: Optional[float] = None
+    
+    # Indices in the flat coordinate array (for the viewer)
+    atom_indices: List[int] = field(default_factory=list)
+
+class _RmfHierarchyInfo:
+    """Track structural information encountered through the RMF hierarchy."""
+    def __init__(self):
+        self.chain_id = None
+        self.copy_index = None
+        self.res_num = None
+        self.res_type = None
+        
+    def handle_node(self, node: RMF.NodeConstHandle, loader: _RmfLoader) -> _RmfHierarchyInfo:
+        rhi = self
+        
+        # Chain
+        if loader.chainf.get_is(node):
+            rhi = copy.copy(rhi)
+            c = loader.chainf.get(node)
+            rhi.chain_id = c.get_chain_id()
+            
+        # Copy
+        if loader.copyf.get_is(node):
+            rhi = copy.copy(rhi)
+            rhi.copy_index = loader.copyf.get(node).get_copy_index()
+            
+        # Fragment
+        if loader.fragmentf.get_is(node):
+            rhi = copy.copy(rhi)
+            f = loader.fragmentf.get(node)
+            resinds = f.get_residue_indexes()
+            if resinds:
+                rhi.res_num = resinds[len(resinds) // 2]
+            rhi.res_type = 'UNK'
+            
+        # Residue
+        if loader.residuef.get_is(node):
+            rhi = copy.copy(rhi)
+            r = loader.residuef.get(node)
+            rhi.res_num = r.get_residue_index()
+            rhi.res_type = r.get_residue_type()
+            
+        return rhi
+
+class _RmfLoader:
+    def __init__(self):
+        self.particle_nodes: List[RMF.NodeConstHandle] = []
+        self.rmf_index_to_particle_idx: Dict[int, int] = {}
+        
+    def load(self, path: Path) -> Dict[str, Any]:
+        if RMF is None:
+            raise RmfNotAvailableError("RMF loading requires 'RMF' package.")
+            
+        r = RMF.open_rmf_file_read_only(str(path))
+        
+        # Initialize factories
+        self.particlef = RMF.ParticleConstFactory(r)
+        self.chainf = RMF.ChainConstFactory(r)
+        self.fragmentf = RMF.FragmentConstFactory(r)
+        self.residuef = RMF.ResidueConstFactory(r)
+        self.copyf = RMF.CopyConstFactory(r)
+        self.statef = RMF.StateConstFactory(r)
+        self.bondf = RMF.BondConstFactory(r)
+        self.represf = RMF.RepresentationConstFactory(r)
+        self.atomf = RMF.AtomConstFactory(r)
+        self.segmentf = RMF.SegmentConstFactory(r)
+        self.coloredf = RMF.ColoredConstFactory(r)
+        
+        try:
+            self.softwaref = RMF.SoftwareProvenanceConstFactory(r)
+        except AttributeError:
+            try:
+                self.softwaref = RMF.SoftwareConstFactory(r)
+            except AttributeError:
+                self.softwaref = None
+
+        r.set_current_frame(RMF.FrameID(0))
+        
+        # 1. First pass: Collect all particle nodes and build hierarchy
+        rhi = _RmfHierarchyInfo()
+        root_node = self._handle_node(r.get_root_node(), rhi)
+        
+        # 2. Extract coordinates for all frames
+        num_frames = r.get_number_of_frames()
+        num_particles = len(self.particle_nodes)
+        
+        if num_particles == 0:
+            raise RuntimeError(f"No particles/coordinates found in {path}")
+            
+        frames_arr = np.zeros((num_frames, num_particles, 3), dtype=np.float32)
+        coord_buffer = np.zeros((num_particles, 3), dtype=np.float64)
+        
+        for f in range(num_frames):
+            r.set_current_frame(RMF.FrameID(f))
+            try:
+                RMF.get_all_global_coordinates(r, r.get_root_node(), coord_buffer)
+            except Exception:
+                for i, node in enumerate(self.particle_nodes):
+                    coord_buffer[i] = RMF.CoordinateConstFactory(r).get(node).get_coordinates()
+            frames_arr[f] = coord_buffer.astype(np.float32)
+            
+        # 3. Extract radii
+        radii_arr = np.zeros(num_particles, dtype=np.float32)
+        for i, node in enumerate(self.particle_nodes):
+            radii_arr[i] = self.particlef.get(node).get_radius()
+            
+        # 4. Extract metadata (restraints, states, PROVENANCE, BONDS)
+        restraints = []
+        rmf_provenance = []
+        states = []
+        bond_pairs = []
+        
+        self._extract_metadata(r.get_root_node(), restraints, rmf_provenance, states, bond_pairs)
+        
+        return {
+            "hierarchy": root_node,
+            "frames": frames_arr,
+            "radii": radii_arr,
+            "states": states,
+            "restraints": restraints,
+            "rmf_provenance": rmf_provenance,
+            "bond_pairs": np.array(bond_pairs, dtype=np.int32) if bond_pairs else None
+        }
+        
+    def _handle_node(self, node: RMF.NodeConstHandle, parent_rhi: _RmfHierarchyInfo) -> RmfHierarchyNode:
+        rhi = parent_rhi.handle_node(node, self)
+        
+        ntype = "NODE"
+        if self.statef.get_is(node): ntype = "STATE"
+        elif self.chainf.get_is(node): ntype = "CHAIN"
+        elif self.residuef.get_is(node): ntype = "RESIDUE"
+        elif self.atomf.get_is(node): ntype = "ATOM"
+        elif self.particlef.get_is(node): ntype = "PARTICLE"
+        
+        ridx = node.get_id().get_index()
+        h_node = RmfHierarchyNode(
+            name=node.get_name(),
+            rmf_index=ridx,
+            node_type=ntype,
+            chain_id=rhi.chain_id,
+            res_num=rhi.res_num,
+            res_type=rhi.res_type,
+            copy_index=rhi.copy_index
+        )
+        
+        # We only collect particles that have Coordinate trait
+        # ParticleConstFactory usually checks for mass/radius, but we also need XYZ.
+        # Actually in RMF all Particles should have coords.
+        if self.particlef.get_is(node):
+            p_idx = len(self.particle_nodes)
+            self.particle_nodes.append(node)
+            self.rmf_index_to_particle_idx[ridx] = p_idx
+            h_node.atom_indices = [p_idx]
+            h_node.radius = self.particlef.get(node).get_radius()
+            
+        for child in node.get_children():
+            # Skip Representation and Provenance nodes in the main hierarchy tree
+            if self.represf.get_is(child): continue
+            if child.get_type() == RMF.PROVENANCE: continue
+            
+            child_h = self._handle_node(child, rhi)
+            child_h.parent = h_node
+            child_h.parent_index = ridx
+            h_node.children.append(child_h)
+            h_node.atom_indices.extend(child_h.atom_indices)
+            
+        return h_node
+
+    def _extract_metadata(self, node: RMF.NodeConstHandle, restraints: list, provenance: list, states: list, bond_pairs: list):
+        # Software
+        if self.softwaref and self.softwaref.get_is(node):
+            sw = self.softwaref.get(node)
+            provenance.append({"name": sw.get_name(), "value": f"{sw.get_version()} ({sw.get_type()})"})
+            
+        # Explicit Bonds
+        if self.bondf.get_is(node):
+            b = self.bondf.get(node)
+            nodes = [b.get_bonded_0(), b.get_bonded_1()]
+            indices = []
+            for n in nodes:
+                idx = n.get_id().get_index()
+                if idx in self.rmf_index_to_particle_idx:
+                    indices.append(self.rmf_index_to_particle_idx[idx])
+            if len(indices) == 2:
+                bond_pairs.append((indices[0], indices[1]))
+
+        # Restraints (Representation nodes)
+        if self.represf.get_is(node):
+            rep = self.represf.get(node)
+            targets = rep.get_representation() # Returns handles
+            indices = [self.rmf_index_to_particle_idx[t.get_id().get_index()] 
+                       for t in targets if t.get_id().get_index() in self.rmf_index_to_particle_idx]
+            
+            # CRITICAL: Only add as distance restraints if exactly 2 particles.
+            # Otherwise it's just a grouping representation and we should NOT draw it as spaghetti.
+            if len(indices) == 2:
+                restraints.append({"indices": (indices[0], indices[1]), "name": node.get_name()})
+        
+        # States
+        if self.statef.get_is(node):
+            states.append(node.get_id().get_index())
+            
+        for child in node.get_children():
+            self._extract_metadata(child, restraints, provenance, states, bond_pairs)
+
+def load_rmf_full(path: Path) -> Dict[str, Any]:
+    loader = _RmfLoader()
+    return loader.load(path)
 
 def load_rmf_frames(path: Path, frame_indices: Optional[Sequence[int]] = None) -> np.ndarray:
-    try:
-        import IMP  # type: ignore[import]
-        import IMP.core  # type: ignore[import]
-        import IMP.atom  # type: ignore[import]
-        import IMP.rmf  # type: ignore[import]
-        import RMF  # type: ignore[import]
-    except Exception as exc:  # pragma: no cover - environment dependent
-        raise RmfNotAvailableError(
-            "RMF and IMP.rmf are required to load RMF files. "
-            "Install IMP with RMF support (e.g. via conda-forge) to enable this feature."
-        ) from exc
+    data = load_rmf_full(path)
+    frames = data["frames"]
+    if frame_indices is not None:
+        return frames[frame_indices]
+    return frames
 
-    p = Path(path)
-    rh = RMF.open_rmf_file_read_only(str(p))
-    model = IMP.Model()
-    hierarchies = IMP.rmf.create_hierarchies(rh, model)
-    if not hierarchies:
-        raise RuntimeError(f"RMF file {p!s} does not contain any hierarchies")
-
-    hierarchy = hierarchies[0]
-    leaves = IMP.atom.get_leaves(hierarchy)
-    if not leaves:
-        raise RuntimeError(f"RMF file {p!s} does not contain any atom leaves")
-
-    n_frames = int(rh.get_number_of_frames())
-    if n_frames <= 0:
-        raise RuntimeError(f"RMF file {p!s} does not contain any frames")
-
-    if frame_indices is None:
-        frame_list = list(range(n_frames))
-    else:
-        frame_list = []
-        for idx in frame_indices:
-            try:
-                i = int(idx)
-            except Exception:
-                continue
-            if 0 <= i < n_frames:
-                frame_list.append(i)
-        if not frame_list:
-            raise ValueError("No valid frame indices for RMF file")
-
-    frames = []
-    for fi in frame_list:
-        IMP.rmf.load_frame(rh, RMF.FrameID(int(fi)))
-        coords = []
-        for particle in leaves:
-            xyzr = IMP.core.XYZR(particle)
-            c = xyzr.get_coordinates()
-            coords.append([float(c[0]), float(c[1]), float(c[2])])
-        arr = np.asarray(coords, dtype=float)
-        if arr.ndim != 2 or arr.shape[1] != 3 or arr.shape[0] == 0:
-            raise RuntimeError(
-                f"Invalid coordinate array from RMF frame {fi} in {p!s}: shape={arr.shape!r}"
-            )
-        frames.append(arr)
-
-    if not frames:
-        raise RuntimeError(f"No usable frames found in RMF file {p!s}")
-
-    first_shape = frames[0].shape
-    for arr in frames[1:]:
-        if arr.shape != first_shape:
-            raise RuntimeError(
-                f"RMF file {p!s} contains frames with inconsistent shape: "
-                f"{first_shape!r} vs {arr.shape!r}"
-            )
-
-    return np.stack(frames, axis=0)
-
-
-__all__ = ["load_rmf_frames", "RmfNotAvailableError"]
+__all__ = ["load_rmf_frames", "load_rmf_full", "RmfNotAvailableError", "RmfHierarchyNode"]

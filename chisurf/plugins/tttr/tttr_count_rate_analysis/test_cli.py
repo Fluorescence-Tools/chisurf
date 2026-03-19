@@ -15,7 +15,7 @@ repo_root = Path(__file__).parent.parent.parent.parent
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
-from chisurf.plugins.count_rate_analysis.cli import cli
+from chisurf.plugins.tttr.tttr_count_rate_analysis.cli import cli
 from click.testing import CliRunner
 
 def test_cli_help():

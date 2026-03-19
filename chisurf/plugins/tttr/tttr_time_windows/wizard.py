@@ -9,7 +9,7 @@ from qtpy import QtWidgets, QtCore
 
 # Reuse the intensity plot widget for visualization
 try:
-    from chisurf.plugins.intensity_trace.__init__ import IntensityPlotWidget
+    from chisurf.plugins.tttr.intensity_trace.__init__ import IntensityPlotWidget
 except Exception:
     IntensityPlotWidget = None  # type: ignore
 
@@ -27,7 +27,7 @@ from chisurf import logging
 
 # Get supported TTTR extensions dynamically (via tttrlib through Trace Browser)
 try:
-    from chisurf.plugins.trace_browser.__init__ import get_tttr_supported_exts
+    from chisurf.plugins.tttr.trace_browser.__init__ import get_tttr_supported_exts
 except Exception:
     get_tttr_supported_exts = None  # type: ignore
 

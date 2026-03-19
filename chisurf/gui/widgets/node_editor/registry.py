@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, TYPE_CHECKING
-from qtpy import QtWidgets
-
-from .model import PortSpec
 
 if TYPE_CHECKING:
-    pass
+    from qtpy import QtWidgets
+
+
+from .model import PortSpec
 
 
 @dataclass
@@ -20,8 +20,9 @@ class NodeType:
     inputs: List[PortSpec]
     outputs: List[PortSpec]
     category: str = "General"
-    factory: Optional[Callable[[Dict], QtWidgets.QWidget]] = None
-    default_config: Dict = None
+    factory: Optional[Callable] = None
+    default_config: Optional[Dict] = None
+    width: float = 190.0
 
     def __post_init__(self):
         if self.default_config is None:

@@ -822,11 +822,11 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         g_factor = self.g_factor
 
         # Set the current experiment to TCSPC
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="experiment.set",
             payload={"name": "TCSPC"},
         )
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="setup.params.set",
             payload={
                 "params": {
@@ -843,9 +843,9 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         )
 
         # Add dataset to chisurf using the standard approach
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.add",
-            payload={"filename": str(save_path)},
+            payload={"filename": str(save_path), "experiment_reader": None},
         )
 
         # Show success message

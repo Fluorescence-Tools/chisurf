@@ -18,7 +18,6 @@ import chisurf.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
-from chisurf.gui.widgets import Controller
 from chisurf.gui.widgets.mdi_custom_titlebar import CustomMdiSubWindow
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 
@@ -196,6 +195,7 @@ class FitSubWindow(CustomMdiSubWindow):
         self.statusBar().showMessage(msg)
 
     def closeEvent(self, event: QtCore.QEvent):
+        import chisurf
         # Honour a per-window opt-out flag (used by macros/app shutdown) as
         # well as the global confirm_close_fit setting.
         if getattr(self, 'close_confirm', True) and chisurf.settings.gui['confirm_close_fit']:
@@ -207,7 +207,8 @@ class FitSubWindow(CustomMdiSubWindow):
             )
             if reply == QtWidgets.QMessageBox.Yes:
                 try:
-                    chisurf.action_controller.execute(name="fit.close", payload={})
+                    fit_idx = getattr(self.fit, "fit_idx", 0)
+                    chisurf.actions.dispatch(name="fit.close", payload={"idx": fit_idx})
                 except Exception:
                     pass
                 chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.modelLayout)

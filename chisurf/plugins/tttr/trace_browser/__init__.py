@@ -59,7 +59,7 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 # Import TTTR Time Window plugin
 try:
-    from chisurf.plugins.tttr_time_windows.wizard import TTTRTimeWindowWizard, compute_bids_from_tttr
+    from chisurf.plugins.tttr.tttr_time_windows.wizard import TTTRTimeWindowWizard, compute_bids_from_tttr
 except Exception:
     TTTRTimeWindowWizard = None
     compute_bids_from_tttr = None

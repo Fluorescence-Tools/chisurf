@@ -25,7 +25,7 @@ class TCSPCTTTRReaderControlWidget(
     - Micro-time coarsening (binning) and optional integer time shift (bins)
     - Drag-and-drop TTTR preview into a log-scaled decay plot
     - An "Add" button that forwards the current TTTR file via
-      chisurf.action_controller.execute("dataset.add", ...), mirroring RICS/PCH controllers.
+      chisurf.actions.dispatch("dataset.add", ...), mirroring RICS/PCH controllers.
     """
 
     def __init__(self, *args, **kwargs):
@@ -706,9 +706,9 @@ class TCSPCTTTRReaderControlWidget(
         except Exception:
             return
 
-        chisurf.action_controller.execute(
+        chisurf.actions.dispatch(
             name="dataset.add",
-            payload={"filename": s},
+            payload={"filename": s, "experiment_reader": None},
         )
 
     def _apply_preview_shift(self, y: np.ndarray, shift: int) -> np.ndarray:

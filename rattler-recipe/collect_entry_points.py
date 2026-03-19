@@ -103,21 +103,27 @@ def patch_recipe(recipe_path: pathlib.Path, entry_points: list) -> None:
     lines.append(f"{indent}# END_ENTRY_POINTS")
     replacement = "\n".join(lines)
 
+    # Simpler regex that just looks for the sentinels regardless of exact spacing
+    pattern = r"[ \t]*#\s*BEGIN_ENTRY_POINTS.*?[ \t]*#\s*END_ENTRY_POINTS"
+    m = re.search(pattern, text, flags=re.DOTALL)
+    if not m:
+        print(f"WARNING: sentinel comments not found in {recipe_path}; recipe not patched.")
+        return
+
     new_text = re.sub(
-        r"[ \t]*#\s*BEGIN_ENTRY_POINTS.*?#\s*END_ENTRY_POINTS",
+        pattern,
         replacement,
         text,
         flags=re.DOTALL,
     )
 
-    if new_text == text:
-        print(f"WARNING: sentinel comments not found in {recipe_path}; recipe not patched.")
-        return
-
-    # Restore original line endings
-    out = new_text.replace("\n", "\r\n") if crlf else new_text
-    recipe_path.write_bytes(out.encode("utf-8"))
-    print(f"Patched {recipe_path} with {len(entry_points)} entry points")
+    if new_text != text:
+        # Restore original line endings
+        out = new_text.replace("\n", "\r\n") if crlf else new_text
+        recipe_path.write_bytes(out.encode("utf-8"))
+        print(f"Patched {recipe_path} with {len(entry_points)} entry points")
+    else:
+        print(f"No changes needed for {recipe_path}")
 
 
 def main():

@@ -78,11 +78,17 @@ class _MolViewObjectState:
     show_atom_gaussians: bool = False
     cartoon_mask: Optional[np.ndarray] = None
     ball_mask: Optional[np.ndarray] = None
+    sticks_mask: Optional[np.ndarray] = None
     bond_pairs: Optional[np.ndarray] = None
     surface_visible: bool = False
     point_overlays: dict[str, dict] = field(default_factory=dict)
     frames: Optional[np.ndarray] = None
     active_frame: int = 0
+    measurements: dict[str, dict] = field(default_factory=dict)
+    bead_radii: Optional[np.ndarray] = None
+    rmf_hierarchy: Optional[object] = None  # RmfHierarchyNode
+    restraints: list[dict] = field(default_factory=list)
+    rmf_provenance: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -91,6 +97,7 @@ class _MolViewObjectEntry:
     name: str
     state: _MolViewObjectState = field(default_factory=_MolViewObjectState)
     visible: bool = True
+    placeholder: bool = False
     source_path: Optional[str] = None
 
 

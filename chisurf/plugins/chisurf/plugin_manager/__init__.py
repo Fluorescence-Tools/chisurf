@@ -314,7 +314,6 @@ class PluginManagerWidget(QMainWindow):
                             elif isinstance(module.icon, str):
                                 # Try to create a simple text icon as fallback
                                 from qtpy.QtGui import QPixmap, QPainter, QFont, QColor
-                                from qtpy.QtCore import Qt
                                 
                                 pm = QPixmap(32, 32)
                                 pm.fill(Qt.transparent)

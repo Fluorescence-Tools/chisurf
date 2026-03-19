@@ -23,6 +23,7 @@ This widget can run as a ChiSurf plugin (see chisurf.plugins.jordi_anisotropy.__
 """
 
 import numpy as np
+import warnings
 from pathlib import Path
 from qtpy.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
@@ -48,6 +49,12 @@ except Exception:
 
 
 name = "Spectroscopy:Fluorescence decay:Jordi Anisotropy Decay"
+menu_hidden = True
+deprecated = True
+deprecation_message = (
+    "Jordi Anisotropy Decay is deprecated/obsolete. "
+    "Use the Jordi G-Factor plugin and reader-integrated anisotropy workflow instead."
+)
 
 # Plugin icon used by the Plugin Manager and window decoration
 try:
@@ -292,7 +299,8 @@ class JordiAnisotropyCalculator(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Jordi Anisotropy Calculator")
+        self.setWindowTitle("Jordi Anisotropy Calculator [DEPRECATED]")
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
         try:
             self.setWindowIcon(icon)
         except Exception:
@@ -319,6 +327,14 @@ class JordiAnisotropyCalculator(QWidget):
 
     def _init_ui(self):
         main_layout = QVBoxLayout()
+
+        deprecation_label = QLabel(
+            "Deprecated: Jordi Anisotropy Decay is obsolete. "
+            "Prefer Jordi G-Factor + reader anisotropy pipeline."
+        )
+        deprecation_label.setWordWrap(True)
+        deprecation_label.setStyleSheet("color: #b45309; font-weight: 600;")
+        main_layout.addWidget(deprecation_label)
 
         controls = QGridLayout()
 

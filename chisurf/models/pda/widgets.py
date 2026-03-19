@@ -29,6 +29,18 @@ if TYPE_CHECKING:
     from chisurf.fitting.fit import Fit
 
 
+def _get_fit_index_for_model(model) -> int:
+    """Get the fit index for a given model, defaulting to 0 if not found."""
+    try:
+        import chisurf
+        for i, fit_obj in enumerate(chisurf.fits):
+            if hasattr(fit_obj, 'model') and fit_obj.model is model:
+                return i
+    except Exception:
+        pass
+    return 0
+
+
 class BackgroundWidget(QtWidgets.QGroupBox, Background):
 
     def __init__(
@@ -334,9 +346,18 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
             fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
                 p = target.parameters_all_dict[key]
-                chisurf.run(f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{key}'].value = {p.value}")
-                chisurf.run(f"chisurf.fits[{fit_idx}].model.parameters_all_dict['{key}'].controller.finalize()")
-            chisurf.run("cs.current_fit.update()")
+                chisurf.actions.dispatch(
+                    name="parameter.value",
+                    payload={
+                        "parameter_name": str(key),
+                        "value": float(p.value),
+                        "fit_index": int(fit_idx),
+                    },
+                )
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_idx)},
+            )
 
         return linkcall
 
@@ -356,14 +377,33 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
     def link_values(self, target):
         def linkcall():
             self._link = target
-            chisurf.run("cs.current_fit.update()")
+            # Find the correct fit index for this model
+            fit_index = 0
+            try:
+                import chisurf
+                # Try to find which fit contains this model
+                for i, fit_obj in enumerate(chisurf.fits):
+                    if hasattr(fit_obj, 'model') and fit_obj.model is self:
+                        fit_index = i
+                        break
+            except Exception:
+                pass
+            
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
             self.gb.setChecked(False)
         return linkcall
 
     def onLinkToggeled(self, checked):
         if checked:
             self._link = None
-            chisurf.run("cs.current_fit.update()")
+            fit_index = _get_fit_index_for_model(self)
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
 
     def link_menu(self):
         menu = self.linkFrom_menu
@@ -476,16 +516,28 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
                 self.lh.addLayout(row_layout)
 
     def onNormalizeAmplitudes(self):
-        chisurf.run(f"chisurf.macros.model.normalize_amplitudes('{self.name}', {self.normalize_amplitude.isChecked()})")
-
-    def onAbsoluteAmplitudes(self):
-        chisurf.run(f"chisurf.macros.model.absolute_amplitudes('{self.name}', {self.absolute_amplitude.isChecked()})")
-
-    def onAddLifetime(self):
-        chisurf.run(f"chisurf.macros.model.add_component('{self.name}')")
-
-    def onRemoveLifetime(self):
-        chisurf.run(f"chisurf.macros.model.remove_component('{self.name}')")
+        chisurf.actions.dispatch(
+            name="model.normalize_amplitudes",
+            payload={
+                "component_name": str(self.name),
+                "normalize": bool(self.normalize_amplitude.isChecked()),
+            },
+        )
+        chisurf.actions.dispatch(
+            name="model.absolute_amplitudes",
+            payload={
+                "component_name": str(self.name),
+                "absolute": bool(self.absolute_amplitude.isChecked()),
+            },
+        )
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": str(self.name)},
+        )
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": str(self.name)},
+        )
 
     def append(self, *args, **kwargs):
         ProbCh0.append(self, *args, **kwargs)
@@ -640,7 +692,11 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
     def onLimitedWidthToggled(self, checked: bool):
         self.limited_width = bool(checked)
         try:
-            chisurf.run("cs.current_fit.update()")
+            fit_index = _get_fit_index_for_model(self)
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
         except Exception:
             pass
 
@@ -648,12 +704,18 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         # Add a new Gaussian distance component to all fits in the current
         # fit group so that the PDA distance model stays structurally
         # consistent across the group.
-        chisurf.run("chisurf.macros.model.add_component('distances')")
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": "distances"},
+        )
 
     def onRemoveComponent(self):
         # Remove the last Gaussian distance component from all fits in the
         # current fit group to keep models synchronized.
-        chisurf.run("chisurf.macros.model.remove_component('distances')")
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": "distances"},
+        )
 
     def append(self, mean: float = 50.0, sigma: float = 5.0, amplitude: float = 1.0):
         PdaGaussianDistances.append(self, mean=mean, sigma=sigma, amplitude=amplitude)
@@ -810,12 +872,18 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
     def onAddComponent(self):
         # Append a new anisotropy species to all fits in the current fit
         # group so that the anisotropy-PDA model remains consistent.
-        chisurf.run("chisurf.macros.model.add_component('species')")
+        chisurf.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": "species"},
+        )
 
     def onRemoveComponent(self):
         # Remove the last anisotropy species from all fits in the current
         # fit group.
-        chisurf.run("chisurf.macros.model.remove_component('species')")
+        chisurf.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": "species"},
+        )
 
     def append(self, amplitude: float = 1.0, r: float = 0.3):
         PdaAnisotropySpecies.append(self, amplitude=amplitude, r=r)
@@ -1483,12 +1551,16 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
         self.pch0 = pch0
 
     def onResidualModeChanged(self):
-      mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
-      self.residual_mode = mode
-      try:
-          chisurf.run("cs.current_fit.update()")
-      except Exception:
-          pass
+        mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
+        self.residual_mode = mode
+        try:
+            fit_index = _get_fit_index_for_model(self)
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
+        except Exception:
+            pass
 
 
 class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
@@ -1678,7 +1750,11 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
         mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
         self.residual_mode = mode
         try:
-            chisurf.run("cs.current_fit.update()")
+            fit_index = _get_fit_index_for_model(self)
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
         except Exception:
             pass
 
@@ -1833,6 +1909,10 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
         self.residual_mode = mode
         try:
-            chisurf.run("cs.current_fit.update()")
+            fit_index = _get_fit_index_for_model(self)
+            chisurf.actions.dispatch(
+                name="fit.update",
+                payload={"fit_index": int(fit_index)},
+            )
         except Exception:
             pass

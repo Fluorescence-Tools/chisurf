@@ -471,7 +471,15 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         # Add a new PCH component to all fits in the current fit group via
         # the shared model macros.
         try:
-            chisurf.run("chisurf.macros.model.add_component('components')")
+            import chisurf
+            controller = getattr(chisurf, "action_controller", None)
+            if controller is not None:
+                controller.execute(
+                    name="model.add_component",
+                    payload={"component_name": "components"},
+                )
+            else:
+                chisurf.run("chisurf.macros.model.add_component('components')")
         except Exception:
             pass
 
@@ -479,7 +487,15 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         # Remove the last PCH component from all fits in the current fit
         # group.
         try:
-            chisurf.run("chisurf.macros.model.remove_component('components')")
+            import chisurf
+            controller = getattr(chisurf, "action_controller", None)
+            if controller is not None:
+                controller.execute(
+                    name="model.remove_component",
+                    payload={"component_name": "components"},
+                )
+            else:
+                chisurf.run("chisurf.macros.model.remove_component('components')")
         except Exception:
             pass
 

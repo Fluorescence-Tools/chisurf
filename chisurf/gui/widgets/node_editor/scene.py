@@ -224,6 +224,25 @@ class NodeScene(QtWidgets.QGraphicsScene):
                     # Underlying C++ item is gone.
                     continue
                 edge.update_path()
+                
+    def validate_connection(self, src_port: NodePortGraphicsItem, tgt_port: NodePortGraphicsItem) -> bool:
+        """Return True if a connection between src_port and tgt_port is allowed.
+        
+        Checks:
+        1. Direction: One must be output, one must be input.
+        2. Port types: Must be compatible (exact match or one is 'any').
+        """
+        if src_port.spec.is_output == tgt_port.spec.is_output:
+            return False
+            
+        src_type = getattr(src_port.spec, "port_type", "spectral") or "spectral"
+        tgt_type = getattr(tgt_port.spec, "port_type", "spectral") or "spectral"
+        
+        # 'any' type connects to anything
+        if src_type == "any" or tgt_type == "any":
+            return True
+            
+        return src_type == tgt_type
 
     # ----- Mouse interaction for creating edges --------------------------
     def mousePressEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent):
@@ -289,9 +308,9 @@ class NodeScene(QtWidgets.QGraphicsScene):
                     end_item = snapped
 
             if isinstance(end_item, NodePortGraphicsItem) and end_item is not self._current_edge.start_port:
-                # Only allow connections between input and output ports
-                if end_item.spec.is_output == self._current_edge.start_port.spec.is_output:
-                    # Same direction -> invalid, cancel
+                # Validate connection (direction and type)
+                if not self.validate_connection(self._current_edge.start_port, end_item):
+                    # Incompatible or same direction -> invalid, cancel
                     self.removeItem(self._current_edge)
                 else:
                     # Finalize connection (wrapped in undo snapshot)
@@ -1159,8 +1178,16 @@ class NodeScene(QtWidgets.QGraphicsScene):
 
     # ----- Layout using networkx ------------------------------------------
     def auto_layout(self):
+        """Automatically arrange nodes using a hierarchical spring approach.
+        
+        This algorithm:
+        1. Assigns nodes to horizontal levels (columns) based on graph flow.
+        2. Uses a spring layout guess for vertical ordering.
+        3. Stacks nodes in columns while ensuring no vertical overlaps.
+        4. Adjusts column spacing to account for node widths.
+        """
         if nx is None:
-            print("networkx is not available; auto layout disabled")
+            logger.warning("networkx is not available; auto layout disabled")
             return
 
         graphs = self._build_nx_graphs()
@@ -1168,46 +1195,79 @@ class NodeScene(QtWidgets.QGraphicsScene):
             return
 
         G_undirected, G_directed, index_by_node = graphs
-        if len(G_undirected.nodes) == 0:
+        if not index_by_node:
             return
+            
+        # node_by_idx[int] -> NodeGraphicsItem
+        node_by_idx = {i: n for n, i in index_by_node.items()}
 
-        pos = nx.spring_layout(G_undirected, scale=300.0)
+        # 1. Assign levels (X-axis)
+        # Using simple distance from roots for depth
+        levels = {}
+        roots = [n for n, d in G_directed.in_degree() if d == 0]
+        if not roots and len(G_directed.nodes) > 0:
+            roots = [list(G_directed.nodes)[0]] # Handle cycles by picking an arbitrary root
+            
+        queue = [(r, 0) for r in roots]
+        processed = set()
+        while queue:
+            idx, lvl = queue.pop(0)
+            levels[idx] = max(levels.get(idx, 0), lvl)
+            if idx not in processed:
+                processed.add(idx)
+                for succ in G_directed.successors(idx):
+                    queue.append((succ, lvl+1))
+        
+        # Ensure every node has a level (e.g. disconnected nodes)
+        for idx in G_directed.nodes:
+            if idx not in levels:
+                levels[idx] = 0
 
-        in_deg = dict(G_directed.in_degree())
-        frontier = [n for n, d in in_deg.items() if d == 0]
-        levels: Dict[int, int] = {}
-        visited = set()
-        level = 0
-        while frontier:
-            next_frontier: List[int] = []
-            for n in frontier:
-                if n in visited:
-                    continue
-                levels[n] = level
-                visited.add(n)
-                for succ in G_directed.successors(n):
-                    if succ not in visited:
-                        next_frontier.append(succ)
-            frontier = next_frontier
-            level += 1
+        # 2. Get relative vertical order from spring layout
+        # This keeps the general "tangle" of the graph preserved
+        pos = nx.spring_layout(G_undirected, k=1.0, iterations=50)
 
-        max_level = level if level > 0 else 0
-        for n in G_directed.nodes:
-            if n not in levels:
-                levels[n] = max_level
-
-        max_level = max(levels.values()) if levels else 0
-        spacing_x = 220.0 if max_level > 0 else 0.0
-
-        from .node_item import NodeGraphicsItem
-
-        for node_item, idx in index_by_node.items():
-            base_x, base_y = pos.get(idx, (0.0, 0.0))
-            lvl = levels.get(idx, 0)
-            x = lvl * spacing_x
-            y = base_y
-            if isinstance(node_item, NodeGraphicsItem):
-                node_item.setPos(float(x), float(y))
+        # 3. Group by level and calculate positions
+        nodes_by_level = {}
+        for idx, lvl in levels.items():
+            nodes_by_level.setdefault(lvl, []).append(idx)
+            
+        h_gap = 100.0 # horizontal gap between columns
+        v_gap = 40.0  # vertical gap between nodes
+        
+        current_x = 0.0
+        
+        # To avoid visual jump, we'll store moves in the parent's undo if available
+        owner = self.parent()
+        if owner and hasattr(owner, "begin_undo"):
+             pass # Already called in contextMenuEvent
+             
+        for lvl in sorted(nodes_by_level.keys()):
+            level_nodes = nodes_by_level[lvl]
+            # Order nodes in this level by their spring layout Y position
+            level_nodes.sort(key=lambda idx: pos[idx][1])
+            
+            max_w = 0.0
+            # Calculate total height of this column to center it
+            col_height = sum(node_by_idx[idx].boundingRect().height() for idx in level_nodes)
+            col_height += v_gap * (len(level_nodes) - 1)
+            
+            current_y = -col_height / 2.0
+            
+            for idx in level_nodes:
+                node = node_by_idx[idx]
+                br = node.boundingRect()
+                
+                # Snap to horizontal center of its intended column? 
+                # Better: Left align in column and track max width.
+                node.setPos(current_x, current_y)
+                
+                max_w = max(max_w, br.width())
+                current_y += br.height() + v_gap
+                
+            current_x += max_w + h_gap
+            
+        self.update()
 
     def _build_nx_graphs(self):
         if nx is None:
@@ -1433,7 +1493,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
                         if labels:
                             item.model.config["text"] = str(labels[-1].text())
 
-                node_id = f"n{idx}"
+                node_id = str(getattr(item.model, "id", f"n{idx}"))
                 id_by_item[item] = node_id
                 model = item.model
                 nodes.append({

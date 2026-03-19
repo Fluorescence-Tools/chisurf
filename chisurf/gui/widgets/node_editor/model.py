@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
-from qtpy import QtWidgets
+from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from qtpy import QtWidgets
 
 
 @dataclass
@@ -15,7 +16,7 @@ class PortSpec:
     # ``fixed`` marks the port as fixed (non-variable), and ``min_value`` /
     # ``max_value`` allow bounded ranges for numeric ports. All fields are
     # optional so existing graphs that only specify names continue to work.
-    port_type: str = ""
+    port_type: str = "spectral"
     fixed: bool = False
     min_value: float | None = None
     max_value: float | None = None
@@ -35,4 +36,5 @@ class NodeModel:
     outputs: List[PortSpec]
     node_type: str = "generic"
     config: Dict[str, Any] = field(default_factory=dict)
-    content_factory: Optional[Callable[[], QtWidgets.QWidget]] = None
+    content_factory: Optional[Callable] = None
+    id: str = field(default_factory=lambda: str(__import__("uuid").uuid4()))

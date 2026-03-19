@@ -466,27 +466,15 @@ class LinePlot(plotbase.Plot):
                     lb = np.log10(lb)
                     ub = np.log10(ub)
                 self.region.setRegion((lb, ub))
-                chisurf.run(f"cs.current_fit.fit_range = {self.lb_i}, {self.ub_i}")
-                try:
-                    fit_group_name = str(getattr(self.fit, "name", ""))
-                    local_fit_name = ""
-                    local_fit = getattr(self.fit, "selected_fit", None)
-                    if local_fit is not None:
-                        local_fit_name = str(getattr(local_fit, "name", ""))
-                    record_action(
-                        action_type="fit_range_set",
-                        summary=f"set fit range for '{fit_group_name}' to [{int(self.lb_i)}, {int(self.ub_i)}) from line plot",
-                        payload={
-                            "fit_group": fit_group_name,
-                            "local_fit": local_fit_name,
-                            "xmin": int(self.lb_i),
-                            "xmax": int(self.ub_i),
-                            "source": "line_plot_region",
-                        },
-                    )
-                except Exception:
-                    pass
-                # Notify listeners (e.g., Fit widget) about changed fit-range
+                import chisurf
+                chisurf.actions.dispatch(
+                    name="fit.range.set",
+                    payload={
+                        "xmin": int(self.lb_i),
+                        "xmax": int(self.ub_i),
+                        "fit_index": getattr(self.fit, "fit_idx", 0),
+                    },
+                )
                 try:
                     self.regionChanged.emit(self.lb_i, self.ub_i)
                 except Exception:

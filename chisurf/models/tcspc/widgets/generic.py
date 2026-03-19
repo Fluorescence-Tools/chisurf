@@ -34,9 +34,15 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
     def onUnloadBackground(self):
         """Unload the background curve and reset it to default (None)
         """
-        chisurf.run("cs.current_fit.model.generic.unload_background_curve()")
+        chisurf.actions.dispatch(
+            name="model.unload_background_curve",
+            payload={},
+        )
         self.lineEdit.setText("")
-        chisurf.run("cs.current_fit.model.update()")
+        chisurf.actions.dispatch(
+            name="model.update",
+            payload={},
+        )
 
     def update(self):
         super().update()

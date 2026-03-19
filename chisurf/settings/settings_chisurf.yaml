@@ -48,7 +48,7 @@ gui:
   RubberBandResize: true
   confirm_close_fit: true
   confirm_close_program: true
-  console_init: '%matplotlib inline
+  console_init: "%matplotlib inline
 
     %config Completer.use_jedi = False
 
@@ -56,37 +56,37 @@ gui:
 
     import pylab as p
 
-    '
+    "
   console_style: linux
   console_width: 80
   console_height: 100
   editor:
-    caret_line_background_color: '#afafaf'
-    default_color: '#000006'
+    caret_line_background_color: "#afafaf"
+    default_color: "#000006"
     font_family: Courier New
     font_size: 9
     language: Python
-    margins_background_color: '#808080'
-    marker_background_color: '#f0f0f0'
-    paper_color: '#cfcfcf'
+    margins_background_color: "#808080"
+    marker_background_color: "#f0f0f0"
+    paper_color: "#cfcfcf"
   fit_models:
     n_columns: 2
-  fit_window_style: 'border: 2px solid rgba(0, 0, 0, 0.10);background-color: gray;'
+  fit_window_style: "border: 2px solid rgba(0, 0, 0, 0.10);background-color: gray;"
   fit_windows_size:
-  - 350
-  - 350
+    - 350
+    - 350
   fit_progress_close_delay_ms: 200
   plot:
     colors:
       active_transparency: 1
-      auto_corr: '#ff00ff'
-      data: '#ffa629'
+      auto_corr: "#ff00ff"
+      data: "#ffa629"
       inactive_transparency: 0.2
-      irf: '#4284f5'
-      model: '#d400cd'
-      region_selector: '#26a298'
+      irf: "#4284f5"
+      model: "#d400cd"
+      region_selector: "#26a298"
       region_selector_alpha: 100
-      residuals: '#df0101'
+      residuals: "#df0101"
     enable_grid: true
     enable_region_selector: true
     hideTitle: true
@@ -112,17 +112,18 @@ gui:
   show_macro_edit: true
   qt_style: auto
   style_sheet: dark_blue_flat.qss
-  mol_viewer: pymol  # 3D molecule viewer backend: pymol (default) or chimol
-  memory_widget_update_interval_ms: 5000  # Memory usage widget update interval in milliseconds
+  mol_viewer: pymol # 3D molecule viewer backend: pymol (default) or chimol
+  memory_widget_update_interval_ms: 5000 # Memory usage widget update interval in milliseconds
   start_jupyter_on_startup: false
+  mcp_autostart: true # Start the Model Context Protocol (MCP) server on startup
   ribbon:
-    auto_fold: true  # Enable automatic ribbon folding after inactivity
-    auto_fold_delay_ms: 1000  # Delay before auto-folding starts (milliseconds)
-    auto_fold_speed_ms: 500  # Speed of folding animation (milliseconds)
-    pinned: true  # Pin ribbon open (disable auto-fold on startup)
-    max_rows: 3  # Maximum number of rows for ribbon panels (reduces ribbon height)
+    auto_fold: true # Enable automatic ribbon folding after inactivity
+    auto_fold_delay_ms: 1000 # Delay before auto-folding starts (milliseconds)
+    auto_fold_speed_ms: 500 # Speed of folding animation (milliseconds)
+    pinned: true # Pin ribbon open (disable auto-fold on startup)
+    max_rows: 3 # Maximum number of rows for ribbon panels (reduces ribbon height)
     ribbon_height: 110
-  use_ribbon_interface: true  # Enable ribbon interface by default
+  use_ribbon_interface: true # Enable ribbon interface by default
   dev_mode:
     show_code_badge: true
     badge_locations:
@@ -195,10 +196,10 @@ mc_settings:
   pPsi: 0.3
   pdbOut: 500
   potentials:
-  - name: H-Potential
-    weight: 2
-  - name: Iso-UNRES
-    weight: 1
+    - name: H-Potential
+      weight: 2
+    - name: Iso-UNRES
+      weight: 1
   scale: 0.0025
   update_rmsd: false
 n_threads: 4
@@ -240,31 +241,31 @@ parameter:
   hide_fix_checkbox: false
   hide_label: false
   hide_link: false
-  role_color_input: ''
-  role_color_linked: ''
-  role_color_output: ''
+  role_color_input: ""
+  role_color_linked: ""
+  role_color_output: ""
 photons:
   complevel: 9
   complib: blosc
   title: spc
 plugins:
   disabled_models:
-  - Et-Model free
-  - Dye-diffusion
+    - Et-Model free
+    - Dye-diffusion
   disabled_plugins:
-  - TTTR:Correlate
-  - TTTR:Generate Decay
+    - TTTR:Correlate
+    - TTTR:Generate Decay
   hide_disabled_plugins: true
   icons_enabled: true
   plugin_order: {}
   toolbar_plugins:
-  - Tools:Histogram-Microtime
-  - FCS:Correlator
-  - Single-Molecule:Burst-Selection
-  - Single-Molecule:Burst MLE Lifetime Analysis
-  - Tools:ndXplorer
-  - Tools:Screenshot
-  - Miscellaneous:F-Test
+    - Tools:Histogram-Microtime
+    - FCS:Correlator
+    - Single-Molecule:Burst-Selection
+    - Single-Molecule:Burst MLE Lifetime Analysis
+    - Tools:ndXplorer
+    - Tools:Screenshot
+    - Miscellaneous:F-Test
   updater:
     ignore_updates_on_startup: false
     check_on_startup: true
@@ -281,12 +282,12 @@ tcspc:
   n0: 2000000
   polarization: vm
   polarization_options:
-  - vm
-  - vv
-  - vh
+    - vm
+    - vv
+    - vh
   rebin:
-  - 1
-  - 1
+    - 1
+    - 1
   rep_rate: 10
   shift_bg_with_irf: true
   ts: 0

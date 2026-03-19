@@ -2,7 +2,7 @@
 ChiSurf Update Mechanism
 ========================
 
-This module provides functionality to update ChiSurf using conda packages.
+This module provides functionality to update ChiSurf.
 It supports updating on Windows, macOS, and Linux, and handles elevated
 privileges when needed.
 
@@ -22,7 +22,7 @@ success, error = update_chisurf(callback=lambda msg: print(msg))
 
 The update mechanism works by:
 1. Checking for updates from a specified URL
-2. Downloading and installing updates using conda
+2. Downloading and installing updates using the package manager
 3. Handling platform-specific update logic (Windows, macOS, Linux)
 4. Handling elevated privileges when needed
 5. Informing the user to restart the application manually after updating
@@ -56,16 +56,16 @@ from chisurf import info
 
 class ChiSurfUpdater:
     """
-    A class to handle the updating of ChiSurf via conda packages.
+    A class to handle the updating of ChiSurf.
 
     This updater can:
     1. Check for updates from a specified URL
-    2. Download and install updates using conda
+    2. Download and install updates using the package manager
     3. Handle platform-specific update logic (Windows, macOS, Linux)
     4. Restart the application after updating
     
-    Note: For broader conda package management (listing/searching/installing arbitrary
-    packages, managing environments and channels), see the `CondaManager` class defined
+    Note: For broader package management (listing/searching/installing arbitrary
+    packages, managing environments and channels), see the `PackageManager` class defined
     in this module. The updater will instantiate and share configuration with it.
     """
 
@@ -75,14 +75,14 @@ class ChiSurfUpdater:
 
         Args:
             update_url: This parameter is ignored. The updater always uses the hardcoded URL
-                        "https://www.peulen.xyz/downloads/chisurf/conda"
-            channel: Conda channel to use for updates
+                        "https://www.peulen.xyz/downloads/chisurf/"
+            channel: Update channel to use
         """
         # Initialize system attribute first
         self.system = platform.system().lower()
 
         # Define the hardcoded URL - this is the only URL that will be used
-        url = "https://www.peulen.xyz/downloads/chisurf/conda"
+        url = "https://www.peulen.xyz/downloads/chisurf/"
 
         # Check if the URL is a local folder using the improved logic
         is_local_folder = False
@@ -116,7 +116,7 @@ class ChiSurfUpdater:
             # Remove trailing slash if present
             if url.endswith('/'):
                 url = url[:-1]
-            # Append '/conda'
+            # Append '/conda' (kept for server directory structure compatibility)
             url += '/conda'
 
         logging.info(f"Update URL: {url}")
@@ -124,11 +124,11 @@ class ChiSurfUpdater:
         self.channel = channel
         self.current_version = info.__version__
         self.settings_path = get_path('settings')
-        # Expose a shared CondaManager for general package management
+        # Expose a shared PackageManager for general package management
         try:
-            self.conda = CondaManager(self)  # type: ignore[name-defined]
+            self.pkg_manager = PackageManager(self)
         except Exception:
-            self.conda = None
+            self.pkg_manager = None
 
     def check_for_updates(self) -> Tuple[bool, Optional[str], Optional[str]]:
         """
@@ -295,17 +295,17 @@ class ChiSurfUpdater:
                 cmd = ['msiexec', '/i', local_file_path, '/quiet', '/norestart']
                 logging.info("Using Windows MSI package")
             elif file_ext in ['.tar.bz2', '.tar.gz', '.bz2', '.gz', '.conda']:
-                # For conda packages
-                conda_exe = self._get_conda_executable()
-                logging.info(f"Using conda package with conda executable: {conda_exe}")
+                # For environment packages
+                pkg_exe = self._get_pkg_executable()
+                logging.info(f"Using update package with executable: {pkg_exe}")
 
                 # Get the environment path (where chisurf is installed)
                 env_path = sys.prefix
                 logging.debug(f"Environment path: {env_path}")
 
-                # Use conda install with --update-deps to handle dependencies automatically
-                cmd = [conda_exe, 'install', '--yes', '--update-deps', '--force-reinstall', '--prefix', env_path, local_file_path]
-                logging.info("Using conda install with --update-deps to handle dependencies automatically")
+                # Use install command with --update-deps to handle dependencies automatically
+                cmd = [pkg_exe, 'install', '--yes', '--update-deps', '--force-reinstall', '--prefix', env_path, local_file_path]
+                logging.info("Using package manager install with --update-deps")
             else:
                 # Unknown file type
                 error_msg = f"Unsupported update file type: {file_ext}"
@@ -390,7 +390,7 @@ class ChiSurfUpdater:
                 return self.update_to_version(latest_version_info["file_path"], callback)
 
             # Otherwise, use the standard update mechanism
-            logging.info("Using standard conda update mechanism")
+            logging.info("Using standard update mechanism")
 
             # Determine if we need elevated privileges
             needs_elevation = self._needs_elevation()
@@ -657,8 +657,6 @@ class ChiSurfUpdater:
         """
         Get update information from the remote server.
 
-        Always uses the hardcoded URL "https://www.peulen.xyz/downloads/chisurf/conda".
-
         Returns:
             Dictionary containing update information, or None if not available
         """
@@ -780,7 +778,6 @@ class ChiSurfUpdater:
                 elif bl in ('main', 'master'):
                     branch = bl
                 else:
-                    # Use custom branch names as is
                     branch = branch
             else:
                 branch = 'development'
@@ -858,19 +855,19 @@ class ChiSurfUpdater:
             return (str(chisurf_path).startswith(program_files) or 
                     str(chisurf_path).startswith(program_files_x86))
 
-        # On Unix-like systems, check if the conda environment is in a system directory
-        conda_prefix = os.environ.get('CONDA_PREFIX', '')
-        return conda_prefix.startswith('/usr') and not conda_prefix.startswith('/usr/local')
+        # On Unix-like systems, check if the environment is in a system directory
+        pkg_prefix = os.environ.get('CONDA_PREFIX', '')
+        return pkg_prefix.startswith('/usr') and not pkg_prefix.startswith('/usr/local')
 
     def _check_missing_dependencies(self) -> List[str]:
         """
         This method is kept for backward compatibility but now returns an empty list.
-        Conda will handle dependency resolution automatically when installing or updating packages.
+        Dependency resolution is handled automatically when installing or updating packages.
 
         Returns:
             Empty list (no missing dependencies to manually install)
         """
-        logging.info("Dependency checking is now handled by conda automatically")
+        logging.info("Dependency checking is handled by the package manager automatically")
         return []
 
     def _prepare_update_command(self, update_info: Dict[str, Any]) -> Tuple[List[str], str]:
@@ -885,8 +882,8 @@ class ChiSurfUpdater:
             - List of command arguments
             - String representation of the command for display
         """
-        # Get the conda executable
-        conda_exe = self._get_conda_executable()
+        # Get the package manager executable
+        pkg_exe = self._get_pkg_executable()
 
         # Prepare channels
         channels = update_info.get("channels", ["conda-forge", "defaults"])
@@ -897,64 +894,30 @@ class ChiSurfUpdater:
         # Get the environment path (where chisurf is installed)
         env_path = sys.prefix
 
-        # Always use conda install with --update-deps to ensure all dependencies are installed/updated
+        # Use install command with --update-deps to ensure all dependencies are installed/updated
         cmd = [
-            conda_exe, "install", "-y", "--update-deps", "--prefix", env_path, "chisurf",
+            pkg_exe, "install", "-y", "--update-deps", "--prefix", env_path, "chisurf",
             *channel_args
         ]
-        logging.info("Using conda install with --update-deps to handle dependencies automatically")
+        logging.info("Using package manager install with --update-deps")
 
         # Create a string representation for display
         cmd_str = " ".join(cmd)
 
         return cmd, cmd_str
 
-    def _get_conda_executable(self) -> str:
+    def _get_pkg_executable(self) -> str:
         """
-        Get the path to the conda executable.
+        Get the path to the package manager executable.
 
         Returns:
-            Path to the conda executable
+            Path to the executable
         """
-        # Try to get from environment
-        conda_exe = os.environ.get('CONDA_EXE', '')
-        if conda_exe and os.path.exists(conda_exe):
-            return conda_exe
-
-        # Try common locations
-        if self.system == "windows":
-            # Get the application directory (where ChiSurf is installed)
-            app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
-            conda_locations = [
-                # First check the pip-installed conda executable
-                os.path.join(app_dir, "Scripts", "conda.exe"),
-                # Then check standard locations
-                os.path.join(sys.prefix, "Scripts", "conda.exe"),
-                os.path.join(sys.prefix, "condabin", "conda.bat"),
-                os.path.join(os.environ.get('CONDA_PREFIX', ''), "Scripts", "conda.exe"),
-                os.path.join(os.environ.get('CONDA_PREFIX', ''), "condabin", "conda.bat")
-            ]
-        else:
-            # Get the application directory (where ChiSurf is installed)
-            app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-
-            conda_locations = [
-                # First check the pip-installed conda executable
-                os.path.join(app_dir, "bin", "conda"),
-                # Then check standard locations
-                os.path.join(sys.prefix, "bin", "conda"),
-                os.path.join(os.environ.get('CONDA_PREFIX', ''), "bin", "conda")
-            ]
-
-        for location in conda_locations:
-            if os.path.exists(location):
-                # Set the CONDA_EXE environment variable to ensure conda commands use this executable
-                os.environ['CONDA_EXE'] = location
-                return location
-
-        # If we can't find conda, try to use the system PATH
-        return "conda"
+        # Try to get from package manager class
+        if self.pkg_manager:
+            return self.pkg_manager.pkg_exe()
+        
+        return "micromamba"
 
     def _run_command(self, cmd: List[str]) -> Tuple[bool, Optional[str]]:
         """
@@ -1105,7 +1068,6 @@ class ChiSurfUpdater:
         Args:
             cmd: Command to run as a list of arguments
             callback: Optional callback function to report progress
-            missing_dependencies: Optional list of missing dependencies to install after the update
 
         Returns:
             Tuple containing:
@@ -1171,7 +1133,7 @@ class ChiSurfUpdater:
                     # Execute the command and redirect output to log file
                     f.write(win_cmd_str + ' >> "' + log_file + '" 2>&1\n')
 
-                    # Dependencies are handled automatically by conda with --update-deps
+                    # Dependencies are handled automatically by the package manager
 
                     f.write('if %ERRORLEVEL% NEQ 0 (\n')
                     f.write('  echo. >> "' + log_file + '"\n')
@@ -1257,7 +1219,7 @@ class ChiSurfUpdater:
                     # Store the exit code
                     f.write('UPDATE_EXIT_CODE=$?\n')
 
-                    # Dependencies are handled automatically by conda with --update-deps
+                    # Dependencies are handled automatically by the package manager
 
                     f.write('if [ $UPDATE_EXIT_CODE -ne 0 ]; then\n')
                     f.write('  echo >> "' + log_file + '"\n')
@@ -1304,7 +1266,7 @@ class ChiSurfUpdater:
                         f.write(f'  xterm -e "sudo {update_script_path}" &\n')
                         f.write('else\n')
                         f.write('  echo "Error: Neither pkexec nor sudo is available. Cannot elevate privileges."\n')
-                        f.write(f'  xterm -e "{update_script_path}" &\n')
+                        f.write('  xterm -e "{update_script_path}" &\n')
                         f.write('fi\n')
                     else:
                         f.write(f'xterm -e "{update_script_path}" &\n')
@@ -1412,62 +1374,60 @@ def update_chisurf(callback=None, auto_restart=True) -> Tuple[bool, Optional[str
     return updater.update(callback, auto_restart)
 
 
-class CondaManager:
+class PackageManager:
     """
-    Lightweight conda package/environment/channels manager used by ChiSurf.
+    Lightweight package/environment/channels manager used by ChiSurf.
 
-    It prefers an existing conda in the current environment, and falls back to
+    It prefers an existing micromamba/mamba in the current environment, and falls back to
     system PATH. Most commands support JSON output for structured results.
     """
     def __init__(self, updater: Optional[ChiSurfUpdater] = None):
         self.updater = updater
         self.system = (updater.system if updater else platform.system().lower())
-        self._conda_exe_cache: Optional[str] = None
+        self._pkg_exe_cache: Optional[str] = None
         self._preferred: List[str] = []  # execution preference order
-        # Prefer mamba/micromamba when found, otherwise conda
+        # Prefer micromamba/mamba when found
         # We'll detect lazily.
 
     # ---------- Detection ----------
-    def conda_exe(self) -> str:
-        if self._conda_exe_cache:
-            return self._conda_exe_cache
+    def pkg_exe(self) -> str:
+        if self._pkg_exe_cache:
+            return self._pkg_exe_cache
         candidates: List[str] = []
         sys_prefix = sys.prefix
-        conda_prefix = os.environ.get('CONDA_PREFIX', '')
+        pkg_prefix = os.environ.get('CONDA_PREFIX', '')
         app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
         if self.system == 'windows':
-            # micromamba/mamba/conda common locations
+            # micromamba/mamba common locations
             candidates += [
                 os.path.join(app_dir, 'Scripts', 'micromamba.exe'),
                 os.path.join(sys_prefix, 'Scripts', 'micromamba.exe'),
-                os.path.join(conda_prefix, 'Scripts', 'micromamba.exe'),
+                os.path.join(pkg_prefix, 'Scripts', 'micromamba.exe'),
                 os.path.join(app_dir, 'Scripts', 'mamba.exe'),
                 os.path.join(sys_prefix, 'Scripts', 'mamba.exe'),
-                os.path.join(conda_prefix, 'Scripts', 'mamba.exe'),
+                os.path.join(pkg_prefix, 'Scripts', 'mamba.exe'),
                 os.path.join(app_dir, 'Scripts', 'conda.exe'),
                 os.path.join(sys_prefix, 'Scripts', 'conda.exe'),
-                os.path.join(conda_prefix, 'Scripts', 'conda.exe'),
-                os.path.join(sys_prefix, 'condabin', 'conda.bat'),
-                os.path.join(conda_prefix, 'condabin', 'conda.bat'),
+                os.path.join(pkg_prefix, 'Scripts', 'conda.exe'),
             ]
         else:
             candidates += [
                 os.path.join(app_dir, 'bin', 'micromamba'),
                 os.path.join(sys_prefix, 'bin', 'micromamba'),
-                os.path.join(conda_prefix, 'bin', 'micromamba'),
+                os.path.join(pkg_prefix, 'bin', 'micromamba'),
                 os.path.join(app_dir, 'bin', 'mamba'),
                 os.path.join(sys_prefix, 'bin', 'mamba'),
-                os.path.join(conda_prefix, 'bin', 'mamba'),
+                os.path.join(pkg_prefix, 'bin', 'mamba'),
                 os.path.join(app_dir, 'bin', 'conda'),
                 os.path.join(sys_prefix, 'bin', 'conda'),
-                os.path.join(conda_prefix, 'bin', 'conda'),
+                os.path.join(pkg_prefix, 'bin', 'conda'),
             ]
         # Finally, rely on PATH
         candidates += ['micromamba', 'mamba', 'conda']
         for c in candidates:
             if os.path.exists(c) or c in ['micromamba', 'mamba', 'conda']:
-                self._conda_exe_cache = c
+                self._pkg_exe_cache = c
                 # Remember preference order by tool name
                 name = os.path.basename(c).lower()
                 if 'micro' in name:
@@ -1476,10 +1436,8 @@ class CondaManager:
                     self._preferred = ['mamba', 'conda']
                 else:
                     self._preferred = ['conda']
-                # Propagate for child conda calls
-                os.environ['CONDA_EXE'] = c
                 break
-        return self._conda_exe_cache or 'conda'
+        return self._pkg_exe_cache or 'micromamba'
 
     def preferred_solver(self) -> str:
         """Return the name of the preferred solver (micromamba, mamba, or conda)."""
@@ -1487,15 +1445,15 @@ class CondaManager:
             if self._preferred:
                 return self._preferred[0]
             # Fallback: determine from cached executable
-            if self._conda_exe_cache:
-                name = os.path.basename(self._conda_exe_cache).lower()
+            if self._pkg_exe_cache:
+                name = os.path.basename(self._pkg_exe_cache).lower()
                 if 'micro' in name:
                     return 'micromamba'
                 elif 'mamba' in name:
                     return 'mamba'
-            return 'conda'
+            return 'micromamba'
         except Exception:
-            return 'conda'
+            return 'micromamba'
 
     # ---------- Running helpers ----------
     def _popen(self, cmd: List[str]) -> Tuple[bool, str, str, int]:
@@ -1505,7 +1463,7 @@ class CondaManager:
                 exe = (cmd[0] if cmd else '').lower()
                 if exe.endswith('.bat') or exe.endswith('.cmd'):
                     popen_cmd = ['cmd.exe', '/C', *cmd]
-            logging.debug(f"CondaManager executing: {' '.join(popen_cmd)}")
+            logging.debug(f"PackageManager executing: {' '.join(popen_cmd)}")
             p = subprocess.Popen(popen_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             out, err = p.communicate()
             if out:
@@ -1519,7 +1477,6 @@ class CondaManager:
     def _with_prefix(self, args: List[str], prefix: Optional[str]) -> List[str]:
         if not prefix:
             prefix = sys.prefix
-        # conda and mamba both accept -p/--prefix
         return args + ['-p', prefix]
 
     def _channels_args(self, channels: Optional[List[str]]) -> List[str]:
@@ -1531,7 +1488,7 @@ class CondaManager:
 
     # ---------- Public operations ----------
     def info(self) -> Tuple[bool, Any, str]:
-        cmd = [self.conda_exe(), 'info', '--json']
+        cmd = [self.pkg_exe(), 'info', '--json']
         ok, out, err, _ = self._popen(cmd)
         data = None
         if ok:
@@ -1539,11 +1496,11 @@ class CondaManager:
                 data = json.loads(out)
             except Exception:
                 ok = False
-                err = err or 'Failed to parse conda info JSON'
+                err = err or 'Failed to parse info JSON'
         return ok, data, err
 
     def list_installed(self, prefix: Optional[str] = None) -> Tuple[bool, Any, str]:
-        cmd = self._with_prefix([self.conda_exe(), 'list', '--json'], prefix)
+        cmd = self._with_prefix([self.pkg_exe(), 'list', '--json'], prefix)
         ok, out, err, _ = self._popen(cmd)
         data = None
         if ok:
@@ -1551,11 +1508,11 @@ class CondaManager:
                 data = json.loads(out)
             except Exception:
                 ok = False
-                err = err or 'Failed to parse conda list JSON'
+                err = err or 'Failed to parse list JSON'
         return ok, data, err
 
     def search(self, query: str, channels: Optional[List[str]] = None) -> Tuple[bool, Any, str]:
-        cmd = [self.conda_exe(), 'search', query, '--json'] + self._channels_args(channels)
+        cmd = [self.pkg_exe(), 'search', query, '--json'] + self._channels_args(channels)
         ok, out, err, _ = self._popen(cmd)
         data = None
         if ok:
@@ -1563,11 +1520,11 @@ class CondaManager:
                 data = json.loads(out)
             except Exception:
                 ok = False
-                err = err or 'Failed to parse conda search JSON'
+                err = err or 'Failed to parse search JSON'
         return ok, data, err
 
     def install(self, packages: List[str], prefix: Optional[str] = None, channels: Optional[List[str]] = None, update_deps: bool = True) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'install', '-y']
+        args = [self.pkg_exe(), 'install', '-y']
         if update_deps:
             args += ['--update-deps']
         args = self._with_prefix(args, prefix) + packages + self._channels_args(channels)
@@ -1575,12 +1532,12 @@ class CondaManager:
         return ok, (out if ok else err)
 
     def remove(self, packages: List[str], prefix: Optional[str] = None) -> Tuple[bool, str]:
-        args = self._with_prefix([self.conda_exe(), 'remove', '-y'], prefix) + packages
+        args = self._with_prefix([self.pkg_exe(), 'remove', '-y'], prefix) + packages
         ok, out, err, _ = self._popen(args)
         return ok, (out if ok else err)
 
     def update(self, packages: Optional[List[str]] = None, prefix: Optional[str] = None) -> Tuple[bool, str]:
-        args = self._with_prefix([self.conda_exe(), 'update', '-y'], prefix)
+        args = self._with_prefix([self.pkg_exe(), 'update', '-y'], prefix)
         if packages and len(packages) > 0:
             args += packages
         else:
@@ -1589,7 +1546,7 @@ class CondaManager:
         return ok, (out if ok else err)
 
     def dry_run_update_all(self, prefix: Optional[str] = None) -> Tuple[bool, Any, str]:
-        args = self._with_prefix([self.conda_exe(), 'update', '--dry-run', '--json', '--all'], prefix)
+        args = self._with_prefix([self.pkg_exe(), 'update', '--dry-run', '--json', '--all'], prefix)
         ok, out, err, _ = self._popen(args)
         data = None
         if ok:
@@ -1601,14 +1558,13 @@ class CondaManager:
         return ok, data, err
 
     def clean_all(self) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'clean', '-y', '--all']
+        args = [self.pkg_exe(), 'clean', '-y', '--all']
         ok, out, err, _ = self._popen(args)
         return ok, (out if ok else err)
 
     # ----- Environments -----
     def list_envs(self) -> Tuple[bool, List[str], str]:
-        # Prefer `conda env list --json`
-        args = [self.conda_exe(), 'env', 'list', '--json']
+        args = [self.pkg_exe(), 'env', 'list', '--json']
         ok, out, err, _ = self._popen(args)
         envs: List[str] = []
         if ok:
@@ -1624,13 +1580,12 @@ class CondaManager:
         return sys.prefix
 
     def create_env(self, name: Optional[str] = None, prefix: Optional[str] = None, python: Optional[str] = None, packages: Optional[List[str]] = None) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'create', '-y']
+        args = [self.pkg_exe(), 'create', '-y']
         if prefix and not name:
             args += ['-p', prefix]
         elif name and not prefix:
             args += ['-n', name]
         else:
-            # Default to name if both missing
             if not name:
                 name = 'chisurf-env'
             args += ['-n', name]
@@ -1642,7 +1597,7 @@ class CondaManager:
         return ok, (out if ok else err)
 
     def remove_env(self, name: Optional[str] = None, prefix: Optional[str] = None) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'env', 'remove', '-y']
+        args = [self.pkg_exe(), 'env', 'remove', '-y']
         if prefix and not name:
             args += ['-p', prefix]
         elif name and not prefix:
@@ -1653,8 +1608,7 @@ class CondaManager:
         return ok, (out if ok else err)
 
     def clone_env(self, name_src: Optional[str] = None, prefix_src: Optional[str] = None, name_dst: Optional[str] = None, prefix_dst: Optional[str] = None) -> Tuple[bool, str]:
-        # Clone via export+create is more portable; but conda has `conda create --name dst --clone src`
-        args = [self.conda_exe(), 'create', '-y']
+        args = [self.pkg_exe(), 'create', '-y']
         if name_dst and not prefix_dst:
             args += ['-n', name_dst]
         elif prefix_dst and not name_dst:
@@ -1671,8 +1625,7 @@ class CondaManager:
         return ok, (out if ok else err)
 
     def export_env(self, prefix: Optional[str] = None) -> Tuple[bool, str]:
-        # Returns YAML text
-        args = [self.conda_exe(), 'env', 'export']
+        args = [self.pkg_exe(), 'env', 'export']
         if prefix:
             args += ['-p', prefix]
         else:
@@ -1681,7 +1634,7 @@ class CondaManager:
         return ok, (out if ok else err)
 
     def import_env(self, file_path: str, name: Optional[str] = None) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'env', 'create', '-f', file_path]
+        args = [self.pkg_exe(), 'env', 'create', '-f', file_path]
         if name:
             args += ['-n', name]
         ok, out, err, _ = self._popen(args)
@@ -1689,8 +1642,7 @@ class CondaManager:
 
     # ----- Channels -----
     def get_channels(self) -> Tuple[bool, List[str], str]:
-        # Use `conda config --show --json` and read 'channels'
-        args = [self.conda_exe(), 'config', '--show', '--json']
+        args = [self.pkg_exe(), 'config', '--show', '--json']
         ok, out, err, _ = self._popen(args)
         channels: List[str] = []
         if ok:
@@ -1699,23 +1651,21 @@ class CondaManager:
                 channels = data.get('channels', []) or data.get('channel_aliases', [])
             except Exception:
                 ok = False
-                err = err or 'Failed to parse conda config JSON'
+                err = err or 'Failed to parse config JSON'
         return ok, channels, err
 
     def add_channel(self, channel: str) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'config', '--add', 'channels', channel]
+        args = [self.pkg_exe(), 'config', '--add', 'channels', channel]
         ok, out, err, _ = self._popen(args)
         return ok, (out if ok else err)
 
     def remove_channel(self, channel: str) -> Tuple[bool, str]:
-        args = [self.conda_exe(), 'config', '--remove', 'channels', channel]
+        args = [self.pkg_exe(), 'config', '--remove', 'channels', channel]
         ok, out, err, _ = self._popen(args)
         return ok, (out if ok else err)
 
     def set_channels(self, channels: List[str]) -> Tuple[bool, str]:
-        # Clear existing then add in order
-        ok, out = self._popen([self.conda_exe(), 'config', '--remove-key', 'channels'])[:2]
-        # ignore failure of remove-key
+        ok, out = self._popen([self.pkg_exe(), 'config', '--remove-key', 'channels'])[:2]
         last_msg = ''
         for ch in channels:
             ok2, msg = self.add_channel(ch)

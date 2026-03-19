@@ -24,7 +24,7 @@ import os
 from qtpy import QtWidgets, QtCore, QtGui
 
 from .updater import ChiSurfUpdater, check_for_updates, update_chisurf
-from .conda_widget import CondaManagerDialog
+from .package_widget import PackageManagerDialog
 from chisurf import info
 import chisurf.settings as _cs_settings_mod
 
@@ -69,7 +69,7 @@ class UpdaterWidget(QtWidgets.QWidget):
             self._check_on_startup = True
 
         # Get update URL from settings or fall back to the one from info.py
-        hardcoded_url = "https://www.peulen.xyz/downloads/chisurf/conda"
+        hardcoded_url = "https://www.peulen.xyz/downloads/chisurf/"
         update_url = cs_settings.get('update_url', hardcoded_url)
 
         # Initialize updater with the update URL
@@ -199,13 +199,13 @@ class UpdaterWidget(QtWidgets.QWidget):
         button_layout.addWidget(self.update_button)
 
         # Open Package Manager button
-        self.conda_manager_button = QtWidgets.QPushButton("Package Manager")
+        self.pkg_manager_button = QtWidgets.QPushButton("Package Manager")
         try:
-            self.conda_manager_button.setToolTip("Open the package manager to manage conda packages in your environment.")
-            self.conda_manager_button.clicked.connect(self.open_conda_manager)
+            self.pkg_manager_button.setToolTip("Open the package manager to manage packages in your environment.")
+            self.pkg_manager_button.clicked.connect(self.open_pkg_manager)
         except Exception:
             pass
-        button_layout.addWidget(self.conda_manager_button)
+        button_layout.addWidget(self.pkg_manager_button)
 
         layout.addLayout(button_layout)
 
@@ -295,14 +295,14 @@ class UpdaterWidget(QtWidgets.QWidget):
             # Fallback: escaped preformatted
             return f"<pre>{html.escape(str(text))}</pre>"
 
-    def open_conda_manager(self):
-        """Open the Conda Package Manager dialog."""
+    def open_pkg_manager(self):
+        """Open the Package Manager dialog."""
         try:
-            dlg = CondaManagerDialog(self)
+            dlg = PackageManagerDialog(self)
             dlg.exec()
         except Exception as e:
             try:
-                QtWidgets.QMessageBox.critical(self, "Conda Manager", f"Failed to open Conda Manager:\n{e}")
+                QtWidgets.QMessageBox.critical(self, "Package Manager", f"Failed to open Package Manager:\n{e}")
             except Exception:
                 pass
 
@@ -635,7 +635,7 @@ class UpdaterWidget(QtWidgets.QWidget):
     def _update_status_tooltip(self):
         """Update the status label tooltip with solver information."""
         try:
-            solver_path = self.updater.conda.conda_exe()
+            solver_path = self.updater.pkg_manager.pkg_exe()
             solver_name = os.path.basename(solver_path).lower()
             if 'micro' in solver_name:
                 solver_type = 'micromamba'

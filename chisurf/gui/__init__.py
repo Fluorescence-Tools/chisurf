@@ -9,6 +9,7 @@ import threading
 import time
 import atexit
 import ast
+import webbrowser
 
 from functools import partial
 import pkgutil
@@ -16,13 +17,6 @@ import importlib
 import chisurf.gui.gui_tweaks  # GUI tweaks (QT_OPENGL, etc.)
 
 from qtpy import QtWidgets, QtGui, QtCore, uic
-try:
-    from qtpy.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-except (ImportError, RuntimeError):
-    QWebEngineView = None
-    QWebEnginePage = None
-    import logging
-    logging.getLogger("chisurf").debug("QtWebEngineWidgets not available - some browser features will be disabled.")
 import pyqtgraph as pg
 
 import chisurf  # Ensure chisurf is available module-wide
@@ -312,14 +306,14 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.message_color = QtCore.Qt.lightGray  # Light gray text color
 
         # Get version information
-        from chisurf.info import __version__
+        from chisurf.info import __version__, __license__
         self.version_text = f"Version: {__version__}"
 
         # Initialize copyright, license, and contributors information
         import datetime
         current_year = datetime.datetime.now().year
         self.copyright_text = f"© 2014-{current_year} ChiSurf Team"
-        self.license_text = "Licensed under GPL2.1"
+        self.license_text = f"Licensed under {__license__}"
         self.contributors_text = "Developers & Contributors: \nThomas-Otavio Peulen, Katherina Hemmen, Jakub Kubiak"
 
     def update_progress(self, value):
@@ -757,11 +751,23 @@ def setup_gui(
                 except Exception:
                     is_dev = False
 
-                # Skip broken plugins if they should be hidden and we're not in experimental mode
-                if is_broken and hide_disabled_plugins and not experimental_mode:
+                # In normal mode, hide broken and CLI-only plugins entirely.
+                # In dev/experimental mode, keep showing them for diagnostics.
+                if (is_broken or is_cli_only) and not experimental_mode:
                     skipped_hidden += 1
                     chisurf.logging.info(
-                        f"Skipping disabled/broken plugin in menu: '{plugin_name}' "
+                        f"Skipping hidden plugin in menu (normal mode): '{plugin_name}' "
+                        f"(module='{module_name}', source='{source}', package_dir='{package_dir}', "
+                        f"is_broken={is_broken}, is_cli_only={is_cli_only})"
+                    )
+                    continue
+
+                # Backward-compatible opt-in: still allow hiding broken plugins in
+                # experimental mode when explicit user setting requests it.
+                if is_broken and hide_disabled_plugins and experimental_mode:
+                    skipped_hidden += 1
+                    chisurf.logging.info(
+                        f"Skipping disabled/broken plugin in menu (experimental + hide_disabled_plugins): '{plugin_name}' "
                         f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
                     )
                     continue
@@ -792,17 +798,16 @@ def setup_gui(
 
                 status = "BROKEN" if is_broken else "ok"
 
-                # Skip CLI-only tools from ribbon menu
+                # CLI-only plugins are hidden in normal mode above. In experimental
+                # mode we keep them visible but disabled.
                 if is_cli_only:
-                    chisurf.logging.info(
-                        f"Skipping CLI-only plugin from ribbon menu: '{plugin_name}' "
-                        f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
-                    )
-                    continue
+                    label_suffix = " (CLI)"
+                else:
+                    label_suffix = ""
 
                 # Route development plugins into the dedicated Dev submenu
                 if is_dev:
-                    label_base = display_name
+                    label_base = f"{display_name}{label_suffix}"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     chisurf.logging.info(
                         f"Adding plugin to Plugins->Dev menu: '{label}' "
@@ -827,7 +832,7 @@ def setup_gui(
                     target_menu = create_nested_menu_structure(plugin_menu, hierarchy_parts, submenu_cache)
                     
                     # Use only the display name for the label
-                    label_base = display_name
+                    label_base = f"{display_name}{label_suffix}"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     
                     chisurf.logging.info(
@@ -847,7 +852,7 @@ def setup_gui(
                     target_menu.addAction(plugin_action)
                 else:
                     # Add directly to main plugins menu
-                    label_base = display_name
+                    label_base = f"{display_name}{label_suffix}"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     
                     chisurf.logging.info(
@@ -903,7 +908,6 @@ def setup_gui(
 
         home_dir = pathlib.Path.home()
         chisurf_path = pathlib.Path(chisurf.__file__).parent
-        plugin_path = pathlib.Path(chisurf.plugins.__file__).parent / "browser"
 
         # Define the target directory inside the home directory
         chisurf_notebooks_dir = home_dir / "notebooks"
@@ -935,11 +939,7 @@ def setup_gui(
                 # http://localhost:8932/notebooks/Links/smFRET_01_Burst_Search_ALEX.
                 adr = f"{chisurf.__jupyter_address__}/notebooks/{notebook_path_str}"
 
-                p = partial(
-                    window.onRunMacro, plugin_path / "wizard.py",
-                    executor='exec',
-                    globals={'__name__': 'plugin', 'adr': adr}
-                )
+                p = partial(webbrowser.open_new_tab, adr)
 
                 menu_text = notebook_file.stem
                 action = QtWidgets.QAction(f"{menu_text}", window)
@@ -1068,7 +1068,49 @@ def setup_gui(
         window._restore_setup_defaults()
     elif stage == "load_tools":
         window.load_tools()
-        # In your setup_gui function:
+    elif stage == "start_mcp":
+        try:
+            _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+            _start_mcp = bool(_gui_cfg.get('mcp_autostart', False))
+        except Exception:
+            _start_mcp = False
+
+        if not _start_mcp:
+            chisurf.logging.info("Skipping MCP server startup (disabled in settings).")
+            return None
+
+        chisurf.logging.info("Starting MCP server process")
+        try:
+            running_thread = getattr(chisurf, "__mcp_thread__", None)
+            if running_thread is not None and getattr(running_thread, "is_alive", lambda: False)():
+                chisurf.logging.info("MCP server thread already running")
+                return None
+
+            def _run_mcp_server_in_process():
+                try:
+                    from chisurf.mcp.server import create_mcp, resolve_transport_kwargs
+
+                    mcp = create_mcp(name="ChiSurf")
+                    kwargs = resolve_transport_kwargs(
+                        transport="streamable-http",
+                        host="127.0.0.1",
+                        port=8765,
+                        path="/mcp",
+                    )
+                    mcp.run(transport="streamable-http", show_banner=False, **kwargs)
+                except Exception as mcp_err:
+                    chisurf.logging.error(f"Failed to run MCP server thread: {mcp_err}")
+
+            chisurf.__mcp_thread__ = threading.Thread(
+                target=_run_mcp_server_in_process,
+                name="chisurf-mcp-server",
+                daemon=True,
+            )
+            chisurf.__mcp_thread__.start()
+        except Exception as e:
+            chisurf.logging.error(f"Failed to start MCP server: {e}")
+            chisurf.__mcp_thread__ = None
+
     elif stage == "start_jupyter":
         try:
             _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
@@ -1195,6 +1237,15 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         ])
     else:
         stages.append(("Populate plugins", "populate_plugins", 90))
+
+    try:
+        _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+        _start_mcp = bool(_gui_cfg.get('mcp_autostart', False))
+    except Exception:
+        _start_mcp = False
+        
+    if _start_mcp:
+        stages.append(("Initializing MCP", "start_mcp", 97))
 
     stages.append(("Styling up", "setup_style", 100))
 
@@ -1377,8 +1428,8 @@ def get_app():
             win.setFocus()
 
 
-    def shutdown_jupyter():
-        """Ensure the Jupyter notebook server is terminated when the application closes."""
+    def shutdown_services():
+        """Ensure the Jupyter notebook server and MCP server are terminated when the application closes."""
         import chisurf
         jupyter_proc = getattr(chisurf, '__jupyter_process__', None)
         # Only terminate if it's still running.
@@ -1390,8 +1441,16 @@ def get_app():
                 # If it doesn't stop in time, force-kill it.
                 jupyter_proc.kill()
 
+        mcp_proc = getattr(chisurf, '__mcp_process__', None)
+        if mcp_proc is not None and mcp_proc.poll() is None:
+            mcp_proc.terminate()
+            try:
+                mcp_proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                mcp_proc.kill()
+
     # Connect our shutdown function to the application's aboutToQuit signal.
-    app.aboutToQuit.connect(shutdown_jupyter)
+    app.aboutToQuit.connect(shutdown_services)
 
     return app
 

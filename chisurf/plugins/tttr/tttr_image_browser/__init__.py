@@ -41,7 +41,7 @@ except Exception:
 
 # Reuse widgets/utilities from existing plugins
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
-from chisurf.plugins.trace_browser.__init__ import get_tttr_supported_exts, StarRatingWidget, NoHoverSelectTable
+from chisurf.plugins.tttr.trace_browser.__init__ import get_tttr_supported_exts, StarRatingWidget, NoHoverSelectTable
 
 # Logging
 from chisurf import logging
