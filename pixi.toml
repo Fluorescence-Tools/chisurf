@@ -58,7 +58,6 @@ mypy = "*"
 pip = "*"
 
 [pypi-dependencies]
-tttrlib = { version = "*", env-markers = "sys_platform == 'win32'" }
 chinet = { path = "modules/chinet", editable = true }
 labellib = { path = "modules/labellib", editable = true }
 ndxplorer = { path = "modules/ndxplorer", editable = true }
@@ -102,27 +101,27 @@ tttrlib = "*"
 [target.osx-arm64.dependencies]
 tttrlib = "*"
 
-[tasks]
-test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
-build-tttrlib = { cmd = "true" }
-build-labellib = { cmd = "python -m pip install -e modules/labellib --no-deps", inputs = [
-    "modules/labellib/CMakeLists.txt",
-    "modules/labellib/FlexLabel/**",
-    "modules/labellib/setup.py",
-] }
-build-ndxplorer = { cmd = "python -m pip install -e modules/ndxplorer --no-deps", inputs = [
-    "modules/ndxplorer/pyproject.toml",
-    "modules/ndxplorer/ndxplorer/**",
-] }
-build-clsmview = { cmd = "python -m pip install -e modules/clsmview --no-deps", inputs = [
-    "modules/clsmview/setup.py",
-    "modules/clsmview/clsmview/**",
-] }
-build-quest = { cmd = "python -m pip install -e modules/quest --no-deps", inputs = [
-    "modules/quest/pyproject.toml",
-    "modules/quest/quest/**",
-] }
-build-chinet = { cmd = "true" }
+ [tasks]
+ test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
+ build-labellib = { cmd = "python -m pip install -e modules/labellib --no-deps", inputs = [
+     "modules/labellib/CMakeLists.txt",
+     "modules/labellib/FlexLabel/**",
+     "modules/labellib/setup.py",
+ ] }
+ build-ndxplorer = { cmd = "python -m pip install -e modules/ndxplorer --no-deps", inputs = [
+     "modules/labellib/CMakeLists.txt",
+     "modules/labelllib/FlexLabel/**",
+     "modules/labellib/setup.py",
+ ] }
+ build-clsmview = { cmd = "python -m pip install -e modules/clsmview --no-deps", inputs = [
+     "modules/clsmview/setup.py",
+     "modules/clsmview/clsmview/**",
+ ] }
+ build-quest = { cmd = "python -m pip install -e modules/quest --no-deps", inputs = [
+     "modules/quest/pyproject.toml",
+     "modules/quest/quest/**",
+ ] }
+ build-chinet = { cmd = "true" }
 build-extensions = { depends-on = [
     "build-tttrlib",
     "build-labellib",

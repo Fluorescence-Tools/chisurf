@@ -2,10 +2,6 @@
 	path = modules/clsmview
 	url = https://github.com/fluorescence-tools/clsmview
 	branch = main
-[submodule "modules/tttrlib"]
-	path = modules/tttrlib
-	url = https://github.com/fluorescence-tools/tttrlib
-	branch = development
 [submodule "modules/labellib"]
 	path = modules/labellib
 	url = https://github.com/fluorescence-tools/labellib
