@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [development]
+    tags: ["v*"]
   release:
     types: [released, prereleased]
   schedule:
@@ -41,6 +42,13 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential xvfb \
+            libgl1-mesa-dev libfuse2
+
       - name: Set macOS SDK
         if: runner.os == 'macOS'
         run: bash build_tools/install_macos_sdk.sh
@@ -52,22 +60,78 @@ jobs:
           cache: true
 
       - name: Build Pixi package
-        run: pixi run -e build build-pkg
+        run: pixi run build-pkg
 
-      - name: Build Windows installer
-        if: runner.os == 'Windows'
-        run: pixi run -e build build-setup
-
-      - name: Upload to GitHub Releases (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ${{ env.OUT_DIR }}/**/*.conda
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload build artifacts
+      - name: Upload conda packages as artifacts
         uses: actions/upload-artifact@v4
         with:
           name: packages-${{ matrix.os }}
           path: ${{ env.OUT_DIR }}/**/*.conda
+
+      - name: Build Windows installer (.exe)
+        if: runner.os == 'Windows'
+        run: pixi run build-setup
+
+      - name: Build macOS DMG installer (.dmg)
+        if: runner.os == 'macOS'
+        run: pixi run build-osx-app
+
+      - name: Build Linux AppImage
+        if: runner.os == 'Linux'
+        run: pixi run build-linux-appimage
+
+      - name: Upload Windows installer
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows
+          path: dist/*.exe
+
+      - name: Upload macOS DMG
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-macos
+          path: dist/*.dmg
+
+      - name: Upload Linux AppImage
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-linux
+          path: dist/*.AppImage
+
+  release:
+    name: Upload to GitHub Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: installer-*
+          merge-multiple: true
+
+      - name: Download conda packages
+        uses: actions/download-artifact@v4
+        with:
+          path: conda-packages
+          pattern: packages-*
+          merge-multiple: true
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/*.exe
+            artifacts/*.dmg
+            artifacts/*.AppImage
+            conda-packages/**/*.conda
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

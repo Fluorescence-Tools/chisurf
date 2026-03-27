@@ -4,11 +4,16 @@ version = "26.dev0"
 description = "ChiSurf: an interactive global analysis platform for fluorescence data."
 authors = ["Thomas-Otavio Peulen <thomas@peulen.xyz>"]
 channels = ["conda-forge", "bioconda"]
-platforms = ["win-64", "linux-64", "osx-arm64"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[environments]
+default = ["build"]
 
 [dependencies]
-python = "3.10.*"
-numpy = "<2.0"
+python = "3.12.*"
+numpy = "*"
+cmake = "<4"
+ninja = "*"
 typing-extensions = ">=4.14"
 pytools = ">=2024.0"
 pyyaml = "*"
@@ -26,7 +31,7 @@ pandas = "*"
 scipy = "*"
 numba = "*"
 boost-cpp = "*"
-mdtraj = "<1.10"
+mdtraj = "*"
 ipython = "*"
 notebook = "*"
 emcee = "*"
@@ -42,19 +47,34 @@ zeus-mcmc = "*"
 pygments = "*"
 pyarrow = "*"
 boost-histogram = "*"
-fastmcp = "*"
-setuptools = ">=61,<70"
+fastmcp = ">=3.1.0,<4"
+setuptools = ">=82.0.1,<83"
+pymol-open-source = "*"
 pytest = "*"
+pytest-cov = "*"
+pytest-qt = "*"
+ruff = "*"
+mypy = "*"
+pip = "*"
+
+[pypi-dependencies]
+tttrlib = { version = "*", env-markers = "sys_platform == 'win32'" }
+chinet = { path = "modules/chinet", editable = true }
+labellib = { path = "modules/labellib", editable = true }
+ndxplorer = { path = "modules/ndxplorer", editable = true }
+clsmview = { path = "modules/clsmview", editable = true }
+quest = { path = "modules/quest", editable = true }
+
+[pypi-options]
+dependency-overrides = { "pymol-open-source" = {}, "numpy" = {} }
 
 [feature.build.dependencies]
 rattler-build = ">=0.58.0"
 cmake = "<4"
 ninja = "*"
-swig = "<4.3.0"
-cython = ">=0.29,<3"
-setuptools = ">=61,<70"
+setuptools = "*"
 wheel = "*"
-pip = "*"
+pip = ">=26.0.1,<27"
 git = "*"
 rattler-index = "*"
 jinja2 = "*"
@@ -62,41 +82,65 @@ tomli = "*"
 micromamba = "*"
 
 [feature.build.tasks]
-collect-entry-points = { cmd = "python rattler-recipe/collect_entry_points.py" }
-build-pkg = { cmd = "python rattler-recipe/build_pkg.py", depends-on = ["collect-entry-points"] }
-build-setup = { cmd = "python build_tools/win/build_setup.py", depends-on = ["collect-entry-points"] }
-
-[feature.docs.dependencies]
-sphinx = "*"
-sphinx_rtd_theme = "*"
-sphinx_bootstrap_theme = "*"
-numpydoc = "*"
-sphinx-autodoc-typehints = "*"
-make = "*"
-
-[feature.docs.tasks]
-docs-html = { cmd = "make html", cwd = "docs" }
-docs-clean = { cmd = "make clean", cwd = "docs" }
-
-[environments]
-default = ["build"]
-build = ["build"]
-docs = ["docs"]
+build-pkg = { cmd = "python build_tools/run_rattler_build.py", depends-on = ["build-extensions"] }
+build-setup = { cmd = "python build_tools/win/build_setup.py /nobuild", depends-on = ["build-pkg"] }
+build-osx-app = { cmd = "bash build_tools/osx/build-osx-app.sh --no-build", depends-on = ["build-pkg"] }
+build-linux-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh --no-build", depends-on = ["build-pkg"] }
 
 [target.win-64.dependencies]
 hdf5 = "*"
+cmake = "<4"
+ninja = "*"
+
+[target.linux-64.dependencies]
+hdf5 = "*"
+tttrlib = "*"
+
+[target.osx-64.dependencies]
+tttrlib = "*"
+
+[target.osx-arm64.dependencies]
+tttrlib = "*"
 
 [tasks]
-# Linux/macOS/Windows extension builds
-build-chinet = { cmd = "cmake -S modules/chinet -B modules/chinet/build -G Ninja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY=OFF -DBUILD_PYTHON_DOCS=OFF -DWITH_AVX=OFF -DWITH_MONGODB=OFF && cmake --build modules/chinet/build --config Release --target install" }
-build-tttrlib = { cmd = "cmake -S modules/tttrlib -B modules/tttrlib/b2 -G Ninja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY=OFF -DBUILD_PYTHON_DOCS=OFF -DWITH_AVX=OFF && cmake --build modules/tttrlib/b2 --config Release --target install" }
-build-labellib = { cmd = "cmake -S modules/labellib -B modules/labellib/build -G Ninja -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_BUILD_TYPE=Release -DPYTHON_LIBRARY_OUTPUT_DIRECTORY=$CONDA_PREFIX/Lib/site-packages && cmake --build modules/labellib/build --config Release --target install" }
-build-ndxplorer = { cmd = "python -m pip install -e modules/ndxplorer --no-deps" }
-build-clsmview = { cmd = "python -m pip install -e modules/clsmview --no-deps" }
-build-quest = { cmd = "python -m pip install -e modules/quest --no-deps" }
-build-extensions = { depends-on = ["build-chinet", "build-tttrlib", "build-labellib", "build-ndxplorer", "build-clsmview", "build-quest"] }
+test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
+build-tttrlib = { cmd = "true" }
+build-labellib = { cmd = "python -m pip install -e modules/labellib --no-deps", inputs = [
+    "modules/labellib/CMakeLists.txt",
+    "modules/labellib/FlexLabel/**",
+    "modules/labellib/setup.py",
+] }
+build-ndxplorer = { cmd = "python -m pip install -e modules/ndxplorer --no-deps", inputs = [
+    "modules/ndxplorer/pyproject.toml",
+    "modules/ndxplorer/ndxplorer/**",
+] }
+build-clsmview = { cmd = "python -m pip install -e modules/clsmview --no-deps", inputs = [
+    "modules/clsmview/setup.py",
+    "modules/clsmview/clsmview/**",
+] }
+build-quest = { cmd = "python -m pip install -e modules/quest --no-deps", inputs = [
+    "modules/quest/pyproject.toml",
+    "modules/quest/quest/**",
+] }
+build-chinet = { cmd = "true" }
+build-extensions = { depends-on = [
+    "build-tttrlib",
+    "build-labellib",
+    "build-ndxplorer",
+    "build-clsmview",
+    "build-quest",
+    "build-chinet",
+] }
+chisurf = { cmd = "python -m chisurf" }
 
-chisurf = { cmd = "python -m chisurf", depends-on = ["build-extensions"], env = { PYTHONPATH = "." } }
-test-app = "python -c \"import chisurf; print('ChiSurf imported successfully')\""
-test = { cmd = "pytest unittests -k 'not gui and not widget and not window'", env = { PYTHONPATH = "." } }
+test-app-linux = { cmd = "echo 'test-app-linux: requires native pixi environment on Linux'", depends-on = ["build-extensions"] }
+test = { cmd = "pytest test -k 'not gui and not widget and not window'", depends-on = ["build-extensions"] }
+test-gui = { cmd = "pytest test/gui", depends-on = ["build-extensions"] }
+lint = { cmd = "ruff check chisurf/ test/ && ruff format --check chisurf/ test/" }
+fmt = { cmd = "ruff format chisurf/ test/ && ruff check --fix chisurf/ test/" }
+typecheck = { cmd = "mypy chisurf/" }
+test-cov = { cmd = "pytest --cov=chisurf --cov-report=term --cov-report=xml --cov-report=html", depends-on = ["build-extensions"] }
 test-linux = { cmd = "docker build -t chisurf-linux -f Dockerfile.linux . && docker run --rm chisurf-linux" }
+test-smoke = { cmd = "pytest test/test_basic.py -q", depends-on = ["build-extensions"] }
+
+[target.win-64.tasks]

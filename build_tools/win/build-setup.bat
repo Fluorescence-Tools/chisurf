@@ -80,6 +80,15 @@ echo OUTPUT_DIR        = %OUTPUT_DIR%
 echo PIXI_MANIFEST     = %PIXI_MANIFEST%
 echo.
 
+if defined INNO_SETUP_EXE goto InnoCheck
+if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "INNO_SETUP_EXE=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+if exist "C:\Program Files\Inno Setup 6\ISCC.exe" set "INNO_SETUP_EXE=C:\Program Files\Inno Setup 6\ISCC.exe"
+:InnoCheck
+if not defined INNO_SETUP_EXE (
+    echo ERROR: Inno Setup compiler not found. Set INNO_SETUP_EXE or install Inno Setup 6.
+    exit /b 1
+)
+
 :: -----------------------------------------------------------------------
 :: Compute version (PEP 440 compatible) if not already set in environment
 :: -----------------------------------------------------------------------
@@ -128,7 +137,7 @@ if errorlevel 1 (
 if "%BUILD_RATTLER_PACKAGE%"=="1" (
     echo.
     echo [1/4] Building package ...
-    pixi run -e build --manifest-path "%PIXI_MANIFEST%" build-pkg
+    pixi run build-pkg
     if errorlevel 1 (
         echo ERROR: Package build failed
         exit /b 1
@@ -138,21 +147,10 @@ if "%BUILD_RATTLER_PACKAGE%"=="1" (
 )
 
 :: -----------------------------------------------------------------------
-:: Index the local channel so it can be used for installation
+:: Create the distribution environment from the local package
 :: -----------------------------------------------------------------------
 echo.
-echo [2/4] Indexing local repository at %OUTPUT_DIR% ...
-pixi run -e build --manifest-path "%PIXI_MANIFEST%" rattler-index fs "%OUTPUT_DIR%"
-if errorlevel 1 (
-    echo ERROR: rattler-index failed
-    exit /b 1
-)
-
-:: -----------------------------------------------------------------------
-:: Create the distribution environment from the local channel
-:: -----------------------------------------------------------------------
-echo.
-echo [3/4] Creating distribution environment at %APP_PATH% ...
+echo [2/4] Creating distribution environment at %APP_PATH% ...
 
 if not exist "%DIST_PATH%" mkdir "%DIST_PATH%"
 if exist "%APP_PATH%" (
@@ -160,10 +158,21 @@ if exist "%APP_PATH%" (
     rmdir /s /q "%APP_PATH%"
 )
 
-pixi run -e build --manifest-path "%PIXI_MANIFEST%" micromamba create -y ^
+:: Find the built conda package
+set "CHISURF_PKG="
+for %%f in ("%OUTPUT_DIR%\win-64\chisurf-*.conda") do set "CHISURF_PKG=%%f"
+if not defined CHISURF_PKG (
+    echo ERROR: No chisurf conda package found in %OUTPUT_DIR%\win-64
+    exit /b 1
+)
+echo Found package: %CHISURF_PKG%
+
+set "CHISURF_PKG_URL=%CHISURF_PKG:\=/%"
+pixi run micromamba create -y ^
     --prefix "%APP_PATH%" ^
+    python ^
     chisurf ^
-    -c "file:///%OUTPUT_DIR%" ^
+    "file:///%CHISURF_PKG_URL%" ^
     -c conda-forge ^
     --no-channel-priority
 if errorlevel 1 (
@@ -172,19 +181,27 @@ if errorlevel 1 (
 )
 
 :: Verify installation
-if not exist "%APP_PATH%\python.exe" (
-    echo ERROR: python.exe not found in %APP_PATH%
-    exit /b 1
+if not exist "%APP_PATH%\Scripts\python.exe" (
+    if not exist "%APP_PATH%\python.exe" (
+        echo ERROR: python.exe not found in %APP_PATH%
+        exit /b 1
+    )
 )
+echo Installing tttrlib via pip (Windows) ...
+"%APP_PATH%\Scripts\pip.exe" install tttrlib --no-cache-dir
+if errorlevel 1 (
+    echo WARNING: Could not install tttrlib
+)
+
 echo Verifying chisurf installation ...
-pixi run -e build --manifest-path "%PIXI_MANIFEST%" python -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import chisurf; print('chisurf OK:', chisurf.__version__)"
+"%APP_PATH%\Scripts\python.exe" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import chisurf; print('chisurf OK:', chisurf.__version__)"
 if errorlevel 1 (
     echo WARNING: Could not verify chisurf import (may be OK in sandboxed environment)
 )
 
 :: Pre-compile Python files
 echo Compiling .pyc files ...
-pixi run -e build --manifest-path "%PIXI_MANIFEST%" python -m compileall -qq "%APP_PATH%"
+"%APP_PATH%\Scripts\python.exe" -m compileall -qq "%APP_PATH%"
 
 :: Strip dev-only bloat
 echo Stripping headers, docs, .lib files ...
@@ -199,7 +216,7 @@ for /r "%APP_PATH%\Library\lib" %%F in (*.lib) do del /q "%%F"
 :: Generate Inno Setup script and build setup.exe
 :: -----------------------------------------------------------------------
 echo.
-echo [4/4] Building Windows installer ...
+echo [3/4] Building Windows installer ...
 
 :: create_installer_script.py must run from the build_tools\win directory
 cd /d "%SCRIPT_DIR%"
@@ -209,13 +226,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer_config.iss
+if not defined INNO_SETUP_EXE (
+    echo ERROR: INNO_SETUP_EXE is not set.
+    exit /b 1
+)
+"%INNO_SETUP_EXE%" installer_config.iss
 if errorlevel 1 (
     echo ERROR: Inno Setup failed
     exit /b 1
 )
 
-del /q installer_config.iss 2>nul
+if exist installer_config.iss del /q installer_config.iss
 
 :: -----------------------------------------------------------------------
 :: Report version and clean up
@@ -233,4 +254,3 @@ rmdir /s /q "%APP_PATH%"
 cd /d "%SOURCE_PATH%"
 echo Done.
 exit /b 0
-

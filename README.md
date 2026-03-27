@@ -1,5 +1,6 @@
 [![DOI](https://zenodo.org/badge/149296509.svg)](https://zenodo.org/badge/latestdoi/149296509)
-[![Pixi Build](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml/badge.svg?branch=development)](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml)
+[![Pixi CI](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml/badge.svg?branch=development)](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml)
+[![Release](https://github.com/Fluorescence-Tools/chisurf/actions/workflows/pixi-ci.yml/badge.svg)](https://github.com/Fluorescence-Tools/chisurf/releases)
 
 # ChiSurf
 
@@ -7,8 +8,8 @@ ChiSurf is a software package for the global analysis of fluorescence data. It e
 For a detailed explanation of the methods and implementation, please refer to the [ChiSurf Manuscript](https://doi.org/10.3390/spectroscj3020016).
 
 <p align="center">
-  <img src="https://www.peulen.xyz/wp-content/uploads/2017/05/ChiSurf_Overview-768x451.png" alt="ChiSurf GUI" width="50%">
-  <img src="https://www.peulen.xyz/wp-content/uploads/2024/04/ChiSurf_ParameterGraph.png" alt="ChiSurf Parameter Network" width="40%">
+  <img src="docs/images/ChiSurf_Overview.png" alt="ChiSurf GUI" width="50%">
+  <img src="docs/images/ChiSurf_ParameterGraph.png" alt="ChiSurf Parameter Network" width="40%">
 </p>
 
 
@@ -56,15 +57,41 @@ This paper provides an in-depth overview of ChiSurf's capabilities, including it
 
 ## Download
 
-ChiSurf is available as a compiled Windows installation file. By downloading and using ChiSurf, you agree to the following terms:
+Download the latest release for your platform from [GitHub Releases](https://github.com/Fluorescence-Tools/chisurf/releases):
 
-> ChiSurf is provided “as is” without warranty of any kind, express or implied. The authors of ChiSurf shall not be held liable for any claim, damages, or other liability arising from its use. Redistribution of the code is not permitted, and it is provided free of charge for both academic and commercial users.
+| Platform | Artifact |
+|----------|----------|
+| Windows  | `ChiSurf-windows-setup_*.exe` |
+| macOS    | `ChiSurf-Installer.dmg` |
+| Linux    | `ChiSurf-x86_64.AppImage` |
+
+Previous versions are available at [peulen.xyz/downloads/](https://www.peulen.xyz/downloads/).
+
+By downloading and using ChiSurf, you agree to the following terms:
+
+> ChiSurf is provided "as is" without warranty of any kind, express or implied. The authors of ChiSurf shall not be held liable for any claim, damages, or other liability arising from its use. Redistribution of the code is not permitted, and it is provided free of charge for both academic and commercial users.
 
 ### Installation Instructions
 
-#### Linux & macOS
+#### Windows
 
-The recommended way to install and run `chisurf` is using [pixi](https://pixi.sh/):
+Run the downloaded `.exe` installer. For local installer builds, run `pixi run -e build build-setup`. The helper automatically downloads and installs the Inno Setup compiler into your user profile the first time it runs, so no extra manual setup is required.
+
+#### macOS
+
+Open the downloaded `.dmg` and drag `ChiSurf.app` into your `Applications` folder.
+
+#### Linux
+
+Download the `.AppImage`, make it executable, and run:
+```bash
+chmod +x ChiSurf-x86_64.AppImage
+./ChiSurf-x86_64.AppImage
+```
+
+### Developer Install (pixi)
+
+The recommended way to install and develop `chisurf` is using [pixi](https://pixi.sh/):
 
 ```bash
 git clone https://github.com/Fluorescence-Tools/chisurf.git
@@ -91,9 +118,9 @@ For Linux users, ChiSurf can be built and run using Docker. This ensures all sys
    docker run --rm chisurf-linux pixi run test
    ```
 
-#### Windows
+## Local CI & Smoke Tests
 
-Download the latest releases from [https://www.peulen.xyz/downloads/](https://www.peulen.xyz/downloads/).
+- Follow `docs/ci-act.md` to reproduce the Pixi-based GitHub Actions Linux job locally with [`act`](https://github.com/nektos/act).
 
 ---
 

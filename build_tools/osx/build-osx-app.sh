@@ -1,178 +1,226 @@
 #!/usr/bin/env bash
-# Build an OSX Application (.app) for ChiSurf
+set -euo pipefail
 
-set -e  # Exit on error
-set -u  # Treat unset variables as errors
-set -o pipefail  # Catch errors in pipelines
-
-# Ensure script runs from its own directory
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+pushd "$SCRIPT_DIR/../.." > /dev/null
+REPO_ROOT="$(pwd)"
+popd > /dev/null
 
-# Default Values
-ICON_FILE="icon.png"
-PYTHON_VERSION="3.10"
-PYTHON_MODULE=""
+DIST_PATH="$REPO_ROOT/dist"
+APP_PATH="$DIST_PATH/osx"
+RATTLER_RECIPE_DIR="$REPO_ROOT/rattler-recipe"
+OUTPUT_DIR="$REPO_ROOT/conda-bld"
 APP_NAME="ChiSurf"
-OUTPUT_PATH="$SCRIPT_DIR/dist"
-PYTHON_MODULE_PATH=""
+BUILD_RATTLER_PACKAGE=1
 
-# Function to get absolute filename
-get_abs_filename() {
-  realpath "$1"
-}
-
-# Function to print usage
-print_usage() {
-    echo "Usage: build-osx-app.sh [options]"
-    echo "Options:"
-    echo "    -i, --icon          Path to the icon file (default: icon.png)"
-    echo "    -n, --name          Name of the .app file (default: ChiSurf)"
-    echo "    -t, --python        Python version (default: 3.10)"
-    echo "    -m, --module        Python module to bundle"
-    echo "    -p, --module_path   Path to the module’s parent directory"
-    echo "    -o, --output_path   Output directory for the .app (default: ./dist)"
-    echo "    -h, --help          Display this help message"
-    exit 0
-}
-
-# Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        -i=*|--icon=*) ICON_FILE=$(get_abs_filename "${1#*=}") ;;
-        -m=*|--module=*) PYTHON_MODULE="${1#*=}" ;;
-        -n=*|--name=*) APP_NAME="${1#*=}" ;;
-        -o=*|--output_path=*) OUTPUT_PATH=$(get_abs_filename "${1#*=}") ;;
-        -p=*|--module_path=*) PYTHON_MODULE_PATH=$(get_abs_filename "${1#*=}") ;;
-        -t=*|--python=*) PYTHON_VERSION="${1#*=}" ;;
-        -h|--help) print_usage ;;
-        *) echo "Unknown option: $1"; print_usage ;;
+        --no-build) BUILD_RATTLER_PACKAGE=0; shift ;;
+        --output-dir=*) OUTPUT_DIR="${1#*=}"; shift ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
     esac
-    shift
 done
 
-# Validate required arguments
-if [[ -z "$PYTHON_MODULE" || -z "$PYTHON_MODULE_PATH" ]]; then
-    echo "Error: Python module and module path must be specified."
-    print_usage
+echo.
+echo "=== ChiSurf macOS Build ==="
+echo "REPO_ROOT        = $REPO_ROOT"
+echo "DIST_PATH        = $DIST_PATH"
+echo "APP_PATH         = $APP_PATH"
+echo "OUTPUT_DIR       = $OUTPUT_DIR"
+echo "RATTLER_RECIPE   = $RATTLER_RECIPE_DIR"
+echo.
+
+if [[ ! -x "$(command -v pixi)" ]]; then
+    if [[ -x "$HOME/.pixi/bin/pixi" ]]; then
+        export PATH="$HOME/.pixi/bin:$PATH"
+    else
+        echo "ERROR: pixi not found. Install from https://pixi.sh"
+        exit 1
+    fi
 fi
 
-# Resolve paths
-mkdir -p "$OUTPUT_PATH"
-OUTPUT_PATH=$(cd "$OUTPUT_PATH" && pwd)
-PYTHON_MODULE_PATH=$(cd "$PYTHON_MODULE_PATH" && pwd)
+CHISURF_VERSION="${CHISURF_VERSION:-}"
+if [[ -z "$CHISURF_VERSION" ]]; then
+    CHISURF_VERSION="$(cd "$REPO_ROOT" && python rattler-recipe/generate_version.py --print)"
+    if [[ -z "$CHISURF_VERSION" ]]; then
+        echo "ERROR: Failed to generate version"
+        exit 1
+    fi
+fi
+echo "CHISURF_VERSION = $CHISURF_VERSION"
 
-APP_FOLDER="$OUTPUT_PATH/$APP_NAME.app"
-mkdir -p "$APP_FOLDER/Contents"
+echo '{"version": "'"$CHISURF_VERSION"'"}' > "$RATTLER_RECIPE_DIR/version.json"
 
-# Create Conda environment inside the bundle
-echo "Creating Conda environment in $APP_FOLDER/Contents..."
-mamba create --prefix "$APP_FOLDER/Contents" --force -y python="$PYTHON_VERSION"
-source "$(conda info --base)/etc/profile.d/conda.sh"
-conda activate "$APP_FOLDER/Contents"
+if [[ ! -f "$RATTLER_RECIPE_DIR/entry_points.json" ]]; then
+    echo "Generating entry_points.json ..."
+    (cd "$REPO_ROOT" && python rattler-recipe/collect_entry_points.py) || {
+        echo "WARNING: collect_entry_points.py failed, continuing"
+    }
+fi
 
-# Install Python module
-echo "Installing module $PYTHON_MODULE..."
-mamba install -y "$PYTHON_MODULE" --use-local
-
-# Create necessary directories
-mkdir -p "$APP_FOLDER/Contents/MacOS"
-mkdir -p "$APP_FOLDER/Contents/Resources"
-
-# Copy Python module
-cd "$PYTHON_MODULE_PATH"
-SITE_PACKAGE_PATH=$("$APP_FOLDER/Contents/bin/python" -c 'import site; print(site.getsitepackages()[0])')
-cp -R "$PYTHON_MODULE" "$SITE_PACKAGE_PATH"
-
-# Print values
-function print_values() {
-    echo "============================="
-    echo " App Build Configuration"
-    echo "-----------------------------"
-    echo " App Name:           $APP_NAME"
-    echo " Icon File:          $ICON_FILE"
-    echo " Python Version:     $PYTHON_VERSION"
-    echo " Python Module:      $PYTHON_MODULE"
-    echo " Module Path:        $PYTHON_MODULE_PATH"
-    echo " Output Path:        $OUTPUT_PATH"
-    echo " Site Packages Path: $SITE_PACKAGE_PATH"
-    echo " App Folder:         $APP_FOLDER"
-    echo "============================="
-}
-print_values
-
-# Generate icons
-cd "$SCRIPT_DIR"
-python generate-iconset.py "$SCRIPT_DIR/resources/AppIcon.png"
-python generate-iconset.py "$SCRIPT_DIR/resources/VolumeIcon.png"
-
-# Set app icon
-"$SCRIPT_DIR/fileicon" set "$APP_FOLDER" "$SCRIPT_DIR/resources/AppIcon.icns"
-
-# Generate Info.plist and executable
-cd "$PYTHON_MODULE_PATH"
-"$SCRIPT_DIR/create_app_plist.py" \
-  --module "$PYTHON_MODULE" \
-  --output "$APP_FOLDER/Contents/Info.plist" \
-  --executable "$APP_NAME" \
-  -i "$SCRIPT_DIR/resources/AppIcon.icns" \
-  -p "$SCRIPT_DIR/plist_template" \
-  -t "$SCRIPT_DIR/launch_template"
-
-# Compile Python files
-#cd "$APP_FOLDER/Contents"
-#./bin/python -m compileall .
-
-# --- Create DMG with Drag-and-Drop Installation ---
-# Instead of creating a temporary folder in /tmp, we now create the staging folder in the output directory.
-
-STAGING_DIR="$OUTPUT_PATH/${APP_NAME}-dmg"
-rm -rf "$STAGING_DIR"         # Remove any previous staging folder
-mkdir -p "$STAGING_DIR"
-echo "Staging DMG content in: $STAGING_DIR"
-
-# Move the .app bundle into the staging folder
-mv "$APP_FOLDER" "$STAGING_DIR/"
-echo "Moved app bundle to staging folder."
-
-# Create a symlink to the /Applications folder for drag-and-drop installation
-ln -s /Applications "$STAGING_DIR/Applications"
-echo "Created symlink to /Applications in staging folder."
-
-# Optionally, add a custom background image if available.
-if [[ -f "$SCRIPT_DIR/resources/dmg-background.png" ]]; then
-    mkdir -p "$STAGING_DIR/.background"
-    cp "$SCRIPT_DIR/resources/dmg-background.png" "$STAGING_DIR/.background/"
-    echo "Custom background image added."
+if [[ "$BUILD_RATTLER_PACKAGE" == "1" ]]; then
+    echo.
+    echo "[1/4] Building conda package ..."
+    (cd "$REPO_ROOT" && pixi run build-pkg)
 else
-    echo "No custom background image found. Skipping background image."
+    echo "[1/4] Skipping package build (--no-build)"
 fi
 
-# Debug: List staging folder contents
-echo "Staging folder contents:"
-ls -la "$STAGING_DIR"
+echo.
+echo "[2/4] Finding built conda package ..."
 
-# Define DMG parameters
-DMG_NAME="$OUTPUT_PATH/$APP_NAME-Installer.dmg"
-VOL_NAME="$APP_NAME Installer"
-echo "Creating DMG file: $DMG_NAME with volume name: $VOL_NAME"
+CHISURF_PKG=""
+for f in "$OUTPUT_DIR/osx-64"/chisurf-*.conda; do
+    if [[ -f "$f" ]]; then
+        CHISURF_PKG="$f"
+        break
+    fi
+done
+if [[ -z "$CHISURF_PKG" ]]; then
+    echo "ERROR: No chisurf conda package found in $OUTPUT_DIR/osx-64"
+    exit 1
+fi
+echo "Found package: $CHISURF_PKG"
 
-# Remove existing DMG if present
-rm -f "$DMG_NAME"
+echo.
+echo "[3/4] Creating distribution environment at $APP_PATH ..."
+rm -rf "$APP_PATH"
+mkdir -p "$(dirname "$APP_PATH")"
 
-# Increase size to 5 GB (adjust if needed)
-DMG_SIZE="4.5g"
+CHISURF_PKG_URL="${CHISURF_PKG//\//\\/}"
+(cd "$REPO_ROOT" && pixi run micromamba create -y \
+    --prefix "$APP_PATH" \
+    python \
+    chisurf \
+    tttrlib \
+    "file:///$CHISURF_PKG_URL" \
+    -c conda-forge \
+    -c bioconda \
+    --no-channel-priority)
 
-# Create a read/write DMG from the staging folder.
-hdiutil create -volname "$VOL_NAME" -srcfolder "$STAGING_DIR" -ov -format UDRW -size "$DMG_SIZE" "$DMG_NAME"
+if [[ ! -f "$APP_PATH/bin/python" ]]; then
+    echo "ERROR: python not found in $APP_PATH"
+    exit 1
+fi
 
-# Convert the read/write DMG to a compressed, read-only DMG for distribution
-hdiutil convert "$DMG_NAME" -format UDZO -o "${DMG_NAME%.dmg}-final.dmg"
+echo "Compiling .pyc files ..."
+"$APP_PATH/bin/python" -m compileall -qq "$APP_PATH"
 
-# Replace the original DMG with the final version
-mv "${DMG_NAME%.dmg}-final.dmg" "$DMG_NAME"
+echo "Stripping dev-only bloat ..."
+rm -rf "$APP_PATH/include"
+rm -rf "$APP_PATH/share/doc"
+rm -rf "$APP_PATH/share/IMP"
+rm -rf "$APP_PATH/share/info"
+find "$APP_PATH/lib" -name "*.a" -delete 2>/dev/null || true
+find "$APP_PATH/lib" -name "*.la" -delete 2>/dev/null || true
+find "$APP_PATH" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find "$APP_PATH" -name "*.pyo" -delete 2>/dev/null || true
+find "$APP_PATH" -name "*.pyc" -delete 2>/dev/null || true
 
-# Clean up the staging folder
+echo.
+echo "[4/4] Building .app bundle ..."
+
+APP_BUNDLE="$DIST_PATH/$APP_NAME.app"
+rm -rf "$APP_BUNDLE"
+mkdir -p "$APP_BUNDLE/Contents/MacOS"
+mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+echo "Moving micromamba environment into bundle ..."
+cp -a "$APP_PATH/." "$APP_BUNDLE/Contents/"
+
+cat > "$APP_BUNDLE/Contents/MacOS/$APP_NAME" << LAUNCHER
+#!/usr/bin/env bash
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+SCRIPT_DIR="\$(dirname "\$(cd "\$(dirname "\$0")" && pwd)")"
+export PYTHONNOUSERSITE=1
+export PATH="\$SCRIPT_DIR/Contents/bin:\$SCRIPT_DIR/Contents:\$PATH"
+export QT_PLUGIN_PATH="\$SCRIPT_DIR/Contents/plugins"
+export DYLD_LIBRARY_PATH="\$SCRIPT_DIR/Contents/lib:\${DYLD_LIBRARY_PATH:-}"
+cd "\$SCRIPT_DIR/Contents"
+exec "\$SCRIPT_DIR/Contents/bin/python" -m chisurf "\$@"
+LAUNCHER
+chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+
+if command -v python &> /dev/null; then
+    (cd "$REPO_ROOT" && python build_tools/osx/create_app_plist.py \
+        --module chisurf \
+        --output "$APP_BUNDLE/Contents/Info.plist" \
+        --executable "$APP_NAME" \
+        -i "$REPO_ROOT/chisurf/gui/resources/icons/cs_logo.png" \
+        -p "$SCRIPT_DIR/plist_template" \
+        -t "$SCRIPT_DIR/launch_template") || {
+        echo "WARNING: create_app_plist.py failed, generating minimal Info.plist"
+        cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleDisplayName</key><string>$APP_NAME</string>
+    <key>CFBundleExecutable</key><string>$APP_NAME</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>$APP_NAME</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$CHISURF_VERSION</string>
+    <key>CFBundleSignature</key><string>????</string>
+    <key>CFBundleVersion</key><string>$CHISURF_VERSION</string>
+    <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+PLIST
+    }
+else
+    echo "WARNING: python not available for create_app_plist.py, generating minimal Info.plist"
+    cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleDisplayName</key><string>$APP_NAME</string>
+    <key>CFBundleExecutable</key><string>$APP_NAME</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>$APP_NAME</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>$CHISURF_VERSION</string>
+    <key>CFBundleSignature</key><string>????</string>
+    <key>CFBundleVersion</key><string>$CHISURF_VERSION</string>
+    <key>NSHighResolutionCapable</key><true/>
+</dict>
+</plist>
+PLIST
+fi
+
+echo.
+echo "[4/4] Creating DMG installer ..."
+
+STAGING_DIR="$DIST_PATH/${APP_NAME}-dmg"
 rm -rf "$STAGING_DIR"
-echo "Cleaned up staging folder."
+mkdir -p "$STAGING_DIR"
+cp -a "$APP_BUNDLE" "$STAGING_DIR/"
+ln -s /Applications "$STAGING_DIR/Applications"
 
-echo "DMG created successfully at: $DMG_NAME"
+DMG_PATH="$DIST_PATH/ChiSurf-Installer.dmg"
+rm -f "$DMG_PATH"
+
+DMG_SIZE="5g"
+hdiutil create \
+    -volname "$APP_NAME Installer" \
+    -srcfolder "$STAGING_DIR" \
+    -ov -format UDRW \
+    -size "$DMG_SIZE" \
+    "$DMG_PATH"
+
+hdiutil convert "$DMG_PATH" -format UDZO -o "${DMG_PATH%.dmg}-compressed.dmg"
+mv "${DMG_PATH%.dmg}-compressed.dmg" "$DMG_PATH"
+
+rm -rf "$STAGING_DIR"
+rm -rf "$APP_BUNDLE"
+rm -rf "$APP_PATH"
+
+echo.
+echo "=== Build complete ==="
+echo "Version:    $CHISURF_VERSION"
+echo "Installer:  $DMG_PATH"
+echo "Done."

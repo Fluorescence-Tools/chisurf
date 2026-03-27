@@ -46,8 +46,7 @@ build:
 
 requirements:
   build:
-    - ${{ compiler('c') }}
-    - ${{ compiler('cxx') }}
+    - ${{ "vs2022_win-64" if win }}
     - cmake <4
     - ninja
     - ${{ "make" if unix }}
@@ -104,7 +103,6 @@ requirements:
     - hmmlearn
     - sympy
     - zeus-mcmc
-    - ${{ "tttrlib" if unix }}
     - ${{ "libcxx" if osx }}
     - micromamba
     - pygments
