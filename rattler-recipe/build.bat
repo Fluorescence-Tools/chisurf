@@ -34,27 +34,9 @@ if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 cmake --install build --prefix %PREFIX%
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
-:: Build chinet
-cd %ROOT_DIR%\modules\chinet
-if exist build rmdir /s /q build
-mkdir build
-cd build
-cmake .. -G "Ninja" ^
- -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" ^
- -DCMAKE_PREFIX_PATH="%PREFIX%" ^
- -DBUILD_PYTHON_INTERFACE=ON ^
- -DCMAKE_BUILD_TYPE=Release ^
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
- -DCMAKE_SWIG_OUTDIR="%SP_DIR%" ^
- -DPython_ROOT_DIR="%PREFIX%\bin" ^
- -DBUILD_LIBRARY=OFF ^
- -DBUILD_PYTHON_DOCS=OFF ^
- -DWITH_AVX=OFF ^
- -DWITH_MONGODB=OFF ^
- -Wno-dev ^
- -DBoost_USE_STATIC_LIBS=OFF
-if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
-cmake --build . --config Release --target install
+:: Build chinet (pure Python package)
+cd %ROOT_DIR%
+%PYTHON% -m pip install .\modules\chinet --no-deps --prefix=%PREFIX%
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
 :: Build tttrlib

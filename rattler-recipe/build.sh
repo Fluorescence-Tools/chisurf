@@ -29,26 +29,8 @@ popd
 "$PY" -m pip install ./modules/ndxplorer   --no-deps -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/quest       --no-deps -vv --prefix="$PREFIX"
 
-# 5) Build & install chinet (CMake+SWIG)
-pushd modules/chinet
-  rm -rf build && mkdir build && cd build
-  cmake -S .. -B . \
-    -DCMAKE_C_COMPILER="${CC}" \
-    -DCMAKE_CXX_COMPILER="${CXX}" \
-    -DCMAKE_INSTALL_PREFIX="$PREFIX" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_PYTHON_INTERFACE=ON \
-    -DWITH_AVX=OFF \
-    -DBoost_USE_STATIC_LIBS=OFF \
-    -DCMAKE_SWIG_OUTDIR="${PREFIX}" \
-    -DBUILD_PYTHON_DOCS=ON \
-    -DPython_ROOT_DIR="${PREFIX}/bin" \
-    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="${PREFIX}" \
-    -DWITH_MONGODB=OFF \
-    -G Ninja
-  ninja -j "${CPU_COUNT}"
-  ninja install
-popd
+# 5) Install chinet (pure Python, no CMake/SWIG needed)
+"$PY" -m pip install ./modules/chinet --no-deps -vv --prefix="$PREFIX"
 
 # 6) Versioning
 echo "Building ChiSurf version: $PKG_VERSION"
