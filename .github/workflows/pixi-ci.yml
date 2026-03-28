@@ -58,6 +58,7 @@ jobs:
         with:
           pixi-version: latest
           cache: true
+          locked: false
 
       - name: Build Pixi package
         run: pixi run build-pkg
