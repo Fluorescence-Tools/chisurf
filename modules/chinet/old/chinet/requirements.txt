@@ -1,0 +1,2 @@
+numpy>=1.20.0
+cmake_build_extension>=0.5.1

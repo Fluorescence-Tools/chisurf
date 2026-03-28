@@ -1,0 +1,65 @@
+{% set pyproject = load_file_data('../pyproject.toml', from_recipe_dir=True) %}
+{% set data = pyproject.get('project', {}) %}
+{% set setup_data = load_setup_py_data(setup_file='../setup.py', from_recipe_dir=True) %}
+{% set version = setup_data.get('version') %}
+
+package:
+  name: {{ data.get('name') }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  number: 0
+  detect_binary_files_with_prefix: True  # [not win]
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - pkg-config # [not win]
+    - git
+    - cmake <4
+    - ninja
+    - make # [not win]
+  host:
+    - swig <4.3.0
+    - cmake-build-extension
+    - pkg-config   # [not win]
+    - llvm-openmp  # [osx]
+    - libgomp      # [linux]
+    - doxygen
+    - python
+    - pip
+    - doxygen
+    - boost-cpp
+    - numpy
+  run:
+    - python
+    - boost-cpp
+    - numpy
+
+test:
+  imports:
+    - chinet
+  #requires:
+  #  - nose
+  #  - python    
+  #commands:
+  #  # - mongodb # mongodb only on py37 -> use system mongodb
+  #  # - cd test && mkdir db && mongod --dbpath db &&
+  #  - nosetests
+
+about:
+  home: https://github.com/tpeulen/chinet
+  license: MIT
+  summary: |
+    {{ data.get('description') }}
+  description: |
+    {{ data.get('long_description') }}
+  doc_url: https://github.com/tpeulen.github.io/chinet/
+
+extra:
+  recipe-maintainers:
+    - tpeulen
