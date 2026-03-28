@@ -1,101 +1,23 @@
 [project]
-dynamic = ["version", "dependencies"]
 name = "chinet"
+version = "0.3.0"
 requires-python = ">=3.10"
-description = "chinet is the C++ backend for chisurf."
+description = "A simplified dependency management and linking system."
 readme = "README.md"
 authors = [
-{name = "author = Thomas-Otavio Peulen", email = "thomas.otavio.peulen@gmail.com"},
+    {name = "Thomas-Otavio Peulen", email = "thomas.otavio.peulen@gmail.com"},
 ]
 license = "MIT"
 license-files = ["LICENSE.txt"]
 
-keywords = [
-    "fluorescence",
-    "time-resolved",
-    "spectroscopy",
-    "imaging",
-    "microscopy"
+dependencies = [
+    "numpy",
 ]
-
-classifiers = [
-    "Topic :: Software Development",
-    "Development Status :: 2 - Pre-Alpha",
-    "Operating System :: POSIX :: Linux",
-    "Operating System :: MacOS",
-    "Operating System :: Microsoft :: Windows",
-    "Intended Audience :: Education",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering",
-    "Topic :: Scientific/Engineering :: Physics",
-    "Topic :: Scientific/Engineering :: Chemistry",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
-    "Topic :: Scientific/Engineering :: Image Processing",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Programming Language :: C++",
-    "Programming Language :: Python :: 3 :: Only",
-]
-[tool.setuptools.dynamic]
-version = {attr = "chinet._version.__version__"}
-dependencies = {file = ["requirements.txt"]}
-
-[project.urls]
-    homepage = "https://github.com/tpeulen/chinet"
-    documentation = "https://github.com/tpeulen/chinet"
-    repository = "https://github.com/tpeulen/chinet.git"
-
 
 [build-system]
-    requires = [
-        "wheel",
-        "setuptools",
-        "cmake_build_extension",
-        "numpy"
-    ]
-    build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-
-[tool.cibuildwheel]
-# Normal options, etc.
-build-verbosity = 2
-
-test-command = 'python -c "import chinet; p1 = chinet.Port(); print(p1)"'
-
-# Skip CPython 32-bit builds
-skip = ["pp*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
-
-# Install test dependencies
-test-requires = []
-
-[tool.cibuildwheel.macos]
-# Newer C++ features with old SDK:
-# https://conda-forge.org/docs/maintainer/knowledge_base.html
-environment = {CFLAGS="-g -Wall", CXXFLAGS="${CXXFLAGS} -D_LIBCPP_DISABLE_AVAILABILITY=1", MACOSX_DEPLOYMENT_TARGET="10.14"}
-
-[[tool.cibuildwheel.overrides]]
-select = "cp3{8,9,10}-*"
-
-    # On Linux we need to use different package managers depending on image used
-    [tool.cibuildwheel.linux]
-
-    before-all = [
-        "yum update -y --nogpgcheck",
-        "yum install -y epel-release",
-        "yum -y install boost-devel swig cmake"
-    ]
-
-    manylinux-x86_64-image = "manylinux_2_28"
-    manylinux-i686-image = "manylinux_2_28"
-    manylinux-aarch64-image = "manylinux_2_28"
-    manylinux-ppc64le-image = "manylinux_2_28"
-    manylinux-s390x-image = "manylinux_2_28"
-    manylinux-pypy_x86_64-image = "manylinux_2_28"
-    manylinux-pypy_i686-image = "manylinux_2_28"
-    manylinux-pypy_aarch64-image = "manylinux_2_28"
-
-    archs = [
-        "x86_64",
-        "aarch64",
-        # "ppc64le"
-    ]
+[tool.setuptools.packages.find]
+include = ["chinet*"]
+exclude = ["old*", "build*", "test*", "doc*", "examples*", "cmake*", "conda-recipe*", "tools*"]
