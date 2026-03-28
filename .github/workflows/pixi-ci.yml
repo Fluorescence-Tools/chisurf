@@ -57,7 +57,7 @@ jobs:
         shell: bash -l {0}
         run: |
           micromamba create -n build -y -c conda-forge \
-            python rattler-build micromamba git pip setuptools wheel \
+            python=3.12 rattler-build micromamba git pip setuptools wheel \
             cython numpy swig cmake ninja
 
       - name: Build conda package

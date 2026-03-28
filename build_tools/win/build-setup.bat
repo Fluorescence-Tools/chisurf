@@ -212,7 +212,7 @@ echo [3/3] Building Windows installer ...
 
 :: create_installer_script.py must run from the build_tools\win directory
 cd /d "%SCRIPT_DIR%"
-python create_installer_script.py
+call "%APP_PATH%\Scripts\python.exe" create_installer_script.py
 if errorlevel 1 (
     echo ERROR: Failed to generate Inno Setup script
     exit /b 1
