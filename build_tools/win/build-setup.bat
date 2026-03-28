@@ -163,6 +163,7 @@ micromamba create -y ^
     --prefix "%APP_PATH%" ^
     python ^
     chisurf ^
+    jinja2 ^
     "file:///%CHISURF_PKG_URL%" ^
     -c conda-forge ^
     --no-channel-priority
@@ -178,11 +179,8 @@ if not exist "%APP_PATH%\Scripts\python.exe" (
         exit /b 1
     )
 )
-echo Installing tttrlib via pip (Windows) ...
-"%APP_PATH%\Scripts\pip.exe" install tttrlib --no-cache-dir
-if errorlevel 1 (
-    echo WARNING: Could not install tttrlib
-)
+echo Skipping tttrlib pip install (not available on PyPI) ...
+REM tttrlib removed from conda recipe, not available on PyPI
 
 echo Verifying chisurf installation ...
 "%APP_PATH%\Scripts\python.exe" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import chisurf; print('chisurf OK:', chisurf.__version__)"
