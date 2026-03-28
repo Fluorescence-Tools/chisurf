@@ -7,11 +7,16 @@ broken*
 broken
 .vscode
 .ipynb_checkpoints
+.pytest_cache
+*.egg-info
+/test_*
 
 # Build artifacts
 ########################
 *.log
 *.json
+# Local testing artifacts
+act-output*.txt
 # setup.py
 build/
 dist/
@@ -33,6 +38,7 @@ __pycache__/
 # Generated entry points (rattler-build)
 rattler-recipe/entry_points.json
 .pixi
+output/
 
 # Tests
 ###########################
