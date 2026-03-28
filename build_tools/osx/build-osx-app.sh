@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 pushd "$SCRIPT_DIR/../.." > /dev/null
 REPO_ROOT="$(pwd)"
 popd > /dev/null
-
 DIST_PATH="$REPO_ROOT/dist"
 APP_PATH="$DIST_PATH/osx"
 RATTLER_RECIPE_DIR="$REPO_ROOT/rattler-recipe"
@@ -21,23 +19,11 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-echo.
+echo ""
 echo "=== ChiSurf macOS Build ==="
 echo "REPO_ROOT        = $REPO_ROOT"
-echo "DIST_PATH        = $DIST_PATH"
-echo "APP_PATH         = $APP_PATH"
 echo "OUTPUT_DIR       = $OUTPUT_DIR"
-echo "RATTLER_RECIPE   = $RATTLER_RECIPE_DIR"
-echo.
-
-if [[ ! -x "$(command -v pixi)" ]]; then
-    if [[ -x "$HOME/.pixi/bin/pixi" ]]; then
-        export PATH="$HOME/.pixi/bin:$PATH"
-    else
-        echo "ERROR: pixi not found. Install from https://pixi.sh"
-        exit 1
-    fi
-fi
+echo ""
 
 CHISURF_VERSION="${CHISURF_VERSION:-}"
 if [[ -z "$CHISURF_VERSION" ]]; then
@@ -48,76 +34,55 @@ if [[ -z "$CHISURF_VERSION" ]]; then
     fi
 fi
 echo "CHISURF_VERSION = $CHISURF_VERSION"
-
 echo '{"version": "'"$CHISURF_VERSION"'"}' > "$RATTLER_RECIPE_DIR/version.json"
 
-if [[ ! -f "$RATTLER_RECIPE_DIR/entry_points.json" ]]; then
-    echo "Generating entry_points.json ..."
-    (cd "$REPO_ROOT" && python rattler-recipe/collect_entry_points.py) || {
-        echo "WARNING: collect_entry_points.py failed, continuing"
-    }
-fi
-
 if [[ "$BUILD_RATTLER_PACKAGE" == "1" ]]; then
-    echo.
+    echo ""
     echo "[1/4] Building conda package ..."
-    (cd "$REPO_ROOT" && pixi run build-pkg)
+    rattler-build build --recipe "$RATTLER_RECIPE_DIR" --output-dir "$OUTPUT_DIR" --test skip
 else
     echo "[1/4] Skipping package build (--no-build)"
 fi
 
-echo.
+echo ""
 echo "[2/4] Finding built conda package ..."
-
 CHISURF_PKG=""
-for f in "$OUTPUT_DIR/osx-64"/chisurf-*.conda; do
+for f in "$OUTPUT_DIR/osx-64"/chisurf-*.conda "$OUTPUT_DIR/osx-arm64"/chisurf-*.conda; do
     if [[ -f "$f" ]]; then
         CHISURF_PKG="$f"
         break
     fi
 done
 if [[ -z "$CHISURF_PKG" ]]; then
-    echo "ERROR: No chisurf conda package found in $OUTPUT_DIR/osx-64"
+    echo "ERROR: No chisurf conda package found in $OUTPUT_DIR/osx-*"
     exit 1
 fi
 echo "Found package: $CHISURF_PKG"
 
-echo.
+echo ""
 echo "[3/4] Creating distribution environment at $APP_PATH ..."
 rm -rf "$APP_PATH"
 mkdir -p "$(dirname "$APP_PATH")"
 
-CHISURF_PKG_URL="${CHISURF_PKG//\//\\/}"
-(cd "$REPO_ROOT" && pixi run micromamba create -y \
+micromamba create -y \
     --prefix "$APP_PATH" \
-    python \
-    chisurf \
-    tttrlib \
-    "file:///$CHISURF_PKG_URL" \
-    -c conda-forge \
-    -c bioconda \
-    --no-channel-priority)
+    python chisurf tttrlib \
+    "$CHISURF_PKG" \
+    -c conda-forge -c bioconda \
+    --no-channel-priority
 
 if [[ ! -f "$APP_PATH/bin/python" ]]; then
     echo "ERROR: python not found in $APP_PATH"
     exit 1
 fi
 
-echo "Compiling .pyc files ..."
-"$APP_PATH/bin/python" -m compileall -qq "$APP_PATH"
-
 echo "Stripping dev-only bloat ..."
-rm -rf "$APP_PATH/include"
-rm -rf "$APP_PATH/share/doc"
-rm -rf "$APP_PATH/share/IMP"
-rm -rf "$APP_PATH/share/info"
+rm -rf "$APP_PATH/include" "$APP_PATH/share/doc" "$APP_PATH/share/IMP" "$APP_PATH/share/info"
 find "$APP_PATH/lib" -name "*.a" -delete 2>/dev/null || true
 find "$APP_PATH/lib" -name "*.la" -delete 2>/dev/null || true
 find "$APP_PATH" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find "$APP_PATH" -name "*.pyo" -delete 2>/dev/null || true
-find "$APP_PATH" -name "*.pyc" -delete 2>/dev/null || true
 
-echo.
+echo ""
 echo "[4/4] Building .app bundle ..."
 
 APP_BUNDLE="$DIST_PATH/$APP_NAME.app"
@@ -125,7 +90,6 @@ rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
-echo "Moving micromamba environment into bundle ..."
 cp -a "$APP_PATH/." "$APP_BUNDLE/Contents/"
 
 cat > "$APP_BUNDLE/Contents/MacOS/$APP_NAME" << LAUNCHER
@@ -156,44 +120,35 @@ if command -v python &> /dev/null; then
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key><string>en</string>
-    <key>CFBundleDisplayName</key><string>$APP_NAME</string>
     <key>CFBundleExecutable</key><string>$APP_NAME</string>
-    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>$APP_NAME</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$CHISURF_VERSION</string>
-    <key>CFBundleSignature</key><string>????</string>
     <key>CFBundleVersion</key><string>$CHISURF_VERSION</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
     <key>NSHighResolutionCapable</key><true/>
 </dict>
 </plist>
 PLIST
     }
 else
-    echo "WARNING: python not available for create_app_plist.py, generating minimal Info.plist"
     cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key><string>en</string>
-    <key>CFBundleDisplayName</key><string>$APP_NAME</string>
     <key>CFBundleExecutable</key><string>$APP_NAME</string>
-    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>$APP_NAME</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$CHISURF_VERSION</string>
-    <key>CFBundleSignature</key><string>????</string>
     <key>CFBundleVersion</key><string>$CHISURF_VERSION</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
     <key>NSHighResolutionCapable</key><true/>
 </dict>
 </plist>
 PLIST
 fi
 
-echo.
-echo "[4/4] Creating DMG installer ..."
+echo ""
+echo "[4/4] Creating DMG ..."
 
 STAGING_DIR="$DIST_PATH/${APP_NAME}-dmg"
 rm -rf "$STAGING_DIR"
@@ -204,22 +159,19 @@ ln -s /Applications "$STAGING_DIR/Applications"
 DMG_PATH="$DIST_PATH/ChiSurf-Installer.dmg"
 rm -f "$DMG_PATH"
 
-DMG_SIZE="5g"
 hdiutil create \
     -volname "$APP_NAME Installer" \
     -srcfolder "$STAGING_DIR" \
     -ov -format UDRW \
-    -size "$DMG_SIZE" \
+    -size "5g" \
     "$DMG_PATH"
 
 hdiutil convert "$DMG_PATH" -format UDZO -o "${DMG_PATH%.dmg}-compressed.dmg"
 mv "${DMG_PATH%.dmg}-compressed.dmg" "$DMG_PATH"
 
-rm -rf "$STAGING_DIR"
-rm -rf "$APP_BUNDLE"
-rm -rf "$APP_PATH"
+rm -rf "$STAGING_DIR" "$APP_BUNDLE" "$APP_PATH"
 
-echo.
+echo ""
 echo "=== Build complete ==="
 echo "Version:    $CHISURF_VERSION"
 echo "Installer:  $DMG_PATH"

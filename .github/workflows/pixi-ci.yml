@@ -1,4 +1,4 @@
-name: Pixi Build and Release
+name: Build and Release
 
 on:
   workflow_dispatch:
@@ -8,7 +8,6 @@ on:
   release:
     types: [released, prereleased]
   schedule:
-    # Every Monday at 11:00 UTC
     - cron: "0 11 * * 1"
 
 jobs:
@@ -53,15 +52,28 @@ jobs:
         if: runner.os == 'macOS'
         run: bash build_tools/install_macos_sdk.sh
 
-      - name: Set up Pixi
-        uses: prefix-dev/setup-pixi@v0.8.1
+      - name: Set up Micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
-          pixi-version: latest
-          cache: true
-          locked: false
+          micromamba-version: "latest"
+          init-shell: bash
 
-      - name: Build Pixi package
-        run: pixi run build-pkg
+      - name: Install build tools
+        shell: bash -l {0}
+        run: |
+          micromamba create -n build -y -c conda-forge \
+            python rattler-build micromamba git pip setuptools wheel \
+            cython numpy swig cmake ninja
+
+      - name: Build conda package
+        shell: bash -l {0}
+        run: |
+          micromamba activate build
+          CHISURF_VERSION=$(python rattler-recipe/generate_version.py --print)
+          echo "CHISURF_VERSION=$CHISURF_VERSION"
+          echo "{\"version\": \"$CHISURF_VERSION\"}" > rattler-recipe/version.json
+          python rattler-recipe/collect_entry_points.py || true
+          rattler-build build --recipe rattler-recipe --output-dir conda-bld --test skip
 
       - name: Upload conda packages as artifacts
         uses: actions/upload-artifact@v4
@@ -71,15 +83,18 @@ jobs:
 
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
-        run: pixi run build-setup
+        shell: cmd
+        run: build_tools\win\build-setup.bat
 
       - name: Build macOS DMG installer (.dmg)
         if: runner.os == 'macOS'
-        run: pixi run build-osx-app
+        shell: bash -l {0}
+        run: bash build_tools/osx/build-osx-app.sh --no-build
 
       - name: Build Linux AppImage
         if: runner.os == 'Linux'
-        run: pixi run build-linux-appimage
+        shell: bash -l {0}
+        run: bash build_tools/linuxdeploy/build.sh --no-build
 
       - name: Upload Windows installer
         if: runner.os == 'Windows'
