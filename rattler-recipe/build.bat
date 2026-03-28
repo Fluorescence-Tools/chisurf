@@ -39,32 +39,6 @@ cd %ROOT_DIR%
 %PYTHON% -m pip install .\modules\chinet --no-deps --prefix=%PREFIX%
 if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
-:: Build tttrlib
-cd %ROOT_DIR%\modules\tttrlib
-:: git fetch --all
-:: git checkout development
-:: git pull origin development
-:: git submodule update --init --recursive
-
-if exist b2 rmdir b2 /s /q
-mkdir b2
-cd b2
-cmake .. -G "Ninja" ^
- -DCMAKE_INSTALL_PREFIX="%LIBRARY_PREFIX%" ^
- -DCMAKE_PREFIX_PATH="%PREFIX%" ^
- -DBUILD_PYTHON_INTERFACE=ON ^
- -DCMAKE_BUILD_TYPE=Release ^
- -DCMAKE_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
- -DCMAKE_SWIG_OUTDIR="%SP_DIR%" ^
- -DPython_ROOT_DIR="%PREFIX%\bin" ^
- -DBUILD_LIBRARY=OFF ^
- -DBUILD_PYTHON_DOCS=ON ^
- -DWITH_AVX=OFF ^
- -DBoost_USE_STATIC_LIBS=OFF
-if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
-ninja install
-if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
-
 :: Install sub-modules
 cd %ROOT_DIR%
 %PYTHON% -m pip install .\modules\clsmview --no-deps --prefix=%PREFIX%
