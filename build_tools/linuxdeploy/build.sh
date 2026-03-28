@@ -73,7 +73,7 @@ mkdir -p "$(dirname "$APP_PATH")"
 
 micromamba create -y \
     --prefix "$APP_PATH" \
-    python chisurf \
+    python chisurf tttrlib \
     "$CHISURF_PKG" \
     -c conda-forge -c bioconda \
     --no-channel-priority
