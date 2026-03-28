@@ -118,39 +118,30 @@ if not exist "%RATTLER_RECIPE_FOLDER%\entry_points.json" (
     )
 )
 
-:: -----------------------------------------------------------------------
-:: Ensure pixi is on PATH
-:: -----------------------------------------------------------------------
-where pixi >nul 2>nul
+:: ---------------------------------------------------------------------------
+:: Ensure micromamba is on PATH (installed by CI or locally)
+:: ---------------------------------------------------------------------------
+where micromamba >nul 2>nul
 if errorlevel 1 (
-    if exist "%USERPROFILE%\.pixi\bin\pixi.exe" (
-        set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
-    ) else (
-        echo ERROR: pixi not found. Install from https://pixi.sh
-        exit /b 1
-    )
+    echo ERROR: micromamba not found. Install via 'micromamba shell init' or CI setup.
+    exit /b 1
 )
 
 :: -----------------------------------------------------------------------
-:: Build package via rattler-build (pixi build env)
+:: Build package via rattler-build
 :: -----------------------------------------------------------------------
 if "%BUILD_RATTLER_PACKAGE%"=="1" (
-    echo.
-    echo [1/4] Building package ...
-    pixi run build-pkg
-    if errorlevel 1 (
-        echo ERROR: Package build failed
-        exit /b 1
-    )
+    echo [1/3] Building package ...
+    rattler-build build --recipe "%RATTLER_RECIPE_FOLDER%" --output-dir "%OUTPUT_DIR%" --test skip
 ) else (
-    echo [1/4] Skipping package build ^(--nobuild^)
+    echo [1/3] Skipping package build ^(/nobuild^)
 )
 
 :: -----------------------------------------------------------------------
 :: Create the distribution environment from the local package
 :: -----------------------------------------------------------------------
 echo.
-echo [2/4] Creating distribution environment at %APP_PATH% ...
+echo [2/3] Creating distribution environment at %APP_PATH% ...
 
 if not exist "%DIST_PATH%" mkdir "%DIST_PATH%"
 if exist "%APP_PATH%" (
@@ -168,7 +159,7 @@ if not defined CHISURF_PKG (
 echo Found package: %CHISURF_PKG%
 
 set "CHISURF_PKG_URL=%CHISURF_PKG:\=/%"
-pixi run micromamba create -y ^
+micromamba create -y ^
     --prefix "%APP_PATH%" ^
     python ^
     chisurf ^
@@ -216,7 +207,7 @@ for /r "%APP_PATH%\Library\lib" %%F in (*.lib) do del /q "%%F"
 :: Generate Inno Setup script and build setup.exe
 :: -----------------------------------------------------------------------
 echo.
-echo [3/4] Building Windows installer ...
+echo [3/3] Building Windows installer ...
 
 :: create_installer_script.py must run from the build_tools\win directory
 cd /d "%SCRIPT_DIR%"
