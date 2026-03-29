@@ -21,7 +21,6 @@ jobs:
 
     env:
       OUT_DIR: conda-bld
-      PIXI_VERSION: latest
 
     steps:
 
@@ -93,17 +92,12 @@ jobs:
           path: ${{ env.OUT_DIR }}/win-64/**/*.conda
           if-no-files-found: error
 
-      - name: Set up Pixi (Windows installer)
-        if: runner.os == 'Windows'
-        uses: prefix-dev/setup-pixi@v0.9.4
-        with:
-          pixi-version: ${{ env.PIXI_VERSION }}
-          cache: false
-          locked: false
-
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
-        run: pixi run -e build build-setup
+        shell: bash -l {0}
+        run: |
+          micromamba activate build
+          build_tools/win/build-setup.bat /nobuild
 
       - name: Upload Windows installer
         if: runner.os == 'Windows'
