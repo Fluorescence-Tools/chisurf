@@ -1,10 +1,7 @@
 name: Pixi Tests & Quality
 
 on:
-  push:
-    branches: [development, main]
-  pull_request:
-    branches: [development, main]
+  workflow_dispatch:
 
 env:
   PIXI_VERSION: latest

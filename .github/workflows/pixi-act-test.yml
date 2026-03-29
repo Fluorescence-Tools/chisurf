@@ -2,12 +2,6 @@ name: Pixi Act Smoke
 
 on:
   workflow_dispatch:
-  push:
-    branches: [development]
-    paths:
-      - '.github/workflows/pixi-act-test.yml'
-      - 'pixi.toml'
-      - 'pixi.lock'
 
 env:
   PIXI_VERSION: latest
