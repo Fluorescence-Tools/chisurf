@@ -4,7 +4,10 @@ import glob
 import jinja2
 import pathlib
 import json
-import tomli
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 script_dir = pathlib.Path(__file__).parent.absolute()
 module_path = (script_dir / ".." / ".." / "chisurf").resolve()
@@ -26,7 +29,7 @@ else:
     print(f"WARNING: {entry_points_json} not found. Using pyproject.toml only.")
     pyproject_path = setup_path / "pyproject.toml"
     with open(pyproject_path, 'rb') as f:
-        pyproject = tomli.load(f)
+        pyproject = tomllib.load(f)
     scripts = pyproject.get("project", {}).get("scripts", {})
     gui_scripts = pyproject.get("project", {}).get("gui-scripts", {})
     all_entry_points = [f"{k} = {v}" for k, v in scripts.items()] + [f"{k} = {v}" for k, v in gui_scripts.items()]
@@ -42,7 +45,7 @@ for ep in all_entry_points:
 
 pyproject_path = setup_path / "pyproject.toml"
 with open(pyproject_path, 'rb') as f:
-    pyproject = tomli.load(f)
+    pyproject = tomllib.load(f)
 gui_scripts = pyproject.get("project", {}).get("gui-scripts", {})
 
 # append the relative location you want to import from

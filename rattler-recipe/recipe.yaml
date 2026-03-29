@@ -46,12 +46,14 @@ build:
 
 requirements:
   build:
+    - ${{ compiler('c') }}
+    - ${{ compiler('cxx') }}
     - ${{ "vs2022_win-64" if win }}
     - cmake <4
     - ninja
     - ${{ "make" if unix }}
   host:
-    - python
+    - python 3.12.*
     - git
     - pip
     - setuptools >=61
@@ -72,7 +74,7 @@ requirements:
     - ${{ "hdf5" if win }}
 
   run:
-    - python
+    - python 3.12.*
     - numpy <2.0
     - typing-extensions >=4.14
     - pytools >=2024.0

@@ -23,12 +23,6 @@ jobs:
       OUT_DIR: conda-bld
 
     steps:
-      - name: Free Disk Space (Ubuntu)
-        if: runner.os == 'Linux'
-        uses: jlumbroso/free-disk-space@main
-        with:
-          large-packages: true
-          docker-images: true
 
       - name: Checkout (with tags & submodules)
         uses: actions/checkout@v4
