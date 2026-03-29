@@ -64,11 +64,31 @@ jobs:
           python rattler-recipe/collect_entry_points.py || true
           rattler-build build --recipe rattler-recipe --output-dir conda-bld --test skip
 
-      - name: Upload conda packages as artifacts
+      - name: Upload Linux conda packages
+        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: packages-${{ matrix.os }}
-          path: ${{ env.OUT_DIR }}/**/*.conda
+          name: packages-linux
+          path: |
+            ${{ env.OUT_DIR }}/linux-64/**/*.conda
+            ${{ env.OUT_DIR }}/noarch/**/*.conda
+          if-no-files-found: error
+
+      - name: Upload macOS conda packages
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-macos
+          path: ${{ env.OUT_DIR }}/osx-64/**/*.conda
+          if-no-files-found: error
+
+      - name: Upload Windows conda packages
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-windows
+          path: ${{ env.OUT_DIR }}/win-64/**/*.conda
+          if-no-files-found: error
 
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
@@ -122,12 +142,23 @@ jobs:
           pattern: installer-*
           merge-multiple: true
 
-      - name: Download conda packages
+      - name: Download Linux conda packages
         uses: actions/download-artifact@v4
         with:
-          path: conda-packages
-          pattern: packages-*
-          merge-multiple: true
+          name: packages-linux
+          path: conda-packages/linux
+
+      - name: Download macOS conda packages
+        uses: actions/download-artifact@v4
+        with:
+          name: packages-macos
+          path: conda-packages/macos
+
+      - name: Download Windows conda packages
+        uses: actions/download-artifact@v4
+        with:
+          name: packages-windows
+          path: conda-packages/windows
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v1
