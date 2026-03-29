@@ -3,7 +3,7 @@ name: Build and Release
 on:
   workflow_dispatch:
   push:
-    branches: [development]
+    branches: [development, main]
     tags: ["v*"]
   release:
     types: [released, prereleased]
