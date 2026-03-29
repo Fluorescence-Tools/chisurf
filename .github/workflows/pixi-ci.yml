@@ -21,6 +21,7 @@ jobs:
 
     env:
       OUT_DIR: conda-bld
+      PIXI_VERSION: latest
 
     steps:
 
@@ -92,23 +93,17 @@ jobs:
           path: ${{ env.OUT_DIR }}/win-64/**/*.conda
           if-no-files-found: error
 
+      - name: Set up Pixi (Windows installer)
+        if: runner.os == 'Windows'
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: ${{ env.PIXI_VERSION }}
+          cache: false
+          locked: false
+
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
-        shell: cmd
-        continue-on-error: true
-        run: build_tools\win\build-setup.bat
-
-      - name: Build macOS DMG installer (.dmg)
-        if: runner.os == 'macOS'
-        shell: bash -l {0}
-        continue-on-error: true
-        run: bash build_tools/osx/build-osx-app.sh --no-build
-
-      - name: Build Linux AppImage
-        if: runner.os == 'Linux'
-        shell: bash -l {0}
-        continue-on-error: true
-        run: bash build_tools/linuxdeploy/build.sh --no-build
+        run: pixi run -e build build-setup
 
       - name: Upload Windows installer
         if: runner.os == 'Windows'
@@ -116,23 +111,7 @@ jobs:
         with:
           name: installer-windows
           path: dist/*.exe
-          if-no-files-found: warn
-
-      - name: Upload macOS DMG
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: installer-macos
-          path: dist/*.dmg
-          if-no-files-found: warn
-
-      - name: Upload Linux AppImage
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: installer-linux
-          path: dist/*.AppImage
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     name: Upload to GitHub Release
@@ -143,12 +122,11 @@ jobs:
       contents: write
 
     steps:
-      - name: Download all installer artifacts
+      - name: Download Windows installer artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-          pattern: installer-*
-          merge-multiple: true
+          name: installer-windows
+          path: artifacts/windows
 
       - name: Download Linux conda packages
         uses: actions/download-artifact@v4
@@ -172,9 +150,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            artifacts/*.exe
-            artifacts/*.dmg
-            artifacts/*.AppImage
+            artifacts/windows/*.exe
             conda-packages/**/*.conda
           generate_release_notes: true
         env:

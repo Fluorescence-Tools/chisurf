@@ -34,8 +34,8 @@ pushd "%SCRIPT_DIR%\..\.."
 set "SOURCE_PATH=%CD%"
 popd
 
-set "DIST_PATH=%TEMP%\chisurf_dist"
-set "APP_PATH=%TEMP%\chisurf_dist\win"
+set "DIST_PATH=%SOURCE_PATH%\dist"
+set "APP_PATH=%DIST_PATH%\win"
 set "RATTLER_RECIPE_FOLDER=%SOURCE_PATH%\rattler-recipe"
 set "OUTPUT_DIR=%SOURCE_PATH%\conda-bld"
 set "PIXI_MANIFEST=%SOURCE_PATH%\pixi.toml"
@@ -172,28 +172,33 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Verify installation
-if not exist "%APP_PATH%\Scripts\python.exe" (
-    if not exist "%APP_PATH%\python.exe" (
-        echo ERROR: python.exe not found in %APP_PATH%
-        exit /b 1
-    )
+set "PYTHON_EXE="
+if exist "%APP_PATH%\python.exe" set "PYTHON_EXE=%APP_PATH%\python.exe"
+if not defined PYTHON_EXE if exist "%APP_PATH%\Scripts\python.exe" set "PYTHON_EXE=%APP_PATH%\Scripts\python.exe"
+if not defined PYTHON_EXE (
+    echo ERROR: python.exe not found in %APP_PATH%
+    exit /b 1
 )
+
 echo Installing tttrlib via pip (Windows) ...
-"%APP_PATH%\Scripts\pip.exe" install tttrlib --no-cache-dir
+if exist "%APP_PATH%\Scripts\pip.exe" (
+    call "%APP_PATH%\Scripts\pip.exe" install tttrlib --no-cache-dir
+) else (
+    call "%PYTHON_EXE%" -m pip install tttrlib --no-cache-dir
+)
 if errorlevel 1 (
     echo WARNING: Could not install tttrlib
 )
 
 echo Verifying chisurf installation ...
-"%APP_PATH%\Scripts\python.exe" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import chisurf; print('chisurf OK:', chisurf.__version__)"
+"%PYTHON_EXE%" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import chisurf; print('chisurf OK:', chisurf.__version__)"
 if errorlevel 1 (
     echo WARNING: Could not verify chisurf import (may be OK in sandboxed environment)
 )
 
 :: Pre-compile Python files
 echo Compiling .pyc files ...
-"%APP_PATH%\Scripts\python.exe" -m compileall -qq "%APP_PATH%"
+"%PYTHON_EXE%" -m compileall -qq "%APP_PATH%"
 
 :: Strip dev-only bloat
 echo Stripping headers, docs, .lib files ...
@@ -212,7 +217,7 @@ echo [3/3] Building Windows installer ...
 
 :: create_installer_script.py must run from the build_tools\win directory
 cd /d "%SCRIPT_DIR%"
-call "%APP_PATH%\Scripts\python.exe" create_installer_script.py
+call "%PYTHON_EXE%" create_installer_script.py
 if errorlevel 1 (
     echo ERROR: Failed to generate Inno Setup script
     exit /b 1
