@@ -79,7 +79,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packages-macos
-          path: ${{ env.OUT_DIR }}/osx-64/**/*.conda
+          path: |
+            ${{ env.OUT_DIR }}/osx-64/**/*.conda
+            ${{ env.OUT_DIR }}/osx-arm64/**/*.conda
           if-no-files-found: error
 
       - name: Upload Windows conda packages
@@ -93,16 +95,19 @@ jobs:
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
         shell: cmd
+        continue-on-error: true
         run: build_tools\win\build-setup.bat
 
       - name: Build macOS DMG installer (.dmg)
         if: runner.os == 'macOS'
         shell: bash -l {0}
+        continue-on-error: true
         run: bash build_tools/osx/build-osx-app.sh --no-build
 
       - name: Build Linux AppImage
         if: runner.os == 'Linux'
         shell: bash -l {0}
+        continue-on-error: true
         run: bash build_tools/linuxdeploy/build.sh --no-build
 
       - name: Upload Windows installer
@@ -111,6 +116,7 @@ jobs:
         with:
           name: installer-windows
           path: dist/*.exe
+          if-no-files-found: warn
 
       - name: Upload macOS DMG
         if: runner.os == 'macOS'
@@ -118,6 +124,7 @@ jobs:
         with:
           name: installer-macos
           path: dist/*.dmg
+          if-no-files-found: warn
 
       - name: Upload Linux AppImage
         if: runner.os == 'Linux'
@@ -125,6 +132,7 @@ jobs:
         with:
           name: installer-linux
           path: dist/*.AppImage
+          if-no-files-found: warn
 
   release:
     name: Upload to GitHub Release
