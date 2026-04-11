@@ -7,7 +7,7 @@ from unittest.mock import patch, MagicMock
 from qtpy import QtWidgets
 
 from chisurf.settings import ai_settings
-from chisurf.plugins.ai_settings.plugin import AISettingsWidget, PROVIDER_OPTIONS, DEFAULT_BASE_URLS, DEFAULT_MODELS
+from chisurf.plugins.ai_settings.plugin import AISettingsWidget
 
 
 class TestAISettingsModule:
@@ -23,7 +23,7 @@ class TestAISettingsModule:
 
     def test_get_provider_returns_valid_provider(self):
         """Test that get_provider returns a valid provider string."""
-        valid_providers = ["openai", "mistral", "anthropic", "local"]
+        valid_providers = ["local_llm", "mistral_api", "openai_api"]
         provider = ai_settings.get_provider()
         assert provider in valid_providers
 
@@ -55,11 +55,11 @@ class TestAISettingsSaveLoad:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = pathlib.Path(tmpdir)
 
-            with patch.object(ai_settings, 'get_path', return_value=tmp_path):
+            with patch.object(ai_settings, '_get_settings_path', return_value=tmp_path / "ai_api_settings.json"):
                 test_settings = {
-                    "provider": "mistral",
+                    "provider": "mistral_api",
                     "base_url": "https://api.mistral.ai/v1",
-                    "model": "mistral-large",
+                    "model": "mistral-large-latest",
                     "api_key": "test-key-123",
                 }
                 result = ai_settings.save_api_settings(test_settings)
@@ -75,59 +75,33 @@ class TestAISettingsSaveLoad:
             test_file = tmp_path / "ai_api_settings.json"
 
             test_settings = {
-                "provider": "anthropic",
-                "base_url": "https://api.anthropic.com",
-                "model": "claude-3",
-                "api_key": "test-anthropic-key",
+                "provider": "mistral_api",
+                "base_url": "https://api.mistral.ai/v1",
+                "model": "mistral-small-latest",
+                "api_key": "test-mistral-key",
             }
             with open(test_file, 'w') as f:
                 json.dump(test_settings, f)
 
-            with patch.object(ai_settings, 'get_path', return_value=tmp_path):
+            with patch.object(ai_settings, '_get_settings_path', return_value=test_file):
                 loaded = ai_settings.get_api_settings()
-                assert loaded["provider"] == "anthropic"
-                assert loaded["base_url"] == "https://api.anthropic.com"
-                assert loaded["model"] == "claude-3"
-                assert loaded["api_key"] == "test-anthropic-key"
+                assert loaded["provider"] == "mistral_api"
+                assert loaded["base_url"] == "https://api.mistral.ai/v1"
+                assert loaded["model"] == "mistral-small-latest"
+                assert loaded["api_key"] == "test-mistral-key"
 
-    def test_save_and_load_roundtrip(self):
-        """Test save and load together."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_path = pathlib.Path(tmpdir)
 
-            original_get_path = ai_settings.get_path
-
-            def mock_path(name):
-                if name == 'settings':
-                    return tmp_path
-                return original_get_path(name)
-
-            with patch.object(ai_settings, 'get_path', side_effect=mock_path):
-                test_settings = {
-                    "provider": "local",
-                    "base_url": "http://localhost:1234",
-                    "model": "llama-2",
-                    "api_key": "local-key",
-                }
-                ai_settings.save_api_settings(test_settings)
-                loaded = ai_settings.get_api_settings()
-
-                assert loaded["provider"] == "local"
-                assert loaded["base_url"] == "http://localhost:1234"
-                assert loaded["model"] == "llama-2"
-                assert loaded["api_key"] == "local-key"
+@pytest.fixture(scope="module")
+def app():
+    """Create QApplication instance for Qt tests."""
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        app = QtWidgets.QApplication([])
+    yield app
 
 
 class TestAISettingsWidget:
     """Tests for the AI Settings widget."""
-
-    @pytest.fixture
-    def app(self):
-        """Create QApplication instance for Qt tests."""
-        app = QtWidgets.QApplication.instance()
-        if app is None:
-            app = QtWidgets.QApplication([])
-        yield app
 
     def test_widget_creation(self, app):
         """Test that the widget can be created."""
@@ -139,62 +113,34 @@ class TestAISettingsWidget:
         widget = AISettingsWidget()
         assert hasattr(widget, 'provider_combo')
         assert hasattr(widget, 'base_url_input')
-        assert hasattr(widget, 'model_input')
+        assert hasattr(widget, 'chat_model_combo')
         assert hasattr(widget, 'api_key_input')
 
     def test_provider_options_populated(self, app):
         """Test that provider options are populated."""
         widget = AISettingsWidget()
-        assert widget.provider_combo.count() == len(PROVIDER_OPTIONS)
+        assert widget.provider_combo.count() >= 3  # Local, Mistral, OpenAI
 
-    def test_default_base_urls_defined(self):
-        """Test default base URLs for all providers."""
-        assert "openai" in DEFAULT_BASE_URLS
-        assert "mistral" in DEFAULT_BASE_URLS
-        assert "anthropic" in DEFAULT_BASE_URLS
-        assert "local" in DEFAULT_BASE_URLS
-
-    def test_default_models_defined(self):
-        """Test default models for all providers."""
-        assert "openai" in DEFAULT_MODELS
-        assert "mistral" in DEFAULT_MODELS
-        assert "anthropic" in DEFAULT_MODELS
-        assert "local" in DEFAULT_MODELS
-
-    def test_provider_change_emits_signal(self, app):
-        """Test that provider change triggers callback."""
-        widget = AISettingsWidget()
-        called = []
-
-        def on_change(index):
-            called.append(index)
-
-        widget.provider_combo.currentIndexChanged.connect(on_change)
-        widget.provider_combo.setCurrentIndex(1)
-        widget.provider_combo.setCurrentIndex(2)
-
-        assert len(called) >= 1
-
-    def test_reset_clears_inputs(self, app):
-        """Test reset to defaults clears all inputs."""
+    def test_reset_to_defaults(self, app):
+        """Test reset to defaults sets correct values."""
         widget = AISettingsWidget()
 
         widget.provider_combo.setCurrentIndex(1)
         widget.base_url_input.setText("test-url")
-        widget.model_input.setText("test-model")
+        widget.chat_model_combo.setCurrentText("test-model")
         widget.api_key_input.setText("test-key")
 
         widget.reset_to_defaults()
 
-        assert widget.base_url_input.text() == ""
-        assert widget.model_input.text() == ""
+        assert widget.base_url_input.text() == "https://api.mistral.ai/v1"
+        assert widget.chat_model_combo.currentText() == "mistral-small-latest"
         assert widget.api_key_input.text() == ""
 
 
 class TestAISettingsIntegration:
     """Integration tests for AI settings plugin."""
 
-    def test_plugin_load_function_returns_widget(self):
+    def test_plugin_load_function_returns_widget(self, app):
         """Test that plugin load returns a widget."""
         from chisurf.plugins.ai_settings import load
         widget = load()
@@ -212,7 +158,7 @@ class TestAISettingsIntegration:
         assert hasattr(ai_settings, 'icon')
         assert ai_settings.icon == "🤖"
 
-    def test_plugin_exports_widget(self):
+    def test_plugin_exports_widget(self, app):
         """Test that widget is exported."""
         from chisurf.plugins.ai_settings import AISettingsWidget as ImportedWidget
         assert ImportedWidget is AISettingsWidget

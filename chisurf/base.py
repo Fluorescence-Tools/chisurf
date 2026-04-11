@@ -215,12 +215,17 @@ def find_objects(
     """
     re = list()
     for value in search_iterable:
+        # Standard isinstance check for speed and correctness
         if isinstance(value, searched_object_type):
+            re.append(value)
+        # Fallback to class name check to handle reloaded environments (e.g. pytest)
+        elif type(value).__name__ == getattr(searched_object_type, '__name__', None):
             re.append(value)
         elif isinstance(value, list):
             re += find_objects(value, searched_object_type, remove_doublets)
     if remove_doublets:
-        return list(set(re))
+        seen = set()
+        return [x for x in re if not (x in seen or seen.add(x))]
     else:
         return re
 

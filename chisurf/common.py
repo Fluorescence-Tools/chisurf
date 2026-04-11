@@ -8,36 +8,37 @@ in plots but also constants as the Avogadros number.
 
 from chisurf.settings import structure_data
 
-quencher = structure_data['Quencher']
+quencher = structure_data.get('Quencher', {})
 quencher_names = quencher.keys()
 """Definition of quenching amino-acids and quenching atoms of quencher"""
 
-MAX_BONDS = structure_data['MAX_BONDS']
+MAX_BONDS = structure_data.get('MAX_BONDS', {})
 """Dictionary of maximum number of bonds per atom type"""
 
+_periodic_table = structure_data.get("Periodic Table", {})
 atom_weights = dict(
     (
         key,
-        structure_data["Periodic Table"][key]["Atomic weight"]
+        _periodic_table[key]["Atomic weight"]
     )
-    for key in structure_data["Periodic Table"].keys()
+    for key in _periodic_table.keys()
 )
 """Atomic weights (http://www.chem.qmul.ac.uk/iupac/AtWt/ & PyMol) """
 
-PKA_DICT = structure_data['PKA_DICT']
+PKA_DICT = structure_data.get('PKA_DICT', {})
 """Dictionary of pKa values and un-protonated charge state."""
 
-CHARGE_DICT = structure_data['CHARGE_DICT']
+CHARGE_DICT = structure_data.get('CHARGE_DICT', {})
 """Default charges of amino acids"""
 
-TITR_ATOM = structure_data['TITR_ATOM']
+TITR_ATOM = structure_data.get('TITR_ATOM', {})
 """Atom on which to place charge in amino-acid"""
 
-TITR_ATOM_COARSE = structure_data['TITR_ATOM_COARSE']
+TITR_ATOM_COARSE = structure_data.get('TITR_ATOM_COARSE', {})
 """Atom on which to place charge in amino-acid (Coarse grained default 
 position C-Beta)"""
 
-MW_DICT = structure_data['MW_DICT']
+MW_DICT = structure_data.get('MW_DICT', {})
 """Dictionary of amino acid molecular weights.  The the molecular weight of 
 water should be subtracted for each peptide bond to calculate a protein 
 molecular weight."""
@@ -46,8 +47,8 @@ MW_H2O = 18.0
 """Molecular weight of water"""
 
 VDW_DICT = dict(
-    (key, structure_data["Periodic Table"][key]["vdW radius"])
-    for key in structure_data["Periodic Table"].keys()
+    (key, _periodic_table[key]["vdW radius"])
+    for key in _periodic_table.keys()
 )
 """Dictionary of van der Waal radii
 CR - coarse grained Carbon/Calpha

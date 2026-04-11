@@ -114,7 +114,7 @@ gui:
   style_sheet: dark_blue_flat.qss
   mol_viewer: pymol # 3D molecule viewer backend: pymol (default) or chimol
   memory_widget_update_interval_ms: 5000 # Memory usage widget update interval in milliseconds
-  start_jupyter_on_startup: false
+  start_jupyter_on_startup: true
   mcp_autostart: true # Start the Model Context Protocol (MCP) server on startup
   ribbon:
     auto_fold: true # Enable automatic ribbon folding after inactivity
@@ -226,6 +226,7 @@ optimization:
     method: emcee
     n_runs: 10
     steps: 1000
+    substeps: 100
     thin: 1
 parameter:
   bounds_on: false
