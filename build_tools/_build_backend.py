@@ -11,7 +11,9 @@ import os
 import datetime
 import pathlib
 import re
+import shutil
 import subprocess
+import warnings
 
 
 # Re-export the standard backend functions
@@ -37,16 +39,30 @@ def get_extensions():
     Returns:
         list: List of Extension objects for Cython modules
     """
+    import platform
+
+    if platform.system() == "Windows":
+        py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
+        project_root = pathlib.Path(__file__).resolve().parent.parent
+        prebuilt_modules = [
+            project_root / 'chisurf' / 'structure' / 'av' / f'fps_.{py_tag}-win_amd64.pyd',
+            project_root / 'chisurf' / 'structure' / 'potential' / f'cPotentials_.{py_tag}-win_amd64.pyd',
+        ]
+        if all(module.exists() for module in prebuilt_modules) and not shutil.which("cl.exe"):
+            warnings.warn(
+                "cl.exe not found; reusing prebuilt Windows extension modules instead of compiling Cython extensions.",
+                RuntimeWarning,
+            )
+            return []
+
     import numpy as np
     from Cython.Build import cythonize
-    import platform
     
     # Platform-specific compiler flags
     if platform.system() == "Darwin":
         extra_compile_args = ["-O3", "-stdlib=libc++"]
         extra_link_args = ["-stdlib=libc++"]
     elif platform.system() == "Windows":
-        import shutil
         if not shutil.which("cl.exe"):
             print("\n" + "!" * 80)
             print("ERROR: C++ compiler (cl.exe) not found.")
@@ -113,6 +129,7 @@ class CustomBuildPy(build_py):
         # Determine the version to bake into the built package.
         # Prefer explicit override; otherwise derive from git tags.
         version = os.environ.get('CHISURF_VERSION')
+        desc = ''
         if version:
             version = version.strip()
         else:
@@ -190,6 +207,22 @@ class CustomBuildPy(build_py):
         try:
             # Call the original build_py run method to perform the actual build
             build_py.run(self)
+
+            # Ensure JSON constants are present in the built package.
+            constants_src = project_root / 'chisurf' / 'settings' / 'constants'
+            constants_dst = pathlib.Path(self.build_lib) / 'chisurf' / 'settings' / 'constants'
+            constants_dst.mkdir(parents=True, exist_ok=True)
+            for json_file in constants_src.glob('*.json'):
+                shutil.copy2(json_file, constants_dst / json_file.name)
+
+            # Vendor the pure-Python chinet package into ChiSurf builds so
+            # Windows installers remain self-contained.
+            chinet_src = project_root / 'modules' / 'chinet' / 'chinet'
+            chinet_dst = pathlib.Path(self.build_lib) / 'chinet'
+            if chinet_src.exists():
+                if chinet_dst.exists():
+                    shutil.rmtree(chinet_dst)
+                shutil.copytree(chinet_src, chinet_dst)
         finally:
             # After the build is complete, restore the original dynamic version
             # This ensures that the source code remains unchanged
@@ -222,6 +255,9 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
         # Inject our extensions
         if 'ext_modules' not in kwargs:
             kwargs['ext_modules'] = get_extensions()
+        cmdclass = dict(kwargs.get('cmdclass', {}))
+        cmdclass.setdefault('build_py', CustomBuildPy)
+        kwargs['cmdclass'] = cmdclass
         return original_setup(*args, **kwargs)
     
     # Replace setup temporarily

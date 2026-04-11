@@ -3,9 +3,11 @@ include chisurf/structure/potential/database/*.npy
 include chisurf/models/fcs/*.yaml
 include chisurf/models/parse/*.yaml
 include chisurf/settings/*.yaml
+include chisurf/settings/constants/*.json
 include chisurf/gui/styles/*.css
 include chisurf/plugins/spectra_viewer/*.db
 include notebooks/*.ipynb
+recursive-include modules/chinet/chinet *.py
 recursive-include docs *.md *.png *.svg *.jpg *.jpeg *.gif
 include _build_backend.py
 include README.md

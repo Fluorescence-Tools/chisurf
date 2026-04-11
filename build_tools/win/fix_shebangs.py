@@ -1,68 +1,78 @@
-# This script is intended to fix shebangs in setuptools entry points after installation by
-# InnoSetup.
-#
-# see: http://www.entropyreduction.al/python/distutils/2017/09/21/bundle-python-app-w-inno-setup.html
-#
-# e.g.
-# [Run]
-# "C:\Program Files\AwesomeApp\python.exe fix_shebangs.py awesomeapp"
-#
-# For each argument {arg}, it will search for a file
-#   .\Scripts\{arg}-script.py
-# and fix the shebang to point to the correct interpreter.
+import inspect
+import json
+import os
+import os.path
+import sys
+import time
+from pathlib import Path
 
-import os, os.path, sys, inspect, time
+from pip._vendor.distlib.scripts import ScriptMaker
 
 if os.name != 'nt':
-    raise OSError('Fix shebangs only designed for Windows platform Python at present')
+    raise OSError('Launcher regeneration is only supported on Windows')
 
-currentDir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-scriptsDir = os.path.join(currentDir, 'Scripts')
-sys.path.insert(0, currentDir)
-sys.path.insert(0, scriptsDir)
+CURRENT_DIR = Path(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
+SCRIPTS_DIR = CURRENT_DIR / 'Scripts'
+ENTRY_POINTS_FILE = CURRENT_DIR / 'entry_points.json'
+PYTHON_EXE = CURRENT_DIR / 'python.exe'
 
-# Prefer to log to a file, but if that
+sys.path.insert(0, str(CURRENT_DIR))
+sys.path.insert(0, str(SCRIPTS_DIR))
+
+
+def _open_log():
+    try:
+        return open(CURRENT_DIR / 'install.log', 'w', encoding='utf-8')
+    except PermissionError:
+        class Log:
+            write = staticmethod(print)
+
+        return Log()
+
+
+def _load_entry_points():
+    with open(ENTRY_POINTS_FILE, 'r', encoding='utf-8') as fp:
+        payload = json.load(fp)
+    return payload.get('entry_points', [])
+
+
+def _remove_existing_wrappers(name: str, log) -> None:
+    for suffix in ('.exe', '-script.py', '-script.pyw', '.py', '.pyw'):
+        path = SCRIPTS_DIR / f'{name}{suffix}'
+        if path.exists():
+            try:
+                path.unlink()
+                log.write(f'Removed stale launcher {path.name}\n')
+            except OSError as exc:
+                log.write(f'WARNING: Could not remove {path.name}: {exc}\n')
+
+
+def _regenerate_launchers(log) -> None:
+    entry_points = _load_entry_points()
+    maker = ScriptMaker(None, str(SCRIPTS_DIR))
+    maker.executable = str(PYTHON_EXE)
+    maker.variants = {''}
+    maker.clobber = True
+    maker.set_mode = False
+
+    for spec in entry_points:
+        name = spec.split('=')[0].strip()
+        _remove_existing_wrappers(name, log)
+        # Always target python.exe for launcher compatibility across install scopes.
+        options = {'gui': False}
+        maker.executable = str(PYTHON_EXE)
+        created = maker.make(spec, options)
+        log.write(f'Regenerated {name}: {created}\n')
+
+
+log = _open_log()
 try:
-    log = open(os.path.join(currentDir, 'install.log'), 'w')
-except PermissionError:
-    class Log(object):
-        def __init__(self):
-            self.write = print
-
-
-    log = Log()
-
-for script in sys.argv[1:]:
-    log.write('De-mangling script {}\n'.format(script))
-
-    interp = 'python.exe'
-    scriptFile = os.path.join(scriptsDir, script + '-script.py')
-    if not os.path.isfile(scriptFile):
-        # For some reason gui_scripts have the extension .pyw
-        interp = 'pythonw.exe'
-        scriptFile = os.path.join(scriptsDir, script + '-script.pyw')
-        if not os.path.isfile(scriptFile):
-            log.write('Script {} does not exist.\n'.format(script))
-            continue
-
-    with open(scriptFile, 'r') as sh:
-        scriptLines = sh.readlines()
-
-    new_shebang = '#!"{}"\n'.format(os.path.join(currentDir, interp))
-
-    if scriptLines and scriptLines[0].startswith('#!'):
-        log.write("Replacing shebang for {}: {}\n".format(script, new_shebang))
-        scriptLines[0] = new_shebang
+    if not ENTRY_POINTS_FILE.exists():
+        raise FileNotFoundError(f'Missing entry_points.json at {ENTRY_POINTS_FILE}')
+    _regenerate_launchers(log)
+finally:
+    if getattr(log, 'write', None) is print:
+        print("Couldn't create install.log, so waiting...")
+        time.sleep(10.0)
     else:
-        log.write("Inserting shebang for {}: {}\n".format(script, new_shebang))
-        scriptLines.insert(0, new_shebang)
-
-    # Writing here may require administrator access!
-    with open(scriptFile, 'w') as sh:
-        sh.writelines(scriptLines)
-
-if log.write is print:
-    print("Couldn't create install.log, so waiting...")
-    time.sleep(10.0)
-else:
-    log.close()
+        log.close()

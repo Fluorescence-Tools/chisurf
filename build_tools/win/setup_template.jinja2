@@ -37,9 +37,12 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 ; Icon files must be explicitely included
 Source: ".\icons\*.ico"; DestDir: "{app}\icons"
-Source: "{{ App_dir }}\**"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Use \* with recursesubdirs so Inno includes both root-level runtime files
+; (for example python.exe and DLLs) and nested package dependencies.
+Source: "{{ App_dir }}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ;Source: "{{ vc_runtime_path }}\*"; DestDir: {tmp}; Flags: deleteafterinstall
 Source: "fix_shebangs.py"; DestDir: "{app}"
+Source: "..\..\rattler-recipe\entry_points.json"; DestDir: "{app}"
 
 [Icons]
 ; --- Start Menu: all entry points ---
@@ -56,7 +59,7 @@ Type: files; Name: "{app}\install.log"
 
 [Run]
 ; Fix shebangs for all entry points
-Filename: "{app}\python.exe"; Parameters: "fix_shebangs.py {{ all_entry_names|join(' ') }}"; StatusMsg: "Optimizing executables..."; Flags: runhidden
+Filename: "{app}\python.exe"; Parameters: "fix_shebangs.py {% for entry_point in gui_entry_points %}{{ entry_point }} {% endfor %}"; StatusMsg: "Regenerating entry-point launchers..."; Flags: runhidden
 
 [Code]
 function GetInstallDir(Param: string): string;
