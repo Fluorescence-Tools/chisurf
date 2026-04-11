@@ -8,10 +8,9 @@ import numpy as np
 
 import chisurf.settings
 import chisurf.fitting
-import chisurf.base
-import chisurf.parameter
+from chisurf import base
+from chisurf import parameter
 import chisurf.decorators
-import chisurf.models.model
 
 #parameter_settings = chisurf.settings.parameter
 
@@ -112,6 +111,16 @@ class FittingParameter(chisurf.parameter.Parameter):
             **kwargs
         )
 
+    def update(self) -> None:
+        """Update the UI controller for this parameter."""
+        controller = getattr(self, "controller", None)
+        if controller is not None and hasattr(controller, "finalize"):
+            try:
+                controller.finalize()
+            except Exception as e:
+                import chisurf.logging
+                chisurf.logging.error(f"Failed to finalize parameter controller: {e}")
+
     def __getstate__(self):
         """Return a picklable representation of the fitting parameter."""
         state = super().__getstate__()
@@ -147,7 +156,10 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
         typing.Tuple[float, float]
     ]:
         """List of ``(lb, ub)`` bounds of all parameters (including fixed)."""
-        return [pi.bounds for pi in self.parameters]
+        return [
+            pi.bounds if getattr(pi, "bounds_on", True) else (float("-inf"), float("inf"))
+            for pi in self.parameters
+        ]
 
     @property
     def parameters_all(self) -> typing.List[
@@ -186,7 +198,8 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
         for value in self.__dict__.values():
             if isinstance(value, FittingParameterGroup):
                 a.append(value)
-        return list(set(a))
+        seen = set()
+        return [x for x in a if not (x in seen or seen.add(x))]
 
     @property
     def parameter_dict(self) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
@@ -254,7 +267,7 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
 
     def find_parameters(
             self,
-            parameter_type=chisurf.parameter.Parameter
+            parameter_type=FittingParameter
     ) -> None:
         """Discover parameters and nested groups attached to this instance.
 
@@ -265,26 +278,33 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
         self._aggregated_parameters = None
         self._parameters = None
         d = [v for v in self.__dict__.values() if v is not self]
-        ag = chisurf.base.find_objects(
+        ag = base.find_objects(
             search_iterable=d,
-            searched_object_type=chisurf.fitting.parameter.FittingParameterGroup
+            searched_object_type=FittingParameterGroup
         )
         self._aggregated_parameters = ag
 
         ap = list()
-        for o in set(ag):
-            if not isinstance(o, chisurf.models.Model):
+        from chisurf.models.model import Model
+        for o in ag:
+            if not isinstance(o, Model):
                 o.find_parameters()
-                self.__dict__[o.name] = o
+                # Do NOT overwrite existing attributes with group names to avoid collisions
+                if o.name not in self.__dict__:
+                    self.__dict__[o.name] = o
                 ap += o.parameters_all
 
-        mp = chisurf.base.find_objects(
+        # Search using the base Parameter class for robustness.
+        # FittingParameter is renamed by @register so isinstance against FittingParameter
+        # can be unreliable; searching by base class always works.
+        mp = base.find_objects(
             search_iterable=d,
-            searched_object_type=parameter_type
+            searched_object_type=parameter.Parameter
         )
-        self._parameters = list(set(mp + ap))
+        seen = set()
+        self._parameters = [x for x in (mp + ap) if not (x in seen or seen.add(x))]
 
-    def append_parameter(self, p: chisurf.parameter.Parameter):
+    def append_parameter(self, p: parameter.Parameter):
         """Append a new :class:`FittingParameter` to this group."""
         self._parameters.append(p)
 

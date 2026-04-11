@@ -469,16 +469,19 @@ def add_fit(
         return ""
 
     cs = getattr(chisurf, "cs", None)
-    if cs is None:
-        chisurf.logging.error("add_fit: no active main window (chisurf.cs is missing)")
-        return
     # Process inputs of macro and replace None
     # with more sensible values that are read
-    # from the GUI
+    # from the GUI or fallback defaults
     if dataset_indices is None:
-        dataset_indices = [cs.dataset_selector.selected_curve_index]
+        if cs is not None:
+            dataset_indices = [cs.dataset_selector.selected_curve_index]
+        else:
+            dataset_indices = [0] if chisurf.imported_datasets else []
     if model_name is None:
-        model_name = _resolve_model_name_from_cs(cs)
+        if cs is not None:
+            model_name = _resolve_model_name_from_cs(cs)
+        else:
+            model_name = ""
 
     # Do nothing of no dataset is selected
     if len(dataset_indices) == 0:
@@ -487,16 +490,24 @@ def add_fit(
     # If multiple datasets were requested, build each fit independently
     # using the already-stable single-dataset code path.
     if len(dataset_indices) > 1:
-        mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
-        plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
         batched_frozen = bool(_ui_updates_frozen)
+        mdl_parent = None
+        plo_parent = None
+        
+        if cs is not None:
+            mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
+            plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
+            try:
+                if not batched_frozen:
+                    if mdl_parent:
+                        mdl_parent.setUpdatesEnabled(False)
+                    if plo_parent:
+                        plo_parent.setUpdatesEnabled(False)
+                    cs.mdiarea.setUpdatesEnabled(False)
+            except Exception:
+                pass
+
         try:
-            if not batched_frozen:
-                if mdl_parent:
-                    mdl_parent.setUpdatesEnabled(False)
-                if plo_parent:
-                    plo_parent.setUpdatesEnabled(False)
-                cs.mdiarea.setUpdatesEnabled(False)
             for idx in dataset_indices:
                 try:
                     add_fit(
@@ -509,35 +520,77 @@ def add_fit(
                 except Exception as e:
                     chisurf.logging.warning(f"add_fit: failed for dataset index {idx}: {e}")
         finally:
-            if not batched_frozen:
-                cs.mdiarea.setUpdatesEnabled(True)
-                if mdl_parent:
-                    mdl_parent.setUpdatesEnabled(True)
-                if plo_parent:
-                    plo_parent.setUpdatesEnabled(True)
-        if not _defer_cs_update:
-            cs.update()
+            if cs is not None and not batched_frozen:
+                try:
+                    cs.mdiarea.setUpdatesEnabled(True)
+                    if mdl_parent:
+                        mdl_parent.setUpdatesEnabled(True)
+                    if plo_parent:
+                        plo_parent.setUpdatesEnabled(True)
+                except Exception:
+                    pass
+        if cs is not None and not _defer_cs_update:
+            try:
+                cs.update()
+            except Exception:
+                pass
         return
 
     # create a list of data sets to which a fit with
-    # a particular model is added
-    data_sets = [cs.dataset_selector.datasets[i] for i in dataset_indices]
+    # a particular model is added. Avoid GUI access if missing.
+    try:
+        data_sets = [chisurf.imported_datasets[i] for i in dataset_indices]
+    except IndexError:
+        chisurf.logging.error("add_fit: dataset indices out of bounds of chisurf.imported_datasets")
+        return
 
     # Prefer the experiment attached to the dataset; fall back to the
     # globally selected experiment if necessary (e.g. after project load).
     exp = getattr(data_sets[0], "experiment", None)
-    if exp is None:
+    if exp is None and cs is not None:
         exp = getattr(cs, "current_experiment", None)
+    if exp is None:
+        # Headless fallback: trying to use first registered experiment
+        try:
+            exp = list(chisurf.experiments.types.values())[0] if chisurf.experiments.types else None
+        except Exception:
+            exp = None
     if exp is None:
         chisurf.logging.warning("add_fit: no experiment available on dataset or cs.current_experiment; aborting")
         return
 
     model_names = exp.model_names
-    model_class = exp.model_classes[0]
+    model_class = None
+
+    # Try to find the model by name in the experiment type
     for model_idx, mn in enumerate(model_names):
         if mn == model_name:
             model_class = exp.model_classes[model_idx]
             break
+
+    # If not found and we have a specific name, search globally in all Model subclasses.
+    # This ensures headless project loading works for any registered model class in the environment.
+    if model_class is None and model_name != "None":
+        from chisurf.models.model import Model
+        def get_all_subclasses(cls):
+            all_subclasses = []
+            for subclass in cls.__subclasses__():
+                all_subclasses.append(subclass)
+                all_subclasses.extend(get_all_subclasses(subclass))
+            return all_subclasses
+
+        for cls in get_all_subclasses(Model):
+            if getattr(cls, 'name', None) == model_name:
+                model_class = cls
+                break
+
+    # Fallback to experiment's default model if still not found and no specific name requested
+    if model_class is None and exp.model_classes:
+        model_class = exp.model_classes[0]
+
+    if model_class is None:
+        chisurf.logging.warning(f"add_fit: could not resolve model '{model_name}'; aborting")
+        return
 
     base_model_kw = dict(model_kw or {})
 
@@ -630,56 +683,63 @@ def add_fit(
                 )
 
             # Batch UI updates to avoid repeated repaints while constructing widgets
-            mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
-            plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
-            try:
-                if not _ui_updates_frozen:
-                    if mdl_parent:
-                        mdl_parent.setUpdatesEnabled(False)
-                    if plo_parent:
-                        plo_parent.setUpdatesEnabled(False)
-                    cs.mdiarea.setUpdatesEnabled(False)
-
-                fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
-                    fit=fit_group
-                )
-                header_layout = getattr(cs, "analysisHeaderLayout", None)
-                if header_layout is not None:
-                    header_layout.addWidget(fit_control_widget)
-                else:
-                    cs.modelLayout.addWidget(fit_control_widget)
-                for fit in fit_group:
-                    cs.modelLayout.addWidget(fit.model)
-
-                fit_window = chisurf.gui.widgets.fitting.FitSubWindow(
-                    fit=fit_group,
-                    control_layout=cs.plotOptionsLayout,
-                    fit_widget=fit_control_widget
-                )
-
-                fit_window.setWindowTitle(fit.name)
-                fit_window = cs.mdiarea.addSubWindow(fit_window)
-                chisurf.gui.fit_windows.append(fit_window)
-                cs.current_fit = fit_group
-                # Run auto-fit range synchronously so that each fit completes
-                # its range setup and model/plot updates before the next fit
-                # is created. This mirrors the stable sequential behaviour.
+            if cs is not None:
+                mdl_parent = getattr(cs.modelLayout, 'parentWidget', lambda: None)()
+                plo_parent = getattr(cs.plotOptionsLayout, 'parentWidget', lambda: None)()
                 try:
-                    fit_control_widget.onAutoFitRange()
-                except Exception:
-                    pass
-            finally:
-                # Re-enable updates and show
-                if not _ui_updates_frozen:
-                    cs.mdiarea.setUpdatesEnabled(True)
-                    if mdl_parent:
-                        mdl_parent.setUpdatesEnabled(True)
-                    if plo_parent:
-                        plo_parent.setUpdatesEnabled(True)
-                fit_window.show()
+                    if not _ui_updates_frozen:
+                        if mdl_parent:
+                            mdl_parent.setUpdatesEnabled(False)
+                        if plo_parent:
+                            plo_parent.setUpdatesEnabled(False)
+                        cs.mdiarea.setUpdatesEnabled(False)
 
-    if not _defer_cs_update:
-        cs.update()
+                    fit_control_widget = chisurf.gui.widgets.fitting.FittingControllerWidget(
+                        fit=fit_group
+                    )
+                    header_layout = getattr(cs, "analysisHeaderLayout", None)
+                    if header_layout is not None:
+                        header_layout.addWidget(fit_control_widget)
+                    else:
+                        cs.modelLayout.addWidget(fit_control_widget)
+                    for fit in fit_group:
+                        cs.modelLayout.addWidget(fit.model)
+
+                    fit_window = chisurf.gui.widgets.fitting.FitSubWindow(
+                        fit=fit_group,
+                        control_layout=cs.plotOptionsLayout,
+                        fit_widget=fit_control_widget
+                    )
+
+                    fit_window.setWindowTitle(fit.name)
+                    fit_window = cs.mdiarea.addSubWindow(fit_window)
+                    chisurf.gui.fit_windows.append(fit_window)
+                    cs.current_fit = fit_group
+                    # Run auto-fit range synchronously so that each fit completes
+                    # its range setup and model/plot updates before the next fit
+                    # is created. This mirrors the stable sequential behaviour.
+                    try:
+                        fit_control_widget.onAutoFitRange()
+                    except Exception:
+                        pass
+                finally:
+                    # Re-enable updates and show
+                    if not _ui_updates_frozen:
+                        cs.mdiarea.setUpdatesEnabled(True)
+                        if mdl_parent:
+                            mdl_parent.setUpdatesEnabled(True)
+                        if plo_parent:
+                            plo_parent.setUpdatesEnabled(True)
+                    try:
+                        fit_window.show()
+                    except Exception:
+                        pass
+
+    if cs is not None and not _defer_cs_update:
+        try:
+            cs.update()
+        except Exception:
+            pass
 
 
 def save_fit(
@@ -1305,6 +1365,9 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     fits and UI state. It no longer creates per-fit folders, screenshots or
     DOCX reports; everything is embedded in ``project.json``.
 
+    Works in headless mode (without GUI / ``chisurf.cs``). UI state is
+    only captured when a main window is available.
+
     Parameters
     ----------
     target_path : str
@@ -1315,9 +1378,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
 
     log = chisurf.logging
     cs = getattr(chisurf, "cs", None)
-    if cs is None:
-        log.error("save_project: no active main window (chisurf.cs is missing)")
-        return
 
     base_dir = os.path.abspath(str(target_path))
     project_dir = os.path.join(base_dir, project_name)
@@ -1372,6 +1432,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             "ex": ex.tolist(),
             "ey": ey.tolist(),
             "data_reader": _serialize_reader(getattr(dc, "data_reader", None)),
+            "experiment_name": getattr(getattr(dc, "experiment", None), "name", None),
         }
         dataset_id_by_obj[key] = ds_id
         return ds_id
@@ -1425,8 +1486,11 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     # --- Collect fits & global links --------------------------------------
     manifest_fits: typing.List[typing.Dict[str, typing.Any]] = []
 
-    for i, fit_window in enumerate(chisurf.gui.fit_windows):
-        fit_group = getattr(fit_window, "fit", None)
+    # Headless: iterate core model list (chisurf.fits) directly.
+    # Falls back to chisurf.gui.fit_windows only when fits list is empty
+    # but GUI windows exist (legacy compat).
+    fit_sources = chisurf.fits
+    for i, fit_group in enumerate(fit_sources):
         if fit_group is None:
             continue
 
@@ -1456,6 +1520,13 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                                 break
                         except Exception:
                             continue
+                except Exception:
+                    pass
+
+            # Headless fallback: use the model class's own 'name' attribute if experiment mapping is missing
+            if model_name is None and local_fit is not None:
+                try:
+                    model_name = getattr(local_fit.model, "name", None)
                 except Exception:
                     pass
 
@@ -1505,22 +1576,22 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             "global_links": global_links_state,
         })
 
-    ui_state = {
-        "current_fit_index": getattr(cs, "fit_idx", 0),
-        "current_experiment_idx": getattr(cs, "current_experiment_idx", 0),
-        "current_setup_idx": getattr(cs, "current_setup_idx", 0),
-    }
+    ui_state = {}
     if dataset_layout:
         ui_state["dataset_layout"] = dataset_layout
 
-    # Use centralized UI 1:1 state capture 
-    try:
-        from chisurf.project.ui_state import get_ui_state
-        gui_state = get_ui_state(cs)
-        if gui_state:
-            ui_state.update(gui_state)
-    except Exception as exc:
-        log.warning(f"save_project: could not capture UI state: {exc}")
+    # Capture UI state only when a main window is available (headless-safe)
+    if cs is not None:
+        ui_state["current_fit_index"] = getattr(cs, "fit_idx", 0)
+        ui_state["current_experiment_idx"] = getattr(cs, "current_experiment_idx", 0)
+        ui_state["current_setup_idx"] = getattr(cs, "current_setup_idx", 0)
+        try:
+            from chisurf.project.ui_state import get_ui_state
+            gui_state = get_ui_state(cs)
+            if gui_state:
+                ui_state.update(gui_state)
+        except Exception as exc:
+            log.warning(f"save_project: could not capture UI state: {exc}")
 
     proj = CSProject(
         name=project_name,
@@ -1649,15 +1720,17 @@ def _write_fit_docx(
     document.save(str(docx_path))
     return docx_path
 
-def _build_fitgroup_payload_from_window(
-        fit_window,
+def _build_fitgroup_payload(
+        fit_group,
         register_datacurve: typing.Callable[[chisurf.data.DataCurve], str],
         log: typing.Any,
         group_index: int = 0,
         include_global_links: bool = True,
 ) -> typing.Tuple[str, typing.Dict]:
-    """Helper to serialize a single FitSubWindow into the Project payload."""
-    fit_group = getattr(fit_window, "fit", None)
+    """Helper to serialize a FitGroup into the Project payload.
+
+    Works headlessly — no GUI window required.
+    """
     if fit_group is None:
         return None, {}
 
@@ -1737,6 +1810,18 @@ def _build_fitgroup_payload_from_window(
     }
 
 
+def _build_fitgroup_payload_from_window(
+        fit_window,
+        register_datacurve: typing.Callable[[chisurf.data.DataCurve], str],
+        log: typing.Any,
+        group_index: int = 0,
+        include_global_links: bool = True,
+) -> typing.Tuple[str, typing.Dict]:
+    """Legacy wrapper: extract FitGroup from a GUI window, then delegate."""
+    fit_group = getattr(fit_window, "fit", None)
+    return _build_fitgroup_payload(fit_group, register_datacurve, log, group_index, include_global_links)
+
+
 def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf_fit"):
     """Save a single fit (data + model state + window) in the project format.
 
@@ -1746,15 +1831,21 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
     """
     log = chisurf.logging
     cs = getattr(chisurf, "cs", None)
-    if cs is None:
-        log.error("save_fit_project: no active main window (chisurf.cs is missing)")
-        return
-
-    if fit_window is None:
+    # Headless-safe: cs may be None
+    if fit_window is None and cs is not None:
         fit_window = getattr(cs.mdiarea, "currentSubWindow", lambda: None)()
     if fit_window is None:
-        log.error("save_fit_project: no fit window available")
-        return
+        # Headless: try to use the last fit group directly
+        if chisurf.fits:
+            fit_group = chisurf.fits[-1]
+        else:
+            log.error("save_fit_project: no fit window or fit group available")
+            return
+    else:
+        fit_group = getattr(fit_window, "fit", None)
+        if fit_group is None:
+            log.error("save_fit_project: fit window has no fit group")
+            return
 
     base_dir = os.path.abspath(str(target_path))
     project_dir = os.path.join(base_dir, fit_name)
@@ -1798,23 +1889,23 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
         dataset_id_by_obj[key] = ds_id
         return ds_id
 
-    fg_key, fit_payload = _build_fitgroup_payload_from_window(
-        fit_window, register_datacurve, log, group_index=0
+    fg_key, fit_payload = _build_fitgroup_payload(
+        fit_group, register_datacurve, log, group_index=0
     )
     if not fit_payload:
         log.error("save_fit_project: fit payload empty; aborting")
         return
 
-    fit_ui_state = {
-        "current_fit_index": getattr(cs, "fit_idx", 0),
-    }
-    try:
-        history_browser = getattr(cs, "historyBrowser", None)
-        get_hist_state = getattr(history_browser, "get_ui_state", None)
-        if callable(get_hist_state):
-            fit_ui_state["history_browser"] = get_hist_state()
-    except Exception:
-        pass
+    fit_ui_state = {}
+    if cs is not None:
+        fit_ui_state["current_fit_index"] = getattr(cs, "fit_idx", 0)
+        try:
+            history_browser = getattr(cs, "historyBrowser", None)
+            get_hist_state = getattr(history_browser, "get_ui_state", None)
+            if callable(get_hist_state):
+                fit_ui_state["history_browser"] = get_hist_state()
+        except Exception:
+            pass
 
     proj = CSProject(
         name=fit_name,
@@ -1869,12 +1960,11 @@ def load_fit_project(project_path: str):
 
     Existing datasets and fits are left untouched. The stored dataset(s) are
     appended, then the fit group is rebuilt and its state restored.
+
+    Works in headless mode (without GUI / ``chisurf.cs``).
     """
     log = chisurf.logging
     cs = getattr(chisurf, "cs", None)
-    if cs is None:
-        log.error("load_fit_project: no active main window (chisurf.cs is missing)")
-        return
 
     proj = None
     history_base_dir = None
@@ -1929,7 +2019,7 @@ def load_fit_project(project_path: str):
                     pass
 
             try:
-                exp_obj = getattr(cs, "current_experiment", None)
+                exp_obj = getattr(cs, "current_experiment", None) if cs is not None else None
             except Exception:
                 exp_obj = None
             if exp_obj is not None:
@@ -1945,10 +2035,11 @@ def load_fit_project(project_path: str):
             log.warning(f"load_fit_project: could not reconstruct dataset {ds_id}: {exc}")
             continue
 
-    try:
-        cs.dataset_selector.update()
-    except Exception:
-        pass
+    if cs is not None:
+        try:
+            cs.dataset_selector.update()
+        except Exception:
+            pass
 
     # --- Rebuild fit groups and restore their state -----------------------
     fits_map = proj.fits or {}
@@ -2020,24 +2111,26 @@ def load_fit_project(project_path: str):
                 except Exception as exc:
                     log.warning(f"load_fit_project: could not restore global links for {key}: {exc}")
 
-    # Best-effort: bring the newest fit window to front
-    try:
-        if chisurf.gui.fit_windows:
-            win = chisurf.gui.fit_windows[-1]
-            win.show()
-            win.setFocus()
-    except Exception:
-        pass
+    # Best-effort: bring the newest fit window to front (GUI only)
+    if cs is not None:
+        try:
+            if chisurf.gui.fit_windows:
+                win = chisurf.gui.fit_windows[-1]
+                win.show()
+                win.setFocus()
+        except Exception:
+            pass
 
-    try:
-        fit_ui_state = proj.ui_state or {}
-        history_browser_state = fit_ui_state.get("history_browser") or {}
-        history_browser = getattr(cs, "historyBrowser", None)
-        set_hist_state = getattr(history_browser, "set_ui_state", None)
-        if callable(set_hist_state) and isinstance(history_browser_state, dict):
-            set_hist_state(history_browser_state)
-    except Exception:
-        pass
+    if cs is not None:
+        try:
+            fit_ui_state = proj.ui_state or {}
+            history_browser_state = fit_ui_state.get("history_browser") or {}
+            history_browser = getattr(cs, "historyBrowser", None)
+            set_hist_state = getattr(history_browser, "set_ui_state", None)
+            if callable(set_hist_state) and isinstance(history_browser_state, dict):
+                set_hist_state(history_browser_state)
+        except Exception:
+            pass
 
     _refresh_history_browser()
     _record_history(
@@ -2067,9 +2160,6 @@ def load_project(project_path: str):
 
     log = chisurf.logging
     cs = getattr(chisurf, "cs", None)
-    if cs is None:
-        log.error("load_project: no active main window (chisurf.cs is missing)")
-        return
 
     if not os.path.isdir(project_path):
         log.error(f"Project path {project_path} does not exist")
@@ -2088,49 +2178,20 @@ def load_project(project_path: str):
     except Exception:
         pass
 
-    try:
-        reinit = getattr(cs, "reinitialize", None)
-        if callable(reinit):
-            reinit()
-        else:
-            try:
-                cs.onCloseAllFits()
-            except Exception:
-                pass
-            try:
-                chisurf.fits.clear()
-            except Exception:
-                pass
-            try:
-                chisurf.gui.fit_windows.clear()
-            except Exception:
-                pass
-            try:
-                chisurf.imported_datasets.clear()
-            except Exception:
-                pass
-    except Exception:
-        pass
+    if cs is not None:
+        try:
+            reinit = getattr(cs, "reinitialize", None)
+            if callable(reinit):
+                reinit()
+            else:
+                try:
+                    cs.onCloseAllFits()
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
-    # --- Restore experiment/setup state early so we can attach it to datasets
-    ui_state = proj.ui_state or {}
-
-    try:
-        current_experiment_idx = ui_state.get("current_experiment_idx", 0)
-        total_exp = cs.comboBox_experimentSelect.count()
-        if 0 <= current_experiment_idx < total_exp:
-            cs.set_current_experiment_idx(current_experiment_idx)
-    except Exception:
-        pass
-
-    try:
-        current_setup_idx = ui_state.get("current_setup_idx", 0)
-        total_setup = cs.comboBox_setupSelect.count()
-        if 0 <= current_setup_idx < total_setup:
-            cs.set_current_setup_idx(current_setup_idx)
-    except Exception:
-        pass
-
+    # Unconditionally clear headless state
     try:
         chisurf.fits.clear()
     except Exception:
@@ -2139,10 +2200,30 @@ def load_project(project_path: str):
         chisurf.gui.fit_windows.clear()
     except Exception:
         pass
-    try:
-        chisurf.imported_datasets.clear()
-    except Exception:
-        pass
+    # We rely on reinit() to have cleared headless state as needed.
+    # chisurf.imported_datasets.clear() is NOT called here because reinit()
+    # already clears it while preserving the Global Dataset instance if possible.
+    # We will overwrite it later with [:] slice assignment.
+
+    # --- Restore experiment/setup state early so we can attach it to datasets
+    ui_state = proj.ui_state or {}
+
+    if cs is not None:
+        try:
+            current_experiment_idx = ui_state.get("current_experiment_idx", 0)
+            total_exp = cs.comboBox_experimentSelect.count()
+            if 0 <= current_experiment_idx < total_exp:
+                cs.set_current_experiment_idx(current_experiment_idx)
+        except Exception:
+            pass
+
+        try:
+            current_setup_idx = ui_state.get("current_setup_idx", 0)
+            total_setup = cs.comboBox_setupSelect.count()
+            if 0 <= current_setup_idx < total_setup:
+                cs.set_current_setup_idx(current_setup_idx)
+        except Exception:
+            pass
 
     # --- Reconstruct datasets ---------------------------------------------
     dataset_objects: typing.Dict[str, chisurf.data.DataCurve] = {}
@@ -2176,14 +2257,29 @@ def load_project(project_path: str):
                 except Exception:
                     pass
 
-            # Attach a reasonable experiment object so that GUI widgets and
-            # macros relying on d.experiment (e.g. dataset selectors, add_fit)
-            # continue to work. For now we associate all reloaded datasets with
-            # the current experiment, if available.
-            try:
+            # Re-associate with the correct experiment object if possible.
+            exp_obj = None
+            stored_exp_name = payload.get("experiment_name")
+            
+            # 1) Try to find experiment by stored name
+            if stored_exp_name:
+                exp_obj = chisurf.experiment.get(stored_exp_name)
+            
+            # 2) Special case for global datasets (fallback for older projects)
+            if exp_obj is None:
+                ds_name_lower = str(name or ds_id).lower()
+                if "global" in ds_name_lower:
+                    exp_obj = chisurf.experiment.get("Global")
+                    if exp_obj is None:
+                        # try case variants
+                        for en in ("Global", "Global-Fit", "Global fit"):
+                            exp_obj = chisurf.experiment.get(en)
+                            if exp_obj is not None: break
+            
+            # 3) Final fallback to current experiment
+            if exp_obj is None and cs is not None:
                 exp_obj = getattr(cs, "current_experiment", None)
-            except Exception:
-                exp_obj = None
+            
             if exp_obj is not None:
                 try:
                     dc.experiment = exp_obj
@@ -2261,10 +2357,11 @@ def load_project(project_path: str):
 
     chisurf.imported_datasets[:] = restored_datasets
 
-    try:
-        cs.dataset_selector.update()
-    except Exception:
-        pass
+    if cs is not None:
+        try:
+            cs.dataset_selector.update()
+        except Exception:
+            pass
 
     # --- Rebuild fit groups and restore their state -----------------------
     fits_list = proj.fits or []
@@ -2351,32 +2448,33 @@ def load_project(project_path: str):
                     log.warning(f"load_project: could not restore global links for {key}: {exc}")
 
     # --- Restore UI state (current fit and window layout) -----------------
-    current_fit_idx = ui_state.get("current_fit_index", 0)
-    if 0 <= current_fit_idx < len(chisurf.fits):
+    if cs is not None:
+        current_fit_idx = ui_state.get("current_fit_index", 0)
+        if 0 <= current_fit_idx < len(chisurf.fits):
+            try:
+                cs.current_fit = chisurf.fits[current_fit_idx]
+            except Exception:
+                pass
+
         try:
-            cs.current_fit = chisurf.fits[current_fit_idx]
+            cs.fit_selector.update()
         except Exception:
             pass
 
-    try:
-        cs.fit_selector.update()
-    except Exception:
-        pass
+        # Restore main-window and MDI geometry/state if present. This should be
+        # done only after datasets and fits (and thus subwindows) have been
+        # recreated so that Qt has matching widgets to apply the layout to.
+        try:
+            from chisurf.project.ui_state import set_ui_state
+            set_ui_state(cs, ui_state)
+        except Exception as exc:
+            log.warning(f"load_project: could not restore UI state from dict: {exc}")
 
-    # Restore main-window and MDI geometry/state if present. This should be
-    # done only after datasets and fits (and thus subwindows) have been
-    # recreated so that Qt has matching widgets to apply the layout to.
-    try:
-        from chisurf.project.ui_state import set_ui_state
-        set_ui_state(cs, ui_state)
-    except Exception as exc:
-        log.warning(f"load_project: could not restore UI state from dict: {exc}")
-
-    # Trigger a single GUI refresh now that datasets, fits and layout are consistent.
-    try:
-        cs.update()
-    except Exception:
-        pass
+        # Trigger a single GUI refresh now that datasets, fits and layout are consistent.
+        try:
+            cs.update()
+        except Exception:
+            pass
 
     _refresh_history_browser()
     _record_history(

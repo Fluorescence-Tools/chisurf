@@ -90,6 +90,32 @@ class Model(FittingParameterGroup):
 
         self.update_model()
 
+    def finalize(self) -> None:
+        """Propagate finalization to all parameter groups.
+
+        This ensures that UI controllers and other secondary outputs
+        linked to model components are refreshed after updates.
+        """
+        import chisurf.base
+        import chisurf.fitting.parameter
+        
+        # 1. Finalize ourselves (Model is a FittingParameterGroup)
+        super().finalize()
+        
+        # 2. Finalize all sub-groups discovered via attributes
+        d = [v for v in self.__dict__.values() if v is not self]
+        pgs = chisurf.base.find_objects(
+            search_iterable=d,
+            searched_object_type=chisurf.fitting.parameter.FittingParameterGroup
+        )
+        for pg in set(pgs):
+            if hasattr(pg, "finalize") and pg is not self:
+                try:
+                    pg.finalize()
+                except Exception as e:
+                    import chisurf.logging
+                    chisurf.logging.error(f"Failed to finalize parameter group: {e}")
+
     def get_wres(
             self,
             fit: chisurf.fitting.fit.Fit,

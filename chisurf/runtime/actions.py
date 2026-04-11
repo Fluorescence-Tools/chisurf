@@ -14,6 +14,7 @@ class ActionSpec:
     schema: typing.Dict[str, typing.Any] = field(default_factory=dict)
     replayable: bool = True
     debounce_ms: int = 0
+    debounce_keys: typing.Optional[typing.Tuple[str, ...]] = None
     side_effect_class: str = "state"
     handler: typing.Optional[typing.Callable] = None
     _handler_params: frozenset = field(init=False, repr=False)
@@ -54,6 +55,7 @@ class ActionSpec:
             "schema": schema_repr,
             "replayable": bool(self.replayable),
             "debounce_ms": int(self.debounce_ms),
+            "debounce_keys": list(self.debounce_keys) if self.debounce_keys else None,
             "side_effect_class": str(self.side_effect_class),
         }
 
@@ -151,6 +153,7 @@ class ActionDispatcher:
         self._history_provider = history_provider
         self._lock = threading.RLock()
         self._recent_fingerprints: typing.Dict[str, float] = {}
+        self._pending_timers: typing.Dict[str, threading.Timer] = {}
 
     @staticmethod
     def _safe_json(value: typing.Any) -> str:
@@ -164,8 +167,15 @@ class ActionDispatcher:
             action_type: str,
             payload: typing.Dict[str, typing.Any],
             source_uid: typing.Optional[str],
+            debounce_keys: typing.Optional[typing.Tuple[str, ...]] = None,
     ) -> str:
-        return f"{action_type}|{self._safe_json(payload)}|{str(source_uid or '')}"
+        if debounce_keys:
+            # Only use specified keys for the identity portion of the fingerprint
+            identity_payload = {k: payload.get(k) for k in debounce_keys if k in payload}
+        else:
+            # Fallback: use whole payload for identity (existing behavior)
+            identity_payload = payload
+        return f"{action_type}|{self._safe_json(identity_payload)}|{str(source_uid or '')}"
 
     def _is_within_debounce(self, fingerprint: str, debounce_ms: int) -> bool:
         """Return True if the same action fired within debounce_ms and should be suppressed."""
@@ -177,7 +187,59 @@ class ActionDispatcher:
             self._recent_fingerprints[fingerprint] = now_ms
             if old is None:
                 return False
-            return (now_ms - old) <= debounce_ms
+            result = (now_ms - old) <= debounce_ms
+            return result
+
+    def _cancel_pending(self, fingerprint: str) -> None:
+        with self._lock:
+            old_timer = self._pending_timers.pop(fingerprint, None)
+            if old_timer:
+                try:
+                    old_timer.cancel()
+                except Exception:
+                    pass
+
+    def _schedule_trailing_edge(
+            self,
+            spec: ActionSpec,
+            name: str,
+            payload: typing.Dict[str, typing.Any],
+            summary: typing.Optional[str],
+            source_uid: typing.Optional[str],
+            target_uid: typing.Optional[str],
+            fingerprint: str,
+    ) -> None:
+        with self._lock:
+            self._cancel_pending(fingerprint)
+
+            def delayed_execute():
+                try:
+                    # Reroute to GUI thread if possible to avoid thread-safety issues
+                    # with model updates. 
+                    from chisurf.gui import run_on_gui_thread
+                    run_on_gui_thread(
+                        self.execute,
+                        name=name,
+                        payload=payload,
+                        summary=summary,
+                        source_uid=source_uid,
+                        target_uid=target_uid,
+                        _is_trailing_edge=True
+                    )
+                except (ImportError, AttributeError):
+                    # Fallback to direct execution if GUI thread runner is not available
+                    self.execute(
+                        name=name,
+                        payload=payload,
+                        summary=summary,
+                        source_uid=source_uid,
+                        target_uid=target_uid,
+                        _is_trailing_edge=True
+                    )
+
+            timer = threading.Timer(spec.debounce_ms / 1000.0, delayed_execute)
+            self._pending_timers[fingerprint] = timer
+            timer.start()
 
     def execute(
             self,
@@ -186,6 +248,7 @@ class ActionDispatcher:
             summary: typing.Optional[str] = None,
             source_uid: typing.Optional[str] = None,
             target_uid: typing.Optional[str] = None,
+            _is_trailing_edge: bool = False,
             **_kw
     ) -> typing.Optional[typing.Dict[str, typing.Any]]:
         canonical_name = self.registry.resolve_name(name)
@@ -196,9 +259,16 @@ class ActionDispatcher:
             return None
         normalized_payload = spec.validate_payload(payload)
 
-        fingerprint = self._fingerprint(canonical_name, normalized_payload, source_uid)
-        if self._is_within_debounce(fingerprint, spec.debounce_ms):
-            return None
+        fingerprint = self._fingerprint(canonical_name, normalized_payload, source_uid, spec.debounce_keys)
+        
+        if not _is_trailing_edge:
+            if self._is_within_debounce(fingerprint, spec.debounce_ms):
+                # Schedule a trailing-edge catch-up execution so the final value is not lost.
+                self._schedule_trailing_edge(spec, name, normalized_payload, summary, source_uid, target_uid, fingerprint)
+                return None
+
+        # About to execute: cancel any pending trailing-edge timer for this fingerprint
+        self._cancel_pending(fingerprint)
 
         result = None
         if spec.handler is not None:
@@ -213,6 +283,9 @@ class ActionDispatcher:
         event = None
         if history_obj is not None and hasattr(history_obj, "record"):
             final_summary = summary or str(canonical_name)
+            if _is_trailing_edge:
+                final_summary += " (auto-sync)"
+                
             enriched_payload = dict(normalized_payload)
             enriched_payload.setdefault("replayable", bool(spec.replayable))
             enriched_payload.setdefault("side_effect_class", str(spec.side_effect_class))

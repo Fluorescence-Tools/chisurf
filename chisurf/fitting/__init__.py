@@ -3,12 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 import chisurf.curve
-
-import chisurf.fitting.fit
-import chisurf.fitting.parameter
-import chisurf.fitting.sample
-import chisurf.fitting.support_plane
-from chisurf.fitting.fit import Fit, FitGroup
+import chisurf.logging
 
 
 def calculate_weighted_residuals(
@@ -39,8 +34,8 @@ def calculate_weighted_residuals(
 
 
 def find_fit_idx(
-        fit: chisurf.fitting.Fit,
-        fits: list[chisurf.fitting.fit.Fit] = None
+        fit: 'chisurf.fitting.fit.Fit',
+        fits: list['chisurf.fitting.fit.Fit'] = None
 ) -> int:
     """Returns index of the fit of a model in chisurf.fits array
 
@@ -56,8 +51,8 @@ def find_fit_idx(
 
 
 def find_fit_idx_of_parameter(
-        parameter: chisurf.fitting.parameter.FittingParameter,
-        fit_list: list[chisurf.fitting.Fit] = None
+        parameter: 'chisurf.fitting.parameter.FittingParameter',
+        fit_list: list['chisurf.fitting.fit.Fit'] = None
 ) -> list[int]:
     if fit_list is None:
         fit_list = chisurf.fits
@@ -86,18 +81,28 @@ def find_fit_idx_of_parameter(
             except Exception:
                 continue
             for p in params:
+                # Primary: object identity
                 if id(p) == id(parameter):
                     fit_idx.append(idx)
                     found = True
                     break
+                # Secondary: port-object identity (stable across list rebuilds,
+                # safe against cross-fit confusion unlike the old name match)
+                try:
+                    if id(p._port) == id(parameter._port):
+                        fit_idx.append(idx)
+                        found = True
+                        break
+                except AttributeError:
+                    continue
             if found:
                 break
     return fit_idx
 
 
 def find_fit_idx_of_model(
-        model: chisurf.models.Model,
-        fits: list[chisurf.fitting.fit.Fit] = None
+        model: 'chisurf.models.Model',
+        fits: list['chisurf.fitting.fit.Fit'] = None
 ) -> int:
     """Returns index of the fit of a model in chisurf.fits array
 

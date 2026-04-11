@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 import chisurf
 import chisurf.data
 import chisurf.experiments
@@ -332,16 +334,46 @@ def append_fit(
         fit_index: int,
         fit: 'chisurf.fitting.fit.FitGroup' = None
 ) -> None:
+    # Local import to ensure symbol resolution in static analyzers and at runtime
+    import chisurf as _cs
     if fit is None:
-        cs = chisurf.cs
+        cs = _cs.cs
         fit = cs.current_fit
     if fit is None:
         return
     try:
-        import chisurf
-        target_fit = chisurf.fits[fit_index]
-        fit.append_fit(target_fit)
-    except Exception:
-        pass
+        target_fit = _cs.fits[fit_index]
+        _cs.logging.info(
+            f"macros.model.append_fit: requested fit_index={fit_index}; receiver fit obj type={type(fit).__name__}"
+        )
+        # Prefer model-level append when available (GlobalFitModel.append_fit expects a Fit)
+        model_obj = getattr(fit, "model", None)
+        used_path = None
+        if hasattr(model_obj, "append_fit") and callable(getattr(model_obj, "append_fit", None)):
+            used_path = "fit.model.append_fit"
+            _cs.logging.info(
+                f"macros.model.append_fit: using {used_path}; target_fit type={type(target_fit).__name__}, name={getattr(target_fit, 'name', None)}"
+            )
+            model_obj.append_fit(target_fit)
+        elif hasattr(fit, "append_fit") and callable(getattr(fit, "append_fit", None)):
+            used_path = "fit.append_fit"
+            _cs.logging.info(
+                f"macros.model.append_fit: using {used_path}; target_fit type={type(target_fit).__name__}, name={getattr(target_fit, 'name', None)}"
+            )
+            fit.append_fit(target_fit)
+        else:
+            _cs.logging.warning(
+                "macros.model.append_fit: neither fit.model.append_fit nor fit.append_fit is available; no-op"
+            )
+        if used_path is not None:
+            recv = model_obj if used_path.startswith("fit.model") else fit
+            _cs.logging.info(
+                f"macros.model.append_fit: appended via {used_path} to receiver={type(recv).__name__}"
+            )
+    except Exception as e:
+        try:
+            _cs.logging.exception("macros.model.append_fit: exception while appending")
+        except Exception:
+            pass
 
 

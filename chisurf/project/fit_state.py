@@ -56,6 +56,7 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
             "bounds_on": bool(getattr(p, "bounds_on", False)),
             # link_target will be filled in a second pass
             "link_target": None,
+            "link_target_fit_uid": None,
         }
         param_states[name] = state
 
@@ -66,9 +67,22 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
         link = getattr(p, "link", None)
         if link is None:
             continue
+        
+        # Intra-fit link discovery
         target_name = obj_to_name.get(id(link))
         if target_name is not None:
             param_states[name]["link_target"] = target_name
+        else:
+            # Inter-fit link discovery (cross-fit)
+            import chisurf
+            for other_fit in getattr(chisurf, "fits", []):
+                other_params = getattr(other_fit.model, "parameters_all_dict", {})
+                other_obj_to_name = {id(op): oname for oname, op in other_params.items()}
+                target_name = other_obj_to_name.get(id(link))
+                if target_name is not None:
+                    param_states[name]["link_target"] = target_name
+                    param_states[name]["link_target_fit_uid"] = str(getattr(other_fit, "unique_identifier", ""))
+                    break
 
     # Optional model-specific extras. These are deliberately small and
     # JSON-friendly. Structural information such as component counts is
@@ -76,8 +90,9 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
     # helper here only wires through sub-group state for TCSPC models.
     extra: Dict[str, Any] = {}
 
-    # TCSPC-specific extras (e.g. IRF, linearization state). We delegate to
-    # small get_state helpers on the corresponding sub-groups if available.
+    # TCSPC-specific extras (e.g. IRF, background, linearization state). 
+    # We delegate to small get_state helpers on the corresponding sub-groups 
+    # if available, and also capture UIDs for external curve dependencies.
     tcspc_state: Dict[str, Any] = {}
     for key in ("generic", "corrections", "convolve"):
         comp = getattr(model, key, None)
@@ -89,6 +104,41 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
                 sub_state = None
             if isinstance(sub_state, dict) and sub_state:
                 tcspc_state[key] = sub_state
+
+    # Explicitly capture UIDs for background and IRF if present.
+    # These are used for reattachment during project loading.
+    try:
+        generic = getattr(model, "generic", None)
+        bg_curve = getattr(generic, "background_curve", None)
+        if bg_curve is not None:
+            bg_uid = getattr(bg_curve, "unique_identifier", None)
+            if bg_uid:
+                if "generic" not in tcspc_state:
+                    tcspc_state["generic"] = {}
+                tcspc_state["generic"]["background_curve_uid"] = str(bg_uid)
+    except Exception:
+        pass
+
+    try:
+        convolve = getattr(model, "convolve", None)
+        # Prefer the original IRF (_irf) over the processed one (irf)
+        # to ensure we capture the correct UID.
+        irf_curve = getattr(convolve, "_irf", None)
+        if irf_curve is None:
+            irf_curve = getattr(convolve, "irf", None)
+        # Fallback for name mangling if internal attribute is used
+        if irf_curve is None:
+            irf_curve = getattr(convolve, "_Convolve__irf", None)
+        
+        if irf_curve is not None:
+            irf_uid = getattr(irf_curve, "unique_identifier", None)
+            if irf_uid:
+                if "convolve" not in tcspc_state:
+                    tcspc_state["convolve"] = {}
+                tcspc_state["convolve"]["irf_uid"] = str(irf_uid)
+    except Exception:
+        pass
+
     if tcspc_state:
         extra["tcspc"] = tcspc_state
 
@@ -179,6 +229,8 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
         if p is None:
             continue
         target_name = p_state.get("link_target")
+        target_fit_uid = p_state.get("link_target_fit_uid")
+        
         if not target_name:
             # Explicitly clear existing links if any
             try:
@@ -186,13 +238,28 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
             except Exception:
                 pass
             continue
-        target = params.get(target_name)
-        if target is not None:
-            try:
-                p.link = target
-            except Exception:
-                # If linking fails, leave parameter unlinked
-                pass
+            
+        if not target_fit_uid:
+            # Intra-fit link restoration
+            target = params.get(target_name)
+            if target is not None:
+                try:
+                    p.link = target
+                except Exception:
+                    pass
+        else:
+            # Inter-fit link restoration (defer to third pass or handle here if registries are ready)
+            # Since this is a GUI-independence helper, we try to resolve from chisurf.fits if present.
+            import chisurf
+            target_fit = next((f for f in getattr(chisurf, "fits", []) 
+                               if str(getattr(f, "unique_identifier", "")) == target_fit_uid), None)
+            if target_fit:
+                target = getattr(target_fit.model, "parameters_all_dict", {}).get(target_name)
+                if target:
+                    try:
+                        p.link = target
+                    except Exception:
+                        pass
 
     # TCSPC-specific extras (e.g. IRF and linearization state) restored via
     # dedicated set_state helpers, if present on the model's sub-groups.
@@ -209,6 +276,34 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
                 except Exception:
                     # Never let TCSPC extras break overall fit restoration
                     pass
+
+        # UID Reattachment Pass for TCSPC components
+        import chisurf
+        datasets = getattr(chisurf, "imported_datasets", [])
+        
+        # 1. Background curve reattachment
+        bg_uid = tcspc_state.get("generic", {}).get("background_curve_uid")
+        if bg_uid:
+            target_bg = next((d for d in datasets if getattr(d, "unique_identifier", None) == bg_uid), None)
+            if target_bg:
+                generic = getattr(model, "generic", None)
+                if generic is not None:
+                    try:
+                        generic.background_curve = target_bg
+                    except Exception:
+                        pass
+
+        # 2. IRF reattachment
+        irf_uid = tcspc_state.get("convolve", {}).get("irf_uid")
+        if irf_uid:
+            target_irf = next((d for d in datasets if getattr(d, "unique_identifier", None) == irf_uid), None)
+            if target_irf:
+                convolve = getattr(model, "convolve", None)
+                if convolve is not None:
+                    try:
+                        convolve._irf = target_irf
+                    except Exception:
+                        pass
 
 
 def apply_state_to_fit(fit: Fit, state: Dict[str, Any]) -> None:

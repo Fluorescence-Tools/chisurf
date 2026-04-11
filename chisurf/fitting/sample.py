@@ -17,7 +17,9 @@ def walk_mcmc(
         step_size: float,
         temp: float = 1.0,
         thin: int = 1,
-        chi2max: float = np.inf
+        chi2max: float = np.inf,
+        callback: typing.Callable = None,
+        check_cancel: typing.Callable = None
 ) -> Dict:
     """
 
@@ -69,6 +71,11 @@ def walk_mcmc(
             np.copyto(state_prev, state_next)
             np.copyto(lnp_prev, lnp_next)
             n_accepted += 1
+            if callback:
+                callback(n_accepted, n_samples)
+        
+        if check_cancel and check_cancel():
+            break
 
     chi2 = -2. * lnp / float(fit.model.n_points - fit.model.n_free - 1.0)
 
@@ -87,7 +94,9 @@ def sample_emcee(
         std: float = 1e-3,
         chi2max: float = np.inf,
         progress_bar = None,
-        substeps: int = 500
+        substeps: int = None,
+        callback: typing.Callable = None,
+        check_cancel: typing.Callable = None
 ) -> Dict:
     """Sample the parameter space by emcee using a number of 'walkers'
 
@@ -99,6 +108,12 @@ def sample_emcee(
     :param std: the standard deviation of the parameters used to randomize the initial set of the walkers
     :return: a list containing the chi2 and the parameter values
     """
+    if substeps is None:
+        try:
+            substeps = int(chisurf.settings.cs_settings['optimization']['sampling'].get('substeps', 100))
+        except (KeyError, TypeError):
+            substeps = 100
+
     model = fit.model
     ndim = fit.n_free  # Number of free parameters to be sampled (number of dimensions)
     kw = {
@@ -112,30 +127,71 @@ def sample_emcee(
         args=[fit],
         kwargs=kw
     )
-    std = np.array(fit.model.parameter_values) * std
+    # Initialize walkers with a robust standard deviation estimate
+    p0 = np.array(model.parameter_values)
+    bounds = np.array(kw['bounds'])
+    std_input = std # input float, e.g., 1e-3
+    std_vec = np.zeros(ndim)
+
+    for i in range(ndim):
+        lb, ub = bounds[i]
+        # 1. Use width of narrow bounds as scale if finite
+        if lb is not None and ub is not None and np.isfinite(lb) and np.isfinite(ub):
+            # Use 1/1000th of the range as jitter
+            std_vec[i] = (ub - lb) * 1e-4
+        # 2. Else use relative scale if parameter is non-zero
+        elif abs(p0[i]) > 1e-15:
+            std_vec[i] = abs(p0[i]) * std_input
+        # 3. Last fallback: use absolute input value
+        else:
+            std_vec[i] = std_input
+
     if progress_bar is not None:
         from qtpy import QtWidgets
         progress_bar.setMaximum(steps)
 
-    previous_state = [fit.model.parameter_values + std * np.random.randn(ndim) for _ in range(nwalkers)]
+    previous_state = []
+    for _ in range(nwalkers):
+        p = p0 + std_vec * np.random.randn(ndim)
+        # Ensure initial state stays within user-provided bounds. 
+        # Clip lb if lb > -inf and ub if ub < inf.
+        for j in range(ndim):
+            lb, ub = bounds[j]
+            if lb is not None and np.isfinite(lb):
+                p[j] = max(p[j], lb)
+            if ub is not None and np.isfinite(ub):
+                p[j] = min(p[j], ub)
+        previous_state.append(p)
 
-    from qtpy import QtWidgets
-    large_steps = steps // substeps
-    for i in range(large_steps):
+    current_step = 0
+    while current_step < steps:
+        n_to_run = min(substeps, steps - current_step)
         previous_state = sampler.run_mcmc(
             previous_state,
-            nsteps=substeps,
+            nsteps=n_to_run,
             thin_by=thin,
-            skip_initial_state_check=True,
-            tune=True
+            skip_initial_state_check=True
         )
+        current_step += n_to_run
+        
         if progress_bar is not None:
-            progress_bar.setValue(substeps * i + 1)
-            QtWidgets.QApplication.processEvents()
+            try:
+                progress_bar.setValue(current_step)
+            except Exception:
+                pass
 
-    chi2 = -2. * sampler.flatlnprobability / float(model.n_points - model.n_free - 1.0)
+        if callback:
+            try:
+                callback(current_step, steps, sampler=sampler)
+            except Exception:
+                pass
+        
+        if check_cancel and check_cancel():
+            break
+
+    chi2 = -2. * sampler.get_log_prob(flat=True) / float(model.n_points - model.n_free - 1.0)
     return {
         'chi2r': chi2,
-        'parameter_values': sampler.flatchain,
+        'parameter_values': sampler.get_chain(flat=True),
         'parameter_names': fit.model.parameter_names
     }

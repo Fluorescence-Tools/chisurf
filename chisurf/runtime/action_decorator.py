@@ -17,6 +17,7 @@ def action(
     schema: typing.Optional[typing.Dict[str, typing.Any]] = None,
     replayable: bool = True,
     debounce_ms: int = 0,
+    debounce_keys: typing.Optional[typing.Tuple[str, ...]] = None,
     side_effect_class: str = "state",
 ):
     """
@@ -55,6 +56,7 @@ def action(
             schema=effective_schema,
             replayable=replayable,
             debounce_ms=debounce_ms,
+            debounce_keys=debounce_keys,
             side_effect_class=side_effect_class,
             handler=func,
         )

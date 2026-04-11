@@ -144,9 +144,20 @@ class Parameter(chisurf.base.Base):
         """
         if self._callable:
             return
+        
+        # Ensure value is a float before passing to low-level chinet port.
+        # This prevents access violations if a Python object (e.g. another
+        # Parameter) is accidentally assigned to this property.
+        try:
+            val_float = float(value)
+        except (TypeError, ValueError):
+            import chisurf.logging
+            chisurf.logging.error(f"Cannot set parameter '{self.name}' value to {type(value)}: {value}")
+            return
+
         f = self._port.fixed
         self._port.fixed = False
-        self._port.value = value
+        self._port.value = val_float
         self._port.fixed = f
 
     @property
@@ -177,7 +188,14 @@ class Parameter(chisurf.base.Base):
     @property
     def is_linked(self) -> bool:
         """Whether this parameter is linked to another parameter."""
-        return self._port.is_linked
+        # In vendored chinet, Port.is_linked is a boolean property (not callable).
+        # Older versions exposed it as a method. Support both styles gracefully.
+        try:
+            return bool(self._port.is_linked)
+        except TypeError:
+            # Fall back to callable for backward compatibility
+            return bool(self._port.is_linked())
+
 
     @property
     def fixed(self):

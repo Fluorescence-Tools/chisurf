@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import chisurf
+import chisurf.logging
 from chisurf import typing
 from collections import deque
 
@@ -22,6 +24,9 @@ import chisurf.models
 import chisurf.math.statistics
 import chisurf.math.optimization
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
+import chisurf.fitting.sampling_meta
+import time
+import json
 
 
 def _raw_fit_name(f) -> str:
@@ -609,6 +614,75 @@ class Fit(chisurf.base.Base):
         if cancelled:
             raise OptimizationCancelled()
 
+    def set_parameter_value(self, name: str, value: float):
+        """Update a parameter value and notify dependents."""
+        try:
+            p = self.model.parameters_all_dict[name]
+            p.value = value
+            self.model.update_model()
+            self.model.finalize()
+        except KeyError:
+            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+
+    def set_parameter_fixed(self, name: str, fixed: bool):
+        """Fix/release a parameter and notify dependents."""
+        try:
+            p = self.model.parameters_all_dict[name]
+            p.fixed = bool(fixed)
+            self.model.finalize()
+        except KeyError:
+            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+
+    def set_parameter_bounds(self, name: str, bounds: typing.Tuple[float, float]):
+        """Set parameter bounds and notify dependents."""
+        try:
+            p = self.model.parameters_all_dict[name]
+            p.bounds = bounds
+            self.model.finalize()
+        except KeyError:
+            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+
+    def set_parameter_bounds_on(self, name: str, on: bool):
+        """Enable/disable parameter bounds and notify dependents."""
+        try:
+            p = self.model.parameters_all_dict[name]
+            p.bounds_on = bool(on)
+            self.model.finalize()
+        except KeyError:
+            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+
+    def link_parameter(self, target_name: str, source_name: str, source_fit: Fit):
+        """Link a parameter to another and notify dependents."""
+        try:
+            tp = self.model.parameters_all_dict[target_name]
+            sp = source_fit.model.parameters_all_dict[source_name]
+            tp.link = sp
+            self.model.finalize()
+        except KeyError:
+            import chisurf.logging
+            # Provide detailed diagnostics including requested keys and available ones.
+            try:
+                tgt_keys = ', '.join(self.model.parameters_all_dict.keys())
+            except Exception:
+                tgt_keys = '<unavailable>'
+            try:
+                src_keys = ', '.join(source_fit.model.parameters_all_dict.keys())
+            except Exception:
+                src_keys = '<unavailable>'
+            chisurf.logging.error(
+                "Parameter link failed: name not found. target='%s' in target_fit(keys=[%s]); "
+                "source='%s' in source_fit(keys=[%s])" % (target_name, tgt_keys, source_name, src_keys)
+            )
+
+    def unlink_parameter(self, name: str):
+        """Unlink a parameter and notify dependents."""
+        try:
+            p = self.model.parameters_all_dict[name]
+            p.link = None
+            self.model.finalize()
+        except KeyError:
+            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+
     def set_result_idx(self, idx: int):
         idx = np.clip(idx, 0, len(self.results) - 1)
         self._result_current = idx
@@ -1071,7 +1145,7 @@ class FitGroup(Fit):
 
 def sample_fit(
         fit: Fit,
-        filename: str,
+        target_directory: str,
         method: str = 'emcee',
         steps: int = 1000,
         thin: int = 1,
@@ -1079,6 +1153,8 @@ def sample_fit(
         n_runs: int = 10,
         step_size: float = 0.1,
         temp: float = 1.0,
+        check_cancel: typing.Callable = None,
+        progress_callback: typing.Callable = None,
         **kwargs
 ):
     """Sample free parameters of a fit and save the chain to disk.
@@ -1087,8 +1163,9 @@ def sample_fit(
     ----------
     fit : Fit
         Fit whose parameters should be sampled.
-    filename : str
-        Output file stem for the chain; run indices are appended.
+    target_directory : str
+        Target directory for the sampling results. A timestamped
+        subdirectory will be created within this directory.
     method : {"emcee", "mcmc"}, optional
         Sampling backend to use.
     steps, thin, chi2max, n_runs, step_size, temp : float or int, optional
@@ -1097,30 +1174,26 @@ def sample_fit(
     """
     # save initial parameter values
     pv = fit.model.parameter_values
-    for i_run in range(n_runs):
-        fn = os.path.splitext(filename)[0] + "_" + str(i_run) + '.er4'
+    
+    # Create timestamped directory
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    sampling_dir = os.path.join(target_directory, timestamp)
+    os.makedirs(sampling_dir, exist_ok=True)
+    
+    # Save project state (full save)
+    from chisurf.macros.core_fit import save_project
+    save_project(target_path=sampling_dir, project_name="project")
+    
+    # Save parameters metadata
+    params_meta = chisurf.fitting.sampling_meta.get_sampling_metadata(fit)
+    params_path = os.path.join(sampling_dir, "parameters.json")
+    with open(params_path, "w") as f:
+        json.dump(params_meta, f, indent=4)
+        
+    chains_dir = os.path.join(sampling_dir, "chains")
+    os.makedirs(chains_dir, exist_ok=True)
 
-        if method == 'mcmc':
-            r = chisurf.fitting.sample.walk_mcmc(
-                fit=fit,
-                steps=steps,
-                thin=thin,
-                chi2max=chi2max,
-                step_size=step_size,
-                temp=temp
-            )
-        else: #'emcee'
-            n_walkers = int(fit.n_free * 2)
-            r = chisurf.fitting.sample.sample_emcee(
-                fit,
-                steps=steps,
-                nwalkers=n_walkers,
-                thin=thin,
-                chi2max=chi2max,
-                progress_bar=chisurf.cs.progress_bar,
-                **kwargs
-            )
-
+    def save_chain_to_file(r, fn_target):
         chi2 = r['chi2r']
         parameter_values = r['parameter_values']
         parameter_names = r['parameter_names']
@@ -1131,11 +1204,81 @@ def sample_fit(
         header += "\t".join(parameter_names)
         chisurf.fio.ascii.Csv().save(
             scan,
-            fn,
+            fn_target,
             delimiter='\t',
             file_type='txt',
             header=header
         )
+
+    total_steps = int(n_runs * steps)
+    done_steps = 0
+
+    success = True
+    # Sanitize fit name for use in filenames
+    safe_fit_name = "".join([c if c.isalnum() or c in (' ', '_', '-') else '_' for c in fit.name]).strip().replace(' ', '_')
+    for i_run in range(n_runs):
+        if check_cancel and check_cancel():
+            success = False
+            break
+            
+        base_fn = f"{safe_fit_name}_{i_run}"
+        fn_final = os.path.join(chains_dir, base_fn + '.er4')
+        fn_partial = os.path.join(chains_dir, base_fn + '.partial.er4')
+
+        def sampler_callback(done, run_total, sampler=None, **cb_kwargs):
+            if sampler is not None:
+                # emcee intermediate save
+                try:
+                    r_partial = {
+                        'chi2r': -2. * sampler.get_log_prob(flat=True) / float(fit.model.n_points - fit.model.n_free - 1.0),
+                        'parameter_values': sampler.get_chain(flat=True),
+                        'parameter_names': fit.model.parameter_names
+                    }
+                    save_chain_to_file(r_partial, fn_partial)
+                except Exception:
+                    pass
+            
+            if progress_callback is not None:
+                current_total_done = done_steps + done
+                progress_callback(current_total_done, total_steps)
+
+        if method == 'mcmc':
+            r = chisurf.fitting.sample.walk_mcmc(
+                fit=fit,
+                steps=steps,
+                thin=thin,
+                chi2max=chi2max,
+                step_size=step_size,
+                temp=temp,
+                check_cancel=check_cancel
+            )
+        else: #'emcee'
+            # Ensure at least 10 walkers and at least 2*ndim+2 for robustness
+            n_walkers = max(int(fit.n_free * 2) + 2, 10)
+            r = chisurf.fitting.sample.sample_emcee(
+                fit,
+                steps=steps,
+                nwalkers=n_walkers,
+                thin=thin,
+                chi2max=chi2max,
+                callback=sampler_callback,
+                check_cancel=check_cancel,
+                **kwargs
+            )
+
+        if success:
+            save_chain_to_file(r, fn_final)
+            
+            if os.path.exists(fn_partial):
+                try:
+                    os.remove(fn_partial)
+                except Exception:
+                    pass
+        
+        done_steps += steps
+        if progress_callback:
+            progress_callback(done_steps, total_steps)
+
     # restore initial parameter values
     fit.model.parameter_values = pv
     fit.model.update()

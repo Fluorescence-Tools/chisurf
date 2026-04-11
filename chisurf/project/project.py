@@ -109,6 +109,14 @@ class Project:
         with project_file.open("w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2, sort_keys=True)
 
+        # Chinet session snapshot
+        try:
+            import chinet
+            chinet_session_file = path / "session.jsonl"
+            chinet.session.save(str(chinet_session_file))
+        except (ImportError, AttributeError):
+            pass
+
         return project_file
 
     @classmethod
@@ -123,7 +131,18 @@ class Project:
         with project_file.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
-        return cls.from_dict(data)
+        project = cls.from_dict(data)
+
+        # Restore chinet session if present
+        try:
+            chinet_session_file = path / "session.jsonl"
+            if chinet_session_file.is_file():
+                import chinet
+                chinet.session.load(str(chinet_session_file))
+        except (ImportError, AttributeError):
+            pass
+
+        return project
 
 
 def save_project(project: Project, target_path: PathLike) -> pathlib.Path:
