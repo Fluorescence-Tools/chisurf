@@ -1,0 +1,220 @@
+from __future__ import annotations
+
+# Consolidated test file: test_grouping.py
+
+
+# --- FROM test_grouping.py ---
+
+# --- FROM test_group_reference.py ---
+import logging
+import chisurf
+from chisurf.data import DataCurve, ExperimentDataCurveGroup
+from chisurf.fitting.fit import Fit, FitGroup
+from chisurf.models.tcspc.lifetime import LifetimeModel
+import numpy as np
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def test_group_reference():
+    """
+    Test that the group reference is working correctly for polarization assignment.
+    """
+    logger.info("Testing group reference for polarization assignment")
+    
+    # Clear any existing datasets and fits
+    chisurf.imported_datasets = []
+    chisurf.fits = []
+    
+    # Create two simple datasets
+    x = np.linspace(0, 10, 100)
+    y1 = np.exp(-x/2) + 0.1*np.random.randn(100)
+    y2 = np.exp(-x/4) + 0.1*np.random.randn(100)
+    
+    data1 = DataCurve(x=x, y=y1, name="Dataset 1")
+    data2 = DataCurve(x=x, y=y2, name="Dataset 2")
+    
+    # Create a data group with both datasets
+    data_group = ExperimentDataCurveGroup([data1, data2])
+    
+    # Create a fit group with the data group
+    fit_group = FitGroup(
+        data=data_group,
+        model_class=LifetimeModel
+    )
+    
+    # Check that each fit has a group attribute that references the fit group
+    for i, fit in enumerate(fit_group.grouped_fits):
+        if hasattr(fit, 'group'):
+            logger.info(f"Fit {i} has group attribute: {fit.group is fit_group}")
+        else:
+            logger.error(f"Fit {i} does not have group attribute")
+    
+    # Check polarization types for each fit in the group
+    for i, fit in enumerate(fit_group.grouped_fits):
+        pol_type = fit.model.anisotropy.polarization_type
+        logger.info(f"Fit {i} polarization type: {pol_type}")
+        
+        # Verify polarization type is set correctly
+        if i == 0 and pol_type != 'vv':
+            logger.error(f"Fit 0 should have polarization type 'vv', but has '{pol_type}'")
+        elif i == 1 and pol_type != 'vh':
+            logger.error(f"Fit 1 should have polarization type 'vh', but has '{pol_type}'")
+    
+    # Test with the example code from the issue description
+    try:
+        logger.info("\nTesting with example code from issue description")
+        
+        # Clear any existing datasets and fits
+        chisurf.imported_datasets = []
+        chisurf.fits = []
+        
+        # Try to add a dataset as described in the issue
+        try:
+            chisurf.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
+            logger.info(f"Dataset added successfully. Total datasets: {len(chisurf.imported_datasets)}")
+        except Exception as e:
+            logger.error(f"Error adding dataset: {e}")
+            
+            # If the file doesn't exist, create a dummy dataset for testing
+            logger.info("Creating dummy dataset for testing")
+            x = np.linspace(0, 10, 100)
+            y = np.exp(-x/2) + 0.1*np.random.randn(100)
+            data = DataCurve(x=x, y=y, name="Test Dataset")
+            chisurf.imported_datasets.append(data)
+        
+        # Add a fit with the Lifetime model
+        logger.info("Adding fit with Lifetime model")
+        chisurf.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
+        logger.info(f"Fit added successfully. Total fits: {len(chisurf.fits)}")
+        
+        # Check if the fit has a group attribute
+        if len(chisurf.fits) > 0:
+            fit = chisurf.fits[0]
+            if hasattr(fit, 'group'):
+                logger.info(f"Fit has group attribute: {fit.group}")
+            else:
+                logger.info("Fit does not have group attribute (expected for single dataset)")
+            
+            # Check the polarization type that was set
+            pol_type = fit.model.anisotropy.polarization_type
+            logger.info(f"Polarization type set to: {pol_type}")
+    except Exception as e:
+        logger.error(f"Error testing example code: {e}")
+
+
+# --- FROM test_grouped_default_linking_contract.py ---
+from pathlib import Path
+
+
+def test_grouped_fits_auto_link_non_nuisance_parameters_contract():
+    path = Path(__file__).resolve().parents[2] / "chisurf" / "macros" / "core_fit.py"
+    src = path.read_text(encoding="utf-8")
+
+    assert "def _auto_link_non_nuisance_group_parameters" in src
+    assert "_collect_group_nuisance_parameter_names" in src
+    assert "generic\", \"corrections\", \"convolve\"" in src
+    assert "linked_masters, linked_followers = _auto_link_non_nuisance_group_parameters(fit_group)" in src
+    assert "action_type=\"fit_group_auto_link\"" in src
+
+# --- FROM test_global_links_state.py ---
+
+import numpy as np
+
+from chisurf.data import DataCurve
+from chisurf.fitting.fit import Fit
+from chisurf.fitting.parameter import FittingParameter
+from chisurf.models.model import ModelCurve
+from chisurf.models.global_model.globalfit import GlobalFitModel
+
+from chisurf.project.fit_state import global_links_to_state, apply_global_links_state
+
+
+class DummyLinearModelForGlobal(ModelCurve):
+    """Minimal model used to exercise GlobalFitModel link serialization.
+
+    The model is ``y = p0 + p1 * x`` with two :class:`FittingParameter`
+    instances that will be referenced from :class:`GlobalFitModel` links.
+    """
+
+    name = "DummyLinearModelForGlobal"
+
+    def __init__(self, fit: Fit, **kwargs):  # type: ignore[override]
+        super().__init__(fit, **kwargs)
+        self.p0 = FittingParameter(name="p0", value=1.0)
+        self.p1 = FittingParameter(name="p1", value=2.0)
+        self.find_parameters()
+
+    def update_model(self, **kwargs):  # type: ignore[override]
+        x = self.fit.data.x
+        if x is None:
+            x = np.arange(self.fit.data.y.size, dtype=float)
+        self.x = x
+        self.y = float(self.p0.value) + float(self.p1.value) * x
+
+    def update(self, **kwargs) -> None:  # type: ignore[override]
+        super().update(**kwargs)
+
+
+def _make_fit() -> Fit:
+    x = np.linspace(0.0, 3.0, 4, dtype=float)
+    y = np.ones_like(x)
+    data = DataCurve(x=x, y=y)
+    return Fit(model_class=DummyLinearModelForGlobal, data=data)
+
+
+def test_global_links_roundtrip_and_effect():
+    # Create two independent fits to be coupled by a GlobalFitModel
+    fit_a1 = _make_fit()
+    fit_b1 = _make_fit()
+
+    # Prepare a GlobalFitModel with a single cross-fit link definition
+    gm1 = GlobalFitModel(fit=fit_a1, fits=[fit_a1, fit_b1])
+    # Origin: fit index 0, parameter "p0"; target: p0 of fit index 1
+    gm1.links = [[True, 0, "p0", "f[1]['p0']"]]
+
+    # Serialize only the link table (no GUI or YAML involved)
+    state = global_links_to_state(gm1)
+    assert "links" in state
+    assert state["links"], "Expected at least one serialized link record"
+
+    rec = state["links"][0]
+    assert rec["enabled"] is True
+    assert rec["origin_fit_index"] == 0
+    assert rec["origin_param_name"] == "p0"
+    assert rec["formula"] == "f[1]['p0']"
+
+    # Rebuild a fresh pair of fits and a new GlobalFitModel instance
+    fit_a2 = _make_fit()
+    fit_b2 = _make_fit()
+    gm2 = GlobalFitModel(fit=fit_a2, fits=[fit_a2, fit_b2])
+    # ``setLinks`` expects this attribute; disable clearing to keep testing simple
+    gm2.clear_on_update = False
+
+    # Apply the serialized link configuration
+    apply_global_links_state(gm2, state)
+
+    # After restoration, the internal link table should match the original
+    assert isinstance(gm2.links, list)
+    assert gm2.links == gm1.links
+
+    # And serializing again should reproduce the same state
+    state2 = global_links_to_state(gm2)
+    assert state2 == state
+
+# --- FROM test_global_fit_dataset_guard.py ---
+
+from pathlib import Path
+
+
+def test_core_data_global_fit_guard_contracts():
+    src = Path("chisurf/macros/core_data.py").read_text(encoding="utf-8")
+    assert "def _is_global_fit_dataset(" in src
+    assert "def restore_global_fit_dataset(" in src
+    assert "dataset_restore_global_fit" in src
+
+
+def test_dataset_actions_exposes_restore_global_fit_action_contract():
+    src = Path("chisurf/actions/dataset_actions.py").read_text(encoding="utf-8")
+    assert "@action(\"dataset.restore_global_fit\")" in src
