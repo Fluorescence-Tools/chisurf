@@ -102,16 +102,16 @@ class Parameter(chisurf.base.Base):
         """
         # If linked, defer entirely to linked parameter's port value.
         if self.is_linked:
-            return self._port.value
+            return float(np.atleast_1d(self._port.value)[0])
 
         # Compute from callable if available.
         if self._callable:
             try:
-                v = float(self._callable())
+                v = float(np.atleast_1d(self._callable())[0])
             except Exception:
-                return self._port.value
+                v = float(np.atleast_1d(self._port.value)[0])
         else:
-            v = float(self._port.value)
+            v = float(np.atleast_1d(self._port.value)[0])
 
         # Apply bounds on read for both callable and non-callable parameters
         # if bounds are enabled. This matches the behaviour expected in the
@@ -190,11 +190,10 @@ class Parameter(chisurf.base.Base):
         """Whether this parameter is linked to another parameter."""
         # In vendored chinet, Port.is_linked is a boolean property (not callable).
         # Older versions exposed it as a method. Support both styles gracefully.
-        try:
-            return bool(self._port.is_linked)
-        except TypeError:
-            # Fall back to callable for backward compatibility
-            return bool(self._port.is_linked())
+        v = self._port.is_linked
+        if callable(v):
+            return bool(v())
+        return bool(v)
 
 
     @property
