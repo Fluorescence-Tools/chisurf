@@ -11,6 +11,8 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
+import chisurf
+import chisurf.logging
 import chisurf.data
 import chisurf.fitting
 import chisurf.decorators
@@ -22,6 +24,47 @@ import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.general import Controller
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
 from chisurf.runtime.actions import record_action
+
+
+class SamplerWorker(QtCore.QObject):
+    """Worker to run MCMC sampling in a background thread."""
+
+    finished = QtCore.Signal(bool)  # success
+    progress = QtCore.Signal(int, int)  # done, total
+
+    def __init__(self, fit, target_directory, kw):
+        super().__init__()
+        self.fit = fit
+        self.target_directory = target_directory
+        self.kw = kw
+        self._cancelled = False
+
+    def check_cancel(self):
+        return self._cancelled
+
+    def cancel(self):
+        self._cancelled = True
+
+    @QtCore.Slot()
+    def run(self):
+        try:
+            def _prog(done, total):
+                self.progress.emit(int(done), int(total))
+
+            chisurf.fitting.fit.sample_fit(
+                self.fit,
+                self.target_directory,
+                check_cancel=self.check_cancel,
+                progress_callback=_prog,
+                **self.kw
+            )
+            self.finished.emit(True)
+        except Exception as e:
+            try:
+                chisurf.logging.error(f"Sampling worker error: {e}")
+            except Exception:
+                pass
+            self.finished.emit(False)
 
 
 class FittingControllerWidget(Controller):
@@ -312,17 +355,83 @@ class FittingControllerWidget(Controller):
         chisurf.run(f"chisurf.macros.change_selected_fit_of_group({self.selected_fit})")
 
     def onErrorEstimate(self):
-        chisurf.logging.info(f"Sampling analysis: {self.fit.name}")
-        filename = chisurf.gui.widgets.save_file('Error estimate', '*.er4')
-        if filename is None:
+        fit_name = str(getattr(self.fit, "name", ""))
+        chisurf.logging.info(f"Sampling analysis: {fit_name}")
+        target_dir, _ = chisurf.gui.widgets.get_directory(caption="Select Target Folder for Sampling Results")
+        if target_dir is None:
             chisurf.logging.info("Sampling canceled!")
             return
-        else:
-            kw = chisurf.settings.cs_settings['optimization']['sampling']
-            kw['n_runs'] = self.n_runs
-            kw['steps'] = self.n_steps
-            chisurf.fitting.fit.sample_fit(self.fit, filename, **kw)
-            chisurf.logging.info("Sampling done!")
+        
+        target_dir_str = str(target_dir)
+        
+        kw = chisurf.settings.cs_settings['optimization']['sampling'].copy()
+        kw['n_runs'] = self.n_runs
+        kw['steps'] = self.n_steps
+        
+        # GUI Progress Integration
+        dialog = None
+        try:
+            wrapped_name = chisurf.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
+        except Exception:
+            wrapped_name = fit_name
+        base_label = f"Sampling {wrapped_name}..."
+        try:
+            dialog = chisurf.gui.widgets.progress.EnhancedProgressDialog(
+                title="Sampling",
+                label_text=base_label,
+                min_value=0,
+                max_value=100,
+                parent=self,
+            )
+            dialog.setWindowModality(QtCore.Qt.WindowModal)
+            dialog.show()
+            dialog.update_progress(0)
+        except Exception:
+            dialog = None
+
+        worker = SamplerWorker(self.fit, target_dir_str, kw)
+        thread = QtCore.QThread(self)
+        worker.moveToThread(thread)
+
+        t0_sampling = time.perf_counter()
+
+        def _on_progress(done, total):
+            if dialog is not None and total > 0:
+                val = int(round(100.0 * done / float(total)))
+                remaining_str = ""
+                if done > 0:
+                    elapsed = time.perf_counter() - t0_sampling
+                    remaining = (elapsed / float(done)) * (total - done)
+                    if remaining > 3600:
+                        remaining_str = f" (ETA: {int(remaining // 3600)}h {int((remaining % 3600) // 60)}m)"
+                    elif remaining > 60:
+                        remaining_str = f" (ETA: {int(remaining // 60)}m {int(remaining % 60)}s)"
+                    else:
+                        remaining_str = f" (ETA: {int(remaining)}s)"
+                msg = f"{base_label}\nStep {done} / {total}{remaining_str}"
+                dialog.update_progress(val, text=msg)
+
+        def _on_finished(success):
+            if dialog is not None:
+                final_text = "Sampling finished!" if success else "Sampling interrupted."
+                dialog.finish(final_text=final_text, auto_close=True)
+            thread.quit()
+            thread.wait()
+            chisurf.logging.info(f"Sampling {'done' if success else 'failed/aborted'}!")
+
+        def _on_cancel():
+            worker.cancel()
+
+        worker.progress.connect(_on_progress)
+        worker.finished.connect(_on_finished)
+        if dialog is not None:
+            dialog.canceled.connect(_on_cancel)
+        thread.started.connect(worker.run)
+        thread.start()
+
+        # Hold references to prevent GC
+        self._sampling_thread = thread
+        self._sampling_worker = worker
 
     def _run_fit_impl(self):
         try:
@@ -419,6 +528,16 @@ class FittingControllerWidget(Controller):
                 # Build an informative status line including objective values
                 # when available.
                 parts = [f"eval {done}/{int(total) if total else '?'}"]
+                if done > 0 and total:
+                    elapsed = time.perf_counter() - t0
+                    remaining = (elapsed / float(done)) * (float(total) - done)
+                    if remaining > 3600:
+                        parts.append(f"ETA: {int(remaining // 3600)}h {int((remaining % 3600) // 60)}m")
+                    elif remaining > 60:
+                        parts.append(f"ETA: {int(remaining // 60)}m {int(remaining % 60)}s")
+                    else:
+                        parts.append(f"ETA: {int(remaining)}s")
+
                 if chi2 is not None:
                     try:
                         parts.append(f"chi2={float(chi2):.3g}")
