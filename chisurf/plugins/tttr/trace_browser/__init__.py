@@ -1967,8 +1967,7 @@ class TraceBrowser(QWidget):
                 pass
             return
         docx_name = (folder.name or "traces") + ".docx"
-        parent_dir = folder.parent if folder.parent != folder else pathlib.Path(".")
-        save_path = parent_dir / docx_name
+        save_path = folder / docx_name
         try:
             import tempfile
             tmpdir = pathlib.Path(tempfile.mkdtemp(prefix="trace_export_"))
