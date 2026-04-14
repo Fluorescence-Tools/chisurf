@@ -112,6 +112,7 @@ jobs:
         shell: bash -l {0}
         run: |
           micromamba activate build
+          export "BASE_CONDA_ROOT=$MAMBA_ROOT_PREFIX"
           build_tools/win/build-setup.bat /nobuild
 
       - name: Upload Windows installer
