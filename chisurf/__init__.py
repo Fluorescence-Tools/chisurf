@@ -3,11 +3,76 @@ from __future__ import annotations
 import importlib
 import logging
 import os
+
+# Map chisurf.logging to the standard logging module to support
+# "import chisurf.logging" throughout the codebase.
+import sys
+sys.modules['chisurf.logging'] = logging
 import pathlib
 import sys
 import typing
 
 import chisurf.info
+
+# --- DISTUTILS SHIM FOR PYTHON 3.12 ---
+import sys
+import importlib.util as _importlib_util
+if 'distutils' not in sys.modules and _importlib_util.find_spec('distutils') is None:
+    try:
+        from types import ModuleType
+        import packaging.version as _pkg_version
+        import shutil as _shutil
+
+        # Create dummy distutils and distutils.version
+        du = ModuleType('distutils')
+        sys.modules['distutils'] = du
+        duv = ModuleType('distutils.version')
+        sys.modules['distutils.version'] = duv
+        dus = ModuleType('distutils.spawn')
+        sys.modules['distutils.spawn'] = dus
+
+        # Provide StrictVersion and LooseVersion backed by packaging.version.Version
+        class _StrictVersion(_pkg_version.Version):
+            def __init__(self, vstring):  # keep signature similar to distutils
+                super().__init__(vstring)
+
+        duv.StrictVersion = _StrictVersion
+        duv.LooseVersion = _pkg_version.Version
+        duv.__all__ = ['StrictVersion', 'LooseVersion']
+
+        # Provide spawn helpers expected by some packages (e.g., mdtraj)
+        def _find_executable(file, path=None):
+            return _shutil.which(file, path=path)
+
+        dus.find_executable = _find_executable
+        dus.__all__ = ['find_executable']
+
+        # Some packages check if distutils is really there (e.g., by looking for __version__)
+        du.__version__ = "3.12-shim"
+    except Exception:
+        # Best-effort ultra-minimal fallback without packaging present
+        try:
+            from types import ModuleType
+            du = ModuleType('distutils')
+            sys.modules['distutils'] = du
+            duv = ModuleType('distutils.version')
+            sys.modules['distutils.version'] = duv
+            dus = ModuleType('distutils.spawn')
+            sys.modules['distutils.spawn'] = dus
+
+            class _SV(str):
+                pass
+
+            duv.StrictVersion = _SV
+            duv.LooseVersion = _SV
+            duv.__all__ = ['StrictVersion', 'LooseVersion']
+            dus.find_executable = lambda file, path=None: None
+            dus.__all__ = ['find_executable']
+            du.__version__ = "3.12-shim-nopackaging"
+        except Exception:
+            # If even this fails, we leave things untouched; import will error as before.
+            pass
+# ----------------------------------------
 
 # Monkeypatch guidata.utils for compatibility with newer versions
 try:

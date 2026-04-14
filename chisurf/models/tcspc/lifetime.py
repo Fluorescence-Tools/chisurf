@@ -315,6 +315,8 @@ class LifetimeModel(ModelCurve):
         lx, lt = chisurf.math.datatools.interleaved_to_two_columns(ls)
         nom = lrx @ lrt
         denom = lx @ lt
+        if denom == 0:
+            return float("NAN")
         return nom / denom
 
     @property
