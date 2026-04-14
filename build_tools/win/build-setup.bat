@@ -282,11 +282,14 @@ if not exist "%APP_PYTHONW_EXE%" (
 )
 
 echo Installing ChiSurf source into cloned environment ...
+call "%PYTHON_EXE%" -m pip uninstall -y pythran >nul 2>&1
 call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%" --no-cache-dir --no-deps --no-build-isolation --upgrade --force-reinstall
 if errorlevel 1 (
     echo ERROR: Failed to install ChiSurf into staged environment
     exit /b 1
 )
+rem Install working pythran version
+call "%PYTHON_EXE%" -m pip install "pythran>=0.9.14,<1"
 
 echo Restoring setuptools runtime compatibility ...
 call "%BASE_CONDA_EXE%" install -y  -p "%APP_PATH%" -c conda-forge --override-channels "setuptools<81"
