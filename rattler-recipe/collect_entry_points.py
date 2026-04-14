@@ -62,8 +62,6 @@ def read_plugin_cli_entrypoint(init_py: pathlib.Path):
                 v = node.value
                 if isinstance(v, ast.Constant) and isinstance(v.value, str):
                     return v.value.strip()
-                if hasattr(ast, "Str") and isinstance(v, ast.Str):
-                    return v.s.strip()
     return None
 
 
