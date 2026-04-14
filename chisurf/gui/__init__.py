@@ -10,6 +10,7 @@ import time
 import atexit
 import ast
 import webbrowser
+import re
 
 from functools import partial
 import pkgutil
@@ -107,16 +108,35 @@ def run_on_gui_thread(func, *args, **kwargs):
         except Exception:
             return None
 
+def get_free_port(start_port=8888, max_attempts=50):
+    """Find a free TCP port, starting from start_port."""
+    import socket
+    port = start_port
+    while port < start_port + max_attempts:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(('', port))
+                return port
+            except OSError:
+                port += 1
+    # Fallback to OS-assigned port if we can't find one in the range
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
+
 
 def launch_jupyter_process(
     notebook_executable="jupyter-notebook",
-    port=8888,
+    port=None,
     directory: pathlib.Path = pathlib.Path().home()
 ):
     """
     Launch Jupyter Notebook with a watchdog that kills it when this process dies.
     Cross-platform: uses os.killpg on Unix, CREATE_NEW_PROCESS_GROUP on Windows.
     """
+    if port is None:
+        port = get_free_port(8888)
+
     jupyter_cmd = [
         sys.executable, "-m", "notebook",
         f"--port={port}",
@@ -373,6 +393,7 @@ def setup_gui(
         window: chisurf.gui.main.Main = None,
         stage: str = None
 ):
+    import chisurf
     def gui_imports():
         import chisurf.settings
         import chisurf.base
@@ -975,6 +996,13 @@ def setup_gui(
         for notebook_file in sorted(chisurf_notebooks_dir.glob("*.ipynb")):
             add_notebook(notebook_file)
 
+        # Ensure the ribbon interface is also updated with the Notebooks category
+        try:
+            if hasattr(window, "_ribbon_integration") and window._ribbon_integration:
+                window._ribbon_integration._create_notebooks_category()
+        except Exception as e:
+            chisurf.logging.debug(f"Failed to update ribbon with notebooks: {e}")
+
     if stage is None:
         gui_imports()
         setup_ipython()
@@ -1037,17 +1065,16 @@ def setup_gui(
                             import importlib
                             updater_plugin = importlib.import_module("chisurf.plugins.updater")
                             # Keep a strong reference to prevent garbage collection from closing the window
-                            import chisurf as _chisurf_mod
-                            _chisurf_mod.__updater_window__ = updater_plugin.UpdaterWidget(suppress_initial_notification=True)
-                            _chisurf_mod.__updater_window__.show()
+                            chisurf.__updater_window__ = updater_plugin.UpdaterWidget(suppress_initial_notification=True)
+                            chisurf.__updater_window__.show()
                             try:
-                                _chisurf_mod.__updater_window__.raise_()
-                                _chisurf_mod.__updater_window__.activateWindow()
+                                chisurf.__updater_window__.raise_()
+                                chisurf.__updater_window__.activateWindow()
                             except Exception:
                                 pass
                             # Signal startup should be interrupted so only the updater remains open
                             try:
-                                _chisurf_mod.__startup_interrupt_for_updater__ = True
+                                chisurf.__startup_interrupt_for_updater__ = True
                             except Exception:
                                 pass
                     except Exception as e:
@@ -1128,21 +1155,77 @@ def setup_gui(
         proc = chisurf.__jupyter_process__
 
         # Read lines until we see the HTTP address (or the process exits)
-        while chisurf.__jupyter_address__ is None:
-            line = proc.stdout.readline()
-            if not line:
-                # The process died or closed its output
-                raise RuntimeError("Jupyter process exited before printing URL")
-            chisurf.logging.info(line.strip())
-            if "http://" in line:
-                start = line.find("http://")
-                end = line.find("/", start + len("http://"))
-                chisurf.__jupyter_address__ = line[start:end]
+        import time
+        t_start = time.time()
+        timeout = 30.0  # seconds
+        chisurf.logging.info(f"Waiting up to {timeout}s for Jupyter URL...")
 
-        chisurf.logging.info(
-            "Server found at %s, migrating monitoring to listener thread",
-            chisurf.__jupyter_address__
+        # To avoid the GUI hanging while waiting for the URL, we use a 
+        # separate reader thread and a shared line buffer.
+        lines_captured = []
+        def _reader(p, out_list):
+            try:
+                for l in iter(p.stdout.readline, ''):
+                    if l:
+                        out_list.append(l)
+                    # Stop if we found the address already (from another read or logic)
+                    if getattr(chisurf, "__jupyter_address__", None):
+                        break
+            except Exception:
+                pass
+
+        chisurf.__jupyter_reader_thread__ = threading.Thread(
+            target=_reader, args=(proc, lines_captured), daemon=True
         )
+        chisurf.__jupyter_reader_thread__.start()
+
+        import re
+        url_pattern = re.compile(r"http://[a-zA-Z0-9\.-]+:\d+[^\s]*")
+
+        while chisurf.__jupyter_address__ is None:
+            if time.time() - t_start > timeout:
+                chisurf.logging.error("Timed out waiting for Jupyter URL.")
+                break
+
+            if proc.poll() is not None:
+                chisurf.logging.error("Jupyter process exited unexpectedly during startup.")
+                break
+
+            app.processEvents()
+            
+            # Check the captured lines
+            if lines_captured:
+                while lines_captured:
+                    line = lines_captured.pop(0)
+                    chisurf.logging.info(f"Jupyter: {line.strip()}")
+                    
+                    match = url_pattern.search(line)
+                    if match:
+                        full_url = match.group(0)
+                        # Extract only protocol, host, and port
+                        # http://localhost:8888/tree?token=... -> http://localhost:8888
+                        from urllib.parse import urlparse
+                        try:
+                            parsed = urlparse(full_url)
+                            addr = f"{parsed.scheme}://{parsed.netloc}"
+                            chisurf.__jupyter_address__ = addr
+                            break
+                        except Exception:
+                            # Fallback to simple split if urlparse fails
+                            chisurf.__jupyter_address__ = full_url.split('/tree')[0].split('?')[0].rstrip('/')
+                            break
+            
+            if chisurf.__jupyter_address__ is None:
+                time.sleep(0.1)
+                app.processEvents()
+
+        if chisurf.__jupyter_address__:
+            chisurf.logging.info(
+                "Server found at %s, migrating monitoring to listener thread",
+                chisurf.__jupyter_address__
+            )
+        else:
+            chisurf.logging.warning("Jupyter startup failed or timed out.")
     elif stage == "setup_logging":
         setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
