@@ -278,12 +278,12 @@ def bin_count(
     """
     n_min = np.rint(bin_min / bin_width)
     n_max = np.rint(bin_max / bin_width)
-    n_bins = n_max - n_min
+    n_bins = int(n_max - n_min)
     count = np.zeros(n_bins, dtype=np.float32)
     bins = np.arange(n_min, n_max, dtype=np.float32)
     bins *= bin_width
     for i in range(data.shape[0]):
-        bin_index = np.rint((data[i] / bin_width)) - n_min
+        bin_index = int(np.rint((data[i] / bin_width)) - n_min)
         if bin_index < n_bins:
             count[bin_index] += 1
     return bins, count
