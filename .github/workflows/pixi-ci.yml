@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build build-essential xvfb \
-            libgl1-mesa-dev libfuse2 qtbase5-dev
+            libgl1-mesa-dev libfuse2 qtbase5-dev patchelf desktop-file-utils file
 
       - name: Set macOS SDK
         if: runner.os == 'macOS'
@@ -62,7 +62,7 @@ jobs:
           echo "CHISURF_VERSION=$CHISURF_VERSION"
           echo "{\"version\": \"$CHISURF_VERSION\"}" > rattler-recipe/version.json
           python rattler-recipe/collect_entry_points.py || true
-          rattler-build build --recipe rattler-recipe --output-dir conda-bld --test skip
+          python build_tools/run_rattler_build.py
 
       - name: Upload Linux conda packages
         if: runner.os == 'Linux'
@@ -72,6 +72,21 @@ jobs:
           path: |
             ${{ env.OUT_DIR }}/linux-64/**/*.conda
             ${{ env.OUT_DIR }}/noarch/**/*.conda
+          if-no-files-found: error
+
+      - name: Build Linux AppImage
+        if: runner.os == 'Linux'
+        shell: bash -l {0}
+        run: |
+          micromamba activate build
+          bash build_tools/linuxdeploy/build.sh --no-build
+
+      - name: Upload Linux AppImage
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: appimage-linux
+          path: dist/ChiSurf-x86_64.AppImage
           if-no-files-found: error
 
       - name: Upload macOS conda packages
@@ -128,6 +143,12 @@ jobs:
           name: packages-linux
           path: conda-packages/linux
 
+      - name: Download Linux AppImage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: appimage-linux
+          path: artifacts/linux
+
       - name: Download macOS conda packages
         uses: actions/download-artifact@v4
         with:
@@ -144,6 +165,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            artifacts/linux/*.AppImage
             artifacts/windows/*.exe
             conda-packages/**/*.conda
           generate_release_notes: true

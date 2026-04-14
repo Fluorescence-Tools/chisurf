@@ -78,7 +78,10 @@ if not defined INNO_SETUP_EXE (
 
 set "BASE_CONDA_EXE=%BASE_CONDA_ROOT%\Scripts\conda.exe"
 if not exist "%BASE_CONDA_EXE%" (
-    echo ERROR: conda.exe not found at %BASE_CONDA_EXE%
+    set "BASE_CONDA_EXE=%BASE_CONDA_ROOT%\Library\bin\micromamba.exe"
+)
+if not exist "%BASE_CONDA_EXE%" (
+    echo ERROR: micromamba.exe not found at %BASE_CONDA_ROOT%
     exit /b 1
 )
 
