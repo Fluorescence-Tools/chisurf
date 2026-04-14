@@ -85,11 +85,32 @@ def load_project(project_path: str):
 
 @action("project.close")
 def close_project(main_window: typing.Any = None):
-    """Close the current project and reinitialize UI."""
+    """Close the current project."""
     import chisurf
     if main_window:
-        main_window.reinitialize()
-        main_window._current_project_dir = None
+        # Instead of calling reinitialize() (which might trigger confirmation
+        # or another project.close dispatch), we perform a focused cleanup.
+        try:
+            # Close all fits
+            if hasattr(main_window, 'onCloseAllFits'):
+                main_window.onCloseAllFits()
+
+            # Clear imported datasets
+            if hasattr(chisurf, 'imported_datasets'):
+                chisurf.imported_datasets.clear()
+
+            # Reset project path
+            main_window._current_project_dir = None
+
+            # Refresh UI selectors
+            if hasattr(main_window, 'dataset_selector'):
+                main_window.dataset_selector.update()
+            if hasattr(main_window, 'fit_selector'):
+                main_window.fit_selector.update()
+        except Exception as e:
+            import chisurf.logging
+            chisurf.logging.error(f"Error in project.close action: {e}")
+
     return {}
 
 
