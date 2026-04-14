@@ -123,7 +123,11 @@ def species_averaged_lifetime(
     if is_lifetime_spectrum:
         x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
         if normalize:
-            x /= x.sum()
+            xs = x.sum()
+            if xs > 0:
+                x /= xs
+            else:
+                return float("NAN")
         tau_x = np.dot(x, t)
         return float(tau_x)
     else:
@@ -131,7 +135,10 @@ def species_averaged_lifetime(
         intensity = fluorescence[1]
 
         dt = (time_axis[1] - time_axis[0])
-        i2 = intensity / max(intensity)
+        imax = np.max(intensity)
+        if imax == 0:
+            return float("NAN")
+        i2 = intensity / imax
         return np.sum(i2) * dt
 
 
@@ -152,15 +159,24 @@ def fluorescence_averaged_lifetime(
     """
     if is_lifetime_spectrum:
         taux = species_averaged_lifetime(fluorescence) if taux is None else taux
+        if taux == 0:
+            return float("NAN")
         x, t = chisurf.math.datatools.interleaved_to_two_columns(fluorescence)
         if normalize:
-            x /= x.sum()
+            xs = x.sum()
+            if xs > 0:
+                x /= xs
+            else:
+                return float("NAN")
         tau_f = np.dot(x, t**2) / taux
         return tau_f
     else:
         time_axis = fluorescence[0]
         intensity = fluorescence[1]
-        return np.sum(intensity * time_axis) / np.sum(intensity)
+        isum = np.sum(intensity)
+        if isum == 0:
+            return 0.0
+        return np.sum(intensity * time_axis) / isum
 
 
 
@@ -895,7 +911,7 @@ def rates2lifetimes_new(
         1. - x_donly
     )
     scaled_donor = chisurf.math.datatools.e1tn(
-        donor_rate_spectrum,
+        np.copy(donor_rate_spectrum),
         x_donly
     )
     rs = np.append(
