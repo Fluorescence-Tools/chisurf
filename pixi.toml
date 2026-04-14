@@ -58,11 +58,6 @@ mypy = "*"
 pip = "*"
 
 [pypi-dependencies]
-chinet = { path = "modules/chinet", editable = true }
-labellib = { path = "modules/labellib", editable = true }
-ndxplorer = { path = "modules/ndxplorer", editable = true }
-clsmview = { path = "modules/clsmview", editable = true }
-quest = { path = "modules/quest", editable = true }
 
 [pypi-options]
 dependency-overrides = { "pymol-open-source" = {}, "numpy" = {} }
@@ -102,34 +97,35 @@ tttrlib = "*"
 tttrlib = "*"
 
  [tasks]
+ build-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh" }
  test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
- build-labellib = { cmd = "python -m pip install -e modules/labellib --no-deps", inputs = [
-     "modules/labellib/CMakeLists.txt",
-     "modules/labellib/FlexLabel/**",
-     "modules/labellib/setup.py",
+build-labellib = { cmd = "pip install -e modules/labellib --no-deps", inputs = [
+      "modules/labellib/CMakeLists.txt",
+      "modules/labellib/FlexLabel/**",
+      "modules/labellib/setup.py",
+  ] }
+  build-ndxplorer = { cmd = "pip install -e modules/ndxplorer --no-deps", inputs = [
+      "modules/labellib/CMakeLists.txt",
+      "modules/labelllib/FlexLabel/**",
+      "modules/labellib/setup.py",
+  ] }
+  build-clsmview = { cmd = "pip install -e modules/clsmview --no-deps", inputs = [
+      "modules/clsmview/setup.py",
+      "modules/clsmview/clsmview/**",
+  ] }
+  build-quest = { cmd = "pip install -e modules/quest --no-deps", inputs = [
+      "modules/quest/pyproject.toml",
+      "modules/quest/quest/**",
+  ] }
+  build-chinet = { cmd = "true" }
+ build-extensions = { depends-on = [
+     "build-labellib",
+     "build-ndxplorer",
+     "build-clsmview",
+     "build-quest",
+     "build-chinet",
  ] }
- build-ndxplorer = { cmd = "python -m pip install -e modules/ndxplorer --no-deps", inputs = [
-     "modules/labellib/CMakeLists.txt",
-     "modules/labelllib/FlexLabel/**",
-     "modules/labellib/setup.py",
- ] }
- build-clsmview = { cmd = "python -m pip install -e modules/clsmview --no-deps", inputs = [
-     "modules/clsmview/setup.py",
-     "modules/clsmview/clsmview/**",
- ] }
- build-quest = { cmd = "python -m pip install -e modules/quest --no-deps", inputs = [
-     "modules/quest/pyproject.toml",
-     "modules/quest/quest/**",
- ] }
- build-chinet = { cmd = "true" }
-build-extensions = { depends-on = [
-    "build-labellib",
-    "build-ndxplorer",
-    "build-clsmview",
-    "build-quest",
-    "build-chinet",
-] }
-chisurf = { cmd = "python -m chisurf" }
+ chisurf = { cmd = "python -m chisurf" }
 
 test-app-linux = { cmd = "echo 'test-app-linux: requires native pixi environment on Linux'", depends-on = ["build-extensions"] }
 test = { cmd = "pytest test -k 'not gui and not widget and not window'", depends-on = ["build-extensions"] }
