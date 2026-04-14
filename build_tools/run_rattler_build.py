@@ -94,9 +94,9 @@ def main() -> int:
                 ignored.add(name)
         return ignored
 
-    with tempfile.TemporaryDirectory(prefix="chisurf-rattler-src-") as tmp_dir:
+    with tempfile.TemporaryDirectory(prefix="chisurf-rattler-src-", ignore_cleanup_errors=True) as tmp_dir:
         tmp_root = Path(tmp_dir) / "chisurf"
-        shutil.copytree(repo_root, tmp_root, ignore=ignore_patterns)
+        shutil.copytree(repo_root, tmp_root, ignore=ignore_patterns, dirs_exist_ok=True)
         os.chdir(tmp_root)
 
         cmd = [
