@@ -208,13 +208,13 @@
    </item>
    <item>
     <widget class="QGroupBox" name="groupBox_2">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
      <property name="title">
       <string>Linking</string>
      </property>
      <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
       <bool>false</bool>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_6">

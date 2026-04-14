@@ -34,6 +34,9 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
         self.pushButton_8.clicked.connect(self.setLinks)
         self.addGlobalLink.clicked.connect(self.onAddLink)
+        # Ensure the "Used fits -> add" tool button actually appends the selected/local fits
+        # to the global fit. Without this connection, clicking the button has no effect.
+        self.toolButton_7.clicked.connect(self.onAddToLocalFitList)
         self.comboBox_gfOriginFit.currentIndexChanged[int].connect(self.update_parameter_origin)
         self.comboBox_gfTargetFit.currentIndexChanged[int].connect(self.update_parameter_target)
         self.comboBox_gfTargetParameter.currentIndexChanged[int].connect(self.update_link_text)
@@ -47,6 +50,17 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.actionOn_clear_local_fits.triggered.connect(self.onClearLocalFits)
         self.actionUpdate_widgets.triggered.connect(self.update_widgets)
         self.actionOnAddGlobalVariable.triggered.connect(self.onAddGlobalVariable)
+
+        self.groupBox_2.toggled.connect(self.widget_3.setVisible)
+        self.widget_3.setVisible(self.groupBox_2.isChecked())
+
+        # Subscribe UI to model-level fit-append notifications so the table updates
+        # regardless of whether fits are appended via GUI or macros/actions.
+        try:
+            self.on_fit_appended(self._on_fit_appended_ui)
+        except Exception:
+            # If the base does not provide the subscription API, ignore silently.
+            pass
 
     @property
     def add_all_fits(self) -> bool:
@@ -208,19 +222,38 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             layout.itemAt(i).widget().deleteLater()
 
     def onAddToLocalFitList(self) -> None:
+        print("onAddToLocalFitList")
+        chisurf.logging.info("onAddToLocalFitList")
         local_fits = self.local_fits
         local_fits_idx = self.local_fit_idx
         fit_indeces = range(len(local_fits)) if self.add_all_fits else [self.current_fit_index]
+        print("fit_indeces:", fit_indeces)
         for fitIndex in fit_indeces:
+            print(f"onAddToLocalFitList:fitIndex:{fitIndex}")
             chisurf.actions.dispatch(
                 name="model.append_fit",
                 payload={"fit_index": int(local_fits_idx[fitIndex])},
             )
 
     def append_fit(self, fit: chisurf.fitting.fit):
-        if fit not in self.fits:
+        # Defer UI updates to the model-level callback to avoid double insertion
+        GlobalFitModel.append_fit(self, fit)
 
+    # --- UI reaction to model notifications ---
+    def _on_fit_appended_ui(self, fit: chisurf.fitting.fit) -> None:
+        try:
+            # Guard: do not add duplicates by name in table
             table = self.tableWidget
+            existing_names = set()
+            for r in range(table.rowCount()):
+                item = table.item(r, 0)
+                if item is not None:
+                    existing_names.add(str(item.text()))
+            if str(fit.name) in existing_names:
+                # Still refresh widgets to keep combos in sync
+                self.update_widgets()
+                return
+
             table.insertRow(table.rowCount())
             rc = table.rowCount() - 1
 
@@ -233,8 +266,9 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             table.resizeRowsToContents()
 
             self.update_widgets()
-
-        GlobalFitModel.append_fit(self, fit)
+        except Exception:
+            # Best-effort UI update; ignore errors to not break model flow
+            pass
 
     def onAddLink(self, links: typing.List = None):
         table = self.table_GlobalLinks

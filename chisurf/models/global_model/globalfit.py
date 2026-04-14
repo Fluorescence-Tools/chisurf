@@ -185,8 +185,53 @@ class GlobalFitModel(model.Model, Curve):
         return wr
 
     def append_fit(self, fit: Fit) -> None:
+        try:
+            import chisurf
+            chisurf.logging.info(
+                f"GlobalFitModel.append_fit: receiver={type(self).__name__}, incoming fit type={type(fit).__name__}, name={getattr(fit, 'name', None)}; already_present={fit in getattr(self, 'fits', [])}"
+            )
+        except Exception:
+            pass
         if fit not in self.fits:
             self.fits.append(fit)
+            try:
+                import chisurf
+                chisurf.logging.info(
+                    f"GlobalFitModel.append_fit: appended successfully; total_fits={len(self.fits)}; names={getattr(self, 'fit_names', [])}"
+                )
+            except Exception:
+                pass
+            # Notify any subscribers that a fit was appended (non-Qt callbacks)
+            try:
+                callbacks = getattr(self, "_on_fit_appended", None)
+                if isinstance(callbacks, list):
+                    for cb in list(callbacks):
+                        try:
+                            cb(fit)
+                        except Exception:
+                            # Keep notifications best-effort; ignore callback errors
+                            pass
+            except Exception:
+                pass
+
+    # --- Lightweight non-Qt subscription API for append notifications ---
+    def on_fit_appended(self, fn) -> None:
+        """Register a callback called with (fit) whenever a new fit is appended.
+
+        This keeps the model free of Qt dependencies while allowing UI layers
+        to react to changes triggered via macros/actions as well as the GUI.
+        """
+        lst = getattr(self, "_on_fit_appended", None)
+        if lst is None:
+            lst = []
+            setattr(self, "_on_fit_appended", lst)
+        if callable(fn) and fn not in lst:
+            lst.append(fn)
+
+    def off_fit_appended(self, fn) -> None:
+        lst = getattr(self, "_on_fit_appended", None)
+        if isinstance(lst, list) and fn in lst:
+            lst.remove(fn)
 
     def append_global_parameter(self, parameter: chisurf.parameter.Parameter) -> None:
         variable_name = parameter.name
