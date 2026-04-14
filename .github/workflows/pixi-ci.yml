@@ -108,7 +108,7 @@ jobs:
           if-no-files-found: error
 
       - name: Build Windows installer (.exe)
-        if: runner.os == 'Windows' && github.ref == 'refs/heads/main'
+        if: runner.os == 'Windows'
         shell: bash -l {0}
         run: |
           micromamba activate build

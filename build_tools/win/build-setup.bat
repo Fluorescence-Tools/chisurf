@@ -282,6 +282,7 @@ if not exist "%APP_PYTHONW_EXE%" (
 )
 
 echo Installing ChiSurf source into cloned environment ...
+xcopy /y /q "%SOURCE_PATH%\build_tools\_build_backend.py" "%APP_SITE_PACKAGES%\" >nul
 call "%PYTHON_EXE%" -m pip install -e "%SOURCE_PATH%" --no-deps
 if errorlevel 1 (
     echo ERROR: Failed to install ChiSurf into staged environment
