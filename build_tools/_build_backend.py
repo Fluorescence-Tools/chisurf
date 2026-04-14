@@ -5,78 +5,16 @@ with NumPy includes.
 """
 from setuptools import build_meta as _orig
 from setuptools import Extension
-from setuptools.command.build_py import build_py
-import sys
+import setuptools
 import os
-import datetime
+import sys
 import pathlib
-import re
-import shutil
-import subprocess
-import warnings
+import numpy as np
+from Cython.Build import cythonize
 
-
-# Re-export the standard backend functions
-prepare_metadata_for_build_wheel = _orig.prepare_metadata_for_build_wheel
-build_sdist = _orig.build_sdist
-
-
-def get_requires_for_build_wheel(config_settings=None):
-    """Add numpy and Cython to build requirements."""
-    base_requires = _orig.get_requires_for_build_wheel(config_settings) or []
-    return base_requires + ['numpy<2.0', 'Cython>=0.29,<3.1']
-
-
-def get_requires_for_build_sdist(config_settings=None):
-    """Add numpy and Cython to build requirements."""
-    base_requires = _orig.get_requires_for_build_sdist(config_settings) or []
-    return base_requires + ['numpy<2.0', 'Cython>=0.29,<3.1'] + ['numpy>=1.20', 'Cython>=0.29']
-
-
+# Define extension modules
 def get_extensions():
-    """Generate Cython extension modules with NumPy includes.
-    
-    Returns:
-        list: List of Extension objects for Cython modules
-    """
-    import platform
-
-    if platform.system() == "Windows":
-        py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
-        project_root = pathlib.Path(__file__).resolve().parent.parent
-        prebuilt_modules = [
-            project_root / 'chisurf' / 'structure' / 'av' / f'fps_.{py_tag}-win_amd64.pyd',
-            project_root / 'chisurf' / 'structure' / 'potential' / f'cPotentials_.{py_tag}-win_amd64.pyd',
-        ]
-        if all(module.exists() for module in prebuilt_modules) and not shutil.which("cl.exe"):
-            warnings.warn(
-                "cl.exe not found; reusing prebuilt Windows extension modules instead of compiling Cython extensions.",
-                RuntimeWarning,
-            )
-            return []
-
-    import numpy as np
-    from Cython.Build import cythonize
-    
-    # Platform-specific compiler flags
-    if platform.system() == "Darwin":
-        extra_compile_args = ["-O3", "-stdlib=libc++"]
-        extra_link_args = ["-stdlib=libc++"]
-    elif platform.system() == "Windows":
-        if not shutil.which("cl.exe"):
-            print("\n" + "!" * 80)
-            print("ERROR: C++ compiler (cl.exe) not found.")
-            print("To build ChiSurf extensions on Windows, you need Visual Studio Build Tools.")
-            print("Please install them and ensure they are in your PATH.")
-            print("Download here: https://visualstudio.microsoft.com/visual-cpp-build-tools/")
-            print("!" * 80 + "\n")
-        extra_compile_args = []
-        extra_link_args = []
-    else:
-        extra_compile_args = []
-        extra_link_args = []
-    
-    # Define extension modules (only include sources that still exist)
+    """Generate Cython extension modules with NumPy includes."""
     extensions = [
         Extension(
             "chisurf.structure.av.fps_",
@@ -85,186 +23,62 @@ def get_extensions():
                 "chisurf/structure/av/mt19937cok.cpp",
             ],
             include_dirs=[np.get_include()],
-            extra_compile_args=extra_compile_args,
-            extra_link_args=extra_link_args,
             language="c++",
         ),
         Extension(
             "chisurf.structure.potential.cPotentials_",
             sources=["chisurf/structure/potential/cPotentials_.pyx"],
             include_dirs=[np.get_include()],
-            extra_compile_args=extra_compile_args,
-            extra_link_args=extra_link_args,
             language="c++",
         ),
     ]
-    
-    # Cythonize extensions
-    return cythonize(extensions, compiler_directives={'language_level': '3'})
+    return cythonize(extensions, language_level=3)
 
-
-class CustomBuildPy(build_py):
-    """Custom build command that replaces the dynamic version with a hardcoded version.
-    
-    This command is used during pip builds to ensure that the version number in the
-    installed package is a fixed string representing the date at build time, rather
-    than a dynamic value that changes each time the module is imported.
-    
-    The command:
-    1. Replaces the dynamic version in info.py with a hardcoded version (current date)
-    2. Runs the standard build_py command to build the package
-    3. Restores the original dynamic version in the source code after the build
-    
-    This approach ensures that:
-    - The installed package has a fixed version number (the date at build time)
-    - The source code remains unchanged after the build process
-    - The behavior is consistent with the Pixi build process
-    """
-    
+class CustomBuildPy(setuptools.command.build_py.build_py):
+    """Custom build_py to ensure extensions are built."""
     def run(self):
-        # Get the path to the info.py file (project root / chisurf / info.py)
-        project_root = pathlib.Path(__file__).resolve().parent.parent
-        info_file = project_root / 'chisurf' / 'info.py'
+        self.run_command('build_ext')
+        return super().run()
 
-        # Determine the version to bake into the built package.
-        # Prefer explicit override; otherwise derive from git tags.
-        version = os.environ.get('CHISURF_VERSION')
-        desc = ''
-        if version:
-            version = version.strip()
-        else:
-            try:
-                desc = subprocess.check_output(
-                    [
-                        'git', 'describe', '--tags', '--long',
-                        '--match', 'v[0-9]*',
-                    ],
-                    cwd=str(project_root),
-                    stderr=subprocess.DEVNULL,
-                    text=True,
-                ).strip()
-            except Exception:
-                desc = ''
+def custom_setup(*args, **kwargs):
+    if 'ext_modules' not in kwargs:
+        kwargs['ext_modules'] = get_extensions()
+    cmdclass = dict(kwargs.get('cmdclass', {}))
+    cmdclass.setdefault('build_py', CustomBuildPy)
+    kwargs['cmdclass'] = cmdclass
+    return _orig.setup(*args, **kwargs)
 
-        # Expected: vX.Y.Z-N-g<sha>
-        m = re.match(r'^(v[0-9.]+)-(\d+)-g([0-9a-f]+)$', desc)
-        if m:
-            tag = m.group(1).lstrip('v')
-            # PEP 440: remove leading zeros from dot-separated numeric segments
-            parts = tag.split('.')
-            norm = []
-            for p in parts:
-                if not p.isdigit():
-                    norm = []
-                    break
-                norm.append(str(int(p)))
-            base = '.'.join(norm) if norm else None
-            if base is not None:
-                distance = int(m.group(2))
-                if distance == 0:
-                    version = base
-                else:
-                    # Extract year from base tag for dev version
-                    base_parts = base.split(".")
-                    if len(base_parts) >= 1:
-                        year = base_parts[0]
-                        version = f'{year}.dev{distance}'
-                    else:
-                        # Fallback to current year if tag format is unexpected
-                        today = datetime.datetime.now()
-                        version = f"{today.strftime('%y')}.dev{distance}"
-
-        if not version:
-            # Final fallback: deterministic dev-style version at build time.
-            today = datetime.datetime.now()
-            version = today.strftime('%y.dev0')
-        
-        # Read the current content of info.py
-        with open(info_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Store original content for restoration
-        original_content = content
-        
-        # Replace the dynamic version computation with the hardcoded version.
-        # This ensures that the installed package has a fixed version string.
-        replacement = f'__version__ = "{version}"'
-        content, n = re.subn(
-            r'^__version__\s*=\s*_compute_version\(\)\s*$',
-            replacement,
-            content,
-            flags=re.MULTILINE,
-        )
-        if n == 0:
-            # Fallback for older layouts.
-            pattern = r'__version__\s*=\s*str\(today\.strftime\("%y\.%m\.%d"\)\)'
-            content = re.sub(pattern, replacement, content)
-        
-        # Write the modified content back to info.py
-        with open(info_file, 'w', encoding='utf-8') as f:
-            f.write(content)
-        
-        try:
-            # Call the original build_py run method to perform the actual build
-            build_py.run(self)
-
-            # Ensure JSON constants are present in the built package.
-            constants_src = project_root / 'chisurf' / 'settings' / 'constants'
-            constants_dst = pathlib.Path(self.build_lib) / 'chisurf' / 'settings' / 'constants'
-            constants_dst.mkdir(parents=True, exist_ok=True)
-            for json_file in constants_src.glob('*.json'):
-                shutil.copy2(json_file, constants_dst / json_file.name)
-
-            # Vendor the pure-Python chinet package into ChiSurf builds so
-            # Windows installers remain self-contained.
-            chinet_src = project_root / 'modules' / 'chinet' / 'chinet'
-            chinet_dst = pathlib.Path(self.build_lib) / 'chinet'
-            if chinet_src.exists():
-                if chinet_dst.exists():
-                    shutil.rmtree(chinet_dst)
-                shutil.copytree(chinet_src, chinet_dst)
-        finally:
-            # After the build is complete, restore the original dynamic version
-            # This ensures that the source code remains unchanged
-            with open(info_file, 'w', encoding='utf-8') as f:
-                f.write(original_content)
-
-
-def get_requires_for_build_editable(config_settings=None):
-    """Add numpy and Cython to build requirements for editable installs."""
-    return get_requires_for_build_wheel(config_settings)
-
-
-def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
-    """Build an editable wheel with extensions."""
-    return build_wheel(wheel_directory, config_settings, metadata_directory)
-
+def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
+    import setuptools
+    original_setup = setuptools.setup
+    setuptools.setup = custom_setup
+    try:
+        return _orig.prepare_metadata_for_build_wheel(metadata_directory, config_settings)
+    finally:
+        setuptools.setup = original_setup
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
-    """Build a wheel with Cython extensions.
-    
-    This wraps setuptools.build_meta and injects our Cython extensions.
-    """
-    # Temporarily inject our extensions into setuptools
     import setuptools
-    
-    # Get the original setup function
     original_setup = setuptools.setup
-    
-    def custom_setup(*args, **kwargs):
-        # Inject our extensions
-        if 'ext_modules' not in kwargs:
-            kwargs['ext_modules'] = get_extensions()
-        cmdclass = dict(kwargs.get('cmdclass', {}))
-        cmdclass.setdefault('build_py', CustomBuildPy)
-        kwargs['cmdclass'] = cmdclass
-        return original_setup(*args, **kwargs)
-    
-    # Replace setup temporarily
     setuptools.setup = custom_setup
-    
     try:
         return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
     finally:
-        # Restore original setup
         setuptools.setup = original_setup
+
+def build_sdist(sdist_directory, config_settings=None):
+    import setuptools
+    original_setup = setuptools.setup
+    setuptools.setup = custom_setup
+    try:
+        return _orig.build_sdist(sdist_directory, config_settings)
+    finally:
+        setuptools.setup = original_setup
+
+def get_requires_for_build_wheel(config_settings=None):
+    base_requires = _orig.get_requires_for_build_wheel(config_settings) or []
+    return base_requires + ['numpy<2.0', 'Cython>=0.29,<3.1']
+
+def get_requires_for_build_sdist(config_settings=None):
+    base_requires = _orig.get_requires_for_build_sdist(config_settings) or []
+    return base_requires + ['numpy<2.0', 'Cython>=0.29,<3.1']
