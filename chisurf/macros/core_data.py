@@ -622,8 +622,9 @@ def reinitialize_application(
         try:
             global_datasets = [
                 d for d in chisurf.imported_datasets
-                if hasattr(d, 'name') and d.name == 'Global Dataset'
+                if _is_global_fit_dataset(d)
             ]
+
         except Exception:
             global_datasets = []
         try:
