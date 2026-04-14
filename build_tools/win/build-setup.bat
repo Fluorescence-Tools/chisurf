@@ -125,7 +125,7 @@ if exist "%RUNTIME_ENV_PATH%" if not exist "%RUNTIME_ENV_PATH%\python.exe" (
 )
 if not exist "%RUNTIME_ENV_PATH%\python.exe" (
     echo Creating base ChiSurf runtime environment at %RUNTIME_ENV_PATH% ...
-    call "%BASE_CONDA_EXE%" create -y --solver libmamba -p "%RUNTIME_ENV_PATH%" -c conda-forge --override-channels ^
+    call "%BASE_CONDA_EXE%" create -y -p "%RUNTIME_ENV_PATH%" -c conda-forge --override-channels ^
         python=3.12.* ^
         pip ^
         "setuptools<81" ^
@@ -254,7 +254,7 @@ if exist "%APP_PATH%" (
     echo Removing existing environment ...
     rmdir /s /q "%APP_PATH%"
 )
-call "%BASE_CONDA_EXE%" create -y --solver libmamba -p "%APP_PATH%" --clone "%RUNTIME_ENV_PATH%"
+call "%BASE_CONDA_EXE%" create -y  -p "%APP_PATH%" --clone "%RUNTIME_ENV_PATH%"
 if errorlevel 1 (
     echo ERROR: Failed to stage cloned runtime environment
     exit /b 1
@@ -289,7 +289,7 @@ if errorlevel 1 (
 )
 
 echo Restoring setuptools runtime compatibility ...
-call "%BASE_CONDA_EXE%" install -y --solver libmamba -p "%APP_PATH%" -c conda-forge --override-channels "setuptools<81"
+call "%BASE_CONDA_EXE%" install -y  -p "%APP_PATH%" -c conda-forge --override-channels "setuptools<81"
 if errorlevel 1 (
     echo ERROR: Failed to restore setuptools runtime compatibility
     exit /b 1
