@@ -4,23 +4,31 @@ ChiSurf uses a simplified versioning scheme that remains **PEP 440** compatible 
 
 ## Public Version Format
 
-- Release line (major): `YY` (year)
-- Major version: `XX`
-- Minor version: `YY`
+Stable releases use a two-segment `YY.X` format:
 
-Stable releases are tagged and published as:
-
-- `YY.XX.YY`
+- `YY` = release year (e.g., `26` for 2026)
+- `X` = sequential release within that year (0, 1, 2, ...)
 
 Examples:
 
-- `26.0.0` (first stable release in 2026)
-- `26.1.0` (next major feature release in 2026)
-- `26.1.1` (bugfix release)
+- `26.1` — first stable release in 2026
+- `26.1` — next release in 2026 (bugfixes + features)
+
+There are no point releases (no `26.1.1`). Bugfixes go into the next minor (`26.1`).
+
+## Pre-Release Versions
+
+Pre-release builds use PEP 440 pre-release suffixes:
+
+- `26.1a1` — alpha 1
+- `26.1b1` — beta 1
+- `26.1rc1` — release candidate 1
+
+PEP 440 sort order: `26.1a1 < 26.1b1 < 26.1rc1 < 26.1`
 
 ## Dev Versions
 
-Dev builds are derived from git metadata (and are therefore unique per commit):
+Dev builds are derived from git metadata (unique per commit):
 
 - `YY.devZZZ`
 
@@ -28,12 +36,12 @@ Where `ZZZ` is the number of commits since the last matching tag.
 
 Notes:
 
-- A tagged commit builds exactly the tag version (e.g., `26.0.0`).
-- A non-tagged commit builds a dev version that sorts *after* the base tag (e.g., `26.dev123`).
+- A tagged commit builds exactly the tag version (e.g., `26.1`).
+- A non-tagged commit builds a dev version (e.g., `26.dev123`).
 
 ## Tag Naming
 
-- Tags use a leading `v`: `v26.0.0`
+- Tags use a leading `v`: `v26.1`, `v26.1a1`, `v26.1b1`, `v26.1rc1`
 
 ## Overrides
 
