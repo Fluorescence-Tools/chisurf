@@ -21,11 +21,13 @@ def _run_git(args: List[str], cwd: pathlib.Path) -> Optional[str]:
 
 
 def _normalize_tag_to_pep440(tag: str) -> Optional[str]:
-    """Normalize a git tag like 'v26.0.0' to a PEP 440-compatible version.
+    """Normalize a git tag like 'v26.0' to a PEP 440-compatible version.
 
     - Strips an optional leading 'v'
     - Removes leading zeros from numeric dot-separated segments
-    - Returns None if the tag is not purely numeric/dot-separated
+    - Accepts PEP 440 pre-release suffixes: aN, bN, rcN
+      e.g. 'v26.0a1' -> '26.0a1', 'v26.0rc2' -> '26.0rc2'
+    - Returns None if the tag does not match expected formats
     """
 
     if not isinstance(tag, str):
@@ -35,6 +37,13 @@ def _normalize_tag_to_pep440(tag: str) -> Optional[str]:
         tag = tag[1:]
     if not tag:
         return None
+
+    # Check for PEP 440 pre-release suffix on the last segment
+    pre_suffix = ""
+    m_pre = re.match(r"^(.+?)((?:a|b|rc)\d+)$", tag)
+    if m_pre:
+        tag = m_pre.group(1)
+        pre_suffix = m_pre.group(2)
 
     parts = tag.split(".")
     if not parts:
@@ -47,7 +56,7 @@ def _normalize_tag_to_pep440(tag: str) -> Optional[str]:
             normalized.append(str(int(p)))
         except Exception:
             return None
-    return ".".join(normalized)
+    return ".".join(normalized) + pre_suffix
 
 
 def _compute_version() -> str:
