@@ -1,0 +1,34 @@
+import os
+import sys
+import pathlib
+from setuptools import setup, Extension, find_packages
+from Cython.Build import cythonize
+import numpy as np
+
+# Define extension modules
+extensions = [
+    Extension(
+        "chisurf.structure.av.fps_",
+        sources=[
+            "chisurf/structure/av/fps_.pyx",
+            "chisurf/structure/av/mt19937cok.cpp",
+        ],
+        include_dirs=[np.get_include()],
+        language="c++",
+    ),
+    Extension(
+        "chisurf.structure.potential.cPotentials_",
+        sources=["chisurf/structure/potential/cPotentials_.pyx"],
+        include_dirs=[np.get_include()],
+        language="c++",
+    ),
+]
+
+setup(
+    name="chisurf",
+    version=os.environ.get('CHISURF_VERSION', '26.dev0'),
+    packages=find_packages(),
+    ext_modules=cythonize(extensions, language_level=3),
+    include_package_data=True,
+    zip_safe=False,
+)
