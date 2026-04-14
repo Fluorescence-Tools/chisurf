@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -210,10 +211,24 @@ class _MaxentActionsMixin:
         thread = QtCore.QThread(self)
         worker.moveToThread(thread)
 
+        t0_sampling = time.perf_counter()
+
         def _on_worker_progress(done: int, total: int) -> None:
             try:
                 progress.setMaximum(int(total))
                 progress.setValue(int(done))
+                if done > 0:
+                    elapsed = time.perf_counter() - t0_sampling
+                    remaining = (elapsed / float(done)) * (float(total) - done)
+                    if remaining > 3600:
+                        eta_str = f" (ETA: {int(remaining // 3600)}h {int((remaining % 3600) // 60)}m)"
+                    elif remaining > 60:
+                        eta_str = f" (ETA: {int(remaining // 60)}m {int(remaining % 60)}s)"
+                    else:
+                        eta_str = f" (ETA: {int(remaining)}s)"
+                    
+                    label = f"Sampling MEM distribution (emcee)...{eta_str}"
+                    progress.setLabelText(label)
             except Exception:
                 pass
 
