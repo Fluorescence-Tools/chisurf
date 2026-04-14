@@ -5,7 +5,7 @@ with NumPy includes.
 """
 from setuptools import build_meta as _orig
 from setuptools import Extension
-import setuptools
+from setuptools.command.build_py import build_py as _build_py
 import os
 import sys
 import pathlib
@@ -34,7 +34,7 @@ def get_extensions():
     ]
     return cythonize(extensions, language_level=3)
 
-class CustomBuildPy(setuptools.command.build_py.build_py):
+class CustomBuildPy(_build_py):
     """Custom build_py to ensure extensions are built."""
     def run(self):
         self.run_command('build_ext')
