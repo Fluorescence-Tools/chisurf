@@ -59,31 +59,7 @@ mkdir -p "$(dirname "$PREFIX")"
 rm -rf "$PREFIX"
 
 echo "[2/4] Creating runtime environment at $PREFIX..."
-# Option A: Stepwise creation to handle complex dependency resolution reliably
-# 1. Base env with core versions
-micromamba create -y --prefix "$PREFIX" \
-    "python=3.12" "numpy<2.0" "micromamba" "qtpy<2.0" "pyqtgraph=0.13.7" "mdtraj=1.11.1" "tttrlib=0.26.2" \
-    --channel conda-forge --channel bioconda --no-channel-priority
-
-# 2. Batch install major dependencies
-micromamba install -y --prefix "$PREFIX" \
-    "numpy<2.0" "qtpy<2.0" "pyqtgraph=0.13.7" "mdtraj=1.11.1" "tttrlib=0.26.2" \
-    scipy pandas matplotlib scikit-image pyqt pyqtwebengine \
-    --channel conda-forge --channel bioconda --no-channel-priority
-
-micromamba install -y --prefix "$PREFIX" \
-    numba guiqwt guidata typing-extensions pytools pyyaml markdown click click-didyoumean \
-    deprecation boost-cpp ipython notebook emcee pyopengl \
-    pytables python-docx qtconsole hmmlearn sympy zeus-mcmc \
-    pygments pyarrow boost-histogram fastmcp pymol-open-source \
-    tttrlib \
-    --channel conda-forge --channel bioconda --no-channel-priority
-
-# 3. Install local chisurf package (no-deps as we handled them above)
-LOCAL_CHAN_DIR="$REPO_ROOT/conda-bld"
-micromamba install -y --prefix "$PREFIX" \
-    --channel "file://$LOCAL_CHAN_DIR" \
-    chisurf --no-deps
+bash "$REPO_ROOT/build_tools/setup_runtime.sh" "$PREFIX" "$PKG"
 
 # 5. Finalize Environment (Cleanup)
 echo "[3/4] Cleaning runtime environment..."
@@ -136,4 +112,3 @@ APPIMAGE_EXTRACT_AND_RUN=1 \
 
 echo "=== Build Complete ==="
 echo "AppImage: $OUTPUT"
-
