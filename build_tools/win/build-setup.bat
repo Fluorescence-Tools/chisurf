@@ -282,8 +282,7 @@ if not exist "%APP_PYTHONW_EXE%" (
 )
 
 echo Installing ChiSurf source into cloned environment ...
-call "%PYTHON_EXE%" -m pip uninstall -y pythran Cython >nul 2>&1
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%" --no-cache-dir --no-deps --upgrade --force-reinstall
+call "%PYTHON_EXE%" -m pip install -e "%SOURCE_PATH%" --no-deps
 if errorlevel 1 (
     echo ERROR: Failed to install ChiSurf into staged environment
     exit /b 1
