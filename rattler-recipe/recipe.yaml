@@ -61,6 +61,7 @@ requirements:
     - setuptools >=61
     - wheel
     - cython >=0.29,<3
+    - pythran >=0.9.14,<1
     - numpy <2.0
     - swig <4.3.0
     - ${{ "pkg-config" if unix }}
