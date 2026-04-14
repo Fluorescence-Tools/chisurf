@@ -345,7 +345,7 @@ def save_file(
     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
         None,
         caption=description,
-        dir=str(working_path.absolute()),
+        directory=str(working_path.absolute()),
         filter=file_type
     )
 
