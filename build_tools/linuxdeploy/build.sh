@@ -1,163 +1,139 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-pushd "$SCRIPT_DIR/../.." > /dev/null
-REPO_ROOT="$(pwd)"
-popd > /dev/null
-
-DIST_PATH="$REPO_ROOT/dist"
-APP_PATH="$DIST_PATH/linux"
-RATTLER_RECIPE_DIR="$REPO_ROOT/rattler-recipe"
-OUTPUT_DIR="$REPO_ROOT/conda-bld"
-APPDIR="$DIST_PATH/AppDir"
+# --- Configuration ---
 APP_NAME="ChiSurf"
-BUILD_RATTLER_PACKAGE=1
+DIST_DIR="dist"
+LINUX_DIST_DIR="$DIST_DIR/linux"
+OUTPUT_APPIMAGE="$DIST_DIR/$APP_NAME-x86_64.AppImage"
 
+# Use current directory as root if not provided
+REPO_ROOT="$(cd "$(dirname "$0")"/../.. && pwd)"
+
+# Ensure we are running in a context where build tools are available (e.g., via pixi run)
+if ! command -v micromamba &> /dev/null; then
+    echo "ERROR: micromamba not found. Please run this script via 'pixi run' or ensure micromamba is in your PATH."
+    exit 1
+fi
+
+# Use mamba as the solver
+export MAMBA_ROOT_PREFIX="$HOME/miniforge3"
+
+# --- Arguments ---
+BUILD_PKG=1
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
-        --no-build) BUILD_RATTLER_PACKAGE=0; shift ;;
-        --output-dir=*) OUTPUT_DIR="${1#*=}"; shift ;;
+        --no-build) BUILD_PKG=0; shift ;;
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
 
-echo ""
-echo "=== ChiSurf Linux Build ==="
-echo "REPO_ROOT        = $REPO_ROOT"
-echo "DIST_PATH        = $DIST_PATH"
-echo "APP_PATH         = $APP_PATH"
-echo "OUTPUT_DIR       = $OUTPUT_DIR"
-echo ""
+echo "=== $APP_NAME Linux AppImage Build ==="
 
-CHISURF_VERSION="${CHISURF_VERSION:-}"
-if [[ -z "$CHISURF_VERSION" ]]; then
-    CHISURF_VERSION="$(cd "$REPO_ROOT" && python rattler-recipe/generate_version.py --print)"
-    if [[ -z "$CHISURF_VERSION" ]]; then
-        echo "ERROR: Failed to generate version"
-        exit 1
-    fi
+# 1. Handle Versioning
+CHI_VERSION="${CHI_VERSION:-}"
+if [[ -z "$CHI_VERSION" ]]; then
+    CHI_VERSION=$(python3 "$REPO_ROOT/rattler-recipe/generate_version.py" --print)
 fi
-echo "CHISURF_VERSION = $CHISURF_VERSION"
-echo '{"version": "'"$CHISURF_VERSION"'"}' > "$RATTLER_RECIPE_DIR/version.json"
+echo "Version: $CHI_VERSION"
+echo "{\"version\": \"$CHI_VERSION\"}" > "$REPO_ROOT/rattler-recipe/version.json"
 
-if [[ "$BUILD_RATTLER_PACKAGE" == "1" ]]; then
-    echo ""
-    echo "[1/4] Building conda package ..."
-    rattler-build build --recipe "$RATTLER_RECIPE_DIR" --output-dir "$OUTPUT_DIR" --test skip
-else
-    echo "[1/4] Skipping package build (--no-build)"
+# 2. Build Conda Package (if requested)
+if [[ "$BUILD_PKG" == "1" ]]; then
+    echo "[1/4] Building conda package..."
+    # We use rattlel-build from the environment
+    rattler-build build --recipe "$REPO_ROOT/rattler-recipe" --output-dir "$REPO_ROOT/conda-bld" --test skip
 fi
 
-echo ""
-echo "[2/4] Finding built conda package ..."
-
-PLATFORM_SUBDIR="linux-64"
-CHISURF_PKG=""
-for f in "$OUTPUT_DIR/$PLATFORM_SUBDIR"/chisurf-*.conda; do
-    if [[ -f "$f" ]]; then
-        CHISURF_PKG="$f"
-        break
-    fi
-done
-if [[ -z "$CHISURF_PKG" ]]; then
-    echo "ERROR: No chisurf conda package found in $OUTPUT_DIR/$PLATFORM_SUBDIR"
+# 3. Locate Package
+PKG="$(ls -t "$REPO_ROOT/conda-bld/linux-64/chisurf-"*.conda | head -n 1)"
+if [[ -z "$PKG" ]]; then
+    echo "ERROR: No conda package found in $REPO_ROOT/conda-bld/linux-64/"
     exit 1
 fi
-echo "Found package: $CHISURF_PKG"
+echo "Using package: $PKG"
 
-echo ""
-echo "[3/4] Creating distribution environment at $APP_PATH ..."
-rm -rf "$APP_PATH"
-mkdir -p "$(dirname "$APP_PATH")"
+# 4. Create Distribution Prefix
+PREFIX="$LINUX_DIST_DIR/runtime"
+mkdir -p "$(dirname "$PREFIX")"
+rm -rf "$PREFIX"
 
-micromamba create -y \
-    --prefix "$APP_PATH" \
-    python chisurf tttrlib \
-    "$CHISURF_PKG" \
-    -c conda-forge -c bioconda \
-    --no-channel-priority
+echo "[2/4] Creating runtime environment at $PREFIX..."
+# Option A: Stepwise creation to handle complex dependency resolution reliably
+# 1. Base env with core versions
+micromamba create -y --prefix "$PREFIX" \
+    "python=3.12" "numpy<2.0" "micromamba" "qtpy<2.0" "pyqtgraph=0.13.7" "mdtraj=1.11.1" "tttrlib=0.26.2" \
+    --channel conda-forge --channel bioconda --no-channel-priority
 
-if [[ ! -f "$APP_PATH/bin/python" ]]; then
-    echo "ERROR: python not found in $APP_PATH"
-    exit 1
-fi
+# 2. Batch install major dependencies
+micromamba install -y --prefix "$PREFIX" \
+    "numpy<2.0" "qtpy<2.0" "pyqtgraph=0.13.7" "mdtraj=1.11.1" "tttrlib=0.26.2" \
+    scipy pandas matplotlib scikit-image pyqt pyqtwebengine \
+    --channel conda-forge --channel bioconda --no-channel-priority
 
-echo "Compiling .pyc files ..."
-"$APP_PATH/bin/python" -m compileall -qq "$APP_PATH"
+micromamba install -y --prefix "$PREFIX" \
+    numba guiqwt guidata typing-extensions pytools pyyaml markdown click click-didyoumean \
+    deprecation boost-cpp ipython notebook emcee pyopengl \
+    pytables python-docx qtconsole hmmlearn sympy zeus-mcmc \
+    pygments pyarrow boost-histogram fastmcp pymol-open-source \
+    tttrlib \
+    --channel conda-forge --channel bioconda --no-channel-priority
 
-echo "Stripping dev-only bloat ..."
-rm -rf "$APP_PATH/include" "$APP_PATH/share/doc" "$APP_PATH/share/IMP" "$APP_PATH/share/info" "$APP_PATH/share/man"
-find "$APP_PATH/lib" -name "*.a" -delete 2>/dev/null || true
-find "$APP_PATH/lib" -name "*.la" -delete 2>/dev/null || true
-find "$APP_PATH" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find "$APP_PATH" -name "*.pyc" -delete 2>/dev/null || true
+# 3. Install local chisurf package (no-deps as we handled them above)
+LOCAL_CHAN_DIR="$REPO_ROOT/conda-bld"
+micromamba install -y --prefix "$PREFIX" \
+    --channel "file://$LOCAL_CHAN_DIR" \
+    chisurf --no-deps
 
-echo ""
-echo "[4/4] Building AppImage with linuxdeploy ..."
+# 5. Finalize Environment (Cleanup)
+echo "[3/4] Cleaning runtime environment..."
+# Use the python in the prefix to ensure we are modifying the right env
+PYTHON_BIN="$PREFIX/bin/python"
 
-rm -rf "$APPDIR"
-mkdir -p "$APPDIR"
+# Strip bloat to keep the AppImage small
+rm -rf "$PREFIX/include" "$PREFIX/share/doc"
+find "$PREFIX/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 
-ln -s "$APP_PATH" "$APPDIR/usr"
+# 6. Bundle into AppImage
+echo "[4/4] Bundling with linuxdeploy..."
+APPDIR=$(mktemp -d)
+trap 'rm -rf "$APPDIR"' EXIT
 
-cat > "$APPDIR/AppRun" << 'LAUNCHER'
-#!/usr/bin/env bash
-SELF="$(readlink -f "$0")"
-APPDIR="$(dirname "$SELF")"
-export PYTHONNOUSERS1
-export PATH="$APPDIR/usr/bin:$PATH"
-export QT_PLUGIN_PATH="$APPDIR/usr/plugins"
-export LD_LIBRARY_PATH="$APPDIR/usr/lib:${LD_LIBRARY_PATH:-}"
-cd "$APPDIR/usr"
-exec "$APPDIR/usr/bin/python" -m chisurf "$@"
-LAUNCHER
+mkdir -p "$APPDIR/usr"
+cp -r "$PREFIX" "$APPDIR/usr/"
+
+# Create AppRun launcher
+cat > "$APPDIR/AppRun" <<'EOF'
+#!/bin/bash
+SELF="$(readlink -f "${0}")"
+APPDIR="$(dirname "${SELF}")"
+export PATH="$APPDIR/usr/runtime/bin:$PATH"
+export QT_PLUGIN_PATH="$APPDIR/usr/runtime/plugins"
+export LD_LIBRARY_PATH="$APPDIR/usr/runtime/lib:$LD_LIBRARY_PATH"
+exec "$APPDIR/usr/runtime/bin/python3" -m chisurf "$@"
+EOF
 chmod +x "$APPDIR/AppRun"
 
-cat > "$APPDIR/chisurf.desktop" << 'DESKTOP'
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=ChiSurf
-Comment=Time-resolved fluorescence analysis
-Exec=chisurf %F
-Terminal=false
-Icon=chisurf-logo
-Categories=Science;Education;
-StartupNotify=true
-DESKTOP
-
+# Copy metadata and icons
+cp "$REPO_ROOT/build_tools/linuxdeploy/chisurf.desktop" "$APPDIR/"
 if [[ -f "$REPO_ROOT/chisurf/gui/resources/icons/cs_logo.png" ]]; then
     cp "$REPO_ROOT/chisurf/gui/resources/icons/cs_logo.png" "$APPDIR/chisurf-logo.png"
 fi
 
-LINUXDEPLOY_BIN="$DIST_PATH/linuxdeploy-x86_64.AppImage"
-LINUXDEPLOY_QT="$DIST_PATH/linuxdeploy-plugin-qt-x86_64.AppImage"
-
+# Run linuxdeploy
+LINUXDEPLOY_BIN="$DIST_DIR/linuxdeploy-x86_64.AppImage"
 if [[ ! -f "$LINUXDEPLOY_BIN" ]]; then
-    echo "Downloading linuxdeploy ..."
-    curl -L -o "$LINUXDEPLOY_BIN" \
-        "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+    curl -L -o "$LINUXDEPLOY_BIN" "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
     chmod +x "$LINUXDEPLOY_BIN"
 fi
 
-if [[ ! -f "$LINUXDEPLOY_QT" ]]; then
-    echo "Downloading linuxdeploy-plugin-qt ..."
-    curl -L -o "$LINUXDEPLOY_QT" \
-        "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage"
-    chmod +x "$LINUXDEPLOY_QT"
-fi
-
-export OUTPUT="$DIST_PATH/ChiSurf-x86_64.AppImage"
+export OUTPUT="$OUTPUT_APPIMAGE"
 rm -f "$OUTPUT"
 
-LINUXDEPLOY_PLUGIN_QT_PATH="$LINUXDEPLOY_QT" "$LINUXDEPLOY_BIN" \
-    --appdir "$APPDIR" \
-    --plugin qt \
-    --output appimage
+# Extract and run to avoid FUSE issues in WSL/containers
+APPIMAGE_EXTRACT_AND_RUN=1 \
+"$LINUXDEPLOY_BIN" --appdir "$APPDIR" --output appimage
 
-echo ""
-echo "=== Build complete ==="
-echo "Version:    $CHISURF_VERSION"
-echo "AppImage:   $OUTPUT"
-echo "Done."
+echo "=== Build Complete ==="
+echo "AppImage: $OUTPUT"
+

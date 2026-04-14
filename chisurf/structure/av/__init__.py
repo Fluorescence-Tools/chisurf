@@ -11,10 +11,7 @@ import chisurf.base
 import chisurf.fio as io
 import chisurf.fio.structure
 
-from . import dynamic
 from . import static
-from . import functions
-from . import fps_ as fps
 from . static import calculate_1_radius, calculate_3_radius, HAS_LABELLIB
 
 package_directory = os.path.dirname(__file__)
@@ -156,6 +153,7 @@ class BasicAV(object):
         return self.structure.atoms
 
     def update_points(self) -> None:
+        from . import functions
         ng = self.ng
         density = self.density
         x0, dg = self.x0, self.dg
@@ -228,6 +226,7 @@ class BasicAV(object):
         >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRmp(av2)
         """
+        from . import functions
         return functions.dRmp(self, av)
 
     def dRDA(
@@ -249,6 +248,7 @@ class BasicAV(object):
         >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDA(av2)
         """
+        from . import functions
         return functions.RDAMean(self, av, **kwargs)
 
     def widthRDA(
@@ -270,6 +270,7 @@ class BasicAV(object):
         >>> av1.widthRDA(av2)
 
         """
+        from . import functions
         return functions.widthRDA(self, av)
 
     def dRDAE(
@@ -291,6 +292,7 @@ class BasicAV(object):
         >>> av2 = chisurf.structure.av.BasicAV(structure, residue_seq_number=577, atom_name='CB')
         >>> av1.dRDAE(av2)
         """
+        from . import functions
         return functions.RDAMeanE(self, av, forster_radius)
 
     def pRDA(
@@ -319,6 +321,7 @@ class BasicAV(object):
         >>> y, x = av1.pRDA(av2)
 
         """
+        from . import functions
         return functions.histogram_rda(
             self,
             av,
@@ -408,6 +411,7 @@ class ACV(BasicAV):
         return self._contact_density
 
     def update_density(self):
+        from . import functions
         av = self
         contact_volume_trapped_fraction = av.contact_volume_trapped_fraction
         dg, x0 = av.dg, av.x0
@@ -527,6 +531,7 @@ class DynamicAV(BasicAV):
         >>> p.show()
         >>> p.hist(av.diffusion_map.flatten(), bins=np.arange(0.01, free_diffusion, 0.5))
         """
+        from . import functions
         diffusion_coefficient = kwargs.get('diffusion_coefficient',
                                            self._diffusion_coefficient)
         slow_factor = kwargs.get('slow_factor', self.slow_factor)
@@ -617,6 +622,7 @@ class DynamicAV(BasicAV):
         >>> p.hist(av.quenching_rate_map.flatten(), bins=np.arange(0.01, av.fluorescence_lifetime, 0.5))
 
         """
+        from . import functions
         av = self
         atoms = av.atoms
         r0 = av.x0
@@ -673,6 +679,7 @@ class DynamicAV(BasicAV):
         >>> p.show()
 
         """
+        from . import functions
         density_donor = self.density
         density_acceptor = acceptor.density
         x0_donor = self.x0
@@ -740,6 +747,7 @@ class DynamicAV(BasicAV):
         return t, c, n
 
     def __init__(self, *args, **kwargs):
+        from . import functions
         BasicAV.__init__(self, *args, **kwargs)
 
         # Initialization of internal variables
