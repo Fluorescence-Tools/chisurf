@@ -187,10 +187,6 @@ class ProjectMixin:
         except Exception:
             pass
 
-    def reinitialize(self: Main):
-        """Reinitialize the application by closing the current project."""
-        self.onCloseProject()
-
 
 class SetupMixin:
     def _restore_setup_defaults(self: Main) -> None:
