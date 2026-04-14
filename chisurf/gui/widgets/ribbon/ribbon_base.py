@@ -309,6 +309,8 @@ class ChiSurfRibbonIntegration(QObject):
             self.categories['Main'] = self._create_main_category()
             # Plugin categories are created dynamically in _create_plugins_category
             self._create_plugins_category()
+            # Create notebooks check directly - added here to be created on setup if and only if jupyter address exists
+            self._create_notebooks_category()
 
             # Apply global alignment fix to all panels after everything is created
             from qtpy import QtCore

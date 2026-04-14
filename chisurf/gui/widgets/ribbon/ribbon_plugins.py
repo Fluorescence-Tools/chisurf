@@ -630,3 +630,75 @@ class PluginMethodsMixin:
             self.logger.error(f"Failed to create hierarchical plugins menu: {e}")
 
         return None
+
+    def _create_notebooks_category(self):
+        """Create dedicated Notebooks category in the ribbon."""
+        import chisurf
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtGui import QIcon
+        import pathlib
+        import webbrowser
+        from functools import partial
+        
+        # Don't show if Jupyter isn't configured or running
+        if not getattr(chisurf, "__jupyter_address__", None):
+            self.logger.info("Jupyter address not set, skipping Notebooks category")
+            return None
+
+        try:
+            category_name = "Notebooks"
+            # Check if category already exists
+            if category_name in self.categories:
+                category = self.categories[category_name]
+            else:
+                category = self.ribbon_bar.addCategory(category_name)
+                self.categories[category_name] = category
+
+            # Create a panel for notebooks
+            panel = category.addPanel("My Notebooks", showPanelOptionButton=False)
+            
+            home_dir = pathlib.Path.home()
+            chisurf_notebooks_dir = home_dir / "notebooks"
+            
+            # Add "Jupyter Home" button
+            root_adr = f"{chisurf.__jupyter_address__}/tree"
+            try:
+                # Try to find a nice icon for Jupyter
+                icon = QIcon.fromTheme('home')
+            except Exception:
+                icon = QIcon()
+                
+            panel.addLargeButton(
+                "Jupyter Home",
+                icon=icon,
+                showText=True,
+                slot=partial(webbrowser.open_new_tab, root_adr)
+            )
+            
+            # Add existing notebooks
+            if chisurf_notebooks_dir.exists():
+                count = 0
+                for nb_file in sorted(chisurf_notebooks_dir.glob("*.ipynb")):
+                    try:
+                        nb_path_str = nb_file.relative_to(home_dir).as_posix()
+                        adr = f"{chisurf.__jupyter_address__}/notebooks/{nb_path_str}"
+                        
+                        btn = panel.addSmallButton(
+                            nb_file.stem,
+                            icon=QIcon(), # Default notebook icon might be missing
+                            showText=True,
+                            slot=partial(webbrowser.open_new_tab, adr),
+                            alignment=Qt.AlignLeft | Qt.AlignTop
+                        )
+                        btn.setToolTip(f"Open {nb_file.name}")
+                        count += 1
+                    except Exception as e:
+                        self.logger.warning(f"Failed to add notebook {nb_file}: {e}")
+                
+                self.logger.info(f"Added {count} notebooks to ribbon")
+            
+            self._fix_panel_alignment(panel)
+            return category
+        except Exception as e:
+            self.logger.error(f"Failed to create Notebooks ribbon category: {e}")
+            return None
