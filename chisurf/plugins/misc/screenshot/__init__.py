@@ -1,18 +1,15 @@
 """
 Screenshot
 
-A minimal plugin that captures a screenshot of the ChiSurf main window.
+A minimal plugin that captures a screenshot of the ChiSurf main window and copies it to the clipboard.
 
 Behavior:
-- When launched, it prompts the user where to save the screenshot.
-- It captures the current main window and saves the image.
-- It closes immediately after saving (or if the user cancels).
+- It captures the current main window and copies the image to the clipboard.
+- It displays a temporary message box confirming the action.
 """
 
 # Display name used by the Plugins menu (category: name)
 name = "Main:Tools:Screenshot"
-
-import pathlib
 
 import chisurf
 from chisurf.gui import QtWidgets
@@ -49,20 +46,8 @@ def _find_main_window():
     return None
 
 
-ess_image_filters = "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;BMP Image (*.bmp);;All Files (*.*)"
-
-
 def _run_screenshot():
-    """Prompt for a filename (pre-filled with current date), grab main window screenshot, copy to clipboard, save, and exit.
-
-    Behavior change:
-    - The grabbed screenshot is now copied to the system clipboard immediately,
-      even if the user cancels the save dialog.
-    """
-    try:
-        from chisurf.gui.widgets import general as _general
-    except Exception:
-        _general = None
+    """Grab main window screenshot, copy to clipboard, and exit."""
 
     win = _find_main_window()
     if win is None:
@@ -80,84 +65,78 @@ def _run_screenshot():
     # Grab pixmap of the window and copy to clipboard immediately
     try:
         pixmap = win.grab()  # QPixmap of the widget
-        try:
-            if app is None:
-                app = QtWidgets.QApplication.instance()
-            if app is not None:
-                cb = app.clipboard()
-                if cb is not None:
-                    cb.setPixmap(pixmap)
-        except Exception as e:
-            try:
-                chisurf.logging.debug(f"Screenshot plugin: failed to copy to clipboard: {e}")
-            except Exception:
-                pass
-    except Exception as e:
-        try:
-            chisurf.logging.error(f"Screenshot plugin failed to grab window: {e}")
-        except Exception:
-            pass
-        return
+        if not pixmap.isNull():
+            cb = QtWidgets.QApplication.clipboard()
+            if cb is not None:
+                cb.setPixmap(pixmap)
 
-    # Build default filename based on current local date/time
-    try:
-        from datetime import datetime
-        ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    except Exception:
-        ts = "screenshot"
+                # Feedback in status bar
+                try:
+                    if hasattr(win, 'statusBar') and win.statusBar() is not None:
+                        win.statusBar().showMessage("Screenshot copied to clipboard", 3000)
+                except Exception:
+                    pass
 
-    # Determine working directory
-    _wp = getattr(chisurf, 'working_path', None)
-    if not _wp:
-        _wp = pathlib.Path.home()
+                # Show a temporary "Toast" message overlay
+                try:
+                    from chisurf.gui import QtCore
+                    # Create a styled label
+                    toast = QtWidgets.QLabel("Screenshot copied to clipboard", win)
+                    toast.setStyleSheet("""
+                        QLabel {
+                            background-color: #222222;
+                            color: #ffffff;
+                            padding: 15px;
+                            border-radius: 8px;
+                            font-size: 14px;
+                            border: 1px solid #444444;
+                        }
+                    """)
+                    toast.setAlignment(QtCore.Qt.AlignCenter)
+                    # Make it a frameless, non-interactive overlay
+                    toast.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.ToolTip | QtCore.Qt.WindowStaysOnTopHint)
+                    toast.setAttribute(QtCore.Qt.WA_ShowWithoutActivating)
+                    toast.adjustSize()
 
-    # Construct the initial path with suggested filename
-    initial_path = pathlib.Path(_wp) / f"{ts}.png"
+                    # Center it relative to the main window
+                    try:
+                        main_rect = win.geometry()
+                        toast_rect = toast.geometry()
+                        x = main_rect.x() + (main_rect.width() - toast_rect.width()) // 2
+                        y = main_rect.y() + (main_rect.height() - toast_rect.height()) // 2
+                        toast.move(x, y)
+                    except Exception:
+                        pass
 
-    # Ask for filename using QFileDialog directly so we can pass a pre-filled path
-    filename, selected_filter = QtWidgets.QFileDialog.getSaveFileName(
-        None,
-        caption="Save screenshot",
-        dir=str(initial_path),
-        filter=ess_image_filters
-    )
+                    toast.show()
 
-    # Update working_path if the user chose a path
-    if filename:
-        try:
-            chisurf.working_path = pathlib.Path(filename).parent
-        except Exception:
-            pass
+                    # Auto-destruct after 1.5 seconds
+                    # We store the reference on the window to prevent premature garbage collection
+                    if not hasattr(win, '_screenshot_toasts'):
+                        win._screenshot_toasts = []
+                    win._screenshot_toasts.append(toast)
 
-    if not filename:
-        # User cancelled, but clipboard is already populated
-        return
+                    def _cleanup():
+                        try:
+                            toast.hide()
+                            toast.deleteLater()
+                            if toast in win._screenshot_toasts:
+                                win._screenshot_toasts.remove(toast)
+                        except Exception:
+                            pass
 
-    path = pathlib.Path(filename)
+                    QtCore.QTimer.singleShot(500, _cleanup)
 
-    # If user didn't provide an extension, infer from selected filter, default to .png
-    if path.suffix == "":
-        suffix = ".png"
-        try:
-            sel = (selected_filter or "").lower()
-            if "*.jpg" in sel or "*.jpeg" in sel:
-                suffix = ".jpg"
-            elif "*.bmp" in sel:
-                suffix = ".bmp"
-        except Exception:
-            pass
-        path = path.with_suffix(suffix)
+                except Exception:
+                    pass
 
-    try:
-        ok = pixmap.save(str(path))
-        if ok:
-            try:
-                chisurf.logging.info(f"Screenshot saved to {path}")
-            except Exception:
-                pass
+                try:
+                    chisurf.logging.info("Screenshot copied to clipboard.")
+                except Exception:
+                    pass
         else:
             try:
-                chisurf.logging.error(f"Failed to save screenshot to {path}")
+                chisurf.logging.error("Screenshot plugin: Grabbed pixmap is null.")
             except Exception:
                 pass
     except Exception as e:
