@@ -135,6 +135,8 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         cmake ^
         ninja ^
         swig ^
+        pybind11 ^
+        eigen ^
         "typing-extensions>=4.14" ^
         "pytools>=2024.0" ^
         pyyaml ^
@@ -291,24 +293,28 @@ if exist "%APP_PATH%\Scripts\pyrcc5.exe" (
     echo WARNING: pyrcc5.exe not found, skipping resource generation
 )
 
+set "OLD_PATH=%PATH%"
+set "PATH=%APP_PATH%;%APP_PATH%\Library\bin;%APP_PATH%\Scripts;%PATH%"
+
 echo Installing ChiSurf submodules ...
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\chinet" --no-deps
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\chinet" --no-deps --no-build-isolation
 if errorlevel 1 (
     echo ERROR: Failed to install chinet submodule
     exit /b 1
 )
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\clsmview" --no-deps
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\ndxplorer" --no-deps
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\quest" --no-deps
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\labellib" --no-deps
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\clsmview" --no-deps --no-build-isolation
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\ndxplorer" --no-deps --no-build-isolation
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\quest" --no-deps --no-build-isolation
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\labellib" --no-deps --no-build-isolation
 
 echo Installing ChiSurf source into cloned environment ...
-xcopy /y /q "%SOURCE_PATH%\build_tools\_build_backend.py" "%APP_SITE_PACKAGES%\" >nul
-call "%PYTHON_EXE%" -m pip install -e "%SOURCE_PATH%" --no-deps
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%" --no-deps --no-build-isolation
 if errorlevel 1 (
     echo ERROR: Failed to install ChiSurf into staged environment
     exit /b 1
 )
+
+set "PATH=%OLD_PATH%"
 
 echo Restoring setuptools runtime compatibility ...
 call "%BASE_CONDA_EXE%" install -y  -p "%APP_PATH%" -c conda-forge --override-channels "setuptools<81"
