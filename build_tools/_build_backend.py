@@ -40,40 +40,45 @@ class CustomBuildPy(_build_py):
         self.run_command('build_ext')
         return super().run()
 
+_original_setup = None
+
 def custom_setup(*args, **kwargs):
     if 'ext_modules' not in kwargs:
         kwargs['ext_modules'] = get_extensions()
     cmdclass = dict(kwargs.get('cmdclass', {}))
     cmdclass.setdefault('build_py', CustomBuildPy)
     kwargs['cmdclass'] = cmdclass
-    return _orig.setup(*args, **kwargs)
+    return _original_setup(*args, **kwargs)
 
 def prepare_metadata_for_build_wheel(metadata_directory, config_settings=None):
     import setuptools
-    original_setup = setuptools.setup
+    global _original_setup
+    _original_setup = setuptools.setup
     setuptools.setup = custom_setup
     try:
         return _orig.prepare_metadata_for_build_wheel(metadata_directory, config_settings)
     finally:
-        setuptools.setup = original_setup
+        setuptools.setup = _original_setup
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     import setuptools
-    original_setup = setuptools.setup
+    global _original_setup
+    _original_setup = setuptools.setup
     setuptools.setup = custom_setup
     try:
         return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
     finally:
-        setuptools.setup = original_setup
+        setuptools.setup = _original_setup
 
 def build_sdist(sdist_directory, config_settings=None):
     import setuptools
-    original_setup = setuptools.setup
+    global _original_setup
+    _original_setup = setuptools.setup
     setuptools.setup = custom_setup
     try:
         return _orig.build_sdist(sdist_directory, config_settings)
     finally:
-        setuptools.setup = original_setup
+        setuptools.setup = _original_setup
 
 def get_requires_for_build_wheel(config_settings=None):
     base_requires = _orig.get_requires_for_build_wheel(config_settings) or []
