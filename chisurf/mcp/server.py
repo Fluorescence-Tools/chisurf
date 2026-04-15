@@ -52,6 +52,33 @@ def _get_chisurf():
         raise RuntimeError("Could not import chisurf. Please ensure it is installed and in the PYTHONPATH.") from e
 
 
+def _get_invoker():
+    global _gui_sync_invoker
+    if _gui_sync_invoker is not None:
+        return _gui_sync_invoker
+
+    with _gui_sync_invoker_lock:
+        if _gui_sync_invoker is None:
+            # If we're already on the GUI thread, we can create it directly
+            # Otherwise we must be careful.
+            if QtCore is not None and QtWidgets is not None:
+                app = QtWidgets.QApplication.instance()
+                if app is not None:
+                    try:
+                        _gui_sync_invoker = _GuiSyncInvoker()
+                        # If we created it in a background thread, move it
+                        if QtCore.QThread.currentThread() is not app.thread():
+                            _gui_sync_invoker.moveToThread(app.thread())
+                    except Exception:
+                        pass
+    return _gui_sync_invoker
+
+
+def initialize_gui_sync():
+    """Explicitly initialize the GUI sync invoker. Should be called from the GUI thread."""
+    _get_invoker()
+
+
 def _execute_on_gui_thread_sync(func):
     if func is None:
         return None
@@ -66,12 +93,9 @@ def _execute_on_gui_thread_sync(func):
     if QtCore.QThread.currentThread() is app.thread():
         return func()
 
-    global _gui_sync_invoker
-    with _gui_sync_invoker_lock:
-        if _gui_sync_invoker is None:
-            invoker = _GuiSyncInvoker()
-            invoker.moveToThread(app.thread())
-            _gui_sync_invoker = invoker
+    invoker = _get_invoker()
+    if invoker is None:
+        return func()
 
     out: Dict[str, Any] = {}
 
@@ -84,7 +108,7 @@ def _execute_on_gui_thread_sync(func):
             out["error"] = e
             out["traceback"] = traceback.format_exc()
 
-    _gui_sync_invoker.invokeRequested.emit(_callable_wrapper)
+    invoker.invokeRequested.emit(_callable_wrapper)
     if not out.get("ok", False):
         err = out.get("error")
         if isinstance(err, Exception):

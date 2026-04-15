@@ -24,7 +24,8 @@ def calculate_weighted_residuals(
     :return: a numpy array containing the weighted residuals
     """
     model_x, model_y = model[xmin:xmax]
-    data_x, data_y, _, data_y_error = data[xmin:xmax]
+    data_sliced = data[xmin:xmax]
+    data_x, data_y, _, data_y_error = data_sliced[:4]
     ml = min([len(model_y), len(data_y)])
     wr = np.array(
         (data_y[:ml] - model_y[:ml]) / data_y_error[:ml],

@@ -319,23 +319,19 @@ class Curve(NCurve):
             y=chisurf.math.signal.shift_array(self.y, shift),
             copy_array=False
         )
-
     def __len__(self) -> int:
         """Number of points in the curve (length of ``y``)."""
         return len(self.y)
 
-    def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
+    def __getitem__(self, key: typing.Union[slice, int, np.ndarray, str]) -> typing.Tuple[np.ndarray, np.ndarray]:
         """Return a slice of curve as (x, y)."""
-        y = self.d.flatten().__getitem__(key)
-        x = np.arange(0, len(y))
-        return x, y
+        return self.x[key], self.y[key]
 
 
 class CurveGroup(object):
     """Light-weight container for a sequence of :class:`Curve` objects.
 
     The default implementation simply stores a list of curves and provides
-    helpers to add, remove and query them.
 
     Examples
     --------

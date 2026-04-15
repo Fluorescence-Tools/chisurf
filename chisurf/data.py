@@ -154,7 +154,8 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
                 self.x,
                 self.y,
                 self.ex,
-                self.ey
+                self.ey,
+                self.mask if self.mask is not None else np.ones_like(self.y)
             ]
         )
 
@@ -168,6 +169,7 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             y: np.ndarray = None,
             ex: np.ndarray = None,
             ey: np.ndarray = None,
+            mask: np.ndarray = None,
             copy_array: bool = True,
             filename: str = '',
             data_reader: "ExperimentReader" = None,
@@ -198,6 +200,10 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             ey = np.ones_like(self.y)
         self.ex = np.copy(ex) if copy_array else ex
         self.ey = np.copy(ey) if copy_array else ey
+        self.mask: np.ndarray = None
+        if not isinstance(mask, np.ndarray):
+            mask = np.ones_like(self.y)
+        self.mask = np.copy(mask) if copy_array else mask
 
     def __str__(self):
         s = "Dataset:\n"
@@ -256,6 +262,7 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         )
         d['ex'] = self.ex.tolist()
         d['ey'] = self.ey.tolist()
+        d['mask'] = self.mask.tolist()
         return d
 
     def from_dict(
@@ -265,6 +272,8 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         super().from_dict(v)
         self.ex = np.array(v['ex'], dtype=np.float64)
         self.ey = np.array(v['ey'], dtype=np.float64)
+        if 'mask' in v:
+            self.mask = np.array(v['mask'], dtype=np.float64)
 
     def load(
             self,
@@ -302,6 +311,13 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
                 self.y = csv.data[1]
                 self.ex = csv.data[2]
                 self.ey = csv.data[3]
+                self.mask = np.ones_like(self.x)
+            elif n_col == 5:
+                self.x = csv.data[0]
+                self.y = csv.data[1]
+                self.ex = csv.data[2]
+                self.ey = csv.data[3]
+                self.mask = csv.data[4]
             else:
                 self.x = np.ones(1)
                 self.y = np.ones(1)
@@ -325,9 +341,10 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         self.filename = filename
         if file_type == "csv":
             csv = chisurf.fio.ascii.Csv()
-            x, y, ex, ey = self[xmin:xmax]
+            # self[xmin:xmax] now returns (x, y, ex, ey, mask)
+            x, y, ex, ey, mask = self[xmin:xmax]
             csv.save(
-                data=np.vstack([x, y, ex, ey]),
+                data=np.vstack([x, y, ex, ey, mask]),
                 filename=filename
             )
         else:
@@ -343,6 +360,7 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             y: np.array,
             ex: np.array = None,
             ey: np.array = None,
+            mask: np.array = None,
     ) -> None:
         self.x = x
         self.y = y
@@ -350,20 +368,23 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             ex = np.ones_like(x)
         if ey is None:
             ey = np.ones_like(y)
+        if mask is None:
+            mask = np.ones_like(y)
         self.ex = ex
         self.ey = ey
+        self.mask = mask
 
     def set_weights(self, w: np.array):
         self.ey = 1. / w
 
-    def __getitem__(self, key: str) -> typing.Tuple[
+    def __getitem__(self, key: typing.Union[slice, int, np.ndarray, str]) -> typing.Tuple[
+        np.ndarray,
         np.ndarray,
         np.ndarray,
         np.ndarray,
         np.ndarray
     ]:
-        x, y = super().__getitem__(key)
-        return x, y, self.ex[key], self.ey[key]
+        return self.x[key], self.y[key], self.ex[key], self.ey[key], self.mask[key]
 
 
 class DataGroup(list, chisurf.base.Base):
@@ -484,12 +505,20 @@ class DataCurveGroup(DataGroup):
     def ey(self, v: np.array):
         self.current_dataset.ey = v
 
+    @property
+    def mask(self) -> np.array:
+        return self.current_dataset.mask
+
+    @mask.setter
+    def mask(self, v: np.array):
+        self.current_dataset.mask = v
+
     def __str__(self):
         return [str(d) + "\n------\n" for d in self]
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            return self.x[key], self.y[key], self.ex[key], self.ey[key]
+            return self.x[key], self.y[key], self.ex[key], self.ey[key], self.mask[key]
         return super().__getitem__(key)
 
     def __init__(self, *args, **kwargs):

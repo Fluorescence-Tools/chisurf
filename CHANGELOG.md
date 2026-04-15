@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Kristine FCS file loading now correctly restores count rate, acquisition time, and masks**:
+  - Re-synchronized `read_kristine` indexing in `chisurf/fio/fluorescence/fcs/kristine.py` to match the non-transposed `(n_points, n_columns)` data layout.
+  - Added full support for an optional 5th 'mask' column in Kristine FCS files and generic CSV datasets.
+  - Corrected duration and count rate extraction from column 2 (indices `[0, 2]` and `[1, 2]`) and uncertainty/weight extraction from column 3.
+  - Resolved a bug in `read_fcs` (`chisurf/fio/fluorescence/fcs/__init__.py`) where CSV-loaded datasets were not correctly populated into the internal dataset list.
+  - This resolves a regression where count rates were read as near-zero (lag-time values), causing small weights and suppressed weighted residuals in FCS fits.
+  - Extended `DataCurve` and `DataGroup` (`chisurf/data.py`) to properly store, serialize, and load mask data, fixing crashes when loading 5-column ASCII datasets.
+
+- **Resolved Windows access violation crash during MCP server startup**:
+  - Refactored GUI synchronization to ensure Qt objects (`_GuiExecutor`, `_GuiSyncInvoker`) are initialized on the main GUI thread during startup, avoiding `killTimer` and cross-thread destruction warnings.
+  - Implemented explicit `asyncio` event loop policy for the MCP server thread on Windows, utilizing `ProactorEventLoopPolicy` for improved stability with HTTP transports.
+  - Pre-initialized GUI executors during the `startup_interface` stage to eliminate race conditions and thread-safety issues during lazy initialization in background threads.
+  - Added pre-import of `chisurf.mcp.server` in the main thread to ensure proper module and Qt class registration before the background MCP thread starts.
+
+- **Fixed ValueError: too many values to unpack (expected 4) and associated "huge residuals" during Curve/DataCurve slicing**:
+  - Resolved a fundamental regression in `Curve.__getitem__` (in `chisurf/curve.py`) where incorrectly using `d.flatten()` on 2xN arrays caused slices to return x-axis values (time/lags) as y-axis values (correlation/amplitudes).
+  - Updated `calculate_weighted_residuals` in `chisurf/fitting/__init__.py` and `DataCurve.save` in `chisurf/data.py` to handle the 5-tuple returned by `DataCurve` slicing.
+  - Refactored `DataCurve.__getitem__` in `chisurf/data.py` to directly access data properties, bypassing the unstable legacy `super()` implementation.
+  - Corrected `DataCurve.__getitem__` type hints for better developer visibility and tool consistency.
+  - This fix restores accuracy to FCS fits, weighted residual plots, and chi-squared calculations which were broken by the cross-axis slicing error.
+
 ### Changed
 
 - **ChiSurf distribution now managed exclusively by pixi with rattler-build**:

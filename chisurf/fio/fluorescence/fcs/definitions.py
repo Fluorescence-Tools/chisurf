@@ -13,6 +13,7 @@ class FCSDataset(typing.TypedDict):
     correlation_times: np.ndarray
     correlation_amplitudes: np.ndarray
     correlation_amplitude_weights: np.ndarray
+    mask: np.ndarray
     intensity_trace_times: np.ndarray
     intensity_trace: np.ndarray
     intensity_trace_name: str

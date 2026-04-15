@@ -47,6 +47,26 @@ class _GuiExecutor(QtCore.QObject):
 _gui_executor = None
 
 
+def initialize_gui_executors():
+    """Explicitly initialize GUI executors. Should be called from the GUI thread."""
+    global _gui_executor
+    if _gui_executor is None:
+        try:
+            app = QtWidgets.QApplication.instance()
+            if app is not None:
+                _gui_executor = _GuiExecutor()
+                _gui_executor.moveToThread(app.thread())
+                _gui_executor.runRequested.connect(_gui_executor._run, QtCore.Qt.QueuedConnection)
+        except Exception:
+            pass
+    
+    try:
+        from chisurf.mcp.server import initialize_gui_sync
+        initialize_gui_sync()
+    except Exception:
+        pass
+
+
 def run_on_gui_thread(func, *args, **kwargs):
     """Ensure *func* executes on the Qt GUI thread.
 
@@ -85,18 +105,14 @@ def run_on_gui_thread(func, *args, **kwargs):
 
     # From a worker thread: use queued signal/slot via _GuiExecutor
     if _gui_executor is None:
+        initialize_gui_executors()
+    
+    if _gui_executor is None:
+        # Fallback to direct execution if setup fails
         try:
-            _executor = _GuiExecutor()
-            _executor.moveToThread(gui_thread)
-            # Ensure queued delivery onto GUI thread
-            _executor.runRequested.connect(_executor._run, QtCore.Qt.QueuedConnection)
-            _gui_executor = _executor
+            return func(*args, **kwargs)
         except Exception:
-            # Fallback to direct execution if setup fails
-            try:
-                return func(*args, **kwargs)
-            except Exception:
-                return None
+            return None
 
     try:
         _gui_executor.runRequested.emit(func, args, kwargs or {})
@@ -415,6 +431,12 @@ def setup_gui(
         import chisurf.structure
         if chisurf.settings.exceptions_on_gui:
             import chisurf.gui.exception_hook
+        
+        # Pre-import MCP server to avoid thread-safety issues with Qt imports in threads
+        try:
+            import chisurf.mcp.server
+        except Exception:
+            pass
 
     def setup_ipython():
         import chisurf.gui.widgets
@@ -426,6 +448,13 @@ def setup_gui(
         window = Main()
         chisurf.console.history_widget = None
         chisurf.cs = window
+        
+        # Initialize GUI executors on the main thread now that the window/app is ready
+        try:
+            initialize_gui_executors()
+        except Exception:
+            pass
+            
         return window
 
     def setup_style(app):
@@ -1115,7 +1144,16 @@ def setup_gui(
 
             def _run_mcp_server_in_process():
                 try:
+                    import asyncio
+                    import sys
                     from chisurf.mcp.server import create_mcp, resolve_transport_kwargs
+
+                    if sys.platform == 'win32':
+                        try:
+                            # Use Proactor policy on Windows if possible, as it's more stable for HTTP
+                            asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+                        except Exception:
+                            pass
 
                     mcp = create_mcp(name="ChiSurf")
                     kwargs = resolve_transport_kwargs(
@@ -1124,6 +1162,9 @@ def setup_gui(
                         port=8765,
                         path="/mcp",
                     )
+                    # We use mcp.run directly, but in a thread. 
+                    # Note: Signal handlers are usually only allowed in the main thread.
+                    # FastMCP might try to install them; if it crashes we might need a lower-level start.
                     mcp.run(transport="streamable-http", show_banner=False, **kwargs)
                 except Exception as mcp_err:
                     chisurf.logging.error(f"Failed to run MCP server thread: {mcp_err}")

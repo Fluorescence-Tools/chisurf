@@ -64,6 +64,7 @@ def make_curve_kwargs(
         "y": np.array(r.get('correlation_amplitudes')),
         "ex": np.ones_like(x),
         "ey": 1. / np.array(r.get('correlation_amplitude_weights')),
+        "mask": np.array(r.get('mask')) if 'mask' in r else np.ones_like(x),
         "filename": filename,
         "meta_data": meta_data,
         "load_filename_on_init": False
@@ -127,6 +128,17 @@ def read_fcs(
         )
         x, y = csv.data[0], csv.data[1]
         ey = csv.data[2]
+        m = csv.data[3] if len(csv.data) > 3 else np.ones_like(x)
+        ds = [
+            {
+                'correlation_times': x.tolist(),
+                'correlation_amplitudes': y.tolist(),
+                'correlation_amplitude_weights': (1. / ey).tolist(),
+                'mask': m.tolist(),
+                'filename': filename,
+                'measurement_id': os.path.basename(filename)
+            }
+        ]
     # Files with multiple curves per file
     elif reader_name in [
         'china-mat',
@@ -316,6 +328,7 @@ def write_single_fcs(
             correlation_amplitude=correlation_amplitude,
             correlation_time=correlation_time,
             correlation_amplitude_uncertainty=correlation_amplitude_uncertainty,
+            mask=getattr(data_set, 'mask', None),
             acquisition_time=aquisition_time,
             mean_countrate=mean_countrate,
         )

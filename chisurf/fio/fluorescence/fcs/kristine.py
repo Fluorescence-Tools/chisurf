@@ -16,6 +16,7 @@ def write_kristine(
         mean_countrate: float,
         acquisition_time: float,
         correlation_amplitude_uncertainty: np.ndarray = None,
+        mask: np.ndarray = None,
         verbose: bool = True
 ) -> None:
     """
@@ -57,7 +58,10 @@ def write_kristine(
                 col_2,
                 col_3
             ]
-        ).T
+        )
+    if isinstance(mask, np.ndarray):
+        data = np.vstack([data, mask])
+    data = data.T
     np.savetxt(
         filename,
         data,
@@ -80,19 +84,32 @@ def read_kristine(
     data = np.loadtxt(filename, encoding='utf-8')
 
     # In kristine file-type
-    x, y = data[0], data[1]
+    # data is (n_points, n_columns), so we take all rows for each column
+    x, y = data[:, 0], data[:, 1]
     i = np.where(x > 0.0)
     x = x[i]
     y = y[i]
-    dur, cr = data[2, 0], data[2, 1]
 
-    # First try to use experimental errors
+    # Metadata (duration, count rate) is stored in the 3rd column (index 2)
     try:
-        w = 1. / data[3][i]
+        dur, cr = data[0, 2], data[1, 2]
     except IndexError:
+        dur, cr = 1.0, 1.0
+
+    # First try to use experimental errors in the 4th column (index 3)
+    try:
+        w = 1. / data[:, 3][i]
+    except (IndexError, np.AxisError):
         # In case everything fails
         # Use no errors at all but uniform weighting
         w = 1. / chisurf.fluorescence.fcs.noise(x, y, dur, cr, weight_type='suren')
+
+    # Try to load mask from the 5th column (index 4)
+    try:
+        mask = data[:, 4][i]
+    except (IndexError, np.AxisError):
+        mask = np.ones_like(x)
+
     measurement_id, _ = os.path.splitext(
         os.path.basename(
             filename
@@ -107,6 +124,7 @@ def read_kristine(
             'correlation_times': x.tolist(),
             'correlation_amplitudes': y.tolist(),
             'correlation_amplitude_weights': w.tolist(),
+            'mask': mask.tolist(),
             'intensity_trace': None
         }
     ]
