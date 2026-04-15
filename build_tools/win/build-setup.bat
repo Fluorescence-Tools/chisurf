@@ -132,6 +132,9 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         wheel ^
         "cython>=0.29,<3.1" ^
         "numpy<2.0" ^
+        cmake ^
+        ninja ^
+        swig ^
         "typing-extensions>=4.14" ^
         "pytools>=2024.0" ^
         pyyaml ^
@@ -281,6 +284,24 @@ if not exist "%APP_PYTHONW_EXE%" (
     exit /b 1
 )
 
+echo Generating Python resources ...
+if exist "%APP_PATH%\Scripts\pyrcc5.exe" (
+    "%APP_PATH%\Scripts\pyrcc5.exe" "%SOURCE_PATH%\chisurf\gui\resources\resource.qrc" -o "%SOURCE_PATH%\chisurf\gui\resources\resource.py"
+) else (
+    echo WARNING: pyrcc5.exe not found, skipping resource generation
+)
+
+echo Installing ChiSurf submodules ...
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\chinet" --no-deps
+if errorlevel 1 (
+    echo ERROR: Failed to install chinet submodule
+    exit /b 1
+)
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\clsmview" --no-deps
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\ndxplorer" --no-deps
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\quest" --no-deps
+call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\labellib" --no-deps
+
 echo Installing ChiSurf source into cloned environment ...
 xcopy /y /q "%SOURCE_PATH%\build_tools\_build_backend.py" "%APP_SITE_PACKAGES%\" >nul
 call "%PYTHON_EXE%" -m pip install -e "%SOURCE_PATH%" --no-deps
@@ -334,7 +355,7 @@ if errorlevel 1 (
 )
 
 echo Verifying chisurf installation ...
-"%PYTHON_EXE%" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import pkg_resources, tttrlib, chisurf; print('chisurf OK:', chisurf.__version__)"
+"%PYTHON_EXE%" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import pkg_resources, tttrlib, chinet, LabelLib, chisurf; print('chisurf OK:', chisurf.__version__)"
 if errorlevel 1 (
     echo ERROR: Failed to verify packaged runtime dependencies
     exit /b 1
@@ -406,7 +427,7 @@ if not exist "%SMOKE_INSTALL_DIR%\pythonw.exe" (
     echo ERROR: Smoke install missing pythonw.exe
     exit /b 1
 )
-"%SMOKE_INSTALL_DIR%\python.exe" -c "import pkg_resources,tttrlib,chinet,chisurf; print('smoke-ok', chisurf.__version__)"
+"%SMOKE_INSTALL_DIR%\python.exe" -c "import pkg_resources,tttrlib,chinet,LabelLib,chisurf; print('smoke-ok', chisurf.__version__)"
 if errorlevel 1 (
     echo ERROR: Smoke install failed runtime import verification
     exit /b 1
