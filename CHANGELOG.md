@@ -4,6 +4,16 @@
 
 ### Fixed
 
+- **Optimized NDXplorer data loading with background computation and caching**:
+  - Offloaded expensive data processing and column computation to background threads to prevent UI blocking.
+  - Implemented `FileMetadataCache` in `modules/ndxplorer` to accelerate subsequent loads of previously processed datasets.
+  - Resolved UI hang during large folder ingestion by ensuring background tasks do not block the main event loop.
+
+- **Improved NDXplorer plot responsiveness and axis selection**:
+  - Fixed root cause of empty axis selectors after folder-drop loads by hardening parameter metadata collection.
+  - Ensured UI correctly re-enables after all data loading and append paths.
+  - Added automatic hiding of image-specific controls for non-image datasets.
+
 - **Kristine FCS file loading now correctly restores count rate, acquisition time, and masks**:
   - Re-synchronized `read_kristine` indexing in `chisurf/fio/fluorescence/fcs/kristine.py` to match the non-transposed `(n_points, n_columns)` data layout.
   - Added full support for an optional 5th 'mask' column in Kristine FCS files and generic CSV datasets.
@@ -26,6 +36,10 @@
   - This fix restores accuracy to FCS fits, weighted residual plots, and chi-squared calculations which were broken by the cross-axis slicing error.
 
 ### Changed
+
+- **Updated `quest` dependencies for NumPy 2.0 compatibility**:
+  - Updated `modules/quest/pyproject.toml` to require `numpy >= 2.0`.
+  - Removed obsolete `pymol-open-source` dependency from build environment.
 
 - **ChiSurf distribution now managed exclusively by pixi with rattler-build**:
   - Removed conda-build recipe (`conda-recipe/` directory deleted) — superseded by `rattler-recipe/`
@@ -89,6 +103,17 @@
   - Cross-reference: `AGENTS_PLAN.md` Phase 11, `handover.md` Phase 11 completion.
 
 ### Added
+
+- **NDXplorer now supports drag-and-drop for `.er4` sampling files**: 
+  - Dropping `.er4` files onto the preview area now automatically triggers the sampling import dialog.
+  - Implemented in `modules/ndxplorer/ndxplorer/utils/working_path_helpers.py`.
+
+- **Added dataset masking support in NDXplorer**:
+  - Implemented `MaskDrawingWidget`, `MaskOverlayWidget`, and `DrawingOverlayWidget` in `modules/ndxplorer` for interactive ROI-based masking of 2D datasets.
+  - Integrated drawing overlay layer into surface plots for immediate visual mask feedback.
+
+- **Added test fixtures for NDXplorer masking**: 
+  - Included sample fluorescence data and unit test fixtures for dataset masking validation in `modules/ndxplorer/ndxplorer/tests/fixtures/`.
 
 - **Dev Mode Source Jumping**: Developer-focused feature for navigating from UI elements to their source code locations.
   - Added `is_dev_mode()` and `dev_mode_settings()` helpers in `chisurf/settings/__init__.py` to gate dev-mode features (mirrors `enable_experimental` setting).
