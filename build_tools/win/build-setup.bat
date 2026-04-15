@@ -132,7 +132,7 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         wheel ^
         "cython>=0.29,<3.1" ^
         "numpy<2.0" ^
-        cmake ^
+        "cmake<3.27" ^
         ninja ^
         swig ^
         pybind11 ^
