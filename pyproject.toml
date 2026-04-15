@@ -5,8 +5,7 @@ requires = [
     "numpy<2.0",
     "Cython>=0.29,<3.1",
 ]
-build-backend = "_build_backend"
-backend-path = ["build_tools"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "chisurf"

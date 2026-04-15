@@ -4,6 +4,13 @@ import pathlib
 from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
 import numpy as np
+from setuptools.command.build_py import build_py as _build_py
+
+class CustomBuildPy(_build_py):
+    """Custom build_py to ensure extensions are built."""
+    def run(self):
+        self.run_command('build_ext')
+        return super().run()
 
 # Define extension modules
 extensions = [
@@ -31,4 +38,5 @@ setup(
     ext_modules=cythonize(extensions, language_level=3),
     include_package_data=True,
     zip_safe=False,
+    cmdclass={'build_py': CustomBuildPy},
 )
