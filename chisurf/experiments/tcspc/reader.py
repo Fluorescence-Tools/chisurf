@@ -294,7 +294,7 @@ class TCSPCReader(ExperimentReader):
                 g_factor=self.g_factor,
                 l1=self.l1,
                 l2=self.l2,
-                experiment=self.experiment,
+                experiment=getattr(self, 'experiment', None),
                 data_reader=self
             )
         elif reading_routine == 'thd':
@@ -302,7 +302,7 @@ class TCSPCReader(ExperimentReader):
                 filename=filename,
                 rebin=self.rebin,
                 dt=self.dt,
-                experiment=self.experiment,
+                experiment=getattr(self, 'experiment', None),
                 data_reader=self
             )
         elif reading_routine == 'pqres':
@@ -310,7 +310,7 @@ class TCSPCReader(ExperimentReader):
                 filename=filename,
                 rebin=self.rebin,
                 dt=self.dt,
-                experiment=self.experiment,
+                experiment=getattr(self, 'experiment', None),
                 data_reader=self
             )
         else:

@@ -3,7 +3,13 @@ from __future__ import annotations
 from typing import Optional
 
 from qtpy import QtCore, QtGui, QtWidgets
-from qtpy import sip
+try:
+    from qtpy import sip
+except ImportError:
+    try:
+        import sip
+    except ImportError:
+        sip = None
 
 from .theme import color as theme_color
 

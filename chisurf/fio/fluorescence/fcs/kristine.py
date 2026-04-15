@@ -77,9 +77,7 @@ def read_kristine(
     if verbose:
         print("Reading kristine .cor from file: ", filename)
 
-    data = np.loadtxt(
-        filename
-    ).T
+    data = np.loadtxt(filename, encoding='utf-8')
 
     # In kristine file-type
     x, y = data[0], data[1]

@@ -72,7 +72,7 @@ class FCS(ExperimentReader):
             skiprows=self.skiprows,
             use_header=self.use_header,
             reader_name=self.experiment_reader,
-            experiment=self.experiment,
+            experiment=getattr(self, 'experiment', None),
             weight_mode=getattr(self, 'weight_mode', None),
             weight_kwargs=getattr(self, 'weight_kwargs', None) or {},
         )
