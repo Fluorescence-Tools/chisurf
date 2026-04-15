@@ -90,21 +90,25 @@ class ExperimentalData(chisurf.base.Data):
             copy_values=copy_values,
             convert_values_to_elementary=convert_values_to_elementary
         )
-        if hasattr(self.data_reader, 'to_dict'):
+        try:
             d['data_reader'] = self.data_reader.to_dict(
                 remove_protected=remove_protected,
                 copy_values=copy_values,
                 convert_values_to_elementary=convert_values_to_elementary
             )
-        else:
+        except AttributeError:
+            import logging
+            logging.debug(f"data_reader has no to_dict method")
             d['data_reader'] = None
-        if hasattr(self.experiment, 'to_dict'):
+        try:
             d['experiment'] = self.experiment.to_dict(
                 remove_protected=remove_protected,
                 copy_values=copy_values,
                 convert_values_to_elementary=convert_values_to_elementary
             )
-        else:
+        except AttributeError:
+            import logging
+            logging.debug(f"experiment has no to_dict method")
             d['experiment'] = None
         return d
 
@@ -235,7 +239,7 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
                     s += "{0:<12.3e}\t".format(ey)
         except (AttributeError, KeyError) as e:
             import logging
-            logging.error(f"Error in Dataset.__str__: {e}")
+            logging.debug(f"Error in Dataset.__str__: {e}")
             s += "This curve does not have complete data..."
         return s
 

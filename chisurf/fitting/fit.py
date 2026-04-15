@@ -1376,7 +1376,7 @@ def covariance_matrix(
     try:
         cov_m = scipy.linalg.pinvh(0.5 * m)
     except (scipy.linalg.LinAlgError, np.linalg.LinAlgError) as e:
-        chisurf.logging.warning(f"Failed to compute covariance matrix: {e}")
+        chisurf.logging.debug(f"Failed to compute covariance matrix: {e}")
         cov_m = np.zeros_like(
             (n_important_parameters, n_important_parameters),
             dtype=float
