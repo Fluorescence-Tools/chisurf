@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def test_add_fit_batches_ui_updates_for_multi_dataset_adds_contract():
-    path = Path(__file__).resolve().parents[1] / "chisurf" / "macros" / "core_fit.py"
+    path = Path(__file__).resolve().parents[2] / "chisurf" / "macros" / "core_fit.py"
     src = path.read_text(encoding="utf-8")
 
     assert "_defer_cs_update" in src
@@ -13,7 +13,7 @@ def test_add_fit_batches_ui_updates_for_multi_dataset_adds_contract():
 
 
 def test_table_plot_avoids_resize_to_contents_and_hidden_refresh_contract():
-    path = Path(__file__).resolve().parents[1] / "chisurf" / "plots" / "table_plot.py"
+    path = Path(__file__).resolve().parents[2] / "chisurf" / "plots" / "table_plot.py"
     src = path.read_text(encoding="utf-8")
 
     assert "QHeaderView.Interactive" in src

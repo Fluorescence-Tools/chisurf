@@ -1,73 +1,69 @@
-import utils
-import os
-import unittest
-import pathlib
-
-TOPDIR = pathlib.Path(__file__).parent.parent
-
-utils.set_search_paths(TOPDIR)
-
+import pytest
 import numpy as np
-import scipy.stats.distributions
-
-import chisurf.math
 import chisurf.math.signal
-import chisurf.curve
 
+@pytest.mark.parametrize("args, expected", [
+    ((np.arange(10), 0,), np.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])),
+    ((np.arange(10), 1,), np.array([0., 0., 1., 2., 3., 4., 5., 6., 7., 8.])),
+    ((np.arange(10), 1.5,), np.array([0., 0., 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5])),
+    ((np.arange(10), 2.0,), np.array([0., 0., 0., 1., 2., 3., 4., 5., 6., 7.])),
+    ((np.arange(10), -1.0,), np.array([1., 2., 3., 4., 5., 6., 7., 8., 9., 0.])),
+    ((np.arange(10), -1.5,), np.array([0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 0.0, 0.0])),
+    ((np.arange(10), -2.0,), np.array([2., 3., 4., 5., 6., 7., 8., 9., 0., 0.])),
+    ((np.arange(10), -2.0, True, 33.), np.array([2., 3., 4., 5., 6., 7., 8., 9., 33., 33.])),
+    ((np.arange(10), 2.0, True, 33.), np.array([33., 33., 0., 1., 2., 3., 4., 5., 6., 7.])),
+    ((np.arange(10), -1.5, True, 33.), np.array([0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 33.0, 33.0])),
+    ((np.arange(10), -2.0, False, 33.), np.array([2., 3., 4., 5., 6., 7., 8., 9., 0., 1.])),
+    ((np.arange(10), -1.5, False, 33.), np.array([0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 4.5])),
+    # Edge cases
+    ((np.array([]), 1.0), np.array([])),
+    ((np.array([1, 2, 3]), 10.0), np.array([0., 0., 0.])),
+    ((np.array([1, 2, 3]), -10.0), np.array([0., 0., 0.])),
+])
+def test_math_signal_shift_array(args, expected):
+    result = chisurf.math.signal.shift_array(*args)
+    assert np.allclose(result, expected)
 
-class Tests(unittest.TestCase):
+@pytest.mark.parametrize("window_type", chisurf.math.signal.window_function_types)
+def test_window_smoothing(window_type):
+    x = np.linspace(0, 2*np.pi, 100)
+    data = np.sin(x)
+    smoothed = chisurf.math.signal.window(data, window_len=11, window_function_type=window_type)
+    assert smoothed.shape == data.shape
+    assert np.all(np.isfinite(smoothed))
 
-    def test_angle(self):
-        a = np.array([0, 0, 0], dtype=np.float64)
-        b = np.array([1, 0, 0], dtype=np.float64)
-        c = np.array([0, 1, 0], dtype=np.float64)
-        angle = chisurf.math.linalg.angle(a, b, c) / np.pi * 360
-        self.assertAlmostEqual(
-            angle,
-            90.0
-        )
+def test_window_errors():
+    with pytest.raises(ValueError, match="smooth only accepts 1 dimension arrays"):
+        chisurf.math.signal.window(np.zeros((5, 5)), 3)
+    with pytest.raises(ValueError, match="Input vector needs to be bigger than window size"):
+        chisurf.math.signal.window(np.arange(2), 5)
+    with pytest.raises(ValueError, match="Window must be one of"):
+        chisurf.math.signal.window(np.arange(10), 5, window_function_type="invalid")
 
-    def test_dihedral(self):
-        a = np.array([-1, 1, 0], dtype=np.float64)
-        b = np.array([-1, 0, 0], dtype=np.float64)
-        c = np.array([0, 0, 0], dtype=np.float64)
-        d = np.array([0, -1, 0], dtype=np.float64)
-        dihedral = chisurf.math.linalg.dihedral(a, b, c, d) / np.pi * 360
-        self.assertAlmostEqual(
-            dihedral,
-            -360.0
-        )
+@pytest.mark.parametrize("background", [0.0, 100.0])
+def test_calculate_fwhm(background):
+    # Create a centered peak
+    x = np.linspace(-5, 5, 101)
+    y = np.exp(-x**2 / 0.5)
+    fwhm, (lb_i, ub_i), (x_left, x_right) = chisurf.math.signal.calculate_fwhm(x, y, background=background)
+    if not np.all(y <= background):
+        assert fwhm > 0
+        assert lb_i <= ub_i
+        assert x_left <= x_right
+    else:
+        assert fwhm == 0.0
 
-    def test_vec3(self):
-        a = np.array([0, 0, 0], dtype=np.float64)
-        b = np.array([1, 0, 0], dtype=np.float64)
-        dist = chisurf.math.linalg.dist3(a, b)
-        self.assertEqual(
-            dist,
-            1.0
-        )
-        c = chisurf.math.linalg.sub3(a, b)
-        self.assertEqual(
-            np.allclose(
-                c,
-                a - b
-            ),
-            True
-        )
-        c = chisurf.math.linalg.add3(a, b)
-        self.assertEqual(
-            np.allclose(
-                c,
-                a + b
-            ),
-            True
-        )
-        c = chisurf.math.linalg.dot3(a, b)
-        self.assertEqual(
-            np.allclose(
-                c,
-                np.dot(a, b)
-            ),
-            True
-        )
+def test_find_bursts():
+    arr = np.array([0, 1, 1, 0, 0, 1, 1, 1, 0])
+    bursts = chisurf.math.signal.find_bursts(arr)
+    expected = np.array([[1, 2], [5, 7]])
+    assert np.array_equal(bursts, expected)
+    
+    # Merged gaps
+    bursts_merged = chisurf.math.signal.find_bursts(arr, max_gap=2)
+    expected_merged = np.array([[1, 7]])
+    assert np.array_equal(bursts_merged, expected_merged)
 
+    # Empty/Zero
+    assert chisurf.math.signal.find_bursts(np.array([])).size == 0
+    assert chisurf.math.signal.find_bursts(np.zeros(10)).size == 0

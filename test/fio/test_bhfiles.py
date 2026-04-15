@@ -1,8 +1,74 @@
-"""
-Test script for the merged bhfiles module.
+# Consolidated test file: test_bhfiles.py
 
-This script tests that both the BeckerHicklSetReader and SdtFile classes
-work correctly after being merged into the bhfiles module.
+
+# --- FROM test_bhfiles.py ---
+
+# --- FROM test_becker_hickl_set.py ---
+"""
+Test script for the BeckerHicklSetReader class.
+
+This script tests the basic functionality of the BeckerHicklSetReader class
+using a real .set file from the test data directory.
+"""
+
+import os
+import sys
+import tempfile
+from pathlib import Path
+import unittest
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from chisurf.fio.fluorescence import BeckerHicklSetReader
+
+
+class TestBeckerHicklSetReader(unittest.TestCase):
+    """Test case for the BeckerHicklSetReader class."""
+
+    def setUp(self):
+        """Use the real bh.set file for testing."""
+        # Use the real test data file
+        self.set_file = Path(os.path.dirname(__file__)) / ".." / "data" / "tttr" / "BH" / "830" / "bh.set"
+        
+        # Verify the file exists
+        if not self.set_file.exists():
+            self.fail(f"Test file not found: {self.set_file}")
+    
+    
+    def test_read_parameters(self):
+        """Test that parameters are correctly read from the .set file."""
+        reader = BeckerHicklSetReader(self.set_file)
+        
+        # Test raw parameter access
+        self.assertAlmostEqual(reader.get_param('SYN_FQ'), -50.980392)
+        self.assertAlmostEqual(reader.get_param('TAC_TC'), 1.831328e-11)
+        self.assertAlmostEqual(reader.get_param('TAC_R'), 1.5002239e-07)
+        self.assertEqual(reader.get_param('ADC_RE'), 4096)
+        
+        # Test default value for non-existent parameter
+        self.assertIsNone(reader.get_param('NONEXISTENT'))
+        self.assertEqual(reader.get_param('NONEXISTENT', 'default'), 'default')
+    
+    def test_derived_properties(self):
+        """Test that derived properties are correctly calculated."""
+        reader = BeckerHicklSetReader(self.set_file)
+        
+        # Test macro_time_resolution
+        expected_macro_time = 1.0 / (abs(-50.980392) * 1e6)  # 1 / |SYN_FQ| in MHz
+        self.assertAlmostEqual(reader.macro_time_resolution, expected_macro_time)
+        
+        # Test micro_time_resolution (in seconds)
+        self.assertAlmostEqual(reader.micro_time_resolution, 1.831328e-11)
+        
+        # Test tac_range
+        self.assertAlmostEqual(reader.tac_range, 1.5002239e-07)
+
+
+
+# --- FROM test_becker_hickl_set_simple.py ---
+"""
+Simple test script for the BeckerHicklSetReader class.
 """
 
 import sys
@@ -13,13 +79,9 @@ from pathlib import Path
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-# Test imports
-from chisurf.fio.fluorescence import BeckerHicklSetReader, SdtFile
+from chisurf.fio.fluorescence.becker_hickl_set import BeckerHicklSetReader
 
-def test_becker_hickl_set_reader():
-    """Test the BeckerHicklSetReader class."""
-    print("Testing BeckerHicklSetReader...")
-    
+def main():
     # Create a temporary .set file for testing
     with tempfile.TemporaryDirectory() as temp_dir:
         set_file = Path(temp_dir) / "test.set"
@@ -52,29 +114,6 @@ def test_becker_hickl_set_reader():
         # Print a summary
         print("\nSummary:")
         reader.summary()
-    
-    print("\nBeckerHicklSetReader test completed successfully!")
+        
+        print("\nTest completed successfully!")
 
-def test_sdt_file():
-    """
-    Test the SdtFile class.
-    
-    Note: This test requires an actual .sdt file, which we don't create here.
-    This function just verifies that the class is properly imported and accessible.
-    """
-    print("\nTesting SdtFile...")
-    print("SdtFile class is available.")
-    print("To fully test SdtFile, you would need an actual .sdt file.")
-    print("SdtFile test completed!")
-
-def main():
-    """Run all tests."""
-    print("Testing bhfiles module...\n")
-    
-    test_becker_hickl_set_reader()
-    test_sdt_file()
-    
-    print("\nAll tests completed successfully!")
-
-if __name__ == "__main__":
-    main()
