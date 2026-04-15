@@ -232,7 +232,7 @@ def find_objects(
 
 class Base(object):
 
-    _verbose = chisurf.settings.cs_settings['verbose']
+    _verbose = None  # Will be set during initialization
     supported_save_file_types: typing.List[str] = ["yaml", "json", "pkl"]
     meta_data: typing.Dict = dict()
 
@@ -528,13 +528,16 @@ class Base(object):
             super().__setattr__(key, value)
 
     def __getattr__(self, key: str):
+        import logging
         propobj = getattr(self.__class__, key, None)
         # the key refers to a property
         if isinstance(propobj, property):
             if propobj.fget is None:
+                logging.error(f"Property '{key}' has no getter")
                 raise AttributeError("can't get attribute")
             return propobj.fget(self)
         if propobj is None:
+            logging.error(f"Attribute '{key}' not found in {self.__class__.__name__}")
             raise AttributeError(f"{self.__class__.__name__} object has no attribute '{key}'")
         return propobj
 

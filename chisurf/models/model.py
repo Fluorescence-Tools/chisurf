@@ -85,7 +85,9 @@ class Model(FittingParameterGroup):
         for pg in pgs:
             try:
                 pg.update()
-            except:
+            except Exception as e:
+                import logging
+                logging.warning(f"Failed to update parameter group {pg}: {e}")
                 continue
 
         self.update_model()

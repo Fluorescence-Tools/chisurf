@@ -42,8 +42,13 @@ class NCurve(chisurf.base.Base):
         return state
 
     def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Return a slice of the curve as (x, y)."""
         y = self.d.flatten().__getitem__(key)
-        x = np.arange(0, len(self.y))
+        # Ensure self.d is properly initialized before accessing self.y
+        if self.d.size > 0:
+            x = np.arange(0, len(y))
+        else:
+            x = np.array([], dtype=np.float64)
         return x, y
 
 
@@ -233,7 +238,14 @@ class Curve(NCurve):
             Arrays of identical length defining the abscissa and
             ordinate of the curve.
         """
-        d = np.vstack([x, y])
+        # Validate inputs before creating array
+        if x is None or y is None:
+            d = np.vstack([np.array([]), np.array([])])
+        else:
+            x, y = np.asarray(x), np.asarray(y)
+            if len(x) != len(y):
+                raise ValueError(f"x and y must have same length, got {len(x)} and {len(y)}")
+            d = np.vstack([x, y])
         super().__init__(*args, d=d, **kwargs)
 
     def normalize(

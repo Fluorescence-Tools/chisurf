@@ -180,7 +180,9 @@ class GlobalFitModel(model.Model, Curve):
             x, d, w = f.model.data[xmin:xmax]
             ml = min([len(m), len(d)])
             wr = np.array((d[:ml] - m[:ml]) * w[:ml], dtype=np.float64)
-        except:
+        except Exception as e:
+            import logging
+            logging.warning(f"Failed to calculate weighted residuals: {e}")
             wr = np.array([1.0])
         return wr
 
