@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from qtpy import QtCore, QtGui, QtWidgets
-import sip
+from qtpy import sip
 
 from .theme import color as theme_color
 

@@ -10,7 +10,7 @@ from chisurf.gui import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import pyqtgraph.dockarea
 import matplotlib.colors
-import sip
+from qtpy import sip
 
 import chisurf.data
 import chisurf.experiments
