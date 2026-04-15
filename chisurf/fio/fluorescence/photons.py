@@ -207,8 +207,8 @@ class Photons(object):
                             t.shift_macro_time(spcs[i-1]['photon']['MT'][-1])
                         spcs.append(
                             tttr.make_spc_dict(
-                                macro_times=t.get_macro_time(),
-                                micro_times=t.get_micro_time(),
+                                macro_times=t.get_macro_times(),
+                                micro_times=t.get_micro_times(),
                                 routing_channels=t.get_routing_channel(),
                                 macro_time_resolution=header.macro_time_resolution,
                                 number_of_events=t.get_n_valid_events(),

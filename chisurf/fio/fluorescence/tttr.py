@@ -18,7 +18,7 @@ class Photon(tables.IsDescription):
     EVENT = tables.Int8Col()
     MT = tables.UInt64Col()
     ROUT = tables.Int8Col()
-    TAC = tables.UInt16Col()
+    TAC = tables.UInt32Col()
 
 
 class Header(tables.IsDescription):
@@ -551,13 +551,20 @@ def make_tp_photon_hdf(
         header['routine'] = routine_name
         header['nTAC'] = number_of_tac_channels
         header.append()
-        photonA = np.rec.array(
-            (
+        photon_dtype = [
+            ('EVENT', 'i1'),
+            ('MT', 'u8'),
+            ('ROUT', 'i1'),
+            ('TAC', 'u4')
+        ]
+        photonA = np.array(
+            list(zip(
                 spc['photon']['TYPE'],
                 spc['photon']['MT'],
                 spc['photon']['ROUT'],
                 spc['photon']['TAC']
-            )
+            )),
+            dtype=photon_dtype
         )
         photontable.append(photonA)
     photontable.cols.ROUT.create_index()
@@ -699,11 +706,11 @@ def read_header(
     """
     b = binary
     if routine_name == 'bh132':
-        MTclock, DataInvalid = chisurf.fio.tttr.bh123_header(b)
+        MTclock, DataInvalid = bh123_header(b)
     elif routine_name == 'iss':
-        MTclock, DataInvalid = chisurf.fio.tttr.iss_header(b)
+        MTclock, DataInvalid = iss_header(b)
     elif routine_name == 'ht3':
-        MTclock, DataInvalid = chisurf.fio.tttr.ht3_header(b)
+        MTclock, DataInvalid = ht3_header(b)
     else:
         MTclock, DataInvalid = 1.0, 0
     dHeader = {'DINV': DataInvalid, 'MTCLK': MTclock, 'nEvents': b.shape[0]}
