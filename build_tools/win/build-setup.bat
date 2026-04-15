@@ -137,6 +137,8 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         swig ^
         pybind11 ^
         eigen ^
+        pythran ^
+        "vs2022_win-64" ^
         "typing-extensions>=4.14" ^
         "pytools>=2024.0" ^
         pyyaml ^
