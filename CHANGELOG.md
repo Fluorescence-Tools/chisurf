@@ -4,6 +4,13 @@
 
 ### Fixed
 
+- **macOS App Bundle Build now generates a `.dmg` artifact**:
+  - Updated `build_tools/osx/build-osx-app.sh` to create a disk image (`.dmg`) using `hdiutil`.
+  - The DMG contains the `ChiSurf.app` bundle and a convenient link to `/Applications`.
+  - Updated `.github/workflows/pixi-ci.yml` to propagate `CHISURF_VERSION` to the DMG build step via `$GITHUB_ENV`.
+  - Fixed a regression in `build-osx-app.sh` where `PYTHONPATH: unbound variable` caused CI failures by quoting the launcher heredoc delimiter.
+  - Hardened the `ChiSurf` launcher to use absolute paths for `PYTHONPATH` and `QT_PLUGIN_PATH`, ensuring the bundle remains self-contained regardless of the current working directory.
+
 - **Optimized NDXplorer data loading with background computation and caching**:
   - Offloaded expensive data processing and column computation to background threads to prevent UI blocking.
   - Implemented `FileMetadataCache` in `modules/ndxplorer` to accelerate subsequent loads of previously processed datasets.

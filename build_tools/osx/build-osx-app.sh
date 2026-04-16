@@ -62,7 +62,7 @@ fi
 echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
 
 # Write Info.plist (required for Cocoa/CoreText initialization; missing plist causes CTFontDrawGlyphs SIGBUS crash)
-CHISURF_VERSION=$(cd "$REPO_ROOT" && git describe --tags --always 2>/dev/null || echo "26.0")
+CHISURF_VERSION=${CHISURF_VERSION:-$(cd "$REPO_ROOT" && git describe --tags --always 2>/dev/null || echo "26.0")}
 cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -128,3 +128,23 @@ cd "$HOME"
 exec "$SCRIPT_DIR/Contents/bin/python" -m chisurf "$@"
 LAUNCHER
 chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+
+echo "[4/4] Creating DMG ..."
+DMG_NAME="$DIST_PATH/$APP_NAME-$CHISURF_VERSION.dmg"
+rm -f "$DMG_NAME"
+
+# Create a temporary folder for the DMG content to add /Applications link
+DMG_TMP="$DIST_PATH/dmg_tmp"
+rm -rf "$DMG_TMP"
+mkdir -p "$DMG_TMP"
+cp -a "$APP_BUNDLE" "$DMG_TMP/"
+ln -s /Applications "$DMG_TMP/Applications"
+
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_TMP" -ov -format UDZO "$DMG_NAME"
+rm -rf "$DMG_TMP"
+
+# Also create a generic link for the CI artifact upload if needed
+ln -sf "$(basename "$DMG_NAME")" "$DIST_PATH/$APP_NAME.dmg"
+
+echo "Created artifact: $DMG_NAME"
+echo "Created artifact: $DIST_PATH/$APP_NAME.dmg"

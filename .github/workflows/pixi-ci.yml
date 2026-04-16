@@ -59,7 +59,7 @@ jobs:
         run: |
           micromamba activate build
           CHISURF_VERSION=$(python rattler-recipe/generate_version.py --print)
-          echo "CHISURF_VERSION=$CHISURF_VERSION"
+          echo "CHISURF_VERSION=$CHISURF_VERSION" >> $GITHUB_ENV
           echo "{\"version\": \"$CHISURF_VERSION\"}" > rattler-recipe/version.json
           python rattler-recipe/collect_entry_points.py || true
           python build_tools/run_rattler_build.py
