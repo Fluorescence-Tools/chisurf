@@ -61,7 +61,7 @@ rm -rf "$PREFIX"
 echo "[2/4] Creating runtime environment at $PREFIX..."
 # Explicitly add eigen and specify python version
 micromamba create -y -p "$PREFIX" \
-    "python=3.12" chisurf tttrlib eigen \
+    "python=3.12" chisurf tttrlib eigen "cmake<3.27" zstd libzstd libarchive \
     -c "$REPO_ROOT/conda-bld" -c conda-forge -c bioconda \
     --no-channel-priority
 
@@ -75,7 +75,8 @@ export CMAKE_PREFIX_PATH="$PREFIX"
 # We look specifically for labellib which is known to have this issue
 if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
     echo "Patching LabelLib to use environment Eigen..."
-    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen"
+    mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/eigen"
     cp -r "$PREFIX/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
     # Force C++14 as required by modern Eigen
     python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
