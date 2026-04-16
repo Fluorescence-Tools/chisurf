@@ -39,7 +39,9 @@ export CMAKE_PREFIX_PATH="$APP_PATH"
 if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
     echo "Patching LabelLib to use environment Eigen..."
     rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
-    ln -s "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+    cp -r "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+    # Force C++14 as required by modern Eigen
+    python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
 fi
 
 for mod in "$REPO_ROOT/modules"/*; do
