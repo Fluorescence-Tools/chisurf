@@ -33,9 +33,10 @@ import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.history_browser
 import chisurf.gui.widgets.experiments.modelling
 
-import chisurf.models
-import chisurf.plugins
-import chisurf.fitting
+# Heavy imports moved to deferred/local usage or warmup_imports
+# import chisurf.models
+# import chisurf.plugins
+# import chisurf.fitting
 import chisurf.gui.resources
 import chisurf.plugins.misc.code_editor
 
@@ -993,11 +994,12 @@ class Main(
         status_layout.setSpacing(0)  # Set spacing between widgets to zero
         status_layout.setContentsMargins(0, 0, 0, 0)  # Set margins to zero
 
-        # Create a progress bar
+        # Create a progress bar — hidden initially, shown only during background loading
         self.progress_bar = QtWidgets.QProgressBar(self.status)
         self.progress_bar.setFixedWidth(150)  # Set a fixed width for the progress bar
         self.progress_bar.setAlignment(QtCore.Qt.AlignCenter)
         self.progress_bar.setFixedHeight(15)  # Adjust the height as needed
+        self.progress_bar.setVisible(False)   # Hidden until background loading starts
 
         # Create a label for the status message
         self.status_label = QtWidgets.QLabel("Ready")
@@ -1011,13 +1013,6 @@ class Main(
         # Add the status widget to the status bar, aligning to the left
         self.status.addWidget(status_widget, 1)  # 1 gives the widget some stretch
 
-        # Warm up heavy imports after the UI is ready to make first-time actions more responsive
-        try:
-            # Run shortly after the event loop starts so the window can appear first
-            QtCore.QTimer.singleShot(100, self.warmup_imports)
-        except Exception:
-            # If QTimer is not available for some reason, just ignore
-            pass
 
         try:
             self._init_system_info_watermark()

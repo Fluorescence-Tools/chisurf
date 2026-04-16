@@ -411,6 +411,7 @@ def setup_gui(
 ):
     import chisurf
     def gui_imports():
+        # Phase 1: Only what's needed for the main window scaffold
         import chisurf.settings
         import chisurf.base
         import chisurf.common
@@ -419,18 +420,21 @@ def setup_gui(
         import chisurf.parameter
         import chisurf.experiments
         import chisurf.fio
-        import chisurf.fitting
-        import chisurf.fluorescence
         import chisurf.gui.decorators
         import chisurf.gui.widgets.ipython
         import chisurf.gui.widgets
         import chisurf.macros
         import chisurf.math
+        if chisurf.settings.exceptions_on_gui:
+            import chisurf.gui.exception_hook
+
+    def deferred_gui_imports():
+        # Phase 2: Heavy functional submodules
+        import chisurf.fitting
+        import chisurf.fluorescence
         import chisurf.models
         import chisurf.plots
         import chisurf.structure
-        if chisurf.settings.exceptions_on_gui:
-            import chisurf.gui.exception_hook
         
         # Pre-import MCP server to avoid thread-safety issues with Qt imports in threads
         try:
@@ -441,20 +445,13 @@ def setup_gui(
     def setup_ipython():
         import chisurf.gui.widgets
         chisurf.console = chisurf.gui.widgets.ipython.QIPythonWidget()
+        chisurf.console.history_widget = None
 
     def startup_interface():
         from chisurf.gui.main import Main
         import chisurf
         window = Main()
-        chisurf.console.history_widget = None
         chisurf.cs = window
-        
-        # Initialize GUI executors on the main thread now that the window/app is ready
-        try:
-            initialize_gui_executors()
-        except Exception:
-            pass
-            
         return window
 
     def setup_style(app):
@@ -1045,6 +1042,8 @@ def setup_gui(
         setup_style(app=app)
     elif stage == "populate_plugins":
         populate_plugins()
+    elif stage == "deferred_gui_imports":
+        return deferred_gui_imports()
     elif stage == "check_updates":
         # Respect user setting to ignore update prompts on startup
         try:
@@ -1124,6 +1123,11 @@ def setup_gui(
         window._restore_setup_defaults()
     elif stage == "load_tools":
         window.load_tools()
+    elif stage == "init_executors":
+        try:
+            initialize_gui_executors()
+        except Exception:
+            pass
     elif stage == "start_mcp":
         try:
             _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
@@ -1340,41 +1344,24 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     except Exception:
         _start_jupyter = False
 
-    stages = [
-        ("Check for updates", "check_updates", 5),
-        ("Loading modules", "gui_imports", 10),
-        ("Setup ipython", "setup_ipython", 30),
-        ("Starting interface", "startup_interface", 40),
-        ("Setup logging", "setup_logging", 45),
-        ("Initialize setups", "init_setups", 50),
-        ("Restore setup defaults", "restore_setup_defaults", 52),
-        ("Defining actions", "define_actions", 55),
-        ("Loading tools", "load_tools", 65),
-        ("Arrange widgets", "arrange_widgets", 70),
+    # --- Phase 1: critical path stages (run during splash, sequential) ---
+    # Only the minimum needed to display a responsive main window.
+    critical_stages = [
+        ("Loading modules",       "gui_imports",           10),
+        ("Setup IPython",         "setup_ipython",         30),
+        ("Starting interface",    "startup_interface",     40),
+        ("Setup logging",         "setup_logging",         45),
+        ("Initialize setups",     "init_setups",           50),
+        ("Restore setup defaults","restore_setup_defaults",52),
+        ("Defining actions",      "define_actions",        55),
+        ("Loading tools",         "load_tools",            65),
+        ("Initialize executors",  "init_executors",        68),
+        ("Arrange widgets",       "arrange_widgets",       75),
+        ("Applying theme",        "setup_style",           90),
     ]
 
-    if _start_jupyter:
-        stages.extend([
-            ("Initializing Jupyter", "start_jupyter", 85),
-            ("Populate plugins", "populate_plugins", 90),
-            ("Populate notebook", "populate_notebooks", 95),
-        ])
-    else:
-        stages.append(("Populate plugins", "populate_plugins", 90))
-
-    try:
-        _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
-        _start_mcp = bool(_gui_cfg.get('mcp_autostart', False))
-    except Exception:
-        _start_mcp = False
-        
-    if _start_mcp:
-        stages.append(("Initializing MCP", "start_mcp", 97))
-
-    stages.append(("Styling up", "setup_style", 100))
-
     window = None
-    for message, stage, progress_value in stages:
+    for message, stage, progress_value in critical_stages:
         logging.info(f"Startup stage '{stage}' starting: {message}")
         splash.update_message(message)
         splash.update_progress(progress_value)
@@ -1389,32 +1376,6 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
                 break
         except Exception:
             pass
-        # After checking for updates, display version comparison on the splash
-        if stage == "check_updates":
-            try:
-                from chisurf.plugins.chisurf.updater import updater as _updater_mod
-                from chisurf import info as _info
-                import time as _time
-                cur = getattr(_info, "__version__", "?")
-                update_available, latest_version, error = _updater_mod.check_for_updates()
-                if error:
-                    text = f"v{cur} — Update check failed"
-                else:
-                    if update_available and latest_version:
-                        text = f"{cur} vs. {latest_version} (Update available)"
-                    else:
-                        # If no update or latest unknown, assume up to date
-                        latest_txt = latest_version or cur
-                        text = f"v{cur} (Up to date)"
-                splash.update_message(text)
-                # Ensure the update info is visible for at least one second
-                start_ts = _time.time()
-                # Process events in small slices to keep UI responsive during the wait
-                while _time.time() - start_ts < 2.0:
-                    app.processEvents()
-                    _time.sleep(0.05)
-            except Exception as e:
-                chisurf.logging.debug(f"Failed to update splash with version info: {e}")
 
     try:
         if getattr(chisurf, "__startup_interrupt_for_updater__", False):
@@ -1427,6 +1388,11 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     except Exception:
         pass
 
+    # --- Phase 1 complete: show window immediately -----------------------
+    splash.update_message("Starting up…")
+    splash.update_progress(100)
+    app.processEvents()
+
     window.show()
     splash.hide()
     splash.finish(window)
@@ -1435,6 +1401,80 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
         chisurf.__startup_in_progress__ = False
     except Exception:
         pass
+
+    # --- Phase 2: deferred stages via BackgroundStartupRunner ------------
+    # Add a placeholder in the Plugins menu so it's never empty while loading
+    _placeholder_action = None
+    try:
+        _plugin_menu = None
+        for _action in window.menuBar.actions():
+            if _action.text().startswith('Plugins'):
+                _plugin_menu = _action.menu()
+                break
+        if _plugin_menu is not None:
+            _placeholder_action = QtWidgets.QAction("Loading plugins…", window)
+            _placeholder_action.setEnabled(False)
+            _plugin_menu.addAction(_placeholder_action)
+    except Exception:
+        pass
+
+    def _make_bg_stage(stage_name):
+        """Return a zero-argument callable for the given setup_gui stage."""
+        def _fn():
+            setup_gui(app=app, stage=stage_name, window=window)
+        _fn.__name__ = stage_name
+        return _fn
+
+    deferred_stages = [
+        ("Loading heavy modules", _make_bg_stage("deferred_gui_imports")),
+        ("Loading plugins",       _make_bg_stage("populate_plugins")),
+        ("Checking for updates",  _make_bg_stage("check_updates"))
+    ]
+
+    if _start_jupyter:
+        deferred_stages.append(("Starting Jupyter (background)", _make_bg_stage("start_jupyter")))
+        deferred_stages.append(("Loading plugins",               _make_bg_stage("populate_plugins")))
+        deferred_stages.append(("Populating notebooks",          _make_bg_stage("populate_notebooks")))
+    else:
+        deferred_stages.append(("Loading plugins", _make_bg_stage("populate_plugins")))
+
+    try:
+        _cfg_mcp = chisurf.settings.cs_settings.get('gui') or {}
+        _start_mcp2 = bool(_cfg_mcp.get('mcp_autostart', False))
+    except Exception:
+        _start_mcp2 = False
+    if _start_mcp2:
+        deferred_stages.append(("Starting MCP (background)", _make_bg_stage("start_mcp")))
+
+    def _warmup():
+        try:
+            from chisurf.gui.misc_helpers import warmup_imports
+            warmup_imports()
+        except Exception:
+            pass
+
+    deferred_stages.append(("Preloading modules", _warmup))
+
+    def _on_bg_complete():
+        # Remove the placeholder once plugins are really loaded
+        try:
+            if _placeholder_action is not None:
+                _placeholder_action.setParent(None)
+        except Exception:
+            pass
+        try:
+            lbl = getattr(window, "status_label", None)
+            if lbl is not None:
+                lbl.setText("Ready")
+        except Exception:
+            pass
+        try:
+            status = getattr(window, "status", None)
+            if status is not None:
+                status.showMessage("Ready", 5000)
+        except Exception:
+            pass
+        logging.info("Background startup complete.")
 
     def _should_open_onboarding() -> bool:
         try:
@@ -1498,6 +1538,23 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
             QtCore.QTimer.singleShot(0, _open_onboarding)
     except Exception:
         pass
+
+    # Launch the background runner (held as window attribute to prevent GC)
+    try:
+        from chisurf.gui.background_startup import BackgroundStartupRunner
+        _bg_runner = BackgroundStartupRunner(
+            window, deferred_stages, on_complete=_on_bg_complete
+        )
+        window._bg_startup_runner = _bg_runner
+        _bg_runner.start()
+    except Exception as _bg_err:
+        logging.warning(f"Background startup runner failed to start: {_bg_err}")
+        for _lbl, _fn in deferred_stages:
+            try:
+                _fn()
+            except Exception:
+                pass
+        _on_bg_complete()
 
     return window
 
