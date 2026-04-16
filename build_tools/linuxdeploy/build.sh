@@ -110,9 +110,7 @@ rm -rf "$PREFIX/lib/python3.12/site-packages/wheel"
 find "$PREFIX/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
 find "$PREFIX/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
 
-# Remove tests and examples from site-packages
-find "$PREFIX/lib/python3.12/site-packages" -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
-find "$PREFIX/lib/python3.12/site-packages" -name "examples" -type d -exec rm -rf {} + 2>/dev/null || true
+# Keep tests and examples as some packages (like tables) import them at runtime
 
 # 6. Bundle into AppImage
 echo "[4/4] Bundling with linuxdeploy..."

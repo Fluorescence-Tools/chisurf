@@ -384,11 +384,9 @@ if exist "%APP_PATH%\Library\include"     rmdir /s /q "%APP_PATH%\Library\includ
 if exist "%APP_PATH%\etc\conda"           rmdir /s /q "%APP_PATH%\etc\conda"
 if exist "%APP_PATH%\conda-meta"          rmdir /s /q "%APP_PATH%\conda-meta"
 
-:: Remove Python bytecode and tests
-echo Removing Python bytecode and tests ...
+:: Remove Python bytecode (safe), but keep tests/examples as some packages import them
+echo Removing Python bytecode ...
 powershell -Command "Get-ChildItem -Path '%APP_PATH%' -Filter '__pycache__' -Recurse | Remove-Item -Force -Recurse"
-powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter 'tests' -Directory -Recurse | Remove-Item -Force -Recurse"
-powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter 'examples' -Directory -Recurse | Remove-Item -Force -Recurse"
 
 :: Remove pip, wheel (keep setuptools as pkg_resources depends on it)
 echo Removing pip, wheel ...

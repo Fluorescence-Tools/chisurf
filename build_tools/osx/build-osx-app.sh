@@ -72,9 +72,7 @@ rm -rf "$APP_PATH/lib/python3.12/site-packages/wheel"
 find "$APP_PATH/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
 find "$APP_PATH/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
 
-# Remove tests and examples from site-packages
-find "$APP_PATH/lib/python3.12/site-packages" -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
-find "$APP_PATH/lib/python3.12/site-packages" -name "examples" -type d -exec rm -rf {} + 2>/dev/null || true
+# Keep tests and examples as some packages (like tables) import them at runtime
 
 # Build app bundle
 APP_BUNDLE="$DIST_PATH/$APP_NAME.app"
