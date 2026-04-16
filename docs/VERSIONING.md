@@ -42,6 +42,10 @@ Notes:
 ## Tag Naming
 
 - Tags use a leading `v`: `v26.1`, `v26.1a1`, `v26.1b1`, `v26.1rc1`
+- Hyphenated GitHub-style tags are also supported (mapped to PEP 440):
+  - `v26.1-alpha.1` → `26.1a1`
+  - `v26.1-beta.2` → `26.1b2`
+  - `v26.1-rc.1` → `26.1rc1`
 
 ## Overrides
 

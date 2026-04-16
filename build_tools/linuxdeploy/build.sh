@@ -5,8 +5,6 @@ set -euo pipefail
 APP_NAME="ChiSurf"
 DIST_DIR="dist"
 LINUX_DIST_DIR="$DIST_DIR/linux"
-OUTPUT_APPIMAGE="$DIST_DIR/$APP_NAME-x86_64.AppImage"
-
 # Use current directory as root if not provided
 REPO_ROOT="$(cd "$(dirname "$0")"/../.. && pwd)"
 
@@ -36,7 +34,8 @@ if [[ -z "$CHI_VERSION" ]]; then
     CHI_VERSION=$(python3 "$REPO_ROOT/rattler-recipe/generate_version.py" --print)
 fi
 echo "Version: $CHI_VERSION"
-echo "{\"version\": \"$CHI_VERSION\"}" > "$REPO_ROOT/rattler-recipe/version.json"
+
+OUTPUT_APPIMAGE="$DIST_DIR/$APP_NAME-$CHI_VERSION-x86_64.AppImage"
 
 # 2. Build Conda Package (if requested)
 if [[ "$BUILD_PKG" == "1" ]]; then

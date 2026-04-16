@@ -2,6 +2,18 @@ name: Build and Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - alpha
+          - beta
+          - rc
+          - stable
   push:
     branches: [development, main]
     tags: ["v*"]
@@ -64,7 +76,6 @@ jobs:
           micromamba activate build
           CHISURF_VERSION=$(python rattler-recipe/generate_version.py --print)
           echo "CHISURF_VERSION=$CHISURF_VERSION" >> $GITHUB_ENV
-          echo "{\"version\": \"$CHISURF_VERSION\"}" > rattler-recipe/version.json
           python rattler-recipe/collect_entry_points.py || true
           python build_tools/run_rattler_build.py
 
@@ -105,7 +116,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: appimage-linux
-          path: dist/ChiSurf-x86_64.AppImage
+          path: dist/ChiSurf-*-x86_64.AppImage
           if-no-files-found: error
 
       - name: Upload macOS conda packages
@@ -196,5 +207,6 @@ jobs:
             artifacts/windows/*.exe
             conda-packages/**/*.conda
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
