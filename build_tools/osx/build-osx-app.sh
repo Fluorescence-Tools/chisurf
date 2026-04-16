@@ -28,9 +28,13 @@ CHISURF_PKG=$(find "$OUTPUT_DIR" -name "chisurf-*.conda" | head -n 1)
 echo "[3/4] Creating distribution environment at $APP_PATH ..."
 rm -rf "$APP_PATH"
 # Explicitly include libomp (from llvm-openmp)
-micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
+micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib eigen "cmake<3.27" libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
 
 echo "[3.5/4] Installing submodules ..."
+# Set CMAKE_ARGS and CMAKE_PREFIX_PATH to help submodules find the environment's eigen
+export CMAKE_ARGS="-DEIGEN3_INCLUDE_DIR=$APP_PATH/include/eigen3"
+export CMAKE_PREFIX_PATH="$APP_PATH"
+
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
         echo "Installing submodule $(basename "$mod") ..."

@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-### Fixed
+- **Resolved submodule compilation errors with outdated Eigen**:
+  - Added `eigen` and `cmake` to the macOS and Linux distribution environments and configured `CMAKE_PREFIX_PATH` and `CMAKE_ARGS` to ensure submodules (like `LabelLib`) use the modern Eigen version from the environment instead of their bundled legacy versions. This fixes compilation errors on newer compilers (AppleClang 17).
 
 - **Resolved CMake compatibility errors with submodules**:
   - Pinned `cmake < 3.27` in `rattler-recipe/recipe.yaml` and `.github/workflows/pixi-ci.yml`. This preserves compatibility for older submodules (like `LabelLib`) that use `cmake_minimum_required(VERSION < 3.5)`, which was removed in newer CMake versions.
