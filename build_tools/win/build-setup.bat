@@ -391,10 +391,9 @@ powershell -Command "Get-ChildItem -Path '%APP_PATH%' -Filter '__pycache__' -Rec
 powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter 'tests' -Directory -Recurse | Remove-Item -Force -Recurse"
 powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter 'examples' -Directory -Recurse | Remove-Item -Force -Recurse"
 
-:: Remove pip, setuptools, wheel
-echo Removing pip, setuptools, wheel ...
+:: Remove pip, wheel (keep setuptools as pkg_resources depends on it)
+echo Removing pip, wheel ...
 rmdir /s /q "%APP_PATH%\Lib\site-packages\pip"
-rmdir /s /q "%APP_PATH%\Lib\site-packages\setuptools"
 rmdir /s /q "%APP_PATH%\Lib\site-packages\wheel"
 powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter '*.dist-info' -Directory -Recurse | Remove-Item -Force -Recurse"
 powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter '*.egg-info' -Directory -Recurse | Remove-Item -Force -Recurse"

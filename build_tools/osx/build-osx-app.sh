@@ -57,10 +57,6 @@ for mod in "$REPO_ROOT/modules"/*; do
     fi
 done
 
-# Remove compile-time dependencies to reduce size
-echo "Removing compile-time dependencies..."
-micromamba remove -y --prefix "$APP_PATH" eigen "cmake<3.27" zstd libarchive
-
 # Strip bloat before bundling
 echo "Cleaning environment..."
 rm -rf "$APP_PATH/include"
@@ -70,9 +66,8 @@ find "$APP_PATH/lib" -name "*.a" -delete
 find "$APP_PATH/lib" -name "*.la" -delete
 find "$APP_PATH/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 
-# Remove pip, setuptools, and wheel (not needed at runtime)
+# Remove pip and wheel (keep setuptools as pkg_resources depends on it)
 rm -rf "$APP_PATH/lib/python3.12/site-packages/pip"
-rm -rf "$APP_PATH/lib/python3.12/site-packages/setuptools"
 rm -rf "$APP_PATH/lib/python3.12/site-packages/wheel"
 find "$APP_PATH/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
 find "$APP_PATH/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true

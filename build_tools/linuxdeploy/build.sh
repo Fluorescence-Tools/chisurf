@@ -94,10 +94,6 @@ for mod in "$REPO_ROOT/modules"/*; do
     fi
 done
 
-# Remove eigen after compilation as it is not needed at runtime
-echo "Removing compile-time dependencies..."
-micromamba remove -y -p "$PREFIX" eigen "cmake<3.27" zstd libarchive
-
 # 5. Finalize Environment (Cleanup)
 echo "[3/4] Cleaning runtime environment..."
 
@@ -109,9 +105,8 @@ find "$PREFIX/lib" -name "*.a" -delete
 find "$PREFIX/lib" -name "*.la" -delete
 find "$PREFIX/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 
-# Remove pip, setuptools, and wheel (not needed at runtime)
+# Remove pip and wheel (keep setuptools as pkg_resources depends on it)
 rm -rf "$PREFIX/lib/python3.12/site-packages/pip"
-rm -rf "$PREFIX/lib/python3.12/site-packages/setuptools"
 rm -rf "$PREFIX/lib/python3.12/site-packages/wheel"
 find "$PREFIX/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
 find "$PREFIX/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
