@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
-script_dir=$(dirname "$(dirname "$0")")
+SCRIPT_DIR="$(cd "$(dirname "$(dirname "$0")")" && pwd)"
 # Disable user site packages
 export PYTHONNOUSERSITE=1
-export PATH="$script_dir:$script_dir/bin:$PATH"
-export QT_PLUGIN_PATH="$script_dir/plugins"
-export PYTHONPATH="$PYTHONPATH:$script_dir"
-cd $script_dir
-python -m {{ app_name }} $@
+export PATH="$SCRIPT_DIR/bin:$SCRIPT_DIR:$PATH"
+export QT_PLUGIN_PATH="$SCRIPT_DIR/plugins"
+export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
+cd "$SCRIPT_DIR"
+exec "$SCRIPT_DIR/bin/python" -m {{ app_name }} "$@"

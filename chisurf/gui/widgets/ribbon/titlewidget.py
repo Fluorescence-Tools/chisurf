@@ -74,10 +74,10 @@ class RibbonTitleWidget(QtWidgets.QFrame):
 
         # Application
         self._applicationButton = RibbonApplicationButton()  # type: ignore
-        # Use Unicode icon instead of PNG
-        self._applicationButton.setText("⚙️")
+        # Set professional ChiSurf logo icon instead of crash-triggering emoji
+        self._applicationButton.setIcon(QtGui.QIcon(":/icons/icons/cs_logo.png"))
         self._applicationButton.setIconSize(QtCore.QSize(self._quickAccessButtonHeight, self._quickAccessButtonHeight))
-        self._applicationButton.setText("ChiSurf Ribbon")
+        self._applicationButton.setText("ChiSurf")
         self._applicationButton.setToolTip("ChiSurf Ribbon")
 
         self._quickAccessToolBar = QtWidgets.QToolBar()
@@ -101,7 +101,7 @@ class RibbonTitleWidget(QtWidgets.QFrame):
         self._collapseRibbonButton = QtWidgets.QToolButton(self)
         self._collapseRibbonButton.setIconSize(QtCore.QSize(self._rightButtonHeight, self._rightButtonHeight))
         # Use Unicode icon instead of PNG
-        self._collapseRibbonButton.setText("▲")
+        self._collapseRibbonButton.setText("^")
         self._collapseRibbonButton.setAutoRaise(True)
         self._collapseRibbonButton.setToolTip("Collapse Ribbon")
         self._collapseRibbonButton.clicked.connect(self.collapseRibbonButtonClicked)  # type: ignore

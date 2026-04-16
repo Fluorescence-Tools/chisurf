@@ -193,7 +193,7 @@ class RibbonPanel(QtWidgets.QFrame):
             self._panelOption = RibbonPanelOptionButton()  # type: ignore
             self._panelOption.setAutoRaise(True)
             # Use Unicode icon instead of PNG
-            self._panelOption.setText("⚙️")
+            self._panelOption.setText("...")
             self._panelOption.setIconSize(QtCore.QSize(self._titleHeight, self._titleHeight))
             self._panelOption.setToolTip("Panel options")
             self._panelOption.clicked.connect(self.panelOptionClicked)  # type: ignore

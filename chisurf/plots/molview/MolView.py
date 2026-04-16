@@ -164,7 +164,7 @@ class MolQtWidget(QGLWidget):
             layout = QtWidgets.QVBoxLayout(self)
             layout.setContentsMargins(16, 16, 16, 16)
             layout.setSpacing(12)
-            icon = QtWidgets.QLabel("ℹ️", self)
+            icon = QtWidgets.QLabel("i", self)
             font = icon.font()
             font.setPointSize(font.pointSize() + 6)
             icon.setFont(font)

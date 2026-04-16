@@ -684,6 +684,9 @@ class ChiSurfRibbonIntegration(QObject):
             if self.original_menubar:
                 # Move menu bar back to main window
                 self.original_menubar.setParent(self.main_window)
+                # Ensure it is native on macOS to restore system menu bar
+                if sys.platform == 'darwin':
+                    self.original_menubar.setNativeMenuBar(True)
                 # Set it as the menu bar
                 self.main_window.setMenuBar(self.original_menubar)
                 self.original_menubar.show()

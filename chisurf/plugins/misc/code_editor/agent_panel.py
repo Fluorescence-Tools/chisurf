@@ -63,6 +63,7 @@ class AgentPanelWidget(QtWidgets.QWidget):
     def setup_ui(self) -> None:
         """Set up the user interface matching Chato's chat widget."""
         from chisurf.plugins._dev.chato.frontend.transcript import TranscriptRenderer
+        chat_available = bool(TranscriptRenderer)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -74,7 +75,17 @@ class AgentPanelWidget(QtWidgets.QWidget):
         self.transcript.setMinimumHeight(200)
         layout.addWidget(self.transcript)
 
-        self._render = TranscriptRenderer(self.transcript, logger=_LOG)
+        if chat_available and TranscriptRenderer:
+            self._render = TranscriptRenderer(self.transcript, logger=_LOG)
+        else:
+            # Fallback renderer or just a placeholder for the object
+            class DummyRenderer:
+                def __init__(self, browser, logger):
+                    self.browser = browser
+                def append_sys(self, text): self.browser.append(f"<i>{text}</i>")
+                def append_user(self, text): self.browser.append(f"<b>User:</b> {text}")
+                def append_assistant(self, text): self.browser.append(f"<b>AI:</b> {text}")
+            self._render = DummyRenderer(self.transcript, _LOG)
 
         self.input = EnterAwarePlainTextEdit(self)
         self.input.setPlaceholderText("Ask something... (Enter to send, Shift+Enter for newline)")
@@ -152,6 +163,9 @@ class AgentPanelWidget(QtWidgets.QWidget):
         """Call the Chato backend to get a response."""
         try:
             from chisurf.plugins._dev.chato.backend.langchain import chat_langchain
+            if not chat_langchain:
+                return "Chato not available: Development plugins are excluded from this build."
+
             from chisurf.settings import ai_settings
 
             api_key = ai_settings.get_api_key()
@@ -194,9 +208,6 @@ class AgentPanelWidget(QtWidgets.QWidget):
             if isinstance(result, dict):
                 return result.get("response", str(result))
             return str(result)
-
-        except ImportError as e:
-            return f"Chato not available: {e}"
         except Exception as e:
             return f"Error calling agent: {e}"
 

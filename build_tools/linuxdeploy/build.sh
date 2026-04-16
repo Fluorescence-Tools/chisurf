@@ -59,7 +59,27 @@ mkdir -p "$(dirname "$PREFIX")"
 rm -rf "$PREFIX"
 
 echo "[2/4] Creating runtime environment at $PREFIX..."
-bash "$REPO_ROOT/build_tools/setup_runtime.sh" "$PREFIX" "$PKG"
+# Explicitly add eigen and specify python version
+micromamba create -y -p "$PREFIX" \
+    "python=3.12" chisurf tttrlib chinet eigen \
+    -c "$REPO_ROOT/conda-bld" -c conda-forge -c bioconda \
+    --no-channel-priority
+
+# Install submodules
+echo "[2.5/4] Installing submodules from modules directory ..."
+# Set CMAKE_ARGS to help submodules find the environment's eigen
+export CMAKE_ARGS="-DEIGEN3_INCLUDE_DIR=$PREFIX/include/eigen3"
+
+for mod in "$REPO_ROOT/modules"/*; do
+    if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
+        echo "Installing submodule $(basename "$mod") ..."
+        "$PREFIX/bin/python" -m pip install "$mod" --no-deps
+    fi
+done
+
+# Remove eigen after compilation as it is not needed at runtime
+echo "Removing compile-time dependencies..."
+micromamba remove -y -p "$PREFIX" eigen
 
 # 5. Finalize Environment (Cleanup)
 echo "[3/4] Cleaning runtime environment..."

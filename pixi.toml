@@ -56,6 +56,9 @@ pytest-qt = "*"
 ruff = "*"
 mypy = "*"
 pip = "*"
+eigen = ">=5.0.1,<6"
+pybind11 = ">=3.0.3,<4"
+cmake-build-extension = ">=0.6.1,<0.7"
 
 [pypi-dependencies]
 
@@ -99,27 +102,30 @@ tttrlib = "*"
  [tasks]
  build-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh" }
  test-chinet = { cmd = "python -m pytest modules/chinet/test -x -q" }
-build-labellib = { cmd = "pip install -e modules/labellib --no-deps", inputs = [
-      "modules/labellib/CMakeLists.txt",
-      "modules/labellib/FlexLabel/**",
-      "modules/labellib/setup.py",
-  ] }
-  build-ndxplorer = { cmd = "pip install -e modules/ndxplorer --no-deps", inputs = [
-      "modules/labellib/CMakeLists.txt",
-      "modules/labelllib/FlexLabel/**",
-      "modules/labellib/setup.py",
-  ] }
-  build-clsmview = { cmd = "pip install -e modules/clsmview --no-deps", inputs = [
-      "modules/clsmview/setup.py",
-      "modules/clsmview/clsmview/**",
-  ] }
-  build-quest = { cmd = "pip install -e modules/quest --no-deps", inputs = [
-      "modules/quest/pyproject.toml",
-      "modules/quest/quest/**",
-  ] }
-  build-chinet = { cmd = "true" }
- build-extensions = { depends-on = [
-     "build-labellib",
+build-labellib = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/include/eigen3\" && pip install -e modules/labellib --no-deps", inputs = [
+     "modules/labellib/CMakeLists.txt",
+     "modules/labellib/FlexLabel/**",
+     "modules/labellib/setup.py",
+ ] }
+ build-ndxplorer = { cmd = "export CMAKE_ARGS=\"-DEigen3_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/share/eigen3/cmake -DEigen3_INCLUDE_DIR=$PIXI_PROJECT_ROOT/.pixi/envs/default/include/eigen3\" && pip install -e modules/ndxplorer --no-deps", inputs = [
+     "modules/labellib/CMakeLists.txt",
+     "modules/labellib/FlexLabel/**",
+     "modules/labellib/setup.py",
+ ] }
+ build-clsmview = { cmd = "pip install -e modules/clsmview --no-deps", inputs = [     "modules/clsmview/setup.py",
+     "modules/clsmview/clsmview/**",
+ ] }
+ build-quest = { cmd = "pip install -e modules/quest --no-deps", inputs = [
+     "modules/quest/pyproject.toml",
+     "modules/quest/quest/**",
+ ] }
+ build-chinet = { cmd = "pip install -e modules/chinet --no-deps", inputs = [
+     "modules/chinet/setup.py",
+     "modules/chinet/chinet/**",
+     "modules/chinet/src/**",
+     "modules/chinet/include/**",
+     ] }
+     build-extensions = { depends-on = [     "build-labellib",
      "build-ndxplorer",
      "build-clsmview",
      "build-quest",
@@ -136,5 +142,16 @@ typecheck = { cmd = "mypy chisurf/" }
 test-cov = { cmd = "pytest --cov=chisurf --cov-report=term --cov-report=xml --cov-report=html", depends-on = ["build-extensions"] }
 test-linux = { cmd = "docker build -t chisurf-linux -f Dockerfile.linux . && docker run --rm chisurf-linux" }
 test-smoke = { cmd = "pytest test/test_basic.py -q", depends-on = ["build-extensions"] }
+
+[build-dependencies]
+cmake-build-extension = ">=0.6.1,<0.7"
+cmake = ">=3.31.8,<4"
+swig = ">=4.4.0,<5"
+ninja = ">=1.13.2,<2"
+numpy = ">=2.4.3,<3"
+python = ">=3.12.13,<3.13"
+scikit-build-core = ">=0.12.1,<0.13"
+pybind11 = ">=3.0.3,<4"
+llvm-openmp = ">=22.1.3,<23"
 
 [target.win-64.tasks]

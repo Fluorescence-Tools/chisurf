@@ -37,13 +37,13 @@ build:
       - csg_trace_browser = chisurf.plugins.trace_browser.__main__:main
       - csg_tttr_image_browser = chisurf.plugins.tttr_image_browser.__main__:main
       - chisurf_update = chisurf.plugins.updater.__main__:main
-      - burst-background=chisurf.plugins.burst.burst_background.cli:cli
-      - fcs-convert=chisurf.plugins.fcs.fcs_convert.cli:cli
-      - lltf=chisurf.plugins.fluorescence_decay.lltf.core.cli:cli
-      - sm-image-mle=chisurf.plugins.microscopy.sm_image_mle.sm_image_mle:cli
-      - proteinmc=chisurf.plugins.modelling.proteinmc.cli:cli
       - microtime-histogram=chisurf.plugins.tttr.microtime_histogram.__main__:main
       - count-rate=chisurf.plugins.tttr.tttr_count_rate_analysis.cli:cli
+      - proteinmc=chisurf.plugins.modelling.proteinmc.cli:cli
+      - fcs-convert=chisurf.plugins.fcs.fcs_convert.cli:cli
+      - burst-background=chisurf.plugins.burst.burst_background.cli:cli
+      - lltf=chisurf.plugins.fluorescence_decay.lltf.core.cli:cli
+      - sm-image-mle=chisurf.plugins.microscopy.sm_image_mle.sm_image_mle:cli
       # END_ENTRY_POINTS
 
 requirements:
@@ -75,7 +75,6 @@ requirements:
     - eigen
     # Windows-only dependency for TTTRlib
     - ${{ "hdf5" if win }}
-
   run:
     - python 3.12.*
     - numpy <2.0
