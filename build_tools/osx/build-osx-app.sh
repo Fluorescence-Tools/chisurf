@@ -28,7 +28,7 @@ CHISURF_PKG=$(find "$OUTPUT_DIR" -name "chisurf-*.conda" | head -n 1)
 echo "[3/4] Creating distribution environment at $APP_PATH ..."
 rm -rf "$APP_PATH"
 # Explicitly include libomp (from llvm-openmp)
-micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib eigen "cmake<3.27" zstd libzstd libarchive libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
+micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib eigen "cmake<3.27" zstd libarchive libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
 
 echo "[3.5/4] Installing submodules ..."
 # Set CMAKE_ARGS and CMAKE_PREFIX_PATH to help submodules find the environment's eigen
@@ -44,6 +44,9 @@ if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
     # Force C++14 as required by modern Eigen
     python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
 fi
+
+# Add environment bin to PATH for submodule builds (so they find cmake, etc.)
+export PATH="$APP_PATH/bin:$PATH"
 
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then

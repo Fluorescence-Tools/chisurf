@@ -61,7 +61,7 @@ rm -rf "$PREFIX"
 echo "[2/4] Creating runtime environment at $PREFIX..."
 # Explicitly add eigen and specify python version
 micromamba create -y -p "$PREFIX" \
-    "python=3.12" chisurf tttrlib eigen "cmake<3.27" zstd libzstd libarchive \
+    "python=3.12" chisurf tttrlib eigen "cmake<3.27" zstd libarchive \
     -c "$REPO_ROOT/conda-bld" -c conda-forge -c bioconda \
     --no-channel-priority
 
@@ -81,6 +81,9 @@ if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
     # Force C++14 as required by modern Eigen
     python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
 fi
+
+# Add environment bin to PATH for submodule builds (so they find cmake, etc.)
+export PATH="$PREFIX/bin:$PATH"
 
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
