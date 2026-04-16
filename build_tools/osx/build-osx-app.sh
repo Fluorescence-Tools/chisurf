@@ -181,8 +181,4 @@ ln -s /Applications "$DMG_TMP/Applications"
 hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_TMP" -ov -format UDZO -imagekey zlib-level=9 "$DMG_NAME"
 rm -rf "$DMG_TMP"
 
-# Also create a generic link for the CI artifact upload if needed
-ln -sf "$(basename "$DMG_NAME")" "$DIST_PATH/$APP_NAME.dmg"
-
 echo "Created artifact: $DMG_NAME"
-echo "Created artifact: $DIST_PATH/$APP_NAME.dmg"
