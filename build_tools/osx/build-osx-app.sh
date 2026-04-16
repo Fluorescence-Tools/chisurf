@@ -28,7 +28,7 @@ CHISURF_PKG=$(find "$OUTPUT_DIR" -name "chisurf-*.conda" | head -n 1)
 echo "[3/4] Creating distribution environment at $APP_PATH ..."
 rm -rf "$APP_PATH"
 # Explicitly include libomp (from llvm-openmp)
-micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib eigen "cmake<3.27" zstd libarchive libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
+micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib eigen pybind11 "cmake<3.27" zstd libarchive libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
 
 echo "[3.5/4] Installing submodules ..."
 # Set CMAKE_ARGS and CMAKE_PREFIX_PATH to help submodules find the environment's eigen
@@ -40,7 +40,11 @@ if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
     echo "Patching LabelLib to use environment Eigen..."
     rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen"
     mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/eigen"
-    cp -r "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+    cp -r "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/"
+    # Patch pybind11 too
+    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include/pybind11"
+    mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include"
+    cp -r "$APP_PATH/include/pybind11" "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include/"
     # Force C++14 as required by modern Eigen
     python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
     # Fix missing include for assert
