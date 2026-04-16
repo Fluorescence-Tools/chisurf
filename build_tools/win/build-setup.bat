@@ -132,6 +132,7 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         wheel ^
         "cython>=0.29,<3.1" ^
         "numpy<2.0" ^
+        openblas ^
         "cmake<3.27" ^
         ninja ^
         swig ^
@@ -377,10 +378,29 @@ echo Compiling .pyc files ...
 echo Stripping headers, docs, .lib files ...
 if exist "%APP_PATH%\include"              rmdir /s /q "%APP_PATH%\include"
 if exist "%APP_PATH%\Library\share\doc"   rmdir /s /q "%APP_PATH%\Library\share\doc"
+if exist "%APP_PATH%\Library\share\man"   rmdir /s /q "%APP_PATH%\Library\share\man"
+if exist "%APP_PATH%\Library\share\info"  rmdir /s /q "%APP_PATH%\Library\share\info"
 if exist "%APP_PATH%\Library\share\IMP"   rmdir /s /q "%APP_PATH%\Library\share\IMP"
 if exist "%APP_PATH%\Library\include"     rmdir /s /q "%APP_PATH%\Library\include"
-if exist "%APP_PATH%\etc\conda\test-files" rmdir /s /q "%APP_PATH%\etc\conda\test-files"
+if exist "%APP_PATH%\etc\conda"           rmdir /s /q "%APP_PATH%\etc\conda"
+if exist "%APP_PATH%\conda-meta"          rmdir /s /q "%APP_PATH%\conda-meta"
+
+:: Remove Python bytecode and tests
+echo Removing Python bytecode and tests ...
+powershell -Command "Get-ChildItem -Path '%APP_PATH%' -Filter '__pycache__' -Recurse | Remove-Item -Force -Recurse"
+powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter 'tests' -Directory -Recurse | Remove-Item -Force -Recurse"
+powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter 'examples' -Directory -Recurse | Remove-Item -Force -Recurse"
+
+:: Remove pip, setuptools, wheel
+echo Removing pip, setuptools, wheel ...
+rmdir /s /q "%APP_PATH%\Lib\site-packages\pip"
+rmdir /s /q "%APP_PATH%\Lib\site-packages\setuptools"
+rmdir /s /q "%APP_PATH%\Lib\site-packages\wheel"
+powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter '*.dist-info' -Directory -Recurse | Remove-Item -Force -Recurse"
+powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter '*.egg-info' -Directory -Recurse | Remove-Item -Force -Recurse"
+
 for /r "%APP_PATH%\Library\lib" %%F in (*.lib) do del /q "%%F"
+for /r "%APP_PATH%\Library\lib" %%F in (*.a) do del /q "%%F"
 
 :: -----------------------------------------------------------------------
 :: Generate Inno Setup script and build setup.exe

@@ -53,9 +53,33 @@ export PATH="$APP_PATH/bin:$PATH"
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
         echo "Installing submodule $(basename "$mod") ..."
-        "$APP_PATH/bin/pip" install -e "$mod" --no-deps
+        "$APP_PATH/bin/pip" install "$mod" --no-deps
     fi
 done
+
+# Remove compile-time dependencies to reduce size
+echo "Removing compile-time dependencies..."
+micromamba remove -y --prefix "$APP_PATH" eigen "cmake<3.27" zstd libarchive
+
+# Strip bloat before bundling
+echo "Cleaning environment..."
+rm -rf "$APP_PATH/include"
+rm -rf "$APP_PATH/share/doc" "$APP_PATH/share/man" "$APP_PATH/share/info"
+rm -rf "$APP_PATH/conda-meta"
+find "$APP_PATH/lib" -name "*.a" -delete
+find "$APP_PATH/lib" -name "*.la" -delete
+find "$APP_PATH/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Remove pip, setuptools, and wheel (not needed at runtime)
+rm -rf "$APP_PATH/lib/python3.12/site-packages/pip"
+rm -rf "$APP_PATH/lib/python3.12/site-packages/setuptools"
+rm -rf "$APP_PATH/lib/python3.12/site-packages/wheel"
+find "$APP_PATH/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$APP_PATH/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Remove tests and examples from site-packages
+find "$APP_PATH/lib/python3.12/site-packages" -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$APP_PATH/lib/python3.12/site-packages" -name "examples" -type d -exec rm -rf {} + 2>/dev/null || true
 
 # Build app bundle
 APP_BUNDLE="$DIST_PATH/$APP_NAME.app"
@@ -159,7 +183,7 @@ mkdir -p "$DMG_TMP"
 cp -a "$APP_BUNDLE" "$DMG_TMP/"
 ln -s /Applications "$DMG_TMP/Applications"
 
-hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_TMP" -ov -format UDZO "$DMG_NAME"
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_TMP" -ov -format UDZO -imagekey zlib-level=9 "$DMG_NAME"
 rm -rf "$DMG_TMP"
 
 # Also create a generic link for the CI artifact upload if needed

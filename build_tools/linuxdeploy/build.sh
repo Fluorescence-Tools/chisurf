@@ -61,7 +61,7 @@ rm -rf "$PREFIX"
 echo "[2/4] Creating runtime environment at $PREFIX..."
 # Explicitly add eigen and specify python version
 micromamba create -y -p "$PREFIX" \
-    "python=3.12" chisurf tttrlib eigen "cmake<3.27" zstd libarchive \
+    "python=3.12" chisurf tttrlib eigen "cmake<3.27" zstd libarchive openblas \
     -c "$REPO_ROOT/conda-bld" -c conda-forge -c bioconda \
     --no-channel-priority
 
@@ -96,16 +96,29 @@ done
 
 # Remove eigen after compilation as it is not needed at runtime
 echo "Removing compile-time dependencies..."
-micromamba remove -y -p "$PREFIX" eigen
+micromamba remove -y -p "$PREFIX" eigen "cmake<3.27" zstd libarchive
 
 # 5. Finalize Environment (Cleanup)
 echo "[3/4] Cleaning runtime environment..."
-# Use the python in the prefix to ensure we are modifying the right env
-PYTHON_BIN="$PREFIX/bin/python"
 
 # Strip bloat to keep the AppImage small
-rm -rf "$PREFIX/include" "$PREFIX/share/doc"
+rm -rf "$PREFIX/include"
+rm -rf "$PREFIX/share/doc" "$PREFIX/share/man" "$PREFIX/share/info"
+rm -rf "$PREFIX/conda-meta"
+find "$PREFIX/lib" -name "*.a" -delete
+find "$PREFIX/lib" -name "*.la" -delete
 find "$PREFIX/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Remove pip, setuptools, and wheel (not needed at runtime)
+rm -rf "$PREFIX/lib/python3.12/site-packages/pip"
+rm -rf "$PREFIX/lib/python3.12/site-packages/setuptools"
+rm -rf "$PREFIX/lib/python3.12/site-packages/wheel"
+find "$PREFIX/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$PREFIX/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Remove tests and examples from site-packages
+find "$PREFIX/lib/python3.12/site-packages" -name "tests" -type d -exec rm -rf {} + 2>/dev/null || true
+find "$PREFIX/lib/python3.12/site-packages" -name "examples" -type d -exec rm -rf {} + 2>/dev/null || true
 
 # 6. Bundle into AppImage
 echo "[4/4] Bundling with linuxdeploy..."
@@ -144,6 +157,8 @@ export OUTPUT="$OUTPUT_APPIMAGE"
 rm -f "$OUTPUT"
 
 # Extract and run to avoid FUSE issues in WSL/containers
+# Use COMP=xz for maximum AppImage compression if appimagetool supports it
+export COMP=xz
 APPIMAGE_EXTRACT_AND_RUN=1 \
 "$LINUXDEPLOY_BIN" --appdir "$APPDIR" --output appimage
 
