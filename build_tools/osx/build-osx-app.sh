@@ -35,6 +35,13 @@ echo "[3.5/4] Installing submodules ..."
 export CMAKE_ARGS="-DEIGEN3_INCLUDE_DIR=$APP_PATH/include/eigen3"
 export CMAKE_PREFIX_PATH="$APP_PATH"
 
+# Patch LabelLib to use environment's Eigen (legacy bundled Eigen fails on new compilers)
+if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
+    echo "Patching LabelLib to use environment Eigen..."
+    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+    ln -s "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+fi
+
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
         echo "Installing submodule $(basename "$mod") ..."

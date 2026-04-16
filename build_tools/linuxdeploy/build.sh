@@ -69,6 +69,15 @@ micromamba create -y -p "$PREFIX" \
 echo "[2.5/4] Installing submodules from modules directory ..."
 # Set CMAKE_ARGS to help submodules find the environment's eigen
 export CMAKE_ARGS="-DEIGEN3_INCLUDE_DIR=$PREFIX/include/eigen3"
+export CMAKE_PREFIX_PATH="$PREFIX"
+
+# Patch submodules to use environment's Eigen (legacy bundled Eigen often fails on new compilers)
+# We look specifically for labellib which is known to have this issue
+if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
+    echo "Patching LabelLib to use environment Eigen..."
+    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+    ln -s "$PREFIX/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
+fi
 
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
