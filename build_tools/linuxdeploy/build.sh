@@ -61,7 +61,7 @@ rm -rf "$PREFIX"
 echo "[2/4] Creating runtime environment at $PREFIX..."
 # Explicitly add eigen and specify python version
 micromamba create -y -p "$PREFIX" \
-    "python=3.12" chisurf tttrlib chinet eigen \
+    "python=3.12" chisurf tttrlib eigen \
     -c "$REPO_ROOT/conda-bld" -c conda-forge -c bioconda \
     --no-channel-priority
 
