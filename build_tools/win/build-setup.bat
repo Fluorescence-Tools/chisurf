@@ -392,8 +392,7 @@ powershell -Command "Get-ChildItem -Path '%APP_PATH%' -Filter '__pycache__' -Rec
 echo Removing pip, wheel ...
 rmdir /s /q "%APP_PATH%\Lib\site-packages\pip"
 rmdir /s /q "%APP_PATH%\Lib\site-packages\wheel"
-powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter '*.dist-info' -Directory -Recurse | Remove-Item -Force -Recurse"
-powershell -Command "Get-ChildItem -Path '%APP_PATH%\Lib\site-packages' -Filter '*.egg-info' -Directory -Recurse | Remove-Item -Force -Recurse"
+:: Keep metadata directories as many packages (prompt_toolkit, etc.) use importlib.metadata
 
 for /r "%APP_PATH%\Library\lib" %%F in (*.lib) do del /q "%%F"
 for /r "%APP_PATH%\Library\lib" %%F in (*.a) do del /q "%%F"

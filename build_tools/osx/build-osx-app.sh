@@ -73,8 +73,7 @@ find "$APP_PATH/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || t
 # Remove pip and wheel (keep setuptools as pkg_resources depends on it)
 rm -rf "$APP_PATH/lib/python3.12/site-packages/pip"
 rm -rf "$APP_PATH/lib/python3.12/site-packages/wheel"
-find "$APP_PATH/lib/python3.12/site-packages" -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
-find "$APP_PATH/lib/python3.12/site-packages" -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+# Keep metadata directories as many packages (prompt_toolkit, etc.) use importlib.metadata
 
 # Keep tests and examples as some packages (like tables) import them at runtime
 
