@@ -54,7 +54,7 @@ fi
 echo "Using package: $PKG"
 
 # 4. Create Distribution Prefix
-PREFIX="$LINUX_DIST_DIR/runtime"
+PREFIX="$REPO_ROOT/$LINUX_DIST_DIR/runtime"
 mkdir -p "$(dirname "$PREFIX")"
 rm -rf "$PREFIX"
 
