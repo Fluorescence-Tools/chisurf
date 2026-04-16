@@ -226,19 +226,19 @@ class RibbonGallery(QtWidgets.QFrame):
 
         self._upButton = RibbonGalleryButton(self)
         # Use Unicode icon instead of PNG
-        self._upButton.setText("▲")
+        self._upButton.setText("^")
         self._upButton.setIconSize(QtCore.QSize(24, 24))
         self._upButton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._upButton.setAutoRaise(True)
         self._downButton = RibbonGalleryButton(self)
         # Use Unicode icon instead of PNG
-        self._downButton.setText("▼")
+        self._downButton.setText("v")
         self._downButton.setIconSize(QtCore.QSize(24, 24))
         self._downButton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._downButton.setAutoRaise(True)
         self._moreButton = RibbonGalleryButton(self)
         # Use Unicode icon instead of PNG
-        self._moreButton.setText("⋯")
+        self._moreButton.setText("...")
         self._moreButton.setIconSize(QtCore.QSize(24, 24))
         self._moreButton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._moreButton.setAutoRaise(True)

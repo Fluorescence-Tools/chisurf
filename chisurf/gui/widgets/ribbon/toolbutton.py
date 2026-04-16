@@ -143,7 +143,7 @@ class RibbonSplitButton(QtWidgets.QWidget):
         self._menuButton.setAutoRaise(True)
         self._menuButton.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self._menuButton.setPopupMode(QtWidgets.QToolButton.ToolButtonPopupMode.InstantPopup)
-        self._menuButton.setText("▼")
+        self._menuButton.setText("v")
         self._menuButton.setFixedSize(16, 16)
         
         self._mainLayout.addWidget(self._actionButton)

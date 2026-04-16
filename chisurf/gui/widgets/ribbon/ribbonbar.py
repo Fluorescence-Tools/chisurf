@@ -28,7 +28,7 @@ class RibbonStackedWidget(QtWidgets.QStackedWidget):
         self.setGraphicsEffect(effect)
 
 
-class RibbonBar(QtWidgets.QMenuBar):
+class RibbonBar(QtWidgets.QWidget):
     """The RibbonBar class is the top level widget that contains the ribbon."""
 
     #: Signal, the help button was clicked.
@@ -843,7 +843,7 @@ class RibbonBar(QtWidgets.QMenuBar):
             self._ribbonVisible = True
             self.collapseRibbonButton().setToolTip("Collapse Ribbon")
             # Use Unicode icon instead of PNG
-            self.collapseRibbonButton().setText("▲")
+            self.collapseRibbonButton().setText("^")
             self._stackedWidget.setVisible(True)
             self.setFixedSize(self.sizeHint())
 
@@ -853,7 +853,7 @@ class RibbonBar(QtWidgets.QMenuBar):
             self._ribbonVisible = False
             self.collapseRibbonButton().setToolTip("Expand Ribbon")
             # Use Unicode icon instead of PNG
-            self.collapseRibbonButton().setText("▼")
+            self.collapseRibbonButton().setText("v")
             self._stackedWidget.setVisible(False)
             self.setFixedSize(self.sizeHint().width(), self._titleWidget.size().height() + 5)  # type: ignore
 

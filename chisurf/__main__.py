@@ -72,6 +72,10 @@ def main():
         os._exit(exit_code)
 
     except Exception as e:
+        # Always print to stderr for CLI users and logging
+        exception_text = f"{str(e)}\n\n{traceback.format_exc()}"
+        print(f"ChiSurf encountered an error during startup:\n{exception_text}", file=sys.stderr)
+
         # Handle the exception
         try:
             if QtWidgets is None:

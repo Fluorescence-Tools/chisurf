@@ -348,7 +348,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
         # Initialize copyright, license, and contributors information
         import datetime
         current_year = datetime.datetime.now().year
-        self.copyright_text = f"© 2014-{current_year} ChiSurf Team"
+        self.copyright_text = f"(c) 2014-{current_year} ChiSurf Team"
         self.license_text = f"Licensed under {__license__}"
         self.contributors_text = "Developers & Contributors: \nThomas-Otavio Peulen, Katherina Hemmen, Jakub Kubiak"
 
@@ -1531,6 +1531,12 @@ def set_app_style(app: QtWidgets.QApplication):
 
 def get_app():
     app = QtWidgets.QApplication(sys.argv)
+    if sys.platform == 'darwin':
+        # Compensate for low-resolution stability mode on macOS ARM64
+        # by setting a readable global application font.
+        font = app.font()
+        font.setPointSize(13)
+        app.setFont(font)
     set_app_style(app)
     app.processEvents()
     win = get_win(app=app)

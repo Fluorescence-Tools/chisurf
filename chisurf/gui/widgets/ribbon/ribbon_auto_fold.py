@@ -120,7 +120,7 @@ class AutoFoldMethodsMixin:
                 
                 # If no theme icon works, create a simple text-based question mark
                 if not icon_set:
-                    help_button.setText("❓")
+                    help_button.setText("?")
                     help_button.setStyleSheet("font-weight: bold; font-size: 14px; color: red;")
                 
                 help_button.setToolTip("Open Help Plugin")
@@ -147,12 +147,12 @@ class AutoFoldMethodsMixin:
             if self.is_pinned:
                 # Pinned state - use a "pinned" icon or create one
                 # For now, we'll use a simple approach with text
-                self.pin_button.setText("📌")
+                self.pin_button.setText("P")
                 self.pin_button.setToolTip("Unpin ribbon (enable auto-fold)")
                 self.pin_button.setStyleSheet("QToolButton { color: #4CAF50; font-weight: bold; }")
             else:
                 # Unpinned state
-                self.pin_button.setText("📍")
+                self.pin_button.setText("L")
                 self.pin_button.setToolTip("Pin ribbon (disable auto-fold)")
                 self.pin_button.setStyleSheet("QToolButton { color: #CCCCCC; }")
 

@@ -231,3 +231,49 @@ def iter_plugins():
                 }
             except Exception:
                 continue
+
+
+class OptionalModuleProxy:
+    """A proxy object that behaves as a falsy module and returns itself for any attribute access."""
+    def __init__(self, name):
+        self.__name__ = name
+        self.__path__ = []
+
+    def __getattr__(self, name):
+        if name.startswith('__'):
+            raise AttributeError(name)
+        return OptionalModuleProxy(f"{self.__name__}.{name}")
+
+    def __call__(self, *args, **kwargs):
+        return None
+
+    def __bool__(self):
+        return False
+
+
+class DevPluginFinder:
+    """A MetaPathFinder that provides virtual modules for missing chisurf.plugins._dev subpackages."""
+    def find_spec(self, fullname, path, target=None):
+        if fullname.startswith("chisurf.plugins._dev"):
+            try:
+                # Check if the physical _dev directory exists.
+                # If it exists, we let the normal import system handle it.
+                plugins_dir = pathlib.Path(__file__).parent
+                if (plugins_dir / "_dev").is_dir():
+                    return None
+            except Exception:
+                pass
+            
+            from importlib.machinery import ModuleSpec
+            return ModuleSpec(fullname, self)
+        return None
+
+    def create_module(self, spec):
+        return OptionalModuleProxy(spec.name)
+
+    def exec_module(self, module):
+        pass
+
+# Register the virtual plugin finder
+import sys
+sys.meta_path.append(DevPluginFinder())

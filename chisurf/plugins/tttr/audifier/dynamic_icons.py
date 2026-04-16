@@ -45,7 +45,7 @@ class DynamicIconManager(QObject):
             return create_emoji_icon("⏸️", size=size, bg_color="#FF9800")
         elif state == "processing":
             # Animated processing indicator
-            processing_emojis = ["⏳", "🔄", "⚙️"]
+            processing_emojis = ["Wait", "Processing", "Done"]
             emoji = processing_emojis[self._animation_frame % len(processing_emojis)]
             return create_emoji_icon(emoji, size=size, bg_color="#2196F3")
         elif state == "error":

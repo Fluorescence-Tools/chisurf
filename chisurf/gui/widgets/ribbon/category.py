@@ -61,14 +61,14 @@ class RibbonCategoryLayoutWidget(QtWidgets.QFrame):
         # Previous/Next buttons
         self._previousButton = RibbonCategoryLayoutButton(self)
         # Use Unicode icon instead of PNG
-        self._previousButton.setText("◀")
+        self._previousButton.setText("<")
         self._previousButton.setIconSize(QtCore.QSize(12, 12))
         self._previousButton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._previousButton.setAutoRaise(True)
         self._previousButton.clicked.connect(self.scrollPrevious)  # type: ignore
         self._nextButton = RibbonCategoryLayoutButton(self)
         # Use Unicode icon instead of PNG
-        self._nextButton.setText("▶")
+        self._nextButton.setText(">")
         self._nextButton.setIconSize(QtCore.QSize(12, 12))
         self._nextButton.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextOnly)
         self._nextButton.setAutoRaise(True)

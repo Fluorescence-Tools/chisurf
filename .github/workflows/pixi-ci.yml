@@ -2,6 +2,18 @@ name: Build and Release
 
 on:
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - alpha
+          - beta
+          - rc
+          - stable
   push:
     branches: [development, main]
     tags: ["v*"]
@@ -50,19 +62,37 @@ jobs:
       - name: Install build tools
         shell: bash -l {0}
         run: |
-          micromamba create -n build -y -c conda-forge \
+          CHANNELS="-c conda-forge"
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            CHANNELS="$CHANNELS -c bioconda"
+          fi
+          micromamba create -n build -y $CHANNELS \
             python=3.12 rattler-build micromamba git pip setuptools wheel \
-            cython numpy swig cmake ninja
+            cython numpy swig "cmake<3.27" ninja eigen
 
       - name: Build conda package
         shell: bash -l {0}
         run: |
           micromamba activate build
           CHISURF_VERSION=$(python rattler-recipe/generate_version.py --print)
-          echo "CHISURF_VERSION=$CHISURF_VERSION"
-          echo "{\"version\": \"$CHISURF_VERSION\"}" > rattler-recipe/version.json
+          echo "CHISURF_VERSION=$CHISURF_VERSION" >> $GITHUB_ENV
           python rattler-recipe/collect_entry_points.py || true
           python build_tools/run_rattler_build.py
+
+      - name: Build macOS DMG
+        if: runner.os == 'macOS'
+        shell: bash -l {0}
+        run: |
+          micromamba activate build
+          bash build_tools/osx/build-osx-app.sh --no-build
+
+      - name: Upload macOS DMG
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-macos
+          path: dist/*.dmg
+          if-no-files-found: error
 
       - name: Upload Linux conda packages
         if: runner.os == 'Linux'
@@ -86,7 +116,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: appimage-linux
-          path: dist/ChiSurf-x86_64.AppImage
+          path: dist/ChiSurf-*-x86_64.AppImage
           if-no-files-found: error
 
       - name: Upload macOS conda packages
@@ -138,6 +168,12 @@ jobs:
           name: installer-windows
           path: artifacts/windows
 
+      - name: Download macOS installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: installer-macos
+          path: artifacts/macos
+
       - name: Download Linux conda packages
         uses: actions/download-artifact@v4
         with:
@@ -167,8 +203,10 @@ jobs:
         with:
           files: |
             artifacts/linux/*.AppImage
+            artifacts/macos/*.dmg
             artifacts/windows/*.exe
             conda-packages/**/*.conda
           generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

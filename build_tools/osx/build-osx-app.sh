@@ -19,160 +19,167 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-echo ""
-echo "=== ChiSurf macOS Build ==="
-echo "REPO_ROOT        = $REPO_ROOT"
-echo "OUTPUT_DIR       = $OUTPUT_DIR"
-echo ""
-
-CHISURF_VERSION="${CHISURF_VERSION:-}"
-if [[ -z "$CHISURF_VERSION" ]]; then
-    CHISURF_VERSION="$(cd "$REPO_ROOT" && python rattler-recipe/generate_version.py --print)"
-    if [[ -z "$CHISURF_VERSION" ]]; then
-        echo "ERROR: Failed to generate version"
-        exit 1
-    fi
-fi
-echo "CHISURF_VERSION = $CHISURF_VERSION"
-echo '{"version": "'"$CHISURF_VERSION"'"}' > "$RATTLER_RECIPE_DIR/version.json"
-
 if [[ "$BUILD_RATTLER_PACKAGE" == "1" ]]; then
-    echo ""
-    echo "[1/4] Building conda package ..."
-    rattler-build build --recipe "$RATTLER_RECIPE_DIR" --output-dir "$OUTPUT_DIR" --test skip
-else
-    echo "[1/4] Skipping package build (--no-build)"
+    rattler-build build --recipe "$RATTLER_RECIPE_DIR" --output-dir "$OUTPUT_DIR" --channel conda-forge --channel bioconda --test skip
 fi
 
-echo ""
-echo "[2/4] Finding built conda package ..."
-CHISURF_PKG=""
-for f in "$OUTPUT_DIR/osx-64"/chisurf-*.conda "$OUTPUT_DIR/osx-arm64"/chisurf-*.conda; do
-    if [[ -f "$f" ]]; then
-        CHISURF_PKG="$f"
-        break
-    fi
-done
-if [[ -z "$CHISURF_PKG" ]]; then
-    echo "ERROR: No chisurf conda package found in $OUTPUT_DIR/osx-*"
-    exit 1
-fi
-echo "Found package: $CHISURF_PKG"
+CHISURF_PKG=$(find "$OUTPUT_DIR" -name "chisurf-*.conda" | head -n 1)
 
-echo ""
 echo "[3/4] Creating distribution environment at $APP_PATH ..."
 rm -rf "$APP_PATH"
-mkdir -p "$(dirname "$APP_PATH")"
+# Explicitly include libomp (from llvm-openmp)
+micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib eigen pybind11 "cmake<3.27" zstd libarchive libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
 
-micromamba create -y \
-    --prefix "$APP_PATH" \
-    python chisurf tttrlib \
-    "$CHISURF_PKG" \
-    -c conda-forge -c bioconda \
-    --no-channel-priority
+echo "[3.5/4] Installing submodules ..."
+# Set CMAKE_ARGS and CMAKE_PREFIX_PATH to help submodules find the environment's eigen
+export CMAKE_ARGS="-DEIGEN3_INCLUDE_DIR=$APP_PATH/include/eigen3"
+export CMAKE_PREFIX_PATH="$APP_PATH"
 
-if [[ ! -f "$APP_PATH/bin/python" ]]; then
-    echo "ERROR: python not found in $APP_PATH"
-    exit 1
+# Patch LabelLib to use environment's Eigen (legacy bundled Eigen fails on new compilers)
+if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
+    echo "Patching LabelLib to use environment Eigen..."
+    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen"
+    mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/eigen"
+    cp -r "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/"
+    # Patch pybind11 too
+    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include/pybind11"
+    mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include"
+    cp -r "$APP_PATH/include/pybind11" "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include/"
+    # Force C++14 as required by modern Eigen
+    python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
+    # Fix missing include for assert
+    python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write('#include <cassert>\n' + content)" "$REPO_ROOT/modules/labellib/FlexLabel/include/FlexLabel/FlexLabel.h"
 fi
 
-echo "Stripping dev-only bloat ..."
-rm -rf "$APP_PATH/include" "$APP_PATH/share/doc" "$APP_PATH/share/IMP" "$APP_PATH/share/info"
-find "$APP_PATH/lib" -name "*.a" -delete 2>/dev/null || true
-find "$APP_PATH/lib" -name "*.la" -delete 2>/dev/null || true
-find "$APP_PATH" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+# Add environment bin to PATH for submodule builds (so they find cmake, etc.)
+export PATH="$APP_PATH/bin:$PATH"
 
-echo ""
-echo "[4/4] Building .app bundle ..."
+for mod in "$REPO_ROOT/modules"/*; do
+    if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
+        echo "Installing submodule $(basename "$mod") ..."
+        "$APP_PATH/bin/pip" install "$mod" --no-deps
+    fi
+done
 
+# Strip bloat before bundling
+echo "Cleaning environment..."
+rm -rf "$APP_PATH/include"
+rm -rf "$APP_PATH/share/doc" "$APP_PATH/share/man" "$APP_PATH/share/info"
+rm -rf "$APP_PATH/conda-meta"
+find "$APP_PATH/lib" -name "*.a" -delete
+find "$APP_PATH/lib" -name "*.la" -delete
+find "$APP_PATH/" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Remove pip and wheel (keep setuptools as pkg_resources depends on it)
+rm -rf "$APP_PATH/lib/python3.12/site-packages/pip"
+rm -rf "$APP_PATH/lib/python3.12/site-packages/wheel"
+# Keep metadata directories as many packages (prompt_toolkit, etc.) use importlib.metadata
+
+# Keep tests and examples as some packages (like tables) import them at runtime
+
+# Build app bundle
 APP_BUNDLE="$DIST_PATH/$APP_NAME.app"
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
+mkdir -p "$APP_BUNDLE/Contents/bin"
+mkdir -p "$APP_BUNDLE/Contents/lib"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
+cp -a "$APP_PATH/bin/"* "$APP_BUNDLE/Contents/bin/"
+cp -a "$APP_PATH/lib/python3.12" "$APP_BUNDLE/Contents/lib/"
+cp -a "$APP_PATH/lib/"*.dylib "$APP_BUNDLE/Contents/lib/"
+# Remove libc++ - it is an OS-provided library on macOS; bundling it causes
+# SIGBUS (EXC_ARM_DA_ALIGN) crashes when the conda version conflicts with the system one.
+rm -f "$APP_BUNDLE/Contents/lib/libc++"*.dylib
 
-cp -a "$APP_PATH/." "$APP_BUNDLE/Contents/"
+# Add Icon
+ICON_SRC="$REPO_ROOT/chisurf/gui/resources/icons/cs_logo.icns"
+if [ -f "$ICON_SRC" ]; then
+    cp "$ICON_SRC" "$APP_BUNDLE/Contents/Resources/ChiSurf.icns"
+fi
 
-cat > "$APP_BUNDLE/Contents/MacOS/$APP_NAME" << LAUNCHER
+# Write PkgInfo (required for macOS bundle recognition)
+echo -n "APPL????" > "$APP_BUNDLE/Contents/PkgInfo"
+
+# Write Info.plist (required for Cocoa/CoreText initialization; missing plist causes CTFontDrawGlyphs SIGBUS crash)
+CHISURF_VERSION=${CHISURF_VERSION:-$(cd "$REPO_ROOT" && git describe --tags --always 2>/dev/null || echo "26.0")}
+cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIconFile</key>
+    <string>ChiSurf</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>$APP_NAME</string>
+    <key>CFBundleExecutable</key>
+    <string>$APP_NAME</string>
+    <key>CFBundleIdentifier</key>
+    <string>xyz.peulen.chisurf</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$APP_NAME</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$CHISURF_VERSION</string>
+    <key>CFBundleVersion</key>
+    <string>$CHISURF_VERSION</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>11.0</string>
+    <key>LSUIElement</key>
+    <false/>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright 2026 Thomas-Otavio Peulen</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+
+cat > "$APP_BUNDLE/Contents/MacOS/$APP_NAME" << 'LAUNCHER'
 #!/usr/bin/env bash
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-SCRIPT_DIR="\$(dirname "\$(cd "\$(dirname "\$0")" && pwd)")"
+SCRIPT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+PYVER=python3.12
 export PYTHONNOUSERSITE=1
-export PATH="\$SCRIPT_DIR/Contents/bin:\$SCRIPT_DIR/Contents:\$PATH"
-export QT_PLUGIN_PATH="\$SCRIPT_DIR/Contents/plugins"
-export DYLD_LIBRARY_PATH="\$SCRIPT_DIR/Contents/lib:\${DYLD_LIBRARY_PATH:-}"
-cd "\$SCRIPT_DIR/Contents"
-exec "\$SCRIPT_DIR/Contents/bin/python" -m chisurf "\$@"
+export PYTHONPATH="$SCRIPT_DIR/Contents/lib/$PYVER/site-packages"
+export PATH="$SCRIPT_DIR/Contents/bin:$PATH"
+export QT_PLUGIN_PATH="$SCRIPT_DIR/Contents/lib/$PYVER/site-packages/PyQt5/Qt5/plugins"
+
+# Workarounds for Qt5 crashes on macOS ARM64 (Apple Silicon)
+# Enable CoreText (required for Ribbon) and use low-resolution compatibility mode for stability.
+# Scaling is handled by a global application font override in chisurf/gui/__init__.py
+export QT_MAC_DISABLE_APP_NAP=1
+export QT_MAC_WANTS_BEST_RESOLUTION_OPENGL_SURFACE=0
+
+cd "$HOME"
+exec "$SCRIPT_DIR/Contents/bin/python" -m chisurf "$@"
 LAUNCHER
 chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
-if command -v python &> /dev/null; then
-    (cd "$REPO_ROOT" && python build_tools/osx/create_app_plist.py \
-        --module chisurf \
-        --output "$APP_BUNDLE/Contents/Info.plist" \
-        --executable "$APP_NAME" \
-        -i "$REPO_ROOT/chisurf/gui/resources/icons/cs_logo.png" \
-        -p "$SCRIPT_DIR/plist_template" \
-        -t "$SCRIPT_DIR/launch_template") || {
-        echo "WARNING: create_app_plist.py failed, generating minimal Info.plist"
-        cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key><string>$APP_NAME</string>
-    <key>CFBundleName</key><string>$APP_NAME</string>
-    <key>CFBundleShortVersionString</key><string>$CHISURF_VERSION</string>
-    <key>CFBundleVersion</key><string>$CHISURF_VERSION</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>NSHighResolutionCapable</key><true/>
-</dict>
-</plist>
-PLIST
-    }
-else
-    cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleExecutable</key><string>$APP_NAME</string>
-    <key>CFBundleName</key><string>$APP_NAME</string>
-    <key>CFBundleShortVersionString</key><string>$CHISURF_VERSION</string>
-    <key>CFBundleVersion</key><string>$CHISURF_VERSION</string>
-    <key>CFBundlePackageType</key><string>APPL</string>
-    <key>NSHighResolutionCapable</key><true/>
-</dict>
-</plist>
-PLIST
-fi
-
-echo ""
 echo "[4/4] Creating DMG ..."
+DMG_NAME="$DIST_PATH/$APP_NAME-$CHISURF_VERSION.dmg"
+rm -f "$DMG_NAME"
 
-STAGING_DIR="$DIST_PATH/${APP_NAME}-dmg"
-rm -rf "$STAGING_DIR"
-mkdir -p "$STAGING_DIR"
-cp -a "$APP_BUNDLE" "$STAGING_DIR/"
-ln -s /Applications "$STAGING_DIR/Applications"
+# Create a temporary folder for the DMG content to add /Applications link
+DMG_TMP="$DIST_PATH/dmg_tmp"
+rm -rf "$DMG_TMP"
+mkdir -p "$DMG_TMP"
+cp -a "$APP_BUNDLE" "$DMG_TMP/"
+ln -s /Applications "$DMG_TMP/Applications"
 
-DMG_PATH="$DIST_PATH/ChiSurf-Installer.dmg"
-rm -f "$DMG_PATH"
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_TMP" -ov -format UDZO -imagekey zlib-level=9 "$DMG_NAME"
+rm -rf "$DMG_TMP"
 
-hdiutil create \
-    -volname "$APP_NAME Installer" \
-    -srcfolder "$STAGING_DIR" \
-    -ov -format UDRW \
-    -size "5g" \
-    "$DMG_PATH"
-
-hdiutil convert "$DMG_PATH" -format UDZO -o "${DMG_PATH%.dmg}-compressed.dmg"
-mv "${DMG_PATH%.dmg}-compressed.dmg" "$DMG_PATH"
-
-rm -rf "$STAGING_DIR" "$APP_BUNDLE" "$APP_PATH"
-
-echo ""
-echo "=== Build complete ==="
-echo "Version:    $CHISURF_VERSION"
-echo "Installer:  $DMG_PATH"
-echo "Done."
+echo "Created artifact: $DMG_NAME"
