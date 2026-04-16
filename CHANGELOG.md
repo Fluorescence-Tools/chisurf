@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Refactored root tests and prototypes into permanent test suite**:
+  - Moved functional `chimol` command tests from root to `test/plugins/test_chimol_*.py` using `pytest`.
+  - Consolidated Windows-specific path and file-handle tests into `test/core/test_win_unicode_paths.py`.
+  - Migrated core dataset grouping verification to `test/core/test_grouping.py`.
+  - Archived experimental prototypes and debug-specific scripts in `AGENT/TEST/` and `AGENT/MD/` per `AGENTS.md` guidelines.
+
+### Changed
+
+- **Cleaned up project root directory**:
+  - Removed over 40 temporary scripts, old reports, and junk files from the root.
+  - Moved legacy notebooks to the `notebooks/` directory.
+  - Organized agent-generated reports, audits, and core agent documentation (`AGENTS.md`, `AGENTS_PLAN.md`, `handover.md`, `ROADMAP.md`, `TODO.md`) into the `AGENT/` directory.
+  - Established `AGENT/TEST/` as the canonical location for temporary/ad-hoc development scripts.
+
 ### Fixed
 
 - **Optimized NDXplorer data loading with background computation and caching**:

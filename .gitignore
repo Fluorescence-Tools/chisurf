@@ -6,6 +6,11 @@
 broken*
 broken
 .vscode
+.kilo
+.ruff_cache
+htmlcov
+manual
+pixi_bin
 .ipynb_checkpoints
 .pytest_cache
 *.egg-info
