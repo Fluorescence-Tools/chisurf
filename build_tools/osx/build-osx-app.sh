@@ -20,7 +20,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [[ "$BUILD_RATTLER_PACKAGE" == "1" ]]; then
-    rattler-build build --recipe "$RATTLER_RECIPE_DIR" --output-dir "$OUTPUT_DIR" --test skip
+    rattler-build build --recipe "$RATTLER_RECIPE_DIR" --output-dir "$OUTPUT_DIR" --channel conda-forge --channel bioconda --test skip
 fi
 
 CHISURF_PKG=$(find "$OUTPUT_DIR" -name "chisurf-*.conda" | head -n 1)
@@ -28,7 +28,7 @@ CHISURF_PKG=$(find "$OUTPUT_DIR" -name "chisurf-*.conda" | head -n 1)
 echo "[3/4] Creating distribution environment at $APP_PATH ..."
 rm -rf "$APP_PATH"
 # Explicitly include libomp (from llvm-openmp)
-micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge --no-channel-priority
+micromamba create -y --prefix "$APP_PATH" python=3.12 tttrlib libffi openblas libgfortran5 llvm-openmp chisurf -c file://$(dirname "$CHISURF_PKG") -c conda-forge -c bioconda --no-channel-priority
 
 echo "[3.5/4] Installing submodules ..."
 for mod in "$REPO_ROOT/modules"/*; do

@@ -50,7 +50,11 @@ jobs:
       - name: Install build tools
         shell: bash -l {0}
         run: |
-          micromamba create -n build -y -c conda-forge \
+          CHANNELS="-c conda-forge"
+          if [[ "${{ runner.os }}" != "Windows" ]]; then
+            CHANNELS="$CHANNELS -c bioconda"
+          fi
+          micromamba create -n build -y $CHANNELS \
             python=3.12 rattler-build micromamba git pip setuptools wheel \
             cython numpy swig cmake ninja eigen
 

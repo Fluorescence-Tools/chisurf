@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **Resolved missing Bioconda channel in build scripts**:
+  - Added `bioconda` channel to `micromamba` and `rattler-build` commands in `build_tools/osx/build-osx-app.sh`, `build_tools/linuxdeploy/build.sh`, and `build_tools/run_rattler_build.py` to resolve missing `tttrlib` dependency on macOS and Linux.
+  - Conditionally excluded `bioconda` on Windows in `run_rattler_build.py` and `.github/workflows/pixi-ci.yml` to honor the existing pip-based `tttrlib` installation on that platform.
+
 - **macOS App Bundle Build now generates a `.dmg` artifact**:
   - Updated `build_tools/osx/build-osx-app.sh` to create a disk image (`.dmg`) using `hdiutil`.
   - The DMG contains the `ChiSurf.app` bundle and a convenient link to `/Applications`.

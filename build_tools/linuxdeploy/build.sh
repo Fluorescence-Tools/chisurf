@@ -42,7 +42,7 @@ echo "{\"version\": \"$CHI_VERSION\"}" > "$REPO_ROOT/rattler-recipe/version.json
 if [[ "$BUILD_PKG" == "1" ]]; then
     echo "[1/4] Building conda package..."
     # We use rattlel-build from the environment
-    rattler-build build --recipe "$REPO_ROOT/rattler-recipe" --output-dir "$REPO_ROOT/conda-bld" --test skip
+    rattler-build build --recipe "$REPO_ROOT/rattler-recipe" --output-dir "$REPO_ROOT/conda-bld" --channel conda-forge --channel bioconda --test skip
 fi
 
 # 3. Locate Package

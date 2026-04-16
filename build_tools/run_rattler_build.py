@@ -106,9 +106,17 @@ def main() -> int:
             str(tmp_root / "rattler-recipe"),
             "--output-dir",
             str(out_dir),
+            "--channel",
+            "conda-forge",
+        ]
+        
+        if platform.system() != "Windows":
+            cmd.extend(["--channel", "bioconda"])
+
+        cmd.extend([
             "--test",
             "skip",
-        ]
+        ])
 
         env = os.environ.copy()
         env["PATH"] = _slim_path()
