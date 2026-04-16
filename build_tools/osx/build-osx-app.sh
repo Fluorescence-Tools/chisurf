@@ -43,6 +43,8 @@ if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
     cp -r "$APP_PATH/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/Eigen"
     # Force C++14 as required by modern Eigen
     python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
+    # Fix missing include for assert
+    python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write('#include <cassert>\n' + content)" "$REPO_ROOT/modules/labellib/FlexLabel/include/FlexLabel/FlexLabel.h"
 fi
 
 # Add environment bin to PATH for submodule builds (so they find cmake, etc.)
