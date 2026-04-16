@@ -56,7 +56,7 @@ jobs:
           fi
           micromamba create -n build -y $CHANNELS \
             python=3.12 rattler-build micromamba git pip setuptools wheel \
-            cython numpy swig cmake ninja eigen
+            cython numpy swig "cmake<3.27" ninja eigen
 
       - name: Build conda package
         shell: bash -l {0}

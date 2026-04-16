@@ -51,7 +51,7 @@ requirements:
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}
     - ${{ "vs2022_win-64" if win }}
-    - cmake <4
+    - cmake <3.27
     - ninja
     - ${{ "make" if unix }}
   host:
