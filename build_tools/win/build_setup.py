@@ -16,7 +16,7 @@ print(f"Working directory: {os.getcwd()}")
 
 # Run the batch script
 result = subprocess.run(
-    [str(script_dir / "build-setup.bat")],
+    [str(script_dir / "build-setup.bat")] + sys.argv[1:],
     cwd=str(script_dir),
     shell=True
 )

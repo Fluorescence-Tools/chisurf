@@ -1,0 +1,32 @@
+{
+  "console_scripts": {
+    "csc": "chisurf.cli:cli",
+    "burst-background": "chisurf.plugins.burst.burst_background.cli:cli",
+    "fcs-convert": "chisurf.plugins.fcs.fcs_convert.cli:cli",
+    "lltf": "chisurf.plugins.fluorescence_decay.lltf.core.cli:cli",
+    "sm-image-mle": "chisurf.plugins.microscopy.sm_image_mle.sm_image_mle:cli",
+    "proteinmc": "chisurf.plugins.modelling.proteinmc.cli:cli",
+    "microtime-histogram": "chisurf.plugins.tttr.microtime_histogram.__main__:main",
+    "count-rate": "chisurf.plugins.tttr.tttr_count_rate_analysis.cli:cli"
+  },
+  "gui_scripts": {
+    "chisurf": "chisurf.__main__:main",
+    "csg_kappa2distribution": "chisurf.plugins.kappa2_dist.__main__:main",
+    "csg_fps_json_edit": "chisurf.plugins.modelling.fps_json_editor.__main__:main",
+    "csg_calculator": "chisurf.plugins.fret_calculator.__main__:main",
+    "csg_f_test": "chisurf.plugins.misc.f_test.__main__:main",
+    "csg_traj_align": "chisurf.plugins.traj.traj_align.__main__:main",
+    "csg_traj_convert": "chisurf.plugins.traj.traj_convert.__main__:main",
+    "csg_traj_fret_analysis": "chisurf.plugins.traj.fret_trajectory.__main__:main",
+    "csg_traj_join": "chisurf.plugins.traj.traj_join.__main__:main",
+    "csg_traj_energy_calculator": "chisurf.plugins.traj.potential_energy.__main__:main",
+    "csg_traj_remove_clashed_frames": "chisurf.plugins.traj.traj_remove_clashes.__main__:main",
+    "csg_traj_rotate_translate": "chisurf.plugins.traj.traj_rotate_translate.__main__:main",
+    "csg_traj_save_topology": "chisurf.plugins.traj.traj_save_topology.__main__:main",
+    "csg_quest": "quest.quest_gui:start_gui",
+    "csg_ndxplorer": "ndxplorer.__main__:main",
+    "csg_trace_browser": "chisurf.plugins.trace_browser.__main__:main",
+    "csg_tttr_image_browser": "chisurf.plugins.tttr_image_browser.__main__:main",
+    "chisurf_update": "chisurf.plugins.updater.__main__:main"
+  }
+}

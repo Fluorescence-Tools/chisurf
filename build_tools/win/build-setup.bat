@@ -32,7 +32,34 @@ pushd "%SCRIPT_DIR%\..\.."
 set "SOURCE_PATH=%CD%"
 popd
 
+:: Parse arguments
+set "NO_CLEANUP="
+set "USER_DIST_PATH="
+
+:ArgLoop
+if "%~1"=="" goto ArgDone
+if /i "%~1"=="/nocleanup" (
+    set "NO_CLEANUP=1"
+    shift
+    goto ArgLoop
+)
+if /i "%~1"=="/nobuild" (
+    :: Existing flag from build_setup.py
+    shift
+    goto ArgLoop
+)
+if "%USER_DIST_PATH%"=="" (
+    set "USER_DIST_PATH=%~1"
+    shift
+    goto ArgLoop
+)
+shift
+goto ArgLoop
+:ArgDone
+
 set "DIST_PATH=%SOURCE_PATH%\dist"
+if not "%USER_DIST_PATH%"=="" set "DIST_PATH=%USER_DIST_PATH%"
+
 set "APP_PATH=%DIST_PATH%\win"
 set "RUNTIME_ENV_PATH=%DIST_PATH%\runtime-base"
 set "BUILDER_ENV_PATH=%DIST_PATH%\builder"
@@ -41,6 +68,7 @@ set "BASE_CONDA_ROOT=%BASE_CONDA_ROOT%"
 if not defined BASE_CONDA_ROOT set "BASE_CONDA_ROOT=E:\miniforge3"
 set "RATTLER_RECIPE_FOLDER=%SOURCE_PATH%\rattler-recipe"
 set "PIXI_MANIFEST=%SOURCE_PATH%\pixi.toml"
+
 
 :: Normalize to absolute paths
 for %%I in ("%DIST_PATH%")             do set "DIST_PATH=%%~fI"
@@ -363,10 +391,16 @@ if errorlevel 1 (
 )
 
 echo Verifying chisurf installation ...
-"%PYTHON_EXE%" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import pkg_resources, tttrlib, chinet, LabelLib, chisurf; print('chisurf OK:', chisurf.__version__)"
+"%PYTHON_EXE%" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import pkg_resources, tttrlib, chinet, LabelLib, chisurf;    print('chisurf OK:', chisurf.__version__)"
 if errorlevel 1 (
     echo ERROR: Failed to verify packaged runtime dependencies
     exit /b 1
+)
+
+:: Fix Windows launchers for relocation and GUI launching in the staged environment
+echo Fixing launchers in %APP_PATH% ...
+if exist "%RATTLER_RECIPE_FOLDER%\fix_launchers.py" (
+    "%PYTHON_EXE%" "%RATTLER_RECIPE_FOLDER%\fix_launchers.py" "%APP_PATH%"
 )
 
 :: Pre-compile Python files
@@ -415,14 +449,16 @@ if not defined INNO_SETUP_EXE (
     echo ERROR: INNO_SETUP_EXE is not set.
     exit /b 1
 )
-"%INNO_SETUP_EXE%" installer_config.iss
-if errorlevel 1 (
-    echo ERROR: Inno Setup failed
-    exit /b 1
-)
-
 if exist installer_config.iss del /q installer_config.iss
 
+goto Done
+
+:InnoSkip
+echo Skipping Inno Setup (not found or requested).
+goto Done
+
+
+:Done
 :: -----------------------------------------------------------------------
 :: Report version and clean up
 :: -----------------------------------------------------------------------
@@ -458,7 +494,12 @@ if errorlevel 1 (
 if exist "%SMOKE_INSTALL_DIR%" rmdir /s /q "%SMOKE_INSTALL_DIR%"
 echo Smoke test passed.
 
-:: Remove the staging environment (the installer bundles it)
+:: Remove the staging environment (unless NO_CLEANUP is set)
+if "%NO_CLEANUP%"=="1" (
+    echo NO_CLEANUP set, preserving staging environments.
+    goto FinalExit
+)
+
 echo Removing staging environment ...
 rmdir /s /q "%APP_PATH%"
 if exist "%BUILDER_ENV_PATH%" (
@@ -466,6 +507,8 @@ if exist "%BUILDER_ENV_PATH%" (
     rmdir /s /q "%BUILDER_ENV_PATH%"
 )
 
+:FinalExit
 cd /d "%SOURCE_PATH%"
 echo Done.
 exit /b 0
+

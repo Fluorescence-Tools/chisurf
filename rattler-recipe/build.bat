@@ -59,5 +59,11 @@ powershell -Command "(Get-Content chisurf\info.py) -replace \"__version__ = .*\"
 :: Main module install
 %PYTHON% -m pip install . --no-deps --no-build-isolation -vv --prefix=%PREFIX%
 
+:: Fix Windows launchers for relocation and GUI launching
+if exist rattler-recipe\fix_launchers.py (
+    echo Fixing Windows launchers...
+    %PYTHON% rattler-recipe\fix_launchers.py
+)
+
 :: Restore info.py
 move /Y chisurf\info.py.bak chisurf\info.py
