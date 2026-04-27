@@ -147,8 +147,10 @@ jobs:
         shell: bash -l {0}
         run: |
           micromamba activate build
-          export "BASE_CONDA_ROOT=$MAMBA_ROOT_PREFIX"
-          build_tools/win/build-setup.bat /nobuild
+          # cygpath converts the bash Unix-style path to a Windows path for the bat file
+          WIN_CONDA_ROOT=$(cygpath -w "$MAMBA_ROOT_PREFIX")
+          export BASE_CONDA_ROOT="$WIN_CONDA_ROOT"
+          cmd //c "build_tools\\win\\build-setup.bat /nobuild"
 
       - name: Upload Windows installer
         if: runner.os == 'Windows'
