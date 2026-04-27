@@ -100,7 +100,13 @@ if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "INNO_SETUP_EXE=C:\P
 if exist "C:\Program Files\Inno Setup 6\ISCC.exe" set "INNO_SETUP_EXE=C:\Program Files\Inno Setup 6\ISCC.exe"
 :InnoCheck
 if not defined INNO_SETUP_EXE (
-    echo ERROR: Inno Setup compiler not found. Set INNO_SETUP_EXE or install Inno Setup 6.
+    echo Inno Setup not found. Attempting to install via Chocolatey...
+    choco install innosetup -y --no-progress
+    if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "INNO_SETUP_EXE=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+    if exist "C:\Program Files\Inno Setup 6\ISCC.exe" set "INNO_SETUP_EXE=C:\Program Files\Inno Setup 6\ISCC.exe"
+)
+if not defined INNO_SETUP_EXE (
+    echo ERROR: Inno Setup compiler not found even after install attempt. Set INNO_SETUP_EXE or install Inno Setup 6.
     exit /b 1
 )
 
@@ -449,12 +455,22 @@ if not defined INNO_SETUP_EXE (
     echo ERROR: INNO_SETUP_EXE is not set.
     exit /b 1
 )
-if exist installer_config.iss del /q installer_config.iss
 
-goto Done
+if not exist installer_config.iss (
+    echo ERROR: installer_config.iss was not generated.
+    exit /b 1
+)
+
+echo Compiling installer with Inno Setup ...
+"%INNO_SETUP_EXE%" installer_config.iss
+if errorlevel 1 (
+    echo ERROR: Inno Setup compilation failed
+    exit /b 1
+)
+del /q installer_config.iss
 
 :InnoSkip
-echo Skipping Inno Setup (not found or requested).
+echo Inno Setup step complete.
 goto Done
 
 

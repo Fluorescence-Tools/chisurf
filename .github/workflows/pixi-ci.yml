@@ -137,6 +137,11 @@ jobs:
           path: ${{ env.OUT_DIR }}/win-64/**/*.conda
           if-no-files-found: error
 
+      - name: Install Inno Setup (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
       - name: Build Windows installer (.exe)
         if: runner.os == 'Windows'
         shell: bash -l {0}
