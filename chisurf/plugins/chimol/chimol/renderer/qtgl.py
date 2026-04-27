@@ -60,7 +60,7 @@ class _DrawData:
     depth_test: bool = True
     glyph: Optional[str] = None
     radii: Optional[np.ndarray] = None
-
+    material: Optional[dict] = None
 
 @dataclass
 class _LabelData:
@@ -83,7 +83,7 @@ class _GpuDrawCall:
     depth_test: bool
     glyph: Optional[str] = None
     radii_vbo: Optional[QtGui.QOpenGLBuffer] = None
-
+    material: Optional[dict] = None
 
 class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
     """Qt-native OpenGL renderer with lightweight VBO caching.
@@ -305,9 +305,13 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         if GL is None:
             return
 
+        gl = self._gl
+        if gl is None:
+            return
+
         r, g_col, b, a = self._background
-        GL.glClearColor(r, g_col, b, a)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
+        gl.glClearColor(r, g_col, b, a)
+        gl.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if self._program is None:
             return
@@ -354,6 +358,12 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             self._program.setUniformValue(self._glyph_mode_uniform, glyph_mode)
             self._program.setUniformValue(self._point_size_uniform, float(call.size))
 
+            mat = call.material or {}
+            self._program.setUniformValue(self._spec_strength_uniform, float(mat.get("specular_strength", self._specular_strength)))
+            self._program.setUniformValue(self._shininess_uniform, float(mat.get("shininess", self._shininess)))
+            self._program.setUniformValue(self._rim_strength_uniform, float(mat.get("rim_strength", self._rim_strength)))
+            self._program.setUniformValue(self._rim_power_uniform, float(mat.get("rim_power", self._rim_power)))
+
             if call.primitive == GL_POINTS:
                 gl.glPointSize(call.size)
                 if glyph_mode:
@@ -384,6 +394,14 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             )
 
             call.normals_vbo.bind()
+            self._program.enableAttributeArray(self._normal_attr)
+            self._program.setAttributeBuffer(
+                self._normal_attr,
+                GL_FLOAT,
+                0,
+                3,
+            )
+
             if self._radius_attr != -1:
                 if call.radii_vbo is not None:
                     call.radii_vbo.bind()
@@ -409,6 +427,12 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             self._program.disableAttributeArray(self._normal_attr)
             if self._radius_attr != -1:
                 self._program.disableAttributeArray(self._radius_attr)
+
+        # Restore global material uniforms so we don't accidentally leak state into next frame
+        self._program.setUniformValue(self._spec_strength_uniform, float(self._specular_strength))
+        self._program.setUniformValue(self._shininess_uniform, float(self._shininess))
+        self._program.setUniformValue(self._rim_strength_uniform, float(self._rim_strength))
+        self._program.setUniformValue(self._rim_power_uniform, float(self._rim_power))
 
         self._program.release()
         self._render_labels()
@@ -486,16 +510,50 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess) * specStrength;
             }
 
-            float rim = pow(max(1.0 - dot(n, viewDir), 0.0), rimPower) * rimStrength;
-
             vec3 baseColor = v_color.rgb;
-            vec3 shaded = baseColor * (lighting + rim);
-            vec3 finalColor = shaded + spec * vec3(1.0);
-
+            
+            // Fresnel for jelly/bubble look: edges are more opaque and reflective
+            float fresnel = pow(clamp(1.0 - dot(n, viewDir), 0.0, 1.0), 2.5);
+            
+            // 1. Shading (Diffuse + Ambient)
+            // Use a slightly lower ambient to make rim and reflections pop
+            float ambient = ambientStrength * 0.7;
+            float diffuse = (1.0 - ambient) * lambert;
+            vec3 shaded = baseColor * (ambient + diffuse);
+            
+            // 2. Rim lighting (edge glow)
+            float rim = pow(clamp(1.0 - dot(n, viewDir), 0.0, 1.0), rimPower);
+            shaded += baseColor * rim * rimStrength;
+            
+            // 3. Procedural Environment Reflection (Fake MatCap)
+            vec3 R = reflect(-viewDir, n);
+            vec3 skyCol = vec3(0.5, 0.7, 1.0);
+            vec3 groundCol = vec3(0.05, 0.05, 0.1);
+            vec3 envReflection = mix(groundCol, skyCol, smoothstep(-0.2, 0.4, R.y));
+            
+            // Add a "sun" highlight
+            vec3 sunDir = normalize(vec3(0.5, 1.0, 0.5)); 
+            float sun = pow(max(0.0, dot(R, sunDir)), max(10.0, shininess));
+            envReflection += vec3(1.5) * sun;
+            
+            // Blend reflection based on Fresnel
+            float reflectMul = clamp(specStrength * (0.1 + 0.6 * fresnel), 0.0, 1.0);
+            vec3 finalColor = mix(shaded, envReflection, reflectMul);
+            
+            // Point-source specular highlight
+            finalColor += spec * vec3(1.0);
+            
+            // 4. Fog
             float fogFactor = clamp(1.0 - exp(-fogDensity * length(v_viewPos)), 0.0, 1.0);
             finalColor = mix(finalColor, fogColor, fogFactor);
 
-            gl_FragColor = vec4(finalColor, v_color.a);
+            // 5. Transparency with Fresnel
+            float finalAlpha = v_color.a;
+            if (finalAlpha < 0.99) {
+                finalAlpha = mix(finalAlpha * 0.3, clamp(finalAlpha + 0.5, 0.0, 1.0), fresnel);
+            }
+            
+            gl_FragColor = vec4(finalColor, clamp(finalAlpha + spec * 0.3 + sun * 0.3, 0.0, 1.0));
         }
         """
 
@@ -722,6 +780,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             depth_test=depth_test,
             glyph=glyph,
             radii=np.asarray(geom.radii, dtype=np.float32) if geom.radii is not None else None,
+            material=obj.material,
         )
 
     def _primitive_for_geometry(self, geom: Geometry) -> Optional[int]:
@@ -801,6 +860,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 width=draw.width,
                 depth_test=draw.depth_test,
                 glyph=draw.glyph,
+                material=draw.material,
             )
             self._gpu_calls.append(gpu_call)
 

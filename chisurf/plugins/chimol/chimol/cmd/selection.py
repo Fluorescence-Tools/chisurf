@@ -208,10 +208,26 @@ class SelectionMixin(BaseCmd):
             else:
                 self._cmd_hide([name])
             return
+        
+        if name.startswith("metaball.") or name.startswith("metaball_"):
+            prop = name.replace("metaball_", "").replace("metaball.", "")
+            window, viewer = self._require_window_and_viewer()
+            if viewer is None:
+                return
+            
+            from ..config import _DISPLAY_CONFIG
+            mcfg = _DISPLAY_CONFIG.setdefault("metaball", {})
+            try:
+                mcfg[prop] = float(value)
+                viewer._update_view()
+                self._emit_message(f"Metaball {prop} set to {value}")
+            except ValueError:
+                self._emit_error(f"Invalid value for metaball.{prop}: {value}")
+            return
 
         self._emit_error(
-            "set command supports only bg_color, color_mode, and simple rep toggles "
-            "(cartoon/trace/atoms/sticks/surface/dots/plane) at the moment."
+            "set command supports bg_color, color_mode, rep toggles, "
+            "and metaball properties (metaball.alpha, metaball.shininess, etc.)"
         )
 
     def _cmd_objects(self, args: List[str]) -> None:

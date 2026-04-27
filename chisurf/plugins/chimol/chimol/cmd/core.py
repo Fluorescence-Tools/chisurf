@@ -493,7 +493,7 @@ class Cmd:
 
     def _cmd_toggle_representation(self, args: List[str], *, visible: bool) -> None:
         if not args:
-            self._emit_error("Usage: show/hide <cartoon|trace|atoms|sticks|dots|surface|plane>")
+            self._emit_error("Usage: show/hide <cartoon|trace|atoms|sticks|dots|surface|metaball|plane>")
             return
 
         window, viewer = self._require_window_and_viewer()
@@ -537,6 +537,8 @@ class Cmd:
                 viewer.set_surface_visible(vis)
             elif rep in ("plane", "grid"):
                 viewer.set_plane_visible(vis)
+            elif rep in ("metaball", "metaballs", "mesh"):
+                viewer.set_metaballs_visible(vis)
             else:
                 self._emit_error(
                     f"Unsupported representation for show/hide: {rep}"

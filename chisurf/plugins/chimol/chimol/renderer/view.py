@@ -21,6 +21,7 @@ from ..geometry import (
     _build_bond_pairs,
     _generate_cartoon_tube_arrays,
     _generate_trace_arrays,
+    _generate_surface_mesh_from_gaussians,
 )
 from ..analysis.ss import assign_ss_c3_from_atoms
 from .base import Renderer
@@ -168,6 +169,7 @@ class MolView(QtWidgets.QWidget):
     _sticks_mask = _StateField("sticks_mask")
     _bond_pairs = _StateField("bond_pairs")
     _surface_visible = _StateField("surface_visible")
+    _metaballs_visible = _StateField("metaballs_visible")
     _point_overlays = _StateField("point_overlays")
     _measurements = _StateField("measurements")
     _bead_radii = _StateField("bead_radii")
@@ -1315,6 +1317,11 @@ class MolView(QtWidgets.QWidget):
 
     def set_surface_visible(self, visible: bool) -> None:
         self._surface_visible = bool(visible)
+        if self._renderer is not None and self._coords is not None:
+            self._update_view()
+
+    def set_metaballs_visible(self, visible: bool) -> None:
+        self._metaballs_visible = bool(visible)
         if self._renderer is not None and self._coords is not None:
             self._update_view()
 
@@ -2503,6 +2510,195 @@ class MolView(QtWidgets.QWidget):
         
         return [SceneObject(id="restraints", geometry=geom, render_mode="opaque")]
 
+    def _update_metaballs(
+        self,
+        coords: np.ndarray,
+        cfg: dict,
+        colors_per_ca: Optional[np.ndarray],
+    ) -> Optional[list[SceneObject]]:
+        if not getattr(self, "_metaballs_visible", False):
+            return None
+
+        iso_value = float(cfg.get("iso_value", 0.15))
+        grid_spacing = float(cfg.get("grid_spacing", 0.6))
+        padding = float(cfg.get("padding", 4.0))
+        max_dim = int(cfg.get("max_dim", 128))
+        alpha = float(cfg.get("alpha", 0.6))
+
+        ao_strength = float(cfg.get("ao_strength", 0.5))
+        ao_radius = float(cfg.get("ao_radius", 4.5))
+
+        lighting_cfg = _DISPLAY_CONFIG.get("lighting", {})
+        # Material properties for the jelly look
+        material = {
+            "shininess": float(cfg.get("shininess", lighting_cfg.get("shininess", 38.0))),
+            "specular_strength": float(cfg.get("specular_strength", lighting_cfg.get("specular_strength", 0.18))),
+            "rim_strength": float(cfg.get("rim_strength", lighting_cfg.get("rim_strength", 0.18))),
+            "rim_power": float(cfg.get("rim_power", lighting_cfg.get("rim_power", 2.4))),
+        }
+
+        pts_surface = None
+        colors_surface = None
+
+        if self._all_atom_coords is not None:
+            pts_surface = np.asarray(self._all_atom_coords, dtype=float)
+        else:
+            pts_surface = coords.copy()
+
+        if pts_surface.size == 0:
+            return None
+
+        n_pts = pts_surface.shape[0]
+
+        # Use an array of sigmas. Default roughly 1.5, or use atom radii if available
+        if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_pts:
+            sigmas = np.asarray(self._all_atom_radii, dtype=float) * 1.5
+        else:
+            sigmas = np.ones(n_pts, dtype=float) * 1.5
+
+        mesh_data = _generate_surface_mesh_from_gaussians(
+            pts_surface,
+            sigmas,
+            grid_spacing=grid_spacing,
+            padding=padding,
+            iso_value=iso_value,
+            max_dim=max_dim,
+        )
+
+        if mesh_data is None:
+            return None
+
+        verts, faces, norms = mesh_data
+
+        # Color the mesh
+        base_color = np.asarray(self._base_color_single, dtype=float)
+        if base_color.shape[0] != 4:
+            base_color = np.array([1.0, 1.0, 1.0, 1.0], dtype=float)
+
+        # Color the mesh with weighted blending
+        mesh_colors = np.zeros((verts.shape[0], 4), dtype=float)
+        
+        # Determine atom colors
+        n_pts = pts_surface.shape[0]
+        atom_colors = np.tile(base_color, (n_pts, 1))
+        
+        if (
+            self._all_atom_res_ids is not None
+            and self._residue_ids is not None
+            and colors_per_ca is not None
+            and len(colors_per_ca) == len(self._residue_ids)
+        ):
+            # Create a robust mapping from residue ID to color
+            res_id_to_color = {}
+            for i_res, rid in enumerate(self._residue_ids):
+                res_id_to_color[rid] = colors_per_ca[i_res]
+                
+            for i_atom, rid in enumerate(self._all_atom_res_ids):
+                if rid in res_id_to_color:
+                    atom_colors[i_atom] = res_id_to_color[rid]
+
+        if getattr(self, "_colors_per_atom_override", None) is not None:
+            ov = np.asarray(self._colors_per_atom_override, dtype=float)
+            for i_atom in range(min(n_pts, ov.shape[0])):
+                if np.isfinite(ov[i_atom]).all():
+                    atom_colors[i_atom] = ov[i_atom]
+
+        try:
+            from scipy.spatial import cKDTree
+            tree = cKDTree(pts_surface)
+            
+            # Find atoms contributing to each vertex
+            max_sigma = float(np.max(sigmas))
+            cutoff = max_sigma * 2.5
+            
+            # query_ball_point can be slow for very large systems, but for 
+            # typical proteins it provides much nicer blending.
+            indices = tree.query_ball_point(verts, r=cutoff)
+            
+            for i_v, atom_indices in enumerate(indices):
+                if not atom_indices:
+                    # Fallback to nearest
+                    _, nearest = tree.query(verts[i_v])
+                    mesh_colors[i_v] = atom_colors[nearest]
+                    continue
+                
+                v_pos = verts[i_v]
+                w_sum = 0.0
+                c_sum = np.zeros(4, dtype=float)
+                
+                for i_a in atom_indices:
+                    d2 = np.sum((v_pos - pts_surface[i_a])**2)
+                    s2 = sigmas[i_a]**2
+                    w = math.exp(-d2 / (2.0 * s2))
+                    c_sum += atom_colors[i_a] * w
+                    w_sum += w
+                
+                if w_sum > 0:
+                    mesh_colors[i_v] = c_sum / w_sum
+                else:
+                    _, nearest = tree.query(v_pos)
+                    mesh_colors[i_v] = atom_colors[nearest]
+
+            # Recalculate normals analytically for buttery smoothness
+            # Normal = -Gradient(Density). Gradient of exp(-d2/2s2) is -(d/s2)*exp(-d2/2s2)
+            # So Normal(v) is proportional to sum_i [ (v - atom_pos_i) / sigma_i^2 * weight_i ]
+            new_norms = np.zeros_like(verts)
+            for i_v, atom_indices in enumerate(indices):
+                if not atom_indices:
+                    continue
+                v_pos = verts[i_v]
+                grad = np.zeros(3, dtype=float)
+                for i_a in atom_indices:
+                    diff = v_pos - pts_surface[i_a]
+                    d2 = np.sum(diff**2)
+                    s2 = sigmas[i_a]**2
+                    w = math.exp(-d2 / (2.0 * s2))
+                    grad += (diff / s2) * w
+                
+                mag = np.linalg.norm(grad)
+                if mag > 1e-6:
+                    new_norms[i_v] = grad / mag
+                else:
+                    new_norms[i_v] = norms[i_v] # Fallback
+            
+            norms = new_norms
+
+            # Estimate Ambient Occlusion for depth
+            if ao_strength > 0:
+                occ = _estimate_ambient_occlusion(verts, radius=ao_radius, max_neighbors=32)
+                if occ is not None:
+                    darken = 1.0 - (occ * ao_strength)
+                    mesh_colors[:, :3] *= darken[:, np.newaxis]
+
+        except Exception:
+            # Absolute fallback to nearest-neighbor if advanced blending fails
+            try:
+                from scipy.spatial import cKDTree
+                tree = cKDTree(pts_surface)
+                _, nearest = tree.query(verts)
+                mesh_colors = atom_colors[nearest]
+            except Exception:
+                mesh_colors[:, :] = base_color
+
+        render_mode = "opaque"
+        if alpha < 1.0:
+            mesh_colors[:, 3] = alpha
+            render_mode = "transparent"
+
+        geom = Geometry(
+            kind="mesh",
+            positions=verts,
+            indices=faces,
+            normals=norms,
+            colors=mesh_colors,
+        )
+        return [SceneObject(
+            id="metaballs", 
+            geometry=geom, 
+            render_mode=render_mode,
+            material=material
+        )]
+
     def _update_surface(
         self, 
         coords: np.ndarray, 
@@ -3067,6 +3263,10 @@ class MolView(QtWidgets.QWidget):
             scene_objects += self._update_atom_gaussians(gaussian_cfg) or []
         scene_objects += self._update_sticks(sticks_cfg, self._colors_per_ca) or []
         scene_objects += self._update_surface(coords, surface_cfg, self._colors_per_ca) or []
+        
+        metaball_cfg = _DISPLAY_CONFIG.get("metaball", {})
+        scene_objects += self._update_metaballs(coords, metaball_cfg, self._colors_per_ca) or []
+        
         scene_objects += self._update_dots(coords, self._colors_per_ca) or []
         scene_objects += self._update_custom_overlays(surface_cfg) or []
         scene_objects += self._update_measurements() or []

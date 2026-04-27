@@ -15,6 +15,8 @@ from chisurf.plugins.chimol.chimol.app import MolViewPluginWindow
 # Public launcher metadata (no plugin menu registration here)
 __version__ = "0.0.1"
 
+name = "Structure:Chimol"
+
 
 def _create_window() -> MolViewPluginWindow:
     win = MolViewPluginWindow()
@@ -32,7 +34,8 @@ def main() -> None:
     owns_app = app is None
     if app is None:
         app = QtWidgets.QApplication(sys.argv)
-    _create_window()
+    win = _create_window()
+    win.show()
     if owns_app:
         sys.exit(app.exec())
 
@@ -40,3 +43,7 @@ def main() -> None:
 if __name__ == "__main__":  # pragma: no cover - manual launch
     main()
 
+
+if __name__ == "plugin":
+    win = MolViewPluginWindow()
+    win.show()

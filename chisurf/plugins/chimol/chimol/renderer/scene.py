@@ -32,6 +32,7 @@ class SceneObject:
     id: str
     geometry: Geometry
     render_mode: str = "opaque"  # "opaque" | "transparent" | "overlay"
+    material: Optional[Dict[str, float]] = None
 
 
 @dataclass
