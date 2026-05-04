@@ -3,10 +3,23 @@ from typing import Optional, Sequence, Dict, Any, List
 import numpy as np
 from pathlib import Path
 
-from qtpy import QtCore
 
-class MockViewer(QtCore.QObject):
-    """Headless implementation of MolView protocol for testing."""
+def _get_qobject_base():
+    """Return QtCore.QObject if Qt is available, else plain ``object``."""
+    try:
+        from qtpy import QtCore
+        return QtCore.QObject
+    except Exception:
+        return object
+
+
+class MockViewer(_get_qobject_base()):
+    """Headless implementation of MolView protocol for testing.
+
+    When Qt is available the class inherits from ``QObject`` so it can be
+    used inside the Qt application; when running in a headless/CLI context
+    it falls back to plain ``object``.
+    """
 
     class MockState:
         def __init__(self):

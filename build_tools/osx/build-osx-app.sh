@@ -40,6 +40,9 @@ export CMAKE_PREFIX_PATH="$APP_PATH"
 # Add environment bin to PATH for submodule builds (so they find cmake, etc.)
 export PATH="$APP_PATH/bin:$PATH"
 
+echo "Installing labellib via pip ..."
+"$APP_PATH/bin/pip" install labellib --no-deps
+
 for mod in "$REPO_ROOT/modules"/*; do
     if [[ -d "$mod" ]] && [[ -f "$mod/setup.py" || -f "$mod/pyproject.toml" ]]; then
         echo "Installing submodule $(basename "$mod") ..."

@@ -395,6 +395,12 @@ if errorlevel 1 (
     echo WARNING: Could not install tttrlib
 )
 
+echo Installing labellib via pip ...
+call "%PYTHON_EXE%" -m pip install labellib --no-cache-dir --no-deps
+if errorlevel 1 (
+    echo WARNING: Could not install labellib
+)
+
 echo Verifying chisurf installation ...
 "%PYTHON_EXE%" -c "import sys; sys.path.insert(0, r'%APP_PATH%\Lib\site-packages'); import pkg_resources, tttrlib, chinet, LabelLib, chisurf;    print('chisurf OK:', chisurf.__version__)"
 if errorlevel 1 (
