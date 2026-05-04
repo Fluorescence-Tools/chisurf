@@ -60,7 +60,7 @@ rm -rf "$PREFIX"
 echo "[2/4] Creating runtime environment at $PREFIX..."
 # Explicitly add eigen and specify python version
 micromamba create -y -p "$PREFIX" \
-    "python=3.12" chisurf tttrlib eigen pybind11 "cmake<3.27" zstd libarchive openblas \
+    "python=3.12" chisurf tttrlib "cmake<3.27" zstd libarchive openblas \
     -c "$REPO_ROOT/conda-bld" -c conda-forge -c bioconda \
     --no-channel-priority
 
@@ -70,22 +70,7 @@ echo "[2.5/4] Installing submodules from modules directory ..."
 export CMAKE_ARGS="-DEIGEN3_INCLUDE_DIR=$PREFIX/include/eigen3"
 export CMAKE_PREFIX_PATH="$PREFIX"
 
-# Patch submodules to use environment's Eigen (legacy bundled Eigen often fails on new compilers)
-# We look specifically for labellib which is known to have this issue
-if [[ -d "$REPO_ROOT/modules/labellib/thirdparty/eigen" ]]; then
-    echo "Patching LabelLib to use environment Eigen..."
-    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/eigen"
-    mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/eigen"
-    cp -r "$PREFIX/include/eigen3/Eigen" "$REPO_ROOT/modules/labellib/thirdparty/eigen/"
-    # Patch pybind11 too
-    rm -rf "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include/pybind11"
-    mkdir -p "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include"
-    cp -r "$PREFIX/include/pybind11" "$REPO_ROOT/modules/labellib/thirdparty/pybind11/include/"
-    # Force C++14 as required by modern Eigen
-    python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write(content.replace('set(CMAKE_CXX_STANDARD 11)', 'set(CMAKE_CXX_STANDARD 14)'))" "$REPO_ROOT/modules/labellib/CMakeLists.txt"
-    # Fix missing include for assert
-    python3 -c "import sys; content = open(sys.argv[1]).read(); open(sys.argv[1], 'w').write('#include <cassert>\n' + content)" "$REPO_ROOT/modules/labellib/FlexLabel/include/FlexLabel/FlexLabel.h"
-fi
+
 
 # Add environment bin to PATH for submodule builds (so they find cmake, etc.)
 export PATH="$PREFIX/bin:$PATH"

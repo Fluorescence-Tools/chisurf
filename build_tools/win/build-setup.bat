@@ -170,8 +170,7 @@ if not exist "%RUNTIME_ENV_PATH%\python.exe" (
         "cmake<3.27" ^
         ninja ^
         swig ^
-        pybind11 ^
-        eigen ^
+
         pythran ^
         "vs2022_win-64" ^
         "typing-extensions>=4.14" ^
@@ -341,7 +340,7 @@ if errorlevel 1 (
 call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\clsmview" --no-deps --no-build-isolation
 call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\ndxplorer" --no-deps --no-build-isolation
 call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\quest" --no-deps --no-build-isolation
-call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%\modules\labellib" --no-deps --no-build-isolation
+
 
 echo Installing ChiSurf source into cloned environment ...
 call "%PYTHON_EXE%" -m pip install "%SOURCE_PATH%" --no-deps --no-build-isolation

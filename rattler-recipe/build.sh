@@ -30,17 +30,7 @@ find_cmake_package_dir() {
 # 1) Qt resources
 "$PREFIX/bin/pyrcc5" chisurf/gui/resources/resource.qrc -o chisurf/gui/resources/resource.py
 
-# 2) Prepare & install labellib without network fetches
-pushd modules/labellib
-  if [[ ! -d .git ]]; then
-    git init -q
-    git config user.email "build@example.invalid"
-    git config user.name "ChiSurf Build"
-    git add -A
-    git commit -qm "build metadata"
-    git tag 2020.10.05
-  fi
-popd
+
 
 export CMAKE_PREFIX_PATH="${PREFIX}:${BUILD_PREFIX:-}:${CMAKE_PREFIX_PATH:-}"
 export PIP_NO_BUILD_ISOLATION=1
@@ -62,7 +52,7 @@ if [[ "${target_platform}" == linux-* ]] && [[ -x /usr/bin/gcc ]] && [[ -x /usr/
 fi
 
 # 4) Install local modules
-"$PY" -m pip install ./modules/labellib    --no-deps --no-build-isolation -vv --prefix="$PREFIX"
+
 "$PY" -m pip install ./modules/clsmview    --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/ndxplorer   --no-deps --no-build-isolation -vv --prefix="$PREFIX"
 "$PY" -m pip install ./modules/quest       --no-deps --no-build-isolation -vv --prefix="$PREFIX"

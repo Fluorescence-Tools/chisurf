@@ -11,28 +11,6 @@ call pyrcc5 chisurf\gui\resources\resource.qrc -o chisurf\gui\resources\resource
 git submodule sync --recursive
 git submodule update --init --recursive --force
 
-:: Build labellib
-set "ROOT_DIR=%cd%"
-cd modules\labellib
-git fetch --tags
-git checkout tags/2020.10.05
-
-:: Set pybind11 version
-pushd thirdparty\pybind11
-git checkout v2.13
-git pull
-popd
-
-:: Configure the build using CMake
-cmake -S . -B build -G Ninja ^
-    -DPYTHON_EXECUTABLE="%PYTHON%" ^
-    -DPYTHON_LIBRARY_OUTPUT_DIRECTORY="%SP_DIR%" ^
-    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE="%SP_DIR%" ^
-    -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release --parallel
-if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
-cmake --install build --prefix %PREFIX%
-if %ERRORLEVEL% neq 0 exit /b %ERRORLEVEL%
 
 :: Build chinet (pure Python package)
 cd %ROOT_DIR%

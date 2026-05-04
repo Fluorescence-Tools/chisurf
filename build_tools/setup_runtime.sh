@@ -77,8 +77,7 @@ if [[ "$BUILD_MODE" == "build" ]]; then
         "ninja"
         "cython<3"
         "swig"
-        "eigen"
-        "pybind11"
+
         "setuptools"
         "pip"
         "wheel"
