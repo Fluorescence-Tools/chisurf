@@ -56,13 +56,30 @@ class SimpleErrorDialog(QtWidgets.QDialog if QtWidgets is not None else object):
 
 def main():
     try:
+        # Enable faulthandler to dump C-level traceback on segfault before
+        # the OS kills the process.  The output file is opened at startup to
+        # avoid allocation inside the signal handler.
+        import faulthandler
+        from datetime import datetime
+        # faulthandler.enable() already registers SIGSEGV, SIGABRT, SIGBUS,
+        # SIGFPE, SIGILL — do NOT call faulthandler.register(signal.SIGSEGV)
+        # on top of it (that raises RuntimeError).
+        _crash_log = pathlib.Path.home() / ".chisurf" / f"crash_{datetime.now():%Y%m%d_%H%M%S}.log"
+        _crash_log.parent.mkdir(parents=True, exist_ok=True)
+        _fh = _crash_log.open("w")
+        faulthandler.enable(file=_fh, all_threads=True)
+
         # Import Qt and settings modules inside the try block to catch import errors
         from chisurf.settings import clear_settings_folder, clear_logging_files
         from chisurf.gui import get_app
 
         # Start the application
         app = get_app()
-        exit_code = app.exec()
+        try:
+            exit_code = app.exec()
+        finally:
+            _fh.flush()
+            _fh.close()
 
         # Hard-exit the process after the Qt event loop finishes. This avoids
         # running full Python interpreter finalization (Py_Finalize), which can
