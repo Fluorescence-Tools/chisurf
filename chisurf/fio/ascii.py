@@ -28,6 +28,18 @@ def _open_maybe_zipped(filename: str, mode: str = "r"):
 
 
 def _decode(line) -> str:
+    """Decode bytes to string using multiple encoding attempts.
+
+    Parameters
+    ----------
+    line : bytes or str
+        Input data to decode.
+
+    Returns
+    -------
+    str
+        Decoded string.
+    """
     if isinstance(line, bytes):
         for enc in ("utf-8", "utf-8-sig", "latin-1"):
             try:
@@ -70,6 +82,20 @@ def _windows_extended_path(filename: str) -> str:
 
 
 def _tokenize(line: str, delimiter_hint: str | None) -> list[str]:
+    """Split a line into tokens by delimiter or whitespace.
+
+    Parameters
+    ----------
+    line : str
+        Input line.
+    delimiter_hint : str or None
+        Delimiter character, or None for whitespace splitting.
+
+    Returns
+    -------
+    list[str]
+        List of tokens.
+    """
     if delimiter_hint is None:
         return line.strip().split()
     return [t for t in line.strip().split(delimiter_hint)]
@@ -77,6 +103,20 @@ def _tokenize(line: str, delimiter_hint: str | None) -> list[str]:
 
 ### NEW: helper to test numeric tokens (supports decimal comma if requested)
 def _is_number_token(tok: str, decimal_comma: bool = False) -> bool:
+    """Check whether a token can be parsed as a number.
+
+    Parameters
+    ----------
+    tok : str
+        Token to test.
+    decimal_comma : bool
+        If True, treat comma as decimal separator.
+
+    Returns
+    -------
+    bool
+        True if token is numeric.
+    """
     s = _decode(tok).strip()
     if not s:
         return False
@@ -210,10 +250,23 @@ def _find_table_region(fp, max_scan_lines: int = 5000) -> tuple[int, int | None,
 
 
 def _decimal_comma_converters(ncols: int):
+    """Build converters dict for genfromtxt to interpret decimal commas.
+
+    Parameters
+    ----------
+    ncols : int
+        Number of columns to create converters for.
+
+    Returns
+    -------
+    dict
+        Mapping from column index to converter function.
+    """
     """
     Build converters dict for genfromtxt to interpret decimal commas (e.g., 1,23) as floats.
     """
     def conv_factory():
+        """Create a converter function for decimal-comma strings."""
         return lambda s: float(_decode(s).strip().replace(",", "."))
     convs = {i: conv_factory() for i in range(ncols)}
     logging.debug(f"_decimal_comma_converters: created converters for ncols={ncols}")
@@ -257,6 +310,26 @@ def load_xy(
         skiprows: int = 0,
         delimiter: str = "\t"
 ) -> typing.Tuple[np.array, np.array]:
+    """Load x,y data from a text file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the file.
+    verbose : bool
+        If True, log progress.
+    usecols : tuple of int, optional
+        Columns to use for x and y. Defaults to (0, 1).
+    skiprows : int
+        Number of rows to skip.
+    delimiter : str
+        Column delimiter.
+
+    Returns
+    -------
+    tuple of np.array
+        x and y arrays.
+    """
     if usecols is None:
         usecols = [0, 1]
     if verbose:
@@ -320,6 +393,33 @@ class Csv(object):
             file_type: str = 'csv',
             **kwargs
     ):
+        """Initialize Csv object, optionally loading a file.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to file to load.
+        colspecs : list of int, optional
+            Fixed-width column specifications.
+        use_header : bool
+            Whether to use header row for column names.
+        x_on, y_on : bool
+            Whether x/y data is present.
+        col_x, col_y, col_ex, col_ey : int
+            Indices for x, y, x-error, y-error columns.
+        reverse : bool
+            If True, reverse data order.
+        error_x_on : bool
+            Whether x-error is present.
+        directory : str
+            Working directory.
+        skiprows : int
+            Number of rows to skip by default.
+        verbose : bool
+            If True, log progress.
+        file_type : str
+            File type ('csv' or fixed-width).
+        """
         self._filename = filename
         self.use_header = use_header
         self.x_on = x_on
@@ -507,6 +607,21 @@ class Csv(object):
             file_type: str = 'txt',
             header: str = ''
     ):
+        """Save data to a file.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Data array to save.
+        filename : str
+            Output file path.
+        delimiter : str
+            Column delimiter.
+        file_type : str
+            'txt' for text or 'npy' for numpy binary.
+        header : str
+            Header string for text output.
+        """
         self._data = data
         filename = _windows_extended_path(filename)
         if self.verbose:

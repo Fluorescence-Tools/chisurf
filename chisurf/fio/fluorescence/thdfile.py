@@ -26,11 +26,11 @@ class THDReader:
     """
     def __init__(self, filepath):
         """Initialize THDReader with a file path.
-        
+
         Parameters
         ----------
         filepath : str
-            Path to the THD file
+            Path to the THD file.
         """
         self.filepath = filepath
         self.header = {}

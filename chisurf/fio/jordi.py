@@ -174,7 +174,8 @@ def read_jordi(
     split: bool = False,
     return_metadata: bool = False,
     **kwargs
-) -> Union[np.ndarray, Tuple[np.ndarray, Dict[str, Any]]]: ...
+) -> Union[np.ndarray, Tuple[np.ndarray, Dict[str, Any]]]:
+    """Overload: return concatenated array when split=False."""
 
 @overload
 def read_jordi(
@@ -183,7 +184,8 @@ def read_jordi(
     split: bool = True,
     return_metadata: bool = False,
     **kwargs
-) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], Dict[str, Any]]]: ...
+) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], Dict[str, Any]]]:
+    """Overload: return channel dict when split=True."""
 
 def read_jordi(
     filename: Union[str, Path],
