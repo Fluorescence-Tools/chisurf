@@ -363,6 +363,25 @@ class ReactionSystem(object):
             fixed=True,
             verbose=False
     ):
+        """Add a reaction to the reaction system.
+
+        Parameters
+        ----------
+        educts : List[int]
+            Indices of reactant species.
+        products : List[int]
+            Indices of product species.
+        educt_stoichiometry : List[float]
+            Stoichiometric coefficients of the reactants.
+        product_stoichometry : List[float]
+            Stoichiometric coefficients of the products.
+        rate : float
+            Rate constant of the reaction.
+        fixed : bool, optional
+            Whether the rate parameter is fixed (default is True).
+        verbose : bool, optional
+            If True, print information about the added reaction.
+        """
         verbose = self.verbose or verbose
         educt_stoichiometry = np.array(
             educt_stoichiometry,
@@ -393,6 +412,14 @@ class ReactionSystem(object):
 
     @property
     def reactions(self):
+        """Get an iterator over all reactions.
+
+        Yields
+        ------
+        tuple
+            A tuple ``(educts, products, educt_stoichiometry,
+            product_stoichiometry, rate_value)`` for each reaction.
+        """
         educts = self.educts
         products = self.products
         educts_stoichometry = self.educts_stoichometry
@@ -435,10 +462,24 @@ class ReactionSystem(object):
 
     @property
     def species_fractions(self):
+        """Get the fractional concentration of each species over time.
+
+        Returns
+        -------
+        np.ndarray
+            Array of shape (n_times, n_species) where each row sums to one.
+        """
         return (self.concentrations.T / self.concentrations.sum(axis=1)).T
 
     @property
     def initial_concentrations(self):
+        """Get the initial concentrations of all species.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of initial concentration values.
+        """
         return np.array(
             [
                 c.value for c in self._initial_concentrations
@@ -447,16 +488,37 @@ class ReactionSystem(object):
 
     @initial_concentrations.setter
     def initial_concentrations(self, v):
+        """Set the initial concentrations of all species.
+
+        Parameters
+        ----------
+        v : list of float
+            Initial concentration values.
+        """
         self._initial_concentrations = [
             chisurf.fitting.parameter.FittingParameter(value=vi) for vi in v
         ]
 
     @property
     def concentrations(self):
+        """Get the time-dependent concentrations.
+
+        Returns
+        -------
+        np.ndarray
+            Array of shape (n_times, n_species) with concentration values.
+        """
         return self._concentrations
 
     @property
     def times(self):
+        """Get the time points.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of time values.
+        """
         return self._times
 
     @times.setter
@@ -464,6 +526,13 @@ class ReactionSystem(object):
             self,
             v
     ):
+        """Set the time points.
+
+        Parameters
+        ----------
+        v : np.ndarray
+            1-D array of time values.
+        """
         self._times = v
 
     def calc(self):
@@ -522,6 +591,13 @@ class ReactionSystem(object):
 
     @property
     def species_brightness(self) -> typing.List[float]:
+        """Get the brightness values for each species.
+
+        Returns
+        -------
+        list of float or np.ndarray
+            Brightness coefficients for each species.
+        """
         if isinstance(self._species_brightness, np.ndarray):
             return self._species_brightness
         else:
@@ -532,15 +608,38 @@ class ReactionSystem(object):
             self,
             v
     ):
+        """Set the brightness values for each species.
+
+        Parameters
+        ----------
+        v : list or np.ndarray
+            Brightness coefficients.
+        """
         self._species_brightness = v
 
     @property
     def signal_intensity(self) -> np.ndarray:
+        """Get the total signal intensity over time.
+
+        The signal is the dot product of concentrations and species brightness.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of total intensity at each time point.
+        """
         sf = self.concentrations
         q = self.species_brightness
         return np.dot(sf, q)
 
     def __str__(self):
+        """Return a string summary of the reaction system.
+
+        Returns
+        -------
+        str
+            Formatted table of species brightnesses and reactions.
+        """
         s = "Species\n"
         s += "--------\n"
         s += "Id\tbrightness"

@@ -20,8 +20,61 @@ def maxent(
         nu,
         **kwargs
 ):
+    """Maximum entropy (MaxEnt) regularized optimization.
+
+    Solves ``min_x ||A x - b||^2 - nu^2 * reg_scale^2 * S(x)`` where
+    ``S`` is the Shannon entropy, using L-BFGS-B.
+
+    Parameters
+    ----------
+    A : np.ndarray
+        Design matrix of shape (n_observations, m_variables).
+    b : np.ndarray
+        Observation vector of length n_observations.
+    nu : float
+        Regularization strength parameter.
+    **kwargs : dict, optional
+        Additional keyword arguments:
+        - w : np.ndarray, optional
+            Weights for each observation (default ones).
+        - x0 : np.ndarray, optional
+            Initial guess (default zeros).
+        - prior_distribution : np.ndarray, optional
+            Prior distribution (default ones).
+        - verbose : bool, optional
+            If True, print convergence info.
+
+    Returns
+    -------
+    np.ndarray
+        Solution vector of length m_variables.
+    """
 
     def func(x, weights, prior, A, b, l2):
+        """Objective function for MaxEnt optimization.
+
+        Returns chi-squared and its gradient with an entropy regularization term.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Current solution vector.
+        weights : np.ndarray
+            Observation weights.
+        prior : np.ndarray
+            Prior distribution.
+        A : np.ndarray
+            Design matrix.
+        b : np.ndarray
+            Observation vector.
+        l2 : float
+            Regularization strength ``(nu * reg_scale)^2``.
+
+        Returns
+        -------
+        tuple of (float, np.ndarray)
+            Chi-squared value and gradient vector.
+        """
         Ax = dot(A, x)
         res = (Ax - b) / weights
         grad_chi2 = 2.0 * dot(A.T, res)

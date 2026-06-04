@@ -90,6 +90,20 @@ def sq_dist3(
         u: np.array,
         v: np.array
 ) -> np.ndarray:
+    """Compute the squared distance between two 3D vectors.
+
+    Parameters
+    ----------
+    u : np.ndarray
+        3-element vector.
+    v : np.ndarray
+        3-element vector.
+
+    Returns
+    -------
+    float
+        Squared Euclidean distance.
+    """
     r = (u[0]-v[0])**2
     r += (u[1] - v[1]) ** 2
     r += (u[2] - v[2]) ** 2
@@ -101,6 +115,20 @@ def cross3(
         a: np.array,
         b: np.array
 ) -> np.ndarray:
+    """Compute the cross product of two 3D vectors.
+
+    Parameters
+    ----------
+    a : np.ndarray
+        3-element vector.
+    b : np.ndarray
+        3-element vector.
+
+    Returns
+    -------
+    np.ndarray
+        3-element cross product vector.
+    """
     o = np.empty(3, dtype=np.float64)
     o[0] = a[1]*b[2]-a[2]*b[1]
     o[1] = a[2]*b[0]-a[0]*b[2]
@@ -465,6 +493,20 @@ def rotate_point(
         p3: np.ndarray,
         quaternion: np.ndarray
 ) -> np.ndarray:
+    """Rotate a 3D point using a quaternion.
+
+    Parameters
+    ----------
+    p3 : np.ndarray
+        3-element vector representing the point.
+    quaternion : np.ndarray
+        4-element quaternion (w, x, y, z).
+
+    Returns
+    -------
+    np.ndarray
+        Rotated 3-element vector.
+    """
     # untested
     v = quaternion[1:3]
     w = quaternion[0]

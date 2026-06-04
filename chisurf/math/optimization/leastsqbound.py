@@ -55,6 +55,18 @@ external (constrained) parameters.
     ls = [_internal2external_lambda(b) for b in bounds]
 
     def convert_i2e(xi):
+        """Convert internal (unconstrained) parameters to external (constrained).
+
+        Parameters
+        ----------
+        xi : np.ndarray
+            Internal (unconstrained) parameter vector.
+
+        Returns
+        -------
+        np.ndarray
+            External (constrained) parameter vector.
+        """
         xe = empty_like(xi)
         xe[:] = [l(p) for l, p in zip(ls, xi)]
         return xe
@@ -86,6 +98,18 @@ internal (unconstrained) parameters.
     ls = [_external2internal_lambda(b) for b in bounds]
 
     def convert_e2i(xe):
+        """Convert external (constrained) parameters to internal (unconstrained).
+
+        Parameters
+        ----------
+        xe : np.ndarray
+            External (constrained) parameter vector.
+
+        Returns
+        -------
+        np.ndarray
+            Internal (unconstrained) parameter vector.
+        """
         xi = empty_like(xe)
         xi[:] = [l(p) for l, p in zip(ls, xe)]
         return xi
@@ -324,6 +348,24 @@ References
                     eff_total = int(200 * (n + 1))
 
             def _wrapped_func(x, *f_args):
+                """Wrapper around the objective function with progress reporting.
+
+                Calls the original ``func``, increments the call counter, and
+                invokes ``progress_callback`` after each evaluation. Used when
+                no bounds are given.
+
+                Parameters
+                ----------
+                x : np.ndarray
+                    Parameter vector.
+                f_args : tuple
+                    Additional arguments passed to ``func``.
+
+                Returns
+                -------
+                np.ndarray
+                    Residual vector from ``func``.
+                """
                 nonlocal nfev, eff_total
                 res = func(x, *f_args)
                 nfev += 1
@@ -391,6 +433,20 @@ References
     # to external parameters and calls func. Progress reporting is layered on
     # top of this base wrapper when a callback is provided.
     def _base_wfunc(x, *f_args):
+        """Base wrapper: convert internal params to external and call func.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Internal (unconstrained) parameter vector.
+        f_args : tuple
+            Additional arguments passed to ``func``.
+
+        Returns
+        -------
+        np.ndarray
+            Residual vector from ``func`` evaluated at external params.
+        """
         return func(i2e(x), *f_args)
 
     if Dfun is None:
@@ -401,6 +457,23 @@ References
 
         if progress_callback is not None:
             def wfunc(x, *f_args):
+                """Wrapper with progress reporting when bounds are given.
+
+                Converts internal params to external, calls ``_base_wfunc``,
+                and reports progress via ``progress_callback``.
+
+                Parameters
+                ----------
+                x : np.ndarray
+                    Internal (unconstrained) parameter vector.
+                f_args : tuple
+                    Additional arguments passed to ``func``.
+
+                Returns
+                -------
+                np.ndarray
+                    Residual vector from ``func``.
+                """
                 nonlocal nfev, eff_total
                 res = _base_wfunc(x, *f_args)
                 nfev += 1
@@ -442,6 +515,22 @@ References
             maxfev = 100 * (n + 1)
 
         def wDfun(x, *args):  # wrapped Dfun
+            """Wrapper around the Jacobian function.
+
+            Converts internal parameters to external before calling ``Dfun``.
+
+            Parameters
+            ----------
+            x : np.ndarray
+                Internal (unconstrained) parameter vector.
+            *args : tuple
+                Additional arguments passed to ``Dfun``.
+
+            Returns
+            -------
+            np.ndarray
+                Jacobian matrix evaluated at external parameters.
+            """
             return Dfun(i2e(x), *args)
 
         retval = _minpack._lmder(

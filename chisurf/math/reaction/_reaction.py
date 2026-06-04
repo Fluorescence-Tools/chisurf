@@ -167,6 +167,22 @@ class Model:
         tmat: np.ndarray,
         propensity: Sequence[Callable[[np.ndarray, np.ndarray], float]],
     ) -> None:
+        """Initialize the stochastic reaction model.
+
+        Parameters
+        ----------
+        vnames : Sequence[str]
+            Names of the state variables.
+        rates : Iterable[float]
+            Array-like of rate constants.
+        inits : Iterable[float]
+            Initial state vector.
+        tmat : np.ndarray
+            Stoichiometric transition matrix with shape (n_vars, n_reactions).
+        propensity : Sequence[Callable[[np.ndarray, np.ndarray], float]]
+            Sequence of callables ``f(rates, state) -> float`` providing the
+            propensities for each reaction channel.
+        """
         # keep legacy attribute names from the Cython implementation
         self.vn: List[str] = list(vnames)
         self.rates = np.asarray(rates, dtype=DTYPE)

@@ -47,6 +47,7 @@ def gaussian_chain(
     return 4*np.pi*r**2/(2./3. * np.pi*r2_mean)**(3./2.) * np.exp(-3./2. * r**2 / r2_mean)
 
 
+# TODO: needs docstring
 @nb.jit(nopython=True)
 def Qd(
         r,

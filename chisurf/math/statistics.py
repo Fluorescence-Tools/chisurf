@@ -327,3 +327,38 @@ def chi2_max(
         1.0 + float(number_of_parameters) / nu *
         scipy.stats.f.isf(1. - conf_level, number_of_parameters, nu)
     )
+
+
+def chi2_threshold(
+        chi2_min: float = 1.0,
+        n_extra_params: int = 1,
+        nu: int = 1,
+        p_value: float = 0.99
+) -> float:
+    """Return the chi² threshold for a given p-value under the F-test.
+
+    The threshold is the chi² value that corresponds to a confidence
+    level of ``p_value`` for an extra parameter added to a model.
+    This is the value at which the F-test would reject the null
+    hypothesis (the simpler model) at the 1 - p_value significance level.
+
+    Parameters
+    ----------
+    chi2_min : float, optional
+        The minimum chi-squared value (best fit). Default is 1.0.
+    n_extra_params : int, optional
+        The number of extra parameters being tested (default 1).
+    nu : int, optional
+        Degrees of freedom of the fit (n_points - n_free). Default is 1.
+    p_value : float, optional
+        The desired p-value threshold (default 0.99).
+
+    Returns
+    -------
+    float
+        The chi-squared value at which the F-test p-value equals p_value.
+    """
+    return chi2_min * (
+        1.0 + float(n_extra_params) / nu *
+        scipy.stats.f.isf(1. - p_value, n_extra_params, nu)
+    )
