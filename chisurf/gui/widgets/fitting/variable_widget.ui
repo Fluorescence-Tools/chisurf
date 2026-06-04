@@ -591,16 +591,9 @@
        </disabled>
       </palette>
      </property>
-     <property name="font">
-      <font>
-       <pointsize>7</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="toolTip">
-      <string>estimated error of fit</string>
-     </property>
+      <property name="toolTip">
+       <string>estimated error of fit</string>
+      </property>
      <property name="text">
       <string/>
      </property>

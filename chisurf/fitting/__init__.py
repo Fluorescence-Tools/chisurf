@@ -55,6 +55,20 @@ def find_fit_idx_of_parameter(
         parameter: 'chisurf.fitting.parameter.FittingParameter',
         fit_list: list['chisurf.fitting.fit.Fit'] = None
 ) -> list[int]:
+    """Find indices of fits that contain a specific parameter.
+
+    Parameters
+    ----------
+    parameter : FittingParameter
+        The parameter to search for.
+    fit_list : list of Fit, optional
+        List of fits to search. Defaults to ``chisurf.fits``.
+
+    Returns
+    -------
+    list of int
+        Indices of fits whose model contains the parameter.
+    """
     if fit_list is None:
         fit_list = chisurf.fits
     fit_idx = list()

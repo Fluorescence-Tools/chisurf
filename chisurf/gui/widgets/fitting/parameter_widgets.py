@@ -743,6 +743,12 @@ class FittingParameterWidget(Controller):
         except Exception:
             pass
 
+        try:
+            self.lineEdit.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+            self.lineEdit.mousePressEvent = self._on_error_field_mouse_press  # type: ignore
+        except Exception:
+            pass
+
         # Display of values
         try:
             _init_v = float(fitting_parameter.value)
@@ -815,6 +821,130 @@ class FittingParameterWidget(Controller):
             self._chisurf_code_badge_installed = True
         except Exception:
             pass
+
+    def _on_error_field_mouse_press(self, event: QtGui.QMouseEvent) -> None:
+        """Run support-plane analysis when the error field is clicked.
+
+        Parameters
+        ----------
+        event : QtGui.QMouseEvent
+            Mouse event delivered to the read-only error field.
+
+        Returns
+        -------
+        None
+            Left-click starts the adaptive scan; other clicks keep the default
+            line-edit behavior.
+        """
+        if event.button() == QtCore.Qt.LeftButton and not getattr(self, "_is_output_param", False):
+            self._run_support_plane_scan()
+            event.accept()
+            return
+        QtWidgets.QLineEdit.mousePressEvent(self.lineEdit, event)
+
+    def _run_support_plane_scan(self) -> None:
+        """Run adaptive support-plane analysis for this parameter.
+
+        Returns
+        -------
+        None
+            The scan result and derived error estimate are stored on the
+            fitting parameter, then the widget and plots are refreshed.
+        """
+        fp = self.fitting_parameter
+        parameter_name = str(getattr(fp, "name", ""))
+        fit_index = self._resolve_fit_idx(default=getattr(fp, "fit_idx", self._absolute_fit_idx))
+        self.lineEdit.setEnabled(False)
+        try:
+            if fit_index is None:
+                raise ValueError("No active fit is available for support-plane analysis.")
+            fit_obj = chisurf.fits[int(fit_index)]
+
+            def run_scan_directly() -> None:
+                """Run the scan without the action controller.
+
+                Returns
+                -------
+                None
+                    The fit stores the full scan result on the parameter.
+                """
+                fit_obj.adaptive_chi2_scan(
+                    parameter_name=parameter_name,
+                    scan_range=(None, None),
+                    p_value=0.99,
+                    max_points_per_side=50,
+                )
+
+            controller = getattr(chisurf, "action_controller", None)
+            if controller is not None:
+                try:
+                    controller.execute(
+                        name="parameter.adaptive_scan",
+                        payload={
+                            "parameter_name": parameter_name,
+                            "fit_index": int(fit_index),
+                            "scan_range": (None, None),
+                            "p_value": 0.99,
+                            "max_points_per_side": 50,
+                        },
+                    )
+                except Exception:
+                    run_scan_directly()
+            else:
+                run_scan_directly()
+
+            scanned_parameter = fit_obj.model.parameters_all_dict.get(parameter_name, fp)
+            self._update_error_estimate_from_scan(scanned_parameter)
+            try:
+                fit_obj.model.update_plots()
+            except Exception:
+                pass
+            self.finalize()
+        except Exception as exc:
+            try:
+                chisurf.logging.warning(
+                    f"FittingParameterWidget: support-plane scan failed for '{parameter_name}': {exc}"
+                )
+            except Exception:
+                pass
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Support-plane analysis failed",
+                f"Could not run support-plane analysis for '{parameter_name}'.\n\n{exc}",
+                QtWidgets.QMessageBox.Ok,
+            )
+        finally:
+            if not getattr(self, "_is_output_param", False):
+                self.lineEdit.setEnabled(True)
+
+    def _update_error_estimate_from_scan(self, parameter) -> None:
+        """Update a parameter's scalar error estimate from scan crossings.
+
+        Parameters
+        ----------
+        parameter : object
+            Fitting parameter with a ``scan_result`` dictionary.
+
+        Returns
+        -------
+        None
+            ``parameter.error_estimate`` is updated when at least one finite
+            support-plane crossing exists.
+        """
+        result = getattr(parameter, "scan_result", None)
+        if result is None:
+            return
+        v0 = result.get("v0", getattr(parameter, "value", None))
+        crossings = result.get("crossings", ())
+        errors = []
+        for crossing in crossings:
+            try:
+                if crossing is not None and np.isfinite(float(crossing)) and np.isfinite(float(v0)):
+                    errors.append(abs(float(crossing) - float(v0)))
+            except Exception:
+                continue
+        if errors:
+            parameter.error_estimate = float(max(errors))
 
 
     def _on_label_mouse_press(self, event: QtGui.QMouseEvent):
@@ -1374,17 +1504,21 @@ class FittingParameterWidget(Controller):
             pass
 
         # Error-estimate
-        value = float(self.fitting_parameter.value)
-        if not np.isfinite(value):
-            rel_error = "NA"
-        else:
+        error_estimate = float('nan')
+        rel_error = float('nan')
+        try:
+            value = float(self.fitting_parameter.value)
             error_estimate = self.fitting_parameter.error_estimate
-            rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
+            if np.isfinite(value):
+                rel_error = abs(error_estimate / (value + 1e-12) * 100.0)
+        except Exception:
+            pass
 
-        if self.fitting_parameter.fixed or not isinstance(error_estimate, float):
+        scan_result = getattr(self.fitting_parameter, 'scan_result', None)
+
+        if self.fitting_parameter.fixed or not np.isfinite(error_estimate):
             self.lineEdit.setText("NA")
-            # Reset background color to default
-            self.lineEdit.setStyleSheet("")
+            self.lineEdit.setStyleSheet("background-color: #d0d0d0; color: #666666;")
         else:
             self.lineEdit.setText("NA" if np.isnan(rel_error) else f"{rel_error:.0f}%")
 
@@ -1410,16 +1544,21 @@ class FittingParameterWidget(Controller):
                 rgb_color = cmap(norm_error)
 
                 # Convert RGB to hex for stylesheet
-                hex_color = mcolors.rgb2hex(rgb_color)
+                if scan_result is not None:
+                    bg_color = mcolors.rgb2hex(tuple(c * 0.65 for c in rgb_color[:3]))
+                    self.lineEdit.setStyleSheet(f"background-color: {bg_color}; color: white;")
+                else:
+                    text_color = mcolors.rgb2hex(rgb_color)
+                    self.lineEdit.setStyleSheet(f"background-color: #d0d0d0; color: {text_color};")
 
-                # Set background color and ensure text is readable
-                # Use white text for darker backgrounds, black for lighter ones
-                r, g, b = rgb_color[:3]
-                brightness = 0.299 * r + 0.587 * g + 0.114 * b
-                text_color = "white" if brightness < 0.5 else "black"
-
-                # Set background color and text color
-                self.lineEdit.setStyleSheet(f"background-color: {hex_color}; color: {text_color};")
+        try:
+            source_text = "support-plane error" if scan_result is not None else "covariance/error estimate"
+            self.lineEdit.setToolTip(
+                f"{source_text}\n"
+                f"Click to run support-plane analysis for '{self.fitting_parameter.name}'."
+            )
+        except Exception:
+            pass
 
         # Link
         if link_param is not None:

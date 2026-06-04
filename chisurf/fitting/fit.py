@@ -64,22 +64,57 @@ class Fit(chisurf.base.Base):
 
     @property
     def fit_idx(self) -> int:
+        """Index of this fit in ``chisurf.fits``.
+
+        Returns
+        -------
+        int
+            Position of the fit in the global fit list.
+        """
         return chisurf.fitting.find_fit_idx(self)
 
     @property
     def xmin(self) -> int:
+        """Minimum index of the fitting range.
+
+        Returns
+        -------
+        int
+            Lower bound of the fitting range.
+        """
         return self._xmin
 
     @xmin.setter
     def xmin(self, v: int):
+        """Set the minimum index of the fitting range.
+
+        Parameters
+        ----------
+        v : int
+            Lower bound. Clamped to zero if negative.
+        """
         self._xmin = max(0, v)
 
     @property
     def xmax(self) -> int:
+        """Maximum index of the fitting range.
+
+        Returns
+        -------
+        int
+            Upper bound of the fitting range.
+        """
         return self._xmax
 
     @xmax.setter
     def xmax(self, v: int):
+        """Set the maximum index of the fitting range.
+
+        Parameters
+        ----------
+        v : int
+            Upper bound. Clamped to the data length minus one.
+        """
         try:
             self._xmax = min(len(self.data.y) - 1, v)
         except AttributeError:
@@ -87,14 +122,35 @@ class Fit(chisurf.base.Base):
 
     @property
     def data(self) -> chisurf.data.DataCurve:
+        """Data curve being fitted.
+
+        Returns
+        -------
+        chisurf.data.DataCurve
+            The experimental data attached to this fit.
+        """
         return self._data
 
     @data.setter
     def data(self, v: chisurf.data.DataCurve):
+        """Set the data curve for this fit.
+
+        Parameters
+        ----------
+        v : chisurf.data.DataCurve
+            New data curve.
+        """
         self._data = v
 
     @property
     def model(self) -> chisurf.models.ModelCurve:
+        """Model curve used for fitting.
+
+        Returns
+        -------
+        chisurf.models.ModelCurve
+            The model instance associated with this fit.
+        """
         return self._model
 
     @model.setter
@@ -104,11 +160,25 @@ class Fit(chisurf.base.Base):
                 chisurf.models.model.ModelCurve
             ]
     ):
+        """Create a new model from a model class.
+
+        Parameters
+        ----------
+        model_class : type
+            A subclass of :class:`chisurf.models.ModelCurve` to instantiate.
+        """
         if issubclass(model_class, chisurf.models.Model):
             self._model = model_class(self, **self._model_kw)
 
     @property
     def weighted_residuals(self) -> chisurf.curve.Curve:
+        """Weighted residuals within the current fit range.
+
+        Returns
+        -------
+        chisurf.curve.Curve
+            Curve whose y-values are ``(data - model) / weights``.
+        """
         wres_x, _ = self.model[self.xmin:self.xmax]
         wres_y = self.model.weighted_residuals
         return chisurf.curve.Curve(
@@ -119,6 +189,13 @@ class Fit(chisurf.base.Base):
 
     @property
     def autocorrelation(self):
+        """Autocorrelation of the weighted residuals.
+
+        Returns
+        -------
+        chisurf.curve.Curve
+            Autocorrelation curve (excluding the zero-lag point).
+        """
         wres = self.weighted_residuals
         return chisurf.curve.Curve(
             x=wres.x[1:],
@@ -128,6 +205,13 @@ class Fit(chisurf.base.Base):
 
     @property
     def chi2(self) -> float:
+        """Chi-squared statistic (non-reduced).
+
+        Returns
+        -------
+        float
+            Sum of squared weighted residuals.
+        """
         return get_chi2(
             self.model.parameter_values,
             model=self.model,
@@ -136,10 +220,24 @@ class Fit(chisurf.base.Base):
 
     @property
     def chi2r(self) -> float:
+        """Reduced chi-squared statistic.
+
+        Returns
+        -------
+        float
+            Chi-squared divided by degrees of freedom.
+        """
         return get_chi2(list(), model=self.model)
 
     @property
     def durbin_watson(self) -> float:
+        """Durbin-Watson statistic of the weighted residuals.
+
+        Returns
+        -------
+        float
+            Test statistic for autocorrelation in residuals.
+        """
         return chisurf.math.statistics.durbin_watson(
             self.weighted_residuals.y
         )
@@ -203,10 +301,25 @@ class Fit(chisurf.base.Base):
 
     @property
     def fit_range(self) -> typing.Tuple[int, int]:
+        """Current fitting range as ``(xmin, xmax)``.
+
+        Returns
+        -------
+        tuple of int
+            Lower and upper index of the fitting range.
+        """
         return self.xmin, self.xmax
 
     @fit_range.setter
     def fit_range(self, v):
+        """Set the fitting range and optionally a residual mask.
+
+        Parameters
+        ----------
+        v : tuple of int
+            Either a 2-tuple ``(xmin, xmax)`` for a simple range, or a
+            4-tuple ``(xmin1, xmax1, xmin2, xmax2)`` for a two-region mask.
+        """
         vals = tuple(int(x) for x in v)
         if len(vals) == 2:
             # Backwards-compatible 1D range: do not touch any existing mask.
@@ -275,6 +388,14 @@ class Fit(chisurf.base.Base):
 
     @mask.setter
     def mask(self, v):
+        """Set the mask or weights applied to weighted residuals.
+
+        Parameters
+        ----------
+        v : array_like or None
+            1D array of weights or boolean inclusion flags. ``None``
+            clears the mask.
+        """
         if v is None:
             self._mask = None
             return
@@ -361,6 +482,13 @@ class Fit(chisurf.base.Base):
         self.model = model_class
 
     def __getstate__(self):
+        """Custom pickling state with removable unpickleable attributes.
+
+        Returns
+        -------
+        dict
+            Serialized state including data and sanitized model state.
+        """
         d = super().__getstate__()
 
         # Try to pickle model; remove unpickleable attributes
@@ -379,6 +507,13 @@ class Fit(chisurf.base.Base):
         return d
 
     def __setstate__(self, state):
+        """Restore fit state from a pickled representation.
+
+        Parameters
+        ----------
+        state : dict
+            State dictionary produced by :meth:`__getstate__`.
+        """
         m = state.pop('model')
         d = state.pop('data')
         self.model.__setstate__(m)
@@ -440,16 +575,42 @@ class Fit(chisurf.base.Base):
             pass
 
     def __str__(self):
-        s = "\nFitting:\n"
-        s += "Dataset:\n"
-        s += "--------\n"
-        s += str(self.data)
-        s += "\n\nFit-result: \n"
-        s += "----------\n"
-        s += "fitrange: %i..%i\n" % (self.xmin, self.xmax)
-        s += "chi2:\t%.4f \n" % self.chi2r
-        s += "----------\n"
-        s += str(self.model)
+        """Human-readable summary of the fit.
+
+        Returns
+        -------
+        str
+            String containing chi²r, range, and a parameter table.
+        """
+        s = f"chi2r={self.chi2r:.4f}  range={self.xmin}..{self.xmax}\n\n"
+        s += f"  {'Name':<12s}  {'Value':<11s}  {'Error':<13s}  {'Source'}  {'Link'}\n"
+        pd = self.model.parameters_all_dict
+        for k in sorted(pd.keys()):
+            p = pd[k]
+            if not isinstance(p, chisurf.fitting.parameter.FittingParameter):
+                continue
+            if getattr(p, 'is_output', False):
+                continue
+            val = f"{p.value:.5g}"
+            if p.fixed:
+                s += f"  {p.name:<12s}  {val:<11s}  fixed"
+            else:
+                try:
+                    ee = p.error_estimate
+                    if isinstance(ee, float):
+                        rel = abs(ee / (p.value + 1e-12) * 100.0)
+                        err = f"±{ee:.3g}({rel:.1f}%)"
+                        src = "sp" if p.scan_result is not None else "cov"
+                    else:
+                        err = "±N/A"
+                        src = ""
+                except Exception:
+                    err = "±N/A"
+                    src = ""
+                s += f"  {p.name:<12s}  {val:<11s}  {err:<13s}  {src:<6s}"
+            if p.is_linked and p.link is not None:
+                s += f"  →{p.link.name}"
+            s += "\n"
         return s
 
     def get_curves(
@@ -684,6 +845,13 @@ class Fit(chisurf.base.Base):
             chisurf.logging.error(f"Parameter '{name}' not found in model.")
 
     def set_result_idx(self, idx: int):
+        """Restore model state from a stored result by index.
+
+        Parameters
+        ----------
+        idx : int
+            Index in the results deque. Clipped to the valid range.
+        """
         idx = np.clip(idx, 0, len(self.results) - 1)
         self._result_current = idx
         self.model.__setstate__(self.results[idx])
@@ -691,12 +859,15 @@ class Fit(chisurf.base.Base):
         self.model.finalize()
 
     def next_result(self):
+        """Advance to the next stored result."""
         self.set_result_idx(self._result_current + 1)
 
     def previous_result(self):
+        """Go back to the previous stored result."""
         self.set_result_idx(self._result_current - 1)
 
     def update_error_estimates(self):
+        """Update parameter error estimates from the covariance matrix."""
         # Estimate errors based on gradient
         fit = self
         cov_m, used_parameters = fit.covariance_matrix
@@ -705,6 +876,7 @@ class Fit(chisurf.base.Base):
             fit.model.parameters[p].error_estimate = e
 
     def update(self) -> None:
+        """Update the model and notify observers."""
         self.model.update()
 
     def chi2_scan(
@@ -739,6 +911,41 @@ class Fit(chisurf.base.Base):
         parameter.parameter_scan = r['parameter_values'], r['chi2r']
         return parameter.parameter_scan
 
+    def adaptive_chi2_scan(
+            self,
+            parameter_name: str,
+            scan_range: typing.Tuple[float, float] = (None, None),
+            p_value: float = 0.99,
+            max_points_per_side: int = 50,
+            **kwargs
+    ) -> typing.Dict:
+        """Adaptive F-test-driven chi² scan for a parameter.
+
+        See :func:`chisurf.fitting.support_plane.adaptive_scan_parameter`
+        for details.
+        """
+        r = chisurf.fitting.support_plane.adaptive_scan_parameter(
+            fit=self,
+            parameter_name=parameter_name,
+            scan_range=scan_range,
+            p_value=p_value,
+            max_points_per_side=max_points_per_side,
+        )
+        parameter = self.model.parameters_all_dict[parameter_name]
+        parameter.parameter_scan = r['parameter_values'], r['chi2r']
+        parameter.scan_result = r
+        crossings = r.get('crossings', (None, None))
+        errors = []
+        for crossing in crossings:
+            try:
+                if crossing is not None and np.isfinite(float(crossing)):
+                    errors.append(abs(float(crossing) - float(parameter.value)))
+            except Exception:
+                pass
+        if errors:
+            parameter.error_estimate = float(max(errors))
+        return r
+
 
 class FitGroup(Fit):
     """Group of :class:`Fit` objects that share a global model.
@@ -749,42 +956,112 @@ class FitGroup(Fit):
 
     @property
     def selected_fit(self) -> Fit:
+        """Currently selected grouped fit.
+
+        Returns
+        -------
+        Fit
+            The fit at the current selection index.
+        """
         return self.grouped_fits[self.selected_fit_index]
 
     @property
     def selected_fit_index(self) -> int:
+        """Index of the currently selected grouped fit.
+
+        Returns
+        -------
+        int
+            Selection index.
+        """
         return self._selected_fit_index
 
     @selected_fit.setter
     def selected_fit(self, v: int):
+        """Set the selected fit index.
+
+        Parameters
+        ----------
+        v : int
+            New selection index.
+        """
         self._selected_fit_index = v
 
     @property
     def data(self) -> chisurf.data.DataCurve:
+        """Data of the currently selected grouped fit.
+
+        Returns
+        -------
+        chisurf.data.DataCurve
+            Data curve of the selected fit.
+        """
         return self.selected_fit.data
 
     @data.setter
     def data(self, v: chisurf.base.Data):
+        """Set the data on the currently selected grouped fit.
+
+        Parameters
+        ----------
+        v : chisurf.data.DataCurve
+            New data curve.
+        """
         self.selected_fit.data = v
 
     @property
     def model(self) -> chisurf.models.Model:
+        """Model of the currently selected grouped fit.
+
+        Returns
+        -------
+        chisurf.models.Model
+            Model of the selected fit.
+        """
         return self.selected_fit.model
 
     @model.setter
     def model(self, v: typing.Type[chisurf.models.Model]):
+        """Set the model on the currently selected grouped fit.
+
+        Parameters
+        ----------
+        v : type
+            Model class to instantiate on the selected fit.
+        """
         self.selected_fit.model = v
 
     @property
     def weighted_residuals(self) -> chisurf.curve.Curve:
+        """Weighted residuals of the currently selected grouped fit.
+
+        Returns
+        -------
+        chisurf.curve.Curve
+            Weighted residuals curve.
+        """
         return self.selected_fit.weighted_residuals
 
     @property
     def chi2r(self) -> float:
+        """Reduced chi-squared of the currently selected grouped fit.
+
+        Returns
+        -------
+        float
+            Reduced chi-squared value.
+        """
         return self.selected_fit.chi2r
 
     @property
     def durbin_watson(self) -> float:
+        """Durbin-Watson statistic of the selected fit's residuals.
+
+        Returns
+        -------
+        float
+            Test statistic for autocorrelation.
+        """
         return chisurf.math.statistics.durbin_watson(
             self.weighted_residuals.y
         )
@@ -802,15 +1079,37 @@ class FitGroup(Fit):
 
     @mask.setter
     def mask(self, v):
+        """Set the mask on all grouped fits.
+
+        Parameters
+        ----------
+        v : array_like or None
+            Mask or weights array forwarded to each member fit.
+        """
         for f in self:
             setattr(f, "mask", v)
 
     @property
     def fit_range(self) -> typing.Tuple[int, int]:
+        """Fitting range of the FitGroup (from the selected fit).
+
+        Returns
+        -------
+        tuple of int
+            ``(xmin, xmax)`` of the selected fit.
+        """
         return self.xmin, self.xmax
 
     @fit_range.setter
     def fit_range(self, v):
+        """Set the fitting range on all grouped fits.
+
+        Parameters
+        ----------
+        v : tuple of int
+            Either a 2-tuple ``(xmin, xmax)`` or a 4-tuple defining two
+            mask intervals.
+        """
         vals = tuple(int(x) for x in v)
         if len(vals) == 2:
             # Backwards-compatible 1D range: propagate to all member fits.
@@ -885,19 +1184,47 @@ class FitGroup(Fit):
 
     @property
     def xmin(self) -> int:
+        """Minimum fit index of the selected grouped fit.
+
+        Returns
+        -------
+        int
+            Lower bound of the fitting range.
+        """
         return self.selected_fit.xmin
 
     @xmin.setter
     def xmin(self, v: int):
+        """Set the minimum fit index on all grouped fits.
+
+        Parameters
+        ----------
+        v : int
+            Lower bound.
+        """
         for f in self:
             f.xmin = v
 
     @property
     def xmax(self) -> int:
+        """Maximum fit index of the selected grouped fit.
+
+        Returns
+        -------
+        int
+            Upper bound of the fitting range.
+        """
         return self.selected_fit.xmax
 
     @xmax.setter
     def xmax(self, v: int):
+        """Set the maximum fit index on all grouped fits.
+
+        Parameters
+        ----------
+        v : int
+            Upper bound.
+        """
         for f in self:
             f.xmax = v
 
@@ -936,6 +1263,17 @@ class FitGroup(Fit):
             verbose: bool = False,
             **kwargs
     ) -> None:
+        """Save all grouped fits with derived per-fit filenames.
+
+        Parameters
+        ----------
+        filename : str
+            Base filename. Per-fit suffixes are derived from data names.
+        file_type : str, optional
+            Output file format (default ``'txt'``).
+        verbose : bool, optional
+            If True, print additional information during save.
+        """
         root, ext = os.path.splitext(filename)
         member_bases = []
         for fit in self:
@@ -1025,6 +1363,7 @@ class FitGroup(Fit):
         self._model.finalize()
 
     def update(self) -> None:
+        """Update all grouped fits."""
         for f in self.grouped_fits:
             f.update()
 
@@ -1101,6 +1440,22 @@ class FitGroup(Fit):
             copy_values: bool = True,
             convert_values_to_elementary: bool = False
     ) -> typing.Dict:
+        """Serialize the FitGroup and its grouped fits to a dictionary.
+
+        Parameters
+        ----------
+        remove_protected : bool, optional
+            If True, omit keys starting with ``'_'``.
+        copy_values : bool, optional
+            If True, copy values to avoid aliasing.
+        convert_values_to_elementary : bool, optional
+            If True, convert numpy types to Python builtins.
+
+        Returns
+        -------
+        dict
+            Serialized representation.
+        """
         d = super().to_dict(
             remove_protected=remove_protected,
             copy_values=copy_values,
@@ -1116,13 +1471,31 @@ class FitGroup(Fit):
         return d
 
     def __str__(self):
-        s = ""
+        """String representation of all grouped fits.
+
+        Returns
+        -------
+        str
+            Joined string representations of each member fit.
+        """
+        parts = []
         for f in self:
-            s += str(f)
-            s += "---\n"
-        return s
+            parts.append(str(f))
+        return "\n".join(parts)
 
     def next(self):
+        """Advance the iterator and return the next grouped fit.
+
+        Returns
+        -------
+        Fit
+            The next grouped fit.
+
+        Raises
+        ------
+        StopIteration
+            If the end of the grouped fits list is reached.
+        """
         if self._selected_fit_index > len(self.grouped_fits):
             raise StopIteration
         else:
@@ -1130,9 +1503,28 @@ class FitGroup(Fit):
             return self.grouped_fits[self._selected_fit_index - 1]
 
     def __len__(self):
+        """Number of grouped fits.
+
+        Returns
+        -------
+        int
+            Length of ``grouped_fits``.
+        """
         return len(self.grouped_fits)
 
     def __getitem__(self, key) -> typing.List[Fit]:
+        """Access grouped fits by index or slice.
+
+        Parameters
+        ----------
+        key : int or slice
+            Index or slice object.
+
+        Returns
+        -------
+        Fit or list of Fit
+            The fit(s) at the given index/slice.
+        """
         if isinstance(key, int):
             return self.grouped_fits.__getitem__(key)
         else:
@@ -1194,6 +1586,16 @@ def sample_fit(
     os.makedirs(chains_dir, exist_ok=True)
 
     def save_chain_to_file(r, fn_target):
+        """Save a sampling result dict to a tab-separated text file.
+
+        Parameters
+        ----------
+        r : dict
+            Result dict with keys ``'chi2r'``, ``'parameter_values'``,
+            and ``'parameter_names'``.
+        fn_target : str
+            Target file path.
+        """
         chi2 = r['chi2r']
         parameter_values = r['parameter_values']
         parameter_names = r['parameter_names']
@@ -1226,6 +1628,18 @@ def sample_fit(
         fn_partial = os.path.join(chains_dir, base_fn + '.partial.er4')
 
         def sampler_callback(done, run_total, sampler=None, **cb_kwargs):
+            """Callback invoked during emcee sampling for intermediate saves.
+
+            Parameters
+            ----------
+            done : int
+                Number of completed steps in the current run.
+            run_total : int
+                Total steps in the current run.
+            sampler : emcee.EnsembleSampler, optional
+                The emcee sampler instance, used to extract intermediate
+                chains when not None.
+            """
             if sampler is not None:
                 # emcee intermediate save
                 try:
@@ -1631,5 +2045,4 @@ def lnprob(
         )
         lnlike = -0.5 * chi2 if chi2 < chi2max else -np.inf
         return lnlike + lp
-
 

@@ -46,6 +46,23 @@ class FittingParameter(chisurf.parameter.Parameter):
             *args,
             **kwargs
     ):
+        """Initialize a fitting parameter.
+
+        Parameters
+        ----------
+        value : float, optional
+            Initial parameter value.
+        link : Parameter, optional
+            Link to another parameter.
+        lb : float, optional
+            Lower bound.
+        ub : float, optional
+            Upper bound.
+        bounds_on : bool, optional
+            Whether bounds are active.
+        fixed : bool, optional
+            Whether the parameter is fixed during optimization.
+        """
         super().__init__(
             *args,
             value=value,
@@ -59,6 +76,7 @@ class FittingParameter(chisurf.parameter.Parameter):
         self._error_estimate = None
         self._chi2s = None
         self._values = None
+        self._scan_result = None
 
     @property
     def parameter_scan(self) -> typing.Tuple[np.array, np.array]:
@@ -94,6 +112,16 @@ class FittingParameter(chisurf.parameter.Parameter):
         """Set the stored error estimate (in the same units as ``value``)."""
         self._error_estimate = v
 
+    @property
+    def scan_result(self) -> typing.Union[typing.Dict, None]:
+        """Return the full result dict from the last smart scan, or None."""
+        return self._scan_result
+
+    @scan_result.setter
+    def scan_result(self, v: typing.Dict):
+        """Store the full result dict from a smart scan."""
+        self._scan_result = v
+
     def scan(
             self,
             fit: chisurf.fitting.fit.Fit,
@@ -108,6 +136,25 @@ class FittingParameter(chisurf.parameter.Parameter):
         fit.chi2_scan(
             parameter_name=self.name,
             rel_range=rel_range,
+            **kwargs
+        )
+
+    def adaptive_scan(
+            self,
+            fit: chisurf.fitting.fit.Fit,
+            scan_range: typing.Tuple[float, float] = (None, None),
+            p_value: float = 0.99,
+            **kwargs
+    ) -> typing.Dict:
+        """Trigger an adaptive F-test-driven chi² scan.
+
+        This is a thin wrapper around
+        :meth:`chisurf.fitting.fit.Fit.adaptive_chi2_scan`.
+        """
+        return fit.adaptive_chi2_scan(
+            parameter_name=self.name,
+            scan_range=scan_range,
+            p_value=p_value,
             **kwargs
         )
 
@@ -134,12 +181,22 @@ class FittingParameter(chisurf.parameter.Parameter):
         """Return a human-readable description of the fitting parameter."""
         s = "\nVariable\n"
         s += f"name: {self.name}\n"
-        s += f"internal-value: {self._port}\n"
+        s += f"value: {self.value:.6g}\n"
+        try:
+            ee = self.error_estimate
+            if isinstance(ee, float) and not self.fixed:
+                rel = abs(ee / (self.value + 1e-12) * 100.0) if np.isfinite(self.value) else float('nan')
+                src = "support plane" if self.scan_result is not None else "covariance"
+                s += f"error: {ee:.4g} ({rel:.0f}%) [{src}]\n"
+        except Exception:
+            pass
+        s += f"fixed: {self.fixed}\n"
         if self.bounds_on:
-            s += f"bounds: {self.bounds}\n"
+            bounds = getattr(self, 'bounds', None)
+            if isinstance(bounds, (tuple, list)) and len(bounds) == 2:
+                s += f"bounds: [{bounds[0]:.4g}, {bounds[1]:.4g}]\n"
         if self.is_linked:
             s += f"linked to: {self.link.name}\n"
-            s += f"link-value: {self.value}\n"
         return s
 
 
@@ -224,6 +281,13 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             self,
             vs: typing.List[float]
     ):
+        """Set values of all free parameters.
+
+        Parameters
+        ----------
+        vs : list of float
+            New parameter values in the same order as :attr:`parameters`.
+        """
         ps = self.parameters
         for i, v in enumerate(vs):
             ps[i].value = v
@@ -458,6 +522,19 @@ class FittingParameterGroup(chisurf.parameter.ParameterGroup):
             ] = None,
             *args, **kwargs
     ):
+        """Initialize a fitting parameter group.
+
+        Parameters
+        ----------
+        fit : Fit, optional
+            The fit this group belongs to.
+        model : Model, optional
+            The model this group belongs to.
+        short : str, optional
+            Short label for the group.
+        parameters : list of FittingParameter, optional
+            Initial list of parameters.
+        """
         super().__init__(*args, **kwargs)
         if chisurf.settings.cs_settings['verbose']:
             print("---------------")

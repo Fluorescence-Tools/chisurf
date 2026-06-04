@@ -1,7 +1,7 @@
 """background_startup.py — deferred post-startup stage runner.
 
 After the main window becomes visible, certain non-critical initialisation
-tasks (plugin discovery, Jupyter/MCP start, update check, module warm-up) are
+tasks (plugin discovery, Jupyter start, update check, module warm-up) are
 scheduled here so they do not block the splash-screen phase.
 
 Usage
