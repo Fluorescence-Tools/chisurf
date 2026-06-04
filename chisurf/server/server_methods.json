@@ -1,0 +1,93 @@
+{
+  "methods": [
+    {"rpc": "list_datasets", "service": "datasets.list_datasets"},
+    {"rpc": "get_dataset_info", "service": "datasets.get_dataset_info"},
+    {"rpc": "add_dataset", "service": "datasets.add_dataset", "event_bus": true},
+    {"rpc": "remove_datasets", "service": "datasets.remove_datasets", "event_bus": true},
+    {"rpc": "clear_datasets", "service": "datasets.clear_datasets", "event_bus": true},
+    {"rpc": "dataset_rename", "service": "datasets.dataset_rename"},
+    {"rpc": "dataset_group", "service": "datasets.dataset_group"},
+    {"rpc": "dataset_ungroup", "service": "datasets.dataset_ungroup"},
+
+    {"rpc": "list_fits", "service": "fits.list_fits"},
+    {"rpc": "get_fit_info", "service": "fits.get_fit_info"},
+    {"rpc": "run_fit", "service": "fits.run_fit", "event_bus": true},
+    {"rpc": "remove_fits", "service": "fits.remove_fits", "event_bus": true},
+    {"rpc": "clear_fits", "service": "fits.clear_fits", "event_bus": true},
+    {"rpc": "fit_set_dataset", "service": "fits.fit_set_dataset", "event_bus": true},
+    {"rpc": "fit_set_result_idx", "service": "fits.fit_set_result_idx", "event_bus": true},
+    {"rpc": "fit_create", "service": "fits.fit_create", "event_bus": true},
+    {"rpc": "fit.add", "service": "fits.fit_create", "event_bus": true},
+    {"rpc": "fit_update", "service": "fits.fit_update", "event_bus": true},
+
+    {"rpc": "get_parameter", "service": "parameters.get_parameter"},
+    {"rpc": "set_parameter_value", "service": "parameters.set_parameter_value"},
+    {"rpc": "set_parameter_fixed", "service": "parameters.set_parameter_fixed"},
+    {"rpc": "set_parameter_bounds", "service": "parameters.set_parameter_bounds"},
+    {"rpc": "parameter_link", "service": "parameters.parameter_link"},
+    {"rpc": "parameter_unlink", "service": "parameters.parameter_unlink"},
+
+    {"rpc": "save_project", "service": "projects.save_project"},
+    {"rpc": "load_project", "service": "projects.load_project"},
+    {"rpc": "get_project_info", "service": "projects.get_project_info"},
+
+    {"rpc": "session_describe", "service": "session_svc.session_describe"},
+    {"rpc": "session_clear", "service": "session_svc.session_clear", "event_bus": true},
+    {"rpc": "session_snapshot", "service": "session_svc.session_snapshot"},
+    {"rpc": "session_restore", "service": "session_svc.session_restore", "event_bus": true},
+
+    {"rpc": "model_finalize", "service": "models.model_finalize"},
+    {"rpc": "model_set_parse_function", "service": "models.model_set_parse_function"},
+    {"rpc": "ping", "service": "fits.ping"},
+
+    {"rpc": "dataset.list", "service": "datasets.list_datasets"},
+    {"rpc": "dataset.get", "service": "datasets.get_dataset_info"},
+    {"rpc": "dataset.curve_data", "service": "datasets.get_dataset_curve_data"},
+    {"rpc": "dataset.remove", "service": "datasets.remove_datasets", "event_bus": true},
+    {"rpc": "dataset.clear", "service": "datasets.clear_datasets", "event_bus": true},
+    {"rpc": "dataset.rename", "service": "datasets.dataset_rename"},
+    {"rpc": "dataset.group", "service": "datasets.dataset_group"},
+    {"rpc": "dataset.ungroup", "service": "datasets.dataset_ungroup"},
+    {"rpc": "dataset.load", "service": "datasets.add_dataset", "event_bus": true},
+
+    {"rpc": "fit.list", "service": "fits.list_fits"},
+    {"rpc": "fit.get", "service": "fits.get_fit_info"},
+    {"rpc": "fit.run", "service": "fits.run_fit", "event_bus": true},
+    {"rpc": "fit.remove", "service": "fits.remove_fits", "event_bus": true},
+    {"rpc": "fit.clear", "service": "fits.clear_fits", "event_bus": true},
+    {"rpc": "fit.set_dataset", "service": "fits.fit_set_dataset", "event_bus": true},
+    {"rpc": "fit.set_result_idx", "service": "fits.fit_set_result_idx", "event_bus": true},
+    {"rpc": "fit.set_fit_range", "service": "fits.fit_set_fit_range"},
+    {"rpc": "fit.create", "service": "fits.fit_create", "event_bus": true},
+    {"rpc": "fit.update", "service": "fits.fit_update", "event_bus": true},
+    {"rpc": "fit.save", "service": "fits.fit_save", "event_bus": true},
+    {"rpc": "fit.curve_data", "service": "fits.fit_curve_data"},
+
+    {"rpc": "parameter.get", "service": "parameters.get_parameter"},
+    {"rpc": "parameter.set_value", "service": "parameters.set_parameter_value"},
+    {"rpc": "parameter.set_fixed", "service": "parameters.set_parameter_fixed"},
+    {"rpc": "parameter.set_bounds", "service": "parameters.set_parameter_bounds"},
+    {"rpc": "parameter.set_bounds_on", "service": "parameters.set_parameter_bounds_on"},
+    {"rpc": "parameter.link", "service": "parameters.parameter_link"},
+    {"rpc": "parameter.unlink", "service": "parameters.parameter_unlink"},
+
+    {"rpc": "project.info", "service": "projects.get_project_info"},
+    {"rpc": "project.save", "service": "projects.save_project"},
+    {"rpc": "project.load", "service": "projects.load_project"},
+
+    {"rpc": "session.describe", "service": "session_svc.session_describe"},
+    {"rpc": "session.clear", "service": "session_svc.session_clear", "event_bus": true},
+    {"rpc": "session.snapshot", "service": "session_svc.session_snapshot"},
+    {"rpc": "session.restore", "service": "session_svc.session_restore", "event_bus": true},
+
+    {"rpc": "model.finalize", "service": "models.model_finalize"},
+    {"rpc": "model.set_parse_function", "service": "models.model_set_parse_function"},
+    {"rpc": "graph.build_fits", "service": "graph.build_fit_graph"},
+    {"rpc": "graph.build", "service": "graph.build_fit_graph"},
+
+    {"rpc": "list_methods", "meta": "methods"},
+    {"rpc": "meta.methods", "meta": "methods"},
+    {"rpc": "meta.protocol", "meta": "protocol"},
+    {"rpc": "meta.ping", "service": "fits.ping"}
+  ]
+}

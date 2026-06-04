@@ -1,0 +1,53 @@
+{
+  "methods": [
+    {"name": "dataset__list", "rpc": "dataset.list", "params": [], "result_key": "datasets", "default": []},
+    {"name": "dataset__get", "rpc": "dataset.get", "params": [{"name": "dataset_index", "default": null}, {"name": "dataset_uid", "default": null}], "result_key": "dataset", "default": {}},
+    {"name": "dataset__curve_data", "rpc": "dataset.curve_data", "params": [{"name": "dataset_index", "default": null}, {"name": "dataset_uid", "default": null}]},
+    {"name": "dataset__remove", "rpc": "dataset.remove", "params": [{"name": "dataset_indices", "default": null}, {"name": "dataset_uids", "default": null}]},
+    {"name": "dataset__clear", "rpc": "dataset.clear", "params": []},
+    {"name": "dataset__rename", "rpc": "dataset.rename", "params": [{"name": "new_name", "required": true}, {"name": "dataset_index", "default": null}, {"name": "dataset_uid", "default": null}]},
+    {"name": "dataset__group", "rpc": "dataset.group", "params": [{"name": "dataset_indices", "required": true}, {"name": "group_name", "default": null}]},
+    {"name": "dataset__ungroup", "rpc": "dataset.ungroup", "params": [{"name": "dataset_indices", "required": true}]},
+
+    {"name": "fit__list", "rpc": "fit.list", "params": [], "result_key": "fits", "default": []},
+    {"name": "fit__get", "rpc": "fit.get", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}], "result_key": "fit", "default": {}},
+    {"name": "fit__run", "rpc": "fit.run", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}]},
+    {"name": "fit__remove", "rpc": "fit.remove", "params": [{"name": "fit_indices", "default": null}, {"name": "fit_uids", "default": null}]},
+    {"name": "fit__clear", "rpc": "fit.clear", "params": []},
+    {"name": "fit__set_dataset", "rpc": "fit.set_dataset", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}, {"name": "dataset_index", "default": 0}, {"name": "dataset_uid", "default": null}]},
+    {"name": "fit__set_result_idx", "rpc": "fit.set_result_idx", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}, {"name": "result_idx", "default": 0}]},
+    {"name": "fit__set_fit_range", "rpc": "fit.set_fit_range", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}, {"name": "xmin", "default": 0}, {"name": "xmax", "default": 0}]},
+    {"name": "fit__create", "rpc": "fit.create", "params": [{"name": "dataset_index", "default": 0}, {"name": "dataset_indices", "default": null}, {"name": "model_name", "default": null}, {"name": "fit_name", "default": null}, {"name": "model_kw", "default": null}]},
+    {"name": "fit__add", "rpc": "fit.add", "params": [], "allow_extra": true},
+    {"name": "fit__update", "rpc": "fit.update", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}]},
+    {"name": "fit__save", "rpc": "fit.save", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}, {"name": "filename", "default": "fit_export"}, {"name": "file_type", "default": "csv"}, {"name": "save_curves", "default": false}]},
+    {"name": "fit__curve_data", "rpc": "fit.curve_data", "params": [{"name": "fit_index", "default": null}, {"name": "fit_uid", "default": null}]},
+
+    {"name": "parameter__get", "rpc": "parameter.get", "params": [{"name": "parameter_name", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}], "result_key": "parameter", "default": {}},
+    {"name": "parameter__set_value", "rpc": "parameter.set_value", "params": [{"name": "parameter_name", "required": true}, {"name": "value", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}]},
+    {"name": "parameter__set_fixed", "rpc": "parameter.set_fixed", "params": [{"name": "parameter_name", "required": true}, {"name": "fixed", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}]},
+    {"name": "parameter__set_bounds", "rpc": "parameter.set_bounds", "params": [{"name": "parameter_name", "required": true}, {"name": "lower", "required": true}, {"name": "upper", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}], "renames": {"lower": "bounds", "upper": "bounds"}},
+    {"name": "parameter__set_bounds_on", "rpc": "parameter.set_bounds_on", "params": [{"name": "parameter_name", "required": true}, {"name": "bounds_on", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}]},
+    {"name": "parameter__link", "rpc": "parameter.link", "params": [{"name": "parameter_name", "required": true}, {"name": "target_parameter_name", "required": true}, {"name": "fit_index", "default": 0}, {"name": "target_fit_index", "default": null}, {"name": "fit_uid", "default": null}, {"name": "target_fit_uid", "default": null}]},
+    {"name": "parameter__unlink", "rpc": "parameter.unlink", "params": [{"name": "parameter_name", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}]},
+
+    {"name": "project__info", "rpc": "project.info", "params": []},
+    {"name": "project__save", "rpc": "project.save", "params": [{"name": "target_path", "required": true}, {"name": "project_name", "default": null}]},
+    {"name": "project__load", "rpc": "project.load", "params": [{"name": "project_path", "required": true}]},
+
+    {"name": "session__describe", "rpc": "session.describe", "params": []},
+    {"name": "session__clear", "rpc": "session.clear", "params": []},
+    {"name": "session__snapshot", "rpc": "session.snapshot", "params": []},
+    {"name": "session__restore", "rpc": "session.restore", "params": [{"name": "project_path", "default": null}]},
+
+    {"name": "model__finalize", "rpc": "model.finalize", "params": [{"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}]},
+    {"name": "model__set_parse_function", "rpc": "model.set_parse_function", "params": [{"name": "parse_function", "required": true}, {"name": "fit_index", "default": 0}, {"name": "fit_uid", "default": null}]},
+
+    {"name": "graph__build", "rpc": "graph.build", "params": [{"name": "fit_indices", "default": null}, {"name": "fit_uids", "default": null}, {"name": "include_fixed", "default": true}, {"name": "connect_fits", "default": false}]},
+    {"name": "graph__build_fits", "rpc": "graph.build_fits", "params": [{"name": "fit_indices", "default": null}, {"name": "fit_uids", "default": null}, {"name": "include_fixed", "default": true}, {"name": "connect_fits", "default": false}]},
+
+    {"name": "meta__ping", "rpc": "meta.ping", "params": []},
+    {"name": "meta__methods", "rpc": "meta.methods", "params": [], "result_key": "result", "default": []},
+    {"name": "meta__protocol", "rpc": "meta.protocol", "params": []}
+  ]
+}
