@@ -10,6 +10,7 @@ import copy
 import yaml
 import pickle
 import logging
+import weakref
 
 import numpy as np
 import chisurf
@@ -235,17 +236,58 @@ class Base(object):
     _verbose = chisurf.settings.cs_settings['verbose']
     supported_save_file_types: typing.List[str] = ["yaml", "json", "pkl"]
     meta_data: typing.Dict = dict()
+    # Global index of all live Base instances keyed by unique_identifier.
+    # Entries are weak references; dead instances are evicted automatically.
+    _uuid_index: "weakref.WeakValueDictionary[str, Base]" = weakref.WeakValueDictionary()
 
     @property
     def unique_identifier(self):
+        """Return the UUID that uniquely identifies this instance."""
         return self.meta_data['unique_identifier']
 
     @unique_identifier.setter
     def unique_identifier(self, v):
+        """Set the UUID that uniquely identifies this instance."""
         self.meta_data['unique_identifier'] = v
+
+    def __eq__(self, other: object) -> bool:
+        """Compare two Base instances by their unique identifier."""
+        if not isinstance(other, Base):
+            return NotImplemented
+        return self.unique_identifier == other.unique_identifier
+
+    def __ne__(self, other: object) -> bool:
+        """Inequality comparison, inverse of :meth:`__eq__`."""
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
+
+    def __hash__(self):
+        """Hash based on the unique identifier."""
+        return hash(self.unique_identifier)
+
+    @classmethod
+    def find_by_uuid(cls, uid: str) -> typing.Optional["Base"]:
+        """Look up a live :class:`Base` instance by its ``unique_identifier``.
+
+        Returns ``None`` if no live instance with that UID exists.
+
+        If multiple live instances share the same UID (e.g. a copy was made
+        with :func:`copy.copy`), the most recently created one is returned.
+        """
+        if not uid:
+            return None
+        return cls._uuid_index.get(str(uid))
+
+    @classmethod
+    def all_uuids(cls) -> typing.List[str]:
+        """Return the UIDs of all currently live :class:`Base` instances."""
+        return list(cls._uuid_index.keys())
 
     @property
     def name(self) -> str:
+        """Return the name of this object (falls back to class name)."""
         # try:
         name = self.__dict__.get('name', self.__class__.name)
         name = name() if callable(name) else name
@@ -255,14 +297,17 @@ class Base(object):
 
     @name.setter
     def name(self, v: str):
+        """Set the name of this object."""
         self.__dict__['name'] = v
 
     @property
     def verbose(self):
+        """Return the verbosity flag."""
         return self.meta_data['verbose']
 
     @verbose.setter
     def verbose(self, v: bool):
+        """Set the verbosity flag."""
         self.meta_data['verbose'] = v
 
     def save(
@@ -272,6 +317,19 @@ class Base(object):
             verbose: bool = False,
             skip_qt_widgets: bool = False
     ) -> None:
+        """Serialize and save the object to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the output file.
+        file_type : str
+            Output format (``'yaml'``, ``'json'``, or ``'pkl'``).
+        verbose : bool
+            If True, print the serialized content.
+        skip_qt_widgets : bool
+            If True, skip Qt widgets during serialization.
+        """
         chisurf.logging.info(
             "%s of type %s is saving filename %s as file type %s" % (
                 self.name,
@@ -305,6 +363,17 @@ class Base(object):
             verbose: bool = False,
             **kwargs
     ) -> None:
+        """Load and restore the object's state from a file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the input file.
+        file_type : str
+            File format (``'json'``, ``'p'``, or ``'yaml'``).
+        verbose : bool
+            If True, print the loaded content.
+        """
         if file_type == "json":
             self.from_json(
                 filename=filename,
@@ -403,6 +472,13 @@ class Base(object):
             self,
             v: dict
     ) -> None:
+        """Restore the object's state from a dictionary.
+
+        Parameters
+        ----------
+        v : dict
+            Dictionary containing the attributes to restore.
+        """
         self.__dict__.update(v)
 
     def to_json(
@@ -413,6 +489,26 @@ class Base(object):
             remove_protected: bool = False,
             skip_qt_widgets: bool = False
     ) -> str:
+        """Serialize the object to a JSON string.
+
+        Parameters
+        ----------
+        indent : int
+            Indentation level for pretty-printing.
+        sort_keys : bool
+            Whether to sort dictionary keys.
+        d : dict, optional
+            Pre-built dictionary to serialize (if None, built from self).
+        remove_protected : bool
+            Whether to omit protected (underscore-prefixed) attributes.
+        skip_qt_widgets : bool
+            If True, skip Qt widgets during serialization.
+
+        Returns
+        -------
+        str
+            JSON-formatted string.
+        """
         if d is None:
             d = self.to_dict(
                 remove_protected=remove_protected,
@@ -434,6 +530,22 @@ class Base(object):
             convert_values_to_elementary: bool = True,
             skip_qt_widgets: bool = False
     ) -> str:
+        """Serialize the object to a YAML string.
+
+        Parameters
+        ----------
+        remove_protected : bool
+            Whether to omit protected attributes.
+        convert_values_to_elementary : bool
+            Whether to convert compound types to elementary types.
+        skip_qt_widgets : bool
+            If True, skip Qt widgets during serialization.
+
+        Returns
+        -------
+        str
+            YAML-formatted string.
+        """
         return yaml.dump(
             data=to_elementary(
                 self.to_dict(
@@ -519,6 +631,7 @@ class Base(object):
         self.from_dict(j)
 
     def __setattr__(self, key: str, value: object):
+        """Route property assignments through their setter; store others in ``__dict__``."""
         propobj = getattr(self.__class__, key, None)
         if isinstance(propobj, property):
             if propobj.fset is None:
@@ -528,20 +641,22 @@ class Base(object):
             super().__setattr__(key, value)
 
     def __getattr__(self, key: str):
+        """Fallback attribute lookup that checks for properties on the class."""
         import logging
         propobj = getattr(self.__class__, key, None)
         # the key refers to a property
         if isinstance(propobj, property):
             if propobj.fget is None:
-                logging.error(f"Property '{key}' has no getter")
+                logging.debug(f"Property '{key}' has no getter")
                 raise AttributeError("can't get attribute")
             return propobj.fget(self)
         if propobj is None:
-            logging.error(f"Attribute '{key}' not found in {self.__class__.__name__}")
+            logging.debug(f"Attribute '{key}' not found in {self.__class__.__name__}")
             raise AttributeError(f"{self.__class__.__name__} object has no attribute '{key}'")
         return propobj
 
     def __getstate__(self):
+        """Return a minimal dict for pickling (metadata + name)."""
         d = {
             'meta_data': self.meta_data,
             'name': self.name
@@ -549,9 +664,15 @@ class Base(object):
         return d
 
     def __setstate__(self, state):
+        """Restore pickled state from :meth:`__getstate__`."""
         self.__dict__.update(state)
+        try:
+            Base._uuid_index[str(self.unique_identifier)] = self
+        except Exception:
+            pass
 
     def __str__(self):
+        """Return a one-line summary showing the class name."""
         s = 'Class: %s\n' % self.__class__.__name__
         return s
 
@@ -618,31 +739,49 @@ class Base(object):
         d['name'] = name
         kwargs.update(d)
         self.__dict__.update(**kwargs)
+        Base._uuid_index[str(self.unique_identifier)] = self
 
     def __copy__(self) -> typing.Type[Base]:
-        c = self.__class__()
-        c.from_dict(
-            copy.copy(
-                self.to_dict(
-                    copy_values=True
-                )
-            )
-        )
-        # make sure that the copy gets a new uuid
-        c.unique_identifier = str(uuid.uuid4())
+        """Return a shallow copy with a deep copy of metadata."""
+        c = self.__class__.__new__(self.__class__)
+        c.__dict__ = copy.copy(self.__dict__)
+        c.__dict__['meta_data'] = copy.deepcopy(self.__dict__.get('meta_data', {}))
+        Base._uuid_index[str(c.unique_identifier)] = c
         return c
 
-    def __deepcopy__(self, memodict={}):
-        c = self.__class__()
-        c.from_dict(
-            copy.deepcopy(self.to_dict())
-        )
-        # make sure that the copy gets a new uuid
-        c.unique_identifier = str(uuid.uuid4())
+    def __deepcopy__(self, memodict=None):
+        """Return a deep copy of this instance."""
+        if memodict is None:
+            memodict = {}
+        c = self.__class__.__new__(self.__class__)
+        c.__dict__ = copy.deepcopy(self.__dict__, memodict)
+        Base._uuid_index[str(c.unique_identifier)] = c
         return c
+
+
+def find_by_uuid(uid: str) -> typing.Optional["Base"]:
+    """Convenience: look up a live :class:`Base` instance by its UID.
+
+    Equivalent to ``Base.find_by_uuid(uid)``.
+    """
+    return Base.find_by_uuid(uid)
+
+
+def all_uuids() -> typing.List[str]:
+    """Convenience: return UIDs of all live :class:`Base` instances.
+
+    Equivalent to ``Base.all_uuids()``.
+    """
+    return Base.all_uuids()
 
 
 class Data(Base):
+    """Base class for data objects with file-binding and optional data embedding.
+
+    Extends :class:`Base` with file-path tracking, binary data embedding,
+    and configurable read-size limits.
+    """
+
     def __init__(
             self,
             filename: str = "None",
@@ -677,24 +816,29 @@ class Data(Base):
 
     @property
     def embed_data(self) -> bool:
+        """Whether binary data is embedded in the serialized output."""
         return self._embed_data
 
     @embed_data.setter
     def embed_data(self, v: bool) -> None:
+        """Control whether binary data is embedded in serialized output."""
         self._embed_data = v
         if v is False:
             self._data = None
 
     @property
     def data(self) -> bytes:
+        """Return the embedded binary data (or None)."""
         return self._data
 
     @data.setter
     def data(self, v: Data):
+        """Set the embedded binary data."""
         self._data = v
 
     @property
     def name(self) -> str:
+        """Return the object name, falling back to the filename."""
         try:
             return self.__dict__['name']
         except KeyError:
@@ -702,10 +846,12 @@ class Data(Base):
 
     @name.setter
     def name(self, v: str):
+        """Set the object name."""
         self.__dict__['name'] = v
 
     @property
     def filename(self) -> str:
+        """Return the associated file path, or ``'No file'``."""
         try:
             return self._filename
         except (AttributeError, TypeError):
@@ -716,6 +862,12 @@ class Data(Base):
             self,
             v: str
     ) -> None:
+        """Set the file path and optionally embed its binary content.
+
+        The file content is read and optionally compressed/embedded
+        according to the instance's ``embed_data`` and ``_max_file_size``
+        settings.
+        """
         try:
             self._filename = os.path.normpath(v)
             file_size = os.path.getsize(self._filename)
@@ -735,6 +887,7 @@ class Data(Base):
                 chisurf.logging.warning("Filename: %s not found" % v)
 
     def __str__(self):
+        """Return a summary including class name and filename."""
         s = super().__str__()
         s += "\nfilename: %s" % self.filename
         return s
