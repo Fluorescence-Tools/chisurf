@@ -42,21 +42,32 @@ class Experiment(chisurf.base.Base):
 
     @property
     def readers(self) -> typing.List[ExperimentReader]:
+        """List of :class:`ExperimentReader` instances registered for this experiment."""
         return self.get_readers()
 
     @property
     def reader_names(self) -> typing.List[str]:
+        """Human-readable names of all registered readers."""
         return self.get_reader_names()
 
     @property
     def model_classes(self) -> typing.List[typing.Type[chisurf.models.Model]]:
+        """List of registered model classes."""
         return list(self._model_classes)
 
     @property
     def model_names(self) -> typing.List[str]:
+        """Human-readable names of all registered model classes."""
         return self.get_model_names()
 
     def add_model_class(self, model: typing.Type[chisurf.models.Model]):
+        """Register a single model class with this experiment.
+
+        Parameters
+        ----------
+        model : type
+            A :class:`chisurf.models.Model` subclass to register.
+        """
         if model not in self.model_classes:
             self._model_classes.append(model)
 
@@ -66,6 +77,13 @@ class Experiment(chisurf.base.Base):
                 typing.Type[chisurf.models.Model]
             ]
     ):
+        """Register multiple model classes at once.
+
+        Parameters
+        ----------
+        models : list of type
+            List of :class:`chisurf.models.Model` subclasses.
+        """
         for model in models:
             self.add_model_class(model)
 
@@ -74,6 +92,15 @@ class Experiment(chisurf.base.Base):
             reader: ExperimentReader,
             controller: ExperimentReaderController = None
     ):
+        """Register a single reader (optionally with a controller).
+
+        Parameters
+        ----------
+        reader : ExperimentReader
+            The reader instance to register.
+        controller : ExperimentReaderController, optional
+            Associated controller.
+        """
         if reader not in self.readers:
             reader.controller = controller
             self._readers.append(reader)
@@ -87,6 +114,13 @@ class Experiment(chisurf.base.Base):
                 ]
             ]
     ):
+        """Register multiple reader/controller pairs.
+
+        Parameters
+        ----------
+        readers : list of tuple
+            Each element is ``(reader, controller)``.
+        """
         for reader, controller in readers:
             self.add_reader(
                 reader,
@@ -129,6 +163,13 @@ class Experiment(chisurf.base.Base):
         return names
 
     def __getstate__(self):
+        """Serialize the experiment state for pickling.
+
+        Returns
+        -------
+        dict
+            Pickle-friendly state dictionary.
+        """
         state = super().__getstate__()
         state['_model_classes'] = self._model_classes
         state['_readers'] = self._readers
@@ -137,6 +178,7 @@ class Experiment(chisurf.base.Base):
         return state
 
     def __str__(self):
+        """Human-readable string representation."""
         return self.__class__.__name__ + "(" + self.name + ")"
 
     def __init__(
@@ -146,6 +188,15 @@ class Experiment(chisurf.base.Base):
             *args,
             **kwargs
     ):
+        """Initialize an experiment registry entry.
+
+        Parameters
+        ----------
+        name : str
+            Human-readable experiment name.
+        hidden : bool
+            If *True*, the experiment is hidden from user interfaces.
+        """
         super().__init__(*args, name=name, **kwargs)
         self.hidden = hidden
         self._model_classes = list()

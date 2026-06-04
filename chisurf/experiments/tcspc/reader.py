@@ -22,6 +22,20 @@ class TCSPCReader(ExperimentReader):
 
     @staticmethod
     def _safe_float(value: typing.Any, default: typing.Any):
+        """Convert a value to float, returning *default* on failure.
+
+        Parameters
+        ----------
+        value : any
+            The value to convert.
+        default : any
+            Fallback value if conversion fails.
+
+        Returns
+        -------
+        float
+            The converted value or default.
+        """
         try:
             if value is None:
                 return float(default)
@@ -31,6 +45,15 @@ class TCSPCReader(ExperimentReader):
 
     @classmethod
     def _default_anisotropy_calibration(cls):
+        """Return the global default anisotropy calibration parameters.
+
+        Reads ``g_factor``, ``l1``, and ``l2`` from the settings.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys ``g_factor``, ``l1``, ``l2``.
+        """
         anisotropy_settings = getattr(chisurf.settings, 'anisotropy', {})
         tcspc_settings = getattr(chisurf.settings, 'tcspc', {})
         g_factor = cls._safe_float(
@@ -46,6 +69,13 @@ class TCSPCReader(ExperimentReader):
         }
 
     def _reader_calibration(self):
+        """Return the reader-level anisotropy calibration parameters.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys ``g_factor``, ``l1``, ``l2``, and ``source``.
+        """
         return {
             'g_factor': self._safe_float(getattr(self, 'g_factor', 1.0), 1.0),
             'l1': self._safe_float(getattr(self, 'l1', 0.0), 0.0),
@@ -54,6 +84,13 @@ class TCSPCReader(ExperimentReader):
         }
 
     def _annotate_anisotropy_calibration(self, data_group) -> None:
+        """Attach anisotropy calibration metadata to a data group.
+
+        Parameters
+        ----------
+        data_group : chisurf.data.DataGroup
+            The data group to annotate.
+        """
         calibration = self._reader_calibration()
 
         group_meta = getattr(data_group, 'meta_data', None)
@@ -205,6 +242,20 @@ class TCSPCReader(ExperimentReader):
         self.vh_shift = int(vh_shift) if vh_shift is not None else 0
 
     def autofitrange(self, data, **kwargs) -> typing.Tuple[int, int]:
+        """Determine the default fit range for TCSPC data.
+
+        Delegates to :func:`chisurf.fluorescence.tcspc.initial_fit_range`.
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental TCSPC data.
+
+        Returns
+        -------
+        tuple of int
+            ``(start, stop)`` indices for the fit region.
+        """
         return chisurf.fluorescence.tcspc.initial_fit_range(
             data.y,
             self.fit_count_threshold,
@@ -267,6 +318,22 @@ class TCSPCReader(ExperimentReader):
         return extension_map.get(ext, self.reading_routine)
 
     def read(self, filename: typing.Optional[str] = None, *args, **kwargs) -> typing.Any:
+        """Read TCSPC data from a file.
+
+        Supports CSV, THD, PQRES, YAML, and JSON formats. The reading
+        routine is either explicitly specified or guessed from the
+        file extension via :meth:`_guess_reading_routine`.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the TCSPC data file.
+
+        Returns
+        -------
+        chisurf.data.DataGroup
+            Group containing the loaded TCSPC curves.
+        """
         import chisurf.fio.fluorescence.thdfile
         import chisurf.fio.fluorescence.pqres
         import chisurf.data

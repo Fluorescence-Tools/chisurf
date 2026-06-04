@@ -12,6 +12,18 @@ from chisurf.settings import get_path
 
 
 def _load_yaml_config(path: pathlib.Path) -> dict:
+    """Load a YAML configuration file and return its contents as a dict.
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        Path to the YAML file.
+
+    Returns
+    -------
+    dict
+        Parsed YAML content, or an empty dict on failure.
+    """
     try:
         with open(str(path), 'r', encoding='utf-8') as fp:
             return yaml.safe_load(fp) or {}

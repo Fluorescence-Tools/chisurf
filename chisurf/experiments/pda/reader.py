@@ -87,6 +87,25 @@ class PdaReader(ExperimentReader):
             *args,
             **kwargs
     ):
+        """Initialize a PDA reader.
+
+        Parameters
+        ----------
+        channels : tuple of list of int
+            Channel numbers for donor/acceptor detection ``(green, red)``.
+        micro_time_ranges : list of tuple of int
+            Micro-time windows ``(start, stop)`` for photon selection.
+        reading_routine : str
+            tttrlib reader type (e.g. ``'PTU'``).
+        maximum_number_of_photons : int
+            Maximum photon number for the S1S2 histogram support.
+        minimum_number_of_photons : int
+            Minimum total photon count per burst.
+        minimum_time_window_length : float
+            Minimum time window length for bursts in seconds.
+        tw_configs : list, optional
+            List of ``(min_photons, min_tw_len_s)`` configurations.
+        """
         super().__init__(*args, **kwargs)
         self.reading_routine = reading_routine
         self.micro_time_ranges = micro_time_ranges
@@ -97,10 +116,34 @@ class PdaReader(ExperimentReader):
         self.channels = channels
 
     def autofitrange(self, data, **kwargs) -> typing.Tuple[int, int]:
+        """Return the full flattened data range as the default fit interval.
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental PDA data.
+
+        Returns
+        -------
+        tuple of int
+            ``(0, len(y))`` for the flattened y data.
+        """
         logging.warning("PDA autofitrange not yet implemented")
         return 0, len(data.y.flatten())
 
     def read(self, filename: typing.List[str] = None, *args, **kwargs) -> chisurf.data.ExperimentDataGroup:
+        """Read PDA TTTR data and return S1S2 histograms.
+
+        Parameters
+        ----------
+        filename : list of str, optional
+            Path(s) to the TTTR data file(s).
+
+        Returns
+        -------
+        chisurf.data.ExperimentDataGroup
+            Group containing :class:`DataCurve` objects with S1S2 histograms.
+        """
         if isinstance(filename, str):
             filename = [filename]
 
@@ -144,6 +187,20 @@ class PdaReader(ExperimentReader):
                 intervals_by_file: Dict[str, Sequence[Tuple[int, int]]] = {}
                 # Normalize keys in a helper for quick access
                 def _get_intervals_for_path(p: pathlib.Path):
+                    """Return burst-slice intervals for a file path.
+
+                    Tries lookups by full path, basename, and stem.
+
+                    Parameters
+                    ----------
+                    p : pathlib.Path
+                        The file path to look up.
+
+                    Returns
+                    -------
+                    list
+                        The matching burst intervals, or an empty list.
+                    """
                     return (
                         burst_slices.get(str(p), [])
                         or burst_slices.get(p.name, [])

@@ -42,6 +42,35 @@ class RICSReader(ExperimentReader):
             *args,
             **kwargs
     ):
+        """Initialize a RICS reader.
+
+        Parameters
+        ----------
+        name : str
+            Human-readable reader name.
+        reading_routine : str or None
+            tttrlib reading routine (e.g. ``'PTU'``).
+        channel : int
+            Default routing channel index.
+        pixel_duration : float, optional
+            Pixel dwell time in microseconds.
+        line_duration : float, optional
+            Line duration in milliseconds.
+        x_range : tuple of int, optional
+            ROI x-range ``(start, stop)``.
+        y_range : tuple of int, optional
+            ROI y-range ``(start, stop)``.
+        subtract_average : str
+            Background subtraction mode (``'frame'``, ``'stack'``, or ``''``).
+        frame_shift : int
+            Frame shift for cross-correlation.
+        fftshift : bool
+            Whether to center the zero-lag pixel in the ICS map.
+        framewise_rics : bool
+            Whether to compute RICS per frame.
+        micro_time_ranges : list, optional
+            Micro-time ranges for photon selection.
+        """
         super().__init__(*args, **kwargs)
         self.name = name
         self.reading_routine = reading_routine
@@ -80,6 +109,18 @@ class RICSReader(ExperimentReader):
         self._cache_micro_time_ranges = None
 
     def autofitrange(self, data, **kwargs):
+        """Return the full data range as the default fit interval.
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental RICS data.
+
+        Returns
+        -------
+        tuple of int
+            ``(0, len(y))`` on success, ``(0, 0)`` on failure.
+        """
         try:
             y = data.y
             return 0, len(y)
@@ -92,6 +133,18 @@ class RICSReader(ExperimentReader):
             *args,
             **kwargs
     ) -> chisurf.data.ExperimentDataCurveGroup:
+        """Read a TTTR or TIFF file and return a RICS curve group.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the TTTR file or TIFF stack.
+
+        Returns
+        -------
+        chisurf.data.ExperimentDataCurveGroup
+            Group containing the ICS mean curve with spatial shift metadata.
+        """
         group = chisurf.data.ExperimentDataCurveGroup([])
         if filename is None:
             return group

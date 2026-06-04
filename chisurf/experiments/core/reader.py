@@ -54,17 +54,43 @@ class ExperimentReader(chisurf.base.Base):
             controller: ExperimentReaderController = None,
             **kwargs
     ):
+        """Initialize the experiment reader.
+
+        Parameters
+        ----------
+        controller : ExperimentReaderController, optional
+            Associated controller instance.
+        """
         super().__init__(*args, **kwargs)
         self.controller = controller
 
     @abc.abstractmethod
     def autofitrange(self, data: chisurf.base.Data, **kwargs) -> typing.Tuple[int, int]:
+        """Determine the default fit range for a dataset.
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental data to estimate a fit range for.
+
+        Returns
+        -------
+        tuple of int
+            ``(start, stop)`` indices defining the fit interval.
+        """
         if isinstance(data, chisurf.data.DataCurve):
             return 0, len(data)
         else:
             return 0, 0
 
     def __getstate__(self):
+        """Serialize the reader state, skipping Qt widgets.
+
+        Returns
+        -------
+        dict
+            Pickle-friendly state dictionary.
+        """
         state = super().__getstate__()
         state.update(
             chisurf.base.to_elementary(self.__dict__.copy(), skip_qt_widgets=True)
@@ -78,9 +104,36 @@ class ExperimentReader(chisurf.base.Base):
             *args,
             **kwargs
     ) -> chisurf.base.Data:
+        """Read experimental data from a file.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the data file.
+
+        Returns
+        -------
+        chisurf.base.Data
+            The loaded experimental data.
+        """
         pass
 
     def get_data(self, **kwargs) -> chisurf.data.ExperimentDataGroup:
+        """Read data and wrap it in an :class:`ExperimentDataGroup`.
+
+        Attaches the experiment, setup, and data_reader references
+        to each dataset in the group.
+
+        Parameters
+        ----------
+        **kwargs
+            Forwarded to :meth:`read`.
+
+        Returns
+        -------
+        chisurf.data.ExperimentDataGroup
+            Group containing the loaded data with metadata attached.
+        """
         data = self.read(**kwargs)
         if isinstance(data, chisurf.data.ExperimentalData):
             data = chisurf.data.ExperimentDataGroup([data])
@@ -111,6 +164,13 @@ class ExperimentReaderController(chisurf.base.Base):
     experiment_reader: ExperimentReader = None
 
     def __init__(self, experiment_reader: ExperimentReader = None, *args, **kwargs):
+        """Initialize the reader controller.
+
+        Parameters
+        ----------
+        experiment_reader : ExperimentReader, optional
+            The reader instance the controller manages.
+        """
         super().__init__(*args, **kwargs)
         self.experiment_reader = experiment_reader
         self._call_dict = dict()
@@ -124,8 +184,16 @@ class ExperimentReaderController(chisurf.base.Base):
     @property
     @abc.abstractmethod
     def filename(self) -> str:
+        """The filename of the currently selected data file."""
         pass
 
     @abc.abstractmethod
     def get_filename(self) -> pathlib.Path:
+        """Return the path to the currently selected data file.
+
+        Returns
+        -------
+        pathlib.Path
+            Path object for the selected file.
+        """
         pass

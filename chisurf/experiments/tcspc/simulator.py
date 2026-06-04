@@ -27,6 +27,25 @@ class TCSPCSimulatorSetup(TCSPCReader):
             sample_name: str = 'TCSPC-Dummy',
             **kwargs
     ):
+        """Initialize a TCSPC simulator.
+
+        Parameters
+        ----------
+        n_tac : int
+            Number of TAC bins (time channels).
+        dt : float
+            Time resolution per bin in nanoseconds.
+        p0 : float
+            Initial peak photon count.
+        rep_rate : float
+            Laser repetition rate in MHz.
+        lifetime_spectrum : list of float, optional
+            Lifetime components for the simulated decay.
+        instrument_response_function : DataCurve, optional
+            IRF to convolve with the decay.
+        sample_name : str
+            Name for the simulated dataset.
+        """
         super().__init__(*args, **kwargs)
         self.experiment = kwargs.get('experiment', None)
         if lifetime_spectrum:
@@ -41,6 +60,18 @@ class TCSPCSimulatorSetup(TCSPCReader):
         self.rep_rate = rep_rate
 
     def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
+        """Generate a simulated TCSPC decay curve.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Ignored; the simulated curve uses ``self.sample_name``.
+
+        Returns
+        -------
+        chisurf.data.DataCurveGroup
+            Group containing the simulated decay.
+        """
         if filename is None:
             filename = self.sample_name
         name = kwargs.get('name', filename)

@@ -21,6 +21,14 @@ class StructureReader(
             *args,
             **kwargs
     ):
+        """Initialize a structure reader.
+
+        Parameters
+        ----------
+        compute_internal_coordinates : bool
+            Whether to compute internal coordinates (dihedral angles etc.)
+            when loading a structure.
+        """
         super().__init__(
             *args,
             **kwargs
@@ -29,6 +37,18 @@ class StructureReader(
 
     @staticmethod
     def autofitrange(data: chisurf.base.Data, **kwargs) -> typing.Tuple[int, int]:
+        """Return a trivial fit range (not applicable for structure data).
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental data (unused).
+
+        Returns
+        -------
+        tuple of int
+            Always ``(0, 0)``.
+        """
         return 0, 0
 
     def read(
@@ -37,6 +57,18 @@ class StructureReader(
             *args,
             **kwargs
     ) -> chisurf.data.ExperimentDataGroup:
+        """Load a molecular structure from a file.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the structure file (e.g. PDB).
+
+        Returns
+        -------
+        chisurf.data.ExperimentDataGroup
+            Group containing the loaded :class:`Structure`.
+        """
         structure = chisurf.structure.Structure(
             p_object=filename,
             make_coarse=self.compute_internal_coordinates

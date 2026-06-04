@@ -34,4 +34,5 @@ class RicsData:
 
     @property
     def shape(self) -> Tuple[int, int]:
+        """Shape of the mean ICS map ``(ny, nx)``."""
         return tuple(self.ics_mean.shape)  # type: ignore[return-value]

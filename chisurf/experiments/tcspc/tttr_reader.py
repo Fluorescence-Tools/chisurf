@@ -25,6 +25,21 @@ class TCSPCTTTRReader(TCSPCReader):
             reading_routine: str | None = None,
             **kwargs
     ):
+        """Initialize a TCSPC TTTR reader.
+
+        Parameters
+        ----------
+        channel_numbers : list of int, optional
+            Routing channel numbers to select.
+        channel : int
+            Fallback single routing channel index.
+        micro_time_coarsening : int
+            Coarsening factor for the micro-time histogram.
+        micro_time_shift : int
+            Shift applied to the micro-time histogram (in bins).
+        reading_routine : str or None
+            tttrlib reading routine (e.g. ``'PTU'``).
+        """
         super().__init__(*args, **kwargs)
         if reading_routine is not None:
             self.reading_routine = reading_routine
@@ -46,6 +61,13 @@ class TCSPCTTTRReader(TCSPCReader):
             self.micro_time_shift = 0
 
     def _get_channels(self) -> typing.Tuple[int, ...]:
+        """Return the sorted tuple of routing channel numbers.
+
+        Returns
+        -------
+        tuple of int
+            Sorted unique channel indices.
+        """
         chs = getattr(self, "channel_numbers", None)
         if chs is None:
             chs = [getattr(self, "channel", 0)]
@@ -55,6 +77,13 @@ class TCSPCTTTRReader(TCSPCReader):
             return (int(getattr(self, "channel", 0) or 0),)
 
     def _get_micro_time_coarsening(self) -> int:
+        """Return the micro-time histogram coarsening factor.
+
+        Returns
+        -------
+        int
+            Coarsening factor (minimum 1).
+        """
         try:
             mtc = int(getattr(self, "micro_time_coarsening", 1) or 1)
         except Exception:
@@ -64,6 +93,13 @@ class TCSPCTTTRReader(TCSPCReader):
         return mtc
 
     def _get_micro_time_shift(self) -> int:
+        """Return the micro-time histogram shift in bins.
+
+        Returns
+        -------
+        int
+            Shift value (may be negative).
+        """
         try:
             s = int(getattr(self, "micro_time_shift", 0) or 0)
         except Exception:
@@ -71,6 +107,23 @@ class TCSPCTTTRReader(TCSPCReader):
         return s
 
     def _apply_shift(self, y: np.ndarray, shift: int) -> np.ndarray:
+        """Apply a circular-like shift to a histogram array.
+
+        Positive *shift* pads at the beginning (right-shift);
+        negative *shift* pads at the end (left-shift).
+
+        Parameters
+        ----------
+        y : np.ndarray
+            The input histogram array.
+        shift : int
+            Number of bins to shift.
+
+        Returns
+        -------
+        np.ndarray
+            The shifted array (same length as input).
+        """
         arr = np.asarray(y, dtype=float)
         if arr.size == 0 or shift == 0:
             return arr
@@ -80,6 +133,19 @@ class TCSPCTTTRReader(TCSPCReader):
         return np.pad(arr, (0, step), mode="constant")[step:]
 
     def _compute_histogram(self, filename: str) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Compute a micro-time histogram from a TTTR file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the TTTR file.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            ``(y, x)`` where *y* is the histogram counts and *x* the
+            micro-time axis in nanoseconds.
+        """
         routine = getattr(self, "reading_routine", None)
         if routine:
             tttr = tttrlib.TTTR(filename, routine)
@@ -103,6 +169,18 @@ class TCSPCTTTRReader(TCSPCReader):
         return y[:n].astype(float), x[:n].astype(float)
 
     def read(self, filename: str = None, *args, **kwargs) -> chisurf.data.DataCurveGroup:
+        """Read a TTTR file and return a TCSPC decay curve.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the TTTR file.
+
+        Returns
+        -------
+        chisurf.data.DataCurveGroup
+            Group containing the TCSPC decay.
+        """
         if filename is None:
             return chisurf.data.DataGroup([])
         if isinstance(filename, (list, tuple)):

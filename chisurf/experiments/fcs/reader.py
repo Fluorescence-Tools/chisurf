@@ -49,6 +49,19 @@ class FCS(ExperimentReader):
             *args,
             **kwargs
     ):
+        """Initialize an FCS reader.
+
+        Parameters
+        ----------
+        name : str
+            Human-readable reader name.
+        use_header : bool
+            Whether to parse a header row if present.
+        experiment_reader : str
+            Name of the low-level FCS reader implementation.
+        skiprows : int
+            Number of header rows to skip.
+        """
         super().__init__(*args, **kwargs)
         self.name = name
         self.skiprows = skiprows
@@ -66,6 +79,20 @@ class FCS(ExperimentReader):
             verbose: bool = None,
             **kwargs
     ) -> chisurf.data.ExperimentDataCurveGroup:
+        """Read an FCS data file.
+
+        Parameters
+        ----------
+        filename : str, optional
+            Path to the FCS file.
+        verbose : bool, optional
+            If *True*, enable verbose output during reading.
+
+        Returns
+        -------
+        chisurf.data.ExperimentDataCurveGroup
+            Group containing the loaded FCS curves.
+        """
         r = chisurf.fio.fluorescence.fcs.read_fcs(
             filename=filename,
             data_reader=self,
@@ -85,6 +112,18 @@ class FCS(ExperimentReader):
             data: chisurf.base.Data,
             **kwargs
     ) -> typing.Tuple[int, int]:
+        """Return the full data range as the default fit interval.
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental data object.
+
+        Returns
+        -------
+        tuple of int
+            ``(0, len(y))`` for curve data, ``(0, 0)`` otherwise.
+        """
         if isinstance(data, (chisurf.data.DataCurve, chisurf.data.DataCurveGroup)):
             return 0, len(data.y)
         return 0, 0

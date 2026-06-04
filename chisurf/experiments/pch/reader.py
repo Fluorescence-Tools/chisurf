@@ -33,6 +33,23 @@ class PCHReader(ExperimentReader):
         *args,
         **kwargs,
     ) -> None:
+        """Initialize a PCH reader.
+
+        Parameters
+        ----------
+        name : str
+            Human-readable reader name.
+        reading_routine : str or None
+            tttrlib reading routine (e.g. ``'PTU'``).
+        channels : sequence of int or None
+            Routing channel numbers to select.
+        channel : int
+            Fallback single routing channel index.
+        bin_time_us : float
+            Bin width in microseconds for the intensity trace.
+        micro_time_range : tuple of int or None
+            Micro-time window ``(start, stop)`` for photon selection.
+        """
         super().__init__(*args, **kwargs)
         self.name = name
         self.reading_routine = reading_routine
@@ -47,6 +64,18 @@ class PCHReader(ExperimentReader):
         ) if isinstance(micro_time_range, (tuple, list)) and len(micro_time_range) >= 2 else None
 
     def autofitrange(self, data, **kwargs) -> Tuple[int, int]:  # type: ignore[override]
+        """Return the full data range as the default fit interval.
+
+        Parameters
+        ----------
+        data : chisurf.base.Data
+            The experimental data object.
+
+        Returns
+        -------
+        tuple of int
+            ``(0, len(y))`` on success, ``(0, 0)`` on failure.
+        """
         try:
             y = data.y
             return 0, len(y)
@@ -54,6 +83,16 @@ class PCHReader(ExperimentReader):
             return 0, 0
 
     def _get_channels(self) -> Tuple[int, ...]:
+        """Return the sorted tuple of routing channel numbers.
+
+        Uses ``channel_numbers`` if set, otherwise falls back to
+        ``self.channel``.
+
+        Returns
+        -------
+        tuple of int
+            Sorted unique channel indices.
+        """
         chs = self.channel_numbers
         if chs is None:
             chs = [self.channel]
@@ -63,6 +102,13 @@ class PCHReader(ExperimentReader):
             return (int(self.channel),)
 
     def _get_micro_time_range(self) -> Optional[Tuple[int, int]]:
+        """Return the micro-time window as a ``(start, stop)`` tuple.
+
+        Returns
+        -------
+        tuple of int or None
+            The micro-time range, or *None* if not configured.
+        """
         mtr = getattr(self, "micro_time_range", None)
         if isinstance(mtr, (tuple, list)) and len(mtr) >= 2:
             try:
@@ -189,6 +235,18 @@ class PCHReader(ExperimentReader):
         *args,
         **kwargs,
     ) -> chisurf.data.ExperimentDataCurveGroup:  # type: ignore[override]
+        """Load a TTTR file and return a PCH histogram.
+
+        Parameters
+        ----------
+        filename : str or list of str or None
+            Path to the TTTR file.
+
+        Returns
+        -------
+        chisurf.data.ExperimentDataCurveGroup
+            Group containing the PCH :class:`DataCurve`.
+        """
         group = chisurf.data.ExperimentDataCurveGroup([])
         if filename is None:
             return group
