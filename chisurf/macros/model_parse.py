@@ -14,6 +14,12 @@ except Exception:  # pragma: no cover - robustness for environments without thes
     FitGroup = object  # type: ignore
 
 
+def _is_proxy_for(obj: Any, type_name: str) -> bool:
+    """Check if *obj* is a proxy object whose DTO declares *type_name*."""
+    return hasattr(obj, '_data') and isinstance(getattr(obj, '_data', None), dict) \
+        and obj._data.get('type') == type_name
+
+
 def _as_iterable_fits(target: Any) -> List[Any]:
     """Normalize various target forms to a list of fit objects.
 
@@ -23,17 +29,17 @@ def _as_iterable_fits(target: Any) -> List[Any]:
     if target is None:
         return []
 
-    # Single Fit
+    # Single Fit (real or proxy)
     try:
-        if isinstance(target, Fit):
+        if isinstance(target, Fit) or _is_proxy_for(target, 'Fit'):
             return [target]
     except Exception:
         pass
 
-    # FitGroup (iterable over fits)
+    # FitGroup (real or proxy)
     try:
-        if isinstance(target, FitGroup):
-            return list(target)
+        if isinstance(target, FitGroup) or _is_proxy_for(target, 'FitGroup'):
+            return list(target) if hasattr(target, '__iter__') else [target]
     except Exception:
         pass
 

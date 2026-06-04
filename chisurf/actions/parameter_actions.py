@@ -39,7 +39,16 @@ def scan_parameter(parameter_name: str, scan_range: typing.Tuple[float, float], 
     """Perform a parameter scan."""
     import chisurf
     fit_obj = chisurf.fits[int(fit_index)]
-    fit_obj.scan_parameter(str(parameter_name), scan_range, int(n_steps))
+    fit_obj.chi2_scan(str(parameter_name), scan_range=scan_range, n_steps=int(n_steps))
+    return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}
+
+
+@action("parameter.adaptive_scan", schema={"parameter_name": str, "fit_index": int, "scan_range": tuple, "p_value": float, "max_points_per_side": int})
+def adaptive_scan_parameter(parameter_name: str, scan_range: typing.Tuple[float, float] = (None, None), p_value: float = 0.99, max_points_per_side: int = 50, fit_index: int = 0):
+    """Perform an adaptive F-test-driven parameter scan."""
+    import chisurf
+    fit_obj = chisurf.fits[int(fit_index)]
+    fit_obj.adaptive_chi2_scan(str(parameter_name), scan_range=scan_range, p_value=p_value, max_points_per_side=max_points_per_side)
     return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}
 
 

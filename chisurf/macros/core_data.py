@@ -19,7 +19,10 @@ from chisurf.runtime.actions import record_action
 
 def _is_global_fit_dataset(dataset: typing.Any) -> bool:
     try:
-        name = str(getattr(dataset, "name", "") or "").strip().lower()
+        if isinstance(dataset, dict):
+            name = str(dataset.get("name", "") or "").strip().lower()
+        else:
+            name = str(getattr(dataset, "name", "") or "").strip().lower()
     except Exception:
         name = ""
     return name in {"global-fit", "global dataset", "global-fit dataset"}
@@ -27,19 +30,58 @@ def _is_global_fit_dataset(dataset: typing.Any) -> bool:
 
 def restore_global_fit_dataset(
         _from_controller: bool = False,
+        update_ui: bool = True,
+        experiment_reader: chisurf.experiments.core.reader.ExperimentReader = None,
+        name: str = "Global-fit",
 ) -> typing.Dict[str, typing.Any]:
     if not _from_controller:
         return chisurf.actions.dispatch(name="dataset.restore_global_fit", payload={})
 
+    import chisurf as _cs
+    _api = getattr(_cs, "api", None)
+    if _api is not None and getattr(_api, "mode", None) == "server":
+        try:
+            for i, dto in enumerate(list(_api.list_datasets() or [])):
+                if isinstance(dto, dict) and _is_global_fit_dataset(dto):
+                    return {"ok": True, "restored": False, "index": int(i)}
+        except Exception:
+            pass
+        try:
+            if experiment_reader is None:
+                from chisurf.experiments.globalfit.reader import GlobalFitSetup
+                experiment_reader = GlobalFitSetup(name="Global-Fit")
+            result = _api.load_dataset(
+                experiment_reader=experiment_reader,
+                name=name,
+            )
+            if result.get("ok"):
+                return {"ok": True, "restored": True, "name": name}
+        except Exception:
+            pass
+
+    existing = list(getattr(chisurf, "imported_datasets", []) or [])
+    seen_global = False
+    normalized = []
+    removed = 0
+    for dataset in existing:
+        if _is_global_fit_dataset(dataset):
+            if seen_global:
+                removed += 1
+                continue
+            seen_global = True
+        normalized.append(dataset)
+    if removed:
+        chisurf.imported_datasets[:] = normalized
+
     for i, d in enumerate(list(getattr(chisurf, "imported_datasets", []) or [])):
         if _is_global_fit_dataset(d):
-            return {"ok": True, "restored": False, "index": int(i)}
+            return {"ok": True, "restored": False, "index": int(i), "removed_duplicates": int(removed)}
 
     try:
         from chisurf.experiments.globalfit.reader import GlobalFitSetup
 
-        setup = GlobalFitSetup(name="Global-Fit")
-        dataset = setup.read(name="Global-fit")
+        setup = experiment_reader if experiment_reader is not None else GlobalFitSetup(name="Global-Fit")
+        dataset = setup.read(name=name)
         try:
             exp = getattr(setup, "experiment", None)
             if exp is None:
@@ -50,18 +92,18 @@ def restore_global_fit_dataset(
             pass
         chisurf.imported_datasets.append(dataset)
         cs = getattr(chisurf, 'cs', None)
-        if cs is not None:
+        if update_ui and cs is not None:
             chisurf.gui.run_on_gui_thread(cs.update)
         _record_history(
             action_type="dataset_restore_global_fit",
             summary="restore global-fit dataset",
-            payload={"dataset_name": str(getattr(dataset, "name", "Global-fit"))},
+            payload={"dataset_name": str(getattr(dataset, "name", name))},
         )
         return {
             "ok": True,
             "restored": True,
             "index": int(len(chisurf.imported_datasets) - 1),
-            "name": str(getattr(dataset, "name", "Global-fit")),
+            "name": str(getattr(dataset, "name", name)),
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -118,6 +160,11 @@ def group_datasets(
         dataset_indices: typing.List[int],
         _from_controller: bool = False,
 ) -> None:
+    import chisurf as _cs
+    _api = getattr(_cs, "api", None)
+    if _api is not None and getattr(_api, "mode", None) == "server":
+        _api.group_datasets(dataset_indices=list(dataset_indices or []))
+        return
     if not _from_controller:
         chisurf.actions.dispatch(
             name="dataset.group",
@@ -165,6 +212,11 @@ def ungroup_datasets(
         dataset_indices: typing.List[int],
         _from_controller: bool = False,
 ) -> None:
+    import chisurf as _cs
+    _api = getattr(_cs, "api", None)
+    if _api is not None and getattr(_api, "mode", None) == "server":
+        _api.ungroup_datasets(dataset_indices=list(dataset_indices or []))
+        return
     if not _from_controller:
         chisurf.actions.dispatch(
             name="dataset.ungroup",
@@ -235,6 +287,11 @@ def remove_datasets(
         dataset_indices: typing.List[int],
         _from_controller: bool = False,
 ) -> None:
+    import chisurf as _cs
+    _api = getattr(_cs, "api", None)
+    if _api is not None and getattr(_api, "mode", None) == "server":
+        _api.remove_datasets(dataset_indices=list(dataset_indices or []))
+        return
     if not _from_controller:
         chisurf.actions.dispatch(
             name="dataset.remove",
@@ -343,6 +400,29 @@ def add_dataset(
         _from_controller: bool = False,
         **kwargs
 ) -> None:
+    # Phase 8: in server mode, route through the API so the server
+    # owns the dataset. Falls back to local creation + append when
+    # the reader cannot be serialised to the server.
+    import chisurf as _cs
+    _api = getattr(_cs, "api", None)
+    if _api is not None and getattr(_api, "mode", None) == "server":
+        try:
+            result = _api.load_dataset(
+                experiment_reader=experiment_reader,
+                dataset=dataset,
+                **kwargs,
+            )
+            if result.get("ok"):
+                return
+        except Exception:
+            pass
+        # Local fallback: create dataset locally and append to proxy.
+        # The proxy's append is a no-op (cache invalidate) – the
+        # dataset will only exist in the GUI process.
+        _cs.logging.warning(
+            "add_dataset in server mode: falling back to local creation. "
+            "The dataset will NOT appear on the server."
+        )
     if not _from_controller:
         payload = dict(kwargs)
         payload["experiment_reader"] = experiment_reader
@@ -393,13 +473,13 @@ def add_dataset(
             pass
 
         if experiment_reader is None:
-            try:
-                experiment_reader = getattr(cs, 'current_experiment_reader')
-            except Exception:
-                experiment_reader = None
-
-        if experiment_reader is None and primary_filename:
-            experiment_reader = _auto_reader_from_filename(primary_filename)
+            if primary_filename:
+                experiment_reader = _auto_reader_from_filename(primary_filename)
+            if experiment_reader is None:
+                try:
+                    experiment_reader = getattr(cs, 'current_experiment_reader')
+                except Exception:
+                    experiment_reader = None
 
         try:
             logging.info(
@@ -774,6 +854,26 @@ def _auto_reader_from_filename(filename: str):
         return None
 
     suffix = pathlib.Path(filename).suffix.lower()
+    if suffix == '.cor':
+        reader = _find_experiment_reader(
+            experiment_names=('FCS', 'fcs'),
+            reader_names=('Seidel Kristine',),
+            low_level_readers=('kristine',),
+        )
+        if reader is not None:
+            return reader
+        experiment = chisurf.experiment.get('FCS')
+        if experiment is None:
+            experiment = chisurf.experiments.types.get('fcs')
+            if experiment is not None:
+                chisurf.experiment[experiment.name] = experiment
+        if experiment is not None:
+            return chisurf.experiments.fcs.FCS(
+                name='Seidel Kristine',
+                experiment_reader='kristine',
+                experiment=experiment,
+            )
+
     structure_ext = {'.pdb', '.cif', '.mmcif', '.gro', '.xyz'}
     if suffix in structure_ext:
         experiment = chisurf.experiment.get('Modelling')
@@ -788,4 +888,32 @@ def _auto_reader_from_filename(filename: str):
             experiment=experiment
         )
         return reader
+    return None
+
+
+def _find_experiment_reader(
+        experiment_names: typing.Iterable[str],
+        reader_names: typing.Iterable[str] = (),
+        low_level_readers: typing.Iterable[str] = (),
+):
+    """Find a configured reader/controller by experiment and reader metadata."""
+    reader_name_set = {name.lower() for name in reader_names}
+    low_level_reader_set = {name.lower() for name in low_level_readers}
+
+    for experiment_name in experiment_names:
+        experiment = chisurf.experiment.get(experiment_name)
+        if experiment is None:
+            continue
+        for candidate in getattr(experiment, 'readers', []) or []:
+            controller_reader = getattr(candidate, 'experiment_reader', None)
+            reader = candidate
+            if controller_reader is not None and not isinstance(controller_reader, str):
+                reader = controller_reader
+            names = {
+                str(getattr(candidate, 'name', '')).lower(),
+                str(getattr(reader, 'name', '')).lower(),
+            }
+            low_level = str(getattr(reader, 'experiment_reader', '')).lower()
+            if names & reader_name_set or low_level in low_level_reader_set:
+                return reader
     return None

@@ -438,7 +438,23 @@ def add_fit(
         model_kw: typing.Dict = None,
         _defer_cs_update: bool = False,
         _ui_updates_frozen: bool = False,
+        _force_local: bool = False,
 ):
+    # Phase 8: in server mode, route through the API so the server
+    # creates the fit object.  The proxy list will pick it up on the
+    # next refresh.
+    import chisurf as _cs_guard
+    _api_guard = getattr(_cs_guard, "api", None)
+    if (
+            not _force_local and
+            _api_guard is not None and
+            getattr(_api_guard, "mode", None) == "server"
+    ):
+        return _api_guard.add_fit(
+            dataset_indices=list(dataset_indices or [0]),
+            model_name=model_name,
+            model_kw=model_kw,
+        )
     def _resolve_model_name_from_cs(main_window) -> str:
         try:
             v = str(getattr(main_window, "current_model_name", "") or "").strip()
@@ -485,7 +501,8 @@ def add_fit(
 
     # Do nothing of no dataset is selected
     if len(dataset_indices) == 0:
-        return
+        chisurf.logging.warning("add_fit: no dataset index selected; aborting")
+        return {"ok": False, "error": "no dataset index selected"}
 
     # If multiple datasets were requested, build each fit independently
     # using the already-stable single-dataset code path.
@@ -542,7 +559,7 @@ def add_fit(
         data_sets = [chisurf.imported_datasets[i] for i in dataset_indices]
     except IndexError:
         chisurf.logging.error("add_fit: dataset indices out of bounds of chisurf.imported_datasets")
-        return
+        return {"ok": False, "error": "dataset indices out of bounds"}
 
     # Prefer the experiment attached to the dataset; fall back to the
     # globally selected experiment if necessary (e.g. after project load).
@@ -557,7 +574,7 @@ def add_fit(
             exp = None
     if exp is None:
         chisurf.logging.warning("add_fit: no experiment available on dataset or cs.current_experiment; aborting")
-        return
+        return {"ok": False, "error": "no experiment available"}
 
     model_names = exp.model_names
     model_class = None
@@ -590,7 +607,7 @@ def add_fit(
 
     if model_class is None:
         chisurf.logging.warning(f"add_fit: could not resolve model '{model_name}'; aborting")
-        return
+        return {"ok": False, "error": f"could not resolve model '{model_name}'"}
 
     base_model_kw = dict(model_kw or {})
 
