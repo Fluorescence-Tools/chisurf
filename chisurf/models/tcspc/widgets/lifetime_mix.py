@@ -56,14 +56,17 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     @property
     def current_model_idx(self) -> int:
+        """Index of the currently selected model."""
         return int(self._current_model.value())
 
     @current_model_idx.setter
     def current_model_idx(self, v: int):
+        """Index of the currently selected model."""
         self._current_model.setValue(v)
 
     @property
     def amplitude(self) -> typing.List[float]:
+        """Amplitude array, normalized to sum to one."""
         layout = self.model_layout
         re = list()
         for i in range(layout.count()):
@@ -77,10 +80,13 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     @property
     def selected_fit(self):
+        """Currently selected fit type in the model selector."""
         i = self.model_selector.currentIndex()
         return self.model_types[i]
 
+    # TODO: needs docstring
     def __init__(self, fit, **kwargs):
+        """Initialize the instance."""
         super().__init__(fit=fit, **kwargs)
         # LifetimeModelWidgetBase.__init__(self, fit, **kwargs)
         # LifetimeMixModel.__init__(self, fit, **kwargs)
@@ -110,7 +116,9 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         self.layout_parameter.addWidget(self._current_model)
         self.layout_parameter.addLayout(layout)
 
+    # TODO: needs docstring
     def add_model(self, fit: chisurf.fitting.fit.FitGroup = None):
+        """Add a new model to the mixture widget."""
         layout = QtWidgets.QHBoxLayout()
 
         if fit is None:
@@ -137,6 +145,8 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         self.model_layout.addLayout(layout)
         self.append(model, fraction)
 
+    # TODO: needs docstring
     def clear_models(self):
+        """Remove all model instances."""
         LifetimeMixModel.clear_models(self)
         chisurf.gui.widgets.general.clear_layout(self.model_layout)

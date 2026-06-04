@@ -12,18 +12,32 @@ from chisurf.models.tcspc.nusiance import Generic
 class GenericWidget(QtWidgets.QGroupBox, Generic):
 
     def _compute_n_ph_bg(self) -> float:
+        """Compute the number of background photons.
+
+        Returns
+        -------
+        float
+        """
         try:
             return float(self.n_ph_bg)
         except Exception:
             return float('nan')
 
     def _compute_n_ph_fl(self) -> float:
+        """Compute the number of fluorescence photons.
+
+        Returns
+        -------
+        float
+        """
         try:
             return float(self.n_ph_fl)
         except Exception:
             return float('nan')
 
+    # TODO: needs docstring
     def change_bg_curve(self, background_index: int = None):
+        """Change the background curve."""
         if isinstance(background_index, int):
             self.background_select.selected_curve_index = background_index
         self._background_curve = self.background_select.selected_dataset
@@ -44,15 +58,19 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
             payload={},
         )
 
+    # TODO: needs docstring
     def update(self):
+        """Update the state and emit signals."""
         super().update()
 
+    # TODO: needs docstring
     def __init__(
             self,
             hide_generic: bool = False,
             *args,
             **kwargs
     ):
+        """Initialize the instance."""
         super().__init__(*args, **kwargs)
         if hide_generic:
             self.hide()

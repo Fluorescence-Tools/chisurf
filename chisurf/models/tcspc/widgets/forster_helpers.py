@@ -12,7 +12,9 @@ def open_forster_calculator(owner: QtWidgets.QWidget) -> None:
             # The SpectraViewerWidget requires an empty constructor, and creates its own window
             owner._forster_calculator_window = SpectraViewerWidget()
             
+            # TODO: needs docstring
             def on_forster_radius_calculated(r0_angstrom: float):
+                """Handle calculated Forster radius from plugin."""
                 try:
                     fret_params = getattr(owner, "fret_parameters", None)
                     if fret_params is not None:

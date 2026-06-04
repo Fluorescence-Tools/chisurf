@@ -26,6 +26,15 @@ class MaxEntFCSModel(ModelCurve):
     name = "FCS MaxEnt"
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
+        """Initialize the MaxEnt FCS model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit this model belongs to.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         super().__init__(fit, **kwargs)
 
         # Regularization strength nu is represented as log10(nu) for stability.
@@ -122,12 +131,26 @@ class MaxEntFCSModel(ModelCurve):
 
     @property
     def l_curve_log10_reg(self):
+        """L-curve log10(reg) grid points.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of log10(regularization) values, or empty.
+        """
         if self._l_curve_log10_reg is None:
             return np.array([], dtype=float)
         return np.asarray(self._l_curve_log10_reg, dtype=float)
 
     @property
     def l_curve_reg(self):
+        """L-curve regularization values (linear scale).
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of regularization values, or empty.
+        """
         vals = self.l_curve_log10_reg
         if vals.size == 0:
             return vals
@@ -135,12 +158,26 @@ class MaxEntFCSModel(ModelCurve):
 
     @property
     def l_curve_chi2(self):
+        """L-curve chi-squared values per regularization point.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of :math:`\\chi^2_r` values, or empty.
+        """
         if self._l_curve_chi2 is None:
             return np.array([], dtype=float)
         return np.asarray(self._l_curve_chi2, dtype=float)
 
     @property
     def l_curve_solution_norm(self):
+        """L-curve solution norm (|p|) per regularization point.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of solution norms, or empty.
+        """
         if self._l_curve_solution_norm is None:
             return np.array([], dtype=float)
         return np.asarray(self._l_curve_solution_norm, dtype=float)
@@ -151,6 +188,18 @@ class MaxEntFCSModel(ModelCurve):
             log10_min: float | None = None,
             log10_max: float | None = None,
     ) -> None:
+        """Sweep the regularization parameter and build the L-curve.
+
+        For each grid point the model is updated and :math:`\\chi^2_r`
+        and the solution norm ``|p|`` are recorded.
+
+        Parameters
+        ----------
+        n_points : int, optional
+            Number of grid points.
+        log10_min, log10_max : float, optional
+            log10(reg) range. Defaults to current value ± 2.
+        """
         print("MaxEntFCSModel.compute_l_curve: called")
         data = self.fit.data
         tau = np.asarray(data.x, dtype=float).ravel()
@@ -227,6 +276,13 @@ class MaxEntFCSModel(ModelCurve):
         return int(idx) if idx is not None else None
 
     def set_reg_from_lcurve_index(self, idx: int) -> None:
+        """Set the regularization parameter from an L-curve index.
+
+        Parameters
+        ----------
+        idx : int
+            Index into the global L-curve arrays.
+        """
         vals = self.l_curve_log10_reg
         if vals.size == 0:
             return
@@ -244,6 +300,11 @@ class MaxEntFCSModel(ModelCurve):
             print(f"MaxEntFCSModel.set_reg_from_lcurve_index: update_model() failed: {e2}")
 
     def on_auto_fit_range_completed(self) -> None:
+        """Callback invoked after an auto-fit range sweep completes.
+
+        Runs an automatic L-curve sweep and sets the regularization
+        parameter to the detected corner.
+        """
         compute_l = getattr(self, "compute_l_curve", None)
         corner_fn = getattr(self, "l_curve_corner_index", None)
         set_from_idx = getattr(self, "set_reg_from_lcurve_index", None)
@@ -335,6 +396,13 @@ class MaxEntFCSModel(ModelCurve):
 class MaxEntFCSLCurveController(QtWidgets.QWidget):
 
     def __init__(self, parent_plot):
+        """Initialize the L-curve controller widget.
+
+        Parameters
+        ----------
+        parent_plot : MaxEntFCSLCurvePlot
+            The L-curve plot this controller belongs to.
+        """
         super().__init__(parent_plot)
         self._plot = parent_plot
         layout = QtWidgets.QVBoxLayout(self)
@@ -390,6 +458,7 @@ class MaxEntFCSLCurveController(QtWidgets.QWidget):
         layout.addLayout(range_layout)
 
     def _on_scale_changed(self, *args):
+        """Qt slot: update log scale mode when checkboxes change."""
         self._plot.set_log_mode(
             logx=self._cb_logx.isChecked(),
             logy=self._cb_logy.isChecked(),
@@ -397,19 +466,21 @@ class MaxEntFCSLCurveController(QtWidgets.QWidget):
 
     @property
     def log10_min(self) -> float | None:
+        """Minimum log10(reg) for the L-curve sweep."""
         return float(self._sb_logmin.value())
 
     @property
     def log10_max(self) -> float | None:
+        """Maximum log10(reg) for the L-curve sweep."""
         return float(self._sb_logmax.value())
 
     @property
     def n_points(self) -> int:
+        """Number of L-curve sweep points."""
         return int(self._sb_npoints.value())
 
     def _on_compute_clicked(self, *args):
-        # Trigger a recomputation and plot update using the current
-        # controller settings for the L-curve range.
+        """Qt slot: trigger L-curve computation with current settings."""
         try:
             self._plot.update_all()
         except Exception:
@@ -421,6 +492,15 @@ class MaxEntFCSLCurvePlot(plots.Plot):
     name = "L-Curve"
 
     def __init__(self, fit: chisurf.fitting.fit.FitGroup, **kwargs):
+        """Initialize the L-curve plot widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            The fit group whose model provides L-curve data.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         super().__init__(fit=fit, **kwargs)
         self._plot_widget = pg.PlotWidget()
         self.layout.addWidget(self._plot_widget)
@@ -454,6 +534,15 @@ class MaxEntFCSLCurvePlot(plots.Plot):
             pass
 
     def set_log_mode(self, logx: bool, logy: bool) -> None:
+        """Set log scale mode for the L-curve axes.
+
+        Parameters
+        ----------
+        logx : bool
+            If True, use log scale for the x-axis (Chi2r).
+        logy : bool
+            If True, use log scale for the y-axis (|p|).
+        """
         self._logx = bool(logx)
         self._logy = bool(logy)
         self._plot_widget.setLogMode(x=self._logx, y=self._logy)
@@ -475,6 +564,15 @@ class MaxEntFCSLCurvePlot(plots.Plot):
         self._curve.setData(x_arr, y_arr)
 
     def update_all(self, *args, **kwargs) -> None:
+        """Recompute the L-curve and refresh the plot.
+
+        Parameters
+        ----------
+        *args
+            Ignored (allows use as Qt slot).
+        **kwargs
+            Ignored.
+        """
         print("MaxEntFCSLCurvePlot.update_all: called")
         model = self.fit.model
         # Obtain L-curve range configuration from the controller, if present
@@ -574,6 +672,18 @@ class MaxEntFCSLCurvePlot(plots.Plot):
         self.set_log_mode(self._logx, self._logy)
 
     def _on_points_clicked(self, item, points):
+        """Qt slot: handle click on an L-curve point.
+
+        Sets the regularization parameter to match the nearest L-curve
+        point and highlights the selection.
+
+        Parameters
+        ----------
+        item
+            The plot item clicked.
+        points
+            Sequence of clicked point objects.
+        """
         print("MaxEntFCSLCurvePlot._on_points_clicked: called")
         print(f"MaxEntFCSLCurvePlot._on_points_clicked: item={item}, type(points)={type(points)}")
         # ``points`` may be a list-like or numpy array; avoid ambiguous
@@ -706,6 +816,17 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
         icon: QtGui.QIcon | None = None,
         **kwargs,
     ):
+        """Initialize the MaxEnt FCS widget (GUI).
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            The fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the model tab.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
 
@@ -770,6 +891,15 @@ class MaxEntRHModel(ModelCurve):
     name = "FCS MaxEnt rH"
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
+        """Initialize the MaxEnt rH model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit this model belongs to.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         super().__init__(fit, **kwargs)
 
         self._reg = FittingParameter(
@@ -854,6 +984,7 @@ class MaxEntRHModel(ModelCurve):
 
     @property
     def last_result(self) -> dict | None:
+        """Return the last MaxEnt rH result or ``None``."""
         return self._result
 
     @property
@@ -871,12 +1002,26 @@ class MaxEntRHModel(ModelCurve):
 
     @property
     def l_curve_log10_reg(self):
+        """L-curve log10(reg) grid points.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of log10(regularization) values, or empty.
+        """
         if self._l_curve_log10_reg is None:
             return np.array([], dtype=float)
         return np.asarray(self._l_curve_log10_reg, dtype=float)
 
     @property
     def l_curve_reg(self):
+        """L-curve regularization values (linear scale).
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of regularization values, or empty.
+        """
         vals = self.l_curve_log10_reg
         if vals.size == 0:
             return vals
@@ -884,12 +1029,26 @@ class MaxEntRHModel(ModelCurve):
 
     @property
     def l_curve_chi2(self):
+        """L-curve chi-squared values per regularization point.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of :math:`\\chi^2_r` values, or empty.
+        """
         if self._l_curve_chi2 is None:
             return np.array([], dtype=float)
         return np.asarray(self._l_curve_chi2, dtype=float)
 
     @property
     def l_curve_solution_norm(self):
+        """L-curve solution norm (|p|) per regularization point.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of solution norms, or empty.
+        """
         if self._l_curve_solution_norm is None:
             return np.array([], dtype=float)
         return np.asarray(self._l_curve_solution_norm, dtype=float)
@@ -900,6 +1059,15 @@ class MaxEntRHModel(ModelCurve):
             log10_min: float | None = None,
             log10_max: float | None = None,
     ) -> None:
+        """Sweep the regularization parameter and build the L-curve.
+
+        Parameters
+        ----------
+        n_points : int, optional
+            Number of grid points.
+        log10_min, log10_max : float, optional
+            log10(reg) range. Defaults to current value ± 2.
+        """
         data = self.fit.data
         tau = np.asarray(data.x, dtype=float).ravel()
         g = np.asarray(data.y, dtype=float).ravel()
@@ -952,6 +1120,13 @@ class MaxEntRHModel(ModelCurve):
             pass
 
     def l_curve_corner_index(self) -> int | None:
+        """Locate the L-curve corner index automatically.
+
+        Returns
+        -------
+        int or None
+            Global index into the L-curve arrays, or ``None``.
+        """
         rho = self.l_curve_chi2
         eta = self.l_curve_solution_norm
         if rho.size < 3 or eta.size < 3:
@@ -960,6 +1135,13 @@ class MaxEntRHModel(ModelCurve):
         return int(idx) if idx is not None else None
 
     def set_reg_from_lcurve_index(self, idx: int) -> None:
+        """Set the regularization parameter from an L-curve index.
+
+        Parameters
+        ----------
+        idx : int
+            Index into the global L-curve arrays.
+        """
         vals = self.l_curve_log10_reg
         if vals.size == 0:
             return
@@ -1090,6 +1272,17 @@ class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
         icon: QtGui.QIcon | None = None,
         **kwargs,
     ):
+        """Initialize the MaxEnt rH widget (GUI).
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            The fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the model tab.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
 

@@ -18,6 +18,18 @@ class ParseFCSWidget(ParseModelWidget):
 
     @staticmethod
     def _to_float_or_none(value):
+        """Convert *value* to float, returning ``None`` on failure.
+
+        Parameters
+        ----------
+        value : any
+            Value to convert.
+
+        Returns
+        -------
+        float or None
+            Numeric value, or ``None`` if conversion fails or is non-finite.
+        """
         try:
             v = float(value)
         except Exception:
@@ -27,6 +39,21 @@ class ParseFCSWidget(ParseModelWidget):
         return v
 
     def _resolve_total_mean_count_rate(self, meta):
+        """Extract the total mean count rate from metadata.
+
+        Handles both ``mean_count_rate_total`` and
+        ``mean_count_rate`` with a ``per_detector`` semantic.
+
+        Parameters
+        ----------
+        meta : dict
+            Data metadata dictionary.
+
+        Returns
+        -------
+        float or None
+            Total mean count rate in kHz, or ``None`` if not available.
+        """
         if not isinstance(meta, dict):
             return None
 
@@ -71,6 +98,17 @@ class ParseFCSWidget(ParseModelWidget):
             icon: QtGui.QIcon = None,
             **kwargs
     ):
+        """Initialize the FCS parse-model widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            The fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the model tab.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
         self.icon = icon

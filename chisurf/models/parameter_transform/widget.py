@@ -20,6 +20,7 @@ from chisurf.models import model
 
 
 class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
+    """Widget for the parameter transform model with code editor and parameter table."""
 
     plot_classes = [
                     (plots.FitInfo, {}),
@@ -27,6 +28,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
     ]
 
     def create_parameter_widgets(self):
+        """Rebuild the parameter editor widgets from the current model parameters."""
         layout = self.w.gridLayout
         chisurf.gui.widgets.clear_layout(layout)
 
@@ -48,6 +50,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
             layout.addWidget(pw, row, column)
 
     def set_default_parameter_values(self):
+        """Set parameter values and bounds from the YAML model definition."""
         d = self.codes[self.code_name]['initial']
         param_keys = list(self.parameters_all_dict.keys())
 
@@ -60,6 +63,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
 
     @property
     def code_name(self):
+        """Name of the currently selected code definition."""
         current_index = self.w.comboBox.currentIndex()
 
         if not self.codes:
@@ -76,6 +80,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
 
     @code_name.setter
     def code_name(self, v: str):
+        """Set the currently selected code definition by name."""
         idx = self.w.comboBox.findText(v)
         if idx == -1:
             return
@@ -83,10 +88,12 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
 
     @property
     def codes(self) -> typing.Dict:
+        """Dictionary of loaded code definitions keyed by name."""
         return self._codes
 
     @codes.setter
     def codes(self, v: typing.Dict):
+        """Set the codes dictionary and populate the combo box."""
         self._codes = v
         self.w.comboBox.clear()
 
@@ -97,6 +104,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
         self.w.comboBox.addItems(code_keys)
 
     def onCodeChanged(self):
+        """Handle selection of a different code definition from the combo box."""
         try:
             code = self.codes[self.code_name]['code']
             self.w.textEdit.setPlainText(code)
@@ -114,6 +122,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
             )
 
     def onFunctionUpdate(self):
+        """Update the model function from the code editor contents."""
         t = self.w.textEdit.toPlainText()
         try:
             self.function = str(t)
@@ -131,6 +140,13 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
             )
 
     def load_model_file(self, filename: pathlib.Path):
+        """Load a YAML code definition file.
+
+        Parameters
+        ----------
+        filename : pathlib.Path
+            Path to the YAML file.
+        """
         with io.open_maybe_zipped(filename, 'r') as fp:
             self._code_file = filename
             yaml_content = yaml.safe_load(fp)
@@ -144,6 +160,15 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
             code_file: pathlib.Path = None,
             **kwargs
     ):
+        """Initialize the parameter transform widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object this widget belongs to.
+        code_file : pathlib.Path, optional
+            Path to a YAML file with code definitions.
+        """
         super().__init__(fit, *args, **kwargs)
 
         path = pathlib.Path(__file__).parent.absolute()

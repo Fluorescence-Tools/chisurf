@@ -19,16 +19,28 @@ if TYPE_CHECKING:
 
 
 class ParameterTransformModel(model.Model):
+    """A model that wraps an arbitrary Python function as a parameter transform.
+
+    The function is provided as a string, compiled, and used to define input
+    and output parameters. The model evaluates the function and makes its
+    outputs available as fixed parameters for linking.
+    """
 
     name = "Parameter Transform"
 
     def finalize(self):
+        """Evaluate the model and finalize all parameter controllers."""
         self.update_model()
         for i, p in enumerate(self.parameters_all):
             if hasattr(p, 'controller') and p.controller is not None:
                 p.controller.finalize()
 
     def update_model(self, **kwargs):
+        """Evaluate the parameter transform node and lock output parameters.
+
+        Outputs are temporarily unlocked for evaluation, then re-locked so
+        they remain fixed for linking purposes.
+        """
         # Temporarily unlock outputs for evaluation
         for output in self._model._node.outputs.values():
             output.fixed = False
@@ -48,22 +60,33 @@ class ParameterTransformModel(model.Model):
 
     @property
     def n_points(self):
+        """Number of data points; always 1 for a parameter transform."""
         return 1
 
     @property
     def n_free(self):
+        """Number of free parameters; always 0 (outputs are fixed)."""
         return 0
 
     @property
     def weighted_residuals(self) -> np.ndarray:
+        """Weighted residuals are not applicable; returns an empty array."""
         return np.array([], dtype=np.float64)
 
     @property
     def function(self) -> str:
+        """The Python function string used for the parameter transform."""
         return self._function
 
     @function.setter
     def function(self, fun: str):
+        """Compile and set the function, creating a wrapped model node.
+
+        Parameters
+        ----------
+        fun : str
+            The Python function definition as a string.
+        """
         # Validate the function string before using it
         # Try to compile the function to check for syntax errors
         code_obj = compile(fun, '<string>', 'exec')
@@ -117,10 +140,12 @@ class ParameterTransformModel(model.Model):
 
     @property
     def _parameters(self) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
+        """List of all parameters from the wrapped model node."""
         return self._model.parameters_all
 
     @_parameters.setter
     def _parameters(self, v):
+        """No-op setter to satisfy the read-only property protocol."""
         pass
 
     def __init__(
@@ -130,6 +155,15 @@ class ParameterTransformModel(model.Model):
             *args,
             **kwargs
     ):
+        """Initialize the parameter transform model.
+
+        Parameters
+        ----------
+        fit : Fit
+            The fit object this model is attached to.
+        function : str, optional
+            Python function definition string. Defaults to ``'def f(x): return x'``.
+        """
         if function is None:
             function = 'def f(x): return x'
         self.fit = fit
@@ -137,6 +171,7 @@ class ParameterTransformModel(model.Model):
         super().__init__(fit, *args, **kwargs)
 
     def __str__(self):
+        """Return a string summary of the model function and parameters."""
         s = "\n"
         s += "Model: Parameter transform\n"
         s += "\n"
@@ -150,6 +185,18 @@ class ParameterTransformModel(model.Model):
         return s
 
     def __getitem__(self, key):
+        """Return a slice of the model curve as ``(x, y)``.
+
+        Parameters
+        ----------
+        key : slice
+            Slice object specifying start/stop/step.
+
+        Returns
+        -------
+        tuple of numpy.ndarray
+            Sliced ``(x, y)`` arrays.
+        """
         start = key.start
         stop = key.stop
         step = 1 if key.step is None else key.step

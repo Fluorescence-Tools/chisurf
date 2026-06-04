@@ -49,24 +49,29 @@ class Generic(FittingParameterGroup):
 
     @property
     def scatter(self) -> float:
+        """Scatter amplitude."""
         # Scatter amplitude
         return self._sc.value
 
     @scatter.setter
     def scatter(self, v: float):
+        """Scatter amplitude."""
         self._sc.value = v
 
     @property
     def background(self) -> float:
+        """Constant background in fluorescence decay curve."""
         # Constant background in fluorescence decay curve
         return self._bg.value
 
     @background.setter
     def background(self, v: float):
+        """Constant background in fluorescence decay curve."""
         self._bg.value = v
 
     @property
     def background_curve(self) -> chisurf.curve.Curve:
+        """Background curve used for background subtraction."""
         if isinstance(self._background_curve, Curve):
             return self._background_curve
         else:
@@ -74,6 +79,7 @@ class Generic(FittingParameterGroup):
 
     @background_curve.setter
     def background_curve(self, v: float):
+        """Background curve used for background subtraction."""
         if isinstance(v, Curve):
             self._background_curve = v
 
@@ -90,6 +96,7 @@ class Generic(FittingParameterGroup):
 
     @t_bg.setter
     def t_bg(self, v: float):
+        """Measurement time of background measurement."""
         self._tmeas_bg.value = v
 
     @property
@@ -100,14 +107,17 @@ class Generic(FittingParameterGroup):
 
     @t_exp.setter
     def t_exp(self, v: float):
+        """Measurement time of experiment."""
         self._tmeas_exp.value = v
 
+    # TODO: needs docstring
     def __init__(
             self,
             background_curve: chisurf.data.DataCurve = None,
             name: str = 'Nuisance',
             **kwargs
     ):
+        """Initialize the instance."""
 
         super().__init__(
             name=name,
@@ -147,12 +157,14 @@ class Corrections(FittingParameterGroup):
 
     @property
     def lintable(self) -> np.array:
+        """Linearization table for DNL correction."""
         if self._lintable is None:
             self._lintable = np.ones_like(self.fit.data.y)
         return self._lintable[::-1] if self.reverse else self._lintable
 
     @lintable.setter
     def lintable(self, v: np.array):
+        """Linearization table for DNL correction."""
         self._curve = v
         self._lintable = self.calc_lintable(v.y)
 
@@ -164,28 +176,34 @@ class Corrections(FittingParameterGroup):
 
     @property
     def window_length(self) -> int:
+        """Window length for the smoothing window function."""
         return int(self._window_length.value)
 
     @window_length.setter
     def window_length(self, v: int):
+        """Window length for the smoothing window function."""
         self._window_length.value = v
         self._lintable = self.calc_lintable(self._curve.y)
 
     @property
     def window_function(self) -> str:
+        """Name of the window function used for smoothing."""
         return self._window_function
 
     @window_function.setter
     def window_function(self, v: str):
+        """Name of the window function used for smoothing."""
         self._window_function = v
         self._lintable = self.calc_lintable(self._curve.y)
 
     @property
     def reverse(self) -> bool:
+        """Whether to reverse the linearization table."""
         return self._reverse
 
     @reverse.setter
     def reverse(self, v: bool):
+        """Whether to reverse the linearization table."""
         self._reverse = v
 
     def calc_lintable(
@@ -223,6 +241,7 @@ class Corrections(FittingParameterGroup):
 
     @property
     def measurement_time(self) -> float:
+        """Measurement time of the experiment in seconds."""
         try:
             return self.fit.model.generic.t_exp
         except (AttributeError, KeyError):
@@ -233,10 +252,12 @@ class Corrections(FittingParameterGroup):
             self,
             v: float
     ):
+        """Measurement time of the experiment in seconds."""
         self.fit.model.generic.t_exp = v
 
     @property
     def rep_rate(self) -> float:
+        """Laser repetition rate in MHz."""
         try:
             return self.fit.model.convolve.rep_rate
         except (AttributeError, KeyError):
@@ -244,17 +265,22 @@ class Corrections(FittingParameterGroup):
 
     @rep_rate.setter
     def rep_rate(self, v: float):
+        """Laser repetition rate in MHz."""
         self.fit.model.convolve.rep_rate = v
 
     @property
     def dead_time(self) -> float:
+        """Dead time of the detector in ns."""
         return self._dead_time.value
 
     @dead_time.setter
     def dead_time(self, v: float):
+        """Dead time of the detector in ns."""
         self._dead_time.value = v
 
+    # TODO: needs docstring
     def pileup(self, decay: np.array, **kwargs):
+        """Apply pile-up correction to the decay."""
         data = kwargs.get('data', self.fit.data.y)
         rep_rate = kwargs.get('rep_rate', self.rep_rate)
         dead_time = kwargs.get('dead_time', self.dead_time)
@@ -269,11 +295,13 @@ class Corrections(FittingParameterGroup):
                 modify_inplace=True
             )
 
+    # TODO: needs docstring
     def linearize(
             self,
             decay: np.array,
             **kwargs
     ):
+        """Apply DNL linearization to the decay."""
         lintable = kwargs.get('lintable', self.lintable)
         if lintable is not None and self.correct_dnl:
             return decay * lintable
@@ -351,6 +379,7 @@ class Corrections(FittingParameterGroup):
             except Exception:
                 pass
 
+    # TODO: needs docstring
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
@@ -362,6 +391,7 @@ class Corrections(FittingParameterGroup):
             lin_auto_range: bool = True,
             **kwargs
     ):
+        """Initialize the instance."""
         super().__init__(
             fit=fit,
             name=name,
@@ -382,88 +412,108 @@ class Convolve(FittingParameterGroup):
 
     @property
     def dt(self) -> float:
+        """Time step per channel in ns."""
         return self._dt.value
 
     @dt.setter
     def dt(self, v: float):
+        """Time step per channel in ns."""
         self._dt.value = v
 
     @property
     def lamp_background(self) -> float:
+        """Lamp background offset."""
         return self._lb.value # / self.n_photons_irf
 
     @lamp_background.setter
     def lamp_background(self, v: float):
+        """Lamp background offset."""
         self._lb.value = v
 
     @property
     def timeshift(self) -> float:
+        """Time shift of the IRF relative to the decay."""
         return self._ts.value
 
     @timeshift.setter
     def timeshift(self, v: float):
+        """Time shift of the IRF relative to the decay."""
         self._ts.value = v
 
     @property
     def start(self) -> int:
+        """Start channel for convolution (in indices)."""
         return int(self._start.value // self.dt)
 
     @start.setter
     def start(self, v: int):
+        """Start channel for convolution (in indices)."""
         self._start.value = v
 
     @property
     def stop(self) -> int:
+        """Stop channel for convolution (in indices)."""
         stop = int(self._stop.value // self.dt)
         return stop
 
     @stop.setter
     def stop(self, v: int):
+        """Stop channel for convolution (in indices)."""
         self._stop.value = v
 
     @property
     def irf_start(self) -> int:
+        """Start channel for zeroing IRF (in indices)."""
         return int(self._irf_start.value // self.dt)
 
     @irf_start.setter
     def irf_start(self, v: int):
+        """Start channel for zeroing IRF (in indices)."""
         # Convert to numpy array of long integers
         v_array = np.array([v], dtype=np.int64)
         self._irf_start.value = v_array
 
     @property
     def irf_stop(self) -> int:
+        """Stop channel for zeroing IRF (in indices)."""
         stop = int(self._irf_stop.value // self.dt)
         return stop
 
     @irf_stop.setter
     def irf_stop(self, v: int):
+        """Stop channel for zeroing IRF (in indices)."""
         # Convert to numpy array of long integers
         v_array = np.array([v], dtype=np.int64)
         self._irf_stop.value = v_array
 
     @property
     def rep_rate(self) -> float:
+        """Laser repetition rate in MHz."""
         return self._rep.value
 
     @rep_rate.setter
     def rep_rate(self, v: float):
+        """Laser repetition rate in MHz."""
         self._rep.value = float(v)
 
     @property
     def do_convolution(self) -> bool:
+        """Whether convolution with IRF is enabled."""
         return self._do_convolution
 
     @do_convolution.setter
     def do_convolution(self, v: bool):
+        """Whether convolution with IRF is enabled."""
         self._do_convolution = bool(v)
 
     @property
     def n0(self) -> float:
+        """Initial number of excited donor molecules."""
         return self._n0.value
 
     @n0.setter
     def n0(self, v: float):
+        """Initial number of excited donor molecules."""
         self._n0.value = v
 
     def _process_irf(self, normalize: bool = True) -> chisurf.curve.Curve:
@@ -567,6 +617,7 @@ class Convolve(FittingParameterGroup):
 
     @property
     def _irf(self) -> chisurf.curve.Curve:
+        """Stored IRF curve (private)."""
         re = self.__irf
         # if re is None:
         #     x = self.fit.data.x
@@ -576,6 +627,7 @@ class Convolve(FittingParameterGroup):
 
     @_irf.setter
     def _irf(self, v: chisurf.curve.Curve):
+        """Stored IRF curve (private)."""
         self.n_photons_irf = v.normalize(mode="sum", inplace=False)
         self.__irf = v
         try:
@@ -605,6 +657,7 @@ class Convolve(FittingParameterGroup):
 
     @property
     def data(self) -> chisurf.data.DataCurve:
+        """Data curve used for convolution."""
         if self._data is None:
             try:
                 return self.fit.data
@@ -615,8 +668,10 @@ class Convolve(FittingParameterGroup):
 
     @data.setter
     def data(self, v: chisurf.data.DataCurve):
+        """Data curve used for convolution."""
         self._data = v
 
+    # TODO: needs docstring
     def scale(
             self,
             decay: chisurf.data.DataCurve,
@@ -626,6 +681,7 @@ class Convolve(FittingParameterGroup):
             data: np.ndarray = None,
             autoscale: bool = None
     ) -> np.ndarray:
+        """Scale the model decay to match experimental data."""
         if start is None:
             start = min(0, self.start)
         if stop is None:
@@ -657,6 +713,7 @@ class Convolve(FittingParameterGroup):
         """
         self.__irf = None
 
+    # TODO: needs docstring
     def convolve(
             self,
             data: chisurf.data.DataCurve,
@@ -668,6 +725,7 @@ class Convolve(FittingParameterGroup):
             scatter: float = 0.0,
             decay: np.array = None
     ) -> np.array:
+        """Convolve a lifetime spectrum with the IRF."""
         if verbose is None:
             verbose = chisurf.settings.cs_settings['verbose']
         if mode is None:
@@ -727,6 +785,7 @@ class Convolve(FittingParameterGroup):
         decay += (scatter * irf_y)
         return decay
 
+    # TODO: needs docstring
     def __init__(
             self,
             fit: chisurf.fitting.fit.Fit,
@@ -734,6 +793,7 @@ class Convolve(FittingParameterGroup):
             irf: chisurf.curve.Curve = None,
             **kwargs
     ):
+        """Initialize the instance."""
         super().__init__(fit=fit, name=name, **kwargs)
 
         self._data = None

@@ -30,6 +30,13 @@ class ProteinMCModelWidget(ModelWidget):
             *args,
             **kwargs
     ):
+        """Initialize the ProteinMC model widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            Fit object this model is attached to.
+        """
         super().__init__(fit=fit, *args, **kwargs)
 
         self.structure = getattr(self.fit, "data", None)
@@ -60,6 +67,7 @@ class ProteinMCModelWidget(ModelWidget):
         self.layout = layout
 
     def update_model(self, **kwargs):
+        """Update the model state by logging current tracking data lengths."""
         try:
             chisurf.logging.info(
                 "ProteinMCModelWidget.update_model: len(rmsd)=%d len(drmsd)=%d len(energy)=%d len(chi2r)=%d",
@@ -73,6 +81,7 @@ class ProteinMCModelWidget(ModelWidget):
         return
 
     def update_widgets(self) -> None:
+        """Refresh GUI widgets and log the update."""
         try:
             chisurf.logging.info("ProteinMCModelWidget.update_widgets: called")
         except Exception:
@@ -80,6 +89,7 @@ class ProteinMCModelWidget(ModelWidget):
         super().update_widgets()
 
     def update(self) -> None:
+        """Perform a full update of the model, widgets, and tracking data."""
         try:
             chisurf.logging.info(
                 "ProteinMCModelWidget.update: before super.update len(rmsd)=%d len(drmsd)=%d len(energy)=%d len(chi2r)=%d",

@@ -19,6 +19,15 @@ class PdaAnisotropyNuisance(FittingParameterGroup):
     """
 
     def __init__(self, name: str = "pda_aniso_nuisance", **kwargs):
+        """Initialize the anisotropy nuisance parameter group.
+
+        Parameters
+        ----------
+        name : str
+            Name of the parameter group.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(name=name, **kwargs)
 
         # Backgrounds per time window (parallel / perpendicular)
@@ -71,6 +80,7 @@ class PdaAnisotropySpecies(FittingParameterGroup):
 
     @property
     def amplitudes(self) -> np.ndarray:
+        """Return normalized per-species amplitudes."""
         try:
             vs = np.array([p.value for p in self._amplitudes], dtype=float)
         except Exception:
@@ -86,6 +96,7 @@ class PdaAnisotropySpecies(FittingParameterGroup):
 
     @amplitudes.setter
     def amplitudes(self, vs) -> None:
+        """Set per-species amplitudes from an iterable of floats."""
         try:
             values = list(vs)
         except Exception:
@@ -161,6 +172,7 @@ class PdaAnisotropySpecies(FittingParameterGroup):
             return None, None
 
     def __len__(self) -> int:
+        """Return the number of anisotropy species."""
         try:
             return len(self._amplitudes)
         except Exception:
@@ -193,6 +205,15 @@ class PdaAnisotropySpecies(FittingParameterGroup):
         return spec
 
     def __init__(self, name: str = "pda_aniso_species", **kwargs):
+        """Initialize the anisotropy species group.
+
+        Parameters
+        ----------
+        name : str
+            Name of the parameter group.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(name=name, **kwargs)
         self._amplitudes: list[FittingParameter] = []
         self._anisotropies: list[FittingParameter] = []
@@ -247,6 +268,21 @@ class PdaAnisotropyModel(ModelCurve):
         kw_hist: dict | None = None,
         **kwargs,
     ):
+        """Initialize the anisotropy PDA model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object holding experimental data.
+        nuisance : PdaAnisotropyNuisance, optional
+            Nuisance parameter group.
+        species : PdaAnisotropySpecies, optional
+            Anisotropy species parameter group.
+        kw_hist : dict, optional
+            Histogram settings for 1D residuals.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(fit, **kwargs)
 
         if nuisance is None:
@@ -297,6 +333,15 @@ class PdaAnisotropyModel(ModelCurve):
         self.residual_mode = "1D"
 
     def update_model(self, verbose: bool | None = None, **kwargs):
+        """Update the model curve from current nuisance and species parameters.
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            Whether to log debug output.
+        **kwargs
+            Forwarded to the parent method.
+        """
         if verbose is None:
             verbose = chisurf.settings.cs_settings["verbose"]
 
@@ -383,6 +428,22 @@ class PdaAnisotropyModel(ModelCurve):
         xmin: int | None = None,
         xmax: int | None = None,
     ) -> np.ndarray:
+        """Compute weighted residuals for the anisotropy PDA model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object.
+        xmin : int, optional
+            Start index for the residual window.
+        xmax : int, optional
+            End index for the residual window.
+
+        Returns
+        -------
+        numpy.ndarray
+            Weighted residuals.
+        """
         import chisurf.fitting as _fitting
 
         mode = getattr(self, "residual_mode", "1D")
@@ -432,6 +493,7 @@ class PdaAnisotropyModel(ModelCurve):
 
     @property
     def n_points(self) -> int:
+        """Return the number of data points for chi-squared calculation."""
         mode = getattr(self, "residual_mode", "1D")
         if mode == "1D":
             try:

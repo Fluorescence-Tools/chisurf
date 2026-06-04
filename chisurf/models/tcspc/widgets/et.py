@@ -20,10 +20,12 @@ from chisurf.models.tcspc.lifetime import LifetimeModel
 
 class LCurve(object):
 
+    # TODO: needs docstring
     def __init__(
             self,
             **kwargs
     ):
+        """Initialize the instance."""
         self._l_curve_start = 0.0
         self._l_curve_stop = 1.0
         self._l_curve_steps = 512
@@ -59,6 +61,7 @@ class LCurve(object):
             self,
             v: float
     ):
+        """Largest regularization value for the L-curve."""
         self._l_curve_stop = v
 
     @property
@@ -73,6 +76,7 @@ class LCurve(object):
             self,
             v: int
     ):
+        """Number of points in the L-curve."""
         self._l_curve_steps = v
 
     @property
@@ -124,6 +128,7 @@ class DistanceDistribution(object):
 
     @property
     def r_DA_min(self) -> float:
+        """Minimum donor-acceptor distance."""
         return self._r_DA_min
 
     @r_DA_min.setter
@@ -131,10 +136,12 @@ class DistanceDistribution(object):
             self,
             v: float
     ):
+        """Minimum donor-acceptor distance."""
         self._r_DA_min = v
 
     @property
     def r_DA_max(self) -> float:
+        """Maximum donor-acceptor distance."""
         return self._r_DA_max
 
     @r_DA_max.setter
@@ -142,10 +149,12 @@ class DistanceDistribution(object):
             self,
             v: float
     ):
+        """Maximum donor-acceptor distance."""
         self._r_DA_max = v
 
     @property
     def r_DA_npoints(self) -> int:
+        """Number of distance points."""
         return self._r_DA_npoints
 
     @r_DA_npoints.setter
@@ -153,10 +162,12 @@ class DistanceDistribution(object):
             self,
             v: int
     ):
+        """Number of distance points."""
         self._r_DA_npoints = v
 
     @property
     def kappa2(self) -> float:
+        """Orientation factor kappa^2."""
         return self._kappa2
 
     @kappa2.setter
@@ -164,10 +175,12 @@ class DistanceDistribution(object):
             self,
             v: float
     ):
+        """Orientation factor kappa^2."""
         self._kappa2 = v
 
     @property
     def tau0(self) -> float:
+        """Donor fluorescence lifetime in the absence of FRET."""
         return self._tau0
 
     @tau0.setter
@@ -175,10 +188,12 @@ class DistanceDistribution(object):
             self,
             v: float
     ):
+        """Donor fluorescence lifetime in the absence of FRET."""
         self._tau0 = v
 
     @property
     def R0(self) -> float:
+        """Foerster radius."""
         return self._R0
 
     @R0.setter
@@ -186,6 +201,7 @@ class DistanceDistribution(object):
             self,
             v: float
     ):
+        """Foerster radius."""
         self._R0 = v
 
     @property
@@ -200,6 +216,7 @@ class DistanceDistribution(object):
             self,
             v: np.array
     ):
+        """Probability distribution of donor-acceptor distances."""
         self._p_rDA = v
 
     @property
@@ -214,9 +231,12 @@ class DistanceDistribution(object):
             self,
             v: np.array
     ):
+        """Donor-acceptor distance array."""
         self._r_DA = v
 
+    # TODO: needs docstring
     def __init__(self, **kwargs):
+        """Initialize the instance."""
         self._r_DA_min = 0.0
         self._r_DA_max = 150.0
         self._r_DA_npoints = 512
@@ -239,12 +259,14 @@ class EtModelFree(
 
     name = "Et-Model free"
 
+    # TODO: needs docstring
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
             verbose: bool = None,
             **kwargs
     ):
+        """Initialize the instance."""
         Model.__init__(self, fit=fit)
         Phasor.__init__(self)
         LCurve.__init__(self, **kwargs)
@@ -269,6 +291,7 @@ class EtModelFree(
 
     @property
     def fda_model(self):
+        """FRET sample decay model."""
         if 0 <= self.fda_index < len(self.fits):
             return self.fits[self.fda_index].model
         else:
@@ -276,6 +299,7 @@ class EtModelFree(
 
     @property
     def fd0_model(self):
+        """Donor-only reference decay model."""
         if 0 <= self.fd0_index < len(self.fits):
             return self.fits[self.fd0_index].model
         else:
@@ -283,6 +307,7 @@ class EtModelFree(
 
     @property
     def data(self):
+        """Data curve used for convolution."""
         return self.fda.data
 
     @property
@@ -294,6 +319,7 @@ class EtModelFree(
 
     @t_points.setter
     def t_points(self, v):
+        """Number of time points."""
         self._t_points = v
 
     @property
@@ -305,6 +331,7 @@ class EtModelFree(
 
     @t_min.setter
     def t_min(self, v):
+        """Minimum time value."""
         self._t_min = v
 
     @property
@@ -316,6 +343,7 @@ class EtModelFree(
 
     @t_max.setter
     def t_max(self, v):
+        """Maximum time value."""
         self._t_max = v
 
     @property
@@ -327,34 +355,42 @@ class EtModelFree(
 
     @t_mode.setter
     def t_mode(self, v):
+        """Time axis mode (lin or log)."""
         self._t_mode = v
 
     @property
     def inversion_method(self):
+        """Method used for distance distribution inversion."""
         return self._inversion_method
 
     @inversion_method.setter
     def inversion_method(self, v):
+        """Method used for distance distribution inversion."""
         self._inversion_method = v
 
     @property
     def regularization_factor(self):
+        """Regularization factor for inversion."""
         return self._regularization_factor
 
     @regularization_factor.setter
     def regularization_factor(self, v):
+        """Regularization factor for inversion."""
         self._regularization_factor = v
 
     @property
     def chi2r(self):
+        """Reduced chi-squared value."""
         return self._chi2r
 
     @chi2r.setter
     def chi2r(self, v):
+        """Reduced chi-squared value."""
         self._chi2r = float(v)
 
     @property
     def times(self):
+        """Time axis array."""
         if self.t_mode == 'log':
             t_min = np.log10(max(self.t_min, 0.001))
             t_max = np.log10(self.t_max)
@@ -365,6 +401,7 @@ class EtModelFree(
 
     @property
     def fd0(self):
+        """Donor-only decay."""
         if len(self.fits) > 0 and self.fd0_model is not None:
             return self.fd0_model.decay(self.times)
         else:
@@ -372,6 +409,7 @@ class EtModelFree(
 
     @property
     def fda(self):
+        """FRET sample decay."""
         if len(self.fits) > 0 and self.fda_model is not None:
             return self.fda_model.decay(self.times)
         else:
@@ -379,15 +417,18 @@ class EtModelFree(
 
     @property
     def et(self):
+        """Energy transfer efficiency decay (fda / fd0)."""
         return self.fda / self.fd0
 
     @property
     def fits(self):
+        """List of fits with LifetimeModel instances."""
         fits = [f for f in chisurf.fits if isinstance(f.model, LifetimeModel) and not isinstance(f.model, EtModelFree)]
         return fits
 
     @fits.setter
     def fits(self, v):
+        """List of fits with LifetimeModel instances."""
         pass
 
     @property
@@ -496,10 +537,12 @@ class EtModelFree(
         re = np.vstack([species.ravel(), lifetimes.ravel()]).ravel(-1)
         return re
 
+    # TODO: needs docstring
     def update(
             self,
             update_matrix=True
     ):
+        """Update the state and emit signals."""
         if update_matrix:
             self.update_matrix()
             self.p_rDA = self.get_pRDA()
@@ -508,7 +551,9 @@ class EtModelFree(
             self.update_widgets()
             self.update_plots()
 
+    # TODO: needs docstring
     def update_matrix(self):
+        """Update the transfer matrix."""
         self.t_matrix, x = chisurf.fluorescence.general.calc_transfer_matrix(
             self.times,
             r_DA=self.r_DA,
@@ -517,7 +562,9 @@ class EtModelFree(
             R0=self.R0
         )
 
+    # TODO: needs docstring
     def get_chi2r(self, lifetime_spectrum):
+        """Calculate reduced chi-squared for a lifetime spectrum."""
         if self.fda_model is not None:
             self.fda_model.update_model(
                 lifetime_spectrum=lifetime_spectrum,
@@ -551,6 +598,7 @@ class EtModelFreeWidget(
     @chisurf.gui.decorators.init_with_ui(
         ui_filename="et_model_free.ui"
     )
+    # TODO: needs docstring
     def __init__(
             self,
             fit: chisurf.fitting.fit.FitGroup,
@@ -558,6 +606,7 @@ class EtModelFreeWidget(
             *args,
             **kwargs
     ):
+        """Initialize the instance."""
         # TODO, refactor L-Curve (make L-Curve widget)
         # TODO, refactor Phasor (make Phasor widget)
         if icon is None:
@@ -574,6 +623,7 @@ class EtModelFreeWidget(
 
     @property
     def l_curve_start(self) -> float:
+        """Smallest regularization value for the L-curve."""
         return float(self.doubleSpinBox_5.value())
 
     @l_curve_start.setter
@@ -581,10 +631,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Smallest regularization value for the L-curve."""
         self.doubleSpinBox_5.setValue(v)
 
     @property
     def l_curve_stop(self) -> float:
+        """Largest regularization value for the L-curve."""
         return float(self.doubleSpinBox_9.value())
 
     @l_curve_stop.setter
@@ -592,10 +644,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Largest regularization value for the L-curve."""
         self.doubleSpinBox_9.setValue(v)
 
     @property
     def l_curve_steps(self) -> int:
+        """Number of points in the L-curve."""
         return int(self.spinBox_6.value())
 
     @l_curve_steps.setter
@@ -603,14 +657,17 @@ class EtModelFreeWidget(
             self,
             v: int
     ):
+        """Number of points in the L-curve."""
         self.spinBox_6.setValue(int(v))
 
     @property
     def entropy_weight(self) -> float:
+        """Entropy weight for MEM inversion."""
         return float(self.doubleSpinBox_11.value())
 
     @property
     def t_points(self) -> int:
+        """Number of time points."""
         return int(self.spinBox.value())
 
     @t_points.setter
@@ -618,10 +675,12 @@ class EtModelFreeWidget(
             self,
             v: int
     ):
+        """Number of time points."""
         self.spinBox.setValue(int(v))
 
     @property
     def t_min(self) -> float:
+        """Minimum time value."""
         return float(self.doubleSpinBox_3.value())
 
     @t_min.setter
@@ -629,10 +688,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Minimum time value."""
         self.doubleSpinBox_3.setValue(v)
 
     @property
     def t_max(self):
+        """Maximum time value."""
         return float(self.doubleSpinBox_4.value())
 
     @t_max.setter
@@ -640,10 +701,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Maximum time value."""
         self.doubleSpinBox_4.setValue(v)
 
     @property
     def t_mode(self) -> str:
+        """Time axis mode (lin or log)."""
         if self.radioButton_3.isChecked():
             return 'lin'
         else:
@@ -654,6 +717,7 @@ class EtModelFreeWidget(
             self,
             v: str
     ):
+        """Time axis mode (lin or log)."""
         if v == 'lin':
             self.radioButton_3.setChecked(True)
         else:
@@ -661,6 +725,7 @@ class EtModelFreeWidget(
 
     @property
     def inversion_method(self) -> str:
+        """Method used for distance distribution inversion."""
         if self.radioButton_2.isChecked():
             return 'nnls'
         elif self.radioButton_4.isChecked():
@@ -670,6 +735,7 @@ class EtModelFreeWidget(
 
     @property
     def regularization_factor(self) -> float:
+        """Regularization factor for inversion."""
         return float(self.doubleSpinBox_10.value())
 
     @regularization_factor.setter
@@ -677,10 +743,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Regularization factor for inversion."""
         self.doubleSpinBox_10.setValue(float(v))
 
     @property
     def r_DA_min(self) -> float:
+        """Minimum donor-acceptor distance."""
         return float(self.doubleSpinBox.value())
 
     @r_DA_min.setter
@@ -688,10 +756,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Minimum donor-acceptor distance."""
         self.doubleSpinBox.setValue(v)
 
     @property
     def r_DA_max(self) -> float:
+        """Maximum donor-acceptor distance."""
         return float(self.doubleSpinBox_2.value())
 
     @r_DA_max.setter
@@ -699,10 +769,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Maximum donor-acceptor distance."""
         self.doubleSpinBox_2.setValue(v)
 
     @property
     def r_DA_npoints(self) -> int:
+        """Number of distance points."""
         return int(self.spinBox_2.value())
 
     @r_DA_npoints.setter
@@ -710,10 +782,12 @@ class EtModelFreeWidget(
             self,
             v: int
     ):
+        """Number of distance points."""
         self.spinBox_2.setValue(v)
 
     @property
     def kappa2(self):
+        """Orientation factor kappa^2."""
         return float(self.doubleSpinBox_6.value())
 
     @kappa2.setter
@@ -721,10 +795,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Orientation factor kappa^2."""
         self.doubleSpinBox_6.setValue(v)
 
     @property
     def tau0(self) -> float:
+        """Donor fluorescence lifetime in the absence of FRET."""
         return float(self.doubleSpinBox_8.value())
 
     @tau0.setter
@@ -732,10 +808,12 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Donor fluorescence lifetime in the absence of FRET."""
         self.doubleSpinBox_8.setValue(v)
 
     @property
     def R0(self) -> float:
+        """Foerster radius."""
         return float(self.doubleSpinBox_7.value())
 
     @R0.setter
@@ -743,10 +821,12 @@ class EtModelFreeWidget(
             self,
             v
     ) -> float:
+        """Foerster radius."""
         self.doubleSpinBox_7.setValue(v)
 
     @property
     def fda_index(self) -> int:
+        """Index of the FRET sample fit."""
         return int(self.comboBox_2.currentIndex())
 
     @fda_index.setter
@@ -754,10 +834,12 @@ class EtModelFreeWidget(
             self,
             v: int
     ):
+        """Index of the FRET sample fit."""
         pass
 
     @property
     def fd0_index(self) -> int:
+        """Index of the donor-only fit."""
         return int(self.comboBox.currentIndex())
 
     @fd0_index.setter
@@ -765,10 +847,12 @@ class EtModelFreeWidget(
             self,
             v: int
     ):
+        """Index of the donor-only fit."""
         pass
 
     @property
     def chi2r(self) -> float:
+        """Reduced chi-squared value."""
         return float(self.lineEdit_2.text())
 
     @chi2r.setter
@@ -776,13 +860,18 @@ class EtModelFreeWidget(
             self,
             v: float
     ):
+        """Reduced chi-squared value."""
         self.lineEdit_2.setText(str(v))
 
+    # TODO: needs docstring
     def update(self):
+        """Update the state and emit signals."""
         super().update()
         self.model_update.emit()
 
+    # TODO: needs docstring
     def onUpdateDecays(self):
+        """Update decay selection combo boxes."""
         fit_names = [f.name for f in self.fits]
         self.comboBox.clear()
         self.comboBox_2.clear()

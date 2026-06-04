@@ -39,6 +39,7 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         return widgets
 
     def _show_kappa2_distribution(self):
+        """Show the kappa^2 distribution plot dialog."""
         kappa2_helpers.show_kappa2_distribution_plot(
             parent=self,
             orientation_parameter=getattr(self, "orientation_parameter", None),
@@ -46,6 +47,7 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         )
 
     def _open_experimental_k2(self):
+        """Open the experimental kappa^2 dialog."""
         kappa2_helpers.open_experimental_k2_dialog(
             parent=self,
             fret_model=self,
@@ -53,13 +55,17 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
 
     @property
     def use_dye_linker(self) -> bool:
+        """Whether the dye-linker model is used."""
         return bool(self._use_dye_linker.isChecked())
 
     @use_dye_linker.setter
     def use_dye_linker(self, v: bool):
+        """Whether the dye-linker model is used."""
         self._use_dye_linker.setChecked(v)
 
+    # TODO: needs docstring
     def __init__(self, fit: Fit, **kwargs):
+        """Initialize the instance."""
         self.donor = LifetimeWidget(
             parent=self,
             model=self,

@@ -31,6 +31,15 @@ class EquationDialog(QtWidgets.QDialog):
     """A dialog that displays a formatted equation."""
 
     def __init__(self, parent=None, title="Equation"):
+        """Initialize the equation display dialog.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent widget.
+        title : str
+            Window title.
+        """
         super().__init__(parent)
         self.setWindowTitle(title)
         # Remove the fixed minimum size to allow the dialog to resize based on content
@@ -68,6 +77,7 @@ from chisurf.models.parse import ParseModel
 
 
 class ParseFormulaWidget(QtWidgets.QWidget):
+    """Widget for editing and previewing parse-based model equations."""
 
     @chisurf.gui.decorators.init_with_ui("parseWidget.ui")
     def __init__(
@@ -77,6 +87,19 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             model_name: str = None,
             model: chisurf.models.Model = None
     ):
+        """Initialize the parse formula widget.
+
+        Parameters
+        ----------
+        n_columns : int, optional
+            Number of columns for parameter widgets.
+        model_file : pathlib.Path, optional
+            Path to the YAML model definition file.
+        model_name : str, optional
+            Name of the model to select initially.
+        model : chisurf.models.Model
+            The model instance this widget controls.
+        """
         self.model: chisurf.models.parse.ParseModel = model
         if n_columns is None:
             n_columns = chisurf.settings.gui['fit_models']['n_columns']
@@ -195,17 +218,32 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.destroyed.connect(self.cleanup_temp_files)
 
     def load_model_file(self, filename: pathlib.Path):
+        """Load a YAML model definition file.
+
+        Parameters
+        ----------
+        filename : pathlib.Path
+            Path to the YAML file.
+        """
         with io.open_maybe_zipped(filename, 'r') as fp:
             self._model_file = filename
             self.models = yaml.safe_load(fp)
             self.lineEdit.setText(str(filename.as_posix()))
 
     def onLoadModelFile(self, filename: pathlib.Path = None):
+        """Open a file dialog and load a YAML model file.
+
+        Parameters
+        ----------
+        filename : pathlib.Path, optional
+            Path to load. If None, a file dialog is shown.
+        """
         if filename is None:
             filename = chisurf.gui.widgets.get_filename("Model-YAML file", file_type='*.yaml')
         self.load_model_file(filename)
 
     def onEdit_model_file(self):
+        """Open the model YAML file in the code editor."""
         if self.editor is None:
             return
         self.editor.load_file(self._model_file)
@@ -213,33 +251,47 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
     @property
     def models(self) -> typing.Dict:
+        """Dictionary of loaded models keyed by name."""
         return self._models
 
     @models.setter
     def models(self, v: typing.Dict):
+        """Set the models dictionary and populate the combo box."""
         self._models = v
         self.comboBox.clear()
         self.comboBox.addItems(list(v.keys()))
 
     @property
     def model_name(self) -> typing.List[str]:
+        """Name of the currently selected model."""
         return list(self.models.keys())[self.comboBox.currentIndex()]
 
     @model_name.setter
     def model_name(self, v: str):
+        """Set the currently selected model by name."""
         idx = self.comboBox.findText(v)
         self.comboBox.setCurrentIndex(idx)
 
     @property
     def model_file(self) -> str:
+        """Path to the currently loaded model YAML file."""
         return self._model_file
 
     @model_file.setter
     def model_file(self, v: str):
+        """Set the model file path and load it."""
         self._model_file = v
         self.load_model_file(v)
 
     def set_default_parameter_values(self, model_name: str = None):
+        """Set initial parameter values from the YAML model definition.
+
+        Parameters
+        ----------
+        model_name : str, optional
+            Name of the model whose defaults to apply. Uses current selection
+            if None.
+        """
         if model_name is None:
             model_name = self.model_name
         ivs = self.models[model_name]['initial']
@@ -247,6 +299,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             self.model.parameter_dict[key].value = float(ivs[key])
 
     def onUpdateFunc(self):
+        """Update the model function from the editor contents."""
         fit_idx = chisurf.fitting.find_fit_idx_of_model(model=self.model)
         function_str = str(self.plainTextEdit.toPlainText()).strip()
         try:
@@ -255,6 +308,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             pass
 
     def onModelChanged(self):
+        """Handle selection of a different model from the combo box."""
         func = self.models[self.model_name]['equation']
         self.plainTextEdit.setPlainText(func)
 
@@ -279,6 +333,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.onEquationChanged()
 
     def create_parameter_widgets(self):
+        """Rebuild the parameter editor widgets from the current model parameters."""
         layout = self.gridLayout_1
         chisurf.gui.widgets.clear_layout(layout)
         n_columns = self.n_columns
@@ -569,7 +624,15 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             self.showLargeFallbackEquation(equation)
 
     def showLargeEquation(self, image_path, equation=None):
-        """Show a larger version of the equation in a dialog."""
+        """Display an enlarged equation image in a dialog.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to the rendered equation image file.
+        equation : str, optional
+            Equation string to render; uses current editor text if None.
+        """
         # Create a new dialog if it doesn't exist
         if self.equationDialog is None:
             self.equationDialog = EquationDialog(self, f"Equation: {self.model_name}")
@@ -615,7 +678,13 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.equationDialog.show()
 
     def showLargeFallbackEquation(self, equation):
-        """Show a larger version of the fallback equation in a dialog."""
+        """Display an enlarged fallback equation in a dialog.
+
+        Parameters
+        ----------
+        equation : str
+            The equation string to display.
+        """
         # Create a new dialog if it doesn't exist
         if self.equationDialog is None:
             self.equationDialog = EquationDialog(self, f"Equation: {self.model_name}")
@@ -792,6 +861,13 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
     # ---- Small internal helpers to avoid duplication ----
     def _set_editor_text_safely(self, text: str) -> None:
+        """Set the editor text without triggering signal handlers.
+
+        Parameters
+        ----------
+        text : str
+            The text to set in the plain text editor.
+        """
         try:
             self.plainTextEdit.blockSignals(True)
         except Exception:
@@ -835,6 +911,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             pass
 
     def onEquationChanged(self):
+        """Handle changes to the equation editor contents."""
         # First, update the widget's own model so its parsed parameters match the editor
         equation = str(self.plainTextEdit.toPlainText()).strip()
         try:
@@ -907,6 +984,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self._update_equation_preview(func or (self.plainTextEdit.toPlainText() if func is None else ''))
 
 class ParseModelWidget(ParseModel, ModelWidget):
+    """Combined parse model and widget for the ChiSurf fitting GUI."""
 
     def __init__(
             self,
@@ -914,6 +992,13 @@ class ParseModelWidget(ParseModel, ModelWidget):
             *args,
             **kwargs
     ):
+        """Initialize the parse model widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            The fit group this widget belongs to.
+        """
         QtWidgets.QWidget.__init__(self)
         ParseModel.__init__(self, fit, *args, **kwargs)
         parse = ParseFormulaWidget(

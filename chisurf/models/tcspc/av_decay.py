@@ -114,6 +114,7 @@ class AVDecayModel(LifetimeModel):
         self._rc_ele = FittingParameter(value=1.5, name='rc_ele', bounds_on=True, bounds=(0.5, 3.5))
 
         def update_lifetime():
+            """Update the fluorescence lifetime and quenching map."""
             av.fluorescence_lifetime = self._fluorescence_lifetime.value
             av.rC_electron_transfer = self._rc_ele.value
             av.update_quenching_map()
@@ -122,6 +123,7 @@ class AVDecayModel(LifetimeModel):
         self._rc_ele._called_on_value_change = update_lifetime
 
         def update_diffusion():
+            """Update the diffusion coefficient, contact distance, and slow factor."""
             av._diffusion_coefficient = self._diffusion_coefficient.value
             av._contact_distance = self._contact_distance.value
             av._slow_factor = self._slow_factor.value
@@ -134,7 +136,9 @@ class AVDecayModel(LifetimeModel):
 
         self.decay_changed = True
 
+    # TODO: needs docstring
     def update_model(self, **kwargs):
+        """Recompute the model decay."""
         decay_changed = kwargs.get('decay_changed', self.decay_changed)
         i = kwargs.get('inter', 1)
         t_step = (self.times[1] - self.times[0]) / i

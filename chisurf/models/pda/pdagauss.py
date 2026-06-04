@@ -40,6 +40,7 @@ class PdaGaussianDistances(FittingParameterGroup):
 
     @property
     def means(self) -> np.array:
+        """Return the mean distances of all Gaussian components."""
         try:
             return np.array([p.value for p in self._means])
         except AttributeError:
@@ -47,6 +48,7 @@ class PdaGaussianDistances(FittingParameterGroup):
 
     @property
     def sigmas(self) -> np.array:
+        """Return the standard deviations of all Gaussian components."""
         try:
             return np.array([p.value for p in self._sigmas])
         except AttributeError:
@@ -54,6 +56,7 @@ class PdaGaussianDistances(FittingParameterGroup):
 
     @property
     def amplitudes(self) -> np.array:
+        """Return the normalized amplitudes of all Gaussian components."""
         try:
             a = np.sqrt(np.array([p.value for p in self._amplitudes]) ** 2)
             s = a.sum()
@@ -65,6 +68,7 @@ class PdaGaussianDistances(FittingParameterGroup):
 
     @property
     def distribution(self) -> np.array:
+        """Return the combined distance distribution as a 2xN array (r, p(r))."""
         means = self.means
         sigmas = self.sigmas
         amplitudes = self.amplitudes
@@ -79,6 +83,7 @@ class PdaGaussianDistances(FittingParameterGroup):
             sigmas = (sigmas / 100.0) * means
 
         def _gauss(x, loc, scale):
+            """Normal distribution (non-normalized) helper."""
             if scale <= 0.0:
                 return np.zeros_like(x)
             return chisurf.math.functions.distributions.normal_distribution(
@@ -100,6 +105,7 @@ class PdaGaussianDistances(FittingParameterGroup):
         return np.vstack((r, p))
 
     def finalize(self):
+        """Synchronize internal amplitude parameters with normalization rules."""
         amplitudes = self.amplitudes
         for i, p in enumerate(self._amplitudes):
             p.value = amplitudes[i]
@@ -110,6 +116,17 @@ class PdaGaussianDistances(FittingParameterGroup):
         sigma: float,
         amplitude: float,
     ):
+        """Append a new Gaussian component.
+
+        Parameters
+        ----------
+        mean : float
+            Mean distance of the component.
+        sigma : float
+            Standard deviation of the component.
+        amplitude : float
+            Amplitude of the component (will be normalized).
+        """
         n = len(self)
         i = n + 1
         m = FittingParameter(
@@ -135,11 +152,13 @@ class PdaGaussianDistances(FittingParameterGroup):
         self._amplitudes.append(a)
 
     def pop(self):
+        """Remove the last Gaussian component, if any."""
         self._means.pop()
         self._sigmas.pop()
         self._amplitudes.pop()
 
     def __len__(self):
+        """Return the number of Gaussian components."""
         return len(self._amplitudes)
 
     def __init__(
@@ -147,6 +166,15 @@ class PdaGaussianDistances(FittingParameterGroup):
         name: str = "pda_gaussians",
         **kwargs,
     ):
+        """Initialize the Gaussian distance components group.
+
+        Parameters
+        ----------
+        name : str
+            Name of the parameter group.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(name=name, **kwargs)
         self._means = list()
         self._sigmas = list()
@@ -163,6 +191,7 @@ class PdaGaussianDistanceModel(ModelCurve):
     name = "PDA-Gaussian-distance"
 
     def __str__(self):
+        """Return a string representation of the Gaussian-distance PDA model."""
         s = super().__str__()
         return s
 
@@ -174,6 +203,21 @@ class PdaGaussianDistanceModel(ModelCurve):
         kw_hist: dict | None = None,
         **kwargs,
     ):
+        """Initialize the Gaussian-distance PDA model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object holding experimental data.
+        nuisance : PdaFretNuisance, optional
+            Nuisance parameter group.
+        distances : PdaGaussianDistances, optional
+            Gaussian distance components.
+        kw_hist : dict, optional
+            Histogram settings for 1D residuals.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(fit, **kwargs)
 
         if nuisance is None:
@@ -212,6 +256,15 @@ class PdaGaussianDistanceModel(ModelCurve):
         verbose: bool | None = None,
         **kwargs,
     ):
+        """Update the model curve from current distance and nuisance parameters.
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            Whether to log debug output.
+        **kwargs
+            Forwarded to the parent method.
+        """
         if verbose is None:
             verbose = chisurf.settings.cs_settings["verbose"]
 
@@ -406,6 +459,18 @@ class PdaGaussianDistanceModel(ModelCurve):
         self,
         fit: "chisurf.fitting.fit.Fit",
     ) -> np.ndarray:
+        """Compute 1D weighted residuals from the S1S2 histogram.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object.
+
+        Returns
+        -------
+        numpy.ndarray
+            Weighted residuals.
+        """
         wres = pda_1d_residuals_from_s1s2(
             fit=fit,
             pda_obj=self.pda,
@@ -513,6 +578,22 @@ class PdaGaussianDistanceModel(ModelCurve):
         xmin: int | None = None,
         xmax: int | None = None,
     ) -> np.ndarray:
+        """Compute weighted residuals for the Gaussian-distance PDA model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object.
+        xmin : int, optional
+            Start index for the residual window.
+        xmax : int, optional
+            End index for the residual window.
+
+        Returns
+        -------
+        numpy.ndarray
+            Weighted residuals.
+        """
         import chisurf.fitting as _fitting
 
         mode = getattr(self, "residual_mode", "1D")
@@ -561,6 +642,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     @property
     def n_points(self) -> int:
+        """Return the number of data points for chi-squared calculation."""
         mode = getattr(self, "residual_mode", "1D")
         if mode == "1D":
             try:
@@ -572,6 +654,7 @@ class PdaGaussianDistanceModel(ModelCurve):
         return super().n_points
 
     def get_state(self) -> dict:
+        """Serialize the model state, including the number of Gaussian components."""
         state = super().get_state()
         if not isinstance(state, dict):
             state = {}
@@ -588,6 +671,13 @@ class PdaGaussianDistanceModel(ModelCurve):
         return state
 
     def set_state(self, state: dict) -> None:
+        """Restore the model state from a dictionary.
+
+        Parameters
+        ----------
+        state : dict
+            Model state dictionary.
+        """
         if not isinstance(state, dict):
             return
         extra = state.get("extra") or {}

@@ -63,22 +63,27 @@ class ProbCh0(FittingParameterGroup):
 
     @property
     def absolute_amplitudes(self) -> bool:
+        """Whether amplitudes are forced to be positive."""
         return self._abs_amplitudes
 
     @absolute_amplitudes.setter
     def absolute_amplitudes(self, v: bool):
+        """Set whether amplitudes are forced to be positive."""
         self._abs_amplitudes = v
 
     @property
     def normalize_amplitudes(self) -> bool:
+        """Whether amplitudes are normalized to sum to one."""
         return self._normalize_amplitudes
 
     @normalize_amplitudes.setter
     def normalize_amplitudes(self, v: bool):
+        """Set whether amplitudes are normalized to sum to one."""
         self._normalize_amplitudes = v
 
     @property
     def amplitudes(self) -> np.array:
+        """Return per-species amplitudes, optionally absolute and normalized."""
         vs = np.array([x.value for x in self._amplitudes])
         if self.absolute_amplitudes:
             vs = np.sqrt(vs**2)
@@ -88,11 +93,13 @@ class ProbCh0(FittingParameterGroup):
 
     @amplitudes.setter
     def amplitudes(self, vs: typing.List[float]):
+        """Set per-species amplitudes from an iterable of floats."""
         for i, v in enumerate(vs):
             self._amplitudes[i].value = v
 
     @property
     def pch0(self) -> np.array:
+        """Return per-species channel-0 probabilities (always positive)."""
         vs = np.array([math.sqrt(x.value ** 2) for x in self._pch0])
         for i, v in enumerate(vs):
             self._pch0[i].value = v
@@ -100,11 +107,13 @@ class ProbCh0(FittingParameterGroup):
 
     @pch0.setter
     def pch0(self, vs: typing.List[float]):
+        """Set per-species channel-0 probabilities from an iterable."""
         for i, v in enumerate(vs):
             self._pch0[i].value = v
 
     @property
     def pch0_spectrum(self) -> np.array:
+        """Return interleaved (amplitude, pch0) spectrum for tttrlib.Pda."""
         if self._link is None:
             return chisurf.math.datatools.two_column_to_interleaved(
                 self.amplitudes,
@@ -115,29 +124,35 @@ class ProbCh0(FittingParameterGroup):
 
     @pch0_spectrum.setter
     def pch0_spectrum(self, v: np.array):
+        """Set the interleaved (amplitude, pch0) spectrum."""
         for i in range(len(v) // 2):
             self._amplitudes[2 * i + 0].value = v[2 * i + 0]
             self._pch0[2 * i + 1].value = v[2 * i + 1]
 
     @property
     def n(self) -> int:
+        """Return the number of species."""
         return len(self._amplitudes)
 
     @property
     def link(self) -> chisurf.fitting.parameter.FittingParameter:
+        """Return the linked ProbCh0 group, or None."""
         return self._link
 
     @link.setter
     def link(self, v: chisurf.fitting.parameter.FittingParameter):
+        """Link to another ProbCh0 group, or unlink by passing None."""
         if isinstance(v, ProbCh0) or v is None:
             self._link = v
 
     def update(self):
+        """Synchronize internal amplitude values from the (possibly normalized) property."""
         amplitudes = self.amplitudes
         for i, a in enumerate(self._amplitudes):
             a.value = amplitudes[i]
 
     def finalize(self):
+        """Synchronize internal amplitudes with normalization rules."""
         self.update()
 
     def append(
@@ -152,6 +167,29 @@ class ProbCh0(FittingParameterGroup):
             upper_bound_pch0: float = 0.999999,
             **kwargs
     ):
+        """Append a new species with the given amplitude and channel-0 probability.
+
+        Parameters
+        ----------
+        amplitude : float
+            Initial amplitude.
+        pch0 : float
+            Initial probability of channel 0.
+        lower_bound_amplitude : float
+            Lower bound for the amplitude parameter.
+        upper_bound_amplitude : float
+            Upper bound for the amplitude parameter.
+        fixed : bool
+            Whether the parameters are fixed during fitting.
+        bound_on : bool
+            Whether bounds are enabled.
+        lower_bound_pch0 : float
+            Lower bound for the pch0 parameter.
+        upper_bound_pch0 : float
+            Upper bound for the pch0 parameter.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         n = len(self)
         i = n + 1
         amplitude = FittingParameter(
@@ -179,6 +217,7 @@ class ProbCh0(FittingParameterGroup):
         chisurf.fitting.parameter.FittingParameter,
         chisurf.fitting.parameter.FittingParameter
     ]:
+        """Remove and return the last species (amplitude, pch0)."""
         amplitude = self._amplitudes.pop()
         lifetime = self._pch0.pop()
         return amplitude, lifetime
@@ -194,6 +233,27 @@ class ProbCh0(FittingParameterGroup):
             link: FittingParameter = None,
             **kwargs
     ):
+        """Initialize the ProbCh0 parameter group.
+
+        Parameters
+        ----------
+        short : str
+            Short label for naming parameters.
+        absolute_amplitudes : bool
+            Whether to take absolute values of amplitudes.
+        normalize_amplitudes : bool
+            Whether to normalize amplitudes to sum to one.
+        amplitudes : list of FittingParameter, optional
+            Pre-existing amplitude parameters.
+        pch0 : list of FittingParameter, optional
+            Pre-existing pch0 parameters.
+        name : str
+            Name of the parameter group.
+        link : FittingParameter, optional
+            Another ProbCh0 group to link to.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(name=name, **kwargs)
         self.short = short
         self._abs_amplitudes = absolute_amplitudes
@@ -211,6 +271,7 @@ class ProbCh0(FittingParameterGroup):
         self._pch0 = pch0
 
     def __len__(self):
+        """Return the number of species."""
         return self.n
 
 
@@ -236,6 +297,7 @@ class PdaSimpleModel(ModelCurve):
     name = "PDA-discrete"
 
     def __str__(self):
+        """Return a string representation of the discrete PDA model."""
         s = super().__str__()
         return s
 
@@ -247,6 +309,21 @@ class PdaSimpleModel(ModelCurve):
             kw_hist: dict = None,
             **kwargs
     ):
+        """Initialize the discrete-species PDA model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object holding experimental data.
+        background : Background, optional
+            Background parameter group.
+        pch0 : ProbCh0, optional
+            Probability-and-channel-0 species group.
+        kw_hist : dict, optional
+            Histogram settings for 1D residuals.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(fit, **kwargs)
 
         if background is None:
@@ -280,6 +357,17 @@ class PdaSimpleModel(ModelCurve):
             verbose: bool = None,
             **kwargs
     ):
+        """Update the model curve from current background and species parameters.
+
+        Parameters
+        ----------
+        pch0 : np.array, optional
+            Override probability spectrum.
+        verbose : bool, optional
+            Whether to log debug output.
+        **kwargs
+            Forwarded to the parent method.
+        """
         if verbose is None:
             verbose = chisurf.settings.cs_settings['verbose']
         self.pda.background_ch1 = self.background.bg0
@@ -311,6 +399,18 @@ class PdaSimpleModel(ModelCurve):
             self,
             fit: chisurf.fitting.fit.Fit,
     ) -> np.ndarray:
+        """Compute 1D weighted residuals from the S1S2 histogram.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object.
+
+        Returns
+        -------
+        numpy.ndarray
+            Weighted residuals.
+        """
         wres = pda_1d_residuals_from_s1s2(
             fit=fit,
             pda_obj=self.pda,
@@ -328,6 +428,22 @@ class PdaSimpleModel(ModelCurve):
             xmin: int = None,
             xmax: int = None
     ) -> np.ndarray:
+        """Compute weighted residuals for the discrete PDA model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit object.
+        xmin : int, optional
+            Start index for the residual window.
+        xmax : int, optional
+            End index for the residual window.
+
+        Returns
+        -------
+        numpy.ndarray
+            Weighted residuals.
+        """
         import chisurf.fitting as _fitting
 
         mode = getattr(self, "residual_mode", "1D")
@@ -350,6 +466,7 @@ class PdaSimpleModel(ModelCurve):
 
     @property
     def n_points(self) -> int:
+        """Return the number of data points for chi-squared calculation."""
         mode = getattr(self, "residual_mode", "1D")
         if mode == "1D":
             try:
@@ -361,6 +478,7 @@ class PdaSimpleModel(ModelCurve):
         return super().n_points
 
     def get_state(self) -> dict:
+        """Serialize the model state, including the number of species."""
         state = super().get_state()
         if not isinstance(state, dict):
             state = {}
@@ -377,6 +495,13 @@ class PdaSimpleModel(ModelCurve):
         return state
 
     def set_state(self, state: dict) -> None:
+        """Restore the model state from a dictionary.
+
+        Parameters
+        ----------
+        state : dict
+            Model state dictionary.
+        """
         if not isinstance(state, dict):
             return
         extra = state.get("extra") or {}

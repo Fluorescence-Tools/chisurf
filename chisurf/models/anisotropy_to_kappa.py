@@ -12,6 +12,15 @@ class AnisotropyToKappaModel(chisurf.fitting.parameter.FittingParameterGroup):
     """
 
     def __init__(self, fit=None, r0=0.38, **kwargs):
+        """Initialize the model with input/output fitting parameters.
+
+        Parameters
+        ----------
+        fit : optional
+            Fit object this model is attached to.
+        r0 : float
+            Fundamental anisotropy.
+        """
         super().__init__(name="AnisotropyToKappa", fit=fit, **kwargs)
         self.r0 = r0
         
@@ -58,6 +67,7 @@ class AnisotropyToKappaModel(chisurf.fitting.parameter.FittingParameterGroup):
             self.kappa_squared.value = 2.0/3.0
 
     def __str__(self):
+        """Return a string summary of the model parameters and kappa^2 value."""
         s = f"AnisotropyToKappaModel (r0={self.r0:.3f})\n"
         s += f"  r_donor:      {self.r_donor.value:.4f}\n"
         s += f"  r_acceptor:   {self.r_acceptor.value:.4f}\n"

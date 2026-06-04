@@ -70,7 +70,9 @@ def setup_kappa2_controls(
     else:
         dyn_radio.setChecked(True)
 
+    # TODO: needs docstring
     def on_mode_changed() -> None:
+        """Handle dynamic/static radio button change."""
         op = getattr(owner, "orientation_parameter", None)
         if op is None:
             return
@@ -92,14 +94,18 @@ def setup_kappa2_controls(
     
     fast_checkbox.stateChanged.connect(on_fft_changed)
 
+    # TODO: needs docstring
     def on_show_combined() -> None:
+        """Handle show kappa2 distribution button."""
         show_rapp_rda_distribution_plot(
             parent=owner,
             orientation_parameter=getattr(owner, "orientation_parameter", None),
             fret_model=owner,
         )
 
+    # TODO: needs docstring
     def on_open_experimental() -> None:
+        """Handle experimental kappa2 button."""
         open_experimental_k2_dialog(parent=owner, fret_model=owner)
 
     show_btn.clicked.connect(on_show_combined)

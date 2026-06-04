@@ -99,6 +99,7 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
         self.layout.addLayout(layout)
 
     def update(self, *__args):
+        """Synchronize the UI widgets with the underlying background parameters."""
         # Call the group-box update for standard behavior
         QtWidgets.QGroupBox.update(self, *__args)
         # Synchronize UI widgets with underlying parameters
@@ -123,6 +124,17 @@ class PdaPhotonRangeWidget(QtWidgets.QGroupBox):
             *args,
             **kwargs
     ):
+        """Initialize the photon-number range widget.
+
+        Parameters
+        ----------
+        nuisance : PdaFretNuisance
+            The nuisance group providing nPh_min/nPh_max parameters.
+        *args
+            Forwarded to the parent constructor.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(*args, **kwargs)
         self.nuisance = nuisance
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -150,6 +162,7 @@ class PdaPhotonRangeWidget(QtWidgets.QGroupBox):
         self.layout.addLayout(layout)
 
     def update(self, *__args):
+        """Synchronize the UI widgets with the underlying nPh_min/nPh_max."""
         QtWidgets.QGroupBox.update(self, *__args)
         try:
             self._nPh_min_widget.finalize()
@@ -170,6 +183,17 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
             *args,
             **kwargs
     ):
+        """Initialize the PDA FRET nuisance widget.
+
+        Parameters
+        ----------
+        hide_generic : bool
+            Whether to hide the generic parameters.
+        *args
+            Forwarded to the parent constructor.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(*args, **kwargs)
         try:
             PdaFretNuisance.__init__(self, **kwargs)
@@ -284,6 +308,7 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         self.layout.addLayout(layout)
 
     def update(self, *__args):
+        """Synchronize the UI widgets with the underlying FRET nuisance parameters."""
         # Call the group-box update for standard behavior
         QtWidgets.QGroupBox.update(self, *__args)
         # Synchronize UI widgets with underlying parameters
@@ -327,6 +352,7 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
 class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
     def update(self, *__args):
+        """Synchronize UI widgets with the underlying species parameters."""
         ProbCh0.update(self)
         QtWidgets.QWidget.update(self, *__args)
         # Sync amplitude widgets
@@ -338,11 +364,20 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
     @property
     def parameter_widgets(self):
+        """Return all amplitude and pch0 parameter widgets."""
         return self._amp_widgets + self._pch0_widgets
 
     def read_values(self, target):
+        """Return a callable that reads parameter values from *target* into this group.
+
+        Parameters
+        ----------
+        target : ProbCh0
+            Source ProbCh0 group to copy values from.
+        """
 
         def linkcall():
+            """Copy parameter values from *target* into this group."""
             fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
                 p = target.parameters_all_dict[key]
@@ -362,6 +397,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         return linkcall
 
     def read_menu(self):
+        """Populate the 'read' menu with all compatible ProbCh0 groups."""
         menu = self.readFrom_menu
         menu.clear()
         for f in chisurf.fits:
@@ -375,7 +411,16 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
                 menu.addMenu(submenu)
 
     def link_values(self, target):
+        """Return a callable that links this group to *target*.
+
+        Parameters
+        ----------
+        target : ProbCh0
+            The ProbCh0 group to link to.
+        """
+
         def linkcall():
+            """Link this group to *target* and trigger a fit update."""
             self._link = target
             # Find the correct fit index for this model
             fit_index = 0
@@ -397,6 +442,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         return linkcall
 
     def onLinkToggeled(self, checked):
+        """Unlink when the group box is unchecked."""
         if checked:
             self._link = None
             fit_index = _get_fit_index_for_model(self)
@@ -406,6 +452,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
             )
 
     def link_menu(self):
+        """Populate the 'link' menu with all compatible ProbCh0 groups."""
         menu = self.linkFrom_menu
         menu.clear()
         for f in chisurf.fits:
@@ -419,6 +466,15 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
                 menu.addMenu(submenu)
 
     def __init__(self, title: str = '', **kwargs):
+        """Initialize the ProbCh0 widget.
+
+        Parameters
+        ----------
+        title : str
+            Title for the group box.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -516,6 +572,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
                 self.lh.addLayout(row_layout)
 
     def onNormalizeAmplitudes(self):
+        """Emit actions to update normalize/absolute amplitude flags and rebuild."""
         chisurf.actions.dispatch(
             name="model.normalize_amplitudes",
             payload={
@@ -540,6 +597,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         )
 
     def append(self, *args, **kwargs):
+        """Add a new species with the given parameters, creating corresponding UI widgets."""
         ProbCh0.append(self, *args, **kwargs)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -562,6 +620,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         self.lh.addLayout(layout)
 
     def pop(self):
+        """Remove and close the last species (amplitude, pch0) and its UI widgets."""
         self._amplitudes.pop()
         self._pch0.pop()
         self._amp_widgets.pop().close()
@@ -571,6 +630,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
 
     def update(self, *__args):
+        """Synchronize UI widgets with the underlying Gaussian component parameters."""
         PdaGaussianDistances.finalize(self)
         QtWidgets.QWidget.update(self, *__args)
         # Synchronize UI widgets with underlying parameters
@@ -595,9 +655,19 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
 
     @property
     def parameter_widgets(self):
+        """Return all mean, sigma, and amplitude parameter widgets."""
         return self._mean_widgets + self._sigma_widgets + self._amp_widgets
 
     def __init__(self, title: str = '', **kwargs):
+        """Initialize the Gaussian distances widget.
+
+        Parameters
+        ----------
+        title : str
+            Title for the group box.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -690,6 +760,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
                 self._gb.append(gb)
 
     def onLimitedWidthToggled(self, checked: bool):
+        """Toggle limited-width mode and trigger a fit update."""
         self.limited_width = bool(checked)
         try:
             fit_index = _get_fit_index_for_model(self)
@@ -701,6 +772,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
             pass
 
     def onAddComponent(self):
+        """Add a new Gaussian distance component via the action system."""
         # Add a new Gaussian distance component to all fits in the current
         # fit group so that the PDA distance model stays structurally
         # consistent across the group.
@@ -710,6 +782,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         )
 
     def onRemoveComponent(self):
+        """Remove the last Gaussian distance component via the action system."""
         # Remove the last Gaussian distance component from all fits in the
         # current fit group to keep models synchronized.
         chisurf.actions.dispatch(
@@ -718,6 +791,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         )
 
     def append(self, mean: float = 50.0, sigma: float = 5.0, amplitude: float = 1.0):
+        """Add a new Gaussian component with the given parameters, creating corresponding UI widgets."""
         PdaGaussianDistances.append(self, mean=mean, sigma=sigma, amplitude=amplitude)
         n_gauss = len(self._amplitudes)
 
@@ -757,6 +831,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         self._gb.append(gb)
 
     def pop(self):
+        """Remove and close the last Gaussian component and its UI widgets."""
         if len(self._amplitudes) == 0:
             return
         PdaGaussianDistances.pop(self)
@@ -771,6 +846,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
 class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
 
     def update(self, *__args):
+        """Synchronize UI widgets with the underlying anisotropy species parameters."""
         # Keep amplitudes normalized etc.
         PdaAnisotropySpecies.finalize(self)
         QtWidgets.QWidget.update(self, *__args)
@@ -795,9 +871,19 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
 
     @property
     def parameter_widgets(self):
+        """Return all amplitude and anisotropy parameter widgets."""
         return self._amp_widgets + self._r_widgets
 
     def __init__(self, title: str = "", **kwargs):
+        """Initialize the anisotropy species widget.
+
+        Parameters
+        ----------
+        title : str
+            Title for the group box.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -870,6 +956,7 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
                 self.rows_layout.addLayout(row_layout)
 
     def onAddComponent(self):
+        """Add a new anisotropy species via the action system."""
         # Append a new anisotropy species to all fits in the current fit
         # group so that the anisotropy-PDA model remains consistent.
         chisurf.actions.dispatch(
@@ -878,6 +965,7 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         )
 
     def onRemoveComponent(self):
+        """Remove the last anisotropy species via the action system."""
         # Remove the last anisotropy species from all fits in the current
         # fit group.
         chisurf.actions.dispatch(
@@ -886,6 +974,7 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         )
 
     def append(self, amplitude: float = 1.0, r: float = 0.3):
+        """Add a new anisotropy species with the given parameters, creating corresponding UI widgets."""
         PdaAnisotropySpecies.append(self, amplitude=amplitude, r=r)
         n = len(self._amplitudes)
 
@@ -911,6 +1000,7 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         self.rows_layout.addLayout(row_layout)
 
     def pop(self):
+        """Remove and close the last anisotropy species and its UI widgets."""
         if len(self._amplitudes) == 0:
             return
         PdaAnisotropySpecies.pop(self)
@@ -942,8 +1032,16 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
 
 
 class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
+    """Widget for configuring the FRET distance axis (R_DA)."""
 
     def __init__(self, parent=None):
+        """Initialize the FRET R_DA axis settings widget.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent widget.
+        """
         super().__init__(parent)
         self.setTitle("R_DA axis (FRET distance)")
 
@@ -1016,6 +1114,7 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
         layout.addLayout(button_layout)
 
     def on_save_clicked(self):
+        """Save the current R_DA axis settings and apply them globally."""
         rda_min = float(self.sb_min.value())
         rda_max = float(self.sb_max.value())
         n_points = int(self.sb_n.value())
@@ -1077,6 +1176,20 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
 
 
 def get_distribution(fit, kw_hist):
+    """Return data, model, and residual curves for PDA distribution plots.
+
+    Parameters
+    ----------
+    fit : chisurf.fitting.fit.Fit
+        The fit object.
+    kw_hist : dict
+        Histogram settings, including the histogram_function.
+
+    Returns
+    -------
+    list
+        List of [y, x] curve data.
+    """
     pda = fit.model.pda
 
     # The tttrlib.Pda C++ code iterates over the S1S2 matrix in a way that
@@ -1089,6 +1202,7 @@ def get_distribution(fit, kw_hist):
     inner = kw_hist.pop('histogram_function', lambda ch1, ch2: ch1 / max(1, ch2))
 
     def histogram_function(ch1, ch2, _inner=inner):
+        """PDA histogram callback swapping (red, green) to (green, red)."""
         # ch1, ch2 from tttrlib are effectively (red, green); swap to
         # (green, red) before applying the semantic function.
         return _inner(ch2, ch1)
@@ -1504,6 +1618,19 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
             hide_nuisances: bool = False,
             **kwargs
     ):
+        """Initialize the discrete PDA model widget.
+
+        Parameters
+        ----------
+        fit : Fit
+            The fit object.
+        icon : QtGui.QIcon, optional
+            Icon for the widget tab.
+        hide_nuisances : bool
+            Whether to hide nuisance parameter widgets.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         super().__init__(fit=fit, icon=icon, **kwargs)
@@ -1551,6 +1678,7 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
         self.pch0 = pch0
 
     def onResidualModeChanged(self):
+        """Switch between 1D and 2D residual mode and trigger a fit update."""
         mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
         self.residual_mode = mode
         try:
@@ -1695,6 +1823,19 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
         hide_nuisances: bool = False,
         **kwargs,
     ):
+        """Initialize the anisotropy PDA model widget.
+
+        Parameters
+        ----------
+        fit : Fit
+            The fit object.
+        icon : QtGui.QIcon, optional
+            Icon for the widget tab.
+        hide_nuisances : bool
+            Whether to hide nuisance parameter widgets.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         super().__init__(fit=fit, icon=icon, **kwargs)
@@ -1747,6 +1888,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
         self.species_widget = species_widget
 
     def onResidualModeChanged(self):
+        """Switch between 1D and 2D residual mode and trigger a fit update."""
         mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
         self.residual_mode = mode
         try:
@@ -1849,6 +1991,19 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
             hide_nuisances: bool = False,
             **kwargs
     ):
+        """Initialize the Gaussian-distance PDA model widget.
+
+        Parameters
+        ----------
+        fit : Fit
+            The fit object.
+        icon : QtGui.QIcon, optional
+            Icon for the widget tab.
+        hide_nuisances : bool
+            Whether to hide nuisance parameter widgets.
+        **kwargs
+            Forwarded to the parent constructor.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         # Let the usual MRO handle initialization of ModelWidget and
@@ -1906,6 +2061,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         self.fret_parameters_widget = fret_parameters_widget
 
     def onResidualModeChanged(self):
+        """Switch between 1D and 2D residual mode and trigger a fit update."""
         mode = "1D" if getattr(self, "rb_res_1d", None) is not None and self.rb_res_1d.isChecked() else "2D"
         self.residual_mode = mode
         try:

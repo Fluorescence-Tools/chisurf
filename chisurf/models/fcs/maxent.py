@@ -61,6 +61,36 @@ def _quickfit_mem_iteration_numba(
         alpha: float,
         num_iter: int,
 ):
+    """Numba-accelerated MaxEnt iteration loop (QuickFit-style MEM).
+
+    Parameters
+    ----------
+    Vred : np.ndarray
+        Truncated left singular vectors (Nd x s).
+    svals : np.ndarray
+        Truncated singular values (s,).
+    Ured : np.ndarray
+        Truncated right singular vectors (N x s).
+    M : np.ndarray
+        Curvature matrix (s x s) built from singular values and weights.
+    stdev : np.ndarray
+        Data standard deviations (Nd,).
+    ydata : np.ndarray
+        Measured data vector (Nd,) after baseline subtraction.
+    m_prior : np.ndarray
+        Prior distribution on the grid (N,).
+    alpha : float
+        Entropy regularization strength.
+    num_iter : int
+        Number of iterations.
+
+    Returns
+    -------
+    f : np.ndarray
+        Final MaxEnt distribution (N,).
+    F : np.ndarray
+        Reconstructed data vector (Nd,).
+    """
     Nd = ydata.shape[0]
     N = Ured.shape[0]
     s = svals.shape[0]

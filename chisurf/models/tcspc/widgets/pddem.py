@@ -22,11 +22,13 @@ from chisurf.models.tcspc.widgets import kappa2_helpers
 
 class PDDEMWidget(PDDEM, QtWidgets.QWidget):
 
+    # TODO: needs docstring
     def __init__(
             self,
             *args,
             **kwargs
     ):
+        """Initialize the instance."""
         PDDEM.__init__(self, *args, **kwargs)
         parent = kwargs.get("parent")
         if isinstance(parent, QtWidgets.QWidget):
@@ -123,7 +125,9 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
 
     plot_classes = plot_cls_dist_default
 
+    # TODO: needs docstring
     def __init__(self, fit, **kwargs):
+        """Initialize the instance."""
         anisotropy = AnisotropyWidget(model=self, short='rL', fit=fit, **kwargs)
         kwargs['anisotropy'] = anisotropy
         

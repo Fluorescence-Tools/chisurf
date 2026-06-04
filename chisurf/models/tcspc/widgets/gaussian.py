@@ -35,12 +35,14 @@ REMOVE_BUTTON_STYLE = (
 
 class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
 
+    # TODO: needs docstring
     def __init__(
             self,
             donors,
             model=None,
             **kwargs
     ):
+        """Initialize the instance."""
         super().__init__(
             donors=donors,
             model=model,
@@ -123,7 +125,9 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         except Exception:
             pass
 
+    # TODO: needs docstring
     def onAddGaussian(self):
+        """Handle add Gaussian button click."""
         # Add a new Gaussian distance component to all fits in the current
         # fit group so that the FRET distance model stays structurally
         # consistent across the group.
@@ -132,7 +136,9 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
             payload={"component_name": str(self.name)},
         )
 
+    # TODO: needs docstring
     def onRemoveGaussian(self):
+        """Handle remove Gaussian button click."""
         # Remove the last Gaussian distance component from all fits in the
         # current fit group.
         chisurf.actions.dispatch(
@@ -140,7 +146,9 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
             payload={"component_name": str(self.name)},
         )
 
+    # TODO: needs docstring
     def append(self, *args, **kwargs):
+        """Add a new component."""
         super().append(50.0,6.0,1.0,)
 
         gb = QtWidgets.QGroupBox()
@@ -195,7 +203,9 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         except Exception:
             pass
 
+    # TODO: needs docstring
     def pop(self) -> None:
+        """Remove the last component."""
         super().pop()
         self._gb.pop().close()
 
@@ -219,11 +229,15 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         widgets.append(self._fret_parameters_widget)
         return widgets
 
+    # TODO: needs docstring
     def finalize(self):
+        """Finalize the component state."""
         super().finalize()
         self.donor.update()
 
+    # TODO: needs docstring
     def __init__(self, fit: Fit, **kwargs):
+        """Initialize the instance."""
         self.donor = LifetimeWidget(
             parent=self,
             model=self,

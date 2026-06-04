@@ -17,12 +17,14 @@ if TYPE_CHECKING:
 class CorrectionsWidget(Corrections, QtWidgets.QWidget):
 
     @chisurf.gui.decorators.init_with_ui("tcspcCorrections.ui")
+    # TODO: needs docstring
     def __init__(
             self,
             fit: Fit | None = None,
             hide_corrections: bool = False,
             **kwargs
     ):
+        """Initialize the instance."""
         self.groupBox.setChecked(False)
         self.comboBox.addItems(chisurf.math.signal.window_function_types)
         if hide_corrections:
@@ -215,7 +217,9 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         except Exception:
             pass
 
+    # TODO: needs docstring
     def onChangeLin(self):
+        """Handle linearization table selection."""
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
 

@@ -47,10 +47,33 @@ def function_to_model_decorator(**kws):
     """
 
     def decorator(func):
+        """Wrap ``func`` in a ``ModelDecorator`` class and return it.
+
+        Parameters
+        ----------
+        func : callable
+            The Python callable to wrap.
+
+        Returns
+        -------
+        ModelDecorator
+            A dynamically created :class:`chisurf.models.Model` subclass.
+        """
 
         class ModelDecorator(chisurf.models.Model):
 
             def __init__(self, *args, **kwargs):
+                """Initialize the model decorator with chinet node and parameters.
+
+                Parameters
+                ----------
+                *args
+                    Positional arguments forwarded to the parent Model.
+                **kwargs
+                    Keyword arguments forwarded to the parent Model, updated
+                    with the factory-level keyword arguments from
+                    :func:`function_to_model_decorator`.
+                """
                 logging.info('ModelDecorator.__init__')
                 logging.debug(f'args: {args}')
                 logging.debug(f'kwargs: {kwargs}')
@@ -75,6 +98,7 @@ def function_to_model_decorator(**kws):
                 logging.debug(f'make_parameters finished.')
 
             def make_parameters(self):
+                """Create FittingParameters from the chinet node ports."""
                 ports = self._node.get_ports()
                 logging.debug(f'ports: {ports}')
                 logging.debug(f'ports.keys(): {ports.keys()}')
@@ -101,12 +125,14 @@ def function_to_model_decorator(**kws):
                 logging.debug(f'fixed output ports finished.')
 
             def update_model(self, **kwargs):
+                """Evaluate the chinet node to compute the model output."""
                 logging.debug(f'update_model called.')
                 logging.debug(f'evaluating')
                 self._node.evaluate()
                 logging.debug(f'evaluate finished.')
 
             def update(self, **kwargs) -> None:
+                """Refresh parameters and re-evaluate the model."""
                 logging.debug(f'update called.')
                 logging.debug(f'find_parameters')
                 self.find_parameters()

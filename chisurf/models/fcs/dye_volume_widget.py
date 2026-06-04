@@ -92,6 +92,15 @@ class DyeShapeFCSModel(ModelCurve):
     name = "FCS dye shape"
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, **kwargs):
+        """Initialize the dye-shape FCS model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit this model belongs to.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         super().__init__(fit, **kwargs)
 
         self._N = FittingParameter(
@@ -220,13 +229,32 @@ class DyeShapeFCSModel(ModelCurve):
 
     @property
     def dye_name(self) -> str:
+        """Current dye name from the FCS calculator database."""
         return self._dye_name
 
     @dye_name.setter
     def dye_name(self, name: str) -> None:
+        """Set the current dye name.
+
+        Parameters
+        ----------
+        name : str
+            Dye name matching a key in ``DYE_DATA``.
+        """
         self._dye_name = str(name)
 
     def update_model(self, **kwargs) -> None:
+        """Compute the FCS curve for the selected dye and confocal volume.
+
+        The model is a 3D Gaussian with one bunching term. Derived
+        parameters (``D``, ``tauD``, ``cpm``, ``cpm_all``) are updated
+        as fixed output parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         data = self.fit.data
         tau = np.asarray(data.x, dtype=float).ravel()
 
@@ -386,6 +414,17 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
         icon: Optional[QtGui.QIcon] = None,
         **kwargs,
     ):
+        """Initialize the dye-shape FCS widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            The fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the model tab.
+        **kwargs
+            Additional keyword arguments forwarded to the base class.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
 
@@ -454,6 +493,13 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
         self.layout = layout
 
     def _on_dye_changed(self, text: str) -> None:
+        """Qt slot: update dye selection and trigger model recomputation.
+
+        Parameters
+        ----------
+        text : str
+            New dye name selected in the combo box.
+        """
         self.dye_name = text
         try:
             self.update()
@@ -461,6 +507,6 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
             pass
 
     def update_widgets(self) -> None:
-        # Update all fitting-parameter widgets
+        """Refresh all fitting-parameter widgets from the current model state."""
         for parameter in self.parameters:
             parameter.update()

@@ -198,6 +198,13 @@ class RicsSimpleModel(ModelCurve):
     name = "RICS simple diffusion"
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:
+        """Initialize the RICS simple diffusion model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            Fit object this model is attached to.
+        """
         super().__init__(fit, *args, **kwargs)
 
         # Core physical parameters (mirroring playground.rics_experiment.models)
@@ -303,6 +310,12 @@ class RicsSimpleModel(ModelCurve):
         self.rics_model_2d: np.ndarray | None = None
 
     def update_model(self, **kwargs: Any) -> None:  # type: ignore[override]
+        """Compute the 2D RICS model from current parameters and store it.
+
+        Reads the lag grid from data metadata and computes the analytic
+        RICS correlation function, storing both the 2D array and the
+        flattened 1D curve.
+        """
         # Choose current fit (FitGroup or plain Fit)
         fit = getattr(self.fit, 'selected_fit', self.fit)
         data = getattr(fit, 'data', None)
@@ -438,6 +451,15 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
         icon: QtGui.QIcon | None = None,
         **kwargs: Any,
     ) -> None:
+        """Initialize the RICS simple diffusion model widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            Fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the widget tab.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
         # Initialize Model + QWidget side via MRO
@@ -465,7 +487,7 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
         self.layout = layout
 
     def update_widgets(self) -> None:  # type: ignore[override]
-        # Synchronize parameter table with internal parameter values
+        """Synchronize the parameter table with internal parameter values."""
         try:
             if self._param_widget is not None and hasattr(self._param_widget, 'finalize'):
                 self._param_widget.finalize()
@@ -474,10 +496,22 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
 
 
 class RicsTripletModel(ModelCurve):
+    """Analytic RICS model with one 3D diffusion component and triplet/blinking.
+
+    Extends :class:`RicsSimpleModel` by adding triplet amplitude and
+    triplet correlation time parameters.
+    """
 
     name = "RICS diffusion triplet"
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:
+        """Initialize the RICS diffusion + triplet model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            Fit object this model is attached to.
+        """
         super().__init__(fit, *args, **kwargs)
 
         self._n = FittingParameter(
@@ -595,6 +629,11 @@ class RicsTripletModel(ModelCurve):
         self.rics_model_2d: np.ndarray | None = None
 
     def update_model(self, **kwargs: Any) -> None:  # type: ignore[override]
+        """Compute the 2D RICS triplet model from current parameters.
+
+        Reads the lag grid from data metadata and computes the analytic
+        RICS correlation function including triplet blinking.
+        """
         fit = getattr(self.fit, 'selected_fit', self.fit)
         data = getattr(fit, 'data', None)
 
@@ -682,6 +721,7 @@ class RicsTripletModel(ModelCurve):
 
 
 class RicsTripletModelWidget(ModelWidget, RicsTripletModel):
+    """GUI widget for the RICS diffusion + triplet model."""
 
     try:
         plot_classes = RicsSimpleModelWidget.plot_classes
@@ -696,6 +736,15 @@ class RicsTripletModelWidget(ModelWidget, RicsTripletModel):
         icon: QtGui.QIcon | None = None,
         **kwargs: Any,
     ) -> None:
+        """Initialize the RICS diffusion + triplet model widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            Fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the widget tab.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
         super().__init__(fit=fit, icon=icon, **kwargs)
@@ -721,6 +770,7 @@ class RicsTripletModelWidget(ModelWidget, RicsTripletModel):
         self.layout = layout
 
     def update_widgets(self) -> None:  # type: ignore[override]
+        """Refresh the parameter table from the current model state."""
         try:
             if self._param_widget is not None and hasattr(self._param_widget, 'finalize'):
                 self._param_widget.finalize()

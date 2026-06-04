@@ -37,7 +37,9 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
         widgets.append(self._fret_parameters_widget)
         return widgets
 
+    # TODO: needs docstring
     def __init__(self, fit: Fit, **kwargs):
+        """Initialize the instance."""
         self.donor = LifetimeWidget(
             parent=self,
             model=self,

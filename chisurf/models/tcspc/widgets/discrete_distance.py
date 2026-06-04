@@ -12,12 +12,14 @@ import chisurf.models.tcspc.fret as fret
 
 class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
 
+    # TODO: needs docstring
     def __init__(
             self,
             donors,
             model: chisurf.models.Model = None,
             **kwargs
     ):
+        """Initialize the instance."""
         super().__init__(
             donors=donors,
             model=model,
@@ -90,7 +92,9 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         except Exception:
             pass
 
+    # TODO: needs docstring
     def onAddFRETrate(self):
+        """Handle add FRET rate button click."""
         # Append a new discrete FRET-rate component to all fits in the
         # current fit group. The backend FRETrateModel exposes the
         # component group on the 'fret_rates' attribute.
@@ -99,7 +103,9 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
             payload={"component_name": "fret_rates"},
         )
 
+    # TODO: needs docstring
     def onRemoveFRETrate(self):
+        """Handle remove FRET rate button click."""
         # Remove the last discrete FRET-rate component from all fits in the
         # current fit group.
         chisurf.actions.dispatch(
@@ -107,7 +113,9 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
             payload={"component_name": "fret_rates"},
         )
 
+    # TODO: needs docstring
     def append(self, *args, **kwargs):
+        """Add a new component."""
         super().append(50., 1.0)
 
         gb = QtWidgets.QGroupBox()
@@ -133,6 +141,8 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         self.grid_layout.addWidget(gb, row, col)
         self._gb.append(gb)
 
+    # TODO: needs docstring
     def pop(self):
+        """Remove the last component."""
         super().pop()
         self._gb.pop().close()

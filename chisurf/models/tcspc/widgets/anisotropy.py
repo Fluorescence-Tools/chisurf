@@ -45,6 +45,18 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
     @staticmethod
     def _fit_timeshift(local_fit) -> float:
+        """Extract the IRF timeshift from a local fit's convolve.
+
+        Parameters
+        ----------
+        local_fit : chisurf.fitting.fit.Fit
+            The local fit object.
+
+        Returns
+        -------
+        float
+            The timeshift value, or 0.0 if unavailable.
+        """
         try:
             model = getattr(local_fit, 'model', None)
             convolve = getattr(model, 'convolve', None)
@@ -56,6 +68,20 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
     @staticmethod
     def _fit_bg_level(local_fit, default: float = 0.0) -> float:
+        """Extract the background level from a local fit's generic.
+
+        Parameters
+        ----------
+        local_fit : chisurf.fitting.fit.Fit
+            The local fit object.
+        default : float
+            Fallback value if background is unavailable.
+
+        Returns
+        -------
+        float
+            The background level.
+        """
         bg = default
         try:
             model = getattr(local_fit, 'model', None)
@@ -232,6 +258,22 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return None, None, None
 
     def _compute_anisotropy_traces_from_channels(self, t, vv_m, vh_m):
+        """Compute uncorrected and corrected anisotropy traces from VV/VH.
+
+        Parameters
+        ----------
+        t : np.ndarray
+            Time axis.
+        vv_m : np.ndarray
+            VV channel data.
+        vh_m : np.ndarray
+            VH channel data.
+
+        Returns
+        -------
+        tuple of np.ndarray or None
+            (time, r_uncorrected, r_corrected).
+        """
         if t is None or vv_m is None or vh_m is None:
             return None, None, None
         try:
@@ -260,10 +302,18 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             return t, None, None
 
     def _compute_anisotropy_traces(self):
+        """Compute anisotropy traces from background-corrected VV/VH data.
+
+        Returns
+        -------
+        tuple of np.ndarray or None
+            (time, r_uncorrected, r_corrected).
+        """
         t, vv_m, vh_m = self._extract_vv_vh_bg_corrected()
         return self._compute_anisotropy_traces_from_channels(t, vv_m, vh_m)
 
     def _show_anisotropy_decay_dialog(self) -> None:
+        """Show a dialog with interactive anisotropy decay plots (data and model)."""
         if pg is None:
             QtWidgets.QMessageBox.warning(
                 self,
@@ -291,6 +341,21 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         controls.setVerticalSpacing(2)
 
         def _spin(value: float, step: float, decimals: int = 4):
+            """Create a QDoubleSpinBox with the given range and step.
+
+            Parameters
+            ----------
+            value : float
+                Initial value.
+            step : float
+                Single step increment.
+            decimals : int
+                Number of decimal places.
+
+            Returns
+            -------
+            QDoubleSpinBox
+            """
             sb = QtWidgets.QDoubleSpinBox(dialog)
             sb.setRange(-100000.0, 100000.0)
             sb.setDecimals(decimals)
@@ -353,6 +418,22 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         }
 
         def _rt_curves(t, vv, vh, g, l1, l2):
+            """Compute uncorrected and corrected anisotropy from channels.
+
+            Parameters
+            ----------
+            t : np.ndarray
+            vv : np.ndarray
+            vh : np.ndarray
+            g : float
+            l1 : float
+            l2 : float
+
+            Returns
+            -------
+            tuple of np.ndarray or None
+                (t, r_uncorrected, r_corrected).
+            """
             det = (1.0 - l1) * (1.0 - l2) - l1 * l2
             if abs(det) < 1e-12:
                 return t, None, None
@@ -369,7 +450,9 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
                 return t[finite], r_unc[finite], r_cor[finite]
             return t, r_unc, r_cor
 
+        # TODO: needs docstring
         def recompute():
+            """Recompute and update the anisotropy decay plot."""
             t = np.asarray(t_raw, dtype=np.float64)
             vv = np.asarray(vv_raw, dtype=np.float64) - float(bg_vv_sb.value())
             vh = np.asarray(vh_raw, dtype=np.float64) - float(bg_vh_sb.value())
@@ -414,6 +497,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
                 c_model_cor.setData(ttm, rmc)
 
         def _sync_l2_from_l1():
+            """Synchronise l2 value from l1 when the link checkbox is checked."""
             if not link_l_chk.isChecked():
                 return
             v = float(l1_sb.value())
@@ -423,6 +507,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
                 l2_sb.blockSignals(False)
 
         def _on_link_toggle(checked: bool):
+            """Handle the l1/l2 link checkbox toggle.
+
+            Parameters
+            ----------
+            checked : bool
+                Whether the link is active.
+            """
             l2_sb.setEnabled(not bool(checked))
             if checked:
                 _sync_l2_from_l1()
@@ -435,7 +526,9 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         for sb in (g_sb, l1_sb, l2_sb, bg_vv_sb, bg_vh_sb, rel_shift_sb):
             sb.valueChanged.connect(lambda _: recompute())
 
+        # TODO: needs docstring
         def on_reset():
+            """Reset diagnostic spin boxes to defaults."""
             g_sb.setValue(float(defaults['g']))
             l1_sb.setValue(float(defaults['l1']))
             l2_sb.setValue(float(defaults['l2']))
@@ -450,7 +543,9 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
         save_btn = box.addButton("Save CSV", QtWidgets.QDialogButtonBox.ActionRole)
 
+        # TODO: needs docstring
         def on_save_csv():
+            """Save anisotropy decay data to CSV."""
             tt = state.get('t')
             r_du = state.get('r_data_unc')
             r_dc = state.get('r_data_cor')
@@ -495,6 +590,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         dialog.exec_()
 
     def _update_consistency_label(self) -> None:
+        """Update the colour-coded consistency label comparing r_S,L and r_S,I."""
         if not hasattr(self, '_quality_label'):
             return
         r_l = getattr(self, '_last_rsl', float('nan'))
@@ -517,12 +613,26 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             self._quality_label.setStyleSheet("color: #166534;")
 
     def _toggle_diag_visibility(self, show: bool) -> None:
+        """Show or hide the VV/VH background integral diagnostic widgets.
+
+        Parameters
+        ----------
+        show : bool
+            Whether to show the widgets.
+        """
         show = bool(show)
         for w in (getattr(self, '_w_vv_bg', None), getattr(self, '_w_vh_bg', None)):
             if w is not None:
                 w.setVisible(show)
 
     def _intensity_diag_key(self):
+        """Generate a cache key for intensity diagnostics.
+
+        Returns
+        -------
+        tuple
+            Hashable key based on fit, data, group, polarization, g, l1, l2.
+        """
         fit = getattr(self, 'fit', None)
         data = getattr(fit, 'data', None)
         group = getattr(fit, 'group', None)
@@ -538,6 +648,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         )
 
     def _compute_intensity_diagnostics(self):
+        """Compute intensity diagnostic values (sums and steady-state r).
+
+        Returns
+        -------
+        dict or None
+            Dictionary with keys ``sum_vv_m``, ``sum_vh_m``, ``r_si``.
+        """
         t, vv_m, vh_m = self._extract_vv_vh_bg_corrected()
         if t is None or vv_m is None or vh_m is None:
             return None
@@ -565,6 +682,12 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return out
 
     def _get_intensity_diagnostics(self):
+        """Return cached intensity diagnostics or compute them if stale.
+
+        Returns
+        -------
+        dict or None
+        """
         key = self._intensity_diag_key()
         if getattr(self, '_intensity_diag_cache_key', None) == key:
             return getattr(self, '_intensity_diag_cache', None)
@@ -575,6 +698,20 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
     @staticmethod
     def _curve_bg_level(curve, default: float = 0.0) -> float:
+        """Extract the background level from a curve's metadata.
+
+        Parameters
+        ----------
+        curve : object
+            Data curve with an optional ``meta_data`` dict.
+        default : float
+            Fallback value.
+
+        Returns
+        -------
+        float
+            The background level.
+        """
         bg = default
         try:
             meta = getattr(curve, 'meta_data', None)
@@ -585,6 +722,16 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return bg
 
     def _extract_vv_vh_bg_corrected(self):
+        """Extract VV and VH channel data with background correction.
+
+        Handles stacked datasets, fit-group VV/VH pairs, and fallback
+        single-dataset extraction.
+
+        Returns
+        -------
+        tuple of np.ndarray or None
+            (time, vv_bg_corrected, vh_bg_corrected).
+        """
         fit = getattr(self, 'fit', None)
         data = getattr(fit, 'data', None)
         if data is None:
@@ -728,18 +875,42 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return t, None, None
 
     def _compute_vv_bg_corrected_integral(self) -> float:
+        """Return the VV background-corrected integrated intensity.
+
+        Returns
+        -------
+        float
+        """
         diag = self._get_intensity_diagnostics()
         if not isinstance(diag, dict):
             return float('nan')
         return float(diag.get('sum_vv_m', float('nan')))
 
     def _compute_vh_bg_corrected_integral(self) -> float:
+        """Return the VH background-corrected integrated intensity.
+
+        Returns
+        -------
+        float
+        """
         diag = self._get_intensity_diagnostics()
         if not isinstance(diag, dict):
             return float('nan')
         return float(diag.get('sum_vh_m', float('nan')))
 
     def _compute_rt(self, time_axis: np.ndarray) -> np.ndarray:
+        """Compute the time-dependent anisotropy r(t) from the rotation spectrum.
+
+        Parameters
+        ----------
+        time_axis : np.ndarray
+            Time values.
+
+        Returns
+        -------
+        np.ndarray
+            Anisotropy decay r(t).
+        """
         t = np.asarray(time_axis, dtype=np.float64)
         rt = np.zeros_like(t)
         rs = np.asarray(self.rotation_spectrum, dtype=np.float64)
@@ -757,6 +928,20 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return rt
 
     def _background_levels(self, data, y: np.ndarray) -> tuple[float, float, float]:
+        """Determine background levels for VV and VH channels.
+
+        Parameters
+        ----------
+        data : object
+            Data curve or group with optional metadata.
+        y : np.ndarray
+            Channel data array.
+
+        Returns
+        -------
+        tuple of float
+            (bg, bg_vv, bg_vh).
+        """
         bg = 0.0
         try:
             fit = getattr(self, 'fit', None)
@@ -783,6 +968,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return bg, bg, bg
 
     def _compute_steady_state_anisotropy_lifetime(self) -> float:
+        """Compute the steady-state anisotropy from the lifetime model.
+
+        Returns
+        -------
+        float
+            Steady-state anisotropy value, or NaN if unavailable.
+        """
         model = getattr(self, 'model', None)
         if model is None:
             fit = getattr(self, 'fit', None)
@@ -800,6 +992,13 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         return float('nan')
 
     def _compute_steady_state_anisotropy_intensity(self) -> float:
+        """Compute the steady-state anisotropy from the intensity data.
+
+        Returns
+        -------
+        float
+            Steady-state anisotropy value, or NaN if unavailable.
+        """
         model = getattr(self, 'model', None)
         if model is None:
             fit = getattr(self, 'fit', None)
@@ -889,10 +1088,12 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
     @property
     def polarization_type(self) -> str:
+        """Current polarization type (vm, vv, vh, vv/vh)."""
         return self._polarization_type
 
     @polarization_type.setter
     def polarization_type(self, v: str):
+        """Current polarization type (vm, vv, vh, vv/vh)."""
         self._polarization_type = v.lower()
         
         # Block signals to prevent unwanted signal emissions
@@ -916,7 +1117,9 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         # Show/hide rotation parameters based on the selected polarization type
         self.hide_roation_parameters()
 
+    # TODO: needs docstring
     def __init__(self, *args, **kwargs):
+        """Initialize the instance."""
         super().__init__(*args, **kwargs)
 
         if getattr(self, 'model', None) is None:
@@ -1207,26 +1410,34 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         self.hide_roation_parameters()
         
 
+    # TODO: needs docstring
     def hide_roation_parameters(self):
+        """Show/hide rotation parameters based on polarization."""
         # Hide rotation parameters when VM is selected, show otherwise
         if self.radioButtonVM.isChecked():
             self.gb.hide()
         else:
             self.gb.show()
 
+    # TODO: needs docstring
     def onAddRotation(self):
+        """Handle add rotation button click."""
         chisurf.actions.dispatch(
             name="model.add_component",
             payload={"component_name": "anisotropy"},
         )
 
+    # TODO: needs docstring
     def onRemoveRotation(self):
+        """Handle remove rotation button click."""
         chisurf.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": "anisotropy"},
         )
 
+    # TODO: needs docstring
     def add_rotation(self, **kwargs):
+        """Add a rotation component with GUI widget."""
         super().add_rotation(**kwargs)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1248,14 +1459,20 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             )
         )
 
+    # TODO: needs docstring
     def remove_rotation(self):
+        """Remove the last rotation component and widget."""
         self._rhos.pop()
         self._bs.pop()
         self._rho_widgets.pop().close()
         self._b_widgets.pop().close()
 
+    # TODO: needs docstring
     def append(self, *args, **kwargs):
+        """Add a new component."""
         self.add_rotation(*args, **kwargs)
 
+    # TODO: needs docstring
     def pop(self):
+        """Remove the last component."""
         self.remove_rotation()

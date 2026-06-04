@@ -41,7 +41,9 @@ REMOVE_BUTTON_STYLE = (
 
 class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
+    # TODO: needs docstring
     def update(self, *__args):
+        """Update the state and emit signals."""
         Lifetime.update(self)
         QtWidgets.QWidget.update(self, *__args)
         for w, v in zip(self._amp_widgets, self.amplitudes):
@@ -51,11 +53,15 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
     @property
     def parameter_widgets(self):
+        """List of parameter widgets for amplitude and lifetime."""
         return self._amp_widgets + self._lifetime_widgets
 
+    # TODO: needs docstring
     def read_values(self, target):
+        """Create a callback to read values from another widget."""
 
         def linkcall():
+            """Read parameter values from the target widget into this one."""
             fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
                 p = target.parameters_all_dict[key]
@@ -74,7 +80,9 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
         return linkcall
 
+    # TODO: needs docstring
     def read_menu(self):
+        """Build the read-from menu."""
         menu = self.readFrom_menu
         menu.clear()
         for f in chisurf.fits:
@@ -87,8 +95,11 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                         Action.triggered.connect(self.read_values(a))
                 menu.addMenu(submenu)
 
+    # TODO: needs docstring
     def link_values(self, target):
+        """Create a callback to link values to another widget."""
         def linkcall():
+            """Link values from the target widget and trigger fit update."""
             self._link = target
             # Find the correct fit index for this model
             fit_index = 0
@@ -109,7 +120,9 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             self.gb.setChecked(False)
         return linkcall
 
+    # TODO: needs docstring
     def onLinkToggeled(self, checked):
+        """Handle link toggle."""
         if checked:
             self._link = None
             # Find the correct fit index for this model
@@ -129,7 +142,9 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                 payload={"fit_index": int(fit_index)},
             )
 
+    # TODO: needs docstring
     def link_menu(self):
+        """Build the link-from menu."""
         menu = self.linkFrom_menu
         menu.clear()
         for f in chisurf.fits:
@@ -142,7 +157,9 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                         Action.triggered.connect(self.link_values(a))
                 menu.addMenu(submenu)
 
+    # TODO: needs docstring
     def __init__(self, title: str = '', **kwargs):
+        """Initialize the instance."""
         super().__init__(**kwargs)
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -217,12 +234,15 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         self.append()
 
     def __setstate__(self, state):
+        """Restore state from a serialized dictionary."""
         n_lifetime = (len(state.keys()) - 2) // 2
         for _ in range(n_lifetime):
             self.onAddLifetime()
         super().__setstate__(state)
 
+    # TODO: needs docstring
     def onNormalizeAmplitudes(self):
+        """Handle normalize amplitudes checkbox."""
         chisurf.actions.dispatch(
             name="model.normalize_amplitudes",
             payload={
@@ -246,17 +266,25 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             payload={"component_name": str(self.name)},
         )
 
+    # TODO: needs docstring
     def onAbsoluteAmplitudes(self):
+        """Handle absolute amplitudes checkbox."""
         self.onNormalizeAmplitudes()
 
+    # TODO: needs docstring
     def onAddLifetime(self):
+        """Handle add lifetime button click."""
         self.append()
 
+    # TODO: needs docstring
     def onRemoveLifetime(self):
+        """Handle remove lifetime button click."""
         if len(self._lifetimes) > 1:
             self.pop()
 
+    # TODO: needs docstring
     def append(self, *args, **kwargs):
+        """Add a new component."""
         Lifetime.append(self, *args, **kwargs)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -278,7 +306,9 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
         self.lh.addLayout(layout)
 
+    # TODO: needs docstring
     def pop(self):
+        """Remove the last component."""
         self._amplitudes.pop()
         self._lifetimes.pop()
         self._amp_widgets.pop().close()
@@ -322,6 +352,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
         (chisurf.plots.ResidualPlot, {})
     ]
 
+    # TODO: needs docstring
     def __init__(
             self,
             fit: Fit,
@@ -329,6 +360,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
             hide_nuisances: bool = False,
             **kwargs
     ):
+        """Initialize the instance."""
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         super().__init__(fit=fit, icon=icon)
@@ -380,12 +412,14 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
     photon counting (TCSPC) experiments.
     """
 
+    # TODO: needs docstring
     def __init__(
         self,
         fit: FitGroup,
         lifetimes: chisurf.fitting.parameter.FittingParameterGroup = None,
         **kwargs
      ):
+        """Initialize the instance."""
         super().__init__(fit=fit, **kwargs)
         if lifetimes is None:
             lifetimes = LifetimeWidget(
@@ -415,7 +449,9 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
         self.layout.addWidget(self.lifetimes)
         self.layout.addWidget(anisotropy)
 
+    # TODO: needs docstring
     def finalize(self):
+        """Finalize the component state."""
         super().finalize()
         self.lifetimes.update()
 
@@ -458,7 +494,9 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
         )
     ]
 
+    # TODO: needs docstring
     def __init__(self, fit: chisurf.fitting.FitGroup, **kwargs):
+        """Initialize the instance."""
         super().__init__(fit=fit, **kwargs)
 
         hl = QtWidgets.QHBoxLayout()
@@ -514,7 +552,9 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
         except Exception:
             pass
 
+    # TODO: needs docstring
     def onRemoveFit(self):
+        """Remove a fit from the mixture."""
         idx = self.fit_list.currentRow()
         if idx != -1:
             self.fit_list.takeItem(idx)
@@ -523,12 +563,16 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
             logging.warning("Please select an item to remove.")
         self.onUpdateParameterUI()
 
+    # TODO: needs docstring
     def onUpdataFitList(self):
+        """Update fit selection combo box."""
         self.cb.clear()
         names = [f.name for f in self.lifetime_fits]
         self.cb.addItems(names)
 
+    # TODO: needs docstring
     def onAddFit(self, all_fits: bool = False):
+        """Add selected fit(s) to the mixture."""
         if not all_fits:
             idxs = [self.cb.currentIndex()]
         else:
@@ -544,7 +588,9 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
             self.append_model(f.model, name)
         self.onUpdateParameterUI()
 
+    # TODO: needs docstring
     def onUpdateParameterUI(self):
+        """Rebuild the fraction parameter UI."""
         n_columns, row = 2, 1
         layout = self.layout_fractions
         chisurf.gui.widgets.general.clear_layout(layout)

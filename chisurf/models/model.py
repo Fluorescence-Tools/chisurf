@@ -258,25 +258,36 @@ class Model(FittingParameterGroup):
             return
 
     def __str__(self):
-        """Return a human-readable summary of the model parameters.
-
-        The output lists each parameter name, value, bounds and flags
-        indicating whether it is fixed or linked.
-        """
-        s = ""
-        s += "Model: %s\n" % str(self.name)
-
+        """Return a readable summary of model parameters with uncertainty and links."""
+        s = f"Model: {self.name}\n\n"
+        s += f"  {'Name':<12s}  {'Value':<11s}  {'Error':<13s}  {'Source'}  {'Link'}\n"
         pd = self.parameters_all_dict
-        keylist = list(pd.keys())
-        keylist.sort()
-
-        s += "Parameter\tValue\tBounds\tFixed\tLinked\n"
-        for k in keylist:
+        for k in sorted(pd.keys()):
             p = pd[k]
-            if isinstance(p, chisurf.fitting.parameter.FittingParameter):
-                s += f"{p.name}\t{p.value:.4e}\t{p.bounds}\t{p.fixed}\t{p.is_linked}\n"
+            if not isinstance(p, chisurf.fitting.parameter.FittingParameter):
+                continue
+            if getattr(p, 'is_output', False):
+                continue
+            val = f"{p.value:.5g}"
+            if p.fixed:
+                s += f"  {p.name:<12s}  {val:<11s}  fixed"
             else:
-                chisurf.logging.warning("The object is of type %s and is not a FittingParameter" % p.__class__.__name__)
+                try:
+                    ee = p.error_estimate
+                    if isinstance(ee, float):
+                        rel = abs(ee / (p.value + 1e-12) * 100.0)
+                        err = f"±{ee:.3g}({rel:.1f}%)"
+                        src = "sp" if p.scan_result is not None else "cov"
+                    else:
+                        err = "±N/A"
+                        src = ""
+                except Exception:
+                    err = "±N/A"
+                    src = ""
+                s += f"  {p.name:<12s}  {val:<11s}  {err:<13s}  {src:<6s}"
+            if p.is_linked and p.link is not None:
+                s += f"  →{p.link.name}"
+            s += "\n"
         return s
 
 
@@ -334,7 +345,8 @@ class ModelCurve(Model, chisurf.curve.Curve):
         return self.__dict__['d'][0]
 
     @x.setter
-    def x(self,v: np.ndarray):
+    def x(self, v: np.ndarray):
+        """Set the abscissa array of the model curve."""
         self.__dict__['d'][0] = v
 
     @property
@@ -344,6 +356,7 @@ class ModelCurve(Model, chisurf.curve.Curve):
 
     @y.setter
     def y(self, v: np.ndarray):
+        """Set the ordinate array of the model curve."""
         self.__dict__['d'][1] = v
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, *args, **kwargs):

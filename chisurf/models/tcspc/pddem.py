@@ -64,13 +64,17 @@ class PDDEM(FittingParameterGroup):
 
     @property
     def alpha_A(self):
+        """Energy transfer efficiency A->B."""
         return self._alpha_A.value
 
     @property
     def alpha_B(self):
+        """Energy transfer efficiency B->A."""
         return self._alpha_B.value
 
+    # TODO: needs docstring
     def update(self):
+        """Update the state and emit signals."""
         denom = float(self._pmA.value) + float(self._pmB.value)
         if denom > 0.0 and np.isfinite(denom):
             alpha_a = float(self._pmA.value) / denom
@@ -135,7 +139,9 @@ class PDDEM(FittingParameterGroup):
         """
         return np.array([self.fAB, self.fBA], dtype=np.float64)
 
+    # TODO: needs docstring
     def __init__(self, **kwargs):
+        """Initialize the instance."""
         super().__init__(**kwargs)
 
         self._fAB = FittingParameter(name='AtB', value=1.0, model=self.model, decimals=2, fixed=True)
@@ -179,7 +185,9 @@ class PDDEMModel(FRETModel):
 
     name = "FRET: PDDEM"
 
+    # TODO: needs docstring
     def __init__(self, fit, **kwargs):
+        """Initialize the instance."""
         self.fa = Lifetime(name='fa', **kwargs)
         self.fb = Lifetime(name='fb', **kwargs)
         self.donor = self.fb
@@ -189,11 +197,13 @@ class PDDEMModel(FRETModel):
 
     @property
     def distance_distribution(self):
+        """Distance distribution array."""
         dist = self.gaussians.distribution
         return dist
 
     @property
     def lifetime_spectrum(self):
+        """Interleaved (amplitude, lifetime, ...) array."""
         decayA = self.fa.lifetime_spectrum
         decayB = self.fb.lifetime_spectrum
         rate_spectrum = self.fret_rate_spectrum

@@ -7,6 +7,13 @@ from chisurf.models import parse
 class ParseDecayModel(parse.ParseModel):
 
     def __init__(self, fit, **kwargs):
+        """Initialize the parse decay model with convolution and corrections.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            Fit object this model belongs to.
+        """
         parse.ParseModel.__init__(self, fit, **kwargs)
         self.convolve = kwargs.get('convolve', chisurf.models.tcspc.nusiance.Convolve(name='convolve', fit=fit, **kwargs))
         self.corrections = kwargs.get(
@@ -19,6 +26,7 @@ class ParseDecayModel(parse.ParseModel):
         )
 
     def update_model(self, **kwargs):
+        """Recompute the TCSPC decay with convolution and corrections."""
         scatter = kwargs.get('scatter', self.generic.scatter)
         background = kwargs.get('background', self.generic.background)
         lintable = kwargs.get('lintable', self.corrections.lintable)

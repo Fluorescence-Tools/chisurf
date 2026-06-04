@@ -12,6 +12,24 @@ from chisurf.fitting.parameter import FittingParameter
 
 
 def _compute_p1(k_vals: np.ndarray, brightness: float, x_vals: np.ndarray, dx: float) -> np.ndarray:
+    """Compute the PCH distribution P(k) for a single species.
+
+    Parameters
+    ----------
+    k_vals : numpy.ndarray
+        Photon count values k to evaluate.
+    brightness : float
+        Molecular brightness.
+    x_vals : numpy.ndarray
+        Spatial integration points.
+    dx : float
+        Spatial step size.
+
+    Returns
+    -------
+    numpy.ndarray
+        Probability distribution P(k) for the given k values.
+    """
     n = k_vals.shape[0]
     p1 = np.zeros(n, dtype=np.float64)
     for i in range(1, n):
@@ -33,12 +51,44 @@ def _compute_p1(k_vals: np.ndarray, brightness: float, x_vals: np.ndarray, dx: f
 
 
 def _pch_single_species(k_vals: np.ndarray, brightness: float) -> np.ndarray:
+    """Compute the PCH distribution for a single species with standard spatial grid.
+
+    Parameters
+    ----------
+    k_vals : numpy.ndarray
+        Photon count values k to evaluate.
+    brightness : float
+        Molecular brightness.
+
+    Returns
+    -------
+    numpy.ndarray
+        Probability distribution P(k).
+    """
     x_vals = np.linspace(0.0, 5.0, 1000)
     dx = x_vals[1] - x_vals[0]
     return _compute_p1(k_vals, float(brightness), x_vals, float(dx))
 
 
 def _pch_open_system(k_vals: np.ndarray, brightness: float, avgN: float, maxN: int = 30) -> np.ndarray:
+    """Compute the PCH distribution for an open system with Poisson-weighted particle number.
+
+    Parameters
+    ----------
+    k_vals : numpy.ndarray
+        Photon count values k to evaluate.
+    brightness : float
+        Molecular brightness per particle.
+    avgN : float
+        Average number of particles in the observation volume.
+    maxN : int, optional
+        Maximum particle number for the Poisson summation (default 30).
+
+    Returns
+    -------
+    numpy.ndarray
+        Probability distribution P(k).
+    """
     from scipy.stats import poisson  # type: ignore[import]
 
     p1 = _pch_single_species(k_vals, brightness)
@@ -65,6 +115,22 @@ def _pch_open_system(k_vals: np.ndarray, brightness: float, avgN: float, maxN: i
 
 
 def _pch_mixture(k_vals: np.ndarray, epsilons: np.ndarray, avgNs: np.ndarray) -> np.ndarray:
+    """Compute the PCH distribution for a mixture of species via convolution.
+
+    Parameters
+    ----------
+    k_vals : numpy.ndarray
+        Photon count values k to evaluate.
+    epsilons : numpy.ndarray
+        Brightness values for each species.
+    avgNs : numpy.ndarray
+        Average particle numbers for each species.
+
+    Returns
+    -------
+    numpy.ndarray
+        Probability distribution P(k) for the mixture.
+    """
     from scipy.signal import fftconvolve  # type: ignore[import]
 
     k_vals = np.asarray(k_vals, dtype=float)
@@ -91,10 +157,22 @@ def _pch_mixture(k_vals: np.ndarray, epsilons: np.ndarray, avgNs: np.ndarray) ->
 
 
 class PchMultiComponentModel(ModelCurve):
+    """Multi-component photon counting histogram (PCH) model.
+
+    Supports up to three species each with brightness and particle number
+    parameters.
+    """
 
     name = "PCH multi-component"
 
     def __init__(self, fit: chisurf.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:  # type: ignore[name-defined]
+        """Initialize the PCH multi-component model.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            Fit object this model is attached to.
+        """
         super().__init__(fit, *args, **kwargs)
 
         self._eps1 = FittingParameter(
@@ -159,6 +237,7 @@ class PchMultiComponentModel(ModelCurve):
         self.n_components = 1
 
     def update_model(self, **kwargs: Any) -> None:  # type: ignore[override]
+        """Compute the PCH model from current parameter values."""
         fit = getattr(self.fit, "selected_fit", self.fit)
         data = getattr(fit, "data", None)
 
@@ -224,6 +303,7 @@ class PchMultiComponentModel(ModelCurve):
             pass
 
     def add_component(self) -> None:
+        """Add a new PCH component (up to a maximum of 3)."""
         try:
             n = int(getattr(self, "n_components", 1) or 1)
         except Exception:
@@ -238,6 +318,7 @@ class PchMultiComponentModel(ModelCurve):
             pass
 
     def remove_component(self) -> None:
+        """Remove the last PCH component (minimum of 1)."""
         try:
             n = int(getattr(self, "n_components", 1) or 1)
         except Exception:
@@ -252,6 +333,13 @@ class PchMultiComponentModel(ModelCurve):
         self.n_components = n
 
     def _set_component_defaults(self, idx: int) -> None:
+        """Set default brightness and particle number for a component index.
+
+        Parameters
+        ----------
+        idx : int
+            Component index (1, 2, or 3).
+        """
         try:
             if idx == 1:
                 p_eps, p_N = self._eps1, self._N1
@@ -271,6 +359,13 @@ class PchMultiComponentModel(ModelCurve):
             pass
 
     def _clear_component(self, idx: int) -> None:
+        """Zero out the brightness and particle number for a component.
+
+        Parameters
+        ----------
+        idx : int
+            Component index (1, 2, or 3).
+        """
         try:
             if idx == 1:
                 p_eps, p_N = self._eps1, self._N1
@@ -287,6 +382,7 @@ class PchMultiComponentModel(ModelCurve):
 
 
 class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
+    """GUI widget for the PCH multi-component model with add/remove controls."""
 
     try:
         plot_classes = [
@@ -322,6 +418,15 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         icon: QtGui.QIcon | None = None,
         **kwargs: Any,
     ) -> None:
+        """Initialize the PCH multi-component model widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.FitGroup
+            Fit group this widget belongs to.
+        icon : QtGui.QIcon, optional
+            Icon for the widget tab.
+        """
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
         super().__init__(fit=fit, icon=icon, **kwargs)
@@ -384,6 +489,18 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         self.layout = layout
 
     def _get_component_parameters(self, idx: int):
+        """Get the brightness and particle number parameters for a component.
+
+        Parameters
+        ----------
+        idx : int
+            Component index (1, 2, or 3).
+
+        Returns
+        -------
+        tuple of FittingParameter or None
+            (eps_parameter, N_parameter) for the component, or (None, None).
+        """
         if idx == 1:
             return self._eps1, self._N1
         elif idx == 2:
@@ -393,6 +510,13 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         return None, None
 
     def _append_groupbox(self, idx: int) -> None:
+        """Add a group box with parameter widgets for a component.
+
+        Parameters
+        ----------
+        idx : int
+            Component index (1, 2, or 3).
+        """
         if self._make_fitting_parameter_widget is None:
             return
         if idx < 1 or idx > 3:
@@ -430,6 +554,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         self._gb.append(gb)
 
     def append(self, *args, **kwargs) -> None:
+        """Add a new PCH component and its corresponding group box."""
         try:
             n_before = int(getattr(self, "n_components", 1) or 1)
         except Exception:
@@ -453,6 +578,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
                 pass
 
     def pop(self) -> None:
+        """Remove the last PCH component and its group box."""
         try:
             n = int(getattr(self, "n_components", 1) or 1)
         except Exception:
@@ -468,6 +594,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         self.remove_component()
 
     def onAddComponent(self) -> None:
+        """Add a new PCH component to all fits via the shared model macros."""
         # Add a new PCH component to all fits in the current fit group via
         # the shared model macros.
         try:
@@ -484,6 +611,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
             pass
 
     def onRemoveComponent(self) -> None:
+        """Remove the last PCH component from all fits via the shared model macros."""
         # Remove the last PCH component from all fits in the current fit
         # group.
         try:
@@ -500,6 +628,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
             pass
 
     def update_widgets(self) -> None:  # type: ignore[override]
+        """Refresh GUI widgets from the current parameter values."""
         try:
             if self._param_widget is not None and hasattr(self._param_widget, "finalize"):
                 self._param_widget.finalize()

@@ -81,9 +81,11 @@ def pda_1d_residuals_from_s1s2(
         }
 
     def _inner(ch1, ch2):
+        """Return ch2 / max(1, ch1 + ch2)."""
         return ch2 / max(1, ch1 + ch2)
 
     def histogram_function(ch1, ch2, _cb=_inner):
+        """Callback for tttrlib.Pda histogram, swapping (red, green) to (green, red)."""
         return _cb(ch2, ch1)
 
     pda_obj.histogram_function = histogram_function

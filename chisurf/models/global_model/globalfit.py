@@ -21,6 +21,13 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def weighted_residuals(self) -> np.ndarray:
+        """Concatenated weighted residuals from all local fits.
+
+        Returns
+        -------
+        np.ndarray
+            1-D array of weighted residuals, or empty.
+        """
         if len(self.fits) > 0:
             re = list()
             for f in self.fits:
@@ -31,18 +38,28 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def fit_names(self) -> typing.List[str]:
+        """Names of all local fits in this global model."""
         return [f.name for f in self.fits]
 
     @property
     def links(self) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
+        """List of link definitions between local-fit parameters."""
         return self._links
 
     @links.setter
     def links(self, v: typing.List[chisurf.fitting.parameter.FittingParameter]):
+        """Set the list of link definitions.
+
+        Parameters
+        ----------
+        v : list
+            List of link tuples ``(enabled, fit_idx, param_name, formula)``.
+        """
         self._links = v if isinstance(v, list) else list()
 
     @property
     def n_points(self) -> int:
+        """Total number of data points across all local fits."""
         nbr_points = 0
         for f in self.fits:
             nbr_points += f.model.n_points
@@ -50,30 +67,37 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def global_parameters_all(self) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
+        """All global parameters (fixed and variable)."""
         return list(self._global_parameters.values())
 
     @property
     def global_parameters_all_names(self) -> typing.List[str]:
+        """Names of all global parameters."""
         return [p.name for p in self.global_parameters_all]
 
     @property
     def global_parameters(self) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
+        """Non-fixed (variable) global parameters."""
         return [p for p in self.global_parameters_all if not p.fixed]
 
     @property
     def global_parameters_names(self) -> typing.List[str]:
+        """Names of variable global parameters."""
         return [p.name for p in self.global_parameters]
 
     @property
     def global_parameters_bound_all(self) -> typing.List[typing.Tuple[float, float]]:
+        """Bounds for all global parameters."""
         return [pi.bounds for pi in self.global_parameters_all]
 
     @property
     def global_parameter_linked_all(self) -> typing.List[bool]:
+        """Whether each global parameter is linked."""
         return [p.is_linked for p in self.global_parameters_all]
 
     @property
     def parameters(self) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
+        """All fitting parameters (local variable + global variable)."""
         p = list()
         for f in self.fits:
             p += f.model.parameters
@@ -82,6 +106,10 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def parameter_names(self) -> typing.List[str]:
+        """Formatted names of variable parameters across all local fits.
+
+        Each local parameter is prefixed with its fit index, e.g. ``1:N``.
+        """
         try:
             re = list()
             for i, f in enumerate(self.fits):
@@ -94,6 +122,7 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def parameters_all(self) -> typing.List[chisurf.fitting.parameter.FittingParameter]:
+        """All parameters (local + global), including fixed ones."""
         try:
             re = list()
             for f in self.fits:
@@ -106,14 +135,17 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def global_parameters_values_all(self) -> typing.List[float]:
+        """Current values of all global parameters."""
         return [g.value for g in self.global_parameters_all]
 
     @property
     def global_parameters_fixed_all(self) -> typing.List[bool]:
+        """Fixed-state of all global parameters."""
         return [p.fixed for p in self.global_parameters_all]
 
     @property
     def parameter_names_all(self) -> typing.List[str]:
+        """Formatted names of all parameters (local + global), including fixed."""
         try:
             re = list()
             for i, f in enumerate(self.fits):
@@ -126,6 +158,7 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def parameter_dict(self) -> typing.Dict[str, chisurf.fitting.parameter.FittingParameter]:
+        """Dictionary mapping formatted parameter names to parameters."""
         re = dict()
         for i, f in enumerate(self.fits):
             d = f.model.parameter_dict
@@ -136,6 +169,13 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def data(self) -> typing.Tuple[np.array, np.array, np.array]:
+        """Concatenated (x, y, weight) data from all local fits.
+
+        Returns
+        -------
+        tuple of np.array
+            ``(x, y, weights)`` where x is a running index.
+        """
         d = list()
         w = list()
         for f in self.fits:
@@ -154,6 +194,19 @@ class GlobalFitModel(model.Model, Curve):
             *args,
             **kwargs
     ):
+        """Initialize the global fit model.
+
+        Parameters
+        ----------
+        fit : Fit
+            The parent fit (FitGroup or similar).
+        fits : list of Fit, optional
+            Initial list of local fits.
+        *args
+            Positional arguments forwarded to the base class.
+        **kwargs
+            Keyword arguments forwarded to the base class.
+        """
         if fits is None:
             fits = list()
         self.fits = fits
@@ -170,6 +223,20 @@ class GlobalFitModel(model.Model, Curve):
             xmin: int = None,
             xmax: int = None
     ) -> np.array:
+        """Compute weighted residuals for a given fit within a range.
+
+        Parameters
+        ----------
+        fit : Fit
+            The local fit to evaluate.
+        xmin, xmax : int, optional
+            Index range for the residuals.
+
+        Returns
+        -------
+        np.ndarray
+            Weighted residuals array.
+        """
         try:
             f = fit
             if xmin is None:
@@ -187,6 +254,13 @@ class GlobalFitModel(model.Model, Curve):
         return wr
 
     def append_fit(self, fit: Fit) -> None:
+        """Add a local fit to the global model.
+
+        Parameters
+        ----------
+        fit : Fit
+            The fit instance to append.
+        """
         try:
             import chisurf
             chisurf.logging.info(
@@ -222,6 +296,11 @@ class GlobalFitModel(model.Model, Curve):
 
         This keeps the model free of Qt dependencies while allowing UI layers
         to react to changes triggered via macros/actions as well as the GUI.
+
+        Parameters
+        ----------
+        fn : callable
+            Callback accepting one argument (fit).
         """
         lst = getattr(self, "_on_fit_appended", None)
         if lst is None:
@@ -231,16 +310,31 @@ class GlobalFitModel(model.Model, Curve):
             lst.append(fn)
 
     def off_fit_appended(self, fn) -> None:
+        """Unregister a callback previously registered with :meth:`on_fit_appended`.
+
+        Parameters
+        ----------
+        fn : callable
+            The callback to remove.
+        """
         lst = getattr(self, "_on_fit_appended", None)
         if isinstance(lst, list) and fn in lst:
             lst.remove(fn)
 
     def append_global_parameter(self, parameter: chisurf.parameter.Parameter) -> None:
+        """Add a global parameter to the model.
+
+        Parameters
+        ----------
+        parameter : chisurf.parameter.Parameter
+            The parameter instance to add.
+        """
         variable_name = parameter.name
         if variable_name not in list(self._global_parameters.keys()):
             self._global_parameters[parameter.name] = parameter
 
     def setLinks(self):
+        """Evaluate link formulas and set up parameter links."""
         self.parameters_calculated = list()
         if self.clear_on_update:
             self.clear_all_links()
@@ -262,24 +356,47 @@ class GlobalFitModel(model.Model, Curve):
                 print("not enough fits index out of range")
 
     def autofitrange(self, fit: FitGroup):
+        """Reset auto-fit range to cover all data.
+
+        Parameters
+        ----------
+        fit : FitGroup
+            Ignored (kept for API compatibility).
+
+        Returns
+        -------
+        tuple of None
+            ``(None, None)``.
+        """
         self.xmin, self.xmax = None, None
         return self.xmin, self.xmax
 
     def clear_local_fits(self) -> None:
+        """Remove all local fits from the global model."""
         self.fits = list()
 
     def remove_local_fit(self, fit_index: int):
+        """Remove a local fit by index.
+
+        Parameters
+        ----------
+        fit_index : int
+            Index of the fit to remove.
+        """
         del self.fits[fit_index]
 
     def clear_all_links(self) -> None:
+        """Unlink all parameters in all local fits."""
         for fit in self.fits:
             for p in fit.model.parameters_all:
                 p.link = None
 
     def clear_listed_links(self):
+        """Clear the link definition list."""
         self.links = list()
 
     def __str__(self):
+        """Return a string summary of the global model."""
         s = "\n"
         s += "Model: Global-fit\n"
         s += "Global-parameters:"
@@ -298,6 +415,7 @@ class GlobalFitModel(model.Model, Curve):
 
     @property
     def x(self) -> np.array:
+        """x-data from all local fits, one array per fit."""
         x = list()
         for f in self.fits:
             x.append(f.model.x)
@@ -305,10 +423,12 @@ class GlobalFitModel(model.Model, Curve):
 
     @x.setter
     def x(self, v):
+        """Set x-data (no-op, data come from local fits)."""
         pass
 
     @property
     def y(self) -> np.array:
+        """y-data from all local fits, one array per fit."""
         y = list()
         for f in self.fits:
             y.append(f.model.y)
@@ -316,24 +436,46 @@ class GlobalFitModel(model.Model, Curve):
 
     @y.setter
     def y(self, v):
+        """Set y-data (no-op, data come from local fits)."""
         pass
 
     def __getitem__(self, key):
+        """Slice data from all local fits.
+
+        Parameters
+        ----------
+        key : slice
+            Slice object with start/stop/step.
+
+        Returns
+        -------
+        tuple
+            ``(x_slice, y_slice)``.
+        """
         start = key.start
         stop = key.stop
         step = 1 if key.step is None else key.step
         return self.x[start:stop:step], self.y[start:stop:step]
 
     def finalize(self):
+        """Finalize all local-fit models."""
         for f in self.fits:
             f.model.finalize()
 
     def update(self) -> None:
+        """Update all local-fit models."""
         super().update()
         for f in self.fits:
             f.model.update()
 
     def update_model(self, **kwargs) -> None:
+        """Recompute all local-fit models, optionally in parallel threads.
+
+        Parameters
+        ----------
+        **kwargs
+            Forwarded to each local model's ``update_model``.
+        """
         if chisurf.settings.cs_settings['optimization']['global_threaded_model_update']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
             for thread in threads:

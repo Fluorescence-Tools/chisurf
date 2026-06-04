@@ -43,17 +43,21 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         (chisurf.plots.ResidualPlot, {})
     ]
 
+    # TODO: needs docstring
     def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, chisurf.curve.Curve]:
+        """Return a dictionary of curves for plotting."""
         d = super().get_curves(copy_curves)
         d['IRF'] = self.convolve.irf
         return d
 
+    # TODO: needs docstring
     def __init__(
             self,
             fit: FitGroup,
             icon: QtGui.QIcon = None,
             **kwargs
     ):
+        """Initialize the instance."""
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/TCSPC.png")
         super(ModelWidget, self).__init__(fit=fit, icon=icon)

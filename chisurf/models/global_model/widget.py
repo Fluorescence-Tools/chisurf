@@ -28,6 +28,16 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @chisurf.gui.decorators.init_with_ui(ui_filename="globalfit.ui")
     def __init__(self, fit: chisurf.fitting.fit.Fit):
+        """Initialize the global-fit widget.
+
+        Connects UI signals and subscribes to model-level fit-append
+        notifications.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The parent fit (FitGroup).
+        """
         self.pushButton_3.clicked.connect(self.onSaveTable)
         self.pushButton_4.clicked.connect(self.onLoadTable)
         self.pushButton_5.clicked.connect(self.clear_listed_links)
@@ -64,30 +74,43 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def add_all_fits(self) -> bool:
+        """If True, add all available local fits at once."""
         return bool(self.checkBox.isChecked())
 
     @property
     def current_global_variable_name(self) -> str:
+        """Name entered in the global-variable text field."""
         return str(self.lineEdit.text())
 
     @property
     def current_fit_index(self) -> int:
+        """Currently selected local-fit index in the combo box."""
         return self.comboBox.currentIndex()
 
     @property
     def link_all_of_type(self) -> bool:
+        """If True, link all parameters sharing the same name."""
         return not self.checkBox_2.isChecked()
 
     @property
     def clear_on_update(self) -> bool:
+        """Whether links are cleared before re-evaluation."""
         return self.checkBox_3.isChecked()
 
     @clear_on_update.setter
     def clear_on_update(self, v: bool):
+        """Set whether links are cleared before re-evaluation.
+
+        Parameters
+        ----------
+        v : bool
+            New state.
+        """
         self.checkBox_3.setChecked(v)
 
     @property
     def local_fits(self) -> typing.List[chisurf.fitting.fit.Fit]:
+        """Fits available to add to the global model (not already included)."""
         return [
             s for s in chisurf.fits
             if isinstance(s, chisurf.fitting.fit.Fit) and s.model is not self
@@ -95,6 +118,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def local_fit_idx(self) -> typing.List[int]:
+        """Indices of available local fits in the global fit list."""
         return [
             i for i, s in enumerate(chisurf.fits)
             if isinstance(s, chisurf.fitting.fit.Fit) and s.model is not self
@@ -102,54 +126,66 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def local_fit_names(self) -> typing.List[str]:
+        """Names of available local fits."""
         return [f.name for f in self.local_fits]
 
     @property
     def origin_fit_number(self) -> int:
-        return int(self.comboBox_gfOriginFit.currentIndex())  # origin fit fit_index
+        """Index of the origin fit in the global model."""
+        return int(self.comboBox_gfOriginFit.currentIndex())
 
     @property
     def origin_fit(self) -> chisurf.fitting.fit.Fit:
+        """The origin fit for a link."""
         ofNbr = self.origin_fit_number
         return self.fits[ofNbr]
 
     @property
     def origin_parameter(self) -> chisurf.fitting.parameter.FittingParameter:
+        """The origin parameter for a link."""
         return self.origin_fit.model.parameters_all_dict[self.origin_parameter_name]
 
     @property
     def origin_parameter_name(self) -> str:
+        """Name of the selected origin parameter."""
         return str(self.comboBox_gfOriginParameter.currentText())
 
     @property
     def target_fit_number(self) -> int:
-        return int(self.comboBox_gfTargetFit.currentIndex())  # target fit fit_index
+        """Index of the target fit for a link."""
+        return int(self.comboBox_gfTargetFit.currentIndex())
 
     @property
     def target_fit(self) -> chisurf.fitting.fit.Fit:
+        """The target fit for a link."""
         tfNbr = self.target_fit_number
         return self.fits[tfNbr]
 
     @property
     def target_parameter_name(self) -> str:
+        """Name of the selected target parameter."""
         return str(self.comboBox_gfTargetParameter.currentText())
 
     @property
     def target_parameter(self) -> chisurf.fitting.parameter.FittingParameter:
+        """The target parameter for a link."""
         return self.target_fit.model.parameters_all_dict[self.target_parameter_name]
 
     @property
     def current_link_formula(self):
+        """Default link formula string for the current selection."""
         return f"f[{self.target_fit_number}]['{self.target_parameter_name}']"
 
     @property
     def current_target_formula(self) -> str:
+        """Target formula string."""
         if self.checkBox_4.isChecked():
             return str(self.lineEdit_2.text())
         return self.current_link_formula
 
     @property
     def current_origin_link_formula(self):
+        """Origin formula string for a link."""
         if self.link_all_of_type:
             return f"f[i]['{self.origin_parameter_name}']"
         else:
@@ -157,10 +193,10 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def links(self):
+        """Link definitions read from the global-links table."""
         table = self.table_GlobalLinks
         links = []
         for r in range(table.rowCount()):
-            # self.tableWidget_2.item(r, 2).data(0).toInt()
             en = bool(table.cellWidget(r, 0).checkState())
             fitA = int(table.item(r, 1).data(0)) - 1
             pA = str(table.item(r, 2).text())
@@ -170,20 +206,30 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
     @property
     def local_fit_first(self) -> bool:
+        """If True, the local-fit list is displayed first."""
         return self.checkBoxLocal.isChecked()
 
     @local_fit_first.setter
     def local_fit_first(self, v: bool):
+        """Set whether the local-fit list is displayed first.
+
+        Parameters
+        ----------
+        v : bool
+            New state.
+        """
         if v is True:
             self.checkBoxLocal.setCheckState(2)
         else:
             self.checkBoxLocal.setCheckState(0)
 
     def update_link_text(self):
+        """Update the formula text field unless custom editing is enabled."""
         if not self.checkBox_4.isChecked():
             self.lineEdit_2.setText(self.current_link_formula)
 
     def onRemoveLocalFit(self) -> None:
+        """Qt slot: remove the selected local fit from the table."""
         row = self.tableWidget.currentRow()
         self.tableWidget.removeRow(row)
         chisurf.actions.dispatch(
@@ -192,6 +238,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         )
 
     def onClearLocalFits(self) -> None:
+        """Qt slot: clear all local fits from the table."""
         chisurf.actions.dispatch(
             name="model.clear_local_fits",
             payload={},
@@ -199,10 +246,12 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.tableWidget.setRowCount(0)
 
     def onTableGlobalLinksDoubleClicked(self) -> None:
+        """Qt slot: remove a link row on double-click."""
         row = self.table_GlobalLinks.currentRow()
         self.table_GlobalLinks.removeRow(row)
 
     def onAddGlobalVariable(self) -> None:
+        """Qt slot: add a new global variable from the text field."""
         variable_name = self.current_global_variable_name
         if len(variable_name) > 0 and variable_name not in list(self._global_parameters.keys()):
             chisurf.actions.dispatch(
@@ -215,6 +264,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             chisurf.logging.warning("onAddGlobalVariable: No variable name defined.")
 
     def onClearVariables(self) -> None:
+        """Qt slot: remove all global parameters."""
         chisurf.logging.info("onClearVariables")
         self._global_parameters = dict()
         layout = self.verticalLayout
@@ -222,6 +272,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             layout.itemAt(i).widget().deleteLater()
 
     def onAddToLocalFitList(self) -> None:
+        """Qt slot: add selected (or all) local fits to the global model."""
         print("onAddToLocalFitList")
         chisurf.logging.info("onAddToLocalFitList")
         local_fits = self.local_fits
@@ -236,13 +287,27 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             )
 
     def append_fit(self, fit: chisurf.fitting.fit):
-        # Defer UI updates to the model-level callback to avoid double insertion
+        """Append a fit to the global model.
+
+        Defer UI updates to the model-level callback to avoid double insertion.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The fit instance to append.
+        """
         GlobalFitModel.append_fit(self, fit)
 
     # --- UI reaction to model notifications ---
     def _on_fit_appended_ui(self, fit: chisurf.fitting.fit) -> None:
+        """Model callback: update the table when a fit is appended.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            The newly appended fit.
+        """
         try:
-            # Guard: do not add duplicates by name in table
             table = self.tableWidget
             existing_names = set()
             for r in range(table.rowCount()):
@@ -250,7 +315,6 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
                 if item is not None:
                     existing_names.add(str(item.text()))
             if str(fit.name) in existing_names:
-                # Still refresh widgets to keep combos in sync
                 self.update_widgets()
                 return
 
@@ -267,10 +331,17 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
 
             self.update_widgets()
         except Exception:
-            # Best-effort UI update; ignore errors to not break model flow
             pass
 
     def onAddLink(self, links: typing.List = None):
+        """Qt slot: add a link row (or multiple rows) to the global-links table.
+
+        Parameters
+        ----------
+        links : list, optional
+            Pre-defined link definitions. If None, a new link is created
+            from the current UI selection.
+        """
         table = self.table_GlobalLinks
         if not isinstance(links, list):
             links = None
@@ -321,6 +392,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             table.setItem(rc, 3, tmp)
 
     def update_parameter_origin(self):
+        """Refresh the origin-parameter combo box based on the selected origin fit."""
         self.comboBox_gfOriginParameter.clear()
         if len(self.fits) > 0:
             if not self.link_all_of_type:
@@ -340,6 +412,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.update_link_text()
 
     def update_parameter_target(self):
+        """Refresh the target-parameter combo box based on the selected target fit."""
         self.comboBox_gfTargetParameter.clear()
         if len(self.fits) > 0:
             ftIndex = self.comboBox_gfTargetFit.currentIndex()
@@ -349,6 +422,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
             self.comboBox_gfTargetParameter.addItems([p.name for p in ft.model.parameters_all])
 
     def update_widgets(self):
+        """Refresh all combo boxes and parameter lists from model state."""
         self.comboBox.clear()
         self.comboBox.addItems(self.local_fit_names)
 
@@ -359,6 +433,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.comboBox_gfTargetFit.addItems(usedLocalFitNames)
 
     def onSaveTable(self):
+        """Qt slot: save the link table to a pickle file."""
         filename = chisurf.gui.widgets.save_file(
             description='Save link-table',
             file_type='.p'
@@ -366,6 +441,7 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         pickle.dump(self.links, open(filename, "wb"))
 
     def onLoadTable(self):
+        """Qt slot: load a link table from a pickle file."""
         filename = chisurf.gui.widgets.get_filename(
             description='Open link-table',
             file_type='link file (*.p)'
@@ -375,5 +451,6 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
         self.onAddLink(links)
 
     def clear_listed_links(self):
+        """Qt slot: clear all rows from the global-links table."""
         self.table_GlobalLinks.setRowCount(0)
 

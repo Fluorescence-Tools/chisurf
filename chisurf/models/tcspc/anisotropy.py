@@ -54,38 +54,47 @@ class Anisotropy(FittingParameterGroup):
 
     @property
     def r0(self) -> float:
+        """Fundamental anisotropy r0."""
         return self._r0.value
 
     @r0.setter
     def r0(self, v: chisurf.fitting.parameter.FittingParameter):
+        """Fundamental anisotropy r0."""
         self._r0.value = v
 
     @property
     def l1(self) -> float:
+        """First polarizer transmission factor l1."""
         return self._l1.value
 
     @l1.setter
     def l1(self, v: chisurf.fitting.parameter.FittingParameter):
+        """First polarizer transmission factor l1."""
         self._l1.value = v
 
     @property
     def l2(self) -> float:
+        """Second polarizer transmission factor l2."""
         return self._l2.value
 
     @l2.setter
     def l2(self, v: chisurf.fitting.parameter.FittingParameter):
+        """Second polarizer transmission factor l2."""
         self._l2.value = v
 
     @property
     def g(self) -> float:
+        """G-factor for anisotropy correction."""
         return self._g.value
 
     @g.setter
     def g(self, v: chisurf.fitting.parameter.FittingParameter):
+        """G-factor for anisotropy correction."""
         self._g.value = v
 
     @property
     def rho(self) -> np.array:
+        """Rotational correlation times array."""
         r = np.array([rho.value for rho in self._rhos], dtype=np.float64)
         r = np.sqrt(r**2)
         for i, v in enumerate(r):
@@ -94,6 +103,7 @@ class Anisotropy(FittingParameterGroup):
 
     @property
     def b(self) -> np.array:
+        """Rotational amplitudes array, normalized to r0."""
         a = np.sqrt(np.array([g.value for g in self._bs]) ** 2)
         a /= a.sum()
         a *= self.r0
@@ -103,6 +113,7 @@ class Anisotropy(FittingParameterGroup):
 
     @property
     def rotation_spectrum(self) -> np.array:
+        """Interleaved (amplitude, rho, ...) rotation spectrum."""
         rot = np.empty(2 * len(self), dtype=np.float64)
         rot[0::2] = self.b
         rot[1::2] = self.rho
@@ -110,10 +121,12 @@ class Anisotropy(FittingParameterGroup):
 
     @property
     def polarization_type(self) -> str:
+        """Current polarization type (vm, vv, vh, vv/vh)."""
         return self._polarization_type
 
     @polarization_type.setter
     def polarization_type(self, v: str):
+        """Current polarization type (vm, vv, vh, vv/vh)."""
         self._polarization_type = v
 
     def set_polarization_by_group_position(self, fit, model_instance):
@@ -191,7 +204,9 @@ class Anisotropy(FittingParameterGroup):
         # If we get here, polarization was not set
         return False
 
+    # TODO: needs docstring
     def get_decay(self, lifetime_spectrum: np.ndarray):
+        """Calculate the polarized decay."""
         return chisurf.fluorescence.anisotropy.decay.calculcate_spectrum(
             lifetime_spectrum=lifetime_spectrum,
             anisotropy_spectrum=self.rotation_spectrum,
@@ -202,8 +217,10 @@ class Anisotropy(FittingParameterGroup):
         )
 
     def __len__(self):
+        """Return the number of components."""
         return len(self._bs)
 
+    # TODO: needs docstring
     def add_rotation(
             self,
             b: float = 0.2,
@@ -214,6 +231,7 @@ class Anisotropy(FittingParameterGroup):
             bound_on: bool = False,
             **kwargs
     ):
+        """Add a rotation component with GUI widget."""
         b_value = b
         rho_value = rho
         i = (len(self) + 1)
@@ -238,10 +256,13 @@ class Anisotropy(FittingParameterGroup):
         self._rhos.append(rho)
         self._bs.append(b)
 
+    # TODO: needs docstring
     def remove_rotation(self) -> None:
+        """Remove the last rotation component and widget."""
         self._rhos.pop().close()
         self._bs.pop().close()
 
+    # TODO: needs docstring
     def __init__(
             self,
             polarization: str = None,
@@ -252,6 +273,7 @@ class Anisotropy(FittingParameterGroup):
             l2: float = 0.00368,
             **kwargs
     ):
+        """Initialize the instance."""
         super(Anisotropy, self).__init__(name=name, **kwargs)
 
         self._rhos = list()

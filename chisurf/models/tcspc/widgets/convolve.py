@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     def _resolve_fit_group_index(self):
+        """Resolve the fit group index for the current fit.
+
+        Returns
+        -------
+        int or None
+            The fit group index, or None if it could not be resolved.
+        """
         try:
             target = getattr(self.fit, "fit_group", None) or self.fit
             for idx, fit_group in enumerate(list(getattr(chisurf, "fits", []) or [])):
@@ -34,13 +41,16 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     @property
     def fwhm(self) -> float:
+        """Full width at half maximum of the IRF."""
         return self.irf.fwhm
 
     @fwhm.setter
     def fwhm(self, v: float):
+        """Full width at half maximum of the IRF."""
         self.lineEdit_2.setText("%.3f" % v)
 
     def _refresh_fwhm_display(self):
+        """Update the displayed FWHM value from the current IRF."""
         try:
             irf = self.irf
             if irf is not None and hasattr(irf, "fwhm"):
@@ -50,6 +60,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
     @property
     def gui_mode(self):
+        """Currently selected convolution mode in the GUI."""
         if self.radioButton_2.isChecked():
             return "exp"
         elif self.radioButton.isChecked():
@@ -58,6 +69,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             return "full"
 
     @chisurf.gui.decorators.init_with_ui("tcspc_convolve.ui")
+    # TODO: needs docstring
     def __init__(
             self,
             fit: Fit,
@@ -65,6 +77,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             *args,
             **kwargs
     ):
+        """Initialize the instance."""
         if hide_curve_convolution:
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
@@ -140,7 +153,9 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         except Exception:
             pass
 
+    # TODO: needs docstring
     def onConvolutionModeChanged(self):
+        """Handle convolution mode change."""
         # This complex operation sets multiple properties and updates the model
         # For now, we'll use the existing model update action and handle the
         # property changes through the model's own methods
@@ -223,7 +238,9 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
 
         self._refresh_fwhm_display()
 
+    # TODO: needs docstring
     def change_irf(self):
+        """Handle IRF selection change."""
         idx = self.irf_select.selected_curve_index
         name = self.irf_select.curve_name
         payload = {
@@ -239,7 +256,9 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         )
         self._refresh_fwhm_display()
 
+    # TODO: needs docstring
     def onUnloadIRF(self):
+        """Handle IRF unload."""
         payload = {}
         fit_index = self._resolve_fit_group_index()
         if fit_index is not None:

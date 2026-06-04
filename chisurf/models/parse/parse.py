@@ -18,16 +18,32 @@ class ParseModel(ModelCurve, FittingParameterGroup):
 
     @property
     def func(self) -> str:
+        """The equation string that defines the model."""
         return self._func
 
     @func.setter
     def func(self, v):
+        """Set the equation string and trigger parsing."""
         self._func = v
         self.parse_code()
 
     def parse_code(self):
-
+        """Parse the equation string and create fitting parameters for variables."""
         def var_found(scanner, name: str):
+            """Handle a variable name found by the scanner.
+
+            Parameters
+            ----------
+            scanner : Scanner
+                The scanner instance.
+            name : str
+                The variable name found.
+
+            Returns
+            -------
+            str
+                The replacement token (``a[index]``) or the original name.
+            """
             if 'scipy' in name:
                 return name
             elif 'numpy' in name:
@@ -77,6 +93,13 @@ class ParseModel(ModelCurve, FittingParameterGroup):
             *args,
             **kwargs,
     ):
+        """Initialize the ParseModel.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit, optional
+            Fit object this model is attached to.
+        """
         super().__init__(fit,*args, **kwargs)
         self._keys = list()
         self._models = dict()
@@ -87,6 +110,7 @@ class ParseModel(ModelCurve, FittingParameterGroup):
         self.code = self._func
 
     def update_model(self, **kwargs):
+        """Evaluate the parsed equation and update the model curve."""
         super().update_model(**kwargs)
         a = [p.value for p in self._parameters_equation]
         x = self.fit.data.x

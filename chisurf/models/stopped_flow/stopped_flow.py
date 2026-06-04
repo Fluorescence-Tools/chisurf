@@ -16,6 +16,7 @@ from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
 
 
 class ParseStoppedFlowWidget(ParseModelWidget):
+    """Stopped-flow model widget using a parse-based equation from a JSON file."""
 
     plot_classes = [
         (
@@ -30,6 +31,13 @@ class ParseStoppedFlowWidget(ParseModelWidget):
     ]
 
     def __init__(self, fit):
+        """Initialize the stopped-flow parse widget.
+
+        Parameters
+        ----------
+        fit : chisurf.fitting.fit.Fit
+            Fit object this widget belongs to.
+        """
         fn = os.path.join(
             chisurf.settings.package_directory,
             'settings', 'stopped_flow.models.json'
@@ -38,6 +46,8 @@ class ParseStoppedFlowWidget(ParseModelWidget):
 
 
 class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
+    """Widget for kinetic reaction system modeling with GUI controls."""
+
     name = "Reaction-System"
 
     plot_classes = [
@@ -53,10 +63,18 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
 
     @property
     def autoscale(self):
+        """Whether the model Y values should be auto-scaled to match data."""
         return bool(self.checkBox.isChecked())
 
     @property
     def y_values(self):
+        """Compute the model Y values from species concentrations, scaling and background.
+
+        Returns
+        -------
+        numpy.ndarray
+            The computed model Y values.
+        """
         try:
             y = self.signal_intensity * self.scaleing.value
             if self.autoscale:
@@ -72,42 +90,59 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
 
     @y_values.setter
     def y_values(self, v):
+        """No-op setter to satisfy the read-only property protocol."""
         pass
 
     @property
     def times(self):
+        """Time axis (x data) within the current fit window."""
         return self.fit.data.x[self.xmin:self.xmax]
 
     @property
     def new_brightness_fixed(self):
+        """Whether new species brightness parameters are fixed by default."""
         return bool(self.checkBox_3.isChecked())
 
     @property
     def new_concentration_fixed(self):
+        """Whether new species concentration parameters are fixed by default."""
         return bool(self.checkBox_4.isChecked())
 
     @property
     def xmax(self):
+        """Maximum index of the fit window."""
         return self.fitting_widget.xmax
 
     @xmax.setter
     def xmax(self, v):
+        """Set the maximum index of the fit window."""
         self.fitting_widget.xmax = int(v)
 
     @property
     def xmin(self):
+        """Minimum index of the fit window."""
         return self.fitting_widget.xmin
 
     @xmin.setter
     def xmin(self, v):
+        """Set the minimum index of the fit window."""
         self.fitting_widget.xmin = int(v)
 
     def clear(self):
+        """Clear all reactions, species, and parameter widgets."""
         ReactionSystem.clear(self)
         chisurf.gui.widgets.clear_layout(self.verticalLayout_10)
         chisurf.gui.widgets.clear_layout(self.verticalLayout_7)
 
     def __init__(self, **kwargs):
+        """Initialize the reaction system widget.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments forwarded to the parent classes, including
+            the optional ``parameter`` dict with reaction/species definitions.
+        """
         self.scaleing = FittingParameterWidget(
             name='scaling',
             value=1.0
@@ -147,6 +182,13 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.verticalLayout_4.addWidget(self.timeshift)
 
     def setParameter(self, parameter):
+        """Configure the reaction system from a parameter dictionary.
+
+        Parameters
+        ----------
+        parameter : dict
+            Dictionary with ``'reactions'`` and ``'species'`` keys.
+        """
         self.clear()
         if isinstance(parameter, dict):
             reactions = parameter['reactions']
@@ -157,10 +199,12 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
                 self.onAddSpecies(**s)
 
     def onPlot(self):
+        """Calculate the reaction and generate the plot."""
         self.calc()
         self.plot()
 
     def onLoadReaction(self):
+        """Open a file dialog and load a reaction system from JSON."""
         self.clear()
         #filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open Reaction-File', '.rc.json', 'Reaction-Files (*.rc.json)'))
         filename = chisurf.gui.widgets.get_filename('Open Reaction-File', 'Reaction-Files (*.rc.json)')
@@ -170,18 +214,28 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.plainTextEdit.setPlainText(open(filename).read())
 
     def onSaveLabelingFile(self):
+        """Save the current reaction definition to a JSON file."""
         txt = str(self.plainTextEdit.toPlainText())
         json_file = str(QtWidgets.QFileDialog.getSaveFileName(self, 'Save Reaction-JSON File',
                                                                   '.rc.json', 'JSON-Files (*.rc.json)'))[0]
         open(json_file, 'w').write(txt)
 
     def onUpdateReaction(self):
+        """Update the reaction system from the text editor contents."""
         self.clear()
         txt = str(self.plainTextEdit.toPlainText())
         j = json.loads(txt)
         self.setParameter(j)
 
     def onAddSpecies(self, **kwargs):
+        """Add a species with brightness and concentration parameters.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments with species parameters (brightness, concentration,
+            brightness_fixed, concentration_fixed, species name).
+        """
         brightness = kwargs.get('brightness', 1.0)
         brightness_fixed = kwargs.get('brightness_fixed', True)
         concentration = kwargs.get('concentration', 1.0)
@@ -215,6 +269,14 @@ class ReactionWidget(QtWidgets.QWidget, ReactionSystem, Model):
         self.verticalLayout_10.addLayout(l)
 
     def add_reaction(self, **kwargs):
+        """Add a chemical reaction to the system.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments with reaction parameters (educts, products,
+            educt_stoichiometry, product_stoichometry, rate).
+        """
         educts = kwargs.get('educts', 0)
         products = kwargs.get('products', 0)
         educt_stoichiometry = np.array(
