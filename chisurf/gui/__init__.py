@@ -60,13 +60,6 @@ def initialize_gui_executors():
         except Exception:
             pass
     
-    try:
-        from chisurf.mcp.server import initialize_gui_sync
-        initialize_gui_sync()
-    except Exception:
-        pass
-
-
 def run_on_gui_thread(func, *args, **kwargs):
     """Ensure *func* executes on the Qt GUI thread.
 
@@ -436,11 +429,6 @@ def setup_gui(
         import chisurf.plots
         import chisurf.structure
         
-        # Pre-import MCP server to avoid thread-safety issues with Qt imports in threads
-        try:
-            import chisurf.mcp.server
-        except Exception:
-            pass
 
     def setup_ipython():
         import chisurf.gui.widgets
@@ -1128,61 +1116,6 @@ def setup_gui(
             initialize_gui_executors()
         except Exception:
             pass
-    elif stage == "start_mcp":
-        try:
-            _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
-            _start_mcp = bool(_gui_cfg.get('mcp_autostart', False))
-        except Exception:
-            _start_mcp = False
-
-        if not _start_mcp:
-            chisurf.logging.info("Skipping MCP server startup (disabled in settings).")
-            return None
-
-        chisurf.logging.info("Starting MCP server process")
-        try:
-            running_thread = getattr(chisurf, "__mcp_thread__", None)
-            if running_thread is not None and getattr(running_thread, "is_alive", lambda: False)():
-                chisurf.logging.info("MCP server thread already running")
-                return None
-
-            def _run_mcp_server_in_process():
-                try:
-                    import asyncio
-                    import sys
-                    from chisurf.mcp.server import create_mcp, resolve_transport_kwargs
-
-                    if sys.platform == 'win32':
-                        try:
-                            # Use Proactor policy on Windows if possible, as it's more stable for HTTP
-                            asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-                        except Exception:
-                            pass
-
-                    mcp = create_mcp(name="ChiSurf")
-                    kwargs = resolve_transport_kwargs(
-                        transport="streamable-http",
-                        host="127.0.0.1",
-                        port=8765,
-                        path="/mcp",
-                    )
-                    # We use mcp.run directly, but in a thread. 
-                    # Note: Signal handlers are usually only allowed in the main thread.
-                    # FastMCP might try to install them; if it crashes we might need a lower-level start.
-                    mcp.run(transport="streamable-http", show_banner=False, **kwargs)
-                except Exception as mcp_err:
-                    chisurf.logging.error(f"Failed to run MCP server thread: {mcp_err}")
-
-            chisurf.__mcp_thread__ = threading.Thread(
-                target=_run_mcp_server_in_process,
-                name="chisurf-mcp-server",
-                daemon=True,
-            )
-            chisurf.__mcp_thread__.start()
-        except Exception as e:
-            chisurf.logging.error(f"Failed to start MCP server: {e}")
-            chisurf.__mcp_thread__ = None
-
     elif stage == "start_jupyter":
         try:
             _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
@@ -1438,13 +1371,6 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     else:
         deferred_stages.append(("Loading plugins", _make_bg_stage("populate_plugins")))
 
-    try:
-        _cfg_mcp = chisurf.settings.cs_settings.get('gui') or {}
-        _start_mcp2 = bool(_cfg_mcp.get('mcp_autostart', False))
-    except Exception:
-        _start_mcp2 = False
-    if _start_mcp2:
-        deferred_stages.append(("Starting MCP (background)", _make_bg_stage("start_mcp")))
 
     def _warmup():
         try:
@@ -1616,7 +1542,7 @@ def get_app():
 
 
     def shutdown_services():
-        """Ensure the Jupyter notebook server and MCP server are terminated when the application closes."""
+        """Ensure the Jupyter notebook server is terminated when the application closes."""
         import chisurf
         jupyter_proc = getattr(chisurf, '__jupyter_process__', None)
         # Only terminate if it's still running.
@@ -1627,14 +1553,6 @@ def get_app():
             except subprocess.TimeoutExpired:
                 # If it doesn't stop in time, force-kill it.
                 jupyter_proc.kill()
-
-        mcp_proc = getattr(chisurf, '__mcp_process__', None)
-        if mcp_proc is not None and mcp_proc.poll() is None:
-            mcp_proc.terminate()
-            try:
-                mcp_proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                mcp_proc.kill()
 
     # Connect our shutdown function to the application's aboutToQuit signal.
     app.aboutToQuit.connect(shutdown_services)
