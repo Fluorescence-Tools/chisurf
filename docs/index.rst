@@ -8,6 +8,8 @@ Welcome to chisurf's documentation!
    irf_estimation
    history_project_mcp
    architecture_mvc_actions
+   architecture
+   plugins
    user_models
 
    api
