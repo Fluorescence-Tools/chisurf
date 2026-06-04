@@ -280,6 +280,18 @@ def migrate_schema(conn: sqlite3.Connection):
             cursor.close()
 
 def get_schema_version(conn: sqlite3.Connection) -> int:
+    """Get the current schema version of the database.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection.
+
+    Returns
+    -------
+    int
+        Schema version number, or 0 if not available.
+    """
     try:
         row = conn.execute("SELECT version FROM _schema_version").fetchone()
         return row[0] if row else 0
@@ -287,5 +299,14 @@ def get_schema_version(conn: sqlite3.Connection) -> int:
         return 0
 
 def set_schema_version(conn: sqlite3.Connection, version: int):
+    """Set the schema version of the database.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        Database connection.
+    version : int
+        Version number to set.
+    """
     conn.execute("DELETE FROM _schema_version")
     conn.execute("INSERT INTO _schema_version (version) VALUES (?)", (version,))

@@ -85,6 +85,14 @@ class Spectrum:
     intensity_values: np.ndarray
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert the spectrum to a dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary with probe_id, spectrum_type, wavelengths, and
+            intensity_values as native Python types.
+        """
         return {
             "probe_id": self.probe_id,
             "spectrum_type": self.spectrum_type,

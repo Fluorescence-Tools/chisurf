@@ -130,6 +130,16 @@ def _imp_keep_residue(res_name: str) -> bool:
       amino-acid residue names are kept; everything else (e.g. ligands,
       sugars, modified residues) is dropped from the returned atoms
       array. Defaults to ``True`` when the key is missing.
+
+    Parameters
+    ----------
+    res_name : str
+        Three-letter residue name.
+
+    Returns
+    -------
+    bool
+        True if the residue should be kept.
     """
 
     try:
@@ -227,6 +237,20 @@ def fetch_pdb_string(
 
 
 def fetch_pdb(pdb_id: str, **kwargs):
+    """Download a PDB file from RCSB and parse it.
+
+    Parameters
+    ----------
+    pdb_id : str
+        Four-character PDB identifier.
+    **kwargs
+        Passed to parse_string_pdb.
+
+    Returns
+    -------
+    np.ndarray
+        Structured array with atom information.
+    """
     st = fetch_pdb_string(pdb_id)
     return parse_string_pdb(st, **kwargs)
 
@@ -317,6 +341,20 @@ def parse_string_pqr(
         string: str,
         verbose: bool = chisurf.settings.cs_settings['verbose']
 ):
+    """Parse a PQR format string into a structured atom array.
+
+    Parameters
+    ----------
+    string : str
+        PQR file content as a single string.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    np.ndarray
+        Structured array with atom information including charges and radii.
+    """
     rows = string.splitlines()
     atoms = np.zeros(len(rows), dtype={'names': keys, 'formats': formats})
     ni = 0
@@ -448,31 +486,34 @@ def read(
         verbose: bool = None,
         **kwargs
 ) -> np.ndarray:
-    if verbose is None:
-        verbose = chisurf.settings.cs_settings['verbose']
-    """ Open pdb_file and read each line into pdb (a list of lines)
+    """Read atomic coordinates from a PDB/PQR/mmCIF file.
 
-    :param filename:
-    :param assign_charge:
-    :return:
-        numpy structured array containing the PDB info and VdW-radii and charges
+    Parameters
+    ----------
+    filename : str
+        Path to the coordinate file.
+    assign_charge : bool
+        If True, assign charges based on residue type.
+    verbose : bool, optional
+        If True, print progress.
+
+    Returns
+    -------
+    np.ndarray
+        Structured array with atom information.
 
     Examples
     --------
-
     >>> import chisurf.fio
     >>> pdb_file = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
     >>> pdb = chisurf.fio.structure.coordinates.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
            (1, ' ', 7, 'MET', 2, 'CA', 'C', [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),
-           (2, ' ', 7, 'MET', 3, 'C', 'C', [74.361, -18.178, 10.643], 0.0, 1.76, 0.0, 12.0107),
-           (3, ' ', 7, 'MET', 4, 'O', 'O', [73.642, -18.708, 11.489], 0.0, 1.4, 0.0, 15.9994),
-           (4, ' ', 7, 'MET', 5, 'CB', 'C', [73.384, -15.89, 10.649], 0.0, 1.76, 0.0, 12.0107)],
-          dtype=[('i', '<i4'), ('chain', 'S1'), ('res_id', '<i4'), ('res_name', 'S5'), ('atom_id', '<i4'), ('atom_name', 'S5
-    '), ('element', 'S1'), ('xyz', '<f8', (3,)), ('charge', '<f8'), ('radius', '<f8'), ('bfactor', '<f8'), ('mass', '<f8')
-    ])
+           ...
     """
+    if verbose is None:
+        verbose = chisurf.settings.cs_settings['verbose']
     if os.path.isfile(filename):
         with io.zipped.open_maybe_zipped(
                 filename=filename,
