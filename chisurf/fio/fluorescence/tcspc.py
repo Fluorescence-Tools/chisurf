@@ -10,6 +10,19 @@ from chisurf import typing
 
 
 def _safe_float(value: typing.Any, default: typing.Optional[float] = None) -> typing.Optional[float]:
+    """Convert a value to float, returning default on failure.
+
+    Parameters
+    ----------
+    value : any
+        Value to convert.
+    default : float, optional
+        Fallback value.
+
+    Returns
+    -------
+    float or None
+    """
     try:
         if value is None:
             return default
@@ -19,6 +32,19 @@ def _safe_float(value: typing.Any, default: typing.Optional[float] = None) -> ty
 
 
 def _annotate_anisotropy_meta(data_group, g_factor, l1, l2, source: str):
+    """Annotate anisotropy calibration metadata on a DataCurveGroup.
+
+    Parameters
+    ----------
+    data_group : DataCurveGroup
+        The data group to annotate.
+    g_factor : float or None
+        G-factor for anisotropy correction.
+    l1, l2 : float or None
+        L-factor calibration values.
+    source : str
+        Source description of the calibration.
+    """
     group_meta = getattr(data_group, 'meta_data', None)
     if not isinstance(group_meta, dict):
         group_meta = {}
@@ -65,7 +91,38 @@ def read_tcspc_csv(
         *args,
         **kwargs
 ) -> chisurf.data.DataCurveGroup:
+    """Read TCSPC data from a CSV or Jordi file.
 
+    Parameters
+    ----------
+    filename : str, optional
+        Path to the data file.
+    skiprows : int, optional
+        Number of rows to skip.
+    rebin : tuple of int
+        Rebinning factors (x, y).
+    dt : float
+        Time bin width in nanoseconds.
+    matrix_columns : tuple of int
+        Column indices for x and y data.
+    use_header : bool
+        Whether to use header row.
+    is_jordi : bool
+        If True, read as Jordi format.
+    polarization : str
+        Polarization channel ('vm', 'vv', 'vh', 'vv/vh').
+    g_factor : float
+        G-factor for anisotropy correction.
+    l1, l2 : float
+        L-factor calibration parameters.
+    experiment : Experiment, optional
+        Experiment to associate with the data.
+
+    Returns
+    -------
+    DataCurveGroup
+        DataCurveGroup containing the TCSPC curves.
+    """
     # Load data
     rebin_x, rebin_y = rebin
 

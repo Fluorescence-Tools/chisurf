@@ -404,6 +404,20 @@ def read_zeiss_fcs(
         filename: str,
         verbose: bool = False
 ) -> typing.List[FCSDataset]:
+    """Read a Zeiss Confocor .fcs file and return FCS datasets.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the .fcs file.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    list of FCSDataset
+        List of FCS datasets.
+    """
     if verbose:
         print("Reading ALV .asc from file: ", filename)
     d = openFCS(filename)

@@ -91,6 +91,24 @@ def write_bv4_analysis(df: pd.DataFrame, analysis_folder: str = "analysis"):
 
 
 def get_indices_in_ranges(rout, mt, chs, micro_time_ranges):
+    """Find photon indices matching routing channels and micro-time ranges.
+
+    Parameters
+    ----------
+    rout : np.ndarray
+        Routing channel numbers.
+    mt : np.ndarray
+        Micro-time values.
+    chs : list of int
+        Allowed routing channels.
+    micro_time_ranges : list of tuple
+        (start, end) micro-time range pairs.
+
+    Returns
+    -------
+    list of int
+        Matching photon indices.
+    """
     # Create a boolean mask for the rout values in chs
     rout_mask = np.isin(rout, chs)
 
@@ -164,6 +182,17 @@ def write_bur_file_old(bur_filename, start_stop, filename, tttr, windows, detect
 
     # Helper: create a zero row dict
     def create_zero_row(keys):
+        """Create a zero-filled OrderedDict row.
+
+        Parameters
+        ----------
+        keys : list
+            Column keys.
+
+        Returns
+        -------
+        OrderedDict
+        """
         row = OrderedDict()
         for key in keys:
             row[key] = "" if key == "" else 0
@@ -526,6 +555,20 @@ def read_burst_analysis(
     """
 
     def update_tttr_dict(data_path, tttrs: Dict[str, tttrlib.TTTR] = dict()):
+        """Load TTTR files not yet in the cache dictionary.
+
+        Parameters
+        ----------
+        data_path : Path
+            Directory containing TTTR files.
+        tttrs : dict
+            Cache of {filename: tttrlib.TTTR}.
+
+        Returns
+        -------
+        dict
+            Updated cache dictionary.
+        """
         for ff, fl in zip(df['First File'], df['Last File']):
             try:
                 tttr = tttrs[ff]
@@ -567,6 +610,18 @@ def read_burst_analysis(
 
 
 def read_bur_file(bur_path):
+    """Read a .bur file into a pandas DataFrame.
+
+    Parameters
+    ----------
+    bur_path : str or Path
+        Path to the .bur file.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the burst data.
+    """
     bur_path = pathlib.Path(bur_path)
     if not bur_path.exists():
         raise FileNotFoundError(bur_path)

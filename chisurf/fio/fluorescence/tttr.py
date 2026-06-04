@@ -46,6 +46,20 @@ def pq_photons(
     np.array,
     np.array
 ]:
+    """Extract photon data from a PicoQuant PTU binary byte array.
+
+    Parameters
+    ----------
+    b : np.ndarray
+        Binary data as uint8 array.
+    invert_tac : bool
+        If True, invert TAC values.
+
+    Returns
+    -------
+    tuple of np.array
+        (number_of_photons, macro_times, micro_times, routing_channels).
+    """
     length = (b.shape[0] - 4) // 4
     event = np.zeros(length, dtype=np.uint64)
     mt = np.zeros(length, dtype=np.uint64)
@@ -416,6 +430,18 @@ def iss_photons(
 def bh123_header(
         b: np.array
 ) -> typing.Tuple[float, bool]:
+    """Parse the header of a BH132 SPC file.
+
+    Parameters
+    ----------
+    b : np.array
+        Binary data as uint8 array.
+
+    Returns
+    -------
+    tuple of (float, bool)
+        Macro-time clock in 0.1 ns units and DataInvalid flag.
+    """
     bHeader = np.unpackbits(b[0:4])
     conv8le = np.array([128, 64, 32, 16, 8, 4, 2, 1])
     conv24be = np.array([1, 256, 65536])
@@ -431,6 +457,18 @@ def bh123_header(
 def iss_header(
         b: np.ndarray
 ) -> typing.Tuple[float, bool]:
+    """Parse the header of an ISS FCS file.
+
+    Parameters
+    ----------
+    b : np.ndarray
+        Binary data as uint8 array.
+
+    Returns
+    -------
+    tuple of (float, bool)
+        Macro-time clock in ns and DataInvalid flag (always False).
+    """
     # acquisition frequency in Hz
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
@@ -445,6 +483,18 @@ def iss_header(
 def ht3_header(
         b: np.ndarray
 ) -> typing.Tuple[float, int]:
+    """Parse the header of a PicoQuant HT3 file.
+
+    Parameters
+    ----------
+    b : np.ndarray
+        Binary data as uint8 array.
+
+    Returns
+    -------
+    tuple of (float, int)
+        Macro-time clock in ns and DataInvalid flag.
+    """
     # TODO doesnt read header properly!!!!!
     frequency = b[2:6].view(dtype=np.uint32)[0]
     MTclock = 1. / float(frequency) * 1.e9
@@ -504,6 +554,30 @@ def make_spc_dict(
         number_of_events: int,
         filename: str
 ) -> typing.Dict:
+    """Create a dictionary with SPC photon data.
+
+    Parameters
+    ----------
+    macro_times : np.ndarray
+        Macro-time clock counts.
+    micro_times : np.ndarray
+        Micro-time (TAC) values.
+    routing_channels : np.ndarray
+        Routing channel numbers.
+    event_types : np.ndarray
+        Event type indicators.
+    macro_time_resolution : float
+        Macro-time resolution in ms.
+    number_of_events : int
+        Total number of events.
+    filename : str
+        Source filename.
+
+    Returns
+    -------
+    dict
+        Dictionary with 'filename', 'header', and 'photon' keys.
+    """
     spc = {
         'filename': filename,
         'header': {
@@ -531,6 +605,30 @@ def make_tp_photon_hdf(
         spcs: list,
         **kwargs
 ) -> tables.File:
+    """Write SPC data into an HDF5 photon table.
+
+    Parameters
+    ----------
+    title : str
+        HDF5 group name.
+    filename : str
+        Output HDF5 file path.
+    verbose : bool
+        If True, print progress.
+    routine_name : str
+        Name of the reading routine.
+    number_of_routing_channels : int
+        Number of routing channels.
+    number_of_tac_channels : int
+        Number of TAC channels.
+    spcs : list of dict
+        List of SPC dictionaries from make_spc_dict.
+
+    Returns
+    -------
+    tables.File
+        The open HDF5 file handle.
+    """
     h5: tables.File = make_hdf(
         title=title,
         filename=filename,
@@ -772,6 +870,22 @@ def read_hht3(
         n_rec: int,
         version: int = 1
 ):
+    """Parse HydraHarp T3 mode data from a uint32 record array.
+
+    Parameters
+    ----------
+    data : np.array
+        Raw uint32 record data.
+    n_rec : int
+        Number of records.
+    version : int
+        HydraHarp version (1 or 2).
+
+    Returns
+    -------
+    tuple of np.array
+        (special_bits, macro_times, micro_times, channel_numbers).
+    """
 
     sb = np.zeros(n_rec, dtype=np.uint8)
     mt = np.zeros(n_rec, dtype=np.uint64)
@@ -823,6 +937,22 @@ def read_pht3(
         n_rec: int,
         version: int = 1
 ):
+    """Parse PicoHarp T3 mode data from a uint32 record array.
+
+    Parameters
+    ----------
+    data : np.array
+        Raw uint32 record data.
+    n_rec : int
+        Number of records.
+    version : int
+        PicoHarp version.
+
+    Returns
+    -------
+    tuple of np.array
+        (special_bits, macro_times, micro_times, channel_numbers).
+    """
 
     sb = np.zeros(n_rec, dtype=np.uint8)
     mt = np.zeros(n_rec, dtype=np.uint64)

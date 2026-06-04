@@ -13,6 +13,17 @@ def write_china_mat(
         d: typing.List[typing.Dict],
         verbose: bool = False
 ) -> None:
+    """Write FCS data to a China .mat file.
+
+    Parameters
+    ----------
+    filename : str
+        Output file path.
+    d : list of dict
+        List of FCS datasets.
+    verbose : bool
+        If True, print progress.
+    """
     if verbose:
         print("Writing to file: %s" % filename)
     mdict = dict()
@@ -28,6 +39,22 @@ def read_china_mat(
         skip_points: int = 4,
         verbose: bool = False
 ) -> typing.List[FCSDataset]:
+    """Read a China .mat FCS file and return FCS datasets.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the .mat file.
+    skip_points : int
+        Number of initial points to skip.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    list of FCSDataset
+        List of FCS datasets.
+    """
     m = scipy.io.loadmat(filename)
     n_measurements = m['AA'].shape[1]
     # save intensity traces

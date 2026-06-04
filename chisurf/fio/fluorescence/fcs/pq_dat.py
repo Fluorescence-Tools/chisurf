@@ -9,6 +9,20 @@ def read_dat(
         filename: str,
         verbose: bool = False
 ) -> typing.List[typing.Dict]:
+    """Read a PicoQuant .dat FCS file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the .dat file.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    list of dict
+        List of FCS dataset dictionaries.
+    """
     if verbose:
         print("Reading PicoQuant data file: %s" % filename)
     correlations = list()

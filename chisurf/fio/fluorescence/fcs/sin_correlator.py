@@ -168,8 +168,19 @@ def _parse_old_mode(lines: typing.List[str]) -> Tuple[List[ArrayLike], List[Trac
 
     mode_str = mode_str.strip()
 
-    # Helper to read full correlation columns.
     def _read_corr_columns(cols: typing.List[int]) -> typing.List[ArrayLike]:
+        """Read full correlation columns from the CSV data.
+
+        Parameters
+        ----------
+        cols : list of int
+            Column indices to read.
+
+        Returns
+        -------
+        list of ArrayLike
+            List of correlation curve arrays.
+        """
         buffers = [[] for _ in cols]
         for row in csv.reader(corr_lines, delimiter="\t"):
             if not row:
@@ -187,8 +198,19 @@ def _parse_old_mode(lines: typing.List[str]) -> Tuple[List[ArrayLike], List[Trac
                 buf.append((tau_ms, val))
         return [np.asarray(b, dtype=float) for b in buffers]
 
-    # Helper to read 1 or 2 intensity traces.
     def _read_traces(two_channels: bool) -> typing.List[ArrayLike]:
+        """Read 1 or 2 intensity traces from the CSV data.
+
+        Parameters
+        ----------
+        two_channels : bool
+            If True, read two channels.
+
+        Returns
+        -------
+        list of ArrayLike
+            List of intensity trace arrays.
+        """
         t1: typing.List[typing.Tuple[float, float]] = []
         t2: typing.List[typing.Tuple[float, float]] = []
         for row in csv.reader(trace_lines, delimiter="\t"):

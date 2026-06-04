@@ -198,6 +198,18 @@ def openCSV(path, filename=None):
 def read_pycorrfit_header(
         filename: str
 ) -> str:
+    """Read the comment header from a PyCorrFit CSV file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the CSV file.
+
+    Returns
+    -------
+    str
+        The comment header string.
+    """
     header = ""
     with open(filename, "r") as fp:
         lines = fp.readlines()
@@ -213,6 +225,20 @@ def read_pycorrfit(
         filename: str,
         verbose: bool = False
 ) -> typing.List[FCSDataset]:
+    """Read a PyCorrFit CSV file and return FCS datasets.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the CSV file.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    list of FCSDataset
+        List of FCS datasets.
+    """
     header = read_pycorrfit_header(
         filename=filename
     )

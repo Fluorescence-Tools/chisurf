@@ -309,6 +309,17 @@ def write_single_fcs(
         fn: str,
         file_type: str
 ):
+    """Write a single FCS curve to a file.
+
+    Parameters
+    ----------
+    data_set : DataCurve
+        FCS data curve to write.
+    fn : str
+        Output filename.
+    file_type : str
+        Output file format (e.g. 'kristine').
+    """
     correlation_amplitude = data_set.y
     correlation_time = data_set.x
     correlation_amplitude_uncertainty = data_set.ey
@@ -341,6 +352,21 @@ def write_fcs(
         verbose: bool = True,
         mode: str = 'w'
 ):
+    """Write FCS data to a file in the specified format.
+
+    Parameters
+    ----------
+    data : ExperimentDataCurveGroup
+        FCS data curves.
+    filename : str
+        Output filename.
+    file_type : str
+        Output file format ('kristine' or 'yaml').
+    verbose : bool
+        If True, print progress.
+    mode : str
+        File open mode ('w' or 'a').
+    """
     single_fcs_datatypes = ["kristine"]
     multi_fcs_datatypes = ["yaml"]
     # some data types can only hold a single FCS curve

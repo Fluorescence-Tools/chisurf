@@ -32,12 +32,20 @@ class PQResReader:
     tyBinaryBlob = 0xFFFFFFFF
 
     def __init__(self, filepath: str):
+        """Initialize PQResReader with a .pqres file path.
+
+        Parameters
+        ----------
+        filepath : str
+            Path to the .pqres file.
+        """
         self.filepath = filepath
         self.tags = {}
         self.data_offset = None
         self._read_header()
 
     def _read_header(self):
+        """Read and parse the PQRES file header (tags)."""
         with open(self.filepath, 'rb') as f:
             magic = f.read(8)
             if magic[:7] != b'PQRESLT':
@@ -59,6 +67,22 @@ class PQResReader:
             self.tags['_data_offset'] = self.data_offset
 
     def _interpret_tag(self, f, typ, value):
+        """Interpret a single tag value from the binary header.
+
+        Parameters
+        ----------
+        f : file-like
+            Open file handle positioned at tag data.
+        typ : int
+            Tag type identifier.
+        value : int
+            Raw tag value or size.
+
+        Returns
+        -------
+        object
+            Decoded Python value.
+        """
         if typ == self.tyEmpty8:
             return None
         elif typ == self.tyBool8:
@@ -87,17 +111,46 @@ class PQResReader:
             return f"<Unsupported type 0x{typ:X}>"
 
     def get_tag(self, name, default=None):
+        """Get a tag value by name.
+
+        Parameters
+        ----------
+        name : str
+            Tag name.
+        default : any, optional
+            Default value if tag not found.
+
+        Returns
+        -------
+        any
+            Tag value or default.
+        """
         return self.tags.get(name, default)
 
     def list_tags(self):
+        """Return non-internal tag names."""
         return [k for k in self.tags if not k.startswith('_')]
 
     def read_raw_data(self):
+        """Read raw binary data starting at the data offset.
+
+        Returns
+        -------
+        bytes
+            Raw data after the header.
+        """
         with open(self.filepath, 'rb') as f:
             f.seek(self.data_offset)
             return f.read()
 
     def get_curves(self) -> Dict[str, Dict[str, Any]]:
+        """Extract named X/Y curve data from the tag dictionary.
+
+        Returns
+        -------
+        dict of str to dict
+            Mapping from curve name to dict with 'X', 'Y', 'StdDev', 'Weight'.
+        """
         curves = {}
         for k in self.tags:
             if k.endswith("X"):
@@ -134,6 +187,7 @@ class PQResReader:
         return df_dict
 
     def __repr__(self):
+        """Return a string representation of the PQResReader."""
         lines = [f"<PQResReader: {self.filepath}>",
                  f"Version: {self.tags.get('Version')}",
                  f"Data offset: {self.data_offset}",

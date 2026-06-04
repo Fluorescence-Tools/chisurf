@@ -135,6 +135,17 @@ def write_dict_to_kristine(
         ds: typing.List[FCSDataset],
         verbose: bool = True
 ) -> None:
+    """Write multiple FCS datasets to individual Kristine .cor files.
+
+    Parameters
+    ----------
+    filename : str
+        Base filename; individual curves are enumerated.
+    ds : list of FCSDataset
+        FCS datasets to write.
+    verbose : bool
+        If True, print progress.
+    """
     for i, d in enumerate(ds):
         root, ext = os.path.splitext(
             filename

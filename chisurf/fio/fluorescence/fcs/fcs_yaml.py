@@ -46,4 +46,18 @@ def read_yaml(
         filename: str,
         verbose: bool = False
 ) -> typing.List[FCSDataset]:
+    """Read a YAML FCS file.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the YAML file.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    list of FCSDataset
+        List of FCS datasets.
+    """
     pass

@@ -168,6 +168,17 @@ class Photons(object):
             reading_routine: str = None,
             verbose: bool = None
     ):
+        """Initialize Photons object from TTTR data.
+
+        Parameters
+        ----------
+        p_object : str, list of str, or tables.File
+            Filename, list of filenames, or open HDF5 file.
+        reading_routine : str, optional
+            File type ('hdf', 'iss', 'bh132', etc.).
+        verbose : bool, optional
+            If True, print progress.
+        """
         if verbose is None:
             verbose = chisurf.settings.cs_settings['verbose']
         self._tttrs = None
@@ -237,6 +248,7 @@ class Photons(object):
 
     @property
     def selection(self):
+        """The current photon selection mask."""
         return self._selection
 
     @selection.setter
@@ -244,6 +256,13 @@ class Photons(object):
             self,
             v
     ):
+        """Set selection mask and update photon array.
+
+        Parameters
+        ----------
+        v : ndarray
+            Boolean or index selection array.
+        """
         self._selection = v
         self._photon_array = self.photon_table.read_coordinates(
             self._selection
@@ -251,11 +270,13 @@ class Photons(object):
 
     @property
     def photon_table(self) -> tables.Table:
+        """The PyTables photon table from the HDF file."""
         sample = self._h5.get_node('/' + self._sample_name_hdf_tp)
         return sample.photons
 
     @property
     def photon_array(self):
+        """The full photon record array, cached after first read."""
         if self._photon_array is None:
             self._photon_array = self.photon_table.read()
         return self._photon_array
@@ -283,6 +304,7 @@ class Photons(object):
 
     @property
     def shape(self) -> typing.Tuple[int]:
+        """Shape of the photon data (number of photons,)."""
         return self.routing_channels.shape
 
     @property
@@ -366,6 +388,18 @@ class Photons(object):
             self,
             keys
     ) -> Photons:
+        """Return a new Photons object with the given indices selected.
+
+        Parameters
+        ----------
+        keys : ndarray
+            Indices to select.
+
+        Returns
+        -------
+        Photons
+            New Photons object with the selection applied.
+        """
         re = Photons(None)
         if isinstance(self.selection, np.ndarray):
             selection = np.intersect1d(
@@ -386,6 +420,7 @@ class Photons(object):
         return re
 
     def __str__(self):
+        """Return a string summary of the Photons object."""
         s = ""
         s += "File-type: %s\n" % self.filetype
         s += "Filename(s):\t"
@@ -406,9 +441,22 @@ class Photons(object):
     #         #    os.unlink(self._tempfile)
 
     def __len__(self):
+        """Number of photons."""
         return self.nPh
 
     def __getitem__(self, key):
+        """Return a Photons object with the selected indices.
+
+        Parameters
+        ----------
+        key : int or slice
+            Index or slice of photons to select.
+
+        Returns
+        -------
+        Photons
+            New Photons object with the selection.
+        """
         if isinstance(key, int):
             key = np.array(key)
         else:

@@ -38,6 +38,18 @@ def _load_nested_mat(path: pathlib.Path) -> dict:
         mat_struct = ()  # type: ignore[assignment]
 
     def _convert(obj):  # type: ignore[override]
+        """Recursively convert mat_struct objects to plain dicts.
+
+        Parameters
+        ----------
+        obj : any
+            Object to convert.
+
+        Returns
+        -------
+        any
+            Converted plain Python object.
+        """
         if isinstance(obj, dict):
             return {k: _convert(v) for k, v in obj.items()}
         if isinstance(obj, mat_struct):  # type: ignore[arg-type]

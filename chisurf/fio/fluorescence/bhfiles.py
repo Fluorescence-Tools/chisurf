@@ -242,6 +242,13 @@ class SdtFile(object):
 class FileInfo(str):
     """File info string and attributes."""
     def __init__(self, value):
+        """Initialize FileInfo from raw bytes.
+
+        Parameters
+        ----------
+        value : bytes
+            Raw file info block.
+        """
         str.__init__(self)
         assert (value.startswith(b'*IDENTIFICATION') and
                 value.strip().endswith(b'*END'))
@@ -257,6 +264,13 @@ class FileInfo(str):
 class SetupBlock(object):
     """Setup block ascii and binary data."""
     def __init__(self, value):
+        """Initialize SetupBlock from raw bytes.
+
+        Parameters
+        ----------
+        value : bytes
+            Raw setup block data.
+        """
         assert (value.startswith(b'*SETUP') and
                 value.strip().endswith(b'*END'))
         i = value.find(b'BIN_PARA_BEGIN')
@@ -269,34 +283,53 @@ class SetupBlock(object):
             self.binary = None
 
     def __str__(self):
+        """Return the ASCII portion of the setup block."""
         return self.ascii
 
 
 class BlockNo(object):
     """The lblock_no field of BLOCK_HEADER."""
     def __init__(self, value):
+        """Initialize BlockNo from raw value.
+
+        Parameters
+        ----------
+        value : int
+            Raw block number value.
+        """
         self.data = (value & 0xFFFFFF00) >> 24
         self.module = value & 0x000000FF
 
     def __str__(self):
+        """Return string representation of BlockNo."""
         return "Data number: %s\nModule number: %s" % (self.data, self.module)
 
     def __iter__(self):
+        """Iterate over (data, module)."""
         return iter((self.data, self.module))
 
 
 class BlockType(object):
     """The block_type field of BLOCK_HEADER."""
     def __init__(self, value):
+        """Initialize BlockType from raw value.
+
+        Parameters
+        ----------
+        value : int
+            Raw block type value.
+        """
         self.mode = BLOCK_CREATION[value & 0xF]
         self.contents = BLOCK_CONTENT[value & 0xF0]
         self.dtype = BLOCK_DTYPE[value & 0xF00]
 
     def __str__(self):
+        """Return string representation of BlockType."""
         return "Mode: %s\nContent: %s\nData Type: %s" % (
             self.mode, self.contents, self.dtype)
 
     def __iter__(self):
+        """Iterate over (mode, contents, dtype)."""
         return iter((self.mode, self.contents, self.dtype))
 
 

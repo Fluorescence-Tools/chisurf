@@ -625,6 +625,20 @@ def read_asc(
         filename: str,
         verbose: bool = False
 ) -> typing.List[FCSDataset]:
+    """Read an ALV .asc file and return FCS datasets.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the .asc file.
+    verbose : bool
+        If True, print progress.
+
+    Returns
+    -------
+    list of FCSDataset
+        List of FCS datasets.
+    """
     if verbose:
         print("Reading ALV .asc from file: ", filename)
     d = openASC(filename)
@@ -708,4 +722,25 @@ def write_asc(
         acquisition_time: float,
         verbose: bool = True
 ) -> None:
+    """Write FCS data to an ALV .asc file.
+
+    Parameters
+    ----------
+    filename : str
+        Output file path.
+    correlation_amplitudes : tuple of np.ndarray
+        Correlation amplitudes.
+    correlation_times : tuple of np.ndarray
+        Correlation lag times.
+    time_traces : tuple of np.ndarray
+        Intensity traces.
+    mean_countrates : tuple of float
+        Mean count rates.
+    meta_data : dict
+        Metadata to include.
+    acquisition_time : float
+        Acquisition time in seconds.
+    verbose : bool
+        If True, print progress.
+    """
     pass
