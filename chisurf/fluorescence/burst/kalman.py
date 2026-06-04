@@ -46,6 +46,7 @@ class KalmanBurstDetector:
     _H: np.ndarray = field(init=False, repr=False)
 
     def __post_init__(self):
+        """Initialize Kalman filter matrices and default states."""
         self._A = np.eye(self.dim)
         self._H = np.eye(self.dim)
         self._Q = np.eye(self.dim) * self.q
@@ -55,12 +56,42 @@ class KalmanBurstDetector:
             self.P0 = np.eye(self.dim) * 1e6
 
     def _adaptive_R(self, y_rate: np.ndarray, x_pred: np.ndarray) -> np.ndarray:
+        """Build an adaptive measurement noise covariance matrix.
+
+        The noise is proportional to the predicted count rate to model
+        Poissonian photon-counting statistics.
+
+        Parameters
+        ----------
+        y_rate : np.ndarray
+            Observed count rates at the current time step.
+        x_pred : np.ndarray
+            Predicted state (count rates) from the Kalman filter.
+
+        Returns
+        -------
+        np.ndarray
+            Diagonal measurement noise covariance matrix.
+        """
         rate = np.maximum(x_pred, 1e-12)
         var_rate = rate / self.dt
         R = np.diag(self.r_scale * var_rate)
         return R
 
     def detect(self, counts: np.ndarray) -> KalmanBurstResult:
+        """Run Kalman filter burst detection on binned photon counts.
+
+        Parameters
+        ----------
+        counts : np.ndarray
+            Array of shape (T, dim) with binned photon counts per channel.
+
+        Returns
+        -------
+        KalmanBurstResult
+            Dataclass containing filtered rates, covariances, innovation
+            distances, and detected bursts.
+        """
         counts = np.asarray(counts, dtype=float)
         assert counts.ndim == 2 and counts.shape[1] == self.dim, "counts must be of shape (T, dim)"
         T = counts.shape[0]
@@ -97,6 +128,18 @@ class KalmanBurstDetector:
         return KalmanBurstResult(x_filt=x_filt, P_filt=P_filt, innovation_mahal=D_mahal, z_thresh=self.z_thresh, bursts=bursts)
 
     def _extract_bursts(self, D: np.ndarray) -> List[Burst]:
+        """Extract burst intervals from the innovation distance trace.
+
+        Parameters
+        ----------
+        D : np.ndarray
+            Array of Mahalanobis innovation distances.
+
+        Returns
+        -------
+        List[Burst]
+            List of detected burst intervals.
+        """
         over = D > self.z_thresh
         bursts: List[Burst] = []
         t = 0

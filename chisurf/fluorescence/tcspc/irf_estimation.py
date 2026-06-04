@@ -460,6 +460,18 @@ class IRFEstimator:
 
         # Optimize all parameters jointly
         def loss_function(params):
+            """Compute the mean squared error between data and exponential model.
+
+            Parameters
+            ----------
+            params : np.ndarray
+                Parameter vector (A values, C values, k).
+
+            Returns
+            -------
+            float
+                Mean squared error across all channels.
+            """
             A = params[:self.num_channels]
             C = params[self.num_channels:2*self.num_channels]
             k = params[-1]

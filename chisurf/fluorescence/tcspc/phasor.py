@@ -94,6 +94,17 @@ class Phasor(object):
         return phasor_giw(self.et, self.phasor_n, self.phasor_omega, self.times)
 
     def set_fd0_fda_et(self, fd0, fda, et):
+        """Set the donor-only, donor-acceptor, and transfer efficiency decay arrays.
+
+        Parameters
+        ----------
+        fd0 : np.ndarray
+            Donor-only fluorescence decay.
+        fda : np.ndarray
+            Donor-acceptor fluorescence decay.
+        et : np.ndarray
+            Transfer efficiency decay.
+        """
         self.fd0 = fd0
         self.fda = fda
         self.et = et
@@ -103,6 +114,15 @@ class Phasor(object):
             phasor_n: float = 1.0,
             phasor_omega: float = 31.25
     ):
+        """Initialize the Phasor object.
+
+        Parameters
+        ----------
+        phasor_n : float, optional
+            Harmonic number for phasor calculation (default 1.0).
+        phasor_omega : float, optional
+            Angular frequency in MHz (default 31.25).
+        """
         super(Phasor, self).__init__()
         self._phasor_n = phasor_n
         self._phasor_omega = phasor_omega

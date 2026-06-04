@@ -13,6 +13,17 @@ from chisurf.settings.settings_utils import build_fret_rda_axis
 
 
 def rebuild_rda_axis_from_settings() -> np.ndarray:
+    """Rebuild the R_DA axis from the current fret settings.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    np.ndarray
+        The R_DA axis array.
+    """
     fret_cfg = getattr(chisurf.settings, "fret", {}) or {}
     rda_min = fret_cfg.get("rda_min", 1.0)
     rda_max = fret_cfg.get("rda_max", 130.0)

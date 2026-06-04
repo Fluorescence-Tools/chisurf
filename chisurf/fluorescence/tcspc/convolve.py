@@ -192,6 +192,29 @@ def convolve_lifetime_spectrum_periodic(
         dt: float,
         conv_stop: int
 ):
+    """Convolve a lifetime spectrum with a periodic IRF using tttrlib.
+
+    Parameters
+    ----------
+    decay : np.ndarray
+        Output array filled with the convolved decay.
+    lifetime_spectrum : np.ndarray
+        Interleaved array of amplitudes and lifetimes.
+    irf : np.ndarray
+        Instrument response function.
+    start : int
+        Start channel for convolution.
+    stop : int
+        Stop channel for convolution.
+    n_points : int
+        Number of points in the decay.
+    period : float
+        Period of repetition in nanoseconds.
+    dt : float
+        Channel width in nanoseconds.
+    conv_stop : int
+        Stopping channel for convolution.
+    """
     tttrlib.fconv_per_cs(
         decay,
         irf,
@@ -373,6 +396,25 @@ def convolve_lifetime_spectrum(
         amplitude_threshold: float = 0,
         use_amplitude_threshold: bool = False
 ) -> None:
+    """Convolve a lifetime spectrum with an IRF using tttrlib.
+
+    Parameters
+    ----------
+    output_decay : np.ndarray
+        Output array filled with the convolved decay.
+    lifetime_spectrum : np.ndarray
+        Interleaved array of amplitudes and lifetimes.
+    instrument_response_function : np.ndarray
+        The instrument response function.
+    convolution_stop : int, optional
+        Convolution stop channel index.
+    time_axis : np.ndarray, optional
+        The time axis of the decay.
+    amplitude_threshold : float, optional
+        Amplitude threshold for filtering lifetime components.
+    use_amplitude_threshold : bool, optional
+        If True, filter components by amplitude threshold.
+    """
     dt = (time_axis[1] - time_axis[0])
     tttrlib.fconv(
         output_decay,

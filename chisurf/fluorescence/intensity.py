@@ -19,6 +19,7 @@ def nusiance(
     """
 
     def m(*args, **kwargs):
+        """Wrapper that sets global correction parameters and calls the wrapped function."""
 
         # Anisotropy
         f.func_globals['Gfactor'] = kwargs.get('Gfactor', 1.0)

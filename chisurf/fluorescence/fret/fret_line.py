@@ -235,6 +235,7 @@ class FRETLineGenerator(object):
 
     @property
     def model(self) -> chisurf.models.tcspc.lifetime.LifetimeModel:
+        """The fluorescence lifetime model used for FRET-line calculations."""
         return self._model
 
     @model.setter
@@ -242,6 +243,14 @@ class FRETLineGenerator(object):
             self,
             v: typing.Type[chisurf.models.tcspc.lifetime.LifetimeModel]
     ):
+        """Set the fluorescence lifetime model.
+
+        Parameters
+        ----------
+        v : type
+            A LifetimeModel subclass that will be instantiated with the
+            current Fit object.
+        """
         self._model = v(
             fit=self.fit
         )
@@ -253,6 +262,19 @@ class FRETLineGenerator(object):
             verbose: bool = None,
             n_points: int = None
     ):
+        """Recompute the FRET-line by varying the chosen parameter.
+
+        Parameters
+        ----------
+        parameter_name : str, optional
+            Name of the parameter to vary.
+        parameter_range : tuple of float, optional
+            (min, max) range for the parameter.
+        verbose : bool, optional
+            If True, print progress information.
+        n_points : int, optional
+            Number of points along the FRET-line.
+        """
         if verbose is None:
             verbose = self.verbose
         if isinstance(n_points, int):
@@ -328,9 +350,17 @@ class StaticFRETLine(
 
     @sigma.setter
     def sigma(self, v):
+        """Set the width of the DA-distance distribution."""
         self.model.parameter_dict['s(G,1)'].value = v
 
     def __init__(self, **kwargs):
+        """Initialize a StaticFRETLine with a default Gaussian model.
+
+        Parameters
+        ----------
+        **kwargs
+            Keyword arguments forwarded to FRETLineGenerator.
+        """
         super().__init__(**kwargs)
         self.model = chisurf.models.tcspc.fret.GaussianModel
         self.model.gaussians.append(55.0, 10, 1.0)
@@ -344,6 +374,19 @@ class StaticFRETLine(
             verbose: bool = None,
             n_points: int = None
     ):
+        """Recompute the static FRET-line by varying the distance parameter.
+
+        Parameters
+        ----------
+        parameter_name : str, optional
+            Name of the parameter to vary (default 'R(G,1)').
+        parameter_range : tuple of float, optional
+            (min, max) range for the parameter.
+        verbose : bool, optional
+            If True, print progress information.
+        n_points : int, optional
+            Number of points along the FRET-line.
+        """
         self.model.parameter_dict['x(G,1)'].value = 1.0
         super().update(
             parameter_name=parameter_name,
@@ -484,6 +527,7 @@ class DynamicFRETLine(FRETLineGenerator):
 
     @mean_distance_1.setter
     def mean_distance_1(self, v):
+        """Set the mean distance of first limiting state."""
         self.model.parameter_dict['R(G,1)'].value = v
 
     @property
@@ -495,6 +539,7 @@ class DynamicFRETLine(FRETLineGenerator):
 
     @mean_distance_2.setter
     def mean_distance_2(self, v):
+        """Set the mean distance of second limiting state."""
         self.model.parameter_dict['R(G,2)'].value = v
 
     @property
@@ -506,6 +551,7 @@ class DynamicFRETLine(FRETLineGenerator):
 
     @sigma_1.setter
     def sigma_1(self, v):
+        """Set the width of first limiting state."""
         self.model.parameter_dict['s(G,1)'].value = v
 
     @property
@@ -517,6 +563,7 @@ class DynamicFRETLine(FRETLineGenerator):
 
     @sigma_2.setter
     def sigma_2(self, v):
+        """Set the width of second limiting state."""
         self.model.parameter_dict['s(G,2)'].value = v
 
     @property
@@ -528,6 +575,13 @@ class DynamicFRETLine(FRETLineGenerator):
 
     @sigma.setter
     def sigma(self, v):
+        """Set the width of both limiting states.
+
+        Parameters
+        ----------
+        v : float or tuple of float
+            If float, both states get the same width. If tuple, (sigma_1, sigma_2).
+        """
         try:
             self.model.parameter_dict['s(G,1)'].value = v[0]
             self.model.parameter_dict['s(G,2)'].value = v[1]
@@ -542,6 +596,19 @@ class DynamicFRETLine(FRETLineGenerator):
             verbose: bool = None,
             n_points: int = None
     ):
+        """Recompute the dynamic FRET-line by varying the species fraction.
+
+        Parameters
+        ----------
+        parameter_name : str, optional
+            Name of the parameter to vary.
+        parameter_range : tuple of float, optional
+            (min, max) range for the parameter.
+        verbose : bool, optional
+            If True, print progress information.
+        n_points : int, optional
+            Number of points along the FRET-line.
+        """
         self.model.parameter_dict['x(G,1)'].value = 1.0
         self.model.parameter_dict['x(G,2)'].value = 0.0
         FRETLineGenerator.update(

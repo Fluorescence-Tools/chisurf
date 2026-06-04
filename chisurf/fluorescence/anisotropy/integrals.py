@@ -20,6 +20,27 @@ def perrin_steady_state_anisotropy(
         rho: float,
         r0: float = 0.38,
 ) -> float:
+    """Compute the Perrin steady-state anisotropy.
+
+    Parameters
+    ----------
+    tau : float
+        Fluorescence lifetime.
+    rho : float
+        Rotational correlation time.
+    r0 : float, optional
+        Fundamental anisotropy at time zero (default 0.38).
+
+    Returns
+    -------
+    float
+        The steady-state anisotropy.
+
+    Raises
+    ------
+    ValueError
+        If rho is non-positive.
+    """
     tau = float(tau)
     rho = float(rho)
     if rho <= 0.0:
@@ -32,6 +53,27 @@ def compute_g_factor_isotropic(
         s_s,
         axis: Optional[int] = None,
 ) -> float:
+    """Compute the G-factor assuming isotropic rotational diffusion.
+
+    Parameters
+    ----------
+    s_p : array-like
+        Parallel signal intensities.
+    s_s : array-like
+        Perpendicular signal intensities.
+    axis : int, optional
+        Axis along which to sum. If None, sums over all elements.
+
+    Returns
+    -------
+    float
+        The computed G-factor.
+
+    Raises
+    ------
+    ZeroDivisionError
+        If the sum of the parallel signal is zero.
+    """
     sp = np.asarray(s_p, dtype=float)
     ss = np.asarray(s_s, dtype=float)
     num = float(np.sum(ss, axis=axis))
@@ -79,6 +121,43 @@ def anisotropy_from_integrals(
         axis: Optional[int] = None,
         scatter_corrected: bool = False,
 ) -> AnisotropyResult:
+    """Compute anisotropy from integrated signal intensities.
+
+    Parameters
+    ----------
+    s_p : array-like
+        Parallel signal intensities.
+    s_s : array-like
+        Perpendicular signal intensities.
+    G : float
+        G-factor correction for detection sensitivity.
+    l1 : float, optional
+        Mixing factor for parallel channel (default 0.0).
+    l2 : float, optional
+        Mixing factor for perpendicular channel (default 0.0).
+    gamma : float, optional
+        Scatter correction factor (default 0.0).
+    B_p : float, optional
+        Background for parallel channel (default 0.0).
+    B_s : float, optional
+        Background for perpendicular channel (default 0.0).
+    axis : int, optional
+        Axis along which to sum signal arrays.
+    scatter_corrected : bool, optional
+        If True, apply scatter correction (default False).
+
+    Returns
+    -------
+    AnisotropyResult
+        Dataclass containing computed anisotropy values.
+
+    Raises
+    ------
+    ValueError
+        If G is non-positive.
+    ZeroDivisionError
+        If the anisotropy denominator is zero.
+    """
     g = float(G)
     if g <= 0.0:
         raise ValueError("G must be > 0")

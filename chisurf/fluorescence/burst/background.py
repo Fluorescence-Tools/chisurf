@@ -88,6 +88,18 @@ def estimate_background_from_interphoton_times(
     # Negative log-likelihood for Poisson counts y ~ Poisson(model),
     # model = A * exp(-lambda * x).
     def neg_log_likelihood(params: np.ndarray) -> float:
+        """Negative log-likelihood for Poisson counts with exponential model.
+
+        Parameters
+        ----------
+        params : np.ndarray
+            Parameter vector (A, lam) where model = A * exp(-lam * x).
+
+        Returns
+        -------
+        float
+            Negative log-likelihood value.
+        """
         A, lam = params
         if A <= 0.0 or lam <= 0.0:
             return np.inf
