@@ -17,25 +17,155 @@ NA = 6.02214076e23 # 1/mol
 N_PER_nM_fL = NA * 1e-9 * 1e-15  # ≈ 0.602214076
 
 
-def mPa_s_to_Pa_s(eta_mPa_s: float) -> float: return eta_mPa_s * 1e-3
+def mPa_s_to_Pa_s(eta_mPa_s: float) -> float:
+    """Convert viscosity from mPa·s to Pa·s.
 
-def Pa_s_to_mPa_s(eta_Pa_s: float) -> float: return eta_Pa_s * 1e3
+    Parameters
+    ----------
+    eta_mPa_s : float
+        Viscosity in mPa·s.
 
-def nm_to_m(x_nm: float) -> float: return x_nm * 1e-9
+    Returns
+    -------
+    float
+        Viscosity in Pa·s.
+    """
+    return eta_mPa_s * 1e-3
 
-def m_to_nm(x_m: float) -> float: return x_m * 1e9
+def Pa_s_to_mPa_s(eta_Pa_s: float) -> float:
+    """Convert viscosity from Pa·s to mPa·s.
 
-def um2s_to_m2s(D_um2_s: float) -> float: return D_um2_s * 1e-12
+    Parameters
+    ----------
+    eta_Pa_s : float
+        Viscosity in Pa·s.
 
-def m2s_to_um2s(D_m2_s: float) -> float: return D_m2_s * 1e12
+    Returns
+    -------
+    float
+        Viscosity in mPa·s.
+    """
+    return eta_Pa_s * 1e3
 
-def us_to_s(t_us: float) -> float: return t_us * 1e-6
+def nm_to_m(x_nm: float) -> float:
+    """Convert a length from nanometers to meters.
 
-def s_to_us(t_s: float) -> float: return t_s * 1e6
+    Parameters
+    ----------
+    x_nm : float
+        Length in nm.
 
-def m3_to_fL(v_m3: float) -> float: return v_m3 / 1e-18
+    Returns
+    -------
+    float
+        Length in m.
+    """
+    return x_nm * 1e-9
 
-def fL_to_m3(v_fL: float) -> float: return v_fL * 1e-18
+def m_to_nm(x_m: float) -> float:
+    """Convert a length from meters to nanometers.
+
+    Parameters
+    ----------
+    x_m : float
+        Length in m.
+
+    Returns
+    -------
+    float
+        Length in nm.
+    """
+    return x_m * 1e9
+
+def um2s_to_m2s(D_um2_s: float) -> float:
+    """Convert a diffusion coefficient from µm²/s to m²/s.
+
+    Parameters
+    ----------
+    D_um2_s : float
+        Diffusion coefficient in µm²/s.
+
+    Returns
+    -------
+    float
+        Diffusion coefficient in m²/s.
+    """
+    return D_um2_s * 1e-12
+
+def m2s_to_um2s(D_m2_s: float) -> float:
+    """Convert a diffusion coefficient from m²/s to µm²/s.
+
+    Parameters
+    ----------
+    D_m2_s : float
+        Diffusion coefficient in m²/s.
+
+    Returns
+    -------
+    float
+        Diffusion coefficient in µm²/s.
+    """
+    return D_m2_s * 1e12
+
+def us_to_s(t_us: float) -> float:
+    """Convert a time from microseconds to seconds.
+
+    Parameters
+    ----------
+    t_us : float
+        Time in µs.
+
+    Returns
+    -------
+    float
+        Time in s.
+    """
+    return t_us * 1e-6
+
+def s_to_us(t_s: float) -> float:
+    """Convert a time from seconds to microseconds.
+
+    Parameters
+    ----------
+    t_s : float
+        Time in s.
+
+    Returns
+    -------
+    float
+        Time in µs.
+    """
+    return t_s * 1e6
+
+def m3_to_fL(v_m3: float) -> float:
+    """Convert a volume from m³ to femtoliters.
+
+    Parameters
+    ----------
+    v_m3 : float
+        Volume in m³.
+
+    Returns
+    -------
+    float
+        Volume in fL.
+    """
+    return v_m3 / 1e-18
+
+def fL_to_m3(v_fL: float) -> float:
+    """Convert a volume from femtoliters to m³.
+
+    Parameters
+    ----------
+    v_fL : float
+        Volume in fL.
+
+    Returns
+    -------
+    float
+        Volume in m³.
+    """
+    return v_fL * 1e-18
 
 
 def water_viscosity_Pa_s(T_K: float) -> float:
@@ -74,11 +204,45 @@ def stokes_einstein_rh(T_K: float, eta_Pa_s: float, D_m2_s: float) -> float:
 
 
 def veff_from_tau_D_S(tau_s: float, D_m2_s: float, S: float) -> float:
+    """Compute the effective focal volume from diffusion time, ``D`` and structure parameter.
+
+    Implements :math:`V_{eff} = \pi^{3/2} \cdot S \cdot (4 D \tau)^{3/2}`.
+
+    Parameters
+    ----------
+    tau_s : float
+        Diffusion time in seconds.
+    D_m2_s : float
+        Diffusion coefficient in m²/s.
+    S : float
+        Structure parameter (wz/wxy).
+
+    Returns
+    -------
+    float
+        Effective volume in m³.
+    """
     # Veff = π^(3/2) * S * (4 D τ)^(3/2)
     return (math.pi ** 1.5) * S * (4.0 * D_m2_s * tau_s) ** 1.5
 
 
 def D_from_tau_Veff_S(tau_s: float, Veff_m3: float, S: float) -> float:
+    """Compute the diffusion coefficient ``D`` from ``Veff`` and structure parameter ``S``.
+
+    Parameters
+    ----------
+    tau_s : float
+        Diffusion time in seconds.
+    Veff_m3 : float
+        Effective focal volume in m³.
+    S : float
+        Structure parameter (wz/wxy).
+
+    Returns
+    -------
+    float
+        Diffusion coefficient in m²/s, or NaN for invalid input.
+    """
     denom = (math.pi ** 1.5) * S
     if denom <= 0 or tau_s <= 0: return float('nan')
     inner = Veff_m3 / denom
@@ -329,6 +493,13 @@ class ConfocalCalcWidget(QWidget):
     """
 
     def __init__(self, parent=None):
+        """Initialize the calculator widget, internal state, and default values.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setWindowTitle("FCS Confocal Calculator — τ, D, rₕ, Veff, Concentration")
         self._in_update = False
@@ -338,6 +509,7 @@ class ConfocalCalcWidget(QWidget):
         self._recompute()
 
     def _setup_ui(self):
+        """Build all spin boxes, buttons, and layouts of the calculator widget."""
         # Spin boxes
         self.tau_us = QDoubleSpinBox(); self._cfg(self.tau_us, 1e-3, 1e9, 3, 70.0)
         self.D_um2_s = QDoubleSpinBox(); self._cfg(self.D_um2_s, 1e-4, 1e6, 6, 400.0)
@@ -451,9 +623,25 @@ class ConfocalCalcWidget(QWidget):
         self._on_use_water_eta(self.use_water_eta.isChecked())
 
     def _cfg(self, sb: QDoubleSpinBox, lo: float, hi: float, dec: int, val: float):
+        """Configure a ``QDoubleSpinBox`` with range, decimals, and value.
+
+        Parameters
+        ----------
+        sb : QDoubleSpinBox
+            The spin box to configure.
+        lo : float
+            Minimum value.
+        hi : float
+            Maximum value.
+        dec : int
+            Number of decimals.
+        val : float
+            Initial value.
+        """
         sb.setRange(lo, hi); sb.setDecimals(dec); sb.setValue(val)
 
     def _connect_signals(self):
+        """Wire Qt signals to the widget's update and recompute slots."""
         # Core fields trigger recompute
         for w in (self.tau_us, self.D_um2_s, self.rh_nm, self.S, self.veff_fL, self.temp_C, self.eta_mPa_s):
             w.valueChanged.connect(self._recompute)
@@ -479,10 +667,20 @@ class ConfocalCalcWidget(QWidget):
 
     # ---------- Constraint / UI state ----------
     def _on_constraint_changed(self, _btn, _state):
+        """Handle the user switching the active constraint radio button.
+
+        Parameters
+        ----------
+        _btn : QRadioButton
+            The toggled button (unused).
+        _state : bool
+            The new checked state (unused).
+        """
         self._update_field_enable()
         self._recompute()
 
     def _update_field_enable(self):
+        """Set the read-only state of the D, rₕ and Veff fields based on the active constraint."""
         # Outputs are disabled according to the chosen constraint
         fixD = self.rb_fix_D.isChecked()
         fixR = self.rb_fix_rh.isChecked()
@@ -498,11 +696,25 @@ class ConfocalCalcWidget(QWidget):
             sb.setPalette(pal)
 
     def _on_use_water_eta(self, checked: bool):
+        """Enable/disable the manual viscosity spin box and recompute.
+
+        Parameters
+        ----------
+        checked : bool
+            Whether the "Use water η(T)" checkbox is now checked.
+        """
         self.eta_mPa_s.setEnabled(not checked)
         self._recompute()
 
     # ---------- Coupling helpers ----------
     def _conc_changed(self, val: float):
+        """Update ``N`` and ``1/N`` when the concentration spin box changes.
+
+        Parameters
+        ----------
+        val : float
+            New concentration in nM.
+        """
         if self._in_update: return
         self._last_edited = 'conc'
         V_fL = self.veff_fL.value()
@@ -515,6 +727,13 @@ class ConfocalCalcWidget(QWidget):
                 self._set_spin(self.invN, 0.0)
 
     def _N_changed(self, val: float):
+        """Update the concentration and ``1/N`` spin boxes when ``N`` changes.
+
+        Parameters
+        ----------
+        val : float
+            New number of molecules.
+        """
         if self._in_update: return
         self._last_edited = 'N'
         V_fL = self.veff_fL.value()
@@ -527,6 +746,13 @@ class ConfocalCalcWidget(QWidget):
                 self._set_spin(self.invN, 0.0)
 
     def _invN_changed(self, val: float):
+        """Update ``N`` and the concentration when the ``1/N`` field changes.
+
+        Parameters
+        ----------
+        val : float
+            New value of 1/N.
+        """
         if self._in_update: return
         self._last_edited = 'invN'
         V_fL = self.veff_fL.value()
@@ -538,6 +764,7 @@ class ConfocalCalcWidget(QWidget):
 
     # ---------- Dye actions ----------
     def _apply_dref_to_D(self):
+        """Apply the selected reference dye's ``D_25`` (with optional T/η scaling) to the ``D`` field."""
         name = self.dye_combo.currentText()
         info = DYE_DATA.get(name)
         if not info:
@@ -555,10 +782,18 @@ class ConfocalCalcWidget(QWidget):
         self.D_um2_s.setFocus()
 
     def _on_shape_changed(self, _index: int):
+        """Enable the aspect-ratio input only when the shape is not a sphere.
+
+        Parameters
+        ----------
+        _index : int
+            Unused current index of the shape combo.
+        """
         shape = self.shape_combo.currentText()
         self.shape_aspect.setEnabled(shape != "Sphere")
 
     def _apply_shape_to_D(self):
+        """Compute ``D`` from the selected shape (Sphere/Ellipsoid/Cylinder) and apply it to the ``D`` field."""
         if self._in_update:
             return
         shape = self.shape_combo.currentText()
@@ -597,6 +832,13 @@ class ConfocalCalcWidget(QWidget):
             pass
 
     def _collect_settings(self) -> Dict:
+        """Return a dictionary snapshot of all current settings (for JSON export).
+
+        Returns
+        -------
+        dict
+            Mapping from setting name to its current value.
+        """
         shape = self.shape_combo.currentText()
         fix_mode = "D" if self.rb_fix_D.isChecked() else ("rh" if self.rb_fix_rh.isChecked() else "V")
         return {
@@ -620,6 +862,13 @@ class ConfocalCalcWidget(QWidget):
         }
 
     def _apply_settings(self, data: Dict):
+        """Apply a settings dict (as produced by :meth:`_collect_settings`) to the widget.
+
+        Parameters
+        ----------
+        data : dict
+            Mapping from setting name to its value.
+        """
         self._in_update = True
         try:
             if "tau_us" in data:
@@ -676,6 +925,7 @@ class ConfocalCalcWidget(QWidget):
             self._recompute()
 
     def _export_json(self):
+        """Open a save dialog and write the current settings to a JSON file."""
         data = self._collect_settings()
         text = json.dumps(data, indent=2, sort_keys=True)
         path, _ = QFileDialog.getSaveFileName(
@@ -694,6 +944,7 @@ class ConfocalCalcWidget(QWidget):
             return
 
     def _import_json(self):
+        """Open a load dialog and apply the selected JSON file's settings to the widget."""
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Load FCS Calculator Settings",
@@ -715,6 +966,13 @@ class ConfocalCalcWidget(QWidget):
 
     # ---------- Utility ----------
     def _current_eta_Pa_s(self) -> float:
+        """Return the current viscosity in Pa·s, using water's model when enabled.
+
+        Returns
+        -------
+        float
+            Viscosity in Pa·s.
+        """
         if self.use_water_eta.isChecked():
             T_K = self.temp_C.value() + 273.15
             eta = water_viscosity_Pa_s(T_K)
@@ -724,12 +982,22 @@ class ConfocalCalcWidget(QWidget):
         return mPa_s_to_Pa_s(self.eta_mPa_s.value())
 
     def _set_spin(self, spin: QDoubleSpinBox, value: float):
+        """Set ``spin``'s value while suppressing update signals.
+
+        Parameters
+        ----------
+        spin : QDoubleSpinBox
+            The spin box to update.
+        value : float
+            New value.
+        """
         self._in_update = True
         spin.setValue(value)
         self._in_update = False
 
     # ---------- Core recomputation ----------
     def _recompute(self):
+        """Recompute the linked fields (Veff, rₕ, N, conc) according to the active constraint."""
         if self._in_update: return
         self._in_update = True
         try:
@@ -793,6 +1061,7 @@ class ConfocalCalcWidget(QWidget):
 
 
 def main():
+    """Run the FCS confocal calculator as a standalone application."""
     app = QApplication(sys.argv)
     w = ConfocalCalcWidget()
     w.resize(820, 660)

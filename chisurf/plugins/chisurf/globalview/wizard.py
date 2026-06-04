@@ -12,6 +12,7 @@ import chisurf.parameter
 from chisurf.gui import QtWidgets, QtCore, QtGui
 from chisurf import logging
 from chisurf.plugins.chisurf.globalview.graphplotwidget import GraphPlotWidget
+from chisurf.plugins.chisurf.globalview.parameter_table_view import ParameterTableView
 
 
 class GraphWizard(QtWidgets.QWidget):
@@ -32,7 +33,6 @@ class GraphWizard(QtWidgets.QWidget):
     }
 
     def recompute_graph(self):
-        self.graph_widget.close()
         node_data = self.make_graph_plot(
             update_callback=self.callback_selection,
             fit_list=self.fit_list,
@@ -352,10 +352,9 @@ class GraphWizard(QtWidgets.QWidget):
             include_fixed: bool = True
     ) -> (QtWidgets.QWidget, dict):
 
+        # Container widget inside the existing "Graph" tab of the UI's tabWidget
         w = QtWidgets.QWidget(parent=self)
         w.setParent(self)
-        layout = self.layout()
-        layout.addWidget(w, 2, 0, 1, 2)
         l = QtWidgets.QVBoxLayout()
         w.setLayout(l)
 
@@ -391,6 +390,17 @@ class GraphWizard(QtWidgets.QWidget):
                 text=node_data['names'],
                 symbolBrush=symbolBrush
             )
+
+        # Replace previous graph container inside the Graph tab
+        old = getattr(self, 'graph_widget', None)
+        try:
+            if old is not None:
+                old.setParent(None)
+                old.deleteLater()
+        except Exception:
+            pass
+        if hasattr(self, 'graphTabLayout') and self.graphTabLayout is not None:
+            self.graphTabLayout.addWidget(w)
         self.graph_widget = w
         return node_data
 
@@ -429,6 +439,13 @@ class GraphWizard(QtWidgets.QWidget):
             include_fixed=include_fixed,
             fit_list=fit_list
         )
+
+        # Populate the Parameters tab with the table view of all fit parameters
+        self.parameter_table_view = ParameterTableView(self)
+        self.parameter_table_view.refresh_from_fits(fit_list)
+        if hasattr(self, 'paramsTabLayout') and self.paramsTabLayout is not None:
+            self.paramsTabLayout.addWidget(self.parameter_table_view)
+        self.parameter_table_view.paramChanged.connect(self.recompute_graph)
 
         self.toolButton.clicked.connect(self.link_selection)
         self.toolButton_2.clicked.connect(self.link_clear)

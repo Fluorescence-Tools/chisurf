@@ -19,6 +19,13 @@ import chisurf  # your chisurf module with fits, macros, etc.
 # Custom QListWidget that supports drag-and-drop.
 class FileListWidget(QListWidget):
     def __init__(self, parent=None):
+        """Initialize the list widget as a file drop target.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         # allow external drops
         self.setAcceptDrops(True)
@@ -29,18 +36,21 @@ class FileListWidget(QListWidget):
         self.setDropIndicatorShown(True)
 
     def dragEnterEvent(self, event):
+        """Accept the drag if it carries file URLs."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
+        """Accept the drag-move if it carries file URLs."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event):
+        """Add dropped file paths as new (checked) list items."""
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
@@ -57,6 +67,19 @@ class FileListWidget(QListWidget):
 # Dialog to show progress during file processing
 class ProgressWindow(QDialog):
     def __init__(self, title="Processing Files", message="Loading files...", max_value=100, parent=None):
+        """Create a modal progress dialog with a label and a progress bar.
+
+        Parameters
+        ----------
+        title : str, optional
+            Window title.
+        message : str, optional
+            Initial label text.
+        max_value : int, optional
+            Upper bound of the progress bar.
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setWindowModality(QtCore.Qt.WindowModal)
@@ -69,6 +92,13 @@ class ProgressWindow(QDialog):
         self.setLayout(layout)
 
     def set_value(self, value: int):
+        """Update the progress bar and pump the event loop.
+
+        Parameters
+        ----------
+        value : int
+            New value (0..max_value) for the progress bar.
+        """
         self.progress_bar.setValue(value)
         QApplication.processEvents()
 
@@ -76,6 +106,13 @@ class ProgressWindow(QDialog):
 # The final results page that displays the CSV in a table
 class ResultsPage(QWizardPage):
     def __init__(self, parent=None):
+        """Initialize the results page with an empty table.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setTitle("Step 3: Fit Results")
         self.setSubTitle("The results of the fits are displayed below.")
@@ -85,6 +122,7 @@ class ResultsPage(QWizardPage):
         self.setLayout(layout)
 
     def initializePage(self):
+        """Load the CSV produced by the analysis page into the results table."""
         csv_filename = self.wizard().fit_results_file
         if not csv_filename or not os.path.exists(csv_filename):
             QMessageBox.warning(self, "No Results", "No CSV file was found with the fit results.")
@@ -112,6 +150,7 @@ class ResultsPage(QWizardPage):
 # The main wizard which includes all pages
 class BatchProcessingWizard(QWizard):
     def __init__(self):
+        """Initialize the wizard and register its pages."""
         super().__init__()
         self.setWindowTitle("Batch Processing Wizard")
         # Smaller window size: width 600, height 400
@@ -141,6 +180,18 @@ class BatchProcessingWizard(QWizard):
         self.currentIdChanged.connect(self._on_current_id_changed)
 
     def _datasets_have_mixed_types(self, datasets):
+        """Return True when the selected datasets have more than one experiment class.
+
+        Parameters
+        ----------
+        datasets : list
+            List of ChiSurf dataset objects.
+
+        Returns
+        -------
+        bool
+            ``True`` if there is more than one experiment type.
+        """
         try:
             if len(datasets) <= 1:
                 return False
@@ -157,6 +208,13 @@ class BatchProcessingWizard(QWizard):
             return False
 
     def _on_current_id_changed(self, new_id: int):
+        """Block navigation if the user picked datasets of different experiment types.
+
+        Parameters
+        ----------
+        new_id : int
+            The page ID that the wizard is about to switch to.
+        """
         # Avoid re-entrancy when we programmatically change pages
         if self._block_page_change:
             return
@@ -185,6 +243,13 @@ class BatchProcessingWizard(QWizard):
 
 class WelcomePage(QWizardPage):
     def __init__(self, parent=None):
+        """Initialize the welcome page with introductory instructions.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setTitle("Welcome to the Batch Processing Wizard")
         self.setSubTitle("Introduction")
@@ -209,6 +274,13 @@ class WelcomePage(QWizardPage):
 
 class LoadedDataSelectionPage(QWizardPage):
     def __init__(self, parent=None):
+        """Initialize the page that lets the user pick already loaded datasets.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setTitle("Step 1: Select Already Loaded Data (optional)")
         self.setSubTitle("Select already loaded datasets to process. Leave empty to add files in the next step.")
@@ -224,9 +296,11 @@ class LoadedDataSelectionPage(QWizardPage):
         self.setLayout(layout)
 
     def initializePage(self):
+        """Populate the list of available datasets when the page becomes active."""
         self.populate_loaded_list()
 
     def populate_loaded_list(self):
+        """Populate the list widget with the currently imported datasets (excluding the global one)."""
         self.loaded_list.clear()
         try:
             for idx, ds in enumerate(chisurf.imported_datasets):
@@ -246,6 +320,13 @@ class LoadedDataSelectionPage(QWizardPage):
             print(f"Error populating loaded datasets: {e}")
 
     def get_selected_loaded_datasets(self):
+        """Return the dataset objects selected by the user.
+
+        Returns
+        -------
+        list
+            The list of dataset objects whose items are checked.
+        """
         selected = []
         for i in range(self.loaded_list.count()):
             item = self.loaded_list.item(i)
@@ -254,11 +335,30 @@ class LoadedDataSelectionPage(QWizardPage):
         return selected
 
     def validatePage(self):
+        """Ensure all selected datasets share the same experiment type before proceeding.
+
+        Returns
+        -------
+        bool
+            ``True`` if the selection is valid (or empty); ``False`` on mixed types.
+        """
         try:
             selected = self.get_selected_loaded_datasets()
             # Validate that all selected datasets are of the same experiment type
             if len(selected) > 1:
                 def exp_cls(ds):
+                    """Return the type of the dataset's experiment, or ``type(None)`` on failure.
+
+                    Parameters
+                    ----------
+                    ds : object
+                        A ChiSurf dataset.
+
+                    Returns
+                    -------
+                    type
+                        Experiment type, or ``type(None)`` if unavailable.
+                    """
                     try:
                         exp = getattr(ds, 'experiment', None)
                         return type(exp)
@@ -283,6 +383,13 @@ class LoadedDataSelectionPage(QWizardPage):
 
 class FileAndFitSelectionPage(QWizardPage):
     def __init__(self, parent=None):
+        """Initialize the file-and-fit selection page widgets.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setTitle("Step 2: Select Files and Fit")
         self.setSubTitle("Add the files you want to process and select the fitting method to use.")
@@ -316,6 +423,7 @@ class FileAndFitSelectionPage(QWizardPage):
         self.file_list.takeItem(row)
 
     def open_file_dialog(self):
+        """Open a file dialog and add the chosen file paths to the list as checked items."""
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Select Files")
         for file_path in file_paths:
             item = QListWidgetItem(file_path)
@@ -324,6 +432,13 @@ class FileAndFitSelectionPage(QWizardPage):
             self.file_list.addItem(item)
 
     def validatePage(self):
+        """Require both a fit selection and at least one file (or loaded dataset).
+
+        Returns
+        -------
+        bool
+            ``True`` if the page is valid and the wizard may advance.
+        """
         fit_ok = bool(self.fit_combo_box.currentText())
         has_files = self.file_list.count() > 0
         loaded = []
@@ -343,6 +458,13 @@ class FileAndFitSelectionPage(QWizardPage):
         return True
 
     def get_selected_files(self):
+        """Return the file paths whose list items are checked.
+
+        Returns
+        -------
+        list of str
+            Selected file paths.
+        """
         selected_files = []
         for i in range(self.file_list.count()):
             item = self.file_list.item(i)
@@ -351,6 +473,7 @@ class FileAndFitSelectionPage(QWizardPage):
         return selected_files
 
     def populate_fit_combo_box(self):
+        """Populate the fit combo box from ``chisurf.fits`` and try to restore the previous selection."""
         try:
             # Remember previously selected fit object if available
             prev_fit_obj = None
@@ -386,10 +509,18 @@ class FileAndFitSelectionPage(QWizardPage):
             self.fit_combo_box.addItem("No fits available")
 
     def initializePage(self):
+        """Refresh the fit combo box when the page becomes active."""
         # Refresh available fits each time this page becomes active
         self.populate_fit_combo_box()
 
     def get_selected_fit(self):
+        """Return the name of the currently selected fit.
+
+        Returns
+        -------
+        str
+            The display name of the selected fit.
+        """
         return self.fit_combo_box.currentText()
 
     def get_selected_fit_index(self) -> int:
@@ -411,6 +542,13 @@ class FileAndFitSelectionPage(QWizardPage):
 
 class AnalysisPage(QWizardPage):
     def __init__(self, parent=None):
+        """Initialize the analysis page widgets and per-run state.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setTitle("Step 3: Run Fits")
         self.setSubTitle("Run fits on your selected data. Fit results will be saved to a CSV file.")
@@ -452,6 +590,7 @@ class AnalysisPage(QWizardPage):
         self._fit_exports_dir = None
 
     def browse_save_file(self):
+        """Open a file dialog to choose where the results CSV should be written."""
         filename, _ = QFileDialog.getSaveFileName(self, "Save Results File", "", "CSV Files (*.csv);;All Files (*)")
         if filename:
             self.save_file_line_edit.setText(filename)
@@ -480,20 +619,46 @@ class AnalysisPage(QWizardPage):
         print(f"Running fit on: {file}")
 
     def _get_or_create_temp_dir(self) -> str:
+        """Return the existing screenshot temp dir, creating it on first use.
+
+        Returns
+        -------
+        str
+            Absolute path of the screenshot temp directory.
+        """
         if self._temp_dir and os.path.isdir(self._temp_dir):
             return self._temp_dir
         self._temp_dir = tempfile.mkdtemp(prefix="chisurf_batch_")
         return self._temp_dir
 
     def _get_or_create_fit_exports_dir(self) -> str:
+        """Return the existing per-run fit exports temp dir, creating it on first use.
+
+        Returns
+        -------
+        str
+            Absolute path of the per-run fit exports directory.
+        """
         if self._fit_exports_dir and os.path.isdir(self._fit_exports_dir):
             return self._fit_exports_dir
         # Keep all per-run fit result exports in a dedicated temp dir
         base = tempfile.mkdtemp(prefix="chisurf_batch_fit_exports_")
         self._fit_exports_dir = base
-        return self._fit_exports_dir
+        return base
 
     def _sanitize_filename(self, name: str) -> str:
+        """Return a filename-safe version of ``name`` (no extension).
+
+        Parameters
+        ----------
+        name : str
+            Original filename.
+
+        Returns
+        -------
+        str
+            Sanitized base name (no path, no extension), or ``"file"`` if empty.
+        """
         # Keep base name without extension, replace problematic chars
         base = pathlib.Path(name).stem
         safe = "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in base)
@@ -507,6 +672,13 @@ class AnalysisPage(QWizardPage):
             return os.path.abspath(file_path)
 
     def _find_target_window(self):
+        """Return the best window to capture for screenshots, falling back to the wizard itself.
+
+        Returns
+        -------
+        QWidget
+            A visible top-level widget, or ``self.wizard()`` if nothing matches.
+        """
         # Try to find a likely main window to capture; fallback to wizard itself
         try:
             for w in QtWidgets.QApplication.topLevelWidgets():
@@ -521,6 +693,20 @@ class AnalysisPage(QWizardPage):
         return self.wizard()
 
     def _capture_screenshot_for_file(self, file: str, run_index: int) -> str:
+        """Capture a PNG screenshot of the current fit window for a file/run.
+
+        Parameters
+        ----------
+        file : str
+            Original filename used to label the screenshot.
+        run_index : int
+            1-based run index used in the screenshot filename.
+
+        Returns
+        -------
+        str
+            Path to the saved PNG, or an empty string on failure.
+        """
         # Ensure UI updates before capture and mimic save_fit target (MDI current subwindow)
         QApplication.processEvents()
         time.sleep(0.05)
@@ -542,6 +728,20 @@ class AnalysisPage(QWizardPage):
             return ""
 
     def _create_docx_report(self, docx_path: str, file_order: list) -> bool:
+        """Create a DOCX report with per-file screenshots and a consolidated results table.
+
+        Parameters
+        ----------
+        docx_path : str
+            Path of the DOCX file to write.
+        file_order : list
+            Ordered list of filenames used to group and order the results.
+
+        Returns
+        -------
+        bool
+            ``True`` if the DOCX was saved successfully.
+        """
         try:
             from docx import Document
             from docx.shared import Inches
@@ -610,6 +810,7 @@ class AnalysisPage(QWizardPage):
             return False
 
     def run_fits(self):
+        """Run the selected fit on every chosen file/dataset and write the consolidated results."""
         wizard = self.wizard()
         file_selection_page = wizard.file_and_fit_selection_page
 

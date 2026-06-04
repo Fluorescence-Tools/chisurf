@@ -57,6 +57,17 @@ except Exception:
 # Simple data class to replace chisurf.data.DataCurve
 class DataCurve:
     def __init__(self, x=None, y=None, name=None):
+        """Initialize a DataCurve with x, y, and name.
+
+        Parameters
+        ----------
+        x : array-like, optional
+            The x-axis data.
+        y : array-like, optional
+            The y-axis data.
+        name : str, optional
+            A human-readable name for the curve.
+        """
         self.x = x
         self.y = y
         self.name = name
@@ -64,11 +75,25 @@ class DataCurve:
 
 class FileDropList(QListWidget):
     def __init__(self, parent=None):
+        """Initialize the FileDropList widget with drag-and-drop enabled.
+
+        Parameters
+        ----------
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
     def add_files(self, paths):
+        """Add file paths to the list, skipping any that are already present.
+
+        Parameters
+        ----------
+        paths : iterable of str
+            File paths to add to the widget.
+        """
         existing = {self.item(i).text() for i in range(self.count())}
         for p in paths:
             if p and p not in existing:
@@ -76,18 +101,21 @@ class FileDropList(QListWidget):
                 existing.add(p)
 
     def dragEnterEvent(self, event):
+        """Accept drag-enter events that contain URLs (files)."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             super().dragEnterEvent(event)
 
     def dragMoveEvent(self, event):
+        """Accept drag-move events that contain URLs (files)."""
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
         else:
             super().dragMoveEvent(event)
 
     def dropEvent(self, event):
+        """Handle drop events by adding dropped file URLs to the list."""
         if event.mimeData().hasUrls():
             paths = []
             for url in event.mimeData().urls():
@@ -102,6 +130,15 @@ class FileDropList(QListWidget):
 
 class JordiDecayBatchWindow(QDialog):
     def __init__(self, settings_snapshot: dict, parent=None):
+        """Initialize the batch processing dialog.
+
+        Parameters
+        ----------
+        settings_snapshot : dict
+            Snapshot of current g-factor/region/background settings used for batch runs.
+        parent : QWidget, optional
+            The parent widget.
+        """
         super().__init__(parent)
         self.setWindowTitle("Jordi G-Factor Batch Decays")
         self.setWindowModality(Qt.ApplicationModal)
@@ -110,6 +147,7 @@ class JordiDecayBatchWindow(QDialog):
         self._init_ui()
 
     def _init_ui(self):
+        """Build the file list, buttons, and results table layout."""
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Drop Jordi files here or use Add..."))
 
@@ -147,6 +185,22 @@ class JordiDecayBatchWindow(QDialog):
 
     @staticmethod
     def _shift_interp_on_axis(t: np.ndarray, y: np.ndarray, shift: float) -> np.ndarray:
+        """Interpolate ``y`` onto the time axis ``t`` after shifting by ``shift``.
+
+        Parameters
+        ----------
+        t : np.ndarray
+            Reference time axis.
+        y : np.ndarray
+            Intensity values aligned with ``t``.
+        shift : float
+            Shift to apply to ``t`` before interpolation.
+
+        Returns
+        -------
+        np.ndarray
+            Interpolated values aligned with ``t`` (NaN outside the range).
+        """
         if shift == 0.0:
             return np.asarray(y, dtype=float).copy()
         xq = t - shift
@@ -158,6 +212,26 @@ class JordiDecayBatchWindow(QDialog):
 
     @staticmethod
     def _compute_rt(vv, vh, g, l1=0.0, l2=0.0):
+        """Compute the time-resolved anisotropy r(t) from VV/VH traces.
+
+        Parameters
+        ----------
+        vv : array-like
+            Parallel (VV) intensities.
+        vh : array-like
+            Perpendicular (VH) intensities.
+        g : float
+            G-factor.
+        l1 : float, optional
+            L1 correction factor.
+        l2 : float, optional
+            L2 correction factor.
+
+        Returns
+        -------
+        np.ndarray
+            Anisotropy values (NaN where invalid).
+        """
         vv = np.asarray(vv, dtype=float)
         vh = np.asarray(vh, dtype=float)
         gg = float(g)
@@ -169,6 +243,18 @@ class JordiDecayBatchWindow(QDialog):
             return np.divide(num, den, out=np.full_like(vv, np.nan), where=(np.isfinite(den) & (den != 0.0)))
 
     def _compute_file_result(self, file_path: str):
+        """Compute anisotropy results for a single Jordi file using the snapshot.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the Jordi file to process.
+
+        Returns
+        -------
+        tuple
+            ``(filename, r_inf, region_min, region_max, bg_vv, bg_vh, g_factor)``.
+        """
         try:
             if _read_jordi is not None:
                 vv, vh = _read_jordi(file_path, split=True)
@@ -234,6 +320,13 @@ class JordiDecayBatchWindow(QDialog):
             )
 
     def _append_result_row(self, row_tuple):
+        """Append a result row to the table and to the internal results list.
+
+        Parameters
+        ----------
+        row_tuple : tuple
+            Values to display in the new row.
+        """
         r = self.table.rowCount()
         self.table.insertRow(r)
         for c, value in enumerate(row_tuple):
@@ -243,23 +336,28 @@ class JordiDecayBatchWindow(QDialog):
         self.results.append(row_tuple)
 
     def _clear_results(self):
+        """Clear the results table and the internal results list."""
         self.table.setRowCount(0)
         self.results = []
 
     def _on_add(self):
+        """Open a file dialog to add Jordi files to the list."""
         files, _ = QFileDialog.getOpenFileNames(self, "Add Jordi Files", "", "Data Files (*.dat *.txt *.csv);;All Files (*)")
         if files:
             self.file_list.add_files(files)
 
     def _on_remove(self):
+        """Remove the currently selected file entries from the list."""
         for item in self.file_list.selectedItems():
             self.file_list.takeItem(self.file_list.row(item))
 
     def _on_clear(self):
+        """Clear the file list and reset the results table."""
         self.file_list.clear()
         self._clear_results()
 
     def _on_run(self):
+        """Process every file in the list and append a result row for each."""
         paths = [self.file_list.item(i).text() for i in range(self.file_list.count())]
         if not paths:
             QMessageBox.information(self, "Batch", "No files to process.")
@@ -270,6 +368,7 @@ class JordiDecayBatchWindow(QDialog):
         QMessageBox.information(self, "Batch", f"Processed {len(paths)} file(s).")
 
     def _on_save(self):
+        """Save the current batch results to a user-chosen CSV file."""
         if not self.results:
             QMessageBox.information(self, "Save CSV", "No results to save.")
             return
@@ -288,8 +387,9 @@ class JordiDecayBatchWindow(QDialog):
 
 class JordiGFactorCalculator(QWidget):
     """Main widget for the Jordi G-Factor Calculator plugin."""
-    
+
     def __init__(self):
+        """Initialize the calculator widget, default state, and UI."""
         super().__init__()
         self.setWindowTitle("Jordi G-Factor Calculator")
         
@@ -407,6 +507,13 @@ class JordiGFactorCalculator(QWidget):
         self.resize(1200, 760)
 
     def _build_batch_snapshot(self) -> dict:
+        """Build a snapshot of current g-factor/region/background settings for batch use.
+
+        Returns
+        -------
+        dict
+            Dictionary containing g_raw, g_corr, l1, l2, shift, flip, bg values, and region bounds.
+        """
         g_raw = float(self.g_factor_uncorrected) if self.g_factor_uncorrected is not None else np.nan
         if self.g_factor is not None and np.isfinite(self.g_factor) and float(self.g_factor) > 0.0:
             g_corr = float(self.g_factor)
@@ -446,6 +553,7 @@ class JordiGFactorCalculator(QWidget):
         }
 
     def open_batch_window(self):
+        """Open the batch processing dialog populated with the current settings."""
         snap = self._build_batch_snapshot()
         self._batch_window = JordiDecayBatchWindow(snap, self)
         self._batch_window.exec_()
@@ -538,6 +646,18 @@ class JordiGFactorCalculator(QWidget):
 
     @staticmethod
     def _load_jordi_channels(file_path):
+        """Load a Jordi file and return ``(vv, vh)`` arrays.
+
+        Parameters
+        ----------
+        file_path : str
+            Path to the Jordi file.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            The VV and VH intensity arrays.
+        """
         if _read_jordi is not None:
             return _read_jordi(file_path, split=True)
         warnings.warn(
@@ -550,6 +670,13 @@ class JordiGFactorCalculator(QWidget):
         return jordi_data[:half_length], jordi_data[half_length:]
 
     def load_fp_jordi_file(self, file_path=None):
+        """Load a Jordi file for the slow-rotating (FP) anisotropy estimate.
+
+        Parameters
+        ----------
+        file_path : str, optional
+            Path to the Jordi file. If ``None`` (or a bool from Qt), a dialog is shown.
+        """
         self.fp_estimate_available = False
         if isinstance(file_path, bool):
             file_path = None
@@ -586,6 +713,22 @@ class JordiGFactorCalculator(QWidget):
 
     @staticmethod
     def _perrin_steady_state_anisotropy(tau_ns, rho_ns, r0=0.38):
+        """Perrin steady-state anisotropy for a sphere with rotational correlation time ``rho``.
+
+        Parameters
+        ----------
+        tau_ns : float
+            Fluorescence lifetime in nanoseconds.
+        rho_ns : float
+            Rotational correlation time in nanoseconds.
+        r0 : float, optional
+            Fundamental anisotropy (default 0.38).
+
+        Returns
+        -------
+        float
+            Steady-state anisotropy, or NaN if ``rho`` is non-positive.
+        """
         tau = float(tau_ns)
         rho = float(rho_ns)
         if rho <= 0.0:
@@ -594,6 +737,20 @@ class JordiGFactorCalculator(QWidget):
 
     @staticmethod
     def _estimate_lifetime_first_moment(time_axis, intensity):
+        """Estimate the intensity-weighted first moment of the time axis (proxy lifetime).
+
+        Parameters
+        ----------
+        time_axis : array-like
+            Channel time axis.
+        intensity : array-like
+            Intensity values aligned with ``time_axis``.
+
+        Returns
+        -------
+        float
+            First moment in channel units, or NaN if the weighted sum is non-positive.
+        """
         t = np.asarray(time_axis, dtype=float)
         i = np.asarray(intensity, dtype=float)
         valid = np.isfinite(t) & np.isfinite(i) & (i > 0.0)
@@ -609,6 +766,24 @@ class JordiGFactorCalculator(QWidget):
 
     @staticmethod
     def _solve_linked_l_from_steady_state(sp, ss, g_factor, r_target):
+        """Solve for the linked l1=l2 mixing parameter from a target steady-state r.
+
+        Parameters
+        ----------
+        sp : float
+            Sum of parallel channel counts (background corrected).
+        ss : float
+            Sum of perpendicular channel counts (background corrected).
+        g_factor : float
+            Detector G-factor.
+        r_target : float
+            Target steady-state anisotropy (e.g. from Perrin).
+
+        Returns
+        -------
+        float
+            Estimated l1=l2, or NaN on degenerate input.
+        """
         sp = float(sp)
         ss = float(ss)
         g = float(g_factor)
@@ -626,6 +801,21 @@ class JordiGFactorCalculator(QWidget):
         return float((d0 - num / r) / den)
 
     def _set_fp_outputs(self, tau_ns=np.nan, rs_expected=np.nan, l1=np.nan, l2=np.nan, warning_text=None):
+        """Update FP estimate outputs and mirror them to the corresponding UI fields.
+
+        Parameters
+        ----------
+        tau_ns : float, optional
+            Estimated fluorescence lifetime in nanoseconds.
+        rs_expected : float, optional
+            Expected steady-state anisotropy (Perrin).
+        l1 : float, optional
+            Estimated l1 mixing parameter.
+        l2 : float, optional
+            Estimated l2 mixing parameter.
+        warning_text : str, optional
+            Optional warning message to display.
+        """
         self.fp_tau_estimate_ns = float(tau_ns) if np.isfinite(tau_ns) else None
         self.fp_rs_expected = float(rs_expected) if np.isfinite(rs_expected) else None
 
@@ -666,6 +856,13 @@ class JordiGFactorCalculator(QWidget):
             )
 
     def on_fp_l1_value_changed(self, _value):
+        """Mark l1 as manually overridden and recompute dependent outputs.
+
+        Parameters
+        ----------
+        _value : float
+            Unused; the new value is read from the spin box directly.
+        """
         if self._updating_fp_l1_value:
             return
         self.fp_manual_l1_override = True
@@ -676,24 +873,47 @@ class JordiGFactorCalculator(QWidget):
         self.calculate_fp_mixing_estimate()
 
     def on_fp_tau_value_changed(self, _value):
+        """Mark tau as manually overridden and recompute the FP mixing estimate.
+
+        Parameters
+        ----------
+        _value : float
+            Unused; the new value is read from the spin box directly.
+        """
         if self._updating_fp_tau_value:
             return
         self.fp_manual_tau_override = True
         self.calculate_fp_mixing_estimate()
 
     def on_fp_rs_value_changed(self, _value):
+        """Mark expected r as manually overridden and recompute the FP mixing estimate.
+
+        Parameters
+        ----------
+        _value : float
+            Unused; the new value is read from the spin box directly.
+        """
         if self._updating_fp_rs_value:
             return
         self.fp_manual_rs_override = True
         self.calculate_fp_mixing_estimate()
 
     def on_g_factor_value_changed(self):
+        """Apply the manually entered g-factor text after editing finishes."""
         self._apply_manual_g_from_text()
 
     def on_g_factor_text_changed(self, _text):
+        """Apply the manually entered g-factor text as it is being edited.
+
+        Parameters
+        ----------
+        _text : str
+            Unused; the text is read from the line edit directly.
+        """
         self._apply_manual_g_from_text()
 
     def _apply_manual_g_from_text(self):
+        """Read the g-factor text field and apply it as a manual override if valid."""
         if self._updating_g_value:
             return
         txt = str(self.g_factor_value.text()).strip()
@@ -711,6 +931,7 @@ class JordiGFactorCalculator(QWidget):
         self.calculate_fp_mixing_estimate()
 
     def calculate_fp_mixing_estimate(self):
+        """Estimate the FP l1/l2 mixing parameter from a fast g-factor and FP Jordi data."""
         if self.fp_parallel_data is None or self.fp_perpendicular_data is None:
             self._set_fp_outputs(
                 warning_text="Warning: Load FP Jordi data to estimate l1/l2."
@@ -830,6 +1051,13 @@ class JordiGFactorCalculator(QWidget):
         return par, perp
 
     def _get_fp_par_perp(self):
+        """Return FP parallel and perpendicular arrays, applying VV↔VH flip if requested.
+
+        Returns
+        -------
+        tuple
+            ``(par, perp)`` or ``(None, None)`` when no FP data is loaded.
+        """
         if self.fp_parallel_data is None or self.fp_perpendicular_data is None:
             return None, None
         par = self.fp_parallel_data
@@ -841,6 +1069,26 @@ class JordiGFactorCalculator(QWidget):
 
     @staticmethod
     def _compute_rt(par, perp, g_factor, l1=0.0, l2=0.0):
+        """Compute the anisotropy r(t) for given parallel/perpendicular traces.
+
+        Parameters
+        ----------
+        par : array-like
+            Parallel (VV) intensities.
+        perp : array-like
+            Perpendicular (VH) intensities.
+        g_factor : float
+            G-factor.
+        l1 : float, optional
+            L1 correction factor.
+        l2 : float, optional
+            L2 correction factor.
+
+        Returns
+        -------
+        np.ndarray
+            Anisotropy values (NaN where invalid).
+        """
         g = float(g_factor)
         if not np.isfinite(g) or g <= 0.0:
             return np.full_like(np.asarray(par, dtype=float), np.nan, dtype=float)
@@ -852,6 +1100,24 @@ class JordiGFactorCalculator(QWidget):
             return np.divide(num, den, out=np.full_like(num, np.nan), where=(np.isfinite(den) & (den != 0.0)))
 
     def _compute_background_levels(self, par_raw, perp_raw, time_axis, shifted_time_axis):
+        """Compute the mean background level of parallel and perpendicular channels.
+
+        Parameters
+        ----------
+        par_raw : np.ndarray
+            Raw parallel (VV) intensities.
+        perp_raw : np.ndarray
+            Raw perpendicular (VH) intensities.
+        time_axis : np.ndarray
+            Time axis for the parallel channel.
+        shifted_time_axis : np.ndarray
+            Time axis shifted for the perpendicular channel.
+
+        Returns
+        -------
+        tuple of float
+            ``(bg_parallel_avg, bg_perpendicular_avg)``.
+        """
         bg_min_time, bg_max_time = self.bg_region_bounds
         bg_min_idx_parallel = np.argmin(np.abs(time_axis - bg_min_time))
         bg_max_idx_parallel = np.argmin(np.abs(time_axis - bg_max_time))
@@ -865,6 +1131,35 @@ class JordiGFactorCalculator(QWidget):
 
     @staticmethod
     def _plot_decay_set(plot_widget, time_axis, shifted_time_axis, par_raw, perp_raw, bg_par, bg_perp, g_unc, g_cor, prefix, show_raw=True, show_corrected=True):
+        """Plot raw and G-corrected decay traces onto ``plot_widget``.
+
+        Parameters
+        ----------
+        plot_widget : pg.PlotWidget
+            The target plot widget.
+        time_axis : np.ndarray
+            Time axis for the parallel channel.
+        shifted_time_axis : np.ndarray
+            Time axis shifted for the perpendicular channel.
+        par_raw : np.ndarray
+            Raw parallel (VV) intensities.
+        perp_raw : np.ndarray
+            Raw perpendicular (VH) intensities.
+        bg_par : float
+            Background level for the parallel channel.
+        bg_perp : float
+            Background level for the perpendicular channel.
+        g_unc : float
+            Uncorrected G-factor (used as a label only).
+        g_cor : float
+            Active G-factor for the corrected traces.
+        prefix : str
+            Legend prefix (e.g. "fast" or "slow").
+        show_raw : bool, optional
+            Whether to plot the raw traces.
+        show_corrected : bool, optional
+            Whether to plot the corrected (and G-scaled) traces.
+        """
         par_corr = np.maximum(par_raw - bg_par, 0.0)
         perp_corr = np.maximum(perp_raw - bg_perp, 0.0)
 
@@ -901,6 +1196,13 @@ class JordiGFactorCalculator(QWidget):
             )
 
     def on_plot_visibility_changed(self, *_args):
+        """Refresh the main and r(t) plots when show/hide checkboxes change.
+
+        Parameters
+        ----------
+        *_args : tuple
+            Unused signal arguments forwarded by Qt.
+        """
         self.update_plot()
         self.update_rt_plot()
 
@@ -1202,6 +1504,19 @@ class JordiGFactorCalculator(QWidget):
         show_corr = bool(self.show_corrected_checkbox.isChecked())
 
         def _plot_dataset_rt(prefix, time_axis, par_raw, perp_raw):
+            """Plot raw and corrected r(t) traces for a single dataset on the r(t) widget.
+
+            Parameters
+            ----------
+            prefix : str
+                Legend prefix (e.g. "fast" or "slow").
+            time_axis : np.ndarray
+                Reference time axis for the dataset.
+            par_raw : np.ndarray
+                Raw parallel (VV) intensities.
+            perp_raw : np.ndarray
+                Raw perpendicular (VH) intensities.
+            """
             shifted_time_axis = time_axis + self.decay_shift
             # Raw means no shift/background/l-mixing correction.
             perp_on_t_raw = np.asarray(perp_raw, dtype=float)

@@ -31,6 +31,14 @@ class Correlator(QtCore.QThread):
 
     @property
     def data(self) -> chisurf.data.DataCurve:
+        """Return the correlation result as a :class:`DataCurve`.
+
+        Returns
+        -------
+        chisurf.data.DataCurve
+            The cached data curve when available, otherwise a new empty
+            :class:`DataCurve` associated with this correlator.
+        """
         if isinstance(self._data_curve, chisurf.data.DataCurve):
             return self._data_curve
         else:
@@ -44,6 +52,16 @@ class Correlator(QtCore.QThread):
             *args,
             **kwargs
     ):
+        """Initialize the correlator thread.
+
+        Parameters
+        ----------
+        photon_source : object
+            Object exposing ``photon_source.photons`` (used to access
+            the photon stream and its meta information).
+        *args, **kwargs
+            Forwarded to :class:`QtCore.QThread`.
+        """
         super().__init__(*args, **kwargs)
         self.p = photon_source
         self.exiting = False
@@ -92,6 +110,20 @@ class Correlator(QtCore.QThread):
             self,
             use_tttrlib: bool = True
     ):
+        """Compute the correlation and emit progress/done signals.
+
+        Iterates over ``self.p.split`` groups of photons, runs the chosen
+        correlator (tttrlib or the ``tp`` fallback), accumulates the
+        per-group correlations, averages them into a single
+        :class:`DataCurve` and stores the result in ``self._data_curve``.
+
+        Parameters
+        ----------
+        use_tttrlib : bool, optional
+            If ``True`` (default) use :class:`tttrlib.Correlator`,
+            otherwise use the legacy ``chisurf.fluorescence.fcs.correlate``
+            ``tp`` implementation.
+        """
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)
@@ -201,13 +233,33 @@ class Correlator(QtCore.QThread):
         self.procDone.emit(True)
         self.exiting = True
 
+    @property
     def weight(
             self,
-            tau: np.ndarray,
-            cor: np.ndarray,
-            acquisition_time: float,
-            count_rate: float
+            tau,
+            cor,
+            acquisition_time,
+            count_rate
     ):
+        """Weight a per-group correlation by its expected noise.
+
+        Parameters
+        ----------
+        tau : np.ndarray
+            tau-axis in milliseconds.
+        cor : np.ndarray
+            Correlation amplitude corresponding to ``tau``.
+        acquisition_time : float
+            Duration of the group in seconds.
+        count_rate : float
+            Count-rate in kHz.
+
+        Returns
+        -------
+        np.ndarray
+            Weight vector as returned by ``chisurf.fluorescence.fcs.noise``
+            using the configured ``weighting`` (``uniform`` or ``suren``).
+        """
         """
         tau-axis in milliseconds
         correlation amplitude

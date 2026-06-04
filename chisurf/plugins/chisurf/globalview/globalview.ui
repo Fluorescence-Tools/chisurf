@@ -49,35 +49,16 @@
       </property>
       <item row="1" column="2" colspan="2">
        <widget class="QToolButton" name="toolButton_3">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>redraw</string>
         </property>
        </widget>
       </item>
       <item row="0" column="2" colspan="2">
-       <widget class="QComboBox" name="comboBox_layout">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
+       <widget class="QComboBox" name="comboBox_layout"/>
       </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="minimum">
          <double>0.010000000000000</double>
         </property>
@@ -98,12 +79,6 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="doubleSpinBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="minimum">
          <double>0.010000000000000</double>
         </property>
@@ -117,12 +92,6 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>Node size</string>
         </property>
@@ -130,12 +99,6 @@
       </item>
       <item row="2" column="0">
        <widget class="QCheckBox" name="checkBox_connect_fits">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="toolTip">
          <string>Connect fits is only to improve the vizual representation</string>
         </property>
@@ -146,14 +109,8 @@
       </item>
       <item row="2" column="1">
        <widget class="QCheckBox" name="checkBox_include_fixed">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
-         <string>Include fixed </string>
+         <string>Include fixed</string>
         </property>
        </widget>
       </item>
@@ -192,12 +149,6 @@
       </property>
       <item>
        <widget class="QToolButton" name="toolButton_4">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>save</string>
         </property>
@@ -205,12 +156,6 @@
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_5">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>load</string>
         </property>
@@ -248,12 +193,6 @@
       </property>
       <item row="3" column="2">
        <widget class="QCheckBox" name="checkBox_3">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>all</string>
         </property>
@@ -261,12 +200,6 @@
       </item>
       <item row="3" column="1">
        <widget class="QToolButton" name="toolButton_2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>clear</string>
         </property>
@@ -274,12 +207,6 @@
       </item>
       <item row="1" column="0" rowspan="3">
        <widget class="QWidget" name="widget" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
           <number>0</number>
@@ -304,12 +231,6 @@
       </item>
       <item row="1" column="1" colspan="2">
        <widget class="QToolButton" name="toolButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string>link</string>
         </property>
@@ -319,11 +240,23 @@
     </widget>
    </item>
    <item row="2" column="0" colspan="2">
-    <layout class="QVBoxLayout" name="verticalLayout_3">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetNoConstraint</enum>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-    </layout>
+     <widget class="QWidget" name="graphTab">
+      <attribute name="title">
+       <string>Graph</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="graphTabLayout"/>
+     </widget>
+     <widget class="QWidget" name="paramsTab">
+      <attribute name="title">
+       <string>Parameters</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="paramsTabLayout"/>
+     </widget>
+    </widget>
    </item>
   </layout>
  </widget>
