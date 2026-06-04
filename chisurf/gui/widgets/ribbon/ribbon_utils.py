@@ -8,6 +8,7 @@ This module contains utility functions and convenience methods for the ribbon in
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QMessageBox
+from qtpy import QtWidgets
 
 import chisurf
 from chisurf import logging
@@ -58,9 +59,8 @@ class UtilityMethodsMixin:
             # Get the default application font
             app_font = QtWidgets.QApplication.font()
 
-            # Create a much smaller font for ribbon elements (more aggressive)
+            # Keep ribbon text at the same readable size as parameter widgets.
             ribbon_font = QFont(app_font)
-            ribbon_font.setPointSize(max(7, app_font.pointSize() - 2))  # Even smaller
 
             # Apply font to ribbon bar
             self.ribbon_bar.setFont(ribbon_font)

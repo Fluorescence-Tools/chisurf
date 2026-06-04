@@ -479,10 +479,9 @@ RibbonBar QToolButton:focus-visible {
     outline: none !important;
 }
 
-/* Button text styling - force smaller fonts */
+/* Button text styling */
 RibbonToolButton QLabel {
     color: #ffffff;
-    font-size: 8pt !important;
     border: none !important;
     outline: none !important;
 }
@@ -497,19 +496,6 @@ RibbonToolButton:pressed QLabel {
 
 RibbonToolButton:selected QLabel {
     color: #ffffff;
-}
-
-/* Force smaller fonts on all ribbon widgets */
-RibbonBar * {
-    font-size: 8pt !important;
-}
-
-RibbonPanel * {
-    font-size: 8pt !important;
-}
-
-RibbonCategory * {
-    font-size: 8pt !important;
 }
 
 /* RibbonBar main background - darker than default window */

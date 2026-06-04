@@ -617,7 +617,6 @@ class ChiSurfRibbonIntegration(QObject):
                     RibbonPanel > QLabel {
                         margin: 0px;
                         padding: 1px;
-                        font-size: 11px;
                     }
                 """
 
