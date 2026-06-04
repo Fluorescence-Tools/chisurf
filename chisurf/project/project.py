@@ -20,7 +20,7 @@ class Project:
     name: str = "untitled"
     description: str = ""
     chisurf_version: Optional[str] = None
-    project_format_version: int = 3
+    project_format_version: int = 4
     # Creation timestamp (ISO 8601). Mainly for user information.
     created: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
 
@@ -34,8 +34,6 @@ class Project:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert this project into a deterministic JSON-serializable dictionary."""
-        # Ensure v3 format is enforced
-        self.project_format_version = 3
         
         # Sort dictionaries by key for deterministic output
         sorted_datasets = {k: self.datasets[k] for k in sorted(self.datasets.keys())}
@@ -59,10 +57,13 @@ class Project:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Project":
-        """Reconstruct a :class:`Project` from a dictionary. V3 format only."""
+        """Reconstruct a :class:`Project` from a dictionary. V4 format only."""
         version = int(data.get("project_format_version", 1))
-        if version != 3:
-            raise ValueError(f"Unsupported project format version: {version}. Only v3 is supported.")
+        if version < 4:
+            raise ValueError(
+                f"Unsupported project format version: {version}. "
+                "This build requires v4 (UID-keyed). v3 and earlier projects are not supported."
+            )
 
         meta = data.get("meta", {})
         
@@ -74,7 +75,7 @@ class Project:
             name=meta.get("name", "untitled"),
             description=meta.get("description", ""),
             chisurf_version=meta.get("chisurf_version"),
-            project_format_version=3,
+            project_format_version=4,
             created=meta.get("created") or datetime.datetime.now().isoformat(),
             datasets=data.get("datasets") or {},
             experiments=data.get("experiments") or {},

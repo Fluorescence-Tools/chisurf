@@ -7,6 +7,7 @@ core fitting objects (:class:`chisurf.fitting.fit.Fit` and its models).
 They are meant to be used by higher‑level project save/load code.
 """
 
+import uuid
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
 def _model_to_state(model: Any) -> Dict[str, Any]:
     """Extract a JSON‑serializable snapshot of a model's state.
 
+    Version 4: parameters are keyed by UID, and links are resolved by UID.
     This is the core implementation used by :func:`fit_to_state` as well as
     :meth:`chisurf.models.model.Model.get_state`. It operates directly on a
     model instance without requiring a full :class:`Fit` wrapper.
@@ -32,8 +34,9 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
 
     params = getattr(model, "parameters_all_dict", {}) or {}
 
-    # First pass: basic scalar attributes
+    # First pass: basic scalar attributes, keyed by UID
     param_states: Dict[str, Dict[str, Any]] = {}
+    uid_to_obj: Dict[str, Any] = {}
     for name, p in params.items():
         # Bounds may be numpy arrays; normalize to a simple [lb, ub] list
         try:
@@ -49,7 +52,12 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
             # Fall back to 0.0 if the parameter cannot be coerced cleanly
             value = 0.0
 
+        uid = str(getattr(p, "unique_identifier", "")) or str(uuid.uuid4())
+        uid_to_obj[uid] = p
+
         state = {
+            "uid": uid,
+            "name": name,
             "value": value,
             "fixed": bool(getattr(p, "fixed", False)),
             "bounds": [lb, ub],
@@ -58,31 +66,34 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
             "link_target": None,
             "link_target_fit_uid": None,
         }
-        param_states[name] = state
+        param_states[uid] = state
 
-    # Second pass: resolve links within this model by parameter *name*
-    # We key by object id to detect internal links only.
-    obj_to_name = {id(p): name for name, p in params.items()}
-    for name, p in params.items():
+    # Second pass: resolve links by UID
+    for uid, p_state in param_states.items():
+        p = uid_to_obj.get(uid)
+        if p is None:
+            continue
         link = getattr(p, "link", None)
         if link is None:
             continue
         
+        target_uid = str(getattr(link, "unique_identifier", ""))
+        
         # Intra-fit link discovery
-        target_name = obj_to_name.get(id(link))
-        if target_name is not None:
-            param_states[name]["link_target"] = target_name
+        if target_uid in uid_to_obj:
+            p_state["link_target"] = target_uid
         else:
             # Inter-fit link discovery (cross-fit)
             import chisurf
             for other_fit in getattr(chisurf, "fits", []):
-                other_params = getattr(other_fit.model, "parameters_all_dict", {})
-                other_obj_to_name = {id(op): oname for oname, op in other_params.items()}
-                target_name = other_obj_to_name.get(id(link))
-                if target_name is not None:
-                    param_states[name]["link_target"] = target_name
-                    param_states[name]["link_target_fit_uid"] = str(getattr(other_fit, "unique_identifier", ""))
-                    break
+                for op in getattr(other_fit.model, "parameters_all", []):
+                    if str(getattr(op, "unique_identifier", "")) == target_uid:
+                        p_state["link_target"] = target_uid
+                        p_state["link_target_fit_uid"] = str(getattr(other_fit, "unique_identifier", ""))
+                        break
+                else:
+                    continue
+                break
 
     # Optional model-specific extras. These are deliberately small and
     # JSON-friendly. Structural information such as component counts is
@@ -166,13 +177,15 @@ def fit_to_state(fit: Fit) -> Dict[str, Any]:
 def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
     """Apply a previously captured state dictionary to a model instance.
 
+    Version 4: parameters are restored by UID. The stored ``parameters``
+    dict is keyed by UID, and ``link_target`` values are UIDs (not names).
+
     This is the core implementation used by :func:`apply_state_to_fit` as
     well as :meth:`chisurf.models.model.Model.set_state`. It assumes that
     ``model`` is already an instance of the desired class and only updates
     parameters, links and small structural extras (e.g. component counts).
     """
 
-    params = getattr(model, "parameters_all_dict", {}) or {}
     stored_params: Dict[str, Dict[str, Any]] = state.get("parameters", {}) or {}
 
     # Optional structural extras (e.g. component counts for dynamic groups)
@@ -185,13 +198,22 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
         find_params = getattr(model, "find_parameters", None)
         if callable(find_params):
             find_params()
-            params = getattr(model, "parameters_all_dict", {}) or {}
     except Exception:
         pass
 
+    # Build lookup dicts by UID (primary) and by name (fallback)
+    all_params = getattr(model, "parameters_all", []) or []
+    uid_to_param: Dict[str, Any] = {
+        str(getattr(p, "unique_identifier", "")): p
+        for p in all_params
+    }
+    name_to_param: Dict[str, Any] = getattr(model, "parameters_all_dict", {}) or {}
+
     # First pass: scalar attributes (value, fixed, bounds, bounds_on)
-    for name, p_state in stored_params.items():
-        p = params.get(name)
+    for uid, p_state in stored_params.items():
+        p = uid_to_param.get(uid)
+        if p is None:
+            p = name_to_param.get(p_state.get("name", ""))
         if p is None:
             # Parameter not present in this model; skip gracefully
             continue
@@ -223,15 +245,15 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
             except Exception:
                 pass
 
-    # Second pass: restore intra‑fit links by name
-    for name, p_state in stored_params.items():
-        p = params.get(name)
+    # Second pass: restore links by UID
+    for uid, p_state in stored_params.items():
+        p = uid_to_param.get(uid) or name_to_param.get(p_state.get("name", ""))
         if p is None:
             continue
-        target_name = p_state.get("link_target")
+        target_uid = p_state.get("link_target")
         target_fit_uid = p_state.get("link_target_fit_uid")
         
-        if not target_name:
+        if not target_uid:
             # Explicitly clear existing links if any
             try:
                 p.link = None
@@ -240,21 +262,25 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
             continue
             
         if not target_fit_uid:
-            # Intra-fit link restoration
-            target = params.get(target_name)
+            # Intra-fit link restoration by UID
+            target = uid_to_param.get(target_uid)
             if target is not None:
                 try:
                     p.link = target
                 except Exception:
                     pass
         else:
-            # Inter-fit link restoration (defer to third pass or handle here if registries are ready)
-            # Since this is a GUI-independence helper, we try to resolve from chisurf.fits if present.
+            # Inter-fit link restoration by UID
             import chisurf
             target_fit = next((f for f in getattr(chisurf, "fits", []) 
                                if str(getattr(f, "unique_identifier", "")) == target_fit_uid), None)
             if target_fit:
-                target = getattr(target_fit.model, "parameters_all_dict", {}).get(target_name)
+                target_params = getattr(target_fit.model, "parameters_all", []) or []
+                target = next(
+                    (op for op in target_params
+                     if str(getattr(op, "unique_identifier", "")) == target_uid),
+                    None
+                )
                 if target:
                     try:
                         p.link = target

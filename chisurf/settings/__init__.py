@@ -68,12 +68,11 @@ tcspc = dict()
 fps = dict()
 locals().update(cs_settings)
 
-# BETA OVERRIDES: Force Jupyter and MCP to start even if disabled in user settings
+# BETA OVERRIDES: Force Jupyter to start even if disabled in user settings
 # to ensure connectivity for the Antigravity (v26.1) Beta release.
 _gui_overrides = cs_settings.setdefault('gui', {})
 _gui_overrides['start_jupyter_on_startup'] = True
-_gui_overrides['mcp_autostart'] = True
-# Sync top-level variables if they were updated from cs_settings earlier
+# ZMQ server is always auto-started — no setting required.
 gui.update(_gui_overrides)
 
 
