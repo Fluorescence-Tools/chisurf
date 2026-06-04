@@ -41,6 +41,7 @@ class Parameter(chisurf.base.Base):
 
     @staticmethod
     def check_recursive_link(current, target):
+        """Check if linking *current* to *target* would create a recursive cycle."""
         if id(current) == id(target):
             return True
         if current.link is not None:
@@ -49,6 +50,7 @@ class Parameter(chisurf.base.Base):
 
     @property
     def fit_idx(self):
+        """Find the fitting index of this parameter, or -1 if it is not used in a fit."""
         import chisurf.fitting
         idxs = chisurf.fitting.find_fit_idx_of_parameter(self)
         if len(idxs) == 0:
@@ -60,10 +62,12 @@ class Parameter(chisurf.base.Base):
 
     @property
     def name(self) -> str:
+        """Parameter name."""
         return self._name
 
     @name.setter
     def name(self, v: str):
+        """Set the parameter name and update the underlying port."""
         self._port.name = v
         self._name = v
 
@@ -77,6 +81,7 @@ class Parameter(chisurf.base.Base):
 
     @bounds.setter
     def bounds(self, b: typing.Tuple[float, float]):
+        """Set the lower and upper bounds."""
         self._port.bounds = np.array(b, dtype=np.float64)
 
     @property
@@ -86,6 +91,7 @@ class Parameter(chisurf.base.Base):
 
     @bounds_on.setter
     def bounds_on(self, v):
+        """Enable or disable bound enforcement."""
         self._port.bounded = bool(v)
 
     @property
@@ -162,10 +168,18 @@ class Parameter(chisurf.base.Base):
 
     @property
     def link(self) -> chisurf.parameter.Parameter:
+        """Return the linked parameter, or None if this parameter is not linked."""
         return self._link
 
     @link.setter
     def link(self, link: Parameter|None):
+        """Link this parameter to another, or break the link by passing None.
+
+        Parameters
+        ----------
+        link : Parameter or None
+            The target parameter to follow, or None to unlink.
+        """
         if isinstance(link, Parameter):
             if Parameter.check_recursive_link(link, self):
                 raise ValueError("Cannot create a recursive link between parameters.")
@@ -203,9 +217,11 @@ class Parameter(chisurf.base.Base):
 
     @fixed.setter
     def fixed(self, v: bool):
+        """Freeze or unfreeze the parameter value."""
         self._port.fixed = bool(v)
 
     def __add__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self + other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -213,6 +229,7 @@ class Parameter(chisurf.base.Base):
         )
 
     def __mul__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self * other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -220,6 +237,7 @@ class Parameter(chisurf.base.Base):
         )
 
     def __truediv__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self / other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -227,6 +245,7 @@ class Parameter(chisurf.base.Base):
         )
 
     def __floordiv__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self // other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -234,6 +253,7 @@ class Parameter(chisurf.base.Base):
         )
 
     def __sub__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self - other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -241,6 +261,7 @@ class Parameter(chisurf.base.Base):
         )
 
     def __mod__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self % other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -248,6 +269,7 @@ class Parameter(chisurf.base.Base):
         )
 
     def __pow__(self, other: T) -> T:
+        """Return a new parameter whose value is ``self ** other``."""
         a = self.value
         b = other.value if isinstance(other, Parameter) else other
         return self.__class__(
@@ -255,27 +277,15 @@ class Parameter(chisurf.base.Base):
         )
 
     def __invert__(self) -> T:
+        """Return a new parameter whose value is ``1.0 / self``."""
         a = self.value
         return self.__class__(
             value=(1./a)
         )
 
     def __float__(self):
+        """Convert the parameter value to a Python float."""
         return float(self.value)
-
-    def __eq__(self, other: Parameter) -> bool:
-        if isinstance(other, Parameter):
-            return self.value == other.value
-        return NotImplemented
-
-    def __ne__(self, other: Parameter):
-        result = self.__eq__(other)
-        if result is NotImplemented:
-            return result
-        return not result
-
-    def __hash__(self):
-        return super().__hash__()
 
     def __repr__(self):
         """Return a compact string representation of the parameter value.
@@ -290,17 +300,20 @@ class Parameter(chisurf.base.Base):
         return repr(v)
 
     def __abs__(self):
+        """Return a new parameter whose value is ``abs(self)``."""
         return self.__class__(
             value=self.value.__abs__()
         )
 
     def __getstate__(self):
+        """Return the underlying port state for pickling."""
         d = json.loads(self._port.get_json())
         return {
             'port': d
         }
 
     def __setstate__(self, state):
+        """Restore parameter state from :meth:`__getstate__` output."""
         s = json.dumps(state['port'])
         self._port.read_json(s)
         fixed = self._port.fixed
@@ -309,6 +322,7 @@ class Parameter(chisurf.base.Base):
         self._port.fixed = fixed
 
     def __round__(self, n=None):
+        """Return a new parameter whose value is ``round(self)``."""
         return self.__class__(
             value=self.value.__round__()
         )
@@ -485,6 +499,7 @@ class ParameterGroup(chisurf.base.Base):
             *args,
             **kwargs
     ):
+        """Initialize a ParameterGroup with an optional list of parameters."""
         super().__init__(*args, **kwargs)
         if parameters is None:
             parameters = list()
@@ -529,20 +544,39 @@ class ParameterGroup(chisurf.base.Base):
             k: str,
             v: object
     ):
+        """Route attribute writes to contained Parameter objects when possible.
+
+        If *k* names an existing :class:`Parameter` in the group, the
+        value is forwarded to that parameter's *value* setter.
+        """
+        # Check instance __dict__ first — avoids triggering __getattr__
+        # (and its Base-level ERROR log) for every attribute during init.
         try:
-            propobj = getattr(self, k, None)
-            if isinstance(propobj, property):
-                if propobj.fset is None:
-                    raise AttributeError("can't set attribute")
-                propobj.fset(self, v)
-            elif isinstance(propobj, chisurf.parameter.Parameter):
-                propobj.value = v
-            else:
-                super().__setattr__(k, v)
+            existing = self.__dict__.get(k)
+        except AttributeError:
+            existing = None
+        if existing is not None and isinstance(existing, chisurf.parameter.Parameter):
+            existing.value = v
+            return
+
+        # Check MRO for class-level properties / descriptors
+        for cls in type(self).__mro__:
+            if k in cls.__dict__:
+                desc = cls.__dict__[k]
+                if isinstance(desc, property):
+                    if desc.fset is None:
+                        raise AttributeError("can't set attribute")
+                    desc.fset(self, v)
+                    return
+                break  # found but not a property — treat as normal attribute
+
+        try:
+            super().__setattr__(k, v)
         except KeyError:
             super().__setattr__(k, v)
 
     def __getattr__(self, key: str):
+        """Return a contained Parameter's float value when accessed by name."""
         v = super().__getattr__(key=key)
         if isinstance(v, chisurf.parameter.Parameter):
             return v.value
@@ -552,21 +586,26 @@ class ParameterGroup(chisurf.base.Base):
             parameter: Parameter,
             **kwargs
     ):
+        """Append a :class:`Parameter` to the group."""
         self._parameter.append(parameter)
 
     def clear(self):
+        """Remove all parameters from the group."""
         self._parameter = list()
 
     @property
     def parameters(self) -> typing.List[Parameter]:
+        """Return the list of contained parameters."""
         return self._parameter
 
     @property
     def parameter_names(self) -> typing.List[str]:
+        """Return the names of all contained parameters."""
         return [p.name for p in self.parameters]
 
     @property
     def values(self) -> np.array:
+        """Return the current values of all contained parameters."""
         return [p.value for p in self.parameters]
 
     # def save_txt(

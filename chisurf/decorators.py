@@ -54,16 +54,14 @@ def register(cls):
             cls._instances -= dead
 
         def __init__(self, *args, **kwargs):
+            # Initialize the base class first so that attributes like
+            # unique_identifier are available before we add the weakref
+            # to _instances (weakref.ref.__hash__ delegates to self.__hash__).
+            super().__init__(*args, **kwargs)
             self._instances.add(
                 weakref.ref(self)
             )
             self.__class__.__name__ = cls.__name__
-            # for name, member in self.__class__.__dict__.items():
-            #     print(name)
-            #     print(member)
-            #     if not getattr(member, '__doc__'):
-            #         self.__class__.__doc__ = getattr(cls, name).__doc__
-            super().__init__(*args, **kwargs)
 
     return RegisteredClass
 

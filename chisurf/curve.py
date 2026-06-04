@@ -29,6 +29,15 @@ class NCurve(chisurf.base.Base):
             *args,
             **kwargs
     ):
+        """Initialize an NCurve with an optional 1D numpy array.
+
+        Parameters
+        ----------
+        d : np.ndarray, optional
+            Data array.
+        copy_array : bool
+            If True (default), the array is copied.
+        """
         if d is None:
             self.d = np.array(list(), dtype=np.float64)
         if copy_array:
@@ -38,10 +47,24 @@ class NCurve(chisurf.base.Base):
         super().__init__(*args, **kwargs)
 
     def __getstate__(self):
+        """Return the instance ``__dict__`` for pickling."""
         state = self.__dict__.copy()
         return state
 
     def __getitem__(self, key) -> typing.Tuple[np.ndarray, np.ndarray]:
+        """Index into the flattened data array.
+
+        Parameters
+        ----------
+        key : int, slice, or np.ndarray
+            Index.
+
+        Returns
+        -------
+        tuple
+            ``(x, y)`` where *x* is an index array and *y* is the
+            selected data values.
+        """
         y = self.d.flatten().__getitem__(key)
         x = np.arange(0, len(self.y))
         return x, y
@@ -109,6 +132,7 @@ class Curve(NCurve):
 
     @x.setter
     def x(self, v):
+        """Set the curve's x-values (broadcast into the existing storage)."""
         self.d[0] = v
 
     @property
@@ -118,6 +142,7 @@ class Curve(NCurve):
 
     @y.setter
     def y(self, v):
+        """Set the curve's y-values (broadcast into the existing storage)."""
         self.d[1] = v
 
     @property
@@ -349,6 +374,13 @@ class CurveGroup(object):
             self,
             seq: typing.List[chisurf.curve.Curve] = None
     ):
+        """Initialize a CurveGroup with an optional list of curves.
+
+        Parameters
+        ----------
+        seq : list of Curve, optional
+            Initial curve list.
+        """
         if seq is None:
             seq = []
         self._curves = seq

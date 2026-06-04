@@ -31,6 +31,11 @@ class ExperimentalData(chisurf.base.Data):
 
     @property
     def experiment(self) -> "Experiment":
+        """Return the experiment associated with this dataset.
+
+        If ``_experiment`` is not set, attempts to retrieve it from the
+        associated :attr:`data_reader`.
+        """
         if self._experiment is None:
             try:
                 from chisurf.experiments.core.reader import ExperimentReader
@@ -46,9 +51,11 @@ class ExperimentalData(chisurf.base.Data):
             self,
             v: "Experiment"
     ) -> None:
+        """Set the experiment associated with this dataset."""
         self._experiment = v
 
     def __getstate__(self):
+        """Return the instance ``__dict__`` for pickling/serialization."""
         state = self.__dict__.copy()
         return state
 
@@ -85,6 +92,22 @@ class ExperimentalData(chisurf.base.Data):
             copy_values: bool = True,
             convert_values_to_elementary: bool = False
     ):
+        """Serialize this dataset, including its reader and experiment, to a dict.
+
+        Parameters
+        ----------
+        remove_protected : bool
+            Whether to omit protected (underscore-prefixed) attributes.
+        copy_values : bool
+            Whether to copy values instead of returning references.
+        convert_values_to_elementary : bool
+            If True, convert compound types to elementary Python types.
+
+        Returns
+        -------
+        dict
+            A dictionary representation of the dataset.
+        """
         d = super().to_dict(
             remove_protected=remove_protected,
             copy_values=copy_values,
@@ -149,6 +172,7 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
 
     @property
     def data(self) -> np.ndarray:
+        """Return a stacked 5-row array ``(x, y, ex, ey, mask)``."""
         return np.vstack(
             [
                 self.x,
@@ -161,6 +185,13 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
 
     @data.setter
     def data(self, v: np.ndarray):
+        """Set the curve data from a stacked array ``(x, y, ex, ey, mask)``.
+
+        Parameters
+        ----------
+        v : np.ndarray
+            Array where each row corresponds to x, y, ex, ey, mask.
+        """
         self.set_data(*v)
 
     def __init__(
@@ -206,6 +237,7 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         self.mask = np.copy(mask) if copy_array else mask
 
     def __str__(self):
+        """Return a human-readable summary of the dataset (head/tail values)."""
         s = "Dataset:\n"
         try:
             s += "filename: " + self.filename + "\n"
@@ -255,6 +287,23 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             copy_values: bool = True,
             convert_values_to_elementary: bool = False
     ) -> typing.Dict:
+        """Serialize the curve to a dict, including error arrays and mask.
+
+        Parameters
+        ----------
+        remove_protected : bool
+            Whether to omit protected attributes.
+        copy_values : bool
+            Whether to copy values.
+        convert_values_to_elementary : bool
+            Whether to convert to elementary types.
+
+        Returns
+        -------
+        dict
+            Dictionary with keys ``'ex'``, ``'ey'``, ``'mask'`` plus
+            keys from the parent :meth:`chisurf.curve.Curve.to_dict`.
+        """
         d = super().to_dict(
             remove_protected=remove_protected,
             copy_values=copy_values,
@@ -269,6 +318,14 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             self,
             v: typing.Dict
     ) -> None:
+        """Restore curve state from a dictionary produced by :meth:`to_dict`.
+
+        Parameters
+        ----------
+        v : dict
+            Dictionary containing ``'ex'``, ``'ey'``, and optionally ``'mask'``
+            keys with list-of-float values.
+        """
         super().from_dict(v)
         self.ex = np.array(v['ex'], dtype=np.float64)
         self.ey = np.array(v['ey'], dtype=np.float64)
@@ -282,6 +339,22 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             file_type: str = 'csv',
             **kwargs
     ) -> None:
+        """Load curve data from a file.
+
+        Supports CSV files with 1–5 columns (x, y, ex, ey, mask).
+        Delegates to the parent class for other file types.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the file.
+        skiprows : int
+            Number of header rows to skip.
+        file_type : str
+            File format (``'csv'`` or any format supported by the parent).
+        **kwargs
+            Additional arguments passed to the file reader.
+        """
         if file_type == 'csv':
             csv = chisurf.fio.ascii.Csv()
             csv.load(
@@ -338,6 +411,21 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             xmin: int = None,
             xmax: int = None
     ) -> None:
+        """Save the curve data to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Output file path.
+        file_type : str
+            Output format (``'csv'`` or ``'yaml'``).
+        verbose : bool
+            If True, print progress information.
+        xmin : int, optional
+            Start index for a slice of the data to save.
+        xmax : int, optional
+            End index for a slice of the data to save.
+        """
         self.filename = filename
         if file_type == "csv":
             csv = chisurf.fio.ascii.Csv()
@@ -362,6 +450,21 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
             ey: np.array = None,
             mask: np.array = None,
     ) -> None:
+        """Assign x, y, error, and mask arrays to the curve.
+
+        Parameters
+        ----------
+        x : np.ndarray
+            X-values.
+        y : np.ndarray
+            Y-values.
+        ex : np.ndarray, optional
+            X-errors (default: ones).
+        ey : np.ndarray, optional
+            Y-errors (default: ones).
+        mask : np.ndarray, optional
+            Fit mask (default: ones).
+        """
         self.x = x
         self.y = y
         if ex is None:
@@ -375,6 +478,13 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         self.mask = mask
 
     def set_weights(self, w: np.array):
+        """Set y-weights (inverse of y-errors).
+
+        Parameters
+        ----------
+        w : np.ndarray
+            Weight values; ``ey`` is set to ``1 / w``.
+        """
         self.ey = 1. / w
 
     def __getitem__(self, key: typing.Union[slice, int, np.ndarray, str]) -> typing.Tuple[
@@ -384,6 +494,18 @@ class DataCurve(chisurf.curve.Curve, ExperimentalData):
         np.ndarray,
         np.ndarray
     ]:
+        """Index or slice the curve columns ``(x, y, ex, ey, mask)``.
+
+        Parameters
+        ----------
+        key : slice, int, np.ndarray, or str
+            Index used to slice each column.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            Five-element tuple ``(x, y, ex, ey, mask)``.
+        """
         return self.x[key], self.y[key], self.ex[key], self.ey[key], self.mask[key]
 
 
@@ -396,20 +518,36 @@ class DataGroup(list, chisurf.base.Base):
 
     @property
     def names(self) -> typing.List[str]:
+        """Return the names of all datasets in this group."""
         return [d.name for d in self]
 
     @property
     def current_dataset(self) -> chisurf.base.Data:
+        """Return the currently selected dataset.
+
+        Raises
+        ------
+        IndexError
+            If the group is empty.
+        """
         if len(self) == 0:
             raise IndexError("Empty DataGroup has no current dataset")
         return self[self._current_dataset]
 
     @current_dataset.setter
     def current_dataset(self, i: int):
+        """Set the index of the current (active) dataset.
+
+        Parameters
+        ----------
+        i : int
+            Index into this group.
+        """
         self._current_dataset = i
 
     @property
     def name(self) -> str:
+        """Return the group name, falling back to the current dataset's name."""
         try:
             return self.__dict__['name']
         except KeyError:
@@ -419,6 +557,7 @@ class DataGroup(list, chisurf.base.Base):
 
     @property
     def filename(self) -> str:
+        """Return the filename of the first dataset in the group."""
         if len(self) == 0:
             return "Empty group"
         first = self[0]
@@ -432,6 +571,20 @@ class DataGroup(list, chisurf.base.Base):
             remove_protected: bool = False,
             convert_values_to_elementary: bool = True
     ):
+        """Serialize the group (including all contained datasets) to a YAML string.
+
+        Parameters
+        ----------
+        remove_protected : bool
+            Whether to omit protected attributes.
+        convert_values_to_elementary : bool
+            Whether to convert compound types to elementary types.
+
+        Returns
+        -------
+        str
+            YAML-formatted string.
+        """
         d = self.to_dict(
             remove_protected=remove_protected,
             convert_values_to_elementary=convert_values_to_elementary
@@ -446,6 +599,16 @@ class DataGroup(list, chisurf.base.Base):
         return yaml.dump(data=d)
 
     def append(self, dataset: chisurf.base.Data):
+        """Append a dataset (or list of datasets) to the group.
+
+        Only :class:`ExperimentalData` instances are accepted; others
+        are silently ignored.
+
+        Parameters
+        ----------
+        dataset : ExperimentalData or list
+            Dataset(s) to append.
+        """
         if isinstance(dataset, ExperimentalData):
             list.append(self, dataset)
         if isinstance(dataset, list):
@@ -473,50 +636,74 @@ class DataCurveGroup(DataGroup):
 
     @property
     def x(self) -> np.array:
+        """Return the x-values of the current dataset."""
         return self.current_dataset.x
 
     @x.setter
     def x(self,
           v: np.array):
+        """Set the x-values of the current dataset."""
         self.current_dataset.x = v
 
     @property
     def y(self) -> np.array:
+        """Return the y-values of the current dataset."""
         return self.current_dataset.y
 
     @y.setter
     def y(self,
           v: np.array):
+        """Set the y-values of the current dataset."""
         self.current_dataset.y = v
 
     @property
     def ex(self) -> np.array:
+        """Return the x-errors of the current dataset."""
         return self.current_dataset.ex
 
     @ex.setter
     def ex(self, v: np.array):
+        """Set the x-errors of the current dataset."""
         self.current_dataset.ex = v
 
     @property
     def ey(self) -> np.array:
+        """Return the y-errors of the current dataset."""
         return self.current_dataset.ey
 
     @ey.setter
     def ey(self, v: np.array):
+        """Set the y-errors of the current dataset."""
         self.current_dataset.ey = v
 
     @property
     def mask(self) -> np.array:
+        """Return the fit mask of the current dataset."""
         return self.current_dataset.mask
 
     @mask.setter
     def mask(self, v: np.array):
+        """Set the fit mask of the current dataset."""
         self.current_dataset.mask = v
 
     def __str__(self):
+        """Return a list of string summaries for each dataset."""
         return [str(d) + "\n------\n" for d in self]
 
     def __getitem__(self, key):
+        """Index or slice the group, returning 5-tuple for slices.
+
+        Parameters
+        ----------
+        key : slice, int, np.ndarray, or str
+            Index or slice.
+
+        Returns
+        -------
+        tuple or DataCurve
+            A 5-tuple ``(x, y, ex, ey, mask)`` for slices, or a
+            :class:`DataCurve` for integer/string keys.
+        """
         if isinstance(key, slice):
             return self.x[key], self.y[key], self.ex[key], self.ey[key], self.mask[key]
         return super().__getitem__(key)
@@ -530,18 +717,22 @@ class ExperimentDataGroup(DataGroup):
 
     @property
     def setup(self):
+        """Return the setup of the current dataset."""
         return self[self._current_dataset].setup
 
     @setup.setter
     def setup(self, v):
+        # TODO: needs docstring — setter is a no-op; unclear why it exists
         pass
 
     @property
     def experiment(self):
+        """Return the experiment of the current dataset."""
         return self[self._current_dataset].experiment
 
     @experiment.setter
     def experiment(self, v):
+        # TODO: needs docstring — setter is a no-op; unclear why it exists
         pass
 
     def __init__(self, *args, **kwargs):
@@ -553,10 +744,12 @@ class ExperimentDataCurveGroup(ExperimentDataGroup, DataCurveGroup):
 
     @property
     def setup(self):
+        """Return the setup of the first dataset in the group."""
         return self[0].setup
 
     @setup.setter
     def setup(self, v):
+        # TODO: needs docstring — setter is a no-op; unclear why it exists
         pass
 
     def __init__(self, *args, **kwargs):
