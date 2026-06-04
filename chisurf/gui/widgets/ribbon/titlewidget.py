@@ -112,9 +112,6 @@ class RibbonTitleWidget(QtWidgets.QFrame):
         self._tabBar = RibbonTabBar(self)
         self._tabBar.setExpanding(False)
         self._tabBar.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)  # type: ignore
-        font = self._tabBar.font()
-        font.setPointSize(font.pointSize() + 3)
-        self._tabBar.setFont(font)
         self._tabBar.setShape(QtWidgets.QTabBar.Shape.RoundedNorth)
         self._tabBar.setDocumentMode(True)
 
@@ -123,9 +120,6 @@ class RibbonTitleWidget(QtWidgets.QFrame):
         self._titleLabel.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)  # type: ignore
         self._titleLabel.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignBottom)  # type: ignore
         self._titleLabel.setText(title)
-        font = self._titleLabel.font()
-        font.setPointSize(font.pointSize() + 3)
-        self._titleLabel.setFont(font)
 
         self._tabBarLayout.addWidget(self._quickAccessToolBarWidget, 0, QtCore.Qt.AlignmentFlag.AlignVCenter)
         self._tabBarLayout.addWidget(self._tabBar, 0, QtCore.Qt.AlignmentFlag.AlignVCenter)
