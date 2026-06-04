@@ -301,6 +301,7 @@ def calculate_3_radius(
 
 @nb.jit(nopython=True)
 def make_grid_axis(dg, n):
+    """Create a 1D grid axis centered at zero with spacing dg."""
     grid_x = np.empty(n, dtype=np.float64)
     npm = (n - 1) / 2
     for i in range(n):
@@ -381,6 +382,7 @@ def define_starting_positions(linker_sphere, w, dg, l, ng):
 
 @nb.jit(nopython=True)
 def distance_lookup(linknodes, dg):
+    """Precompute sqrt distances scaled by dg for a linknodes x linknodes x linknodes cube."""
     sqrts_dg = np.zeros((linknodes, linknodes, linknodes), dtype=np.float64)
     for ix in range(linknodes):
         for iy in range(linknodes):
@@ -391,6 +393,7 @@ def distance_lookup(linknodes, dg):
 
 @nb.jit(nopython=True)
 def calc_linker_distance(density, linker_sphere, linknodes, dg, w, l):
+    """Calculate linker distances by flood-fill from starting positions within the allowed sphere."""
     ng = density.shape[0]
     linker_length, newpos, nnew = define_starting_positions(linker_sphere, w, dg, l, ng)
     visit_map = np.zeros(density.shape, dtype=np.uint8)

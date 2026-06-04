@@ -63,6 +63,7 @@ class DiffusionSimulationParameter(
             t_step: float = 0.05,
             n_simulations: int = 4
     ):
+        """Initialize diffusion simulation parameters."""
         super().__init__()
         self.t_max = chisurf.parameter.Parameter(
             value=t_max,
@@ -105,54 +106,51 @@ class DiffusionSimulation(object):
 
     @property
     def av(self):
+        """The accessible volume used in the simulation."""
         return self._av
 
     @property
     def quenching_trajectory(self):
+        """Quenching rate trajectory (collisions * k_quench summed over atoms)."""
         collided = self.collided
         k_quench = self.quenching_parameter.k_quench
-        """
-        if False:
-            dist = self._dist
-            dist_c = 1.5
-            if self.verbose:
-                print("Number of frames               : %s" % collided.shape[0])
-                print("Number of collisions with atoms: %s" % collided.sum())
-            r = ne.evaluate('sum(k_quench * exp(-dist/1.5),axis=1)')
-            return r.astype(dtype=np.float32)
-        else:
-        """
         return ne.evaluate('sum(k_quench * collided,axis=1)')
 
     @property
     def collided(self):
+        """Bool array of collision events per frame."""
         if self._collided is None:
             self.run()
         return self._collided
 
     @property
     def collisions(self):
+        """Average number of collisions per frame."""
         return self.collided.sum() // self.collided.shape[0]
 
     @property
     def time_axis(self):
+        """Time axis of the simulation in picoseconds."""
         return np.arange(
             self.quenching_trajectory.shape[0], dtype=np.float32
         ) * self.simulation_parameter.t_step
 
     @property
     def mean_xyz(self):
+        """Mean dye position over the trajectory."""
         mean = self._xyz.distance(axis=0)
         return mean
 
     @property
     def distance_to_mean(self):
+        """RMS distance of each frame to the mean position."""
         return np.linalg.norm(
             self.xyz - self.mean_xyz, axis=2
         ).flatten()
 
     @property
     def xyz(self):
+        """The simulated dye trajectory (xyz coordinates)."""
         return self._xyz
 
     def save(
@@ -229,6 +227,7 @@ class DiffusionSimulation(object):
             t_step: float = None,
             **kwargs
     ):
+        """Run the Brownian dynamics simulation of the dye."""
         if verbose is None:
             verbose = self.verbose
         if slow_fact is None:
@@ -298,6 +297,7 @@ class Dye(ParameterGroup):
 
     @property
     def simulation_grid_resolution(self):
+        """Grid spacing for the AV simulation in Angstrom."""
         return self._simulation_grid_resolution.value
 
     @simulation_grid_resolution.setter
@@ -305,10 +305,12 @@ class Dye(ParameterGroup):
             self,
             v: float
     ):
+        """Set the simulation grid spacing (Angstrom)."""
         self._simulation_grid_resolution.value = v
 
     @property
     def tau0(self):
+        """Fluorescence lifetime of the dye (ns)."""
         return self._tau0.value
 
     @tau0.setter
@@ -316,50 +318,62 @@ class Dye(ParameterGroup):
             self,
             v: float
     ):
+        """Set the fluorescence lifetime of the dye (ns)."""
         self._tau0.value = v
 
     @property
     def diffusion_coefficient(self):
+        """Diffusion coefficient of the dye (A^2/ns)."""
         return self._diffusion_coefficient.value
 
     @diffusion_coefficient.setter
     def diffusion_coefficient(self, v):
+        """Set the diffusion coefficient of the dye (A^2/ns)."""
         self._diffusion_coefficient.value = v
 
     @property
     def critical_distance(self):
+        """Critical distance for quenching (Angstrom)."""
         return self._critical_distance.value
 
     @critical_distance.setter
     def critical_distance(self, v):
+        """Set the critical quenching distance (Angstrom)."""
         self._critical_distance.value = v
 
     @property
     def av_length(self):
+        """Linker length for the AV simulation."""
         return self._av_length.value
 
     @av_length.setter
     def av_length(self, v):
+        """Set the AV linker length."""
         self._av_length.value = v
 
     @property
     def av_radius(self):
+        """Dye radius for the AV simulation."""
         return self._av_radius.value
 
     @av_radius.setter
     def av_radius(self, v):
+        """Set the AV dye radius."""
         self._av_radius.value = v
 
     @property
     def av_width(self):
+        """Linker width for the AV simulation."""
         return self._av_width.value
 
     @av_width.setter
     def av_width(self, v):
+        """Set the AV linker width."""
         self._av_width.value = v
 
     @property
     def av_parameter(self):
+        """Dictionary of AV parameters (linker_length, linker_width, radius1)."""
         p = dict()
         p['linker_length'] = self.av_length
         p['linker_width'] = self.av_width
@@ -368,30 +382,36 @@ class Dye(ParameterGroup):
 
     @av_parameter.setter
     def av_parameter(self, d):
+        """Set all AV parameters at once from a dict."""
         self.av_length = d['linker_length']
         self.av_width = d['linker_width']
         self.av_radius = d['radius1']
 
     @property
     def dye_definition(self):
+        """JSON dye definition dictionary."""
         return chisurf.structure.av.dye_definition[self.dye_name]
 
     @property
     def dye_name(self):
+        """Name of the dye."""
         return self._dye_name
 
     @dye_name.setter
     def dye_name(self, v):
+        """Set the dye name and refresh AV parameters."""
         self._dye_name = v
         self.update_parameter()
 
     @property
     def n_atoms(self):
+        """Number of atoms in the dye topology."""
         json_topology = self.dye_definition
         n_atoms = chisurf.structure.count_atoms(json_topology)
         return n_atoms
 
     def get_av(self, **kwargs):
+        """Get the accessible volume (ACV) for the current dye parameters."""
         structure = kwargs.get('structure', self.structure)
         sticking = kwargs.get('sticking', self.sticking)
 
@@ -410,6 +430,7 @@ class Dye(ParameterGroup):
         return av
 
     def update_parameter(self):
+        """Update AV and diffusion parameters from the dye definition dictionary."""
         try:
             if isinstance(self.dye_definition, dict):
                 self.av_length = self.dye_definition.get('av_length', self.av_length)
@@ -427,6 +448,7 @@ class Dye(ParameterGroup):
             sticking,
             **kwargs
     ):
+        """Initialize a Dye with default AV parameters and a sticking context."""
         ParameterGroup.__init__(self)
         self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.sticking = sticking
@@ -496,6 +518,7 @@ class Sticking(ParameterGroup):
 
     @slow_fact.setter
     def slow_fact(self, v):
+        """Set the slow-down factor for the dye near a slow-center."""
         self._slow_fact.value = v
 
     @property
@@ -507,6 +530,7 @@ class Sticking(ParameterGroup):
 
     @slow_radius.setter
     def slow_radius(self, v):
+        """Set the slow-AV radius (around C-alpha atoms)."""
         self._slow_radius.value = v
 
     @property
@@ -533,6 +557,7 @@ class Sticking(ParameterGroup):
 
     @sticky_mode.setter
     def sticky_mode(self, v):
+        """Set the sticky-mode (``'surface'`` or ``'quencher'``)."""
         self._sticky_mode = v
 
     def __init__(
@@ -569,43 +594,59 @@ class ProteinQuenching(ParameterGroup):
 
     @property
     def kQ_scale(self):
+        """Scaling factor for all quenching rates."""
         return self._k_quench_scale.value
 
     @kQ_scale.setter
     def kQ_scale(self, v):
+        """Set the global quenching-rate scale factor."""
         self._k_quench_scale.value = v
 
     @property
     def all_atoms_quench(self):
+        """If True, all atoms of quenching residues contribute to quenching."""
         return self._all_atoms_quench
 
     @all_atoms_quench.setter
     def all_atoms_quench(self, v):
+        """Set whether all atoms of quenching residues contribute."""
         self._all_atoms_quench = bool(v)
 
     @property
     def excluded_atoms(self):
+        """Set of atom names excluded from quenching."""
         return self._excluded_atoms
 
     @excluded_atoms.setter
     def excluded_atoms(self, v):
+        """Set the atom names excluded from quenching."""
         self._excluded_atoms = v
 
     @property
     def all_atoms_quench(self):
+        """Whether all atoms of quenching residues contribute to quenching.
+
+        Note: this property duplicates an earlier definition; the body
+        is missing ``return`` and should be considered a bug.
+        """
         self._all_atoms_quench
 
     @all_atoms_quench.setter
     def all_atoms_quench(self, v):
+        """Set whether all atoms of quenching residues contribute.
+
+        Note: this setter duplicates an earlier definition.
+        """
         self._all_atoms_quench = bool(v)
 
     @property
     def quencher(self):
+        """Dictionary of quenching parameters per residue type."""
         return self._quencher
 
     @quencher.setter
     def quencher(self, v):
-
+        """Set the per-residue quencher dictionary."""
         q_new = dict()
         atoms = self.structure.atoms
         for residue_key in v:
@@ -669,6 +710,7 @@ class ProteinQuenching(ParameterGroup):
         return self.structure.xyz[atom_idx]
 
     def __str__(self):
+        """Multi-line description of the protein-quenching configuration."""
         s = ParameterGroup.__str__(self)
         s += "\tstructure: %s\n" % self.structure.name
         s += "\tquencher:\n"
@@ -680,6 +722,7 @@ class ProteinQuenching(ParameterGroup):
         return s
 
     def __init__(self, structure, **kwargs):
+        """Initialize a ProteinQuenching for the given structure."""
         self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
         self.structure = structure
 

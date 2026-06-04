@@ -102,6 +102,7 @@ class Structure(chisurf.base.Base):
             protonate: bool = False,
             **kwargs
     ):
+        """Initialize a :class:`Structure` from a PDB file, PDB id, or copy."""
         super().__init__(*args, **kwargs)
         self.auto_update = auto_update
         self._filename = filename
@@ -144,21 +145,25 @@ class Structure(chisurf.base.Base):
 
     @property
     def sequence(self) -> typing.Dict:
+        """A dictionary mapping chain identifiers to residue name sequences."""
         if self._sequence is None:
             self._sequence = chisurf.structure.sequence(self)
         return self._sequence
 
     @property
     def internal_coordinates(self):
+        """Returns None for the base Structure class; subclasses may override."""
         return None
 
     @property
     def energy(self) -> float:
+        """Sum of all attached potential energies."""
         energies = [e(self, **kwargs) for e, kwargs in self._potentials]
         return sum(energies)
 
     @property
     def atoms(self) -> np.array:
+        """The full atom array containing coordinates, names, b-factors, etc."""
         if isinstance(self._atoms, np.ndarray):
             return self._atoms
         else:
@@ -175,6 +180,7 @@ class Structure(chisurf.base.Base):
             self,
             v: np.array
     ):
+        """Set the array of atoms (must be a NumPy structured array)."""
         if isinstance(v, np.ndarray):
             self._atoms = v
 
@@ -189,6 +195,7 @@ class Structure(chisurf.base.Base):
             self,
             v: np.array
     ):
+        """Set cartesian coordinates of all atoms."""
         self.atoms['xyz'] = v
 
     @property
@@ -202,16 +209,19 @@ class Structure(chisurf.base.Base):
             self,
             v: np.array
     ):
+        """Set Van der Waals radii of all atoms."""
         self.atoms['radius'] = v
 
     @property
     def residue_names(self) -> typing.List[str]:
+        """Sorted list of unique residue names (e.g. three-letter codes)."""
         res_name = list(set(self.atoms['res_name']))
         res_name.sort()
         return res_name
 
     @property
     def residue_dict(self):
+        """Dictionary mapping residue IDs to dictionaries of their atoms."""
         if self._residue_dict is None:
             residue_dict = chisurf.structure.make_dictionary_of_atoms(
                 self.atoms
@@ -221,18 +231,22 @@ class Structure(chisurf.base.Base):
 
     @property
     def n_atoms(self) -> int:
+        """Total number of atoms."""
         return len(self.atoms)
 
     @property
     def n_residues(self) -> int:
+        """Total number of residues."""
         return len(self.residue_ids)
 
     @property
     def atom_types(self):
+        """Set of all unique atom names present in the structure."""
         return set(self.atoms['atom_name'])
 
     @property
     def residue_ids(self) -> typing.List[int]:
+        """List of unique residue IDs."""
         residue_ids = list(set(self.atoms['res_id']))
         return residue_ids
 
@@ -257,6 +271,7 @@ class Structure(chisurf.base.Base):
 
     @b_factors.setter
     def b_factors(self, v):
+        """Set b-factors of C-alpha atoms."""
         s = self
         sel = chisurf.structure.get_atom_index_by_name(s.atoms, ['CA'])[0]
         for ai, bi in zip(sel, v):
@@ -264,6 +279,7 @@ class Structure(chisurf.base.Base):
 
     @property
     def radius_gyration(self) -> float:
+        """Radius of gyration of the structure."""
         coord = self.xyz
         rM = coord[:, :].mean(axis=0)
         rG = (np.sqrt((coord - rM) ** 2).sum(axis=1)).mean()
@@ -298,6 +314,7 @@ class Structure(chisurf.base.Base):
         )
 
     def update_coordinates(self):
+        """Update cartesian coordinates if auto_update is enabled."""
         if self.auto_update:
             self.update()
 
@@ -339,9 +356,11 @@ class Structure(chisurf.base.Base):
             self,
             **kwargs
     ):
+        """Update internal state. Base implementation is a no-op."""
         pass
 
     def __str__(self):
+        """Return the structure as a PDB-formatted string."""
         s = ""
         if self.atoms is not None:
             s = ""
@@ -355,6 +374,7 @@ class Structure(chisurf.base.Base):
         return s + "END\n"
 
     def __deepcopy__(self, memo):
+        """Deep copy implementation that preserves the atom array and filename."""
         new = copy.copy(self)
         new._atoms = np.copy(self._atoms)
         new.filename = copy.copy(self.filename)

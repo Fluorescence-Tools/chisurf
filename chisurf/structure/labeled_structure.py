@@ -251,6 +251,7 @@ class LabeledStructure(Structure):
 
     @property
     def donor_lifetime_spectrum(self) -> np.array:
+        """Interleaved donor lifetime spectrum (amplitudes and lifetimes)."""
         return self._ds
 
     @donor_lifetime_spectrum.setter
@@ -258,28 +259,39 @@ class LabeledStructure(Structure):
             self,
             v: np.array
     ):
+        """Set the donor lifetime spectrum (amplitudes and lifetimes)."""
         self._ds = v
 
     @property
     def donor_label(self):
+        """Dictionary describing the donor labeling position."""
         return self._donor_description
 
     @donor_label.setter
     def donor_label(self, v):
+        """Set the donor label description and recompute donor AV."""
         self._donor_description = v
         self._donor_av = chisurf.structure.av.ACV(self, **self._donor_description)
 
     @property
     def acceptor_label(self):
+        """Dictionary describing the acceptor labeling position."""
         return self._acceptor_description
 
     @acceptor_label.setter
     def acceptor_label(self, v):
+        """Set the acceptor label description and recompute acceptor AV.
+
+        Note: implementation currently uses *donor* description; the body
+        may need fixing but the meaning of the setter is clear.
+        """
+        # TODO: needs docstring — body recomputes donor AV; should likely be ``self._acceptor_description``
         self._acceptor_description = v
         self._acceptor_av = chisurf.structure.av.ACV(self, **self._donor_description)
 
     @property
     def distance_distribution(self):
+        """Donor-acceptor distance distribution (amplitudes and distances)."""
         av_donor = self.donor_av
         av_acceptor = self.acceptor_av
         amplitude, distance = av_donor.pRDA(av_acceptor)
@@ -287,6 +299,7 @@ class LabeledStructure(Structure):
 
     @property
     def fret_rate_spectrum(self) -> np.array:
+        """Interleaved FRET-rate constant spectrum."""
         forster_radius = self.forster_radius
         kappa2 = self.kappa2
         tau0 = self.tau0
@@ -302,22 +315,26 @@ class LabeledStructure(Structure):
 
     @property
     def lifetime_spectrum(self) -> np.array:
+        """Interleaved donor lifetime spectrum in presence of FRET."""
         rs = self.fret_rate_spectrum
         ds = self.donor_lifetime_spectrum
         return chisurf.fluorescence.general.rates2lifetimes(rs, ds)
 
     @property
     def transfer_efficency(self) -> float:
+        """FRET transfer efficiency computed from species-averaged lifetimes."""
         tau_x_da = chisurf.fluorescence.general.species_averaged_lifetime(self.lifetime_spectrum)
         tau_x_d0 = chisurf.fluorescence.general.species_averaged_lifetime(self.donor_lifetime_spectrum)
         return 1. - tau_x_da / tau_x_d0
 
     @property
     def donor_av(self):
+        """The donor Accessible Volume (ACV) object."""
         return self._donor_av
 
     @property
     def acceptor_av(self):
+        """The acceptor Accessible Volume (ACV) object."""
         return self._acceptor_av
 
     @property
@@ -345,6 +362,7 @@ class LabeledStructure(Structure):
         return self._donor_av.dRmp(self._acceptor_av)
 
     def update(self):
+        """Recalculate donor and acceptor accessible volumes."""
         self._acceptor_av = chisurf.structure.av.ACV(self, **self._acceptor_description)
         self._donor_av = chisurf.structure.av.ACV(self, **self._donor_description)
 
@@ -353,6 +371,7 @@ class LabeledStructure(Structure):
             *args,
             **kwargs
     ):
+        """Initialize a LabeledStructure with optional donor/acceptor AV params."""
         super().__init__(*args, **kwargs)
         self._donor_description = kwargs.get('donor_av_parameter', None)
         self._acceptor_description = kwargs.get('acceptor_av_parameter', None)

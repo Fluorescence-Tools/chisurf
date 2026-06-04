@@ -42,10 +42,12 @@ class AvPotential(object):
 
     @property
     def structure(self):
+        """The structure this potential is currently computed for."""
         return self._structure
 
     @structure.setter
     def structure(self, structure):
+        """Set the structure and recompute accessible volumes."""
         self._structure = structure
         self.calc_avs()
 

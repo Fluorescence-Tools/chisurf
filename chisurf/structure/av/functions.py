@@ -146,6 +146,7 @@ def dRmp(
 
 @nb.jit(nopython=True)
 def density2points(ng, dg, density, r0):
+    """Convert a 3D density grid to a list of (x, y, z, weight) points."""
     r = np.empty((ng**3, 4), dtype=np.float64)
     npm = (ng - 1) / 2 + 1
 
@@ -317,7 +318,7 @@ assign_diffusion_to_grid = assign_diffusion_to_grid_1
 
 @nb.jit(nopython=True, nogil=True)
 def iterate_cpu(n, p, d, k, b, ng):
-    """CPU implementation of the iterate kernel"""
+    """CPU implementation of the diffusion iteration kernel."""
     for ix in range(1, ng-1):
         for iy in range(1, ng-1):
             for iz in range(1, ng-1):
@@ -345,7 +346,7 @@ def iterate_cpu(n, p, d, k, b, ng):
 
 @nb.jit(nopython=True, nogil=True)
 def reduce_decay_cpu(p, k, time_i, ng):
-    """CPU implementation of the reduce_decay kernel"""
+    """CPU implementation of the reduce_decay kernel for fluorescence decay."""
     decay_sum = 0.0
     population_sum = 0.0
     for i in range(ng*ng*ng):
@@ -354,8 +355,10 @@ def reduce_decay_cpu(p, k, time_i, ng):
     return decay_sum, population_sum
 
 class DiffusionIterator:
+    """Iterative solver for diffusion on a 3D grid with OpenCL or CPU backends."""
 
     def __init__(self, d, b, p, **kwargs):
+        """Initialize a DiffusionIterator on a 3D density/bounds grid."""
         self.ng = ng = d.shape[0]  # number of grid points in one dimension (the maps are quadratic)
 
         self.d = d  # diffusion coefficient map
@@ -386,6 +389,7 @@ class DiffusionIterator:
             self.b_np = None
 
     def build_program(self, filename='iterated.c'):
+        """Build the OpenCL program from kernel source file."""
         if not HAS_OPENCL:
             return None
 
@@ -404,6 +408,7 @@ class DiffusionIterator:
         return None
 
     def to_device(self, **kwargs):
+        """Transfer data to the compute device (CPU or GPU)."""
         self.t_step = t_step = kwargs.get('t_step', None)
         b = self.b = kwargs.get('b', self.b)
         p = self.p = kwargs.get('p', self.p)
@@ -430,6 +435,7 @@ class DiffusionIterator:
             self.n_np = self.p_np.copy()
 
     def execute(self, n_it=1, **kwargs):
+        """Run the diffusion iteration for n_it steps."""
         # this defines how often the calculations are copied back from the compute unit (GPU)
         # e.g. 10 means that every 10th iteration is copied from the computing unit (GPU) to "python"
         n_out = kwargs.get('n_out', 10)

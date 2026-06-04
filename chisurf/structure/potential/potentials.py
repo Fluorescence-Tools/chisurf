@@ -310,6 +310,7 @@ class Ramachandran(object):
         self.ramaPot = np.load(self.filename)
 
     def getEnergy(self) -> float:
+        """Calculate and return the Ramachandran potential energy."""
         c = self.structure
         Erama = chisurf.structure.potential.cPotentials_.ramaEnergy(
             c.residue_lookup_i,
@@ -336,6 +337,7 @@ class Electrostatics(object):
             self.p = chisurf.structure.potential.cPotentials_.gb
 
     def getEnergy(self) -> float:
+        """Calculate and return the electrostatic (GB) energy."""
         structure = self.structure
         #Eel = mfm.structure.potential.cPotentials_.gb(structure.xyz)
         Eel = gb(structure.xyz)
@@ -349,10 +351,12 @@ class LJ_Bead(object):
             self,
             structure: chisurf.structure.Structure
     ):
+        """Initialize a Lennard-Jones bead potential for *structure*."""
         self.structure = structure
         self.name = 'LJ_bead'
 
     def getEnergy(self) -> float:
+        """Calculate and return the Lennard-Jones bead energy."""
         structure = self.structure
         self.E = lennard_jones_calpha(structure.atoms['xyz'])
         return self.E
@@ -370,6 +374,7 @@ class HPotential(object):
             potential: str = None,
             **kwargs
     ):
+        """Initialize the hydrogen bond potential with cutoff and parameter settings."""
         if potential is None:
             from chisurf.settings.path_utils import get_path
             potential = str(get_path('chisurf') / 'structure/potential/database/hb.npy')
@@ -384,6 +389,7 @@ class HPotential(object):
         self.updateParameter()
 
     def getEnergy(self):
+        """Calculate and return the hydrogen bond potential energy."""
         s1 = self.structure
         cca2 = self.cutoffCA ** 2
         ch2 = self.cutoffH ** 2
@@ -395,14 +401,13 @@ class HPotential(object):
         return self.E
 
     def getNbrBonds(self):
-        """
-        :return:
-        """
+        """Return the number of hydrogen bonds."""
         if self.nHbond is None:
             return 0
         return self.nHbond
 
     def updateParameter(self):
+        """Update the hydrogen bond potential based on current OH/ON/CN/CH toggles."""
         hPot = copy.deepcopy(self._hPot)
         if not self.oh:
             hPot[2, :] *= 0.0
@@ -416,11 +421,13 @@ class HPotential(object):
 
     @property
     def potential(self):
+        """The hydrogen bond potential array."""
         return self.hPot
 
     @potential.setter
     def potential(self, v):
-        self._hPot = np.load(v) #np.loadtxt(v, skiprows=1, dtype=np.float64).T[1:, :]
+        """Load the hydrogen-bond potential array from a file."""
+        self._hPot = np.load(v)
         self.hPot = self._hPot
 
 
@@ -430,10 +437,12 @@ class GoPotential(object):
             self,
             structure: chisurf.structure.Structure
     ):
+        """Initialize a Go-like potential for *structure*."""
         self.structure = structure
         self.name = 'go'
 
     def setGo(self):
+        """Initialize the Gō potential energy and contact matrices."""
         c = self.structure
         nnEFactor = self.nnEFactor if self.non_native_contact_on else 0.0
         cutoff = self.cutoff if self.native_cutoff_on else 1e6
@@ -443,6 +452,7 @@ class GoPotential(object):
         )
 
     def getEnergy(self):
+        """Calculate and return the Gō potential energy."""
         c = self.structure
         Etot, nNa, Ena, nNN, Enn = chisurf.structure.potential.cPotentials_.go(
             c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix
@@ -452,18 +462,23 @@ class GoPotential(object):
         return Etot
 
     def getNbrNonNative(self):
+        """Return the number of non-native contacts."""
         return self.nNN
 
     def getNbrNative(self):
+        """Return the number of native contacts."""
         return self.nNa
 
     def set_sMatrix(self, sMatrix):
+        """Set the sigma (distance) matrix for the Gō potential."""
         self.sMatrix = sMatrix
 
     def set_eMatrix(self, eMatrix):
+        """Set the epsilon (energy) matrix for the Gō potential."""
         self.eMatrix = eMatrix
 
     def set_nMatrix(self, nMatrix):
+        """Set the native contact matrix."""
         self.nMatrix = nMatrix
 
 
@@ -477,6 +492,7 @@ class MJPotential(object):
             filename: str = None,
             ca_cutcoff: float = 6.5
     ):
+        """Initialize a Miyazawa-Jernigan potential for *structure*."""
         if filename is None:
             from chisurf.settings.path_utils import get_path
             filename = str(get_path('chisurf') / 'structure/potential/database/mj.npy')
@@ -487,13 +503,16 @@ class MJPotential(object):
 
     @property
     def potential(self):
+        """The Miyazawa-Jernigan potential matrix."""
         return self.mjPot
 
     @potential.setter
     def potential(self, v):
+        """Load the Miyazawa-Jernigan potential matrix from a file."""
         self.mjPot = np.load(v)
 
     def getEnergy(self):
+        """Calculate and return the Miyazawa-Jernigan potential energy."""
         c = self.structure
         nCont, Emj = chisurf.structure.potential.cPotentials_.mj(
             c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff
@@ -503,6 +522,7 @@ class MJPotential(object):
         return Emj
 
     def getNbrContacts(self):
+        """Return the number of residue-residue contacts."""
         return self.nCont
 
 
@@ -551,6 +571,7 @@ class CEPotential(object):
 
     @property
     def potential(self):
+        """The UNRES potential matrix."""
         return self._potential
 
     @potential.setter
@@ -558,6 +579,7 @@ class CEPotential(object):
             self,
             v
     ):
+        """Load the UNRES potential matrix from a file."""
         self._potential = np.load(v)
 
     def getEnergy(
@@ -565,6 +587,7 @@ class CEPotential(object):
             cutoff=None,
             **kwargs
     ) -> float:
+        """Calculate and return the UNRES centroid potential energy."""
         cutoff = cutoff if cutoff is not None else self.ca_cutoff
         c = self.structure
         coord = np.ascontiguousarray(c.xyz)
@@ -586,6 +609,7 @@ class CEPotential(object):
         return float(E * self.scaling_factor)
 
     def getNbrContacts(self) -> int:
+        """Return the number of residue-residue contacts."""
         return self.nCont
 
 
@@ -598,8 +622,9 @@ class ASA(object):
             structure: chisurf.structure.Structure,
             probe: float = 1.0,
             n_sphere_point: int = 590,
-            radius: float = 2.5
+            radius: float = 2.5,
     ):
+        """Initialize an ASA-Cα solvent-accessible-surface potential."""
         super(ASA, self).__init__()
         self.structure = structure
         self.probe = probe
@@ -610,6 +635,7 @@ class ASA(object):
         self.radius = radius
 
     def getEnergy(self) -> float:
+        """Calculate and return the accessible surface area."""
         c = self.structure
         #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
         #double probe=1.0, double radius = 2.5, char sum=1)
@@ -654,6 +680,7 @@ class ClashPotential(object):
         self.covalent_radius = covalent_radius
 
     def getEnergy(self) -> float:
+        """Calculate and return the clash (steric) potential energy."""
         c = self.structure
         return chisurf.structure.potential.cPotentials_.clash_potential(
             c.xyz,

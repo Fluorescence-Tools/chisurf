@@ -19,6 +19,7 @@ class Universe(object):
             self,
             structure: chisurf.structure.Structure = None
     ):
+        """Initialize Universe with an optional starting structure."""
         self.structures = [] if structure is None else [structure]
         self.potentials = list()
         self.scaling = list()
@@ -28,6 +29,7 @@ class Universe(object):
             potential,
             scale: float = 1.0
     ) -> None:
+        """Add a potential with a scaling factor."""
         self.potentials.append(potential)
         self.scaling.append(scale)
 
@@ -35,6 +37,7 @@ class Universe(object):
             self,
             potentialNbr: int = None
     ) -> None:
+        """Remove a potential by index (default: last)."""
         if potentialNbr == -1:
             self.potentials.pop()
             self.scaling.pop()
@@ -43,6 +46,7 @@ class Universe(object):
             self.scaling.pop(potentialNbr)
 
     def clearPotentials(self) -> None:
+        """Remove all potentials and scaling factors."""
         self.potentials = list()
         self.scaling = list()
 
@@ -50,6 +54,7 @@ class Universe(object):
             self,
             structure: chisurf.structure.Structure = None
     ) -> float:
+        """Calculate total energy as sum of all potentials for a given structure."""
         for p in self.potentials:
             p.structure = structure
         Es = self.getEnergies()
@@ -60,6 +65,7 @@ class Universe(object):
             self,
             structure: chisurf.structure.Structure = None
     ) -> np.ndarray:
+        """Calculate individual scaled energies for all potentials."""
         for p in self.potentials:
             p.structure = structure
         scales = np.array(self.scaling)
@@ -256,6 +262,7 @@ class TrajectoryFile(
         self.offset = 0
 
     def clear(self):
+        """Clear all recorded RMSD, dRMSD, energy, and chi2 values."""
         self.rmsd = list()
         self.drmsd = list()
         self.energy = list()
@@ -276,10 +283,12 @@ class TrajectoryFile(
 
     @xyz.setter
     def xyz(self, v):
+        """Set cartesian coordinates."""
         self._xyz = v
 
     @property
     def structure(self) -> chisurf.structure.Structure:
+        """The template structure used for the trajectory."""
         return self._structure
 
     @structure.setter
@@ -287,6 +296,7 @@ class TrajectoryFile(
             self,
             v: chisurf.structure.Structure
     ):
+        """Set the template structure (a shallow copy is stored)."""
         self._structure = copy.copy(v)
 
     @property
@@ -300,6 +310,7 @@ class TrajectoryFile(
             self,
             v: bool
     ):
+        """Enable or disable inversion of the trajectory order."""
         self._invert = bool(v)
 
     @property
@@ -313,12 +324,14 @@ class TrajectoryFile(
             self,
             v: str
     ):
+        """Set the trajectory filename; saving the trajectory to disk."""
         if isinstance(v, str):
             self._filename = v
             mdtraj.Trajectory.save(self, filename=v)
 
     @property
     def mdtraj(self) -> mdtraj.Trajectory:
+        """The underlying mdtraj.Trajectory object."""
         return self._mdtraj
 
     @property
@@ -343,6 +356,7 @@ class TrajectoryFile(
             self,
             ref_frame: int
     ):
+        """Set the reference frame for RMSD calculations and compute RMSDs."""
         self._rmsd_ref_state = ref_frame
         self.rmsd = mdtraj.rmsd(self, self, ref_frame)
 
@@ -520,10 +534,12 @@ class TrajectoryFile(
         return element
 
     def slice(self, key, copy=True):
+        """Slice the trajectory using mdtraj's slice method and return a new TrajectoryFile."""
         s = self.mdtraj.slice(key, copy=True)
         return TrajectoryFile(p_object=s)
 
     def __getitem__(self, key):
+        """Return a structure (int key) or list of structures (slice key)."""
         # TODO: do sth. about the evaluation speed (maybe lazy evaluation)
         # http://code.activestate.com/recipes/576410-lazy-lists/
         if isinstance(key, int):
@@ -541,6 +557,7 @@ class TrajectoryFile(
                 step = 1
 
             def make_structure(i):
+                """Create a :class:`Structure` instance for trajectory index *i*."""
                 s = copy.copy(self.structure)
                 s._filename = self.structure.labeling_file
                 s.xyz = self.mdtraj[i].xyz * 10.0

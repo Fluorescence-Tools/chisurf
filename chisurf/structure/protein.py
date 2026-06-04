@@ -244,6 +244,7 @@ def calc_internal_coordinates_bb(
         verbose: bool = None,
         **kwargs
 ):
+    """Calculate backbone and side-chain internal coordinates for a protein structure."""
     if verbose is None:
         verbose = chisurf.settings.cs_settings['verbose']
 
@@ -347,45 +348,55 @@ class ProteinCentroid(
 
     @property
     def internal_coordinates(self):
+        """The internal (bond/angle/dihedral) coordinate array."""
         return self.coord_i
 
     @property
     def phi(self):
+        """Phi dihedral angles of the protein backbone."""
         return self.internal_coordinates[self._phi_indices]['d']
 
     @phi.setter
     def phi(self, v):
+        """Set phi dihedral angles."""
         self.internal_coordinates['d'][self._phi_indices] = v
         self.update_coordinates()
 
     @property
     def omega(self):
+        """Omega dihedral angles of the protein backbone."""
         return self.internal_coordinates[self._omega_indices]['d']
 
     @omega.setter
     def omega(self, v):
+        """Set omega dihedral angles."""
         self.internal_coordinates['d'][self._omega_indices] = v
         self.update_coordinates()
 
     @property
     def chi(self):
+        """Chi (side-chain) dihedral angles."""
         return self.internal_coordinates[self._chi_indices]['d']
 
     @chi.setter
     def chi(self, v):
+        """Set chi (side-chain) dihedral angles."""
         self.internal_coordinates['d'][self._chi_indices] = v
         self.update_coordinates()
 
     @property
     def psi(self):
+        """Psi dihedral angles of the protein backbone."""
         return self.internal_coordinates[self._psi_indices]['d']
 
     @psi.setter
     def psi(self, v):
+        """Set psi dihedral angles."""
         self.internal_coordinates['d'][self._psi_indices] = v
         self.update_coordinates()
 
     def __deepcopy__(self, memo):
+        """Deep copy with lookup tables and internal coordinates."""
         new = super().__deepcopy__(self)
         new.dist_ca = np.copy(self.dist_ca)
         new.coord_i = np.copy(self.internal_coordinates)
@@ -405,6 +416,7 @@ class ProteinCentroid(
             *args,
             **kwargs
     ):
+        """Initialize ProteinCentroid, optionally converting to coarse-grained representation."""
         # Protonation is now optional and defaults to False since the protonate method is a no-op
         protonate_param = kwargs.pop('protonate', False)
         super().__init__(
@@ -449,12 +461,14 @@ class ProteinCentroid(
         )
 
     def update_dist(self):
+        """Update the C-alpha distance matrix."""
         atom_dist(self.dist_ca, self.l_res, self.xyz, a2id['CA'])
 
     def update(
             self,
             start_point: int = 0
     ):
+        """Update cartesian coordinates from internal coordinates."""
         ic = self.internal_coordinates
         n_atoms = ic.shape[0]
 

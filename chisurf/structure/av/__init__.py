@@ -60,6 +60,7 @@ class BasicAV(object):
             *args,
             **kwargs
     ):
+        """Initialize a BasicAV (accessible volume) from a structure and labeling parameters."""
         super().__init__(*args, **kwargs)
         if not HAS_LABELLIB:
             raise RuntimeError(
@@ -132,27 +133,33 @@ class BasicAV(object):
 
     @property
     def bounds(self):
+        """Binary mask of grid points accessible to the dye (uint8)."""
         return self._bounds
 
     @property
     def ng(self):
+        """Number of grid points in one dimension of the density cube."""
         return self.density.shape[0]
 
     @property
     def density(self):
+        """Normalized density of dye positions on the grid."""
         return self._density
 
     @property
     def points(self):
+        """Array of (x, y, z, weight) points sampled from the density."""
         if self._points is None:
             self.update_points()
         return self._points
 
     @property
     def atoms(self) -> np.ndarray:
+        """The atom array of the associated structure."""
         return self.structure.atoms
 
     def update_points(self) -> None:
+        """Recompute sample points from the current density on the grid."""
         from . import functions
         ng = self.ng
         density = self.density
@@ -161,6 +168,7 @@ class BasicAV(object):
         self._points = p[:n]
 
     def update(self):
+        """Recalculate the point cloud from the density grid."""
         self.update_points()
 
     def save(
@@ -365,6 +373,7 @@ class ACV(BasicAV):
 
     @property
     def contact_volume_trapped_fraction(self) -> float:
+        """Fraction of dye positions trapped in the contact volume."""
         return self._contact_volume_trapped_fraction
 
     @contact_volume_trapped_fraction.setter
@@ -372,15 +381,18 @@ class ACV(BasicAV):
             self,
             v: float
     ):
+        """Set the trapped-fraction and trigger an update."""
         self._contact_volume_trapped_fraction = v
         self.update()
 
     @property
     def slow_centers(self):
+        """Coordinates of centers where dye diffusion is slowed."""
         return self._slow_centers
 
     @slow_centers.setter
     def slow_centers(self, v):
+        """Set the slow-diffusion centers (by name, ``'all'``, or coords)."""
         atoms = self.atoms
         if isinstance(v, str):
             if v == 'all':
@@ -392,10 +404,12 @@ class ACV(BasicAV):
 
     @property
     def slow_radius(self) -> float:
+        """Radius around slow centers where diffusion is reduced."""
         return self._slow_radius
 
     @slow_radius.setter
     def slow_radius(self, v):
+        """Set the per-center slow radius; broadcasts a scalar to all centers."""
         slow_centers = self.slow_centers
         if isinstance(v, (int, float)):
             slow_radii = np.ones(slow_centers.shape[0]) * v
@@ -408,9 +422,11 @@ class ACV(BasicAV):
 
     @property
     def contact_density(self):
+        """Density portion that belongs to the contact (slow) volume."""
         return self._contact_density
 
     def update_density(self):
+        """Recompute the split contact/non-contact density maps."""
         from . import functions
         av = self
         contact_volume_trapped_fraction = av.contact_volume_trapped_fraction
@@ -432,6 +448,7 @@ class ACV(BasicAV):
         self._density = density
 
     def update(self):
+        """Update the contact volume density and then the point cloud."""
         self.update_density()
         BasicAV.update(self)
 
@@ -440,6 +457,13 @@ class ACV(BasicAV):
             *args,
             **kwargs
     ):
+        """Initialize a BaseACV; see :meth:`BasicAV.__init__` for full params.
+
+        Note
+        ----
+        Parameters are intentionally not duplicated here because the
+        constructor forwards them to :class:`BasicAV`.
+        """
         super().__init__(
             *args,
             **kwargs
@@ -462,10 +486,12 @@ class DynamicAV(BasicAV):
 
     @property
     def diffusion_map(self):
+        """Map of diffusion coefficients on the grid (3D)."""
         return self._diffusion_coefficient_map
 
     @property
     def rate_map(self):
+        """Total rate map (quenching + FRET) on the grid."""
         if self._fret_rate_map is not None:
             return self._quenching_rate_map + self._fret_rate_map
         else:
@@ -473,44 +499,54 @@ class DynamicAV(BasicAV):
 
     @property
     def fret_rate_map(self):
+        """Map of FRET rate constants on the donor grid."""
         return self._fret_rate_map
 
     @property
     def quenching_rate_map(self):
+        """Map of quenching rate constants on the grid."""
         return self._quenching_rate_map
 
     @property
     def fluorescence_lifetime(self):
+        """Fluorescence lifetime of the dye without quencher (tau0)."""
         return self._tau0
 
     @fluorescence_lifetime.setter
     def fluorescence_lifetime(self, v):
+        """Set the unquenched fluorescence lifetime (tau0)."""
         self._tau0 = float(v)
 
     @property
     def contact_distance(self):
+        """Distance threshold for dye-protein contact."""
         return self._contact_distance
 
     @contact_distance.setter
     def contact_distance(self, v):
+        """Set the contact distance; adds the dye-radius offsets."""
         av = self
         self._contact_distance = float(v) + max(av.radius1, av.radius2,
                                                 av.radius3)
 
     @property
     def slow_factor(self):
+        """Factor by which diffusion is slowed near slow centers."""
         return self._slow_factor
 
     @slow_factor.setter
     def slow_factor(self, v):
+        """Set the slow-diffusion factor."""
         self._slow_factor = v
 
     @property
     def donor_only_fluorescence(self):
+        """Donor-only fluorescence time axis and fluorescence values."""
         return self._d0_time, self._d0_fluorescence
 
     @property
     def excited_state_map(self):
+        """Map of the excited state population on the grid."""
         return self._ex_state
 
     def update_diffusion_map(self, **kwargs):
@@ -547,6 +583,7 @@ class DynamicAV(BasicAV):
         # diffusion_mode = kwargs.get('diffusion_mode', self.diffusion_mode)
 
         def f(x):
+            """Three-Gaussian helper (parameters hard-coded in body)."""
             a1, a2, a3 = 10.5, 500., 37.2
             m1, m2, m3 = 20.2, 11.7, 1.40
             s1, s2, s3 = 0.47, 11.8, 1.54
@@ -747,6 +784,7 @@ class DynamicAV(BasicAV):
         return t, c, n
 
     def __init__(self, *args, **kwargs):
+        """Initialize a DynamicAV; sets up internal state and density."""
         from . import functions
         BasicAV.__init__(self, *args, **kwargs)
 

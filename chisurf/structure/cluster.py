@@ -8,6 +8,7 @@ from chisurf.structure import rmsd, average, find_best, Structure
 
 
 def findSmallestCluster(clusters):
+    """Find the smallest cluster in a dictionary of clusters."""
     print("findSmallestCluster")
     minCl = list(clusters.keys())[0]
     for clName in clusters:
@@ -24,6 +25,7 @@ def cluster(
         distances=None,
         directory: str = None
 ):
+    """Perform hierarchical clustering on a list of structures using RMSD distances."""
     # http://www.mathworks.de/de/help/stats/hierarchical-clustering.html
     print("Performing cluster-analysis")
     k = 0
