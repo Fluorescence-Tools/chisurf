@@ -5,7 +5,7 @@ Expose the ProteinMC cmd tool via the unified ChiSurf CLI.
 
 name = "Structure:Computation:Protein Monte Carlo"
 
-# Register CLI entrypoint for chisurf.cli discovery
+# Register CLI entrypoint for chisurf.core.cli discovery
 cli_entrypoint = "proteinmc=chisurf.plugins.modelling.proteinmc.cli:cli"
 cli_only = True
 

@@ -1,12 +1,12 @@
 import sys
 import chisurf
 print("DEBUG: chisurf imported")
-import chisurf.fitting
-print("DEBUG: chisurf.fitting imported")
-import chisurf.fitting.fit
-print("DEBUG: chisurf.fitting.fit imported")
-import chisurf.fitting.parameter
-print("DEBUG: chisurf.fitting.parameter imported")
+import chisurf.core.fitting
+print("DEBUG: chisurf.core.fitting imported")
+import chisurf.core.fitting.fit
+print("DEBUG: chisurf.core.fitting.fit imported")
+import chisurf.core.fitting.parameter
+print("DEBUG: chisurf.core.fitting.parameter imported")
 
 if __name__ == "__main__":
     test_imports()

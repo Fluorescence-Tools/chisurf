@@ -1,12 +1,12 @@
 import pytest
-import chisurf.data
+import chisurf.core.data
 import chisurf.macros.core_data
 
 def test_dataset_grouping():
     # Create two mock FCS data groups which inherit from DataCurveGroup
-    mock_fcs1 = chisurf.data.ExperimentDataCurveGroup([chisurf.data.DataCurve()])
+    mock_fcs1 = chisurf.core.data.ExperimentDataCurveGroup([chisurf.core.data.DataCurve()])
     mock_fcs1.name = "FCS_File_1"
-    mock_fcs2 = chisurf.data.ExperimentDataCurveGroup([chisurf.data.DataCurve()])
+    mock_fcs2 = chisurf.core.data.ExperimentDataCurveGroup([chisurf.core.data.DataCurve()])
     mock_fcs2.name = "FCS_File_2"
     
     # Backup original datasets
@@ -20,7 +20,7 @@ def test_dataset_grouping():
         
         # Expect the resulting group to be an ExperimentDataCurveGroup
         grouped = chisurf.imported_datasets[-1]
-        assert isinstance(grouped, chisurf.data.ExperimentDataCurveGroup)
+        assert isinstance(grouped, chisurf.core.data.ExperimentDataCurveGroup)
         assert hasattr(grouped, 'x')
         assert grouped.x is not None
     finally:

@@ -122,7 +122,7 @@ def setup_ui(
     page.plot_item_decay.setLogMode(False, True)
     page.plot_item_sel.setLogMode(False, False)
 
-    colors = chisurf.settings.gui['plot']['colors']
+    colors = chisurf.core.settings.gui['plot']['colors']
     ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
     co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
     page.region_selector = pg.LinearRegionItem(

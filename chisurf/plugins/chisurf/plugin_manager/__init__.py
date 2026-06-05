@@ -37,7 +37,7 @@ from qtpy.QtGui import QIcon
 
 import chisurf
 import chisurf.plugins
-import chisurf.settings
+import chisurf.core.settings
 
 # Import enhanced icon utilities
 try:
@@ -84,7 +84,7 @@ class PluginManagerWidget(QMainWindow):
         self.resize(800, 400)
 
         # Get plugin settings
-        self.plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+        self.plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
         self.disabled_plugins = self.plugin_settings.get('disabled_plugins', [])  # Keep the key for backward compatibility
         self.hide_disabled_plugins = self.plugin_settings.get('hide_disabled_plugins', True)  # Keep the key for backward compatibility
         self.plugin_order = self.plugin_settings.get('plugin_order', {})
@@ -576,12 +576,12 @@ class PluginManagerWidget(QMainWindow):
         self.plugin_settings['toolbar_plugins'] = self.toolbar_plugins
 
         # Update settings in chisurf
-        chisurf.settings.cs_settings['plugins'] = self.plugin_settings
+        chisurf.core.settings.cs_settings['plugins'] = self.plugin_settings
 
         # Save settings to file
         try:
-            with open(chisurf.settings.chisurf_settings_file, 'w') as f:
-                yaml.dump(chisurf.settings.cs_settings, f, default_flow_style=False)
+            with open(chisurf.core.settings.chisurf_settings_file, 'w') as f:
+                yaml.dump(chisurf.core.settings.cs_settings, f, default_flow_style=False)
 
             # Update the toolbar in the main window
             app = QApplication.instance()

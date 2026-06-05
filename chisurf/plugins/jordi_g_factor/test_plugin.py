@@ -7,7 +7,7 @@ within the ChiSurf application.
 
 import os
 import numpy as np
-from chisurf.fio import write_jordi
+from chisurf.core.fio import write_jordi
 
 # Create synthetic Jordi data for testing
 def create_synthetic_jordi_data(filename, n_points=1000):

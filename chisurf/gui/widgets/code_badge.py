@@ -13,7 +13,7 @@ from typing import Callable, Optional, Tuple
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
 
-import chisurf.settings
+import chisurf.core.settings
 
 
 class CodeBadgeButton(QtWidgets.QToolButton):
@@ -71,7 +71,7 @@ class CodeBadgeButton(QtWidgets.QToolButton):
         self.clicked.connect(self._on_clicked)
 
     def _update_visibility(self):
-        visible = chisurf.settings.is_dev_mode()
+        visible = chisurf.core.settings.is_dev_mode()
         self.setVisible(visible)
         if visible:
             self.setOpacity(self._opacity_normal)
@@ -83,16 +83,16 @@ class CodeBadgeButton(QtWidgets.QToolButton):
 
     def enterEvent(self, event: QtGui.QEnterEvent):
         super().enterEvent(event)
-        if chisurf.settings.is_dev_mode():
+        if chisurf.core.settings.is_dev_mode():
             self.setOpacity(self._opacity_hover)
 
     def leaveEvent(self, event: QtCore.QEvent):
         super().leaveEvent(event)
-        if chisurf.settings.is_dev_mode():
+        if chisurf.core.settings.is_dev_mode():
             self.setOpacity(self._opacity_normal)
 
     def _on_clicked(self):
-        if not chisurf.settings.is_dev_mode():
+        if not chisurf.core.settings.is_dev_mode():
             return
 
         if self._target_resolver is None:
@@ -174,7 +174,7 @@ class CodeBadgeManager(QtCore.QObject):
         Returns:
             The created badge or None if dev mode is off
         """
-        if not chisurf.settings.is_dev_mode():
+        if not chisurf.core.settings.is_dev_mode():
             return None
 
         widget_id = id(widget)

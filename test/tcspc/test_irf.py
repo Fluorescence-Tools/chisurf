@@ -19,7 +19,7 @@ import pytest
 
 def test_irf_estimator_basic():
     """Test basic IRF estimation functionality"""
-    from chisurf.fluorescence.tcspc import IRFEstimator
+    from chisurf.core.fluorescence.tcspc import IRFEstimator
     
     # Create synthetic decay data
     time = np.linspace(0, 50, 500)
@@ -77,7 +77,7 @@ def test_irf_estimator_basic():
 
 def test_irf_estimator_run():
     """Test full pipeline with run() method"""
-    from chisurf.fluorescence.tcspc import IRFEstimator
+    from chisurf.core.fluorescence.tcspc import IRFEstimator
     
     # Create synthetic decay data
     time = np.linspace(0, 50, 500)
@@ -98,7 +98,7 @@ def test_irf_estimator_run():
 
 def test_irf_estimator_multi_channel():
     """Test IRF estimation with multiple channels"""
-    from chisurf.fluorescence.tcspc import IRFEstimator
+    from chisurf.core.fluorescence.tcspc import IRFEstimator
     
     # Create synthetic decay data with 3 channels
     time = np.linspace(0, 50, 500)
@@ -123,7 +123,7 @@ def test_irf_estimator_multi_channel():
 
 def test_irf_estimator_import():
     """Test that IRFEstimator can be imported"""
-    from chisurf.fluorescence.tcspc import IRFEstimator
+    from chisurf.core.fluorescence.tcspc import IRFEstimator
     
     assert IRFEstimator is not None
     assert hasattr(IRFEstimator, 'run')
@@ -131,7 +131,7 @@ def test_irf_estimator_import():
 
 def test_utility_functions():
     """Test utility functions"""
-    from chisurf.fluorescence.tcspc.irf_estimation import (
+    from chisurf.core.fluorescence.tcspc.irf_estimation import (
         pad_array,
         median_filter_nd,
         generate_truncated_exponential,
@@ -164,7 +164,7 @@ def test_utility_functions():
 
 def test_error_handling():
     """Test error handling"""
-    from chisurf.fluorescence.tcspc import IRFEstimator
+    from chisurf.core.fluorescence.tcspc import IRFEstimator
     
     # Test with wrong dimensions
     with pytest.raises(ValueError):
@@ -221,10 +221,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 sys.path.append('/')
 
 import chisurf
-from chisurf.curve import Curve
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.models.tcspc.lifetime import LifetimeModel
+from chisurf.core.curve import Curve
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.models.tcspc.lifetime import LifetimeModel
 
 # Create a simple test data
 x = np.linspace(0, 10, 100)

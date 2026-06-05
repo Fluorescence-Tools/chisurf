@@ -8,8 +8,8 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 import chisurf
-from chisurf.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher
-from chisurf.actions import dispatch
+from chisurf.core.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher
+from chisurf.core.actions import dispatch
 
 class TestActions(unittest.TestCase):
     def setUp(self):
@@ -39,7 +39,7 @@ class TestActions(unittest.TestCase):
         chisurf.action_dispatcher = self.old_dispatcher
 
     def test_decorator_registers_action(self):
-        from chisurf.actions._decorator import action
+        from chisurf.core.actions._decorator import action
         
         @action("test.action", schema={"value": int})
         def my_action(value: int):
@@ -53,7 +53,7 @@ class TestActions(unittest.TestCase):
         self.assertEqual(spec.schema, {"value": int})
 
     def test_dispatch_calls_function_and_records_history(self):
-        from chisurf.actions._decorator import action
+        from chisurf.core.actions._decorator import action
         
         executed = []
         @action("test.exec", schema={"x": int})
@@ -72,7 +72,7 @@ class TestActions(unittest.TestCase):
         self.assertEqual(self.history[0]["source_uid"], "src-1")
 
     def test_direct_call_routes_through_dispatcher(self):
-        from chisurf.actions._decorator import action
+        from chisurf.core.actions._decorator import action
         
         executed = []
         @action("test.direct", schema={"y": int})
@@ -90,7 +90,7 @@ class TestActions(unittest.TestCase):
         self.assertEqual(self.history[0]["payload"]["y"], 100)
 
     def test_schema_validation(self):
-        from chisurf.actions._decorator import action
+        from chisurf.core.actions._decorator import action
         
         @action("test.schema", schema={"val": str})
         def schema_action(val: str):
@@ -101,10 +101,10 @@ class TestActions(unittest.TestCase):
             dispatch("test.schema", {"val": 123})
 
     def test_builtin_actions_registered(self):
-        # Import chisurf.actions to trigger registration of all modules
+        # Import chisurf.core.actions to trigger registration of all modules
         # Since we patched chisurf.action_registry in setUp, they should register there
-        import chisurf.actions
-        from chisurf.actions import dataset_actions, fit_actions, model_actions, parameter_actions, project_actions
+        import chisurf.core.actions
+        from chisurf.core.actions import dataset_actions, fit_actions, model_actions, parameter_actions, project_actions
         import importlib
         
         # Reload all modules to trigger decorator-based registration again
@@ -113,7 +113,7 @@ class TestActions(unittest.TestCase):
         importlib.reload(model_actions)
         importlib.reload(parameter_actions)
         importlib.reload(project_actions)
-        importlib.reload(chisurf.actions)
+        importlib.reload(chisurf.core.actions)
         
         # Check a few random ones
         self.assertTrue(self.registry.has("dataset.add"))

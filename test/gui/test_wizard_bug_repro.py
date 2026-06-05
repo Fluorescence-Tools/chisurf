@@ -1,6 +1,6 @@
 import unittest
-import chisurf.models.tcspc.lifetime
-from chisurf.fitting.parameter import FittingParameter
+import chisurf.core.models.tcspc.lifetime
+from chisurf.core.fitting.parameter import FittingParameter
 
 class TestLifetimePopAppendBug(unittest.TestCase):
     def test_lifetime_append_pop_sync(self):
@@ -9,7 +9,7 @@ class TestLifetimePopAppendBug(unittest.TestCase):
         internal parameter cache and component count (n) correctly
         to avoid duplicate parameter names (like xL2 appearing twice).
         """
-        lt = chisurf.models.tcspc.lifetime.Lifetime(short='L')
+        lt = chisurf.core.models.tcspc.lifetime.Lifetime(short='L')
         self.assertEqual(lt.n, 0, "Initial n should be 0")
         
         # Append first component

@@ -5,13 +5,13 @@ import tempfile
 import glob
 import os
 
-import chisurf.fio as io
-import chisurf.fio.ascii
-import chisurf.fio.structure.coordinates
-import chisurf.fio.fluorescence.fcs
-import chisurf.fio.fluorescence.tcspc
-import chisurf.fio.fluorescence.tttr
-import chisurf.fio.fluorescence.photons
+import chisurf.core.fio as io
+import chisurf.core.fio.ascii
+import chisurf.core.fio.structure.coordinates
+import chisurf.core.fio.fluorescence.fcs
+import chisurf.core.fio.fluorescence.tcspc
+import chisurf.core.fio.fluorescence.tttr
+import chisurf.core.fio.fluorescence.photons
 
 # Ensure search paths are set up if utils is available
 try:
@@ -28,7 +28,7 @@ def test_ascii_save_load(tmp_path):
     y = np.sin(x)
     filename = tmp_path / "test.txt"
     
-    chisurf.fio.ascii.save_xy(
+    chisurf.core.fio.ascii.save_xy(
         filename=str(filename),
         x=x,
         y=y,
@@ -36,7 +36,7 @@ def test_ascii_save_load(tmp_path):
         header_string="x\ty\n"
     )
     
-    x2, y2 = chisurf.fio.ascii.load_xy(
+    x2, y2 = chisurf.core.fio.ascii.load_xy(
         filename=str(filename),
         usecols=(0, 1),
         delimiter="\t",
@@ -54,7 +54,7 @@ def test_csv_class(tmp_path):
     filename = str(tmp_path / "test_csv.txt")
     
     # save with basic/simple CSV functions
-    chisurf.fio.ascii.save_xy(
+    chisurf.core.fio.ascii.save_xy(
         filename=filename,
         x=reference_x,
         y=reference_y,
@@ -63,7 +63,7 @@ def test_csv_class(tmp_path):
     )
     
     # CSV class
-    csv = chisurf.fio.ascii.Csv(
+    csv = chisurf.core.fio.ascii.Csv(
         filename=filename,
         skiprows=0,
         use_header=True
@@ -80,30 +80,30 @@ def test_csv_class(tmp_path):
 
 def test_fetch_pdb():
     pdb_id = "148L"
-    s = chisurf.fio.structure.coordinates.fetch_pdb_string(pdb_id)
+    s = chisurf.core.fio.structure.coordinates.fetch_pdb_string(pdb_id)
     assert s.startswith('HEADER    HYDROLASE/HYDROLASE SUBSTRATE')
 
 def test_parse_string_pdb():
     pdb_id = "148L"
-    s = chisurf.fio.structure.coordinates.fetch_pdb_string(pdb_id)
-    atoms = chisurf.fio.structure.coordinates.parse_string_pdb(s)
+    s = chisurf.core.fio.structure.coordinates.fetch_pdb_string(pdb_id)
+    atoms = chisurf.core.fio.structure.coordinates.parse_string_pdb(s)
     atoms_reference = np.array([
         [7.71, 28.561, 39.546],
         [8.253, 29.664, 38.758]
     ])
     assert np.allclose(atoms['xyz'][:2], atoms_reference)
 
-@pytest.mark.skipif(not chisurf.fio.structure.coordinates._HAS_IMP, reason="IMP is required to read coordinates. Try installing it.")
+@pytest.mark.skipif(not chisurf.core.fio.structure.coordinates._HAS_IMP, reason="IMP is required to read coordinates. Try installing it.")
 def test_read_pdb(tmp_path):
     pdb_id = "148L"
     filename = str(tmp_path / "test.pdb")
     with io.open_maybe_zipped(filename=filename, mode='w') as fp:
-        fp.write(chisurf.fio.structure.coordinates.fetch_pdb_string(pdb_id))
+        fp.write(chisurf.core.fio.structure.coordinates.fetch_pdb_string(pdb_id))
     
-    atoms = chisurf.fio.structure.coordinates.read(filename=filename)
+    atoms = chisurf.core.fio.structure.coordinates.read(filename=filename)
     assert len(atoms) > 0
     # Test non-existent file handling
-    atoms_none = chisurf.fio.structure.coordinates.read(filename="None")
+    atoms_none = chisurf.core.fio.structure.coordinates.read(filename="None")
     assert len(atoms_none) == 0
 
 # --- TTTR / Photon Tests ---
@@ -115,7 +115,7 @@ def test_spc2hdf(tmp_path):
     if not spc_files:
         pytest.skip("Test data not found")
         
-    h5 = chisurf.fio.fluorescence.tttr.spc2hdf(
+    h5 = chisurf.core.fio.fluorescence.tttr.spc2hdf(
         spc_files,
         routine_name=filetype,
         filename=output
@@ -138,7 +138,7 @@ def test_photons(d):
         pytest.skip("Test data not found")
     # Note: get_micro_time vs get_micro_times depends on tttrlib version
     # The error message suggested 'get_micro_times'
-    photons = chisurf.fio.fluorescence.photons.Photons(
+    photons = chisurf.core.fio.fluorescence.photons.Photons(
         d["files"],
         reading_routine=d["routine"]
     )
@@ -163,7 +163,7 @@ def test_read_tcspc_csv_jordi(polarization, expected_ref):
     ref_vv_slice = np.array([1., 4., 2., 10., 6., 14., 13., 15., 8.])
     ref_vh_slice = np.array([3., 5., 6., 10., 11., 10., 8., 15.])
     
-    decay_data_curve = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
+    decay_data_curve = chisurf.core.fio.fluorescence.tcspc.read_tcspc_csv(
         filename=filename,
         skiprows=0,
         dt=dt,
@@ -184,7 +184,7 @@ def test_read_tcspc_csv_jordi_complex():
         
     dt = 0.032
     g_factor = 1.5
-    decay_data_curve_vm = chisurf.fio.fluorescence.tcspc.read_tcspc_csv(
+    decay_data_curve_vm = chisurf.core.fio.fluorescence.tcspc.read_tcspc_csv(
         filename=filename,
         skiprows=0,
         dt=dt,
@@ -200,7 +200,7 @@ def test_read_fcs_kristine():
         pytest.skip("Test data not found")
         
     ref_fcs_val = 4.21595667 # First value
-    fcs_data_curve = chisurf.fio.fluorescence.fcs.read_fcs(
+    fcs_data_curve = chisurf.core.fio.fluorescence.fcs.read_fcs(
         reader_name='kristine',
         filename=filename
     )
@@ -213,7 +213,7 @@ def test_read_empty_ascii(tmp_path):
     with open(filename, 'w') as f:
         pass
     # Behavior depends on the specific reader. load_xy returns empty arrays
-    x, y = chisurf.fio.ascii.load_xy(filename)
+    x, y = chisurf.core.fio.ascii.load_xy(filename)
     assert len(x) == 0
     assert len(y) == 0
 
@@ -225,7 +225,7 @@ def test_read_malformed_tcspc(tmp_path):
     
     # This might fail with ValueError or ZeroDivisionError if header is misinterpreted
     with pytest.raises((ValueError, ZeroDivisionError)):
-         chisurf.fio.fluorescence.tcspc.read_tcspc_csv(filename)
+         chisurf.core.fio.fluorescence.tcspc.read_tcspc_csv(filename)
 
 def test_read_nonexistent_photon_file():
     # Photons class might just log a warning and continue with an empty object
@@ -233,11 +233,11 @@ def test_read_nonexistent_photon_file():
     # Given current behavior, we just ensure it doesn't crash the whole process
     # or it raises one of the expected errors if it does fail.
     try:
-        photons = chisurf.fio.fluorescence.photons.Photons("non_existent_file.spc", reading_routine="bh132")
+        photons = chisurf.core.fio.fluorescence.photons.Photons("non_existent_file.spc", reading_routine="bh132")
     except (FileNotFoundError, IOError, AttributeError, ValueError):
         pass
 
 def test_read_nonexistent_fcs():
     with pytest.raises((FileNotFoundError, IOError, AttributeError)):
         # read_fcs_cor doesn't exist, using read_fcs
-        chisurf.fio.fluorescence.fcs.read_fcs(filename="non_existent_file.cor", reader_name="kristine")
+        chisurf.core.fio.fluorescence.fcs.read_fcs(filename="non_existent_file.cor", reader_name="kristine")

@@ -475,7 +475,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
         # Deterministic expectation of the decay
         decay_expectation = _np.zeros_like(time_axis, dtype=float)
         try:
-            from chisurf.fluorescence.tcspc import convolve as _tcspc_convolve
+            from chisurf.core.fluorescence.tcspc import convolve as _tcspc_convolve
 
             _tcspc_convolve.convolve_lifetime_spectrum(
                 output_decay=decay_expectation,
@@ -486,7 +486,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
             )
         except Exception:
             # Fallback: no convolution, plain multi-exponential decay
-            from chisurf.fluorescence import general as _fl_general
+            from chisurf.core.fluorescence import general as _fl_general
 
             _, decay_expectation = _fl_general.calculate_fluorescence_decay(
                 lifetime_spectrum=lifetime_spectrum,
@@ -620,7 +620,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
             experiment_reader = None
 
         try:
-            from chisurf.fluorescence import tcspc as _tcspc_mod
+            from chisurf.core.fluorescence import tcspc as _tcspc_mod
 
             ey = _tcspc_mod.counting_noise(y)
         except Exception:
@@ -628,7 +628,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
         # Create an experimental curve with proper metadata so selectors and
         # fits see it like any other TCSPC dataset.
-        data_set = chisurf.data.DataCurve(
+        data_set = chisurf.core.data.DataCurve(
             x=_np.asarray(t, dtype=float),
             y=_np.asarray(y, dtype=float),
             ey=ey,
@@ -640,7 +640,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
         # Wrap into an ExperimentDataCurveGroup to mirror grouped imports.
         try:
-            dataset_group = chisurf.data.ExperimentDataCurveGroup([data_set])
+            dataset_group = chisurf.core.data.ExperimentDataCurveGroup([data_set])
         except Exception:
             dataset_group = None
 

@@ -853,7 +853,7 @@ def sync_domain_entities(
     to reconcile them, with history recording suppressed.
     """
     import chisurf
-    import chisurf.actions as actions
+    import chisurf.core.actions as actions
 
     target_ds_uids = set(target_nav_state.get("dataset_uids", []))
     target_fit_uids = set(target_nav_state.get("fit_uids", []))

@@ -7,7 +7,7 @@ and generates a burstwise analysis folder next to the corresponding TTTR data.
 Workflow per BID file:
 - Infer the TTTR file from the BID file name (same stem, common TTTR extensions)
 - Load TTTR via tttrlib
-- Compute burst summary using chisurf.fio.fluorescence.burst.generate_burst_dataframe
+- Compute burst summary using chisurf.core.fio.fluorescence.burst.generate_burst_dataframe
 - Write a BUR file to analysis/bi4_bur/<stem>.bur
 - Update/create analysis/Info/*.mti with total measurement time
 
@@ -27,7 +27,7 @@ import pandas as pd
 
 import chisurf
 from chisurf import logging
-import chisurf.fio as io
+import chisurf.core.fio as io
 
 try:
     import tttrlib
@@ -41,12 +41,12 @@ except Exception:  # pragma: no cover
     QtWidgets = None  # type: ignore
     QtCore = None  # type: ignore
 
-from chisurf.fio.fluorescence.burst import (
+from chisurf.core.fio.fluorescence.burst import (
     generate_burst_dataframe,
     write_dataframe_to_bur,
     write_mti_summary,
 )
-from chisurf.fluorescence.burst.utils import create_array_with_ones
+from chisurf.core.fluorescence.burst.utils import create_array_with_ones
 # Detector setup wizard page for defining detectors/windows like the Trace Browser
 try:
     from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage, DetectorWizard  # type: ignore

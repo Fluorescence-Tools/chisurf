@@ -5,9 +5,9 @@ import pyqtgraph as pg
 
 import chisurf
 import chisurf.gui.widgets
-import chisurf.fitting.fit
-import chisurf.models
-import chisurf.parameter
+import chisurf.core.fitting.fit
+import chisurf.core.models
+import chisurf.core.parameter
 
 from chisurf.gui import QtWidgets, QtCore, QtGui
 from chisurf import logging
@@ -164,10 +164,10 @@ class GraphWizard(QtWidgets.QWidget):
         self.recompute_graph()
 
     @staticmethod
-    def skip_fit(fit, omitted_models: list[chisurf.models.Model] = None):
+    def skip_fit(fit, omitted_models: list[chisurf.core.models.Model] = None):
         # Skip fits with global models
         if omitted_models is None:
-            omitted_models = [chisurf.models.global_model.GlobalFitModel]
+            omitted_models = [chisurf.core.models.global_model.GlobalFitModel]
         for c in omitted_models:
             if isinstance(fit.model, c):
                 print("Omit:", fit.name)
@@ -177,7 +177,7 @@ class GraphWizard(QtWidgets.QWidget):
     @staticmethod
     def build_graph(
             include_fixed: bool = True,
-            fit_list: list[chisurf.fitting.FitGroup] = None,
+            fit_list: list[chisurf.core.fitting.FitGroup] = None,
             connect_fits: bool = False,
             **kwargs
     ):
@@ -268,7 +268,7 @@ class GraphWizard(QtWidgets.QWidget):
             self,
             connect_fits: bool = False,
             include_fixed: bool = False,
-            fit_list: list[chisurf.fitting.FitGroup] = None
+            fit_list: list[chisurf.core.fitting.FitGroup] = None
     ):
         if fit_list is None:
             fit_list = chisurf.fits
@@ -290,7 +290,7 @@ class GraphWizard(QtWidgets.QWidget):
         node_types = list()
         for node in G.nodes:
             o = node_objects[node]
-            if isinstance(o, chisurf.parameter.Parameter):
+            if isinstance(o, chisurf.core.parameter.Parameter):
                 if o.fixed:
                     if not include_fixed:
                         continue
@@ -345,7 +345,7 @@ class GraphWizard(QtWidgets.QWidget):
 
     def make_graph_plot(
             self,
-            fit_list: list[chisurf.fitting.FitGroup],
+            fit_list: list[chisurf.core.fitting.FitGroup],
             update_callback=None,
             node_size: float = 0.02,
             connect_fits: bool = False,
@@ -406,11 +406,11 @@ class GraphWizard(QtWidgets.QWidget):
 
     @chisurf.gui.decorators.init_with_ui(
         "globalview.ui",
-        path=chisurf.settings.plugin_path / "chisurf" / "globalview"
+        path=chisurf.core.settings.plugin_path / "chisurf" / "globalview"
     )
     def __init__(
             self,
-            fit_list: list[chisurf.fitting.FitGroup] = None,
+            fit_list: list[chisurf.core.fitting.FitGroup] = None,
             parent=None,
             connect_fits: bool = False,
             include_fixed: bool = False,

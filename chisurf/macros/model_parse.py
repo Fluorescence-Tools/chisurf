@@ -4,11 +4,11 @@ from __future__ import annotations
 from typing import Any, List
 
 import chisurf
-import chisurf.experiments
+import chisurf.core.experiments
 
 try:
     # Optional imports for type checks; fall back gracefully if types move
-    from chisurf.fitting.fit import Fit, FitGroup  # type: ignore
+    from chisurf.core.fitting.fit import Fit, FitGroup  # type: ignore
 except Exception:  # pragma: no cover - robustness for environments without these symbols
     Fit = object  # type: ignore
     FitGroup = object  # type: ignore

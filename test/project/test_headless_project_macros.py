@@ -6,12 +6,12 @@ import numpy as np
 
 # Ensure we test the headless entrypoints
 import chisurf
-from chisurf.data import DataCurve
+from chisurf.core.data import DataCurve
 from chisurf.macros.core_fit import save_project, load_project, add_fit
 
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.models.model import ModelCurve
-from chisurf.fitting.parameter import FittingParameter
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.models.model import ModelCurve
+from chisurf.core.fitting.parameter import FittingParameter
 
 class DummyLinearModel(ModelCurve):
     name = "DummyLinearModel"

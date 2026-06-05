@@ -21,7 +21,7 @@ class SessionState:
 
     def __post_init__(self):
         """Initialise the project registry after dataclass field assignment."""
-        from chisurf.project.registry import Registry
+        from chisurf.core.project.registry import Registry
         self.registry = Registry()
 
     # ── mutation helpers ────────────────────────────────────────────

@@ -9,7 +9,7 @@ utils.set_search_paths(TOPDIR)
 
 import numpy as np
 
-import chisurf.math.regularization as regularization
+import chisurf.core.math.regularization as regularization
 
 
 class Tests(unittest.TestCase):

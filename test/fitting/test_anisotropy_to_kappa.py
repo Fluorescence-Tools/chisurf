@@ -7,8 +7,8 @@ calculated correctly.
 """
 
 import numpy as np
-from chisurf.fitting.fit import Fit
-from chisurf.models.anisotropy_to_kappa import AnisotropyToKappaModel
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.models.anisotropy_to_kappa import AnisotropyToKappaModel
 from chisurf.plugins.kappa2_dist.k2dfun import kappasq, s2delta
 
 # Create a fit object (required by the model)

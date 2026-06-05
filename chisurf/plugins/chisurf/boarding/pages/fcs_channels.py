@@ -1,6 +1,6 @@
 from qtpy import QtCore, QtGui, QtWidgets
 
-from chisurf.fluorescence.fcs.channel_setups import FCS_CHANNEL_SETUPS_FILE
+from chisurf.core.fluorescence.fcs.channel_setups import FCS_CHANNEL_SETUPS_FILE
 
 from ..utils import open_in_file_manager
 

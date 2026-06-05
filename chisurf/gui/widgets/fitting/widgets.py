@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chisurf.settings
+import chisurf.core.settings
 from .fit_list import ModelDataRepresentationSelector
 from .fit_controller import FittingControllerWidget
 from .fit_subwindow import FitSubWindow
@@ -12,7 +12,7 @@ from .parameter_widgets import (
     make_fitting_parameter_widget,
 )
 
-parameter_settings = chisurf.settings.parameter
+parameter_settings = chisurf.core.settings.parameter
 
 __all__ = [
     'parameter_settings',

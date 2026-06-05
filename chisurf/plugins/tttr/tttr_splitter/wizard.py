@@ -4,7 +4,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import tttrlib
 
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 
 VERBOSE = False
 
@@ -85,7 +85,7 @@ def enable_folder_drop(line_edit: QtWidgets.QLineEdit):
 class PTUSplitter(QtWidgets.QWidget):
 
     @chisurf.gui.decorators.init_with_ui("tttr/tttr_splitter/wizard.ui",
-                                         path=chisurf.settings.plugin_path)
+                                         path=chisurf.core.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         # NO super() call here (the decorator handles it).
         self._tttr = None

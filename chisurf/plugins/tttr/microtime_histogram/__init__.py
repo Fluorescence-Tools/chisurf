@@ -25,6 +25,6 @@ properties and dynamics.
 
 name = "Spectroscopy:Fluorescence decay:Histogram-Microtime"
 
-# Expose the plugin's CLI helper through chisurf.cli. This forwards to the
+# Expose the plugin's CLI helper through chisurf.core.cli. This forwards to the
 # argparse-based entry point defined in ``__main__.py``.
 cli_entrypoint = "microtime-histogram=chisurf.plugins.tttr.microtime_histogram.__main__:main"

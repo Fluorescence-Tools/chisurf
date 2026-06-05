@@ -71,7 +71,7 @@ except Exception:
 
 # Burst analysis and NDXplorer integration
 try:
-    from chisurf.fio.fluorescence import burst as burstio
+    from chisurf.core.fio.fluorescence import burst as burstio
 except Exception:
     burstio = None
 try:

@@ -15,9 +15,9 @@ try:
 except ImportError:  # optional dependency
     Bar = ETA = ProgressBar = RotatingMarker = Percentage = None
 
-import chisurf.settings
-from chisurf.math.rand import mc, weighted_choice
-from chisurf.structure import ProteinCentroid, TrajectoryFile, Universe
+import chisurf.core.settings
+from chisurf.core.math.rand import mc, weighted_choice
+from chisurf.core.structure import ProteinCentroid, TrajectoryFile, Universe
 
 verbose = False
 
@@ -25,7 +25,7 @@ verbose = False
 class ProteinMCWorker(object):
     def __init__(
         self,
-        structure: chisurf.structure.ProteinCentroid,
+        structure: chisurf.core.structure.ProteinCentroid,
         output_traj_file: str = None,
         settings: dict = None,
         update_rmsd: bool = False,
@@ -36,7 +36,7 @@ class ProteinMCWorker(object):
         self._config_filename = None
         self.verbose = verbose
         if settings is None:
-            settings = chisurf.settings.cs_settings["mc_settings"]
+            settings = chisurf.core.settings.cs_settings["mc_settings"]
         self.settings = settings
 
         self.output_traj_file = output_traj_file
@@ -111,7 +111,7 @@ class ProteinMCWorker(object):
          Example
          -------
 
-        >>> structure = chisurf.structure.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/eGFP-mCherry.pqr')
+        >>> structure = chisurf.core.structure.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/eGFP-mCherry.pqr')
         >>> mcw = ProteinMCWorker(structure)
         >>> mcw.run(n_out=100, n_iter=10000)
         """

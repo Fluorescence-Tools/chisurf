@@ -5,7 +5,7 @@ import shutil
 from qtpy import QtCore, QtGui
 
 import chisurf
-import chisurf.settings
+import chisurf.core.settings
 
 
 def open_in_file_manager(path: pathlib.Path) -> None:
@@ -25,7 +25,7 @@ def import_check(module_name: str) -> tuple[bool, str]:
 
 
 def settings_paths() -> dict[str, pathlib.Path]:
-    user_dir = chisurf.settings.get_path('settings')
+    user_dir = chisurf.core.settings.get_path('settings')
     return {
         'user_settings_dir': user_dir,
         'settings_chisurf_yaml': user_dir / 'settings_chisurf.yaml',
@@ -69,7 +69,7 @@ def build_status_html() -> str:
     rows.append(_row("logs/", p['logs_dir'].is_dir(), str(p['logs_dir'])))
 
     try:
-        cs = getattr(chisurf.settings, 'cs_settings', None)
+        cs = getattr(chisurf.core.settings, 'cs_settings', None)
         ok = isinstance(cs, dict) and bool(cs)
     except Exception:
         ok = False
@@ -119,8 +119,8 @@ def build_deps_html() -> str:
 
 def copy_defaults(overwrite: bool) -> tuple[bool, str]:
     try:
-        user_dir = chisurf.settings.get_path('settings')
-        pkg_dir = pathlib.Path(chisurf.settings.__file__).resolve().parent
+        user_dir = chisurf.core.settings.get_path('settings')
+        pkg_dir = pathlib.Path(chisurf.core.settings.__file__).resolve().parent
 
         if overwrite:
             allowed = {".yaml", ".yml", ".json", ".qss", ".css"}
@@ -133,13 +133,13 @@ def copy_defaults(overwrite: bool) -> tuple[bool, str]:
                     continue
                 shutil.copyfile(file, user_dir / file.name)
             try:
-                from chisurf.settings.settings_utils import copy_styles_to_user_folder
+                from chisurf.core.settings.settings_utils import copy_styles_to_user_folder
                 copy_styles_to_user_folder()
             except Exception:
                 pass
             return True, "Defaults copied (overwrite)."
 
-        chisurf.settings.copy_settings_to_user_folder()
+        chisurf.core.settings.copy_settings_to_user_folder()
         return True, "Defaults copied (missing files only)."
     except Exception as e:
         return False, str(e)

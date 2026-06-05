@@ -1,9 +1,9 @@
 import unittest
 import numpy as np
 
-import chisurf.fluorescence.fret.fret_line
-from chisurf.fluorescence.fret.fret_line import FRETLineGenerator
-import chisurf.models
+import chisurf.core.fluorescence.fret.fret_line
+from chisurf.core.fluorescence.fret.fret_line import FRETLineGenerator
+import chisurf.core.models
 
 
 class Tests(unittest.TestCase):
@@ -11,7 +11,7 @@ class Tests(unittest.TestCase):
     def test_fret_line_1(self):
         # set rda-axis in chisurf.model.tcspc to avoid dependencies on
         # specific settings
-        chisurf.models.tcspc.fret.rda_axis = np.logspace(
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
             start=np.log(1),
             stop=np.log(500)
         )
@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
             n_points=n_points,
             parameter_range=parameter_range
         )
-        fl.model = chisurf.models.tcspc.fret.GaussianModel
+        fl.model = chisurf.core.models.tcspc.fret.GaussianModel
         fl.model.gaussians.append(55.0, 10, 1.0)
         fl.model.find_parameters()
         fl.model.parameter_dict['xDOnly'].value = 0.0
@@ -104,7 +104,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_orientation_mode_aliases(self):
-        from chisurf.models.tcspc.fret import OrientationParameter
+        from chisurf.core.models.tcspc.fret import OrientationParameter
 
         op = OrientationParameter(orientation_mode='slow_isotropic')
         self.assertEqual(op.mode, 'slow')
@@ -113,7 +113,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(op.mode, 'fast')
 
     def test_fret_line_2(self):
-        chisurf.models.tcspc.fret.rda_axis = np.logspace(
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
             start=np.log(1),
             stop=np.log(500)
         )
@@ -123,7 +123,7 @@ class Tests(unittest.TestCase):
         fl = FRETLineGenerator(
             n_points=n_points,
             parameter_range=parameter_range,
-            model=chisurf.models.tcspc.fret.GaussianModel,
+            model=chisurf.core.models.tcspc.fret.GaussianModel,
             verbose=True
         )
         fl.model.gaussians.append(55.0, 10, 1.0)
@@ -145,12 +145,12 @@ class Tests(unittest.TestCase):
         fl.update()
 
     def test_static_fret_line(self):
-        import chisurf.fluorescence.fret.fret_line
-        chisurf.models.tcspc.fret.rda_axis = np.logspace(
+        import chisurf.core.fluorescence.fret.fret_line
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
             start=np.log(1),
             stop=np.log(500)
         )
-        fl = chisurf.fluorescence.fret.fret_line.StaticFRETLine()
+        fl = chisurf.core.fluorescence.fret.fret_line.StaticFRETLine()
         fl.update()
         self.assertEqual(
             '0.007988*x^0+-0.068925*x^1+0.437420*x^2+-0.009930*x^3+-0.008274*x^4',
@@ -158,11 +158,11 @@ class Tests(unittest.TestCase):
         )
 
     def test_dynamic_fret_line(self):
-        chisurf.models.tcspc.fret.rda_axis = np.logspace(
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
             start=np.log(1),
             stop=np.log(500)
         )
-        fl = chisurf.fluorescence.fret.fret_line.DynamicFRETLine(
+        fl = chisurf.core.fluorescence.fret.fret_line.DynamicFRETLine(
             n_points=10
         )
         fl.update()

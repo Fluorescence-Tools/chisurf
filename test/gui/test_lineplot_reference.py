@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.abspath('..'))
 
 try:
     # Import necessary modules
-    from chisurf.plots.lineplot.lineplot import LinePlot
-    from chisurf.models.tcspc.lifetime import LifetimeModel
+    from chisurf.gui.plots.lineplot.lineplot import LinePlot
+    from chisurf.core.models.tcspc.lifetime import LifetimeModel
     import numpy as np
     
     # Create a simple test data

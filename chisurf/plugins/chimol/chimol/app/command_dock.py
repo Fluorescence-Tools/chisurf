@@ -37,7 +37,7 @@ def _set_hidden_on_windows(path: Path) -> None:
 def _resolve_history_path():
     try:
         try:
-            import chisurf.settings as _cs_settings
+            import chisurf.core.settings as _cs_settings
         except Exception:
             _cs_settings = None
         if _cs_settings is not None:

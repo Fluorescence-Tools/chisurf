@@ -6,11 +6,11 @@ from chisurf.gui import QtWidgets
 
 from scipy.stats import f as fdist
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
-import chisurf.models
-import chisurf.fitting.fit
-import chisurf.math.statistics
+import chisurf.core.models
+import chisurf.core.fitting.fit
+import chisurf.core.math.statistics
 
 
 class FTestWidget(QtWidgets.QWidget):
@@ -129,12 +129,12 @@ class FTestWidget(QtWidgets.QWidget):
         """Compute the upper chi2 limit from the selected fit and current parameters."""
         if isinstance(
                 self._selected_fit,
-                chisurf.fitting.fit.Fit
+                chisurf.core.fitting.fit.Fit
         ):
             self.chi2_min = self._selected_fit.chi2r
         dof = max(1, self.dof)
         number_of_parameters = max(1, self.npars)
-        self.chi2_max = chisurf.math.statistics.chi2_max(
+        self.chi2_max = chisurf.core.math.statistics.chi2_max(
             conf_level=self.conf_level_2,
             number_of_parameters=number_of_parameters,
             nu=dof,

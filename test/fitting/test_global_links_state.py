@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.models.model import ModelCurve
-from chisurf.models.global_model.globalfit import GlobalFitModel
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models.model import ModelCurve
+from chisurf.core.models.global_model.globalfit import GlobalFitModel
 
-from chisurf.project.fit_state import global_links_to_state, apply_global_links_state
+from chisurf.core.project.fit_state import global_links_to_state, apply_global_links_state
 
 
 class DummyLinearModelForGlobal(ModelCurve):

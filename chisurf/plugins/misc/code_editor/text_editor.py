@@ -7,10 +7,10 @@ from enum import Enum, auto
 from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf
-import chisurf.fio as io
+import chisurf.core.fio as io
 from chisurf import logging
 import chisurf.gui.widgets
-import chisurf.settings
+import chisurf.core.settings
 from chisurf.plugins.misc.code_editor.agent_panel import AgentPanelWidget
 
 
@@ -25,9 +25,9 @@ class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
         self.formats = {}
 
         if font_family is None:
-            font_family = chisurf.settings.gui['editor']['font_family']
+            font_family = chisurf.core.settings.gui['editor']['font_family']
         if font_point_size is None:
-            font_point_size = chisurf.settings.gui['editor']['font_size']
+            font_point_size = chisurf.core.settings.gui['editor']['font_size']
 
         self.default_font = QtGui.QFont(font_family, int(font_point_size))
 
@@ -55,9 +55,9 @@ class PythonHighlighter(SyntaxHighlighter):
         super().__init__(parent, font_family, font_point_size)
 
         if paper_color is None:
-            paper_color = chisurf.settings.gui['editor']['paper_color']
+            paper_color = chisurf.core.settings.gui['editor']['paper_color']
         if default_color is None:
-            default_color = chisurf.settings.gui['editor']['default_color']
+            default_color = chisurf.core.settings.gui['editor']['default_color']
 
         # Create formats for different syntax elements
         keyword_format = QtGui.QTextCharFormat()
@@ -128,9 +128,9 @@ class JSONHighlighter(SyntaxHighlighter):
         super().__init__(parent, font_family, font_point_size)
 
         if paper_color is None:
-            paper_color = chisurf.settings.gui['editor']['paper_color']
+            paper_color = chisurf.core.settings.gui['editor']['paper_color']
         if default_color is None:
-            default_color = chisurf.settings.gui['editor']['default_color']
+            default_color = chisurf.core.settings.gui['editor']['default_color']
 
         # Create formats for different syntax elements
         property_format = QtGui.QTextCharFormat()
@@ -177,9 +177,9 @@ class YAMLHighlighter(SyntaxHighlighter):
         super().__init__(parent, font_family, font_point_size)
 
         if paper_color is None:
-            paper_color = chisurf.settings.gui['editor']['paper_color']
+            paper_color = chisurf.core.settings.gui['editor']['paper_color']
         if default_color is None:
-            default_color = chisurf.settings.gui['editor']['default_color']
+            default_color = chisurf.core.settings.gui['editor']['default_color']
 
         # Create formats for different syntax elements
         key_format = QtGui.QTextCharFormat()
@@ -272,18 +272,18 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         super().__init__(parent)
 
         if font_point_size is None:
-            font_point_size = chisurf.settings.gui['editor']['font_size']
+            font_point_size = chisurf.core.settings.gui['editor']['font_size']
         if font_family is None:
-            font_family = chisurf.settings.gui['editor']['font_family']
+            font_family = chisurf.core.settings.gui['editor']['font_family']
         if margins_background_color is None:
-            margins_background_color = chisurf.settings.gui['editor']['margins_background_color']
+            margins_background_color = chisurf.core.settings.gui['editor']['margins_background_color']
         if marker_background_color is None:
-            marker_background_color = chisurf.settings.gui['editor']['marker_background_color']
+            marker_background_color = chisurf.core.settings.gui['editor']['marker_background_color']
         if caret_line_background_color is None:
-            caret_line_background_color = chisurf.settings.gui['editor']['caret_line_background_color']
+            caret_line_background_color = chisurf.core.settings.gui['editor']['caret_line_background_color']
 
-        paper_color = kwargs.get("paper_color", chisurf.settings.gui['editor']['paper_color'])
-        default_color = kwargs.get("default_color", chisurf.settings.gui['editor']['default_color'])
+        paper_color = kwargs.get("paper_color", chisurf.core.settings.gui['editor']['paper_color'])
+        default_color = kwargs.get("default_color", chisurf.core.settings.gui['editor']['default_color'])
 
         # Set the default font
         font = QtGui.QFont()
@@ -376,7 +376,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     def line_number_area_paint_event(self, event):
         """Paint the line number area."""
         painter = QtGui.QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QtGui.QColor(chisurf.settings.gui['editor']['margins_background_color']))
+        painter.fillRect(event.rect(), QtGui.QColor(chisurf.core.settings.gui['editor']['margins_background_color']))
 
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()

@@ -5,10 +5,9 @@ ChiSurf Ribbon Integration - Utilities Module
 This module contains utility functions and convenience methods for the ribbon interface.
 """
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QMessageBox
-from qtpy import QtWidgets
+from qtpy.QtCore import QTimer
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QMessageBox
 
 import chisurf
 from chisurf import logging
@@ -103,7 +102,7 @@ class UtilityMethodsMixin:
 
             # Save to settings
             import chisurf
-            gui_settings = chisurf.settings.cs_settings.get('gui', {})
+            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
             gui_settings['ribbon_style'] = style
 
             self.logger.info(f"Ribbon style changed to {style}")
@@ -136,7 +135,7 @@ class UtilityMethodsMixin:
 
                 # Update settings
                 import chisurf
-                gui_settings = chisurf.settings.cs_settings.get('gui', {})
+                gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
                 gui_settings['use_ribbon_interface'] = False
 
                 self.logger.info("Switched back to traditional menu bar")
@@ -146,7 +145,7 @@ class UtilityMethodsMixin:
 
         except Exception as e:
             self.logger.error(f"Failed to switch to menu: {e}")
-            from PyQt5.QtWidgets import QMessageBox
+            from qtpy.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self.main_window,
                 "Error",

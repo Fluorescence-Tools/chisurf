@@ -48,7 +48,7 @@ class ProjectMixin:
                 pass
 
             try:
-                chisurf.actions.dispatch(
+                chisurf.core.actions.dispatch(
                     name="project.save",
                     payload={
                         "target_path": current_dir.parent.as_posix(),
@@ -112,7 +112,7 @@ class ProjectMixin:
             pass
 
         try:
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="project.save",
                 payload={
                     "target_path": path.as_posix(),
@@ -150,7 +150,7 @@ class ProjectMixin:
 
         chisurf.working_path = path
         try:
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="project.load",
                 payload={
                     "project_path": path.as_posix(),
@@ -175,7 +175,7 @@ class ProjectMixin:
 
     def onCloseProject(self: Main, event: QtCore.QEvent = None):
         try:
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="project.close",
                 payload={
                     "main_window": self,
@@ -233,9 +233,9 @@ class SetupMixin:
         self._current_setup_idx = v
 
     def onExperimentChanged(self: Main):
-        if not chisurf.actions.is_dispatching():
+        if not chisurf.core.actions.is_dispatching():
             experiment_name = self.comboBox_experimentSelect.currentText()
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="experiment.set",
                 payload={"name": str(experiment_name)},
             )
@@ -259,9 +259,9 @@ class SetupMixin:
         self._refresh_setup_ui()
 
     def onSetupChanged(self: Main):
-        if not chisurf.actions.is_dispatching():
+        if not chisurf.core.actions.is_dispatching():
             setup_name = self.comboBox_setupSelect.currentText()
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="setup.select",
                 payload={"name": str(setup_name)},
             )
@@ -302,15 +302,15 @@ class SetupMixin:
         Set up an experiment based on its configuration.
 
         Args:
-            exp_type (str): The experiment type key in chisurf.experiments.types
+            exp_type (str): The experiment type key in chisurf.core.experiments.types
             config (dict): Configuration for the experiment with readers and models
         """
-        import chisurf.experiments
+        import chisurf.core.experiments
         try:
             # Get the base experiment from registry or create a new one
-            experiment = chisurf.experiments.types.get(exp_type)
+            experiment = chisurf.core.experiments.types.get(exp_type)
             if experiment is None:
-                experiment = chisurf.experiments.core.Experiment(
+                experiment = chisurf.core.experiments.core.Experiment(
                     name=config.get('name', exp_type),
                     hidden=config.get('hidden', False)
                 )
@@ -386,7 +386,7 @@ class SetupMixin:
         import yaml
         import pathlib
         import shutil
-        import chisurf.experiments
+        import chisurf.core.experiments
 
         def _load_yaml_config(path: pathlib.Path) -> dict:
             try:
@@ -479,12 +479,12 @@ class SetupMixin:
 
             return "\n".join(lines)
 
-        source_config_file = pathlib.Path(chisurf.settings.get_path('chisurf')) / "settings" / "experiment_configs.yaml"
-        user_config_file = pathlib.Path(chisurf.settings.get_path('settings')) / "experiment_configs.yaml"
+        source_config_file = pathlib.Path(chisurf.core.settings.get_path('chisurf')) / "settings" / "experiment_configs.yaml"
+        user_config_file = pathlib.Path(chisurf.core.settings.get_path('settings')) / "experiment_configs.yaml"
 
         check_updates = True
         try:
-            check_updates = bool(chisurf.settings.cs_settings.get('check_experiment_config_updates_on_startup', True))
+            check_updates = bool(chisurf.core.settings.cs_settings.get('check_experiment_config_updates_on_startup', True))
         except Exception:
             check_updates = True
 
@@ -541,10 +541,10 @@ class SetupMixin:
 
                     try:
                         if checkbox is not None and checkbox.isChecked():
-                            from chisurf.settings.settings_utils import set_check_experiment_config_updates_on_startup as _set_exp_flag
+                            from chisurf.core.settings.settings_utils import set_check_experiment_config_updates_on_startup as _set_exp_flag
                             _set_exp_flag(False)
                             try:
-                                chisurf.settings.cs_settings['check_experiment_config_updates_on_startup'] = False
+                                chisurf.core.settings.cs_settings['check_experiment_config_updates_on_startup'] = False
                             except Exception:
                                 pass
                     except Exception:
@@ -579,11 +579,11 @@ class SetupMixin:
                 self._setup_experiment(exp_type, config)
         else:
             chisurf.logging.warning("Using default experiment configurations")
-            for exp_type, experiment in chisurf.experiments.types.items():
+            for exp_type, experiment in chisurf.core.experiments.types.items():
                 chisurf.experiment[experiment.name] = experiment
 
         global_config = experiment_configs.get('global', {})
-        global_fit = chisurf.experiments.core.Experiment(
+        global_fit = chisurf.core.experiments.core.Experiment(
             name=global_config.get('name', 'Global'),
             hidden=global_config.get('hidden', True)
         )
@@ -596,7 +596,7 @@ class SetupMixin:
             global_setup = reader_class(**reader_params)
             global_fit.add_reader(global_setup)
         else:
-            global_setup = chisurf.experiments.globalfit.GlobalFitSetup(
+            global_setup = chisurf.core.experiments.globalfit.GlobalFitSetup(
                 name='Global-Fit',
                 experiment=global_fit
             )
@@ -608,7 +608,7 @@ class SetupMixin:
 
         chisurf.experiment[global_fit.name] = global_fit
 
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.add",
             payload={
                 "experiment_reader": global_setup,
@@ -1056,7 +1056,7 @@ class StateMixin:
         unresolved_fit_groups: typing.List[str] = []
 
         import chisurf
-        import chisurf.actions as actions
+        import chisurf.core.actions as actions
 
         for fit_group_uid, fg_data in model_state.items():
             if not isinstance(fg_data, dict):
@@ -1575,7 +1575,7 @@ class DevMixin:
 
     def _install_dev_mode_code_badges(self: Main) -> None:
         """Install code badge buttons on docks and key widgets when dev mode is enabled."""
-        if not chisurf.settings.is_dev_mode():
+        if not chisurf.core.settings.is_dev_mode():
             return
 
         try:
@@ -1587,7 +1587,7 @@ class DevMixin:
             chisurf.logging.debug("Code badge module not available")
             return
 
-        dev_settings = chisurf.settings.dev_mode_settings()
+        dev_settings = chisurf.core.settings.dev_mode_settings()
         badge_locations = dev_settings.get('badge_locations', {})
 
         if not dev_settings.get('show_code_badge', True):
@@ -1691,7 +1691,7 @@ class DevMixin:
 
     def _on_mdi_window_activated_for_code_badge(self: Main, sub_window) -> None:
         """Install code badge on newly activated MDI windows."""
-        if not chisurf.settings.is_dev_mode():
+        if not chisurf.core.settings.is_dev_mode():
             return
 
         if sub_window is None:
@@ -1720,7 +1720,7 @@ class DevMixin:
 
     def _init_developer_menu(self: Main) -> None:
         """Initialize the Developer menu with dev mode tools."""
-        if not chisurf.settings.is_dev_mode():
+        if not chisurf.core.settings.is_dev_mode():
             return
 
         try:
@@ -1798,7 +1798,7 @@ class DevMixin:
             from chisurf.gui.widgets.settings_editor import SettingsEditor
             if not hasattr(self, '_dev_settings_editor') or self._dev_settings_editor is None:
                 self._dev_settings_editor = SettingsEditor(
-                    filename=chisurf.settings.chisurf_settings_file,
+                    filename=chisurf.core.settings.chisurf_settings_file,
                     window_title="Dev Mode Settings"
                 )
             self._dev_settings_editor.show()

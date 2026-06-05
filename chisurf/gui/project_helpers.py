@@ -11,7 +11,7 @@ from chisurf.gui import QtWidgets
 
 def _recent_projects_file() -> pathlib.Path:
     try:
-        return chisurf.settings.get_path("settings") / "recent_projects.json"
+        return chisurf.core.settings.get_path("settings") / "recent_projects.json"
     except Exception:
         return pathlib.Path.home() / ".chisurf" / "recent_projects.json"
 
@@ -140,7 +140,7 @@ def open_recent_project(window, project_dir: str) -> None:
         pass
 
     try:
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="project.load",
             payload={"project_path": path.as_posix()},
         )

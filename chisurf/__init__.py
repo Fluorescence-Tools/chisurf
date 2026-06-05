@@ -12,7 +12,7 @@ import pathlib
 import sys
 import typing
 
-import chisurf.info
+import chisurf.core.info
 
 # --- DISTUTILS SHIM FOR PYTHON 3.12 ---
 import sys
@@ -74,28 +74,14 @@ if 'distutils' not in sys.modules and _importlib_util.find_spec('distutils') is 
             pass
 # ----------------------------------------
 
-# Monkeypatch guidata.utils for compatibility with newer versions
-try:
-    import guidata.utils
-    if not hasattr(guidata.utils, 'update_dataset'):
-        try:
-            from guidata.dataset import update_dataset
-            guidata.utils.update_dataset = update_dataset
-            # Also ensure it's in sys.modules if needed for 'from guidata.utils import ...'
-            sys.modules['guidata.utils'].update_dataset = update_dataset
-        except ImportError:
-            pass
-except ImportError:
-    pass
+__version__ = chisurf.core.info.__version__
 
-__version__ = chisurf.info.__version__
-
-fits: typing.List["chisurf.fitting.fit.FitGroup"] = list()
-imported_datasets: typing.List["chisurf.data.DataGroup"] = list()
+fits: typing.List["chisurf.core.fitting.fit.FitGroup"] = list()
+imported_datasets: typing.List["chisurf.core.data.DataGroup"] = list()
 run = lambda x: x   # This is replaced during initialization to execute commands via a command line interface
 cs = None         # The current instance of ChiSurf
 console = None
-experiment: typing.Dict[str, "chisurf.experiments.core.experiment.Experiment"] = dict()
+experiment: typing.Dict[str, "chisurf.core.experiments.core.experiment.Experiment"] = dict()
 working_path = pathlib.Path().home()
 verbose = False  # Updated lazily when settings are loaded
 
@@ -109,7 +95,7 @@ _LOGGING_SETTINGS_APPLIED = False
 def _load_settings_module():
     global _SETTINGS_MODULE
     if _SETTINGS_MODULE is None:
-        _SETTINGS_MODULE = importlib.import_module("chisurf.settings")
+        _SETTINGS_MODULE = importlib.import_module("chisurf.core.settings")
     return _SETTINGS_MODULE
 
 
@@ -179,7 +165,7 @@ _initialize_logging()
 def __getattr__(name: str):
     """Lazily resolve selected subpackages or settings on first access."""
     if name == "plots":
-        mod = importlib.import_module("chisurf.plots")
+        mod = importlib.import_module("chisurf.gui.plots")
         globals()["plots"] = mod
         return mod
     if name == "settings":
@@ -199,11 +185,11 @@ def __getattr__(name: str):
         globals()["history"] = value
         return value
     if name == "actions":
-        mod = importlib.import_module("chisurf.actions")
+        mod = importlib.import_module("chisurf.core.actions")
         globals()["actions"] = mod
         return mod
     if name == "action_dispatcher":
-        mod = importlib.import_module("chisurf.actions._infra")
+        mod = importlib.import_module("chisurf.core.actions._infra")
         value = mod.build_default_dispatcher(history_provider=lambda: getattr(sys.modules[__name__], "history", None))
         globals()["action_dispatcher"] = value
         return value
@@ -213,12 +199,12 @@ def __getattr__(name: str):
         globals()["action_registry"] = value
         return value
     if name == "action_catalog":
-        mod = importlib.import_module("chisurf.actions._infra")
+        mod = importlib.import_module("chisurf.core.actions._infra")
         value = mod.get_action_catalog
         globals()["action_catalog"] = value
         return value
     if name == "action_execute":
-        mod = importlib.import_module("chisurf.actions._infra")
+        mod = importlib.import_module("chisurf.core.actions._infra")
         value = mod.invoke_action
         globals()["action_execute"] = value
         return value

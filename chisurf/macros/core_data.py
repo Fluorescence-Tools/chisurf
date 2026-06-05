@@ -4,17 +4,17 @@ import pathlib
 import traceback
 
 import chisurf
-import chisurf.base
-import chisurf.data
-import chisurf.experiments
-import chisurf.experiments.modelling
-import chisurf.fitting
+import chisurf.core.base
+import chisurf.core.data
+import chisurf.core.experiments
+import chisurf.core.experiments.modelling
+import chisurf.core.fitting
 import chisurf.gui
 import chisurf.gui.widgets
 
 from chisurf import typing, logging
-from chisurf.data import DataGroup, ExperimentDataGroup, ExperimentDataCurveGroup
-from chisurf.actions import record_action
+from chisurf.core.data import DataGroup, ExperimentDataGroup, ExperimentDataCurveGroup
+from chisurf.core.actions import record_action
 
 
 def _is_global_fit_dataset(dataset: typing.Any) -> bool:
@@ -31,11 +31,11 @@ def _is_global_fit_dataset(dataset: typing.Any) -> bool:
 def restore_global_fit_dataset(
         _from_controller: bool = False,
         update_ui: bool = True,
-        experiment_reader: chisurf.experiments.core.reader.ExperimentReader = None,
+        experiment_reader: chisurf.core.experiments.core.reader.ExperimentReader = None,
         name: str = "Global-fit",
 ) -> typing.Dict[str, typing.Any]:
     if not _from_controller:
-        return chisurf.actions.dispatch(name="dataset.restore_global_fit", payload={})
+        return chisurf.core.actions.dispatch(name="dataset.restore_global_fit", payload={})
 
     import chisurf as _cs
     _api = getattr(_cs, "api", None)
@@ -48,7 +48,7 @@ def restore_global_fit_dataset(
             pass
         try:
             if experiment_reader is None:
-                from chisurf.experiments.globalfit.reader import GlobalFitSetup
+                from chisurf.core.experiments.globalfit.reader import GlobalFitSetup
                 experiment_reader = GlobalFitSetup(name="Global-Fit")
             result = _api.load_dataset(
                 experiment_reader=experiment_reader,
@@ -78,7 +78,7 @@ def restore_global_fit_dataset(
             return {"ok": True, "restored": False, "index": int(i), "removed_duplicates": int(removed)}
 
     try:
-        from chisurf.experiments.globalfit.reader import GlobalFitSetup
+        from chisurf.core.experiments.globalfit.reader import GlobalFitSetup
 
         setup = experiment_reader if experiment_reader is not None else GlobalFitSetup(name="Global-Fit")
         dataset = setup.read(name=name)
@@ -120,8 +120,8 @@ def _record_history(
         pass
 
 
-def _flatten_dataset(dataset: chisurf.base.Data) -> typing.List[chisurf.base.Data]:
-    result: typing.List[chisurf.base.Data] = []
+def _flatten_dataset(dataset: chisurf.core.base.Data) -> typing.List[chisurf.core.base.Data]:
+    result: typing.List[chisurf.core.base.Data] = []
     seen: typing.Set[int] = set()
     stack = [dataset]
     while stack:
@@ -138,7 +138,7 @@ def _flatten_dataset(dataset: chisurf.base.Data) -> typing.List[chisurf.base.Dat
     return result
 
 
-def _fit_uses_dataset(fit: chisurf.fitting.fit.Fit, datasets: typing.List[chisurf.base.Data]) -> bool:
+def _fit_uses_dataset(fit: chisurf.core.fitting.fit.Fit, datasets: typing.List[chisurf.core.base.Data]) -> bool:
     dataset_ids = {id(d) for d in datasets}
     for data_obj in _iter_fit_data(fit):
         if data_obj is None:
@@ -148,7 +148,7 @@ def _fit_uses_dataset(fit: chisurf.fitting.fit.Fit, datasets: typing.List[chisur
     return False
 
 
-def _iter_fit_data(fit: chisurf.fitting.fit.Fit) -> typing.Iterator[chisurf.base.Data | None]:
+def _iter_fit_data(fit: chisurf.core.fitting.fit.Fit) -> typing.Iterator[chisurf.core.base.Data | None]:
     grouped = getattr(fit, 'grouped_fits', None)
     if isinstance(grouped, (list, tuple)):
         for member in grouped:
@@ -166,7 +166,7 @@ def group_datasets(
         _api.group_datasets(dataset_indices=list(dataset_indices or []))
         return
     if not _from_controller:
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.group",
             payload={"dataset_indices": [int(i) for i in dataset_indices]},
         )
@@ -177,15 +177,15 @@ def group_datasets(
     ]
     if isinstance(
             selected_data[0],
-            (chisurf.data.DataCurve, chisurf.data.DataCurveGroup)
+            (chisurf.core.data.DataCurve, chisurf.core.data.DataCurveGroup)
     ):
         # TODO: check for double names!!!
-        dg = chisurf.data.ExperimentDataCurveGroup(
+        dg = chisurf.core.data.ExperimentDataCurveGroup(
             selected_data,
             name="Data-Group"
         )
     else:
-        dg = chisurf.data.ExperimentDataGroup(
+        dg = chisurf.core.data.ExperimentDataGroup(
             selected_data,
             name="Data-Group"
         )
@@ -218,7 +218,7 @@ def ungroup_datasets(
         _api.ungroup_datasets(dataset_indices=list(dataset_indices or []))
         return
     if not _from_controller:
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.ungroup",
             payload={"dataset_indices": [int(i) for i in list(dataset_indices or [])]},
         )
@@ -230,7 +230,7 @@ def ungroup_datasets(
     if not idx_set:
         return
 
-    new_imported: typing.List[chisurf.base.Data] = []
+    new_imported: typing.List[chisurf.core.base.Data] = []
     group_names: typing.List[str] = []
     group_uids: typing.List[str] = []
     expanded_members = 0
@@ -238,7 +238,7 @@ def ungroup_datasets(
     expanded_uids: typing.List[str] = []
 
     for i, d in enumerate(chisurf.imported_datasets):
-        if i in idx_set and isinstance(d, chisurf.data.ExperimentDataGroup):
+        if i in idx_set and isinstance(d, chisurf.core.data.ExperimentDataGroup):
             try:
                 group_names.append(str(getattr(d, "name", f"group_{i}")))
             except Exception:
@@ -293,7 +293,7 @@ def remove_datasets(
         _api.remove_datasets(dataset_indices=list(dataset_indices or []))
         return
     if not _from_controller:
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.remove",
             payload={"dataset_indices": [int(i) for i in list(dataset_indices or [])]},
         )
@@ -306,7 +306,7 @@ def remove_datasets(
     actual_indices: typing.List[int] = []
     removed_names: typing.List[str] = []
     removed_uids: typing.List[str] = []
-    to_remove: typing.List[chisurf.base.Data] = []
+    to_remove: typing.List[chisurf.core.base.Data] = []
     for i in dataset_indices:
         if i < 0 or i >= len(chisurf.imported_datasets):
             continue
@@ -327,7 +327,7 @@ def remove_datasets(
     if not actual_indices:
         return
 
-    datasets_to_remove: typing.List[chisurf.base.Data] = []
+    datasets_to_remove: typing.List[chisurf.core.base.Data] = []
     seen_ids: typing.Set[int] = set()
     for dataset in to_remove:
         for entry in _flatten_dataset(dataset):
@@ -365,16 +365,16 @@ def remove_datasets(
         return
 
     if dependent_fit_indices:
-        old_confirm = chisurf.settings.gui.get('confirm_close_fit', True)
-        chisurf.settings.gui['confirm_close_fit'] = False
+        old_confirm = chisurf.core.settings.gui.get('confirm_close_fit', True)
+        chisurf.core.settings.gui['confirm_close_fit'] = False
         try:
             for idx in sorted(dependent_fit_indices, reverse=True):
-                chisurf.actions.dispatch(
+                chisurf.core.actions.dispatch(
                     name="fit.close",
                     payload={"idx": int(idx)},
                 )
         finally:
-            chisurf.settings.gui['confirm_close_fit'] = old_confirm
+            chisurf.core.settings.gui['confirm_close_fit'] = old_confirm
 
     actual_idx_set = set(actual_indices)
     new_imported = []
@@ -395,8 +395,8 @@ def remove_datasets(
 
 
 def add_dataset(
-        experiment_reader: chisurf.experiments.core.reader.ExperimentReader = None,
-        dataset: chisurf.base.Data = None,
+        experiment_reader: chisurf.core.experiments.core.reader.ExperimentReader = None,
+        dataset: chisurf.core.base.Data = None,
         _from_controller: bool = False,
         **kwargs
 ) -> None:
@@ -427,7 +427,7 @@ def add_dataset(
         payload = dict(kwargs)
         payload["experiment_reader"] = experiment_reader
         payload["dataset"] = dataset
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.add",
             payload=payload,
         )
@@ -529,22 +529,22 @@ def add_dataset(
         #
         # Goal: imported_datasets should contain either plain
         # ExperimentalData instances or ExperimentDataGroup instances, so
-        # that chisurf.data.get_data(curve_type='experiment', ...) and the
+        # that chisurf.core.data.get_data(curve_type='experiment', ...) and the
         # ExperimentalDataSelector behave correctly. Some readers (e.g.
         # TCSPCReader) return DataCurveGroup/DataGroup objects; those need
         # to be converted so that the *elements* become group members,
         # instead of wrapping the group itself as a single element.
-        is_experiment_group = isinstance(dataset, chisurf.data.ExperimentDataGroup)
+        is_experiment_group = isinstance(dataset, chisurf.core.data.ExperimentDataGroup)
         if is_experiment_group:
             # Already in the expected grouped form
             dataset_group = dataset
-        elif isinstance(dataset, (chisurf.data.DataGroup, list, tuple)):
+        elif isinstance(dataset, (chisurf.core.data.DataGroup, list, tuple)):
             # Flatten DataGroup/DataCurveGroup or simple sequences into an
             # ExperimentDataCurveGroup of their elements.
-            dataset_group = chisurf.data.ExperimentDataCurveGroup(list(dataset))
+            dataset_group = chisurf.core.data.ExperimentDataCurveGroup(list(dataset))
         else:
             # Single ExperimentalData object
-            dataset_group = chisurf.data.ExperimentDataCurveGroup([dataset])
+            dataset_group = chisurf.core.data.ExperimentDataCurveGroup([dataset])
 
         try:
             logging.info(
@@ -735,8 +735,8 @@ def reinitialize_application(
         try:
             # Only clear specific known caches, don't iterate over all attributes
             cache_modules = [
-                ('chisurf.experiments', 'types'),
-                ('chisurf.fitting', None)  # None means clear all callable clear methods
+                ('chisurf.core.experiments', 'types'),
+                ('chisurf.core.fitting', None)  # None means clear all callable clear methods
             ]
             
             for module_path, attr_name in cache_modules:
@@ -864,11 +864,11 @@ def _auto_reader_from_filename(filename: str):
             return reader
         experiment = chisurf.experiment.get('FCS')
         if experiment is None:
-            experiment = chisurf.experiments.types.get('fcs')
+            experiment = chisurf.core.experiments.types.get('fcs')
             if experiment is not None:
                 chisurf.experiment[experiment.name] = experiment
         if experiment is not None:
-            return chisurf.experiments.fcs.FCS(
+            return chisurf.core.experiments.fcs.FCS(
                 name='Seidel Kristine',
                 experiment_reader='kristine',
                 experiment=experiment,
@@ -880,10 +880,10 @@ def _auto_reader_from_filename(filename: str):
         if experiment is None:
             experiment = chisurf.experiment.get('structure')
         if experiment is None:
-            experiment = chisurf.experiments.types.get('structure')
+            experiment = chisurf.core.experiments.types.get('structure')
             if experiment is not None:
                 chisurf.experiment[experiment.name] = experiment
-        reader = chisurf.experiments.modelling.StructureReader(
+        reader = chisurf.core.experiments.modelling.StructureReader(
             name='Structure',
             experiment=experiment
         )

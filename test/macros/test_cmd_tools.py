@@ -3,7 +3,7 @@ import unittest
 import tempfile
 import numpy as np
 
-import chisurf.fio.fluorescence.fcs
+import chisurf.core.fio.fluorescence.fcs
 from chisurf.plugins.fcs.fcs_convert import cli as fcs_convert_cli
 
 
@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
         ]
         data_types = set([k['reader_name'] for k in test_files])
         for k in test_files:
-            curve_ref = chisurf.fio.fluorescence.fcs.read_fcs(**k)
+            curve_ref = chisurf.core.fio.fluorescence.fcs.read_fcs(**k)
             for dt in data_types:
                 _, output_filename = tempfile.mkstemp(
                     suffix='.tmp'
@@ -40,7 +40,7 @@ class Tests(unittest.TestCase):
                 args = dict()
                 args['filename'] = output_filename
                 args['reader_name'] = dt
-                curve = chisurf.fio.fluorescence.fcs.read_fcs(
+                curve = chisurf.core.fio.fluorescence.fcs.read_fcs(
                     **args
                 )
                 self.assertEqual(

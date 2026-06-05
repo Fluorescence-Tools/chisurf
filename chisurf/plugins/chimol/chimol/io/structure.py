@@ -67,7 +67,7 @@ def load_trajectory_frames(path: Path) -> np.ndarray:
 
     The returned array has shape ``(T, N, 3)`` with coordinates in Angstroms.
     This helper is only used for formats that are not handled by the IMP-based
-    readers in :mod:`chisurf.fio.structure.coordinates`.
+    readers in :mod:`chisurf.core.fio.structure.coordinates`.
     """
 
     try:  # Lazy import so Moview does not hard-depend on mdtraj

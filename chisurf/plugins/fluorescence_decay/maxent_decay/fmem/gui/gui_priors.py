@@ -91,11 +91,11 @@ class _MaxentPriorsMixin:
         _, QtWidgets, _, chisurf, _ = ensure_qt_stack()
 
         try:
-            from chisurf.models.tcspc.lifetime import LifetimeModel  # type: ignore
+            from chisurf.core.models.tcspc.lifetime import LifetimeModel  # type: ignore
         except Exception:
             LifetimeModel = None  # type: ignore[assignment]
         try:
-            from chisurf.models.tcspc.fret import FRETModel  # type: ignore
+            from chisurf.core.models.tcspc.fret import FRETModel  # type: ignore
         except Exception:
             FRETModel = None  # type: ignore[assignment]
 

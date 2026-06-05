@@ -15,15 +15,15 @@ import pyqtgraph as pg
 import matplotlib
 
 from chisurf import logging
-import chisurf.fio as io
-import chisurf.fio.fluorescence
-import chisurf.math
+import chisurf.core.fio as io
+import chisurf.core.fio.fluorescence
+import chisurf.core.math
 import chisurf.gui.decorators
-import chisurf.fluorescence.burst
+import chisurf.core.fluorescence.burst
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
-from chisurf.math.signal import fill_small_gaps_in_array
-from chisurf.settings.path_utils import get_path
-from chisurf.settings.file_utils import safe_open_file
+from chisurf.core.math.signal import fill_small_gaps_in_array
+from chisurf.core.settings.path_utils import get_path
+from chisurf.core.settings.file_utils import safe_open_file
 from ..tttr_channeldefinition.tttr_detector_setups import save_detector_setups, load_detector_setups
 from .tttr_photon_filter_support import CommaSeparatedIntegersValidator
 from .tttr_photon_filter_mode import install_filter_mode_visibility
@@ -31,10 +31,10 @@ from .tttr_photon_filter_file_drop import install_file_drop
 from .tttr_photon_filter_plots import create_plots, place_plots
 from .tttr_photon_filter_connections import setup_connections as _setup_connections
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
-from chisurf.fluorescence.burst.utils import create_array_with_ones
+from chisurf.core.fluorescence.burst.utils import create_array_with_ones
 
 
-colors = chisurf.settings.gui['plot']['colors']
+colors = chisurf.core.settings.gui['plot']['colors']
 
 
 class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
@@ -533,7 +533,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             pass
         elif self.used_filter == 'count_rate':
             filter_options = self.settings['count_rate_filter']
-            selection_idx = chisurf.fluorescence.burst.count_rate_filter(
+            selection_idx = chisurf.core.fluorescence.burst.count_rate_filter(
                 tttr=self.tttr,
                 n_ph_max=filter_options['n_ph_max'],
                 time_window=filter_options['time_window'],
@@ -546,7 +546,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             min_ph = self.min_ph
             ph_window = self.ph_window
             tw = self.dT_max / 1000.0
-            sel = chisurf.fluorescence.burst.burst_filter(
+            sel = chisurf.core.fluorescence.burst.burst_filter(
                 tttr=tttr,
                 min_ph=min_ph,
                 ph_window=ph_window,
@@ -586,7 +586,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             max_run = 256  # Default max run length
 
             # Run BOCPD burst detection with multiple channels
-            bursts, _, _, _, _ = chisurf.fluorescence.burst.bocpd_burst_detection_multi(
+            bursts, _, _, _, _ = chisurf.core.fluorescence.burst.bocpd_burst_detection_multi(
                 timestamps_list,
                 dt=self.trace_bin_width / 1000.0,  # bin width from UI trace_bin_width
                 prior_count=prior_count,
@@ -597,7 +597,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             )
 
             # Convert bursts to start-stop indices
-            start_stop = chisurf.fluorescence.burst.bocpd.convert_bursts_to_start_stop(bursts, tttr)
+            start_stop = chisurf.core.fluorescence.burst.bocpd.convert_bursts_to_start_stop(bursts, tttr)
 
             if len(start_stop) == 0:
                 return s.astype(dtype=np.uint8)
@@ -640,7 +640,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             min_counts = self.min_ph  # Use min_ph as min_counts
 
             # Run Kalman filter burst detection with multiple channels
-            bursts, _, _, _, _ = chisurf.fluorescence.burst.kalman_burst_detection_multi(
+            bursts, _, _, _, _ = chisurf.core.fluorescence.burst.kalman_burst_detection_multi(
                 timestamps_list,
                 dt=self.trace_bin_width / 1000.0,  # bin width from UI trace_bin_width
                 q=q,
@@ -652,7 +652,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
             )
 
             # Convert bursts to start-stop indices
-            start_stop = chisurf.fluorescence.burst.kalman.convert_bursts_to_start_stop(bursts, tttr)
+            start_stop = chisurf.core.fluorescence.burst.kalman.convert_bursts_to_start_stop(bursts, tttr)
 
             if len(start_stop) == 0:
                 return s.astype(dtype=np.uint8)
@@ -681,7 +681,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         selected = self.selected
         max_gap = self.max_gap
         if len(selected) > max_gap:
-            return chisurf.math.signal.find_bursts(selected, max_gap=max_gap)
+            return chisurf.core.math.signal.find_bursts(selected, max_gap=max_gap)
         else:
             return np.array([], dtype=np.uint64)
 
@@ -1362,7 +1362,7 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
                     'filetype': self.filetype,
                     'count_rate_filter': self.settings['count_rate_filter'],
                     'delta_macro_time_filter': self.settings['delta_macro_time_filter'],
-                    'filter': chisurf.fio.compress_numpy_array(self.selected)
+                    'filter': chisurf.core.fio.compress_numpy_array(self.selected)
                 }
                 output_file = sl5_dir / f"{fn.stem}.json.gz"
                 with io.open_maybe_zipped(output_file, 'w') as f:

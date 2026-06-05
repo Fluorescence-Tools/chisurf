@@ -3,7 +3,7 @@ import os
 import tempfile
 import unittest
 
-from chisurf.project import Project, save_project, load_project
+from chisurf.core.project import Project, save_project, load_project
 
 
 class TestProjectV3Format(unittest.TestCase):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from chisurf.project import Project, save_project, load_project
+from chisurf.core.project import Project, save_project, load_project
 
 
 def test_project_json_roundtrip(tmp_path):

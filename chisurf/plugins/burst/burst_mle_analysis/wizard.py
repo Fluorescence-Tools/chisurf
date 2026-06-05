@@ -19,7 +19,7 @@ import json
 
 import chisurf
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 import chisurf.gui.widgets.wizard
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import \
     load_detector_setups, save_detector_setups
@@ -27,7 +27,7 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition import \
 from pathlib import Path
 import tttrlib
 from typing import Dict
-from chisurf.fio import write_jordi
+from chisurf.core.fio import write_jordi
 
 
 class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
@@ -1365,7 +1365,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     @chisurf.gui.decorators.init_with_ui(
         "burst/burst_mle_analysis/wizard.ui",
-        path=chisurf.settings.plugin_path
+        path=chisurf.core.settings.plugin_path
     )
     def __init__(self, *args, **kwargs):
         # Core attributes
@@ -2675,7 +2675,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         json_file_path = info_directory / "photon_selection_parameters.json"
 
         # Use safe_open_file to read the JSON file if it exists
-        from chisurf.settings.file_utils import safe_open_file
+        from chisurf.core.settings.file_utils import safe_open_file
         import json
 
         setup_info = None

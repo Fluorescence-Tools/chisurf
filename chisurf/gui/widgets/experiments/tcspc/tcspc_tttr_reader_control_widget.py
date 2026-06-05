@@ -8,7 +8,7 @@ import numpy as np
 import pyqtgraph as pg
 
 import chisurf
-from chisurf.experiments.core import reader
+from chisurf.core.experiments.core import reader
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 
 
@@ -25,7 +25,7 @@ class TCSPCTTTRReaderControlWidget(
     - Micro-time coarsening (binning) and optional integer time shift (bins)
     - Drag-and-drop TTTR preview into a log-scaled decay plot
     - An "Add" button that forwards the current TTTR file via
-      chisurf.actions.dispatch("dataset.add", ...), mirroring RICS/PCH controllers.
+      chisurf.core.actions.dispatch("dataset.add", ...), mirroring RICS/PCH controllers.
     """
 
     def __init__(self, *args, **kwargs):
@@ -706,7 +706,7 @@ class TCSPCTTTRReaderControlWidget(
         except Exception:
             return
 
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": s, "experiment_reader": None},
         )
@@ -819,7 +819,7 @@ class TCSPCTTTRReaderControlWidget(
             return
 
         try:
-            from chisurf.data import ExperimentDataCurveGroup as _Group
+            from chisurf.core.data import ExperimentDataCurveGroup as _Group
 
             if isinstance(group, _Group) and len(group) > 0:
                 data_obj = group[0]

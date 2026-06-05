@@ -8,13 +8,13 @@ utils.set_search_paths(TOPDIR)
 import numpy as np
 import tempfile
 
-import chisurf.curve
+import chisurf.core.curve
 
 
 class Tests(unittest.TestCase):
 
     def test_curve_init(self):
-        c1 = chisurf.curve.Curve()
+        c1 = chisurf.core.curve.Curve()
         self.assertEqual(
             np.array_equal(c1.x, np.array([], dtype=np.float64)),
             True
@@ -25,14 +25,14 @@ class Tests(unittest.TestCase):
         )
         self.assertEqual(c1.name, 'Curve')
 
-        c1 = chisurf.curve.Curve()
+        c1 = chisurf.core.curve.Curve()
         x = np.linspace(0, 2. * np.pi, 100)
         y = np.sin(x)
         c1.x = x
         c1.y = y
 
         name = 'C2'
-        c2 = chisurf.curve.Curve(x, y, name=name)
+        c2 = chisurf.core.curve.Curve(x, y, name=name)
         self.assertEqual(
             np.array_equal(c1.x, c2.x),
             True
@@ -45,7 +45,7 @@ class Tests(unittest.TestCase):
             c2.name,
             name
         )
-        c3 = chisurf.curve.Curve()
+        c3 = chisurf.core.curve.Curve()
         c3.from_json(
             json_string=c2.to_json()
         )
@@ -70,7 +70,7 @@ class Tests(unittest.TestCase):
         # test no copy option
         x = np.linspace(0, 2.0 * np.pi, 20)
         y = np.sin(x)
-        c4 = chisurf.curve.Curve(
+        c4 = chisurf.core.curve.Curve(
             x=x,
             y=y,
             copy_array=False
@@ -113,7 +113,7 @@ class Tests(unittest.TestCase):
 
     def test_attributes(self):
         import scipy.stats
-        import chisurf.math.signal
+        import chisurf.core.math.signal
 
         x = np.linspace(0, 10, 100)
         y = scipy.stats.distributions.norm.pdf(
@@ -121,10 +121,10 @@ class Tests(unittest.TestCase):
             loc=5,
             scale=2
         )
-        c2 = chisurf.curve.Curve(x, y)
+        c2 = chisurf.core.curve.Curve(x, y)
         self.assertEqual(
             c2.fwhm,
-            chisurf.math.signal.calculate_fwhm(
+            chisurf.core.math.signal.calculate_fwhm(
                 x_values=c2.x, y_values=c2.y
             )[0]
         )
@@ -153,14 +153,14 @@ class Tests(unittest.TestCase):
 
         x = np.linspace(0, 2. * np.pi, 100)
         y = np.sin(x)
-        c1 = chisurf.curve.Curve(x, y)
+        c1 = chisurf.core.curve.Curve(x, y)
 
         c1.save(
             filename=filename,
             file_type='yaml'
         )
 
-        c2 = chisurf.curve.Curve()
+        c2 = chisurf.core.curve.Curve()
         c2.load(
             filename=filename,
             file_type='yaml'
@@ -182,7 +182,7 @@ class Tests(unittest.TestCase):
         import scipy.stats
 
         x = np.linspace(0, 10, 11)
-        c1 = chisurf.curve.Curve(
+        c1 = chisurf.core.curve.Curve(
             x,
             scipy.stats.distributions.norm.pdf(x, loc=2, scale=1)
         )
@@ -208,11 +208,11 @@ class Tests(unittest.TestCase):
         import scipy.stats
 
         x = np.linspace(0, 10, 11)
-        c1 = chisurf.curve.Curve(
+        c1 = chisurf.core.curve.Curve(
             x,
             scipy.stats.distributions.norm.pdf(x, loc=5, scale=2)
         )
-        c2 = chisurf.curve.Curve(
+        c2 = chisurf.core.curve.Curve(
             x,
             scipy.stats.distributions.norm.pdf(x, loc=2, scale=1)
         )

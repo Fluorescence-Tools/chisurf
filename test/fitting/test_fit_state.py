@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import numpy as np
 
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.models.model import ModelCurve
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models.model import ModelCurve
 
-import chisurf.models.tcspc.lifetime as lifetime_mod
-import chisurf.models.tcspc.fret as fret_mod
-import chisurf.models.pda.simple as pda_simple_mod
-import chisurf.experiments
-import chisurf.fitting
+import chisurf.core.models.tcspc.lifetime as lifetime_mod
+import chisurf.core.models.tcspc.fret as fret_mod
+import chisurf.core.models.pda.simple as pda_simple_mod
+import chisurf.core.experiments
+import chisurf.core.fitting
 
-from chisurf.project.fit_state import (
+from chisurf.core.project.fit_state import (
     fit_to_state,
     apply_state_to_fit,
 )
@@ -263,7 +263,7 @@ def test_fret_gaussian_model_get_set_state_preserves_gaussians():
     y = np.exp(-x / 4.0)
     data = DataCurve(x=x, y=y)
 
-    fit1 = Fit(model_class=chisurf.models.tcspc.fret.GaussianModel, data=data)
+    fit1 = Fit(model_class=chisurf.core.models.tcspc.fret.GaussianModel, data=data)
     m1 = fit1.model
     # Add two Gaussians
     m1.gaussians.append(mean=2.0, sigma=0.5, amplitude=1.0)
@@ -273,7 +273,7 @@ def test_fret_gaussian_model_get_set_state_preserves_gaussians():
 
     state = m1.get_state()
 
-    fit2 = Fit(model_class=chisurf.models.tcspc.fret.GaussianModel, data=data)
+    fit2 = Fit(model_class=chisurf.core.models.tcspc.fret.GaussianModel, data=data)
     m2 = fit2.model
     # Ensure starting configuration differs
     assert len(m2.gaussians) != n1

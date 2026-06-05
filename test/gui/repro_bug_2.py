@@ -2,10 +2,10 @@ import pytest
 import numpy as np
 import chinet
 from qtpy import QtWidgets, QtCore
-import chisurf.data
-import chisurf.fitting.fit
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.models.model import ModelCurve
+import chisurf.core.data
+import chisurf.core.fitting.fit
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models.model import ModelCurve
 from chisurf.gui.widgets.fitting.parameter_widgets import FittingParameterWidget
 
 class SimpleModel(ModelCurve):
@@ -20,8 +20,8 @@ class SimpleModel(ModelCurve):
 
 @pytest.fixture
 def mock_fit():
-    data = chisurf.data.DataCurve(x=np.arange(10), y=np.arange(10))
-    fit = chisurf.fitting.fit.Fit(model_class=SimpleModel, data=data)
+    data = chisurf.core.data.DataCurve(x=np.arange(10), y=np.arange(10))
+    fit = chisurf.core.fitting.fit.Fit(model_class=SimpleModel, data=data)
     import chisurf
     chisurf.fits = [fit]
     return fit

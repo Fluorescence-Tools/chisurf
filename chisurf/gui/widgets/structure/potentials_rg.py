@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import chisurf.structure
+import chisurf.core.structure
 
 
 class RadiusGyrationWidget(QtWidgets.QWidget):
@@ -11,7 +11,7 @@ class RadiusGyrationWidget(QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure,
+            structure: chisurf.core.structure.Structure,
             parent=None
     ):
         super(RadiusGyrationWidget, self).__init__(parent)

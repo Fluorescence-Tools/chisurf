@@ -1,8 +1,8 @@
 
 import numpy as np
-import chisurf.data
-import chisurf.fitting
-import chisurf.curve
+import chisurf.core.data
+import chisurf.core.fitting
+import chisurf.core.curve
 import tempfile
 import os
 
@@ -14,7 +14,7 @@ def test_datacurve_slicing_content():
     ey = np.ones_like(y) * 0.1
     mask = np.ones_like(y)
     
-    dc = chisurf.data.DataCurve(x=x, y=y, ex=ex, ey=ey, mask=mask)
+    dc = chisurf.core.data.DataCurve(x=x, y=y, ex=ex, ey=ey, mask=mask)
     
     # Check __getitem__ content
     # Regression check: Curve.__getitem__ used to return (0..N-1, x) instead of (x, y)
@@ -29,12 +29,12 @@ def test_calculate_weighted_residuals_with_datacurve():
     x = np.arange(10, dtype=float)
     y = np.ones(10)
     ey = np.ones(10) * 0.1
-    dc = chisurf.data.DataCurve(x=x, y=y, ex=np.zeros(10), ey=ey)
+    dc = chisurf.core.data.DataCurve(x=x, y=y, ex=np.zeros(10), ey=ey)
     
-    model = chisurf.curve.Curve(x=x, y=y - 0.1)
+    model = chisurf.core.curve.Curve(x=x, y=y - 0.1)
     
     # (y - (y-0.1)) / 0.1 = 0.1 / 0.1 = 1.0
-    wres = chisurf.fitting.calculate_weighted_residuals(dc, model, 0, 5)
+    wres = chisurf.core.fitting.calculate_weighted_residuals(dc, model, 0, 5)
     expected_wres = np.ones(5)
     assert np.allclose(wres, expected_wres)
 

@@ -172,7 +172,7 @@ class _MaxentRunMixin:
             mask = np.isfinite(chi2_vals) & np.isfinite(sol_vals)
             if np.any(mask) and getattr(chisurf, "math", None) is not None:
                 try:
-                    corner_idx = chisurf.math.regularization.discrete_lcurve_corner(chi2_vals, sol_vals)
+                    corner_idx = chisurf.core.math.regularization.discrete_lcurve_corner(chi2_vals, sol_vals)
                 except Exception:
                     corner_idx = None
         except Exception:

@@ -601,18 +601,18 @@ class AnalysisPage(QWizardPage):
         This function calls chisurf to load the file and update the chosen fit's data.
         """
         file_path = pathlib.Path(file).as_posix().replace("\\", "/")
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": file_path, "experiment_reader": None},
         )
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="fit.set_dataset",
             payload={
                 "fit_index": int(fit_idx),
                 "dataset_index": -1,
             },
         )
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="fit.run",
             payload={"fit_index": int(fit_idx)},
         )
@@ -875,14 +875,14 @@ class AnalysisPage(QWizardPage):
                 if item["kind"] == "dataset":
                     ds = item["value"]
                     ds_idx = chisurf.imported_datasets.index(ds)
-                    chisurf.actions.dispatch(
+                    chisurf.core.actions.dispatch(
                         name="fit.set_dataset",
                         payload={
                             "fit_index": int(fit_idx),
                             "dataset_index": int(ds_idx),
                         },
                     )
-                    chisurf.actions.dispatch(
+                    chisurf.core.actions.dispatch(
                         name="fit.run",
                         payload={"fit_index": int(fit_idx)},
                     )

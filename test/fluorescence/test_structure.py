@@ -10,12 +10,12 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 
 utils.set_search_paths(TOPDIR)
 
-import chisurf.structure
+import chisurf.core.structure
 
 class Tests(unittest.TestCase):
 
     pdb_filename = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
-    s1 = chisurf.structure.ProteinCentroid(
+    s1 = chisurf.core.structure.ProteinCentroid(
         pdb_filename,
         verbose=True
     )
@@ -28,14 +28,14 @@ class Tests(unittest.TestCase):
          [73.1036816, -14.05035305, 10.73760945]]
     )
 
-    s2 = chisurf.structure.Structure(
+    s2 = chisurf.core.structure.Structure(
         pdb_filename,
         verbose=True
     )
 
     def test_structure_Structure(self):
-        s1 = chisurf.structure.Structure(pdb_id='148L')
-        s2 = chisurf.structure.Structure('148L')
+        s1 = chisurf.core.structure.Structure(pdb_id='148L')
+        s2 = chisurf.core.structure.Structure('148L')
         self.assertEqual(
             np.allclose(
                 s1.atoms['xyz'],
@@ -52,7 +52,7 @@ class Tests(unittest.TestCase):
         s2.write(
             filename=filename + '.gz'
         )
-        s3 = chisurf.structure.Structure(
+        s3 = chisurf.core.structure.Structure(
             filename=filename
         )
         self.assertAlmostEqual(
@@ -136,13 +136,13 @@ class Tests(unittest.TestCase):
         )
 
     def test_traj_opening(self):
-        import chisurf.structure
-        traj = chisurf.structure.TrajectoryFile(
+        import chisurf.core.structure
+        traj = chisurf.core.structure.TrajectoryFile(
             './test/data/atomic_coordinates/trajectory/h5-file/hgbp1_transition.h5',
             stride=1
         )
         self.assertEqual(
-            isinstance(traj[0], chisurf.structure.Structure),
+            isinstance(traj[0], chisurf.core.structure.Structure),
             True
         )
         self.assertEqual(
@@ -152,14 +152,14 @@ class Tests(unittest.TestCase):
 
     def test_traj_writing(self):
         import tempfile
-        import chisurf.structure
+        import chisurf.core.structure
 
         _, filename = tempfile.mkstemp('.h5')
-        structure = chisurf.structure.ProteinCentroid(
+        structure = chisurf.core.structure.ProteinCentroid(
             './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb',
             auto_update=True
         )
-        traj_write = chisurf.structure.TrajectoryFile(
+        traj_write = chisurf.core.structure.TrajectoryFile(
             structure,
             filename=filename
         )
@@ -181,12 +181,12 @@ class Tests(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_labeled_structure(self):
-        import chisurf.structure
-        import chisurf.structure.labeled_structure
-        structure = chisurf.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
+        import chisurf.core.structure
+        import chisurf.core.structure.labeled_structure
+        structure = chisurf.core.structure.Structure('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb')
         donor_description = {'residue_seq_number': 18, 'atom_name' : 'CB'}
         acceptor_description = {'residue_seq_number': 577, 'atom_name' : 'CB'}
-        pRDA, rda = chisurf.structure.labeled_structure.av_distance_distribution(
+        pRDA, rda = chisurf.core.structure.labeled_structure.av_distance_distribution(
             structure,
             donor_av_parameter=donor_description,
             acceptor_av_parameter=acceptor_description

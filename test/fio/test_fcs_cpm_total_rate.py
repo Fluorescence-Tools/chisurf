@@ -4,7 +4,7 @@ import pytest
 
 
 try:
-    from chisurf.models.fcs.fcs import ParseFCSWidget
+    from chisurf.core.models.fcs.fcs import ParseFCSWidget
 except Exception as exc:  # pragma: no cover - environment-dependent import guard
     pytestmark = pytest.mark.skip(reason=f"chisurf FCS model import unavailable: {exc}")
     ParseFCSWidget = None  # type: ignore[assignment]

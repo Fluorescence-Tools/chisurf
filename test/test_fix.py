@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.abspath('..'))
 
 try:
     # Import the necessary modules
-    from chisurf.models.tcspc.fret import FRETModel
-    from chisurf.fitting.fit import FitGroup
+    from chisurf.core.models.tcspc.fret import FRETModel
+    from chisurf.core.fitting.fit import FitGroup
     import numpy as np
     
     # Create a simple test data

@@ -8,12 +8,12 @@ import yaml
 import numpy as np
 from qtpy import QtWidgets, QtCore
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-import chisurf.fluorescence.tcspc.convolve
-import chisurf.fluorescence.general
-import chisurf.fio as io
+import chisurf.core.fluorescence.tcspc.convolve
+import chisurf.core.fluorescence.general
+import chisurf.core.fio as io
 
 # Import scikit_fluorescence for TCSPC data handling
 # Import ucfret module

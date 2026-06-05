@@ -11,7 +11,7 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple, Callable
 
 # Path helper to locate user settings folder for CONDARC
-from chisurf.settings.path_utils import get_path
+from chisurf.core.settings.path_utils import get_path
 
 # Reuse conda discovery logic from the updater
 from .updater import ChiSurfUpdater

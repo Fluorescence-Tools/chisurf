@@ -22,7 +22,7 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.wizard
 
 from chisurf import logging
-from chisurf import settings
+from chisurf.core import settings
 
 from sklearn.mixture import GaussianMixture
 
@@ -362,7 +362,7 @@ class BurstSelectionTool(QtWidgets.QMainWindow):
             self.update_histogram()
 
 
-    @chisurf.gui.decorators.init_with_ui("gui.ui", path=chisurf.settings.plugin_path / "burst" / "burst_selection")
+    @chisurf.gui.decorators.init_with_ui("gui.ui", path=chisurf.core.settings.plugin_path / "burst" / "burst_selection")
     def __init__(self, *args, 
                  show_channel_selection=True,
                  show_clear_button=False, 

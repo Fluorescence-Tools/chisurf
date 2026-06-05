@@ -13,7 +13,7 @@ import click
 import numpy as np
 import tttrlib
 
-import chisurf.fluorescence.burst as cs_burst
+import chisurf.core.fluorescence.burst as cs_burst
 
 # Import from chisurf if available, otherwise handle standalone usage
 try:  # pragma: no cover - convenience import

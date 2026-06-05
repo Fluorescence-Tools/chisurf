@@ -7,7 +7,7 @@ from typing import Optional, Dict, List
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from chisurf.settings.path_utils import get_path
+from chisurf.core.settings.path_utils import get_path
 from chisurf.gui.widgets.general import EnterAwarePlainTextEdit
 
 
@@ -166,7 +166,7 @@ class AgentPanelWidget(QtWidgets.QWidget):
             if not chat_langchain:
                 return "Chato not available: Development plugins are excluded from this build."
 
-            from chisurf.settings import ai_settings
+            from chisurf.core.settings import ai_settings
 
             api_key = ai_settings.get_api_key()
             provider = ai_settings.get_provider()

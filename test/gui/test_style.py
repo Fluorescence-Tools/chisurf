@@ -11,14 +11,14 @@ import pathlib
 # Add the chisurf directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-import chisurf.settings
+import chisurf.core.settings
 
 def main():
     # Print the current style sheet setting
-    print(f"Current style sheet setting: {chisurf.settings.cs_settings['gui']['style_sheet']}")
+    print(f"Current style sheet setting: {chisurf.core.settings.cs_settings['gui']['style_sheet']}")
     
     # Get the path to the style sheet file
-    style_file = pathlib.Path(chisurf.__file__).parent / "gui/styles" / chisurf.settings.cs_settings['gui']['style_sheet']
+    style_file = pathlib.Path(chisurf.__file__).parent / "gui/styles" / chisurf.core.settings.cs_settings['gui']['style_sheet']
     print(f"Style sheet file path: {style_file}")
     
     # Check if the file exists

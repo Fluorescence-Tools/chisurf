@@ -26,9 +26,9 @@ from qtpy.QtCore import Qt, QSize
 from qtpy.QtGui import QIcon
 
 import chisurf
-import chisurf.models
-import chisurf.experiments
-import chisurf.settings
+import chisurf.core.models
+import chisurf.core.experiments
+import chisurf.core.settings
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Setup:Models"
@@ -41,7 +41,7 @@ class ModelManagerWidget(QMainWindow):
         self.resize(800, 500)
 
         # Get settings
-        self.settings = chisurf.settings.cs_settings.get('plugins', {})
+        self.settings = chisurf.core.settings.cs_settings.get('plugins', {})
         self.disabled_models = self.settings.get('disabled_models', [])
         self.disabled_experiments = self.settings.get('disabled_experiments', [])
         self.hide_disabled = self.settings.get('hide_disabled_models', False)  # Default to not hiding
@@ -59,10 +59,10 @@ class ModelManagerWidget(QMainWindow):
         self.settings_file_edit.setMaximumHeight(50)
 
         # Determine which settings file is being used
-        if chisurf.settings.cs_settings.get('use_source_folder', True):
-            settings_file = pathlib.Path(chisurf.settings.__file__).parent / 'settings_chisurf.yaml'
+        if chisurf.core.settings.cs_settings.get('use_source_folder', True):
+            settings_file = pathlib.Path(chisurf.core.settings.__file__).parent / 'settings_chisurf.yaml'
         else:
-            settings_file = chisurf.settings.chisurf_settings_file
+            settings_file = chisurf.core.settings.chisurf_settings_file
 
         self.settings_file_edit.setText(str(settings_file))
         settings_file_layout.addWidget(self.settings_file_edit)
@@ -221,7 +221,7 @@ class ModelManagerWidget(QMainWindow):
         self.models = {}
 
         # Get all experiments
-        experiments = chisurf.experiments.types
+        experiments = chisurf.core.experiments.types
 
         # Collect all models from all experiments
         for exp_name, experiment in experiments.items():
@@ -270,7 +270,7 @@ class ModelManagerWidget(QMainWindow):
         self.experiments = {}
 
         # Get all experiments
-        experiments = chisurf.experiments.types
+        experiments = chisurf.core.experiments.types
 
         for _, experiment in experiments.items():
             # Check if this experiment is marked as disabled
@@ -424,18 +424,18 @@ class ModelManagerWidget(QMainWindow):
         self.settings['hide_disabled_models'] = self.hide_disabled
 
         # Update settings in chisurf
-        chisurf.settings.cs_settings['plugins'] = self.settings
+        chisurf.core.settings.cs_settings['plugins'] = self.settings
 
         # Determine which settings file to use
-        if chisurf.settings.cs_settings.get('use_source_folder', True):
-            settings_file = pathlib.Path(chisurf.settings.__file__).parent / 'settings_chisurf.yaml'
+        if chisurf.core.settings.cs_settings.get('use_source_folder', True):
+            settings_file = pathlib.Path(chisurf.core.settings.__file__).parent / 'settings_chisurf.yaml'
         else:
-            settings_file = chisurf.settings.chisurf_settings_file
+            settings_file = chisurf.core.settings.chisurf_settings_file
 
         # Save settings to file
         try:
             with open(settings_file, 'w') as f:
-                yaml.dump(chisurf.settings.cs_settings, f, default_flow_style=False)
+                yaml.dump(chisurf.core.settings.cs_settings, f, default_flow_style=False)
             QMessageBox.information(
                 self,
                 "Settings Saved",

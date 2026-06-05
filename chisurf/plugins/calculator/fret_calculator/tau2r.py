@@ -4,7 +4,7 @@ import numpy as np
 from chisurf.gui import QtWidgets
 
 import chisurf.gui.decorators
-from chisurf.fluorescence.general import \
+from chisurf.core.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
     lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance, gaussian2rates
 
@@ -13,7 +13,7 @@ class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
 
-    @chisurf.gui.decorators.init_with_ui("calculator/fret_calculator/calc_tau2r.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("calculator/fret_calculator/calc_tau2r.ui", path=chisurf.core.settings.plugin_path)
     def __init__(self, kappa2=0.667, *args, **kwargs):
         self.kappa2 = kappa2
 

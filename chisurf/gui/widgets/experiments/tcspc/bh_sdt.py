@@ -3,14 +3,14 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
-import chisurf.fio.fluorescence.sdtfile
+import chisurf.core.fio.fluorescence.sdtfile
 
-import chisurf.fluorescence
-import chisurf.fluorescence.tcspc
-import chisurf.decorators
-import chisurf.data
+import chisurf.core.fluorescence
+import chisurf.core.fluorescence.tcspc
+import chisurf.core.decorators
+import chisurf.core.data
 import chisurf.gui.decorators
-from chisurf.experiments.tcspc import TCSPCReader
+from chisurf.core.experiments.tcspc import TCSPCReader
 
 
 class TcspcSDTWidget(
@@ -40,7 +40,7 @@ class TcspcSDTWidget(
 
     @filename.setter
     def filename(self, v: str):
-        self._sdt = chisurf.fio.fluorescence.sdtfile.SdtFile(v)
+        self._sdt = chisurf.core.fio.fluorescence.sdtfile.SdtFile(v)
         # refresh GUI
         self.comboBox.clear()
         l = [str(i) for i in range(self.n_curves)]
@@ -82,12 +82,12 @@ class TcspcSDTWidget(
         pass
 
     @property
-    def curve(self) -> chisurf.data.DataCurve:
+    def curve(self) -> chisurf.core.data.DataCurve:
         y = self.ph_counts
-        ey = chisurf.fluorescence.tcspc.counting_noise(
+        ey = chisurf.core.fluorescence.tcspc.counting_noise(
             decay=y
         )
-        d = chisurf.data.DataCurve(
+        d = chisurf.core.data.DataCurve(
             setup=self,
             x=self.times,
             y=y,

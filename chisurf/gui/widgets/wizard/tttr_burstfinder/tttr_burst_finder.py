@@ -12,7 +12,7 @@ import pandas as pd
 
 from collections import OrderedDict
 
-import chisurf.fio
+import chisurf.core.fio
 import chisurf.gui.decorators
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 
@@ -487,7 +487,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
                 'filetype': self.filetype,
                 'count_rate_filter': self.settings['count_rate_filter'],
                 'delta_macro_time_filter': self.settings['delta_macro_time_filter'],
-                'filter': chisurf.fio.compress_numpy_array(self.selected)
+                'filter': chisurf.core.fio.compress_numpy_array(self.selected)
             }
 
             # Use basename to get the base name of the file
@@ -496,7 +496,7 @@ class WizardTTTRBurstFinder(QtWidgets.QWizardPage):
             # Modify the output file name to use the base name in the same folder
             output_filename = parent_directory / f"{base_name}.json.gz"
 
-            with chisurf.fio.open_maybe_zipped(output_filename, "w") as outfile:
+            with chisurf.core.fio.open_maybe_zipped(output_filename, "w") as outfile:
                 packed = json.dumps(d)
                 outfile.write(packed)
 

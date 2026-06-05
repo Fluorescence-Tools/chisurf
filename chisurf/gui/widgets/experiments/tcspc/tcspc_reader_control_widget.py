@@ -7,7 +7,7 @@ import pathlib
 import chisurf
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fio
-from chisurf.experiments.core import reader
+from chisurf.core.experiments.core import reader
 
 from .csv_tcspc_widget import CsvTCSPCWidget
 

@@ -10,7 +10,7 @@ import pathlib
 TOPDIR = pathlib.Path(__file__).parent.parent
 
 utils.set_search_paths(TOPDIR)
-import chisurf.fio
+import chisurf.core.fio
 
 
 app = QApplication(sys.argv)

@@ -6,8 +6,8 @@ from chisurf import typing
 
 import sys
 
-import chisurf.fio
-import chisurf.settings
+import chisurf.core.fio
+import chisurf.core.settings
 import chisurf.gui.widgets
 from chisurf.gui import QtGui, QtWidgets
 
@@ -17,7 +17,7 @@ import pyqtgraph.parametertree.parameterTypes
 
 import json
 
-import chisurf.fio as io
+import chisurf.core.fio as io
 
 
 
@@ -99,7 +99,7 @@ class ParameterEditor(QtWidgets.QWidget):
         if json_file is None:
             json_file = chisurf.gui.widgets.get_filename()
         if target is None:
-            target = chisurf.settings.cs_settings
+            target = chisurf.core.settings.cs_settings
         if windows_title is None:
             windows_title = "Configuration: %s" % json_file
 

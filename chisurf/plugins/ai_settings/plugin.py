@@ -5,8 +5,8 @@ from typing import Optional, List
 
 from qtpy import QtWidgets, QtCore
 
-from chisurf.settings import ai_settings
-from chisurf.settings.ai_settings import MISTRAL_CHAT_MODELS, MISTRAL_EMBED_MODELS
+from chisurf.core.settings import ai_settings
+from chisurf.core.settings.ai_settings import MISTRAL_CHAT_MODELS, MISTRAL_EMBED_MODELS
 
 _LOG = logging.getLogger(__name__)
 

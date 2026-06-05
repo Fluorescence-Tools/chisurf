@@ -8,10 +8,10 @@ import os
 from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf
-import chisurf.fio as io
+import chisurf.core.fio as io
 from chisurf import logging
-import chisurf.settings
-from chisurf.settings import cs_settings
+import chisurf.core.settings
+from chisurf.core.settings import cs_settings
 
 LIST_SEP = "|"
 
@@ -108,7 +108,7 @@ def _build_help_section_map_for_file(basename: str) -> dict[str, str]:
     if basename == "settings_chisurf.yaml":
         # Use the loaded cs_settings keys as root keys
         try:
-            cs_dict = getattr(chisurf.settings, "cs_settings", {}) or {}
+            cs_dict = getattr(chisurf.core.settings, "cs_settings", {}) or {}
             root_keys = [str(k) for k in cs_dict.keys()]
         except Exception:
             root_keys = []
@@ -364,7 +364,7 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
             logging.log(1, f"Error while listing package styles: {e}")
 
         try:
-            user_styles_dir = chisurf.settings.get_path('settings') / 'styles'
+            user_styles_dir = chisurf.core.settings.get_path('settings') / 'styles'
             if user_styles_dir.is_dir():
                 for p in sorted(user_styles_dir.glob("*.qss")):
                     name = p.name
@@ -1211,7 +1211,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    editor = SettingsEditor(filename=chisurf.settings.chisurf_settings_file)
+    editor = SettingsEditor(filename=chisurf.core.settings.chisurf_settings_file)
     editor.show()
 
     sys.exit(app.exec_())

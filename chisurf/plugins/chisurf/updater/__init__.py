@@ -25,8 +25,8 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from .updater import ChiSurfUpdater, check_for_updates, update_chisurf
 from .package_widget import PackageManagerDialog
-from chisurf import info
-import chisurf.settings as _cs_settings_mod
+from chisurf.core import info
+import chisurf.core.settings as _cs_settings_mod
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Help:Updates and Packages"
@@ -57,7 +57,7 @@ class UpdaterWidget(QtWidgets.QWidget):
             pass
 
         # Import settings
-        from chisurf.settings import cs_settings
+        from chisurf.core.settings import cs_settings
         self.cs_settings = cs_settings
 
         # Load startup-related settings for the updater plugin
@@ -448,7 +448,7 @@ class UpdaterWidget(QtWidgets.QWidget):
                     except Exception:
                         pass
             else:
-                from chisurf import info as _info
+                from chisurf.core import info as _info
                 if not populated_versions:
                     self.status_label.setText(f"ChiSurf is up to date (version {_info.__version__}).")
                     self._update_status_tooltip()
@@ -594,7 +594,7 @@ class UpdaterWidget(QtWidgets.QWidget):
             target_version = data.get('version')
             if not target_version:
                 return
-            from chisurf import info as _info
+            from chisurf.core import info as _info
 
             # Default: show changes from currently installed to selected
             from_version = _info.__version__
@@ -761,7 +761,7 @@ def build_installed_vs_latest_changelog(latest_version: str, max_chars: int = 15
         Tuple: (installed_version, changelog_text)
     """
     try:
-        from chisurf import info as _info
+        from chisurf.core import info as _info
         installed = getattr(_info, "__version__", "")
     except Exception:
         installed = ""

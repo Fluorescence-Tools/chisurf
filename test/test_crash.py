@@ -5,8 +5,8 @@ sys.path.insert(0, os.path.abspath('e:/dev/chisurf'))
 import logging
 logging.basicConfig(level=logging.INFO)
 import chisurf
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.models.tcspc.fret import GaussianModel
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.models.tcspc.fret import GaussianModel
 import traceback
 import faulthandler
 

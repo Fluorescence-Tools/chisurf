@@ -50,9 +50,9 @@ import logging
 from typing import Optional, Dict, Any, Tuple, List, Callable
 from datetime import datetime, timedelta, timezone
 
-from chisurf.settings.file_utils import safe_open_file
-from chisurf.settings.path_utils import get_path
-from chisurf import info
+from chisurf.core.settings.file_utils import safe_open_file
+from chisurf.core.settings.path_utils import get_path
+from chisurf.core import info
 
 class ChiSurfUpdater:
     """

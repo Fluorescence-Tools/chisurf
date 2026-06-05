@@ -3,11 +3,11 @@ import os
 import numpy as np
 from qtpy import  QtWidgets, uic, QtCore
 
-import chisurf.decorators
-import chisurf.fio
+import chisurf.core.decorators
+import chisurf.core.fio
 import chisurf.gui.decorators
-from chisurf.structure import Structure
-from chisurf.structure.trajectory import TrajectoryFile
+from chisurf.core.structure import Structure
+from chisurf.core.structure.trajectory import TrajectoryFile
 
 
 class PDBSelector(
@@ -104,7 +104,7 @@ class PDBSelector(
         atom_name = self.atom_name
         chain = self.chain_id
 
-        w = chisurf.fio.structure.coordinates.get_atom_index(
+        w = chisurf.core.fio.structure.coordinates.get_atom_index(
             self.atoms,
             chain,
             residue_key,

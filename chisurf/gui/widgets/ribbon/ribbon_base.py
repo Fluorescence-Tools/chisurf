@@ -88,7 +88,7 @@ class ChiSurfRibbonIntegration(QObject):
         self.auto_fold_timer.timeout.connect(self._auto_fold_ribbon)
         msg = "Auto-fold timer created and connected"
         self.logger.info(msg)
-        self.last_activity_time = QtCore.QTimer()
+        self.last_activity_time = QtCore.QElapsedTimer()
         self.last_activity_time.start()
         self.is_folded = False
 
@@ -243,7 +243,7 @@ class ChiSurfRibbonIntegration(QObject):
 
             # Read max_rows and ribbon_height from settings
             import chisurf
-            gui_settings = chisurf.settings.cs_settings.get('gui', {})
+            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
             ribbon_settings = gui_settings.get('ribbon', {})
             max_rows = ribbon_settings.get('max_rows', 3)  # Default to 3 rows for reduced height
             ribbon_height = ribbon_settings.get('ribbon_height', 110)  # Default to 110px for reduced height
@@ -520,7 +520,7 @@ class ChiSurfRibbonIntegration(QObject):
 
                     # Save to settings for persistence
                     import chisurf
-                    gui_settings = chisurf.settings.cs_settings.get('gui', {})
+                    gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
                     ribbon_settings = gui_settings.get('ribbon', {})
                     ribbon_settings['max_rows'] = row_count
                     self.logger.info(f"Saved max_rows={row_count} to settings")

@@ -37,7 +37,7 @@ import contextlib
 
 import chisurf
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 import chisurf.gui.widgets.wizard
 
 import tttrlib

@@ -220,7 +220,7 @@ def add_dataset(
     if reader is None and reader_name and filename:
         try:
             import numpy as np
-            from chisurf.data import DataCurve
+            from chisurf.core.data import DataCurve
             import pathlib
             p = pathlib.Path(filename)
             x = np.array(curve_data.get("x", []), dtype=float) if curve_data and "x" in curve_data else None
@@ -336,7 +336,7 @@ def dataset_group(
             remaining.append(d)
 
     try:
-        from chisurf.data import ExperimentDataGroup
+        from chisurf.core.data import ExperimentDataGroup
         group = ExperimentDataGroup()
         group.name = str(group_name or "Data-Group")
         for ds in selected:

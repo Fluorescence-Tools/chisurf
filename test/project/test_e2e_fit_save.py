@@ -3,11 +3,11 @@ import json
 import numpy as np
 import pytest
 import chisurf
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.models.model import ModelCurve
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.project import Project, save_project, load_project as project_load_json
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.models.model import ModelCurve
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.project import Project, save_project, load_project as project_load_json
 from chisurf.macros.core_fit import add_fit, save_project as macro_save_project, load_project as macro_load_project
 
 # Mock chisurf global state for tests

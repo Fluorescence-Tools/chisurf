@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import chisurf
 from chisurf.controllers.action_controller import ActionController
-from chisurf.actions import record_action
+from chisurf.core.actions import record_action
 
 
 def benchmark_memory_usage(func, *args, **kwargs):

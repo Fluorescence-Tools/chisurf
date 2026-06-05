@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import chisurf.math.datatools as dt
+import chisurf.core.math.datatools as dt
 
 @pytest.mark.parametrize("distances, separation, sigma, normalize, expected_sum", [
     (np.linspace(0, 10, 100), 5.0, 1.0, True, 1.0),

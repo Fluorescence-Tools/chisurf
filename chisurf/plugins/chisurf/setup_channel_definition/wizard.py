@@ -6,10 +6,10 @@ import chisurf.gui.widgets.wizard
 import chisurf.gui.widgets
 import chisurf.gui.decorators
 
-import chisurf.data
-import chisurf.experiments
-import chisurf.curve
-import chisurf.fitting
+import chisurf.core.data
+import chisurf.core.experiments
+import chisurf.core.curve
+import chisurf.core.fitting
 
 import chisurf.macros
 

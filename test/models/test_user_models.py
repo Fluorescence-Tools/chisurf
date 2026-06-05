@@ -6,18 +6,18 @@ import utils
 TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
-import chisurf.models
+import chisurf.core.models
 
 
 class TestUserModels(unittest.TestCase):
 
     def setUp(self):
-        chisurf.models._user_models_loaded = False
-        chisurf.models._user_model_registry.clear()
+        chisurf.core.models._user_models_loaded = False
+        chisurf.core.models._user_model_registry.clear()
 
     def test_register_user_model_decorator(self):
-        @chisurf.models.register_user_model(["tcspc", "TCSPC"])
-        class DummyTCSPCModel(chisurf.models.Model):
+        @chisurf.core.models.register_user_model(["tcspc", "TCSPC"])
+        class DummyTCSPCModel(chisurf.core.models.Model):
             name = "DummyTCSPCModel"
 
             def update_model(self, **kwargs):
@@ -27,7 +27,7 @@ class TestUserModels(unittest.TestCase):
                 pass
 
         models = list(
-            chisurf.models.iter_user_models_for_experiment(
+            chisurf.core.models.iter_user_models_for_experiment(
                 "tcspc",
                 "TCSPC",
             )
@@ -45,9 +45,9 @@ class TestUserModels(unittest.TestCase):
             module_path = models_dir / "user_tcspc_model.py"
             module_source = (
                 "import chisurf\n"
-                "import chisurf.models\n\n"
-                "@chisurf.models.register_user_model(['tcspc'])\n"
-                "class FileTCSPCModel(chisurf.models.Model):\n"
+                "import chisurf.core.models\n\n"
+                "@chisurf.core.models.register_user_model(['tcspc'])\n"
+                "class FileTCSPCModel(chisurf.core.models.Model):\n"
                 "    name = 'FileTCSPCModel'\n\n"
                 "    def update_model(self, **kwargs):\n"
                 "        pass\n\n"
@@ -56,18 +56,18 @@ class TestUserModels(unittest.TestCase):
             )
             module_path.write_text(module_source, encoding="utf-8")
 
-            chisurf.models._user_models_loaded = False
-            chisurf.models._user_model_registry.clear()
+            chisurf.core.models._user_models_loaded = False
+            chisurf.core.models._user_model_registry.clear()
 
-            original_get_path = chisurf.models.get_path
+            original_get_path = chisurf.core.models.get_path
             try:
-                chisurf.models.get_path = lambda kind="settings": settings_dir
-                chisurf.models.load_user_models()
+                chisurf.core.models.get_path = lambda kind="settings": settings_dir
+                chisurf.core.models.load_user_models()
             finally:
-                chisurf.models.get_path = original_get_path
+                chisurf.core.models.get_path = original_get_path
 
             models = list(
-                chisurf.models.iter_user_models_for_experiment(
+                chisurf.core.models.iter_user_models_for_experiment(
                     "tcspc",
                     "TCSPC",
                 )

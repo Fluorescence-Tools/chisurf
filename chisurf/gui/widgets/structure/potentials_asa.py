@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import chisurf.structure
-from chisurf.structure.potential.potentials import ASA
+import chisurf.core.structure
+from chisurf.core.structure.potential.potentials import ASA
 
 
 class AsaWidget(ASA, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure,
+            structure: chisurf.core.structure.Structure,
             parent: QtWidgets.QWidget = None,
             **kwargs
     ):

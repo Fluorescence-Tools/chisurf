@@ -37,9 +37,9 @@ class ActionRouter:
 
     def dispatch(self, action_name: str, payload: typing.Optional[typing.Dict] = None):
         """Utility to dispatch an action via the central Action Core."""
-        import chisurf.actions
+        import chisurf.core.actions
         try:
-            chisurf.actions.dispatch(name=action_name, payload=payload or {})
+            chisurf.core.actions.dispatch(name=action_name, payload=payload or {})
         except Exception as e:
             chisurf.logging.error(f"Router failed to dispatch '{action_name}': {e}")
 

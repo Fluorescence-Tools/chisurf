@@ -6,7 +6,7 @@ import sys
 TOPDIR = "."
 sys.path.insert(0, TOPDIR)
 
-from chisurf.project.registry import Registry, get_registry, reset_registry
+from chisurf.core.project.registry import Registry, get_registry, reset_registry
 
 
 class TestRegistry(unittest.TestCase):

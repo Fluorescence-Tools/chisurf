@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import chisurf.settings
-from chisurf.experiments.tcspc.reader import TCSPCReader
-import chisurf.experiments.tcspc.reader as reader_module
+import chisurf.core.settings
+from chisurf.core.experiments.tcspc.reader import TCSPCReader
+import chisurf.core.experiments.tcspc.reader as reader_module
 
 
 def _make_reader(**kwargs) -> TCSPCReader:
@@ -19,7 +19,7 @@ def _make_reader(**kwargs) -> TCSPCReader:
 
 def test_reader_defaults_include_l1_l2(monkeypatch):
     monkeypatch.setattr(
-        chisurf.settings,
+        chisurf.core.settings,
         'anisotropy',
         {'g_factor': 1.234, 'l1': 0.012, 'l2': 0.034},
         raising=False,

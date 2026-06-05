@@ -6,7 +6,7 @@ from typing import List, Tuple
 import numpy as np
 import tttrlib
 
-from chisurf.models.fcs.maxent import fcs_maxent
+from chisurf.core.models.fcs.maxent import fcs_maxent
 
 
 # ----------------------------------------------------------------------

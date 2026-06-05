@@ -8,10 +8,10 @@ This module contains category creation methods for the ribbon interface.
 import functools
 from pathlib import Path
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction
-from PyQt5 import QtWidgets
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import QAction
+from qtpy import QtWidgets
 
 import chisurf
 from chisurf import logging
@@ -124,11 +124,11 @@ class CategoryMethodsMixin:
             from pathlib import Path
 
             # Get plugin settings
-            plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+            plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
             disabled_plugins = plugin_settings.get('disabled_plugins', [])
             hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
             plugin_order = plugin_settings.get('plugin_order', {})
-            experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+            experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
 
             # Discover plugins
             try:
@@ -356,11 +356,11 @@ class CategoryMethodsMixin:
             from pathlib import Path
 
             # Get plugin settings
-            plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+            plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
             disabled_plugins = plugin_settings.get('disabled_plugins', [])
             hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
             plugin_order = plugin_settings.get('plugin_order', {})
-            experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+            experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
 
             # Discover plugins
             try:
@@ -575,7 +575,7 @@ class CategoryMethodsMixin:
         category = self.ribbon_bar.addCategory('Analysis')
 
         # Check if we're in experimental mode
-        experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+        experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
 
         # Discover plugins
         if hasattr(self.main_window, 'comboBox_modelSelect'):

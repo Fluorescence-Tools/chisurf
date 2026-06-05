@@ -22,7 +22,7 @@ import pytest
 
 
 try:
-    from chisurf.models.fcs.fcs import ParseFCSWidget
+    from chisurf.core.models.fcs.fcs import ParseFCSWidget
 except Exception as exc:  # pragma: no cover - environment-dependent import guard
     pytestmark = pytest.mark.skip(reason=f"chisurf FCS model import unavailable: {exc}")
     ParseFCSWidget = None  # type: ignore[assignment]
@@ -76,8 +76,8 @@ import pathlib
 import pytest
 
 import chisurf
-import chisurf.fio.fluorescence.fcs as fcs_io
-import chisurf.fio.fluorescence.fcs.sin_correlator as sin_reader
+import chisurf.core.fio.fluorescence.fcs as fcs_io
+import chisurf.core.fio.fluorescence.fcs.sin_correlator as sin_reader
 
 
 DATA_ROOT = pathlib.Path(__file__).parent / "data" / "fcs"

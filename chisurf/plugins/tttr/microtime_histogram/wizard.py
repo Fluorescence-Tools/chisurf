@@ -6,7 +6,7 @@ import numpy as np
 
 import tttrlib
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 VERBOSE = False
@@ -472,7 +472,7 @@ class MicrotimeHistogram(QtWidgets.QWidget):
     def selected_files(self):
         return self.listWidget.get_selected_files()
 
-    @chisurf.gui.decorators.init_with_ui("tttr/microtime_histogram/wizard.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("tttr/microtime_histogram/wizard.ui", path=chisurf.core.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         self._tttr = None
         self.tttr_folder = None  # Store the folder where TTTR files are found
@@ -822,11 +822,11 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         g_factor = self.g_factor
 
         # Set the current experiment to TCSPC
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="experiment.set",
             payload={"name": "TCSPC"},
         )
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="setup.params.set",
             payload={
                 "params": {
@@ -843,7 +843,7 @@ class MicrotimeHistogram(QtWidgets.QWidget):
         )
 
         # Add dataset to chisurf using the standard approach
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": str(save_path), "experiment_reader": None},
         )

@@ -10,15 +10,15 @@ import pathlib
 TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
-import chisurf.experiments
-import chisurf.models
-import chisurf.fio
+import chisurf.core.experiments
+import chisurf.core.models
+import chisurf.core.fio
 
 
 class Tests(unittest.TestCase):
 
     def test_experiment(self):
-        experiment = chisurf.experiments.core.Experiment(
+        experiment = chisurf.core.experiments.core.Experiment(
             name="AAA"
         )
         self.assertEqual(
@@ -27,7 +27,7 @@ class Tests(unittest.TestCase):
         )
 
         experiment_json = experiment.to_json()
-        e2 = chisurf.experiments.core.Experiment(name=None)
+        e2 = chisurf.core.experiments.core.Experiment(name=None)
         e2.from_json(
             experiment_json
         )
@@ -40,21 +40,21 @@ class Tests(unittest.TestCase):
             )
 
         experiment.add_model_class(
-            chisurf.models.Model
+            chisurf.core.models.Model
         )
         self.assertEqual(
-            chisurf.models.Model in experiment.model_classes,
+            chisurf.core.models.Model in experiment.model_classes,
             True
         )
         experiment.add_model_classes(
             [
-                chisurf.models.Model
+                chisurf.core.models.Model
             ]
         )
 
         # Models are unique
         experiment.add_model_class(
-            chisurf.models.Model
+            chisurf.core.models.Model
         )
         self.assertEqual(
             len(experiment.model_classes),
@@ -65,7 +65,7 @@ class Tests(unittest.TestCase):
             ['Model name not available']
         )
 
-        experiment_reader = chisurf.experiments.core.ExperimentReader(
+        experiment_reader = chisurf.core.experiments.core.ExperimentReader(
             name="ExperimentReaderName_A",
             experiment=experiment
         )
@@ -85,17 +85,17 @@ class Tests(unittest.TestCase):
         )
 
     def test_experimental_data(self):
-        experiment = chisurf.experiments.core.Experiment(
+        experiment = chisurf.core.experiments.core.Experiment(
             name="Experiment Type"
         )
-        data_reader = chisurf.experiments.core.ExperimentReader(
+        data_reader = chisurf.core.experiments.core.ExperimentReader(
             experiment=experiment
         )
         experiment.add_reader(
             data_reader
         )
         a = np.arange(100)
-        experimental_data = chisurf.data.ExperimentalData(
+        experimental_data = chisurf.core.data.ExperimentalData(
             experiment=experiment,
             data_reader=data_reader,
             embed_data=True,
@@ -137,17 +137,17 @@ class Tests(unittest.TestCase):
 
     def test_TCSPCReader(self):
         filename = "./test/data/tcspc/ibh_sample/Decay_577D.txt"
-        ex = chisurf.experiments.core.Experiment(
+        ex = chisurf.core.experiments.core.Experiment(
             'TCSPC'
         )
         dt = 0.0141
-        g1 = chisurf.experiments.tcspc.TCSPCReader(
+        g1 = chisurf.core.experiments.tcspc.TCSPCReader(
             experiment=ex,
             skiprows=8,
             rebin=(1, 8),
             dt=dt
         )
-        g2 = chisurf.experiments.tcspc.TCSPCReader(
+        g2 = chisurf.core.experiments.tcspc.TCSPCReader(
             experiment=ex
         )
         g2.from_dict(
@@ -179,8 +179,8 @@ class Tests(unittest.TestCase):
     def test_TCSPCReader_auto_routine(self):
         """Test automatic detection of reading routine based on file extension."""
         # Create a TCSPCReader with default settings (reading_routine='auto')
-        ex = chisurf.experiments.core.Experiment('TCSPC')
-        reader = chisurf.experiments.tcspc.TCSPCReader(experiment=ex)
+        ex = chisurf.core.experiments.core.Experiment('TCSPC')
+        reader = chisurf.core.experiments.tcspc.TCSPCReader(experiment=ex)
 
         # Test guessing reading routine for different file extensions
         self.assertEqual(reader._guess_reading_routine("file.txt"), "csv")
@@ -212,17 +212,17 @@ class Tests(unittest.TestCase):
             pass
 
     def test_FCS_Reader(self):
-        import chisurf.experiments
+        import chisurf.core.experiments
         filename = './test/data/fcs/kristine/Kristine_with_error.cor'
         root, ext = os.path.splitext(
             os.path.basename(
                 filename
             )
         )
-        ex = chisurf.experiments.core.Experiment(
+        ex = chisurf.core.experiments.core.Experiment(
             'FCS'
         )
-        g1 = chisurf.experiments.fcs.FCS(
+        g1 = chisurf.core.experiments.fcs.FCS(
             experiment=ex,
             experiment_reader='kristine'
         )
@@ -265,7 +265,7 @@ x	y	error-x	error-y
         ex = np.zeros_like(x)
         ey = np.ones_like(y)
         data = np.vstack([x, y, ex, ey])
-        csv_io = chisurf.fio.ascii.Csv(
+        csv_io = chisurf.core.fio.ascii.Csv(
             use_header=False
         )
         _, filename = tempfile.mkstemp(
@@ -275,7 +275,7 @@ x	y	error-x	error-y
             data=data,
             filename=filename
         )
-        d = chisurf.data.DataCurve(*data)
+        d = chisurf.core.data.DataCurve(*data)
         d_copy = copy.copy(d)
         self.assertEqual(
             np.allclose(
@@ -313,7 +313,7 @@ x	y	error-x	error-y
             filename
         )
 
-        d2 = chisurf.data.DataCurve()
+        d2 = chisurf.core.data.DataCurve()
         d2.load(
             filename=filename,
             skiprows=0
@@ -326,7 +326,7 @@ x	y	error-x	error-y
             True
         )
 
-        d3 = chisurf.data.DataCurve()
+        d3 = chisurf.core.data.DataCurve()
         d3.set_data(*d2.data)
         self.assertEqual(
             np.allclose(
@@ -336,7 +336,7 @@ x	y	error-x	error-y
             True
         )
 
-        d4 = chisurf.data.DataCurve()
+        d4 = chisurf.core.data.DataCurve()
         d4.data = d3.data
         self.assertEqual(
             np.allclose(

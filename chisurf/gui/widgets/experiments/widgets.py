@@ -9,20 +9,20 @@ import pickle
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
-import chisurf.fio
+import chisurf.core.fio
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fio
-import chisurf.data
-import chisurf.fitting
-import chisurf.decorators
-from chisurf.experiments.core import reader
+import chisurf.core.data
+import chisurf.core.fitting
+import chisurf.core.decorators
+from chisurf.core.experiments.core import reader
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 from .rics import RICSController
 from .pch import PCHController
 from .fcs import FCSController
 
 
-@chisurf.decorators.register
+@chisurf.core.decorators.register
 class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     @property
@@ -32,7 +32,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         except AttributeError:
             return "Untitled"
 
-    def get_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
+    def get_datasets(self) -> typing.List[chisurf.core.data.ExperimentalData]:
         data_curves = self.get_data_sets(curve_type=self.curve_type)
         if self.experiment is not None:
             dv = [
@@ -43,7 +43,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             return data_curves
 
     @property
-    def datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
+    def datasets(self) -> typing.List[chisurf.core.data.ExperimentalData]:
         return self.get_datasets()
 
     @property
@@ -58,11 +58,11 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         self.setCurrentItem(self.topLevelItem(v))
 
     @property
-    def selected_dataset(self) -> chisurf.data.ExperimentalData:
+    def selected_dataset(self) -> chisurf.core.data.ExperimentalData:
         return self.datasets[self.selected_curve_index]
 
     @property
-    def selected_datasets(self) -> typing.List[chisurf.data.ExperimentalData]:
+    def selected_datasets(self) -> typing.List[chisurf.core.data.ExperimentalData]:
         data_sets_idx = self.selected_dataset_idx
         return [self.datasets[i] for i in data_sets_idx]
 
@@ -87,7 +87,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
         dataset_idx = [
             selected_index.row() for selected_index in self.selectedIndexes()
         ]
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.remove",
             payload={"dataset_indices": [int(i) for i in dataset_idx]},
         )
@@ -115,7 +115,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def onGroupDatasets(self):
         dg = self.selected_dataset_idx
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.group",
             payload={"dataset_indices": [int(i) for i in dg]},
         )
@@ -123,7 +123,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def onUnGroupDatasets(self):
         dg = self.selected_dataset_idx
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.ungroup",
             payload={"dataset_indices": [int(i) for i in dg]},
         )
@@ -157,7 +157,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
         for nbr, d in enumerate(self.datasets):
             # If group of curves
-            if isinstance(d, chisurf.data.ExperimentDataGroup):
+            if isinstance(d, chisurf.core.data.ExperimentDataGroup):
                 if len(d) == 1:
                     di = d[0]
                     widget_name = pathlib.Path(di.name).name
@@ -226,7 +226,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
             paths = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             paths.sort()
             for p in paths:
-                chisurf.actions.dispatch(
+                chisurf.core.actions.dispatch(
                     name="dataset.add",
                     payload={"filename": str(p), "experiment_reader": None},
                 )
@@ -269,7 +269,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit = None,
+            fit: chisurf.core.fitting.fit.Fit = None,
             experiment=None,
             drag_enabled: bool = False,
             click_close: bool = True,
@@ -282,7 +282,7 @@ class ExperimentalDataSelector(QtWidgets.QTreeWidget):
     ):
         if get_data_sets is None:
             def get_data_sets(**kwargs):
-                return chisurf.data.get_data(
+                return chisurf.core.data.get_data(
                     data_set=chisurf.imported_datasets,
                     **kwargs
                 )

@@ -8,9 +8,9 @@ from __future__ import annotations
 # --- FROM test_group_reference.py ---
 import logging
 import chisurf
-from chisurf.data import DataCurve, ExperimentDataCurveGroup
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.models.tcspc.lifetime import LifetimeModel
+from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.models.tcspc.lifetime import LifetimeModel
 import numpy as np
 
 # Configure logging
@@ -122,13 +122,13 @@ def test_grouped_fits_auto_link_non_nuisance_parameters_contract():
 
 import numpy as np
 
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.models.model import ModelCurve
-from chisurf.models.global_model.globalfit import GlobalFitModel
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models.model import ModelCurve
+from chisurf.core.models.global_model.globalfit import GlobalFitModel
 
-from chisurf.project.fit_state import global_links_to_state, apply_global_links_state
+from chisurf.core.project.fit_state import global_links_to_state, apply_global_links_state
 
 
 class DummyLinearModelForGlobal(ModelCurve):

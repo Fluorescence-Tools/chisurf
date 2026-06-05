@@ -1,7 +1,7 @@
 import unittest
 import time
 import threading
-from chisurf.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher
+from chisurf.core.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher
 
 class TestDebounceFix(unittest.TestCase):
     def test_trailing_edge_debounce(self):

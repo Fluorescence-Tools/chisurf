@@ -37,13 +37,13 @@ from qtpy.QtGui import QIcon
 import pyqtgraph as pg
 
 try:
-    from chisurf.fio import read_jordi as _read_jordi
+    from chisurf.core.fio import read_jordi as _read_jordi
 except Exception:
     _read_jordi = None
 
 # Optional writer for Jordi files
 try:
-    from chisurf.fio.jordi import write_jordi as _write_jordi
+    from chisurf.core.fio.jordi import write_jordi as _write_jordi
 except Exception:
     _write_jordi = None
 

@@ -9,24 +9,24 @@ import pyqtgraph as pg
 
 from chisurf.gui import QtWidgets
 
-import chisurf.decorators
-import chisurf.curve
-import chisurf.data
-import chisurf.experiments
-import chisurf.fluorescence.tcspc
+import chisurf.core.decorators
+import chisurf.core.curve
+import chisurf.core.data
+import chisurf.core.experiments
+import chisurf.core.fluorescence.tcspc
 
 import chisurf.gui.decorators
 import chisurf.gui.widgets.experiments.widgets
 import chisurf.gui.widgets.fio
 
 
-plot_settings = chisurf.settings.gui['plot']
+plot_settings = chisurf.core.settings.gui['plot']
 lw = plot_settings['line_width']
 
 
 class HistogramTTTR(
     QtWidgets.QWidget,
-    chisurf.curve.CurveGroup
+    chisurf.core.curve.CurveGroup
 ):
 
     @chisurf.gui.decorators.init_with_ui(
@@ -42,7 +42,7 @@ class HistogramTTTR(
         self.curve_selector = chisurf.gui.widgets.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False,
-            experiment=chisurf.experiments.types['tcspc']
+            experiment=chisurf.core.experiments.types['tcspc']
         )
         self.verticalLayout_6.addWidget(self.curve_selector)
         self.plot = pg.PlotWidget()
@@ -90,7 +90,7 @@ class HistogramTTTR(
         current_curve = self.curve_selector.selected_curve_index
         for i, curve in enumerate(self._curves):
             l = lw * 0.5 if i != current_curve else 1.5 * lw
-            color = chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex']
+            color = chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex']
             plot.plot(x=curve.x, y=curve.y,
                          pen=pg.mkPen(color, width=l),
                          name=curve.name)
@@ -101,7 +101,7 @@ class HistogramTTTR(
     def add_curve(
             self,
             *args,
-            v: chisurf.curve.Curve = None,
+            v: chisurf.core.curve.Curve = None,
             **kwargs
     ):
         if v is None:
@@ -239,10 +239,10 @@ class TcspcTTTRWidget(
         x = self.x
         y = self.y
         name = self.spcFileWidget.sample_name + "_" + str(self.chs)
-        d = chisurf.data.DataCurve(
+        d = chisurf.core.data.DataCurve(
             x=x,
             y=y,
-            ey=chisurf.fluorescence.tcspc.counting_noise(
+            ey=chisurf.core.fluorescence.tcspc.counting_noise(
                 decay=y
             ),
             name=name

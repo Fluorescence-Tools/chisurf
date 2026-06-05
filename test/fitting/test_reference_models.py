@@ -13,10 +13,10 @@ import numpy as np
 
 utils.set_search_paths(TOPDIR)
 
-import chisurf.data
-from chisurf.fitting.fit import Fit
-import chisurf.models.tcspc.lifetime
-import chisurf.models.tcspc.nusiance
+import chisurf.core.data
+from chisurf.core.fitting.fit import Fit
+import chisurf.core.models.tcspc.lifetime
+import chisurf.core.models.tcspc.nusiance
 
 def generate_synthetic_decay(lifetime, amplitude, background, dt, n_channels):
     time = np.arange(n_channels).astype(np.float32) * dt
@@ -37,10 +37,10 @@ def test_lifetime_model_convergence():
     time, y_data = generate_synthetic_decay(true_tau, true_amp, true_bg, dt, n_channels)
     ey = np.sqrt(np.maximum(y_data, 1.0)) # Poisson errors
     
-    data = chisurf.data.DataCurve(x=time, y=y_data, ey=ey)
-    dg = chisurf.data.DataGroup([data])
+    data = chisurf.core.data.DataCurve(x=time, y=y_data, ey=ey)
+    dg = chisurf.core.data.DataGroup([data])
     
-    fit = Fit(model_class=chisurf.models.tcspc.lifetime.LifetimeModel)
+    fit = Fit(model_class=chisurf.core.models.tcspc.lifetime.LifetimeModel)
     model = fit.model
     # Manual data setup
     model.data.time = time

@@ -3,7 +3,7 @@ import sys
 import pytest
 import numpy as np
 from pathlib import Path
-from chisurf.plots.lineplot.lineplot import LinePlot
+from chisurf.gui.plots.lineplot.lineplot import LinePlot
 
 def _lineplot_source() -> str:
     path = Path(__file__).resolve().parents[2] / "chisurf" / "plots" / "lineplot" / "lineplot.py"

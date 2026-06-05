@@ -14,7 +14,7 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtTest import QTest
 from qtpy.QtCore import Qt
 
-import chisurf.fio
+import chisurf.core.fio
 
 
 app = QApplication(sys.argv)

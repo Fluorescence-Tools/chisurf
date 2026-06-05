@@ -6,7 +6,7 @@ import pyqtgraph as pg
 from qtpy import QtCore, QtWidgets
 
 from chisurf import logging
-from chisurf.fio.fluorescence import burst as burstio
+from chisurf.core.fio.fluorescence import burst as burstio
 
 
 name = "Spectroscopy:Single-Molecule:Burst Browser"
@@ -575,7 +575,7 @@ class BurstBrowserWidget(QtWidgets.QWidget):
         self.setup_detectors = None
 
         try:
-            from chisurf.settings.file_utils import safe_open_file
+            from chisurf.core.settings.file_utils import safe_open_file
             import json
         except Exception:
             return

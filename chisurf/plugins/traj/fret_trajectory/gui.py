@@ -5,9 +5,9 @@ import tempfile
 import mdtraj as md
 from chisurf.gui import QtWidgets
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
-from chisurf.fio.structure import coordinates
+from chisurf.core.fio.structure import coordinates
 import chisurf.gui.widgets
 from .traj2fret import CalculateTransfer
 from chisurf.gui.widgets.pdb import PDBSelector

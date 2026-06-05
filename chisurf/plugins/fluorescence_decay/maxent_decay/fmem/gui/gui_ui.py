@@ -273,7 +273,7 @@ class _MaxentUIMixin:
         self.spin_period.setSingleStep(1.0)
         self.spin_period.setValue(10.0)
         # First take MaxEnt-specific settings from our JSON file; fall back
-        # to global chisurf.settings.fret when available.
+        # to global chisurf.core.settings.fret when available.
         try:
             fret_cfg = (self._settings.get("fret", {}) or {})
             if "tau0" in fret_cfg:
@@ -287,7 +287,7 @@ class _MaxentUIMixin:
             fret_cfg = {}
             use_periodic = False
         try:
-            cfg = getattr(chisurf.settings, "fret", {}) or {}
+            cfg = getattr(chisurf.core.settings, "fret", {}) or {}
             if "tau0" not in fret_cfg:
                 self.spin_tau0.setValue(float(cfg.get("tau0", self.spin_tau0.value())))
             if "R0" not in fret_cfg:
@@ -338,7 +338,7 @@ class _MaxentUIMixin:
         except Exception:
             pass
         try:
-            cfg = getattr(chisurf.settings, "fret", {}) or {}
+            cfg = getattr(chisurf.core.settings, "fret", {}) or {}
             if "r_bins" not in fret_cfg:
                 r_res_default = int(cfg.get("rda_resolution", r_res_default))
             if "r_min_frac" not in fret_cfg and "r_max_frac" not in fret_cfg:

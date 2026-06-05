@@ -8,11 +8,11 @@ import sys
 import traceback
 
 # Core imports
-from chisurf.data import DataCurve
+from chisurf.core.data import DataCurve
 from chisurf.macros.core_fit import save_project, load_project, add_fit
 from chinet.node import Node
-from chisurf.models.model import ModelCurve
-from chisurf.fitting.parameter import FittingParameter
+from chisurf.core.models.model import ModelCurve
+from chisurf.core.fitting.parameter import FittingParameter
 
 # Define a model that will be found by the global resolution fallback
 class SmokeLinearModel(ModelCurve):

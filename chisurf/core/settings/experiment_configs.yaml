@@ -1,0 +1,205 @@
+# Experiment configurations for ChiSurf
+# This file defines the configuration for each experiment type, including readers and models
+
+# Basic experiment type definitions
+experiment_types:
+  tcspc:
+    name: TCSPC
+    hidden: false
+  fcs:
+    name: FCS
+    hidden: false
+  rics:
+    name: RICS
+    hidden: false
+  pch:
+    name: PCH
+    hidden: false
+  pda:
+    name: PDA
+    hidden: false
+  stopped_flow:
+    name: Stopped flow
+    hidden: true
+  structure:
+    name: Modelling
+    hidden: false
+
+tcspc:
+  readers:
+    - reader_class: chisurf.core.experiments.tcspc.TCSPCReader
+      reader_params:
+        name: TXT/CSV
+      controller_class: chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget
+      controller_params:
+        name: CSV/PQ/IBH
+      settings_key: tcspc_csv
+    - reader_class: chisurf.core.experiments.tcspc.TCSPCTTTRReader
+      reader_params:
+        name: TTTR-file
+      controller_class: chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget
+      settings_key: tcspc_csv
+    - reader_class: chisurf.gui.widgets.experiments.tcspc.bh_sdt.TCSPCSetupSDTWidget
+      reader_params:
+        name: Becker-SDT
+      controller_class: null
+    - reader_class: chisurf.core.experiments.tcspc.TCSPCSimulatorSetup
+      reader_params:
+        name: Simulator
+      controller_class: chisurf.gui.widgets.experiments.tcspc.controller.TCSPCSimulatorSetupWidget
+  models:
+    - chisurf.gui.widgets.models.tcspc.LifetimeModelWidget
+    - chisurf.gui.widgets.models.tcspc.FRETrateModelWidget
+    - chisurf.gui.widgets.models.tcspc.GaussianModelWidget
+    - chisurf.gui.widgets.models.tcspc.PDDEMModelWidget
+    - chisurf.gui.widgets.models.tcspc.WormLikeChainModelWidget
+    - chisurf.gui.widgets.models.tcspc.ParseDecayModelWidget
+    - chisurf.gui.widgets.models.tcspc.LifetimeMixtureModelWidget
+    - chisurf.gui.widgets.models.tcspc.EtModelFreeWidget
+
+stopped_flow:
+  readers:
+    - reader_class: chisurf.core.experiments.tcspc.TCSPCReader
+      reader_params:
+        name: TXT/CSV
+      controller_class: chisurf.gui.widgets.experiments.tcspc.controller.TCSPCReaderControlWidget
+      controller_params:
+        name: CSV/PQ/IBH
+      settings_key: tcspc_csv
+    - reader_class: chisurf.core.experiments.tcspc.TCSPCTTTRReader
+      reader_params:
+        name: TTTR-file
+      controller_class: chisurf.gui.widgets.experiments.tcspc.controller.TCSPCTTTRReaderControlWidget
+      settings_key: tcspc_csv
+  models:
+    - chisurf.gui.widgets.models.stopped_flow.ParseStoppedFlowWidget
+    - chisurf.gui.widgets.models.stopped_flow.ReactionWidget
+
+pda:
+  readers:
+    - reader_class: chisurf.core.experiments.pda.PdaReader
+      reader_params:
+        name: PTU/HT3/SPC
+        micro_time_ranges:
+          - [0, 16000]
+          - [0, 16000]
+        channels:
+          - [0, 3]
+          - [1, 2]
+      controller_class: chisurf.gui.widgets.experiments.pda.controller.PdaTTTRWidget
+      controller_params:
+        name: PTU/HT3/SPC
+  models:
+    - chisurf.gui.widgets.models.pda.PdaSimpleModelWidget
+    - chisurf.gui.widgets.models.pda.PdaGaussianDistanceModelWidget
+    - chisurf.gui.widgets.models.pda.PdaAnisotropyModelWidget
+
+fcs:
+  readers:
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: Seidel Kristine
+        experiment_reader: kristine
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: Kristine files (*.cor)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: FCS-CSV
+        experiment_reader: csv
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: All files (*.*)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: Zeiss Confocor3
+        experiment_reader: confocor3
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: Confocor3 files (*.fcs)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: China FCS
+        experiment_reader: china-mat
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: China FCS .mat files (*.mat)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: Ries SFCS
+        experiment_reader: ries-mat
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: Ries SFCS .mat files (*.mat)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: PyCorrFit
+        experiment_reader: pycorrfit
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: PyCorrFit csv files (*.csv)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: ALV-Correlator
+        experiment_reader: alv
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: ALV-Correlator files (*.asc)
+    - reader_class: chisurf.core.experiments.fcs.FCS
+      reader_params:
+        name: Correlator.com SIN
+        experiment_reader: sin
+      controller_class: chisurf.gui.widgets.experiments.fcs.FCSController
+      controller_params:
+        file_type: Correlator.com SIN files (*.sin)
+  models:
+    - chisurf.gui.widgets.models.fcs.ParseFCSWidget
+    - chisurf.gui.widgets.models.fcs.DyeShapeFCSWidget
+    - chisurf.gui.widgets.models.fcs.MaxEntFCSWidget
+    - chisurf.gui.widgets.models.fcs.MaxEntRHWidget
+
+rics:
+  readers:
+    - reader_class: chisurf.core.experiments.rics.RICSReader
+      reader_params:
+        name: RICS (TTTR/ICS)
+        reading_routine: PTU
+        channel: 0
+      controller_class: chisurf.gui.widgets.experiments.rics.RICSController
+      controller_params: {}
+  models:
+    - chisurf.gui.widgets.models.rics.RicsSimpleModelWidget
+    - chisurf.gui.widgets.models.rics.RicsTripletModelWidget
+
+pch:
+  readers:
+    - reader_class: chisurf.core.experiments.pch.PCHReader
+      reader_params:
+        name: PCH (TTTR)
+        reading_routine: PTU
+        channel: 0
+        bin_time_us: 100.0
+        micro_time_range: [0, 65535]
+      controller_class: chisurf.gui.widgets.experiments.pch.PCHController
+      controller_params: {}
+  models:
+    - chisurf.gui.widgets.models.pch.PchMultiComponentModelWidget
+
+structure:
+  readers:
+    - reader_class: chisurf.core.experiments.modelling.StructureReader
+      reader_params: {}
+      controller_class: chisurf.gui.widgets.experiments.modelling.StructureReaderController
+  models:
+    - chisurf.gui.widgets.models.proteinmc.ProteinMCModelWidget
+
+global:
+  name: Global
+  hidden: true
+  readers:
+    - reader_class: chisurf.core.experiments.globalfit.GlobalFitSetup
+      reader_params:
+        name: Global-Fit
+  models:
+    - chisurf.gui.widgets.models.global_model.GlobalFitModelWidget
+    - chisurf.gui.widgets.models.global_model.ParameterTransformWidget

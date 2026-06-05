@@ -9,14 +9,14 @@ import numpy as np
 import pyqtgraph as pg
 
 import chisurf
-import chisurf.fio as io
+import chisurf.core.fio as io
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
-from chisurf.fluorescence.fcs.channel_setups import load_fcs_channel_setups
+from chisurf.core.fluorescence.fcs.channel_setups import load_fcs_channel_setups
 from .tttr_correlator_ui import setup_ui as _setup_ui
 
-colors = chisurf.settings.gui['plot']['colors']
+colors = chisurf.core.settings.gui['plot']['colors']
 
 
 class WizardTTTRCorrelator(QtWidgets.QWizardPage):
@@ -147,7 +147,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.pw_fcs.clear()
         if self.is_correlated:
             for i, cor in enumerate(self.correlations):
-                pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=1)
+                pen = pg.mkPen(chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex'], width=1)
                 self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
 
     def read_tttrs(self):
@@ -399,7 +399,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 
                 # Update plot immediately after computing each correlation
                 self.is_correlated = True
-                pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=1)
+                pen = pg.mkPen(chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex'], width=1)
                 self.plot_item_fcs.plot(x=d['x'], y=d['y'], pen=pen)
             else:
                 chisurf.logging.log(1, "Warning: No photons to correlate with.")
@@ -666,7 +666,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             return None
         tttr_filename = self.analysis_folder / pathlib.Path(data.get('filename', ''))
         tttr_filetype = data.get('filetype')
-        f = chisurf.fio.decompress_numpy_array(data.get('filter'))
+        f = chisurf.core.fio.decompress_numpy_array(data.get('filter'))
         idx = np.where(f > 0)[0] if f is not None else None
         if not tttr_filename.exists():
             chisurf.logging.log(1, f"TTTR source file does not exist: {tttr_filename}")
@@ -762,7 +762,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         ------
         - UI elements are set based on the provided arguments.
         - The correlation flag (`self.is_correlated`) is invalidated when any parameter is modified.
-        - Default values for correlation parameters are taken from chisurf.settings.cs_settings at runtime,
+        - Default values for correlation parameters are taken from chisurf.core.settings.cs_settings at runtime,
           allowing them to reflect any changes to settings that occur during runtime.
         """
 
@@ -796,10 +796,10 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
         # Force update of UI elements with values from settings
         # This ensures that any default values from the UI file are overridden
-        self.spinBox_2.setValue(int(chisurf.settings.cs_settings['correlator']['B']))
-        self.spinBox_3.setValue(int(chisurf.settings.cs_settings['correlator']['number_of_cascades']))
-        self.spinBox.setValue(int(chisurf.settings.cs_settings['correlator']['split']))
-        self.checkBox_2.setChecked(bool(chisurf.settings.cs_settings['correlator']['fine']))
+        self.spinBox_2.setValue(int(chisurf.core.settings.cs_settings['correlator']['B']))
+        self.spinBox_3.setValue(int(chisurf.core.settings.cs_settings['correlator']['number_of_cascades']))
+        self.spinBox.setValue(int(chisurf.core.settings.cs_settings['correlator']['split']))
+        self.checkBox_2.setChecked(bool(chisurf.core.settings.cs_settings['correlator']['fine']))
 
         # Ensure parameters are updated after setting them
         self.update_parameter()
@@ -898,16 +898,16 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         This method ensures that the correlation flag (`self.is_correlated`) is invalidated.
 
         If any of the correlation parameters (ncasc, nbins, nsplits, is_fine) are None,
-        their values are taken from chisurf.settings.cs_settings at runtime.
+        their values are taken from chisurf.core.settings.cs_settings at runtime.
         """
 
         chisurf.logging.log(0, "Setting initial parameters for UI elements")
 
         # Always get the latest values from settings
-        settings_ncasc = chisurf.settings.cs_settings['correlator']['number_of_cascades']
-        settings_nbins = chisurf.settings.cs_settings['correlator']['B']
-        settings_nsplits = chisurf.settings.cs_settings['correlator']['split']
-        settings_is_fine = bool(chisurf.settings.cs_settings['correlator']['fine'])
+        settings_ncasc = chisurf.core.settings.cs_settings['correlator']['number_of_cascades']
+        settings_nbins = chisurf.core.settings.cs_settings['correlator']['B']
+        settings_nsplits = chisurf.core.settings.cs_settings['correlator']['split']
+        settings_is_fine = bool(chisurf.core.settings.cs_settings['correlator']['fine'])
 
         # Use provided parameters if not None, otherwise use settings
         if ncasc is None:

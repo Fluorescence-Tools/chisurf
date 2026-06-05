@@ -12,7 +12,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import mdtraj as md
 import numpy as np
 
-import chisurf.fio
+import chisurf.core.fio
 
 
 @dataclass(frozen=True)
@@ -172,7 +172,7 @@ def _select_av_backend() -> str:
         HAS_IMP_BFF = False
 
     try:
-        from chisurf.structure.av.static import HAS_LABELLIB
+        from chisurf.core.structure.av.static import HAS_LABELLIB
     except Exception:
         HAS_LABELLIB = False
 
@@ -278,13 +278,13 @@ def compute_efficiencies_from_fps_av(
                     av_points[name] = pts
 
             else:
-                import chisurf.structure
-                import chisurf.structure.av
+                import chisurf.core.structure
+                import chisurf.core.structure.av
 
-                structure = chisurf.structure.Structure(tmp_pdb)
+                structure = chisurf.core.structure.Structure(tmp_pdb)
                 for name in needed_positions:
                     cfg = pos_cfg[name] or {}
-                    av_obj = chisurf.structure.av.BasicAV(
+                    av_obj = chisurf.core.structure.av.BasicAV(
                         structure,
                         simulation_grid_resolution=float(cfg.get('simulation_grid_resolution', None) or 1.5),
                         allowed_sphere_radius=float(cfg.get('allowed_sphere_radius', None) or 1.5),
@@ -345,7 +345,7 @@ def rmsd_matrix(traj: md.Trajectory, atom_selection: Optional[str] = None) -> np
 
 def load_fps_json(path: Union[str, Path]) -> Dict:
     p = Path(path)
-    with chisurf.fio.zipped.open_maybe_zipped(filename=str(p), mode='r') as fp:
+    with chisurf.core.fio.zipped.open_maybe_zipped(filename=str(p), mode='r') as fp:
         return json.load(fp)
 
 

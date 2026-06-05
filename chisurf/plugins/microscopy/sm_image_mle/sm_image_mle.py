@@ -25,7 +25,7 @@ from skimage.segmentation import clear_border, watershed
 from skimage.feature import peak_local_max
 from scipy import ndimage as ndi
 import matplotlib.pyplot as plt
-from chisurf.fio import write_jordi
+from chisurf.core.fio import write_jordi
 
 
 # --------------------------------------------------

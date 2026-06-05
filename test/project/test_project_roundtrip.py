@@ -11,13 +11,13 @@ import pytest
 
 pytest.importorskip("chinet")
 
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.models.model import ModelCurve
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.models.model import ModelCurve
 
-from chisurf.project import Project, save_project, load_project
-from chisurf.project.fit_state import make_fit_record, apply_fit_record
-from chisurf.fitting.parameter import FittingParameter
+from chisurf.core.project import Project, save_project, load_project
+from chisurf.core.project.fit_state import make_fit_record, apply_fit_record
+from chisurf.core.fitting.parameter import FittingParameter
 
 
 class DummyLinearModel(ModelCurve):
@@ -130,7 +130,7 @@ def test_project_fits_roundtrip_with_single_fit(tmp_path):
 
 import json
 
-from chisurf.project import Project, save_project, load_project
+from chisurf.core.project import Project, save_project, load_project
 
 
 def test_project_json_roundtrip(tmp_path):
@@ -181,7 +181,7 @@ import os
 import tempfile
 import unittest
 
-from chisurf.project import Project, save_project, load_project
+from chisurf.core.project import Project, save_project, load_project
 
 
 class TestProjectV3Format(unittest.TestCase):

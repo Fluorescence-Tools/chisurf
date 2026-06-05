@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import numpy as np
 import chinet
-from chisurf.project.project import Project
+from chisurf.core.project.project import Project
 
 class TestChinetSession(unittest.TestCase):
 

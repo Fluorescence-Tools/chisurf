@@ -56,7 +56,7 @@ def warmup_imports():
         import scipy.stats as _sstats  # noqa: F401
         import chisurf.gui.widgets.fitting as _fitwidgets  # noqa: F401
         _ = getattr(_fitwidgets, "FittingControllerWidget", None)
-        _ = importlib.import_module("chisurf.models.global_model.globalfit")
+        _ = importlib.import_module("chisurf.core.models.global_model.globalfit")
     except Exception as e:
         try:
             logging.debug(f"warmup_imports encountered: {e}")

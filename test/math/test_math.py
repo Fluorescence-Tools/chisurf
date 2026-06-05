@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import chisurf.math.signal
+import chisurf.core.math.signal
 
 @pytest.mark.parametrize("args, expected", [
     ((np.arange(10), 0,), np.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])),
@@ -21,31 +21,31 @@ import chisurf.math.signal
     ((np.array([1, 2, 3]), -10.0), np.array([0., 0., 0.])),
 ])
 def test_math_signal_shift_array(args, expected):
-    result = chisurf.math.signal.shift_array(*args)
+    result = chisurf.core.math.signal.shift_array(*args)
     assert np.allclose(result, expected)
 
-@pytest.mark.parametrize("window_type", chisurf.math.signal.window_function_types)
+@pytest.mark.parametrize("window_type", chisurf.core.math.signal.window_function_types)
 def test_window_smoothing(window_type):
     x = np.linspace(0, 2*np.pi, 100)
     data = np.sin(x)
-    smoothed = chisurf.math.signal.window(data, window_len=11, window_function_type=window_type)
+    smoothed = chisurf.core.math.signal.window(data, window_len=11, window_function_type=window_type)
     assert smoothed.shape == data.shape
     assert np.all(np.isfinite(smoothed))
 
 def test_window_errors():
     with pytest.raises(ValueError, match="smooth only accepts 1 dimension arrays"):
-        chisurf.math.signal.window(np.zeros((5, 5)), 3)
+        chisurf.core.math.signal.window(np.zeros((5, 5)), 3)
     with pytest.raises(ValueError, match="Input vector needs to be bigger than window size"):
-        chisurf.math.signal.window(np.arange(2), 5)
+        chisurf.core.math.signal.window(np.arange(2), 5)
     with pytest.raises(ValueError, match="Window must be one of"):
-        chisurf.math.signal.window(np.arange(10), 5, window_function_type="invalid")
+        chisurf.core.math.signal.window(np.arange(10), 5, window_function_type="invalid")
 
 @pytest.mark.parametrize("background", [0.0, 100.0])
 def test_calculate_fwhm(background):
     # Create a centered peak
     x = np.linspace(-5, 5, 101)
     y = np.exp(-x**2 / 0.5)
-    fwhm, (lb_i, ub_i), (x_left, x_right) = chisurf.math.signal.calculate_fwhm(x, y, background=background)
+    fwhm, (lb_i, ub_i), (x_left, x_right) = chisurf.core.math.signal.calculate_fwhm(x, y, background=background)
     if not np.all(y <= background):
         assert fwhm > 0
         assert lb_i <= ub_i
@@ -55,15 +55,15 @@ def test_calculate_fwhm(background):
 
 def test_find_bursts():
     arr = np.array([0, 1, 1, 0, 0, 1, 1, 1, 0])
-    bursts = chisurf.math.signal.find_bursts(arr)
+    bursts = chisurf.core.math.signal.find_bursts(arr)
     expected = np.array([[1, 2], [5, 7]])
     assert np.array_equal(bursts, expected)
     
     # Merged gaps
-    bursts_merged = chisurf.math.signal.find_bursts(arr, max_gap=2)
+    bursts_merged = chisurf.core.math.signal.find_bursts(arr, max_gap=2)
     expected_merged = np.array([[1, 7]])
     assert np.array_equal(bursts_merged, expected_merged)
 
     # Empty/Zero
-    assert chisurf.math.signal.find_bursts(np.array([])).size == 0
-    assert chisurf.math.signal.find_bursts(np.zeros(10)).size == 0
+    assert chisurf.core.math.signal.find_bursts(np.array([])).size == 0
+    assert chisurf.core.math.signal.find_bursts(np.zeros(10)).size == 0

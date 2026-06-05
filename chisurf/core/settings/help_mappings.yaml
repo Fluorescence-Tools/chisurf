@@ -1,0 +1,115 @@
+help:
+  reader_rules:
+    # TCSPC TXT/CSV readers (including Stopped flow), with special Jordi subsection
+    - experiment: "TCSPC"
+      setup: "TXT/CSV"
+      doc: "docs/TCSPC files.md"
+      anchor: "tcspc-txtcsv"
+      jordi_anchor: "tcspc-jordi"
+
+    - experiment: "Stopped flow"
+      setup: "TXT/CSV"
+      doc: "docs/TCSPC files.md"
+      anchor: "tcspc-txtcsv"
+      jordi_anchor: "tcspc-jordi"
+
+    # TCSPC TTTR, Becker-SDT, and Simulator readers
+    - experiment: "TCSPC"
+      setup: "TTTR-file"
+      doc: "docs/TCSPC files.md"
+      anchor: "tcspc-tttr"
+
+    - experiment: "Stopped flow"
+      setup: "TTTR-file"
+      doc: "docs/TCSPC files.md"
+      anchor: "tcspc-tttr"
+
+    - experiment: "TCSPC"
+      setup: "Becker-SDT"
+      doc: "docs/TCSPC files.md"
+      anchor: "tcspc-sdt"
+
+    - experiment: "TCSPC"
+      setup: "Simulator"
+      doc: "docs/TCSPC files.md"
+      anchor: "tcspc-simulator"
+
+    # FCS readers: prefer low-level reader names, with optional UI-label fallbacks
+    - experiment: "FCS"
+      reader: "kristine"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-kristine"
+
+    - experiment: "FCS"
+      reader: "csv"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-csv"
+
+    - experiment: "FCS"
+      reader: "confocor3"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-confocor3"
+
+    - experiment: "FCS"
+      reader: "china-mat"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-china-mat"
+
+    - experiment: "FCS"
+      reader: "pycorrfit"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-pycorrfit"
+
+    - experiment: "FCS"
+      reader: "alv"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-alv"
+
+    # FCS fallbacks keyed by UI setup label
+    - experiment: "FCS"
+      setup: "Seidel Kristine"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-kristine"
+
+    - experiment: "FCS"
+      setup: "FCS-CSV"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-csv"
+
+    - experiment: "FCS"
+      setup: "Zeiss Confocor3"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-confocor3"
+
+    - experiment: "FCS"
+      setup: "China FCS"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-china-mat"
+
+    - experiment: "FCS"
+      setup: "PyCorrFit"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-pycorrfit"
+
+    - experiment: "FCS"
+      setup: "ALV-Correlator"
+      doc: "docs/FCS files.md"
+      anchor: "fcs-alv"
+
+    # PDA TTTR reader
+    - experiment: "PDA"
+      setup: "PTU/HT3/SPC"
+      doc: "docs/PDA files.md"
+      anchor: "pda-tttr"
+
+    # RICS TTTR/ICS reader
+    - experiment: "RICS"
+      setup: "RICS (TTTR/ICS)"
+      doc: "docs/RICS files.md"
+      anchor: "rics-tttr-ics"
+
+    # PCH TTTR reader
+    - experiment: "PCH"
+      setup: "PCH (TTTR)"
+      doc: "docs/PCH files.md"
+      anchor: "pch-tttr"

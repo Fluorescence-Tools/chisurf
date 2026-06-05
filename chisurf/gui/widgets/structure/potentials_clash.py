@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from qtpy import QtWidgets
 
-import chisurf.structure
-from chisurf.structure.potential.potentials import ClashPotential
+import chisurf.core.structure
+from chisurf.core.structure.potential.potentials import ClashPotential
 
 
 class ClashPotentialWidget(ClashPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure = None,
+            structure: chisurf.core.structure.Structure = None,
             **kwargs
     ):
         QtWidgets.QWidget.__init__(self, parent=kwargs.get('parent'))

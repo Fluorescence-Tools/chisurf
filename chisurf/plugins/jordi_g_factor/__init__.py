@@ -48,13 +48,13 @@ except Exception:
 
 # Optional ChiSurf I/O import for Jordi reading (keeps standalone capability)
 try:
-    from chisurf.fio import read_jordi as _read_jordi
+    from chisurf.core.fio import read_jordi as _read_jordi
 except Exception:
     _read_jordi = None
 
 # No ChiSurf dependencies
 
-# Simple data class to replace chisurf.data.DataCurve
+# Simple data class to replace chisurf.core.data.DataCurve
 class DataCurve:
     def __init__(self, x=None, y=None, name=None):
         """Initialize a DataCurve with x, y, and name.
@@ -661,7 +661,7 @@ class JordiGFactorCalculator(QWidget):
         if _read_jordi is not None:
             return _read_jordi(file_path, split=True)
         warnings.warn(
-            "Direct Jordi reading via numpy.loadtxt is deprecated. Use chisurf.fio.read_jordi instead.",
+            "Direct Jordi reading via numpy.loadtxt is deprecated. Use chisurf.core.fio.read_jordi instead.",
             DeprecationWarning,
             stacklevel=2,
         )

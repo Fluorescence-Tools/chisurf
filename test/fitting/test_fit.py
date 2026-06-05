@@ -10,10 +10,10 @@ import tempfile
 import numpy as np
 import copy
 
-import chisurf.data
-import chisurf.experiments
-import chisurf.models
-import chisurf.fitting
+import chisurf.core.data
+import chisurf.core.experiments
+import chisurf.core.models
+import chisurf.core.fitting
 
 
 def get_data_values(
@@ -35,7 +35,7 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.data.DataCurve(
+        data = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -66,16 +66,16 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.data.DataCurve(
+        data = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
-        fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.data.DataGroup(
+        fit = chisurf.core.fitting.fit.FitGroup(
+            data=chisurf.core.data.DataGroup(
                 [data]
             ),
-            model_class=chisurf.models.parse.ParseModel
+            model_class=chisurf.core.models.parse.ParseModel
         )
         model = fit.model
         model.func = 'c+a*x**2'
@@ -179,16 +179,16 @@ class FitTests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.data.DataCurve(
+        data = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
-        fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.data.DataGroup(
+        fit = chisurf.core.fitting.fit.FitGroup(
+            data=chisurf.core.data.DataGroup(
                 [data]
             ),
-            model_class=chisurf.models.parse.ParseModel
+            model_class=chisurf.core.models.parse.ParseModel
         )
         fit.model.func = 'c+a*x**2'
 
@@ -250,16 +250,16 @@ class FitTests(unittest.TestCase):
             c_value=c_value
         )
 
-        data = chisurf.data.DataCurve(
+        data = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
-        fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.data.DataGroup(
+        fit = chisurf.core.fitting.fit.FitGroup(
+            data=chisurf.core.data.DataGroup(
                 [data]
             ),
-            model_class=chisurf.models.parse.ParseModel
+            model_class=chisurf.core.models.parse.ParseModel
         )
 
         self.assertIs(
@@ -267,7 +267,7 @@ class FitTests(unittest.TestCase):
             data
         )
 
-        data_2 = chisurf.data.DataCurve(
+        data_2 = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -285,8 +285,8 @@ class FitTests(unittest.TestCase):
         )
 
     def test_fit_sample(self):
-        import chisurf.models
-        import chisurf.fitting
+        import chisurf.core.models
+        import chisurf.core.fitting
 
         c_value = 3.1
         a_value = 1.2
@@ -295,23 +295,23 @@ class FitTests(unittest.TestCase):
             c_value=c_value
         )
 
-        data = chisurf.data.DataCurve(
+        data = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
         )
-        fit = chisurf.fitting.fit.FitGroup(
-            data=chisurf.data.DataGroup(
+        fit = chisurf.core.fitting.fit.FitGroup(
+            data=chisurf.core.data.DataGroup(
                 [data]
             ),
-            model_class=chisurf.models.parse.ParseModel
+            model_class=chisurf.core.models.parse.ParseModel
         )
         fit.fit_range = 0, len(fit.model.y)
 
         model = fit.model
         model.func = 'c+a*x**2'
         fit.model.find_parameters()
-        r = chisurf.fitting.sample.sample_emcee(
+        r = chisurf.core.fitting.sample.sample_emcee(
             fit=fit,
             steps=100,
             nwalkers=5,
@@ -332,7 +332,7 @@ class FitTests(unittest.TestCase):
         )
         n_runs = 5
         sampling_method = 'emcee'
-        chisurf.fitting.fit.sample_fit(
+        chisurf.core.fitting.fit.sample_fit(
             fit=fit,
             filename=filename,
             steps=10,
@@ -349,7 +349,7 @@ class FitTests(unittest.TestCase):
             )
 
         fit.run()
-        r = chisurf.fitting.sample.walk_mcmc(
+        r = chisurf.core.fitting.sample.walk_mcmc(
             fit=fit,
             steps=50,
             step_size=0.1,
@@ -365,7 +365,7 @@ class FitTests(unittest.TestCase):
         sampling_method = 'mcmc'
         n_runs = 1
         fit.run()
-        chisurf.fitting.fit.sample_fit(
+        chisurf.core.fitting.fit.sample_fit(
             fit=fit,
             filename=filename,
             steps=50,
@@ -376,8 +376,8 @@ class FitTests(unittest.TestCase):
 
         fit.run()
 
-        import chisurf.fitting.support_plane
-        r = chisurf.fitting.support_plane.scan_parameter(
+        import chisurf.core.fitting.support_plane
+        r = chisurf.core.fitting.support_plane.scan_parameter(
             fit=fit,
             parameter_name='c',
             rel_range=0.2,

@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import chinet
-from chisurf.fitting.parameter import FittingParameter
+from chisurf.core.fitting.parameter import FittingParameter
 
 def test_fitting_parameter_chinet_sync():
     # Test that FittingParameter synchronizes with its underlying chinet.Port

@@ -4,8 +4,8 @@ import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.gui.widgets
-from chisurf.settings.path_utils import get_path
-from chisurf.structure.potential.potentials import HPotential
+from chisurf.core.settings.path_utils import get_path
+from chisurf.core.structure.potential.potentials import HPotential
 
 
 class HPotentialWidget(HPotential, QtWidgets.QWidget):

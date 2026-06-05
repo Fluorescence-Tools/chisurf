@@ -15,11 +15,11 @@ import chisurf.gui.decorators
 import chisurf.plugins
 import chisurf.gui.widgets.parameter_editor
 
-import chisurf.data
-import chisurf.experiments
-import chisurf.curve
-import chisurf.fitting
-import chisurf.settings
+import chisurf.core.data
+import chisurf.core.experiments
+import chisurf.core.curve
+import chisurf.core.fitting
+import chisurf.core.settings
 
 import chisurf.macros
 
@@ -33,7 +33,7 @@ name = "Tools:Anisotropy-Wizard"
 
 class ChisurfWizard(QtWidgets.QWizard):
 
-    data: typing.Dict[str, chisurf.curve.Curve] = {
+    data: typing.Dict[str, chisurf.core.curve.Curve] = {
         'irf_vv': None,
         'irf_vh': None,
         'irf_vv_bg': None,
@@ -63,7 +63,7 @@ class ChisurfWizard(QtWidgets.QWizard):
             pathlib.Path: Path to the user settings directory for the plugin
         """
         # Get the user settings path
-        user_plugin_path = chisurf.settings.chisurf_settings_path / "plugins" / "tr_anisotropy"
+        user_plugin_path = chisurf.core.settings.chisurf_settings_path / "plugins" / "tr_anisotropy"
         # Create the directory if it doesn't exist
         user_plugin_path.mkdir(parents=True, exist_ok=True)
         return user_plugin_path
@@ -276,17 +276,17 @@ class ChisurfWizard(QtWidgets.QWizard):
             if vh_sum > 0:
                 vh = vh * (s / vh_sum)
 
-        self.data['irf_vv_bg_norm'] = chisurf.data.DataCurve(
+        self.data['irf_vv_bg_norm'] = chisurf.core.data.DataCurve(
             x=self.data['irf_vv'].x, y=vv, ey=self.data['irf_vv'].ey,
             experiment=chisurf.cs.current_experiment,
-            setup=chisurf.experiments.tcspc.TCSPCReader,
+            setup=chisurf.core.experiments.tcspc.TCSPCReader,
             name=os.path.splitext(self.data['irf_vv'].name)[0] + "_vv"
         )
 
-        self.data['irf_vh_bg_norm'] = chisurf.data.DataCurve(
+        self.data['irf_vh_bg_norm'] = chisurf.core.data.DataCurve(
             x=self.data['irf_vh'].x, y=vh, ey=self.data['irf_vh'].ey,
             experiment=chisurf.cs.current_experiment,
-            setup=chisurf.experiments.tcspc.TCSPCReader,
+            setup=chisurf.core.experiments.tcspc.TCSPCReader,
             name=os.path.splitext(self.data['irf_vh'].name)[0] + "_vh"
         )
 
@@ -434,7 +434,7 @@ class ChisurfWizard(QtWidgets.QWizard):
         model_kw = dict()
         model_kw.update(self.correction_factors)
 
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="fit.add",
             payload={
                 "model_name": "Lifetime fit",
@@ -481,7 +481,7 @@ class ChisurfWizard(QtWidgets.QWizard):
 
         # Create Global fit and add vv, vh fit
         #######################################
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="fit.add",
             payload={
                 "model_name": "Global fit",
@@ -705,18 +705,18 @@ class ChisurfWizard(QtWidgets.QWizard):
         self.actionRemove_Lifetime.triggered.connect(self.wizardPageComponents.completeChanged.emit)
         self.actionRemove_Rotation.triggered.connect(self.wizardPageComponents.completeChanged.emit)
 
-    @chisurf.gui.decorators.init_with_ui("fluorescence_decay/tr_anisotropy/wizard.ui", path=chisurf.settings.plugin_path)
+    @chisurf.gui.decorators.init_with_ui("fluorescence_decay/tr_anisotropy/wizard.ui", path=chisurf.core.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         self.irf_bg_range_plot = pg.PlotWidget()
         self.region = pg.LinearRegionItem()
         self.correction_factors = {}
         self.data_loaded = False
 
-        self.fit_vv: chisurf.fitting.fit.Fit = None
-        self.fit_vh: chisurf.fitting.fit.Fit = None
-        self.global_fit: chisurf.fitting.fit.Fit = None
+        self.fit_vv: chisurf.core.fitting.fit.Fit = None
+        self.fit_vh: chisurf.core.fitting.fit.Fit = None
+        self.global_fit: chisurf.core.fitting.fit.Fit = None
 
-        fn = chisurf.settings.chisurf_settings_path / "anisotropy_corrections.json"
+        fn = chisurf.core.settings.chisurf_settings_path / "anisotropy_corrections.json"
         logging.info(f"anisotropy_corrections: {fn}")
         self.conf_edit = chisurf.gui.widgets.parameter_editor.ParameterEditor(
             target=self.correction_factors,

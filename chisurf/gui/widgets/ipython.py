@@ -10,9 +10,9 @@ import qtconsole.inprocess
 import qtconsole.styles
 import qtconsole.manager
 
-import chisurf.fio as io
+import chisurf.core.fio as io
 import chisurf.gui
-import chisurf.settings
+import chisurf.core.settings
 
 
 class QIPythonWidget(
@@ -89,7 +89,7 @@ class QIPythonWidget(
             self.kernel_manager.shutdown_kernel()
 
         self.exit_requested.connect(stop)
-        self.width = kwargs.get('width', chisurf.settings.gui['console_width'])
+        self.width = kwargs.get('width', chisurf.core.settings.gui['console_width'])
         self._macro = ""
         self.recording = recording
 
@@ -105,8 +105,8 @@ class QIPythonWidget(
             pass
 
         # save nevertheless every input into a session file
-        self.session_file = chisurf.settings.session_file
-        self.set_default_style(chisurf.settings.gui['console_style'])
+        self.session_file = chisurf.core.settings.session_file
+        self.set_default_style(chisurf.core.settings.gui['console_style'])
         self.style_sheet = qtconsole.styles.default_light_style_sheet
 
     def pushVariables(self, variableDict: typing.Dict[str, object]) -> None:

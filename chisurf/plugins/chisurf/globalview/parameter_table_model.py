@@ -7,9 +7,9 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf
 from chisurf import logging
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.plots.table_plot import BooleanToggleDelegate
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.gui.plots.table_plot import BooleanToggleDelegate
 
 
 # ── constants / column enumeration ────────────────────────────────────
@@ -90,7 +90,7 @@ def _get_rows(
 
         fit_list = list(getattr(chisurf, "fits", []) or [])
 
-    from chisurf.models.global_model import GlobalFitModel
+    from chisurf.core.models.global_model import GlobalFitModel
 
     rows: List[RowTuple] = []
     for fi, fit in enumerate(fit_list):
@@ -224,7 +224,7 @@ class ParameterTableModel(QtCore.QAbstractTableModel):
         return ""
 
     def _bg_color(self, param: FittingParameter):
-        ps = getattr(chisurf.settings, "parameter", {}) or {}
+        ps = getattr(chisurf.core.settings, "parameter", {}) or {}
         if getattr(param, "is_output", False):
             c = ps.get("role_color_output", "")
         elif getattr(param, "is_linked", False) and not getattr(

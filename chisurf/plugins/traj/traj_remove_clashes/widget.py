@@ -9,7 +9,7 @@ import mdtraj
 import numpy as np
 import tables
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 

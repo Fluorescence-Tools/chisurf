@@ -62,7 +62,7 @@ def apply_dock_tab_colors(window) -> None:
     except Exception:
         return
     try:
-        gui_cfg = getattr(chisurf.settings, "gui", {})
+        gui_cfg = getattr(chisurf.core.settings, "gui", {})
     except Exception:
         gui_cfg = {}
     if not isinstance(gui_cfg, dict):

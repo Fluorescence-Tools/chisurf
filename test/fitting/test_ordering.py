@@ -1,7 +1,7 @@
 
 import pytest
 import numpy as np
-from chisurf.fitting.parameter import FittingParameter, FittingParameterGroup
+from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
 
 def test_find_parameters_ordering_stability():
     """
@@ -53,8 +53,8 @@ def test_aggregated_parameters_ordering_stability():
         assert order_n == order1
 
 def test_find_objects_order_preservation():
-    """Directly test chisurf.base.find_objects for order preservation."""
-    from chisurf.base import find_objects
+    """Directly test chisurf.core.base.find_objects for order preservation."""
+    from chisurf.core.base import find_objects
     
     class Mock:
         pass

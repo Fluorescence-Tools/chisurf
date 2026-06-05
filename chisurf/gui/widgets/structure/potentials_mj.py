@@ -4,16 +4,16 @@ import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.gui.widgets
-import chisurf.structure
-from chisurf.settings.path_utils import get_path
-from chisurf.structure.potential.potentials import MJPotential
+import chisurf.core.structure
+from chisurf.core.settings.path_utils import get_path
+from chisurf.core.structure.potential.potentials import MJPotential
 
 
 class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure,
+            structure: chisurf.core.structure.Structure,
             filename: str = None,
             ca_cutoff: float = 6.5,
             parent=None

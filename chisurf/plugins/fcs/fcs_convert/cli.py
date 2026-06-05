@@ -8,9 +8,9 @@ from typing import Iterable
 
 import click
 
-from chisurf.fio.fluorescence import fcs as fcs_io
+from chisurf.core.fio.fluorescence import fcs as fcs_io
 
-# Readers exposed by chisurf.fio.fluorescence.fcs.read_fcs plus CSV helper
+# Readers exposed by chisurf.core.fio.fluorescence.fcs.read_fcs plus CSV helper
 _SUPPORTED_INPUT_TYPES: tuple[str, ...] = (
     "alv",
     "china-mat",
@@ -25,7 +25,7 @@ _SUPPORTED_INPUT_TYPES: tuple[str, ...] = (
     "yaml",
 )
 
-# Writers supported by chisurf.fio.fluorescence.fcs.write_fcs
+# Writers supported by chisurf.core.fio.fluorescence.fcs.write_fcs
 _SUPPORTED_OUTPUT_TYPES: tuple[str, ...] = (
     "kristine",
     "yaml",
@@ -57,11 +57,11 @@ def convert_fcs(
     input_filename:
         Path to the source file.
     input_type:
-        Reader key understood by :func:`chisurf.fio.fluorescence.fcs.read_fcs`.
+        Reader key understood by :func:`chisurf.core.fio.fluorescence.fcs.read_fcs`.
     output_filename:
         Destination path for the converted data.
     output_type:
-        Writer key supported by :func:`chisurf.fio.fluorescence.fcs.write_fcs`.
+        Writer key supported by :func:`chisurf.core.fio.fluorescence.fcs.write_fcs`.
     skiprows:
         Number of rows to skip when reading CSV input.
     use_header:

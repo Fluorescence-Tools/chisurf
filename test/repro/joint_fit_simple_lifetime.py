@@ -12,17 +12,17 @@ import sys
 chisurf_path = pathlib.Path(__file__).parent
 sys.path.insert(0, str(chisurf_path))
 
-import chisurf.experiments
-import chisurf.models
-import chisurf.fitting
+import chisurf.core.experiments
+import chisurf.core.models
+import chisurf.core.fitting
 
 def main():
     print("Starting simplified joint TCSPC fitting with LifetimeModel...")
     
     # Set up the experiment and reader
     dt = 0.0141
-    tcspc_experiment = chisurf.experiments.core.Experiment(name='TCSPC')
-    tcspc_reader = chisurf.experiments.tcspc.TCSPCReader(
+    tcspc_experiment = chisurf.core.experiments.core.Experiment(name='TCSPC')
+    tcspc_reader = chisurf.core.experiments.tcspc.TCSPCReader(
         is_jordi=False,
         skiprows=10,
         dt=dt,
@@ -41,9 +41,9 @@ def main():
     
     # Create individual fits with LifetimeModel
     print("Creating donor-only fit...")
-    fit_donor = chisurf.fitting.fit.FitGroup(
+    fit_donor = chisurf.core.fitting.fit.FitGroup(
         data=decay_donor_only,
-        model_class=chisurf.models.tcspc.lifetime.LifetimeModel
+        model_class=chisurf.core.models.tcspc.lifetime.LifetimeModel
     )
     
     model_donor = fit_donor.model
@@ -54,9 +54,9 @@ def main():
     fit_donor.fit_range = 100, 1500
     
     print("Creating FRET decay fit...")
-    fit_fret = chisurf.fitting.fit.FitGroup(
+    fit_fret = chisurf.core.fitting.fit.FitGroup(
         data=decay_fret,
-        model_class=chisurf.models.tcspc.lifetime.LifetimeModel
+        model_class=chisurf.core.models.tcspc.lifetime.LifetimeModel
     )
     
     model_fret = fit_fret.model

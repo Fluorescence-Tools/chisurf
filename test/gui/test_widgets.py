@@ -2,7 +2,7 @@ import sys
 import os
 import pytest
 from qtpy import QtWidgets
-import chisurf.base
+import chisurf.core.base
 
 # Ensure chinet is available for node editor tests
 pytest.importorskip("chinet")
@@ -55,11 +55,11 @@ def test_gui_widgets_node_edit_help_dialog(node_editor, qtbot):
 
 # --- Skip Qt Widgets Serialization Tests ---
 
-class SerializedTestClass(chisurf.base.Base):
+class SerializedTestClass(chisurf.core.base.Base):
     def __init__(self, name="TestClass"):
         super().__init__(name=name)
         # We don't need a real QApplication here if we are just testing skip_qt_widgets logic,
-        # but chisurf.base likely checks for types.
+        # but chisurf.core.base likely checks for types.
         self.widget = QtWidgets.QWidget()
         self.spinbox = QtWidgets.QSpinBox()
         self.normal_attr = "This is a normal attribute"
@@ -88,7 +88,7 @@ def test_with_to_elementary(qtbot):
     d = test_obj.to_dict()
     
     # Then use to_elementary with skip_qt_widgets=True
-    result = chisurf.base.to_elementary(d, skip_qt_widgets=True)
+    result = chisurf.core.base.to_elementary(d, skip_qt_widgets=True)
     
     # Check that Qt widgets were skipped
     assert 'widget' not in result, "Qt widget 'widget' was not skipped"

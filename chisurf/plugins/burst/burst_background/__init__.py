@@ -11,7 +11,7 @@ so that the same setups can be shared with other TTTR tools.
 
 name = "Spectroscopy:Single-Molecule:Burst Background Estimation"
 
-# Expose the plugin CLI through chisurf.cli
+# Expose the plugin CLI through chisurf.core.cli
 cli_entrypoint = "burst-background=chisurf.plugins.burst.burst_background.cli:cli"
 
 import os
@@ -38,7 +38,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QDragEnterEvent, QDropEvent
 
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
-import chisurf.fluorescence.burst
+import chisurf.core.fluorescence.burst
 
 
 class BurstBackgroundEstimator(QWidget):
@@ -207,7 +207,7 @@ class BurstBackgroundEstimator(QWidget):
                 self.file_table.setItem(file_idx, 1, QTableWidgetItem(f"Error: {exc}"))
                 continue
 
-            bg = chisurf.fluorescence.burst.estimate_background_from_bursts(
+            bg = chisurf.core.fluorescence.burst.estimate_background_from_bursts(
                 tttr,
                 detectors,
             )

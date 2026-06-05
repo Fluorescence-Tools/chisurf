@@ -46,9 +46,9 @@ import pyqtgraph as pg
 
 # ChiSurf imports
 try:
-    from chisurf.fio import read_jordi as _read_jordi
-    from chisurf.fio import write_jordi as _write_jordi
-    from chisurf.fluorescence.tcspc import IRFEstimator
+    from chisurf.core.fio import read_jordi as _read_jordi
+    from chisurf.core.fio import write_jordi as _write_jordi
+    from chisurf.core.fluorescence.tcspc import IRFEstimator
     import chisurf
     CHISURF_AVAILABLE = True
 except Exception:
@@ -566,7 +566,7 @@ class IRFEstimatorPlugin(QWidget):
         
         # If we have estimation results, plot IRF and forward model
         if self.estimator is not None and self.estimator.params is not None:
-            from chisurf.fluorescence.tcspc.irf_estimation import (
+            from chisurf.core.fluorescence.tcspc.irf_estimation import (
                 partial_convolution_fft
             )
             
@@ -1031,11 +1031,11 @@ class IRFEstimatorPlugin(QWidget):
         # Set up ChiSurf experiment settings for TCSPC data
         if CHISURF_AVAILABLE and hasattr(chisurf, 'cs'):
             # Configure the current setup for IRF data
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="experiment.set",
                 payload={"name": "TCSPC"},
             )
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="setup.params.set",
                 payload={
                     "params": {
@@ -1052,7 +1052,7 @@ class IRFEstimatorPlugin(QWidget):
             )
 
             # Add the IRF dataset to ChiSurf
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="dataset.add",
                 payload={"filename": tmp_path, "experiment_reader": None},
             )
@@ -1082,7 +1082,7 @@ class IRFEstimatorPlugin(QWidget):
             
         try:
             # Use the same approach as in ConvolveWidget
-            from chisurf.data import get_data, ExperimentalData
+            from chisurf.core.data import get_data, ExperimentalData
             
             # Get all datasets from ChiSurf's imported datasets
             all_curves = get_data(

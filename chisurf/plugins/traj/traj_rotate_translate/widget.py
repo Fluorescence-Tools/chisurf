@@ -6,10 +6,10 @@ import tables
 from qtpy import QtWidgets
 import mdtraj
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-from chisurf.structure import translate, rotate
+from chisurf.core.structure import translate, rotate
 
 
 class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
@@ -77,7 +77,7 @@ class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     @chisurf.gui.decorators.init_with_ui(ui_filename="rotate_translate_traj.ui")
     def __init__(self, **kwargs):
         self.trajectory = None
-        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
+        self.verbose = kwargs.get('verbose', chisurf.core.settings.cs_settings['verbose'])
         self.actionOpen_trajectory.triggered.connect(self.onOpenTrajectory)
         self.actionSave_trajectory.triggered.connect(self.onSaveTrajectory)
 

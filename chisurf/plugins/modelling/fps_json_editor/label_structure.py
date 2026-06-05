@@ -9,15 +9,15 @@ import traceback
 
 from chisurf.gui import QtWidgets, QtCore
 
-import chisurf.fio as io
+import chisurf.core.fio as io
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 import chisurf.gui.widgets.pdb
 import chisurf.gui.widgets.fluorescence.av
-import chisurf.decorators
-import chisurf.settings
-import chisurf.structure
-import chisurf.structure
+import chisurf.core.decorators
+import chisurf.core.settings
+import chisurf.core.structure
+import chisurf.core.structure
 from chisurf.plugins.misc.code_editor import SimpleCodeEditor
 
 
@@ -217,12 +217,12 @@ class LabelStructure(
             'PDB-Files (*.pdb);;PDB-GZ (*.pdb.gz)'
         )
         self.pdb_filename = filename
-        self.structure = chisurf.structure.Structure(self.pdb_filename)
+        self.structure = chisurf.core.structure.Structure(self.pdb_filename)
         self.atom_select.atoms = self.structure.atoms
 
     def onAddLabel(self):
         try:
-            allowed_sphere_radius = float(chisurf.settings.fps.get('allowed_sphere_radius', 1.5))
+            allowed_sphere_radius = float(chisurf.core.settings.fps.get('allowed_sphere_radius', 1.5))
             simulation_grid_resolution = float(self.av_properties.resolution)
             label = {
                 "atom_name": str(self.atom_select.atom_name),
@@ -267,7 +267,7 @@ class LabelStructure(
             fn = chisurf.gui.widgets.get_filename(
                 "DA-Distance distribution (1st column RDA, 2nd pRDA)"
             )
-            csv = chisurf.fio.ascii.Csv(
+            csv = chisurf.core.fio.ascii.Csv(
                 filename=fn,
                 skiprows=1
             )

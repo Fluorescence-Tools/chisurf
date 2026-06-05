@@ -46,7 +46,7 @@ def save_project(
         Project display name (defaults to directory basename).
 
     """
-    from chisurf.project import Project
+    from chisurf.core.project import Project
     import chisurf
 
     path = pathlib.Path(target_path)
@@ -105,7 +105,7 @@ def load_project(
         Path to the project directory.
 
     """
-    from chisurf.project import load_project as project_loader
+    from chisurf.core.project import load_project as project_loader
 
     path = pathlib.Path(project_path)
     project_file = path / "project.json"

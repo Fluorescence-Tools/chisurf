@@ -10,18 +10,18 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
-import chisurf.data
-import chisurf.fitting
-import chisurf.decorators
+import chisurf.core.data
+import chisurf.core.fitting
+import chisurf.core.decorators
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
-from chisurf.math.optimization.leastsqbound import OptimizationCancelled
+from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
 
 
-@chisurf.decorators.register
+@chisurf.core.decorators.register
 class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
 
     @property
@@ -36,11 +36,11 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         self.setCurrentItem(self.topLevelItem(v))
 
     @property
-    def selected_fit(self) -> chisurf.fitting.fit.FitGroup:
+    def selected_fit(self) -> chisurf.core.fitting.fit.FitGroup:
         return chisurf.fits[self.selected_fit_index]
 
     @property
-    def selected_fits(self) -> typing.List[chisurf.fitting.fit.FitGroup]:
+    def selected_fits(self) -> typing.List[chisurf.core.fitting.fit.FitGroup]:
         return [chisurf.fits[i] for i in self.selected_fit_idx]
 
     @property
@@ -71,7 +71,7 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
         fit_idxs = [selected_index.row() for selected_index in self.selectedIndexes()]
         for fit_idx in fit_idxs:
             try:
-                chisurf.actions.dispatch(
+                chisurf.core.actions.dispatch(
                     name="fit.close",
                     payload={"idx": int(fit_idx)},
                 )
@@ -144,7 +144,7 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.Fit = None,
+            fit: chisurf.core.fitting.fit.Fit = None,
             experiment=None,
             drag_enabled: bool = False,
             click_close: bool = False,
@@ -157,7 +157,7 @@ class ModelDataRepresentationSelector(QtWidgets.QTreeWidget):
     ):
         if get_data_sets is None:
             def get_data_sets(**kwargs):
-                return chisurf.data.get_data(
+                return chisurf.core.data.get_data(
                     data_set=chisurf.imported_datasets,
                     **kwargs
                 )

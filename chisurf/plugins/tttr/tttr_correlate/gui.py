@@ -10,15 +10,15 @@ from chisurf.gui import QtCore, QtWidgets
 import numpy as np
 import tttrlib
 
-import chisurf.curve
-import chisurf.decorators
+import chisurf.core.curve
+import chisurf.core.decorators
 #import chisurf.gui.tools
-import chisurf.fio
-import chisurf.fluorescence
-import chisurf.data
+import chisurf.core.fio
+import chisurf.core.fluorescence
+import chisurf.core.data
 import chisurf.gui.decorators
-import chisurf.settings
-import chisurf.fluorescence.fcs
+import chisurf.core.settings
+import chisurf.core.fluorescence.fcs
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments
 import chisurf.gui.widgets.fio
@@ -30,19 +30,19 @@ class Correlator(QtCore.QThread):
     partDone = QtCore.Signal(int)
 
     @property
-    def data(self) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.core.data.DataCurve:
         """Return the correlation result as a :class:`DataCurve`.
 
         Returns
         -------
-        chisurf.data.DataCurve
+        chisurf.core.data.DataCurve
             The cached data curve when available, otherwise a new empty
             :class:`DataCurve` associated with this correlator.
         """
-        if isinstance(self._data_curve, chisurf.data.DataCurve):
+        if isinstance(self._data_curve, chisurf.core.data.DataCurve):
             return self._data_curve
         else:
-            return chisurf.data.DataCurve(
+            return chisurf.core.data.DataCurve(
                 setup=self
             )
 
@@ -98,7 +98,7 @@ class Correlator(QtCore.QThread):
         elif isinstance(tacWeighting, np.ndarray):
             chisurf.logging.info("TAC-weighted")
             wt = tacWeighting
-        w = chisurf.fluorescence.fcs.correlate.get_weights(
+        w = chisurf.core.fluorescence.fcs.correlate.get_weights(
             routing_channels=photons.routing_channels,
             micro_times=photons.micro_times,
             weights=wt,
@@ -121,7 +121,7 @@ class Correlator(QtCore.QThread):
         ----------
         use_tttrlib : bool, optional
             If ``True`` (default) use :class:`tttrlib.Correlator`,
-            otherwise use the legacy ``chisurf.fluorescence.fcs.correlate``
+            otherwise use the legacy ``chisurf.core.fluorescence.fcs.correlate``
             ``tp`` implementation.
         """
 
@@ -181,7 +181,7 @@ class Correlator(QtCore.QThread):
                 wi2 = w2[index_start: index_stop]
                 cr_filter = np.ones_like(wi1)
                 if self.p.method == 'tp':
-                    results = chisurf.fluorescence.fcs.correlate.log_corr(
+                    results = chisurf.core.fluorescence.fcs.correlate.log_corr(
                         p.macro_times, p.micro_times, p.routing_channels, cr_filter,
                         wi1, wi2,
                         self.p.B, self.p.number_of_cascades,
@@ -194,7 +194,7 @@ class Correlator(QtCore.QThread):
                     dt_2 = results['measurement_time_ch2']
                     tau = results['correlation_time_axis']
                     corr = results['correlation_amplitude']
-                    cr = chisurf.fluorescence.fcs.correlate.normalize(
+                    cr = chisurf.core.fluorescence.fcs.correlate.normalize(
                         np_1, np_2,
                         dt_1, dt_2,
                         tau, corr,
@@ -222,7 +222,7 @@ class Correlator(QtCore.QThread):
         cor = np.array(cors)
         w = np.array(weights)
 
-        data_curve = chisurf.data.DataCurve(
+        data_curve = chisurf.core.data.DataCurve(
             x=np.array(taus).mean(axis=0)[1:],
             y=cor.mean(axis=0)[1:],
             ey=1. / w.mean(axis=0)[1:]
@@ -257,7 +257,7 @@ class Correlator(QtCore.QThread):
         Returns
         -------
         np.ndarray
-            Weight vector as returned by ``chisurf.fluorescence.fcs.noise``
+            Weight vector as returned by ``chisurf.core.fluorescence.fcs.noise``
             using the configured ``weighting`` (``uniform`` or ``suren``).
         """
         """
@@ -267,11 +267,11 @@ class Correlator(QtCore.QThread):
         count_rate = count-rate in kHz
         """
         if self.p.weighting == 1:
-            return chisurf.fluorescence.fcs.noise(
+            return chisurf.core.fluorescence.fcs.noise(
                 tau, cor, acquisition_time, count_rate, weight_type='uniform'
             )
         elif self.p.weighting == 0:
-            return chisurf.fluorescence.fcs.noise(
+            return chisurf.core.fluorescence.fcs.noise(
                 tau, cor, acquisition_time, count_rate, weight_type='suren'
             )
 
@@ -291,7 +291,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
             fine: bool = None
     ):
         # Import settings here to make them dynamic
-        from chisurf.settings import cs_settings
+        from chisurf.core.settings import cs_settings
         correlator_settings = cs_settings['correlator']
 
         # Use default settings if parameters are None
@@ -320,8 +320,8 @@ class CorrelatorWidget(QtWidgets.QWidget):
         )
 
         # fill widgets
-        self.comboBox_3.addItems(chisurf.fluorescence.fcs.weightCalculations)
-        self.comboBox_2.addItems(chisurf.fluorescence.fcs.correlationMethods)
+        self.comboBox_3.addItems(chisurf.core.fluorescence.fcs.weightCalculations)
+        self.comboBox_2.addItems(chisurf.core.fluorescence.fcs.correlationMethods)
         self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
         self.progressBar.setValue(0)
@@ -334,7 +334,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.progressBar.setValue(val)
 
     @property
-    def data(self) -> chisurf.data.DataCurve:
+    def data(self) -> chisurf.core.data.DataCurve:
         return self.correlator_thread.data
 
     @property
@@ -440,7 +440,7 @@ class CrFilterWidget(QtWidgets.QWidget):
     ):
         # Import settings here to make them dynamic
         import chisurf
-        from chisurf.settings import cs_settings
+        from chisurf.core.settings import cs_settings
         correlator_settings = cs_settings['correlator']
 
         # Use default settings if parameters are None
@@ -483,7 +483,7 @@ class CrFilterWidget(QtWidgets.QWidget):
         return bool(self.groupBox_2.isChecked())
 
     @property
-    def photons(self) -> chisurf.fio.photons.Photons:
+    def photons(self) -> chisurf.core.fio.photons.Photons:
         photons = self.photon_source.photons
         if self.cr_filter_on:
             dt = photons.mt_clk
@@ -500,7 +500,7 @@ class CrFilterWidget(QtWidgets.QWidget):
             mt = photons.macro_times
             n_ph = mt.shape[0]
             w = np.ones(n_ph, dtype=np.float32)
-            chisurf.fluorescence.fcs.correlate.count_rate_filter(
+            chisurf.core.fluorescence.fcs.correlate.count_rate_filter(
                 mt,
                 tw,
                 n_ph_max,
@@ -548,7 +548,7 @@ class CorrelateTTTR(
             self,
             *args,
             **kwargs
-    ) -> typing.List[chisurf.curve.Curve]:
+    ) -> typing.List[chisurf.core.curve.Curve]:
         return self._curves
 
     def plot_curves(self):
@@ -561,7 +561,7 @@ class CorrelateTTTR(
         plot.showGrid(True, True, 1.0)
 
         # Import settings here to make them dynamic
-        from chisurf.settings import cs_settings, colors
+        from chisurf.core.settings import cs_settings, colors
         plot_settings = cs_settings['gui']['plot']
 
         current_curve = self.cs.selected_curve_index
@@ -598,7 +598,7 @@ class CorrelateTTTR(
         #)
 
         # Import settings here to make them dynamic
-        from chisurf.settings import cs_settings
+        from chisurf.core.settings import cs_settings
         correlator_settings = cs_settings['correlator']
 
         self.correlator = CorrelatorWidget(

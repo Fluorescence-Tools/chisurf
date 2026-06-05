@@ -2,13 +2,13 @@ import pathlib
 import tttrlib
 
 import chisurf.gui
-from chisurf.experiments.core import reader
+from chisurf.core.experiments.core import reader
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
 import chisurf
 from chisurf import logging
 from chisurf.macros import core_data as core_data_macros
-from chisurf.experiments.pda import PdaReader
+from chisurf.core.experiments.pda import PdaReader
 from chisurf.gui.widgets.progress import EnhancedProgressDialog
 
 # Reuse the setups loader from the DetectorWizard
@@ -1515,7 +1515,7 @@ class PdaTTTRWidget(
                 )
                 # Attach the correct experiment to the reader so get_data can set d.experiment
                 try:
-                    pda_reader.experiment = chisurf.experiments.types.get('pda') or chisurf.cs.current_experiment
+                    pda_reader.experiment = chisurf.core.experiments.types.get('pda') or chisurf.cs.current_experiment
                 except Exception:
                     # Fallback to current experiment if types lookup fails
                     pda_reader.experiment = getattr(chisurf.cs, 'current_experiment', None)

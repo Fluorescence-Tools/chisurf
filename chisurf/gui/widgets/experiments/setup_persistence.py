@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, List
 
 import numpy as np
 
-from chisurf.settings.path_utils import get_path
+from chisurf.core.settings.path_utils import get_path
 
 
 SCHEMA_VERSION = 1
@@ -60,7 +60,7 @@ def serialize_reader_state(reader: Any) -> Optional[Dict[str, Any]]:
     Returns:
         Dict with module, class, and state keys, or None if not a valid reader
     """
-    from chisurf.experiments.core.reader import ExperimentReader
+    from chisurf.core.experiments.core.reader import ExperimentReader
     
     if not isinstance(reader, ExperimentReader):
         return None
@@ -121,7 +121,7 @@ def apply_reader_state(reader: Any, state: Dict[str, Any]) -> None:
         reader: An ExperimentReader instance
         state: Dict of attribute names to values
     """
-    from chisurf.experiments.core.reader import ExperimentReader
+    from chisurf.core.experiments.core.reader import ExperimentReader
     
     if not isinstance(reader, ExperimentReader):
         return

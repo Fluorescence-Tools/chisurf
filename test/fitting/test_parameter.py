@@ -7,41 +7,41 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 
 utils.set_search_paths(TOPDIR)
 
-import chisurf.parameter
-import chisurf.models
-import chisurf.fitting
+import chisurf.core.parameter
+import chisurf.core.models
+import chisurf.core.fitting
 
 
 class Tests(unittest.TestCase):
 
     def test_get_instances(self):
-        p1 = chisurf.parameter.Parameter()
+        p1 = chisurf.core.parameter.Parameter()
         initial_instances = len(list(p1.get_instances()))
         self.assertEqual(p1 in p1.get_instances(), True)
 
-        p2 = chisurf.parameter.Parameter()
+        p2 = chisurf.core.parameter.Parameter()
         self.assertEqual(
             len(list(p1.get_instances())), initial_instances + 1
         )
         self.assertEqual(p2 in p1.get_instances(), True)
 
     def test_create(self):
-        p1 = chisurf.parameter.Parameter()
+        p1 = chisurf.core.parameter.Parameter()
         p1.value = 2.0
         self.assertEqual(p1.value, 2.0)
 
-        p2 = chisurf.parameter.Parameter(value=2.0)
+        p2 = chisurf.core.parameter.Parameter(value=2.0)
         self.assertEqual(p2.value, 2.0)
 
     def test_equality(self):
-        p1 = chisurf.parameter.Parameter(value=2.0)
-        p2 = chisurf.parameter.Parameter(value=2.0)
+        p1 = chisurf.core.parameter.Parameter(value=2.0)
+        p2 = chisurf.core.parameter.Parameter(value=2.0)
         self.assertEqual(p1, p2)
         self.assertIsNot(p1, p2)
 
     def test_arithmetics(self):
-        p1 = chisurf.parameter.Parameter(value=2.0)
-        p2 = chisurf.parameter.Parameter(value=3.0)
+        p1 = chisurf.core.parameter.Parameter(value=2.0)
+        p2 = chisurf.core.parameter.Parameter(value=3.0)
 
         p3 = p1 + p2
         self.assertEqual(p3.value, 5.0)
@@ -65,8 +65,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(p3.value, 2. ** 3.)
 
     def test_linking(self):
-        p1 = chisurf.parameter.Parameter(value=2.0)
-        p2 = chisurf.parameter.Parameter(value=3.0)
+        p1 = chisurf.core.parameter.Parameter(value=2.0)
+        p2 = chisurf.core.parameter.Parameter(value=3.0)
         self.assertEqual(p1.value, 2.0)
         self.assertEqual(p2.value, 3.0)
         self.assertEqual(p2.is_linked, False)
@@ -85,17 +85,17 @@ class Tests(unittest.TestCase):
         self.assertEqual(p2.value, 3.0)
 
     def test_restore_link_from_dict(self):
-        p1 = chisurf.parameter.Parameter(value=2.0)
-        p2 = chisurf.parameter.Parameter(value=3.0)
+        p1 = chisurf.core.parameter.Parameter(value=2.0)
+        p2 = chisurf.core.parameter.Parameter(value=3.0)
         p2.link = p1
-        p3 = chisurf.parameter.Parameter()
+        p3 = chisurf.core.parameter.Parameter()
         p3.from_dict(
             p2.to_dict()
         )
         self.assertEqual(p3.value, 2.0)
 
     def test_fixing(self):
-        p1 = chisurf.parameter.Parameter(value=2.0)
+        p1 = chisurf.core.parameter.Parameter(value=2.0)
         p1.fixed = True
         self.assertEqual(
             p1.fixed,
@@ -108,7 +108,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_bounds(self):
-        p1 = chisurf.parameter.Parameter(
+        p1 = chisurf.core.parameter.Parameter(
             value=2.0,
             bounds_on=True,
             lb=1.,
@@ -119,7 +119,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(p1.value, 2.5)
 
     def test_rep_str(self):
-        p1 = chisurf.parameter.Parameter(22)
+        p1 = chisurf.core.parameter.Parameter(22)
         self.assertEqual(
             p1.__repr__(),
             "22"
@@ -134,7 +134,7 @@ class Tests(unittest.TestCase):
             'ub': 2.5,
             'unique_identifier': 'b671b0b3-3009-42df-824a-6d690c2b3e54'
         }
-        p1 = chisurf.parameter.Parameter(**d1)
+        p1 = chisurf.core.parameter.Parameter(**d1)
         d3 = {
             'name': 'Parameter',
             'verbose': False,
@@ -164,7 +164,7 @@ class Tests(unittest.TestCase):
             suffix='.json'
         )
 
-        p1 = chisurf.parameter.Parameter(
+        p1 = chisurf.core.parameter.Parameter(
             value=2.0,
             bounds_on=True,
             lb=1.,
@@ -175,23 +175,23 @@ class Tests(unittest.TestCase):
             file_type='json'
         )
 
-        p2 = chisurf.parameter.Parameter()
+        p2 = chisurf.core.parameter.Parameter()
         p2.load(
             filename=filename,
             file_type='json'
         )
 
     def test_parameter_group(self):
-        p1 = chisurf.parameter.Parameter(
+        p1 = chisurf.core.parameter.Parameter(
             value=22,
             name='p1'
         )
-        p2 = chisurf.parameter.Parameter(
+        p2 = chisurf.core.parameter.Parameter(
             value=11,
             name='p2'
         )
         group_name = 'Parameter Gruppe'
-        pg = chisurf.parameter.ParameterGroup(
+        pg = chisurf.core.parameter.ParameterGroup(
             name=group_name
         )
         self.assertEqual(
@@ -210,7 +210,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_fitting_parameter(self):
-        p1 = chisurf.fitting.parameter.FittingParameter(value=22)
+        p1 = chisurf.core.fitting.parameter.FittingParameter(value=22)
 
         value = 11
         link = p1
@@ -221,7 +221,7 @@ class Tests(unittest.TestCase):
         verbose = True
         unique_identifier = None
         fixed = True
-        p2 = chisurf.fitting.parameter.FittingParameter(
+        p2 = chisurf.core.fitting.parameter.FittingParameter(
             fixed=fixed,
             value=value,
             link=link,
@@ -238,7 +238,7 @@ class Tests(unittest.TestCase):
             p2.value
         )
 
-        p3 = chisurf.fitting.parameter.FittingParameter()
+        p3 = chisurf.core.fitting.parameter.FittingParameter()
         p3.from_dict(
             p2.to_dict()
         )
@@ -253,24 +253,24 @@ class Tests(unittest.TestCase):
         )
 
     def test_fitting_parameter_group(self):
-        p1 = chisurf.fitting.parameter.FittingParameter(value=22)
-        p2 = chisurf.fitting.parameter.FittingParameter(value=33)
-        pg = chisurf.fitting.parameter.FittingParameterGroup(name="jjk")
+        p1 = chisurf.core.fitting.parameter.FittingParameter(value=22)
+        p2 = chisurf.core.fitting.parameter.FittingParameter(value=33)
+        pg = chisurf.core.fitting.parameter.FittingParameterGroup(name="jjk")
         pg.append(p1)
         pg.append(p2)
         pg.find_parameters(
-            chisurf.fitting.parameter.FittingParameter
+            chisurf.core.fitting.parameter.FittingParameter
         )
 
     # def test_numpy(self):
     #     import numpy as np
     #     value = 22
-    #     p1 = chisurf.fitting.parameter.FittingParameter(value=value)
+    #     p1 = chisurf.core.fitting.parameter.FittingParameter(value=value)
     #     x = np.linspace(0, 2, 100)
     #     p2 = p1 + x
     #     self.assertEqual(
     #         type(p2),
-    #         chisurf.fitting.parameter.FittingParameter
+    #         chisurf.core.fitting.parameter.FittingParameter
     #     )
     #     self.assertEqual(
     #         np.allclose(
@@ -282,7 +282,7 @@ class Tests(unittest.TestCase):
 
     def test_abs(self):
         value = -11
-        p1 = chisurf.fitting.parameter.FittingParameter(value=value)
+        p1 = chisurf.core.fitting.parameter.FittingParameter(value=value)
         p2 = abs(p1)
         self.assertEqual(
             abs(p1.value),
@@ -293,7 +293,7 @@ class Tests(unittest.TestCase):
     def test_parameter_get_set_state_roundtrip(self):
         """Parameter.get_state/set_state should round-trip basic port state."""
 
-        p1 = chisurf.parameter.Parameter(
+        p1 = chisurf.core.parameter.Parameter(
             value=2.0,
             bounds_on=True,
             lb=1.0,
@@ -301,7 +301,7 @@ class Tests(unittest.TestCase):
         )
         s = p1.get_state()
 
-        p2 = chisurf.parameter.Parameter()
+        p2 = chisurf.core.parameter.Parameter()
         # Ensure defaults differ
         self.assertNotEqual(p2.value, 2.0)
 
@@ -313,9 +313,9 @@ class Tests(unittest.TestCase):
     def test_parameter_group_get_set_state_does_not_crash(self):
         """ParameterGroup.get_state/set_state should be callable and benign."""
 
-        p1 = chisurf.parameter.Parameter(value=11, name='p1')
-        p2 = chisurf.parameter.Parameter(value=22, name='p2')
-        pg = chisurf.parameter.ParameterGroup(parameters=[p1, p2])
+        p1 = chisurf.core.parameter.Parameter(value=11, name='p1')
+        p2 = chisurf.core.parameter.Parameter(value=22, name='p2')
+        pg = chisurf.core.parameter.ParameterGroup(parameters=[p1, p2])
         state = pg.get_state()
 
         # Re-apply to the same group; primarily a smoke test.
@@ -334,12 +334,12 @@ class Tests(unittest.TestCase):
 
         import json
 
-        p1 = chisurf.fitting.parameter.FittingParameter(value=22, name='p1')
-        p2 = chisurf.fitting.parameter.FittingParameter(value=33, name='p2')
-        pg = chisurf.fitting.parameter.FittingParameterGroup(name="grp1")
+        p1 = chisurf.core.fitting.parameter.FittingParameter(value=22, name='p1')
+        p2 = chisurf.core.fitting.parameter.FittingParameter(value=33, name='p2')
+        pg = chisurf.core.fitting.parameter.FittingParameterGroup(name="grp1")
         pg.append(p1)
         pg.append(p2)
-        pg.find_parameters(chisurf.fitting.parameter.FittingParameter)
+        pg.find_parameters(chisurf.core.fitting.parameter.FittingParameter)
 
         state = pg.get_state()
         # Must be JSON-serializable without custom encoders
@@ -355,10 +355,10 @@ class Tests(unittest.TestCase):
 
     def test_parameter_group(self):
 
-        class A(chisurf.parameter.ParameterGroup):
+        class A(chisurf.core.parameter.ParameterGroup):
 
             def __init__(self):
-                self.pv = chisurf.parameter.Parameter(
+                self.pv = chisurf.core.parameter.Parameter(
                     value=11
                 )
 

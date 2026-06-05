@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pathlib
 import chisurf.plugins.fluorescence_decay.lltf.core.convolve as convolve
-from chisurf.models.parse.parse import ParseModel
+from chisurf.core.models.parse.parse import ParseModel
 
 # Reference data paths
 REF_DIR = pathlib.Path(__file__).parent.parent / "data" / "reference"

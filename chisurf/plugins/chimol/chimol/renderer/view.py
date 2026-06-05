@@ -880,7 +880,7 @@ class MolView(QtWidgets.QWidget):
 
         The object is expected to provide either:
         - ``atoms``: NumPy structured array with fields ``'xyz'`` and
-          ``'atom_name'`` (as in :mod:`chisurf.structure`), or
+          ``'atom_name'`` (as in :mod:`chisurf.core.structure`), or
         - ``xyz``: array-like of shape ``(N, 3)``.
         """
 

@@ -6,10 +6,10 @@ import numpy as np
 
 import chisurf
 import chisurf.macros.core_fit as core_fit
-from chisurf.data import DataCurve, DataGroup
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.models.model import ModelCurve
+from chisurf.core.data import DataCurve, DataGroup
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models.model import ModelCurve
 
 
 class DummyLinearModel(ModelCurve):

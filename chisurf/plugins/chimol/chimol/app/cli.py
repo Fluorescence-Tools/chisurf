@@ -31,7 +31,7 @@ from typing import Any, Dict, Optional
 def _resolve_history_path() -> Path:
     """Return a platform-appropriate path for chimol CLI history."""
     try:
-        import chisurf.settings as _cs_settings
+        import chisurf.core.settings as _cs_settings
         base = _cs_settings.get_path("settings")
         return Path(base) / "chimol_cli_history"
     except Exception:

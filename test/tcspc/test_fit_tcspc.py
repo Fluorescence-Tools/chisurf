@@ -6,19 +6,19 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 
 utils.set_search_paths(TOPDIR)
 
-import chisurf.experiments
-import chisurf.models
-import chisurf.fitting
+import chisurf.core.experiments
+import chisurf.core.models
+import chisurf.core.fitting
 
 
 class FitTests(unittest.TestCase):
 
     def test_data_group(self):
         dt = 0.0141
-        tcspc_experiment = chisurf.experiments.core.Experiment(
+        tcspc_experiment = chisurf.core.experiments.core.Experiment(
             name='TCSPC'
         )
-        tcspc_reader = chisurf.experiments.tcspc.TCSPCReader(
+        tcspc_reader = chisurf.core.experiments.tcspc.TCSPCReader(
             is_jordi=False,
             skiprows=10,
             dt=dt,
@@ -37,9 +37,9 @@ class FitTests(unittest.TestCase):
             filename='./test/data/tcspc/ibh_sample/Decay_577D+577A+GTPgS.txt'
         )
 
-        fit_d0 = chisurf.fitting.fit.FitGroup(
+        fit_d0 = chisurf.core.fitting.fit.FitGroup(
             data=decay_dd_d0,
-            model_class=chisurf.models.tcspc.lifetime.LifetimeModel
+            model_class=chisurf.core.models.tcspc.lifetime.LifetimeModel
         )
 
         model_d0 = fit_d0.model
@@ -68,9 +68,9 @@ class FitTests(unittest.TestCase):
             True
         )
 
-        fit_da = chisurf.fitting.fit.FitGroup(
+        fit_da = chisurf.core.fitting.fit.FitGroup(
             data=decay_dd_da,
-            model_class=chisurf.models.tcspc.fret.GaussianModel
+            model_class=chisurf.core.models.tcspc.fret.GaussianModel
         )
         model_da = fit_da.model
 

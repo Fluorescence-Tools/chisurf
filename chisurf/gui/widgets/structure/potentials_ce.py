@@ -4,16 +4,16 @@ import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.gui.widgets
-import chisurf.structure
-from chisurf.settings.path_utils import get_path
-from chisurf.structure.potential.potentials import CEPotential
+import chisurf.core.structure
+from chisurf.core.settings.path_utils import get_path
+from chisurf.core.structure.potential.potentials import CEPotential
 
 
 class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure,
+            structure: chisurf.core.structure.Structure,
             potential: str = None,
             ca_cutoff: float = 25.0,
             parent=None

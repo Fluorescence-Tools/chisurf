@@ -5,7 +5,7 @@ import sqlite3
 # Add project root
 sys.path.append(r"e:\dev\chisurf")
 
-from chisurf.fio.mmcif.db import FluorophoreDatabase
+from chisurf.core.fio.mmcif.db import FluorophoreDatabase
 
 db_path = r"e:\dev\chisurf\chisurf\plugins\_dev\fluorophore_db\spectra.db"
 

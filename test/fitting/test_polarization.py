@@ -1,8 +1,8 @@
 import logging
 import chisurf
-from chisurf.data import DataCurve, ExperimentDataCurveGroup
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.models.tcspc.lifetime import LifetimeModel
+from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.models.tcspc.lifetime import LifetimeModel
 import numpy as np
 
 # Configure logging

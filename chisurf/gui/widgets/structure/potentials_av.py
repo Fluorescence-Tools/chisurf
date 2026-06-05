@@ -4,15 +4,15 @@ import json
 from qtpy import QtWidgets
 
 import chisurf.gui.widgets
-import chisurf.structure
-from chisurf.structure.av.potential import AvPotential
+import chisurf.core.structure
+from chisurf.core.structure.av.potential import AvPotential
 
 
 class AvPotentialWidget(AvPotential, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure = None,
+            structure: chisurf.core.structure.Structure = None,
             parent=None
     ):
         QtWidgets.QWidget.__init__(self, parent=parent)

@@ -6,21 +6,21 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 
-import chisurf.decorators
+import chisurf.core.decorators
 
 
 class Tests(unittest.TestCase):
 
     def test_register(self):
-        @chisurf.decorators.register
+        @chisurf.core.decorators.register
         class A1():
             pass
 
-        @chisurf.decorators.register
+        @chisurf.core.decorators.register
         class B():
             pass
 
-        @chisurf.decorators.register
+        @chisurf.core.decorators.register
         class A2(A1):
             pass
 
@@ -51,7 +51,7 @@ class Tests(unittest.TestCase):
 
     def test_set_module(self):
         name = 'test_module_name'
-        @chisurf.decorators.set_module(name)
+        @chisurf.core.decorators.set_module(name)
         def example():
             pass
         self.assertEqual(

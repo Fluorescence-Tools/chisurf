@@ -23,7 +23,7 @@ from qtpy.QtCore import Qt, QRegExp
 from qtpy.QtGui import QTextCharFormat, QFont, QColor, QSyntaxHighlighter
 
 import chisurf
-import chisurf.settings
+import chisurf.core.settings
 
 # Define the plugin name - this will appear in the Plugins menu
 name = "Setup:Styles"
@@ -33,7 +33,7 @@ def copy_styles_to_user_folder():
     """Copies all style files from the gui/styles directory to the user folder,
     ensuring that existing files are not overwritten."""
     package_path = pathlib.Path(chisurf.__file__).parent / 'gui' / 'styles'
-    user_settings_path = chisurf.settings.get_path('settings') / 'styles'
+    user_settings_path = chisurf.core.settings.get_path('settings') / 'styles'
     user_settings_path.mkdir(parents=True, exist_ok=True)
 
     for file in package_path.iterdir():
@@ -54,7 +54,7 @@ def clear_style_files():
     Raises:
         None. All deletion errors are caught and logged.
     """
-    styles_dir = chisurf.settings.get_path('settings') / 'styles'
+    styles_dir = chisurf.core.settings.get_path('settings') / 'styles'
 
     # If the styles directory doesn't exist, nothing to do
     if not os.path.isdir(styles_dir):
@@ -138,7 +138,7 @@ class StyleManagerWidget(QMainWindow):
         self.resize(800, 600)
         
         # Get the styles directory
-        self.styles_dir = chisurf.settings.get_path('settings') / 'styles'
+        self.styles_dir = chisurf.core.settings.get_path('settings') / 'styles'
         self.styles_dir.mkdir(parents=True, exist_ok=True)
         
         # Current file being edited
@@ -315,11 +315,11 @@ class StyleManagerWidget(QMainWindow):
             QApplication.instance().setStyleSheet(style_sheet)
             
             # Update the style sheet in chisurf settings
-            chisurf.settings.style_sheet = style_sheet
+            chisurf.core.settings.style_sheet = style_sheet
             
             # Update the current style sheet file name in settings
             file_name = os.path.basename(self.current_file)
-            chisurf.settings.gui['style_sheet'] = file_name
+            chisurf.core.settings.gui['style_sheet'] = file_name
             
             self.status_bar.showMessage(f"Applied style: {file_name}")
         except Exception as e:

@@ -20,7 +20,7 @@ import unittest
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from chisurf.fio.fluorescence import BeckerHicklSetReader
+from chisurf.core.fio.fluorescence import BeckerHicklSetReader
 
 
 class TestBeckerHicklSetReader(unittest.TestCase):
@@ -79,7 +79,7 @@ from pathlib import Path
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('..'))
 
-from chisurf.fio.fluorescence.becker_hickl_set import BeckerHicklSetReader
+from chisurf.core.fio.fluorescence.becker_hickl_set import BeckerHicklSetReader
 
 def main():
     # Create a temporary .set file for testing

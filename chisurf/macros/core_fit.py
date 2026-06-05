@@ -9,18 +9,18 @@ import importlib
 import numpy as np
 
 import chisurf
-import chisurf.base
-import chisurf.data
-import chisurf.fitting
+import chisurf.core.base
+import chisurf.core.data
+import chisurf.core.fitting
 import chisurf.gui
 import chisurf.gui.widgets
-from chisurf.actions import record_action, get_action_catalog
+from chisurf.core.actions import record_action, get_action_catalog
 
 from chisurf import typing
 from chisurf import logging
-from chisurf.project import Project as CSProject, save_project as project_save_json, load_project as project_load_json
-from chisurf.project import fit_state as project_fit_state
-from chisurf.experiments.core.reader import ExperimentReader
+from chisurf.core.project import Project as CSProject, save_project as project_save_json, load_project as project_load_json
+from chisurf.core.project import fit_state as project_fit_state
+from chisurf.core.experiments.core.reader import ExperimentReader
 
 
 def _iter_group_members(group):
@@ -569,7 +569,7 @@ def add_fit(
     if exp is None:
         # Headless fallback: trying to use first registered experiment
         try:
-            exp = list(chisurf.experiments.types.values())[0] if chisurf.experiments.types else None
+            exp = list(chisurf.core.experiments.types.values())[0] if chisurf.core.experiments.types else None
         except Exception:
             exp = None
     if exp is None:
@@ -588,7 +588,7 @@ def add_fit(
     # If not found and we have a specific name, search globally in all Model subclasses.
     # This ensures headless project loading works for any registered model class in the environment.
     if model_class is None and model_name != "None":
-        from chisurf.models.model import Model
+        from chisurf.core.models.model import Model
         def get_all_subclasses(cls):
             all_subclasses = []
             for subclass in cls.__subclasses__():
@@ -614,8 +614,8 @@ def add_fit(
     for data_set in data_sets:
         if data_set.experiment is data_sets[0].experiment:
             # Make sure the data set is a DataGroup
-            if not isinstance(data_set, chisurf.data.DataGroup):
-                data_group = chisurf.data.ExperimentDataCurveGroup([data_set])
+            if not isinstance(data_set, chisurf.core.data.DataGroup):
+                data_group = chisurf.core.data.ExperimentDataCurveGroup([data_set])
             else:
                 data_group = data_set
 
@@ -661,7 +661,7 @@ def add_fit(
                     dataset_model_kw[key] = value
 
             # Create the fit
-            fit_group = chisurf.fitting.fit.FitGroup(
+            fit_group = chisurf.core.fitting.fit.FitGroup(
                 data=data_group,
                 model_class=model_class,
                 model_kw=dataset_model_kw
@@ -785,7 +785,7 @@ def save_fit(
         log.debug("No target_path passed—using working_path=%r", target_path)
 
     if use_complex_name:
-        save_name = chisurf.base.clean_string(fit.name)
+        save_name = chisurf.core.base.clean_string(fit.name)
         log.debug("Using complex fit.name → %r", save_name)
     else:
         save_name = os.path.basename(fit.data.name)
@@ -813,7 +813,7 @@ def save_fit(
         datasets: typing.Dict[str, typing.Dict] = {}
         try:
             data_obj = getattr(fit, "data", None)
-            if isinstance(data_obj, chisurf.data.DataCurve):
+            if isinstance(data_obj, chisurf.core.data.DataCurve):
                 try:
                     x = np.asarray(getattr(data_obj, "x", []), dtype=float)
                     y = np.asarray(getattr(data_obj, "y", []), dtype=float)
@@ -854,7 +854,7 @@ def save_fit(
             proj = CSProject(
                 name=fit.name or save_stem,
                 description=f"ChiSurf fit '{fit.name or save_stem}'",
-                chisurf_version=getattr(chisurf.info, "__version__", None),
+                chisurf_version=getattr(chisurf.core.info, "__version__", None),
                 datasets=datasets,
                 experiments={},
                 fits={fg_key: fit_payload},
@@ -957,10 +957,13 @@ def save_fit(
     log.info("Saving report document to %r", docx_path)
     document.save(docx_path)
 
-    # ——— force Qt cleanup —————
+    # ——— attempt Qt event processing cleanup —————
     log.debug("Processing pending Qt events and cleaning up")
-    from PyQt5.QtWidgets import QApplication
-    QApplication.processEvents()
+    try:
+        from qtpy.QtWidgets import QApplication
+        QApplication.processEvents()
+    except Exception:
+        pass
 
     # drop Qt references and run GC
     fit_window = widget = fit_group = document = None
@@ -1032,11 +1035,11 @@ def save_fits(target_path: str, use_complex_name: bool = False):
 
             # Skip global fits
             setup = getattr(fit.data, 'setup', None)
-            if isinstance(setup, chisurf.experiments.globalfit.GlobalFitSetup):
+            if isinstance(setup, chisurf.core.experiments.globalfit.GlobalFitSetup):
                 continue
 
             if use_complex_name:
-                save_name = chisurf.base.clean_string(fit.name)
+                save_name = chisurf.core.base.clean_string(fit.name)
             else:
                 save_name = os.path.basename(fit.data.name)
             save_stem = os.path.splitext(save_name)[0]
@@ -1378,7 +1381,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     """Save the current state of the application as a project.
 
     This implementation writes a JSON ``project.json`` file using
-    :class:`chisurf.project.Project` together with a snapshot of all datasets,
+    :class:`chisurf.core.project.Project` together with a snapshot of all datasets,
     fits and UI state. It no longer creates per-fit folders, screenshots or
     DOCX reports; everything is embedded in ``project.json``.
 
@@ -1418,7 +1421,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     dataset_id_by_obj: typing.Dict[int, str] = {}
     ds_counter = 0
 
-    def register_datacurve(dc: chisurf.data.DataCurve) -> str:
+    def register_datacurve(dc: chisurf.core.data.DataCurve) -> str:
         nonlocal ds_counter
         key = id(dc)
         if key in dataset_id_by_obj:
@@ -1456,16 +1459,16 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
 
     # Register all DataCurve objects reachable from imported_datasets
     for item in chisurf.imported_datasets:
-        if isinstance(item, chisurf.data.DataCurve):
+        if isinstance(item, chisurf.core.data.DataCurve):
             register_datacurve(item)
-        elif isinstance(item, chisurf.data.DataGroup):
+        elif isinstance(item, chisurf.core.data.DataGroup):
             for dc in item:
-                if isinstance(dc, chisurf.data.DataCurve):
+                if isinstance(dc, chisurf.core.data.DataCurve):
                     register_datacurve(dc)
 
     dataset_layout: typing.List[typing.Dict[str, typing.Any]] = []
     for item in chisurf.imported_datasets:
-        if isinstance(item, chisurf.data.DataCurve):
+        if isinstance(item, chisurf.core.data.DataCurve):
             ds_id = register_datacurve(item)
             dataset_layout.append({
                 "kind": "dataset",
@@ -1473,10 +1476,10 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             })
             continue
 
-        if isinstance(item, chisurf.data.DataGroup):
+        if isinstance(item, chisurf.core.data.DataGroup):
             member_ids: typing.List[str] = []
             for dc in item:
-                if isinstance(dc, chisurf.data.DataCurve):
+                if isinstance(dc, chisurf.core.data.DataCurve):
                     member_ids.append(register_datacurve(dc))
             if not member_ids:
                 continue
@@ -1512,7 +1515,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             continue
 
         base_name = getattr(fit_group, "name", "") or f"fitgroup_{i:03d}"
-        fg_id = chisurf.base.clean_string(str(base_name)) or f"fitgroup_{i:03d}"
+        fg_id = chisurf.core.base.clean_string(str(base_name)) or f"fitgroup_{i:03d}"
 
         local_fits_state: typing.List[typing.Dict[str, typing.Any]] = []
         model_name = None
@@ -1521,7 +1524,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         for local_fit in grouped:
             data_obj = getattr(local_fit, "data", None)
             ds_id = None
-            if isinstance(data_obj, chisurf.data.DataCurve):
+            if isinstance(data_obj, chisurf.core.data.DataCurve):
                 ds_id = register_datacurve(data_obj)
 
             # Derive human-readable model label from experiment, if available
@@ -1603,7 +1606,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         ui_state["current_experiment_idx"] = getattr(cs, "current_experiment_idx", 0)
         ui_state["current_setup_idx"] = getattr(cs, "current_setup_idx", 0)
         try:
-            from chisurf.project.ui_state import get_ui_state
+            from chisurf.core.project.ui_state import get_ui_state
             gui_state = get_ui_state(cs)
             if gui_state:
                 ui_state.update(gui_state)
@@ -1613,7 +1616,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     proj = CSProject(
         name=project_name,
         description=f"ChiSurf project '{project_name}'",
-        chisurf_version=getattr(chisurf.info, "__version__", None),
+        chisurf_version=getattr(chisurf.core.info, "__version__", None),
         datasets=datasets,
         experiments={},  # reserved for future structured experiment state
         fits=manifest_fits,
@@ -1739,7 +1742,7 @@ def _write_fit_docx(
 
 def _build_fitgroup_payload(
         fit_group,
-        register_datacurve: typing.Callable[[chisurf.data.DataCurve], str],
+        register_datacurve: typing.Callable[[chisurf.core.data.DataCurve], str],
         log: typing.Any,
         group_index: int = 0,
         include_global_links: bool = True,
@@ -1758,7 +1761,7 @@ def _build_fitgroup_payload(
     for local_fit in grouped:
         data_obj = getattr(local_fit, "data", None)
         ds_id = None
-        if isinstance(data_obj, chisurf.data.DataCurve):
+        if isinstance(data_obj, chisurf.core.data.DataCurve):
             ds_id = register_datacurve(data_obj)
 
         # Derive human-readable model label from experiment, if available
@@ -1829,7 +1832,7 @@ def _build_fitgroup_payload(
 
 def _build_fitgroup_payload_from_window(
         fit_window,
-        register_datacurve: typing.Callable[[chisurf.data.DataCurve], str],
+        register_datacurve: typing.Callable[[chisurf.core.data.DataCurve], str],
         log: typing.Any,
         group_index: int = 0,
         include_global_links: bool = True,
@@ -1877,7 +1880,7 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
     dataset_id_by_obj: typing.Dict[int, str] = {}
     ds_counter = 0
 
-    def register_datacurve(dc: chisurf.data.DataCurve) -> str:
+    def register_datacurve(dc: chisurf.core.data.DataCurve) -> str:
         nonlocal ds_counter
         key = id(dc)
         if key in dataset_id_by_obj:
@@ -1927,7 +1930,7 @@ def save_fit_project(target_path: str, fit_window=None, fit_name: str = "chisurf
     proj = CSProject(
         name=fit_name,
         description=f"ChiSurf fit '{fit_name}'",
-        chisurf_version=getattr(chisurf.info, "__version__", None),
+        chisurf_version=getattr(chisurf.core.info, "__version__", None),
         datasets=datasets,
         experiments={},
         fits={fg_key: fit_payload},
@@ -2016,7 +2019,7 @@ def load_fit_project(project_path: str):
         pass
 
     # --- Reconstruct datasets and append to existing imports ---------------
-    dataset_objects: typing.Dict[str, chisurf.data.DataCurve] = {}
+    dataset_objects: typing.Dict[str, chisurf.core.data.DataCurve] = {}
     dataset_indices: typing.Dict[str, int] = {}
 
     for ds_id, payload in (proj.datasets or {}).items():
@@ -2027,7 +2030,7 @@ def load_fit_project(project_path: str):
             y = np.asarray(payload.get("y", []), dtype=float)
             ex = np.asarray(payload.get("ex", np.zeros_like(x)), dtype=float)
             ey = np.asarray(payload.get("ey", np.ones_like(y)), dtype=float)
-            dc = chisurf.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
+            dc = chisurf.core.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
 
             if filename:
                 try:
@@ -2167,7 +2170,7 @@ def load_project(project_path: str):
     :func:`save_project`. Datasets are reconstructed from the stored x/y/ex/ey
     arrays, :func:`add_fit` is used to rebuild each :class:`FitGroup`, and
     per-fit parameter state plus global links are restored via
-    :mod:`chisurf.project.fit_state`.
+    :mod:`chisurf.core.project.fit_state`.
 
     Parameters
     ----------
@@ -2243,7 +2246,7 @@ def load_project(project_path: str):
             pass
 
     # --- Reconstruct datasets ---------------------------------------------
-    dataset_objects: typing.Dict[str, chisurf.data.DataCurve] = {}
+    dataset_objects: typing.Dict[str, chisurf.core.data.DataCurve] = {}
     dataset_indices: typing.Dict[str, int] = {}
 
     for ds_id, payload in (proj.datasets or {}).items():
@@ -2254,7 +2257,7 @@ def load_project(project_path: str):
             y = np.asarray(payload.get("y", []), dtype=float)
             ex = np.asarray(payload.get("ex", np.zeros_like(x)), dtype=float)
             ey = np.asarray(payload.get("ey", np.ones_like(y)), dtype=float)
-            dc = chisurf.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
+            dc = chisurf.core.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
 
             # Preserve the original filename for user reference without
             # triggering a reload from disk (DataCurve.__init__ only loads
@@ -2339,13 +2342,13 @@ def load_project(project_path: str):
                 if not members:
                     continue
 
-                group_class = chisurf.data.ExperimentDataCurveGroup
+                group_class = chisurf.core.data.ExperimentDataCurveGroup
                 if rec.get("group_type") == "ExperimentDataGroup":
-                    group_class = chisurf.data.ExperimentDataGroup
+                    group_class = chisurf.core.data.ExperimentDataGroup
                 try:
                     group_obj = group_class(members)
                 except Exception:
-                    group_obj = chisurf.data.ExperimentDataCurveGroup(members)
+                    group_obj = chisurf.core.data.ExperimentDataCurveGroup(members)
 
                 group_name = rec.get("name")
                 if isinstance(group_name, str) and group_name:
@@ -2482,7 +2485,7 @@ def load_project(project_path: str):
         # done only after datasets and fits (and thus subwindows) have been
         # recreated so that Qt has matching widgets to apply the layout to.
         try:
-            from chisurf.project.ui_state import set_ui_state
+            from chisurf.core.project.ui_state import set_ui_state
             set_ui_state(cs, ui_state)
         except Exception as exc:
             log.warning(f"load_project: could not restore UI state from dict: {exc}")

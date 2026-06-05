@@ -39,9 +39,9 @@ from typing import Any, Dict, List
 
 from qtpy import QtWidgets, QtCore
 
-from chisurf.settings import cs_settings
+from chisurf.core.settings import cs_settings
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups, JsonEditorDialog
-from chisurf.fluorescence.fcs.channel_setups import (
+from chisurf.core.fluorescence.fcs.channel_setups import (
     FCS_CHANNEL_SETUPS_FILE,
     load_fcs_channel_setups,
     save_fcs_channel_setups,

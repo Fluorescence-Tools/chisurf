@@ -3,7 +3,7 @@ import numpy as np
 import tables
 from chisurf.gui import QtWidgets
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 

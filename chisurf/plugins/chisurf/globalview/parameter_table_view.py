@@ -6,10 +6,10 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf
 from chisurf import logging
-from chisurf.fitting.fit import Fit, FitGroup
-from chisurf.fitting.parameter import FittingParameter
-from chisurf.plots.table_plot import BooleanToggleDelegate
-from chisurf.base import Base, find_by_uuid
+from chisurf.core.fitting.fit import Fit, FitGroup
+from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.gui.plots.table_plot import BooleanToggleDelegate
+from chisurf.core.base import Base, find_by_uuid
 
 from chisurf.plugins.chisurf.globalview.parameter_table_model import (
     ParameterTableModel,
@@ -644,7 +644,7 @@ class ParameterTableView(QtWidgets.QWidget):
             return
 
         # If it's a Parameter, try to select its row in the table
-        from chisurf.parameter import Parameter
+        from chisurf.core.parameter import Parameter
         if isinstance(obj, Parameter):
             uids = {str(obj.unique_identifier)}
             for src_row in range(self._model.rowCount()):

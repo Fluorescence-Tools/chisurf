@@ -9,10 +9,10 @@ import pathlib
 from chisurf.gui import QtGui, QtWidgets, QtCore
 from io import BytesIO
 
-import chisurf.fio
-import chisurf.settings
-import chisurf.curve
-import chisurf.base
+import chisurf.core.fio
+import chisurf.core.settings
+import chisurf.core.curve
+import chisurf.core.base
 import chisurf
 
 
@@ -53,7 +53,7 @@ class MyMessageBox(QtWidgets.QMessageBox):
             label: str = None,
             info: str = "",
             details: str = None,
-            show_fortune: bool = chisurf.settings.cs_settings['fortune']
+            show_fortune: bool = chisurf.core.settings.cs_settings['fortune']
     ):
         super().__init__()
         self.setSizeGripEnabled(True)
@@ -497,7 +497,7 @@ def get_all_items(tree_widget):
     return all_items
 
 
-class Controller(QtWidgets.QWidget, chisurf.base.Base):
+class Controller(QtWidgets.QWidget, chisurf.core.base.Base):
     """
     Used by FittingControllerWidget
     """
@@ -531,7 +531,7 @@ class Controller(QtWidgets.QWidget, chisurf.base.Base):
 
 class View(
     QtWidgets.QWidget,
-    chisurf.base.Base
+    chisurf.core.base.Base
 ):
     """
     Used by Plot

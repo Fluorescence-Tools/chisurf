@@ -564,7 +564,7 @@ def burst_filter(tttr, min_ph, ph_window, time_window):
     """
     Apply burst filter using tttrlib's burst_search method.
     
-    This is the correct implementation matching chisurf.fluorescence.burst.burst_filter
+    This is the correct implementation matching chisurf.core.fluorescence.burst.burst_filter
     
     Parameters:
     -----------

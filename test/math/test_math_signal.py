@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 
-import chisurf.math.signal
-from chisurf.math.signal import shift_array
+import chisurf.core.math.signal
+from chisurf.core.math.signal import shift_array
 
 
 class Tests(unittest.TestCase):

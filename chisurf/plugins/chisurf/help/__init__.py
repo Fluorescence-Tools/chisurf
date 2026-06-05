@@ -22,8 +22,8 @@ from qtpy.QtGui import QTextDocument, QImage
 
 import chisurf
 import chisurf.plugins
-import chisurf.settings
-from chisurf import info
+import chisurf.core.settings
+from chisurf.core import info
 
 try:
     import markdown
@@ -221,11 +221,11 @@ class HelpWidget(QWidget):
         but labels in the tree still prefer README titles where available.
         """
         # Plugin settings and ordering
-        plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+        plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
         disabled_plugins = plugin_settings.get('disabled_plugins', [])
         hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
         plugin_order = plugin_settings.get('plugin_order', {})
-        experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+        experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
 
         # Discover plugin modules (built-in + user, including nested subpackages)
         try:

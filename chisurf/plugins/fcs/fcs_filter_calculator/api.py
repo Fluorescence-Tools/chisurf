@@ -220,7 +220,7 @@ def compute_filters(
         Result object containing filters, reconstruction, residuals, and metadata.
     """
     # Import here to avoid circular dependencies
-    from chisurf.fluorescence.fcs.filtered import calc_ffcs_filters
+    from chisurf.core.fluorescence.fcs.filtered import calc_ffcs_filters
     
     # Validate inputs
     total = np.asarray(total_decay, dtype=float)
@@ -297,7 +297,7 @@ def compute_filters_mfd(
     metadata: Dict[str, Any] | None = None,
 ) -> FilterResultMFD:
     """Compute fFCS lifetime filters for MFD data."""
-    from chisurf.fluorescence.fcs.filtered import calc_ffcs_filters
+    from chisurf.core.fluorescence.fcs.filtered import calc_ffcs_filters
     
     total_par = np.asarray(total_decay_par, dtype=float)
     total_perp = np.asarray(total_decay_perp, dtype=float)

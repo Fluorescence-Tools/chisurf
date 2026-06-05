@@ -4,16 +4,16 @@ import numpy as np
 from qtpy import QtWidgets
 
 import chisurf.gui.widgets
-import chisurf.structure
-from chisurf.settings.path_utils import get_path
-from chisurf.structure.potential.potentials import Ramachandran
+import chisurf.core.structure
+from chisurf.core.settings.path_utils import get_path
+from chisurf.core.structure.potential.potentials import Ramachandran
 
 
 class RamachandranWidget(Ramachandran, QtWidgets.QWidget):
 
     def __init__(
             self,
-            structure: chisurf.structure.Structure,
+            structure: chisurf.core.structure.Structure,
             filename: str = None,
             parent=None
     ):

@@ -5,8 +5,8 @@ import pathlib
 import pytest
 
 import chisurf
-import chisurf.fio.fluorescence.fcs as fcs_io
-import chisurf.fio.fluorescence.fcs.sin_correlator as sin_reader
+import chisurf.core.fio.fluorescence.fcs as fcs_io
+import chisurf.core.fio.fluorescence.fcs.sin_correlator as sin_reader
 
 
 DATA_ROOT = pathlib.Path(__file__).parent / "data" / "fcs"

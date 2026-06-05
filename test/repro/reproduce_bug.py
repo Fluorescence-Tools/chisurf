@@ -6,15 +6,15 @@ import sys
 TOPDIR = pathlib.Path(__file__).parent
 sys.path.append(str(TOPDIR))
 
-import chisurf.models.tcspc.lifetime
-import chisurf.models.tcspc.anisotropy
-import chisurf.fitting.fit
+import chisurf.core.models.tcspc.lifetime
+import chisurf.core.models.tcspc.anisotropy
+import chisurf.core.fitting.fit
 
 def reproduce_bug():
     print("Reproducing bug...")
     
     # Create Lifestyle fit
-    lt = chisurf.models.tcspc.lifetime.Lifetime(short='L')
+    lt = chisurf.core.models.tcspc.lifetime.Lifetime(short='L')
     print(f"Initial n: {lt.n}")
     
     print("Appending component 1...")

@@ -1,7 +1,7 @@
 """Tests for copy/paste and alignment behaviour in the node editor scene."""
 
 import pytest
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.gui.widgets.node_editor.scene import NodeScene
 from chisurf.gui.widgets.node_editor.node_item import NodeGraphicsItem

@@ -626,7 +626,7 @@ def assign_ss_c3_from_file(
         return None
 
     try:  # Lazy import to avoid hard-wiring Chimol to IMP at import time
-        from chisurf.fio.structure import coordinates as _coords  # type: ignore[import]
+        from chisurf.core.fio.structure import coordinates as _coords  # type: ignore[import]
     except Exception:
         return None
 

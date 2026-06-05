@@ -151,7 +151,7 @@ def kappasq_all_delta(
     second rank order parameter of the donor and acceptor are estimated by the
     dye's residual anisotropies. The angle between the symmetry axes is estimated
     by the residual anisotropy of the FRET sensitized emission (see:
-    `chisurf.fluorescence.anisotropy.kappa2.s2delta`).
+    `chisurf.core.fluorescence.anisotropy.kappa2.s2delta`).
 
     This function computes a orientation factor distribution, :math:`p(/kappa^2)`,
     for a wobbling in a cone model (WIC) for second rank structure factors of

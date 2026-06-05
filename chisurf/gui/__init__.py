@@ -21,7 +21,7 @@ from qtpy import QtWidgets, QtGui, QtCore, uic
 import pyqtgraph as pg
 
 import chisurf  # Ensure chisurf is available module-wide
-import chisurf.settings
+import chisurf.core.settings
 from chisurf import logging
 import chisurf.gui.decorators
 
@@ -260,7 +260,7 @@ def setup_logging_widgets(window):
     )
     window.status_log_handler = log_handler
 
-    log_level = chisurf.settings.cs_settings.get('log_level', logging.INFO)
+    log_level = chisurf.core.settings.cs_settings.get('log_level', logging.INFO)
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
@@ -335,7 +335,7 @@ class SplashScreen(QtWidgets.QSplashScreen):
         self.message_color = QtCore.Qt.lightGray  # Light gray text color
 
         # Get version information
-        from chisurf.info import __version__, __license__
+        from chisurf.core.info import __version__, __license__
         self.version_text = f"Version: {__version__}"
 
         # Initialize copyright, license, and contributors information
@@ -405,29 +405,29 @@ def setup_gui(
     import chisurf
     def gui_imports():
         # Phase 1: Only what's needed for the main window scaffold
-        import chisurf.settings
-        import chisurf.base
-        import chisurf.common
-        import chisurf.curve
-        import chisurf.decorators
-        import chisurf.parameter
-        import chisurf.experiments
-        import chisurf.fio
+        import chisurf.core.settings
+        import chisurf.core.base
+        import chisurf.core.common
+        import chisurf.core.curve
+        import chisurf.core.decorators
+        import chisurf.core.parameter
+        import chisurf.core.experiments
+        import chisurf.core.fio
         import chisurf.gui.decorators
         import chisurf.gui.widgets.ipython
         import chisurf.gui.widgets
         import chisurf.macros
-        import chisurf.math
-        if chisurf.settings.exceptions_on_gui:
+        import chisurf.core.math
+        if chisurf.core.settings.exceptions_on_gui:
             import chisurf.gui.exception_hook
 
     def deferred_gui_imports():
         # Phase 2: Heavy functional submodules
-        import chisurf.fitting
-        import chisurf.fluorescence
-        import chisurf.models
-        import chisurf.plots
-        import chisurf.structure
+        import chisurf.core.fitting
+        import chisurf.core.fluorescence
+        import chisurf.core.models
+        import chisurf.gui.plots
+        import chisurf.core.structure
         
 
     def setup_ipython():
@@ -440,19 +440,25 @@ def setup_gui(
         import chisurf
         window = Main()
         chisurf.cs = window
+        import chisurf.core.base
+        chisurf.core.base.set_safe_import_notify(
+            lambda title, text: QtWidgets.QMessageBox.information(
+                window, title, text, QtWidgets.QMessageBox.Ok
+            )
+        )
         return window
 
     def setup_style(app):
         import pathlib
         import chisurf
-        gui_settings = chisurf.settings.cs_settings.get('gui') or {}
+        gui_settings = chisurf.core.settings.cs_settings.get('gui') or {}
         style_name = gui_settings.get('style_sheet')
 
         base_path = pathlib.Path(chisurf.__file__).parent
         package_styles_path = base_path / "gui" / "styles"
 
         try:
-            user_styles_path = chisurf.settings.get_path('settings') / 'styles'
+            user_styles_path = chisurf.core.settings.get_path('settings') / 'styles'
         except Exception:
             user_styles_path = None
 
@@ -474,7 +480,7 @@ def setup_gui(
 
                 app.setStyleSheet(text)
                 try:
-                    chisurf.settings.style_sheet = text
+                    chisurf.core.settings.style_sheet = text
                 except Exception:
                     pass
                 return True
@@ -695,13 +701,13 @@ def setup_gui(
         submenu_cache = {}
 
         # Get plugin settings
-        plugin_settings = chisurf.settings.cs_settings.get('plugins', {})
+        plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
         disabled_plugins = plugin_settings.get('disabled_plugins', [])
         hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
         plugin_order = plugin_settings.get('plugin_order', {})
 
         # Check if we're in experimental mode
-        experimental_mode = chisurf.settings.cs_settings.get('enable_experimental', False)
+        experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
 
         # Discover plugins (built-in + user, including nested subpackages)
         try:
@@ -1035,7 +1041,7 @@ def setup_gui(
     elif stage == "check_updates":
         # Respect user setting to ignore update prompts on startup
         try:
-            _plugins = chisurf.settings.cs_settings.get('plugins') or {}
+            _plugins = chisurf.core.settings.cs_settings.get('plugins') or {}
             _updater_settings = _plugins.get('updater') or {}
             _ignore_updates = bool(_updater_settings.get('ignore_updates_on_startup', False))
             _check_on_startup = bool(_updater_settings.get('check_on_startup', True))
@@ -1118,7 +1124,7 @@ def setup_gui(
             pass
     elif stage == "start_jupyter":
         try:
-            _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+            _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
             _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
         except Exception:
             _start_jupyter = False
@@ -1208,7 +1214,7 @@ def setup_gui(
         setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
         try:
-            _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+            _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
             _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
         except Exception:
             _start_jupyter = False
@@ -1272,7 +1278,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
     # Update progress as the setup progresses
     try:
-        _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+        _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
         _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
     except Exception:
         _start_jupyter = False
@@ -1416,7 +1422,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
             pass
 
         try:
-            from chisurf.settings import path_utils as _pu
+            from chisurf.core.settings import path_utils as _pu
             existed_before = getattr(_pu, "USER_SETTINGS_EXISTED_BEFORE", True)
             if existed_before is False:
                 return True
@@ -1425,7 +1431,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
         try:
             import json
-            settings_dir = chisurf.settings.get_path('settings')
+            settings_dir = chisurf.core.settings.get_path('settings')
             det_file = settings_dir / 'detector_setups.json'
             if not det_file.exists():
                 return True
@@ -1487,7 +1493,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
 def set_app_style(app: QtWidgets.QApplication):
     try:
-        _gui_cfg = chisurf.settings.cs_settings.get('gui') or {}
+        _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
         _fallback_style = "Windows" if sys.platform == "win32" else "Fusion"
         _style_name = _gui_cfg.get('qt_style')
         if _style_name is None:

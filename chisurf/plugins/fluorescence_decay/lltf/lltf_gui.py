@@ -11,12 +11,12 @@ from typing import Optional, Dict, Any, List, Tuple
 import numpy as np
 from qtpy import QtWidgets, QtCore, QtGui
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets.settings_editor
-import chisurf.fluorescence.tcspc.convolve
-import chisurf.fluorescence.general
-import chisurf.fio as io
+import chisurf.core.fluorescence.tcspc.convolve
+import chisurf.core.fluorescence.general
+import chisurf.core.fio as io
 
 # Import matplotlib for plotting
 import matplotlib

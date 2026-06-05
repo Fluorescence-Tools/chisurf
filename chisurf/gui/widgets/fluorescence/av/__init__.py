@@ -1,10 +1,10 @@
 from qtpy import QtWidgets
 
-import chisurf.fitting
-import chisurf.fluorescence
-import chisurf.structure
+import chisurf.core.fitting
+import chisurf.core.fluorescence
+import chisurf.core.structure
 import chisurf.gui.widgets
-from chisurf.structure.av.dynamic import ProteinQuenching, Dye, Sticking
+from chisurf.core.structure.av.dynamic import ProteinQuenching, Dye, Sticking
 from chisurf.gui.widgets.fitting import FittingParameterWidget
 from chisurf.gui.widgets.fluorescence.av.accessible_volume import AVProperties
 
@@ -59,7 +59,7 @@ class ProteinQuenchingWidget(ProteinQuenching, QtWidgets.QGroupBox):
         kq = kwargs.get('k_quench_protein', 5.0)
         print(f"kq: {kq}")
         # Create a FittingParameter from the k_quench_scale parameter
-        k_quench_param = chisurf.fitting.parameter.FittingParameter(
+        k_quench_param = chisurf.core.fitting.parameter.FittingParameter(
             value=kq,
             name='kQ'
         )
@@ -106,7 +106,7 @@ class DyeWidget(Dye, QtWidgets.QGroupBox):
     ):
         QtWidgets.QGroupBox.__init__(self)
         self.dye_select = QtWidgets.QComboBox()
-        self.dye_select.addItems(chisurf.structure.av.dye_names)
+        self.dye_select.addItems(chisurf.core.structure.av.dye_names)
         Dye.__init__(self, **kwargs)
 
         layout = QtWidgets.QVBoxLayout()
@@ -174,8 +174,8 @@ class StickingWidget(Sticking, QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            fit: 'chisurf.fitting.fit.Fit',
-            structure: 'chisurf.structure.Structure',
+            fit: 'chisurf.core.fitting.fit.Fit',
+            structure: 'chisurf.core.structure.Structure',
             **kwargs
     ):
         super().__init__(fit, structure, **kwargs)

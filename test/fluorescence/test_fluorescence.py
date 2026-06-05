@@ -3,17 +3,17 @@ import numpy as np
 import glob
 import scipy.stats
 
-import chisurf.fio
-import chisurf.fio.fluorescence
-import chisurf.fluorescence
-import chisurf.fluorescence.fret
-import chisurf.fluorescence.fcs
-import chisurf.fluorescence.tcspc
-import chisurf.fluorescence.general
-import chisurf.fluorescence.anisotropy
+import chisurf.core.fio
+import chisurf.core.fio.fluorescence
+import chisurf.core.fluorescence
+import chisurf.core.fluorescence.fret
+import chisurf.core.fluorescence.fcs
+import chisurf.core.fluorescence.tcspc
+import chisurf.core.fluorescence.general
+import chisurf.core.fluorescence.anisotropy
 
-from chisurf.fluorescence.anisotropy.decay import calculcate_spectrum
-from chisurf.fluorescence.tcspc.corrections import compute_linearization_table
+from chisurf.core.fluorescence.anisotropy.decay import calculcate_spectrum
+from chisurf.core.fluorescence.tcspc.corrections import compute_linearization_table
 
 
 class Tests(unittest.TestCase):
@@ -105,12 +105,12 @@ class Tests(unittest.TestCase):
     def test_vm_vv_vh(self):
         times = np.linspace(0, 50, 32)
         lifetime_spectrum = np.array([1., 4], dtype=np.float)
-        times, vm = chisurf.fluorescence.general.calculate_fluorescence_decay(
+        times, vm = chisurf.core.fluorescence.general.calculate_fluorescence_decay(
             lifetime_spectrum=lifetime_spectrum,
             time_axis=times
         )
         anisotropy_spectrum = np.array([0.1, 0.6, 0.38 - 0.1, 10.0])
-        vv, vh = chisurf.fluorescence.anisotropy.decay.vm_rt_to_vv_vh(
+        vv, vh = chisurf.core.fluorescence.anisotropy.decay.vm_rt_to_vv_vh(
             times,
             vm,
             anisotropy_spectrum
@@ -153,13 +153,13 @@ class Tests(unittest.TestCase):
     def test_fcs(self):
         directory = './test/data/tttr/BH/132/'
         spc_files = glob.glob(directory + '/BH_SPC132.spc')
-        photons = chisurf.fio.fluorescence.photons.Photons(spc_files, reading_routine="bh132")
+        photons = chisurf.core.fio.fluorescence.photons.Photons(spc_files, reading_routine="bh132")
         cr_filter = np.ones_like(photons.macro_times, dtype=np.float)
         w1 = np.ones_like(photons.macro_times, dtype=np.float)
         w2 = np.ones_like(photons.macro_times, dtype=np.float)
         points_per_decade = 5
         number_of_decades = 10
-        results = chisurf.fluorescence.fcs.correlate.log_corr(
+        results = chisurf.core.fluorescence.fcs.correlate.log_corr(
             macro_times=photons.macro_times,
             tac_channels=photons.micro_times,
             rout=photons.routing_channels,
@@ -177,7 +177,7 @@ class Tests(unittest.TestCase):
         dt_2 = results['measurement_time_ch2']
         tau = results['correlation_time_axis']
         corr = results['correlation_amplitude']
-        cr = chisurf.fluorescence.fcs.correlate.normalize(
+        cr = chisurf.core.fluorescence.fcs.correlate.normalize(
             np_1, np_2, dt_1, dt_2, tau, corr, points_per_decade
         )
         cr /= photons.dt
@@ -194,7 +194,7 @@ class Tests(unittest.TestCase):
         )
 
         transfer_efficiency = 0.3
-        decay_ad = chisurf.fluorescence.fret.acceptor.da_a0_to_ad(
+        decay_ad = chisurf.core.fluorescence.fret.acceptor.da_a0_to_ad(
             times=times,
             decay_da=decay_da,
             acceptor_lifetime_spectrum=acceptor_lifetime_spectrum,
@@ -208,7 +208,7 @@ class Tests(unittest.TestCase):
         )
 
         for target_value in np.linspace(0.1, 0.9):
-            scaled_acceptor = chisurf.fluorescence.fret.acceptor.scale_acceptor(
+            scaled_acceptor = chisurf.core.fluorescence.fret.acceptor.scale_acceptor(
                 donor=decay_da,
                 acceptor=decay_ad,
                 transfer_efficiency=target_value
@@ -241,7 +241,7 @@ class Tests(unittest.TestCase):
         irf = scipy.stats.norm.pdf(time_axis, loc=irf_position, scale=irf_width)
         lifetime_spectrum = np.array([0.8, 1.1, 0.2, 4.0])
         model_decay = np.zeros_like(time_axis)
-        chisurf.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
+        chisurf.core.fluorescence.tcspc.convolve.convolve_lifetime_spectrum(
             model_decay,
             lifetime_spectrum=lifetime_spectrum,
             instrument_response_function=irf,

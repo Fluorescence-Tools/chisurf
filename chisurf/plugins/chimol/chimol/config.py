@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 try:
-    import chisurf.settings as _cs_settings
+    import chisurf.core.settings as _cs_settings
 except Exception:  # pragma: no cover - moview can run without chisurf
     _cs_settings = None
 

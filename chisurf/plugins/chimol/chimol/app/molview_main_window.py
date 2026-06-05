@@ -9,9 +9,9 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 try:  # moview can run inside or outside chisurf
     import chisurf
-    import chisurf.settings as _cs_settings
+    import chisurf.core.settings as _cs_settings
     from chisurf.gui.widgets.general import open_files as _cs_open_files
-    from chisurf.structure import Structure as _ChiSurfStructure
+    from chisurf.core.structure import Structure as _ChiSurfStructure
 except Exception:  # pragma: no cover - standalone moview
     chisurf = None  # type: ignore[assignment]
     _cs_settings = None

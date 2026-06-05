@@ -6,7 +6,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
 import chisurf.gui.widgets
-from chisurf.experiments.core import reader
+from chisurf.core.experiments.core import reader
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 
 
@@ -509,7 +509,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
             return
 
         try:
-            from chisurf.data import ExperimentDataCurveGroup
+            from chisurf.core.data import ExperimentDataCurveGroup
 
             if isinstance(group, ExperimentDataCurveGroup) and len(group) > 0:
                 data_obj = group[0]
@@ -566,7 +566,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
                 continue
 
             try:
-                from chisurf.data import ExperimentDataCurveGroup
+                from chisurf.core.data import ExperimentDataCurveGroup
 
                 if isinstance(group, ExperimentDataCurveGroup) and len(group) > 0:
                     data_obj = group[0]
@@ -775,7 +775,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
                 s = p.as_posix().replace("\\", "/")
             except Exception:
                 continue
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="dataset.add",
                 payload={"filename": s, "experiment_reader": None},
             )

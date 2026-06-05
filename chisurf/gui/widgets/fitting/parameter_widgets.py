@@ -10,19 +10,19 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
-import chisurf.data
-import chisurf.fitting
-import chisurf.decorators
+import chisurf.core.data
+import chisurf.core.fitting
+import chisurf.core.decorators
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.general import Controller
-from chisurf.math.optimization.leastsqbound import OptimizationCancelled
-from chisurf.actions import record_action
+from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
+from chisurf.core.actions import record_action
 
-parameter_settings = chisurf.settings.parameter
+parameter_settings = chisurf.core.settings.parameter
 
 class FittingParameterDetailPopup(QtWidgets.QDialog):
 
@@ -478,7 +478,7 @@ class FittingParameterWidget(Controller):
 
         return "\n".join([l for l in lines if l is not None])
 
-    def make_linkcall(self, target_parameter: chisurf.fitting.parameter.FittingParameter):
+    def make_linkcall(self, target_parameter: chisurf.core.fitting.parameter.FittingParameter):
         def linkcall():
             try:
                 self.blockSignals(True)
@@ -594,7 +594,7 @@ class FittingParameterWidget(Controller):
     @chisurf.gui.decorators.init_with_ui("variable_widget.ui")
     def __init__(
             self,
-            fitting_parameter: chisurf.fitting.parameter.FittingParameter,
+            fitting_parameter: chisurf.core.fitting.parameter.FittingParameter,
             layout: QtWidgets.QLayout = None,
             decimals: int = None,
             hide_label: bool = None,
@@ -809,8 +809,8 @@ class FittingParameterWidget(Controller):
     def _install_code_badge(self):
         """Install a code badge for dev mode source jumping."""
         try:
-            import chisurf.settings
-            if not chisurf.settings.is_dev_mode():
+            import chisurf.core.settings
+            if not chisurf.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -1337,7 +1337,7 @@ class FittingParameterWidget(Controller):
             return idx
 
         try:
-            idxs = chisurf.fitting.find_fit_idx_of_parameter(self.fitting_parameter)
+            idxs = chisurf.core.fitting.find_fit_idx_of_parameter(self.fitting_parameter)
             if idxs:
                 idx = int(idxs[0])
         except Exception:
@@ -1602,7 +1602,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
     def __init__(
             self,
-            parameter_group: chisurf.fitting.parameter.FittingParameterGroup,
+            parameter_group: chisurf.core.fitting.parameter.FittingParameterGroup,
             n_col: int = None,
             layout: QtWidgets.QVBoxLayout = None,
             *args,
@@ -1611,7 +1611,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
         super().__init__(*args, **kwargs)
 
         if n_col is None:
-            n_col = chisurf.settings.gui['fit_models']['n_columns']
+            n_col = chisurf.core.settings.gui['fit_models']['n_columns']
 
         self.parameter_group = parameter_group
         self.n_col = n_col
@@ -1636,7 +1636,7 @@ class FittingParameterGroupWidget(QtWidgets.QGroupBox):
 
 
 def make_fitting_parameter_widget(
-        fitting_parameter: chisurf.fitting.parameter.FittingParameter,
+        fitting_parameter: chisurf.core.fitting.parameter.FittingParameter,
         label_text: str = None,
         layout: QtWidgets.QLayout = None,
         decimals: int = None,
@@ -1691,7 +1691,7 @@ def make_fitting_parameter_widget(
 
 
 def make_fitting_parameter_group_widget(
-        fitting_parameter_group: chisurf.fitting.parameter.FittingParameterGroup,
+        fitting_parameter_group: chisurf.core.fitting.parameter.FittingParameterGroup,
         *args,
         **kwargs
 ):

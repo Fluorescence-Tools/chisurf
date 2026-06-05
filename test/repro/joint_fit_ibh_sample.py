@@ -12,18 +12,18 @@ import sys
 chisurf_path = pathlib.Path(__file__).parent
 sys.path.insert(0, str(chisurf_path))
 
-import chisurf.experiments
-import chisurf.models
-import chisurf.fitting
-import chisurf.fluorescence.tcspc
+import chisurf.core.experiments
+import chisurf.core.models
+import chisurf.core.fitting
+import chisurf.core.fluorescence.tcspc
 
 def main():
     print("Starting joint TCSPC fitting...")
     
     # Set up the experiment and reader
     dt = 0.0141  # Time per channel in ns (8 ps per channel based on file names)
-    tcspc_experiment = chisurf.experiments.core.Experiment(name='TCSPC Joint Fit')
-    tcspc_reader = chisurf.experiments.tcspc.TCSPCReader(
+    tcspc_experiment = chisurf.core.experiments.core.Experiment(name='TCSPC Joint Fit')
+    tcspc_reader = chisurf.core.experiments.tcspc.TCSPCReader(
         is_jordi=False,
         skiprows=10,
         dt=dt,
@@ -44,21 +44,21 @@ def main():
     
     # Create a data group containing both datasets for joint fitting
     print("Creating data group...")
-    data_group = chisurf.data.DataGroup([decay_donor_only[0], decay_fret[0]])
+    data_group = chisurf.core.data.DataGroup([decay_donor_only[0], decay_fret[0]])
     
     # Create individual fits first, then we'll link them
     print("Creating individual fits...")
     
     # Fit for donor-only decay
-    fit_donor = chisurf.fitting.fit.FitGroup(
-        data=chisurf.data.DataGroup([decay_donor_only[0]]),
-        model_class=chisurf.models.tcspc.lifetime.LifetimeModel
+    fit_donor = chisurf.core.fitting.fit.FitGroup(
+        data=chisurf.core.data.DataGroup([decay_donor_only[0]]),
+        model_class=chisurf.core.models.tcspc.lifetime.LifetimeModel
     )
     
     # Fit for FRET decay
-    fit_fret = chisurf.fitting.fit.FitGroup(
-        data=chisurf.data.DataGroup([decay_fret[0]]),
-        model_class=chisurf.models.tcspc.fret.GaussianModel
+    fit_fret = chisurf.core.fitting.fit.FitGroup(
+        data=chisurf.core.data.DataGroup([decay_fret[0]]),
+        model_class=chisurf.core.models.tcspc.fret.GaussianModel
     )
     
     # Configure the donor-only model
@@ -127,7 +127,7 @@ def main():
     # Save the fit results
     save_path = pathlib.Path('./joint_fit_results')
     save_path.mkdir(exist_ok=True)
-    chisurf.fitting.fit.save_fit(str(save_path / 'joint_fit.chisurf'), joint_fit)
+    chisurf.core.fitting.fit.save_fit(str(save_path / 'joint_fit.chisurf'), joint_fit)
     print(f"Fit results saved to: {save_path}")
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import logging
 import chisurf
-from chisurf.data import DataCurve
+from chisurf.core.data import DataCurve
 import numpy as np
 
 # Configure logging to see what's happening

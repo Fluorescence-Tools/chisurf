@@ -1,7 +1,7 @@
 import mdtraj as md
 from qtpy import QtWidgets
 
-import chisurf.decorators
+import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 

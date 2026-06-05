@@ -398,8 +398,8 @@ def fit_create(
             return service_error(f"dataset index {i} out of range", error_code=INVALID_INPUT)
     data_groups = [datasets[i] for i in indices]
     try:
-        from chisurf.models.model import Model
-        from chisurf.fitting.fit import FitGroup
+        from chisurf.core.models.model import Model
+        from chisurf.core.fitting.fit import FitGroup
     except ImportError as e:
         return service_error(f"fit model/fit classes not importable: {e}", error_code=OPERATION_FAILED, exception=e)
     try:

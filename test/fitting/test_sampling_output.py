@@ -5,8 +5,8 @@ import json
 import time
 import pytest
 import numpy as np
-import chisurf.fitting.fit as fit_module
-from chisurf.fitting.parameter import FittingParameter
+import chisurf.core.fitting.fit as fit_module
+from chisurf.core.fitting.parameter import FittingParameter
 
 def test_sampling_directory_structure(tmp_path):
     """
@@ -44,7 +44,7 @@ def test_sampling_directory_structure(tmp_path):
     chisurf.macros.core_fit.save_project = lambda target_path: os.makedirs(target_path, exist_ok=True)
     
     # 3. Mock the sampling backends to do nothing but return dummy results
-    import chisurf.fitting.sample
+    import chisurf.core.fitting.sample
     def mock_sample_emcee(fit, **kwargs):
         return {
             'chi2r': np.array([1.0, 1.1]),
@@ -52,8 +52,8 @@ def test_sampling_directory_structure(tmp_path):
             'parameter_names': ["p1", "p2"]
         }
     
-    original_emcee = chisurf.fitting.sample.sample_emcee
-    chisurf.fitting.sample.sample_emcee = mock_sample_emcee
+    original_emcee = chisurf.core.fitting.sample.sample_emcee
+    chisurf.core.fitting.sample.sample_emcee = mock_sample_emcee
     
     try:
         output_base = str(tmp_path / "test_sample")
@@ -84,7 +84,7 @@ def test_sampling_directory_structure(tmp_path):
     finally:
         # Restore mocks
         chisurf.macros.core_fit.save_project = original_save
-        chisurf.fitting.sample.sample_emcee = original_emcee
+        chisurf.core.fitting.sample.sample_emcee = original_emcee
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -10,7 +10,7 @@ changes the *Finish* step:
 - For each burst, a single FCS correlation curve is computed for the
   **currently selected correlator channels and settings** on the
   Correlator page (typically set via the FCS preset combobox).
-- Each correlation curve is then fitted with :func:`chisurf.models.fcs.maxent.fcs_maxent`
+- Each correlation curve is then fitted with :func:`chisurf.core.models.fcs.maxent.fcs_maxent`
   to obtain a diffusion-time distribution. Two summary diffusion
   times are stored per burst: the probability-weighted mean and the
   peak (mode) of the distribution.
@@ -29,11 +29,11 @@ import tttrlib
 import pyqtgraph as pg
 
 from chisurf.gui import QtWidgets, QtCore
-from chisurf.models.fcs.maxent import fcs_maxent
+from chisurf.core.models.fcs.maxent import fcs_maxent
 from chisurf.gui.widgets.wizard.tttr_correlator import WizardTTTRCorrelator
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
-from chisurf.settings.path_utils import get_path as _get_settings_path
-from chisurf import settings as _cs_settings
+from chisurf.core.settings.path_utils import get_path as _get_settings_path
+from chisurf.core import settings as _cs_settings
 from .file_list import BurstFileListWidget
 from .helpers import (
     parse_bst_file,
@@ -1139,7 +1139,7 @@ class BurstWiseFCSWizard(QtWidgets.QDialog):
                 n_casc = int(corr.correlation_ncasc)
                 make_fine = bool(corr.correlation_is_fine)
             except Exception:
-                from chisurf import settings as _cs_settings
+                from chisurf.core import settings as _cs_settings
                 n_bins = int(_cs_settings.cs_settings['correlator']['B'])
                 n_casc = int(_cs_settings.cs_settings['correlator']['number_of_cascades'])
                 make_fine = bool(_cs_settings.cs_settings['correlator']['fine'])

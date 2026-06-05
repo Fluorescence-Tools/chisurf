@@ -36,7 +36,7 @@ class SimpleErrorDialog(QtWidgets.QDialog if QtWidgets is not None else object):
             raise RuntimeError("Qt is not available for SimpleErrorDialog")
         try:
             # Import settings functions directly
-            from chisurf.settings import clear_settings_folder, clear_logging_files
+            from chisurf.core.settings import clear_settings_folder, clear_logging_files
 
             clear_settings_folder()
             clear_logging_files()
@@ -70,7 +70,7 @@ def main():
         faulthandler.enable(file=_fh, all_threads=True)
 
         # Import Qt and settings modules inside the try block to catch import errors
-        from chisurf.settings import clear_settings_folder, clear_logging_files
+        from chisurf.core.settings import clear_settings_folder, clear_logging_files
         from chisurf.gui import get_app
 
         # Start the application

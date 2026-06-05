@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 
-import chisurf.base
-import chisurf.decorators
-import chisurf.experiments
+import chisurf.core.base
+import chisurf.core.decorators
+import chisurf.core.experiments
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-from chisurf.experiments.core import reader
+from chisurf.core.experiments.core import reader
 from qtpy import QtWidgets
 
 
@@ -39,11 +39,11 @@ class LoadStructureFolder(
     def get_data(
             self,
             **kwargs
-    ) -> chisurf.data.ExperimentDataGroup:
+    ) -> chisurf.core.data.ExperimentDataGroup:
         return [self.pdbWidget.trajectory]
 
     @staticmethod
-    def autofitrange(data: chisurf.base.Data, **kwargs):
+    def autofitrange(data: chisurf.core.base.Data, **kwargs):
         return None, None
 
 

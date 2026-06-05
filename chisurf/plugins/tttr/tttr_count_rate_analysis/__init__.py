@@ -32,7 +32,7 @@ Example:
 
 name = "TTTR:Analysis:Count Rate Analysis"
 
-# Expose the plugin CLI through chisurf.cli
+# Expose the plugin CLI through chisurf.core.cli
 cli_entrypoint = "count-rate=chisurf.plugins.tttr.tttr_count_rate_analysis.cli:cli"
 
 import sys

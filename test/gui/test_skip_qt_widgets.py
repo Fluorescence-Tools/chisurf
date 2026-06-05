@@ -11,13 +11,13 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from qtpy.QtWidgets import QApplication, QWidget, QSpinBox
-import chisurf.base
+import chisurf.core.base
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Create a simple class that contains Qt widgets
-class TestClass(chisurf.base.Base):
+class TestClass(chisurf.core.base.Base):
     def __init__(self, name="TestClass"):
         super().__init__(name=name)
         self.app = QApplication.instance() or QApplication(sys.argv)
@@ -55,7 +55,7 @@ def test_with_to_elementary():
     d = test_obj.to_dict()
     
     # Then use to_elementary with skip_qt_widgets=True
-    result = chisurf.base.to_elementary(d, skip_qt_widgets=True)
+    result = chisurf.core.base.to_elementary(d, skip_qt_widgets=True)
     
     # Check that Qt widgets were skipped
     assert 'app' not in result, "Qt widget 'app' was not skipped"

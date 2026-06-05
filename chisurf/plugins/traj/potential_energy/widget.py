@@ -6,12 +6,12 @@ from qtpy import QtCore, QtWidgets
 
 import mdtraj
 
-import chisurf.fio as io
+import chisurf.core.fio as io
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-import chisurf.decorators
-import chisurf.structure.potential
-import chisurf.structure.trajectory
+import chisurf.core.decorators
+import chisurf.core.structure.potential
+import chisurf.core.structure.trajectory
 import chisurf.gui.widgets.structure
 
 
@@ -25,7 +25,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
     def __init__(
             self,
             verbose: bool = False,
-            structure: chisurf.structure.Structure = None
+            structure: chisurf.core.structure.Structure = None
     ):
         self._trajectory_file = ''
         self.potential_weight = 1.0
@@ -33,7 +33,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
 
         self.verbose = verbose
         self.structure = structure
-        self.universe = chisurf.structure.Universe()
+        self.universe = chisurf.core.structure.Universe()
 
         self.actionOpen_trajectory.triggered.connect(self.onLoadTrajectory)
         self.actionProcess_trajectory.triggered.connect(self.onProcessTrajectory)
@@ -71,7 +71,7 @@ class PotentialEnergyWidget(QtWidgets.QWidget):
             mode='w'
         ).write(s)
 
-        self.structure = chisurf.structure.TrajectoryFile(
+        self.structure = chisurf.core.structure.TrajectoryFile(
             mdtraj.load_frame(
                 self.trajectory_file, 0
             )

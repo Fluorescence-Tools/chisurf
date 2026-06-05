@@ -1,5 +1,5 @@
 import pytest
-import chisurf.models.tcspc.lifetime
+import chisurf.core.models.tcspc.lifetime
 
 def test_lifetime_append_pop_sync():
     """
@@ -7,7 +7,7 @@ def test_lifetime_append_pop_sync():
     internal parameter cache and component count (n) correctly
     to avoid duplicate parameter names (like xL2 appearing twice).
     """
-    lt = chisurf.models.tcspc.lifetime.Lifetime(short='L')
+    lt = chisurf.core.models.tcspc.lifetime.Lifetime(short='L')
     assert lt.n == 0, "Initial n should be 0"
     
     # Append first component

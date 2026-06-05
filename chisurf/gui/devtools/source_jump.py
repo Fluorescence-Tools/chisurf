@@ -13,7 +13,7 @@ from typing import Optional, Tuple, Any, Callable
 
 from chisurf.gui import QtWidgets
 
-import chisurf.settings
+import chisurf.core.settings
 
 
 def resolve_widget_source(widget: QtWidgets.QWidget) -> Optional[Tuple[str, int]]:

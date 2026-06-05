@@ -10,16 +10,16 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
-import chisurf.data
-import chisurf.fitting
-import chisurf.decorators
+import chisurf.core.data
+import chisurf.core.fitting
+import chisurf.core.decorators
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.mdi_custom_titlebar import CustomMdiSubWindow
-from chisurf.math.optimization.leastsqbound import OptimizationCancelled
+from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
 
 
 class FitSubWindow(CustomMdiSubWindow):
@@ -30,7 +30,7 @@ class FitSubWindow(CustomMdiSubWindow):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.FitGroup,
+            fit: chisurf.core.fitting.fit.FitGroup,
             control_layout: QtWidgets.QLayout,
             fit_widget: 'FittingControllerWidget' = None,
             *args,
@@ -97,11 +97,11 @@ class FitSubWindow(CustomMdiSubWindow):
         # Use RubberBandResize / RubberBandMove
         self.setOption(
             chisurf.gui.QtWidgets.QMdiSubWindow.RubberBandResize,
-            chisurf.settings.gui['RubberBandResize']
+            chisurf.core.settings.gui['RubberBandResize']
         )
         self.setOption(
             chisurf.gui.QtWidgets.QMdiSubWindow.RubberBandMove,
-            chisurf.settings.gui['RubberBandMove']
+            chisurf.core.settings.gui['RubberBandMove']
         )
 
         # Set windows icon
@@ -112,13 +112,13 @@ class FitSubWindow(CustomMdiSubWindow):
         self.setWindowIcon(icon)
 
         # Set global style sheet
-        # window_style = chisurf.settings.gui['fit_window_style']
-        # self.setStyleSheet(chisurf.settings.style_sheet)
+        # window_style = chisurf.core.settings.gui['fit_window_style']
+        # self.setStyleSheet(chisurf.core.settings.style_sheet)
 
         self.setAttribute(chisurf.gui.QtCore.Qt.WA_DeleteOnClose, True)
 
         # Resize window
-        xs, ys = chisurf.settings.gui['fit_windows_size']
+        xs, ys = chisurf.core.settings.gui['fit_windows_size']
         self.resize(xs, ys)
 
     def ensure_plot_created(self, idx: int):
@@ -198,7 +198,7 @@ class FitSubWindow(CustomMdiSubWindow):
         import chisurf
         # Honour a per-window opt-out flag (used by macros/app shutdown) as
         # well as the global confirm_close_fit setting.
-        if getattr(self, 'close_confirm', True) and chisurf.settings.gui['confirm_close_fit']:
+        if getattr(self, 'close_confirm', True) and chisurf.core.settings.gui['confirm_close_fit']:
             reply = chisurf.gui.widgets.MyMessageBox.question(
                 self,
                 'Message',
@@ -208,7 +208,7 @@ class FitSubWindow(CustomMdiSubWindow):
             if reply == QtWidgets.QMessageBox.Yes:
                 try:
                     fit_idx = getattr(self.fit, "fit_idx", 0)
-                    chisurf.actions.dispatch(name="fit.close", payload={"idx": fit_idx})
+                    chisurf.core.actions.dispatch(name="fit.close", payload={"idx": fit_idx})
                 except Exception:
                     pass
                 chisurf.gui.widgets.hide_items_in_layout(chisurf.cs.modelLayout)

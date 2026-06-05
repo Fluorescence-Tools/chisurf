@@ -11,7 +11,7 @@ def _extract_ca_coordinates_from_atoms(atoms: np.ndarray) -> Optional[np.ndarray
     """Return CA atom coordinates if available, else ``None``.
 
     The ``atoms`` array is expected to expose ``'atom_name'`` and ``'xyz'``
-    fields compatible with :mod:`chisurf.structure`.
+    fields compatible with :mod:`chisurf.core.structure`.
     """
 
     coords, _, _, _ = _extract_ca_trace(atoms)

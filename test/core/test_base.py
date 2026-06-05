@@ -9,9 +9,9 @@ import tempfile
 import copy
 import numpy as np
 
-import chisurf.base
-import chisurf.experiments
-import chisurf.data
+import chisurf.core.base
+import chisurf.core.experiments
+import chisurf.core.data
 
 
 def get_data_values(
@@ -27,11 +27,11 @@ def get_data_values(
 class Tests(unittest.TestCase):
 
     def test_base_init(self):
-        b1 = chisurf.base.Base()
+        b1 = chisurf.core.base.Base()
         self.assertEqual(b1.name, 'Base')
-        b2 = chisurf.base.Base(name='B')
+        b2 = chisurf.core.base.Base(name='B')
         self.assertEqual(b2.name, 'B')
-        b3 = chisurf.base.Base(
+        b3 = chisurf.core.base.Base(
             name='B',
             test_parameter='aa'
         )
@@ -47,7 +47,7 @@ class Tests(unittest.TestCase):
         )
 
     def test_base_copy(self):
-        b1 = chisurf.base.Base(name='B')
+        b1 = chisurf.core.base.Base(name='B')
         b2 = copy.copy(b1)
         self.assertNotEqual(
             b1.unique_identifier,
@@ -68,18 +68,18 @@ class Tests(unittest.TestCase):
                 'unique_identifier': 'e7f0eb02-cbab-4aa3-abf2-799aebe96a09'
             }
         }
-        b1 = chisurf.base.Base(**d)
+        b1 = chisurf.core.base.Base(**d)
         self.assertEqual(
             d,
             b1.to_dict()
         )
-        b2 = chisurf.base.Base()
+        b2 = chisurf.core.base.Base()
         b2.from_dict(d)
         self.assertEqual(b1.to_dict(), b2.to_dict())
 
     def test_base_uuid(self):
-        b1 = chisurf.base.Base(value=2.0)
-        b2 = chisurf.base.Base(value=2.0)
+        b1 = chisurf.core.base.Base(value=2.0)
+        b2 = chisurf.core.base.Base(value=2.0)
         self.assertIsNot(
             b1.unique_identifier,
             b2.unique_identifier
@@ -93,18 +93,18 @@ class Tests(unittest.TestCase):
 
     def test_base_yaml(self):
         yaml_string = 'meta_data:\n  unique_identifier: bf8aa948-d449-48a3-ace7-f361867582dd\n  verbose: false\nname: B\n'
-        b1 = chisurf.base.Base()
+        b1 = chisurf.core.base.Base()
         b1.from_yaml(yaml_string, verbose=False)
 
-        b2 = chisurf.base.Base()
+        b2 = chisurf.core.base.Base()
         b2.from_yaml(yaml_string)
         self.assertEqual(b1.to_dict(), b2.to_dict())
 
-        b3 = chisurf.base.Base()
+        b3 = chisurf.core.base.Base()
         b3.from_yaml(b2.to_yaml())
         self.assertEqual(b2.to_dict(), b3.to_dict())
         # test from_yaml
-        b4 = chisurf.base.Base()
+        b4 = chisurf.core.base.Base()
         b4.from_yaml(
             yaml_string=b2.to_yaml(),
             verbose=True
@@ -116,18 +116,18 @@ class Tests(unittest.TestCase):
 
     def test_json(self):
         json_string = '{\n    "meta_data": {\n        "unique_identifier": "bf8aa948-d449-48a3-ace7-f361867582dd",\n        "verbose": false\n    },\n    "name": "B"\n}'
-        b1 = chisurf.base.Base()
+        b1 = chisurf.core.base.Base()
         b1.from_json(json_string, verbose=False)
 
-        b2 = chisurf.base.Base()
+        b2 = chisurf.core.base.Base()
         b2.from_json(json_string)
         self.assertEqual(b1.to_dict(), b2.to_dict())
 
-        b3 = chisurf.base.Base()
+        b3 = chisurf.core.base.Base()
         b3.from_json(b2.to_json())
         self.assertEqual(b2.to_dict(), b3.to_dict())
         # test from_json
-        b4 = chisurf.base.Base()
+        b4 = chisurf.core.base.Base()
         b4.from_json(
             json_string=b2.to_json(),
             verbose=True
@@ -156,13 +156,13 @@ class Tests(unittest.TestCase):
             suffix='.json'
         )
 
-        b1 = chisurf.base.Base(**d)
+        b1 = chisurf.core.base.Base(**d)
         b1.save(
             filename=filename,
             file_type='json',
             verbose=True
         )
-        b2 = chisurf.base.Base()
+        b2 = chisurf.core.base.Base()
         b2.load(
             filename=filename,
             file_type='json'
@@ -181,12 +181,12 @@ class Tests(unittest.TestCase):
             suffix='.yaml'
         )
 
-        b1 = chisurf.base.Base(**d)
+        b1 = chisurf.core.base.Base(**d)
         b1.save(
             filename=filename,
             file_type='yaml'
         )
-        b2 = chisurf.base.Base()
+        b2 = chisurf.core.base.Base()
         b2.load(
             filename=filename,
             file_type='yaml'
@@ -204,7 +204,7 @@ class Tests(unittest.TestCase):
         s1 = "ldldöö_ddd   dd**"
         s2 = "ldldoo_ddd_dd"
         self.assertEqual(
-            chisurf.base.clean_string(s1),
+            chisurf.core.base.clean_string(s1),
             s2
         )
 
@@ -223,7 +223,7 @@ class Tests(unittest.TestCase):
             file=filename,
             arr=a
         )
-        d = chisurf.base.Data(
+        d = chisurf.core.base.Data(
             filename=filename,
             embed_data=True
         )
@@ -236,7 +236,7 @@ class Tests(unittest.TestCase):
             True
         )
 
-        d = chisurf.base.Data(
+        d = chisurf.core.base.Data(
             filename=filename,
             embed_data=False
         )
@@ -258,7 +258,7 @@ class Tests(unittest.TestCase):
     def test_hasattr(self):
         # Test that hasattr correctly returns True for existing attributes
         # and False for non-existent attributes
-        b = chisurf.base.Base(name="test_base", test_attr="test_value")
+        b = chisurf.core.base.Base(name="test_base", test_attr="test_value")
 
         # Test existing attributes
         self.assertTrue(hasattr(b, "name"))
@@ -280,7 +280,7 @@ class Tests(unittest.TestCase):
             a_value=a_value,
             c_value=c_value
         )
-        data = chisurf.data.DataCurve(
+        data = chisurf.core.data.DataCurve(
             x=x_data,
             y=y_data,
             ey=np.ones_like(y_data)
@@ -300,7 +300,7 @@ class Tests(unittest.TestCase):
             ),
             True
         )
-        data_group = chisurf.data.DataGroup(
+        data_group = chisurf.core.data.DataGroup(
             [data, data2]
         )
         data_group.current_dataset = 0

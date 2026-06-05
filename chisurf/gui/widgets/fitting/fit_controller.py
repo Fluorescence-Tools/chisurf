@@ -13,17 +13,17 @@ import matplotlib.colors as mcolors
 
 import chisurf
 import chisurf.logging
-import chisurf.data
-import chisurf.fitting
-import chisurf.decorators
+import chisurf.core.data
+import chisurf.core.fitting
+import chisurf.core.decorators
 import chisurf.gui.decorators
-import chisurf.settings
+import chisurf.core.settings
 
 import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.general import Controller
-from chisurf.math.optimization.leastsqbound import OptimizationCancelled
-from chisurf.actions import record_action
+from chisurf.core.math.optimization.leastsqbound import OptimizationCancelled
+from chisurf.core.actions import record_action
 
 
 class SamplerWorker(QtCore.QObject):
@@ -51,7 +51,7 @@ class SamplerWorker(QtCore.QObject):
             def _prog(done, total):
                 self.progress.emit(int(done), int(total))
 
-            chisurf.fitting.fit.sample_fit(
+            chisurf.core.fitting.fit.sample_fit(
                 self.fit,
                 self.target_directory,
                 check_cancel=self.check_cancel,
@@ -130,7 +130,7 @@ class FittingControllerWidget(Controller):
         try:
             source_uid = str(getattr(self.fit, "unique_identifier", ""))
             if str(action_type) in {"fit_run_start", "fit_run_finish", "fit_run_abort"}:
-                chisurf.actions.dispatch(
+                chisurf.core.actions.dispatch(
                     name=str(action_type).replace("_", "."),
                     payload=payload or {},
                 )
@@ -214,7 +214,7 @@ class FittingControllerWidget(Controller):
         try:
             fit_index = chisurf.fits.index(self.fit)
             dataset_index = chisurf.imported_datasets.index(dataset)
-            chisurf.actions.dispatch(
+            chisurf.core.actions.dispatch(
                 name="fit.set_dataset",
                 payload={
                     "fit_index": int(fit_index),
@@ -242,7 +242,7 @@ class FittingControllerWidget(Controller):
 
     def __init__(
             self,
-            fit: chisurf.fitting.fit.FitGroup = None,
+            fit: chisurf.core.fitting.fit.FitGroup = None,
             hide_fit_button: bool = False,
             hide_range: bool = False,
             hide_fitting: bool = False,
@@ -334,8 +334,8 @@ class FittingControllerWidget(Controller):
     def _install_code_badge(self):
         """Install a code badge for dev mode source jumping."""
         try:
-            import chisurf.settings
-            if not chisurf.settings.is_dev_mode():
+            import chisurf.core.settings
+            if not chisurf.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -364,7 +364,7 @@ class FittingControllerWidget(Controller):
         
         target_dir_str = str(target_dir)
         
-        kw = chisurf.settings.cs_settings['optimization']['sampling'].copy()
+        kw = chisurf.core.settings.cs_settings['optimization']['sampling'].copy()
         kw['n_runs'] = self.n_runs
         kw['steps'] = self.n_steps
         
@@ -570,7 +570,7 @@ class FittingControllerWidget(Controller):
             else:
                 # Finalize model and parameter controllers as before.
                 self.fit.model.finalize()
-                for pa in chisurf.fitting.parameter.FittingParameter.get_instances():
+                for pa in chisurf.core.fitting.parameter.FittingParameter.get_instances():
                     try:
                         pa.controller.finalize()
                     except (AttributeError, RuntimeError, TypeError):
@@ -590,7 +590,7 @@ class FittingControllerWidget(Controller):
                     final_text = "Fitting finished!" if success else "Fitting aborted."
                     # Close immediately by default; user can override via settings.
                     try:
-                        delay_ms = int(chisurf.settings.gui.get('fit_progress_close_delay_ms', 0))
+                        delay_ms = int(chisurf.core.settings.gui.get('fit_progress_close_delay_ms', 0))
                     except Exception:
                         delay_ms = 0
                     dialog.finish(final_text=final_text, auto_close=True, close_delay_ms=delay_ms)
@@ -620,7 +620,7 @@ class FittingControllerWidget(Controller):
         )
 
     def onRunFit(self):
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="fit.run.execute",
             payload={"fit_controller": self},
         )

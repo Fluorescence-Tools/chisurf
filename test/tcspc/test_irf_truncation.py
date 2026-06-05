@@ -10,10 +10,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 sys.path.append('/')
 
 import chisurf
-from chisurf.curve import Curve
-from chisurf.data import DataCurve
-from chisurf.fitting.fit import Fit
-from chisurf.models.tcspc.lifetime import LifetimeModel
+from chisurf.core.curve import Curve
+from chisurf.core.data import DataCurve
+from chisurf.core.fitting.fit import Fit
+from chisurf.core.models.tcspc.lifetime import LifetimeModel
 
 # Create a simple test data
 x = np.linspace(0, 10, 100)

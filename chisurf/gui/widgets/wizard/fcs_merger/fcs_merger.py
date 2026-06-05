@@ -7,14 +7,14 @@ import numpy as np
 import pyqtgraph as pg
 
 import chisurf
-import chisurf.fio as io
-import chisurf.data
-import chisurf.fluorescence.fcs
+import chisurf.core.fio as io
+import chisurf.core.data
+import chisurf.core.fluorescence.fcs
 import chisurf.gui.decorators
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from .fcs_merger_ui import setup_ui as _setup_ui
 
-colors = chisurf.settings.gui['plot']['colors']
+colors = chisurf.core.settings.gui['plot']['colors']
 
 
 class WizardFcsMerger(QtWidgets.QWizardPage):
@@ -52,7 +52,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
             cors.append(cor)
             # Only compute weights if merging multiple curves
             if n_curves > 1:
-                w = chisurf.fluorescence.fcs.noise(tau, cor, duration, cr, weight_type='suren')
+                w = chisurf.core.fluorescence.fcs.noise(tau, cor, duration, cr, weight_type='suren')
                 ws.append(w)
         
         ys = np.array(cors)
@@ -104,7 +104,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
                 pen = pg.mkPen('grey', width=1.0, style=QtCore.Qt.DashLine)
             else:
                 width = 3.0 if i == idx else 1.0
-                pen = pg.mkPen(chisurf.settings.colors[i % len(chisurf.settings.colors)]['hex'], width=width)
+                pen = pg.mkPen(chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex'], width=width)
             self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
 
         self.pw_fcs_mean.clear()
@@ -316,17 +316,17 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
         # Use the standard approach as specified in the issue description
         # Set the current experiment and setup using the global cs instance
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="experiment.set",
             payload={"name": "FCS"},
         )
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="setup.select",
             payload={"name": "Seidel Kristine"},
         )
 
         # Add dataset to chisurf using the standard approach
-        chisurf.actions.dispatch(
+        chisurf.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": cor_file.as_posix(), "experiment_reader": None},
         )

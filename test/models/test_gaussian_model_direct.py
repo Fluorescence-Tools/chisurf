@@ -11,17 +11,17 @@ import sys
 chisurf_path = pathlib.Path(__file__).parent
 sys.path.insert(0, str(chisurf_path))
 
-import chisurf.experiments
-import chisurf.models
-import chisurf.fitting
+import chisurf.core.experiments
+import chisurf.core.models
+import chisurf.core.fitting
 
 def main():
     print("Testing GaussianModel creation directly...")
     
     # Set up the experiment and reader
     dt = 0.0141
-    tcspc_experiment = chisurf.experiments.core.Experiment(name='TCSPC')
-    tcspc_reader = chisurf.experiments.tcspc.TCSPCReader(
+    tcspc_experiment = chisurf.core.experiments.core.Experiment(name='TCSPC')
+    tcspc_reader = chisurf.core.experiments.tcspc.TCSPCReader(
         is_jordi=False,
         skiprows=10,
         dt=dt,
@@ -36,9 +36,9 @@ def main():
     
     print("Creating fit with GaussianModel...")
     try:
-        fit_da = chisurf.fitting.fit.FitGroup(
+        fit_da = chisurf.core.fitting.fit.FitGroup(
             data=decay_dd_da,
-            model_class=chisurf.models.tcspc.fret.GaussianModel
+            model_class=chisurf.core.models.tcspc.fret.GaussianModel
         )
         print("Fit created successfully!")
         

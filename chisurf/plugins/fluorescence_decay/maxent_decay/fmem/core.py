@@ -88,7 +88,7 @@ def auto_fit_range_tcspc(
     skip_first: int = 0,
     skip_last: int = 0,
 ) -> Tuple[int, int]:
-    """Auto fit range similar to chisurf.fluorescence.tcspc.initial_fit_range.
+    """Auto fit range similar to chisurf.core.fluorescence.tcspc.initial_fit_range.
 
     Parameters
     ----------

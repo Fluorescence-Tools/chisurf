@@ -3,14 +3,14 @@ from __future__ import annotations
 import os
 from qtpy import QtWidgets
 
-import chisurf.decorators
-import chisurf.base
+import chisurf.core.decorators
+import chisurf.core.base
 import chisurf.gui.decorators
-import chisurf.structure
+import chisurf.core.structure
 import chisurf.gui.widgets
 
-from chisurf.fio.fluorescence import photons
-from chisurf.fio.fluorescence import tttr
+from chisurf.core.fio.fluorescence import photons
+from chisurf.core.fio.fluorescence import tttr
 
 
 class SpcFileWidget(
@@ -138,18 +138,18 @@ class SpcFileWidget(
 
         self.lineEdit_2.setText(filenames[0])
         self.filenames = filenames
-        self._photons = chisurf.fio.fluorescence.photons.Photons(filenames, file_type)
+        self._photons = chisurf.core.fio.fluorescence.photons.Photons(filenames, file_type)
         #self.samples = self._photons.samples
         #self.comboBox.addItems(self._photons.sample_names)
         self.onSampleChanged()
 
     @property
-    def photons(self) -> chisurf.fio.fluorescence.photons.Photons:
+    def photons(self) -> chisurf.core.fio.fluorescence.photons.Photons:
         return self._photons
 
 
 class CsvWidget(
-    chisurf.base.Base,
+    chisurf.core.base.Base,
     QtWidgets.QWidget
 ):
 
@@ -169,7 +169,7 @@ class CsvWidget(
         self.actionColumnsChanged.triggered.connect(
             self.changeCsvParameter
         )
-        self.verbose = kwargs.get('verbose', chisurf.settings.cs_settings['verbose'])
+        self.verbose = kwargs.get('verbose', chisurf.core.settings.cs_settings['verbose'])
 
     def changeCsvParameter(self):
         set_errx_on = bool(self.checkBox_3.isChecked())
