@@ -1,2 +1,0 @@
-"repulsive_cb.npy"
-is based on unres.npy. in repulsive_cb only the repulsive part of the potential is used.

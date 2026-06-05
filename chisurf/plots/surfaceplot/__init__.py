@@ -1,1 +1,0 @@
-from chisurf.plots.surfaceplot.surfaceplot import SurfacePlot, SurfacePlotWidget
