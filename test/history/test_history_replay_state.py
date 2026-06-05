@@ -6,7 +6,7 @@ import utils
 TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
-from chisurf import history_replay
+from chisurf.history import replay as history_replay
 
 
 class TestHistoryReplayState(unittest.TestCase):

@@ -46,7 +46,7 @@ ChiSurf is organised in four main layers:
 | Layer | Module(s) | Responsibility |
 |-------|-----------|----------------|
 | **Presentation** | `chisurf.gui`, `chisurf.plugins`, `chisurf.macros` | User interaction, visualisation, scripting entry points |
-| **Action** | `chisurf.runtime.actions` | State-change routing, history recording, MCP bridge |
+| **Action** | `chisurf.actions._infra` | State-change routing, history recording, MCP bridge |
 | **Service** | `chisurf.server`, `chisurf.client` | Remote procedure call layer, dispatcher, ZMQ transport |
 | **Domain** | `chisurf.fits`, `chisurf.models`, `chisurf.project`, ... | Core data structures, algorithms, persistence |
 

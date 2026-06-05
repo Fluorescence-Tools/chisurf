@@ -27,7 +27,7 @@ import chisurf.fitting
 import chisurf.settings
 import chisurf.math.statistics
 from chisurf.plots import plotbase
-from chisurf.runtime.actions import record_action
+from chisurf.actions import record_action
 
 
 class DraggableTextItem(pg.TextItem):

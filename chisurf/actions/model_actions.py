@@ -1,6 +1,6 @@
 from __future__ import annotations
 from chisurf import typing
-from chisurf.runtime.action_decorator import action
+from chisurf.actions._decorator import action
 
 
 def _resolve_fit(fit_index: typing.Optional[int] = None):

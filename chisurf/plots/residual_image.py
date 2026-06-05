@@ -6,7 +6,7 @@ from qtpy import QtWidgets, QtCore
 
 import chisurf.fitting
 from chisurf.plots import plotbase
-from chisurf.runtime.actions import record_action
+from chisurf.actions import record_action
 
 
 class _DraggableTextItem(pg.TextItem):

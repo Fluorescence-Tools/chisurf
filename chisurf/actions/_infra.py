@@ -67,16 +67,12 @@ class ActionSpec:
             if expected is None or expected is typing.Any:
                 continue
             value = data.get(key)
-            
-            # If expected is a string (e.g. from future imports or string annotations)
-            # or a complex typing generic (which doesn't support isinstance), we skip strict isinstance checks
-            # to avoid crashing. 
+
             if isinstance(expected, str) or getattr(expected, "__origin__", None) is not None:
                 continue
-                
+
             try:
                 if isinstance(expected, tuple):
-                    # Filter out strings/typing constructs from tuple before isinstance check
                     valid_types = tuple(t for t in expected if isinstance(t, type))
                     if not valid_types:
                         continue
@@ -86,9 +82,8 @@ class ActionSpec:
                         continue
                     ok = isinstance(value, expected)
             except TypeError:
-                # Fallback if expected throws TypeError in isinstance (e.g. some typing constructs)
                 continue
-                
+
             if not ok:
                 exp_name = (
                     "/".join(getattr(t, "__name__", str(t)) for t in expected)
@@ -170,15 +165,12 @@ class ActionDispatcher:
             debounce_keys: typing.Optional[typing.Tuple[str, ...]] = None,
     ) -> str:
         if debounce_keys:
-            # Only use specified keys for the identity portion of the fingerprint
             identity_payload = {k: payload.get(k) for k in debounce_keys if k in payload}
         else:
-            # Fallback: use whole payload for identity (existing behavior)
             identity_payload = payload
         return f"{action_type}|{self._safe_json(identity_payload)}|{str(source_uid or '')}"
 
     def _is_within_debounce(self, fingerprint: str, debounce_ms: int) -> bool:
-        """Return True if the same action fired within debounce_ms and should be suppressed."""
         if debounce_ms <= 0:
             return False
         now_ms = time.monotonic() * 1000.0
@@ -214,8 +206,6 @@ class ActionDispatcher:
 
             def delayed_execute():
                 try:
-                    # Reroute to GUI thread if possible to avoid thread-safety issues
-                    # with model updates. 
                     from chisurf.gui import run_on_gui_thread
                     run_on_gui_thread(
                         self.execute,
@@ -227,7 +217,6 @@ class ActionDispatcher:
                         _is_trailing_edge=True
                     )
                 except (ImportError, AttributeError):
-                    # Fallback to direct execution if GUI thread runner is not available
                     self.execute(
                         name=name,
                         payload=payload,
@@ -260,14 +249,12 @@ class ActionDispatcher:
         normalized_payload = spec.validate_payload(payload)
 
         fingerprint = self._fingerprint(canonical_name, normalized_payload, source_uid, spec.debounce_keys)
-        
+
         if not _is_trailing_edge:
             if self._is_within_debounce(fingerprint, spec.debounce_ms):
-                # Schedule a trailing-edge catch-up execution so the final value is not lost.
                 self._schedule_trailing_edge(spec, name, normalized_payload, summary, source_uid, target_uid, fingerprint)
                 return None
 
-        # About to execute: cancel any pending trailing-edge timer for this fingerprint
         self._cancel_pending(fingerprint)
 
         result = None
@@ -285,12 +272,12 @@ class ActionDispatcher:
             final_summary = summary or str(canonical_name)
             if _is_trailing_edge:
                 final_summary += " (auto-sync)"
-                
+
             enriched_payload = dict(normalized_payload)
             enriched_payload.setdefault("replayable", bool(spec.replayable))
             enriched_payload.setdefault("side_effect_class", str(spec.side_effect_class))
             enriched_payload.setdefault("debounce_ms", int(spec.debounce_ms))
-            
+
             event = history_obj.record(
                 action_type=str(canonical_name),
                 summary=str(final_summary),
@@ -298,7 +285,7 @@ class ActionDispatcher:
                 source_uid=source_uid,
                 target_uid=target_uid,
             )
-            
+
         return result if result is not None else event
 
 

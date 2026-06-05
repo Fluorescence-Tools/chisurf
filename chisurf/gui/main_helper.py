@@ -8,10 +8,8 @@ import copy
 import importlib
 
 import chisurf
-import logging
-from chisurf import typing as cs_typing
-from chisurf.gui import QtWidgets, QtGui, QtCore
-from chisurf.gui import project_helpers, misc_helpers
+from chisurf.history import replay as _hr
+
 
 if typing.TYPE_CHECKING:
     from chisurf.gui.main import Main
@@ -704,7 +702,7 @@ class HistoryMixin:
                 pass
             try:
                 chisurf.history.set_checkpoint_capture(
-                    chisurf.history_replay.capture_domain_snapshot
+                    _hr.capture_domain_snapshot
                 )
             except Exception:
                 pass
@@ -1382,7 +1380,6 @@ class StateMixin:
 
         try:
             import chisurf.history
-            import chisurf.history_replay
             browser = getattr(self, "historyBrowser", None)
             events = [event]
             all_events = [event]
@@ -1407,17 +1404,17 @@ class StateMixin:
                 pass
 
             if checkpoint_snapshot is not None:
-                replay_state = chisurf.history_replay.snapshot_to_replay_state(checkpoint_snapshot)
+                replay_state = _hr.snapshot_to_replay_state(checkpoint_snapshot)
                 nav_state = replay_state.get("navigation", {})
                 parameter_state = replay_state.get("parameters", {})
                 fit_range_state = replay_state.get("fit_ranges", {})
                 setup_state = replay_state.get("setup", {})
                 model_state = replay_state.get("models", {})
-                nav_delta = chisurf.history_replay.reconstruct_navigation_state(events_to_replay)
-                param_delta = chisurf.history_replay.reconstruct_parameter_state(events_to_replay)
-                range_delta = chisurf.history_replay.reconstruct_fit_range_state(events_to_replay)
-                setup_delta = chisurf.history_replay.reconstruct_setup_state(events_to_replay)
-                model_delta = chisurf.history_replay.reconstruct_model_state(events_to_replay)
+                nav_delta = _hr.reconstruct_navigation_state(events_to_replay)
+                param_delta = _hr.reconstruct_parameter_state(events_to_replay)
+                range_delta = _hr.reconstruct_fit_range_state(events_to_replay)
+                setup_delta = _hr.reconstruct_setup_state(events_to_replay)
+                model_delta = _hr.reconstruct_model_state(events_to_replay)
                 for key in ["datasets", "dataset_uids", "fits", "fit_uids"]:
                     if key in nav_delta:
                         nav_state[key] = nav_delta[key]
@@ -1461,15 +1458,15 @@ class StateMixin:
                                         existing["config"] = {}
                                     existing["config"].update(local_data["config"])
             else:
-                nav_state = chisurf.history_replay.reconstruct_navigation_state(events)
-                parameter_state = chisurf.history_replay.reconstruct_parameter_state(events)
-                fit_range_state = chisurf.history_replay.reconstruct_fit_range_state(events)
-                setup_state = chisurf.history_replay.reconstruct_setup_state(events)
-                model_state = chisurf.history_replay.reconstruct_model_state(events)
+                nav_state = _hr.reconstruct_navigation_state(events)
+                parameter_state = _hr.reconstruct_parameter_state(events)
+                fit_range_state = _hr.reconstruct_fit_range_state(events)
+                setup_state = _hr.reconstruct_setup_state(events)
+                model_state = _hr.reconstruct_model_state(events)
             
-            chisurf.history_replay.sync_domain_entities(nav_state, all_events)
+            _hr.sync_domain_entities(nav_state, all_events)
 
-            link_touched = chisurf.history_replay.touched_parameter_keys(
+            link_touched = _hr.touched_parameter_keys(
                 all_events,
                 include_actions={"parameter_link", "parameter_unlink"},
             )

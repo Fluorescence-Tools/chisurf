@@ -1,6 +1,6 @@
 import time
 from chisurf import typing
-from chisurf.runtime.action_decorator import action
+from chisurf.actions._decorator import action
 
 
 @action("fit.add", schema={"dataset_indices": list})

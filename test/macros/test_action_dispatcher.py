@@ -8,7 +8,7 @@ utils.set_search_paths(TOPDIR)
 
 from chisurf.history import OperationHistory
 import chisurf
-from chisurf.runtime.actions import ActionSpec, ActionRegistry, ActionDispatcher, get_action_catalog
+from chisurf.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher, get_action_catalog
 
 
 class TestActionDispatcher(unittest.TestCase):
@@ -131,7 +131,7 @@ class TestActionDispatcher(unittest.TestCase):
         self.assertTrue(event is None or isinstance(event, dict))
 
     def test_record_action_falls_back_for_unregistered_type(self):
-        from chisurf.runtime.actions import record_action
+        from chisurf.actions._infra import record_action
 
         backup_history = getattr(chisurf, "history", None)
         history = OperationHistory()

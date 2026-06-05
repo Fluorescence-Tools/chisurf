@@ -14,7 +14,7 @@ import chisurf.data
 import chisurf.fitting
 import chisurf.gui
 import chisurf.gui.widgets
-from chisurf.runtime.actions import record_action, get_action_catalog
+from chisurf.actions import record_action, get_action_catalog
 
 from chisurf import typing
 from chisurf import logging

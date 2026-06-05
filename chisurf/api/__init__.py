@@ -666,7 +666,7 @@ class ChiSurfAPI:
         """
         if not force and self.mode != "server":
             return
-        from chisurf.proxy import install_proxies
+        from chisurf.api._proxies import install_proxies
         install_proxies(self.client)
 
     # ---- graph ----

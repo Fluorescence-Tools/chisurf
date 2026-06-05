@@ -38,7 +38,7 @@ def action(
         Broad category of side-effect: ``"state"``, ``"execution"``, ``"diagnostic"``.
     """
     def decorator(func: typing.Callable[..., typing.Any]):
-        from chisurf.runtime.actions import ActionSpec
+        from chisurf.actions._infra import ActionSpec
         import chisurf
 
         effective_schema = schema
@@ -61,7 +61,6 @@ def action(
             handler=func,
         )
 
-        # Register immediately if the registry is already available
         try:
             registry = getattr(chisurf, "action_registry", None)
             if registry is not None:
@@ -71,12 +70,9 @@ def action(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # If already inside dispatcher.execute, run the function directly
-            # to avoid re-entering dispatch.
             if getattr(wrapper, "_executing", False):
                 return func(*args, **kwargs)
 
-            # Build payload from call signature and route through dispatch
             sig = inspect.signature(func)
             bound = sig.bind(*args, **kwargs)
             bound.apply_defaults()

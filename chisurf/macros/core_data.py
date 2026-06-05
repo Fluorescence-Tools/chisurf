@@ -14,7 +14,7 @@ import chisurf.gui.widgets
 
 from chisurf import typing, logging
 from chisurf.data import DataGroup, ExperimentDataGroup, ExperimentDataCurveGroup
-from chisurf.runtime.actions import record_action
+from chisurf.actions import record_action
 
 
 def _is_global_fit_dataset(dataset: typing.Any) -> bool:

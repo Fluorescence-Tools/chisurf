@@ -1,6 +1,6 @@
 from __future__ import annotations
 from chisurf import typing
-from chisurf.runtime.action_decorator import action
+from chisurf.actions._decorator import action
 
 
 @action("parameter.value", schema={"parameter_name": str}, debounce_ms=200, debounce_keys=("parameter_name",))

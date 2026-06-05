@@ -20,7 +20,7 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments.widgets
 from chisurf.gui.widgets.general import Controller
 from chisurf.math.optimization.leastsqbound import OptimizationCancelled
-from chisurf.runtime.actions import record_action
+from chisurf.actions import record_action
 
 parameter_settings = chisurf.settings.parameter
 

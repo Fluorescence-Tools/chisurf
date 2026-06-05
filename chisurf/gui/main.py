@@ -24,8 +24,7 @@ import chisurf.fio
 import chisurf.experiments
 import chisurf.macros
 import chisurf.settings
-import chisurf.history_replay
-from chisurf.runtime.actions import record_action
+from chisurf.actions import record_action
 
 import chisurf.gui.widgets.settings_editor
 import chisurf.gui.widgets

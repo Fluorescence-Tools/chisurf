@@ -8,7 +8,7 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 import chisurf
-from chisurf.runtime.actions import ActionSpec, ActionRegistry, ActionDispatcher
+from chisurf.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher
 from chisurf.actions import dispatch
 
 class TestActions(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestActions(unittest.TestCase):
         chisurf.action_dispatcher = self.old_dispatcher
 
     def test_decorator_registers_action(self):
-        from chisurf.runtime.action_decorator import action
+        from chisurf.actions._decorator import action
         
         @action("test.action", schema={"value": int})
         def my_action(value: int):
@@ -53,7 +53,7 @@ class TestActions(unittest.TestCase):
         self.assertEqual(spec.schema, {"value": int})
 
     def test_dispatch_calls_function_and_records_history(self):
-        from chisurf.runtime.action_decorator import action
+        from chisurf.actions._decorator import action
         
         executed = []
         @action("test.exec", schema={"x": int})
@@ -72,7 +72,7 @@ class TestActions(unittest.TestCase):
         self.assertEqual(self.history[0]["source_uid"], "src-1")
 
     def test_direct_call_routes_through_dispatcher(self):
-        from chisurf.runtime.action_decorator import action
+        from chisurf.actions._decorator import action
         
         executed = []
         @action("test.direct", schema={"y": int})
@@ -90,7 +90,7 @@ class TestActions(unittest.TestCase):
         self.assertEqual(self.history[0]["payload"]["y"], 100)
 
     def test_schema_validation(self):
-        from chisurf.runtime.action_decorator import action
+        from chisurf.actions._decorator import action
         
         @action("test.schema", schema={"val": str})
         def schema_action(val: str):

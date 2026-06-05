@@ -203,7 +203,7 @@ def __getattr__(name: str):
         globals()["actions"] = mod
         return mod
     if name == "action_dispatcher":
-        mod = importlib.import_module("chisurf.runtime.actions")
+        mod = importlib.import_module("chisurf.actions._infra")
         value = mod.build_default_dispatcher(history_provider=lambda: getattr(sys.modules[__name__], "history", None))
         globals()["action_dispatcher"] = value
         return value
@@ -213,12 +213,12 @@ def __getattr__(name: str):
         globals()["action_registry"] = value
         return value
     if name == "action_catalog":
-        mod = importlib.import_module("chisurf.runtime.actions")
+        mod = importlib.import_module("chisurf.actions._infra")
         value = mod.get_action_catalog
         globals()["action_catalog"] = value
         return value
     if name == "action_execute":
-        mod = importlib.import_module("chisurf.runtime.actions")
+        mod = importlib.import_module("chisurf.actions._infra")
         value = mod.invoke_action
         globals()["action_execute"] = value
         return value

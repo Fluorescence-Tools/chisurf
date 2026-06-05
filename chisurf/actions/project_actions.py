@@ -1,6 +1,6 @@
 from __future__ import annotations
 from chisurf import typing
-from chisurf.runtime.action_decorator import action
+from chisurf.actions._decorator import action
 
 
 @action("experiment.set", schema={"name": str})
@@ -117,7 +117,7 @@ def close_project(main_window: typing.Any = None):
 @action("action.catalog.export")
 def export_action_catalog(target_path: str, file_type: str = "yaml"):
     """Export the list of available actions to a file."""
-    from chisurf.runtime.actions import get_action_catalog
+    from chisurf.actions._infra import get_action_catalog
     import yaml
     catalog = get_action_catalog()
     with open(target_path, "w") as f:

@@ -9,7 +9,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 import chisurf.fitting
 from chisurf.plots import plotbase
-from chisurf.runtime.actions import record_action
+from chisurf.actions import record_action
 
 
 class NoBackgroundProxy(QtCore.QIdentityProxyModel):
