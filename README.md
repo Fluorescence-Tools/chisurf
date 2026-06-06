@@ -4,6 +4,8 @@
 
 # ChiSurf
 
+📐 [Architecture Documentation](docs/architecture.md)
+
 ChiSurf is a software package for the global analysis of fluorescence data. It enables users to interlink, optimize, and jointly sample variables of models for time-resolved single-molecule and ensemble fluorescence experiments. By introducing dependencies across models, ChiSurf allows for the construction of complex descriptions across multiple datasets.
 For a detailed explanation of the methods and implementation, please refer to the [ChiSurf Manuscript](https://doi.org/10.3390/spectroscj3020016).
 

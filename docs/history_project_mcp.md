@@ -6,7 +6,7 @@ project save/load metadata, and MCP-style external control.
 ## Current Routing Model
 
 - State-change and observability events are emitted through `record_action(...)`
-  in `chisurf/runtime/actions.py`.
+  in `chisurf.core.actions._infra`.
 - `record_action(...)` first routes through `chisurf.action_dispatcher`
   (`ActionDispatcher.execute`).
 - If dispatcher execution fails (for example, unknown legacy action name),
@@ -32,25 +32,17 @@ project save/load metadata, and MCP-style external control.
 - `chisurf.action_execute(name, payload, summary, source_uid, target_uid)`
   - Executes actions through the shared dispatcher path.
   - Accepts canonical or MCP-style action names.
-- `chisurf.action_controller.execute(name, payload, context)`
-  - Controller entrypoint for routed lifecycle operations.
-  - Current migrated slices:
-    - experiment/setup control: `experiment.set`, `setup.select`, `setup.params.set`
-    - project lifecycle: `project.save`, `project.load`, `project.close`
-    - fit lifecycle (initial callsites): `fit.add`, `fit.close`
-    - dataset lifecycle (key GUI callsites): `dataset.add`, `dataset.remove`, `dataset.group`
-    - dataset ungroup: `dataset.ungroup`
-    - fit-run event invocation bridge: `fit.run.start`, `fit.run.finish`, `fit.run.abort`
-    - fit-run execution dispatch: `fit.run.execute` (controller triggers fit-run implementation)
-    - automation fit actions: `fit.set_dataset`, `fit.run`
+- `chisurf.core.api.ChiSurfAPI`
+  - Facade entrypoint for dataset, fit, parameter, project, session, model, and graph operations.
+  - Supports `local`, `hybrid`, and `server` modes.
 
 ## Command Export (JSON/YAML)
 
 - Action catalog export is available as a macro command:
   - `chisurf.macros.export_action_catalog(target_path="action_catalog.yaml", file_type="yaml")`
   - `chisurf.macros.export_action_catalog(target_path="action_catalog.json", file_type="json")`
-- Controller/MCP path supports the same operation via:
-  - `chisurf.action_controller.execute("action.catalog.export", {"target_path": "action_catalog.yaml", "file_type": "yaml"})`
+- Action execution supports the same operation where the action is registered:
+  - `chisurf.action_execute("action.catalog.export", {"target_path": "action_catalog.yaml", "file_type": "yaml"})`
 - Format can be selected by `file_type` (`yaml`/`json`) or inferred from file
   suffix when possible.
 
@@ -65,11 +57,10 @@ project save/load metadata, and MCP-style external control.
 
 ## MCP Experiment Loading Control
 
-- MCP/Controller can set experiment and setup before loading data:
-  - `chisurf.action_controller.execute("experiment.set", {"name": "PDA"})`
-  - `chisurf.action_controller.execute("setup.select", {"name": "PDA"})`
-- MCP/Controller can set many setup parameters in one call:
-  - `chisurf.action_controller.execute("setup.params.set", {"params": {...}})`
+- Registered actions can set experiment and setup before loading data where those
+  actions are present in the action registry.
+- Use `chisurf.action_catalog()` to inspect the current action surface before
+  calling an action from automation.
 - Nested setup attributes are supported with dotted keys (for example
   `"noise_model.weight_type"`), which helps configure FCS noise settings,
   PDA time-window settings (`minimum_time_window_length`), and similar setup
@@ -84,7 +75,7 @@ project save/load metadata, and MCP-style external control.
 
 ## Scope Status
 
-- Direct `history.record(...)` usage is centralized in
-  `chisurf/runtime/actions.py`.
+- Direct `history.record(...)` usage is centralized through
+  `chisurf.core.actions._infra`.
 - Remaining work is event-coverage completion: ensuring all state mutations
   emit routed actions (Phase 9 remains `[PARTIAL]`).

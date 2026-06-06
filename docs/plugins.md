@@ -5,54 +5,40 @@ Auto-generated documentation for all ChiSurf plugins.
 ## Table of Contents
 
 - Burst
-  - [ variance analysis](#-variance-analysis)
-- FCS
-  - [ Correlator](#-correlator)
+  - variance analysis
 - Main
-  - [Tools:ndXplorer](#tools:ndxplorer)
+  - Tools:ndXplorer
 - Spectroscopy
-  - [Fluorescence decay:Jordi Anisotropy Decay](#fluorescence-decay:jordi-anisotropy-decay)
-  - [Fluorescence decay:Jordi G-Factor Calculator](#fluorescence-decay:jordi-g-factor-calculator)
-  - [Single-Molecule:PCH](#single-molecule:pch)
+  - Fluorescence decay:Jordi Anisotropy Decay
+  - Fluorescence decay:Jordi G-Factor Calculator
+  - Single-Molecule:PCH
 - Structure
-  - [Chimol](#chimol)
-  - [Computation:QuEst](#computation:quest)
-  - [FRET:Kappa2 Distribution](#fret:kappa2-distribution)
+  - Chimol
+  - Computation:QuEst
+  - FRET:Kappa2 Distribution
 - Tools
-  - [AI Settings](#ai-settings)
+  - AI Settings
 - Uncategorized
-  - [burst](#burst)
-  - [calculator](#calculator)
-  - [chisurf](#chisurf)
-  - [fcs](#fcs)
-  - [file_split](#file_split)
-  - [fluorescence_decay](#fluorescence_decay)
-  - [icon_utils](#icon_utils)
-  - [microscopy](#microscopy)
-  - [misc](#misc)
-  - [modelling](#modelling)
-  - [traj](#traj)
-  - [tttr](#tttr)
+  - burst
+  - calculator
+  - chisurf
+  - fcs
+  - file_split
+  - fluorescence_decay
+  - icon_utils
+  - microscopy
+  - misc
+  - modelling
+  - traj
+  - tttr
 
 ## Burst
 
-###  variance analysis
+### variance analysis
 
 *Module: `sm_burst_variance_analysis`*
 
 No description available.
-
----
-
-## FCS
-
-###  Correlator
-
-*Module: `fcs_correlator`*
-
-No description available.
-
----
 
 ## Main
 
@@ -86,8 +72,6 @@ various correction factors and calculation methods.
 When working with image spectroscopy data, ndXplorer allows pixel-by-pixel analysis 
 of multiparameter fluorescence information, enabling spatial correlation of 
 spectroscopic properties.
-
----
 
 ## Spectroscopy
 
@@ -164,8 +148,6 @@ fluorescence time traces. PCH analysis can reveal information about:
 The plugin supports loading TTTR files, calculating PCH histograms, and fitting
 them with theoretical models for single or multiple species.
 
----
-
 ## Structure
 
 ### Chimol
@@ -241,8 +223,6 @@ This plugin allows researchers to model more realistic κ² distributions based 
 anisotropy data, providing more accurate distance measurements in FRET experiments where the 
 standard assumptions about fluorophore mobility may not apply.
 
----
-
 ## Tools
 
 ### AI Settings
@@ -253,8 +233,6 @@ AI Settings plugin for configuring API providers and backends.
 
 This plugin provides a GUI for managing centralized AI API settings,
 including provider selection, base URL, model selection, and API key.
-
----
 
 ## Uncategorized
 
@@ -351,5 +329,3 @@ No description available.
 *Module: `tttr`*
 
 No description available.
-
----

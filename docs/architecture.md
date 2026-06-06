@@ -1,442 +1,201 @@
 # ChiSurf Software Architecture
 
-This document describes the high-level architecture of ChiSurf, covering the
-plugin system, client-server layer, project model, and data-flow patterns.
+This document describes the current source layout and runtime architecture of
+ChiSurf. It is intentionally implementation-oriented: if this file disagrees
+with `chisurf/`, the source tree wins and this document should be fixed.
 
-## System Overview
+## Source Layout
 
-ChiSurf is organised in four main layers:
+| Path | Role |
+|------|------|
+| `chisurf/__init__.py` | Runtime globals, lazy accessors, logging setup, compatibility shims |
+| `chisurf/__main__.py` | GUI application entry point for `python -m chisurf` |
+| `chisurf/core/` | Domain objects, fitting, data, models, math, settings, actions, API facade |
+| `chisurf/core/actions/` | Action registry, dispatcher, and state-change action implementations |
+| `chisurf/core/api/` | Hybrid API facade, plugin context, remote client wrapper, optional proxies |
+| `chisurf/gui/` | Qt application, widgets, plots, resources, and GUI startup helpers |
+| `chisurf/history/` | Operation-history recording and replay support |
+| `chisurf/macros/` | Scriptable convenience entry points used by GUI, console, and plugins |
+| `chisurf/plugins/` | Built-in plugin packages and plugin utilities |
+| `chisurf/server/` | Headless ZMQ/JSON-RPC server, session state, dispatcher, services, transport |
 
+## Runtime Layers
+
+```text
+Presentation
+  chisurf.gui, chisurf.plugins, chisurf.macros, scripts/CLI
+      |
+      v
+Facade and Action Routing
+  chisurf.core.api.ChiSurfAPI
+  chisurf.core.api.PluginContext
+  chisurf.core.actions.ActionDispatcher / ActionRegistry
+      |
+      v
+Service and Transport
+  chisurf.server.app.ChiSurfServer
+  chisurf.server.dispatcher.ServiceDispatcher
+  chisurf.server.transport.zmq.ZmqServer / ZmqClient
+      |
+      v
+Domain and Session State
+  chisurf.core data/model/fitting objects
+  chisurf.server.session.SessionState
+  runtime globals: chisurf.fits, chisurf.imported_datasets, chisurf.cs
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Presentation Layer                    │
-│  ┌──────────────┐  ┌────────────┐  ┌───────────────┐   │
-│  │  Qt GUI       │  │  Plugins   │  │  Scripts/CLI  │   │
-│  │  (gui/)       │  │  (plugins/)│  │  (macros/)    │   │
-│  └──────┬───────┘  └─────┬──────┘  └───────┬───────┘   │
-│         │                │                  │           │
-│         └────────────────┼──────────────────┘           │
-│                          │                              │
-│  ┌───────────────────────┼──────────────────────┐       │
-│  │           Action Layer (runtime/actions.py)   │       │
-│  │  ActionController → Dispatcher → History      │       │
-│  └───────────────────────┼──────────────────────┘       │
-│                          │                              │
-│  ┌───────────────────────┼──────────────────────┐       │
-│  │           Service Layer                        │       │
-│  │  ┌──────────┐ ┌──────┴───────┐ ┌──────────┐ │       │
-│  │  │  Server   │ │  Dispatcher  │ │  Client   │ │       │
-│  │  │  (app.py) │ │  (dispatch)  │ │(client.py)│ │       │
-│  │  └────┬─────┘ └──────┬───────┘ └─────┬────┘ │       │
-│  │       │              │                │        │       │
-│  │       └──── ZMQ ─────┴──── JSON-RPC ──┘        │       │
-│  └───────────────────────┼──────────────────────┘       │
-│                          │                              │
-│  ┌───────────────────────┼──────────────────────┐       │
-│  │              Domain Layer                       │       │
-│  │  chisurf.fits, chisurf.imported_datasets,       │       │
-│  │  chisurf.project, chisurf.models, ...           │       │
-│  │  EventBus, JobManager, SessionState             │       │
-│  └─────────────────────────────────────────────────┘       │
-└─────────────────────────────────────────────────────────┘
-```
 
-### Layer Responsibilities
+## Important Runtime Globals
 
-| Layer | Module(s) | Responsibility |
-|-------|-----------|----------------|
-| **Presentation** | `chisurf.gui`, `chisurf.plugins`, `chisurf.macros` | User interaction, visualisation, scripting entry points |
-| **Action** | `chisurf.actions._infra` | State-change routing, history recording, MCP bridge |
-| **Service** | `chisurf.server`, `chisurf.client` | Remote procedure call layer, dispatcher, ZMQ transport |
-| **Domain** | `chisurf.fits`, `chisurf.models`, `chisurf.project`, ... | Core data structures, algorithms, persistence |
+`chisurf/__init__.py` still exposes several process-local globals. These are
+part of the current hybrid architecture and remain important for GUI and legacy
+macro compatibility.
 
----
+| Global | Meaning |
+|--------|---------|
+| `chisurf.fits` | Process-local list of current fit groups |
+| `chisurf.imported_datasets` | Process-local list of imported datasets |
+| `chisurf.cs` | Current Qt main window instance in the GUI process |
+| `chisurf.experiment` | Registered experiment objects keyed by name |
+| `chisurf.working_path` | Current working path used by GUI and macros |
+| `chisurf.action_dispatcher` | Lazily created `ActionDispatcher` |
+| `chisurf.action_registry` | Dispatcher registry for action metadata |
+| `chisurf.action_catalog` | Callable returning action catalogue metadata |
+| `chisurf.action_execute` | Callable for action execution by canonical or dotted name |
+
+These globals are not the target architecture for server-owned state. New code
+that needs datasets, fits, parameters, project state, or server communication
+should prefer `chisurf.core.api.ChiSurfAPI` or `chisurf.core.api.PluginContext`.
+
+## Action Layer
+
+The action layer lives under `chisurf/core/actions/`.
+
+| File | Role |
+|------|------|
+| `_infra.py` | `ActionSpec`, `ActionRegistry`, `ActionDispatcher`, default dispatcher helpers |
+| `_decorator.py` | Action registration decorator support |
+| `dataset_actions.py` | Dataset state-change actions |
+| `fit_actions.py` | Fit state-change actions |
+| `model_actions.py` | Model actions |
+| `parameter_actions.py` | Parameter actions |
+| `project_actions.py` | Project actions |
+
+`chisurf.__getattr__` lazily exposes `action_dispatcher`, `action_registry`,
+`action_catalog`, and `action_execute`. Action names may be canonical internal
+names or dotted aliases, depending on the registered action spec.
+
+## API Facade
+
+`chisurf.core.api.ChiSurfAPI` is the stable facade for GUI, macros, plugins, and
+the QtConsole.
+
+Modes:
+
+| Mode | Behavior |
+|------|----------|
+| `local` | Read and mutate current in-process objects for legacy workflows |
+| `hybrid` | Preserve local behavior while allowing migrated server paths |
+| `server` | Route operations through `ChisurfClient` RPC calls |
+
+Related classes and modules:
+
+| Symbol | Path | Role |
+|--------|------|------|
+| `ChiSurfAPI` | `chisurf.core.api` | Dataset, fit, parameter, project, session facade |
+| `PluginContext` | `chisurf.core.api.context` | API/client/main-window context passed to migrated plugins |
+| `ChisurfClient` | `chisurf.core.api._client` | High-level client over ZMQ JSON-RPC transport |
+| `RemoteError` | `chisurf.core.api._client` | Client-side structured RPC error exception |
+
+## Server Architecture
+
+ChiSurf includes a headless server based on ZMQ and JSON-RPC 2.0. The server is
+Qt-free and lives under `chisurf/server/`.
+
+| Path | Role |
+|------|------|
+| `app.py` | `ChiSurfServer`, server wiring and lifecycle |
+| `__main__.py` | `python -m chisurf.server` entry point |
+| `startup.py` | Subprocess startup/termination helpers |
+| `dispatcher.py` | `ServiceDispatcher`, method registration and invocation |
+| `server_methods.json` | Declarative server RPC registry |
+| `client_methods.json` | Declarative client wrapper method registry |
+| `protocol.py` | JSON-RPC encode/decode helpers and protocol metadata |
+| `session.py` | `SessionState`, server-side runtime state container |
+| `dto.py` | Dataclasses documenting JSON-safe DTO contract shapes |
+| `eventbus.py` | In-process event bus feeding ZMQ PUB/SUB events |
+| `jobs.py` | Job lifecycle helpers for long-running work |
+| `services/` | Dataset, fit, parameter, project, session, model, and graph handlers |
+| `transport/zmq.py` | ZMQ REP/PUB server and REQ/SUB client transport |
+
+Services receive a `SessionState` and return `ServiceResult` dictionaries with
+`{"ok": bool, ...}`. Failures should use `chisurf.server.services.service_error()`
+so callers can inspect `error_code`, `jsonrpc_code`, and optional
+`exception_type` fields.
+
+## RPC Namespaces
+
+The authoritative method registry is `chisurf/server/server_methods.json`.
+`meta.protocol` returns the namespace catalogue from `chisurf.server.protocol`.
+
+| Namespace | Methods |
+|-----------|---------|
+| `meta` | `meta.ping`, `meta.methods`, `meta.protocol` |
+| `dataset` | `dataset.list`, `dataset.get`, `dataset.curve_data`, `dataset.load`, `dataset.rename`, `dataset.group`, `dataset.ungroup`, `dataset.remove`, `dataset.clear` |
+| `fit` | `fit.list`, `fit.get`, `fit.create`, `fit.run`, `fit.update`, `fit.save`, `fit.curve_data`, `fit.set_dataset`, `fit.set_result_idx`, `fit.set_fit_range`, `fit.remove`, `fit.clear` |
+| `parameter` | `parameter.get`, `parameter.set_value`, `parameter.set_fixed`, `parameter.set_bounds`, `parameter.set_bounds_on`, `parameter.link`, `parameter.unlink` |
+| `project` | `project.info`, `project.save`, `project.load` |
+| `session` | `session.describe`, `session.clear`, `session.snapshot`, `session.restore` |
+| `model` | `model.finalize`, `model.set_parse_function` |
+| `graph` | `graph.build`, `graph.build_fits` |
+
+Legacy aliases such as `list_datasets`, `get_fit_info`, `run_fit`, and
+`save_project` remain registered for compatibility while code migrates.
+
+## DTO Policy
+
+`chisurf/server/dto.py` contains dataclasses such as `DatasetSummary`,
+`FitSummary`, `FitDetail`, `ParameterDTO`, `SetupDTO`, `ProjectInfoDTO`, and
+`ActionResultDTO`. These classes document the JSON contract and provide helper
+serialization. Service handlers are not required to return dataclass instances;
+they should return JSON-safe dictionaries matching the documented shapes.
+
+DTOs must not contain Qt objects or arbitrary Python domain objects. Stable IDs
+should be exposed as `uid` strings where possible. GUI code should compare DTOs
+by `uid`, not by Python object identity.
 
 ## Plugin System
 
-### Discovery
+Built-in plugins live under `chisurf/plugins/`. User plugins live under
+`~/.chisurf/plugins/`.
 
-Plugins are loaded from two locations:
-
-| Location | Purpose |
-|----------|---------|
-| `chisurf/plugins/` | Built-in plugins shipped with ChiSurf |
-| `~/.chisurf/plugins/` | User-defined custom plugins (created automatically on startup) |
-
-At startup ChiSurf scans both directories for Python packages. Each package
-must contain an `__init__.py` that defines the plugin metadata and entry point.
-
-### Plugin Structure
-
-A minimal plugin directory:
-
-```
-my_plugin/
-├── __init__.py      # Plugin code + metadata
-├── create_icon.py   # Script to generate the icon
-└── icon.png         # 48×48 menu icon
-```
-
-### Plugin Metadata
-
-Every plugin must define a `name` variable in its `__init__.py`:
+A plugin package normally contains an `__init__.py` with a `name` variable:
 
 ```python
 name = "Category:Plugin Name"
 ```
 
-The string before the colon (`:`) determines the submenu category in the
-Plugins menu. Common categories:
-
-| Category | Purpose |
-|----------|---------|
-| `Tools` | Utility tools |
-| `Structure` | Structural biology / molecular dynamics |
-| `Analysis` | Data analysis routines |
-| `Visualization` | Data viewers and plots |
-| `Processing` | Data transformation |
-| `Import/Export` | File format converters |
-
-### Plugin Entry Point
-
-Plugin code is executed when the module is loaded with `__name__ == "plugin"`:
-
-```python
-if __name__ == "plugin":
-    window = MyPluginWidget()
-    window.show()
-```
-
-This guard ensures the plugin only activates when ChiSurf loads it via the
-plugin manager, not during regular `import`.
-
-### Plugin Manager
-
-The Plugin Manager (Tools → Plugin Manager) lets users:
-
-- **Enable/disable** individual plugins
-- **View** plugin metadata (name, path, category, icon)
-- **Distinguish** built-in vs. user plugins (user plugins show `[user]` indicator)
-
-### Creating Plugins
-
-**Cookiecutter (recommended):**
-
-```bash
-pip install cookiecutter
-cookiecutter path/to/chisurf/plugins/cookiecutter-chisurf-plugin
-```
-
-**Manual:** Create a directory with `__init__.py` following the structure above,
-then copy it to `~/.chisurf/plugins/`.
-
-### Plugin Lifecycle
-
-```
-discovery ──► scan directories ──► load __init__.py ──►
-    register in PluginManager ──► user enables ──►
-    execute with __name__=="plugin"
-```
-
----
-
-## Client-Server Architecture
-
-### Overview
-
-ChiSurf includes a lightweight RPC server based on **ZeroMQ** and
-**JSON-RPC 2.0**. The server enables programmatic control of ChiSurf from
-external processes (scripts, other applications, MCP agents) without
-requiring GUI access.
-
-### Components
-
-```
-┌───────────────────────────────┐    ┌───────────────────────────────┐
-│         Server Process        │    │        Client Process         │
-│                               │    │                               │
-│  ┌─────────────────────────┐  │    │  ┌─────────────────────────┐  │
-│  │     ChiSurfServer        │  │    │  │     ChisurfClient       │  │
-│  │  ┌───────────────────┐   │  │    │  │                         │  │
-│  │  │ ServiceDispatcher  │   │  │    │  │  list_datasets()       │  │
-│  │  │  dispatch(m,p) → r │   │  │    │  │  list_fits()           │  │
-│  │  └────────┬──────────┘   │  │    │  │  run_fit()             │  │
-│  │           │              │  │    │  │  set_parameter_value()  │  │
-│  │  ┌────────┴──────────┐   │  │    │  │  ...                   │  │
-│  │  │   Service Handlers │   │  │    │  └──────────┬────────────┘  │
-│  │  │  datasets / fits   │   │  │    │             │               │
-│  │  │  parameters / proj │   │  │    │  ┌──────────┴────────────┐  │
-│  │  └────────┬──────────┘   │  │    │  │      ZmqClient        │  │
-│  │           │              │  │    │  │  call(method, params)  │  │
-│  │  ┌────────┴──────────┐   │  │    │  └──────────┬────────────┘  │
-│  │  │      ZmqServer    │   │  │    │             │               │
-│  │  │  REP socket : cmd  │   │  │    │     REQ socket             │
-│  │  │  PUB socket : pub  │   │  │    │     SUB socket             │
-│  │  └───────────────────┘   │  │    │  └─────────────────────────┘  │
-│  └─────────────────────────┘  │    └───────────────────────────────┘
-│                               │
-│  ┌─────────────────────────┐  │
-│  │   Global State          │  │
-│  │  chisurf.fits           │  │
-│  │  chisurf.imported_datasets │  │
-│  └─────────────────────────┘  │
-└───────────────────────────────┘
-           ↑  JSON-RPC 2.0  │
-           │  over ZMQ      │
-           └────────────────┘
-```
-
-### ChiSurfServer (`chisurf/server/app.py`)
-
-The server factory that wires all components:
-
-- Creates a `ServiceDispatcher` and registers all service handlers
-- Creates a `JobManager` for async job lifecycle
-- Creates an `InProcessEventBus` for pub/sub events
-- Creates a `ZmqServer` that binds to TCP ports for commands and events
-
-```python
-from chisurf.server.app import ChiSurfServer
-
-server = ChiSurfServer(cmd_port=8765, pub_port=8766)
-server.serve_forever()  # blocking
-```
-
-### ServiceDispatcher (`chisurf/server/dispatcher.py`)
-
-Routes JSON-RPC method names to handler functions:
-
-- `register(name, handler)` — register a handler
-- `dispatch(method, params)` — call the handler and return a `ServiceResult`
-- `has_method(name)` / `list_methods()` — introspection
-- `_build_default_registry()` — registers all built-in service handlers
-
-The dispatcher catches exceptions from handlers and returns structured
-error results (`{"ok": False, "error": "..."}`) rather than crashing.
-
-### Services (`chisurf/server/services/`)
-
-GUI-independent service modules that operate on `chisurf` globals:
-
-| Module | Actions | State Accessed |
-|--------|---------|----------------|
-| `datasets.py` | `list_datasets`, `get_dataset_info`, `add_dataset`, `remove_datasets` | `chisurf.imported_datasets`, `chisurf.fits` |
-| `fits.py` | `list_fits`, `get_fit_info`, `run_fit` | `chisurf.fits` |
-| `parameters.py` | `get_parameter`, `set_parameter_value`, `set_parameter_fixed`, `set_parameter_bounds` | `chisurf.fits` + model parameters |
-| `projects.py` | `save_project`, `load_project`, `get_project_info` | `chisurf.project` |
-
-All services return `ServiceResult` dicts with `{"ok": bool, ...}`.
-No service module imports `chisurf.gui` or any Qt widget.
-
-### Transport (`chisurf/server/transport/zmq.py`)
-
-Two ZMQ socket patterns:
-
-| Socket | Pattern | Port | Purpose |
-|--------|---------|------|---------|
-| REP | Request-Reply | `cmd_port` (default 8765) | Synchronous RPC calls |
-| PUB | Publish-Subscribe | `pub_port` (default 8766) | Event broadcasting (fit completed, dataset added, ...) |
-
-Messages follow JSON-RPC 2.0 format:
-
-**Request:**
-```json
-{"jsonrpc": "2.0", "method": "list_datasets", "params": {}, "id": 1}
-```
-
-**Success response:**
-```json
-{"jsonrpc": "2.0", "result": {"ok": true, "datasets": []}, "id": 1}
-```
-
-**Error response:**
-```json
-{"jsonrpc": "2.0", "error": {"code": -32601, "message": "Method not found"}, "id": 1}
-```
-
-### ChisurfClient (`chisurf/client.py`)
-
-High-level Python client wrapping `ZmqClient`:
-
-```python
-from chisurf.client import ChisurfClient
-
-client = ChisurfClient(host="127.0.0.1", cmd_port=8765)
-
-# Datasets
-datasets = client.list_datasets()
-
-# Fits
-fits = client.list_fits()
-result = client.run_fit(fit_index=0)
-
-# Parameters
-client.set_parameter_value(fit_index=0, param_id="tau1", value=3.5)
-client.set_parameter_fixed(fit_index=0, param_id="tau1", fixed=True)
-
-# Projects
-client.save_project("analysis.h5")
-```
-
-The client raises `RemoteError` on transport failures or server-side errors.
-
-### SessionState (`chisurf/server/session.py`)
-
-Mutable runtime state container that tracks datasets, fits, and experiments
-by index and UID. Supports:
-
-- `sync_from_globals()` — pull current state from `chisurf.fits` / `chisurf.imported_datasets`
-- `to_dict()` — snapshot for serialisation
-- `remove_dataset(index)` / `remove_fit(index)` — removal with UID lookup
-- `find_fit_by_uid(uid)` / `find_dataset_by_uid(uid)` — stable references
-
-### EventBus (`chisurf/server/eventbus.py`)
-
-Thread-safe publish/subscribe with pattern matching:
-
-```python
-bus = InProcessEventBus()
-
-# Subscribe
-bus.subscribe("fit.completed", my_handler)
-bus.subscribe("fit.*", wildcard_handler)    # fnmatch patterns
-
-# Publish
-bus.publish("fit.completed", {"fit_index": 0, "chi2": 1.05})
-```
-
-Events are enriched with a timestamp and topic automatically.
-
-### JobManager (`chisurf/server/jobs.py`)
-
-Manages async job lifecycle:
-
-```
-QUEUED ──► RUNNING ──► COMPLETED
-                 │
-                 └──► FAILED
-                 │
-                 └──► CANCELLED
-```
-
-```python
-jm = JobManager()
-
-def costly_task(params):
-    import time
-    time.sleep(5)
-    return {"result": 42}
-
-job_id = jm.run_fn(costly_task, {}, run_async=True)
-# ... later ...
-job = jm.get_job(job_id)
-assert job.status == "COMPLETED"
-```
-
-Jobs support cooperative cancellation via `should_cancel(job_id)`.
-Completed/failed jobs older than a configurable threshold are cleaned up.
-
-### Dependency
-
-The server requires `pyzmq>=25.0`. Install with:
-
-```bash
-pip install chisurf[server]
-```
-
----
-
-## Project Model
-
-### Save / Load Format
-
-Projects are saved to HDF5 files via `tables` (PyTables). The project
-file bundles:
-
-| Group | Contents |
-|-------|----------|
-| `/fits/` | Fit configurations, model parameters, data references |
-| `/datasets/` | Dataset metadata |
-| `/history/` | Action history log |
-| `/extra/` | Plugin-specific metadata, action catalog snapshots |
-
-```python
-import chisurf
-chisurf.project.save("analysis.h5")
-chisurf.project.load("analysis.h5")
-```
-
-### Project Metadata
-
-Action catalog metadata is embedded in `proj.extra["action_catalog"]` on save,
-enabling history-aware loading and replay. The `history_loaded` flag marks
-whether persisted history was restored.
-
----
-
-## Data Flow Examples
-
-### "List Datasets" (Synchronous RPC)
-
-```
-Client                          Server
-  │                               │
-  ├─ ZMQ REQ ─────────────────► ZMQ REP
-  │  {"method":"list_datasets",   │
-  │   "params":{}, "id":1}       │
-  │                              ├─ Dispatcher.dispatch("list_datasets", {})
-  │                              │  → datasets.list_datasets()
-  │                              │  → returns {"ok":True,"datasets":[...]}
-  │◄─ ZMQ REP ───────────────── ZMQ REP
-  │  {"result":{"ok":True,       │
-  │   "datasets":[...]}, "id":1} │
-  │                              │
-  client.list_datasets() → [...]
-```
-
-### "Run Fit" with Job Lifecycle
-
-```
-Client                          Server
-  │                               │
-  ├─ call("run_fit",{idx:0}) ──► │
-  │                              ├─ fits.run_fit()
-  │                              │  → fit.run() (may be long)
-  │◄─ {ok:True, chi2_before:..., │
-  │      chi2_after:...}         │
-  │                              │
-  │  (Event via PUB/SUB)         │
-  │◄─ topic:"fit.completed" ──── │
-  │    {fit_index:0, chi2:1.05}  │
-```
-
-### Plugin Load Flow
-
-```
-ChiSurf startup
-  │
-  ├─ Scan chisurf/plugins/
-  ├─ Scan ~/.chisurf/plugins/
-  │
-  ├─ For each package:
-  │    ├─ Import __init__.py
-  │    ├─ Read name = "Category:Name"
-  │    ├─ Load icon.png (if present)
-  │    └─ Register in PluginManager
-  │
-  └─ User opens Plugin Manager:
-       ├─ Enable plugin
-       └─ __name__ == "plugin" → execute entry point
-```
-
----
+The category before `:` controls the plugin-menu grouping. Plugin entry code is
+usually guarded by `if __name__ == "plugin":` so regular imports do not launch
+widgets.
+
+Migrated plugins should use `PluginContext` or `ChiSurfAPI` for datasets, fits,
+parameters, project state, and server-owned state. They may continue to use Qt
+objects locally for UI work.
+
+## Project Persistence
+
+Project save/load is implemented in the core project/fitting code and exposed
+through `project.save`, `project.load`, and `project.info` RPC methods. Project
+files bundle fit configurations, model parameters, data references, history
+metadata, and plugin/action catalogue extras where supported.
 
 ## Design Constraints
 
 | Constraint | Rationale |
-|-----------|-----------|
-| **Server must not import `chisurf.gui`** | Servers may run in headless mode or subprocess without Qt |
-| **Services operate on globals directly** | Initial implementation uses existing state; `SessionState` provides an abstraction layer for future migration |
-| **All new code is additive** | Existing files (except `README.md`, `pyproject.toml`, `docs/`) are not modified |
-| **JSON-RPC 2.0 over ZMQ** | Lightweight, no HTTP dependency, built-in pub/sub, same API for local and remote |
-| **Lazy imports for heavy/unavailable deps** | Avoids crashes when optional extensions (e.g. `tttrlib`) are not installed |
+|------------|-----------|
+| `chisurf.server` must not import Qt or `chisurf.gui` | Server must run headless and in subprocesses |
+| Use ZMQ plus JSON-RPC 2.0 only for server communication | Keeps one transport/protocol contract |
+| Do not install transparent object proxies in normal GUI startup | The GUI still expects real Python objects in many paths |
+| Use explicit DTOs and commands for server-owned state | JSON cannot preserve Python identity, `isinstance`, or deep mutation semantics |
+| Prefer additive migration steps | The GUI and plugins must keep working during the hybrid period |
+| Keep documentation source-aligned | Wrong docs are worse than missing docs |

@@ -1,144 +1,101 @@
 # ChiSurf Client-Server Architecture
 
-This document is the central reference for migrating ChiSurf to a clean
-client-server architecture. It describes the target architecture, the current
-hybrid state, and the constraints that must be respected while keeping the
-application working.
-
-Detailed implementation steps are in
-[`docs/client_server_migration_plan.md`](client_server_migration_plan.md).
+This is the current architecture reference for ChiSurf's headless server and
+hybrid GUI/server migration. The implementation source of truth is
+`chisurf/server/`, `chisurf/core/api/`, and `chisurf/core/actions/`.
 
 ## Goals
 
-- Move computation and core runtime state out of the Qt GUI process.
-- Use **only ZMQ + JSON-RPC 2.0** for process communication.
-- Keep the GUI responsive and mostly presentation-only.
-- Keep plugins functional during migration and make their server interaction explicit.
-- Allow multiple ChiSurf GUI instances without port or state collisions.
-- Keep the application working at every migration step.
+- Keep GUI startup stable while server-owned workflows are added incrementally.
+- Use only ZMQ and JSON-RPC 2.0 for process communication.
+- Keep `chisurf.server` Qt-free.
+- Make server contracts explicit through namespaced RPC methods and JSON-safe DTO shapes.
+- Move computation and authoritative runtime state toward the server over time.
+- Preserve plugin and macro compatibility during migration.
 
-## Non-Goals
+## Current Hybrid State
 
-- Do not reintroduce FastMCP, HTTP, SSE, or other server protocols.
-- Do not implement a fake distributed Python-object layer for GUI use.
-- Do not require Qt in the server process.
-- Do not force all plugins to migrate in one large change.
+- The GUI process still owns real Python objects for many workflows through `chisurf.fits` and `chisurf.imported_datasets`.
+- `chisurf.server` can run as a headless JSON-RPC server with its own `SessionState`.
+- `chisurf.core.api.ChiSurfAPI` provides `local`, `hybrid`, and `server` modes.
+- `chisurf.core.api._client.ChisurfClient` wraps ZMQ RPC calls and installs typed methods from `chisurf/server/client_methods.json`.
+- The server registers methods from `chisurf/server/server_methods.json`.
+- Transparent proxies exist under `chisurf.core.api._proxies`, but normal GUI startup must not install them by default.
 
-## Current State
-
-The current codebase is hybrid:
-
-- `chisurf.server` is a clean ZMQ/JSON-RPC server package.
-- `ChiSurfServer` owns a `SessionState` in the server process.
-- `ChisurfClient` can communicate with the server.
-- The GUI starts a private server subprocess on dynamic ports.
-- The GUI still computes locally and uses real in-process objects:
-  - `chisurf.fits`
-  - `chisurf.imported_datasets`
-  - `chisurf.cs`
-- Plugins and macros still directly access local globals and local objects.
-- The proxy package exists for headless experiments but must **not** be installed by the GUI by default.
-
-This state is intentionally stable: the GUI continues to work while the server
-API is expanded and migrated into.
-
-## Target Architecture
+## Process Model
 
 ```text
-┌──────────────────────────────┐       ZMQ/JSON-RPC       ┌──────────────────────────────┐
-│ GUI Process                  │  ──────────────────────► │ Server Process                │
-│                              │                          │                              │
-│ Qt widgets                   │                          │ SessionState                  │
-│ Plugin UI                    │                          │ Dataset objects               │
-│ Plot widgets                 │                          │ Fit/model objects             │
-│ QtConsole client facade      │                          │ Parameter objects             │
-│                              │                          │ Project/session persistence   │
-│ No heavy fitting             │ ◄──────────────────────  │ Compute services              │
-│ No direct model computation  │      ZMQ PUB/SUB events  │ ServiceDispatcher             │
-└──────────────────────────────┘                          └──────────────────────────────┘
+GUI Process                                      Server Process
+-----------                                      --------------
+Qt widgets                                       ChiSurfServer
+Plugins                                         ServiceDispatcher
+Macros / QtConsole                              SessionState
+ChiSurfAPI                                      Service modules
+ChisurfClient  -- ZMQ REQ/REP JSON-RPC ------>  ZmqServer command socket
+ZMQ subscriber <-- ZMQ PUB/SUB events --------  EventBus
 ```
 
-### Server Responsibilities
+## Key Components
 
-- Own authoritative state:
-  - datasets
-  - fits
-  - models
-  - parameters
-  - project/session data
-- Execute computation:
-  - file reading / dataset loading
-  - fit creation
-  - fit execution
-  - model update/finalize
-  - parameter updates and linking
-  - project load/save
-- Expose explicit JSON-safe DTOs.
-- Emit events through ZMQ PUB/SUB.
-- Never import `chisurf.gui`, `qtpy`, `PyQt5`, or widget code.
+| Component | Path | Responsibility |
+|-----------|------|----------------|
+| `ChiSurfAPI` | `chisurf/core/api/__init__.py` | Stable facade for local, hybrid, and server-mode operations |
+| `PluginContext` | `chisurf/core/api/context.py` | Context object for migrated plugins |
+| `ChisurfClient` | `chisurf/core/api/_client.py` | High-level client over ZMQ JSON-RPC |
+| `ChiSurfServer` | `chisurf/server/app.py` | Server lifecycle and component wiring |
+| `ServiceDispatcher` | `chisurf/server/dispatcher.py` | RPC method lookup and service invocation |
+| `SessionState` | `chisurf/server/session.py` | Server-side datasets, fits, experiments, project/session snapshots |
+| `ServiceResult` | `chisurf/server/services/__init__.py` | Standard `{"ok": bool, ...}` service return shape |
+| `service_error()` | `chisurf/server/services/__init__.py` | Structured service error helper |
+| DTO dataclasses | `chisurf/server/dto.py` | JSON contract documentation and helper serialization |
+| Protocol metadata | `chisurf/server/protocol.py` | JSON-RPC helpers, protocol version, method catalogue, schemas |
 
-### GUI Responsibilities
+## Server Responsibilities
 
-- Own Qt widgets and view state only.
-- Display DTO snapshots from the server.
-- Send commands through `ChisurfClient` or a higher-level API facade.
-- Subscribe to server events and refresh affected views.
-- Keep `chisurf.cs` as the local Qt main window object.
-- Avoid local heavy computation after migration of each workflow.
+- Own a `SessionState` instance.
+- Execute RPC service handlers without importing Qt or `chisurf.gui`.
+- Return JSON-safe dictionaries.
+- Publish state-change events through ZMQ PUB/SUB where handlers are wired with `event_bus`.
+- Expose protocol and method metadata through `meta.protocol` and `meta.methods`.
 
-### Plugin Responsibilities
+## GUI Responsibilities
 
-- Use a provided `PluginContext` or `chisurf.api` facade.
-- Avoid direct mutation of:
-  - `chisurf.fits`
-  - `chisurf.imported_datasets`
-  - server-owned parameters/models/datasets
-- Avoid `chisurf.run("...")` for server-owned state changes.
-- Keep Qt UI work local.
+- Own Qt widgets, windows, plots, and view state.
+- Keep `chisurf.cs` as the local main-window object.
+- Use `ChiSurfAPI`, `PluginContext`, or `ChisurfClient` for server-facing operations.
+- Avoid installing transparent Python object proxies by default.
+- During migration, continue to support local objects where workflows have not yet moved to server mode.
 
-## Why Not Use Python Object Proxies For The GUI?
+## RPC Method Registry
 
-The existing GUI and plugins expect real Python objects. They use:
+The authoritative registry is `chisurf/server/server_methods.json`. The client
+method wrappers are generated from `chisurf/server/client_methods.json`.
 
-- `fit.model.parameters_all_dict`
-- `fit.data.name`
-- `fit.run()`
-- `fit.update()`
-- `isinstance(dataset, DataCurve)`
-- `f is current_fit`
-- `id(dataset)` comparisons
-- direct assignment such as `p.link = parameter`
+| Namespace | Methods |
+|-----------|---------|
+| `meta` | `meta.ping`, `meta.methods`, `meta.protocol` |
+| `dataset` | `dataset.list`, `dataset.get`, `dataset.curve_data`, `dataset.load`, `dataset.rename`, `dataset.group`, `dataset.ungroup`, `dataset.remove`, `dataset.clear` |
+| `fit` | `fit.list`, `fit.get`, `fit.create`, `fit.run`, `fit.update`, `fit.save`, `fit.curve_data`, `fit.set_dataset`, `fit.set_result_idx`, `fit.set_fit_range`, `fit.remove`, `fit.clear` |
+| `parameter` | `parameter.get`, `parameter.set_value`, `parameter.set_fixed`, `parameter.set_bounds`, `parameter.set_bounds_on`, `parameter.link`, `parameter.unlink` |
+| `project` | `project.info`, `project.save`, `project.load` |
+| `session` | `session.describe`, `session.clear`, `session.snapshot`, `session.restore` |
+| `model` | `model.finalize`, `model.set_parse_function` |
+| `graph` | `graph.build`, `graph.build_fits` |
 
-A JSON-backed proxy cannot correctly preserve Python identity, `isinstance`,
-method dispatch, cyclic object graphs, or deep mutation tracking. Therefore the
-target architecture is **explicit DTOs and commands**, not transparent object
-proxying.
-
-## API Naming Convention
-
-New methods should be namespaced. Existing legacy aliases may remain while code
-migrates.
-
-| Domain | Methods |
-|--------|---------|
-| Session | `session.describe`, `session.clear`, `session.snapshot` |
-| Dataset | `dataset.list`, `dataset.get`, `dataset.load`, `dataset.remove`, `dataset.clear` |
-| Fit | `fit.list`, `fit.get`, `fit.create`, `fit.run`, `fit.update`, `fit.remove`, `fit.clear` |
-| Parameter | `parameter.get`, `parameter.set_value`, `parameter.set_fixed`, `parameter.set_bounds`, `parameter.link`, `parameter.unlink` |
-| Setup | `setup.list`, `setup.get`, `setup.set_property`, `setup.apply` |
-| Project | `project.info`, `project.save`, `project.load` |
-| Action | `action.execute`, `action.list` |
-| Meta | `meta.ping`, `meta.methods` |
+Legacy aliases are still registered for compatibility. Examples include
+`ping`, `list_methods`, `list_datasets`, `get_dataset_info`, `list_fits`,
+`get_fit_info`, `run_fit`, `get_parameter`, `set_parameter_value`,
+`save_project`, and `load_project`.
 
 ## DTO Principles
 
 - DTOs must be JSON-serializable.
-- DTOs must include stable identifiers (`uid`) wherever possible.
-- GUI must compare by `uid`, not Python identity.
-- DTOs should be explicit and versionable.
-- DTOs should not contain Qt objects or arbitrary Python objects.
+- DTOs must not contain Qt objects or arbitrary Python domain objects.
+- DTOs should include stable `uid` strings wherever possible.
+- GUI and plugin code should compare server-owned objects by `uid`, not Python identity.
+- DTO dataclasses in `chisurf/server/dto.py` document shapes; services may return plain dicts matching those shapes.
 
-Example `FitSummary`:
+Example `FitSummary` shape:
 
 ```json
 {
@@ -154,79 +111,49 @@ Example `FitSummary`:
 }
 ```
 
-Example `ParameterDTO`:
+## Error Model
 
-```json
-{
-  "name": "tau1",
-  "value": 3.8,
-  "fixed": false,
-  "bounds": [0.0, 100.0],
-  "bounds_on": true,
-  "linked_to": null,
-  "error_estimate": 0.1
-}
-```
+There are two layers of errors:
+
+- Transport/protocol failures use JSON-RPC error envelopes.
+- Service-level failures usually return `{"ok": false, "error": "...", "error_code": "...", "jsonrpc_code": ...}` inside a JSON-RPC `result` for compatibility.
+
+Client transport failures and server-side JSON-RPC errors are represented by
+`chisurf.core.api._client.RemoteError`.
 
 ## Event Model
 
-The server publishes events on the PUB socket after state changes.
+State-changing services that are registered with `event_bus` publish events on
+the server event bus and ZMQ PUB socket. Event payloads should contain enough
+IDs for the GUI to refresh only affected views.
 
-Required topics:
+Important topics include session, dataset, fit, parameter, project, and job
+changes. Exact emitted topics should be checked in the service implementation
+when extending a workflow.
 
-- `session.changed`
-- `dataset.added`
-- `dataset.removed`
-- `dataset.cleared`
-- `fit.added`
-- `fit.updated`
-- `fit.removed`
-- `fit.cleared`
-- `parameter.changed`
-- `project.loaded`
-- `project.saved`
-- `job.started`
-- `job.finished`
-- `job.failed`
+## Why Not Transparent Proxies By Default?
 
-Event payloads must include enough identifiers for the GUI to refresh the
-minimum required view.
+Existing GUI and plugin code often relies on real Python behavior:
 
-## Compatibility Strategy
+- object identity with `is` and `id()`
+- `isinstance(...)`
+- direct method calls such as `fit.run()` and `fit.update()`
+- deep mutation such as `p.link = parameter`
+- mutable object graphs such as `fit.model.parameters_all_dict`
 
-The application must work after every merge. Migration therefore proceeds in
-small reversible steps:
-
-1. Keep current GUI behavior intact.
-2. Add server endpoint and tests.
-3. Add client facade method.
-4. Migrate one widget/plugin path to the facade.
-5. Verify GUI still imports and server tests pass.
-6. Remove old local-compute path only after all callers migrated.
-
-## Current Critical Coupling Points
-
-These areas must be migrated carefully:
-
-- `chisurf/macros/core_data.py`
-- `chisurf/macros/core_fit.py`
-- `chisurf/macros/model.py`
-- `chisurf/macros/model_parse.py`
-- `chisurf/actions/*`
-- `chisurf/gui/widgets/fitting/*`
-- `chisurf/gui/widgets/experiments/*`
-- Plugins using `chisurf.fits`, `chisurf.imported_datasets`, `chisurf.actions.dispatch`, or `chisurf.run`.
+JSON-backed proxies cannot preserve those semantics reliably. The migration
+therefore uses explicit RPC methods, DTOs, and facade methods. Proxies may be
+used only for explicit headless experiments, not normal GUI startup.
 
 ## Acceptance Criteria For Clean Architecture
 
 The migration is complete when:
 
-- The GUI can start without constructing core datasets/fits locally.
-- Fit execution happens only through server RPC.
-- Dataset loading happens only through server RPC.
-- Project load/save happens only through server RPC.
-- Plugins use `PluginContext` or `chisurf.api`, not direct globals, for server-owned state.
+- The GUI can start without constructing authoritative datasets/fits locally.
+- Fit execution, dataset loading, parameter mutation, and project load/save happen through server RPC for migrated workflows.
+- Main GUI views render DTO snapshots rather than real server-owned objects.
+- Plugins use `PluginContext` or `ChiSurfAPI` for server-owned state.
 - `chisurf.fits` and `chisurf.imported_datasets` are no longer authoritative in the GUI process.
-- The server package imports without Qt installed.
-- Multiple GUI instances spawn independent server subprocesses.
+- `chisurf.server` imports and runs without Qt installed.
+- Multiple GUI instances spawn or connect to independent server sessions without port or state collisions.
 - Server integration tests cover the main workflows.

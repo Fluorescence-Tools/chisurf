@@ -1,289 +1,135 @@
 # ChiSurf Client-Server Migration Plan
 
-This file is a detailed implementation plan for migrating ChiSurf toward clean
-client-server computation separation. It is intended as the starting point for
-implementation agents.
+This plan tracks the remaining migration from the current hybrid GUI/server
+architecture to cleaner server-owned computation and state. It is written for
+implementation agents and should be kept synchronized with `chisurf/`.
 
-Read this together with
-[`docs/architecture_client_server.md`](architecture_client_server.md).
+Read this with [`architecture_client_server.md`](architecture_client_server.md).
 
 ## Operating Rules
 
 - Keep the application working after each change.
-- Prefer additive APIs first, then migrate callers, then remove old paths.
-- Keep the server Qt-free.
-- Use only ZMQ/JSON-RPC for process communication.
-- Do not install transparent Python object proxies into the GUI startup path.
-- Add tests with each server/client change.
+- Prefer additive server/client/facade APIs before removing local paths.
+- Keep `chisurf.server` Qt-free.
+- Use only ZMQ and JSON-RPC 2.0 for process communication.
+- Do not install transparent Python object proxies in normal GUI startup.
+- Add tests with each server/client behavior change.
+- Update docs in the same change when source behavior changes.
 
-## Phase 1: Stabilize The Hybrid Baseline
+## Status Summary
 
-### Goal
+| Phase | Status | Current reality |
+|-------|--------|-----------------|
+| 1. Hybrid baseline | Mostly implemented | GUI/local-object compatibility remains; server can run headless; proxies are not default GUI behavior |
+| 2. DTOs and namespaced RPC | Mostly implemented | DTO dataclasses exist; namespaced RPCs and legacy aliases are registered from JSON files |
+| 3. API facade | Mostly implemented | `chisurf.core.api.ChiSurfAPI`, `PluginContext`, and `ChisurfClient` exist |
+| 4. Mutation paths through facade | In progress | Some macros route through API in server mode; direct global mutations remain |
+| 5. Heavy computation on server | In progress | RPC endpoints exist for fit/model/dataset operations; GUI workflows still use local objects in many paths |
+| 6. DTO read paths widget-by-widget | In progress | Main GUI and plugins still contain direct object reads |
+| 7. Plugin migration | In progress | `PluginContext` exists; many plugins still access globals directly |
+| 8. Server-owned session cutover | Not complete | GUI globals remain authoritative for non-migrated workflows |
 
-Make the current state explicit and safe: GUI continues to use real local
-objects, server is available as a headless API, and no proxy breaks GUI code.
+## Implemented Foundation
 
-### Tasks
+The following should be treated as existing infrastructure, not future work:
 
-1. Confirm `gui/__init__.py` starts server but does not call `install_proxies()`.
-2. Confirm `chisurf.fits` and `chisurf.imported_datasets` remain real lists in GUI process.
-3. Keep `chisurf.__server_client__` available for QtConsole and future facades.
-4. Ensure server subprocess terminates on GUI shutdown.
-5. Verify dynamic ports prevent multiple-instance interference.
+- `chisurf/server/dto.py` contains `DatasetSummary`, `DatasetDetail`, `FitSummary`, `FitDetail`, `ParameterDTO`, `SetupDTO`, `ProjectInfoDTO`, and `ActionResultDTO`.
+- `chisurf/server/server_methods.json` registers legacy and namespaced RPC methods.
+- `chisurf/server/client_methods.json` defines generated `ChisurfClient` convenience methods.
+- `chisurf/server/protocol.py` exposes `PROTOCOL_VERSION`, `METHOD_CATALOGUE`, and initial `METHOD_SCHEMAS`.
+- `meta.ping`, `meta.methods`, and `meta.protocol` are available.
+- `chisurf.core.api.ChiSurfAPI` supports local, hybrid, and server modes.
+- `chisurf.core.api.context.PluginContext` exists for migrated plugins.
+- `chisurf.core.api._client.ChisurfClient` and `RemoteError` exist.
+- Structured service errors are centralized through `chisurf.server.services.service_error()`.
 
-### Tests
+## Current RPC Inventory
 
-- `python -m pytest test/server/`
-- Import smoke: `python -c "import chisurf.gui"`
-- Server subprocess smoke: spawn `python -m chisurf.server`, ping with `ChisurfClient`.
+| Namespace | Methods |
+|-----------|---------|
+| `meta` | `meta.ping`, `meta.methods`, `meta.protocol` |
+| `dataset` | `dataset.list`, `dataset.get`, `dataset.curve_data`, `dataset.load`, `dataset.rename`, `dataset.group`, `dataset.ungroup`, `dataset.remove`, `dataset.clear` |
+| `fit` | `fit.list`, `fit.get`, `fit.create`, `fit.run`, `fit.update`, `fit.save`, `fit.curve_data`, `fit.set_dataset`, `fit.set_result_idx`, `fit.set_fit_range`, `fit.remove`, `fit.clear` |
+| `parameter` | `parameter.get`, `parameter.set_value`, `parameter.set_fixed`, `parameter.set_bounds`, `parameter.set_bounds_on`, `parameter.link`, `parameter.unlink` |
+| `project` | `project.info`, `project.save`, `project.load` |
+| `session` | `session.describe`, `session.clear`, `session.snapshot`, `session.restore` |
+| `model` | `model.finalize`, `model.set_parse_function` |
+| `graph` | `graph.build`, `graph.build_fits` |
 
-### Done When
+Legacy aliases remain for compatibility. Do not remove them until all callers
+are migrated and tests prove the namespaced methods cover the same behavior.
 
-- GUI import works.
-- Server tests pass.
-- No main GUI startup code installs proxies.
+## DTO Policy
 
-## Phase 2: Formalize DTOs And Namespaced RPC
+`chisurf/server/dto.py` dataclasses document the JSON contract shapes and provide
+helpers. Service handlers may return plain dictionaries. Those dictionaries must
+be JSON-safe and should match the DTO shapes where a DTO exists.
 
-### Goal
+When adding or changing service result shapes:
 
-Make the client/server contract explicit and versionable.
+1. Add or update the DTO/dataclass or schema documentation.
+2. Return JSON-safe dicts from the service.
+3. Add tests for serialization and representative service output.
+4. Update `METHOD_SCHEMAS` in `chisurf/server/protocol.py` where applicable.
+5. Update these docs if the public contract changes.
 
-### New Files
+## Next Work: Protocol Schemas
 
-- `chisurf/server/dto.py`
-- `test/server/test_dto.py`
+`METHOD_SCHEMAS` currently covers the initial protocol metadata and selected
+dataset/fit methods. Continue adding schema metadata incrementally.
 
-### DTOs To Add
+Priority order:
 
-- `DatasetSummary`
-- `DatasetDetail`
-- `FitSummary`
-- `FitDetail`
-- `ParameterDTO`
-- `SetupDTO`
-- `ProjectInfoDTO`
-- `ActionResultDTO`
+1. `parameter.*`
+2. `project.*`
+3. `session.*`
+4. `model.*`
+5. `graph.*`
 
-Use simple dataclasses or typed dict helpers. They must convert to plain JSON
-dicts.
+Each schema entry should document:
 
-### RPC Method Names
+- required params
+- optional params
+- result shape name or DTO reference
+- event topics emitted
 
-Add namespaced methods while keeping legacy aliases during migration:
+Verification:
 
-| Legacy | New |
-|--------|-----|
-| `ping` | `meta.ping` |
-| `list_methods` | `meta.methods` |
-| `list_datasets` | `dataset.list` |
-| `get_dataset_info` | `dataset.get` |
-| `remove_datasets` | `dataset.remove` |
-| `clear_datasets` | `dataset.clear` |
-| `list_fits` | `fit.list` |
-| `get_fit_info` | `fit.get` |
-| `run_fit` | `fit.run` |
-| `remove_fits` | `fit.remove` |
-| `clear_fits` | `fit.clear` |
-| `get_parameter` | `parameter.get` |
-| `set_parameter_value` | `parameter.set_value` |
-| `set_parameter_fixed` | `parameter.set_fixed` |
-| `set_parameter_bounds` | `parameter.set_bounds` |
-| `get_project_info` | `project.info` |
-| `save_project` | `project.save` |
-| `load_project` | `project.load` |
-
-### Tests
-
-- Every namespaced method is listed by `meta.methods`.
-- Legacy aliases still pass existing tests.
-- DTO serialization produces only JSON-safe values.
-
-### Done When
-
-- `ChisurfClient` exposes both current compatibility methods and namespaced
-  methods or a namespaced facade.
-- Server tests cover aliases and namespaced methods.
-
-## Phase 3: Add `chisurf.api` Facade
-
-### Goal
-
-Give GUI, macros, plugins, and QtConsole a single stable API that can route to
-local code now and server RPC later.
-
-### New Package
-
-- `chisurf/api/__init__.py`
-- `chisurf/api/client.py`
-- `chisurf/api/context.py`
-
-### Design
-
-Create a facade object:
-
-```python
-class ChiSurfAPI:
-    def __init__(self, client=None, mode="hybrid"):
-        self.client = client
-        self.mode = mode
-
-    def list_fits(self): ...
-    def run_fit(self, fit_uid=None, fit_index=None): ...
-    def list_datasets(self): ...
-    def load_dataset(self, ...): ...
+```bash
+python -m pytest test/server/test_protocol.py test/server/test_integration.py::TestMetaProtocol --tb=line -q --no-cov
 ```
 
-Modes:
+## Next Work: Facade Migration
 
-- `local`: use current in-process objects.
-- `hybrid`: local reads allowed, server commands preferred for migrated paths.
-- `server`: pure client/server operation.
+Goal: reduce direct mutation of `chisurf.fits` and `chisurf.imported_datasets`.
 
-Set `chisurf.api` during GUI startup and expose it in QtConsole.
+Known remaining mutation patterns include:
 
-### Tests
+- `chisurf.imported_datasets.append(...)`
+- `chisurf.imported_datasets = ...`
+- `chisurf.imported_datasets.clear()` / `.extend(...)`
+- `chisurf.fits.append(...)`
+- direct fit/model/parameter mutation through local objects
+- `chisurf.run("...")` for state changes
 
-- Facade can be created without GUI.
-- Facade can call server methods when a client is provided.
-- Facade local mode still works with simple in-process state.
+Migration pattern:
 
-### Done When
+1. Identify one workflow or caller.
+2. Confirm or add the server RPC endpoint.
+3. Confirm or add the `ChisurfClient` method.
+4. Confirm or add the `ChiSurfAPI` facade method.
+5. Route the caller through `ChiSurfAPI` in server mode.
+6. Preserve local/hybrid behavior until all dependent GUI paths are migrated.
+7. Add tests for server mode and compatibility behavior.
+8. Update docs if the public contract changed.
 
-- New code can use `chisurf.api` instead of touching globals.
-- QtConsole has `api` and `client` variables.
+Do not migrate unrelated widgets or plugins in one change.
 
-## Phase 4: Move Mutation Paths To The Facade
+## Next Work: Read-Path Migration
 
-### Goal
+GUI views should gradually render DTOs rather than real domain objects.
 
-Stop adding new direct mutations to `chisurf.fits` and
-`chisurf.imported_datasets`. Migrate central mutation helpers first.
-
-### Files To Migrate First
-
-- `chisurf/macros/core_data.py`
-- `chisurf/macros/core_fit.py`
-- `chisurf/actions/fit_actions.py`
-- `chisurf/actions/dataset_actions.py` if present
-- `chisurf/actions/parameter_actions.py`
-
-### Required Server Methods
-
-Add methods before migrating callers:
-
-- `dataset.load`
-- `dataset.rename`
-- `dataset.group`
-- `dataset.ungroup`
-- `fit.create`
-- `fit.update`
-- `fit.set_dataset`
-- `fit.set_result_idx`
-- `parameter.link`
-- `parameter.unlink`
-- `model.finalize`
-- `model.set_parse_function`
-
-### Migration Pattern
-
-Replace direct mutation:
-
-```python
-chisurf.fits.append(fit_group)
-```
-
-with facade call:
-
-```python
-chisurf.api.add_fit(fit_config)
-```
-
-During hybrid migration, the facade may still update local lists after the
-server call so existing widgets keep working.
-
-### Tests
-
-- Macro tests should verify both local-visible effect and server response.
-- Server tests should verify state mutation in `SessionState`.
-
-### Done When
-
-- Central macros no longer directly mutate lists except through compatibility
-  shims.
-- Existing GUI workflows still work.
-
-## Phase 5: Move Heavy Computation To Server
-
-### Goal
-
-Make compute-heavy operations server-owned while GUI displays results.
-
-### Priority Order
-
-1. Fit execution
-2. Model update/finalize
-3. Parameter linking and updates
-4. Dataset loading
-5. Project load/save
-
-### Fit Execution
-
-Current direct calls include:
-
-- `self.fit.run(...)`
-- `fit.run()`
-- `chisurf.run("chisurf.fits[n].set_result_idx(...)")`
-
-Target:
-
-```python
-result = chisurf.api.run_fit(fit_uid=fit_uid)
-```
-
-The server executes optimization and emits `fit.updated`. GUI refreshes the fit
-view using `fit.get` or `fit.list`.
-
-### Dataset Loading
-
-Current direct appends include:
-
-- `chisurf.imported_datasets.append(dataset)`
-- `chisurf.imported_datasets = new_list`
-- `chisurf.imported_datasets[:] = restored_datasets`
-
-Target:
-
-```python
-dataset = chisurf.api.load_dataset(reader="tcspc", filename=path, params=params)
-```
-
-Server creates dataset and returns DTO.
-
-### Done When
-
-- The migrated workflows do not call heavy `.run()`, `.update()`, or file
-  readers in the GUI process.
-- GUI remains responsive during fit execution.
-
-## Phase 6: Migrate Read Paths Widget-By-Widget
-
-### Goal
-
-Make GUI views render DTOs instead of real domain objects.
-
-### First Widgets
-
-Start with low-risk list/detail widgets:
-
-1. `chisurf/gui/widgets/fitting/fit_list.py`
-2. `chisurf/gui/widgets/experiments/widgets.py`
-3. `chisurf/plugins/misc/f_test/f_calculator.py`
-4. `chisurf/plugins/chisurf/globalview/wizard.py`
-
-### Migration Pattern
-
-Replace:
+Replace direct reads:
 
 ```python
 for fit in chisurf.fits:
@@ -291,10 +137,10 @@ for fit in chisurf.fits:
     chi2 = fit.chi2
 ```
 
-with:
+with facade reads:
 
 ```python
-for fit in chisurf.api.list_fits():
+for fit in api.list_fits():
     name = fit["name"]
     chi2 = fit["chi2"]
 ```
@@ -302,138 +148,74 @@ for fit in chisurf.api.list_fits():
 Replace identity checks:
 
 ```python
-if f is current_fit:
+if fit is current_fit:
+    ...
 ```
 
 with UID checks:
 
 ```python
-if f["uid"] == current_fit_uid:
+if fit_summary["uid"] == current_fit_uid:
+    ...
 ```
 
-### Done When
+## Next Work: Plugin Migration
 
-- Widget displays same information using DTOs.
-- No direct `chisurf.fits` read remains in migrated widget.
-- Tests or smoke paths cover widget initialization.
+Migrated plugins should use `PluginContext` or `ChiSurfAPI` for server-owned
+state.
 
-## Phase 7: Plugin Migration
+Rules for migrated plugins:
 
-### Goal
+- Do not directly mutate `chisurf.fits`.
+- Do not directly mutate `chisurf.imported_datasets`.
+- Do not use `chisurf.run("...")` for server-owned state changes.
+- Use `context.api` for data, fit, parameter, project, model, session, and graph operations.
+- Use `context.main_window` only for local Qt UI operations.
 
-Plugins communicate via `chisurf.api` / `PluginContext`, not direct global state.
+## Risk Areas
 
-### Plugin Context
-
-Add:
-
-```python
-class PluginContext:
-    api: ChiSurfAPI
-    client: ChisurfClient
-    main_window: object
-```
-
-Pass `PluginContext` when launching plugins. Keep old plugin loading until each
-plugin is migrated.
-
-### Rules For Migrated Plugins
-
-- No direct `chisurf.fits`.
-- No direct `chisurf.imported_datasets`.
-- No `chisurf.run("...")` for server-owned state.
-- Use `context.api` for data/fits/parameters/project operations.
-- Use `context.main_window` only for Qt UI operations.
-
-### Priority Plugins
-
-1. `plugins/misc/f_test/f_calculator.py` — mostly reads fit summaries.
-2. `plugins/chisurf/globalview/wizard.py` — list/detail display.
-3. `plugins/chisurf/batch_analysis/wizard.py` — server-action heavy.
-4. `plugins/fluorescence_decay/tr_anisotropy/wizard.py` — complex fit/dataset workflow.
-5. `plugins/fluorescence_decay/irf_estimator/__init__.py`.
-6. TTTR plugins using `chisurf.actions.dispatch`.
-
-### Done When
-
-- Migrated plugin works with server DTOs.
-- Plugin does not mutate global lists directly.
-- Plugin tests or smoke scripts exist.
-
-## Phase 8: Server-Owned Session Cutover
-
-### Goal
-
-Complete the migration: server owns state, GUI is a client.
-
-### Preconditions
-
-- Core macros use `chisurf.api`.
-- Main fitting/dataset widgets use DTOs.
-- Important plugins use `PluginContext`.
-- Fit execution and dataset loading are server-side.
-
-### Cutover Tasks
-
-1. Stop creating authoritative fits/datasets in GUI process.
-2. Make GUI startup load a session snapshot from server.
-3. Replace local `chisurf.fits`/`chisurf.imported_datasets` with read-only
-   compatibility views or remove usage entirely.
-4. Subscribe GUI to server events and refresh views.
-5. Remove local compute fallbacks once tests cover server paths.
-
-### Done When
-
-- GUI can run without local authoritative fit/dataset lists.
-- Server state is the single source of truth.
-- The GUI can be restarted and reconnect to a server session snapshot.
-
-## Known Risk Areas
-
-### Python Identity
-
-Any `is`, `id()`, or `list.index(real_object)` logic must become UID-based.
-
-### `isinstance`
-
-Any `isinstance(dataset, DataCurve)` logic must become DTO type checks.
-
-### `chisurf.run("...")`
-
-Code-string execution should not mutate server-owned state. Replace with facade
-methods or explicit RPC.
-
-### Deep Mutations
-
-Patterns like `p.link = parameter` and `fit.model.func = ...` need dedicated
-server methods. Do not rely on mutating DTOs.
-
-### Qt Objects
-
-`chisurf.cs`, `mdiarea`, widgets, dialogs, and plot items stay in GUI process.
-Never send Qt objects to the server.
-
-## Implementation Checklist For Each Migrated Workflow
-
-1. Identify current local-object reads and mutations.
-2. Add/extend DTOs needed for the view.
-3. Add server endpoint for each mutation/compute action.
-4. Add `ChisurfClient` method.
-5. Add `chisurf.api` facade method.
-6. Migrate one caller.
-7. Add/adjust tests.
-8. Run server tests and GUI import smoke.
-9. Document any remaining local fallback.
+| Risk | Required migration pattern |
+|------|----------------------------|
+| Python identity (`is`, `id`, `list.index(real_object)`) | Use stable `uid` fields |
+| `isinstance(dataset, DataCurve)` | Use DTO type/name fields or explicit schema fields |
+| Deep mutations (`p.link = parameter`, `fit.model.func = ...`) | Add explicit RPC/facade methods |
+| Local `.run()` / `.update()` calls | Route through `fit.run`, `fit.update`, or facade methods |
+| Qt objects | Keep in GUI process; never send over RPC |
 
 ## Verification Commands
 
-Use these after each migration step:
+Run after meaningful server/client/facade changes:
 
 ```bash
-python -m pytest test/server/
-python -c "import chisurf.gui; print('GUI import OK')"
-python -m chisurf.server --cmd-port 18765 --pub-port 18766
+python -m pytest test/server/ --tb=line -q --no-cov
+python -c "import chisurf.server; print('server import OK')"
+python -c "import chisurf.gui; print('gui import OK')"
 ```
 
-For subprocess smoke tests, start the server, create `ChisurfClient`, call
-`ping`, `meta.methods`, `dataset.list`, and `fit.list`.
+For subprocess smoke testing:
+
+```bash
+python -m chisurf.server --cmd-port 18765 --pub-port 18766 --host 127.0.0.1
+```
+
+Then from another process:
+
+```python
+from chisurf.core.api._client import ChisurfClient
+
+client = ChisurfClient(cmd_port=18765, pub_port=18766)
+client.connect()
+print(client.meta__ping())
+print(client.meta__protocol())
+client.close()
+```
+
+## Stop Conditions
+
+Stop and ask before continuing if a migration would:
+
+- require importing Qt or `chisurf.gui` from `chisurf.server`
+- install proxies during normal GUI startup
+- remove a legacy alias still used by known callers
+- rewrite multiple unrelated widgets/plugins in one change
+- remove local/hybrid fallback before equivalent server tests exist
