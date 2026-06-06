@@ -37,6 +37,8 @@
 *scratch
 .*mypy*
 .DS_Store
+Thumbs.db
+~$*
 .coverage*
 .idea
 .omx
