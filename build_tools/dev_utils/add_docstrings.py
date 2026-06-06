@@ -16,7 +16,8 @@ import re
 import tokenize
 import io
 
-GUI_DIR = os.path.join(os.path.dirname(__file__), "chisurf", "gui")
+# Resolve repo root: script at build_tools/dev_utils/add_docstrings.py, go up 2 levels
+GUI_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "chisurf", "gui")
 SKIP_DIRS = {"__pycache__", ".git", "resources"}
 
 # Map of function name patterns -> docstring templates
