@@ -8,6 +8,7 @@ platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
 
 [environments]
 default = ["build"]
+docs = ["build", "docs"]
 
 [dependencies]
 python = "3.12.*"
@@ -83,6 +84,19 @@ build-pkg = { cmd = "python build_tools/run_rattler_build.py", depends-on = ["bu
 build-setup = { cmd = "python build_tools/win/build_setup.py /nobuild", depends-on = ["build-pkg"] }
 build-osx-app = { cmd = "bash build_tools/osx/build-osx-app.sh --no-build", depends-on = ["build-pkg"] }
 build-linux-appimage = { cmd = "bash build_tools/linuxdeploy/build.sh --no-build", depends-on = ["build-pkg"] }
+
+[feature.docs.pypi-dependencies]
+sphinx = "*"
+sphinx_rtd_theme = "*"
+numpydoc = "*"
+sphinx-autodoc-typehints = "*"
+myst-parser = "*"
+
+[feature.docs.tasks]
+docs-plugins = { cmd = "python build_tools/docs/generate_plugin_docs.py" }
+docs-manual = { cmd = "python build_tools/docs/convert_manual.py" }
+docs-clean = { cmd = "rm -rf docs/_build" }
+docs-html = { depends-on = ["docs-manual", "docs-plugins"], cmd = "sphinx-build -E -b html docs docs/_build" }
 
 [target.win-64.dependencies]
 hdf5 = "*"

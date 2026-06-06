@@ -12,6 +12,7 @@
 #
 import os
 import sys
+import importlib.util
 sys.path.insert(0, os.path.abspath('..'))
 
 
@@ -35,10 +36,26 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+]
+
+autosummary_generate = False
+numpydoc_show_class_members = False
+numpydoc_class_members_toctree = False
+
+# Tolerate 'Modes' section used in ChiSurfAPI docstring (NumPy-style allows it)
+numpydoc_validate = False
+
+suppress_warnings = [
+    'autodoc.cannot_be_local_function',
+]
+
+for optional_extension in [
     'numpydoc',
     'sphinx_autodoc_typehints',
     'myst_parser',
-]
+]:
+    if importlib.util.find_spec(optional_extension) is not None:
+        extensions.append(optional_extension)
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -54,7 +71,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_rtd_theme' if importlib.util.find_spec('sphinx_rtd_theme') else 'alabaster'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builder finishes

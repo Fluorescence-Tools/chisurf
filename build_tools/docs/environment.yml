@@ -1,0 +1,49 @@
+# Conda environment for building ChiSurf documentation.
+#
+# Usage:
+#   conda env create -f build_tools/docs/environment.yml
+#   conda activate chisurf-docs
+#   python build_tools/docs/generate_plugin_docs.py
+#   sphinx-build -b html docs docs/_build
+#
+# Or with a single script:
+#   bash build_tools/docs/build_docs.sh
+
+name: chisurf-docs
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python>=3.10
+  - pip
+
+  # Runtime (needed by autodoc for importing chisurf modules)
+  - numpy<2.0
+  - scipy
+  - pyyaml
+  - click
+  - pyzmq>=25.0
+
+  # Sphinx and theme
+  - sphinx>=7
+  - sphinx_rtd_theme
+
+  # Sphinx extensions
+  - numpydoc
+  - myst-parser
+
+  # Manual conversion
+  - python-docx
+
+  # EMF vector images → PNG for browser display.
+  # The converter calls `soffice --headless --convert-to png`.
+  # Install LibreOffice:
+  #   macOS: brew install --cask libreoffice
+  #   Linux: sudo apt install libreoffice  (or pacman -S libreoffice-fresh)
+  #   Windows: download from https://www.libreoffice.org/
+
+  # pip extras
+  - pip:
+    - sphinx-autodoc-typehints
