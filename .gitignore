@@ -27,6 +27,8 @@
 *.egg-info
 *.exe
 *.json
+!chisurf/server/client_methods.json
+!chisurf/server/server_methods.json
 *.log
 *.pyc
 *.pyd
@@ -35,7 +37,11 @@
 *scratch
 .*mypy*
 .DS_Store
-.idea/*
+.coverage*
+.idea
+.omx
+.kilocode
+.benchmarks
 .ipynb_checkpoints
 .mypy*
 .pixi
@@ -59,6 +65,8 @@ conda-bld/
 dist/
 doc/_build/
 doc/api/
+docs/_build/
+docs/api/
 output/
 playground/*
 rattler-build-log.txt

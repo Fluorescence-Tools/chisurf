@@ -88,14 +88,20 @@ class ChiSurfAPI:
     Routes to local in-process objects in ``local`` mode, server RPC in
     ``server`` mode, and a mix in ``hybrid`` mode.
 
-    Modes
+    Parameters
+    ----------
+    client : object, optional
+        A ``ChisurfClient`` instance for server-mode routing.
+    mode : str
+        ``"local"``, ``"hybrid"``, or ``"server"``.
+
+    Notes
     -----
-    local
-        Use current in-process ``chisurf.fits`` / ``chisurf.imported_datasets``.
-    hybrid
-        Local reads allowed; server commands preferred for migrated paths.
-    server
-        Pure client/server operation through a ``ChisurfClient``.
+    **local** mode uses current in-process
+    ``chisurf.fits`` / ``chisurf.imported_datasets``. **hybrid** mode
+    preserves local reads while preferring server commands for migrated
+    paths. **server** mode is pure client/server through a
+    ``ChisurfClient``.
     """
 
     def __init__(

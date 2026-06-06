@@ -56,6 +56,7 @@ dependencies = [
     "mdtraj",
     "ipython",
     "click",
+    "pyzmq>=25.0",
 ]
 
 [project.optional-dependencies]
@@ -71,9 +72,6 @@ dev = [
 ]
 cli = [
     "ptpython>=3.0",
-]
-mcp = [
-    "fastmcp",
 ]
 
 [project.urls]
@@ -132,6 +130,9 @@ version = {attr = "chisurf.info.__version__"}
 addopts = "--doctest-modules --cov=chisurf --cov-report=html"
 norecursedirs = ["build_tools", "modules", "conda-bld", ".pixi", "dist", "chisurf", "rattler-recipe", "repro"]
 testpaths = ["test"]
+markers = [
+    "slow: marks tests as slow (reader-heavy) and excluded from default runs",
+]
 
 [tool.pytest-cov]
 # Minimum coverage thresholds as defined in the test coverage plan
@@ -174,14 +175,31 @@ line-length = 100
 
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "UP", # pyupgrade
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "D",   # pydocstyle — docstring conventions (NumPy-style)
 ]
 ignore = [
-    "E501", # line too long, let formatter handle it
+    "E501",  # line too long, let formatter handle it
+    "D100",  # missing docstring in public module (handled per-module)
+    "D104",  # missing docstring in public package (noise for __init__ stubs)
+    "D107",  # missing docstring in __init__ (redundant with class docstring)
+    "D203",  # 1 blank line before class docstring (conflicts with D211)
+    "D212",  # multi-line summary first line (conflicts with D213)
+    "D213",  # multi-line summary second line (we use NumPy style)
+    "D402",  # first line not function signature (handled by convention)
+    "D404",  # first word not "This" (numspy style allows this)
+    "D407",  # dashed line under section headers (NumPy style uses dashes)
+    "D408",  # section underline matches length (NumPy style doesn't require this)
+    "D409",  # section underline matches dashes (NumPy style)
+    "D410",  # blank line after section (NumPy style uses blank lines)
+    "D411",  # blank line before section (NumPy style)
+    "D412",  # no blank lines between header/content (NumPy style)
+    "D413",  # blank line after last section (NumPy style)
+    "D414",  # non-empty docstring should have description (fine)
 ]
 
 [tool.mypy]
