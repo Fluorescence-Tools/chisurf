@@ -7,7 +7,7 @@ codebase and with the FCS/TCSPC model definitions.
 
 These tools are **for developers** and are not part of the public API.
 They are typically run from the repository root using the Python module
-interface (e.g. `python -m dev_tools.export_fitting_parameters`).
+interface (e.g. `python -m build_tools.dev_utils.export_fitting_parameters`).
 
 ---
 
@@ -30,12 +30,12 @@ interface (e.g. `python -m dev_tools.export_fitting_parameters`).
 
   ```bash
   # From the repository root
-  python -m dev_tools.export_fitting_parameters \
+  python -m build_tools.dev_utils.export_fitting_parameters \
       --root chisurf \
       --output chisurf/settings/constants/fitting_parameters.json
 
   # Optionally include tests in the scan
-  python -m dev_tools.export_fitting_parameters --include-tests
+  python -m build_tools.dev_utils.export_fitting_parameters --include-tests
   ```
 
 - **`export_fcs_parameters.py`**  
@@ -58,7 +58,7 @@ interface (e.g. `python -m dev_tools.export_fitting_parameters`).
   **Typical usage:**
 
   ```bash
-  python -m dev_tools.export_fcs_parameters \
+  python -m build_tools.dev_utils.export_fcs_parameters \
       --root chisurf \
       --yaml chisurf/models/fcs/models.yaml \
       --output chisurf/settings/constants/fitting_parameters.json
@@ -83,7 +83,7 @@ interface (e.g. `python -m dev_tools.export_fitting_parameters`).
   **Typical usage:**
 
   ```bash
-  python -m dev_tools.export_tcspc_parameters \
+  python -m build_tools.dev_utils.export_tcspc_parameters \
       --root chisurf \
       --json chisurf/models/tcspc/tcspc.models.json \
       --output chisurf/settings/constants/fitting_parameters.json
@@ -103,7 +103,7 @@ interface (e.g. `python -m dev_tools.export_fitting_parameters`).
   **Typical usage:**
 
   ```bash
-  python -m dev_tools.fill_fcs_descriptions \
+  python -m build_tools.dev_utils.fill_fcs_descriptions \
       --root chisurf \
       --output chisurf/settings/constants/fitting_parameters.json
   ```
@@ -126,7 +126,7 @@ interface (e.g. `python -m dev_tools.export_fitting_parameters`).
   **Typical usage:**
 
   ```bash
-  python -m dev_tools.fill_tcspc_descriptions \
+  python -m build_tools.dev_utils.fill_tcspc_descriptions \
       --root chisurf \
       --output chisurf/settings/constants/fitting_parameters.json
   ```
@@ -139,13 +139,13 @@ When evolving models or adding new fitting parameters, a typical maintenance
 sequence is:
 
 1. **Refresh the base registry from code:**
-   - **Run:** `python -m dev_tools.export_fitting_parameters`.
+   - **Run:** `python -m build_tools.dev_utils.export_fitting_parameters`.
 2. **Add/refresh FCS and TCSPC model parameters:**
-   - **Run:** `python -m dev_tools.export_fcs_parameters`.
-   - **Run:** `python -m dev_tools.export_tcspc_parameters`.
+   - **Run:** `python -m build_tools.dev_utils.export_fcs_parameters`.
+   - **Run:** `python -m build_tools.dev_utils.export_tcspc_parameters`.
 3. **Backfill missing descriptions:**
-   - **Run:** `python -m dev_tools.fill_fcs_descriptions`.
-   - **Run:** `python -m dev_tools.fill_tcspc_descriptions`.
+   - **Run:** `python -m build_tools.dev_utils.fill_fcs_descriptions`.
+   - **Run:** `python -m build_tools.dev_utils.fill_tcspc_descriptions`.
 
 All commands can be pointed at alternate roots or output paths via their
 respective CLI options if needed for experiments or CI scripts.

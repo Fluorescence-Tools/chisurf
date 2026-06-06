@@ -121,7 +121,7 @@ structure_data = safe_open_file(
 
 # Optional registry of fitting-parameter metadata used to enrich parameter
 # descriptions in the GUI. This is populated by the command
-# ``python dev_tools/export_fitting_parameters.py`` and can be
+# ``python -m build_tools.dev_utils.export_fitting_parameters`` and can be
 # edited by the user.
 fitting_parameters = safe_open_file(
     file_path=package_directory / 'constants' / 'fitting_parameters.json',
