@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 import numpy as np
 
 from .base import BaseCmd
+from ..colors import _PYMOL_COLORS, get_pymol_color
 
 
 class RenderingMixin(BaseCmd):
     """Background, representation toggles, color modes and per-selection coloring."""
+
+    # User-defined colors (via set_color command)
+    _user_colors: Dict[str, np.ndarray] = {}
 
     def _mixin_commands(self):
         return {
@@ -20,8 +24,14 @@ class RenderingMixin(BaseCmd):
             "orient": self._cmd_orient,
             "zoom": self._cmd_zoom,
             "reset": self._cmd_reset,
+            "get_view": self._cmd_get_view,
+            "set_view": self._cmd_set_view,
             "color": self._cmd_color,
+            "spectrum": self._cmd_spectrum,
+            "cartoon": self._cmd_cartoon,
             "split_chains": self._cmd_split_chains,
+            "set_color": self._cmd_set_color,
+            "get_color_index": self._cmd_get_color_index,
         }
 
     # ------------------------------------------------------------------ #
@@ -274,6 +284,70 @@ class RenderingMixin(BaseCmd):
             return
         viewer.reset_view()
 
+    def _cmd_cartoon(self, args: List[str]) -> None:
+        """Set cartoon display type similar to PyMOL ``cartoon``."""
+
+        if not args:
+            self._emit_error("Usage: cartoon <automatic|tube|oval|rect|arrow|loop> [, selection]")
+            return
+        mode = (args[0].rstrip(",") or "").strip().lower()
+        from ..config import _DISPLAY_CONFIG
+        cfg = _DISPLAY_CONFIG.setdefault("cartoon", {})
+        if mode in ("automatic", "auto", "default", "oval", "rect", "rectangle", "arrow", "loop"):
+            cfg["style"] = "ribbon"
+        elif mode in ("tube", "trace"):
+            cfg["style"] = "tube"
+        else:
+            self._emit_error(f"Unsupported cartoon type: {mode}")
+            return
+        _, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return
+        try:
+            viewer.set_cartoon_visible(True)
+            viewer._update_view()
+        except Exception:
+            pass
+        self._emit_message(f"Cartoon type set to {mode}")
+
+    def _cmd_get_view(self, args: List[str]) -> str:
+        """Return a copy/pasteable PyMOL-style set_view command."""
+
+        _, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return ""
+        try:
+            vals = [float(v) for v in viewer.get_view_state()]
+        except Exception as exc:
+            self._emit_error(f"Failed to get view: {exc}")
+            return ""
+        return "set_view (" + ", ".join(f"{v:.9g}" for v in vals) + ")"
+
+    def _cmd_set_view(self, args: List[str]) -> None:
+        """Restore an 18-float view tuple."""
+
+        joined = " ".join(args).strip()
+        if not joined:
+            self._emit_error("Usage: set_view (<18 floats>)")
+            return
+        text = joined.replace("set_view", " ").replace("(", " ").replace(")", " ")
+        text = text.replace("\\", " ").replace(",", " ")
+        try:
+            vals = [float(tok) for tok in text.split()]
+        except Exception:
+            self._emit_error("set_view requires 18 numeric values")
+            return
+        if len(vals) != 18:
+            self._emit_error("set_view requires 18 numeric values")
+            return
+        _, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return
+        try:
+            viewer.set_view_state(vals)
+        except Exception as exc:
+            self._emit_error(f"Failed to set view: {exc}")
+
     # ------------------------------------------------------------------ #
     # Color handling
     # ------------------------------------------------------------------ #
@@ -361,12 +435,23 @@ class RenderingMixin(BaseCmd):
                     pass
             return
 
-        # No comma: treat as simple color-mode toggle on active object.
+        # No comma: treat as simple color-mode toggle or uniform color on active object.
         raw = (args[0] or "").strip().lower()
         try:
             mode = self._normalize_color_mode(raw)
-        except ValueError as exc:
-            self._emit_error(str(exc))
+        except ValueError:
+            # Not a mode name; try parsing as a color spec for uniform coloring.
+            try:
+                rgba = self._parse_color_spec(raw)
+            except ValueError:
+                self._emit_error(
+                    f"Unrecognized color '{raw}'. Use a color name, #hex, "
+                    "or one of: single, by_residue, by_ss, by_sequence, "
+                    "by_element, by_chain, spectrum."
+                )
+                return
+            # Apply uniform color to all residues via the comma form internally.
+            self._cmd_color([raw + ", all"])
             return
 
         try:
@@ -381,8 +466,50 @@ class RenderingMixin(BaseCmd):
                 pass
 
     def _cmd_spectrum(self, args: List[str]) -> None:
-        """Color by a spectrum (rainbow). Alias for 'color spectrum'."""
-        self._cmd_color(["spectrum"] + args)
+        """Color by a spectrum (rainbow). Alias for 'color spectrum'.
+
+        PyMOL syntax: spectrum [expression [, palette [, selection]]]
+        Chimol currently supports the global color mode part.
+        """
+        self._cmd_color(["spectrum"])
+
+    def _cmd_set_color(self, args: List[str]) -> None:
+        """Define a named color.
+
+        PyMOL syntax: set_color name, [r, g, b] or set_color name, hex
+        """
+        if not args:
+            self._emit_error("Usage: set_color <name>, <r,g,b> or <#hex>")
+            return
+        joined = " ".join(args).strip()
+        if "," not in joined:
+            self._emit_error("Usage: set_color <name>, <r,g,b> or <#hex>")
+            return
+        name_part, color_part = [p.strip() for p in joined.split(",", 1)]
+        if not name_part or not color_part:
+            self._emit_error("Usage: set_color <name>, <r,g,b> or <#hex>")
+            return
+        try:
+            rgba = self._parse_color_spec(color_part)
+        except (ValueError, KeyError) as exc:
+            self._emit_error(f"Cannot parse color value: {exc}")
+            return
+        key = name_part.strip().lower()
+        self._user_colors[key] = rgba
+        self._emit_message(f"Defined color '{name_part.strip()}' = {rgba[:3]}")
+
+    def _cmd_get_color_index(self, args: List[str]) -> Optional[int]:
+        """Return the internal index for a named color (always 0 for compat)."""
+        if not args:
+            self._emit_error("Usage: get_color_index <name>")
+            return None
+        name = args[0].strip().lower()
+        if name in _PYMOL_COLORS or name in self._user_colors:
+            # PyMOL returns -1 for unknown colors; Chimol returns 0 for known.
+            self._emit_message(f"Color index for '{name}': 0")
+            return 0
+        self._emit_error(f"Unknown color: {name}")
+        return None
 
     def _normalize_color_mode(self, raw: str) -> str:
         token = (raw or "").strip().lower()
@@ -462,23 +589,15 @@ class RenderingMixin(BaseCmd):
             raise ValueError("Empty color specification")
 
         name = text.lower()
-        named: dict[str, tuple[float, float, float]] = {
-            "red": (1.0, 0.0, 0.0),
-            "green": (0.0, 1.0, 0.0),
-            "blue": (0.0, 0.0, 1.0),
-            "yellow": (1.0, 1.0, 0.0),
-            "cyan": (0.0, 1.0, 1.0),
-            "magenta": (1.0, 0.0, 1.0),
-            "white": (1.0, 1.0, 1.0),
-            "black": (0.0, 0.0, 0.0),
-            "gray": (0.5, 0.5, 0.5),
-            "grey": (0.5, 0.5, 0.5),
-            "orange": (1.0, 0.5, 0.0),
-        }
 
-        if name in named:
-            r, g, b = named[name]
+        # Check built-in PyMOL colors
+        if name in _PYMOL_COLORS:
+            r, g, b = _PYMOL_COLORS[name]
             return np.array([r, g, b, 1.0], dtype=float)
+
+        # Check user-defined colors
+        if name in self._user_colors:
+            return self._user_colors[name].copy()
 
         if name.startswith("#") and len(name) in (7, 9):
             try:

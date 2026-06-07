@@ -16,7 +16,6 @@ class EditingMixin(BaseCmd):
             "iterate": self._cmd_iterate,
             "alter": self._cmd_alter,
             "remove": self._cmd_remove,
-            "delete": self._cmd_remove,  # alias
             "pseudoatom": self._cmd_pseudoatom,
         }
 

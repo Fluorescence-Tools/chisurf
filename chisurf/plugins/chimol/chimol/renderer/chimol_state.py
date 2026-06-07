@@ -84,12 +84,14 @@ class _MolViewObjectState:
     metaballs_visible: bool = False
     point_overlays: dict[str, dict] = field(default_factory=dict)
     frames: Optional[np.ndarray] = None
+    frames_raw: Optional[np.ndarray] = None
     active_frame: int = 0
     measurements: dict[str, dict] = field(default_factory=dict)
     bead_radii: Optional[np.ndarray] = None
     rmf_hierarchy: Optional[object] = None  # RmfHierarchyNode
     restraints: list[dict] = field(default_factory=list)
     rmf_provenance: list[dict] = field(default_factory=list)
+    _ca_indices: Optional[np.ndarray] = None
 
 
 @dataclass

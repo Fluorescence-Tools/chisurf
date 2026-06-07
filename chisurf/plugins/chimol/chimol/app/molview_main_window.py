@@ -1,5 +1,6 @@
 """Protein structure viewer (Chimol) plugin."""
 
+import chisurf as cs
 from pathlib import Path
 from typing import Optional, Any, Sequence
 
@@ -7,13 +8,12 @@ import numpy as np
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-try:  # moview can run inside or outside chisurf
-    import chisurf
+try:  # moview can run inside or outside cs
     import chisurf.core.settings as _cs_settings
     from chisurf.gui.widgets.general import open_files as _cs_open_files
     from chisurf.core.structure import Structure as _ChiSurfStructure
 except Exception:  # pragma: no cover - standalone moview
-    chisurf = None  # type: ignore[assignment]
+    cs = None  # type: ignore[assignment]
     _cs_settings = None
     _cs_open_files = None
     _ChiSurfStructure = None
@@ -355,7 +355,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                 loaded_any = True
             except Exception as e:
                 try:
-                    chisurf.logging.warning(
+                    cs.logging.warning(
                         "MolViewPluginWindow.on_open_structure: failed to load '%s': %s",
                         path,
                         e,
@@ -2066,7 +2066,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             self.viewer.set_residue_representation(idx, cartoon=cartoon, ball=ball)
         except Exception as e:
             try:
-                chisurf.logging.warning(
+                cs.logging.warning(
                     "MolViewPluginWindow._apply_representation_to_selection failed: %s",
                     e,
                 )

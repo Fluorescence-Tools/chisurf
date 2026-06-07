@@ -126,7 +126,7 @@ class _RmfLoader:
                 RMF.get_all_global_coordinates(r, r.get_root_node(), coord_buffer)
             except Exception:
                 for i, node in enumerate(self.particle_nodes):
-                    coord_buffer[i] = RMF.CoordinateConstFactory(r).get(node).get_coordinates()
+                    coord_buffer[i] = self.particlef.get(node).get_coordinates()
             frames_arr[f] = coord_buffer.astype(np.float32)
             
         # 3. Extract radii
@@ -200,7 +200,14 @@ class _RmfLoader:
         # Software
         if self.softwaref and self.softwaref.get_is(node):
             sw = self.softwaref.get(node)
-            provenance.append({"name": sw.get_name(), "value": f"{sw.get_version()} ({sw.get_type()})"})
+            get_type = getattr(sw, "get_type", None)
+            type_text = ""
+            if get_type is not None:
+                try:
+                    type_text = f" ({get_type()})"
+                except Exception:
+                    type_text = ""
+            provenance.append({"name": sw.get_name(), "value": f"{sw.get_version()}{type_text}"})
             
         # Explicit Bonds
         if self.bondf.get_is(node):

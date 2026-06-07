@@ -61,13 +61,13 @@ class AnimationMixin(BaseCmd):
             curr = viewer.get_current_frame()
             total = viewer.get_total_frames()
             
-            if val.startswith("+"):
+            val_l = val.lower()
+            if val_l in {"last", "end"}:
+                viewer.set_current_frame(total - 1)
+            elif val.startswith("+"):
                 viewer.set_current_frame((curr + int(val[1:])) % total)
             elif val.startswith("-"):
-                if val == "-1": # Last frame
-                    viewer.set_current_frame(total - 1)
-                else:
-                    viewer.set_current_frame((curr - int(val[1:])) % total)
+                viewer.set_current_frame((curr + int(val)) % total)
             else:
                 frame_no = int(val)
                 # Ensure 1-based to 0-based conversion and wrapping

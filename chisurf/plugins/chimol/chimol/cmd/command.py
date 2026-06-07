@@ -10,11 +10,13 @@ from .measurements import MeasurementMixin
 from .editing import EditingMixin
 from .animation import AnimationMixin
 from .rmf import RmfMixin
+from .lifecycle import LifecycleMixin
+from .exporting import ExportMixin
 
 MixinType = Type[BaseCmd]
 
 
-class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMixin, MeasurementMixin, EditingMixin, BaseCmd):
+class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMixin, MeasurementMixin, EditingMixin, LifecycleMixin, ExportMixin, BaseCmd):
     """Thin aggregator that wires together all command mixins."""
 
     def _builtin_commands(self) -> Dict[str, Callable[[List[str]], object]]:
@@ -27,6 +29,8 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMix
             EditingMixin,
             AnimationMixin,
             RmfMixin,
+            LifecycleMixin,
+            ExportMixin,
         ):
             helper = getattr(mixin, "_mixin_commands", None)
             if callable(helper):
@@ -36,7 +40,6 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMix
                 "help": self._cmd_help,
                 "objects": self._cmd_objects,
                 "get_names": self._cmd_get_names,
-                "delete": self._cmd_delete,
                 "quit": self._cmd_quit,
                 "exit": self._cmd_quit,
             }
@@ -86,8 +89,23 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMix
     def reset(self) -> None:
         self._cmd_reset([])
 
+    def get_view(self):
+        return self._cmd_get_view([])
+
+    def set_view(self, view) -> None:
+        if isinstance(view, str):
+            self._cmd_set_view([view])
+        else:
+            self._cmd_set_view([", ".join(str(v) for v in view)])
+
     def color(self, mode: str) -> None:
         self._cmd_color([mode])
+
+    def spectrum(self, *args: str) -> None:
+        self._cmd_spectrum(list(args))
+
+    def cartoon(self, *args: str) -> None:
+        self._cmd_cartoon(list(args))
 
     def distance(self, *tokens: str) -> None:
         self._cmd_distance(list(tokens))
@@ -155,6 +173,9 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMix
     def deselect(self) -> None:
         self._cmd_deselect([])
 
+    def clear(self) -> None:
+        self._cmd_clear([])
+
     def iterate(self, *args: str) -> None:
         self._cmd_iterate(list(args))
 
@@ -174,56 +195,14 @@ class Cmd(LoaderCommands, SelectionMixin, RenderingMixin, AnimationMixin, RmfMix
         """Delete objects by id or name (PyMOL-style delete)."""
         self._cmd_delete(list(tokens))
 
-    # ------------------------------------------------------------------
-    # Internal handlers (falling back to BaseCmd helpers for errors)
-    # ------------------------------------------------------------------
+    def reinitialize(self, *tokens: str) -> None:
+        self._cmd_reinitialize(list(tokens))
 
-    def _cmd_delete(self, args: List[str]) -> None:
-        if not args:
-            self._emit_error("Usage: delete <object_name|id> [more ...]")
-            return
+    def copy(self, target: str, source: str) -> None:
+        self._cmd_copy([target, source])
 
-        window, viewer = self._require_window_and_viewer()
-        if viewer is None:
-            return
+    def png(self, filename: str, *args: str) -> None:
+        self._cmd_png([filename, *args])
 
-        removed: list[str] = []
-        failed: list[str] = []
-
-        for token in args:
-            target = (token or "").strip()
-            if not target:
-                continue
-
-            obj = self._find_object_by_name(viewer, target)
-            if obj is None:
-                failed.append(target)
-                continue
-
-            oid = str(obj.get("id", "")).strip()
-            oname = str(obj.get("name") or oid).strip()
-            if not oid:
-                failed.append(target)
-                continue
-
-            try:
-                ok = bool(viewer.remove_object(oid))
-            except Exception:
-                ok = False
-
-            if ok:
-                removed.append(f"{oname} ({oid})")
-            else:
-                failed.append(target)
-
-        # Refresh UI/store if we have a window
-        try:
-            if window is not None:
-                window._refresh_objects_from_viewer()
-        except Exception:
-            pass
-
-        if removed:
-            self._emit_message("Deleted: " + ", ".join(removed))
-        if failed:
-            self._emit_error("Not found or failed: " + ", ".join(failed))
+    def ray(self, *args: str) -> None:
+        self._cmd_ray(list(args))

@@ -172,6 +172,7 @@ class MolView(QtWidgets.QWidget):
     _surface_visible = _StateField("surface_visible")
     _metaballs_visible = _StateField("metaballs_visible")
     _point_overlays = _StateField("point_overlays")
+    _ca_indices = _StateField("_ca_indices")
     _measurements = _StateField("measurements")
     _bead_radii = _StateField("bead_radii")
     _rmf_hierarchy = _StateField("rmf_hierarchy")
@@ -462,6 +463,23 @@ class MolView(QtWidgets.QWidget):
         self._update_view()
         return True
 
+    def copy_object(self, object_id: str, *, name: Optional[str] = None) -> Optional[str]:
+        """Create a deep copy of an existing loaded object."""
+
+        entry = self._objects.get(object_id)
+        if entry is None:
+            return None
+        copied = self._create_object(
+            name=name or f"{entry.name}_copy",
+            source_path=entry.source_path,
+            placeholder=entry.placeholder,
+        )
+        copied.state = _copy_state(entry.state)
+        copied.visible = bool(entry.visible)
+        self._active_object_id = copied.id
+        self._update_view()
+        return copied.id
+
     # ------------------------------------------------------------------
     # Animation API
     # ------------------------------------------------------------------
@@ -528,7 +546,6 @@ class MolView(QtWidgets.QWidget):
         frame = np.asarray(arr[idx], dtype=float)
 
         state.active_frame = idx
-        state.coords = frame
         # Coordinate-only trajectories should not leave stale all-atom data in
         # atom rendering paths. Reuse all-atom coords only when dimensions match.
         all_atom_coords = getattr(state, "all_atom_coords", None)
@@ -577,20 +594,47 @@ class MolView(QtWidgets.QWidget):
                     state.secondary_structure = None
                     state.trace_ups = None
 
+        # All-atom frames: set_frames already re-centered and scaled them.
+        # Extract the CA trace so residue-level rendering (cartoon, trace,
+        # labels) stays intact. Always replace state.coords; frames usually
+        # have the same shape, so a shape-change guard would keep rendering
+        # the first conformation while only all-atom overlays move.
+        selected_coords = None
+        if frame_matches_all_atoms and state.residue_ids is not None:
+            try:
+                ca_idx = getattr(state, "_ca_indices", None)
+                if ca_idx is not None and len(ca_idx) > 0 and ca_idx.max() < frame.shape[0]:
+                    ca_coords = frame[ca_idx]
+                    if ca_coords.shape[0] == len(state.residue_ids):
+                        selected_coords = ca_coords
+            except Exception:
+                pass
+        if selected_coords is None:
+            selected_coords = frame
+        state.coords = selected_coords
+
         try:
-            center, radius = _compute_center_radius(frame)
+            center, radius = _compute_center_radius(
+                state.all_atom_coords
+                if frame_matches_all_atoms and state.all_atom_coords is not None
+                else state.coords
+            )
             state.center = center
             state.radius = float(radius)
         except Exception:
             pass
 
-        if state.cartoon_mask is None or len(state.cartoon_mask) != frame.shape[0]:
-            state.cartoon_mask = np.ones(frame.shape[0], dtype=bool)
-        if state.ball_mask is None or len(state.ball_mask) not in (
-            frame.shape[0],
-            0 if state.all_atom_coords is None else np.asarray(state.all_atom_coords).shape[0],
-        ):
-            state.ball_mask = np.zeros(frame.shape[0], dtype=bool)
+        coords_len = state.coords.shape[0] if state.coords is not None else frame.shape[0]
+        all_atom_len = (
+            np.asarray(state.all_atom_coords).shape[0]
+            if state.all_atom_coords is not None
+            else coords_len
+        )
+
+        if state.cartoon_mask is None or len(state.cartoon_mask) != coords_len:
+            state.cartoon_mask = np.ones(coords_len, dtype=bool)
+        if state.ball_mask is None or len(state.ball_mask) not in (coords_len, all_atom_len):
+            state.ball_mask = np.zeros(coords_len, dtype=bool)
         return idx
 
     def _apply_frame_states(self) -> None:
@@ -781,6 +825,8 @@ class MolView(QtWidgets.QWidget):
 
         self.view: Optional[QtWidgets.QWidget] = None
         self._disabled_label: Optional[QtWidgets.QLabel] = None
+        self._container: Optional[QtWidgets.QWidget] = None
+        self._ray_overlay: Optional[QtWidgets.QLabel] = None
 
         # Stored geometry
         self._coords: Optional[np.ndarray] = None
@@ -1081,6 +1127,14 @@ class MolView(QtWidgets.QWidget):
 
             self._center = np.zeros(3, dtype=float)
             self._radius = float(radius * scale)
+            if getattr(self, "_ca_indices", None) is None:
+                try:
+                    _atom_names = np.asarray(atoms["atom_name"], dtype=str)
+                    self._ca_indices = np.where(
+                        np.char.strip(_atom_names) == "CA"
+                    )[0]
+                except Exception:
+                    self._ca_indices = None
             self._trace_ups = _build_trace_ups(atoms, self._residue_ids, self._coords)
 
             try:
@@ -1132,7 +1186,6 @@ class MolView(QtWidgets.QWidget):
             raise ValueError("xyz must have shape (N, 3)")
 
         self._atoms = None
-        self._all_atom_coords = None
         self._all_atom_res_ids = None
         self._all_atom_radii = None
         self._atom_features = {}
@@ -1143,6 +1196,7 @@ class MolView(QtWidgets.QWidget):
         scale = float(self._scale_factor)
         arr = (arr - center) * scale
 
+        self._all_atom_coords = arr
         self._coords = arr
         self._center = np.zeros(3, dtype=float)
         self._radius = float(radius * scale)
@@ -1335,6 +1389,31 @@ class MolView(QtWidgets.QWidget):
             azimuth=float(self._default_azimuth)
         )
         self._renderer.fit_to_radius(radius)
+
+    def get_view_state(self) -> list[float]:
+        """Return an 18-float view tuple for PyMOL-style ``get_view``."""
+
+        renderer = self._renderer
+        if renderer is not None and hasattr(renderer, "get_view_state"):
+            return list(renderer.get_view_state())
+        return [
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0,
+            float(self._radius * 3.0), 20.0, 45.0,
+            0.0, 0.0, 0.0,
+            float(self._camera_near_clip), float(self._camera_far_clip), 45.0,
+        ]
+
+    def set_view_state(self, view) -> None:
+        """Restore an 18-float view tuple from PyMOL-style ``set_view``."""
+
+        vals = [float(v) for v in view]
+        if len(vals) != 18:
+            raise ValueError("view must contain 18 floats")
+        renderer = self._renderer
+        if renderer is not None and hasattr(renderer, "set_view_state"):
+            renderer.set_view_state(vals)
 
     def center(self, indices: Optional[Sequence[int]] = None, *, object_id: Optional[str] = None) -> None:
         """Center camera on the geometric center of target residues."""
@@ -1956,8 +2035,6 @@ class MolView(QtWidgets.QWidget):
         if not self._show_cartoon:
             return scene_objects
 
-        radius_scale = float(config.get("radius_scale", 0.05))
-        min_radius = float(config.get("min_radius", 0.4))
         ao_radius = float(config.get("ao_radius", 4.0))
         ao_max = int(config.get("ao_max_neighbors", 16))
         ao_strength = float(config.get("ao_strength", 0.45))
@@ -2100,10 +2177,10 @@ class MolView(QtWidgets.QWidget):
                     seg_coords,
                     seg_colors,
                     seg_trace_ups,
-                    base_radius=max(self._radius * radius_scale, min_radius),
+                    base_radius=float(config.get("tube_radius", 0.5)),
                     style=str(config.get("style", "tube")),
                     ss_codes=seg_ss,
-                    config=config,
+                    config={**config, "coordinate_scale": float(self._scale_factor)},
                 )
 
                 if arrays is not None:
@@ -2423,6 +2500,99 @@ class MolView(QtWidgets.QWidget):
                 )
 
         return scene_objects if scene_objects else None
+
+    def get_atom_sphere_data(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Extract all atom positions, colors (RGB), and radii for ray tracing.
+
+        Works regardless of the current representation mode (cartoon, sticks,
+        etc.) — always returns ALL atoms in the active object.  Radii are
+        estimated from the ``radius`` field or the bounding sphere when per-atom
+        radii are unavailable.
+
+        Returns three arrays suitable for building a list of :class:`Sphere`:
+        (positions, colors, radii) where positions is (N, 3), colors (N, 3),
+        and radii (N,) — all in world / model coordinates.  If no atom data
+        is available, returns empty arrays.
+        """
+        positions = np.zeros((0, 3), dtype=float)
+        colors_rgb = np.zeros((0, 3), dtype=float)
+        radii_arr = np.zeros((0,), dtype=float)
+
+        balls_cfg = _DISPLAY_CONFIG.get("balls", {})
+        balls_size_scale = float(balls_cfg.get("size_scale", 0.04))
+        balls_min_size = float(balls_cfg.get("min_size", 3.0))
+        balls_radius_multiplier = float(balls_cfg.get("radius_multiplier", 1.0))
+        base_global_radius = max(self._radius * balls_size_scale, balls_min_size)
+
+        atoms = self._atoms
+        atom_xyz = self._all_atom_coords
+        if atom_xyz is None and atoms is not None and "xyz" in (atoms.dtype.fields or {}):
+            atom_xyz = np.asarray(atoms["xyz"], dtype=float)
+        if atom_xyz is None:
+            return positions, colors_rgb, radii_arr
+        pts = np.asarray(atom_xyz, dtype=float)
+
+        n_atoms_total = pts.shape[0]
+
+        # --- Radii ---
+        if (
+            self._all_atom_radii is not None
+            and len(self._all_atom_radii) == n_atoms_total
+        ):
+            radii_arr = np.asarray(self._all_atom_radii, dtype=float)
+            radii_arr = radii_arr * balls_radius_multiplier
+        else:
+            radii_arr = np.full(n_atoms_total, base_global_radius, dtype=float)
+        radii_arr[np.isnan(radii_arr) | (radii_arr <= 0.0)] = base_global_radius
+
+        # --- Colors ---
+        colors_4 = np.zeros((n_atoms_total, 4), dtype=float)
+        colors_4[:] = np.asarray(self._base_color_single, dtype=float)
+
+        if atoms is not None:
+            n_points = len(self._residue_ids) if self._residue_ids is not None else 0
+            if (
+                self._colors_per_ca is not None
+                and len(self._colors_per_ca) == n_points
+            ):
+                atom_res_id = None
+                if "res_id" in (atoms.dtype.fields or {}):
+                    try:
+                        atom_res_id = np.asarray(atoms["res_id"])
+                    except Exception:
+                        atom_res_id = None
+                if atom_res_id is not None:
+                    for i_atom in range(n_atoms_total):
+                        rid = atom_res_id[i_atom]
+                        idx_in_res = np.where(self._residue_ids == rid)[0]
+                        if len(idx_in_res) > 0:
+                            colors_4[i_atom, :3] = self._colors_per_ca[idx_in_res[0], :3]
+                        else:
+                            colors_4[i_atom, :3] = self._base_color_single[:3]
+
+            # Per-atom overrides
+            ov = getattr(self, "_colors_per_atom_override", None)
+            if ov is not None and len(ov) == n_atoms_total:
+                ov_arr = np.asarray(ov, dtype=float)
+                for i_atom in range(n_atoms_total):
+                    if np.isfinite(ov_arr[i_atom]).all():
+                        colors_4[i_atom, :3] = ov_arr[i_atom, :3]
+
+        colors_rgb = np.clip(colors_4[:, :3], 0.0, 1.0)
+
+        return pts, colors_rgb, radii_arr
+
+    def get_ray_view_state(self) -> list[float]:
+        """Return the current 18-float view tuple for ray-traced camera setup."""
+        renderer = getattr(self, "_renderer", None)
+        if renderer is not None and hasattr(renderer, "get_view_state"):
+            return renderer.get_view_state()
+        return [1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0,
+                50.0, 20.0, 45.0,
+                0.0, 0.0, 0.0,
+                0.1, 100.0, 45.0]
 
     def _update_atom_gaussians(self, config: dict) -> Optional[list[SceneObject]]:
         if not self._show_atom_gaussians:

@@ -15,6 +15,7 @@ class SelectionMixin(BaseCmd):
     def _mixin_commands(self):
         return {
             "select": self._cmd_select,
+            "clear": self._cmd_clear,
             "set": self._cmd_set,
             "enable": self._cmd_enable,
             "disable": self._cmd_disable,
@@ -162,8 +163,8 @@ class SelectionMixin(BaseCmd):
             self._emit_error("Usage: set <name> <value>")
             return
 
-        name = (args[0] or "").strip().lower()
-        value = " ".join(args[1:]).strip()
+        name = (args[0] or "").strip().rstrip(",").lower()
+        value = " ".join(args[1:]).strip().lstrip(",").strip()
         if not name or not value:
             self._emit_error("Usage: set <name> <value>")
             return
@@ -207,6 +208,35 @@ class SelectionMixin(BaseCmd):
                 self._cmd_show([name])
             else:
                 self._cmd_hide([name])
+            return
+
+        cartoon_setting_map = {
+            "cartoon_sampling": "cartoon_sampling",
+            "cartoon_loop_radius": "loop_radius",
+            "cartoon_loop_quality": "loop_quality",
+            "cartoon_rect_length": "rect_length",
+            "cartoon_rect_width": "rect_width",
+            "cartoon_oval_length": "oval_length",
+            "cartoon_oval_width": "oval_width",
+            "cartoon_oval_quality": "oval_quality",
+            "cartoon_tube_radius": "tube_radius",
+            "cartoon_tube_quality": "tube_quality",
+        }
+        if name in cartoon_setting_map:
+            window, viewer = self._require_window_and_viewer()
+            if viewer is None:
+                return
+            from ..config import _DISPLAY_CONFIG
+            try:
+                _DISPLAY_CONFIG.setdefault("cartoon", {})[cartoon_setting_map[name]] = float(value)
+            except ValueError:
+                self._emit_error(f"Invalid numeric value for {name}: {value}")
+                return
+            try:
+                viewer._update_view()
+            except Exception:
+                pass
+            self._emit_message(f"{name} set to {value}")
             return
         
         if name.startswith("metaball.") or name.startswith("metaball_"):
@@ -298,6 +328,17 @@ class SelectionMixin(BaseCmd):
             pass
 
         self._emit_message("Deselected residues on active object")
+
+    def _cmd_clear(self, args: List[str]) -> None:
+        """Clear the current selection and transient selection UI state.
+
+        PyMOL uses ``clear`` in interactive contexts to clear current user
+        input/selection state. In Chimol this is intentionally non-destructive:
+        it does not delete loaded molecules. Use ``delete`` for that.
+        """
+
+        self._cmd_deselect(args)
+        self._emit_message("Cleared current selection")
 
     # ------------------------------------------------------------------ #
     # Helpers used by other command groups

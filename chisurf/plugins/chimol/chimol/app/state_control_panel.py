@@ -96,7 +96,7 @@ class StateControlDock(QtCore.QObject):
         play_layout.addWidget(_make_play_btn(" ■ ", "mstop", "Stop"))
         play_layout.addWidget(_make_play_btn(" ► ", "mplay", "Play"))
         play_layout.addWidget(_make_play_btn(" > ", "frame +1", "Next frame"))
-        play_layout.addWidget(_make_play_btn(">|", "frame -1", "Go to last frame"))
+        play_layout.addWidget(_make_play_btn(">|", "frame last", "Go to last frame"))
         
         layout.addLayout(play_layout)
         layout.addStretch(1)

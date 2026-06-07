@@ -279,6 +279,47 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._azimuth = float(azimuth)
         self.update()
 
+    def get_view_state(self) -> list[float]:
+        """Return an 18-float view tuple for PyMOL-style round-tripping."""
+
+        center = np.zeros(3, dtype=float)
+        if self._scene is not None:
+            try:
+                center = np.asarray(self._scene.center, dtype=float)
+            except Exception:
+                center = np.zeros(3, dtype=float)
+        target = center + self._pan_offset
+        return [
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0,
+            float(self._distance), float(self._elevation), float(self._azimuth),
+            float(target[0]), float(target[1]), float(target[2]),
+            float(self._near_clip), float(self._far_clip), 45.0,
+        ]
+
+    def set_view_state(self, view) -> None:
+        """Restore an 18-float view tuple produced by ``get_view_state``."""
+
+        vals = [float(v) for v in view]
+        if len(vals) != 18:
+            raise ValueError("view must contain 18 floats")
+        self._distance = max(vals[9], 0.1)
+        self._elevation = vals[10]
+        self._azimuth = vals[11]
+        target = np.array(vals[12:15], dtype=float)
+        center = np.zeros(3, dtype=float)
+        if self._scene is not None:
+            try:
+                center = np.asarray(self._scene.center, dtype=float)
+            except Exception:
+                center = np.zeros(3, dtype=float)
+        self._pan_offset = target - center
+        self._near_clip = self._clamp_near_clip(vals[15])
+        self._far_clip = max(vals[16], self._near_clip * 10.0)
+        self._update_center_opt()
+        self.update()
+
     # Compatibility helpers -------------------------------------------------
     def cameraPosition(self) -> QtGui.QVector3D:
         pos = self._camera_position()

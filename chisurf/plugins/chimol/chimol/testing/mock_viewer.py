@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional, Sequence, Dict, Any, List
 import numpy as np
 from pathlib import Path
+import copy
 
 
 def _get_qobject_base():
@@ -35,6 +36,9 @@ class MockViewer(_get_qobject_base()):
             self.sticks_mask = None
             self.cartoon_mask = None
             self.measurements = {}
+            self.frames = None
+            self.frames_raw = None
+            self.active_frame = 0
 
     class MockEntry:
         def __init__(self, oid, name):
@@ -54,6 +58,15 @@ class MockViewer(_get_qobject_base()):
         self._animation_running = False
         self._animation_timer = None
         self._color_mode = "single"
+        self._selected_residues: List[int] = []
+        self._view_state = [
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0,
+            30.0, 20.0, 45.0,
+            0.0, 0.0, 0.0,
+            0.1, 1000.0, 45.0,
+        ]
         self._reps: Dict[str, bool] = {
             "cartoon": True,
             "ca_trace": False,
@@ -68,6 +81,16 @@ class MockViewer(_get_qobject_base()):
     def set_total_frames(self, n): self._total_frames = n
     def get_current_frame(self): return self._current_frame
     def set_current_frame(self, i): self._current_frame = i
+
+    def mset(self, first=1, last=1):
+        self._total_frames = max(int(last), int(first), 1)
+
+    def start_animation(self):
+        self._animation_running = True
+
+    def stop_animation(self):
+        self._animation_running = False
+        self._current_frame = 0
 
     def set_background_color(self, color: str):
         self._background_color = color
@@ -87,6 +110,42 @@ class MockViewer(_get_qobject_base()):
                   entry.state.all_atom_chain_ids = entry.state.atoms["chain_id"]
                   entry.state.residue_chain_ids = np.array([b"A"] * len(entry.state.residue_ids)) # Mock
         self._update_view()
+
+    def add_structure(self, structure: Any, *, name: Optional[str] = None, source_path: Optional[str] = None):
+        oid = self._create_object(name=name)
+        self.set_structure(structure)
+        return oid
+
+    def add_coordinates(self, coords, *, name: Optional[str] = None, source_path: Optional[str] = None):
+        oid = self._create_object(name=name)
+        entry = self._objects[oid]
+        entry.state.all_atom_coords = np.asarray(coords, dtype=float)
+        return oid
+
+    def set_frames(self, frames, *, object_id=None):
+        oid = object_id or self._active_object_id
+        if not oid or oid not in self._objects:
+            oid = self._create_object()
+        arr = np.asarray(frames, dtype=float)
+        self._objects[oid].state.frames = arr
+        self._objects[oid].state.frames_raw = arr
+        self._objects[oid].state.active_frame = 0
+        self._total_frames = max(self._total_frames, int(arr.shape[0]))
+
+    def append_frame(self, frame, *, object_id=None):
+        oid = object_id or self._active_object_id
+        if not oid or oid not in self._objects:
+            oid = self._create_object()
+        arr = np.asarray(frame, dtype=float)
+        state = self._objects[oid].state
+        if state.frames_raw is None:
+            state.frames_raw = arr[np.newaxis, :, :]
+        else:
+            state.frames_raw = np.concatenate([state.frames_raw, arr[np.newaxis, :, :]], axis=0)
+        state.frames = state.frames_raw
+        state.active_frame = state.frames.shape[0] - 1
+        self._total_frames = max(self._total_frames, int(state.frames.shape[0]))
+        return int(state.frames.shape[0])
 
     def get_active_state(self):
         if self._active_object_id:
@@ -129,6 +188,84 @@ class MockViewer(_get_qobject_base()):
             return True
         return False
 
+    def copy_object(self, object_id: str, *, name: Optional[str] = None):
+        if object_id not in self._objects:
+            return None
+        old = self._objects[object_id]
+        new_id = self._create_object(name=name or f"{old.name}_copy")
+        new = self._objects[new_id]
+        new.state = copy.deepcopy(old.state)
+        new.visible = old.visible
+        self._active_object_id = new_id
+        return new_id
+
+    def set_object_visible(self, object_id: str, visible: bool):
+        if object_id in self._objects:
+            self._objects[object_id].visible = bool(visible)
+
+    def set_color_mode(self, mode: str):
+        self._color_mode = str(mode)
+
+    def clear_color_overrides(self):
+        pass
+
+    def reset_view(self):
+        pass
+
+    def set_cartoon_visible(self, visible: bool):
+        self._reps["cartoon"] = bool(visible)
+
+    def set_trace_visible(self, visible: bool):
+        self._reps["ca_trace"] = bool(visible)
+
+    def set_atoms_visible_all(self, visible: bool):
+        self._reps["atoms"] = bool(visible)
+
+    def set_sticks_visible(self, visible: bool):
+        self._reps["sticks"] = bool(visible)
+
+    def set_dots_visible(self, visible: bool):
+        self._reps["dots"] = bool(visible)
+
+    def set_surface_visible(self, visible: bool):
+        self._reps["surface"] = bool(visible)
+
+    def set_metaballs_visible(self, visible: bool):
+        self._reps["metaball"] = bool(visible)
+
+    def set_plane_visible(self, visible: bool):
+        self._reps["plane"] = bool(visible)
+
+    def save_png(self, path, *, width=None, height=None):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_bytes(b"mock png")
+        return True
+
+    def get_view_state(self):
+        return list(self._view_state)
+
+    def set_view_state(self, view):
+        vals = [float(v) for v in view]
+        if len(vals) != 18:
+            raise ValueError("view must contain 18 floats")
+        self._view_state = vals
+
+    def get_ray_view_state(self) -> list:
+        return self.get_view_state()
+
+    def get_atom_sphere_data(self) -> tuple:
+        state = self.get_active_state()
+        if state is None:
+            return np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0,))
+        coords = state.all_atom_coords
+        if coords is None:
+            return np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0,))
+        n = coords.shape[0]
+        positions = np.asarray(coords, dtype=float)
+        colors = np.full((n, 3), 0.8, dtype=float)
+        radii = np.full(n, 1.5, dtype=float)
+        return positions, colors, radii
+
     def get_residue_positions(self, indices=None, *, object_id=None):
         oid = object_id or self._active_object_id
         if not oid or oid not in self._objects:
@@ -139,6 +276,9 @@ class MockViewer(_get_qobject_base()):
              return np.zeros((0, 3))
         # For simplicity in mock, just return all if indices is None
         return coords
+
+    def set_selected_residues(self, indices, *, object_id=None):
+        self._selected_residues = [int(i) for i in list(indices)]
 
     def apply_transform_to_object(self, rotation, translation, *, object_id=None):
         oid = object_id or self._active_object_id
