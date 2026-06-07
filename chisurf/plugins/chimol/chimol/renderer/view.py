@@ -2882,109 +2882,255 @@ class MolView(QtWidgets.QWidget):
         if not self._surface_visible:
             return None
 
-        surface_size_scale = float(surface_cfg.get("size_scale", 0.03))
-        surface_min_size = float(surface_cfg.get("min_size", 2.5))
+        surface_alpha = float(surface_cfg.get("alpha", 0.85))
         surface_ao_radius = float(surface_cfg.get("ao_radius", 4.5))
-        surface_ao_max = int(surface_cfg.get("max_neighbors", 24))
         surface_ao_strength = float(surface_cfg.get("ao_strength", 0.6))
-        surface_alpha = float(surface_cfg.get("alpha", 0.8))
-        surface_max_points = int(surface_cfg.get("max_points", 10000))
-        surface_color_mode = str(surface_cfg.get("color_mode", "ao_gray")).lower()
         surface_base_color = np.asarray(
             surface_cfg.get("base_color", self._base_color_single), dtype=float
         )
         if surface_base_color.shape[0] != 4:
             surface_base_color = np.asarray(self._base_color_single, dtype=float)
 
-        pts_surface = None
-        colors_surface = None
-
         if self._all_atom_coords is not None:
             pts_surface = np.asarray(self._all_atom_coords, dtype=float)
+        elif coords is not None:
+            pts_surface = np.asarray(coords, dtype=float)
         else:
-            pts_surface = coords.copy()
+            return None
 
-        if pts_surface.size:
-            # Base surface colors from residue mapping or uniform base color.
-            if (
-                surface_color_mode == "by_residue"
-                and self._all_atom_res_ids is not None
-                and self._residue_ids is not None
-                and colors_per_ca is not None
-                and len(colors_per_ca) == len(self._residue_ids)
-            ):
-                color_map = {rid: colors_per_ca[i_res] for i_res, rid in enumerate(self._residue_ids)}
-                colors_surface = np.zeros(
-                    (pts_surface.shape[0], 4), dtype=float
-                )
-                for i_atom, rid in enumerate(self._all_atom_res_ids):
-                    colors_surface[i_atom, :] = color_map.get(
-                        rid, self._base_color_single
-                    )
-            else:
-                colors_surface = np.tile(
-                    surface_base_color,
-                    (pts_surface.shape[0], 1),
-                )
+        if pts_surface.size == 0:
+            return None
 
-            # Apply per-atom overrides if present.
-            if (
-                getattr(self, "_colors_per_atom_override", None) is not None
-                and self._all_atom_res_ids is not None
-                and len(self._colors_per_atom_override) == self._all_atom_res_ids.shape[0]
-            ):
-                ov = np.asarray(self._colors_per_atom_override, dtype=float)
-                for i_atom in range(min(colors_surface.shape[0], ov.shape[0])):
-                    col_ov = ov[i_atom]
-                    if np.isfinite(col_ov).all():
-                        colors_surface[i_atom, :] = col_ov
+        n_pts = pts_surface.shape[0]
 
-            max_pts = max(1, surface_max_points)
-            if pts_surface.shape[0] > max_pts:
-                step = max(1, pts_surface.shape[0] // max_pts)
-                pts_surface = pts_surface[::step]
-                colors_surface = colors_surface[::step]
+        # --- Try mesh surface via Gaussian density + marching cubes ---
+        grid_spacing = float(surface_cfg.get("grid_spacing", 0.8))
+        iso_value = float(surface_cfg.get("iso_value", 0.5))
+        padding = float(surface_cfg.get("padding", 3.0))
+        max_dim = int(surface_cfg.get("max_dim", 96))
+        mesh_sigma_factor = float(surface_cfg.get("mesh_sigma_factor", 1.0))
+        mesh_sigma_default = float(surface_cfg.get("mesh_sigma_default", 1.8))
 
-            colors_surface = colors_surface.copy()
+        if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_pts:
+            sigmas = np.asarray(self._all_atom_radii, dtype=float) * mesh_sigma_factor
+        else:
+            sigmas = np.full(n_pts, mesh_sigma_default, dtype=float)
 
-            # Apply a simple ambient-occlusion style darkening based on
-            # local point density so that pockets and grooves appear
-            # darker, similar to pyball-style surface shading.
-            try:
-                occ_surf = _estimate_ambient_occlusion(
-                    pts_surface,
-                    radius=surface_ao_radius,
-                    max_neighbors=surface_ao_max,
-                )
-            except Exception:
-                occ_surf = None
-            if (
-                occ_surf is not None
-                and np.asarray(occ_surf).shape[0] == pts_surface.shape[0]
-            ):
-                occ_s = np.asarray(occ_surf, dtype=float)
-                shade_surf = (1.0 - surface_ao_strength) + (
-                    surface_ao_strength * (1.0 - occ_s)
-                )
-                colors_surface[:, :3] *= shade_surf.reshape(-1, 1)
+        mesh_data = _generate_surface_mesh_from_gaussians(
+            pts_surface,
+            sigmas,
+            grid_spacing=grid_spacing,
+            padding=padding,
+            iso_value=iso_value,
+            max_dim=max_dim,
+        )
 
-            colors_surface = np.clip(colors_surface, 0.0, 1.0)
-            colors_surface[:, 3] *= surface_alpha
-
-            size_world = max(self._radius * surface_size_scale, surface_min_size)
-            meta = {"size": float(size_world), "glyph": "sphere"}
-
-            geom = Geometry(
-                kind="points",
-                positions=pts_surface,
-                colors=colors_surface,
-                meta=meta,
+        if mesh_data is not None:
+            verts, faces, norms = mesh_data
+            return self._build_surface_mesh_scene(
+                verts, faces, norms, pts_surface, sigmas,
+                surface_cfg, colors_per_ca, surface_base_color, surface_alpha,
             )
-            scene_objects = [SceneObject(id="surface", geometry=geom, render_mode="transparent")]
 
-            return scene_objects
+        # --- Fallback: point-cloud surface ---
+        surface_size_scale = float(surface_cfg.get("size_scale", 0.03))
+        surface_min_size = float(surface_cfg.get("min_size", 2.5))
+        surface_ao_max = int(surface_cfg.get("max_neighbors", 24))
+        surface_max_points = int(surface_cfg.get("max_points", 10000))
+        surface_color_mode = str(surface_cfg.get("color_mode", "ao_gray")).lower()
 
-        return None
+        colors_surface = self._build_surface_atom_colors(
+            pts_surface, surface_cfg, colors_per_ca, surface_base_color,
+        )
+        if colors_surface is None:
+            colors_surface = np.tile(surface_base_color, (pts_surface.shape[0], 1))
+
+        max_pts = max(1, surface_max_points)
+        if pts_surface.shape[0] > max_pts:
+            step = max(1, pts_surface.shape[0] // max_pts)
+            pts_surface = pts_surface[::step]
+            colors_surface = colors_surface[::step]
+
+        colors_surface = colors_surface.copy()
+
+        try:
+            occ_surf = _estimate_ambient_occlusion(
+                pts_surface,
+                radius=surface_ao_radius,
+                max_neighbors=surface_ao_max,
+            )
+        except Exception:
+            occ_surf = None
+        if (
+            occ_surf is not None
+            and np.asarray(occ_surf).shape[0] == pts_surface.shape[0]
+        ):
+            occ_s = np.asarray(occ_surf, dtype=float)
+            shade_surf = (1.0 - surface_ao_strength) + (
+                surface_ao_strength * (1.0 - occ_s)
+            )
+            colors_surface[:, :3] *= shade_surf.reshape(-1, 1)
+
+        colors_surface = np.clip(colors_surface, 0.0, 1.0)
+        colors_surface[:, 3] *= surface_alpha
+
+        size_world = max(self._radius * surface_size_scale, surface_min_size)
+        meta = {"size": float(size_world), "glyph": "sphere"}
+
+        geom = Geometry(
+            kind="points",
+            positions=pts_surface,
+            colors=colors_surface,
+            meta=meta,
+        )
+        return [SceneObject(id="surface", geometry=geom, render_mode="transparent")]
+
+    def _build_surface_atom_colors(
+        self,
+        pts_surface: np.ndarray,
+        surface_cfg: dict,
+        colors_per_ca: Optional[np.ndarray],
+        surface_base_color: np.ndarray,
+    ) -> Optional[np.ndarray]:
+        """Build per-atom/point colors for the surface representation."""
+        surface_color_mode = str(surface_cfg.get("color_mode", "ao_gray")).lower()
+        n_pts = pts_surface.shape[0]
+
+        if (
+            surface_color_mode == "by_residue"
+            and self._all_atom_res_ids is not None
+            and self._residue_ids is not None
+            and colors_per_ca is not None
+            and len(colors_per_ca) == len(self._residue_ids)
+        ):
+            color_map = {rid: colors_per_ca[i_res] for i_res, rid in enumerate(self._residue_ids)}
+            colors = np.zeros((n_pts, 4), dtype=float)
+            for i_atom, rid in enumerate(self._all_atom_res_ids):
+                colors[i_atom, :] = color_map.get(rid, self._base_color_single)
+        else:
+            colors = np.tile(surface_base_color, (n_pts, 1))
+
+        if (
+            getattr(self, "_colors_per_atom_override", None) is not None
+            and self._all_atom_res_ids is not None
+            and len(self._colors_per_atom_override) == self._all_atom_res_ids.shape[0]
+        ):
+            ov = np.asarray(self._colors_per_atom_override, dtype=float)
+            for i_atom in range(min(colors.shape[0], ov.shape[0])):
+                col_ov = ov[i_atom]
+                if np.isfinite(col_ov).all():
+                    colors[i_atom, :] = col_ov
+
+        return colors
+
+    def _build_surface_mesh_scene(
+        self,
+        verts: np.ndarray,
+        faces: np.ndarray,
+        norms: np.ndarray,
+        pts_surface: np.ndarray,
+        sigmas: np.ndarray,
+        surface_cfg: dict,
+        colors_per_ca: Optional[np.ndarray],
+        surface_base_color: np.ndarray,
+        surface_alpha: float,
+    ) -> Optional[list[SceneObject]]:
+        """Build a colored mesh SceneObject for the Gaussian surface."""
+        surface_ao_radius = float(surface_cfg.get("ao_radius", 4.5))
+        surface_ao_strength = float(surface_cfg.get("ao_strength", 0.6))
+
+        base_color = np.asarray(self._base_color_single, dtype=float)
+        if base_color.shape[0] != 4:
+            base_color = np.array([1.0, 1.0, 1.0, 1.0], dtype=float)
+
+        n_pts = pts_surface.shape[0]
+        mesh_colors = np.zeros((verts.shape[0], 4), dtype=float)
+
+        atom_colors = self._build_surface_atom_colors(
+            pts_surface, surface_cfg, colors_per_ca, surface_base_color,
+        )
+        if atom_colors is None:
+            atom_colors = np.tile(base_color, (n_pts, 1))
+
+        try:
+            from scipy.spatial import cKDTree
+            tree = cKDTree(pts_surface)
+            max_sigma = float(np.max(sigmas))
+            cutoff = max_sigma * 2.5
+
+            indices = tree.query_ball_point(verts, r=cutoff)
+
+            for i_v, atom_indices in enumerate(indices):
+                if not atom_indices:
+                    _, nearest = tree.query(verts[i_v])
+                    mesh_colors[i_v] = atom_colors[nearest]
+                    continue
+
+                v_pos = verts[i_v]
+                w_sum = 0.0
+                c_sum = np.zeros(4, dtype=float)
+
+                for i_a in atom_indices:
+                    d2 = np.sum((v_pos - pts_surface[i_a])**2)
+                    s2 = sigmas[i_a]**2
+                    w = math.exp(-d2 / (2.0 * s2))
+                    c_sum += atom_colors[i_a] * w
+                    w_sum += w
+
+                if w_sum > 0:
+                    mesh_colors[i_v] = c_sum / w_sum
+                else:
+                    _, nearest = tree.query(v_pos)
+                    mesh_colors[i_v] = atom_colors[nearest]
+
+            # Analytical normals from Gaussian gradient
+            new_norms = np.zeros_like(verts)
+            for i_v, atom_indices in enumerate(indices):
+                if not atom_indices:
+                    continue
+                v_pos = verts[i_v]
+                grad = np.zeros(3, dtype=float)
+                for i_a in atom_indices:
+                    diff = v_pos - pts_surface[i_a]
+                    d2 = np.sum(diff**2)
+                    s2 = sigmas[i_a]**2
+                    w = math.exp(-d2 / (2.0 * s2))
+                    grad += (diff / s2) * w
+                mag = np.linalg.norm(grad)
+                if mag > 1e-6:
+                    new_norms[i_v] = grad / mag
+                else:
+                    new_norms[i_v] = norms[i_v]
+            norms = new_norms
+
+            if surface_ao_strength > 0:
+                occ = _estimate_ambient_occlusion(verts, radius=surface_ao_radius, max_neighbors=32)
+                if occ is not None:
+                    darken = 1.0 - (occ * surface_ao_strength)
+                    mesh_colors[:, :3] *= darken[:, np.newaxis]
+
+        except Exception:
+            try:
+                from scipy.spatial import cKDTree
+                tree = cKDTree(pts_surface)
+                _, nearest = tree.query(verts)
+                mesh_colors = atom_colors[nearest]
+            except Exception:
+                mesh_colors[:, :] = base_color
+
+        render_mode = "opaque"
+        if surface_alpha < 1.0:
+            mesh_colors[:, 3] = surface_alpha
+            render_mode = "transparent"
+
+        geom = Geometry(
+            kind="mesh",
+            positions=verts,
+            indices=faces,
+            normals=norms,
+            colors=mesh_colors,
+        )
+        return [SceneObject(id="surface", geometry=geom, render_mode=render_mode)]
 
     def _update_dots(
         self,
