@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 from qtpy import QtCore, QtGui, QtWidgets
@@ -14,7 +14,7 @@ except Exception:  # pragma: no cover - handled at runtime
 
 from ..config import _DISPLAY_CONFIG
 from .base import Renderer
-from .scene import Geometry, Scene, SceneObject
+from .scene import Geometry, Material, Scene, SceneObject
 
 
 # Minimal set of OpenGL enum values used by this renderer. These are
@@ -60,7 +60,7 @@ class _DrawData:
     depth_test: bool = True
     glyph: Optional[str] = None
     radii: Optional[np.ndarray] = None
-    material: Optional[dict] = None
+    material: Any = None
 
 @dataclass
 class _LabelData:
@@ -68,6 +68,15 @@ class _LabelData:
     text: str
     color: QtGui.QColor
     depth_test: bool = True
+
+
+def _material_val(mat: Any, key: str, fallback: float) -> float:
+    """Read a material parameter from either a Material dataclass or a dict."""
+    if isinstance(mat, Material):
+        return float(getattr(mat, key, fallback))
+    if isinstance(mat, dict):
+        return float(mat.get(key, fallback))
+    return float(fallback)
 
 
 @dataclass
@@ -81,9 +90,10 @@ class _GpuDrawCall:
     size: float
     width: float
     depth_test: bool
+    depth: float = 0.0  # camera-space depth for transparent sorting
     glyph: Optional[str] = None
     radii_vbo: Optional[QtGui.QOpenGLBuffer] = None
-    material: Optional[dict] = None
+    material: Any = None
 
 class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
     """Qt-native OpenGL renderer with lightweight VBO caching.
@@ -343,90 +353,113 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         fog_color = QtGui.QVector3D(float(r), float(g_col), float(b))
         self._program.setUniformValue(self._fog_color_uniform, fog_color)
 
-        for call in self._gpu_calls:
-            if call.render_mode == "overlay":
-                gl.glDisable(GL_DEPTH_TEST)
-            else:
+        # Render passes: opaque first, then transparent (back-to-front), then overlay
+        opaque_calls = [c for c in self._gpu_calls if c.render_mode == "opaque"]
+        transparent_calls = [c for c in self._gpu_calls if c.render_mode == "transparent"]
+        overlay_calls = [c for c in self._gpu_calls if c.render_mode == "overlay"]
+
+        # Compute camera-space depth for transparent sorting (back-to-front)
+        if transparent_calls:
+            for call in transparent_calls:
+                # Approximate depth from the average of a few positions
+                # by reading back VBO data.  For simplicity, use the
+                # draw-call's depth stored during upload (centroid z in
+                # view space).  If unavailable, fall back to 0.
+                depth = getattr(call, "depth", 0.0)
+                call.depth = depth
+            transparent_calls.sort(key=lambda c: c.depth, reverse=True)
+
+        for call_set, depth_enable, blend_enable in [
+            (opaque_calls, True, False),
+            (transparent_calls, True, True),
+            (overlay_calls, False, False),
+        ]:
+            if not call_set:
+                continue
+            if depth_enable:
                 gl.glEnable(GL_DEPTH_TEST)
-            if call.render_mode == "transparent":
+            else:
+                gl.glDisable(GL_DEPTH_TEST)
+            if blend_enable:
                 gl.glEnable(GL_BLEND)
                 gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             else:
                 gl.glDisable(GL_BLEND)
 
-            glyph_mode = 1 if (call.glyph == "sphere" and call.primitive == GL_POINTS) else 0
-            self._program.setUniformValue(self._glyph_mode_uniform, glyph_mode)
-            self._program.setUniformValue(self._point_size_uniform, float(call.size))
+            for call in call_set:
+                glyph_mode = 1 if (call.glyph == "sphere" and call.primitive == GL_POINTS) else 0
+                self._program.setUniformValue(self._glyph_mode_uniform, glyph_mode)
+                self._program.setUniformValue(self._point_size_uniform, float(call.size))
 
-            mat = call.material or {}
-            self._program.setUniformValue(self._spec_strength_uniform, float(mat.get("specular_strength", self._specular_strength)))
-            self._program.setUniformValue(self._shininess_uniform, float(mat.get("shininess", self._shininess)))
-            self._program.setUniformValue(self._rim_strength_uniform, float(mat.get("rim_strength", self._rim_strength)))
-            self._program.setUniformValue(self._rim_power_uniform, float(mat.get("rim_power", self._rim_power)))
+                mat = call.material
+                self._program.setUniformValue(self._spec_strength_uniform, _material_val(mat, "specular_strength", self._specular_strength))
+                self._program.setUniformValue(self._shininess_uniform, _material_val(mat, "shininess", self._shininess))
+                self._program.setUniformValue(self._rim_strength_uniform, _material_val(mat, "rim_strength", self._rim_strength))
+                self._program.setUniformValue(self._rim_power_uniform, _material_val(mat, "rim_power", self._rim_power))
 
-            if call.primitive == GL_POINTS:
-                gl.glPointSize(call.size)
-                if glyph_mode:
-                    gl.glEnable(GL_POINT_SPRITE)
+                if call.primitive == GL_POINTS:
+                    gl.glPointSize(call.size)
+                    if glyph_mode:
+                        gl.glEnable(GL_POINT_SPRITE)
+                    else:
+                        gl.glDisable(GL_POINT_SPRITE)
+                elif call.primitive == GL_LINES:
+                    gl.glLineWidth(call.width)
+                    gl.glDisable(GL_POINT_SPRITE)
                 else:
                     gl.glDisable(GL_POINT_SPRITE)
-            elif call.primitive == GL_LINES:
-                gl.glLineWidth(call.width)
-                gl.glDisable(GL_POINT_SPRITE)
-            else:
-                gl.glDisable(GL_POINT_SPRITE)
 
-            call.positions_vbo.bind()
-            self._program.enableAttributeArray(self._pos_attr)
-            self._program.setAttributeBuffer(
-                self._pos_attr,
-                GL_FLOAT,
-                0,
-                3,
-            )
-            call.colors_vbo.bind()
-            self._program.enableAttributeArray(self._color_attr)
-            self._program.setAttributeBuffer(
-                self._color_attr,
-                GL_FLOAT,
-                0,
-                4,
-            )
+                call.positions_vbo.bind()
+                self._program.enableAttributeArray(self._pos_attr)
+                self._program.setAttributeBuffer(
+                    self._pos_attr,
+                    GL_FLOAT,
+                    0,
+                    3,
+                )
+                call.colors_vbo.bind()
+                self._program.enableAttributeArray(self._color_attr)
+                self._program.setAttributeBuffer(
+                    self._color_attr,
+                    GL_FLOAT,
+                    0,
+                    4,
+                )
 
-            call.normals_vbo.bind()
-            self._program.enableAttributeArray(self._normal_attr)
-            self._program.setAttributeBuffer(
-                self._normal_attr,
-                GL_FLOAT,
-                0,
-                3,
-            )
+                call.normals_vbo.bind()
+                self._program.enableAttributeArray(self._normal_attr)
+                self._program.setAttributeBuffer(
+                    self._normal_attr,
+                    GL_FLOAT,
+                    0,
+                    3,
+                )
 
-            if self._radius_attr != -1:
+                if self._radius_attr != -1:
+                    if call.radii_vbo is not None:
+                        call.radii_vbo.bind()
+                        self._program.enableAttributeArray(self._radius_attr)
+                        self._program.setAttributeBuffer(self._radius_attr, GL_FLOAT, 0, 1)
+                    else:
+                        self._program.disableAttributeArray(self._radius_attr)
+                        self._program.setAttributeValue(self._radius_attr, 0.0)
+
+                gl.glDrawArrays(call.primitive, 0, call.vertex_count)
+
+                if call.primitive == GL_POINTS:
+                    gl.glPointSize(1.0)
+                    gl.glDisable(GL_POINT_SPRITE)
+
+                call.positions_vbo.release()
+                call.colors_vbo.release()
+                call.normals_vbo.release()
                 if call.radii_vbo is not None:
-                    call.radii_vbo.bind()
-                    self._program.enableAttributeArray(self._radius_attr)
-                    self._program.setAttributeBuffer(self._radius_attr, GL_FLOAT, 0, 1)
-                else:
+                    call.radii_vbo.release()
+                self._program.disableAttributeArray(self._pos_attr)
+                self._program.disableAttributeArray(self._color_attr)
+                self._program.disableAttributeArray(self._normal_attr)
+                if self._radius_attr != -1:
                     self._program.disableAttributeArray(self._radius_attr)
-                    self._program.setAttributeValue(self._radius_attr, 0.0)
-
-            gl.glDrawArrays(call.primitive, 0, call.vertex_count)
-
-            if call.primitive == GL_POINTS:
-                gl.glPointSize(1.0)
-                gl.glDisable(GL_POINT_SPRITE)
-
-            call.positions_vbo.release()
-            call.colors_vbo.release()
-            call.normals_vbo.release()
-            if call.radii_vbo is not None:
-                call.radii_vbo.release()
-            self._program.disableAttributeArray(self._pos_attr)
-            self._program.disableAttributeArray(self._color_attr)
-            self._program.disableAttributeArray(self._normal_attr)
-            if self._radius_attr != -1:
-                self._program.disableAttributeArray(self._radius_attr)
 
         # Restore global material uniforms so we don't accidentally leak state into next frame
         self._program.setUniformValue(self._spec_strength_uniform, float(self._specular_strength))
@@ -849,6 +882,8 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
             vbo_norm.allocate(draw.normals.tobytes(), draw.normals.nbytes)
             vbo_norm.release()
 
+            centroid_z = float(np.mean(draw.positions[:, 2])) if draw.render_mode == "transparent" and draw.positions.shape[0] > 0 else 0.0
+
             gpu_call = _GpuDrawCall(
                 primitive=draw.primitive,
                 vertex_count=draw.positions.shape[0],
@@ -859,6 +894,7 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
                 size=draw.size,
                 width=draw.width,
                 depth_test=draw.depth_test,
+                depth=centroid_z,
                 glyph=draw.glyph,
                 material=draw.material,
             )

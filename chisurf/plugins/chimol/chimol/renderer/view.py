@@ -16,6 +16,7 @@ from ..geometry import (
     _compute_center_radius,
     _estimate_ambient_occlusion,
     _build_sphere_mesh,
+    _build_stick_mesh,
     _build_trace_ups,
     _extract_ca_trace,
     _build_bond_pairs,
@@ -193,6 +194,7 @@ class MolView(QtWidgets.QWidget):
             state = self._get_active_state()
             state.rmf_hierarchy = hierarchy
             state.frames = frames
+            state.frames_raw = frames
             state.bead_radii = radii
             if restraints:
                 state.restraints = restraints
@@ -203,10 +205,12 @@ class MolView(QtWidgets.QWidget):
                 state.show_sticks = True
             # If we have frames, set the first one as active
             if frames is not None and len(frames) > 0:
-                state.all_atom_coords = frames[0]
-                state.coords = frames[0]
-                state.active_frame = 0
+                self._select_state_frame(state, 0)
                 self._total_frames = max(self._total_frames, len(frames))
+                n_points = int(np.asarray(frames).shape[1])
+                state.cartoon_mask = np.zeros(n_points, dtype=bool)
+                state.ball_mask = np.ones(n_points, dtype=bool)
+                state.sticks_mask = np.ones(n_points, dtype=bool)
             
             # If we have radii, we likely want to show beads (mode 'spheres')
             if radii is not None and np.any(radii > 0):
@@ -474,12 +478,120 @@ class MolView(QtWidgets.QWidget):
         return self._current_frame
 
     def set_current_frame(self, frame_idx: int) -> None:
+        # If frames have been attached without going through the public
+        # timeline (e.g. via ``set_frames`` + ``set_active_frame``), derive
+        # the timeline length from the active state so the spinbox/UI match.
+        try:
+            active_state = self._get_active_state()
+            state_frames = getattr(active_state, "frames", None)
+        except Exception:
+            state_frames = None
+        if state_frames is not None and getattr(state_frames, "ndim", 0) == 3:
+            try:
+                n_states = int(state_frames.shape[0])
+            except Exception:
+                n_states = 0
+            if n_states > 0 and n_states > self._total_frames:
+                self._total_frames = n_states
         new_idx = max(0, min(int(frame_idx), self._total_frames - 1))
         if new_idx == self._current_frame:
             return
         self._current_frame = new_idx
         self._apply_frame_states()
         self._update_view(fit_camera=False)
+
+    def _select_state_frame(
+        self,
+        state: _MolViewObjectState,
+        index: int,
+    ) -> int:
+        """Select one trajectory frame and expose it as render geometry.
+
+        Chimol stores trajectories in ``state.frames`` but all render paths
+        consume ``state.coords`` / ``state.all_atom_coords``. Keeping that
+        derived state in one place prevents accidental rendering of the whole
+        ``(T, N, 3)`` trajectory array.
+        """
+
+        frames = getattr(state, "frames", None)
+        if frames is None:
+            return 0
+        try:
+            arr = np.asarray(frames, dtype=float)
+        except Exception:
+            return 0
+        if arr.ndim != 3 or arr.shape[2] != 3 or arr.shape[0] == 0:
+            return 0
+
+        n_frames = int(arr.shape[0])
+        idx = max(0, min(int(index), n_frames - 1))
+        frame = np.asarray(arr[idx], dtype=float)
+
+        state.active_frame = idx
+        state.coords = frame
+        # Coordinate-only trajectories should not leave stale all-atom data in
+        # atom rendering paths. Reuse all-atom coords only when dimensions match.
+        all_atom_coords = getattr(state, "all_atom_coords", None)
+        frame_matches_all_atoms = False
+        if all_atom_coords is None:
+            state.all_atom_coords = frame
+        else:
+            try:
+                all_atom_arr = np.asarray(all_atom_coords)
+                if all_atom_arr.ndim == 2 and all_atom_arr.shape == frame.shape:
+                    state.all_atom_coords = frame
+                    frame_matches_all_atoms = True
+                elif all_atom_arr.ndim == 3 and all_atom_arr.shape[1:] == frame.shape:
+                    state.all_atom_coords = np.asarray(all_atom_arr[idx], dtype=float)
+                    frame_matches_all_atoms = True
+                else:
+                    state.all_atom_coords = frame
+            except Exception:
+                state.all_atom_coords = frame
+
+        if state.atoms is not None and not frame_matches_all_atoms:
+            try:
+                atoms_xyz = np.asarray(state.atoms["xyz"], dtype=float)
+                if atoms_xyz.shape != frame.shape:
+                    state.atoms = None
+                    state.all_atom_res_ids = None
+                    state.all_atom_radii = None
+                    state.bond_pairs = None
+                    if state.residue_ids is not None and len(state.residue_ids) != frame.shape[0]:
+                        state.residue_ids = None
+                        state.residue_names = None
+                        state.residue_oneletter = None
+                        state.residue_chain_ids = None
+                        state.secondary_structure = None
+                        state.trace_ups = None
+            except Exception:
+                state.atoms = None
+                state.all_atom_res_ids = None
+                state.all_atom_radii = None
+                state.bond_pairs = None
+                if state.residue_ids is not None and len(state.residue_ids) != frame.shape[0]:
+                    state.residue_ids = None
+                    state.residue_names = None
+                    state.residue_oneletter = None
+                    state.residue_chain_ids = None
+                    state.secondary_structure = None
+                    state.trace_ups = None
+
+        try:
+            center, radius = _compute_center_radius(frame)
+            state.center = center
+            state.radius = float(radius)
+        except Exception:
+            pass
+
+        if state.cartoon_mask is None or len(state.cartoon_mask) != frame.shape[0]:
+            state.cartoon_mask = np.ones(frame.shape[0], dtype=bool)
+        if state.ball_mask is None or len(state.ball_mask) not in (
+            frame.shape[0],
+            0 if state.all_atom_coords is None else np.asarray(state.all_atom_coords).shape[0],
+        ):
+            state.ball_mask = np.zeros(frame.shape[0], dtype=bool)
+        return idx
 
     def _apply_frame_states(self) -> None:
         """Update scene objects based on the current frame index."""
@@ -490,9 +602,7 @@ class MolView(QtWidgets.QWidget):
                 # If the object has frames, map the global timeline to its states.
                 # Simplest mapping: state_idx = global_idx % n_states
                 n_states = state.frames.shape[0]
-                state.active_frame = self._current_frame % n_states
-                state.all_atom_coords = state.frames[state.active_frame]
-                state.coords = state.all_atom_coords
+                self._select_state_frame(state, self._current_frame % n_states)
                 # Also update center/radius if needed, but maybe defer for performance?
                 # PyMOL usually doesn't re-center automatically during movie playback.
 
@@ -1046,7 +1156,13 @@ class MolView(QtWidgets.QWidget):
         self._cartoon_mask = None
         self._ball_mask = None
 
-    def set_frames(self, frames: np.ndarray, *, object_id: Optional[str] = None) -> None:
+    def set_frames(
+        self,
+        frames: np.ndarray,
+        *,
+        object_id: Optional[str] = None,
+        active_frame: Optional[int] = None,
+    ) -> None:
         arr = np.asarray(frames, dtype=float)
         if arr.ndim != 3 or arr.shape[2] != 3:
             raise ValueError("frames must have shape (T, N, 3)")
@@ -1061,15 +1177,54 @@ class MolView(QtWidgets.QWidget):
         with self._activate_object(object_id):
             state = self._get_active_state()
             state.frames = arr_scaled
-            state.active_frame = 0
-            self._coords = arr_scaled[0]
+            state.frames_raw = arr
+            idx = 0 if active_frame is None else int(active_frame)
+            idx = self._select_state_frame(state, idx)
             self._center = np.zeros(3, dtype=float)
             self._radius = float(radius * scale)
             self._selected_residues = []
+            # Keep the global timeline in sync with the new trajectory so
+            # ``set_current_frame`` / ``get_total_frames`` reflect reality.
+            self._total_frames = max(self._total_frames, int(arr.shape[0]))
+            self._current_frame = idx
+            if self._current_frame >= self._total_frames:
+                self._current_frame = self._total_frames - 1
             try:
                 self._update_view()
             except Exception:
                 pass
+
+    def append_frame(self, frame: np.ndarray, *, object_id: Optional[str] = None) -> int:
+        """Append one raw coordinate frame to an object's trajectory.
+
+        Parameters
+        ----------
+        frame : np.ndarray
+            Coordinate array with shape ``(N, 3)`` in Angstrom.
+        object_id : str, optional
+            Object to update. The active object is used by default.
+
+        Returns
+        -------
+        int
+            Number of frames after appending.
+        """
+        arr = np.asarray(frame, dtype=float)
+        if arr.ndim != 2 or arr.shape[1] != 3:
+            raise ValueError("frame must have shape (N, 3)")
+        with self._activate_object(object_id):
+            state = self._get_active_state()
+            raw = getattr(state, "frames_raw", None)
+            if raw is None:
+                frames = arr[np.newaxis, :, :]
+            else:
+                raw_arr = np.asarray(raw, dtype=float)
+                if raw_arr.ndim != 3 or raw_arr.shape[1:] != arr.shape:
+                    raise ValueError("frame shape does not match existing trajectory")
+                frames = np.concatenate([raw_arr, arr[np.newaxis, :, :]], axis=0)
+        self.set_frames(frames, object_id=object_id)
+        self.set_active_frame(frames.shape[0] - 1, object_id=object_id)
+        return int(frames.shape[0])
 
     def set_active_frame(self, index: int, *, object_id: Optional[str] = None) -> None:
         with self._activate_object(object_id):
@@ -1092,8 +1247,14 @@ class MolView(QtWidgets.QWidget):
                 idx = 0
             if idx >= n_frames:
                 idx = n_frames - 1
-            state.active_frame = idx
-            self._coords = arr[idx]
+            self._select_state_frame(state, idx)
+            # Keep ``_total_frames`` consistent with the trajectory length
+            # so the public ``get_total_frames`` / ``set_current_frame`` API
+            # behaves correctly for externally attached frames.
+            self._total_frames = max(self._total_frames, n_frames)
+            self._current_frame = idx
+            if self._current_frame >= self._total_frames:
+                self._current_frame = self._total_frames - 1
             try:
                 self._update_view(fit_camera=False)
             except Exception:
@@ -1350,7 +1511,7 @@ class MolView(QtWidgets.QWidget):
         if self._coords is not None:
             self._update_view(fit_camera=False)
 
-    def set_representation(self, mode: str) -> None:
+    def set_representation(self, mode: str, *, object_id: Optional[str] = None) -> None:
         """Legacy mode-style API (cartoon / ca_trace / atoms).
 
         This is primarily used by keyboard shortcuts and :class:`MolViewPlot`.
@@ -1362,40 +1523,41 @@ class MolView(QtWidgets.QWidget):
         mode_l = str(mode).lower()
         if mode_l not in ("cartoon", "ca_trace", "atoms"):
             return
-        self._representation_mode = mode_l
+        with self._activate_object(object_id):
+            self._representation_mode = mode_l
 
-        if self._coords is None:
-            return
-        n = self._coords.shape[0]
-        if n <= 0:
-            return
+            if self._coords is None:
+                return
+            n = self._coords.shape[0]
+            if n <= 0:
+                return
 
-        if mode_l == "cartoon":
-            self._show_cartoon = True
-            self._show_trace = False
-            self._show_atoms = False
-        elif mode_l == "ca_trace":
-            self._show_cartoon = False
-            self._show_trace = True
-            self._show_atoms = False
-        else:  # "atoms"
-            self._show_cartoon = False
-            self._show_trace = False
-            self._show_atoms = True
+            if mode_l == "cartoon":
+                self._show_cartoon = True
+                self._show_trace = False
+                self._show_atoms = False
+            elif mode_l == "ca_trace":
+                self._show_cartoon = False
+                self._show_trace = True
+                self._show_atoms = False
+            else:  # "atoms"
+                self._show_cartoon = False
+                self._show_trace = False
+                self._show_atoms = True
 
-        # For atoms mode, default to showing balls on all residues.
-        if mode_l == "atoms":
-            self._cartoon_mask = np.ones(n, dtype=bool)
-            self._ball_mask = np.ones(n, dtype=bool)
-        else:
-            if self._cartoon_mask is None or len(self._cartoon_mask) != n:
+            # For atoms mode, default to showing balls on all residues.
+            if mode_l == "atoms":
                 self._cartoon_mask = np.ones(n, dtype=bool)
+                self._ball_mask = np.ones(n, dtype=bool)
             else:
-                self._cartoon_mask[:] = True
-            if self._ball_mask is None or len(self._ball_mask) != n:
-                self._ball_mask = np.zeros(n, dtype=bool)
-            else:
-                self._ball_mask[:] = False
+                if self._cartoon_mask is None or len(self._cartoon_mask) != n:
+                    self._cartoon_mask = np.ones(n, dtype=bool)
+                else:
+                    self._cartoon_mask[:] = True
+                if self._ball_mask is None or len(self._ball_mask) != n:
+                    self._ball_mask = np.zeros(n, dtype=bool)
+                else:
+                    self._ball_mask[:] = False
 
         self._update_view()
 
@@ -2469,20 +2631,20 @@ class MolView(QtWidgets.QWidget):
                         if np.isfinite(col_ov).all():
                             atom_colors[i_atom, :] = col_ov
 
-                n_bonds = bonds.shape[0]
-                seg_pos = np.empty((n_bonds * 2, 3), dtype=np.float32)
-                seg_col = np.empty((n_bonds * 2, 4), dtype=np.float32)
-
-                seg_pos[0::2, :] = pts_all[bonds[:, 0]]
-                seg_pos[1::2, :] = pts_all[bonds[:, 1]]
-                seg_col[0::2, :] = atom_colors[bonds[:, 0]]
-                seg_col[1::2, :] = atom_colors[bonds[:, 1]]
-                seg_col[:, 3] = 1.0
-
-                geom = Geometry(kind="line", positions=seg_pos, colors=seg_col)
-                scene_obj = SceneObject(id="sticks", geometry=geom, render_mode="opaque")
-
-                return [scene_obj]
+                # Use cylinder mesh for sticks (replaces GL_LINES)
+                sticks_radius = float(sticks_cfg.get("radius", 0.15))
+                sticks_segments = int(sticks_cfg.get("segments_circle", 12))
+                mesh = _build_stick_mesh(
+                    bonds, pts_all, atom_colors,
+                    radius=sticks_radius, segments_circle=sticks_segments,
+                )
+                if mesh is not None:
+                    verts, norms, faces, cols = mesh
+                    geom = Geometry(
+                        kind="mesh", positions=verts, indices=faces,
+                        normals=norms, colors=cols,
+                    )
+                    return [SceneObject(id="sticks", geometry=geom, render_mode="opaque")]
 
         return None
 
@@ -3189,7 +3351,15 @@ class MolView(QtWidgets.QWidget):
         if self._coords is None or self._coords.size == 0:
             return []
 
-        coords = self._coords.copy()
+        coords = np.asarray(self._coords, dtype=float)
+        if coords.ndim == 3:
+            state = self._get_active_state()
+            idx = self._select_state_frame(state, getattr(state, "active_frame", 0))
+            coords = np.asarray(state.coords, dtype=float)
+            state.active_frame = idx
+        if coords.ndim != 2 or coords.shape[1] != 3:
+            return []
+        coords = coords.copy()
         n_points = coords.shape[0]
 
         cartoon_cfg = _DISPLAY_CONFIG.get("cartoon", {})
@@ -3283,6 +3453,3 @@ class MolView(QtWidgets.QWidget):
         if self._renderer is None:
             return
         self._renderer.fit_to_radius(radius)
-
-
-

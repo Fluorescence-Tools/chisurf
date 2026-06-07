@@ -7,6 +7,26 @@ import numpy as np
 
 
 @dataclass
+class Material:
+    """Backend-agnostic material properties for a SceneObject.
+
+    All fields are plain Python types (not Qt) so they can be used by any
+    rendering backend.  The renderer maps these to shader uniforms.
+    """
+
+    ambient: float = 0.55
+    diffuse: float = 0.6
+    specular: float = 0.3
+    shininess: float = 60.0
+    opacity: float = 1.0
+    metallic: float = 0.0
+    roughness: float = 0.5
+    rim_strength: float = 0.18
+    rim_power: float = 2.4
+    blending: str = "normal"  # "normal" | "additive"
+
+
+@dataclass
 class Geometry:
     """Backend-agnostic geometric data for a single draw call.
 
@@ -32,7 +52,7 @@ class SceneObject:
     id: str
     geometry: Geometry
     render_mode: str = "opaque"  # "opaque" | "transparent" | "overlay"
-    material: Optional[Dict[str, float]] = None
+    material: Optional[Material] = None
 
 
 @dataclass
