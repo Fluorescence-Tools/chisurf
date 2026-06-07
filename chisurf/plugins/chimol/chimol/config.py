@@ -170,9 +170,9 @@ def _load_display_config() -> dict:
         },
         "lighting": {
             "light_direction": [0.0, 0.0, 1.0],
-            "ambient_strength": 0.1,
-            "specular_strength": 0.02,
-            "shininess": 4.0,
+            "ambient_strength": 0.45,
+            "specular_strength": 0.25,
+            "shininess": 40.0,
             "rim_strength": 0.18,
             "rim_power": 2.4,
         },

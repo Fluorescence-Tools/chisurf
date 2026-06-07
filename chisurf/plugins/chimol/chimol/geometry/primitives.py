@@ -21,44 +21,61 @@ def _compute_center_radius(xyz: np.ndarray) -> tuple[np.ndarray, float]:
     return center, radius
 
 
-def _build_sphere_mesh(radius: float) -> Optional[dict[str, np.ndarray]]:
-    """Return a procedural sphere approximation with normals."""
+_SPHERE_TEMPLATE_CACHE: dict[int, dict[str, np.ndarray]] = {}
 
-    r = float(radius)
-    if not np.isfinite(r) or r <= 0.0:
-        return None
 
-    rows = 10
-    cols = 20
-    phi = np.linspace(0.0, np.pi, rows)
-    theta = np.linspace(0.0, 2.0 * np.pi, cols, endpoint=False)
+def _get_sphere_template(segments_lat: int = 16, segments_lon: int = 32) -> dict[str, np.ndarray]:
+    """Return a cached unit-sphere mesh with normals."""
+    key = (segments_lat << 16) | segments_lon
+    cached = _SPHERE_TEMPLATE_CACHE.get(key)
+    if cached is not None:
+        return cached
+
+    phi = np.linspace(0.0, np.pi, segments_lat)
+    theta = np.linspace(0.0, 2.0 * np.pi, segments_lon, endpoint=False)
     phi, theta = np.meshgrid(phi, theta, indexing="ij")
     sin_phi = np.sin(phi)
     cos_phi = np.cos(phi)
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
 
-    x = r * sin_phi * cos_theta
-    y = r * sin_phi * sin_theta
-    z = r * cos_phi
-    vertices = np.stack([x, y, z], axis=-1).reshape(-1, 3)
+    vertices = np.stack(
+        [sin_phi * cos_theta, sin_phi * sin_theta, cos_phi], axis=-1
+    ).reshape(-1, 3).astype(np.float32, copy=False)
 
-    normals = np.stack([sin_phi * cos_theta, sin_phi * sin_theta, cos_phi], axis=-1)
-    normals = normals.reshape(-1, 3)
-    norms = np.linalg.norm(normals, axis=1, keepdims=True)
-    normals = normals / np.clip(norms, 1e-8, None)
+    normals = vertices.copy()
 
     faces = []
-    for i in range(rows - 1):
-        for j in range(cols):
-            k0 = i * cols + j
-            k1 = i * cols + (j + 1) % cols
-            k2 = (i + 1) * cols + j
-            k3 = (i + 1) * cols + (j + 1) % cols
+    for i in range(segments_lat - 1):
+        for j in range(segments_lon):
+            k0 = i * segments_lon + j
+            k1 = i * segments_lon + (j + 1) % segments_lon
+            k2 = (i + 1) * segments_lon + j
+            k3 = (i + 1) * segments_lon + (j + 1) % segments_lon
             faces.append([k0, k2, k1])
             faces.append([k1, k2, k3])
     faces_arr = np.asarray(faces, dtype=np.int32)
-    return {"vertices": vertices, "normals": normals, "faces": faces_arr}
+
+    template = {"vertices": vertices, "normals": normals, "faces": faces_arr}
+    _SPHERE_TEMPLATE_CACHE[key] = template
+    return template
+
+
+def _build_sphere_mesh(radius: float) -> Optional[dict[str, np.ndarray]]:
+    """Return a procedural sphere approximation with normals.
+
+    Uses a cached unit-sphere template scaled to *radius*.
+    """
+
+    r = float(radius)
+    if not np.isfinite(r) or r <= 0.0:
+        return None
+
+    template = _get_sphere_template()
+    verts = template["vertices"] * r
+    norms = template["normals"].copy()  # unit normals stay the same
+    faces = template["faces"]
+    return {"vertices": verts, "normals": norms, "faces": faces}
 
 
 _CYLINDER_TEMPLATE_CACHE: dict[int, dict[str, np.ndarray]] = {}
