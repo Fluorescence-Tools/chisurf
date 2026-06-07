@@ -1624,6 +1624,14 @@ class MolView(QtWidgets.QWidget):
         """Enable or disable the sticks (bond) representation globally."""
 
         self._show_sticks = bool(visible)
+        if visible and self._all_atom_coords is not None:
+            n_atoms = int(np.asarray(self._all_atom_coords).shape[0])
+            if (
+                self._sticks_mask is None
+                or len(self._sticks_mask) != n_atoms
+                or not np.asarray(self._sticks_mask, dtype=bool).any()
+            ):
+                self._sticks_mask = np.ones(n_atoms, dtype=bool)
         if self._coords is not None:
             self._update_view()
 
@@ -2604,14 +2612,17 @@ class MolView(QtWidgets.QWidget):
                 pts_all = np.asarray(self._all_atom_coords, dtype=float)
 
                 # Build per-atom colors from residue colors and/or explicit overrides.
-                atom_res = np.asarray(self._all_atom_res_ids)
+                atom_res = None
+                if self._all_atom_res_ids is not None:
+                    atom_res = np.asarray(self._all_atom_res_ids)
                 atom_colors = np.tile(
                     np.asarray(self._base_color_single, dtype=float),
                     (pts_all.shape[0], 1),
                 )
 
                 if (
-                    self._residue_ids is not None
+                    atom_res is not None
+                    and self._residue_ids is not None
                     and colors_per_ca is not None
                     and len(colors_per_ca) == len(self._residue_ids)
                 ):
@@ -2622,7 +2633,8 @@ class MolView(QtWidgets.QWidget):
                         )
 
                 if (
-                    getattr(self, "_colors_per_atom_override", None) is not None
+                    atom_res is not None
+                    and getattr(self, "_colors_per_atom_override", None) is not None
                     and len(self._colors_per_atom_override) == atom_res.shape[0]
                 ):
                     ov = np.asarray(self._colors_per_atom_override, dtype=float)
@@ -2632,7 +2644,7 @@ class MolView(QtWidgets.QWidget):
                             atom_colors[i_atom, :] = col_ov
 
                 # Use cylinder mesh for sticks (replaces GL_LINES)
-                sticks_radius = float(sticks_cfg.get("radius", 0.15))
+                sticks_radius = float(sticks_cfg.get("radius", 0.15)) * float(self._scale_factor)
                 sticks_segments = int(sticks_cfg.get("segments_circle", 12))
                 mesh = _build_stick_mesh(
                     bonds, pts_all, atom_colors,
