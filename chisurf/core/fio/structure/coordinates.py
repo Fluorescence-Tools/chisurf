@@ -118,6 +118,9 @@ _STANDARD_RESIDUES = {
     "LEU", "LYS", "MET", "PHE", "PRO",
     "SER", "THR", "TRP", "TYR", "VAL",
     "SEC", "PYL",
+    # Nucleic acid residues (DNA/RNA)
+    "DA", "DC", "DG", "DT",  # Deoxyribonucleotides
+    "A", "C", "G", "T", "U",  # Ribonucleotides
 }
 
 
@@ -127,9 +130,9 @@ def _imp_keep_residue(res_name: str) -> bool:
     Controlled via ``structure.json`` (``structure_data['IMP']``):
 
     - ``filter_non_standard_residues`` (bool): if true, only standard
-      amino-acid residue names are kept; everything else (e.g. ligands,
-      sugars, modified residues) is dropped from the returned atoms
-      array. Defaults to ``True`` when the key is missing.
+      amino-acid and nucleic acid residue names are kept; everything else
+      (e.g. ligands, sugars, modified residues) is dropped from the returned
+      atoms array. Defaults to ``True`` when the key is missing.
 
     Parameters
     ----------

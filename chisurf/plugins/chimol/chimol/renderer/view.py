@@ -21,6 +21,7 @@ from ..geometry import (
     _extract_ca_trace,
     _build_bond_pairs,
     _generate_cartoon_tube_arrays,
+    _generate_nucleic_cartoon_arrays,
     _generate_trace_arrays,
     _generate_surface_mesh_from_gaussians,
 )
@@ -2149,6 +2150,21 @@ class MolView(QtWidgets.QWidget):
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    def _has_nucleic_acids(self, residue_names: Optional[np.ndarray] = None) -> bool:
+        """Check if the current structure contains nucleic acid residues."""
+        if residue_names is None:
+            residue_names = getattr(self, "_residue_names", None)
+        if residue_names is None:
+            return False
+        try:
+            names_arr = np.asarray(residue_names, dtype=str)
+            names_upper = np.char.upper(names_arr)
+            # Check for common nucleic acid residue names
+            nucleic_names = {"DA", "DC", "DG", "DT", "A", "C", "G", "T", "U"}
+            return bool(nucleic_names.intersection(set(names_upper)))
+        except Exception:
+            return False
+
     def _clear_items(self) -> None:
         if self._renderer is not None:
             try:
@@ -2162,8 +2178,16 @@ class MolView(QtWidgets.QWidget):
         scene_objects: list[SceneObject] = []
         if not self._show_cartoon:
             return scene_objects
-
-        ao_radius = float(config.get("ao_radius", 4.0))
+        
+        # Skip regular cartoon for nucleic acids; use nucleic cartoon instead
+        skip_regular = (
+            self._has_nucleic_acids()
+            and self._atoms is not None
+            and self._all_atom_coords is not None
+        )
+        
+        if not skip_regular:
+            ao_radius = float(config.get("ao_radius", 4.0))
         ao_max = int(config.get("ao_max_neighbors", 16))
         ao_strength = float(config.get("ao_strength", 0.45))
 
@@ -2323,6 +2347,29 @@ class MolView(QtWidgets.QWidget):
                     scene_objects.append(
                         SceneObject(id="cartoon", geometry=geom, render_mode="opaque")
                     )
+        
+        # Generate nucleic cartoon for DNA/RNA structures
+        if skip_regular and self._atoms is not None and self._all_atom_coords is not None:
+            nuc_arrays = _generate_nucleic_cartoon_arrays(
+                self._atoms,
+                self._all_atom_coords,
+                getattr(self, "_residue_ids", None),
+                getattr(self, "_residue_chain_ids", None),
+                colors,
+                config={**config, "coordinate_scale": float(self._scale_factor)},
+            )
+            if nuc_arrays is not None:
+                nuc_verts, nuc_norms, nuc_faces, nuc_cols = nuc_arrays
+                nuc_geom = Geometry(
+                    kind="mesh",
+                    positions=nuc_verts,
+                    indices=nuc_faces,
+                    normals=nuc_norms,
+                    colors=nuc_cols,
+                )
+                scene_objects.append(
+                    SceneObject(id="cartoon_nucleic", geometry=nuc_geom, render_mode="opaque")
+                )
 
         return scene_objects
 
