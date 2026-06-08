@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from copy import deepcopy
 from pathlib import Path
 from typing import Optional
@@ -21,6 +22,7 @@ from chisurf.plugins.modelling.proteinmc.model import (
     list_flexfit_sets,
 )
 from chisurf.gui.plots.proteinMC import ProteinMCDistanceNetworkPlot, ProteinMCPlot, ProteinMCStructurePlot
+from chisurf.gui.widgets.progress import EnhancedProgressDialog, wrap_text
 
 
 try:  # Chimol is preferred over PyMOL for ProteinMC visual feedback.
@@ -114,6 +116,54 @@ class ProteinMCModelWidget(ModelWidget):
                 "centroid_number": 4.0,
             },
         },
+        "go": {
+            "label": "Gō-Potential",
+            "name": "go",
+            "weight": 1.0,
+            "enabled": False,
+            "params": {
+                "epsilon": 1.0,
+                "cutoff": 6.5,
+                "native_cutoff_on": True,
+                "nnEFactor": 0.7,
+                "non_native_contact_on": True,
+            },
+        },
+        "rama": {
+            "label": "Ramachandran",
+            "name": "rama",
+            "weight": 1.0,
+            "enabled": False,
+            "params": {},
+        },
+        "asa": {
+            "label": "ASA-Cα",
+            "name": "asa",
+            "weight": 1.0,
+            "enabled": False,
+            "params": {
+                "probe": 1.0,
+                "n_sphere_point": 590,
+                "radius": 2.5,
+            },
+        },
+        "rg": {
+            "label": "Radius of Gyration",
+            "name": "rg",
+            "weight": 1.0,
+            "enabled": False,
+            "params": {},
+        },
+        "fps": {
+            "label": "Dye potential",
+            "name": "dye",
+            "weight": 1.0,
+            "enabled": True,
+            "params": {
+                "labeling_file": "",
+                "score_set": "",
+            },
+        },
     }
 
     def __init__(
@@ -149,10 +199,33 @@ class ProteinMCModelWidget(ModelWidget):
         self._resume_chi2r: list[float] = []
         self._continuing_run: bool = False
         self._requested_run_count: int = 1
+        self._total_frames_target: int = 0
         # Throttle expensive UI updates (Chimol rebuild + plot setData) to
         # at most one per ``update_interval_ms`` so the main thread stays
         # responsive while ProteinMC is sampling.
         self.update_interval_ms: int = 500
+        self.n_iter_spin = QtWidgets.QSpinBox(self)
+        self.n_iter_spin.setRange(1, 100000000)
+        self.n_iter_spin.setValue(10000)
+        self.n_out_spin = QtWidgets.QSpinBox(self)
+        self.n_out_spin.setRange(1, 1000000)
+        self.n_out_spin.setValue(100)
+        self.n_written_spin = QtWidgets.QSpinBox(self)
+        self.n_written_spin.setRange(1, 1000000)
+        self.n_written_spin.setValue(100)
+        self.scale_spin = QtWidgets.QDoubleSpinBox(self)
+        self.scale_spin.setDecimals(6)
+        self.scale_spin.setRange(0.0, 10.0)
+        self.scale_spin.setValue(0.0025)
+        self.kt_spin = QtWidgets.QDoubleSpinBox(self)
+        self.kt_spin.setDecimals(4)
+        self.kt_spin.setRange(0.0, 100000.0)
+        self.kt_spin.setValue(1.5)
+        self.labeling_edit = QtWidgets.QLineEdit(self)
+        self.score_set_combo = QtWidgets.QComboBox(self)
+        self.labeling_weight_spin = QtWidgets.QDoubleSpinBox(self)
+        self.labeling_weight_spin.setRange(0.0, 1000.0)
+        self.labeling_weight_spin.setValue(1.0)
         self._build_ui()
 
     @property
@@ -203,74 +276,6 @@ class ProteinMCModelWidget(ModelWidget):
         self.structure_button = QtWidgets.QPushButton("...", self)
         self.structure_button.clicked.connect(self.on_browse_structure)
 
-        self.labeling_edit = QtWidgets.QLineEdit(self)
-        self.labeling_edit.setPlaceholderText("FPS JSON labeling file")
-        self.labeling_button = QtWidgets.QPushButton("...", self)
-        self.labeling_button.clicked.connect(self.on_browse_labeling)
-        self.labeling_edit_button = QtWidgets.QPushButton("E", self)
-        self.labeling_edit_button.setToolTip("edit")
-        self.labeling_edit_button.clicked.connect(self.on_edit_labeling_json)
-
-        self.score_set_combo = QtWidgets.QComboBox(self)
-        self.score_set_combo.setToolTip(
-            "Select a χ² score set (scoring group) from the FPS JSON file. "
-            "Leave empty to use all distances."
-        )
-        self.score_set_combo.addItem("")  # empty = all distances
-
-        self.n_iter_spin = QtWidgets.QSpinBox(self)
-        self.n_iter_spin.setRange(1, 100000000)
-        self.n_iter_spin.setValue(10000)
-        self.n_out_spin = QtWidgets.QSpinBox(self)
-        self.n_out_spin.setRange(1, 1000000)
-        self.n_out_spin.setValue(100)
-        self.n_written_spin = QtWidgets.QSpinBox(self)
-        self.n_written_spin.setRange(1, 1000000)
-        self.n_written_spin.setValue(100)
-        self.scale_spin = QtWidgets.QDoubleSpinBox(self)
-        self.scale_spin.setDecimals(6)
-        self.scale_spin.setRange(0.0, 10.0)
-        self.scale_spin.setValue(0.0025)
-        self.kt_spin = QtWidgets.QDoubleSpinBox(self)
-        self.kt_spin.setDecimals(4)
-        self.kt_spin.setRange(0.0, 100000.0)
-        self.kt_spin.setValue(1.5)
-        self.labeling_weight_spin = QtWidgets.QDoubleSpinBox(self)
-        self.labeling_weight_spin.setDecimals(4)
-        self.labeling_weight_spin.setRange(0.0, 100000.0)
-        self.labeling_weight_spin.setValue(1.0)
-
-        tooltips = {
-            self.n_iter_spin: "Maximum Monte Carlo trial moves attempted by the ProteinMC run.",
-            self.n_out_spin: "Accepted-step interval between saved trajectory frames.",
-            self.n_written_spin: "Maximum number of saved trajectory frames; ProteinMC stops after this many frames or n_iter trials.",
-            self.scale_spin: "Size of each torsion-angle Monte Carlo move; larger values explore faster but reject more moves.",
-            self.kt_spin: "Metropolis temperature kT; higher values accept more uphill energy moves.",
-            self.labeling_weight_spin: "Weight of the FPS/AV labeling restraint energy term.",
-        }
-        for widget, tooltip in tooltips.items():
-            widget.setToolTip(tooltip)
-
-        form.setColumnStretch(1, 1)
-        form.setColumnStretch(3, 1)
-        form.addWidget(QtWidgets.QLabel("Structure"), 0, 0)
-        form.addWidget(self.structure_edit, 0, 1, 1, 3)
-        form.addWidget(self.structure_button, 0, 4)
-        form.addWidget(QtWidgets.QLabel("Labeling"), 1, 0)
-        form.addWidget(self.labeling_edit, 1, 1, 1, 3)
-        labeling_buttons = QtWidgets.QHBoxLayout()
-        labeling_buttons.setContentsMargins(0, 0, 0, 0)
-        labeling_buttons.setSpacing(2)
-        labeling_buttons.addWidget(self.labeling_button)
-        labeling_buttons.addWidget(self.labeling_edit_button)
-        form.addLayout(labeling_buttons, 1, 4)
-
-        self.score_set_combo.setMinimumWidth(120)
-        form.addWidget(QtWidgets.QLabel("Score set"), 2, 0)
-        form.addWidget(self.score_set_combo, 2, 1, 1, 3)
-        self.score_set_combo.currentTextChanged.connect(self._on_score_set_changed)
-        self.labeling_edit.textChanged.connect(self._populate_score_sets)
-
         # --- FlexFit controls ---
         self.flexfit_use_check = QtWidgets.QCheckBox("FlexFit", self)
         self.flexfit_use_check.setToolTip(
@@ -288,63 +293,39 @@ class ProteinMCModelWidget(ModelWidget):
         self.flexfit_n_residues_label.setToolTip(
             "Number of flexible residues in the selected FlexFit set."
         )
+
+        # Settings button (gear icon)
+        self.settings_button = QtWidgets.QPushButton(self)
+        self.settings_button.setIcon(self.settings_button.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+        self.settings_button.setToolTip("Open detailed MC sampling settings")
+        self.settings_button.setMaximumWidth(32)
+        self.settings_button.clicked.connect(self._open_settings_dialog)
+
+        form.setColumnStretch(1, 1)
+        form.setColumnStretch(3, 1)
+        form.addWidget(QtWidgets.QLabel("Structure"), 0, 0)
+        form.addWidget(self.structure_edit, 0, 1, 1, 3)
+        form.addWidget(self.structure_button, 0, 4)
+
         flexfit_row = QtWidgets.QHBoxLayout()
         flexfit_row.setContentsMargins(0, 0, 0, 0)
         flexfit_row.setSpacing(3)
         flexfit_row.addWidget(self.flexfit_use_check)
         flexfit_row.addWidget(self.flexfit_set_combo, stretch=1)
         flexfit_row.addWidget(self.flexfit_n_residues_label)
-        form.addLayout(flexfit_row, 3, 1, 1, 3)
+        flexfit_row.addWidget(self.settings_button)
+        form.addLayout(flexfit_row, 1, 1, 1, 3)
+
         self.flexfit_use_check.stateChanged.connect(self._on_flexfit_use_changed)
         self.flexfit_set_combo.currentTextChanged.connect(self._on_flexfit_set_changed)
-        self.labeling_edit.textChanged.connect(self._populate_flexfit_sets)
-
-        label_tooltips = {
-            "MC trials": tooltips[self.n_iter_spin],
-            "Save every": tooltips[self.n_out_spin],
-            "Max frames": tooltips[self.n_written_spin],
-            "Move scale": tooltips[self.scale_spin],
-            "kT": tooltips[self.kt_spin],
-            "FPS weight": tooltips[self.labeling_weight_spin],
-        }
-        parameter_labels = {
-            name: QtWidgets.QLabel(name)
-            for name in label_tooltips
-        }
-        for name, label in parameter_labels.items():
-            label.setToolTip(label_tooltips[name])
-
-        form.addWidget(parameter_labels["MC trials"], 4, 0)
-        form.addWidget(self.n_iter_spin, 4, 1)
-        form.addWidget(parameter_labels["Save every"], 4, 2)
-        form.addWidget(self.n_out_spin, 4, 3)
-        form.addWidget(parameter_labels["Max frames"], 5, 0)
-        form.addWidget(self.n_written_spin, 5, 1)
-        form.addWidget(parameter_labels["Move scale"], 5, 2)
-        form.addWidget(self.scale_spin, 5, 3)
-        form.addWidget(parameter_labels["kT"], 6, 0)
-        form.addWidget(self.kt_spin, 6, 1)
-        form.addWidget(parameter_labels["FPS weight"], 6, 2)
-        form.addWidget(self.labeling_weight_spin, 6, 3)
 
         self._build_potential_ui(layout)
 
-        buttons = QtWidgets.QHBoxLayout()
+        # Start button (hidden, but needed for internal references)
         self.start_button = QtWidgets.QPushButton("Start ProteinMC", self)
         self.start_button.setToolTip("Starts the same ProteinMC run as the Sampling panel's Sample button.")
         self.start_button.hide()
-        self.stop_button = QtWidgets.QPushButton("Stop", self)
-        self.stop_button.setEnabled(False)
         self.start_button.clicked.connect(self.start_proteinmc)
-        self.stop_button.clicked.connect(self.stop_proteinmc)
-        buttons.addWidget(self.stop_button)
-        layout.addLayout(buttons)
-
-        self.progress_bar = QtWidgets.QProgressBar(self)
-        self.status_label = QtWidgets.QLabel("ProteinMC idle", self)
-        self.status_label.setMaximumHeight(22)
-        layout.addWidget(self.progress_bar)
-        layout.addWidget(self.status_label)
 
         if ChimolView is not None:
             self.viewer = ChimolView(parent=self, representation_mode="atoms")
@@ -363,16 +344,18 @@ class ProteinMCModelWidget(ModelWidget):
         group_layout = QtWidgets.QVBoxLayout(group)
         group_layout.setContentsMargins(3, 3, 3, 3)
         group_layout.setSpacing(2)
-        self.potential_table = QtWidgets.QTableWidget(0, 3, group)
-        self.potential_table.setHorizontalHeaderLabels(["Term", "Weight", ""])
+        self.potential_table = QtWidgets.QTableWidget(0, 5, group)
+        self.potential_table.setHorizontalHeaderLabels(["Term", "Eval. every", "Weight", "", ""])
         self.potential_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.potential_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.potential_table.setToolTip("Use the row-local r button to remove an energy term.")
+        self.potential_table.setToolTip("Use the row-local delete button to remove an energy term.")
         self.potential_table.itemChanged.connect(self.on_potential_item_changed)
         self.potential_table.horizontalHeader().setStretchLastSection(False)
         self.potential_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.potential_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
         self.potential_table.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        self.potential_table.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
+        self.potential_table.horizontalHeader().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
         self.potential_table.verticalHeader().hide()
         self.potential_table.setMinimumHeight(82)
         self.potential_table.setMaximumHeight(130)
@@ -386,12 +369,8 @@ class ProteinMCModelWidget(ModelWidget):
             self.potential_combo.addItem(str(spec["label"]), key)
         self.potential_add_button = QtWidgets.QPushButton("Add", group)
         self.potential_add_button.clicked.connect(self.on_add_potential)
-        self.potential_details_button = QtWidgets.QPushButton("Details...", group)
-        self.potential_details_button.setToolTip("Edit detailed parameters for the selected energy term")
-        self.potential_details_button.clicked.connect(self.on_edit_potential_details)
         controls.addWidget(self.potential_combo, stretch=1)
         controls.addWidget(self.potential_add_button)
-        controls.addWidget(self.potential_details_button)
         group_layout.addLayout(controls)
 
         for key, spec in self._POTENTIAL_SPECS.items():
@@ -410,7 +389,7 @@ class ProteinMCModelWidget(ModelWidget):
         height = min(max(header + rows * row_height + 8, 82), 130)
         self.potential_table.setFixedHeight(height)
 
-    def _add_potential_row(self, key: str, weight: float = None, settings: dict = None) -> None:
+    def _add_potential_row(self, key: str, weight: float = None, settings: dict = None, eval_interval: int = 1) -> None:
         """Add or update one energy-term row."""
 
         spec = self._POTENTIAL_SPECS.get(key)
@@ -420,7 +399,7 @@ class ProteinMCModelWidget(ModelWidget):
             item = self.potential_table.item(row, 0)
             if item is not None and item.data(QtCore.Qt.UserRole) == key:
                 if weight is not None:
-                    self.potential_table.item(row, 1).setText(f"{float(weight):.2f}")
+                    self.potential_table.item(row, 2).setText(f"{float(weight):.2f}")
                 if settings is not None:
                     item.setData(QtCore.Qt.UserRole + 1, dict(settings))
                 self._resize_potential_table()
@@ -431,22 +410,77 @@ class ProteinMCModelWidget(ModelWidget):
         term_item = QtWidgets.QTableWidgetItem(str(spec["label"]))
         term_item.setFlags(term_item.flags() & ~QtCore.Qt.ItemIsEditable)
         term_item.setData(QtCore.Qt.UserRole, key)
-        term_item.setData(QtCore.Qt.UserRole + 1, dict(settings or spec["params"]))
+        initial_settings = dict(settings or spec["params"])
+        if key == "fps" and not initial_settings.get("labeling_file"):
+            lbl_file = self.labeling_edit.text().strip()
+            if lbl_file:
+                initial_settings["labeling_file"] = lbl_file
+            score_set = self.score_set_combo.currentText()
+            if score_set:
+                initial_settings["score_set"] = score_set
+        term_item.setData(QtCore.Qt.UserRole + 1, initial_settings)
         weight_item = QtWidgets.QTableWidgetItem(f"{float(weight if weight is not None else spec['weight']):.2f}")
-        remove_button = QtWidgets.QPushButton("r", self.potential_table)
+
+        interval_spin = QtWidgets.QSpinBox(self.potential_table)
+        interval_spin.setRange(1, 1000000)
+        interval_spin.setValue(max(1, int(eval_interval)))
+        interval_spin.setToolTip("Evaluate this energy term every N MC steps (1 = every step)")
+        interval_spin.setMaximumWidth(64)
+
+        settings_button = QtWidgets.QPushButton(self.potential_table)
+        settings_button.setIcon(settings_button.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+        settings_button.setMaximumWidth(24)
+        settings_button.setToolTip("Edit parameters for this energy term")
+        settings_button.clicked.connect(lambda _checked=False, button=settings_button: self._on_row_settings_clicked(button))
+
+        remove_button = QtWidgets.QPushButton(self.potential_table)
+        remove_button.setIcon(remove_button.style().standardIcon(QtWidgets.QStyle.SP_TrashIcon))
         remove_button.setMaximumWidth(24)
-        remove_button.setToolTip("remove")
+        remove_button.setToolTip("Remove this energy term")
         remove_button.clicked.connect(lambda _checked=False, button=remove_button: self._remove_potential_button_row(button))
+
         self.potential_table.setItem(row, 0, term_item)
-        self.potential_table.setItem(row, 1, weight_item)
-        self.potential_table.setCellWidget(row, 2, remove_button)
+        self.potential_table.setCellWidget(row, 1, interval_spin)
+        self.potential_table.setItem(row, 2, weight_item)
+        self.potential_table.setCellWidget(row, 3, settings_button)
+        self.potential_table.setCellWidget(row, 4, remove_button)
         self._resize_potential_table()
+
+    def _on_row_settings_clicked(self, button: QtWidgets.QPushButton) -> None:
+        """Find the row for the clicked settings button and open its settings."""
+        for row in range(self.potential_table.rowCount()):
+            if self.potential_table.cellWidget(row, 3) is button:
+                self.edit_potential_details(row)
+                return
+
+    def _open_settings_dialog(self) -> None:
+        """Open a modal dialog with detailed MC sampling parameters."""
+        dialog = QtWidgets.QDialog(self)
+        dialog.setWindowTitle("ProteinMC Sampling Settings")
+        layout = QtWidgets.QFormLayout(dialog)
+        for w in (self.n_iter_spin, self.n_out_spin, self.n_written_spin,
+                  self.scale_spin, self.kt_spin):
+            w.setParent(dialog)
+        layout.addRow("MC trials", self.n_iter_spin)
+        layout.addRow("Save every", self.n_out_spin)
+        layout.addRow("Max frames", self.n_written_spin)
+        layout.addRow("Move scale", self.scale_spin)
+        layout.addRow("kT", self.kt_spin)
+        buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addRow(buttons)
+        result = dialog.exec_()
+        for w in (self.n_iter_spin, self.n_out_spin, self.n_written_spin,
+                  self.scale_spin, self.kt_spin):
+            if w is not None:
+                w.setParent(self)
 
     def _remove_potential_button_row(self, button: QtWidgets.QPushButton) -> None:
         """Remove the energy-term row that owns a row-local remove button."""
 
         for row in range(self.potential_table.rowCount()):
-            if self.potential_table.cellWidget(row, 2) is button:
+            if self.potential_table.cellWidget(row, 4) is button:
                 self.potential_table.removeRow(row)
                 self._resize_potential_table()
                 return
@@ -488,9 +522,13 @@ class ProteinMCModelWidget(ModelWidget):
     @QtCore.Slot()
     def on_edit_potential_details(self) -> None:
         """Open a popup editor for selected energy-term parameters."""
-
         row = self.potential_table.currentRow()
-        if row < 0:
+        if row >= 0:
+            self.edit_potential_details(row)
+
+    def edit_potential_details(self, row: int) -> None:
+        """Open a popup editor for the energy-term parameters at the specified row."""
+        if row < 0 or row >= self.potential_table.rowCount():
             return
         item = self.potential_table.item(row, 0)
         if item is None:
@@ -504,13 +542,41 @@ class ProteinMCModelWidget(ModelWidget):
         dialog.setWindowTitle(f"{spec['label']} parameters")
         form = QtWidgets.QFormLayout(dialog)
         controls = {}
-        for param_name, default in spec["params"].items():
-            spin = QtWidgets.QDoubleSpinBox(dialog)
-            spin.setDecimals(6)
-            spin.setRange(-100000.0, 100000.0)
-            spin.setValue(float(settings.get(param_name, default)))
-            form.addRow(param_name, spin)
-            controls[param_name] = spin
+        
+        if not spec["params"]:
+            label = QtWidgets.QLabel("No configurable parameters for this energy term.", dialog)
+            form.addRow(label)
+        else:
+            for param_name, default in spec["params"].items():
+                if isinstance(default, bool):
+                    checkbox = QtWidgets.QCheckBox(dialog)
+                    checkbox.setChecked(bool(settings.get(param_name, default)))
+                    form.addRow(param_name, checkbox)
+                    controls[param_name] = checkbox
+                elif isinstance(default, str):
+                    line_edit = QtWidgets.QLineEdit(
+                        str(settings.get(param_name, default)), dialog
+                    )
+                    if param_name in ("labeling_file",):
+                        browse_btn = QtWidgets.QPushButton("Browse...", dialog)
+                        browse_btn.clicked.connect(
+                            lambda _checked=False, le=line_edit: self._browse_fps_file(le)
+                        )
+                        row_layout = QtWidgets.QHBoxLayout()
+                        row_layout.addWidget(line_edit)
+                        row_layout.addWidget(browse_btn)
+                        form.addRow(param_name, row_layout)
+                    else:
+                        form.addRow(param_name, line_edit)
+                    controls[param_name] = line_edit
+                else:
+                    spin = QtWidgets.QDoubleSpinBox(dialog)
+                    spin.setDecimals(6)
+                    spin.setRange(-100000.0, 100000.0)
+                    spin.setValue(float(settings.get(param_name, default)))
+                    form.addRow(param_name, spin)
+                    controls[param_name] = spin
+
         buttons = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
             parent=dialog,
@@ -520,8 +586,17 @@ class ProteinMCModelWidget(ModelWidget):
         form.addRow(buttons)
         if dialog.exec_() != QtWidgets.QDialog.Accepted:
             return
-        updated = {name: spin.value() for name, spin in controls.items()}
+        updated = {}
+        for name, ctrl in controls.items():
+            if isinstance(ctrl, QtWidgets.QCheckBox):
+                updated[name] = ctrl.isChecked()
+            elif isinstance(ctrl, QtWidgets.QLineEdit):
+                updated[name] = ctrl.text()
+            else:
+                updated[name] = ctrl.value()
         item.setData(QtCore.Qt.UserRole + 1, updated)
+        if key == "fps":
+            self._sync_fps_potential_to_labeling()
 
     def _potential_settings(self) -> list[dict]:
         """Return enabled ProteinMC potential settings from the UI."""
@@ -532,7 +607,7 @@ class ProteinMCModelWidget(ModelWidget):
             return out
         for row in range(table.rowCount()):
             term_item = table.item(row, 0)
-            weight_item = table.item(row, 1)
+            weight_item = table.item(row, 2)
             if term_item is None or weight_item is None:
                 continue
             key = term_item.data(QtCore.Qt.UserRole)
@@ -540,18 +615,24 @@ class ProteinMCModelWidget(ModelWidget):
             if spec is None:
                 continue
             settings = dict(term_item.data(QtCore.Qt.UserRole + 1) or spec["params"])
-            for int_key in ("centroid_number",):
+            for int_key in ("centroid_number", "n_sphere_point"):
                 if int_key in settings:
                     settings[int_key] = int(settings[int_key])
+            for param_name, default in spec["params"].items():
+                if isinstance(default, bool) and param_name in settings:
+                    settings[param_name] = bool(settings[param_name])
             try:
                 weight = float(weight_item.text())
             except ValueError:
                 weight = float(spec["weight"])
                 weight_item.setText(f"{weight:.2f}")
+            interval_spin = table.cellWidget(row, 1)
+            eval_interval = interval_spin.value() if interval_spin else 1
             out.append(
                 {
                     "name": spec["name"],
                     "weight": weight,
+                    "eval_interval": eval_interval,
                     "settings": settings,
                 }
             )
@@ -690,6 +771,18 @@ class ProteinMCModelWidget(ModelWidget):
         editor.show()
         self._labeling_json_editor = editor
 
+    @staticmethod
+    def _browse_fps_file(line_edit: QtWidgets.QLineEdit) -> None:
+        """Open a file dialog for an FPS JSON labeling file."""
+        filename = QtWidgets.QFileDialog.getOpenFileName(
+            line_edit.parent(),
+            "Open FPS JSON labeling file",
+            line_edit.text().strip(),
+            "FPS JSON (*.json *.fps.json);;All files (*)",
+        )[0]
+        if filename:
+            line_edit.setText(filename)
+
     @QtCore.Slot()
     def on_browse_structure(self) -> None:
         """Choose a structure file."""
@@ -713,6 +806,44 @@ class ProteinMCModelWidget(ModelWidget):
         )[0]
         if filename:
             self.labeling_edit.setText(filename)
+            self._sync_labeling_to_fps_potential()
+
+    def _set_inputs_enabled(self, enabled: bool) -> None:
+        """Enable or disable ProteinMC inputs during sampling."""
+        for attr in (
+            "structure_edit", "structure_button",
+            "flexfit_use_check", "flexfit_set_combo", "potential_table",
+            "potential_combo", "potential_add_button",
+            "settings_button", "labeling_edit", "labeling_weight_spin", "score_set_combo"
+        ):
+            widget = getattr(self, attr, None)
+            if widget is not None:
+                try:
+                    widget.setEnabled(enabled)
+                except Exception:
+                    pass
+        
+        flexfit_use = getattr(self, "flexfit_use_check", None)
+        flexfit_set = getattr(self, "flexfit_set_combo", None)
+        if flexfit_use is not None and flexfit_set is not None:
+            try:
+                flexfit_set.setEnabled(enabled and flexfit_use.isChecked())
+            except Exception:
+                pass
+
+        # Try to find and disable parent fitting controller sampling inputs
+        parent = self.parent()
+        while parent is not None:
+            if parent.__class__.__name__ == "FittingControllerWidget":
+                for attr in ("button_sample", "doubleSpinBox", "spinBox_5"):
+                    w = getattr(parent, attr, None)
+                    if w is not None:
+                        try:
+                            w.setEnabled(enabled)
+                        except Exception:
+                            pass
+                break
+            parent = parent.parent()
 
     @QtCore.Slot()
     def start_proteinmc(self, output_directory: str | Path | None = None) -> None:
@@ -724,7 +855,7 @@ class ProteinMCModelWidget(ModelWidget):
         if self._sampling_directory is None:
             target_dir, _ = cs.gui.widgets.get_directory(caption="Select ProteinMC Sampling Output Folder")
             if target_dir is None:
-                self.status_label.setText("ProteinMC sampling canceled")
+                cs.logging.info("ProteinMC sampling canceled")
                 return
             self._sampling_directory = Path(target_dir)
         self._sampling_directory.mkdir(parents=True, exist_ok=True)
@@ -734,18 +865,18 @@ class ProteinMCModelWidget(ModelWidget):
         self._continuing_run = continuing
         source = self.proteinmc_structure if continuing else (self.structure_edit.text().strip() or self.structure)
         if not source:
-            self.status_label.setText("Select a structure or enter a PDB ID first")
+            cs.logging.info("Select a structure or enter a PDB ID first")
             return
+        n_runs = getattr(self, "_requested_run_count", 1)
         settings = {
             "n_iter": self.n_iter_spin.value(),
             "n_out": self.n_out_spin.value(),
             "pdbOut": self.n_written_spin.value(),
             "scale": self.scale_spin.value(),
             "kt": self.kt_spin.value(),
-            "labeling_weight": self.labeling_weight_spin.value(),
+            "n_runs": n_runs,
             "potentials": self._potential_settings(),
         }
-        labeling = self.labeling_edit.text().strip() or None
         initial_frames = []
         if continuing:
             initial_frames = [np.asarray(frame, dtype=float) for frame in self.trajectory_frames[:-1]]
@@ -784,13 +915,37 @@ class ProteinMCModelWidget(ModelWidget):
             self.energy = []
             self.chi2r = []
         start_frame_count = len(self.trajectory_frames)
-        self.progress_bar.setRange(0, start_frame_count + self.n_written_spin.value() + 1)
-        self.progress_bar.setValue(start_frame_count)
+        self._total_frames_target = start_frame_count + self.n_written_spin.value() + 1
         verb = "continuing" if continuing else "running"
         run_text = f", runs={self._requested_run_count}" if self._requested_run_count > 1 else ""
-        self.status_label.setText(f"ProteinMC {verb}{run_text}: {self._sampling_directory}")
+        cs.logging.info(f"ProteinMC {verb}{run_text}: {self._sampling_directory}")
         self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
+
+        self._set_inputs_enabled(False)
+        self._dialog = None
+        fit_name = str(getattr(self.fit, "name", ""))
+        try:
+            wrapped_name = wrap_text(fit_name, width=48, max_lines=3)
+        except Exception:
+            wrapped_name = fit_name
+        base_label = f"Sampling ProteinMC for {wrapped_name}..." if wrapped_name else "Sampling ProteinMC..."
+        try:
+            self._dialog = EnhancedProgressDialog(
+                title="ProteinMC Sampling",
+                label_text=base_label,
+                min_value=0,
+                max_value=100,
+                parent=self,
+                window_modality=QtCore.Qt.NonModal
+            )
+            self._dialog.show()
+            self._dialog.update_progress(0)
+            self._dialog.canceled.connect(self.stop_proteinmc)
+        except Exception:
+            self._dialog = None
+
+        self._t0_sampling = time.perf_counter()
+        self._start_frame_count = start_frame_count
 
         self._thread = QtCore.QThread(self)
         flexfit_set = (
@@ -800,8 +955,6 @@ class ProteinMCModelWidget(ModelWidget):
         )
         self._worker = _ProteinMCWorker(
             structure_source=source,
-            labeling_file=labeling,
-            score_set=self.score_set_combo.currentText(),
             flexfit_set=flexfit_set,
             settings=settings,
             output_file=output,
@@ -843,7 +996,7 @@ class ProteinMCModelWidget(ModelWidget):
         """Stop the active ProteinMC run."""
         if self._worker is not None:
             self._worker.stop()
-        self.status_label.setText("Stopping ProteinMC ...")
+        cs.logging.info("Stopping ProteinMC ...")
 
     @QtCore.Slot(object)
     def on_prepared(self, structure) -> None:
@@ -855,7 +1008,7 @@ class ProteinMCModelWidget(ModelWidget):
                 self.viewer.set_representation("atoms", object_id=self._chimol_object_id)
             except Exception:
                 pass
-        self.status_label.setText("ProteinMC prepared starting structure")
+        cs.logging.info("ProteinMC prepared starting structure")
 
     @QtCore.Slot(object)
     def on_progress(self, progress: ProteinMCProgress) -> None:
@@ -873,14 +1026,42 @@ class ProteinMCModelWidget(ModelWidget):
             self.trajectory_frames.append(np.asarray(progress.xyz, dtype=float))
             self.current_frame_index = len(self.trajectory_frames) - 1
         frame_index = len(self.trajectory_frames)
-        self.progress_bar.setValue(frame_index)
-        self.status_label.setText(
+        cs.logging.info(
             f"Frame {frame_index} energy={progress.energy:.4g} "
             f"labeling={progress.labeling_energy:.4g}"
         )
         if self.viewer is not None and progress.xyz is not None:
             self._schedule_chimol_update(progress.xyz)
         self._schedule_plot_update()
+
+        dialog = getattr(self, "_dialog", None)
+        if dialog is not None:
+            done = len(self.trajectory_frames)
+            total = self._total_frames_target
+            start_frame_count = getattr(self, "_start_frame_count", 0)
+            new_done = done - start_frame_count
+            new_total = total - start_frame_count
+            if new_total > 0:
+                val = int(round(100.0 * new_done / float(new_total)))
+                val = max(0, min(val, 100))
+                remaining_str = ""
+                t0 = getattr(self, "_t0_sampling", None)
+                if t0 is not None and new_done > 0 and new_total > new_done:
+                    elapsed = time.perf_counter() - t0
+                    remaining = (elapsed / float(new_done)) * (new_total - new_done)
+                    if remaining > 3600:
+                        remaining_str = f" (ETA: {int(remaining // 3600)}h {int((remaining % 3600) // 60)}m)"
+                    elif remaining > 60:
+                        remaining_str = f" (ETA: {int(remaining // 60)}m {int(remaining % 60)}s)"
+                    else:
+                        remaining_str = f" (ETA: {int(remaining)}s)"
+                fit_name = str(getattr(self.fit, "name", ""))
+                try:
+                    wrapped_name = wrap_text(fit_name, width=48, max_lines=3)
+                except Exception:
+                    wrapped_name = fit_name
+                msg = f"Sampling ProteinMC for {wrapped_name}...\nFrame {new_done} / {new_total}{remaining_str}"
+                dialog.update_progress(val, text=msg)
 
     def _schedule_chimol_update(self, xyz: np.ndarray) -> None:
         """Coalesce Chimol updates to keep the UI thread responsive.
@@ -977,10 +1158,21 @@ class ProteinMCModelWidget(ModelWidget):
     @QtCore.Slot(object)
     def on_finished(self, result) -> None:
         """Handle successful ProteinMC completion."""
+        self._set_inputs_enabled(True)
+        dialog = getattr(self, "_dialog", None)
+        if dialog is not None:
+            try:
+                dialog.finish(final_text="ProteinMC sampling finished!", auto_close=True)
+            except Exception:
+                try:
+                    dialog.finalize(force_auto_close=True)
+                except Exception:
+                    pass
+            self._dialog = None
+
         self.proteinmc_structure = getattr(result, "structure", self.proteinmc_structure)
-        self.status_label.setText(f"ProteinMC finished: {result.output_file}")
+        cs.logging.info(f"ProteinMC finished: {result.output_file}")
         self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
         self._continuing_run = False
         # Force a final flush of any deferred Chimol/plot updates.
         self._pending_xyz = None
@@ -1017,13 +1209,27 @@ class ProteinMCModelWidget(ModelWidget):
     @QtCore.Slot(str)
     def on_failed(self, message: str) -> None:
         """Handle ProteinMC worker failures."""
-        self.status_label.setText(f"ProteinMC failed: {message}")
+        self._set_inputs_enabled(True)
+        dialog = getattr(self, "_dialog", None)
+        if dialog is not None:
+            try:
+                dialog.finish(final_text=f"ProteinMC sampling failed: {message}", auto_close=True)
+            except Exception:
+                try:
+                    dialog.finalize(force_auto_close=True)
+                except Exception:
+                    pass
+            self._dialog = None
+
+        cs.logging.error(f"ProteinMC failed: {message}")
         self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
 
     @QtCore.Slot()
     def _clear_thread(self) -> None:
         """Clear completed worker references."""
+        QtCore.QTimer.singleShot(0, self._do_clear_thread)
+
+    def _do_clear_thread(self) -> None:
         self._thread = None
         self._worker = None
 
@@ -1111,7 +1317,9 @@ class ProteinMCModelWidget(ModelWidget):
                 pass
 
         self._restore_potential_settings(settings.get("potentials", []))
-
+        self._sync_labeling_to_fps_potential()
+        self._sync_fps_potential_to_labeling()
+ 
         self._refresh_structure_plots()
 
     def _restore_potential_settings(self, potentials: object) -> None:
@@ -1128,6 +1336,9 @@ class ProteinMCModelWidget(ModelWidget):
             "miyazawa-jernigan": "mj",
             "unres": "unres",
             "iso-unres": "unres",
+            "av": "fps",
+            "av/fps": "fps",
+            "dye": "fps",
         }
         table = getattr(self, "potential_table", None)
         if table is not None:
@@ -1154,9 +1365,56 @@ class ProteinMCModelWidget(ModelWidget):
             for param_name, value in settings.items():
                 if param_name in restored_settings:
                     restored_settings[param_name] = value
-            self._add_potential_row(key, weight=weight, settings=restored_settings)
+            eval_interval = int(item.get("eval_interval", 1))
+            self._add_potential_row(key, weight=weight, settings=restored_settings, eval_interval=eval_interval)
         self._resize_potential_table()
-
+ 
+    def _sync_labeling_to_fps_potential(self) -> None:
+        """Ensure the 'fps' (Dye potential) row settings are in sync with self.labeling_edit."""
+        lbl_file = self.labeling_edit.text().strip()
+        score_set = self.score_set_combo.currentText()
+        if not lbl_file:
+            return
+        table = getattr(self, "potential_table", None)
+        if table is None:
+            return
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
+            if item is not None and item.data(QtCore.Qt.UserRole) == "fps":
+                settings = dict(item.data(QtCore.Qt.UserRole + 1) or {})
+                changed = False
+                if settings.get("labeling_file") != lbl_file:
+                    settings["labeling_file"] = lbl_file
+                    changed = True
+                if score_set and settings.get("score_set") != score_set:
+                    settings["score_set"] = score_set
+                    changed = True
+                if changed:
+                    item.setData(QtCore.Qt.UserRole + 1, settings)
+                break
+ 
+    def _sync_fps_potential_to_labeling(self) -> None:
+        """Sync self.labeling_edit and self.score_set_combo from the 'fps' potential row."""
+        table = getattr(self, "potential_table", None)
+        if table is None:
+            return
+        for row in range(table.rowCount()):
+            item = table.item(row, 0)
+            if item is not None and item.data(QtCore.Qt.UserRole) == "fps":
+                settings = dict(item.data(QtCore.Qt.UserRole + 1) or {})
+                lbl_file = settings.get("labeling_file", "").strip()
+                score_set = settings.get("score_set", "").strip()
+                if lbl_file:
+                    self.labeling_edit.setText(lbl_file)
+                if score_set:
+                    idx = self.score_set_combo.findText(score_set)
+                    if idx >= 0:
+                        self.score_set_combo.setCurrentIndex(idx)
+                    else:
+                        self.score_set_combo.addItem(score_set)
+                        self.score_set_combo.setCurrentText(score_set)
+                break
+ 
     def _load_starting_structure(self, filename: str) -> None:
         """Load and display the starting structure without running ProteinMC."""
 
