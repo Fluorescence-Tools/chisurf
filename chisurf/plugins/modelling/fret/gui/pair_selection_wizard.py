@@ -9,11 +9,11 @@ import numpy as np
 import pyqtgraph as pg
 from qtpy import QtCore, QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.widgets
 
-from .olga_greedy import select_informative_pairs
-from .traj_utils import (
+from ..core.olga_greedy import select_informative_pairs
+from ..core.trajectory import (
     build_atom_pairs,
     build_sites,
     candidate_pairs_from_fps_json,
@@ -153,17 +153,17 @@ class FRETPairSelectionWindow(QtWidgets.QMainWindow):
         self.export_btn.clicked.connect(self._export)
 
     def _browse_traj(self):
-        files = chisurf.gui.widgets.open_files("Open Trajectory", "All files (*)")
+        files = cs.gui.widgets.open_files("Open Trajectory", "All files (*)")
         if files:
             self.traj_edit.setText(str(files[0]))
 
     def _browse_top(self):
-        files = chisurf.gui.widgets.open_files("Open Topology", "PDB files (*.pdb);;All files (*)")
+        files = cs.gui.widgets.open_files("Open Topology", "PDB files (*.pdb);;All files (*)")
         if files:
             self.top_edit.setText(str(files[0]))
 
     def _browse_fps(self):
-        files = chisurf.gui.widgets.open_files("Open FPS JSON", "JSON-Files (*.fps.json);;All files (*)")
+        files = cs.gui.widgets.open_files("Open FPS JSON", "JSON-Files (*.fps.json);;All files (*)")
         if files:
             self.fps_edit.setText(str(files[0]))
 
@@ -299,7 +299,7 @@ class FRETPairSelectionWindow(QtWidgets.QMainWindow):
         if self._last_selected is None or self._last_decay is None:
             return
 
-        out = chisurf.gui.widgets.save_file(description="Export pair selection", file_type="Text files (*.txt);;All files (*)")
+        out = cs.gui.widgets.save_file(description="Export pair selection", file_type="Text files (*.txt);;All files (*)")
         if not out:
             return
 
