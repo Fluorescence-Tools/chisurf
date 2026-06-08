@@ -5,6 +5,7 @@ from .ambient import _estimate_ambient_occlusion
 from .cartoon import (
     _build_trace_ups,
     _generate_cartoon_tube_arrays,
+    _generate_nucleic_cartoon_arrays,
     _generate_trace_arrays,
 )
 from .trace import _extract_ca_trace
@@ -20,6 +21,7 @@ __all__ = [
     "_extract_ca_trace",
     "_build_bond_pairs",
     "_generate_cartoon_tube_arrays",
+    "_generate_nucleic_cartoon_arrays",
     "_generate_trace_arrays",
     "_generate_surface_mesh_from_gaussians",
 ]

@@ -1065,10 +1065,24 @@ def _generate_nucleic_cartoon_arrays(
     if atoms is None or coords_all is None or res_ids is None or len(res_ids) == 0:
         return None
 
+    # Deduplicate residues to avoid processing the same residue multiple times
+    # (this can happen when the CA trace includes multiple backbone atoms per residue)
+    if len(res_ids) > 0 and chain_ids is not None:
+        seen = set()
+        unique_indices = []
+        for i in range(len(res_ids)):
+            key = (res_ids[i], chain_ids[i])
+            if key not in seen:
+                seen.add(key)
+                unique_indices.append(i)
+        res_ids = np.asarray(res_ids)[unique_indices]
+        chain_ids = np.asarray(chain_ids)[unique_indices] if chain_ids is not None else None
+        # Note: we don't deduplicate coords_all here because it's used for atom lookup below
+
     cfg = config or {}
     coordinate_scale = float(cfg.get("coordinate_scale", 1.0))
-    ladder_radius = float(cfg.get("ladder_radius", 0.15)) * coordinate_scale
-    ring_thickness = float(cfg.get("ring_thickness", 0.25)) * coordinate_scale
+    ladder_radius = float(cfg.get("ladder_radius", 0.25)) * coordinate_scale
+    ring_thickness = float(cfg.get("ring_thickness", 0.125)) * coordinate_scale
     backbone_radius = float(cfg.get("backbone_radius", 0.1)) * coordinate_scale
     backbone_quality = int(cfg.get("backbone_quality", 18))
 

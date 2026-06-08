@@ -177,7 +177,7 @@ def _load_display_config() -> dict:
         },
         "backbone_trace": {
             "protein_atoms": ["CA"],
-            "nucleic_atoms": ["P", "C4'", "C1'"],
+            "nucleic_atoms": ["P", "C4'", "C1'", "C4*", "C1*"],
         },
         "lighting": {
             "light_direction": [0.0, 0.0, 1.0],
