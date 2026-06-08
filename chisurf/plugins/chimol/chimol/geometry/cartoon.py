@@ -1133,10 +1133,10 @@ def _generate_nucleic_cartoon_arrays(
         for name, coord in zip(res_atom_names, res_coords):
             atom_to_coord[name] = coord
 
-        # Try to use P atom for backbone (more characteristic for DNA/RNA)
-        # Fall back to C1' or C1*
+        # Use C1' or C1* for backbone to match ladder connection point
+        # Fall back to P if sugar atoms are not available
         backbone_atom_name = None
-        for cand in ["P", "C1'", "C1*"]:  # Prefer P, then C1'
+        for cand in ["C1'", "C1*", "P"]:  # Prefer C1', then C1*, then P
             if cand in atom_to_coord:
                 backbone_atom_name = cand
                 break

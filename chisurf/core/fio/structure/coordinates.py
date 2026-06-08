@@ -121,6 +121,11 @@ _STANDARD_RESIDUES = {
     # Nucleic acid residues (DNA/RNA)
     "DA", "DC", "DG", "DT",  # Deoxyribonucleotides
     "A", "C", "G", "T", "U",  # Ribonucleotides
+    # Modified nucleic acid residues
+    "2DA", "2DC", "2DG", "2DT",  # Modified deoxyribonucleotides
+    "1MA", "1MG", "1MC", "1MT",  # Other modified nucleotides
+    "M2G", "OMG", "OMC", "H2U",  # Common RNA modifications
+    "PSU", "5MC", "7MG", "I",  # More modifications
 }
 
 

@@ -47,7 +47,7 @@ def _extract_ca_trace(
 
     cfg = _DISPLAY_CONFIG.get("backbone_trace", {})
     prot_atoms = cfg.get("protein_atoms", ["CA"])
-    nuc_atoms = cfg.get("nucleic_atoms", ["P", "C4'", "C1'"])
+    nuc_atoms = cfg.get("nucleic_atoms", ["P", "C4'", "C1'", "C4*", "C1*"])
 
     candidates: list[str] = []
     for seq in (prot_atoms, nuc_atoms):
