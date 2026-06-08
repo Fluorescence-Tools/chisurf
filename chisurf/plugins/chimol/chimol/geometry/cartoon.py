@@ -853,6 +853,387 @@ def _build_trace_ups(
     return ups
 
 
+def _newell_normal(coords: np.ndarray) -> np.ndarray:
+    """Calculate the normal vector of a polygon using Newell's method.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Array of shape (N, 3) representing the coordinates of the polygon.
+
+    Returns
+    -------
+    np.ndarray
+        A unit normal vector of shape (3,).
+    """
+    normal = np.zeros(3, dtype=float)
+    n = len(coords)
+    for i in range(n):
+        curr = coords[i]
+        nxt = coords[(i + 1) % n]
+        normal[0] += (curr[1] - nxt[1]) * (curr[2] + nxt[2])
+        normal[1] += (curr[2] - nxt[2]) * (curr[0] + nxt[0])
+        normal[2] += (curr[0] - nxt[0]) * (curr[1] + nxt[1])
+    norm = float(np.linalg.norm(normal))
+    if norm > 1e-6:
+        return normal / norm
+    return np.array([0.0, 0.0, 1.0], dtype=float)
+
+
+def _generate_prism_mesh(
+    coords: np.ndarray,
+    thickness: float,
+    color: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Generate a 3D prism mesh from a flat polygon.
+
+    Parameters
+    ----------
+    coords : np.ndarray
+        Coordinates of the polygon vertices, shape (N, 3).
+    thickness : float
+        Thickness of the extruded prism.
+    color : np.ndarray
+        RGBA color vector, shape (4,).
+
+    Returns
+    -------
+    tuple of np.ndarray
+        Tuple of (vertices, normals, faces, colors).
+    """
+    n = len(coords)
+    normal = _newell_normal(coords)
+
+    half_thick = thickness / 2.0
+    verts_top = coords + normal * half_thick
+    verts_bottom = coords - normal * half_thick
+
+    center = coords.mean(axis=0)
+    center_top = center + normal * half_thick
+    center_bottom = center - normal * half_thick
+
+    verts = []
+    norms = []
+    faces = []
+
+    # 1. Top cap
+    idx_center_top = 0
+    verts.append(center_top)
+    norms.append(normal)
+    for v in verts_top:
+        verts.append(v)
+        norms.append(normal)
+    for i in range(1, n):
+        faces.append([idx_center_top, i, i + 1])
+    faces.append([idx_center_top, n, 1])
+
+    # 2. Bottom cap
+    idx_center_bottom = len(verts)
+    verts.append(center_bottom)
+    norms.append(-normal)
+    for v in verts_bottom:
+        verts.append(v)
+        norms.append(-normal)
+    for i in range(1, n):
+        faces.append([idx_center_bottom, idx_center_bottom + i + 1, idx_center_bottom + i])
+    faces.append([idx_center_bottom, idx_center_bottom + 1, idx_center_bottom + n])
+
+    # 3. Side faces
+    for i in range(n):
+        i_next = (i + 1) % n
+        v_top_curr = verts_top[i]
+        v_top_next = verts_top[i_next]
+
+        edge = v_top_next - v_top_curr
+        side_norm = np.cross(edge, normal)
+        sn = float(np.linalg.norm(side_norm))
+        if sn > 1e-6:
+            side_norm /= sn
+        else:
+            side_norm = np.array([0.0, 1.0, 0.0], dtype=float)
+
+        idx_vt_curr = len(verts)
+        verts.append(v_top_curr)
+        norms.append(side_norm)
+
+        idx_vt_next = len(verts)
+        verts.append(v_top_next)
+        norms.append(side_norm)
+
+        idx_vb_curr = len(verts)
+        verts.append(verts_bottom[i])
+        norms.append(side_norm)
+
+        idx_vb_next = len(verts)
+        verts.append(verts_bottom[i_next])
+        norms.append(side_norm)
+
+        faces.append([idx_vb_curr, idx_vt_curr, idx_vt_next])
+        faces.append([idx_vb_curr, idx_vt_next, idx_vb_next])
+
+    verts_arr = np.asarray(verts, dtype=float)
+    norms_arr = np.asarray(norms, dtype=float)
+    faces_arr = np.asarray(faces, dtype=np.int32)
+    colors_arr = np.tile(color, (len(verts), 1))
+
+    return verts_arr, norms_arr, faces_arr, colors_arr
+
+
+def _generate_cylinder(
+    p1: np.ndarray,
+    p2: np.ndarray,
+    radius: float,
+    color: np.ndarray,
+    segments: int = 8,
+) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]]:
+    """Generate a capped cylinder connecting two points.
+
+    Parameters
+    ----------
+    p1 : np.ndarray
+        Start coordinate, shape (3,).
+    p2 : np.ndarray
+        End coordinate, shape (3,).
+    radius : float
+        Cylinder radius.
+    color : np.ndarray
+        RGBA color vector, shape (4,).
+    segments : int, optional
+        Number of circle segments for the cylinder.
+
+    Returns
+    -------
+    tuple of np.ndarray, or None
+        Tuple of (vertices, normals, faces, colors).
+    """
+    d = p2 - p1
+    dn = float(np.linalg.norm(d))
+    if dn <= 1e-6:
+        return None
+    direction = d / dn
+
+    up = _default_up_from_tangent(direction)
+    side = np.cross(direction, up)
+    sn = float(np.linalg.norm(side))
+    if sn > 0.0:
+        side /= sn
+    else:
+        side = np.array([0.0, 1.0, 0.0], dtype=float)
+    up = np.cross(side, direction)
+
+    frame = np.column_stack([side, up, direction])
+    frames = np.array([frame, frame])
+    path = np.array([p1, p2])
+
+    sv, sn_shape = _make_circle_shape(segments, radius)
+    colors = np.array([color, color])
+
+    res = _extrude_shape(path, frames, sv, sn_shape, colors, cap_ends=True)
+    return res
+
+
+def _generate_nucleic_cartoon_arrays(
+    atoms: np.ndarray,
+    coords_all: np.ndarray,
+    res_ids: np.ndarray,
+    chain_ids: np.ndarray,
+    colors: Optional[np.ndarray],
+    config: Optional[dict] = None,
+) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray, Optional[np.ndarray]]]:
+    """Generate ladders and rings for nucleic acids (DNA/RNA).
+
+    Parameters
+    ----------
+    atoms : np.ndarray
+        Structured array of all atoms in the structure.
+    coords_all : np.ndarray
+        Scaled and centered coordinates of all atoms, shape (N, 3).
+    res_ids : np.ndarray
+        Residue IDs along the backbone trace.
+    chain_ids : np.ndarray
+        Chain IDs along the backbone trace.
+    colors : np.ndarray or None
+        RGBA colors for each residue in the trace.
+    config : dict, optional
+        Display config dictionary.
+
+    Returns
+    -------
+    tuple of np.ndarray, or None
+        Tuple of (vertices, normals, faces, colors).
+    """
+    if atoms is None or coords_all is None or res_ids is None or len(res_ids) == 0:
+        return None
+
+    cfg = config or {}
+    coordinate_scale = float(cfg.get("coordinate_scale", 1.0))
+    ladder_radius = float(cfg.get("ladder_radius", 0.15)) * coordinate_scale
+    ring_thickness = float(cfg.get("ring_thickness", 0.25)) * coordinate_scale
+    backbone_radius = float(cfg.get("backbone_radius", 0.1)) * coordinate_scale
+    backbone_quality = int(cfg.get("backbone_quality", 18))
+
+    fields = set(atoms.dtype.fields or {})
+    if not {"res_id", "atom_name"}.issubset(fields):
+        return None
+
+    atom_res_ids = np.asarray(atoms["res_id"])
+    try:
+        atom_names = np.char.strip(atoms["atom_name"].astype(str))
+    except Exception:
+        atom_names = np.array([str(n).strip() for n in atoms["atom_name"]])
+
+    try:
+        atom_names_u = np.char.upper(atom_names)
+    except Exception:
+        atom_names_u = np.array([str(t).upper() for t in atom_names])
+
+    if "chain" in fields:
+        try:
+            atom_chains = np.char.strip(atoms["chain"].astype(str))
+        except Exception:
+            atom_chains = np.array([str(c).strip() for c in atoms["chain"]])
+    else:
+        atom_chains = np.zeros(len(atoms), dtype=object)
+
+    all_verts = []
+    all_norms = []
+    all_faces = []
+    all_colors = []
+    vert_offset = 0
+
+    def add_mesh(v, n, f, c):
+        nonlocal vert_offset
+        if v is not None and len(v) > 0:
+            all_verts.append(v)
+            all_norms.append(n)
+            all_faces.append(f + vert_offset)
+            if c is not None:
+                all_colors.append(c)
+            vert_offset += len(v)
+
+    pyr_ring_names = ["N1", "C2", "N3", "C4", "C5", "C6"]
+    pur_ring6_names = ["N1", "C2", "N3", "C4", "C5", "C6"]
+    pur_ring5_names = ["C4", "C5", "N7", "C8", "N9"]
+    
+    # Collect backbone coordinates (P or C1') for backbone trace
+    backbone_coords = []
+    backbone_colors = []
+
+    for i, rid in enumerate(res_ids):
+        chain_id = chain_ids[i] if chain_ids is not None else ""
+
+        mask = (atom_res_ids == rid) & (atom_chains == chain_id)
+        if not np.any(mask):
+            continue
+
+        res_atom_names = atom_names_u[mask]
+        res_coords = coords_all[mask]
+
+        atom_to_coord = {}
+        for name, coord in zip(res_atom_names, res_coords):
+            atom_to_coord[name] = coord
+
+        # Try to use P atom for backbone (more characteristic for DNA/RNA)
+        # Fall back to C1' or C1*
+        backbone_atom_name = None
+        for cand in ["P", "C1'", "C1*"]:  # Prefer P, then C1'
+            if cand in atom_to_coord:
+                backbone_atom_name = cand
+                break
+        
+        if backbone_atom_name is None:
+            continue
+        
+        # Get backbone atom coordinate
+        backbone_coord = atom_to_coord[backbone_atom_name]
+        res_color = colors[i] if colors is not None else np.array([1.0, 1.0, 1.0, 1.0])
+        
+        # Collect backbone coordinates (P or C1')
+        backbone_coords.append(backbone_coord.copy())
+        backbone_colors.append(res_color.copy())
+        
+        # For ladder and base rings, we need C1' or C1*
+        c1_name = None
+        for cand in ["C1'", "C1*", backbone_atom_name]:  # Try C1', then C1*, then whatever we have
+            if cand in atom_to_coord:
+                c1_name = cand
+                break
+
+        if not c1_name:
+            # If we have a backbone atom but no C1', just add backbone and skip ladder/rings
+            continue
+
+        c1_coord = atom_to_coord[c1_name]
+
+        is_purine = False
+        is_pyrimidine = False
+        base_anchor_name = None
+
+        if "N9" in atom_to_coord:
+            is_purine = True
+            base_anchor_name = "N9"
+        elif "N1" in atom_to_coord:
+            is_pyrimidine = True
+            base_anchor_name = "N1"
+
+        if not base_anchor_name:
+            continue
+
+        base_anchor_coord = atom_to_coord[base_anchor_name]
+
+        ladder_mesh = _generate_cylinder(c1_coord, base_anchor_coord, ladder_radius, res_color)
+        if ladder_mesh is not None:
+            add_mesh(*ladder_mesh)
+
+        if is_purine:
+            if all(n in atom_to_coord for n in pur_ring6_names):
+                coords6 = np.array([atom_to_coord[n] for n in pur_ring6_names])
+                r6_mesh = _generate_prism_mesh(coords6, ring_thickness, res_color)
+                add_mesh(*r6_mesh)
+            if all(n in atom_to_coord for n in pur_ring5_names):
+                coords5 = np.array([atom_to_coord[n] for n in pur_ring5_names])
+                r5_mesh = _generate_prism_mesh(coords5, ring_thickness, res_color)
+                add_mesh(*r5_mesh)
+        elif is_pyrimidine:
+            if all(n in atom_to_coord for n in pyr_ring_names):
+                coords6 = np.array([atom_to_coord[n] for n in pyr_ring_names])
+                r6_mesh = _generate_prism_mesh(coords6, ring_thickness, res_color)
+                add_mesh(*r6_mesh)
+
+    # Generate backbone tube connecting C1' atoms
+    if len(backbone_coords) >= 2:
+        bb_coords = np.array(backbone_coords, dtype=float)
+        bb_colors = np.array(backbone_colors, dtype=float) if backbone_colors else None
+        
+        # Sample the backbone path for smoothness
+        bb_smooth, bb_colors_smooth = _sample_path(bb_coords, bb_colors)
+        
+        # Generate tube arrays for backbone
+        backbone_arrays = _generate_cartoon_tube_arrays(
+            bb_smooth,
+            bb_colors_smooth,
+            None,  # No trace_ups for backbone
+            base_radius=backbone_radius,
+            style="tube",
+            ss_codes=None,
+            config={"coordinate_scale": coordinate_scale, "tube_quality": backbone_quality},
+        )
+        
+        if backbone_arrays is not None:
+            bb_verts, bb_norms, bb_faces, bb_cols = backbone_arrays
+            add_mesh(bb_verts, bb_norms, bb_faces, bb_cols)
+    
+    if not all_verts:
+        return None
+
+    out_verts = np.concatenate(all_verts, axis=0)
+    out_norms = np.concatenate(all_norms, axis=0)
+    out_faces = np.concatenate(all_faces, axis=0)
+    out_colors = np.concatenate(all_colors, axis=0) if all_colors else None
+
+    return out_verts, out_norms, out_faces, out_colors
+
+
 # ---------------------------------------------------------------------------
 # Legacy aliases
 # ---------------------------------------------------------------------------
@@ -865,6 +1246,7 @@ _build_profile = lambda *a, **kw: {}
 __all__ = [
     "_build_trace_ups",
     "_generate_cartoon_tube_arrays",
+    "_generate_nucleic_cartoon_arrays",
     "_sample_path",
     "_generate_trace_arrays",
     "_build_profile",
