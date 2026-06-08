@@ -48,12 +48,17 @@ def _camera_from_view_state(view: List[float]) -> RayCamera:
     sin_p = math.sin(phi)
     cos_p = math.cos(phi)
 
-    # forward points FROM target TOWARD camera (up-vector convention)
-    up_vec = np.array([sin_t * sin_p, -cos_t * sin_p, cos_p], dtype=float)
-    up_vec /= np.linalg.norm(up_vec)
-    origin = target + up_vec * distance
+    # Camera position from QtGL's view matrix (corrected Y sign)
+    # From V = T(0,0,-dist) * Rx(el) * Rz(az) * T(-center)
+    # C = center + Rz(-az) * Rx(-el) * (0,0,dist)
+    # = center + [sin(az)*sin(el), cos(az)*sin(el), cos(el)] * distance
+    # Note: QtGL's _camera_position has a bug with Y sign
+    origin = target + np.array(
+        [sin_t * sin_p * distance, cos_t * sin_p * distance, cos_p * distance],
+        dtype=float,
+    )
 
-    # The ray tracer forward is the REVERSE: from camera toward target
+    # Forward: from camera to target
     forward = target - origin
     fnorm = np.linalg.norm(forward)
     if fnorm > 1e-9:
@@ -61,14 +66,19 @@ def _camera_from_view_state(view: List[float]) -> RayCamera:
     else:
         forward = np.array([0.0, 0.0, 1.0], dtype=float)
 
-    world_up = np.array([0.0, 0.0, 1.0], dtype=float)
-    right = np.cross(forward, world_up)
-    if np.linalg.norm(right) < 1e-9:
-        right = np.array([1.0, 0.0, 0.0], dtype=float)
-    else:
-        right /= np.linalg.norm(right)
-    cam_up = np.cross(right, forward)
-    cam_up /= np.linalg.norm(cam_up)
+    # Camera basis from QtGL's view matrix columns
+    # R^-1 = Rz(-az) * Rx(-el)
+    # right = first column of R^-1
+    # up = second column of R^-1
+    right = np.array([cos_t, -sin_t, 0.0], dtype=float)
+    rn = np.linalg.norm(right)
+    if rn > 1e-9:
+        right /= rn
+    
+    cam_up = np.array([sin_t * cos_p, cos_t * cos_p, -sin_p], dtype=float)
+    un = np.linalg.norm(cam_up)
+    if un > 1e-9:
+        cam_up /= un
 
     return RayCamera(origin=origin, forward=forward, up=cam_up,
                      fov_degrees=_FOV_DEG_DEFAULT, far_clip=far_clip)
