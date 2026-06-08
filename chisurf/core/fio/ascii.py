@@ -7,7 +7,7 @@ import re
 import numpy as np
 
 import chisurf.core.fio as io
-import chisurf
+import chisurf as cs
 from chisurf import logging
 
 
@@ -15,7 +15,7 @@ from chisurf import logging
 
 def _open_maybe_zipped(filename: str, mode: str = "r"):
     """
-    Compatibility wrapper for zipped/plain I/O across chisurf versions.
+    Compatibility wrapper for zipped/plain I/O across cs versions.
     """
     try:
         opener = io.open_maybe_zipped
@@ -280,7 +280,7 @@ def save_xy(
         filename: str,
         x: np.ndarray,
         y: np.ndarray,
-        verbose: bool = chisurf.core.settings.cs_settings['verbose'],
+        verbose: bool = cs.core.settings.cs_settings['verbose'],
         fmt: str = "%.3f\t%.3f",
         header_string: str = None
 ) -> None:
@@ -305,7 +305,7 @@ def save_xy(
 
 def load_xy(
         filename: str,
-        verbose: bool = chisurf.core.settings.cs_settings['verbose'],
+        verbose: bool = cs.core.settings.cs_settings['verbose'],
         usecols: typing.Tuple[int, int] = None,
         skiprows: int = 0,
         delimiter: str = "\t"
@@ -355,7 +355,7 @@ class Csv(object):
     Two-column in-memory data
 
     >>> import numpy as np
-    >>> from chisurf.core.fio.ascii import Csv
+    >>> from cs.core.fio.ascii import Csv
     >>> arr = np.column_stack(([0.0, 1.0, 2.0], [10.0, 11.0, 12.0]))
     >>> csv = Csv(data=arr)
     >>> csv.n_rows, csv.n_cols
@@ -389,7 +389,7 @@ class Csv(object):
             error_x_on: bool = False,
             directory: str = '.',
             skiprows: int = 9,
-            verbose: bool = chisurf.core.settings.cs_settings['verbose'],
+            verbose: bool = cs.core.settings.cs_settings['verbose'],
             file_type: str = 'csv',
             **kwargs
     ):
@@ -468,7 +468,7 @@ class Csv(object):
             filename: str,
             skiprows: int = None,
             use_header: bool = None,
-            verbose: bool = chisurf.core.settings.cs_settings['verbose'],
+            verbose: bool = cs.core.settings.cs_settings['verbose'],
             delimiter: str = None,
             file_type: str = None,
             infer_delimiter: bool = True,
@@ -597,7 +597,7 @@ class Csv(object):
 
             self._data = d
         else:
-            chisurf.logging.warning(f"File {filename} not found")
+            cs.logging.warning(f"File {filename} not found")
 
     def save(
             self,

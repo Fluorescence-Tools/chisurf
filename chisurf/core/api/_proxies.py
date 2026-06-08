@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 from typing import Any, Dict, Iterator, List, Optional, Union
 
@@ -6,17 +7,15 @@ from chisurf.core.api._client import ChisurfClient
 
 
 def install_proxies(client: ChisurfClient) -> None:
-    """Replace ``chisurf.fits``, ``chisurf.imported_datasets`` with proxy objects.
+    """Replace ``cs.fits``, ``cs.imported_datasets`` with proxy objects.
 
     Must be called after the server subprocess is running and the client
     is connected.  The proxies delegate all reads/writes to the server
     via ZMQ/JSON-RPC, keeping the two processes in sync.
     """
-    import chisurf
-
-    chisurf.fits = ProxyFitList(client)
-    chisurf.imported_datasets = ProxyDatasetList(client)
-    chisurf.__client__ = client
+    cs.fits = ProxyFitList(client)
+    cs.imported_datasets = ProxyDatasetList(client)
+    cs.__client__ = client
 
 
 class DataProxy:
@@ -463,7 +462,7 @@ class ProxyList:
 
 
 class ProxyDatasetList(ProxyList):
-    """Proxy for ``chisurf.imported_datasets``."""
+    """Proxy for ``cs.imported_datasets``."""
 
     def _fetch(self) -> List[Dict[str, Any]]:
         resp = self._client.dataset__list()
@@ -483,7 +482,7 @@ class ProxyDatasetList(ProxyList):
 
 
 class ProxyFitList(ProxyList):
-    """Proxy for ``chisurf.fits``."""
+    """Proxy for ``cs.fits``."""
 
     def _fetch(self) -> List[Dict[str, Any]]:
         resp = self._client.fit__list()

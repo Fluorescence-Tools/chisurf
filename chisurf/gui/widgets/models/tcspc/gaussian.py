@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 
@@ -113,7 +113,7 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -131,7 +131,7 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         # Add a new Gaussian distance component to all fits in the current
         # fit group so that the FRET distance model stays structurally
         # consistent across the group.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": str(self.name)},
         )
@@ -141,7 +141,7 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         """Handle remove Gaussian button click."""
         # Remove the last Gaussian distance component from all fits in the
         # current fit group.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": str(self.name)},
         )
@@ -159,19 +159,19 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianMeans[-1],
             layout=layout
         )
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianSigma[-1],
             layout=layout
         )
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianShape[-1],
             layout=layout
         )
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gaussianAmplitudes[-1],
             layout=layout
         )
@@ -194,9 +194,8 @@ class GaussianWidget(fret.Gaussians, QtWidgets.QWidget):
         setattr(self, 'is_distance_between_gaussians', checked)
         # Update the model for all fits in the current fit group
         try:
-            import chisurf
-            for fit_obj in chisurf.fits:
-                chisurf.core.actions.dispatch(
+            for fit_obj in cs.fits:
+                cs.core.actions.dispatch(
                     name="model.update",
                     payload={},
                 )
@@ -277,7 +276,7 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         self.layout.addWidget(self.donor)
 
         # Create parameter widgets
-        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        self._fret_parameters_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters
         )
         self.layout.addWidget(self._fret_parameters_widget)
@@ -285,7 +284,7 @@ class GaussianModelWidget(fret.GaussianModel, LifetimeModelWidgetBase):
         # Shared κ² mode controls (dynamic vs static + distribution/experimental buttons)
         kappa2_helpers.setup_kappa2_controls(self, self.layout)
 
-        # self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        # self._orientation_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
         #     self.orientation_parameter
         # )
         # self.layout.addWidget(self._orientation_widget)

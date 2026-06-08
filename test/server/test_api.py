@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import pytest
 
@@ -158,15 +159,14 @@ class TestChiSurfAPI:
 
     def test_list_datasets_local(self):
         dataset = DummyDataset(name="test", uid="uid-1")
-        import chisurf
-        chisurf.imported_datasets.append(dataset)
+        cs.imported_datasets.append(dataset)
         try:
             api = ChiSurfAPI(mode="local")
             result = api.list_datasets()
             assert isinstance(result, list)
             assert len(result) >= 1
         finally:
-            chisurf.imported_datasets.clear()
+            cs.imported_datasets.clear()
 
     def test_list_datasets_server(self):
         client = DummyClient()
@@ -178,8 +178,7 @@ class TestChiSurfAPI:
 
     def test_list_fits_local(self):
         fit = DummyFit(name="TestFit", uid="fit-uid")
-        import chisurf
-        chisurf.fits.append(fit)
+        cs.fits.append(fit)
         try:
             api = ChiSurfAPI(mode="local")
             result = api.list_fits()
@@ -188,7 +187,7 @@ class TestChiSurfAPI:
             assert result[0]["name"] == "TestFit"
             assert result[0]["chi2"] == 1.23
         finally:
-            chisurf.fits.clear()
+            cs.fits.clear()
 
     def test_list_fits_server(self):
         client = DummyClient()
@@ -198,15 +197,14 @@ class TestChiSurfAPI:
 
     def test_run_fit_local(self):
         fit = DummyFit(name="MyFit", uid="run-uid")
-        import chisurf
-        chisurf.fits.append(fit)
+        cs.fits.append(fit)
         try:
             api = ChiSurfAPI(mode="local")
             result = api.run_fit(fit_index=0)
             assert result["ok"] is True
             assert result["fit_uid"] == "run-uid"
         finally:
-            chisurf.fits.clear()
+            cs.fits.clear()
 
     def test_run_fit_server(self):
         client = DummyClient()
@@ -217,26 +215,24 @@ class TestChiSurfAPI:
 
     def test_get_parameter_local(self):
         fit = DummyFit(name="Fit", uid="p-uid")
-        import chisurf
-        chisurf.fits.append(fit)
+        cs.fits.append(fit)
         try:
             api = ChiSurfAPI(mode="local")
             result = api.get_parameter("tau", fit_index=0)
             assert result["ok"] is True
             assert result["parameter"]["value"] == 3.8
         finally:
-            chisurf.fits.clear()
+            cs.fits.clear()
 
     def test_set_parameter_value_local(self):
         fit = DummyFit(name="Fit", uid="set-uid")
-        import chisurf
-        chisurf.fits.append(fit)
+        cs.fits.append(fit)
         try:
             api = ChiSurfAPI(mode="local")
             result = api.set_parameter_value("tau", 5.0, fit_index=0)
             assert result["ok"] is True
         finally:
-            chisurf.fits.clear()
+            cs.fits.clear()
 
     def test_get_project_info_local(self):
         api = ChiSurfAPI(mode="local")
@@ -254,15 +250,14 @@ class TestChiSurfAPI:
 
     def test_clear_fits_local(self):
         fit = DummyFit()
-        import chisurf
-        chisurf.fits.append(fit)
+        cs.fits.append(fit)
         try:
             api = ChiSurfAPI(mode="local")
             result = api.clear_fits()
             assert result["ok"] is True
-            assert len(chisurf.fits) == 0
+            assert len(cs.fits) == 0
         finally:
-            chisurf.fits.clear()
+            cs.fits.clear()
 
 
 class TestPluginContext:

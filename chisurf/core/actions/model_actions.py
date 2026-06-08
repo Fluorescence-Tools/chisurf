@@ -1,20 +1,19 @@
 from __future__ import annotations
 from chisurf import typing
 from chisurf.core.actions._decorator import action
+import chisurf as cs
 
 
 def _resolve_fit(fit_index: typing.Optional[int] = None):
-    import chisurf
-
     try:
-        chisurf.logging.info(f"actions._resolve_fit: called with fit_index={fit_index}")
+        cs.logging.info(f"actions._resolve_fit: called with fit_index={fit_index}")
     except Exception:
         pass
 
     if fit_index is None:
-        r = getattr(getattr(chisurf, "cs", None), "current_fit", None)
+        r = getattr(getattr(cs, "cs", None), "current_fit", None)
         try:
-            chisurf.logging.info(
+            cs.logging.info(
                 f"actions._resolve_fit: returning current_fit type={type(r).__name__ if r is not None else None}"
             )
         except Exception:
@@ -22,11 +21,11 @@ def _resolve_fit(fit_index: typing.Optional[int] = None):
         return r
 
     idx = int(fit_index)
-    fits = list(getattr(chisurf, "fits", []) or [])
+    fits = list(getattr(cs, "fits", []) or [])
     if 0 <= idx < len(fits):
         r = fits[idx]
         try:
-            chisurf.logging.info(
+            cs.logging.info(
                 f"actions._resolve_fit: resolved index {idx} -> type={type(r).__name__}, name={getattr(r, 'name', None)}"
             )
         except Exception:
@@ -110,16 +109,15 @@ def append_global_parameter(parameter_name: str, fit_index: typing.Optional[int]
 def append_fit_to_global(fit_index: int, global_fit_index: typing.Optional[int] = None):
     """Append a fit to a global model."""
     from chisurf.macros import model as model_macros
-    import chisurf
-    chisurf.logging.info(
+    cs.logging.info(
         f"actions.model.append_fit_to_global: fit_index={fit_index}, global_fit_index={global_fit_index}"
     )
     fit = _resolve_fit(global_fit_index)
     if fit is None:
-        chisurf.logging.warning("actions.model.append_fit_to_global: global fit resolution returned None; aborting")
+        cs.logging.warning("actions.model.append_fit_to_global: global fit resolution returned None; aborting")
         return {}
     try:
-        chisurf.logging.info(
+        cs.logging.info(
             f"actions.model.append_fit_to_global: resolved global fit type={type(fit).__name__}, name={getattr(fit, 'name', None)}; dispatching to macros"
         )
     except Exception:

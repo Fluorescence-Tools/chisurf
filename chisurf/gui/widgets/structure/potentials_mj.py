@@ -3,10 +3,11 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
-import chisurf.gui.widgets
 import chisurf.core.structure
+import chisurf.gui.widgets
 from chisurf.core.settings.path_utils import get_path
 from chisurf.core.structure.potential.potentials import MJPotential
+from chisurf.gui.widgets.warning_once import show_warning_once
 
 
 class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
@@ -19,10 +20,10 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
             parent=None
     ):
         QtWidgets.QWidget.__init__(self, parent=parent)
-        
+
         # Set default filename path if not provided
         if filename is None:
-            filename = str(get_path('chisurf') / 'structure/potential/database/mj.npy')
+            filename = str(get_path('chisurf') / 'core/structure/potential/database/mj.npy')
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -47,7 +48,7 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
 
         self.pushButton.clicked.connect(self.onOpenFile)
 
-        super(MJPotentialWidget, self).__init__(structure, filename, ca_cutoff)
+        super().__init__(structure, filename, ca_cutoff)
         self.potential = filename
         self.ca_cutoff = ca_cutoff
 
@@ -70,9 +71,9 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
         try:
             self.mjPot = np.load(v)
             self.lineEdit.setText(v)
-        except (FileNotFoundError, IOError) as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+        except (OSError, FileNotFoundError):
+            show_warning_once(
+                "mj_potential_file",
                 "Missing MJ Potential File",
                 f"MJ potential file not found: {v}\n\n"
                 f"The Miyazawa-Jernigan potential file should be located at:\n"
@@ -83,8 +84,8 @@ class MJPotentialWidget(MJPotential, QtWidgets.QWidget):
             self.mjPot = np.zeros((20, 20))
             self.lineEdit.setText(v)
         except Exception as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+            show_warning_once(
+                "mj_potential_file_error",
                 "MJ Potential File Error",
                 f"Error loading MJ potential file {v}:\n{str(e)}"
             )

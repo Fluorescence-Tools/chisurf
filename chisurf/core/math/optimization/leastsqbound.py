@@ -1,16 +1,14 @@
 """Constrained multivariate least-squares optimization"""
 
 import warnings
+import numpy as np
 
-from numpy import array, take, eye, triu, transpose, dot
-from numpy import empty_like, sqrt, cos, sin, arcsin
 from scipy.optimize import _minpack, leastsq
 import scipy
 try:
     from scipy.optimize.minpack import _check_func
 except ImportError:
     from scipy.optimize._minpack_py import _check_func
-
 
 class OptimizationCancelled(Exception):
     """Signal that a least-squares optimization was cancelled by the caller.
@@ -24,7 +22,6 @@ class OptimizationCancelled(Exception):
 
     pass
 
-
 def _internal2external_grad(
         xi,
         bounds
@@ -33,19 +30,18 @@ def _internal2external_grad(
 Calculate the internal (unconstrained) to external (constained)
 parameter gradiants.
 """
-    grad = empty_like(xi)
+    grad = np.empty_like(xi)
     for i, (v, bound) in enumerate(zip(xi, bounds)):
         lower, upper = bound
         if lower is None and upper is None:  # No constraints
             grad[i] = 1.0
         elif upper is None:  # only lower bound
-            grad[i] = v / sqrt(v * v + 1.)
+            grad[i] = v / np.sqrt(v * v + 1.)
         elif lower is None:  # only upper bound
-            grad[i] = -v / sqrt(v * v + 1.)
+            grad[i] = -v / np.sqrt(v * v + 1.)
         else:  # lower and upper bounds
-            grad[i] = (upper - lower) * cos(v) / 2.
+            grad[i] = (upper - lower) * np.cos(v) / 2.
     return grad
-
 
 def _internal2external_func(bounds):
     """
@@ -67,12 +63,11 @@ external (constrained) parameters.
         np.ndarray
             External (constrained) parameter vector.
         """
-        xe = empty_like(xi)
+        xe = np.empty_like(xi)
         xe[:] = [l(p) for l, p in zip(ls, xi)]
         return xe
 
     return convert_i2e
-
 
 def _internal2external_lambda(bound):
     """
@@ -83,12 +78,11 @@ parameter to a external (constrained) parameter.
     if lower is None and upper is None:  # no constraints
         return lambda x: x
     elif upper is None:  # only lower bound
-        return lambda x: lower - 1. + sqrt(x * x + 1.)
+        return lambda x: lower - 1. + np.sqrt(x * x + 1.)
     elif lower is None:  # only upper bound
-        return lambda x: upper + 1. - sqrt(x * x + 1.)
+        return lambda x: upper + 1. - np.sqrt(x * x + 1.)
     else:
-        return lambda x: lower + ((upper - lower) / 2.) * (sin(x) + 1.)
-
+        return lambda x: lower + ((upper - lower) / 2.) * (np.sin(x) + 1.)
 
 def _external2internal_func(bounds):
     """
@@ -110,12 +104,11 @@ internal (unconstrained) parameters.
         np.ndarray
             Internal (unconstrained) parameter vector.
         """
-        xi = empty_like(xe)
+        xi = np.empty_like(xe)
         xi[:] = [l(p) for l, p in zip(ls, xe)]
         return xi
 
     return convert_e2i
-
 
 def _external2internal_lambda(bound):
     """
@@ -126,12 +119,11 @@ parameter to a internal (unconstrained) parameter.
     if lower is None and upper is None:  # no constraints
         return lambda x: x
     elif upper is None:  # only lower bound
-        return lambda x: sqrt((x - lower + 1.) ** 2 - 1)
+        return lambda x: np.sqrt((x - lower + 1.) ** 2 - 1)
     elif lower is None:  # only upper bound
-        return lambda x: sqrt((upper - x + 1.) ** 2 - 1)
+        return lambda x: np.sqrt((upper - x + 1.) ** 2 - 1)
     else:
-        return lambda x: arcsin((2. * (x - lower) / (upper - lower)) - 1.)
-
+        return lambda x: np.arcsin((2. * (x - lower) / (upper - lower)) - 1.)
 
 def leastsqbound(
         func, x0,
@@ -228,7 +220,7 @@ fjac*p = q*r, where r is upper triangular
 with diagonal elements of nonincreasing
 magnitude. Column j of p is column ipvt(j)
 of the identity matrix.
-- 'qtf' : the vector (transpose(q) * fvec).
+- 'qtf' : the vector (np.transpose(q) * fvec).
 
 mesg : str
 A string message giving information about the cause of failure.
@@ -261,18 +253,18 @@ parameter, p_i, and a external parameter, p_e, are as follows:
 
 With ``min`` and ``max`` bounds defined ::
 
-p_i = arcsin((2 * (p_e - min) / (max - min)) - 1.)
-p_e = min + ((max - min) / 2.) * (sin(p_i) + 1.)
+p_i = np.arcsin((2 * (p_e - min) / (max - min)) - 1.)
+p_e = min + ((max - min) / 2.) * (np.sin(p_i) + 1.)
 
 With only ``max`` defined ::
 
-p_i = sqrt((max - p_e + 1.)**2 - 1.)
-p_e = max + 1. - sqrt(p_i**2 + 1.)
+p_i = np.sqrt((max - p_e + 1.)**2 - 1.)
+p_e = max + 1. - np.sqrt(p_i**2 + 1.)
 
 With only ``min`` defined ::
 
-p_i = sqrt((p_e - min + 1.)**2 - 1.)
-p_e = min - 1. + sqrt(p_i**2 + 1.)
+p_i = np.sqrt((p_e - min + 1.)**2 - 1.)
+p_e = min - 1. + np.sqrt(p_i**2 + 1.)
 
 These transfomations are used in the MINUIT package, and described in
 detail in the section 1.3.1 of the MINUIT User's Guide.
@@ -306,12 +298,12 @@ References
         """
 
         try:
-            r = array(residuals, ndmin=1).ravel()
+            r = np.array(residuals, ndmin=1).ravel()
         except Exception:
             return None, None
 
         try:
-            chi2_val = float(dot(r, r))
+            chi2_val = float(np.dot(r, r))
         except Exception:
             chi2_val = None
 
@@ -337,7 +329,7 @@ References
         if progress_callback is not None:
             # Estimate a total evaluation budget similar to MINPACK defaults
             # so that the callback can report a normalized progress fraction.
-            x0_arr = array(x0, ndmin=1)
+            x0_arr = np.array(x0, ndmin=1)
             n = len(x0_arr)
             if eff_total is None:
                 if maxfev and maxfev > 0:
@@ -418,7 +410,7 @@ References
     i2e = _internal2external_func(bounds)
     e2i = _external2internal_func(bounds)
 
-    x0 = array(x0, ndmin=1)
+    x0 = np.array(x0, ndmin=1)
     i0 = e2i(x0)
     n = len(x0)
     if len(bounds) != n:
@@ -588,17 +580,17 @@ References
     if full_output:
         # convert fjac from internal params to external
         grad = _internal2external_grad(retval[0], bounds)
-        retval[1]['fjac'] = (retval[1]['fjac'].T / take(grad, retval[1]['ipvt'] - 1)).T
+        retval[1]['fjac'] = (retval[1]['fjac'].T / np.take(grad, retval[1]['ipvt'] - 1)).T
         cov_x = None
         if info in [1, 2, 3, 4]:
             # from numpy.dual import pinv
             from numpy.linalg import LinAlgError, pinv
 
-            perm = take(eye(n), retval[1]['ipvt'] - 1, 0)
-            r = triu(transpose(retval[1]['fjac'])[:n, :])
-            R = dot(r, perm)
+            perm = np.take(np.eye(n), retval[1]['ipvt'] - 1, 0)
+            r = np.triu(np.transpose(retval[1]['fjac'])[:n, :])
+            R = np.dot(r, perm)
             try:
-                cov_x = pinv(dot(transpose(R), R))
+                cov_x = pinv(np.dot(np.transpose(R), R))
             except LinAlgError:
                 pass
         return (x, cov_x) + retval[1:-1] + (mesg, info)

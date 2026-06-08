@@ -5,14 +5,14 @@
 import sys
 import pathlib
 import importlib
-import chisurf
+import chisurf as cs
 from chisurf.gui.main import Main
 
 # Create a Main instance
 main = Main()
 
 # Path to the pong_game plugin's __init__.py file
-plugin_path = pathlib.Path(chisurf.plugins.__file__).parent / "pong_game" / "__init__.py"
+plugin_path = pathlib.Path(cs.plugins.__file__).parent / "pong_game" / "__init__.py"
 print(f"Testing macro execution with file: {plugin_path}")
 
 try:
@@ -65,7 +65,7 @@ try:
             if len(plugin_path) > 0:
                 package_name = plugin_path[0]
                 # Set __package__ for relative imports to work
-                globals_dict["__package__"] = f"chisurf.plugins.{package_name}"
+                globals_dict["__package__"] = f"cs.plugins.{package_name}"
                 print(f"Set __package__ to: {globals_dict['__package__']}")
 
     # Execute the file

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from importlib import import_module
 import copy
-from typing import Optional
+from typing import Optional, Union, Sequence, Any
 
 import numpy as np
 
@@ -437,6 +437,133 @@ class MolView(QtWidgets.QWidget):
                 self._radius = state.radius
 
         self._update_view()
+
+    def add_point_overlay(
+        self,
+        key: str,
+        coords: np.ndarray,
+        color: Union[np.ndarray, Sequence[float]] = (0.0, 1.0, 0.5, 0.6),
+        size_scale: float = 0.03,
+        min_size: float = 2.5,
+        alpha: float = 0.6,
+    ) -> None:
+        """Add or replace a named point-cloud overlay in the 3D view.
+
+        The overlay is rendered as transparent spheres on top of the structure.
+        Suitable for displaying AV point clouds, dye density distributions, or
+        any set of 3D positions.
+
+        Parameters
+        ----------
+        key : str
+            Unique identifier for this overlay. Calling again with the same key
+            replaces the existing overlay.
+        coords : (N, 3) ndarray
+            3D coordinates of the overlay points.
+        color : (4,) array-like or (N, 4) array-like
+            RGBA colour in [0, 1]. Broadcast scalar or per-point.
+        size_scale : float
+            Point size relative to the scene radius.
+        min_size : float
+            Minimum point size in world units.
+        alpha : float
+            Global alpha multiplier applied on top of the per-point alpha.
+        """
+        if self._point_overlays is None:
+            self._point_overlays = {}
+        self._point_overlays[key] = {
+            "coords": coords,
+            "color": color,
+            "size_scale": size_scale,
+            "min_size": min_size,
+            "alpha": alpha,
+        }
+        self._update_view()
+
+    def update_point_overlay(
+        self,
+        key: str,
+        coords: np.ndarray,
+        **kwargs,
+    ) -> None:
+        """Update the coordinates (and optionally style) of an existing overlay.
+
+        If no overlay with *key* exists, behaves identically to
+        :meth:`add_point_overlay`.
+        """
+        if self._point_overlays is None:
+            self._point_overlays = {}
+        if key not in self._point_overlays:
+            self.add_point_overlay(key, coords, **kwargs)
+        else:
+            self._point_overlays[key]["coords"] = coords
+            for k, v in kwargs.items():
+                self._point_overlays[key][k] = v
+            self._update_view()
+
+    def remove_point_overlay(self, key: str) -> bool:
+        """Remove a named point-cloud overlay.
+
+        Returns True if the overlay existed and was removed.
+        """
+        if self._point_overlays is not None and key in self._point_overlays:
+            del self._point_overlays[key]
+            self._update_view()
+            return True
+        return False
+
+    def clear_point_overlays(self) -> None:
+        """Remove all point-cloud overlays from the view."""
+        self._point_overlays = {}
+        self._update_view()
+
+    def add_sphere(
+        self,
+        center: np.ndarray,
+        radius: float = 1.5,
+        color: Sequence[float] = (1.0, 0.8, 0.2, 0.9),
+        label: Optional[str] = None,
+        key: Optional[str] = None,
+    ) -> str:
+        """Place a single sphere at *center* (e.g. an AV mean position or attachment point).
+
+        Parameters
+        ----------
+        center : (3,) array-like
+            Sphere centre in Å.
+        radius : float
+            Sphere radius in Å (default 1.5 — about a Cβ).
+        color : (4,) array-like
+            RGBA colour in [0, 1].
+        label : str, optional
+            Text label placed next to the sphere.
+        key : str, optional
+            Overlay key; auto-generated as ``'sphere_<n>'`` if not provided.
+
+        Returns
+        -------
+        key : str
+            The overlay key used, for subsequent removal.
+        """
+        if self._point_overlays is None:
+            self._point_overlays = {}
+        if key is None:
+            n = len([k for k in self._point_overlays if k.startswith("sphere_")])
+            key = f"sphere_{n}"
+
+        coords = np.asarray(center, dtype=float).reshape(1, 3)
+        self._point_overlays[key] = {
+            "coords": coords,
+            "color": color,
+            "size_scale": 0.0,
+            "min_size": 2 * radius,
+            "alpha": color[3] if len(color) > 3 else 1.0,
+            "glyph": "sphere",
+        }
+        if label is not None:
+            self._point_overlays[key]["label"] = label
+        self._update_view()
+        return key
 
     def remove_object(self, object_id: str) -> bool:
         if object_id not in self._objects:
@@ -989,6 +1116,7 @@ class MolView(QtWidgets.QWidget):
 
             self._renderer = renderer
             self.view = self._renderer.widget()
+            self._container = container
             bg = background if background is not None else _DISPLAY_CONFIG.get(
                 "background", "k"
             )
@@ -2594,6 +2722,106 @@ class MolView(QtWidgets.QWidget):
                 0.0, 0.0, 0.0,
                 0.1, 100.0, 45.0]
 
+    def get_current_scene(self) -> Optional[Scene]:
+        """Return the currently visible scene description.
+
+        Returns
+        -------
+        Scene or None
+            Current backend-neutral scene object used by the OpenGL renderer.
+        """
+        return self._scene
+
+    def grab_current_view_image(
+        self,
+        *,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ) -> Optional[QtGui.QImage]:
+        """Grab the currently visible OpenGL view as a QImage.
+
+        Parameters
+        ----------
+        width, height:
+            Optional output dimensions. When both are provided, the grabbed
+            image is scaled to that exact size.
+
+        Returns
+        -------
+        QtGui.QImage or None
+            Snapshot of the current viewport, or ``None`` if unavailable.
+        """
+        renderer = getattr(self, "_renderer", None)
+        widget = renderer.widget() if renderer is not None and hasattr(renderer, "widget") else None
+        grab = getattr(widget, "grabFramebuffer", None)
+        if not callable(grab):
+            return None
+        try:
+            image = grab()
+        except Exception:
+            return None
+        if image is None or image.isNull():
+            return None
+        if width and height and width > 0 and height > 0 and (image.width() != width or image.height() != height):
+            image = image.scaled(
+                int(width),
+                int(height),
+                QtCore.Qt.IgnoreAspectRatio,
+                QtCore.Qt.SmoothTransformation,
+            )
+        return image
+
+    def show_ray_overlay(self, image: QtGui.QImage) -> bool:
+        """Show a rendered image over the OpenGL viewport until interaction.
+
+        Parameters
+        ----------
+        image:
+            Rendered image to display.
+
+        Returns
+        -------
+        bool
+            ``True`` when the overlay was shown.
+        """
+        container = getattr(self, "_container", None)
+        if container is None or image is None or image.isNull():
+            return False
+        overlay = self._ray_overlay
+        if overlay is None:
+            overlay = QtWidgets.QLabel(container)
+            overlay.setAlignment(QtCore.Qt.AlignCenter)
+            overlay.setScaledContents(True)
+            overlay.setStyleSheet("background-color: black;")
+            overlay.installEventFilter(self)
+            self._ray_overlay = overlay
+            layout = container.layout()
+            if layout is not None:
+                layout.addWidget(overlay, 0, 0)
+        overlay.setPixmap(QtGui.QPixmap.fromImage(image))
+        overlay.show()
+        overlay.raise_()
+        return True
+
+    def hide_ray_overlay(self) -> None:
+        """Hide the ray-rendered overlay if visible."""
+        overlay = self._ray_overlay
+        if overlay is not None:
+            overlay.hide()
+
+    def eventFilter(self, obj, event):  # type: ignore[override]
+        """Dismiss ray overlay on user interaction."""
+        if obj is self._ray_overlay and event is not None:
+            if event.type() in (
+                QtCore.QEvent.MouseButtonPress,
+                QtCore.QEvent.MouseButtonDblClick,
+                QtCore.QEvent.Wheel,
+                QtCore.QEvent.KeyPress,
+            ):
+                self.hide_ray_overlay()
+                return True
+        return super().eventFilter(obj, event)
+
     def _update_atom_gaussians(self, config: dict) -> Optional[list[SceneObject]]:
         if not self._show_atom_gaussians:
             return None
@@ -3467,8 +3695,22 @@ class MolView(QtWidgets.QWidget):
             if colors_ov.shape[1] >= 4:
                 colors_ov[:, 3] *= alpha_ov
 
-            geom = Geometry(kind="points", positions=pts_ov, colors=colors_ov)
+            geom = Geometry(
+                kind="points",
+                positions=pts_ov,
+                colors=colors_ov,
+                meta={"size": size_ov, "glyph": overlay.get("glyph", "sphere")},
+            )
             scene_objects.append(SceneObject(id="overlay", geometry=geom, render_mode="transparent"))
+
+            if overlay.get("label"):
+                label_geom = Geometry(
+                    kind="text",
+                    positions=pts_ov[0].reshape(1, 3),
+                    colors=colors_ov[0].reshape(1, 4),
+                    meta={"labels": [overlay["label"]]},
+                )
+                scene_objects.append(SceneObject(id="overlay_label", geometry=label_geom, render_mode="overlay"))
 
         return scene_objects
 

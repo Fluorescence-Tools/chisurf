@@ -29,8 +29,8 @@ spectroscopic properties.
 
 name = "Main:Tools:ndXplorer"
 
-import chisurf
-log = chisurf.logging.info
+import chisurf as cs
+log = cs.logging.info
 
 
 if __name__ == '__main__':

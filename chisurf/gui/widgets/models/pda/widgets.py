@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.core.settings
 import chisurf.gui.widgets.fitting
 import chisurf.gui.plots
@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 def _get_fit_index_for_model(model) -> int:
     """Get the fit index for a given model, defaulting to 0 if not found."""
     try:
-        import chisurf
-        for i, fit_obj in enumerate(chisurf.fits):
+        for i, fit_obj in enumerate(cs.fits):
             if hasattr(fit_obj, 'model') and fit_obj.model is model:
                 return i
     except Exception:
@@ -82,11 +81,11 @@ class BackgroundWidget(QtWidgets.QGroupBox, Background):
         self.setTitle("Generic")
 
         # Generic parameters
-        self._bg0_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bg0_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg0,
             label_text='Bg0',
         )
-        self._bg1_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bg1_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg1,
             label_text='Bg1'
         )
@@ -147,11 +146,11 @@ class PdaPhotonRangeWidget(QtWidgets.QGroupBox):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self._nPh_min_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._nPh_min_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self.nuisance._nPh_min,
             label_text='nPh_min',
         )
-        self._nPh_max_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._nPh_max_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self.nuisance._nPh_max,
             label_text='nPh_max',
         )
@@ -212,57 +211,57 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self._bgG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bgG_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bgG,
             label_text='BG',
         )
-        self._bgR_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._bgR_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bgR,
             label_text='BR',
         )
-        self._QYD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._QYD_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._QYD,
             label_text='QYD',
         )
-        self._QYA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._QYA_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._QYA,
             label_text='QYA',
         )
 
         # Detector efficiencies per channel (green/red).
-        self._gG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._gG_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gG,
             label_text='gG',
         )
-        self._gR_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._gR_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._gR,
             label_text='gR',
         )
 
         # Absolute excitation probabilities (e.g. extinction coefficients).
-        self._ExDG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._ExDG_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._ExDG,
             label_text='ExDG',
         )
-        self._ExAG_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._ExAG_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._ExAG,
             label_text='ExAG',
         )
 
         # Emission / detection crosstalk matrix elements (c_{channel|species}).
-        self._cGD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._cGD_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._cGD,
             label_text='cG|D',
         )
-        self._cGA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._cGA_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._cGA,
             label_text='cG|A',
         )
-        self._cRD_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._cRD_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._cRD,
             label_text='cR|D',
         )
-        self._cRA_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._cRA_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._cRA,
             label_text='cR|A',
         )
@@ -270,11 +269,11 @@ class PdaFretNuisanceWidget(QtWidgets.QGroupBox, PdaFretNuisance):
         # Derived legacy-style crosstalk fractions (read-only): alpha
         # (donor bleed-through to red) and alpha_A (acceptor bleed-through
         # to green). These are populated by the PDA model.
-        self._alpha_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._alpha_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._alpha,
             label_text='&alpha;<sub>D</sub>',
         )
-        self._alpha_A_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        self._alpha_A_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._alpha_A,
             label_text='&alpha;<sub>A</sub>',
         )
@@ -381,7 +380,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
             fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
                 p = target.parameters_all_dict[key]
-                chisurf.core.actions.dispatch(
+                cs.core.actions.dispatch(
                     name="parameter.value",
                     payload={
                         "parameter_name": str(key),
@@ -389,7 +388,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
                         "fit_index": int(fit_idx),
                     },
                 )
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_idx)},
             )
@@ -400,7 +399,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         """Populate the 'read' menu with all compatible ProbCh0 groups."""
         menu = self.readFrom_menu
         menu.clear()
-        for f in chisurf.fits:
+        for f in cs.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -425,16 +424,15 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
             # Find the correct fit index for this model
             fit_index = 0
             try:
-                import chisurf
                 # Try to find which fit contains this model
-                for i, fit_obj in enumerate(chisurf.fits):
+                for i, fit_obj in enumerate(cs.fits):
                     if hasattr(fit_obj, 'model') and fit_obj.model is self:
                         fit_index = i
                         break
             except Exception:
                 pass
             
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -446,7 +444,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         if checked:
             self._link = None
             fit_index = _get_fit_index_for_model(self)
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -455,7 +453,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         """Populate the 'link' menu with all compatible ProbCh0 groups."""
         menu = self.linkFrom_menu
         menu.clear()
-        for f in chisurf.fits:
+        for f in cs.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -493,8 +491,8 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
-        self._amp_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
-        self._pch0_widgets : typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._amp_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._pch0_widgets : typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
 
         lh = QtWidgets.QHBoxLayout()
         lh.setContentsMargins(0, 0, 0, 0)
@@ -558,13 +556,13 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
                 row_layout.setContentsMargins(0, 0, 0, 0)
                 row_layout.setSpacing(0)
                 self._amp_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._amplitudes[i],
                         layout=row_layout
                     )
                 )
                 self._pch0_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._pch0[i],
                         layout=row_layout
                     )
@@ -573,25 +571,25 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
     def onNormalizeAmplitudes(self):
         """Emit actions to update normalize/absolute amplitude flags and rebuild."""
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.normalize_amplitudes",
             payload={
                 "component_name": str(self.name),
                 "normalize": bool(self.normalize_amplitude.isChecked()),
             },
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.absolute_amplitudes",
             payload={
                 "component_name": str(self.name),
                 "absolute": bool(self.absolute_amplitude.isChecked()),
             },
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": str(self.name)},
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": str(self.name)},
         )
@@ -604,14 +602,14 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         layout.setSpacing(0)
 
         self._amp_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=layout
             )
         )
 
         self._pch0_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._pch0[-1],
                 layout=layout
             )
@@ -686,9 +684,9 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
 
-        self._mean_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
-        self._sigma_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
-        self._amp_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._mean_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._sigma_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._amp_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
         self._gb: typing.List[QtWidgets.QGroupBox] = list()
 
         lh = QtWidgets.QHBoxLayout()
@@ -732,21 +730,21 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
                 vlayout.setSpacing(0)
 
                 self._mean_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._means[i],
                         layout=vlayout,
                         label_text=f"R<sub>P,{i + 1}</sub>"
                     )
                 )
                 self._sigma_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._sigmas[i],
                         layout=vlayout,
                         label_text=f"s<sub>P,{i + 1}</sub>"
                     )
                 )
                 self._amp_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._amplitudes[i],
                         layout=vlayout,
                         label_text=f"x<sub>P,{i + 1}</sub>"
@@ -764,7 +762,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         self.limited_width = bool(checked)
         try:
             fit_index = _get_fit_index_for_model(self)
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -776,7 +774,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         # Add a new Gaussian distance component to all fits in the current
         # fit group so that the PDA distance model stays structurally
         # consistent across the group.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": "distances"},
         )
@@ -785,7 +783,7 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         """Remove the last Gaussian distance component via the action system."""
         # Remove the last Gaussian distance component from all fits in the
         # current fit group to keep models synchronized.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": "distances"},
         )
@@ -803,21 +801,21 @@ class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):
         vlayout.setSpacing(0)
 
         self._mean_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._means[-1],
                 layout=vlayout,
                 label_text=f"R<sub>P,{n_gauss}</sub>"
             )
         )
         self._sigma_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._sigmas[-1],
                 layout=vlayout,
                 label_text=f"s<sub>P,{n_gauss}</sub>"
             )
         )
         self._amp_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=vlayout,
                 label_text=f"x<sub>P,{n_gauss}</sub>"
@@ -902,8 +900,8 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
 
-        self._amp_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = []
-        self._r_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = []
+        self._amp_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = []
+        self._r_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = []
 
         # Header row with add/del buttons
         lh = QtWidgets.QHBoxLayout()
@@ -940,14 +938,14 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
                 row_layout.setSpacing(0)
 
                 self._amp_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._amplitudes[i],
                         layout=row_layout,
                         label_text=f"x<sub>A,{i + 1}</sub>",
                     )
                 )
                 self._r_widgets.append(
-                    chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                    cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                         self._anisotropies[i],
                         layout=row_layout,
                         label_text=f"r<sub>A,{i + 1}</sub>",
@@ -959,7 +957,7 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         """Add a new anisotropy species via the action system."""
         # Append a new anisotropy species to all fits in the current fit
         # group so that the anisotropy-PDA model remains consistent.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": "species"},
         )
@@ -968,7 +966,7 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         """Remove the last anisotropy species via the action system."""
         # Remove the last anisotropy species from all fits in the current
         # fit group.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": "species"},
         )
@@ -983,14 +981,14 @@ class PdaAnisotropySpeciesWidget(PdaAnisotropySpecies, QtWidgets.QWidget):
         row_layout.setSpacing(0)
 
         self._amp_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=row_layout,
                 label_text=f"x<sub>A,{n}</sub>",
             )
         )
         self._r_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._anisotropies[-1],
                 layout=row_layout,
                 label_text=f"r<sub>A,{n}</sub>",
@@ -1051,9 +1049,9 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
 
         description = QtWidgets.QLabel(
             "Distance axis used for FRET-related distance distributions.\n"
-            "These values control chisurf.core.settings.fret['rda_min'], "
+            "These values control cs.core.settings.fret['rda_min'], "
             "['rda_max'], ['rda_resolution'] and ['rda_scale'] which "
-            "define the grid chisurf.core.models.tcspc.fret.rda_axis (log or "
+            "define the grid cs.core.models.tcspc.fret.rda_axis (log or "
             "linear spacing)."
         )
         description.setWordWrap(True)
@@ -1063,7 +1061,7 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
         form.setContentsMargins(0, 0, 0, 0)
         form.setSpacing(2)
 
-        fret_cfg = getattr(chisurf.core.settings, "fret", {}) or {}
+        fret_cfg = getattr(cs.core.settings, "fret", {}) or {}
         rda_min = float(fret_cfg.get("rda_min", 1.0))
         rda_max = float(fret_cfg.get("rda_max", 130.0))
         rda_res = int(fret_cfg.get("rda_resolution", 96))
@@ -1139,29 +1137,29 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
             return
 
         try:
-            if not isinstance(getattr(chisurf.core.settings, "fret", None), dict):
-                chisurf.core.settings.fret = {}
+            if not isinstance(getattr(cs.core.settings, "fret", None), dict):
+                cs.core.settings.fret = {}
         except Exception:
-            chisurf.core.settings.fret = {}
+            cs.core.settings.fret = {}
 
-        chisurf.core.settings.fret["rda_min"] = float(rda_min)
-        chisurf.core.settings.fret["rda_max"] = float(rda_max)
-        chisurf.core.settings.fret["rda_resolution"] = int(n_points)
-        chisurf.core.settings.fret["rda_scale"] = scale
+        cs.core.settings.fret["rda_min"] = float(rda_min)
+        cs.core.settings.fret["rda_max"] = float(rda_max)
+        cs.core.settings.fret["rda_resolution"] = int(n_points)
+        cs.core.settings.fret["rda_scale"] = scale
 
         try:
             new_axis = build_fret_rda_axis(
-                chisurf.core.settings.fret["rda_min"],
-                chisurf.core.settings.fret["rda_max"],
-                chisurf.core.settings.fret["rda_resolution"],
-                chisurf.core.settings.fret.get("rda_scale", scale),
+                cs.core.settings.fret["rda_min"],
+                cs.core.settings.fret["rda_max"],
+                cs.core.settings.fret["rda_resolution"],
+                cs.core.settings.fret.get("rda_scale", scale),
             )
         except Exception:
             return
 
         try:
             try:
-                chisurf.core.fluorescence.rda_axis = new_axis
+                cs.core.fluorescence.rda_axis = new_axis
             except Exception:
                 pass
             tcspc_fret.rda_axis = new_axis
@@ -1170,7 +1168,7 @@ class FretRdaAxisSettingsWidget(QtWidgets.QGroupBox):
             pass
 
         try:
-            chisurf.run("cs.current_fit.update()")
+            cs.run("cs.current_fit.update()")
         except Exception:
             pass
 
@@ -1180,7 +1178,7 @@ def get_distribution(fit, kw_hist):
 
     Parameters
     ----------
-    fit : chisurf.core.fitting.fit.Fit
+    fit : cs.core.fitting.fit.Fit
         The fit object.
     kw_hist : dict
         Histogram settings, including the histogram_function.
@@ -1194,7 +1192,7 @@ def get_distribution(fit, kw_hist):
 
     # The tttrlib.Pda C++ code iterates over the S1S2 matrix in a way that
     # effectively calls the histogram callback with arguments in the order
-    # (red, green), while the documented convention and chisurf's semantics
+    # (red, green), while the documented convention and cs's semantics
     # expect (green, red). To keep all existing model definitions consistent
     # (including S0/S1 and S1/(S0+S1) plots), we wrap the user-provided
     # histogram function so that it always receives (green, red).
@@ -1493,7 +1491,7 @@ def _get_gaussian_component_curves_for_pda(
 def get_pda_residual_image(fit_group, weighted: bool = True):
     """Return a 2D residual image for a PDA fit.
 
-    This accessor is used by the generic chisurf.gui.plots.Residual2DPlot and
+    This accessor is used by the generic cs.gui.plots.Residual2DPlot and
     therefore must not depend on any plot internals. It only inspects the
     PDA data/model state and returns (image, x_axis, y_axis).
     """
@@ -1535,7 +1533,7 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
 
     plot_classes = [
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 'with_residual_panel': True,
                 'distribution_options': {
@@ -1564,7 +1562,7 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
                             # the curve using the global data color, in the
                             # same visual style as MaxEnt FCS distributions.
                             'fillLevel': 0.0,
-                            'fillBrush': chisurf.core.settings.gui['plot']['colors']['data'],
+                            'fillBrush': cs.core.settings.gui['plot']['colors']['data'],
                         }
                     },
                     'S0/S1': {
@@ -1591,15 +1589,15 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
                             # Shade the experimental PDA histogram under
                             # the curve using the global data color.
                             'fillLevel': 0.0,
-                            'fillBrush': chisurf.core.settings.gui['plot']['colors']['data'],
+                            'fillBrush': cs.core.settings.gui['plot']['colors']['data'],
                         }
                     }
                 }
             }
         ),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (
-            chisurf.gui.plots.Residual2DPlot,
+            cs.gui.plots.Residual2DPlot,
             {
                 'accessor': get_pda_residual_image,
                 'accessor_kwargs': {
@@ -1607,8 +1605,8 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
                 }
             }
         ),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
     ]
 
     def __init__(
@@ -1683,7 +1681,7 @@ class PdaSimpleModelWidget(ModelWidget, PdaSimpleModel):
         self.residual_mode = mode
         try:
             fit_index = _get_fit_index_for_model(self)
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -1695,7 +1693,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
 
     plot_classes = [
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 "with_residual_panel": True,
                 "distribution_options": {
@@ -1720,7 +1718,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
                             "symbol": ["None", "None", "None"],
                             "pen": ["b", "r", "k"],
                             "fillLevel": 0.0,
-                            "fillBrush": chisurf.core.settings.gui["plot"]["colors"]["data"],
+                            "fillBrush": cs.core.settings.gui["plot"]["colors"]["data"],
                         },
                     },
                     "S0/S1": {
@@ -1744,7 +1742,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
                             "symbol": ["None", "None", "None"],
                             "pen": ["b", "r", "k"],
                             "fillLevel": 0.0,
-                            "fillBrush": chisurf.core.settings.gui["plot"]["colors"]["data"],
+                            "fillBrush": cs.core.settings.gui["plot"]["colors"]["data"],
                         },
                     },
                     # Raw polarization: (S0 - S1) / (S0 + S1)
@@ -1770,7 +1768,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
                             "symbol": ["None", "None", "None"],
                             "pen": ["b", "r", "k"],
                             "fillLevel": 0.0,
-                            "fillBrush": chisurf.core.settings.gui["plot"]["colors"]["data"],
+                            "fillBrush": cs.core.settings.gui["plot"]["colors"]["data"],
                         },
                     },
                     # Raw anisotropy-like quantity: (S0 - S1) / (S0 + 2*S1)
@@ -1796,15 +1794,15 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
                             "symbol": ["None", "None", "None"],
                             "pen": ["b", "r", "k"],
                             "fillLevel": 0.0,
-                            "fillBrush": chisurf.core.settings.gui["plot"]["colors"]["data"],
+                            "fillBrush": cs.core.settings.gui["plot"]["colors"]["data"],
                         },
                     },
                 },
             },
         ),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (
-            chisurf.gui.plots.Residual2DPlot,
+            cs.gui.plots.Residual2DPlot,
             {
                 "accessor": get_pda_residual_image,
                 "accessor_kwargs": {
@@ -1812,8 +1810,8 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
                 },
             },
         ),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
     ]
 
     def __init__(
@@ -1862,7 +1860,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
         layout.addLayout(res_layout)
 
         # Nuisance parameter group (backgrounds, G, l1, l2)
-        nuisance_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        nuisance_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.nuisance
         )
 
@@ -1893,7 +1891,7 @@ class PdaAnisotropyModelWidget(ModelWidget, PdaAnisotropyModel):
         self.residual_mode = mode
         try:
             fit_index = _get_fit_index_for_model(self)
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -1907,7 +1905,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
     # default option, while still exposing S1/(S0+S1) as an alternative.
     plot_classes = [
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 'with_residual_panel': True,
                 'distribution_options': {
@@ -1937,7 +1935,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
                             # curve) under the line in the same style as the
                             # MaxEnt FCS distributions.
                             'fillLevel': 0.0,
-                            'fillBrush': chisurf.core.settings.gui['plot']['colors']['data'],
+                            'fillBrush': cs.core.settings.gui['plot']['colors']['data'],
                         }
                     },
                     'S1/(S0+S1)': {
@@ -1964,15 +1962,15 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
                             # Shade the experimental PDA histogram under the
                             # curve using the global data color.
                             'fillLevel': 0.0,
-                            'fillBrush': chisurf.core.settings.gui['plot']['colors']['data'],
+                            'fillBrush': cs.core.settings.gui['plot']['colors']['data'],
                         }
                     },
                 }
             }
         ),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (
-            chisurf.gui.plots.Residual2DPlot,
+            cs.gui.plots.Residual2DPlot,
             {
                 'accessor': get_pda_residual_image,
                 'accessor_kwargs': {
@@ -1980,8 +1978,8 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
                 }
             }
         ),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
     ]
 
     def __init__(
@@ -2019,7 +2017,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         distances = PdaGaussianDistancesWidget(fit=fit, **kwargs)
 
         # Generic widget for the shared FRET parameter group (R0, tau0, kappa2, ...)
-        fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        fret_parameters_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters
         )
 
@@ -2066,7 +2064,7 @@ class PdaGaussianDistanceModelWidget(ModelWidget, PdaGaussianDistanceModel):
         self.residual_mode = mode
         try:
             fit_index = _get_fit_index_for_model(self)
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )

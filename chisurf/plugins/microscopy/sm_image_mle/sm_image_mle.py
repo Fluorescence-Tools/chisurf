@@ -1,3 +1,4 @@
+import chisurf as cs
 #!/usr/bin/env python3
 """
 CLI Tool for Processing PTU Files and Extracting Molecule Data

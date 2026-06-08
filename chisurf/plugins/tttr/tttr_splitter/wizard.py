@@ -177,12 +177,6 @@ class PTUSplitter(QtWidgets.QWidget):
                 f"Successfully opened {p.name}."
             )
 
-    def populate_supported_types(self):
-        """Populates the comboBox with supported container types plus an 'Auto' option."""
-        self.comboBox.clear()
-        self.comboBox.insertItem(0, "Auto")
-        self.comboBox.insertItems(1, list(tttrlib.TTTR.get_supported_container_names()))
-
     def browse_and_open_input_file(self):
         """File dialog for selecting a PTU file, then open it."""
         dialog = QtWidgets.QFileDialog(self, "Select PTU File")

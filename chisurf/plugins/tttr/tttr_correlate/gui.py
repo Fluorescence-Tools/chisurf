@@ -1,18 +1,19 @@
 from __future__ import annotations
 from chisurf import typing
+import chisurf as cs
 
 import sys
 
 import pyqtgraph as pg
 from chisurf.gui import QtCore, QtWidgets
-# Now using qtpy compatibility layer through chisurf.gui import
+# Now using qtpy compatibility layer through cs.gui import
 
 import numpy as np
 import tttrlib
 
 import chisurf.core.curve
 import chisurf.core.decorators
-#import chisurf.gui.tools
+#import cs.gui.tools
 import chisurf.core.fio
 import chisurf.core.fluorescence
 import chisurf.core.data
@@ -30,19 +31,19 @@ class Correlator(QtCore.QThread):
     partDone = QtCore.Signal(int)
 
     @property
-    def data(self) -> chisurf.core.data.DataCurve:
+    def data(self) -> cs.core.data.DataCurve:
         """Return the correlation result as a :class:`DataCurve`.
 
         Returns
         -------
-        chisurf.core.data.DataCurve
+        cs.core.data.DataCurve
             The cached data curve when available, otherwise a new empty
             :class:`DataCurve` associated with this correlator.
         """
-        if isinstance(self._data_curve, chisurf.core.data.DataCurve):
+        if isinstance(self._data_curve, cs.core.data.DataCurve):
             return self._data_curve
         else:
-            return chisurf.core.data.DataCurve(
+            return cs.core.data.DataCurve(
                 setup=self
             )
 
@@ -85,10 +86,10 @@ class Correlator(QtCore.QThread):
         :return: numpy-array with same length as photon-stream, each photon
         is associated to one weight.
         """
-        chisurf.logging.info(f"Correlator::getWeightStream({tacWeighting}, {max_number_of_routing_channels})")
+        cs.logging.info(f"Correlator::getWeightStream({tacWeighting}, {max_number_of_routing_channels})")
         photons = self.p.photon_source.photons
         if isinstance(tacWeighting, list):
-            chisurf.logging.info("channel-wise selection")
+            cs.logging.info("channel-wise selection")
             #print("Max-Rout: %s" % photons.n_rout)
             wt = np.zeros(
                 [max_number_of_routing_channels, photons.n_tac],
@@ -96,9 +97,9 @@ class Correlator(QtCore.QThread):
             )
             wt[tacWeighting] = 1.0
         elif isinstance(tacWeighting, np.ndarray):
-            chisurf.logging.info("TAC-weighted")
+            cs.logging.info("TAC-weighted")
             wt = tacWeighting
-        w = chisurf.core.fluorescence.fcs.correlate.get_weights(
+        w = cs.core.fluorescence.fcs.correlate.get_weights(
             routing_channels=photons.routing_channels,
             micro_times=photons.micro_times,
             weights=wt,
@@ -121,16 +122,16 @@ class Correlator(QtCore.QThread):
         ----------
         use_tttrlib : bool, optional
             If ``True`` (default) use :class:`tttrlib.Correlator`,
-            otherwise use the legacy ``chisurf.core.fluorescence.fcs.correlate``
+            otherwise use the legacy ``cs.core.fluorescence.fcs.correlate``
             ``tp`` implementation.
         """
 
         w1 = self.getWeightStream(self.p.ch1)
         w2 = self.getWeightStream(self.p.ch2)
-        chisurf.logging.info("Correlation running...")
-        chisurf.logging.info("Correlation method: %s" % self.p.method)
-        chisurf.logging.info("Fine-correlation: %s" % self.p.fine)
-        chisurf.logging.info("Data stream split into %s correlations." % self.p.split)
+        cs.logging.info("Correlation running...")
+        cs.logging.info("Correlation method: %s" % self.p.method)
+        cs.logging.info("Fine-correlation: %s" % self.p.fine)
+        cs.logging.info("Data stream split into %s correlations." % self.p.split)
         photons = self.p.photon_source.photons
 
         if use_tttrlib:
@@ -181,7 +182,7 @@ class Correlator(QtCore.QThread):
                 wi2 = w2[index_start: index_stop]
                 cr_filter = np.ones_like(wi1)
                 if self.p.method == 'tp':
-                    results = chisurf.core.fluorescence.fcs.correlate.log_corr(
+                    results = cs.core.fluorescence.fcs.correlate.log_corr(
                         p.macro_times, p.micro_times, p.routing_channels, cr_filter,
                         wi1, wi2,
                         self.p.B, self.p.number_of_cascades,
@@ -194,7 +195,7 @@ class Correlator(QtCore.QThread):
                     dt_2 = results['measurement_time_ch2']
                     tau = results['correlation_time_axis']
                     corr = results['correlation_amplitude']
-                    cr = chisurf.core.fluorescence.fcs.correlate.normalize(
+                    cr = cs.core.fluorescence.fcs.correlate.normalize(
                         np_1, np_2,
                         dt_1, dt_2,
                         tau, corr,
@@ -222,12 +223,12 @@ class Correlator(QtCore.QThread):
         cor = np.array(cors)
         w = np.array(weights)
 
-        data_curve = chisurf.core.data.DataCurve(
+        data_curve = cs.core.data.DataCurve(
             x=np.array(taus).mean(axis=0)[1:],
             y=cor.mean(axis=0)[1:],
             ey=1. / w.mean(axis=0)[1:]
         )
-        chisurf.logging.info("Correlation finished!")
+        cs.logging.info("Correlation finished!")
 
         self._data_curve = data_curve
         self.procDone.emit(True)
@@ -257,7 +258,7 @@ class Correlator(QtCore.QThread):
         Returns
         -------
         np.ndarray
-            Weight vector as returned by ``chisurf.core.fluorescence.fcs.noise``
+            Weight vector as returned by ``cs.core.fluorescence.fcs.noise``
             using the configured ``weighting`` (``uniform`` or ``suren``).
         """
         """
@@ -267,18 +268,18 @@ class Correlator(QtCore.QThread):
         count_rate = count-rate in kHz
         """
         if self.p.weighting == 1:
-            return chisurf.core.fluorescence.fcs.noise(
+            return cs.core.fluorescence.fcs.noise(
                 tau, cor, acquisition_time, count_rate, weight_type='uniform'
             )
         elif self.p.weighting == 0:
-            return chisurf.core.fluorescence.fcs.noise(
+            return cs.core.fluorescence.fcs.noise(
                 tau, cor, acquisition_time, count_rate, weight_type='suren'
             )
 
 
 class CorrelatorWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(ui_filename="correlatorWidget.ui")
+    @cs.gui.decorators.init_with_ui(ui_filename="correlatorWidget.ui")
     def __init__(
             self,
             photon_source,
@@ -320,8 +321,8 @@ class CorrelatorWidget(QtWidgets.QWidget):
         )
 
         # fill widgets
-        self.comboBox_3.addItems(chisurf.core.fluorescence.fcs.weightCalculations)
-        self.comboBox_2.addItems(chisurf.core.fluorescence.fcs.correlationMethods)
+        self.comboBox_3.addItems(cs.core.fluorescence.fcs.weightCalculations)
+        self.comboBox_2.addItems(cs.core.fluorescence.fcs.correlationMethods)
         self.checkBox.setChecked(True)
         self.checkBox.setChecked(False)
         self.progressBar.setValue(0)
@@ -334,7 +335,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
         self.progressBar.setValue(val)
 
     @property
-    def data(self) -> chisurf.core.data.DataCurve:
+    def data(self) -> cs.core.data.DataCurve:
         return self.correlator_thread.data
 
     @property
@@ -428,7 +429,7 @@ class CorrelatorWidget(QtWidgets.QWidget):
 
 class CrFilterWidget(QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui(
+    @cs.gui.decorators.init_with_ui(
         ui_filename='cr_filter.ui'
     )
     def __init__(
@@ -439,7 +440,6 @@ class CrFilterWidget(QtWidgets.QWidget):
             max_count_rate = None
     ):
         # Import settings here to make them dynamic
-        import chisurf
         from chisurf.core.settings import cs_settings
         correlator_settings = cs_settings['correlator']
 
@@ -483,24 +483,24 @@ class CrFilterWidget(QtWidgets.QWidget):
         return bool(self.groupBox_2.isChecked())
 
     @property
-    def photons(self) -> chisurf.core.fio.photons.Photons:
+    def photons(self) -> cs.core.fio.photons.Photons:
         photons = self.photon_source.photons
         if self.cr_filter_on:
             dt = photons.mt_clk
             tw = int(self.time_window / dt)
             n_ph_max = int(self.max_count_rate * self.time_window)
             if self.verbose:
-                chisurf.logging.info("Using count-rate filter:")
-                chisurf.logging.info("Window-size [ms]: %s" % self.time_window)
-                chisurf.logging.info("max_count_rate [kHz]: %s" % self.max_count_rate)
-                chisurf.logging.info("n_ph_max in window [#]: %s" % n_ph_max)
-                chisurf.logging.info("Window-size [n(MTCLK)]: %s" % tw)
-                chisurf.logging.info("---------------------------------")
+                cs.logging.info("Using count-rate filter:")
+                cs.logging.info("Window-size [ms]: %s" % self.time_window)
+                cs.logging.info("max_count_rate [kHz]: %s" % self.max_count_rate)
+                cs.logging.info("n_ph_max in window [#]: %s" % n_ph_max)
+                cs.logging.info("Window-size [n(MTCLK)]: %s" % tw)
+                cs.logging.info("---------------------------------")
 
             mt = photons.macro_times
             n_ph = mt.shape[0]
             w = np.ones(n_ph, dtype=np.float32)
-            chisurf.core.fluorescence.fcs.correlate.count_rate_filter(
+            cs.core.fluorescence.fcs.correlate.count_rate_filter(
                 mt,
                 tw,
                 n_ph_max,
@@ -548,7 +548,7 @@ class CorrelateTTTR(
             self,
             *args,
             **kwargs
-    ) -> typing.List[chisurf.core.curve.Curve]:
+    ) -> typing.List[cs.core.curve.Curve]:
         return self._curves
 
     def plot_curves(self):
@@ -582,11 +582,11 @@ class CorrelateTTTR(
         self.cs.update()
         self.plot_curves()
 
-    @chisurf.gui.decorators.init_with_ui("tttr_correlate.ui")
+    @cs.gui.decorators.init_with_ui("tttr_correlate.ui")
     def __init__(self):
         self._curves = list()
 
-        self.fileWidget = chisurf.gui.widgets.fio.SpcFileWidget()
+        self.fileWidget = cs.gui.widgets.fio.SpcFileWidget()
         self.verticalLayout.addWidget(self.fileWidget)
 
         #self.countrateFilterWidget = CrFilterWidget(
@@ -609,7 +609,7 @@ class CorrelateTTTR(
         )
         self.verticalLayout.addWidget(self.correlator)
 
-        self.cs = chisurf.gui.widgets.experiments.widgets.ExperimentalDataSelector(
+        self.cs = cs.gui.widgets.experiments.widgets.ExperimentalDataSelector(
             get_data_sets=self.get_data_curves,
             click_close=False
         )

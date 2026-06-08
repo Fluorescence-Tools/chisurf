@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import traceback
 
-import chisurf
+import chisurf as cs
 from chisurf.gui import QtCore
 
 
@@ -18,7 +18,7 @@ def add_fits_for_datasets(window, data_idx, model_name: str):
             return
         idx = indices.pop(0)
         try:
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.add",
                 payload={
                     "dataset_indices": [idx],
@@ -28,8 +28,8 @@ def add_fits_for_datasets(window, data_idx, model_name: str):
         except Exception as e:
             msg = f"Add fit failed for dataset index {idx} with model '{model_name}': {e}"
             try:
-                chisurf.logging.error(msg)
-                chisurf.logging.error(traceback.format_exc())
+                cs.logging.error(msg)
+                cs.logging.error(traceback.format_exc())
             except Exception:
                 pass
             try:

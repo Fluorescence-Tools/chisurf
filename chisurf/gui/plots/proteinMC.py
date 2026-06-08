@@ -519,11 +519,24 @@ class ProteinMCDistanceNetworkPlot(Plot):
             controller.refresh_from_model()
         structure = getattr(self.model, "proteinmc_structure", None)
         frames = getattr(self.model, "trajectory_frames", []) or []
+        if not frames and structure is not None:
+            xyz = getattr(structure, "xyz", None)
+            if xyz is not None:
+                frames = [xyz]
         labeling_file = ""
         try:
             labeling_file = self.model.labeling_edit.text().strip()
         except Exception:
             pass
+        if not labeling_file:
+            try:
+                for pot in getattr(self.model, "_potential_settings", lambda: [])():
+                    if pot.get("name") == "dye":
+                        labeling_file = pot.get("settings", {}).get("labeling_file", "")
+                        if labeling_file:
+                            break
+            except Exception:
+                pass
         if structure is None or not frames or not labeling_file:
             self.plot_widget.clear()
             self._network_cache_key = None

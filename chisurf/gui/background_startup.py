@@ -1,5 +1,6 @@
 """background_startup.py — deferred post-startup stage runner.
 
+import chisurf as cs
 After the main window becomes visible, certain non-critical initialisation
 tasks (plugin discovery, Jupyter start, update check, module warm-up) are
 scheduled here so they do not block the splash-screen phase.
@@ -18,6 +19,7 @@ Qt event loop stays responsive between stages. Progress is reflected on:
 """
 from __future__ import annotations
 
+import chisurf as cs
 import traceback
 from typing import Callable, List, Optional, Tuple
 
@@ -92,8 +94,7 @@ class BackgroundStartupRunner(QtCore.QObject):
             fn()
         except Exception:
             try:
-                import chisurf
-                chisurf.logging.error(
+                cs.logging.error(
                     f"Background startup stage '{label}' failed:\n"
                     + traceback.format_exc()
                 )
@@ -119,8 +120,7 @@ class BackgroundStartupRunner(QtCore.QObject):
 
     def _set_status(self, label: str, index: int, total: int) -> None:
         try:
-            import chisurf
-            chisurf.logging.info(f"[BG] {label}")
+            cs.logging.info(f"[BG] {label}")
         except Exception:
             pass
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from chisurf import typing
+import chisurf as cs
 
 import threading
 import numpy as np
@@ -42,12 +43,12 @@ class GlobalFitModel(model.Model, Curve):
         return [f.name for f in self.fits]
 
     @property
-    def links(self) -> typing.List[chisurf.core.fitting.parameter.FittingParameter]:
+    def links(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
         """List of link definitions between local-fit parameters."""
         return self._links
 
     @links.setter
-    def links(self, v: typing.List[chisurf.core.fitting.parameter.FittingParameter]):
+    def links(self, v: typing.List[cs.core.fitting.parameter.FittingParameter]):
         """Set the list of link definitions.
 
         Parameters
@@ -66,7 +67,7 @@ class GlobalFitModel(model.Model, Curve):
         return nbr_points
 
     @property
-    def global_parameters_all(self) -> typing.List[chisurf.core.fitting.parameter.FittingParameter]:
+    def global_parameters_all(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
         """All global parameters (fixed and variable)."""
         return list(self._global_parameters.values())
 
@@ -76,7 +77,7 @@ class GlobalFitModel(model.Model, Curve):
         return [p.name for p in self.global_parameters_all]
 
     @property
-    def global_parameters(self) -> typing.List[chisurf.core.fitting.parameter.FittingParameter]:
+    def global_parameters(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
         """Non-fixed (variable) global parameters."""
         return [p for p in self.global_parameters_all if not p.fixed]
 
@@ -96,7 +97,7 @@ class GlobalFitModel(model.Model, Curve):
         return [p.is_linked for p in self.global_parameters_all]
 
     @property
-    def parameters(self) -> typing.List[chisurf.core.fitting.parameter.FittingParameter]:
+    def parameters(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
         """All fitting parameters (local variable + global variable)."""
         p = list()
         for f in self.fits:
@@ -121,7 +122,7 @@ class GlobalFitModel(model.Model, Curve):
             return list()
 
     @property
-    def parameters_all(self) -> typing.List[chisurf.core.fitting.parameter.FittingParameter]:
+    def parameters_all(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
         """All parameters (local + global), including fixed ones."""
         try:
             re = list()
@@ -157,7 +158,7 @@ class GlobalFitModel(model.Model, Curve):
             return []
 
     @property
-    def parameter_dict(self) -> typing.Dict[str, chisurf.core.fitting.parameter.FittingParameter]:
+    def parameter_dict(self) -> typing.Dict[str, cs.core.fitting.parameter.FittingParameter]:
         """Dictionary mapping formatted parameter names to parameters."""
         re = dict()
         for i, f in enumerate(self.fits):
@@ -262,8 +263,7 @@ class GlobalFitModel(model.Model, Curve):
             The fit instance to append.
         """
         try:
-            import chisurf
-            chisurf.logging.info(
+            cs.logging.info(
                 f"GlobalFitModel.append_fit: receiver={type(self).__name__}, incoming fit type={type(fit).__name__}, name={getattr(fit, 'name', None)}; already_present={fit in getattr(self, 'fits', [])}"
             )
         except Exception:
@@ -271,8 +271,7 @@ class GlobalFitModel(model.Model, Curve):
         if fit not in self.fits:
             self.fits.append(fit)
             try:
-                import chisurf
-                chisurf.logging.info(
+                cs.logging.info(
                     f"GlobalFitModel.append_fit: appended successfully; total_fits={len(self.fits)}; names={getattr(self, 'fit_names', [])}"
                 )
             except Exception:
@@ -321,12 +320,12 @@ class GlobalFitModel(model.Model, Curve):
         if isinstance(lst, list) and fn in lst:
             lst.remove(fn)
 
-    def append_global_parameter(self, parameter: chisurf.core.parameter.Parameter) -> None:
+    def append_global_parameter(self, parameter: cs.core.parameter.Parameter) -> None:
         """Add a global parameter to the model.
 
         Parameters
         ----------
-        parameter : chisurf.core.parameter.Parameter
+        parameter : cs.core.parameter.Parameter
             The parameter instance to add.
         """
         variable_name = parameter.name
@@ -347,8 +346,8 @@ class GlobalFitModel(model.Model, Curve):
             try:
                 origin_parameter = f[origin_fit][origin_name]
                 target = eval(str(formula), {"__builtins__": {}}, {"f": f, "g": g})
-                if not isinstance(target, chisurf.core.parameter.Parameter):
-                    chisurf.logging.warning("Global link formula did not resolve to a Parameter: %r" % (formula,))
+                if not isinstance(target, cs.core.parameter.Parameter):
+                    cs.logging.warning("Global link formula did not resolve to a Parameter: %r" % (formula,))
                     continue
                 origin_parameter.link = target
                 print("f[%s][%s] linked to %s" % (origin_fit, origin_parameter.name, target.name))
@@ -476,7 +475,7 @@ class GlobalFitModel(model.Model, Curve):
         **kwargs
             Forwarded to each local model's ``update_model``.
         """
-        if chisurf.core.settings.cs_settings['optimization']['global_threaded_model_update']:
+        if cs.core.settings.cs_settings['optimization']['global_threaded_model_update']:
             threads = [threading.Thread(target=f.model.update_model) for f in self.fits]
             for thread in threads:
                 thread.start()

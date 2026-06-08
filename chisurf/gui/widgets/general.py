@@ -13,9 +13,7 @@ import chisurf.core.fio
 import chisurf.core.settings
 import chisurf.core.curve
 import chisurf.core.base
-import chisurf
-
-
+import chisurf as cs
 def get_widgets_in_layout(
         layout: QtWidgets.QLayout
 ):
@@ -53,7 +51,7 @@ class MyMessageBox(QtWidgets.QMessageBox):
             label: str = None,
             info: str = "",
             details: str = None,
-            show_fortune: bool = chisurf.core.settings.cs_settings['fortune']
+            show_fortune: bool = cs.core.settings.cs_settings['fortune']
     ):
         super().__init__()
         self.setSizeGripEnabled(True)
@@ -69,7 +67,7 @@ class MyMessageBox(QtWidgets.QMessageBox):
         # Add fortune message (if enabled) with a better look
         if show_fortune:
             try:
-                fortune = chisurf.gui.widgets.fortune.get_fortune()
+                fortune = cs.gui.widgets.fortune.get_fortune()
                 if fortune:  # Only add fortune if it's not empty
                     fortune_html = f"<br><i>{fortune}</i><br><br>"  # Italicized fortune text, with spacing
                     self.setInformativeText(formatted_info + fortune_html)
@@ -218,7 +216,7 @@ class LogListWidget(QtWidgets.QListWidget):
         clipboard.setText(text_to_copy)
         
         # Optional: Log that items were copied
-        chisurf.logging.info(f"Copied {len(selected_items)} log entries to clipboard")
+        cs.logging.info(f"Copied {len(selected_items)} log entries to clipboard")
 
 
 
@@ -269,9 +267,9 @@ def get_filename(
     :return:
     """
     if working_path is None:
-        if chisurf.working_path is None:
-            chisurf.working_path = pathlib.Path.home()
-        working_path = chisurf.working_path
+        if cs.working_path is None:
+            cs.working_path = pathlib.Path.home()
+        working_path = cs.working_path
     filename_str, _ = QtWidgets.QFileDialog.getOpenFileName(
         None,
         description,
@@ -281,7 +279,7 @@ def get_filename(
     filename = pathlib.Path(filename_str)
     try:
         if filename_str:
-            chisurf.working_path = filename.parent
+            cs.working_path = filename.parent
     except Exception:
         pass
     return filename
@@ -303,7 +301,7 @@ def open_files(
     :return: List of selected filenames, or empty list if cancel is clicked or an error occurs.
     """
     if working_path is None:
-        working_path = chisurf.working_path
+        working_path = cs.working_path
     filenames = QtWidgets.QFileDialog.getOpenFileNames(
         None,
         description,
@@ -314,7 +312,7 @@ def open_files(
         # Only update the working path if at least one file was selected
         if filenames:
             # Use parent() to get the directory containing the file
-            chisurf.working_path = pathlib.Path(filenames[0]).parent
+            cs.working_path = pathlib.Path(filenames[0]).parent
     except Exception as e:
         # Log the error but don't show it to the user
         import logging
@@ -338,9 +336,9 @@ def save_file(
     :return: The selected filename, or None if cancel is clicked.
     """
     if isinstance(working_path, str):
-        working_path = chisurf.working_path / working_path
+        working_path = cs.working_path / working_path
     if working_path is None:
-        working_path = chisurf.working_path
+        working_path = cs.working_path
 
     filename, _ = QtWidgets.QFileDialog.getSaveFileName(
         None,
@@ -354,7 +352,7 @@ def save_file(
         return None
 
     # Update the working path to the directory containing the saved file.
-    chisurf.working_path = pathlib.Path(filename).parent
+    cs.working_path = pathlib.Path(filename).parent
     return filename
 
 
@@ -375,7 +373,7 @@ def get_directory(
     """
     fn_ending = filename_ending
     if directory is None:
-        directory = chisurf.working_path
+        directory = cs.working_path
     caption_text = caption or "Select Directory"
     if isinstance(directory, pathlib.Path):
         directory_str = QtWidgets.QFileDialog.getExistingDirectory(None, caption_text, str(directory.absolute()))
@@ -385,7 +383,7 @@ def get_directory(
     if not directory_str:
         return None, []
     directory = pathlib.Path(directory_str)
-    chisurf.working_path = directory
+    cs.working_path = directory
     if not get_files:
         return directory, []
     else:
@@ -497,7 +495,7 @@ def get_all_items(tree_widget):
     return all_items
 
 
-class Controller(QtWidgets.QWidget, chisurf.core.base.Base):
+class Controller(QtWidgets.QWidget, cs.core.base.Base):
     """
     Used by FittingControllerWidget
     """
@@ -531,7 +529,7 @@ class Controller(QtWidgets.QWidget, chisurf.core.base.Base):
 
 class View(
     QtWidgets.QWidget,
-    chisurf.core.base.Base
+    cs.core.base.Base
 ):
     """
     Used by Plot

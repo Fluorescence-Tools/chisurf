@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fluorescence
 
 from chisurf import typing
@@ -102,7 +102,7 @@ def read_kristine(
     except (IndexError, np.AxisError):
         # In case everything fails
         # Use no errors at all but uniform weighting
-        w = 1. / chisurf.core.fluorescence.fcs.noise(x, y, dur, cr, weight_type='suren')
+        w = 1. / cs.core.fluorescence.fcs.noise(x, y, dur, cr, weight_type='suren')
 
     # Try to load mask from the 5th column (index 4)
     try:

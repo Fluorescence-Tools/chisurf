@@ -4,7 +4,7 @@ from chisurf.gui import QtWidgets
 
 import pathlib
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.widgets
 import chisurf.gui.widgets.fio
 from chisurf.core.experiments.core import reader
@@ -17,7 +17,7 @@ class TCSPCReaderControlWidget(
     QtWidgets.QWidget,
 ):
     def get_filename(self) -> pathlib.Path:
-        return chisurf.gui.widgets.get_filename(
+        return cs.gui.widgets.get_filename(
             description="CSV-TCSPC file",
             file_type="All files (*.*)",
             working_path=None,
@@ -29,7 +29,7 @@ class TCSPCReaderControlWidget(
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.layout = layout
-        csv_widget = chisurf.gui.widgets.fio.CsvWidget()
+        csv_widget = cs.gui.widgets.fio.CsvWidget()
         self.layout.addWidget(csv_widget)
         self.csv_tcspc_widget = CsvTCSPCWidget()
         self.layout.addWidget(self.csv_tcspc_widget)

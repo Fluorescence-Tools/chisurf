@@ -39,18 +39,37 @@ class TTTRData:
     micro_time_unit_s: Optional[float] = None
 
 
+CHORD_INTERVALS = {
+    "major":       [0, 4, 7],
+    "minor":       [0, 3, 7],
+    "diminished":  [0, 3, 6],
+    "augmented":   [0, 4, 8],
+    "sus4":        [0, 5, 7],
+    "major7":      [0, 4, 7, 11],
+    "minor7":      [0, 3, 7, 10],
+    "dom7":        [0, 4, 7, 10],
+    "power":       [0, 7],
+}
+
+def _chord_freqs(root_hz: float, chord_type: str) -> List[float]:
+    intervals = CHORD_INTERVALS.get(chord_type, [0, 4, 7])
+    return [root_hz * _semitones_to_ratio(s) for s in intervals]
+
+
 @dataclass(frozen=True)
 class ChannelConfig:
     """
     Per routing-channel audio mapping & gating.
 
-    note_hz: Base oscillator frequency for the channel (e.g., 261.63 for C4)
+    note_hz: Base (root) frequency for the channel (e.g., 261.63 for C4)
+    chord_type: Chord quality name (major, minor, diminished, etc.)
     pitch_semitones: Fine adjustment in semitones (+/-)
     micro_min: Inclusive microtime bin lower bound
     micro_max: Exclusive microtime bin upper bound
     gain: Linear gain multiplier for this channel
     """
     note_hz: float
+    chord_type: str = "major"
     pitch_semitones: float = 0.0
     micro_min: int = 0
     micro_max: int = 2**31 - 1
@@ -288,7 +307,151 @@ def counts_to_envelopes(
     return env_out
 
 
-def synthesize_audio_from_envelopes(
+# ---------------------------------------------------------------------------
+# New synthesis helpers — continuous mode
+# ---------------------------------------------------------------------------
+
+def _upsample_envelope(env: np.ndarray, frame_samps: int) -> np.ndarray:
+    """
+    Linearly upsample a per-frame envelope (n_frames,) to sample-level
+    (n_frames * frame_samps,) using smooth interpolation.
+
+    This avoids zipper noise from stepped amplitude changes.
+    """
+    n_frames = len(env)
+    total = n_frames * frame_samps
+    x_old = np.linspace(0, total, n_frames)
+    x_new = np.arange(total)
+    return np.interp(x_new, x_old, env).astype(np.float64)
+
+
+def _apply_reverb(y: np.ndarray, sample_rate: int, mix: float = 0.25) -> np.ndarray:
+    """
+    Simple Schroeder plate reverb using comb + allpass filters.
+
+    Adds space and smooths out the granularity of bursty photon data.
+    Falls back to dry signal if scipy is not available.
+    """
+    try:
+        from scipy.signal import lfilter
+    except ImportError:
+        return y
+
+    comb_delays_ms = [31, 37, 41, 47]
+    comb_gain = 0.6
+    wet = np.zeros_like(y)
+    for d_ms in comb_delays_ms:
+        d = int(d_ms * sample_rate / 1000)
+        b = np.zeros(d + 1)
+        b[0] = 1.0
+        a = np.zeros(d + 1)
+        a[0] = 1.0
+        a[d] = -comb_gain
+        wet += lfilter(b, a, y)
+    wet /= len(comb_delays_ms)
+
+    ap_delays_ms = [5, 17]
+    ap_gain = 0.7
+    for d_ms in ap_delays_ms:
+        d = int(d_ms * sample_rate / 1000)
+        b = np.zeros(d + 1)
+        b[0] = ap_gain
+        b[d] = 1.0
+        a = np.zeros(d + 1)
+        a[0] = 1.0
+        a[d] = ap_gain
+        wet = lfilter(b, a, wet)
+
+    return (1.0 - mix) * y + mix * wet
+
+
+def _normalize_rms(y: np.ndarray, target_rms: float = 0.06) -> np.ndarray:
+    """
+    RMS-based normalization with soft limiting.
+    Quieter than peak normalization; occasional loud bursts don't squash
+    everything else.  Final soft-clip via tanh prevents digital clipping.
+    """
+    if len(y) == 0:
+        return y
+    rms = np.sqrt(np.mean(y ** 2))
+    if rms > 1e-12:
+        y = y * (target_rms / rms)
+    # tanh soft clip — gentle saturation rather than hard limiting
+    y = np.tanh(y * 2.0) / 2.0
+    return y
+
+
+# ---------------------------------------------------------------------------
+# Old ping-train synthesis (kept for backward compatibility)
+# ---------------------------------------------------------------------------
+
+def _synthesize_ping(
+    envelopes: np.ndarray,
+    frame_width_s: float,
+    sample_rate: int,
+    channels: List[int],
+    channel_cfg: Dict[int, ChannelConfig],
+    master_gain: float = 0.8,
+) -> np.ndarray:
+    """Original per-frame ping-train synthesis.  See `synthesize_audio_from_envelopes`."""
+    envelopes = np.asarray(envelopes, dtype=np.float64)
+    n_frames = envelopes.shape[0]
+    frame_samps = int(round(frame_width_s * sample_rate))
+    if frame_samps <= 0:
+        raise ValueError("frame_width_s too small for given sample_rate")
+    total_samps = n_frames * frame_samps
+    t = np.arange(total_samps, dtype=np.float64) / sample_rate
+
+    attack_s = min(0.002, 0.25 * frame_width_s)
+    decay_s = min(0.015, 0.85 * frame_width_s)
+    attack_n = max(1, int(round(attack_s * sample_rate)))
+    t_frame = np.arange(frame_samps, dtype=np.float64) / sample_rate
+    ping_env = np.exp(-t_frame / max(decay_s, 1e-6))
+    ping_env[:attack_n] *= np.linspace(0.0, 1.0, attack_n, endpoint=False)
+    ping_env_rep = np.tile(ping_env, n_frames)[:total_samps]
+
+    y = np.zeros(total_samps, dtype=np.float64)
+    rng_state = np.random.get_state()
+    np.random.seed(42)
+
+    for j, ch in enumerate(channels):
+        cfg = channel_cfg[ch]
+        cf = cfg.note_hz * _semitones_to_ratio(cfg.pitch_semitones)
+        freqs = _chord_freqs(cf, cfg.chord_type)
+        a = np.repeat(envelopes[:, j], frame_samps)[:total_samps]
+        a[a < 1e-6] = 0.0
+        n_notes = len(freqs)
+        note_gains = [1.0, 0.65, 0.50] + [0.35] * max(0, n_notes - 3)
+        note_gains = note_gains[:n_notes]
+
+        phase0 = np.random.rand() * 2.0 * math.pi
+        sub = np.sin(2.0 * math.pi * (cf / 2.0) * t + phase0)
+        sig_ch = cfg.gain * 0.25 * a * ping_env_rep * sub
+
+        for ni, freq in enumerate(freqs):
+            phase0 = np.random.rand() * 2.0 * math.pi
+            osc = np.sin(2.0 * math.pi * freq * t + phase0)
+            sig_ch += cfg.gain * note_gains[ni] * a * ping_env_rep * osc
+
+        air_mix = 0.04
+        if air_mix > 0:
+            noise = np.random.randn(total_samps).astype(np.float64)
+            sig_ch = (1.0 - air_mix) * sig_ch + air_mix * (cfg.gain * a * ping_env_rep * noise)
+
+        y += sig_ch
+
+    np.random.set_state(rng_state)
+    peak = np.max(np.abs(y)) if total_samps > 0 else 1.0
+    if peak > 0:
+        y = (master_gain / max(1.0, peak)) * y
+    return y.astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# New continuous synthesis — smooth, legato, with reverb
+# ---------------------------------------------------------------------------
+
+def _synthesize_continuous(
     envelopes: np.ndarray,
     frame_width_s: float,
     sample_rate: int,
@@ -297,11 +460,12 @@ def synthesize_audio_from_envelopes(
     master_gain: float = 0.8,
 ) -> np.ndarray:
     """
-    Render *non-continuous* audio: per-frame pings modulated by envelopes.
-    Drop-in replacement for the original continuous sine mix.
+    Continuous legato synthesis.
 
-    envelopes: shape (n_frames, n_channels) in [0,1]
-    Produces silence when envelope == 0 and louder pings when envelope is high.
+    Instead of a per-frame ping, the envelope smoothly controls oscillator
+    amplitude with sample-rate interpolation (no per-frame clicks).
+    A plate reverb adds space and smooths burst granularity.
+    RMS-based normalisation keeps quiet sections audible.
     """
     envelopes = np.asarray(envelopes, dtype=np.float64)
     if envelopes.ndim != 2:
@@ -311,62 +475,88 @@ def synthesize_audio_from_envelopes(
     frame_samps = int(round(frame_width_s * sample_rate))
     if frame_samps <= 0:
         raise ValueError("frame_width_s too small for given sample_rate")
-
     total_samps = n_frames * frame_samps
     t = np.arange(total_samps, dtype=np.float64) / sample_rate
 
-    # --- Per-frame ping shape (attack + exponential decay) ---
-    # Make sure the ping is well-contained within the frame so you do NOT hear a continuous tone.
-    # Decay scales with frame length to remain perceptually stable.
-    attack_s = min(0.001, 0.25 * frame_width_s)                   # up to 1 ms
-    decay_s  = min(0.010, 0.85 * frame_width_s)                   # up to 10 ms, but within frame
-    attack_n = max(1, int(round(attack_s * sample_rate)))
-
-    t_frame = np.arange(frame_samps, dtype=np.float64) / sample_rate
-    ping_env = np.exp(-t_frame / max(decay_s, 1e-6))
-    # linear attack ramp
-    ping_env[:attack_n] *= np.linspace(0.0, 1.0, attack_n, endpoint=False)
-
-    # repeat ping envelope per frame
-    ping_env_rep = np.tile(ping_env, n_frames)[:total_samps]
-
     y = np.zeros(total_samps, dtype=np.float64)
+    rng_state = np.random.get_state()
+    np.random.seed(42)
 
-    # --- Render each channel as a pitched ping train ---
     for j, ch in enumerate(channels):
         cfg = channel_cfg[ch]
-        freq = cfg.note_hz * _semitones_to_ratio(cfg.pitch_semitones)
+        cf = cfg.note_hz * _semitones_to_ratio(cfg.pitch_semitones)
+        freqs = _chord_freqs(cf, cfg.chord_type)
 
-        # per-frame envelope expanded to samples
-        a = np.repeat(envelopes[:, j], frame_samps)[:total_samps]
+        # Smoothly upsample envelope — no per-frame steps
+        a = _upsample_envelope(envelopes[:, j], frame_samps)
+        a[a < 1e-8] = 0.0
 
-        # HARD silence for truly empty bins
-        # (envelopes already should be 0 for empty bins, but guard numeric noise)
-        a[a < 1e-6] = 0.0
+        n_notes = len(freqs)
+        note_gains = [1.0, 0.65, 0.50] + [0.35] * max(0, n_notes - 3)
+        note_gains = note_gains[:n_notes]
 
-        # random initial phase avoids "phasiness" when mixing channels
+        # Sub-bass
         phase0 = np.random.rand() * 2.0 * math.pi
-        osc = np.sin(2.0 * math.pi * freq * t + phase0)
+        sub = np.sin(2.0 * math.pi * (cf / 2.0) * t + phase0)
+        sig_ch = cfg.gain * 0.25 * a * sub
 
-        # Apply per-frame ping envelope so sound is transient, not continuous
-        sig = cfg.gain * a * ping_env_rep * osc
+        # Chord voices — continuous, gated by smooth envelope
+        for ni, freq in enumerate(freqs):
+            phase0 = np.random.rand() * 2.0 * math.pi
+            osc = np.sin(2.0 * math.pi * freq * t + phase0)
+            sig_ch += cfg.gain * note_gains[ni] * a * osc
 
-        # Optional: add a small amount of "click" (wideband) proportional to amplitude
-        # This improves audibility of fast intensity changes without changing interface.
-        # Keep it subtle.
-        click_mix = 0.12
-        if click_mix > 0:
+        # Air
+        air_mix = 0.04
+        if air_mix > 0:
             noise = np.random.randn(total_samps).astype(np.float64)
-            sig = (1.0 - click_mix) * sig + click_mix * (cfg.gain * a * ping_env_rep * noise)
+            sig_ch = (1.0 - air_mix) * sig_ch + air_mix * (cfg.gain * a * noise)
 
-        y += sig
+        y += sig_ch
 
-    # --- Normalize / prevent clipping ---
-    peak = np.max(np.abs(y)) if total_samps > 0 else 1.0
-    if peak > 0:
-        y = (master_gain / max(1.0, peak)) * y
+    np.random.set_state(rng_state)
+
+    # RMS normalize (gentler than peak norm) + soft clip
+    y = _normalize_rms(y, target_rms=0.06 * master_gain)
+
+    # Plate reverb — adds space and smooths burst granularity
+    y = _apply_reverb(y, sample_rate, mix=0.25)
 
     return y.astype(np.float32)
+
+
+# ---------------------------------------------------------------------------
+# Public dispatcher
+# ---------------------------------------------------------------------------
+
+def synthesize_audio_from_envelopes(
+    envelopes: np.ndarray,
+    frame_width_s: float,
+    sample_rate: int,
+    channels: List[int],
+    channel_cfg: Dict[int, ChannelConfig],
+    master_gain: float = 0.8,
+    continuous: bool = False,
+) -> np.ndarray:
+    """
+    Render audio from envelopes.
+
+    Parameters
+    ----------
+    continuous : bool
+        If True  → smooth legato synthesis with reverb (warmer, less clicky).
+        If False → original per-frame ping-train (more percussive, faithful to
+                   photon arrival granularity).
+    """
+    if continuous:
+        return _synthesize_continuous(
+            envelopes, frame_width_s, sample_rate,
+            channels, channel_cfg, master_gain,
+        )
+    return _synthesize_ping(
+        envelopes, frame_width_s, sample_rate,
+        channels, channel_cfg, master_gain,
+    )
 
 
 def tttr_to_wav(
@@ -527,15 +717,23 @@ def plot_waterfall(
 # Convenience: “select channels to listen to”
 # -----------------------------
 
-DEFAULT_NOTE_MAP_HZ = {
-    # Simple “distinct notes” palette (C major-ish). Customize as needed.
-    0: 261.63,  # C4
-    1: 329.63,  # E4
-    2: 392.00,  # G4
-    3: 466.16,  # Bb4
-    4: 523.25,  # C5
-    5: 659.26,  # E5
+DEFAULT_CHORD_MAP = {
+    # Each routing channel gets a root frequency + chord quality
+    0: (261.63, "major"),       # C4  major
+    1: (293.66, "minor"),       # D4  minor
+    2: (329.63, "minor"),       # E4  minor
+    3: (349.23, "major"),       # F4  major
+    4: (392.00, "major"),       # G4  major
+    5: (440.00, "minor"),       # A4  minor
+    6: (466.16, "diminished"),  # Bb4 diminished → tense, resolves
+    7: (493.88, "dom7"),        # B4  dom7 → bluesy
+    8: (523.25, "major"),       # C5  major
+    9: (587.33, "minor7"),      # D5  minor7 → floaty
+    10: (659.26, "major7"),     # E5  major7 → dreamy
+    11: (698.46, "power"),      # F5  power → stark
 }
+
+CHORD_TYPE_NAMES = list(CHORD_INTERVALS.keys())
 
 
 def make_default_channel_cfg(
@@ -543,23 +741,29 @@ def make_default_channel_cfg(
     micro_defaults: Tuple[int, int] = (0, 4096),
     pitch_adjust_semitones: Optional[Dict[int, float]] = None,
     micro_gates: Optional[Dict[int, Tuple[int, int]]] = None,
+    chord_types: Optional[Dict[int, str]] = None,
     gains: Optional[Dict[int, float]] = None,
-    base_note_map_hz: Optional[Dict[int, float]] = None,
 ) -> Dict[int, ChannelConfig]:
     """
-    Create a per-channel config dict quickly.
+    Create a per-channel config dict quickly, with chord assignments.
+
+    Each channel gets a root note and chord quality from DEFAULT_CHORD_MAP,
+    or falls back to a chromatic walk with a major chord.
     """
-    base_note_map_hz = dict(DEFAULT_NOTE_MAP_HZ if base_note_map_hz is None else base_note_map_hz)
     pitch_adjust_semitones = pitch_adjust_semitones or {}
     micro_gates = micro_gates or {}
+    chord_types = chord_types or {}
     gains = gains or {}
 
     cfg: Dict[int, ChannelConfig] = {}
     for ch in channels:
-        note = base_note_map_hz.get(ch, 261.63 * _semitones_to_ratio((ch % 12) * 2.0))
+        root, default_chord = DEFAULT_CHORD_MAP.get(
+            ch, (261.63 * _semitones_to_ratio((ch % 12) * 2.0), "major")
+        )
         g0, g1 = micro_gates.get(ch, micro_defaults)
         cfg[ch] = ChannelConfig(
-            note_hz=float(note),
+            note_hz=float(root),
+            chord_type=str(chord_types.get(ch, default_chord)),
             pitch_semitones=float(pitch_adjust_semitones.get(ch, 0.0)),
             micro_min=int(g0),
             micro_max=int(g1),

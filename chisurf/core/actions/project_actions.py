@@ -1,44 +1,43 @@
 from __future__ import annotations
 from chisurf import typing
 from chisurf.core.actions._decorator import action
+import chisurf as cs
 
 
 @action("experiment.set", schema={"name": str})
 def set_experiment(name: str):
     """Switch the current experiment type and refresh the GUI."""
-    import chisurf
-    cs = getattr(chisurf, "cs", None)
-    if cs is None:
+    gui = getattr(cs, "cs", None)
+    if gui is None:
         return {}
     # Update combo selection without triggering a dispatch loop
-    combo = getattr(cs, "comboBox_experimentSelect", None)
+    combo = getattr(gui, "comboBox_experimentSelect", None)
     if combo is not None:
         idx = combo.findText(name)
         if idx != -1 and combo.currentIndex() != idx:
             combo.blockSignals(True)
             combo.setCurrentIndex(idx)
             combo.blockSignals(False)
-            cs._current_experiment_idx = idx
+            gui._current_experiment_idx = idx
     # Refresh GUI directly — no re-dispatch
-    if hasattr(cs, "_refresh_experiment_ui"):
-        cs._refresh_experiment_ui()
+    if hasattr(gui, "_refresh_experiment_ui"):
+        gui._refresh_experiment_ui()
     return {}
 
 
 @action("setup.select", schema={"name": str})
 def select_setup(name: str):
     """Select a setup configuration and refresh the GUI."""
-    import chisurf
-    cs = getattr(chisurf, "cs", None)
-    if cs is None:
+    gui = getattr(cs, "cs", None)
+    if gui is None:
         return {}
     # Find the setup index from the current experiment's readers
     try:
-        readers = cs.current_experiment.readers
+        readers = gui.current_experiment.readers
         for j, s in enumerate(readers):
             if s.name == name:
-                cs._current_setup_idx = j
-                combo = getattr(cs, "comboBox_setupSelect", None)
+                gui._current_setup_idx = j
+                combo = getattr(gui, "comboBox_setupSelect", None)
                 if combo is not None:
                     combo.blockSignals(True)
                     combo.setCurrentIndex(j)
@@ -47,16 +46,15 @@ def select_setup(name: str):
     except Exception:
         pass
     # Refresh GUI directly — no re-dispatch
-    if hasattr(cs, "_refresh_setup_ui"):
-        cs._refresh_setup_ui()
+    if hasattr(gui, "_refresh_setup_ui"):
+        gui._refresh_setup_ui()
     return {}
 
 
 @action("setup.params.set", schema={"params": dict})
 def set_setup_params(params: typing.Dict[str, typing.Any]):
     """Set parameters for the current setup."""
-    import chisurf
-    setup = chisurf.cs.current_setup
+    setup = cs.cs.current_setup
     for key, value in params.items():
         if "." in key:
             parts = key.split(".")
@@ -86,7 +84,6 @@ def load_project(project_path: str):
 @action("project.close")
 def close_project(main_window: typing.Any = None):
     """Close the current project."""
-    import chisurf
     if main_window:
         # Instead of calling reinitialize() (which might trigger confirmation
         # or another project.close dispatch), we perform a focused cleanup.
@@ -96,8 +93,8 @@ def close_project(main_window: typing.Any = None):
                 main_window.onCloseAllFits()
 
             # Clear imported datasets
-            if hasattr(chisurf, 'imported_datasets'):
-                chisurf.imported_datasets.clear()
+            if hasattr(cs, 'imported_datasets'):
+                cs.imported_datasets.clear()
 
             # Reset project path
             main_window._current_project_dir = None
@@ -109,7 +106,7 @@ def close_project(main_window: typing.Any = None):
                 main_window.fit_selector.update()
         except Exception as e:
             import chisurf.logging
-            chisurf.logging.error(f"Error in project.close action: {e}")
+            cs.logging.error(f"Error in project.close action: {e}")
 
     return {}
 
@@ -140,5 +137,4 @@ def app_reinitialize_finish():
 @action("run_command", replayable=False, side_effect_class="diagnostic")
 def run_command(command: str):
     """Run a shell or macro command."""
-    import chisurf
-    return chisurf.run(command)
+    return cs.run(command)

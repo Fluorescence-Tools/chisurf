@@ -57,8 +57,8 @@ def get_path(path_type: str = 'settings') -> pathlib.Path:
         return path
 
     elif path_type == 'chisurf':
-        # Return the module root without changing attributes
-        return pathlib.Path(__file__).parent.parent
+        # Return the chisurf package root directory
+        return pathlib.Path(__file__).parent.parent.parent
     else:
         # Fallback: return settings dir behavior for unknown types, without risking hiding other paths
         path = pathlib.Path.home() / '.chisurf'

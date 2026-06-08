@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import pathlib
 from typing import Any, Dict, Optional
@@ -47,14 +48,12 @@ def save_project(
 
     """
     from chisurf.core.project import Project
-    import chisurf
-
     path = pathlib.Path(target_path)
     path.mkdir(parents=True, exist_ok=True)
 
     project = Project(
         name=str(project_name or path.name),
-        chisurf_version=chisurf.__version__,
+        chisurf_version=cs.__version__,
     )
 
     for ds in state.datasets:

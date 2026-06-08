@@ -2,11 +2,11 @@ import pytest
 import sys
 import os
 from unittest.mock import MagicMock
+import chisurf as cs
 
 def test_chisurf_import():
     # Basic import test
-    import chisurf
-    assert chisurf.__version__ is not None
+    assert cs.__version__ is not None
 
 def test_parameter_no_gui():
     # Ensure core fitting parameters work without a GUI loop
@@ -17,7 +17,7 @@ def test_parameter_no_gui():
     assert p.value == 4.56
 
 def test_gui_import_headless():
-    # chisurf.gui often checks for IPython kernel
+    # cs.gui often checks for IPython kernel
     # We want to ensure it doesn't crash the entire process if imported in a script
     try:
         import chisurf.gui

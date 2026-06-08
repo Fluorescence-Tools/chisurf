@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import pathlib
 
@@ -13,8 +14,6 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setu
 class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
     def get_filename(self) -> pathlib.Path:
-        import chisurf
-
         # Ensure current GUI values are pushed before opening the dialog.
         try:
             self.onParametersChanged()
@@ -29,7 +28,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         if fn_prev:
             return pathlib.Path(fn_prev)
 
-        fn = chisurf.gui.widgets.open_files(
+        fn = cs.gui.widgets.open_files(
             description='PCH TTTR file',
             file_type='TTTR files (*.ptu *.ht3 *.t2r *.t3r);;All files (*.*)',
             working_path=None,
@@ -221,10 +220,8 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         return str(fn) if fn is not None else ""
 
     def updateUI(self):
-        import chisurf
-
         try:
-            setup = chisurf.cs.current_setup
+            setup = cs.cs.current_setup
         except Exception:
             return
 
@@ -270,8 +267,6 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
             pass
 
     def onParametersChanged(self):
-        import chisurf
-
         routine = self.combo_routine.currentText()
 
         try:
@@ -298,7 +293,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         mt_max = int(self.spin_mt_max.value())
 
         try:
-            chisurf.run(
+            cs.run(
                 "\n".join(
                     [
                         f"cs.current_setup.reading_routine = '{routine}'",
@@ -489,15 +484,13 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
             super().dropEvent(event)
 
     def _load_preview_from_file(self, path: pathlib.Path) -> None:
-        import chisurf
-
         try:
             self.onParametersChanged()
         except Exception:
             pass
 
         try:
-            reader_obj = chisurf.cs.current_setup
+            reader_obj = cs.cs.current_setup
         except Exception:
             reader_obj = None
         if reader_obj is None:
@@ -540,7 +533,6 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
         self._refresh_preview_plot()
 
     def _load_preview_from_paths(self, paths) -> None:
-        import chisurf
         import numpy as np
 
         try:
@@ -549,7 +541,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
             pass
 
         try:
-            reader_obj = chisurf.cs.current_setup
+            reader_obj = cs.cs.current_setup
         except Exception:
             reader_obj = None
         if reader_obj is None:
@@ -725,7 +717,6 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
             pass
 
     def _on_add_pch_clicked(self) -> None:
-        import chisurf
         import pathlib as _pathlib
 
         try:
@@ -775,7 +766,7 @@ class PCHController(reader.ExperimentReaderController, QtWidgets.QWidget):
                 s = p.as_posix().replace("\\", "/")
             except Exception:
                 continue
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="dataset.add",
                 payload={"filename": s, "experiment_reader": None},
             )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 from chisurf.gui import QtWidgets
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 
 
@@ -10,7 +10,7 @@ class HomoFRETCalculator(QtWidgets.QWidget):
 
     name = "HomoFRET-Calculator"
 
-    @chisurf.gui.decorators.init_with_ui("calculator/homofret_calculator/calc_homofret.ui", path=chisurf.core.settings.plugin_path)
+    @cs.gui.decorators.init_with_ui("calculator/homofret_calculator/calc_homofret.ui", path=cs.core.settings.plugin_path)
     def __init__(self, *args, **kwargs):
         #super().__init__(*args, **kwargs)
         # Wire signals

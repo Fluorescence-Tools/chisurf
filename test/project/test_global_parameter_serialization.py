@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 import numpy as np
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting.parameter
 from chisurf.core.models.global_model.globalfit import GlobalFitModel
 from chisurf.core.project import fit_state
@@ -13,7 +13,7 @@ class TestGlobalSerialization(unittest.TestCase):
         model = GlobalFitModel(fit=mock_fit)
         
         # Add a global parameter
-        p_global = chisurf.core.fitting.parameter.FittingParameter(name="shared_tau", value=5.0)
+        p_global = cs.core.fitting.parameter.FittingParameter(name="shared_tau", value=5.0)
         model.append_global_parameter(p_global)
         
         # Trigger discovery

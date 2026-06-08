@@ -397,8 +397,6 @@ class ProteinMCRunner:
         self,
         structure_source: str | Path | ProteinCentroid,
         *,
-        labeling_file: str | Path | None = None,
-        score_set: str = "",
         flexfit_set: str | None = None,
         settings: Optional[dict[str, Any]] = None,
         settings_file: str | Path | None = None,
@@ -412,15 +410,10 @@ class ProteinMCRunner:
         Parameters
         ----------
         structure_source : str | Path | ProteinCentroid
-        labeling_file : str | Path | None
-            Path to an fps.json labeling file.
-        score_set : str, optional
-            Name of the χ² score group to use. When empty, all distances
-            in the labeling file are used for scoring.
         flexfit_set : str or None
             Name of the FlexFit set used to derive the per-residue move
-            map.  When ``None`` and a labeling file with FlexFit data is
-            provided, the first FlexFit set is used automatically.
+            map.  When ``None`` and a FPS potential with a labeling file is
+            configured in *settings*, the first FlexFit set is used automatically.
             An explicit ``move_map`` entry in *settings* takes
             precedence over this parameter.
         settings : dict, optional
@@ -435,8 +428,6 @@ class ProteinMCRunner:
             settings = dict(loaded, **(settings or {}))
         self.settings = normalize_settings(settings)
         self.structure = load_structure(structure_source)
-        self.labeling_file = str(labeling_file) if labeling_file else None
-        self.score_set = score_set
         self.flexfit_set = flexfit_set
         self.output_file = str(output_file or _temporary_rmf_filename())
         self.initial_frames = [np.asarray(frame, dtype=float) for frame in (initial_frames or [])]
@@ -444,20 +435,24 @@ class ProteinMCRunner:
         self.verbose = verbose
         self.exiting = False
         self.universe = Universe()
-        self.labeling_potential = None
         self.rmsd: list[float] = []
         self.drmsd: list[float] = []
         self.energies: list[float] = []
         self.labeling_energies: list[float] = []
         self._reference_xyz: Optional[np.ndarray] = None
         self._previous_xyz: Optional[np.ndarray] = None
-        if "move_map" not in self.settings and self.labeling_file:
+        self._eval_intervals: list[int] = []
+        self._last_energies: list[float] = []
+        self._labeling_potential: DirectLabelingPotential | None = None
+        self._configure_potentials()
+        self._last_energies = [0.0] * len(self.universe.potentials)
+        fps_file = self._find_fps_file()
+        if "move_map" not in self.settings and fps_file:
             derived = build_move_map_from_flexfit(
-                self.structure, self.labeling_file, flexfit_set
+                self.structure, fps_file, flexfit_set
             )
             if derived is not None:
                 self.settings["move_map"] = derived
-        self._configure_potentials()
 
     @property
     def move_map(self) -> np.ndarray:
@@ -471,26 +466,38 @@ class ProteinMCRunner:
         """Request the MC loop to stop."""
         self.exiting = True
 
+    def _find_fps_file(self) -> str | None:
+        """Return the labeling file path from the dye potential, if any."""
+        for ps in self.settings.get("potentials", []) or []:
+            name = ps.get("name", "")
+            if name in ("fps", "dye"):
+                return ps.get("settings", {}).get("labeling_file") or None
+        return None
+
     def _configure_potentials(self) -> None:
-        """Add configured structure and labeling potentials."""
+        """Add configured structural and labeling potentials."""
         for potential_settings in self.settings.get("potentials", []) or []:
             name = potential_settings.get("name")
+            weight = potential_settings.get("weight", 1.0)
+            interval = max(1, int(potential_settings.get("eval_interval", 1)))
+            kwargs = dict(potential_settings.get("settings", {}) or {})
+            if name in ("fps", "dye"):
+                labeling_file = kwargs.pop("labeling_file", None)
+                score_set = kwargs.pop("score_set", "")
+                if labeling_file:
+                    potential = DirectLabelingPotential(
+                        self.structure, str(labeling_file), score_set
+                    )
+                    self.universe.addPotential(potential, weight)
+                    self._eval_intervals.append(interval)
+                    self._labeling_potential = potential
+                continue
             potential_cls = _potential_classes().get(name)
             if potential_cls is None:
                 continue
-            kwargs = potential_settings.get("settings", {}) or {}
             potential = potential_cls(structure=self.structure, **kwargs)
-            self.universe.addPotential(potential, potential_settings.get("weight", 1.0))
-        if self.labeling_file:
-            self.labeling_potential = DirectLabelingPotential(
-                self.structure,
-                self.labeling_file,
-                score_set=self.score_set,
-            )
-            self.universe.addPotential(
-                self.labeling_potential,
-                float(self.settings.get("labeling_weight", 1.0)),
-            )
+            self.universe.addPotential(potential, weight)
+            self._eval_intervals.append(interval)
 
     def run(self) -> ProteinMCResult:
         """Run ProteinMC and write accepted frames to RMF."""
@@ -504,7 +511,7 @@ class ProteinMCRunner:
         self._reference_xyz = np.array(self.structure.xyz, copy=True)
         self._previous_xyz = np.array(self.structure.xyz, copy=True)
 
-        energy = self._total_energy()
+        energy = self._total_energy(iteration=0)
         self._append_frame(writer, energy, self._labeling_energy(), iteration=0, accepted=0, rejected=0)
 
         move_map = np.asarray(self.move_map, dtype=np.float64)
@@ -556,7 +563,7 @@ class ProteinMCRunner:
                 self.structure.chi = self.structure.chi + c_chi
 
             self.structure.update()
-            new_energy = self._total_energy()
+            new_energy = self._total_energy(iteration=iteration)
             if mc(energy, new_energy, kt):
                 energy = new_energy
                 accepted += 1
@@ -612,19 +619,29 @@ class ProteinMCRunner:
         self._previous_xyz = np.array(xyz, copy=True)
         self._emit_progress(iteration, accepted, rejected, xyz)
 
-    def _total_energy(self) -> float:
-        """Return the total weighted energy for the current structure."""
+    def _total_energy(self, iteration: int = 0) -> float:
+        """Return total weighted energy, optionally skipping evaluations.
+
+        Potentials whose ``eval_interval`` is >1 are only re-evaluated
+        every *interval* iterations; the last computed value is reused
+        on intermediate steps.
+        """
         total = 0.0
-        for potential, scale in zip(self.universe.potentials, self.universe.scaling):
-            potential.structure = self.structure
-            total += float(scale) * float(potential.getEnergy())
+        for i, (potential, scale) in enumerate(
+            zip(self.universe.potentials, self.universe.scaling)
+        ):
+            interval = self._eval_intervals[i]
+            if interval <= 1 or iteration % interval == 0:
+                potential.structure = self.structure
+                self._last_energies[i] = float(potential.getEnergy())
+            total += scale * self._last_energies[i]
         return float(total)
 
     def _labeling_energy(self) -> float:
         """Return the latest labeling potential energy."""
-        if self.labeling_potential is None:
+        if self._labeling_potential is None:
             return 0.0
-        return float(self.labeling_potential.last_energy)
+        return float(self._labeling_potential.last_energy)
 
     def _emit_progress(
         self,
@@ -668,6 +685,7 @@ def run_protein_mc(
     n_iter: Optional[int] = None,
     n_out: Optional[int] = None,
     n_written: Optional[int] = None,
+    eval_interval: int = 1,
     progress_callback: ProgressCallback | None = None,
 ) -> str:
     """Run ProteinMC and return the generated RMF filename."""
@@ -680,10 +698,20 @@ def run_protein_mc(
         overrides["n_out"] = int(n_out)
     if n_written is not None:
         overrides["pdbOut"] = int(n_written)
+    if labeling_file:
+        fps = {
+            "name": "dye",
+            "weight": 1.0,
+            "eval_interval": max(1, int(eval_interval)),
+            "settings": {
+                "labeling_file": str(labeling_file),
+                "score_set": score_set or "",
+            },
+        }
+        existing = overrides.get("potentials", [])
+        overrides["potentials"] = existing + [fps]
     runner = ProteinMCRunner(
         pdb_file,
-        labeling_file=labeling_file,
-        score_set=score_set,
         flexfit_set=flexfit_set,
         settings=overrides,
         settings_file=settings_file,
@@ -713,11 +741,19 @@ def _potential_classes() -> dict[str, Any]:
         "hbond": core_potentials.HPotential,
         "mj": core_potentials.MJPotential,
         "unres": core_potentials.CEPotential,
+        "go": core_potentials.GoPotential,
+        "rama": core_potentials.Ramachandran,
+        "asa": core_potentials.ASA,
+        "rg": core_potentials.RadiusGyration,
         "H-Bond": core_potentials.HPotential,
         "H-Potential": core_potentials.HPotential,
         "Iso-UNRES": core_potentials.CEPotential,
         "Miyazawa-Jernigan": core_potentials.MJPotential,
         "Clash potential": core_potentials.ClashPotential,
+        "Go-Potential": core_potentials.GoPotential,
+        "Ramachandran": core_potentials.Ramachandran,
+        "ASA-Calpha": core_potentials.ASA,
+        "Radius of Gyration": core_potentials.RadiusGyration,
     }
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 
@@ -60,7 +60,7 @@ class FRETrateModelWidget(fret.FRETrateModel, LifetimeModelWidgetBase):
         )
 
         # Create parameter widgets
-        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        self._fret_parameters_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters
         )
         self.layout.addWidget(self._fret_parameters_widget)

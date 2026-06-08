@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import numpy as np
 import pyqtgraph as pg
@@ -285,7 +286,7 @@ class Residual2DPlot(plotbase.Plot):
 
     Expected signature:
 
-        accessor(fit_group: chisurf.core.fitting.fit.FitGroup, **kwargs)
+        accessor(fit_group: cs.core.fitting.fit.FitGroup, **kwargs)
             -> (image_2d, x_axis, y_axis)
     """
 
@@ -298,7 +299,7 @@ class Residual2DPlot(plotbase.Plot):
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         *args,
         accessor=None,
         accessor_kwargs: dict | None = None,
@@ -765,8 +766,7 @@ class Residual2DPlot(plotbase.Plot):
         # Propagate to the current fit's range using the same mechanism as
         # LinePlot so downstream widgets and macros stay in sync.
         try:
-            import chisurf
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.range.set",
                 payload={
                     "xmin": int(xmin_idx),

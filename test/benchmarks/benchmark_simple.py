@@ -11,14 +11,14 @@ import os
 # Ensure we're using the right environment
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import chisurf
+import chisurf as cs
 from chisurf.controllers.action_controller import ActionController
 
 def benchmark_action_controller():
     """Benchmark the action controller performance"""
     print("=== Simplified ChiSurf Foundation Benchmark ===")
     print(f"Python version: {sys.version}")
-    print(f"ChiSurf version: {getattr(chisurf, '__version__', 'unknown')}")
+    print(f"ChiSurf version: {getattr(cs, '__version__', 'unknown')}")
     print()
     
     controller = ActionController()
@@ -67,7 +67,7 @@ def benchmark_action_controller():
     # Test action registry performance
     print("--- Action Registry Performance ---")
     try:
-        registry = getattr(chisurf, 'action_registry', None)
+        registry = getattr(cs, 'action_registry', None)
         if registry:
             start_time = time.time()
             
@@ -96,7 +96,7 @@ def benchmark_action_controller():
     # Test history system (if available)
     print("--- History System Status ---")
     try:
-        history = getattr(chisurf, 'history', None)
+        history = getattr(cs, 'history', None)
         if history:
             # Check history attributes
             history_attrs = []
@@ -129,7 +129,7 @@ def benchmark_action_controller():
             'metadata': {
                 'timestamp': timestamp,
                 'python_version': sys.version,
-                'chisurf_version': getattr(chisurf, '__version__', 'unknown')
+                'chisurf_version': getattr(cs, '__version__', 'unknown')
             },
             'results': results
         }, f, indent=2)

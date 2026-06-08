@@ -4,7 +4,7 @@ import importlib
 
 from chisurf.gui import QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 
@@ -52,7 +52,7 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
             self._sync_l2_from_l1()
             self.onParametersChanged()
 
-    @chisurf.gui.decorators.init_with_ui("tcspc_csv.ui")
+    @cs.gui.decorators.init_with_ui("tcspc_csv.ui")
     def __init__(self, *args, **kwargs):
         self.actionDtChanged.triggered.connect(self.onParametersChanged)
         self.actionRebinChanged.triggered.connect(self.onParametersChanged)
@@ -75,9 +75,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
-        import chisurf
         # Get the current setup
-        setup = chisurf.cs.current_setup
+        setup = cs.cs.current_setup
 
         # Update is_jordi checkbox
         self.checkBox_3.setChecked(setup.is_jordi)
@@ -154,7 +153,7 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         """
         try:
             # 1) Ask for Jordi file
-            file_path = chisurf.gui.widgets.get_filename(
+            file_path = cs.gui.widgets.get_filename(
                 description="Open Jordi VV/VH file (fast rotating dye)",
                 file_type="Data Files (*.dat *.txt *.csv);;All Files (*)",
             )
@@ -168,7 +167,7 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
 
             # Pre-fill FP dt [ns/ch] from current CSV reader settings.
             try:
-                dt_base = float(self.doubleSpinBox_2.value()) if hasattr(self, 'doubleSpinBox_2') else float(getattr(chisurf.cs.current_setup, 'dt', 1.0))
+                dt_base = float(self.doubleSpinBox_2.value()) if hasattr(self, 'doubleSpinBox_2') else float(getattr(cs.cs.current_setup, 'dt', 1.0))
                 rebin_y = int(self.comboBox.currentText()) if hasattr(self, 'comboBox') else 1
                 use_scaled_dt = bool(self.checkBox_2.isChecked()) if hasattr(self, 'checkBox_2') else False
                 dt_ns = dt_base * rebin_y if use_scaled_dt else dt_base
@@ -260,8 +259,8 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         except ValueError:
             matrix_columns = []
         gfactor = float(self.doubleSpinBox_3.value())
-        l1 = self._safe_float(getattr(chisurf.cs.current_setup, 'l1', 0.0), 0.0)
-        l2 = self._safe_float(getattr(chisurf.cs.current_setup, 'l2', 0.0), 0.0)
+        l1 = self._safe_float(getattr(cs.cs.current_setup, 'l1', 0.0), 0.0)
+        l2 = self._safe_float(getattr(cs.cs.current_setup, 'l2', 0.0), 0.0)
         if hasattr(self, 'doubleSpinBox_l1'):
             l1 = self._safe_float(self.doubleSpinBox_l1.value(), l1)
         if hasattr(self, 'doubleSpinBox_l2'):
@@ -284,7 +283,7 @@ class CsvTCSPCWidget(QtWidgets.QWidget):
         rebin = int(self.comboBox.currentText())
         dt_base = float(self.doubleSpinBox_2.value())
         dt = dt_base * rebin if self.checkBox_2.isChecked() else dt_base
-        chisurf.run(
+        cs.run(
             "\n".join(
                 [
                     f"cs.current_setup.is_jordi = {is_jordi}",

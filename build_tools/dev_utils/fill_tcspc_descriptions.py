@@ -231,7 +231,7 @@ def _update_tcspc_descriptions(params: Dict[str, Any]) -> Dict[str, Any]:
     """Fill missing descriptions for all TCSPC-related registry entries.
 
     This includes both tcspc.* keys (from parsed models) and plain parameter
-    names whose sources live in chisurf.models.tcspc.* modules.
+    names whose sources live in chisurf.core.models.tcspc.* modules.
 
     Existing non-empty descriptions are preserved. Keywords are merged with the
     auto-generated ones without removing any user-provided terms.

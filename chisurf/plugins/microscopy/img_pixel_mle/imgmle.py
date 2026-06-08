@@ -35,7 +35,7 @@ import time
 import contextlib
 
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 import chisurf.core.settings
 import chisurf.gui.widgets.wizard
@@ -334,7 +334,7 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
         self.tab_widget.insertTab(0, self.tab_detector, "Detector Definition")
         self.tab_widget.setCurrentIndex(0)
         self.verticalLayout_detector_tab = QtWidgets.QVBoxLayout(self.tab_detector)
-        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
+        self.channel_definer = cs.gui.widgets.wizard.DetectorWizardPage(parent=self)
         self.groupBox_detector = QtWidgets.QGroupBox("Detector Configuration")
         self.verticalLayout_detector = QtWidgets.QVBoxLayout(self.groupBox_detector)
         self.verticalLayout_detector.addWidget(self.channel_definer)
@@ -615,9 +615,9 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                 if 'ch_p' in info or 'ch_s' in info:
                     try:
                         cp = info.get('ch_p', []) or []
-                        cs = info.get('ch_s', []) or []
+                        ch_s = info.get('ch_s', []) or []
                         ch_p_list = [int(cp)] if isinstance(cp, int) else [int(x) for x in cp]
-                        ch_s_list = [int(cs)] if isinstance(cs, int) else [int(x) for x in cs]
+                        ch_s_list = [int(ch_s)] if isinstance(ch_s, int) else [int(x) for x in ch_s]
                     except Exception:
                         pass
                 else:
@@ -1147,7 +1147,7 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
             bg_data_s = self.bg_tttr[self.bg_tttr.get_selection_by_channel(ch_s_list)]
             self._bg_p_full, _ = bg_data_p.get_microtime_histogram(binning_factor)
             self._bg_s_full, _ = bg_data_s.get_microtime_histogram(binning_factor)
-            chisurf.logging.info(f"Loaded background pattern from {fn_bg}")
+            cs.logging.info(f"Loaded background pattern from {fn_bg}")
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Error loading background pattern: {str(e)}")
             self.bg_tttr = None
@@ -1237,28 +1237,28 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
 
             def _noop_info(parent, title, text, *args, **kwargs):
                 try:
-                    chisurf.logging.info(f"[info suppressed] {title}: {text}")
+                    cs.logging.info(f"[info suppressed] {title}: {text}")
                 except Exception:
                     pass
                 return MB.Ok
 
             def _noop_warn(parent, title, text, *args, **kwargs):
                 try:
-                    chisurf.logging.warning(f"[warning suppressed] {title}: {text}")
+                    cs.logging.warning(f"[warning suppressed] {title}: {text}")
                 except Exception:
                     pass
                 return MB.Ok
 
             def _noop_crit(parent, title, text, *args, **kwargs):
                 try:
-                    chisurf.logging.error(f"[critical suppressed] {title}: {text}")
+                    cs.logging.error(f"[critical suppressed] {title}: {text}")
                 except Exception:
                     pass
                 return MB.Ok
 
             def _noop_question(parent, title, text, buttons=MB.Yes | MB.No, default_button=MB.No):
                 try:
-                    chisurf.logging.info(f"[question suppressed] {title}: {text}")
+                    cs.logging.info(f"[question suppressed] {title}: {text}")
                 except Exception:
                     pass
                 return default_answer if default_answer is not None else MB.Yes
@@ -1512,7 +1512,7 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                 QMessageBox.warning(self, "Processing Error", f"Failed to process all detectors: {str(e)}")
             except Exception:
                 try:
-                    chisurf.logging.error(f"Failed to process all detectors: {e}")
+                    cs.logging.error(f"Failed to process all detectors: {e}")
                 except Exception:
                     pass
 
@@ -1740,11 +1740,11 @@ class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
                 s = np.pad(s, (0, n_half - s.size))
             background[:n_half] = p
             background[n_half:] = s
-            chisurf.logging.info("Using background pattern from file (sliced)")
+            cs.logging.info("Using background pattern from file (sliced)")
         else:
             background[:n_half] = bg_p
             background[n_half:] = bg_s
-            chisurf.logging.info(f"Using fixed background values: P={bg_p}, S={bg_s}")
+            cs.logging.info(f"Using fixed background values: P={bg_p}, S={bg_s}")
         return background
 
     def update_fit(self):

@@ -5,7 +5,7 @@ import copy
 import numpy as np
 import numba as nb
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio.structure
 import chisurf.core.math.linalg
 from chisurf.core.structure.structure import Structure
@@ -68,9 +68,9 @@ def r2i(coord_i, a1, a2, a3, a4, ai):
     v1 = a1['xyz']
     v2 = a2['xyz']
     v3 = a3['xyz']
-    b = chisurf.core.math.linalg.norm3(v3 - vn)
-    a = chisurf.core.math.linalg.angle(v2, v3, vn)
-    d = chisurf.core.math.linalg.dihedral(v1, v2, v3, vn)
+    b = cs.core.math.linalg.norm3(v3 - vn)
+    a = cs.core.math.linalg.angle(v2, v3, vn)
+    d = cs.core.math.linalg.dihedral(v1, v2, v3, vn)
     coord_i[ai] = a4['i'], a3['i'], a2['i'], a1['i'], b, a, d
     return ai + 1
 
@@ -246,7 +246,7 @@ def calc_internal_coordinates_bb(
 ):
     """Calculate backbone and side-chain internal coordinates for a protein structure."""
     if verbose is None:
-        verbose = chisurf.core.settings.cs_settings['verbose']
+        verbose = cs.core.settings.cs_settings['verbose']
 
     structure.coord_i = np.zeros(
         structure.atoms.shape[0],
@@ -264,11 +264,11 @@ def calc_internal_coordinates_bb(
             structure.coord_i[ai] = rn['N']['i'], 0, 0, 0, 0.0, 0.0, 0.0
             ai += 1
             structure.coord_i[ai] = rn['CA']['i'], rn['N']['i'], 0, 0, \
-                                    chisurf.core.math.linalg.norm3(rn['N']['xyz'] - rn['CA']['xyz']), 0.0, 0.0
+                                    cs.core.math.linalg.norm3(rn['N']['xyz'] - rn['CA']['xyz']), 0.0, 0.0
             ai += 1
             structure.coord_i[ai] = rn['C']['i'], rn['CA']['i'], rn['N']['i'], 0, \
-                                    chisurf.core.math.linalg.norm3(rn['CA']['xyz'] - rn['C']['xyz']), \
-                                    chisurf.core.math.linalg.angle(rn['C']['xyz'], rn['CA']['xyz'], rn['N']['xyz']), \
+                                    cs.core.math.linalg.norm3(rn['CA']['xyz'] - rn['C']['xyz']), \
+                                    cs.core.math.linalg.angle(rn['C']['xyz'], rn['CA']['xyz'], rn['N']['xyz']), \
                                     0.0
             ai += 1
         else:
@@ -306,9 +306,9 @@ class ProteinCentroid(
     Examples
     --------
 
-    >>> import chisurf.core.structure
+    >>> import cs.core.structure
     >>> pdb_filename = './data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
-    >>> sp = chisurf.core.structure.ProteinCentroid(pdb_filename, verbose=True, make_coarse=True)
+    >>> sp = cs.core.structure.ProteinCentroid(pdb_filename, verbose=True, make_coarse=True)
     ======================================
     Filename: /data/structure/HM_1FN5_Naming.pdb
     Path: /data/structure
@@ -325,7 +325,7 @@ class ProteinCentroid(
     ATOM   2273    C ALA   386      47.799  59.970  21.123  0.00  0.00             C
     ATOM   2274    O ALA   386      47.600  59.096  20.280  0.00  0.00             O
     >>> sp.write('test_out.pdb')
-    >>> s_aa = chisurf.core.structure.ProteinCentroid(pdb_filename, verbose=True, make_coarse=False)
+    >>> s_aa = cs.core.structure.ProteinCentroid(pdb_filename, verbose=True, make_coarse=False)
     >>> print(s_aa)
     ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
     ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -502,8 +502,8 @@ class ProteinCentroid(
         Examples
         --------
 
-        >>> import chisurf.core.structure
-        >>> s_aa = chisurf.core.structure.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True, make_coarse=False)
+        >>> import cs.core.structure
+        >>> s_aa = cs.core.structure.ProteinCentroid('./test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb', verbose=True, make_coarse=False)
         >>> print(s_aa)
         ATOM   9312    H MET   583      40.848  10.075  17.847  0.00  0.00             H
         ATOM   9313   HA MET   583      40.666   8.204  15.667  0.00  0.00             H
@@ -535,8 +535,8 @@ class ProteinCentroid(
         atoms = np.empty(
             n_atoms,
             dtype={
-                'names': chisurf.core.fio.structure.coordinates.keys,
-                'formats': chisurf.core.fio.structure.coordinates.formats
+                'names': cs.core.fio.structure.coordinates.keys,
+                'formats': cs.core.fio.structure.coordinates.formats
             }
         )
 

@@ -7,6 +7,7 @@ import chisurf.core.fitting.fit
 from chisurf.core.fitting.parameter import FittingParameter
 from chisurf.core.models.model import ModelCurve
 from chisurf.gui.widgets.fitting.parameter_widgets import FittingParameterWidget
+import chisurf as cs
 
 class SimpleModel(ModelCurve):
     name = "SimpleModel"
@@ -20,10 +21,9 @@ class SimpleModel(ModelCurve):
 
 @pytest.fixture
 def mock_fit():
-    data = chisurf.core.data.DataCurve(x=np.arange(10), y=np.arange(10))
-    fit = chisurf.core.fitting.fit.Fit(model_class=SimpleModel, data=data)
-    import chisurf
-    chisurf.fits = [fit]
+    data = cs.core.data.DataCurve(x=np.arange(10), y=np.arange(10))
+    fit = cs.core.fitting.fit.Fit(model_class=SimpleModel, data=data)
+    cs.fits = [fit]
     return fit
 
 def test_parameter_debounce_data_loss(qtbot, mock_fit):

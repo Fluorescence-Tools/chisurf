@@ -2,8 +2,7 @@ from __future__ import annotations
 import pathlib
 import numpy as np
 from typing import List, Tuple, Dict, Any, Optional
-import chisurf
-
+import chisurf as cs
 try:
     from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
     HAS_DETECTOR_WIZARD = True
@@ -111,7 +110,7 @@ def load_vector(path: pathlib.Path, chs: List[str] | None = None, detector_setti
                 
                 # If no channels matched (mask is all False), use all photons as fallback
                 if not mask.any():
-                    chisurf.logging.warning(f"No detector channels matched for {path.name}, using all photons")
+                    cs.logging.warning(f"No detector channels matched for {path.name}, using all photons")
                     valid = (microtimes >= 0) & (microtimes < n_tac)
                 else:
                     valid = (microtimes >= 0) & (microtimes < n_tac) & mask
@@ -121,7 +120,7 @@ def load_vector(path: pathlib.Path, chs: List[str] | None = None, detector_setti
             np.add.at(hist, microtimes[valid], 1)
             return hist.ravel()
         except Exception as e:
-            chisurf.logging.error(f"tttrlib failed to load {path}: {e}")
+            cs.logging.error(f"tttrlib failed to load {path}: {e}")
             return np.fromfile(path, dtype=np.float64).ravel().astype(float)
 
     elif ext == '.bst':

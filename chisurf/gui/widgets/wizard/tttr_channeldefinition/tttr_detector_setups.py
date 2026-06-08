@@ -1,11 +1,11 @@
 import json
 import pathlib
 
-from qtpy.QtWidgets import QMessageBox, QCheckBox
+from qtpy.QtWidgets import QCheckBox, QMessageBox
 
-from chisurf.core.settings.path_utils import get_path
 from chisurf.core.settings.file_utils import safe_open_file
-
+from chisurf.core.settings.path_utils import get_path
+from chisurf.gui.widgets.warning_once import mark_warning_shown, was_warning_shown
 
 DETECTOR_SETUPS_FILE = get_path('settings') / 'detector_setups.json'
 
@@ -44,7 +44,8 @@ def load_detector_setups(file_path=None):
         except Exception:
             pass
 
-        if show_warning and is_default and app_running:
+        if show_warning and is_default and app_running and not was_warning_shown("detector_setups_file"):
+            mark_warning_shown("detector_setups_file")
             msg = QMessageBox()
             msg.setWindowTitle("Detector setups file not found")
             msg.setIcon(QMessageBox.Warning)
@@ -66,7 +67,9 @@ def load_detector_setups(file_path=None):
 
             try:
                 if cb is not None and cb.isChecked():
-                    from chisurf.core.settings.settings_utils import set_warn_missing_detector_setups as _set_warn
+                    from chisurf.core.settings.settings_utils import (
+                        set_warn_missing_detector_setups as _set_warn,
+                    )
                     _set_warn(False)
                     try:
                         import chisurf.core.settings

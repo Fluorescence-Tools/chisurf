@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import pathlib
 
@@ -26,7 +27,7 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         if getattr(self, "_preview_filename", None) is not None:
             return pathlib.Path(self._preview_filename)
 
-        fn = chisurf.gui.widgets.open_files(
+        fn = cs.gui.widgets.open_files(
             description='RICS TTTR/TIFF file',
             file_type='All files (*.*)',
             working_path=None
@@ -310,9 +311,8 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
-        import chisurf
         try:
-            setup = chisurf.cs.current_setup
+            setup = cs.cs.current_setup
         except Exception:
             return
 
@@ -411,7 +411,6 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         through CLI-style assignments, making the state visible in the
         IPython/console layer.
         """
-        import chisurf
         routine = self.combo_routine.currentText()
 
         # Parse routing channel numbers from the line edit (comma/semicolon separated)
@@ -488,7 +487,7 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         setup_name_esc = setup_name.replace("'", "\\'")
         detector_name_esc = detector_name.replace("'", "\\'")
         try:
-            chisurf.run(
+            cs.run(
                 "\n".join(
                     [
                         f"cs.current_setup.reading_routine = '{routine}'",
@@ -672,7 +671,6 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         ROI/micro-time/parameter configuration shown in the preview.
         """
 
-        import chisurf
         import pathlib as _pathlib
 
         # Prefer the last dropped/previewed file. If none is available,
@@ -706,7 +704,7 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
         # Normalize path like the main window's onAddDataset implementation
         s = p.as_posix().replace("\\", "/")
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": s, "experiment_reader": None},
         )
@@ -714,7 +712,6 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
     def _load_preview_from_file(self, path: pathlib.Path) -> None:
         """Load RICS/intensity preview for a dropped TTTR/TIFF file."""
 
-        import chisurf
         import numpy as np
 
         try:
@@ -723,7 +720,7 @@ class RICSController(reader.ExperimentReaderController, QtWidgets.QWidget):
             pass
 
         try:
-            reader_obj = chisurf.cs.current_setup
+            reader_obj = cs.cs.current_setup
         except Exception:
             reader_obj = None
         if reader_obj is None:

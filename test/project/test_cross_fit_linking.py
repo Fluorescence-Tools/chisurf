@@ -1,11 +1,11 @@
 import unittest
 from unittest.mock import MagicMock
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting.fit
 import chisurf.core.fitting.parameter
 from chisurf.core.project import fit_state
 
-class MockFit(chisurf.core.base.Base):
+class MockFit(cs.core.base.Base):
     def __init__(self, name, uid):
         super().__init__()
         self.name = name
@@ -17,19 +17,19 @@ class MockFit(chisurf.core.base.Base):
 class TestCrossFitLinking(unittest.TestCase):
     def setUp(self):
         # Clear global fits
-        chisurf.fits = []
+        cs.fits = []
         
         # Create two fits with UIDs
         self.fit_a = MockFit("FitA", "UID-A")
         self.fit_b = MockFit("FitB", "UID-B")
         
         # Add to global registry
-        chisurf.fits.append(self.fit_a)
-        chisurf.fits.append(self.fit_b)
+        cs.fits.append(self.fit_a)
+        cs.fits.append(self.fit_b)
         
         # Setup parameters
-        self.pa = chisurf.core.fitting.parameter.FittingParameter(name="amp_a", value=1.0)
-        self.pb = chisurf.core.fitting.parameter.FittingParameter(name="amp_b", value=2.0)
+        self.pa = cs.core.fitting.parameter.FittingParameter(name="amp_a", value=1.0)
+        self.pb = cs.core.fitting.parameter.FittingParameter(name="amp_b", value=2.0)
         
         self.fit_a.model.parameters_all_dict = {"amp_a": self.pa}
         self.fit_b.model.parameters_all_dict = {"amp_b": self.pb}
@@ -52,7 +52,7 @@ class TestCrossFitLinking(unittest.TestCase):
         state = fit_state._model_to_state(self.fit_a.model)
         
         # Create fresh pa (new model for fit_a)
-        new_pa = chisurf.core.fitting.parameter.FittingParameter(name="amp_a", value=0.0)
+        new_pa = cs.core.fitting.parameter.FittingParameter(name="amp_a", value=0.0)
         new_model_a = MagicMock()
         new_model_a.parameters_all_dict = {"amp_a": new_pa}
         

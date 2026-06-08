@@ -5,9 +5,10 @@ from typing import Any
 import numpy as np
 from qtpy import QtWidgets, QtGui
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.plots
-from chisurf.core.models.model import ModelCurve, ModelWidget
+from chisurf.core.models.model import ModelCurve
+from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.fitting.parameter import FittingParameter
 
 from chisurf.core.models.rics.models import rics_simple, rics_diffusion_triplet
@@ -197,12 +198,12 @@ class RicsSimpleModel(ModelCurve):
 
     name = "RICS simple diffusion"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, fit: cs.core.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:
         """Initialize the RICS simple diffusion model.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             Fit object this model is attached to.
         """
         super().__init__(fit, *args, **kwargs)
@@ -419,7 +420,7 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
     try:
         plot_classes = [
             (
-                chisurf.gui.plots.Residual2DPlot,
+                cs.gui.plots.Residual2DPlot,
                 {
                     'accessor': get_rics_residual_image,
                     'accessor_kwargs': {
@@ -437,8 +438,8 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
                     'max_frames_accessor': get_rics_number_of_frames,
                 },
             ),
-            (chisurf.gui.plots.FitInfo, {}),
-            (chisurf.gui.plots.ParameterScanPlot, {}),
+            (cs.gui.plots.FitInfo, {}),
+            (cs.gui.plots.ParameterScanPlot, {}),
         ]
     except Exception:
         plot_classes = []
@@ -447,7 +448,7 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         icon: QtGui.QIcon | None = None,
         **kwargs: Any,
     ) -> None:
@@ -455,7 +456,7 @@ class RicsSimpleModelWidget(ModelWidget, RicsSimpleModel):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             Fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the widget tab.
@@ -504,12 +505,12 @@ class RicsTripletModel(ModelCurve):
 
     name = "RICS diffusion triplet"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, fit: cs.core.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:
         """Initialize the RICS diffusion + triplet model.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             Fit object this model is attached to.
         """
         super().__init__(fit, *args, **kwargs)
@@ -732,7 +733,7 @@ class RicsTripletModelWidget(ModelWidget, RicsTripletModel):
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         icon: QtGui.QIcon | None = None,
         **kwargs: Any,
     ) -> None:
@@ -740,7 +741,7 @@ class RicsTripletModelWidget(ModelWidget, RicsTripletModel):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             Fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the widget tab.

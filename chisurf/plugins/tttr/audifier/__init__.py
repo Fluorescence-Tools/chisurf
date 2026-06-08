@@ -8,7 +8,7 @@ icon = "🎵"  # Default musical note emoji
 
 # Import dynamic icon utilities
 try:
-    from .dynamic_icons import get_icon_manager
+    from chisurf.plugins.tttr.audifier.dynamic_icons import get_icon_manager
     _icon_manager = get_icon_manager()
     
     def get_current_icon():
@@ -30,14 +30,14 @@ except ImportError:
 
 def load():
     """Return the plugin's main widget instance."""
-    from .gui import TTTRAudifierWidget
+    from chisurf.plugins.tttr.audifier.gui import TTTRAudifierWidget
 
     return TTTRAudifierWidget()
 
 
 # Import lifetime analysis functions for direct access
 try:
-    from .lifetime_analysis import (
+    from chisurf.plugins.tttr.audifier.lifetime_analysis import (
         lifetime_spectrum_ilt,
         compute_lifetime_waterfall,
         plot_lifetime_waterfall,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 import chisurf.core.models
@@ -16,7 +16,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
     def __init__(
             self,
             donors,
-            model: chisurf.core.models.Model = None,
+            model: cs.core.models.Model = None,
             **kwargs
     ):
         """Initialize the instance."""
@@ -80,7 +80,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -98,7 +98,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         # Append a new discrete FRET-rate component to all fits in the
         # current fit group. The backend FRETrateModel exposes the
         # component group on the 'fret_rates' attribute.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": "fret_rates"},
         )
@@ -108,7 +108,7 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         """Handle remove FRET rate button click."""
         # Remove the last discrete FRET-rate component from all fits in the
         # current fit group.
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": "fret_rates"},
         )
@@ -126,11 +126,11 @@ class DiscreteDistanceWidget(fret.DiscreteDistance, QtWidgets.QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._distances[-1],
             layout=layout
         )
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._amplitudes[-1],
             layout=layout
         )

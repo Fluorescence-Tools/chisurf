@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import dot, log, sqrt
 from scipy.optimize import minimize
 
 import chisurf.core.settings
@@ -75,10 +74,10 @@ def maxent(
         tuple of (float, np.ndarray)
             Chi-squared value and gradient vector.
         """
-        Ax = dot(A, x)
+        Ax = np.dot(A, x)
         res = (Ax - b) / weights
-        grad_chi2 = 2.0 * dot(A.T, res)
-        grad_S = l2 * (1 + log(prior * x))
+        grad_chi2 = 2.0 * np.dot(A.T, res)
+        grad_S = l2 * (1 + np.log(prior * x))
 
         chi2 = sum(res**2)
         #return chi2, grad_chi2 + grad_S
@@ -106,16 +105,16 @@ def maxent(
                       })
     x = result.x
     # Summarize results #
-    res = dot(A, x) - b
+    res = np.dot(A, x) - b
 
-    grad_chi2 = 2.0 * dot(A.T, res)
-    norm_chi2 = sqrt(dot(grad_chi2, grad_chi2))
+    grad_chi2 = 2.0 * np.dot(A.T, res)
+    norm_chi2 = np.sqrt(np.dot(grad_chi2, grad_chi2))
 
-    grad_S = l2 * (1 + log(prior * x))
-    norm_S = sqrt(dot(grad_S, grad_S))
+    grad_S = l2 * (1 + np.log(prior * x))
+    norm_S = np.sqrt(np.dot(grad_S, grad_S))
 
     delta = (grad_chi2/norm_chi2-grad_S/norm_S)
-    dgrad = 0.5*sqrt(dot(delta, delta))
+    dgrad = 0.5*np.sqrt(np.dot(delta, delta))
 
     Q = norm_chi2-0.5*nu*norm_S
 

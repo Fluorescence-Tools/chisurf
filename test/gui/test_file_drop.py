@@ -22,44 +22,44 @@ from qtpy.QtCore import QMimeData, QUrl, Qt
 from qtpy.QtWidgets import QApplication
 from qtpy import QtGui
 
-import chisurf
+import chisurf as cs
 import chisurf.gui
 
-cs_app = chisurf.gui.get_app()
+cs_app = cs.gui.get_app()
 
 # Use local mode for dataset operations (avoids server RPC fallback warnings)
-if hasattr(chisurf, "api") and chisurf.core.api is not None:
-    chisurf.core.api.mode = "local"
+if hasattr(cs, "api") and cs.core.api is not None:
+    cs.core.api.mode = "local"
 
 
 def _count():
-    return len(getattr(chisurf, 'imported_datasets', []) or [])
+    return len(getattr(cs, 'imported_datasets', []) or [])
 
 
 def _clear():
-    chisurf.core.actions.dispatch(name="fit.close_all", payload={})
-    chisurf.imported_datasets.clear()
+    cs.core.actions.dispatch(name="fit.close_all", payload={})
+    cs.imported_datasets.clear()
 
 
 def _set_exp(exp_name, setup_name, **kw):
-    cs = chisurf.cs
-    idx = cs.comboBox_experimentSelect.findText(exp_name)
+    gui = cs.cs
+    idx = gui.comboBox_experimentSelect.findText(exp_name)
     if idx >= 0:
-        cs.comboBox_experimentSelect.setCurrentIndex(idx)
-        cs._refresh_experiment_ui()
-    idx = cs.comboBox_setupSelect.findText(setup_name)
+        gui.comboBox_experimentSelect.setCurrentIndex(idx)
+        gui._refresh_experiment_ui()
+    idx = gui.comboBox_setupSelect.findText(setup_name)
     if idx >= 0:
-        cs.comboBox_setupSelect.setCurrentIndex(idx)
-        cs._refresh_setup_ui()
+        gui.comboBox_setupSelect.setCurrentIndex(idx)
+        gui._refresh_setup_ui()
     for k, v in kw.items():
         try:
-            setattr(cs.current_setup, k, v)
+            setattr(gui.current_setup, k, v)
         except Exception:
             pass
 
 
 def _add_ds(filename):
-    chisurf.core.actions.dispatch(
+    cs.core.actions.dispatch(
         name="dataset.add",
         payload={"filename": filename, "experiment_reader": None},
     )
@@ -97,7 +97,7 @@ def test_fcs_kristine_drop_auto_reader_independent_of_current_setup():
     before = _count()
     _add_ds("./test/data/fcs/kristine/Kristine_with_error.cor")
     assert _count() == before + 1
-    loaded = chisurf.imported_datasets[-1]
+    loaded = cs.imported_datasets[-1]
     assert loaded.experiment.name == "FCS"
     # NOTE: ExperimentDataCurveGroup.filename is None for FCS data
     # due to a pre-existing bug where DataCurve.__init__ doesn't forward
@@ -169,12 +169,12 @@ def _sim_drop_direct(widget, paths):
 
 def test_drop_on_label():
     _clear()
-    cs = chisurf.cs
+    gui = cs.cs
     _set_exp("TCSPC", "TXT/CSV",
              skiprows=11, reading_routine='csv', is_jordi=False,
              use_header=True, matrix_columns=[], polarization='vm',
              rep_rate=10.0, dt=0.0141)
-    label = getattr(cs, 'label_filedrop', None)
+    label = getattr(gui, 'label_filedrop', None)
     if label is None:
         pytest.skip("No label_filedrop widget")
     before = _count()
@@ -186,7 +186,7 @@ def test_drop_on_label():
 
 def test_drop_on_selector():
     _clear()
-    cs = chisurf.cs
+    gui = cs.cs
     _set_exp("TCSPC", "TXT/CSV",
              skiprows=11, reading_routine='csv', is_jordi=False,
              use_header=True, matrix_columns=[], polarization='vm',
@@ -194,5 +194,5 @@ def test_drop_on_selector():
     before = _count()
     # Call dropEvent directly (sendEvent gets intercepted by QTreeWidget's
     # viewport event handling, which doesn't reach our override).
-    _sim_drop_direct(cs.dataset_selector, ["./test/data/tcspc/ibh_sample/Decay_577D.txt"])
+    _sim_drop_direct(gui.dataset_selector, ["./test/data/tcspc/ibh_sample/Decay_577D.txt"])
     assert _count() == before + 1

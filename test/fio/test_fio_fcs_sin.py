@@ -4,7 +4,7 @@ import pathlib
 
 import pytest
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio.fluorescence.fcs as fcs_io
 import chisurf.core.fio.fluorescence.fcs.sin_correlator as sin_reader
 

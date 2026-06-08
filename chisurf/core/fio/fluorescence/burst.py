@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from typing import Dict, Tuple
 
-import chisurf
+import chisurf as cs
 import numpy as np
 import pathlib
 import pandas as pd
@@ -87,7 +87,7 @@ def write_bv4_analysis(df: pd.DataFrame, analysis_folder: str = "analysis"):
         # Write the mini DataFrame to a .bv4 file using tab as the separator
         bv4_df.to_csv(bv4_filename, sep='\t', index=False)
 
-    chisurf.logging.info(f"BVA results have been written to .bv4 files in the '{bv4_folder}' directory.")
+    cs.logging.info(f"BVA results have been written to .bv4 files in the '{bv4_folder}' directory.")
 
 
 def get_indices_in_ranges(rout, mt, chs, micro_time_ranges):
@@ -601,7 +601,7 @@ def read_burst_analysis(
             df[column] = pd.to_numeric(df[column])
         except ValueError:
             if not is_first_file:  # Ignore conversion errors only for the first file
-                chisurf.logging.warning(f"read_burst_analysis: Could not convert {column} to numeric")
+                cs.logging.warning(f"read_burst_analysis: Could not convert {column} to numeric")
         is_first_file = False  # After processing the first file, set flag to False
 
     tttrs = dict()

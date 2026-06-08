@@ -10,7 +10,7 @@ import numba as nb
 import numpy as np
 import tables
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio as io
 
 
@@ -367,7 +367,7 @@ def iss_32(
 
 def iss_photons(
         data,
-        verbose: bool = chisurf.core.settings.cs_settings['verbose']
+        verbose: bool = cs.core.settings.cs_settings['verbose']
 ) -> typing.Tuple[
     np.array,
     np.array,
@@ -505,8 +505,8 @@ def ht3_header(
 def make_hdf(
         title: str = None,
         filename: str = None,
-        verbose: bool = chisurf.core.settings.cs_settings['verbose'],
-        complib: str = chisurf.core.settings.cs_settings['photons']['complib'],
+        verbose: bool = cs.core.settings.cs_settings['verbose'],
+        complib: str = cs.core.settings.cs_settings['photons']['complib'],
         driver: str = "H5FD_CORE",
         **kwargs
 ) -> tables.File:
@@ -518,12 +518,12 @@ def make_hdf(
     :return: hdf-file handle (pytables)
     """
     if title is None:
-        title = str(chisurf.core.settings.cs_settings['photons']['title'])
+        title = str(cs.core.settings.cs_settings['photons']['title'])
     if filename is None:
         _, filename = tempfile.mkstemp(
             suffix=".photons.h5"
         )
-    complevel = kwargs.get('', int(chisurf.core.settings.cs_settings['photons']['complevel']))
+    complevel = kwargs.get('', int(cs.core.settings.cs_settings['photons']['complevel']))
     if verbose:
         print("-------------------------------------------")
         print("Make Photon HDF-File")
@@ -681,7 +681,7 @@ def spc2hdf(
         spc_files: typing.List[str],
         routine_name: str = "bh132",
         title: str = "spc",
-        verbose: bool = chisurf.core.settings.cs_settings['verbose'],
+        verbose: bool = cs.core.settings.cs_settings['verbose'],
         filename: str = None,
         **kwargs
 ):
@@ -711,11 +711,11 @@ def spc2hdf(
     To an existing HDF-File simply a new group with the title will be created
     After finished work with the HDF-File it should be closed.
 
-    >>> import chisurf.core.fio.tttr  # doctest: +SKIP
-    >>> import chisurf.core.fio.photons  # doctest: +SKIP
+    >>> import cs.core.fio.tttr  # doctest: +SKIP
+    >>> import cs.core.fio.photons  # doctest: +SKIP
     >>> import glob  # doctest: +SKIP
     >>> spc_files = glob.glob('./test/data/tttr/BH/132/*.spc')  # doctest: +SKIP
-    >>> h5 = chisurf.core.fio.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')  # doctest: +SKIP
+    >>> h5 = cs.core.fio.tttr.spc2hdf(spc_files, filename='test.h5', title='hGBP1_18D')  # doctest: +SKIP
     >>> h5.close()  # doctest: +SKIP
 
     """
@@ -793,11 +793,11 @@ def read_header(
 
     Reading Seidel-BID files
 
-    >>> import glob, chisurf.core.fio.tttr  # doctest: +SKIP
+    >>> import glob, cs.core.fio.tttr  # doctest: +SKIP
     >>> directory = "./test/data/tttr/BH/hGBP1_18D"  # doctest: +SKIP
     >>> spc_files = glob.glob(directory+'/*.spc')  # doctest: +SKIP
     >>> b = np.fromfile(spc_files[0], dtype=np.uint8)  # doctest: +SKIP
-    >>> header = chisurf.core.fio.tttr.read_header(b, 'bh132')  # doctest: +SKIP
+    >>> header = cs.core.fio.tttr.read_header(b, 'bh132')  # doctest: +SKIP
     >>> print(header)  # doctest: +SKIP
     {'MTCLK': 13.6, 'DINV': 0, 'nEvents': 1200000}
 

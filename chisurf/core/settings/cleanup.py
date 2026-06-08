@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import os
 import shutil
@@ -14,7 +15,7 @@ def clear_settings_folder():
     This function walks through the directory returned by `get_path()` and:
       - Recursively deletes each subdirectory (skipping over any files it cannot remove),
       - Deletes each settings file at the top level (skipping log files),
-      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
+      - Logs a concise warning via `cs.logging.warning()` (max 128 chars)
         for any file or directory that cannot be deleted.
 
     The root settings folder itself is left intact, even if not empty.
@@ -22,8 +23,6 @@ def clear_settings_folder():
     Raises:
         None. All deletion errors are caught and logged.
     """
-    import chisurf
-
     root = get_path()
 
     # Helper to warn on failed removals inside rmtree()
@@ -31,7 +30,7 @@ def clear_settings_folder():
         ex = exc_info[1]
         # Only skip PermissionErrors (file-in-use, etc.)
         if isinstance(ex, PermissionError):
-            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
+            cs.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
             return
         # Propagate everything else
         raise ex
@@ -53,15 +52,15 @@ def clear_settings_folder():
                     # Remove a single file
                     os.unlink(path)
         except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
+            cs.logging.warning(f"Skipping locked file or folder: {path}")
         except OSError as e:
             # e.errno==ENOTEMPTY can happen if subdir isn't empty (due to skips)
-            chisurf.logging.warning(f"Couldn't remove {path}")
+            cs.logging.warning(f"Couldn't remove {path}")
 
 
 def clear_user_plugins_folder():
     """
-    Remove all contents of the user plugins folder (~/.chisurf/plugins).
+    Remove all contents of the user plugins folder (~/.cs/plugins).
 
     This function removes all files and directories inside the user plugins
     directory but leaves the directory itself intact.
@@ -69,9 +68,7 @@ def clear_user_plugins_folder():
     Raises:
         None. All deletion errors are caught and logged.
     """
-    import chisurf
-
-    user_plugins_dir = pathlib.Path.home() / '.chisurf' / 'plugins'
+    user_plugins_dir = pathlib.Path.home() / '.cs' / 'plugins'
 
     # If the user plugins directory doesn't exist, nothing to do
     if not user_plugins_dir.is_dir():
@@ -82,7 +79,7 @@ def clear_user_plugins_folder():
         ex = exc_info[1]
         # Only skip PermissionErrors (file-in-use, etc.)
         if isinstance(ex, PermissionError):
-            chisurf.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
+            cs.logging.warning(f"Could not delete {path}: {ex}. Skipping.")
             return
         # Propagate everything else
         raise ex
@@ -98,9 +95,9 @@ def clear_user_plugins_folder():
                 # Remove a single file
                 os.unlink(path)
         except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked file or folder: {path}")
+            cs.logging.warning(f"Skipping locked file or folder: {path}")
         except OSError as e:
-            chisurf.logging.warning(f"Couldn't remove {path}")
+            cs.logging.warning(f"Couldn't remove {path}")
 
 
 def clear_logging_files():
@@ -109,7 +106,7 @@ def clear_logging_files():
 
     This function walks through the logs directory inside the settings folder and:
       - Deletes each log file (files ending with .log or .py),
-      - Logs a concise warning via `chisurf.logging.warning()` (max 128 chars)
+      - Logs a concise warning via `cs.logging.warning()` (max 128 chars)
         for any file that cannot be deleted.
 
     The logs folder itself is left intact, even if not empty.
@@ -117,8 +114,6 @@ def clear_logging_files():
     Raises:
         None. All deletion errors are caught and logged.
     """
-    import chisurf
-
     root = get_path()
     logs_folder = root / "logs"
 
@@ -135,6 +130,6 @@ def clear_logging_files():
                 if str(path).endswith('.log') or str(path).endswith('.py'):
                     os.unlink(path)
         except PermissionError as e:
-            chisurf.logging.warning(f"Skipping locked file: {path}")
+            cs.logging.warning(f"Skipping locked file: {path}")
         except OSError as e:
-            chisurf.logging.warning(f"Couldn't remove file: {path}")
+            cs.logging.warning(f"Couldn't remove file: {path}")

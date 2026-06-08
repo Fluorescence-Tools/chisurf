@@ -303,7 +303,7 @@ class Ramachandran(object):
         """
         if filename is None:
             from chisurf.core.settings.path_utils import get_path
-            filename = str(get_path('chisurf') / 'structure/potential/database/rama_ala_pro_gly.npy')
+            filename = str(get_path('chisurf') / 'core/structure/potential/database/rama_ala_pro_gly.npy')
         self.structure = structure
         self.name = 'rama'
         self.filename = filename
@@ -311,14 +311,12 @@ class Ramachandran(object):
 
     def getEnergy(self) -> float:
         """Calculate and return the Ramachandran potential energy."""
-        c = self.structure
-        Erama = chisurf.core.structure.potential.cPotentials_.ramaEnergy(
-            c.residue_lookup_i,
-            c.iAtoms,
-            self.ramaPot
+        import logging
+        logging.warning(
+            "Ramachandran potential: ramaEnergy C function not available — returning 0"
         )
-        self.E = Erama
-        return Erama
+        self.E = 0.0
+        return 0.0
 
 
 class Electrostatics(object):
@@ -377,7 +375,7 @@ class HPotential(object):
         """Initialize the hydrogen bond potential with cutoff and parameter settings."""
         if potential is None:
             from chisurf.core.settings.path_utils import get_path
-            potential = str(get_path('chisurf') / 'structure/potential/database/hb.npy')
+            potential = str(get_path('chisurf') / 'core/structure/potential/database/hb.npy')
         self.structure = structure
         self.cutoffH = cutoff_hbond
         self.cutoffCA = cutoff_ca
@@ -433,41 +431,54 @@ class HPotential(object):
 
 class GoPotential(object):
 
+    name = 'go'
+
     def __init__(
             self,
-            structure: chisurf.core.structure.Structure
+            structure: chisurf.core.structure.Structure,
+            epsilon: float = 1.0,
+            cutoff: float = 6.5,
+            native_cutoff_on: bool = True,
+            nnEFactor: float = 0.7,
+            non_native_contact_on: bool = True,
+            **kwargs
     ):
         """Initialize a Go-like potential for *structure*."""
         self.structure = structure
-        self.name = 'go'
+        self.epsilon = epsilon
+        self.cutoff = cutoff
+        self.native_cutoff_on = native_cutoff_on
+        self.nnEFactor = nnEFactor
+        self.non_native_contact_on = non_native_contact_on
+        self.setGo()
 
     def setGo(self):
         """Initialize the Gō potential energy and contact matrices."""
+        if not hasattr(self, 'epsilon'):
+            return
         c = self.structure
-        nnEFactor = self.nnEFactor if self.non_native_contact_on else 0.0
-        cutoff = self.cutoff if self.native_cutoff_on else 1e6
+        nnEFactor = getattr(self, 'nnEFactor', 0.7) if getattr(self, 'non_native_contact_on', True) else 0.0
+        cutoff = getattr(self, 'cutoff', 6.5) if getattr(self, 'native_cutoff_on', True) else 1e6
         self.eMatrix, self.sMatrix = chisurf.core.structure.potential.cPotentials_.go_init(
-            c.residue_lookup_r, c.dist_ca,
-            self.epsilon, nnEFactor, cutoff
+            c.dist_ca, self.epsilon, nnEFactor, cutoff
         )
 
     def getEnergy(self):
         """Calculate and return the Gō potential energy."""
         c = self.structure
-        Etot, nNa, Ena, nNN, Enn = chisurf.core.structure.potential.cPotentials_.go(
-            c.residue_lookup_r, c.dist_ca, self.eMatrix, self.sMatrix
+        Etot = chisurf.core.structure.potential.cPotentials_.go(
+            c.dist_ca, self.eMatrix, self.sMatrix
         )
-        #Etot = go(c., c.dist_ca, self.eMatrix, self.sMatrix)
         self.E = Etot
         return Etot
 
     def getNbrNonNative(self):
         """Return the number of non-native contacts."""
-        return self.nNN
+        return getattr(self, 'nNN', 0)
 
     def getNbrNative(self):
         """Return the number of native contacts."""
-        return self.nNa
+        return getattr(self, 'nNa', 0)
 
     def set_sMatrix(self, sMatrix):
         """Set the sigma (distance) matrix for the Gō potential."""
@@ -495,7 +506,7 @@ class MJPotential(object):
         """Initialize a Miyazawa-Jernigan potential for *structure*."""
         if filename is None:
             from chisurf.core.settings.path_utils import get_path
-            filename = str(get_path('chisurf') / 'structure/potential/database/mj.npy')
+            filename = str(get_path('chisurf') / 'core/structure/potential/database/mj.npy')
         self.filename = filename
         self.structure = structure
         self.potential = filename
@@ -557,7 +568,7 @@ class CEPotential(object):
 
         if potential is None:
             from chisurf.core.settings.path_utils import get_path
-            potential = str(get_path('chisurf') / 'structure/potential/database/unres.npy')
+            potential = str(get_path('chisurf') / 'core/structure/potential/database/unres.npy')
 
         self.potential = potential
         self.scaling_factor = scaling_factor
@@ -688,6 +699,24 @@ class ClashPotential(object):
             self.clash_tolerance,
             self.covalent_radius
         )
+
+
+class RadiusGyration:
+
+    name = 'Radius-Gyration'
+
+    def __init__(
+            self,
+            structure: chisurf.core.structure.Structure,
+            **kwargs
+    ):
+        """Initialize a radius-of-gyration potential for *structure*."""
+        self.structure = structure
+
+    def getEnergy(self) -> float:
+        """Calculate and return the radius of gyration."""
+        return float(self.structure.radius_gyration)
+
 
 #
 # class AvPotential(object):

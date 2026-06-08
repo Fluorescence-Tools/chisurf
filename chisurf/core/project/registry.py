@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import threading
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -221,19 +222,18 @@ def get_parameter(uid: str) -> Optional[Any]:
 def sync_from_runtime() -> None:
     """Sync registry with current runtime state.
 
-    Scans chisurf.fits and chisurf.imported_datasets and populates
+    Scans cs.fits and cs.imported_datasets and populates
     the registry with their UIDs.
     """
-    import chisurf
     reg = get_registry()
     reg.clear()
 
-    for ds in getattr(chisurf, "imported_datasets", []):
+    for ds in getattr(cs, "imported_datasets", []):
         uid = getattr(ds, "unique_identifier", None)
         if uid:
             reg.register_dataset(uid, ds)
 
-    for fg in getattr(chisurf, "fits", []):
+    for fg in getattr(cs, "fits", []):
         uid = getattr(fg, "unique_identifier", None)
         if uid:
             reg.register_fit(uid, fg)

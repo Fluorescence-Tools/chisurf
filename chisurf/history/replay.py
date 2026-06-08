@@ -523,8 +523,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
     - setup: experiment and setup state
     - models: model component and configuration state
     """
-    import chisurf
-
+    import chisurf as cs
     snapshot: typing.Dict[str, typing.Any] = {
         "navigation": {},
         "parameters": {},
@@ -534,7 +533,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
     }
 
     try:
-        datasets = list(getattr(chisurf, "imported_datasets", []))
+        datasets = list(getattr(cs, "imported_datasets", []))
         dataset_names = []
         dataset_uids = []
         for ds in datasets:
@@ -550,7 +549,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
-        current_ds = getattr(chisurf, "current_data", None)
+        current_ds = getattr(cs, "current_data", None)
         if current_ds is not None:
             snapshot["navigation"]["selected_dataset"] = str(getattr(current_ds, "name", ""))
             snapshot["navigation"]["selected_dataset_uid"] = str(getattr(current_ds, "unique_identifier", ""))
@@ -558,7 +557,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
-        fits = list(getattr(chisurf, "fits", []))
+        fits = list(getattr(cs, "fits", []))
         fit_names = []
         fit_uids = []
         for fg in fits:
@@ -574,7 +573,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
-        current_fit = getattr(chisurf, "current_fit", None)
+        current_fit = getattr(cs, "current_fit", None)
         if current_fit is not None:
             snapshot["navigation"]["selected_fit"] = str(getattr(current_fit, "name", ""))
             snapshot["navigation"]["selected_fit_uid"] = str(getattr(current_fit, "unique_identifier", ""))
@@ -582,7 +581,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
-        fits = list(getattr(chisurf, "fits", []))
+        fits = list(getattr(cs, "fits", []))
         param_state: typing.Dict[str, typing.Dict[str, typing.Any]] = {}
         for fg in fits:
             fg_name = str(getattr(fg, "name", ""))
@@ -660,7 +659,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
 
     try:
         # Capture model state
-        fits = list(getattr(chisurf, "fits", []))
+        fits = list(getattr(cs, "fits", []))
         model_state: typing.Dict[str, typing.Dict[str, typing.Any]] = {}
         for fg in fits:
             fg_name = str(getattr(fg, "name", ""))
@@ -732,7 +731,7 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
-        fits = list(getattr(chisurf, "fits", []))
+        fits = list(getattr(cs, "fits", []))
         fit_range_state: typing.Dict[str, typing.Dict[str, int]] = {}
         for fg in fits:
             fg_name = str(getattr(fg, "name", ""))
@@ -751,10 +750,10 @@ def capture_domain_snapshot() -> typing.Dict[str, typing.Any]:
         pass
 
     try:
-        experiment = getattr(chisurf, "experiment", None)
+        experiment = getattr(cs, "experiment", None)
         if experiment is not None:
             snapshot["setup"]["experiment"] = str(getattr(experiment, "name", ""))
-        setup = getattr(chisurf, "setup", None)
+        setup = getattr(cs, "setup", None)
         if setup is not None:
             snapshot["setup"]["setup"] = str(getattr(setup, "name", ""))
     except Exception:
@@ -852,7 +851,6 @@ def sync_domain_entities(
     This identifies missing or extra entities by UID and uses action services
     to reconcile them, with history recording suppressed.
     """
-    import chisurf
     import chisurf.core.actions as actions
 
     target_ds_uids = set(target_nav_state.get("dataset_uids", []))
@@ -860,11 +858,11 @@ def sync_domain_entities(
 
     current_ds_uids = {
         str(getattr(ds, "unique_identifier", ""))
-        for ds in getattr(chisurf, "imported_datasets", [])
+        for ds in getattr(cs, "imported_datasets", [])
     }
     current_fit_uids = {
         str(getattr(f, "unique_identifier", ""))
-        for f in getattr(chisurf, "fits", [])
+        for f in getattr(cs, "fits", [])
     }
 
     # Identify missing UIDs
@@ -873,16 +871,16 @@ def sync_domain_entities(
 
     # Identify extra UIDs
     extra_ds_indices = [
-        i for i, ds in enumerate(getattr(chisurf, "imported_datasets", []))
+        i for i, ds in enumerate(getattr(cs, "imported_datasets", []))
         if str(getattr(ds, "unique_identifier", "")) not in target_ds_uids
         and str(getattr(ds, "name", "")) != "Global Dataset"
     ]
     extra_fit_indices = [
-        i for i, f in enumerate(getattr(chisurf, "fits", []))
+        i for i, f in enumerate(getattr(cs, "fits", []))
         if str(getattr(f, "unique_identifier", "")) not in target_fit_uids
     ]
 
-    history = getattr(chisurf, "history", None)
+    history = getattr(cs, "history", None)
     if history is None:
         return
 
@@ -899,7 +897,7 @@ def sync_domain_entities(
             # 2a. Build UID -> Current Index map for resolving dependencies
             uid_to_idx = {
                 str(getattr(ds, "unique_identifier", "")): i
-                for i, ds in enumerate(getattr(chisurf, "imported_datasets", []))
+                for i, ds in enumerate(getattr(cs, "imported_datasets", []))
             }
 
             # Map UID -> Event for creation actions
@@ -951,7 +949,7 @@ def sync_domain_entities(
                     # Update uid_to_idx after adding
                     uid_to_idx = {
                         str(getattr(ds, "unique_identifier", "")): i
-                        for i, ds in enumerate(getattr(chisurf, "imported_datasets", []))
+                        for i, ds in enumerate(getattr(cs, "imported_datasets", []))
                     }
 
             # Replay missing fits

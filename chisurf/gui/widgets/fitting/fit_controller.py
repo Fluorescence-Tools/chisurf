@@ -11,7 +11,7 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
-import chisurf
+import chisurf as cs
 import chisurf.logging
 import chisurf.core.data
 import chisurf.core.fitting
@@ -51,7 +51,7 @@ class SamplerWorker(QtCore.QObject):
             def _prog(done, total):
                 self.progress.emit(int(done), int(total))
 
-            chisurf.core.fitting.fit.sample_fit(
+            cs.core.fitting.fit.sample_fit(
                 self.fit,
                 self.target_directory,
                 check_cancel=self.check_cancel,
@@ -61,7 +61,7 @@ class SamplerWorker(QtCore.QObject):
             self.finished.emit(True)
         except Exception as e:
             try:
-                chisurf.logging.error(f"Sampling worker error: {e}")
+                cs.logging.error(f"Sampling worker error: {e}")
             except Exception:
                 pass
             self.finished.emit(False)
@@ -130,7 +130,7 @@ class FittingControllerWidget(Controller):
         try:
             source_uid = str(getattr(self.fit, "unique_identifier", ""))
             if str(action_type) in {"fit_run_start", "fit_run_finish", "fit_run_abort"}:
-                chisurf.core.actions.dispatch(
+                cs.core.actions.dispatch(
                     name=str(action_type).replace("_", "."),
                     payload=payload or {},
                 )
@@ -145,7 +145,7 @@ class FittingControllerWidget(Controller):
         except Exception:
             pass
         try:
-            chisurf.logging.info(f"# HIST {action_type}: {summary}")
+            cs.logging.info(f"# HIST {action_type}: {summary}")
         except Exception:
             pass
 
@@ -212,9 +212,9 @@ class FittingControllerWidget(Controller):
     def change_dataset(self) -> None:
         dataset = self.curve_select.selected_dataset
         try:
-            fit_index = chisurf.fits.index(self.fit)
-            dataset_index = chisurf.imported_datasets.index(dataset)
-            chisurf.core.actions.dispatch(
+            fit_index = cs.fits.index(self.fit)
+            dataset_index = cs.imported_datasets.index(dataset)
+            cs.core.actions.dispatch(
                 name="fit.set_dataset",
                 payload={
                     "fit_index": int(fit_index),
@@ -242,7 +242,7 @@ class FittingControllerWidget(Controller):
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup = None,
+            fit: cs.core.fitting.fit.FitGroup = None,
             hide_fit_button: bool = False,
             hide_range: bool = False,
             hide_fitting: bool = False,
@@ -252,7 +252,7 @@ class FittingControllerWidget(Controller):
         super().__init__(*args, **kwargs)
 
         self.fit = fit
-        self.curve_select = chisurf.gui.widgets.experiments.widgets.ExperimentalDataSelector(
+        self.curve_select = cs.gui.widgets.experiments.widgets.ExperimentalDataSelector(
             parent=None,
             fit=fit,
             change_event=self.change_dataset,
@@ -326,16 +326,132 @@ class FittingControllerWidget(Controller):
         if hide_fitting:
             self.hide()
 
+        self._apply_proteinmc_controls()
+
+        try:
+            self.comboBox.currentIndexChanged.connect(lambda *_args: self._apply_proteinmc_controls())
+        except Exception:
+            pass
+
         try:
             self._install_code_badge()
         except Exception:
             pass
 
+    def _apply_proteinmc_controls(self) -> None:
+        """Disable generic fitting controls when this controller hosts ProteinMC."""
+
+        if self._is_proteinmc_fit():
+            self.actionFit.setEnabled(False)
+            self.groupBox.hide()
+        else:
+            self.groupBox.show()
+            self.actionFit.setEnabled(True)
+            self.button_fit.setEnabled(True)
+
+        if self._model_sampling_handler() is not None or self._is_proteinmc_fit():
+            self.button_sample.setToolTip(
+                "Start model-defined sampling. For ProteinMC, run length is controlled "
+                "by the MC trials, Save every, and Max frames fields below."
+            )
+        if self._is_proteinmc_fit():
+            self.doubleSpinBox.setEnabled(True)
+            self.doubleSpinBox.setToolTip("ProteinMC MC trials, in thousands.")
+            self.spinBox_5.setEnabled(True)
+            self.spinBox_5.setToolTip("Number of independent ProteinMC runs to launch.")
+            steps_label = getattr(self, "label", None)
+            if steps_label is not None:
+                steps_label.setEnabled(True)
+                steps_label.setToolTip("ProteinMC MC trials, in thousands.")
+            runs_label = getattr(self, "label_2", None)
+            if runs_label is not None:
+                runs_label.setEnabled(True)
+                runs_label.setToolTip("Number of independent ProteinMC runs to launch.")
+        else:
+            for widget in (self.doubleSpinBox, self.spinBox_5):
+                widget.setEnabled(True)
+                widget.setToolTip("")
+            for widget_name in ("label", "label_2"):
+                widget = getattr(self, widget_name, None)
+                if widget is not None:
+                    widget.setEnabled(True)
+                    widget.setToolTip("")
+    def _candidate_sampling_models(self) -> list:
+        """Return models that may handle the Sampling button themselves."""
+
+        models = []
+
+        direct_model = getattr(self.fit, "model", None)
+        if direct_model is not None:
+            models.append(direct_model)
+        selected_fit = getattr(self.fit, "selected_fit", None)
+        selected_model = getattr(selected_fit, "model", None)
+        if selected_model is not None and selected_model not in models:
+            models.append(selected_model)
+
+        fits = []
+        grouped_fits = getattr(self.fit, "grouped_fits", None)
+        if grouped_fits:
+            try:
+                fits.extend(list(grouped_fits))
+            except Exception:
+                pass
+        if not fits:
+            try:
+                fits = list(self.fit)
+            except Exception:
+                fits = [self.fit]
+        try:
+            index = int(self.selected_fit)
+        except Exception:
+            index = 0
+        if index < 0 or index >= len(fits):
+            index = 0
+        fit = fits[index] if fits else self.fit
+        model = getattr(fit, "model", None)
+        if model is not None and model not in models:
+            models.append(model)
+        for fit in fits:
+            model = getattr(fit, "model", None)
+            if model is not None and model not in models:
+                models.append(model)
+        return models
+
+    def _model_sampling_handler(self):
+        """Return a model-defined Sampling-button handler if one exists."""
+
+        for model in self._candidate_sampling_models():
+            for method_name in ("run_sampling", "sample", "on_sample", "start_sampling"):
+                method = getattr(model, method_name, None)
+                if callable(method):
+                    return method
+        return None
+
+    def _is_proteinmc_fit(self) -> bool:
+        """Return True if any candidate model is ProteinMC."""
+
+        for model in self._candidate_sampling_models():
+            model_name = str(getattr(model, "name", "") or getattr(model.__class__, "name", ""))
+            class_name = str(getattr(model.__class__, "__name__", ""))
+            if model_name == "ProteinMC" or class_name == "ProteinMCModelWidget":
+                return True
+        return False
+
+    def _proteinmc_model_widget(self):
+        """Return the active ProteinMC model widget, if this fit uses one."""
+
+        for model in self._candidate_sampling_models():
+            model_name = str(getattr(model, "name", "") or getattr(model.__class__, "name", ""))
+            class_name = str(getattr(model.__class__, "__name__", ""))
+            if model_name == "ProteinMC" or class_name == "ProteinMCModelWidget":
+                return model
+        return None
+
     def _install_code_badge(self):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -349,34 +465,59 @@ class FittingControllerWidget(Controller):
 
     def _result_changed(self):
         result_idx = self.spinBox_3.value() - 1
-        chisurf.run(f"chisurf.fits[{self.fit.fit_idx}].set_result_idx({result_idx})")
+        cs.run(f"cs.fits[{self.fit.fit_idx}].set_result_idx({result_idx})")
 
     def onDatasetChanged(self):
-        chisurf.run(f"chisurf.macros.change_selected_fit_of_group({self.selected_fit})")
+        cs.run(f"cs.macros.change_selected_fit_of_group({self.selected_fit})")
 
     def onErrorEstimate(self):
+        sampling_handler = self._model_sampling_handler()
+        if sampling_handler is not None:
+            target_dir, _ = cs.gui.widgets.get_directory(caption="Select Sampling Output Folder")
+            if target_dir is None:
+                cs.logging.info("Model-defined sampling canceled!")
+                return
+            try:
+                sampling_handler(
+                    output_directory=target_dir,
+                    run_count=self.n_runs,
+                    n_iter=self.n_steps,
+                )
+            except TypeError:
+                try:
+                    sampling_handler(output_directory=target_dir, run_count=self.n_runs)
+                except TypeError:
+                    try:
+                        sampling_handler(output_directory=target_dir)
+                    except TypeError:
+                        sampling_handler(target_dir)
+            return
+        if self._is_proteinmc_fit():
+            cs.logging.warning("ProteinMC must handle Sampling itself; refusing to run generic emcee sampling.")
+            return
+
         fit_name = str(getattr(self.fit, "name", ""))
-        chisurf.logging.info(f"Sampling analysis: {fit_name}")
-        target_dir, _ = chisurf.gui.widgets.get_directory(caption="Select Target Folder for Sampling Results")
+        cs.logging.info(f"Sampling analysis: {fit_name}")
+        target_dir, _ = cs.gui.widgets.get_directory(caption="Select Target Folder for Sampling Results")
         if target_dir is None:
-            chisurf.logging.info("Sampling canceled!")
+            cs.logging.info("Sampling canceled!")
             return
         
         target_dir_str = str(target_dir)
         
-        kw = chisurf.core.settings.cs_settings['optimization']['sampling'].copy()
+        kw = cs.core.settings.cs_settings['optimization']['sampling'].copy()
         kw['n_runs'] = self.n_runs
         kw['steps'] = self.n_steps
         
         # GUI Progress Integration
         dialog = None
         try:
-            wrapped_name = chisurf.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
+            wrapped_name = cs.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
         except Exception:
             wrapped_name = fit_name
         base_label = f"Sampling {wrapped_name}..."
         try:
-            dialog = chisurf.gui.widgets.progress.EnhancedProgressDialog(
+            dialog = cs.gui.widgets.progress.EnhancedProgressDialog(
                 title="Sampling",
                 label_text=base_label,
                 min_value=0,
@@ -417,7 +558,7 @@ class FittingControllerWidget(Controller):
                 dialog.finish(final_text=final_text, auto_close=True)
             thread.quit()
             thread.wait()
-            chisurf.logging.info(f"Sampling {'done' if success else 'failed/aborted'}!")
+            cs.logging.info(f"Sampling {'done' if success else 'failed/aborted'}!")
 
         def _on_cancel():
             worker.cancel()
@@ -434,14 +575,18 @@ class FittingControllerWidget(Controller):
         self._sampling_worker = worker
 
     def _run_fit_impl(self):
+        if self._proteinmc_model_widget() is not None:
+            self._apply_proteinmc_controls()
+            cs.logging.info("ProteinMC does not use generic Fit. Use Sampling to start ProteinMC.")
+            return
         try:
             fit_name = str(getattr(self.fit, "name", ""))
         except Exception:
             fit_name = ""
-        chisurf.logging.info(f"Please wait fitting: {fit_name}")
+        cs.logging.info(f"Please wait fitting: {fit_name}")
 
         try:
-            wrapped_name = chisurf.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
+            wrapped_name = cs.gui.widgets.progress.wrap_text(fit_name, width=48, max_lines=3)
         except Exception:
             wrapped_name = fit_name
         if "\n" in wrapped_name:
@@ -469,7 +614,7 @@ class FittingControllerWidget(Controller):
         try:
             # Create a modal progress dialog if the GUI helpers are available.
             try:
-                dialog = chisurf.gui.widgets.progress.EnhancedProgressDialog(
+                dialog = cs.gui.widgets.progress.EnhancedProgressDialog(
                     title="Fitting",
                     label_text=base_label,
                     min_value=0,
@@ -565,19 +710,19 @@ class FittingControllerWidget(Controller):
                     progress_callback=_on_progress,
                 )
             except OptimizationCancelled:
-                chisurf.logging.info("Fitting cancelled by user.")
+                cs.logging.info("Fitting cancelled by user.")
                 success = False
             else:
                 # Finalize model and parameter controllers as before.
                 self.fit.model.finalize()
-                for pa in chisurf.core.fitting.parameter.FittingParameter.get_instances():
+                for pa in cs.core.fitting.parameter.FittingParameter.get_instances():
                     try:
                         pa.controller.finalize()
                     except (AttributeError, RuntimeError, TypeError):
-                        chisurf.logging.warning(
+                        cs.logging.warning(
                             f"Fitting parameter {pa.name} does not have a controller to update."
                         )
-                chisurf.logging.info("Fitting finished!")
+                cs.logging.info("Fitting finished!")
                 success = True
 
                 # Update fit result selector
@@ -590,7 +735,7 @@ class FittingControllerWidget(Controller):
                     final_text = "Fitting finished!" if success else "Fitting aborted."
                     # Close immediately by default; user can override via settings.
                     try:
-                        delay_ms = int(chisurf.core.settings.gui.get('fit_progress_close_delay_ms', 0))
+                        delay_ms = int(cs.core.settings.gui.get('fit_progress_close_delay_ms', 0))
                     except Exception:
                         delay_ms = 0
                     dialog.finish(final_text=final_text, auto_close=True, close_delay_ms=delay_ms)
@@ -620,7 +765,12 @@ class FittingControllerWidget(Controller):
         )
 
     def onRunFit(self):
-        chisurf.core.actions.dispatch(
+        proteinmc_model = self._proteinmc_model_widget()
+        if proteinmc_model is not None:
+            self._apply_proteinmc_controls()
+            cs.logging.info("ProteinMC does not use generic Fit. Use Sampling to start ProteinMC.")
+            return
+        cs.core.actions.dispatch(
             name="fit.run.execute",
             payload={"fit_controller": self},
         )
@@ -658,7 +808,7 @@ class FittingControllerWidget(Controller):
         self.spinBox_6.setValue(v)
 
     def onFitRangeChanged(self, event, xmin: int = None, xmax: int = None):
-        chisurf.logging.info(f'onFitRangeChanged: {xmin, xmax}')
+        cs.logging.info(f'onFitRangeChanged: {xmin, xmax}')
         if xmin is not None:
             self.xmin = xmin
         if xmax is not None:
@@ -667,7 +817,7 @@ class FittingControllerWidget(Controller):
             # Apply directly to this widget's fit to avoid depending on cs.current_fit
             self.fit.fit_range = (self.xmin, self.xmax)
         except Exception as e:
-            chisurf.logging.warning(f'Failed to set fit range directly: {e}')
+            cs.logging.warning(f'Failed to set fit range directly: {e}')
         # For intrinsically 2D datasets (PDA/RICS), update the Fit/FitGroup
         # mask from the four spin boxes interpreted as (x_min, x_max,
         # y_min, y_max) indices on the underlying 2D grid.
@@ -675,7 +825,7 @@ class FittingControllerWidget(Controller):
             try:
                 self._update_2d_mask_from_spinboxes()
             except Exception as e:
-                chisurf.logging.warning(f'Failed to update 2D mask from spinboxes: {e}')
+                cs.logging.warning(f'Failed to update 2D mask from spinboxes: {e}')
         # Avoid deep re-entrant updates when auto-fit-range is already
         # driving a fit update.
         if getattr(self, '_auto_fit_range_in_progress', False):
@@ -690,7 +840,7 @@ class FittingControllerWidget(Controller):
             return
         try:
             fit_range = reader.autofitrange(data)
-            chisurf.logging.info(f'onAutoFitRange: {fit_range}')
+            cs.logging.info(f'onAutoFitRange: {fit_range}')
             xmin_1d, xmax_1d = fit_range
 
             # Guard against re-entrant updates when auto-fit-range is itself
@@ -731,13 +881,13 @@ class FittingControllerWidget(Controller):
                     try:
                         self.fit.fit_range = (0, n_flat)
                     except Exception as e:
-                        chisurf.logging.warning(f'Failed to set 1D fit range during 2D auto-fit: {e}')
+                        cs.logging.warning(f'Failed to set 1D fit range during 2D auto-fit: {e}')
 
                     # Refresh the 2D mask from the full-extent spin boxes
                     try:
                         self._update_2d_mask_from_spinboxes()
                     except Exception as e:
-                        chisurf.logging.warning(f'Failed to update 2D mask after 2D autofitrange: {e}')
+                        cs.logging.warning(f'Failed to update 2D mask after 2D autofitrange: {e}')
                 else:
                     # 1D datasets: keep the original semantics where the two
                     # spin boxes encode [xmin, xmax) directly.
@@ -745,59 +895,72 @@ class FittingControllerWidget(Controller):
                     try:
                         self.fit.fit_range = (xmin_1d, xmax_1d)
                     except Exception as e:
-                        chisurf.logging.warning(f'Failed to set fit range during auto-fit: {e}')
+                        cs.logging.warning(f'Failed to set fit range during auto-fit: {e}')
 
-                # Trigger a single fit update for the new range / mask
-                self.fit.update()
-                try:
-                    payload = {
-                        "fit_group": str(getattr(self.fit, "name", "")),
-                        "xmin": int(self.xmin),
-                        "xmax": int(self.xmax),
-                        "source": "auto_fit_range",
-                        "is_2d": bool(getattr(self, "_is_2d_dataset", False)),
-                    }
-                    if bool(getattr(self, "_is_2d_dataset", False)):
-                        payload.update({
-                            "x_min": int(self.xmin),
-                            "x_max": int(self.xmin2),
-                            "y_min": int(self.xmax),
-                            "y_max": int(self.xmax2),
-                        })
-                    self._record_history(
-                        action_type="fit_range_set",
-                        summary=f"auto fit range for '{getattr(self.fit, 'name', '')}' to [{int(self.xmin)}, {int(self.xmax)})",
-                        payload=payload,
-                    )
-                except Exception:
-                    pass
-                # Allow models to react to the completed auto-fit range via
-                # an optional hook. This keeps the controller generic while
-                # enabling model-specific post-processing (e.g. MaxEnt L-curves).
-                try:
-                    grouped = getattr(self.fit, "grouped_fits", None)
-                    if isinstance(grouped, (list, tuple)):
-                        models = [getattr(f, "model", None) for f in grouped]
-                    else:
-                        models = [getattr(self.fit, "model", None)]
-                    for m in models:
-                        hook = getattr(m, "on_auto_fit_range_completed", None)
-                        if callable(hook):
-                            try:
-                                hook()
-                            except Exception as e:
-                                chisurf.logging.warning(
-                                    f"FittingControllerWidget.onAutoFitRange: model hook on_auto_fit_range_completed failed: {e}"
-                                )
-                except Exception:
-                    pass
+                # Defer the model update and subsequent hooks to the next
+                # event-loop iteration to allow pending Qt events (spinbox
+                # repaints, layout updates) to complete before the fit update
+                # mutates widget state. This avoids deep re-entrancy that can
+                # cause SIGBUS on macOS ARM64.
+                fit = self.fit
+                xmin_val = int(self.xmin)
+                xmax_val = int(self.xmax)
+                is_2d = bool(getattr(self, "_is_2d_dataset", False))
+                xmin2_val = int(self.xmin2) if is_2d else 0
+                xmax2_val = int(self.xmax2) if is_2d else 0
+
+                def _do_deferred_update():
+                    fit.update()
+                    # Record history
+                    try:
+                        payload = {
+                            "fit_group": str(getattr(fit, "name", "")),
+                            "xmin": xmin_val,
+                            "xmax": xmax_val,
+                            "source": "auto_fit_range",
+                            "is_2d": is_2d,
+                        }
+                        if is_2d:
+                            payload.update({
+                                "x_min": xmin_val,
+                                "x_max": xmin2_val,
+                                "y_min": xmax_val,
+                                "y_max": xmax2_val,
+                            })
+                        self._record_history(
+                            action_type="fit_range_set",
+                            summary=f"auto fit range for '{getattr(fit, 'name', '')}' to [{xmin_val}, {xmax_val})",
+                            payload=payload,
+                        )
+                    except Exception:
+                        pass
+                    # Model hooks
+                    try:
+                        grouped = getattr(fit, "grouped_fits", None)
+                        if isinstance(grouped, (list, tuple)):
+                            models = [getattr(f, "model", None) for f in grouped]
+                        else:
+                            models = [getattr(fit, "model", None)]
+                        for m in models:
+                            hook = getattr(m, "on_auto_fit_range_completed", None)
+                            if callable(hook):
+                                try:
+                                    hook()
+                                except Exception as e:
+                                    cs.logging.warning(
+                                        f"FittingControllerWidget.onAutoFitRange: model hook on_auto_fit_range_completed failed: {e}"
+                                    )
+                    except Exception:
+                        pass
+
+                QtCore.QTimer.singleShot(0, _do_deferred_update)
             finally:
                 try:
                     self._auto_fit_range_in_progress = False
                 except Exception:
                     pass
         except Exception as e:
-            chisurf.logging.warning(f"onAutoFitRange failed: {e}")
+            cs.logging.warning(f"onAutoFitRange failed: {e}")
 
     # ------------------------------------------------------------------
     # Dimensionality and 2D mask helpers
@@ -1008,5 +1171,3 @@ class FittingControllerWidget(Controller):
             self.fit.mask = mask_1d.astype(float)
         except Exception:
             pass
-
-

@@ -3,10 +3,11 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
-import chisurf.gui.widgets
 import chisurf.core.structure
+import chisurf.gui.widgets
 from chisurf.core.settings.path_utils import get_path
 from chisurf.core.structure.potential.potentials import CEPotential
+from chisurf.gui.widgets.warning_once import show_warning_once
 
 
 class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
@@ -19,10 +20,10 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
             parent=None
     ):
         QtWidgets.QWidget.__init__(self, parent=parent)
-        
+
         # Set default potential path if not provided
         if potential is None:
-            potential = str(get_path('chisurf') / 'structure/potential/database/unres.npy')
+            potential = str(get_path('chisurf') / 'core/structure/potential/database/unres.npy')
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -52,7 +53,7 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
         self.actionOpen_potential_file.triggered.connect(self.onOpenPotentialFile)
         self.toolButton.clicked.connect(self.actionOpen_potential_file.trigger)
 
-        super(CEPotentialWidget, self).__init__(
+        super().__init__(
             structure,
             potential=potential,
             ca_cutoff=ca_cutoff
@@ -68,9 +69,9 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
         self.lineEdit.setText(str(v))
         try:
             self._potential = np.load(v)
-        except (FileNotFoundError, IOError) as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+        except (OSError, FileNotFoundError):
+            show_warning_once(
+                "ce_potential_file",
                 "Missing Potential File",
                 f"Potential file not found: {v}\n\n"
                 f"The UNRES potential file should be located at:\n"
@@ -80,8 +81,8 @@ class CEPotentialWidget(CEPotential, QtWidgets.QWidget):
             )
             self._potential = np.zeros((20, 20))
         except Exception as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+            show_warning_once(
+                "ce_potential_file_error",
                 "Potential File Error",
                 f"Error loading potential file {v}:\n{str(e)}"
             )

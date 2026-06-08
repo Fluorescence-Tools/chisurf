@@ -3,10 +3,11 @@ from __future__ import annotations
 import numpy as np
 from qtpy import QtWidgets
 
-import chisurf.gui.widgets
 import chisurf.core.structure
+import chisurf.gui.widgets
 from chisurf.core.settings.path_utils import get_path
 from chisurf.core.structure.potential.potentials import Ramachandran
+from chisurf.gui.widgets.warning_once import show_warning_once
 
 
 class RamachandranWidget(Ramachandran, QtWidgets.QWidget):
@@ -18,10 +19,10 @@ class RamachandranWidget(Ramachandran, QtWidgets.QWidget):
             parent=None
     ):
         QtWidgets.QWidget.__init__(self, parent=parent)
-        
+
         # Set default filename path if not provided
         if filename is None:
-            filename = str(get_path('chisurf') / 'structure/potential/database/rama_ala_pro_gly.npy')
+            filename = str(get_path('chisurf') / 'core/structure/potential/database/rama_ala_pro_gly.npy')
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -64,9 +65,9 @@ class RamachandranWidget(Ramachandran, QtWidgets.QWidget):
             self._filename = v
             self.ramaPot = np.load(v)
             self.lineEdit.setText(str(v))
-        except (FileNotFoundError, IOError) as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+        except (OSError, FileNotFoundError):
+            show_warning_once(
+                "rama_potential_file",
                 "Missing Ramachandran Potential File",
                 f"Ramachandran potential file not found: {v}\n\n"
                 f"The Ramachandran potential file should be located at:\n"
@@ -79,8 +80,8 @@ class RamachandranWidget(Ramachandran, QtWidgets.QWidget):
             self.ramaPot = np.zeros((5, 129600))  # Same shape as expected
             self.lineEdit.setText(str(v))
         except Exception as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+            show_warning_once(
+                "rama_potential_file_error",
                 "Ramachandran Potential File Error",
                 f"Error loading Ramachandran potential file {v}:\n{str(e)}"
             )

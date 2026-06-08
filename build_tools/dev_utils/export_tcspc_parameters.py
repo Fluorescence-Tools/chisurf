@@ -153,7 +153,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         type=str,
         default=None,
         help=(
-            "Path to the TCSPC models JSON file (defaults to models/tcspc/"
+            "Path to the TCSPC models JSON file (defaults to core/models/tcspc/"
             "tcspc.models.json under --root)."
         ),
     )
@@ -180,7 +180,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     if args.json is not None:
         json_path = Path(args.json).resolve()
     else:
-        json_path = source_root / "models" / "tcspc" / "tcspc.models.json"
+        json_path = source_root / "core" / "models" / "tcspc" / "tcspc.models.json"
 
     if args.output is not None:
         out_path = Path(args.output).resolve()

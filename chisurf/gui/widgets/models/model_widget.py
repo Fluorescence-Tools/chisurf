@@ -4,7 +4,7 @@ import abc
 
 from qtpy import QtGui, QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting.fit
 import chisurf.gui.plots
 from chisurf.core.models.model import Model
@@ -22,7 +22,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
     try:
         plot_classes = [
             (
-                chisurf.gui.plots.LinePlot, {
+                cs.gui.plots.LinePlot, {
                     'scale_x': 'lin',
                     'd_scaley': 'log',
                     'r_scaley': 'lin',
@@ -30,9 +30,9 @@ class ModelWidget(Model, QtWidgets.QWidget):
                     'y_label': 'y'
                 }
             ),
-            (chisurf.gui.plots.FitInfo, {}),
-            (chisurf.gui.plots.ParameterScanPlot, {}),
-            (chisurf.gui.plots.ResidualPlot, {})
+            (cs.gui.plots.FitInfo, {}),
+            (cs.gui.plots.ParameterScanPlot, {}),
+            (cs.gui.plots.ResidualPlot, {})
         ]
     except Exception:
         plot_classes = []
@@ -44,7 +44,8 @@ class ModelWidget(Model, QtWidgets.QWidget):
     @abc.abstractmethod
     def update_widgets(self) -> None:
         for parameter in self.parameters:
-            parameter.update()
+            if hasattr(parameter, 'update') and callable(parameter.update):
+                parameter.update()
 
     @abc.abstractmethod
     def update(self) -> None:
@@ -54,7 +55,7 @@ class ModelWidget(Model, QtWidgets.QWidget):
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             *args,
             **kwargs

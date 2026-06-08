@@ -4,7 +4,7 @@ import numpy as np
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.models.model import ModelCurve
@@ -26,12 +26,12 @@ class MaxEntFCSModel(ModelCurve):
 
     name = "FCS MaxEnt"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.Fit, **kwargs):
+    def __init__(self, fit: cs.core.fitting.fit.Fit, **kwargs):
         """Initialize the MaxEnt FCS model.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit this model belongs to.
         **kwargs
             Additional keyword arguments forwarded to the base class.
@@ -112,7 +112,7 @@ class MaxEntFCSModel(ModelCurve):
         """Return the last MaxEnt result dictionary or ``None``.
 
         The structure matches the output of
-        :func:`chisurf.core.models.fcs.maxent.fcs_maxent` and contains the
+        :func:`cs.core.models.fcs.maxent.fcs_maxent` and contains the
         reconstructed curve, diffusion-time grid and MaxEnt distribution.
         """
         return self._result
@@ -121,7 +121,7 @@ class MaxEntFCSModel(ModelCurve):
     def maxent_tauD_distribution(self):
         """Return the MaxEnt diffusion-time distribution as (y, x) = (p, td_grid).
 
-        This is used by chisurf.gui.plots.DistributionPlot via the
+        This is used by cs.gui.plots.DistributionPlot via the
         "maxent_tauD_distribution" attribute.
         """
         if self._result is None:
@@ -273,7 +273,7 @@ class MaxEntFCSModel(ModelCurve):
         eta = self.l_curve_solution_norm
         if rho.size < 3 or eta.size < 3:
             return None
-        idx = chisurf.core.math.regularization.discrete_lcurve_corner(rho, eta)
+        idx = cs.core.math.regularization.discrete_lcurve_corner(rho, eta)
         return int(idx) if idx is not None else None
 
     def set_reg_from_lcurve_index(self, idx: int) -> None:
@@ -318,7 +318,7 @@ class MaxEntFCSModel(ModelCurve):
                 set_from_idx(int(idx))
         except Exception as e:
             try:
-                chisurf.logging.warning(
+                cs.logging.warning(
                     f"MaxEntFCSModel.on_auto_fit_range_completed: auto L-curve sweep failed: {e}"
                 )
             except Exception:
@@ -492,12 +492,12 @@ class MaxEntFCSLCurvePlot(plots.Plot):
 
     name = "L-Curve"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.FitGroup, **kwargs):
+    def __init__(self, fit: cs.core.fitting.fit.FitGroup, **kwargs):
         """Initialize the L-curve plot widget.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             The fit group whose model provides L-curve data.
         **kwargs
             Additional keyword arguments forwarded to the base class.
@@ -787,7 +787,7 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {}),
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 "distribution_options": {
                     "MaxEnt tau_D": {
@@ -800,20 +800,20 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
                             "symbol": "None",
                             "multi_curve": False,
                             "fillLevel": 0.0,
-                            "fillBrush": chisurf.core.settings.gui["plot"]["colors"]["data"],
+                            "fillBrush": cs.core.settings.gui["plot"]["colors"]["data"],
                         },
                     }
                 },
                 "scale_x": "log",
             },
         ),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (MaxEntFCSLCurvePlot, {}),
     ]
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         icon: QtGui.QIcon | None = None,
         **kwargs,
     ):
@@ -821,7 +821,7 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             The fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the model tab.
@@ -884,19 +884,19 @@ class MaxEntFCSWidget(ModelWidget, MaxEntFCSModel):
 class MaxEntRHModel(ModelCurve):
     """FCS model that reconstructs an rH distribution via MaxEnt.
 
-    This model wraps :func:`chisurf.core.models.fcs.maxent.fcs_maxent_rh` and
+    This model wraps :func:`cs.core.models.fcs.maxent.fcs_maxent_rh` and
     exposes both the reconstructed FCS curve and a hydrodynamic-radius
     distribution on ``rh_grid``.
     """
 
     name = "FCS MaxEnt rH"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.Fit, **kwargs):
+    def __init__(self, fit: cs.core.fitting.fit.Fit, **kwargs):
         """Initialize the MaxEnt rH model.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit this model belongs to.
         **kwargs
             Additional keyword arguments forwarded to the base class.
@@ -992,7 +992,7 @@ class MaxEntRHModel(ModelCurve):
     def maxent_rH_distribution(self):
         """Return the MaxEnt rH distribution as ``(y, x) = (p, rh_grid)``.
 
-        This is used by :class:`chisurf.gui.plots.DistributionPlot` via the
+        This is used by :class:`cs.gui.plots.DistributionPlot` via the
         ``"maxent_rH_distribution"`` attribute.
         """
         if self._result is None:
@@ -1132,7 +1132,7 @@ class MaxEntRHModel(ModelCurve):
         eta = self.l_curve_solution_norm
         if rho.size < 3 or eta.size < 3:
             return None
-        idx = chisurf.core.math.regularization.discrete_lcurve_corner(rho, eta)
+        idx = cs.core.math.regularization.discrete_lcurve_corner(rho, eta)
         return int(idx) if idx is not None else None
 
     def set_reg_from_lcurve_index(self, idx: int) -> None:
@@ -1164,7 +1164,7 @@ class MaxEntRHModel(ModelCurve):
         The experimental data are taken from ``self.fit.data``. The
         hydrodynamic-radius grid, beam waist, temperature and other options
         are derived from the internal :class:`FittingParameter` instances
-        and passed to :func:`chisurf.core.models.fcs.maxent.fcs_maxent_rh`.
+        and passed to :func:`cs.core.models.fcs.maxent.fcs_maxent_rh`.
         The reconstructed curve is stored in ``self.y`` and the full
         result dictionary in ``self._result``.
         """
@@ -1243,7 +1243,7 @@ class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {}),
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 "distribution_options": {
                     "MaxEnt rH": {
@@ -1256,20 +1256,20 @@ class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
                             "symbol": "None",
                             "multi_curve": False,
                             "fillLevel": 0.0,
-                            "fillBrush": chisurf.core.settings.gui["plot"]["colors"]["data"],
+                            "fillBrush": cs.core.settings.gui["plot"]["colors"]["data"],
                         },
                     }
                 },
                 "scale_x": "log",
             },
         ),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (MaxEntFCSLCurvePlot, {}),
     ]
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         icon: QtGui.QIcon | None = None,
         **kwargs,
     ):
@@ -1277,7 +1277,7 @@ class MaxEntRHWidget(ModelWidget, MaxEntRHModel):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             The fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the model tab.

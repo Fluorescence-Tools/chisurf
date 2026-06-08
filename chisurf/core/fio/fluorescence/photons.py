@@ -33,7 +33,7 @@ import numpy as np
 import tables
 import tttrlib
 
-import chisurf
+import chisurf as cs
 from . import tttr
 
 
@@ -65,10 +65,10 @@ def read_burst_ids(
     Examples
     --------
 
-    >>> import chisurf.core.fio, glob  # doctest: +SKIP
+    >>> import cs.core.fio, glob  # doctest: +SKIP
     >>> directory = "./test/data/tttr/spc132/hGBP1_18D/burstwise_All 0.1200#30\\BID"  # doctest: +SKIP
     >>> files = glob.glob(directory+'/*.bst')  # doctest: +SKIP
-    >>> bids = chisurf.core.fio.photons.read_burst_ids(files)  # doctest: +SKIP
+    >>> bids = cs.core.fio.photons.read_burst_ids(files)  # doctest: +SKIP
     >>> bids[1]  # doctest: +SKIP
     array([20384, 20385, 20386, 20387, 20388, 20389, 20390, 20391, 20392,
        20393, 20394, 20395, 20396, 20397, 20398, 20399, 20400, 20401,
@@ -139,10 +139,10 @@ class Photons(object):
 
     Examples
     --------
-    >>> import chisurf.core.fio, glob  # doctest: +SKIP
+    >>> import cs.core.fio, glob  # doctest: +SKIP
     >>> directory = './test/data/tttr/BH/'  # doctest: +SKIP
     >>> spc_files = glob.glob(directory+'/BH_SPC132.spc')  # doctest: +SKIP
-    >>> photons = chisurf.core.fio.photons.Photons(spc_files, file_type="bh132")  # doctest: +SKIP
+    >>> photons = cs.core.fio.photons.Photons(spc_files, file_type="bh132")  # doctest: +SKIP
     >>> print(photons)  # doctest: +SKIP
     File-type: bh132
     Filename(s):
@@ -180,7 +180,7 @@ class Photons(object):
             If True, print progress.
         """
         if verbose is None:
-            verbose = chisurf.core.settings.cs_settings['verbose']
+            verbose = cs.core.settings.cs_settings['verbose']
         self._tttrs = None
         self._h5 = None
         self._sample_name_hdf_tp = 'spc'
@@ -229,7 +229,7 @@ class Photons(object):
                         )
                     if len(self._filenames) > 0:
                         self._tttrs = spcs
-                        self._h5 = chisurf.core.fio.fluorescence.tttr.make_tp_photon_hdf(
+                        self._h5 = cs.core.fio.fluorescence.tttr.make_tp_photon_hdf(
                             title=self._sample_name_hdf_tp,
                             filename=self._h5_tempfile,
                             verbose=verbose,

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 
 import chisurf.core.base
@@ -22,7 +23,7 @@ class LoadStructureFolder(
         self.parent = kwargs.get('parent', None)
         layout = QtWidgets.QVBoxLayout(self)
         self.layout = layout
-        self.pdbWidget = chisurf.gui.widgets.pdb.PDBFolderLoad(self)
+        self.pdbWidget = cs.gui.widgets.pdb.PDBFolderLoad(self)
         self.layout.addWidget(self.pdbWidget)
 
     def read(
@@ -39,11 +40,11 @@ class LoadStructureFolder(
     def get_data(
             self,
             **kwargs
-    ) -> chisurf.core.data.ExperimentDataGroup:
+    ) -> cs.core.data.ExperimentDataGroup:
         return [self.pdbWidget.trajectory]
 
     @staticmethod
-    def autofitrange(data: chisurf.core.base.Data, **kwargs):
+    def autofitrange(data: cs.core.base.Data, **kwargs):
         return None, None
 
 
@@ -53,13 +54,13 @@ class StructureReaderController(
 ):
 
     def get_filename(self) -> str:
-        return chisurf.gui.widgets.get_filename(
+        return cs.gui.widgets.get_filename(
             description='Open PDB-Structure',
             file_type='PDB-file (*.pdb)',
             working_path=None
         )
 
-    @chisurf.gui.decorators.init_with_ui(
+    @cs.gui.decorators.init_with_ui(
         ui_filename="proteinMCLoad.ui"
     )
     def __init__(
@@ -75,7 +76,7 @@ class StructureReaderController(
 
     def onParametersChanged(self):
         compute_internal_coordinates = bool(self.checkBox.isChecked())
-        chisurf.run(
+        cs.run(
             "\n".join(
                 [
                     "cs.current_setup.compute_internal_coordinates = %s" % compute_internal_coordinates
@@ -85,9 +86,8 @@ class StructureReaderController(
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
-        import chisurf
         try:
-            setup = chisurf.cs.current_setup
+            setup = cs.cs.current_setup
         except Exception:
             return
 

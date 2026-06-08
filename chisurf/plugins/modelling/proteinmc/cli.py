@@ -51,6 +51,13 @@ def _validate_output_path(path: Optional[str]) -> Optional[str]:
 @click.option("--n-iter", type=int, help="Override total MC trial count.")
 @click.option("--n-out", type=int, help="Override accepted moves between RMF writes.")
 @click.option("--n-written", type=int, help="Override number of accepted frames to write.")
+@click.option(
+    "--eval-interval",
+    type=int,
+    default=1,
+    show_default=True,
+    help="Evaluate labeling potential every N MC steps (1 = every step).",
+)
 @click.option("-v", "--verbose", is_flag=True, help="Print detailed progress output.")
 def cli(
     structure: str,
@@ -61,6 +68,7 @@ def cli(
     n_iter: Optional[int],
     n_out: Optional[int],
     n_written: Optional[int],
+    eval_interval: int,
     verbose: bool,
 ) -> None:
     """Run ProteinMC for a local PDB/PQR file or four-character PDB ID."""
@@ -78,6 +86,7 @@ def cli(
             n_iter=n_iter,
             n_out=n_out,
             n_written=n_written,
+            eval_interval=eval_interval,
         )
     except Exception as exc:  # pragma: no cover - delegated logic
         raise click.ClickException(f"ProteinMC simulation failed: {exc}") from exc

@@ -124,11 +124,11 @@ namespaces = true
 "chisurf.settings.constants" = ["*.json"]
 
 [tool.setuptools.dynamic]
-version = {attr = "chisurf.info.__version__"}
+version = {attr = "chisurf.core.info.__version__"}
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --cov=chisurf --cov-report=html"
-norecursedirs = ["build_tools", "modules", "conda-bld", ".pixi", "dist", "chisurf", "rattler-recipe", "repro"]
+addopts = "--cov=chisurf --cov-report=html"
+norecursedirs = ["build_tools", "modules", "conda-bld", ".pixi", "dist", "rattler-recipe", "repro"]
 testpaths = ["test"]
 markers = [
     "slow: marks tests as slow (reader-heavy) and excluded from default runs",

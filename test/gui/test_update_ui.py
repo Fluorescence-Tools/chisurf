@@ -1,3 +1,4 @@
+import chisurf as cs
 # Test script to update the UI when properties of current_setup are changed
 cs.current_experiment = 'TCSPC'
 cs.current_setup = 'TXT/CSV'

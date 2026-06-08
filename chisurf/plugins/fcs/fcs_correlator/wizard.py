@@ -5,7 +5,7 @@ import typing
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
 
-import chisurf
+import chisurf as cs
 import chisurf.gui
 import chisurf.gui.widgets.wizard
 import chisurf.gui.widgets
@@ -240,7 +240,7 @@ class CorrelatorPage(QtWidgets.QWizardPage):
         super().__init__(parent)
         self.setTitle("Correlator")
         # Embed the original correlator widget
-        self.inner = chisurf.gui.widgets.wizard.WizardTTTRCorrelator()
+        self.inner = cs.gui.widgets.wizard.WizardTTTRCorrelator()
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.inner)
@@ -930,13 +930,13 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
         self.setWizardStyle(QtWidgets.QWizard.ModernStyle)
 
         # Pages
-        self.detector_page = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
+        self.detector_page = cs.gui.widgets.wizard.DetectorWizardPage(parent=self)
         self.detector_page_id = self.addPage(self.detector_page)
 
         self.file_page = FileAndStepsPage(self)
         self.file_page_id = self.addPage(self.file_page)
 
-        self.photon_select = chisurf.gui.widgets.wizard.WizardTTTRPhotonFilter(
+        self.photon_select = cs.gui.widgets.wizard.WizardTTTRPhotonFilter(
             windows={},
             detectors={},
             show_dT=True,
@@ -951,7 +951,7 @@ class ChisurfFCSWizard(QtWidgets.QWizard):
         self.correlator_page = CorrelatorPage()
         self.correlator_page_id = self.addPage(self.correlator_page)
 
-        self.fcs_merger = chisurf.gui.widgets.wizard.WizardFcsMerger()
+        self.fcs_merger = cs.gui.widgets.wizard.WizardFcsMerger()
         self.fcs_merger_page_id = self.addPage(self.fcs_merger)
 
         # React to changes of detector/setup selection by clearing files for safety

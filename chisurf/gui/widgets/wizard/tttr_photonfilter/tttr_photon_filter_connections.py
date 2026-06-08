@@ -4,7 +4,7 @@ def setup_connections(page):
     This centralizes all connections in one place for better maintainability.
     """
     import tttrlib
-    import chisurf
+    import chisurf as cs
     import chisurf.gui.decorators
     from chisurf.gui import QtCore, QtWidgets
     from .tttr_photon_filter_support import ProgressWindow

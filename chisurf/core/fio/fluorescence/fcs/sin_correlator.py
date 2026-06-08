@@ -6,7 +6,7 @@ from typing import List, Tuple, Union
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 from chisurf import typing
 from chisurf.core.fio.fluorescence.fcs.definitions import FCSDataset
 
@@ -326,8 +326,8 @@ def read_sin(
     The function returns a list of :class:`FCSDataset` entries, one per
     correlation curve contained in the file. Correlation lag times are
     stored in milliseconds, intensities in kHz, and the acquisition time
-    is recorded in seconds so that :func:`chisurf.core.fluorescence.fcs.noise`
-    or :func:`chisurf.core.fluorescence.fcs.compute_weights` can be applied
+    is recorded in seconds so that :func:`cs.core.fluorescence.fcs.noise`
+    or :func:`cs.core.fluorescence.fcs.compute_weights` can be applied
     consistently.
     """
 

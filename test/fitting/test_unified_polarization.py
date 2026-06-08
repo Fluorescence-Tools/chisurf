@@ -1,5 +1,5 @@
 import logging
-import chisurf
+import chisurf as cs
 from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.models.tcspc.lifetime import LifetimeModel
@@ -20,8 +20,8 @@ def test_unified_polarization_assignment():
     logger.info("Testing unified polarization assignment")
     
     # Clear any existing datasets and fits
-    chisurf.imported_datasets = []
-    chisurf.fits = []
+    cs.imported_datasets = []
+    cs.fits = []
     
     # Create datasets of different sizes to test various scenarios
     test_group_sizes = [1, 2, 3, 4]

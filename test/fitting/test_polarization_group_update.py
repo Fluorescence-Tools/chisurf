@@ -1,5 +1,5 @@
 import logging
-import chisurf
+import chisurf as cs
 from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.models.tcspc.lifetime import LifetimeModel
@@ -19,8 +19,8 @@ def test_polarization_group_update():
     logger.info("Testing polarization update for all fits in a group")
     
     # Clear any existing datasets and fits
-    chisurf.imported_datasets = []
-    chisurf.fits = []
+    cs.imported_datasets = []
+    cs.fits = []
     
     # Create datasets
     datasets = []

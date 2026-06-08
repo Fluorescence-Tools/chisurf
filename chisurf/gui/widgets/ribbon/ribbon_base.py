@@ -1,3 +1,4 @@
+import chisurf as cs
 # -*- coding: utf-8 -*-
 """
 ChiSurf Ribbon Integration - Base Module
@@ -65,7 +66,7 @@ class ChiSurfRibbonIntegration(QObject):
 
         Parameters
         ----------
-        main_window : chisurf.gui.main.Main
+        main_window : cs.gui.main.Main
             The ChiSurf main window instance
         """
         super().__init__()
@@ -80,7 +81,7 @@ class ChiSurfRibbonIntegration(QObject):
         # Create a hidden widget to preserve the ribbon bar
         self.ribbon_preserve_widget = QWidget()
         self.ribbon_preserve_widget.hide()
-        self.logger = logging.getLogger('chisurf.gui.widgets.ribbon')
+        self.logger = logging.getLogger('cs.gui.widgets.ribbon')
 
         # Auto-fold functionality
         self.auto_fold_timer = QtCore.QTimer()
@@ -242,8 +243,7 @@ class ChiSurfRibbonIntegration(QObject):
             self._apply_title_widget_fix()
 
             # Read max_rows and ribbon_height from settings
-            import chisurf
-            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+            gui_settings = cs.core.settings.cs_settings.get('gui', {})
             ribbon_settings = gui_settings.get('ribbon', {})
             max_rows = ribbon_settings.get('max_rows', 3)  # Default to 3 rows for reduced height
             ribbon_height = ribbon_settings.get('ribbon_height', 110)  # Default to 110px for reduced height
@@ -519,8 +519,7 @@ class ChiSurfRibbonIntegration(QObject):
                     self.logger.info(f"Updated all categories to use {row_count} max rows")
 
                     # Save to settings for persistence
-                    import chisurf
-                    gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+                    gui_settings = cs.core.settings.cs_settings.get('gui', {})
                     ribbon_settings = gui_settings.get('ribbon', {})
                     ribbon_settings['max_rows'] = row_count
                     self.logger.info(f"Saved max_rows={row_count} to settings")

@@ -7,7 +7,7 @@ and generates a burstwise analysis folder next to the corresponding TTTR data.
 Workflow per BID file:
 - Infer the TTTR file from the BID file name (same stem, common TTTR extensions)
 - Load TTTR via tttrlib
-- Compute burst summary using chisurf.core.fio.fluorescence.burst.generate_burst_dataframe
+- Compute burst summary using cs.core.fio.fluorescence.burst.generate_burst_dataframe
 - Write a BUR file to analysis/bi4_bur/<stem>.bur
 - Update/create analysis/Info/*.mti with total measurement time
 
@@ -25,7 +25,7 @@ import numpy as np
 import zipfile
 import pandas as pd
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 import chisurf.core.fio as io
 

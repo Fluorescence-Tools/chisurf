@@ -6,7 +6,7 @@ import re
 import numpy as np
 import pyqtgraph as pg
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio as io
 import chisurf.core.data
 import chisurf.core.fluorescence.fcs
@@ -14,7 +14,7 @@ import chisurf.gui.decorators
 from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from .fcs_merger_ui import setup_ui as _setup_ui
 
-colors = chisurf.core.settings.gui['plot']['colors']
+colors = cs.core.settings.gui['plot']['colors']
 
 
 class WizardFcsMerger(QtWidgets.QWizardPage):
@@ -52,7 +52,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
             cors.append(cor)
             # Only compute weights if merging multiple curves
             if n_curves > 1:
-                w = chisurf.core.fluorescence.fcs.noise(tau, cor, duration, cr, weight_type='suren')
+                w = cs.core.fluorescence.fcs.noise(tau, cor, duration, cr, weight_type='suren')
                 ws.append(w)
         
         ys = np.array(cors)
@@ -93,7 +93,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         return pathlib.Path('..')
 
     def update_plots(self, *args, **kwargs):
-        chisurf.logging.info('WizardTTTRCorrelator::Updating plots')
+        cs.logging.info('WizardTTTRCorrelator::Updating plots')
         self.pw_fcs.clear()
         idx = self.current_curve_idx
         for i, cor in enumerate(self.correlations):
@@ -104,7 +104,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
                 pen = pg.mkPen('grey', width=1.0, style=QtCore.Qt.DashLine)
             else:
                 width = 3.0 if i == idx else 1.0
-                pen = pg.mkPen(chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex'], width=width)
+                pen = pg.mkPen(cs.core.settings.colors[i % len(cs.core.settings.colors)]['hex'], width=width)
             self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
 
         self.pw_fcs_mean.clear()
@@ -112,7 +112,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         self.plot_item_fcs_mean.plot(x=corr_mean['x'], y=corr_mean['y'])
 
     def onClearFiles(self):
-        chisurf.logging.info("WizardTTTRCorrelator::onClearFiles")
+        cs.logging.info("WizardTTTRCorrelator::onClearFiles")
         self.settings['tttr_filenames'].clear()
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
@@ -158,7 +158,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         correlation_dict['use_curve'] = True
 
     def open_correlation_folder(self, folder: pathlib.Path = None):
-        chisurf.logging.info( "WizardFcsMerger::open_correlation_folder")
+        cs.logging.info( "WizardFcsMerger::open_correlation_folder")
         self.tableWidget.setRowCount(0)
         if folder is None:
             folder = self.correlation_folder
@@ -202,7 +202,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
                 self.append_correlation(file, d)
             except Exception:
                 continue
-        chisurf.logging.info('Opening analysis folder...')
+        cs.logging.info('Opening analysis folder...')
         self.lineEdit_2.setText(self.target_filepath.as_posix())
         self.update_plots()
 
@@ -240,7 +240,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
         return filename
 
     def save_mean_correlation(self, evt=None, filename: pathlib.Path = None):
-        chisurf.logging.info("WizardFcsMerger::save_mean_correlation")
+        cs.logging.info("WizardFcsMerger::save_mean_correlation")
         correlation = self.mean_correlation
         if filename is None:
             filename = self.target_filepath
@@ -249,7 +249,7 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
             filename.parent.mkdir(parents=True, exist_ok=True)
         except Exception:
             pass
-        chisurf.logging.info(f"Saving: {filename}")
+        cs.logging.info(f"Saving: {filename}")
         suren_column = np.zeros_like(correlation['x'])
         suren_column[0] = correlation['duration']
         suren_column[1] = correlation['count_rate']
@@ -290,11 +290,11 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
     def add_to_chisurf(self):
         """
-        Add the generated correlation curve to chisurf as a dataset using FCS Kristine correlation.
+        Add the generated correlation curve to cs as a dataset using FCS Kristine correlation.
         This method uses the already generated .cor file instead of creating a new one.
         """
         print("Adding correlation to ChiSurf...")
-        chisurf.logging.info("WizardFcsMerger::adding correlation to chisurf")
+        cs.logging.info("WizardFcsMerger::adding correlation to cs")
 
         # Ensure the correlation file exists
         cor_file = self.target_filepath
@@ -316,24 +316,24 @@ class WizardFcsMerger(QtWidgets.QWizardPage):
 
         # Use the standard approach as specified in the issue description
         # Set the current experiment and setup using the global cs instance
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="experiment.set",
             payload={"name": "FCS"},
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="setup.select",
             payload={"name": "Seidel Kristine"},
         )
 
-        # Add dataset to chisurf using the standard approach
-        chisurf.core.actions.dispatch(
+        # Add dataset to cs using the standard approach
+        cs.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": cor_file.as_posix(), "experiment_reader": None},
         )
 
         # Show success message
-        chisurf.logging.info(f"Added correlation to ChiSurf: {cor_file.name}")
+        cs.logging.info(f"Added correlation to ChiSurf: {cor_file.name}")
 
-    @chisurf.gui.decorators.init_with_ui("fcs_merger.ui")
+    @cs.gui.decorators.init_with_ui("fcs_merger.ui")
     def __init__(self, *args, **kwargs):
         _setup_ui(self)

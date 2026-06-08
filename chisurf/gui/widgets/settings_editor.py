@@ -7,7 +7,7 @@ import os
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio as io
 from chisurf import logging
 import chisurf.core.settings
@@ -28,7 +28,7 @@ _SETTINGS_HELP_SECTION_CACHE: dict[str, dict[str, str]] = {}
 def _slugify_heading_for_docs(text: str) -> str:
     """Replicate the HelpWidget heading slug logic for anchor IDs.
 
-    This matches chisurf.plugins.help.HelpWidget._slugify_heading so that
+    This matches cs.plugins.help.HelpWidget._slugify_heading so that
     anchors computed here correspond to those used when rendering the
     Markdown in the help browser.
     """
@@ -77,7 +77,7 @@ def _build_help_section_map_for_file(basename: str) -> dict[str, str]:
     titles.
     """
     try:
-        base = pathlib.Path(chisurf.__file__).resolve().parent
+        base = pathlib.Path(cs.__file__).resolve().parent
         root = base.parent
         md_path = root / SETTINGS_DOC_REL_PATH
         text = md_path.read_text(encoding="utf-8")
@@ -108,7 +108,7 @@ def _build_help_section_map_for_file(basename: str) -> dict[str, str]:
     if basename == "settings_chisurf.yaml":
         # Use the loaded cs_settings keys as root keys
         try:
-            cs_dict = getattr(chisurf.core.settings, "cs_settings", {}) or {}
+            cs_dict = getattr(cs.core.settings, "cs_settings", {}) or {}
             root_keys = [str(k) for k in cs_dict.keys()]
         except Exception:
             root_keys = []
@@ -354,7 +354,7 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
 
         themes = []
         try:
-            package_styles_dir = pathlib.Path(chisurf.__file__).parent / "gui" / "styles"
+            package_styles_dir = pathlib.Path(cs.__file__).parent / "gui" / "styles"
             if package_styles_dir.is_dir():
                 for p in sorted(package_styles_dir.glob("*.qss")):
                     name = p.name
@@ -364,7 +364,7 @@ class SettingsItemDelegate(QtWidgets.QStyledItemDelegate):
             logging.log(1, f"Error while listing package styles: {e}")
 
         try:
-            user_styles_dir = chisurf.core.settings.get_path('settings') / 'styles'
+            user_styles_dir = cs.core.settings.get_path('settings') / 'styles'
             if user_styles_dir.is_dir():
                 for p in sorted(user_styles_dir.glob("*.qss")):
                     name = p.name
@@ -1089,7 +1089,7 @@ class SettingsEditor(QtWidgets.QWidget):
 
         # 1) Prefer delegating to the main window if available
         try:
-            main_win = getattr(chisurf, "cs", None)
+            main_win = getattr(cs, "cs", None)
             if main_win is not None and hasattr(main_win, "open_context_help_for_reader"):
                 try:
                     main_win.open_context_help_for_reader(txt)
@@ -1105,19 +1105,19 @@ class SettingsEditor(QtWidgets.QWidget):
             import pathlib as _pl
 
             try:
-                help_plugin = importlib.import_module("chisurf.plugins.chisurf.help")
+                help_plugin = importlib.import_module("chisurf.plugins.core.help")
             except Exception:
-                help_plugin = importlib.import_module("chisurf.plugins.help")
+                help_plugin = importlib.import_module("chisurf.plugins.core.help")
 
-            # Reuse a singleton window attached to the chisurf module
-            window = getattr(chisurf, "_settings_help_window", None)
+            # Reuse a singleton window attached to the cs module
+            window = getattr(cs, "_settings_help_window", None)
             if window is None or not isinstance(window, help_plugin.HelpWidget):
                 window = help_plugin.HelpWidget()
                 try:
-                    window.destroyed.connect(lambda _=None: setattr(chisurf, "_settings_help_window", None))
+                    window.destroyed.connect(lambda _=None: setattr(cs, "_settings_help_window", None))
                 except Exception:
                     pass
-                chisurf._settings_help_window = window
+                cs._settings_help_window = window
 
             handled = False
             try:
@@ -1135,7 +1135,7 @@ class SettingsEditor(QtWidgets.QWidget):
                     # convention as the help plugin itself).
                     if not raw_path.is_absolute():
                         try:
-                            base = _pl.Path(chisurf.__file__).resolve().parent
+                            base = _pl.Path(cs.__file__).resolve().parent
                             root = base.parent
                             candidate = (root / raw_path).resolve()
                         except Exception:
@@ -1211,7 +1211,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    editor = SettingsEditor(filename=chisurf.core.settings.chisurf_settings_file)
+    editor = SettingsEditor(filename=cs.core.settings.chisurf_settings_file)
     editor.show()
 
     sys.exit(app.exec_())

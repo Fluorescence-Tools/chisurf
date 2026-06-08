@@ -10,6 +10,7 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, uic, QtCore, QtGui
 import matplotlib.colors as mcolors
 
+import chisurf as cs
 import chisurf.core.data
 import chisurf.core.fitting
 import chisurf.core.decorators
@@ -682,15 +683,36 @@ class FittingParameterWidget(Controller):
         self.label.setVisible(not hide_label)
         self.lineEdit.setVisible(not hide_error)
         self.widget_bounds_on.setDisabled(hide_bounds)
-        self.widget_fix.setVisible(fixable or not hide_fix_checkbox)
+        self.widget_bounds_on.setVisible(not hide_bounds)
+        self.widget_fix.setVisible(fixable)
         self.widget.setHidden(hide_bounds)
         self.widget_link.setDisabled(hide_link)
+        self.widget_link.setVisible(not hide_link)
+
+        if hide_error:
+            try:
+                self.label.setMinimumWidth(80)
+                sp = self.label.sizePolicy()
+                sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Preferred)
+                self.label.setSizePolicy(sp)
+            except Exception:
+                pass
 
         if self._is_output_param:
             # Output parameters are displayed as read-only result cells.
             # Keep the row layout identical (checkboxes stay visible) but
             # prevent any user interaction and remove spin buttons so the
             # value looks like a plain, non-editable field.
+            self.widget_fix.setVisible(False)
+            self.widget_bounds_on.setVisible(False)
+            self.widget_link.setVisible(False)
+            try:
+                self.label.setMinimumWidth(80)
+                sp = self.label.sizePolicy()
+                sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Preferred)
+                self.label.setSizePolicy(sp)
+            except Exception:
+                pass
             try:
                 # Try to hide spin buttons directly on the SpinBox.
                 self.widget_value.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)

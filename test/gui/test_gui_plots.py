@@ -1,6 +1,7 @@
 import pytest
 from qtpy import QtCore
 import chisurf.gui
+import chisurf as cs
 
 def test_plot_updates_when_parameter_changes(chisurf_app, qtbot):
     """

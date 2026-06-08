@@ -2,6 +2,7 @@ from __future__ import annotations
 import functools
 import inspect
 import threading
+import chisurf as cs
 from chisurf import typing
 
 _threading_local = threading.local()
@@ -39,8 +40,7 @@ def action(
     """
     def decorator(func: typing.Callable[..., typing.Any]):
         from chisurf.core.actions._infra import ActionSpec
-        import chisurf
-
+        import chisurf as cs
         effective_schema = schema
         if effective_schema is None:
             effective_schema = {}
@@ -62,7 +62,7 @@ def action(
         )
 
         try:
-            registry = getattr(chisurf, "action_registry", None)
+            registry = getattr(cs, "action_registry", None)
             if registry is not None:
                 registry.register(spec)
         except (AttributeError, ImportError):
@@ -93,8 +93,7 @@ def action(
 
 def dispatch(name: str, payload: typing.Optional[typing.Dict[str, typing.Any]] = None):
     """Dispatch an action by name with a payload dict."""
-    import chisurf
-    dispatcher = getattr(chisurf, "action_dispatcher", None)
+    dispatcher = getattr(cs, "action_dispatcher", None)
     if dispatcher:
         was = getattr(_threading_local, "is_dispatching", False)
         _threading_local.is_dispatching = True

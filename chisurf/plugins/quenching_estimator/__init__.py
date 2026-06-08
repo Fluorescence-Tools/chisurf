@@ -30,12 +30,12 @@ name = "Structure:Computation:QuEst"
 
 import sys
 
-import chisurf
+import chisurf as cs
 from quest.lib.tools.dye_diffusion import TransientDecayGenerator
 
 from qtpy import QtWidgets
 
-log = chisurf.logging.info
+log = cs.logging.info
 
 
 class QuEstWindow(QtWidgets.QMainWindow):

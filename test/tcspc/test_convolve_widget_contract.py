@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def test_convolve_widget_exposes_on_unload_irf_handler_contract():
-    path = Path("chisurf/models/tcspc/widgets/convolve.py")
+    path = Path("chisurf/gui/widgets/models/tcspc/convolve.py")
     source = path.read_text(encoding="utf-8")
     tree = ast.parse(source)
 
@@ -24,7 +24,7 @@ def test_convolve_widget_exposes_on_unload_irf_handler_contract():
 
 
 def test_lifetime_widget_exposes_button_handler_contracts():
-    path = Path("chisurf/models/tcspc/widgets/lifetime.py")
+    path = Path("chisurf/gui/widgets/models/tcspc/lifetime.py")
     source = path.read_text(encoding="utf-8")
     tree = ast.parse(source)
 

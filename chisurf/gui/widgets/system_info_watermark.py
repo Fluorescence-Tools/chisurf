@@ -10,9 +10,7 @@ from typing import Deque
 
 from qtpy import QtWidgets, QtCore, QtGui
 
-import chisurf
-
-
+import chisurf as cs
 def _compute_ram_string() -> str:
     """Return total RAM as a human-readable string.
 
@@ -92,10 +90,10 @@ def build_system_info_text() -> str:
     try:
         from chisurf.core import info as _info_mod  # type: ignore
 
-        cs_ver = getattr(_info_mod, "__version__", None) or getattr(chisurf, "__version__", "?")
+        cs_ver = getattr(_info_mod, "__version__", None) or getattr(cs, "__version__", "?")
     except Exception:
         try:
-            cs_ver = getattr(chisurf, "__version__", "?")
+            cs_ver = getattr(cs, "__version__", "?")
         except Exception:
             cs_ver = "?"
 
@@ -216,7 +214,7 @@ def build_system_info_text() -> str:
 
     # Custom environment variables injected from settings (env)
     try:
-        cs_cfg = getattr(chisurf.core.settings, "cs_settings", {})  # type: ignore[attr-defined]
+        cs_cfg = getattr(cs.core.settings, "cs_settings", {})  # type: ignore[attr-defined]
         env_cfg = cs_cfg.get("env", {}) if isinstance(cs_cfg, dict) else {}
         if isinstance(env_cfg, dict) and env_cfg:
             injected_parts: list[str] = []
@@ -314,7 +312,7 @@ def _get_total_memory_mb() -> float | None:
 def _get_update_interval_ms() -> int:
     """Get memory update interval from settings (default 5000ms)."""
     try:
-        cs_settings = getattr(chisurf.core.settings, "cs_settings", {})
+        cs_settings = getattr(cs.core.settings, "cs_settings", {})
         gui_settings = cs_settings.get("gui", {}) if isinstance(cs_settings, dict) else {}
         return int(gui_settings.get("memory_widget_update_interval_ms", 5000))
     except Exception:

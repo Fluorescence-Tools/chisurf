@@ -20,33 +20,33 @@ from unittest.mock import patch
 
 from qtpy import QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.gui
 
-cs_app = chisurf.gui.get_app()
+cs_app = cs.gui.get_app()
 
-if hasattr(chisurf, "api") and chisurf.core.api is not None:
-    chisurf.core.api.mode = "local"
+if hasattr(cs, "api") and cs.core.api is not None:
+    cs.core.api.mode = "local"
 
 
 def _clear():
-    chisurf.core.actions.dispatch(name="fit.close_all", payload={})
-    chisurf.imported_datasets.clear()
+    cs.core.actions.dispatch(name="fit.close_all", payload={})
+    cs.imported_datasets.clear()
 
 
 def _set_exp(exp_name: str, setup_name: str, **kw):
-    cs = chisurf.cs
-    idx = cs.comboBox_experimentSelect.findText(exp_name)
+    gui = cs.cs
+    idx = gui.comboBox_experimentSelect.findText(exp_name)
     if idx >= 0:
-        cs.comboBox_experimentSelect.setCurrentIndex(idx)
-        cs._refresh_experiment_ui()
-    idx = cs.comboBox_setupSelect.findText(setup_name)
+        gui.comboBox_experimentSelect.setCurrentIndex(idx)
+        gui._refresh_experiment_ui()
+    idx = gui.comboBox_setupSelect.findText(setup_name)
     if idx >= 0:
-        cs.comboBox_setupSelect.setCurrentIndex(idx)
-        cs._refresh_setup_ui()
+        gui.comboBox_setupSelect.setCurrentIndex(idx)
+        gui._refresh_setup_ui()
     for k, v in kw.items():
         try:
-            setattr(cs.current_setup, k, v)
+            setattr(gui.current_setup, k, v)
         except Exception:
             pass
 
@@ -58,8 +58,8 @@ def test_open_tcspc_via_action():
              skiprows=11, reading_routine='csv', is_jordi=False,
              use_header=True, matrix_columns=[], polarization='vm',
              rep_rate=10.0, dt=0.0141)
-    before = len(chisurf.imported_datasets)
-    chisurf.core.actions.dispatch(
+    before = len(cs.imported_datasets)
+    cs.core.actions.dispatch(
         name="dataset.add",
         payload={
             "filename": os.path.abspath(
@@ -68,14 +68,14 @@ def test_open_tcspc_via_action():
             "experiment_reader": None,
         },
     )
-    assert len(chisurf.imported_datasets) == before + 1
+    assert len(cs.imported_datasets) == before + 1
 
 
 def test_open_fcs_via_action():
     _clear()
     _set_exp("FCS", "Seidel Kristine")
-    before = len(chisurf.imported_datasets)
-    chisurf.core.actions.dispatch(
+    before = len(cs.imported_datasets)
+    cs.core.actions.dispatch(
         name="dataset.add",
         payload={
             "filename": os.path.abspath(
@@ -84,4 +84,4 @@ def test_open_fcs_via_action():
             "experiment_reader": None,
         },
     )
-    assert len(chisurf.imported_datasets) == before + 1
+    assert len(cs.imported_datasets) == before + 1

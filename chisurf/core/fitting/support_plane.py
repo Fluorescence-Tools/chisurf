@@ -8,7 +8,7 @@ import numpy as np
 import warnings
 from typing import TYPE_CHECKING
 
-import chisurf
+import chisurf as cs
 import chisurf.core.math.statistics
 
 
@@ -338,7 +338,7 @@ def adaptive_scan_parameter(
     n_free = fit.model.n_free
     nu = n_points - n_free - 1
 
-    threshold = chisurf.core.math.statistics.chi2_threshold(
+    threshold = cs.core.math.statistics.chi2_threshold(
         chi2r_min, n_extra_params=1, nu=nu, p_value=p_value
     )
 

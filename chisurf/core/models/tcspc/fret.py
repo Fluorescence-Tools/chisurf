@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fluorescence.tcspc
 import chisurf.core.fluorescence.anisotropy.kappa2 as kapp2
 
@@ -14,11 +14,11 @@ from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGro
 from chisurf.core.settings.settings_utils import build_fret_rda_axis
 
 try:
-    # Prefer the central global R_DA axis defined in chisurf.core.fluorescence.
-    rda_axis = chisurf.core.fluorescence.rda_axis
+    # Prefer the central global R_DA axis defined in cs.core.fluorescence.
+    rda_axis = cs.core.fluorescence.rda_axis
 except Exception:
     # Fallback: reconstruct from settings if the central axis is not available.
-    _fret_cfg = getattr(chisurf.core.settings, "fret", {}) or {}
+    _fret_cfg = getattr(cs.core.settings, "fret", {}) or {}
     _rda_min = _fret_cfg.get("rda_min", 1.0)
     _rda_max = _fret_cfg.get("rda_max", 130.0)
     _rda_res = _fret_cfg.get("rda_resolution", 96)
@@ -73,8 +73,8 @@ class FRETParameters(FittingParameterGroup):
     # TODO: needs docstring
     def __init__(
             self,
-            forster_radius: float = chisurf.core.settings.fret['forster_radius'],
-            tau0: float = chisurf.core.settings.fret['tau0'],
+            forster_radius: float = cs.core.settings.fret['forster_radius'],
+            tau0: float = cs.core.settings.fret['tau0'],
             xDOnly: float = 0.0,
             kappa2: float = 0.66667,
             enable_fret_efficiency: bool = True,
@@ -129,7 +129,7 @@ class FRETParameters(FittingParameterGroup):
                     try:
                         value = float(func_calc_fret)
                     except Exception:
-                        chisurf.logging.warning(
+                        cs.logging.warning(
                             f"FRETParameters: func_calc_fret={func_calc_fret!r} is not callable or numeric; defaulting E_FRET to 0.0"
                         )
 
@@ -218,7 +218,7 @@ class OrientationParameter(FittingParameterGroup):
         pk2 = kapp2.p_isotropic_orientation_factor(
             k2s
         )
-        self._k2_slow_iso = chisurf.core.math.datatools.two_column_to_interleaved(
+        self._k2_slow_iso = cs.core.math.datatools.two_column_to_interleaved(
             pk2, k2s
         )
         
@@ -285,11 +285,11 @@ class Gaussians(FittingParameterGroup):
         weights = self.amplitude
         if not self.is_distance_between_gaussians:
             args = zip(self.mean, self.sigma, self.shape)
-            pdf = chisurf.core.math.functions.distributions.generalized_normal_distribution
+            pdf = cs.core.math.functions.distributions.generalized_normal_distribution
         else:
             args = zip(self.mean, self.sigma)
-            pdf = chisurf.core.math.functions.rdf.distance_between_gaussian
-        p = chisurf.core.math.functions.distributions.combine_distributions(
+            pdf = cs.core.math.functions.rdf.distance_between_gaussian
+        p = cs.core.math.functions.distributions.combine_distributions(
             x_axis=rda_axis,
             dist_function=pdf,
             dist_args=args,
@@ -590,12 +590,12 @@ class FRETModel(LifetimeModel):
             self.donor.rate_spectrum,
             xDOnly
         )
-        if chisurf.core.settings.cs_settings['fret']['bin_lifetime']:
-            n_lifetimes = chisurf.core.settings.cs_settings['fret']['lifetime_bins']
-            discriminate = chisurf.core.settings.cs_settings['fret']['discriminate']
-            discriminate_amplitude = chisurf.core.settings.cs_settings['fret'][
+        if cs.core.settings.cs_settings['fret']['bin_lifetime']:
+            n_lifetimes = cs.core.settings.cs_settings['fret']['lifetime_bins']
+            discriminate = cs.core.settings.cs_settings['fret']['discriminate']
+            discriminate_amplitude = cs.core.settings.cs_settings['fret'][
                 'discriminate_amplitude']
-            return chisurf.core.fluorescence.tcspc.bin_lifetime_spectrum(
+            return cs.core.fluorescence.tcspc.bin_lifetime_spectrum(
                 lt, n_lifetimes=n_lifetimes,
                 discriminate=discriminate,
                 discriminator=discriminate_amplitude
@@ -696,7 +696,7 @@ class FRETModel(LifetimeModel):
     # TODO: needs docstring
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             lifetimes: Lifetime = None,
             **kwargs
     ):
@@ -709,7 +709,7 @@ class FRETModel(LifetimeModel):
             )
         )
         self.orientation_parameter = OrientationParameter(
-            orientation_mode=chisurf.core.settings.cs_settings['fret']['orientation_mode']
+            orientation_mode=cs.core.settings.cs_settings['fret']['orientation_mode']
         )
         super().__init__(fit, **kwargs)
 
@@ -813,7 +813,7 @@ class GaussianModel(FRETModel):
         self.gaussians.finalize()
 
     # TODO: needs docstring
-    def __init__(self, fit: chisurf.core.fitting.fit.FitGroup, **kwargs):
+    def __init__(self, fit: cs.core.fitting.fit.FitGroup, **kwargs):
         """Initialize the instance."""
         super().__init__(fit, **kwargs)
         self.gaussians = kwargs.get('gaussians', Gaussians(**kwargs))
@@ -878,7 +878,7 @@ class FRETrateModel(FRETModel):
     @property
     def fret_rate_spectrum(self) -> np.array:
         """FRET-rate spectrum calculated from the distance distribution."""
-        fret_rates = chisurf.core.fluorescence.general.distance_to_fret_rate_constant(
+        fret_rates = cs.core.fluorescence.general.distance_to_fret_rate_constant(
             self.fret_rates.distance,
             self.fret_parameters.forster_radius,
             self.fret_parameters.tauD0,
@@ -913,7 +913,7 @@ class FRETrateModel(FRETModel):
     # TODO: needs docstring
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             fret_rates: DiscreteDistance = None,
             **kwargs
     ):
@@ -934,20 +934,20 @@ class WormLikeChainModel(FRETModel):
         chain_length = self._chain_length.value
         kappa = self._persistence_length.value / chain_length
         if not self.use_dye_linker:
-            prob = chisurf.core.math.functions.rdf.worm_like_chain(
+            prob = cs.core.math.functions.rdf.worm_like_chain(
                 rda_axis,
                 kappa,
                 chain_length
             )
         else:
             sigma_linker = self._sigma_linker.value
-            prob = chisurf.core.math.functions.rdf.worm_like_chain_linker(
+            prob = cs.core.math.functions.rdf.worm_like_chain_linker(
                 rda_axis, kappa,
                 chain_length,
                 sigma_linker
             )
         dist = np.array([prob, rda_axis]).reshape(
-            [1, 2, chisurf.core.settings.fret['rda_resolution']]
+            [1, 2, cs.core.settings.fret['rda_resolution']]
         )
         return dist
 
@@ -964,7 +964,7 @@ class WormLikeChainModel(FRETModel):
     # TODO: needs docstring
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             use_dye_linker: bool = False,
             **kwargs
     ):
@@ -1045,7 +1045,7 @@ class SingleDistanceModel(FRETModel):
     # TODO: needs docstring
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             **kwargs
     ):
         """Initialize the instance."""

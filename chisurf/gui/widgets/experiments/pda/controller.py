@@ -5,7 +5,7 @@ import chisurf.gui
 from chisurf.core.experiments.core import reader
 
 from chisurf.gui import QtWidgets, QtGui, QtCore
-import chisurf
+import chisurf as cs
 from chisurf import logging
 from chisurf.macros import core_data as core_data_macros
 from chisurf.core.experiments.pda import PdaReader
@@ -278,7 +278,7 @@ class PdaTTTRWidget(
             elif chosen == act_clear:
                 self.clear_all()
 
-    @chisurf.gui.decorators.init_with_ui("pda_tttr.ui")
+    @cs.gui.decorators.init_with_ui("pda_tttr.ui")
     def __init__(self, *args, **kwargs):
         # super().__init__(parent=parent)
         # Internal cache for current setup data
@@ -900,14 +900,14 @@ class PdaTTTRWidget(
                 continue
             ivals_sorted = sorted(ivals, key=lambda x: (int(x[0]), int(x[1])))
             out = []
-            cs, ce = ivals_sorted[0]
+            ch_start, ce = ivals_sorted[0]
             for s, e in ivals_sorted[1:]:
                 if s <= ce:  # overlap or directly adjacent (exclusive stop)
                     ce = max(ce, e)
                 else:
-                    out.append((cs, ce))
-                    cs, ce = s, e
-            out.append((cs, ce))
+                    out.append((ch_start, ce))
+                    ch_start, ce = s, e
+            out.append((ch_start, ce))
             merged[k] = out
         return merged
 
@@ -1059,9 +1059,8 @@ class PdaTTTRWidget(
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
-        import chisurf
         try:
-            setup = chisurf.cs.current_setup
+            setup = cs.cs.current_setup
         except Exception:
             return
 
@@ -1162,8 +1161,8 @@ class PdaTTTRWidget(
         # potential source of instability from repeatedly executing CLI
         # strings.
         try:
-            cs = getattr(chisurf, "cs", None)
-            setup = getattr(cs, "current_setup", None) if cs is not None else None
+            gui = getattr(cs, "cs", None)
+            setup = getattr(gui, "current_setup", None) if gui is not None else None
         except Exception:
             setup = None
 
@@ -1184,7 +1183,7 @@ class PdaTTTRWidget(
                     pass
         except Exception:
             logging.warning(
-                "PDA: Failed to propagate parameter changes to cs.current_setup",
+                "PDA: Failed to propagate parameter changes to gui.current_setup",
                 exc_info=True,
             )
 
@@ -1316,7 +1315,7 @@ class PdaTTTRWidget(
                 pass
 
     def get_filename(self) -> pathlib.Path:
-        return chisurf.gui.widgets.open_files(
+        return cs.gui.widgets.open_files(
             description='HT3/PTU/SPC file',
             file_type='All files (*.*)',
             working_path=None
@@ -1336,7 +1335,7 @@ class PdaTTTRWidget(
 
             progress_dialog = None
             try:
-                parent = getattr(chisurf, 'cs', None)
+                parent = getattr(cs, 'cs', None)
             except Exception:
                 parent = None
             if not isinstance(parent, QtWidgets.QWidget):
@@ -1363,11 +1362,11 @@ class PdaTTTRWidget(
 
             try:
                 try:
-                    cs = getattr(chisurf, 'cs', None)
+                    gui = getattr(cs, 'cs', None)
                 except Exception:
-                    cs = None
-                progress_bar = getattr(cs, 'progress_bar', None)
-                status_label = getattr(cs, 'status_label', None)
+                    gui = None
+                progress_bar = getattr(gui, 'progress_bar', None)
+                status_label = getattr(gui, 'status_label', None)
                 progress_backup = None
                 status_backup = None
                 if progress_bar is not None:
@@ -1515,10 +1514,10 @@ class PdaTTTRWidget(
                 )
                 # Attach the correct experiment to the reader so get_data can set d.experiment
                 try:
-                    pda_reader.experiment = chisurf.core.experiments.types.get('pda') or chisurf.cs.current_experiment
+                    pda_reader.experiment = cs.core.experiments.types.get('pda') or cs.cs.current_experiment
                 except Exception:
                     # Fallback to current experiment if types lookup fails
-                    pda_reader.experiment = getattr(chisurf.cs, 'current_experiment', None)
+                    pda_reader.experiment = getattr(cs.cs, 'current_experiment', None)
                 try:
                     pda_reader.controller = self
                 except Exception:

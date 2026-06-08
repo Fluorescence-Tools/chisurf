@@ -20,7 +20,7 @@ name = "Tools:Miscellaneous:Pong"
 import sys
 from qtpy.QtWidgets import QApplication
 
-from .pong_game import Pong
+from chisurf.plugins.misc.pong_game.pong_game import Pong
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

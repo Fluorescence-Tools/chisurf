@@ -194,7 +194,7 @@ from pathlib import Path
 
 
 def test_irf_is_normalized_before_convolution_paths():
-    path = Path(__file__).resolve().parents[2] / "chisurf" / "models" / "tcspc" / "nusiance.py"
+    path = Path(__file__).resolve().parents[2] / "cs" / "models" / "tcspc" / "nusiance.py"
     src = path.read_text(encoding="utf-8")
 
     norm_idx = src.find("irf_y = irf_y / np.sum(irf_y)")
@@ -217,10 +217,10 @@ import sys
 # Configure logging to show info messages
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Add the chisurf directory to the path
+# Add the cs directory to the path
 sys.path.append('/')
 
-import chisurf
+import chisurf as cs
 from chisurf.core.curve import Curve
 from chisurf.core.data import DataCurve
 from chisurf.core.fitting.fit import Fit

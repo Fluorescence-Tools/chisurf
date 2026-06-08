@@ -1,6 +1,7 @@
 import time
 from chisurf import typing
 from chisurf.core.actions._decorator import action
+import chisurf as cs
 
 
 @action("fit.add", schema={"dataset_indices": list})
@@ -59,15 +60,14 @@ def close_fit(idx: int):
 @action("fit.data_set", debounce_ms=200)
 def set_fit_data(fit_index: int, dataset_index: int):
     """Set data for a fit."""
-    import chisurf
     fit_idx = int(fit_index)
     ds_idx = int(dataset_index)
     if ds_idx < 0:
-        ds_idx = len(chisurf.imported_datasets) - 1
+        ds_idx = len(cs.imported_datasets) - 1
     if ds_idx < 0:
         return None
-    fit_obj = chisurf.fits[fit_idx]
-    dataset_obj = chisurf.imported_datasets[ds_idx]
+    fit_obj = cs.fits[fit_idx]
+    dataset_obj = cs.imported_datasets[ds_idx]
     fit_obj.data = dataset_obj
     return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}
 
@@ -119,8 +119,7 @@ def toggle_fit_group_link(fit_indices: typing.List[int]):
 @action("fit.update", debounce_ms=200)
 def update_fit(fit_index: int = 0):
     """Update a fit's state."""
-    import chisurf
-    fit_obj = chisurf.fits[int(fit_index)]
+    fit_obj = cs.fits[int(fit_index)]
     fit_obj.update()
     return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}
 
@@ -128,8 +127,7 @@ def update_fit(fit_index: int = 0):
 @action("fit.mask_set", replayable=False, debounce_ms=200)
 def set_fit_mask(fit_index: int, mask: typing.Any):
     """Set the fitting mask."""
-    import chisurf
-    fit_obj = chisurf.fits[int(fit_index)]
+    fit_obj = cs.fits[int(fit_index)]
     fit_obj.mask = mask
     return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}
 
@@ -137,9 +135,8 @@ def set_fit_mask(fit_index: int, mask: typing.Any):
 @action("fit.range.set", schema={"fit_index": int, "xmin": int, "xmax": int}, debounce_ms=60)
 def set_fit_range(fit_index: int, xmin: int, xmax: int):
     """Set the fit range for a fit group."""
-    import chisurf
     try:
-        fit_obj = chisurf.fits[int(fit_index)]
+        fit_obj = cs.fits[int(fit_index)]
     except (IndexError, AttributeError):
         return None
     fit_obj.fit_range = (int(xmin), int(xmax))
@@ -151,16 +148,15 @@ def set_fit_range(fit_index: int, xmin: int, xmax: int):
 @action("fit.set_dataset", schema={"fit_index": int, "dataset_index": int})
 def set_fit_dataset(fit_index: int, dataset_index: int = -1):
     """Assign a dataset to a fit."""
-    import chisurf
     fit_idx = int(fit_index)
     ds_idx = int(dataset_index)
     if ds_idx < 0:
-        ds_idx = len(chisurf.imported_datasets) - 1
+        ds_idx = len(cs.imported_datasets) - 1
     if ds_idx < 0:
         return None
 
-    fit_obj = chisurf.fits[fit_idx]
-    dataset_obj = chisurf.imported_datasets[ds_idx]
+    fit_obj = cs.fits[fit_idx]
+    dataset_obj = cs.imported_datasets[ds_idx]
     fit_obj.data = dataset_obj
     return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}
 
@@ -168,8 +164,7 @@ def set_fit_dataset(fit_index: int, dataset_index: int = -1):
 @action("fit.run", schema={"fit_index": int}, replayable=False, side_effect_class="execution")
 def run_fit(fit_index: int):
     """Execute the fit optimization."""
-    import chisurf
     fit_idx = int(fit_index)
-    fit_obj = chisurf.fits[fit_idx]
+    fit_obj = cs.fits[fit_idx]
     fit_obj.run()
     return {"source_uid": str(getattr(fit_obj, "unique_identifier", ""))}

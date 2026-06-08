@@ -15,17 +15,17 @@ class CustomBuildPy(_build_py):
 # Define extension modules
 extensions = [
     Extension(
-        "chisurf.structure.av.fps_",
+        "chisurf.core.structure.av.fps_",
         sources=[
-            "chisurf/structure/av/fps_.pyx",
-            "chisurf/structure/av/mt19937cok.cpp",
+            "chisurf/core/structure/av/fps_.pyx",
+            "chisurf/core/structure/av/mt19937cok.cpp",
         ],
         include_dirs=[np.get_include()],
         language="c++",
     ),
     Extension(
-        "chisurf.structure.potential.cPotentials_",
-        sources=["chisurf/structure/potential/cPotentials_.pyx"],
+        "chisurf.core.structure.potential.cPotentials_",
+        sources=["chisurf/core/structure/potential/cPotentials_.pyx"],
         include_dirs=[np.get_include()],
         language="c++",
     ),

@@ -7,9 +7,7 @@ import pathlib
 import numpy as np
 import pyqtgraph as pg
 
-import chisurf
-
-
+import chisurf as cs
 class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
     """Controller widget for the TCSPC simulator reader.
 
@@ -20,13 +18,13 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
     - An IRF selector with Gaussian fallback.
     - A **Simulate** button to generate a Poisson-noisy decay.
     - An **Add** button to append the simulated decay to
-      ``chisurf.imported_datasets``.
+      ``cs.imported_datasets``.
     - A tool button next to the *lifetime spectrum* field that loads an
       interleaved (amplitude, lifetime, ...) spectrum from a CSV/text file
       into the line edit.
     """
 
-    @chisurf.gui.decorators.init_with_ui("tcspc_simulator.ui")
+    @cs.gui.decorators.init_with_ui("tcspc_simulator.ui")
     def __init__(self, *args, **kwargs):
         # Internal reference to the currently selected IRF dataset (if any)
         self._irf_dataset = None
@@ -83,7 +81,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
         # break isinstance checks in ExperimentalDataSelector. Leaving
         # "experiment" unset mirrors ConvolveWidget behaviour and shows the
         # same imported datasets.
-        self.irf_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
+        self.irf_selector = cs.gui.widgets.experiments.ExperimentalDataSelector(
             click_close=True,
             parent=None,
             context_menu_enabled=False,
@@ -198,9 +196,8 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
-        import chisurf
         # Get the current setup
-        setup = chisurf.cs.current_setup
+        setup = cs.cs.current_setup
 
         # Update sample_name line edit
         if hasattr(setup, 'sample_name'):
@@ -228,14 +225,14 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
         p0 = self.spinBox_2.value()
         sample_name = str(self.lineEdit.text())
         lt_text = self.lineEdit_2.text()
-        chisurf.run(
+        cs.run(
             "\n".join(
                 [
-                    f"cs.current_setup.sample_name = '{sample_name}'",
-                    f"cs.current_setup.dt = {dt}",
-                    f"cs.current_setup.lifetime_spectrum = np.array([{lt_text}], dtype=np.float64)",
-                    f"cs.current_setup.n_tac = {n_tac}",
-                    f"cs.current_setup.p0 = {p0}"
+                    f"gui.current_setup.sample_name = '{sample_name}'",
+                    f"gui.current_setup.dt = {dt}",
+                    f"gui.current_setup.lifetime_spectrum = np.array([{lt_text}], dtype=np.float64)",
+                    f"gui.current_setup.n_tac = {n_tac}",
+                    f"gui.current_setup.p0 = {p0}"
                 ]
             )
         )
@@ -251,7 +248,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
         two-column (amplitude, lifetime) table. In both cases the values
         are converted into the interleaved ``a1, tau1, a2, tau2, ...``
         string used by the simulator. The line edit is updated and
-        :meth:`onParametersChanged` is called so ``cs.current_setup``
+        :meth:`onParametersChanged` is called so ``gui.current_setup``
         reflects the new spectrum.
         """
 
@@ -259,7 +256,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
         import numpy as _np
 
         try:
-            start_dir = getattr(chisurf, "working_path", "") or ""
+            start_dir = getattr(cs, "working_path", "") or ""
         except Exception:
             start_dir = ""
 
@@ -602,20 +599,20 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
         # Resolve experiment, setup and reader from the global ChiSurf state
         try:
-            cs = chisurf.cs
+            gui = cs.cs
         except Exception:
-            cs = None
+            gui = None
 
         try:
-            experiment = getattr(cs, 'current_experiment', None) if cs is not None else None
+            experiment = getattr(gui, 'current_experiment', None) if gui is not None else None
         except Exception:
             experiment = None
         try:
-            setup = getattr(cs, 'current_setup', None) if cs is not None else None
+            setup = getattr(gui, 'current_setup', None) if gui is not None else None
         except Exception:
             setup = None
         try:
-            experiment_reader = getattr(cs, 'current_experiment_reader', None) if cs is not None else None
+            experiment_reader = getattr(gui, 'current_experiment_reader', None) if gui is not None else None
         except Exception:
             experiment_reader = None
 
@@ -628,7 +625,7 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
         # Create an experimental curve with proper metadata so selectors and
         # fits see it like any other TCSPC dataset.
-        data_set = chisurf.core.data.DataCurve(
+        data_set = cs.core.data.DataCurve(
             x=_np.asarray(t, dtype=float),
             y=_np.asarray(y, dtype=float),
             ey=ey,
@@ -640,14 +637,14 @@ class TCSPCSimulatorSetupWidget(QtWidgets.QWidget):
 
         # Wrap into an ExperimentDataCurveGroup to mirror grouped imports.
         try:
-            dataset_group = chisurf.core.data.ExperimentDataCurveGroup([data_set])
+            dataset_group = cs.core.data.ExperimentDataCurveGroup([data_set])
         except Exception:
             dataset_group = None
 
-        if dataset_group is not None and cs is not None:
+        if dataset_group is not None and gui is not None:
             try:
-                chisurf.imported_datasets.append(dataset_group)
-                chisurf.gui.run_on_gui_thread(cs.update)
+                cs.imported_datasets.append(dataset_group)
+                cs.gui.run_on_gui_thread(gui.update)
                 return
             except Exception:
                 pass

@@ -12,7 +12,7 @@ try:
 except Exception:
     pymol2 = None
     _HAVE_PYMOL2 = False
-import chisurf
+import chisurf as cs
 from chisurf.gui.plots.plotbase import Plot
 
 try:
@@ -42,9 +42,9 @@ except Exception:
 
 try:
     if _HAVE_QGL:
-        chisurf.logging.info("MolView: using real QGLWidget backend")
+        cs.logging.info("MolView: using real QGLWidget backend")
     else:
-        chisurf.logging.warning("MolView: using stub QGLWidget backend; PyMOL display may be disabled")
+        cs.logging.warning("MolView: using stub QGLWidget backend; PyMOL display may be disabled")
 except Exception:
     pass
 
@@ -61,7 +61,7 @@ _PYMOL_MISSING_HINT = (
     "PyMOL is not available in this ChiSurf environment, so the 3D view is disabled.\n\n"
     "To enable the 3D viewer, install ChiSurf (which bundles PyMOL) via the ChiSurf "
     "Package Manager (Help → Updates and Packages → Package Manager) or through "
-    "`conda install chisurf -c conda-forge -c tpeulen` on the command line."
+    "`conda install cs -c conda-forge -c tpeulen` on the command line."
 )
 
 
@@ -189,7 +189,7 @@ class MolQtWidget(QGLWidget):
         except Exception:
             pass
         try:
-            chisurf.logging.info(
+            cs.logging.info(
                 "MolQtWidget.__init__: PyMOL started (enableUi=%s, sequence=%s)",
                 enableUi,
                 sequence
@@ -289,7 +289,7 @@ class MolQtWidget(QGLWidget):
 
     def resizeGL(self, w, h):
         try:
-            chisurf.logging.info("MolQtWidget.resizeGL: w=%d h=%d", w, h)
+            cs.logging.info("MolQtWidget.resizeGL: w=%d h=%d", w, h)
         except Exception:
             pass
         self.pymol.reshape(w,h, True)
@@ -489,7 +489,7 @@ class MolView(Plot):
             structure = None
 
         try:
-            chisurf.logging.info(
+            cs.logging.info(
                 "MolView.__init__: fit=%s structure=%s type=%s",
                 getattr(fit, 'name', 'unknown'),
                 getattr(structure, 'name', getattr(structure, 'filename', 'unknown')) if structure is not None else 'None',
@@ -504,7 +504,7 @@ class MolView(Plot):
                 self.open_structure(structure)
             except Exception as e:
                 try:
-                    chisurf.logging.warning(f"MolView.__init__: open_structure failed: {e}")
+                    cs.logging.warning(f"MolView.__init__: open_structure failed: {e}")
                 except Exception:
                     pass
 

@@ -8,7 +8,7 @@ import numpy as np
 
 import pyqtgraph as pg
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio as io
 import chisurf.gui.decorators
 import chisurf.core.settings
@@ -16,7 +16,7 @@ from chisurf.gui import QtGui, QtWidgets, QtCore, uic
 from chisurf.core.fluorescence.fcs.channel_setups import load_fcs_channel_setups
 from .tttr_correlator_ui import setup_ui as _setup_ui
 
-colors = chisurf.core.settings.gui['plot']['colors']
+colors = cs.core.settings.gui['plot']['colors']
 
 
 class WizardTTTRCorrelator(QtWidgets.QWizardPage):
@@ -86,9 +86,9 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         return self.get_microtime_ranges(s)
 
     def get_microtime_ranges(self, s) -> typing.List[typing.Tuple[int, int]] | None:
-        chisurf.logging.log(0, "WizardTTTRCorrelator::get_microtime_ranges")
+        cs.logging.log(0, "WizardTTTRCorrelator::get_microtime_ranges")
         if not s:
-            chisurf.logging.log(0, "::microtime_ranges: Warning - Input string is empty.")
+            cs.logging.log(0, "::microtime_ranges: Warning - Input string is empty.")
             return None
 
         try:
@@ -104,7 +104,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                     segments.append(item)
 
             if not segments:
-                chisurf.logging.log(0, "::microtime_ranges: No usable ranges after parsing.")
+                cs.logging.log(0, "::microtime_ranges: No usable ranges after parsing.")
                 return None
 
             ranges: typing.List[typing.Tuple[int, int]] = []
@@ -139,19 +139,19 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             return ranges if ranges else None
 
         except (ValueError, TypeError):
-            chisurf.logging.log(1, "::microtime_ranges: Invalid values in microsecond ranges.")
+            cs.logging.log(1, "::microtime_ranges: Invalid values in microsecond ranges.")
             return None
 
     def update_plots(self):
-        chisurf.logging.log(0, 'WizardTTTRCorrelator::Updating plots')
+        cs.logging.log(0, 'WizardTTTRCorrelator::Updating plots')
         self.pw_fcs.clear()
         if self.is_correlated:
             for i, cor in enumerate(self.correlations):
-                pen = pg.mkPen(chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex'], width=1)
+                pen = pg.mkPen(cs.core.settings.colors[i % len(cs.core.settings.colors)]['hex'], width=1)
                 self.plot_item_fcs.plot(x=cor['x'], y=cor['y'], pen=pen)
 
     def read_tttrs(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::read_tttrs")
+        cs.logging.log(0, "WizardTTTRCorrelator::read_tttrs")
         fn = self.current_tttr_filename
         if fn:
             if pathlib.Path(fn).exists():
@@ -166,7 +166,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 self.update_plots()
 
     def update_output_path(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::update_output_path")
+        cs.logging.log(0, "WizardTTTRCorrelator::update_output_path")
         if len(self.channel_a) > 0 and len(self.channel_b) > 0:
             cha = ','.join([str(x) for x in self.channel_a])
             chb = ','.join([str(x) for x in self.channel_b])
@@ -177,7 +177,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.lineEdit_5.setText(s.as_posix())
 
     def update_parameter(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::update_parameter")
+        cs.logging.log(0, "WizardTTTRCorrelator::update_parameter")
         self.settings['correlation']['is_fine'] = self.correlation_is_fine
         self.settings['correlation']['ncasc'] = self.correlation_ncasc
         self.settings['correlation']['nbins'] = self.correlation_nbins
@@ -193,7 +193,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.update_output_path()
 
     def onClearFiles(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::onClearFiles")
+        cs.logging.log(0, "WizardTTTRCorrelator::onClearFiles")
         self.settings['tttr_filenames'].clear()
         self.comboBox.setEnabled(True)
         self.lineEdit.clear()
@@ -203,23 +203,23 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         self.is_correlated = False
 
     def split_array(self, tttr, n):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::split_array")
+        cs.logging.log(0, "WizardTTTRCorrelator::split_array")
         chunk_size = len(tttr) // n
         chunks = [tttr[i * chunk_size: (i + 1) * chunk_size] for i in range(n)]
         return chunks
 
     def get_correlation_settings(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::Getting correlation settings")
+        cs.logging.log(0, "WizardTTTRCorrelator::Getting correlation settings")
         d = {
             "n_bins": self.correlation_nbins,
             "n_casc": self.correlation_ncasc,
             "make_fine": self.correlation_is_fine
         }
-        chisurf.logging.log(0, "Correlation settings:", d)
+        cs.logging.log(0, "Correlation settings:", d)
         return d
 
     def save_correlations(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::saving correlations to files")
+        cs.logging.log(0, "WizardTTTRCorrelator::saving correlations to files")
         # If disabled, skip writing per-chunk files (direct TTTR mode)
         if not getattr(self, 'save_chunks_to_disk', True):
             return
@@ -262,7 +262,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 continue
 
     def correlate_data(self):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::Correlate data")
+        cs.logging.log(0, "WizardTTTRCorrelator::Correlate data")
 
         # Ensure default analysis folder if missing (use parent of first TTTR file)
         try:
@@ -273,14 +273,14 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         n_chunks = self.correlation_nsplits
         ch1 = self.channel_a
         ch2 = self.channel_b
-        chisurf.logging.log(0, "ch1", ch1)
-        chisurf.logging.log(0, "ch2", ch2)
-        chisurf.logging.log(0, "n_chunks", n_chunks)
-        chisurf.logging.log(0, "self.tttr:", self.tttr)
+        cs.logging.log(0, "ch1", ch1)
+        cs.logging.log(0, "ch2", ch2)
+        cs.logging.log(0, "n_chunks", n_chunks)
+        cs.logging.log(0, "self.tttr:", self.tttr)
 
         # **Handle empty tttr case**
         if self.tttr is None or len(self.tttr) == 0:
-            chisurf.logging.log(1, "Warning: No TTTR data available for correlation.")
+            cs.logging.log(1, "Warning: No TTTR data available for correlation.")
 
             # **Display a message box to the user**
             msg_box = QtWidgets.QMessageBox()
@@ -304,12 +304,12 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
         for i, tttr in enumerate(self.split_array(self.tttr, n_chunks)):
             if progress.wasCanceled():
-                chisurf.logging.log(1, "Correlation process was canceled by the user.")
+                cs.logging.log(1, "Correlation process was canceled by the user.")
                 break
 
             # **Handle empty chunk case**
             if tttr is None or len(tttr.macro_times) == 0:
-                chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to empty TTTR data.")
+                cs.logging.log(1, f"Warning: Skipping chunk {i} due to empty TTTR data.")
                 continue
 
             print(f"Processing chunk {i}...")
@@ -349,7 +349,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
             # **Handle empty macro_times to prevent IndexError**
             if len(t) == 0:
-                chisurf.logging.log(1, f"Warning: Skipping chunk {i} due to missing macro_times.")
+                cs.logging.log(1, f"Warning: Skipping chunk {i} due to missing macro_times.")
                 continue
             
             # Compute duration more robustly using percentiles to avoid outliers
@@ -399,10 +399,10 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                 
                 # Update plot immediately after computing each correlation
                 self.is_correlated = True
-                pen = pg.mkPen(chisurf.core.settings.colors[i % len(chisurf.core.settings.colors)]['hex'], width=1)
+                pen = pg.mkPen(cs.core.settings.colors[i % len(cs.core.settings.colors)]['hex'], width=1)
                 self.plot_item_fcs.plot(x=d['x'], y=d['y'], pen=pen)
             else:
-                chisurf.logging.log(1, "Warning: No photons to correlate with.")
+                cs.logging.log(1, "Warning: No photons to correlate with.")
 
             # Update progress bar and keep it on top
             progress.setValue(i + 1)
@@ -486,7 +486,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                     break
             if tttr_path is None:
                 # Could not locate TTTR file for this .bst; skip gracefully
-                chisurf.logging.log(1, f"Could not resolve TTTR for BST: {p_bst}")
+                cs.logging.log(1, f"Could not resolve TTTR for BST: {p_bst}")
                 continue
             # Parse start/stop ranges from bst file
             ranges: typing.List[typing.Tuple[int, int]] = []
@@ -507,7 +507,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
                         except Exception:
                             continue
             except Exception as e:
-                chisurf.logging.log(1, f"Failed to parse BST file '{p_bst}': {e}")
+                cs.logging.log(1, f"Failed to parse BST file '{p_bst}': {e}")
                 continue
             if not ranges:
                 continue
@@ -656,60 +656,60 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
             pass
 
     def open_sl5(self, filename: str) -> tttrlib.TTTR | None:
-        chisurf.logging.log(0, 'WizardTTTRCorrelator::open_sl5:', filename)
+        cs.logging.log(0, 'WizardTTTRCorrelator::open_sl5:', filename)
         data = dict()
         try:
             with io.open_maybe_zipped(filename) as fp:
                 data.update(json.load(fp))
         except Exception as e:
-            chisurf.logging.log(1, f"Failed to read selection file {filename}: {e}")
+            cs.logging.log(1, f"Failed to read selection file {filename}: {e}")
             return None
         tttr_filename = self.analysis_folder / pathlib.Path(data.get('filename', ''))
         tttr_filetype = data.get('filetype')
-        f = chisurf.core.fio.decompress_numpy_array(data.get('filter'))
+        f = cs.core.fio.decompress_numpy_array(data.get('filter'))
         idx = np.where(f > 0)[0] if f is not None else None
         if not tttr_filename.exists():
-            chisurf.logging.log(1, f"TTTR source file does not exist: {tttr_filename}")
+            cs.logging.log(1, f"TTTR source file does not exist: {tttr_filename}")
             return None
-        chisurf.logging.log(0, 'tttr_filetype: ', tttr_filetype)
+        cs.logging.log(0, 'tttr_filetype: ', tttr_filetype)
         tttr = tttrlib.TTTR(tttr_filename.as_posix(), tttr_filetype)
         if idx is not None:
             tttr = tttr[idx]
         return tttr
 
     def open_selections(self, filenames: typing.List[pathlib.Path]) -> tttrlib.TTTR | None:
-        chisurf.logging.log(0, "WizardTTTRCorrelator::open_selections:", filenames)
+        cs.logging.log(0, "WizardTTTRCorrelator::open_selections:", filenames)
         if not filenames:
-            chisurf.logging.log(1, "No selection files provided to open_selections.")
+            cs.logging.log(1, "No selection files provided to open_selections.")
             return None
         first = self.open_sl5(str(filenames[0]))
         if first is None:
-            chisurf.logging.log(1, f"Failed to open first selection file: {filenames[0]}")
+            cs.logging.log(1, f"Failed to open first selection file: {filenames[0]}")
             return None
         self.tttr = first
         for filename in filenames[1:]:
             tttr_part = self.open_sl5(str(filename))
             if tttr_part is not None:
                 self.tttr.append(tttr_part)
-        chisurf.logging.log(0, "tttr", self.tttr)
+        cs.logging.log(0, "tttr", self.tttr)
         return self.tttr
 
     def open_analysis_folder(self, folder: pathlib.Path = None):
-        chisurf.logging.log(0, "WizardTTTRCorrelator::open_analysis_folder")
+        cs.logging.log(0, "WizardTTTRCorrelator::open_analysis_folder")
         if folder is None:
             folder = self.analysis_folder / 'sl5'
         if not folder.exists():
-            chisurf.logging.log(1, f"Analysis folder does not exist: {folder}")
+            cs.logging.log(1, f"Analysis folder does not exist: {folder}")
             return
         selected_files = sorted(list(folder.glob('*.json.gz')))
-        chisurf.logging.log(0, 'Opening analysis folder')
-        chisurf.logging.log(0, list(selected_files))
+        cs.logging.log(0, 'Opening analysis folder')
+        cs.logging.log(0, list(selected_files))
         if not selected_files:
-            chisurf.logging.log(1, f"No selection files (*.json.gz) found in: {folder}")
+            cs.logging.log(1, f"No selection files (*.json.gz) found in: {folder}")
             return
         self.open_selections(selected_files)
 
-    @chisurf.gui.decorators.init_with_ui("tttr_correlator.ui")
+    @cs.gui.decorators.init_with_ui("tttr_correlator.ui")
     def __init__(
             self,
             ncasc: int = None,
@@ -762,7 +762,7 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         ------
         - UI elements are set based on the provided arguments.
         - The correlation flag (`self.is_correlated`) is invalidated when any parameter is modified.
-        - Default values for correlation parameters are taken from chisurf.core.settings.cs_settings at runtime,
+        - Default values for correlation parameters are taken from cs.core.settings.cs_settings at runtime,
           allowing them to reflect any changes to settings that occur during runtime.
         """
 
@@ -796,10 +796,10 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
 
         # Force update of UI elements with values from settings
         # This ensures that any default values from the UI file are overridden
-        self.spinBox_2.setValue(int(chisurf.core.settings.cs_settings['correlator']['B']))
-        self.spinBox_3.setValue(int(chisurf.core.settings.cs_settings['correlator']['number_of_cascades']))
-        self.spinBox.setValue(int(chisurf.core.settings.cs_settings['correlator']['split']))
-        self.checkBox_2.setChecked(bool(chisurf.core.settings.cs_settings['correlator']['fine']))
+        self.spinBox_2.setValue(int(cs.core.settings.cs_settings['correlator']['B']))
+        self.spinBox_3.setValue(int(cs.core.settings.cs_settings['correlator']['number_of_cascades']))
+        self.spinBox.setValue(int(cs.core.settings.cs_settings['correlator']['split']))
+        self.checkBox_2.setChecked(bool(cs.core.settings.cs_settings['correlator']['fine']))
 
         # Ensure parameters are updated after setting them
         self.update_parameter()
@@ -898,16 +898,16 @@ class WizardTTTRCorrelator(QtWidgets.QWizardPage):
         This method ensures that the correlation flag (`self.is_correlated`) is invalidated.
 
         If any of the correlation parameters (ncasc, nbins, nsplits, is_fine) are None,
-        their values are taken from chisurf.core.settings.cs_settings at runtime.
+        their values are taken from cs.core.settings.cs_settings at runtime.
         """
 
-        chisurf.logging.log(0, "Setting initial parameters for UI elements")
+        cs.logging.log(0, "Setting initial parameters for UI elements")
 
         # Always get the latest values from settings
-        settings_ncasc = chisurf.core.settings.cs_settings['correlator']['number_of_cascades']
-        settings_nbins = chisurf.core.settings.cs_settings['correlator']['B']
-        settings_nsplits = chisurf.core.settings.cs_settings['correlator']['split']
-        settings_is_fine = bool(chisurf.core.settings.cs_settings['correlator']['fine'])
+        settings_ncasc = cs.core.settings.cs_settings['correlator']['number_of_cascades']
+        settings_nbins = cs.core.settings.cs_settings['correlator']['B']
+        settings_nsplits = cs.core.settings.cs_settings['correlator']['split']
+        settings_is_fine = bool(cs.core.settings.cs_settings['correlator']['fine'])
 
         # Use provided parameters if not None, otherwise use settings
         if ncasc is None:

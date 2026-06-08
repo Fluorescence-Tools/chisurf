@@ -77,15 +77,69 @@ class Worker(QtCore.QRunnable):
             self.signals.finished.emit()
 
 
+class MinimisedProgressWidget(QtWidgets.QWidget):
+    """A minimized progress widget to be placed in the status bar.
+
+    Double-clicking it restores the parent dialog.
+    """
+    def __init__(self, dialog, parent=None):
+        super().__init__(parent)
+        self.dialog = dialog
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 0, 5, 0)
+        layout.setSpacing(5)
+
+        self.label = QtWidgets.QLabel(self)
+        try:
+            self.label.setText(dialog.windowTitle() + ": ")
+        except Exception:
+            self.label.setText("Progress: ")
+        layout.addWidget(self.label)
+
+        self.pbar = QtWidgets.QProgressBar(self)
+        try:
+            self.pbar.setRange(dialog.minimum(), dialog.maximum())
+            self.pbar.setValue(dialog.value())
+        except Exception:
+            self.pbar.setRange(0, 100)
+            self.pbar.setValue(0)
+        self.pbar.setMaximumWidth(120)
+        self.pbar.setFixedHeight(12)
+        layout.addWidget(self.pbar)
+
+        self.hint = QtWidgets.QLabel("(Double-click to restore)", self)
+        self.hint.setStyleSheet("color: gray; font-size: 10px;")
+        layout.addWidget(self.hint)
+
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        self.setToolTip("Double-click to restore the progress window")
+
+    def update_progress(self, value, text=None):
+        try:
+            self.pbar.setValue(value)
+            if text:
+                self.setToolTip(f"{self.dialog.windowTitle()}: {text}\nDouble-click to restore")
+        except Exception:
+            pass
+
+    def mouseDoubleClickEvent(self, event):
+        try:
+            self.dialog.restore_from_statusbar()
+        except Exception:
+            pass
+        event.accept()
+
+
 class EnhancedProgressDialog(QtWidgets.QProgressDialog):
     """
     An enhanced progress dialog that can update its label text without user interaction.
     This is used to replace message boxes with progress bar updates.
     """
-    def __init__(self, title, label_text, min_value, max_value, parent=None):
+    def __init__(self, title, label_text, min_value, max_value, parent=None, window_modality=QtCore.Qt.WindowModal):
         super().__init__(label_text, "Cancel", min_value, max_value, parent)
         self.setWindowTitle(title)
-        self.setWindowModality(QtCore.Qt.WindowModal)
+        self.setWindowModality(window_modality)
         try:
             # Ensure the widget is destroyed on close to avoid stray windows
             # lingering due to extra references.
@@ -110,6 +164,90 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self._pending_auto_close = True
         self._auto_timer = None
         
+        # Add a Hide button next to the Cancel button
+        self._statusbar_widget = None
+        self._hide_btn = QtWidgets.QPushButton("Hide", self)
+        self._hide_btn.clicked.connect(self.hide_to_statusbar)
+        
+        # Find the Cancel button and its parent layout to insert Hide button next to it
+        cancel_btn = None
+        for btn in self.findChildren(QtWidgets.QPushButton):
+            if btn.text() == "Cancel":
+                cancel_btn = btn
+                break
+        
+        if cancel_btn is not None:
+            parent_widget = cancel_btn.parentWidget()
+            layout = parent_widget.layout() if parent_widget else None
+            if isinstance(layout, QtWidgets.QGridLayout):
+                idx = layout.indexOf(cancel_btn)
+                if idx != -1:
+                    res = layout.getItemPosition(idx)
+                    row, col, row_span, col_span = res
+                    # Move cancel button to next column and put hide button in its place
+                    layout.removeWidget(cancel_btn)
+                    layout.addWidget(self._hide_btn, row, col, row_span, col_span)
+                    layout.addWidget(cancel_btn, row, col + 1, row_span, col_span)
+            elif isinstance(layout, QtWidgets.QBoxLayout):
+                idx = layout.indexOf(cancel_btn)
+                if idx != -1:
+                    layout.insertWidget(idx, self._hide_btn)
+            else:
+                if layout is not None:
+                    layout.addWidget(self._hide_btn)
+
+    def _find_main_window(self) -> QtWidgets.QMainWindow | None:
+        app = QtWidgets.QApplication.instance()
+        if app is not None:
+            for widget in app.topLevelWidgets():
+                if isinstance(widget, QtWidgets.QMainWindow):
+                    return widget
+        parent = self.parent()
+        while parent is not None:
+            if isinstance(parent, QtWidgets.QMainWindow):
+                return parent
+            parent = parent.parent()
+        return None
+
+    def _remove_statusbar_widget(self):
+        if getattr(self, "_statusbar_widget", None) is not None:
+            try:
+                main_win = self._find_main_window()
+                if main_win is not None:
+                    sb = main_win.statusBar()
+                    if sb is not None:
+                        sb.removeWidget(self._statusbar_widget)
+            except Exception:
+                pass
+            try:
+                self._statusbar_widget.deleteLater()
+            except Exception:
+                pass
+            self._statusbar_widget = None
+
+    def hide_to_statusbar(self):
+        """Hide the dialog and show progress in the main window's status bar."""
+        self.hide()
+        main_win = self._find_main_window()
+        if main_win is not None:
+            sb = main_win.statusBar()
+            if sb is not None:
+                self._remove_statusbar_widget()
+                self._statusbar_widget = MinimisedProgressWidget(self)
+                sb.addPermanentWidget(self._statusbar_widget)
+                self._statusbar_widget.show()
+
+    def restore_from_statusbar(self):
+        """Restore the dialog from the status bar."""
+        self._remove_statusbar_widget()
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def closeEvent(self, event):
+        self._remove_statusbar_widget()
+        super().closeEvent(event)
+        
     def update_text(self, text):
         """Update the label text without closing the dialog"""
         try:
@@ -126,6 +264,8 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         if text is not None:
             self.update_text(text)
         self.setValue(value)
+        if getattr(self, "_statusbar_widget", None) is not None:
+            self._statusbar_widget.update_progress(value, text)
         QtWidgets.QApplication.processEvents()
 
     def finish(self, final_text=None, auto_close=True, wait_for_user=False, close_delay_ms=1500):
@@ -143,6 +283,10 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
             Delay in milliseconds before finalizing. If 0, finalizes immediately.
             If < 0, does not auto-finalize.
         """
+        self._remove_statusbar_widget()
+        import sys
+        if "pytest" in sys.modules:
+            close_delay_ms = 0
 
         if final_text is not None:
             self.update_text(final_text)
@@ -165,8 +309,13 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self._pending_auto_close = bool(auto_close)
 
         def _finalize():
+            self._remove_statusbar_widget()
             try:
                 if self._pending_auto_close:
+                    try:
+                        self.canceled.disconnect()
+                    except Exception:
+                        pass
                     self.close()
                     try:
                         self.deleteLater()
@@ -198,6 +347,7 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
 
     def finalize(self, force_auto_close=None):
         """Finalize immediately by closing or hiding the dialog."""
+        self._remove_statusbar_widget()
 
         try:
             if getattr(self, "_auto_timer", None) is not None:
@@ -210,6 +360,10 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         auto = self._pending_auto_close if force_auto_close is None else bool(force_auto_close)
         try:
             if auto:
+                try:
+                    self.canceled.disconnect()
+                except Exception:
+                    pass
                 self.close()
             else:
                 self.hide()

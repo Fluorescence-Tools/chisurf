@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import chisurf
+import chisurf as cs
 from chisurf import typing
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
@@ -20,7 +20,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
 
     plot_classes = [
         (
-            chisurf.gui.plots.LinePlot,
+            cs.gui.plots.LinePlot,
             {
                 'd_scalex': 'lin',
                 'd_scaley': 'log',
@@ -31,17 +31,17 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
                 'plot_irf': True
             }
          ),
-        (chisurf.gui.plots.FitTablePlot, {}),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.FitTablePlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 'distribution_options': {
                     'Lifetime': {
                         'attribute': 'lifetime_spectrum',
-                        'accessor': chisurf.core.math.datatools.interleaved_to_two_columns,
+                        'accessor': cs.core.math.datatools.interleaved_to_two_columns,
                         'accessor_kwargs': {'sort': True},
                         'curve_options': {
                             'stepMode': False,
@@ -73,7 +73,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
             item = layout.itemAt(i)
             if isinstance(
                     item,
-                    chisurf.gui.widgets.fitting.widgets.FittingParameterWidget
+                    cs.gui.widgets.fitting.widgets.FittingParameterWidget
             ):
                 re.append(item)
         return re
@@ -117,7 +117,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         self.layout_parameter.addLayout(layout)
 
     # TODO: needs docstring
-    def add_model(self, fit: chisurf.core.fitting.fit.FitGroup = None):
+    def add_model(self, fit: cs.core.fitting.fit.FitGroup = None):
         """Add a new model to the mixture widget."""
         layout = QtWidgets.QHBoxLayout()
 
@@ -129,7 +129,7 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
         xi = len(self) + 1
         fraction_name = f"x({xi})"
         label_text = f"x<sub>{xi}</sub>"
-        fraction = chisurf.gui.widgets.fitting.widgets.FittingParameterWidget(
+        fraction = cs.gui.widgets.fitting.widgets.FittingParameterWidget(
             name=fraction_name,
             value=1.0,
             model=self,
@@ -149,4 +149,4 @@ class LifetimeMixModelWidget(LifetimeModelWidgetBase, LifetimeMixModel):
     def clear_models(self):
         """Remove all model instances."""
         LifetimeMixModel.clear_models(self)
-        chisurf.gui.widgets.general.clear_layout(self.model_layout)
+        cs.gui.widgets.general.clear_layout(self.model_layout)

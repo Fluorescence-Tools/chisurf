@@ -7,12 +7,12 @@ from typing import Dict
 import emcee
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting
 
 
 def walk_mcmc(
-        fit: chisurf.core.fitting.fit.Fit,
+        fit: cs.core.fitting.fit.Fit,
         steps: int,
         step_size: float,
         temp: float = 1.0,
@@ -42,7 +42,7 @@ def walk_mcmc(
     bounds = fit.model.parameter_bounds
 
     lnp_prev = np.array(
-        chisurf.core.fitting.fit.lnprob(
+        cs.core.fitting.fit.lnprob(
             parameter_values=state_initial,
             fit=fit,
             chi2max=chi2max,
@@ -53,7 +53,7 @@ def walk_mcmc(
     while n_accepted < n_samples:
 
         state_next = state_prev + np.random.normal(0.0, step_size, dim) * state_initial
-        lnp_next = chisurf.core.fitting.fit.lnprob(
+        lnp_next = cs.core.fitting.fit.lnprob(
             parameter_values=state_next,
             fit=fit,
             chi2max=chi2max,
@@ -87,7 +87,7 @@ def walk_mcmc(
 
 
 def sample_emcee(
-        fit: chisurf.core.fitting.fit.Fit,
+        fit: cs.core.fitting.fit.Fit,
         steps: int,
         nwalkers: int,
         thin: int = 10,
@@ -110,7 +110,7 @@ def sample_emcee(
     """
     if substeps is None:
         try:
-            substeps = int(chisurf.core.settings.cs_settings['optimization']['sampling'].get('substeps', 100))
+            substeps = int(cs.core.settings.cs_settings['optimization']['sampling'].get('substeps', 100))
         except (KeyError, TypeError):
             substeps = 100
 
@@ -123,7 +123,7 @@ def sample_emcee(
     sampler = emcee.EnsembleSampler(
         nwalkers=nwalkers,
         ndim=ndim,
-        log_prob_fn=chisurf.core.fitting.fit.lnprob,
+        log_prob_fn=cs.core.fitting.fit.lnprob,
         args=[fit],
         kwargs=kw
     )

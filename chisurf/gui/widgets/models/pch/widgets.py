@@ -5,9 +5,10 @@ from typing import Any
 import numpy as np
 from qtpy import QtWidgets, QtGui
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.plots
-from chisurf.core.models.model import ModelCurve, ModelWidget
+from chisurf.core.models.model import ModelCurve
+from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.fitting.parameter import FittingParameter
 
 
@@ -165,12 +166,12 @@ class PchMultiComponentModel(ModelCurve):
 
     name = "PCH multi-component"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:  # type: ignore[name-defined]
+    def __init__(self, fit: cs.core.fitting.fit.Fit, *args: Any, **kwargs: Any) -> None:  # type: ignore[name-defined]
         """Initialize the PCH multi-component model.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             Fit object this model is attached to.
         """
         super().__init__(fit, *args, **kwargs)
@@ -387,7 +388,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
     try:
         plot_classes = [
             (
-                chisurf.gui.plots.LinePlot,
+                cs.gui.plots.LinePlot,
                 {
                     "scale_x": "lin",
                     "d_scaley": "log",
@@ -403,9 +404,9 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
                     },
                 },
             ),
-            (chisurf.gui.plots.ResidualPlot, {}),
-            (chisurf.gui.plots.FitInfo, {}),
-            (chisurf.gui.plots.ParameterScanPlot, {}),
+            (cs.gui.plots.ResidualPlot, {}),
+            (cs.gui.plots.FitInfo, {}),
+            (cs.gui.plots.ParameterScanPlot, {}),
         ]
     except Exception:
         plot_classes = []
@@ -414,7 +415,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         icon: QtGui.QIcon | None = None,
         **kwargs: Any,
     ) -> None:
@@ -422,7 +423,7 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             Fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the widget tab.
@@ -598,15 +599,14 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         # Add a new PCH component to all fits in the current fit group via
         # the shared model macros.
         try:
-            import chisurf
-            controller = getattr(chisurf, "action_controller", None)
+            controller = getattr(cs, "action_controller", None)
             if controller is not None:
                 controller.execute(
                     name="model.add_component",
                     payload={"component_name": "components"},
                 )
             else:
-                chisurf.run("chisurf.macros.model.add_component('components')")
+                cs.run("cs.macros.model.add_component('components')")
         except Exception:
             pass
 
@@ -615,15 +615,14 @@ class PchMultiComponentModelWidget(ModelWidget, PchMultiComponentModel):
         # Remove the last PCH component from all fits in the current fit
         # group.
         try:
-            import chisurf
-            controller = getattr(chisurf, "action_controller", None)
+            controller = getattr(cs, "action_controller", None)
             if controller is not None:
                 controller.execute(
                     name="model.remove_component",
                     payload={"component_name": "components"},
                 )
             else:
-                chisurf.run("chisurf.macros.model.remove_component('components')")
+                cs.run("cs.macros.model.remove_component('components')")
         except Exception:
             pass
 

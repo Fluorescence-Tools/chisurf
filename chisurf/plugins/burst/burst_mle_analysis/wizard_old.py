@@ -1,3 +1,4 @@
+import chisurf as cs
 # -*- coding: utf-8 -*-
 """
 Archived/legacy implementations of burst processing for MLELifetimeAnalysisWizard.

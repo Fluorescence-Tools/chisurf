@@ -16,7 +16,7 @@ from qtpy import uic
 
 from chisurf.gui import plots
 from chisurf.core.models.parameter_transform.model import ParameterTransformModel
-from chisurf.core.models import model
+from chisurf.gui.widgets.models import model_widget as model
 
 
 class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
@@ -181,7 +181,7 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
 
         self._codes = {}
         if code_file is None:
-            code_file = path / 'models.yaml'
+            code_file = pathlib.Path(cs.__file__).parent / 'core' / 'models' / 'parameter_transform' / 'models.yaml'
         self._code_file = code_file.absolute().as_posix()
 
         self.load_model_file(code_file)

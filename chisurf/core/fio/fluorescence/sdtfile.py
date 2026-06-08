@@ -50,7 +50,7 @@ equipment for photon counting.
 Requirements
 ------------
 * `CPython 2.7 or 3.4 <http://www.python.org>`_
-* `Numpy 1.8.2 <http://www.numpy.org>`_
+* `Numpy 1.8.2 <http://www.np.org>`_
 
 Revisions
 ---------
@@ -103,8 +103,7 @@ from __future__ import division, print_function
 
 import sys
 
-import numpy
-
+import numpy as np
 __version__ = '2014.09.05'
 __docformat__ = 'restructuredtext en'
 __all__ = "SdtFile",
@@ -115,16 +114,16 @@ class SdtFile(object):
 
     Attributes
     ----------
-    header : numpy.rec.array of FILE_HEADER structure
+    header : np.rec.array of FILE_HEADER structure
         General information about the location of the setup and measurement
         data within the file.
     info : FileInfo
         General information in ASCII format.
     setup : SetupBlock
         Setup block containing all system parameters, display parameters, etc.
-    measure_info : numpy.rec.array of MEASURE_INFO structure
+    measure_info : np.rec.array of MEASURE_INFO structure
         Measurement description blocks.
-    block_headers : list of numpy.rec.array of BLOCK_HEADER structure
+    block_headers : list of np.rec.array of BLOCK_HEADER structure
         Data block headers.
     data : list of 2D numpy arrays
         Photon counts at each curve point.
@@ -155,7 +154,7 @@ class SdtFile(object):
             Open binary file handle.
         """
         # read file header
-        self.header = numpy.rec.fromfile(fh, dtype=FILE_HEADER,
+        self.header = np.rec.fromfile(fh, dtype=FILE_HEADER,
                                          shape=1, byteorder='<')[0]
         if self.header.header_valid != 0x5555:
             raise ValueError("not a SDT file")
@@ -181,14 +180,14 @@ class SdtFile(object):
 
         # read measurement description blocks
         self.measure_info = []
-        dtype = numpy.dtype(MEASURE_INFO)
+        dtype = np.dtype(MEASURE_INFO)
         if dtype.itemsize > self.header.meas_desc_block_length:
             # TODO: shorten MEASURE_INFO to meas_desc_block_length
             pass
         fh.seek(self.header.meas_desc_block_offset)
         for _ in range(self.header.no_of_meas_desc_blocks):
             self.measure_info.append(
-                numpy.rec.fromfile(fh, dtype=dtype, shape=1, byteorder='<'))
+                np.rec.fromfile(fh, dtype=dtype, shape=1, byteorder='<'))
             fh.seek(self.header.meas_desc_block_length - dtype.itemsize, 1)
 
         self.times = []
@@ -199,7 +198,7 @@ class SdtFile(object):
         for _ in range(self.header.no_of_data_blocks):
             # read data block header
             fh.seek(offset)
-            bh = numpy.rec.fromfile(
+            bh = np.rec.fromfile(
                 fh,
                 dtype=BLOCK_HEADER,
                 shape=1,
@@ -210,7 +209,7 @@ class SdtFile(object):
             mi = self.measure_info[bh.meas_desc_block_no]
             dtype = BlockType(bh.block_type).dtype
             dsize = bh.block_length // dtype.itemsize
-            data = numpy.fromfile(fh, dtype=dtype, count=dsize)
+            data = np.fromfile(fh, dtype=dtype, count=dsize)
             if dsize == mi.scan_x * mi.scan_y * mi.adc_re:
                 data = data.reshape(mi.scan_x, mi.scan_y, mi.adc_re)
             elif dsize == mi.image_x * mi.image_y * mi.adc_re:
@@ -219,7 +218,7 @@ class SdtFile(object):
                 data = data.reshape(-1, mi.adc_re[0])
             self.data.append(data)
             # generate time axis
-            t = numpy.arange(mi.adc_re, dtype=numpy.float64)
+            t = np.arange(mi.adc_re, dtype=np.float64)
             t *= mi.tac_r / float(mi.tac_g * mi.adc_re)
             self.times.append(t)
             offset = bh.next_block_offs
@@ -496,9 +495,9 @@ BLOCK_CONTENT = {
     0x60: 'IMG_BLOCK'}
 
 BLOCK_DTYPE = {  # data type
-    0x000: numpy.dtype('<u2'),
-    0x100: numpy.dtype('<u4'),
-    0x200: numpy.dtype('<f4')}
+    0x000: np.dtype('<u2'),
+    0x100: np.dtype('<u4'),
+    0x200: np.dtype('<f4')}
 
 HEADER_VALID = {
     0x1111: False,

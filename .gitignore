@@ -41,6 +41,7 @@ Thumbs.db
 ~$*
 .coverage*
 .idea
+.ruff_cache
 .omx
 .kilocode
 .benchmarks
@@ -49,6 +50,8 @@ Thumbs.db
 .pixi
 .pytest_cache
 .vscode
+/htmlcov
+/AGENT
 /build_tools/osx/resources/
 /modules/*/.git/
 /modules/*/b2/

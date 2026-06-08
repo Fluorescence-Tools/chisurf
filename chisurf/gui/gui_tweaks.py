@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import os
 
@@ -58,11 +59,11 @@ def apply_dock_tab_colors(window) -> None:
     except Exception:
         return
     try:
-        import chisurf
+        pass
     except Exception:
         return
     try:
-        gui_cfg = getattr(chisurf.core.settings, "gui", {})
+        gui_cfg = getattr(cs.core.settings, "gui", {})
     except Exception:
         gui_cfg = {}
     if not isinstance(gui_cfg, dict):

@@ -1,7 +1,7 @@
 import os
 import json
 import numpy as np
-import chisurf
+import chisurf as cs
 import pathlib
 import tempfile
 import sys
@@ -49,9 +49,9 @@ def run_smoke_tests():
         ds = DataCurve(x=x, y=y, name="smoke_ds")
         # We must give it a path for project save/load to recognize it as 'saveable'
         ds.path = "smoke_data.csv" 
-        chisurf.imported_datasets = [ds]
-        chisurf.fits = []
-        chisurf.cs = None
+        cs.imported_datasets = [ds]
+        cs.fits = []
+        cs.cs = None
         print(f"  - Dataset '{ds.name}' registered.")
     except Exception as e:
         print(f"  - FAILED: {e}")
@@ -63,10 +63,10 @@ def run_smoke_tests():
         # Use add_fit directly with the model name. 
         # Since SmokeLinearModel is not in any experiment, it will use the global resolution fallback.
         add_fit(dataset_indices=[0], model_name="SmokeLinearModel")
-        if len(chisurf.fits) == 0:
+        if len(cs.fits) == 0:
              print("  - FAILED: No fit was added (resolution failed).")
              return False
-        assert chisurf.fits[0].model.name == "SmokeLinearModel"
+        assert cs.fits[0].model.name == "SmokeLinearModel"
         print(f"  - Fit added successfully via global resolution.")
     except Exception as e:
         print(f"  - FAILED: {e}")
@@ -76,7 +76,7 @@ def run_smoke_tests():
     # 4. Run Fit (Simulate adjustment)
     print("\n[4/7] Run Fit (Simulated)...")
     try:
-        fit_group = chisurf.fits[0]
+        fit_group = cs.fits[0]
         fit_group.model.slope.value = 2.1
         fit_group.model.intercept.value = 0.95
         print(f"  - Fit parameters updated (simulated).")
@@ -94,17 +94,17 @@ def run_smoke_tests():
             print("  - Project saved.")
             
             # Clear state
-            chisurf.fits = []
-            chisurf.imported_datasets = []
+            cs.fits = []
+            cs.imported_datasets = []
             
             # Load
             load_project(str(project_dir))
             
-            if len(chisurf.fits) == 0:
+            if len(cs.fits) == 0:
                 print("  - FAILED: No fits loaded.")
                 return False
                 
-            val = float(np.atleast_1d(chisurf.fits[0].model.slope.value)[0])
+            val = float(np.atleast_1d(cs.fits[0].model.slope.value)[0])
             print(f"  - Loaded slope: {val}")
             if not np.isclose(val, 2.1):
                 print(f"  - FAILED: slope {val} != 2.1")
@@ -118,7 +118,7 @@ def run_smoke_tests():
     # 6. Cross-Fit Link
     print("\n[6/7] Cross-Fit Link logic check...")
     try:
-        p1 = chisurf.fits[0].model.slope
+        p1 = cs.fits[0].model.slope
         p2 = FittingParameter(name="p2", value=1.0)
         p2.link = p1
         p1.value = 3.5

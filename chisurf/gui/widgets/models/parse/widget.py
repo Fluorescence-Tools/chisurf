@@ -110,7 +110,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
         self._models = {}
         if model_file is None:
-            model_file = pathlib.Path(__file__).parent / 'models.yaml'
+            model_file = pathlib.Path(cs.__file__).parent / 'core' / 'models' / 'parse' / 'models.yaml'
         self._model_file = model_file.absolute().as_posix()
         self.load_model_file(model_file)
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 This module contains PDA models that use Gaussian distance distributions
 for donor–acceptor separations. The core classes
 :class:`PdaGaussianDistances` and :class:`PdaGaussianDistanceModel`
-were previously defined in :mod:`chisurf.core.models.pda.simple` and have
+were previously defined in :mod:`cs.core.models.pda.simple` and have
 been moved here for clarity.
 """
 
@@ -16,7 +16,7 @@ import tttrlib
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.core.math.datatools
 
 from chisurf.core.fitting.parameter import FittingParameterGroup, FittingParameter
@@ -35,7 +35,7 @@ class PdaGaussianDistances(FittingParameterGroup):
     small number of Gaussian distance components. The
     :attr:`distribution` property turns these parameters into a
     normalized distance distribution on the grid defined by
-    ``chisurf.core.models.tcspc.fret.rda_axis``.
+    ``cs.core.models.tcspc.fret.rda_axis``.
     """
 
     @property
@@ -74,7 +74,7 @@ class PdaGaussianDistances(FittingParameterGroup):
         amplitudes = self.amplitudes
         if means.size == 0:
             return np.zeros((2, 0), dtype=np.float64)
-        r = chisurf.core.models.tcspc.fret.rda_axis
+        r = cs.core.models.tcspc.fret.rda_axis
 
         # Optional limited-width mode: interpret stored sigmas as
         # percentages of the mean distance, so that for a component with
@@ -86,7 +86,7 @@ class PdaGaussianDistances(FittingParameterGroup):
             """Normal distribution (non-normalized) helper."""
             if scale <= 0.0:
                 return np.zeros_like(x)
-            return chisurf.core.math.functions.distributions.normal_distribution(
+            return cs.core.math.functions.distributions.normal_distribution(
                 x=x,
                 loc=loc,
                 scale=scale,
@@ -94,7 +94,7 @@ class PdaGaussianDistances(FittingParameterGroup):
             )
 
         dist_args = [[float(m), float(s)] for m, s in zip(means, sigmas)]
-        p = chisurf.core.math.functions.distributions.combine_distributions(
+        p = cs.core.math.functions.distributions.combine_distributions(
             x_axis=r,
             dist_function=_gauss,
             dist_args=dist_args,
@@ -197,7 +197,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def __init__(
         self,
-        fit: "chisurf.core.fitting.fit.Fit",
+        fit: "cs.core.fitting.fit.Fit",
         nuisance: PdaFretNuisance | None = None,
         distances: PdaGaussianDistances | None = None,
         kw_hist: dict | None = None,
@@ -207,7 +207,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object holding experimental data.
         nuisance : PdaFretNuisance, optional
             Nuisance parameter group.
@@ -227,7 +227,7 @@ class PdaGaussianDistanceModel(ModelCurve):
         self.nuisance = nuisance
         self.distances = distances
 
-        self.fret_parameters = chisurf.core.models.tcspc.fret.FRETParameters(
+        self.fret_parameters = cs.core.models.tcspc.fret.FRETParameters(
             enable_fret_efficiency=False
         )
 
@@ -266,7 +266,7 @@ class PdaGaussianDistanceModel(ModelCurve):
             Forwarded to the parent method.
         """
         if verbose is None:
-            verbose = chisurf.core.settings.cs_settings["verbose"]
+            verbose = cs.core.settings.cs_settings["verbose"]
 
         dist = self.distances.distribution
         if dist.shape[1] == 0:
@@ -410,7 +410,7 @@ class PdaGaussianDistanceModel(ModelCurve):
             prob_spectrum[3::2] = []
 
         try:
-            chisurf.logging.debug(
+            cs.logging.debug(
                 {
                     "model": "PdaGaussianDistanceModel",
                     "len_prob_spectrum": int(len(prob_spectrum)),
@@ -457,13 +457,13 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def _get_1d_residuals(
         self,
-        fit: "chisurf.core.fitting.fit.Fit",
+        fit: "cs.core.fitting.fit.Fit",
     ) -> np.ndarray:
         """Compute 1D weighted residuals from the S1S2 histogram.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object.
 
         Returns
@@ -484,7 +484,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def _get_cached_photon_number_mask(
         self,
-        fit: "chisurf.core.fitting.fit.Fit",
+        fit: "cs.core.fitting.fit.Fit",
     ) -> np.ndarray | None:
         """Return a cached photon-number mask for 2D PDA residuals.
 
@@ -574,7 +574,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
     def get_wres(
         self,
-        fit: "chisurf.core.fitting.fit.Fit",
+        fit: "cs.core.fitting.fit.Fit",
         xmin: int | None = None,
         xmax: int | None = None,
     ) -> np.ndarray:
@@ -582,7 +582,7 @@ class PdaGaussianDistanceModel(ModelCurve):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object.
         xmin : int, optional
             Start index for the residual window.

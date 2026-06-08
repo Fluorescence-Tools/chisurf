@@ -5,7 +5,7 @@ import pathlib
 import typing
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import urllib
 
 from qtpy import QtCore, QtWidgets
@@ -24,7 +24,7 @@ except ImportError:
     QWebEngineProfile = object
     QWebView = QtWidgets.QWidget
 
-log = chisurf.logging.info
+log = cs.logging.info
 
 class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
     def interceptRequest(self, info):

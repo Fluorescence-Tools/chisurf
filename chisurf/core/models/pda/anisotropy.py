@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import tttrlib
 
-import chisurf
+import chisurf as cs
 import chisurf.core.math.datatools
 
 from chisurf.core.models.model import ModelCurve
@@ -199,7 +199,7 @@ class PdaAnisotropySpecies(FittingParameterGroup):
         p_pars = np.asarray(p_pars, dtype=np.float64)
 
         try:
-            spec = chisurf.core.math.datatools.two_column_to_interleaved(amps, p_pars)
+            spec = cs.core.math.datatools.two_column_to_interleaved(amps, p_pars)
         except Exception:
             spec = np.zeros(0, dtype=np.float64)
         return spec
@@ -262,7 +262,7 @@ class PdaAnisotropyModel(ModelCurve):
 
     def __init__(
         self,
-        fit: "chisurf.core.fitting.fit.Fit",
+        fit: "cs.core.fitting.fit.Fit",
         nuisance: PdaAnisotropyNuisance | None = None,
         species: "PdaAnisotropySpecies | None" = None,
         kw_hist: dict | None = None,
@@ -272,7 +272,7 @@ class PdaAnisotropyModel(ModelCurve):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object holding experimental data.
         nuisance : PdaAnisotropyNuisance, optional
             Nuisance parameter group.
@@ -343,7 +343,7 @@ class PdaAnisotropyModel(ModelCurve):
             Forwarded to the parent method.
         """
         if verbose is None:
-            verbose = chisurf.core.settings.cs_settings["verbose"]
+            verbose = cs.core.settings.cs_settings["verbose"]
 
         # --- 1) Read nuisance params and anisotropy species -----------
         G = float(self.nuisance.G.value)
@@ -404,7 +404,7 @@ class PdaAnisotropyModel(ModelCurve):
 
     # --- Residuals (can reuse the existing PDA machinery) -------------
 
-    def _get_1d_residuals(self, fit: "chisurf.core.fitting.fit.Fit") -> np.ndarray:
+    def _get_1d_residuals(self, fit: "cs.core.fitting.fit.Fit") -> np.ndarray:
         """Return 1D weighted residuals for the anisotropy histogram.
 
         The helper :func:`pda_1d_residuals_from_s1s2` constructs a 1D
@@ -424,7 +424,7 @@ class PdaAnisotropyModel(ModelCurve):
 
     def get_wres(
         self,
-        fit: "chisurf.core.fitting.fit.Fit",
+        fit: "cs.core.fitting.fit.Fit",
         xmin: int | None = None,
         xmax: int | None = None,
     ) -> np.ndarray:
@@ -432,7 +432,7 @@ class PdaAnisotropyModel(ModelCurve):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object.
         xmin : int, optional
             Start index for the residual window.

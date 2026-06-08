@@ -1,7 +1,6 @@
 import sys
 import time
-import chisurf
-
+import chisurf as cs
 import pytest
 import chisurf.core.actions
 from chisurf.core.fitting.parameter import FittingParameter, FittingParameterGroup
@@ -53,8 +52,8 @@ def test_parameter_sync_via_dispatch():
     model.find_parameters()
     print(f"DEBUG: parameters_all: {model.parameters_all}")
     
-    # Register the fit in chisurf.fits so the action can find it
-    chisurf.fits = [fit]
+    # Register the fit in cs.fits so the action can find it
+    cs.fits = [fit]
     
     # 2. Attach a mock controller to the parameter
     ctrl = MockController()
@@ -62,7 +61,7 @@ def test_parameter_sync_via_dispatch():
     
     # 3. Dispatch the action (this is what the GUI does)
     # The action handler calls fit.set_parameter_value(p.name, value)
-    chisurf.core.actions.dispatch(
+    cs.core.actions.dispatch(
         name="parameter.value",
         payload={
             "parameter_name": "p1",
@@ -95,12 +94,12 @@ def test_rapid_parameter_updates():
     model.parameter_groups = [pg]
     fit.model = model
     model.find_parameters()
-    chisurf.fits = [fit]
+    cs.fits = [fit]
     
     # Fire multiple updates rapidly
     values = [1.1, 1.2, 1.3, 1.4, 1.5]
     for v in values:
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="parameter.value",
             payload={"parameter_name": "tau", "value": v, "fit_index": 0}
         )

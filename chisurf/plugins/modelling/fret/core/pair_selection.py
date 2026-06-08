@@ -203,3 +203,99 @@ def write_pair_selection_report(
         lines.append(f"{idx + 1}\t{pname}\t{precision_decay[idx]:.4f}")
     with open(output_path, "w") as f:
         f.write("\n".join(lines) + "\n")
+
+
+def compute_rmsd_matrix_from_trajectory(
+    top_path: str,
+    traj_path: str,
+    selection: str = "name CA",
+) -> Tuple[np.ndarray, List[str]]:
+    """Build all-vs-all RMSD matrix from a trajectory file.
+
+    Uses superposition (Kabsch) before RMSD computation.
+
+    Parameters
+    ----------
+    top_path : str
+        Path to topology PDB file.
+    traj_path : str
+        Path to trajectory file (e.g. XTC, DCD).
+    selection : str
+        Atom selection syntax.
+
+    Returns
+    -------
+    rmsds : (n, n) float32 — symmetric RMSD matrix
+    filenames : list of str — frame names, in matrix order
+    """
+    t = md.load(traj_path, top=top_path)
+    atom_indices = t.topology.select(selection)
+    if len(atom_indices) == 0:
+        raise ValueError(f"Selection '{selection}' matches zero atoms in topology")
+
+    n = t.n_frames
+    rmsds = np.zeros((n, n), dtype=np.float32)
+    for i in range(n):
+        rmsds[i, :] = md.rmsd(t, t, frame=i, atom_indices=atom_indices, precentered=False)
+
+    filenames = [f"frame_{i}" for i in range(n)]
+    return rmsds, filenames
+
+
+def compute_efficiency_matrix_from_evaluators_trajectory(
+    top_path: str,
+    traj_path: str,
+    positions: Dict,
+    distances: Dict,
+    forster_radii: Optional[Dict[str, float]] = None,
+) -> Tuple[np.ndarray, List[str]]:
+    """Compute (n_frames, n_pairs) FRET efficiency matrix from a trajectory.
+
+    Uses FretEfficiencyEvaluator for each distance pair.
+
+    Parameters
+    ----------
+    top_path : str
+        Path to topology PDB file.
+    traj_path : str
+        Path to trajectory file (e.g. XTC, DCD).
+    positions : dict
+        fps.json Positions section.
+    distances : dict
+        fps.json Distances section.
+    forster_radii : dict, optional
+        Map of pair_name -> Forster radius (overrides fps.json settings).
+
+    Returns
+    -------
+    effs : (n_frames, n_pairs) float32 — may contain NaN
+    pair_names : list of str — distance keys in column order
+    """
+    from .evaluate import evaluate_trajectory
+    from ..evaluators import FretEfficiencyEvaluator
+
+    evaluators = []
+    pair_names = sorted(distances.keys())
+    for k in pair_names:
+        ddef = distances[k]
+        pos1 = ddef["position1_name"]
+        pos2 = ddef["position2_name"]
+
+        R0 = 52.0
+        if forster_radii and k in forster_radii:
+            R0 = forster_radii[k]
+        else:
+            R0 = float(ddef.get("Forster_radius", ddef.get("forster_radius", 52.0)))
+
+        evaluators.append(FretEfficiencyEvaluator(k, pos1, pos2, R0))
+
+    storage = evaluate_trajectory(top_path, traj_path, positions, evaluators)
+
+    n_frames = len(storage.filenames)
+    n_pairs = len(evaluators)
+    effs = np.empty((n_frames, n_pairs), dtype=np.float32)
+    for p_idx, ev in enumerate(evaluators):
+        effs[:, p_idx] = storage.results[ev.name]
+
+    return effs, pair_names
+

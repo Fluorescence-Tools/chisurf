@@ -6,7 +6,7 @@ from typing import Optional
 import numpy as np
 from qtpy import QtWidgets, QtCore, QtGui
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.models.model import ModelCurve
@@ -92,12 +92,12 @@ class DyeShapeFCSModel(ModelCurve):
 
     name = "FCS dye shape"
 
-    def __init__(self, fit: chisurf.core.fitting.fit.Fit, **kwargs):
+    def __init__(self, fit: cs.core.fitting.fit.Fit, **kwargs):
         """Initialize the dye-shape FCS model.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit this model belongs to.
         **kwargs
             Additional keyword arguments forwarded to the base class.
@@ -406,12 +406,12 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
         (plots.FitTablePlot, {}),
         (plots.FitInfo, {}),
         (plots.ParameterScanPlot, {}),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
     ]
 
     def __init__(
         self,
-        fit: chisurf.core.fitting.fit.FitGroup,
+        fit: cs.core.fitting.fit.FitGroup,
         icon: Optional[QtGui.QIcon] = None,
         **kwargs,
     ):
@@ -419,7 +419,7 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             The fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the model tab.
@@ -510,4 +510,5 @@ class DyeShapeFCSWidget(ModelWidget, DyeShapeFCSModel):
     def update_widgets(self) -> None:
         """Refresh all fitting-parameter widgets from the current model state."""
         for parameter in self.parameters:
-            parameter.update()
+            if hasattr(parameter, 'update') and callable(parameter.update):
+                parameter.update()

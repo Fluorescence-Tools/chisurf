@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 from chisurf.core.fitting.parameter import FittingParameter
@@ -49,7 +49,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
         Parameters
         ----------
-        local_fit : chisurf.core.fitting.fit.Fit
+        local_fit : cs.core.fitting.fit.Fit
             The local fit object.
 
         Returns
@@ -72,7 +72,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
         Parameters
         ----------
-        local_fit : chisurf.core.fitting.fit.Fit
+        local_fit : cs.core.fitting.fit.Fit
             The local fit object.
         default : float
             Fallback value if background is unavailable.
@@ -1210,24 +1210,24 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         param_grid.setHorizontalSpacing(6)
         param_grid.setVerticalSpacing(2)
 
-        w_r0 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_r0 = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._r0,
             label_text='r<sub>0</sub>'
         )
         param_grid.addWidget(w_r0, 0, 0)
-        w_g = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_g = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._g,
             label_text='g'
         )
         param_grid.addWidget(w_g, 0, 1)
 
-        w_l1 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_l1 = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._l1,
             label_text='l<sub>1</sub>',
             decimals=4
         )
         param_grid.addWidget(w_l1, 1, 0)
-        w_l2 = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_l2 = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._l2,
             label_text='l<sub>2</sub>',
             decimals=4
@@ -1248,7 +1248,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             is_output=True,
             label_text='r<sub>S,L</sub>'
         )
-        w_rss_l = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_rss_l = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._rss_l,
             label_text='r<sub>S,L</sub>',
             decimals=5
@@ -1262,7 +1262,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             is_output=True,
             label_text='r<sub>S,I</sub>'
         )
-        w_rss_i = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_rss_i = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._rss_i,
             label_text='r<sub>S,I</sub>',
             decimals=5
@@ -1308,7 +1308,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             is_output=True,
             label_text='VV<sub>bg-corr</sub>'
         )
-        w_vv_bg = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_vv_bg = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._vv_bg_int,
             label_text='VV<sub>bg-corr</sub>',
             decimals=3
@@ -1323,7 +1323,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
             is_output=True,
             label_text='VH<sub>bg-corr</sub>'
         )
-        w_vh_bg = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        w_vh_bg = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._vh_bg_int,
             label_text='VH<sub>bg-corr</sub>',
             decimals=3
@@ -1364,7 +1364,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -1422,7 +1422,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
     # TODO: needs docstring
     def onAddRotation(self):
         """Handle add rotation button click."""
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": "anisotropy"},
         )
@@ -1430,7 +1430,7 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
     # TODO: needs docstring
     def onRemoveRotation(self):
         """Handle remove rotation button click."""
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": "anisotropy"},
         )
@@ -1445,14 +1445,14 @@ class AnisotropyWidget(Anisotropy, QtWidgets.QGroupBox):
 
         self.lh.addLayout(layout)
         self._b_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._bs[-1],
                 decimals=4,
                 layout=layout
             )
         )
         self._rho_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 fitting_parameter=self._rhos[-1],
                 decimals=4,
                 layout=layout

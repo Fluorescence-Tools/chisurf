@@ -3,7 +3,7 @@ from __future__ import annotations
 import pathlib
 from typing import TYPE_CHECKING
 
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui, uic
 import chisurf.gui.widgets.fitting
 
@@ -85,28 +85,28 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
         self._use_dye_linker.setText('Use linker')
         layout.addWidget(self._use_dye_linker)
 
-        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._sigma_linker)
+        pw = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._sigma_linker)
         layout.addWidget(pw)
 
         # Create parameter widgets
-        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        self._fret_parameters_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters)
         layout.addWidget(self._fret_parameters_widget)
 
         # Shared κ² mode controls (dynamic vs static + distribution/experimental buttons)
         kappa2_helpers.setup_kappa2_controls(self, layout)
 
-        self._orientation_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        self._orientation_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.orientation_parameter
         )
         layout.addWidget(self._orientation_widget)
 
         self.layout.addWidget(self.donor)
 
-        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._chain_length)
+        pw = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._chain_length)
         self.layout.addWidget(pw)
 
-        pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        pw = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._persistence_length,
             layout=layout
         )
@@ -120,12 +120,12 @@ class WormLikeChainModelWidget(fret.WormLikeChainModel, LifetimeModelWidgetBase)
     #     #print "load_distance_distribution"
     #     verbose = kwargs.get('verbose', self.verbose)
     #     #filename = kwargs.get('filename', str(QtGui.QFileDialog.getOpenFileName(self, 'Open File')))
-    #     filename = chisurf.gui.widgets.get_filename(
+    #     filename = cs.gui.widgets.get_filename(
     #         description='Open distance distribution',
     #         file_type='CSV-files (*.csv)'
     #     )
     #     self.lineEdit.setText(filename)
-    #     csv = chisurf.core.fio.ascii.Csv(filename)
+    #     csv = cs.core.fio.ascii.Csv(filename)
     #     ar = csv.data.T
     #     if verbose:
     #         print("Opening distribution")

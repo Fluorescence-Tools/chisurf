@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.io
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fluorescence.fcs
 
 from chisurf import typing
@@ -97,7 +97,7 @@ def read_china_mat(
                 intensity = m[intensity_key][:, measurement_number]
             aquisition_time = intensity_time[-1]
             mean_count_rate = intensity.sum() / (aquisition_time * 1000.0)
-            w = 1. / chisurf.core.fluorescence.fcs.noise(
+            w = 1. / cs.core.fluorescence.fcs.noise(
                 correlation_time,
                 correlation_amplitude,
                 aquisition_time,

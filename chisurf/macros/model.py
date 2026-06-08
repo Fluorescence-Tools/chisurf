@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-import chisurf
+import chisurf as cs
 import chisurf.core.data
 import chisurf.core.experiments
 
@@ -10,11 +10,11 @@ import chisurf.core.experiments
 def set_linearization(
         idx: int = None,
         curve_name: str = None,
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     if fit is None or idx is None:
         return
@@ -25,7 +25,7 @@ def set_linearization(
         return
 
     for f in fit[fit.selected_fit_index:]:
-        f.model.corrections.lintable = chisurf.core.data.DataCurve(
+        f.model.corrections.lintable = cs.core.data.DataCurve(
             x=lin_table.x,
             y=lin_table.y
         )
@@ -39,11 +39,11 @@ def set_linearization(
 
 
 def unload_lintable(
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     if fit is None:
         return
@@ -59,11 +59,11 @@ def unload_lintable(
 def set_correction(
         correction_type: str,
         value: typing.Any,
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     if fit is None:
         return
@@ -79,11 +79,11 @@ def set_correction(
 def normalize_amplitudes(
         normalize: bool = True,
         name: str = "amplitudes",
-        fit: chisurf.core.fitting.fit.FitGroup = None
+        fit: cs.core.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     if fit is None:
         return
     for f in fit:
@@ -104,11 +104,11 @@ def normalize_amplitudes(
 def absolute_amplitudes(
         use_absolute_amplitudes: bool = True,
         name: str = "amplitudes",
-        fit: chisurf.core.fitting.fit.FitGroup = None
+        fit: cs.core.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     if fit is None:
         return
     for f in fit:
@@ -128,11 +128,11 @@ def absolute_amplitudes(
 
 def remove_component(
         name: str,
-        fit: chisurf.core.fitting.fit.FitGroup = None
+        fit: cs.core.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     for f in fit:
         try:
             target = getattr(f.model, name)
@@ -154,11 +154,11 @@ def remove_component(
 def change_irf(
         dataset_idx: int,
         irf_name: str,
-        fit: chisurf.core.fitting.fit.FitGroup = None
+        fit: cs.core.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     irf_curve = None
 
@@ -172,7 +172,7 @@ def change_irf(
 
     if irf_curve is None:
         try:
-            imported = list(getattr(chisurf, "imported_datasets", []) or [])
+            imported = list(getattr(cs, "imported_datasets", []) or [])
         except Exception:
             imported = []
 
@@ -192,7 +192,7 @@ def change_irf(
         return
 
     for f in fit[fit.selected_fit_index:]:
-        f.model.convolve._irf = chisurf.core.data.DataCurve(x=irf_curve.x, y=irf_curve.y)
+        f.model.convolve._irf = cs.core.data.DataCurve(x=irf_curve.x, y=irf_curve.y)
 
     fit.update()
     for f in fit[fit.selected_fit_index:]:
@@ -200,11 +200,11 @@ def change_irf(
 
 
 def unload_irf(
-        fit: chisurf.core.fitting.fit.FitGroup = None
+        fit: cs.core.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     if fit is None:
         return
@@ -225,11 +225,11 @@ def unload_irf(
 
 
 def unload_background_curve(
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     if fit is None:
         return
@@ -243,11 +243,11 @@ def unload_background_curve(
 
 
 def update_model(
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
 
     if fit is None:
         return
@@ -257,11 +257,11 @@ def update_model(
 
 def add_component(
         name: str,
-        fit: chisurf.core.fitting.fit.FitGroup = None
+        fit: cs.core.fitting.fit.FitGroup = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     for f in fit:
         try:
             target = getattr(f.model, name)
@@ -288,11 +288,11 @@ def add_component(
 
 def remove_local_fit(
         row: int,
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     if fit is None:
         return
     try:
@@ -302,11 +302,11 @@ def remove_local_fit(
 
 
 def clear_local_fits(
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     if fit is None:
         return
     try:
@@ -317,11 +317,11 @@ def clear_local_fits(
 
 def append_global_parameter(
         parameter_name: str,
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     if fit is None:
-        cs = chisurf.cs
-        fit = cs.current_fit
+        gui = cs.cs
+        fit = gui.current_fit
     if fit is None:
         return
     try:
@@ -332,13 +332,13 @@ def append_global_parameter(
 
 def append_fit(
         fit_index: int,
-        fit: 'chisurf.core.fitting.fit.FitGroup' = None
+        fit: 'cs.core.fitting.fit.FitGroup' = None
 ) -> None:
     # Local import to ensure symbol resolution in static analyzers and at runtime
     import chisurf as _cs
     if fit is None:
-        cs = _cs.cs
-        fit = cs.current_fit
+        gui = _cs.cs
+        fit = gui.current_fit
     if fit is None:
         return
     try:

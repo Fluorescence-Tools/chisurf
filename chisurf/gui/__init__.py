@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import sys
 import subprocess
@@ -47,6 +48,34 @@ class _GuiExecutor(QtCore.QObject):
 _gui_executor = None
 
 
+def _setup_action_dispatcher_scheduler():
+    """Set up the action dispatcher to schedule debounced actions on the GUI thread."""
+    try:
+        import chisurf as cs
+        dispatcher = getattr(cs, 'action_dispatcher', None)
+        if dispatcher is None:
+            return
+        
+        # Only set the scheduler once
+        if dispatcher._scheduler is not None:
+            return
+        
+        def qt_scheduler(func, **kwargs):
+            """Schedule function to run on the GUI thread via QTimer.singleShot."""
+            try:
+                QtCore.QTimer.singleShot(0, lambda: func(**kwargs))
+            except Exception:
+                # Fallback to direct execution if scheduling fails
+                try:
+                    func(**kwargs)
+                except Exception:
+                    pass
+        
+        dispatcher.set_scheduler(qt_scheduler)
+    except Exception:
+        pass
+
+
 def initialize_gui_executors():
     """Explicitly initialize GUI executors. Should be called from the GUI thread."""
     global _gui_executor
@@ -59,6 +88,9 @@ def initialize_gui_executors():
                 _gui_executor.runRequested.connect(_gui_executor._run, QtCore.Qt.QueuedConnection)
         except Exception:
             pass
+    
+    # Set up action dispatcher scheduler to run debounced actions on GUI thread
+    _setup_action_dispatcher_scheduler()
     
 def run_on_gui_thread(func, *args, **kwargs):
     """Ensure *func* executes on the Qt GUI thread.
@@ -260,7 +292,7 @@ def setup_logging_widgets(window):
     )
     window.status_log_handler = log_handler
 
-    log_level = chisurf.core.settings.cs_settings.get('log_level', logging.INFO)
+    log_level = cs.core.settings.cs_settings.get('log_level', logging.INFO)
 
     # Attach logging to the root logger
     logging.getLogger().addHandler(log_handler)
@@ -399,10 +431,9 @@ class SplashScreen(QtWidgets.QSplashScreen):
 
 def setup_gui(
         app: QtWidgets.QApplication,
-        window: chisurf.gui.main.Main = None,
+        window: cs.gui.main.Main = None,
         stage: str = None
 ):
-    import chisurf
     def gui_imports():
         # Phase 1: Only what's needed for the main window scaffold
         import chisurf.core.settings
@@ -418,7 +449,7 @@ def setup_gui(
         import chisurf.gui.widgets
         import chisurf.macros
         import chisurf.core.math
-        if chisurf.core.settings.exceptions_on_gui:
+        if cs.core.settings.exceptions_on_gui:
             import chisurf.gui.exception_hook
 
     def deferred_gui_imports():
@@ -432,16 +463,15 @@ def setup_gui(
 
     def setup_ipython():
         import chisurf.gui.widgets
-        chisurf.console = chisurf.gui.widgets.ipython.QIPythonWidget()
-        chisurf.console.history_widget = None
+        cs.console = cs.gui.widgets.ipython.QIPythonWidget()
+        cs.console.history_widget = None
 
     def startup_interface():
         from chisurf.gui.main import Main
-        import chisurf
         window = Main()
-        chisurf.cs = window
+        cs.cs = window
         import chisurf.core.base
-        chisurf.core.base.set_safe_import_notify(
+        cs.core.base.set_safe_import_notify(
             lambda title, text: QtWidgets.QMessageBox.information(
                 window, title, text, QtWidgets.QMessageBox.Ok
             )
@@ -450,15 +480,14 @@ def setup_gui(
 
     def setup_style(app):
         import pathlib
-        import chisurf
-        gui_settings = chisurf.core.settings.cs_settings.get('gui') or {}
+        gui_settings = cs.core.settings.cs_settings.get('gui') or {}
         style_name = gui_settings.get('style_sheet')
 
-        base_path = pathlib.Path(chisurf.__file__).parent
+        base_path = pathlib.Path(cs.__file__).parent
         package_styles_path = base_path / "gui" / "styles"
 
         try:
-            user_styles_path = chisurf.core.settings.get_path('settings') / 'styles'
+            user_styles_path = cs.core.settings.get_path('settings') / 'styles'
         except Exception:
             user_styles_path = None
 
@@ -480,7 +509,7 @@ def setup_gui(
 
                 app.setStyleSheet(text)
                 try:
-                    chisurf.core.settings.style_sheet = text
+                    cs.core.settings.style_sheet = text
                 except Exception:
                     pass
                 return True
@@ -614,11 +643,11 @@ def setup_gui(
         # Check if the file exists in the built-in directory
         if not init_py.exists():
             # Try to find it in the user plugins directory
-            user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+            user_plugin_root = pathlib.Path.home() / '.cs' / 'plugins'
             user_init_py = user_plugin_root / module_name / "__init__.py"
             if user_init_py.exists():
                 init_py = user_init_py
-                chisurf.logging.info(f"Found user plugin: {module_name} at {init_py}")
+                cs.logging.info(f"Found user plugin: {module_name} at {init_py}")
             else:
                 return name, description
 
@@ -644,7 +673,7 @@ def setup_gui(
 
             return name, description
         except Exception as e:
-            chisurf.logging.warning(f"Error extracting metadata from {init_py}: {e}")
+            cs.logging.warning(f"Error extracting metadata from {init_py}: {e}")
             return name, description
 
     def parse_hierarchical_plugin_name(plugin_name):
@@ -687,33 +716,33 @@ def setup_gui(
         try:
             window.menuBar.addMenu(plugin_menu)
         except RuntimeError:
-            chisurf.logging.debug("Original menu bar deleted; skipping plugin menu addition.")
+            cs.logging.debug("Original menu bar deleted; skipping plugin menu addition.")
 
 
         # Store the plugin menu in a global variable so it can be accessed by populate_notebooks
         global plugin_menu_action
         plugin_menu_action = plugin_menu.menuAction()
 
-        # Dedicated submenu for development plugins that live under chisurf.plugins._dev
+        # Dedicated submenu for development plugins that live under cs.plugins._dev
         dev_menu = plugin_menu.addMenu("Dev")
 
         # Cache for submenus to avoid duplicates
         submenu_cache = {}
 
         # Get plugin settings
-        plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
+        plugin_settings = cs.core.settings.cs_settings.get('plugins', {})
         disabled_plugins = plugin_settings.get('disabled_plugins', [])
         hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
         plugin_order = plugin_settings.get('plugin_order', {})
 
         # Check if we're in experimental mode
-        experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
+        experimental_mode = cs.core.settings.cs_settings.get('enable_experimental', False)
 
         # Discover plugins (built-in + user, including nested subpackages)
         try:
-            plugin_infos = list(chisurf.plugins.iter_plugins())
+            plugin_infos = list(cs.plugins.iter_plugins())
         except Exception as e:
-            chisurf.logging.error(f"Failed to enumerate plugins via chisurf.plugins.iter_plugins(): {e}")
+            cs.logging.error(f"Failed to enumerate plugins via cs.plugins.iter_plugins(): {e}")
             plugin_infos = []
 
         # Prefer the built-in updater plugin over any legacy user copy
@@ -735,9 +764,9 @@ def setup_gui(
 
         # Resolve the built-in plugins root so we can detect the _dev subtree
         try:
-            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent.resolve()
+            plugins_root = pathlib.Path(cs.plugins.__file__).parent.resolve()
         except Exception:
-            plugins_root = pathlib.Path(chisurf.plugins.__file__).parent
+            plugins_root = pathlib.Path(cs.plugins.__file__).parent
 
         # Sort plugins by order (ascending) then by plugin name
         ordered = []
@@ -753,7 +782,7 @@ def setup_gui(
         skipped_hidden = 0
         marked_broken = 0
 
-        chisurf.logging.info(
+        cs.logging.info(
             f"Populating plugin menu: {len(ordered)} plugin(s) discovered "
             f"(experimental_mode={experimental_mode}, hide_disabled_plugins={hide_disabled_plugins})."
         )
@@ -766,7 +795,7 @@ def setup_gui(
                 source = info.get('source') or 'built-in'
                 is_cli_only = bool(info.get('cli_only'))
                 if bool(info.get('menu_hidden')):
-                    chisurf.logging.info(
+                    cs.logging.info(
                         f"Skipping plugin marked as hidden from menu: '{plugin_name}' "
                         f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
                     )
@@ -796,7 +825,7 @@ def setup_gui(
                 # In dev/experimental mode, keep showing them for diagnostics.
                 if (is_broken or is_cli_only) and not experimental_mode:
                     skipped_hidden += 1
-                    chisurf.logging.info(
+                    cs.logging.info(
                         f"Skipping hidden plugin in menu (normal mode): '{plugin_name}' "
                         f"(module='{module_name}', source='{source}', package_dir='{package_dir}', "
                         f"is_broken={is_broken}, is_cli_only={is_cli_only})"
@@ -807,7 +836,7 @@ def setup_gui(
                 # experimental mode when explicit user setting requests it.
                 if is_broken and hide_disabled_plugins and experimental_mode:
                     skipped_hidden += 1
-                    chisurf.logging.info(
+                    cs.logging.info(
                         f"Skipping disabled/broken plugin in menu (experimental + hide_disabled_plugins): '{plugin_name}' "
                         f"(module='{module_name}', source='{source}', package_dir='{package_dir}')"
                     )
@@ -850,7 +879,7 @@ def setup_gui(
                 if is_dev:
                     label_base = f"{display_name}{label_suffix}"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
-                    chisurf.logging.info(
+                    cs.logging.info(
                         f"Adding plugin to Plugins->Dev menu: '{label}' "
                         f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
                         f"status={status}, script='{script_file}')"
@@ -876,7 +905,7 @@ def setup_gui(
                     label_base = f"{display_name}{label_suffix}"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     
-                    chisurf.logging.info(
+                    cs.logging.info(
                         f"Adding plugin to hierarchical menu: '{label}' "
                         f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
                         f"status={status}, script='{script_file}', hierarchy={hierarchy_parts})"
@@ -896,7 +925,7 @@ def setup_gui(
                     label_base = f"{display_name}{label_suffix}"
                     label = f"{label_base} (BROKEN)" if is_broken else label_base
                     
-                    chisurf.logging.info(
+                    cs.logging.info(
                         f"Adding plugin to Plugins main menu: '{label}' "
                         f"(plugin='{plugin_name}', module='{module_name}', source='{source}', "
                         f"status={status}, script='{script_file}')"
@@ -912,13 +941,13 @@ def setup_gui(
                     added_main += 1
                     plugin_menu.addAction(plugin_action)
             except Exception as e:
-                chisurf.logging.error(
+                cs.logging.error(
                     f"Error while adding plugin to plugin menu: '{plugin_name}' "
                     f"(module='{info.get('module_name')}', source='{info.get('source')}'): {e}"
                 )
                 continue
 
-        chisurf.logging.info(
+        cs.logging.info(
             f"Plugin menu populated: added {added_main} main, {added_submenu} submenu, "
             f"{added_dev} dev plugin(s); {skipped_hidden} disabled/broken plugin(s) hidden; "
             f"{marked_broken} plugin(s) marked as BROKEN."
@@ -945,10 +974,10 @@ def setup_gui(
             else:
                 window.menuBar.insertMenu(next_action, notebook_menu)
         except RuntimeError:
-            chisurf.logging.debug("Original menu bar deleted; skipping notebook menu addition.")
+            cs.logging.debug("Original menu bar deleted; skipping notebook menu addition.")
 
         home_dir = pathlib.Path.home()
-        chisurf_path = pathlib.Path(chisurf.__file__).parent
+        chisurf_path = pathlib.Path(cs.__file__).parent
 
         # Define the target directory inside the home directory
         chisurf_notebooks_dir = home_dir / "notebooks"
@@ -959,7 +988,7 @@ def setup_gui(
             dest_file = dest_dir / src.name
             if not dest_file.exists():  # Only copy if the file doesn't exist
                 dest_file.write_bytes(src.read_bytes())  # Read and write in binary mode
-                chisurf.logging.info(f"Copied notebook: {src.name} to {dest_file}")
+                cs.logging.info(f"Copied notebook: {src.name} to {dest_file}")
             return dest_file
 
         def add_notebook(notebook_file):
@@ -978,7 +1007,7 @@ def setup_gui(
 
                 # Correct Jupyter notebook URL with `/tree/`
                 # http://localhost:8932/notebooks/Links/smFRET_01_Burst_Search_ALEX.
-                adr = f"{chisurf.__jupyter_address__}/notebooks/{notebook_path_str}"
+                adr = f"{cs.__jupyter_address__}/notebooks/{notebook_path_str}"
 
                 p = partial(webbrowser.open_new_tab, adr)
 
@@ -1005,7 +1034,7 @@ def setup_gui(
             notebook_source_dirs.append(repo_notebooks_dir)
 
         for src_dir in notebook_source_dirs:
-            chisurf.logging.info(f"Checking for notebooks in: {src_dir}")
+            cs.logging.info(f"Checking for notebooks in: {src_dir}")
             for notebook_file in sorted(src_dir.glob("*.ipynb")):
                 copy_notebook(notebook_file, chisurf_notebooks_dir)
 
@@ -1021,7 +1050,7 @@ def setup_gui(
             if hasattr(window, "_ribbon_integration") and window._ribbon_integration:
                 window._ribbon_integration._create_notebooks_category()
         except Exception as e:
-            chisurf.logging.debug(f"Failed to update ribbon with notebooks: {e}")
+            cs.logging.debug(f"Failed to update ribbon with notebooks: {e}")
 
     if stage is None:
         gui_imports()
@@ -1041,7 +1070,7 @@ def setup_gui(
     elif stage == "check_updates":
         # Respect user setting to ignore update prompts on startup
         try:
-            _plugins = chisurf.core.settings.cs_settings.get('plugins') or {}
+            _plugins = cs.core.settings.cs_settings.get('plugins') or {}
             _updater_settings = _plugins.get('updater') or {}
             _ignore_updates = bool(_updater_settings.get('ignore_updates_on_startup', False))
             _check_on_startup = bool(_updater_settings.get('check_on_startup', True))
@@ -1050,19 +1079,19 @@ def setup_gui(
             _check_on_startup = True
 
         if _ignore_updates or not _check_on_startup:
-            chisurf.logging.info("Startup update prompt suppressed by user settings.")
+            cs.logging.info("Startup update prompt suppressed by user settings.")
         else:
-            from chisurf.plugins.chisurf.updater import updater as _updater_mod
+            from chisurf.plugins.core.updater import updater as _updater_mod
 
             def _startup_update_check():
                 update_available, latest_version, error = _updater_mod.check_for_updates()
                 if error:
-                    chisurf.logging.info(f"Update check skipped or failed: {error}")
+                    cs.logging.info(f"Update check skipped or failed: {error}")
                 elif update_available:
-                    chisurf.logging.info(f"Update available: {latest_version}")
+                    cs.logging.info(f"Update available: {latest_version}")
                     # Prompt user to open the updater
                     try:
-                        from chisurf.plugins.chisurf.updater import build_installed_vs_latest_changelog as _build_changes
+                        from chisurf.plugins.core.updater import build_installed_vs_latest_changelog as _build_changes
                         try:
                             _installed_ver, _changes = _build_changes(str(latest_version))
                         except Exception:
@@ -1085,24 +1114,24 @@ def setup_gui(
                         )
                         if reply == QtWidgets.QMessageBox.Yes:
                             import importlib
-                            updater_plugin = importlib.import_module("chisurf.plugins.updater")
+                            updater_plugin = importlib.import_module("chisurf.plugins.core.updater")
                             # Keep a strong reference to prevent garbage collection from closing the window
-                            chisurf.__updater_window__ = updater_plugin.UpdaterWidget(suppress_initial_notification=True)
-                            chisurf.__updater_window__.show()
+                            cs.__updater_window__ = updater_plugin.UpdaterWidget(suppress_initial_notification=True)
+                            cs.__updater_window__.show()
                             try:
-                                chisurf.__updater_window__.raise_()
-                                chisurf.__updater_window__.activateWindow()
+                                cs.__updater_window__.raise_()
+                                cs.__updater_window__.activateWindow()
                             except Exception:
                                 pass
                             # Signal startup should be interrupted so only the updater remains open
                             try:
-                                chisurf.__startup_interrupt_for_updater__ = True
+                                cs.__startup_interrupt_for_updater__ = True
                             except Exception:
                                 pass
                     except Exception as e:
-                        chisurf.logging.debug(f"Failed to show update prompt: {e}")
+                        cs.logging.debug(f"Failed to show update prompt: {e}")
                 else:
-                    chisurf.logging.info("ChiSurf is up to date.")
+                    cs.logging.info("ChiSurf is up to date.")
             _startup_update_check()
     elif stage == "startup_interface":
         return startup_interface()
@@ -1124,25 +1153,25 @@ def setup_gui(
             pass
     elif stage == "start_jupyter":
         try:
-            _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
+            _gui_cfg = cs.core.settings.cs_settings.get('gui') or {}
             _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
         except Exception:
             _start_jupyter = False
 
         if not _start_jupyter:
-            chisurf.logging.info("Skipping Jupyter notebook startup (disabled in settings).")
+            cs.logging.info("Skipping Jupyter notebook startup (disabled in settings).")
             return None
 
-        chisurf.logging.info("Starting Jupyter notebook process")
+        cs.logging.info("Starting Jupyter notebook process")
         # Start the notebook and capture the process
-        chisurf.__jupyter_process__ = launch_jupyter_process()
-        proc = chisurf.__jupyter_process__
+        cs.__jupyter_process__ = launch_jupyter_process()
+        proc = cs.__jupyter_process__
 
         # Read lines until we see the HTTP address (or the process exits)
         import time
         t_start = time.time()
         timeout = 30.0  # seconds
-        chisurf.logging.info(f"Waiting up to {timeout}s for Jupyter URL...")
+        cs.logging.info(f"Waiting up to {timeout}s for Jupyter URL...")
 
         # To avoid the GUI hanging while waiting for the URL, we use a 
         # separate reader thread and a shared line buffer.
@@ -1153,26 +1182,26 @@ def setup_gui(
                     if l:
                         out_list.append(l)
                     # Stop if we found the address already (from another read or logic)
-                    if getattr(chisurf, "__jupyter_address__", None):
+                    if getattr(cs, "__jupyter_address__", None):
                         break
             except Exception:
                 pass
 
-        chisurf.__jupyter_reader_thread__ = threading.Thread(
+        cs.__jupyter_reader_thread__ = threading.Thread(
             target=_reader, args=(proc, lines_captured), daemon=True
         )
-        chisurf.__jupyter_reader_thread__.start()
+        cs.__jupyter_reader_thread__.start()
 
         import re
         url_pattern = re.compile(r"http://[a-zA-Z0-9\.-]+:\d+[^\s]*")
 
-        while chisurf.__jupyter_address__ is None:
+        while cs.__jupyter_address__ is None:
             if time.time() - t_start > timeout:
-                chisurf.logging.error("Timed out waiting for Jupyter URL.")
+                cs.logging.error("Timed out waiting for Jupyter URL.")
                 break
 
             if proc.poll() is not None:
-                chisurf.logging.error("Jupyter process exited unexpectedly during startup.")
+                cs.logging.error("Jupyter process exited unexpectedly during startup.")
                 break
 
             app.processEvents()
@@ -1181,7 +1210,7 @@ def setup_gui(
             if lines_captured:
                 while lines_captured:
                     line = lines_captured.pop(0)
-                    chisurf.logging.info(f"Jupyter: {line.strip()}")
+                    cs.logging.info(f"Jupyter: {line.strip()}")
                     
                     match = url_pattern.search(line)
                     if match:
@@ -1192,42 +1221,42 @@ def setup_gui(
                         try:
                             parsed = urlparse(full_url)
                             addr = f"{parsed.scheme}://{parsed.netloc}"
-                            chisurf.__jupyter_address__ = addr
+                            cs.__jupyter_address__ = addr
                             break
                         except Exception:
                             # Fallback to simple split if urlparse fails
-                            chisurf.__jupyter_address__ = full_url.split('/tree')[0].split('?')[0].rstrip('/')
+                            cs.__jupyter_address__ = full_url.split('/tree')[0].split('?')[0].rstrip('/')
                             break
             
-            if chisurf.__jupyter_address__ is None:
+            if cs.__jupyter_address__ is None:
                 time.sleep(0.1)
                 app.processEvents()
 
-        if chisurf.__jupyter_address__:
-            chisurf.logging.info(
+        if cs.__jupyter_address__:
+            cs.logging.info(
                 "Server found at %s, migrating monitoring to listener thread",
-                chisurf.__jupyter_address__
+                cs.__jupyter_address__
             )
         else:
-            chisurf.logging.warning("Jupyter startup failed or timed out.")
+            cs.logging.warning("Jupyter startup failed or timed out.")
     elif stage == "setup_logging":
         setup_logging_widgets(window)  # Attach logging to status bar
     elif stage == "populate_notebooks":
         try:
-            _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
+            _gui_cfg = cs.core.settings.cs_settings.get('gui') or {}
             _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
         except Exception:
             _start_jupyter = False
 
-        if not _start_jupyter or chisurf.__jupyter_address__ is None:
-            chisurf.logging.info("Skipping notebook menu population (Jupyter disabled or not running).")
+        if not _start_jupyter or cs.__jupyter_address__ is None:
+            cs.logging.info("Skipping notebook menu population (Jupyter disabled or not running).")
             return None
 
-        chisurf.logging.info("Looking for ipynb in home folder")
+        cs.logging.info("Looking for ipynb in home folder")
         populate_notebooks()
     return None
 
-def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
+def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
     logging.info("Starting GUI startup (get_win)")
     from chisurf.gui.gui_tweaks import apply_pyqtgraph_autorange_compat
     pg.setConfigOptions(useOpenGL=False)  # Disable OpenGL in PyQtGraph
@@ -1237,7 +1266,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     import pathlib
 
     # Load splash screen from file path instead of resource
-    splash_path = pathlib.Path(chisurf.__file__).parent / "gui" / "resources" / "icons" / "splashscreen.png"
+    splash_path = pathlib.Path(cs.__file__).parent / "gui" / "resources" / "icons" / "splashscreen.png"
     pixmap = QtGui.QPixmap(str(splash_path))
     splash = SplashScreen(pixmap)
 
@@ -1272,13 +1301,13 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     app.processEvents()
 
     try:
-        chisurf.__startup_in_progress__ = True
+        cs.__startup_in_progress__ = True
     except Exception:
         pass
 
     # Update progress as the setup progresses
     try:
-        _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
+        _gui_cfg = cs.core.settings.cs_settings.get('gui') or {}
         _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
     except Exception:
         _start_jupyter = False
@@ -1311,15 +1340,15 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
             window = w2
         # If user chose to open updater, interrupt startup immediately
         try:
-            if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+            if getattr(cs, "__startup_interrupt_for_updater__", False):
                 break
         except Exception:
             pass
 
     try:
-        if getattr(chisurf, "__startup_interrupt_for_updater__", False):
+        if getattr(cs, "__startup_interrupt_for_updater__", False):
             try:
-                chisurf.__startup_in_progress__ = False
+                cs.__startup_in_progress__ = False
             except Exception:
                 pass
             splash.hide()
@@ -1337,7 +1366,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
     splash.finish(window)
 
     try:
-        chisurf.__startup_in_progress__ = False
+        cs.__startup_in_progress__ = False
     except Exception:
         pass
 
@@ -1410,13 +1439,13 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
     def _should_open_onboarding() -> bool:
         try:
-            if getattr(chisurf, "__startup_onboarding_shown__", False):
+            if getattr(cs, "__startup_onboarding_shown__", False):
                 return False
         except Exception:
             pass
 
         try:
-            if getattr(chisurf, "__pending_startup_onboarding__", False):
+            if getattr(cs, "__pending_startup_onboarding__", False):
                 return True
         except Exception:
             pass
@@ -1431,7 +1460,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
         try:
             import json
-            settings_dir = chisurf.core.settings.get_path('settings')
+            settings_dir = cs.core.settings.get_path('settings')
             det_file = settings_dir / 'detector_setups.json'
             if not det_file.exists():
                 return True
@@ -1447,17 +1476,17 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
     def _open_onboarding() -> None:
         try:
-            if getattr(chisurf, "__startup_onboarding_shown__", False):
+            if getattr(cs, "__startup_onboarding_shown__", False):
                 return
         except Exception:
             pass
         try:
-            chisurf.__startup_onboarding_shown__ = True
+            cs.__startup_onboarding_shown__ = True
         except Exception:
             pass
 
         try:
-            from chisurf.plugins.chisurf.boarding import wizard as _wiz
+            from chisurf.plugins.core.boarding import wizard as _wiz
             _wiz.show_onboarding(parent=window)
         except Exception as e:
             try:
@@ -1493,7 +1522,7 @@ def get_win(app: QtWidgets.QApplication) -> chisurf.gui.main.Main:
 
 def set_app_style(app: QtWidgets.QApplication):
     try:
-        _gui_cfg = chisurf.core.settings.cs_settings.get('gui') or {}
+        _gui_cfg = cs.core.settings.cs_settings.get('gui') or {}
         _fallback_style = "Windows" if sys.platform == "win32" else "Fusion"
         _style_name = _gui_cfg.get('qt_style')
         if _style_name is None:
@@ -1549,8 +1578,7 @@ def get_app():
 
     def shutdown_services():
         """Ensure the Jupyter notebook server is terminated when the application closes."""
-        import chisurf
-        jupyter_proc = getattr(chisurf, '__jupyter_process__', None)
+        jupyter_proc = getattr(cs, '__jupyter_process__', None)
         # Only terminate if it's still running.
         if jupyter_proc is not None and jupyter_proc.poll() is None:
             jupyter_proc.terminate()

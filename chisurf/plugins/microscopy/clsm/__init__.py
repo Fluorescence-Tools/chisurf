@@ -31,12 +31,12 @@ name = "Imaging:CLSM-Draw"
 
 import sys
 
-import chisurf
+import chisurf as cs
 from quest.lib.tools.dye_diffusion import TransientDecayGenerator
 
 from qtpy.QtWidgets import *
 
-log = chisurf.logging.info
+log = cs.logging.info
 
 
 if __name__ == '__main__':

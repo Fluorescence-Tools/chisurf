@@ -13,7 +13,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction
 from qtpy import QtWidgets
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 
 # Import enhanced icon utilities for emoji support
@@ -454,17 +454,17 @@ class PluginMethodsMixin:
         """Create dedicated Plugins category with hierarchical submenu support"""
         try:
             # Get plugin settings
-            plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
+            plugin_settings = cs.core.settings.cs_settings.get('plugins', {})
             disabled_plugins = plugin_settings.get('disabled_plugins', [])
             hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
             plugin_order = plugin_settings.get('plugin_order', {})
 
             # Check if we're in experimental mode
-            experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
+            experimental_mode = cs.core.settings.cs_settings.get('enable_experimental', False)
 
             # Discover plugins
             try:
-                plugin_infos = list(chisurf.plugins.iter_plugins())
+                plugin_infos = list(cs.plugins.iter_plugins())
             except Exception as e:
                 self.logger.error(f"Failed to enumerate plugins: {e}")
                 plugin_infos = []
@@ -496,9 +496,9 @@ class PluginMethodsMixin:
 
             # Resolve plugins root
             try:
-                plugins_root = Path(chisurf.plugins.__file__).parent.resolve()
+                plugins_root = Path(cs.plugins.__file__).parent.resolve()
             except Exception:
-                plugins_root = Path(chisurf.plugins.__file__).parent
+                plugins_root = Path(cs.plugins.__file__).parent
 
             # Collect all plugins (except Setup: and Help: which are handled separately)
             all_plugins = []
@@ -633,7 +633,6 @@ class PluginMethodsMixin:
 
     def _create_notebooks_category(self):
         """Create dedicated Notebooks category in the ribbon."""
-        import chisurf
         from qtpy.QtCore import Qt
         from qtpy.QtGui import QIcon
         import pathlib
@@ -641,7 +640,7 @@ class PluginMethodsMixin:
         from functools import partial
         
         # Don't show if Jupyter isn't configured or running
-        if not getattr(chisurf, "__jupyter_address__", None):
+        if not getattr(cs, "__jupyter_address__", None):
             self.logger.info("Jupyter address not set, skipping Notebooks category")
             return None
 
@@ -661,7 +660,7 @@ class PluginMethodsMixin:
             chisurf_notebooks_dir = home_dir / "notebooks"
             
             # Add "Jupyter Home" button
-            root_adr = f"{chisurf.__jupyter_address__}/tree"
+            root_adr = f"{cs.__jupyter_address__}/tree"
             try:
                 # Try to find a nice icon for Jupyter
                 icon = QIcon.fromTheme('home')
@@ -681,7 +680,7 @@ class PluginMethodsMixin:
                 for nb_file in sorted(chisurf_notebooks_dir.glob("*.ipynb")):
                     try:
                         nb_path_str = nb_file.relative_to(home_dir).as_posix()
-                        adr = f"{chisurf.__jupyter_address__}/notebooks/{nb_path_str}"
+                        adr = f"{cs.__jupyter_address__}/notebooks/{nb_path_str}"
                         
                         btn = panel.addSmallButton(
                             nb_file.stem,

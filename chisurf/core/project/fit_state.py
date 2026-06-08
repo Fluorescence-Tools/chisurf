@@ -1,9 +1,10 @@
 from __future__ import annotations
+import chisurf as cs
 
 """Utilities for serializing and restoring fit/model parameter state.
 
 These helpers are intentionally GUI‑independent and operate purely on the
-core fitting objects (:class:`chisurf.core.fitting.fit.Fit` and its models).
+core fitting objects (:class:`cs.core.fitting.fit.Fit` and its models).
 They are meant to be used by higher‑level project save/load code.
 """
 
@@ -12,7 +13,7 @@ from typing import Any, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Imported only for static type checking to avoid circular imports at
-    # runtime (chisurf.core.fitting.fit -> chisurf.core.project.fit_state -> Fit).
+    # runtime (cs.core.fitting.fit -> cs.core.project.fit_state -> Fit).
     from chisurf.core.fitting.fit import Fit
 
 
@@ -21,7 +22,7 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
 
     Version 4: parameters are keyed by UID, and links are resolved by UID.
     This is the core implementation used by :func:`fit_to_state` as well as
-    :meth:`chisurf.core.models.model.Model.get_state`. It operates directly on a
+    :meth:`cs.core.models.model.Model.get_state`. It operates directly on a
     model instance without requiring a full :class:`Fit` wrapper.
     """
 
@@ -84,8 +85,7 @@ def _model_to_state(model: Any) -> Dict[str, Any]:
             p_state["link_target"] = target_uid
         else:
             # Inter-fit link discovery (cross-fit)
-            import chisurf
-            for other_fit in getattr(chisurf, "fits", []):
+            for other_fit in getattr(cs, "fits", []):
                 for op in getattr(other_fit.model, "parameters_all", []):
                     if str(getattr(op, "unique_identifier", "")) == target_uid:
                         p_state["link_target"] = target_uid
@@ -181,7 +181,7 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
     dict is keyed by UID, and ``link_target`` values are UIDs (not names).
 
     This is the core implementation used by :func:`apply_state_to_fit` as
-    well as :meth:`chisurf.core.models.model.Model.set_state`. It assumes that
+    well as :meth:`cs.core.models.model.Model.set_state`. It assumes that
     ``model`` is already an instance of the desired class and only updates
     parameters, links and small structural extras (e.g. component counts).
     """
@@ -271,8 +271,7 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
                     pass
         else:
             # Inter-fit link restoration by UID
-            import chisurf
-            target_fit = next((f for f in getattr(chisurf, "fits", []) 
+            target_fit = next((f for f in getattr(cs, "fits", []) 
                                if str(getattr(f, "unique_identifier", "")) == target_fit_uid), None)
             if target_fit:
                 target_params = getattr(target_fit.model, "parameters_all", []) or []
@@ -304,8 +303,7 @@ def _apply_state_to_model(model: Any, state: Dict[str, Any]) -> None:
                     pass
 
         # UID Reattachment Pass for TCSPC components
-        import chisurf
-        datasets = getattr(chisurf, "imported_datasets", [])
+        datasets = getattr(cs, "imported_datasets", [])
         
         # 1. Background curve reattachment
         bg_uid = tcspc_state.get("generic", {}).get("background_curve_uid")
@@ -383,7 +381,7 @@ def global_links_to_state(global_model: Any) -> Dict[str, Any]:
 
     The function inspects the ``links`` attribute, which is expected to be a
     list of ``[enabled, origin_fit_index, origin_param_name, formula]``
-    entries as used by :class:`chisurf.core.models.global_model.GlobalFitModel`.
+    entries as used by :class:`cs.core.models.global_model.GlobalFitModel`.
     It returns a JSON-serializable dictionary containing a normalized list
     of link records.
     """

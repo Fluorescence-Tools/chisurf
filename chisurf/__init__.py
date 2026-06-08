@@ -208,4 +208,9 @@ def __getattr__(name: str):
         value = mod.invoke_action
         globals()["action_execute"] = value
         return value
+    if name == "current_setup":
+        _cs_instance = globals().get("cs")
+        if _cs_instance is None:
+            raise AttributeError(f"ChiSurf is not initialized — {name!r} is unavailable")
+        return _cs_instance.current_setup
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

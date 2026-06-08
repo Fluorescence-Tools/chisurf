@@ -5,7 +5,7 @@ from __future__ import annotations
 
 # --- FROM test_fcs_setup.py ---
 # Test script to verify that changing to an FCS setup doesn't crash
-# This script should be run in the chisurf console
+# This script should be run in the cs console
 
 # # First, set the experiment to FCS
 # cs.current_experiment = 'FCS'
@@ -24,7 +24,7 @@ import pytest
 try:
     from chisurf.core.models.fcs.fcs import ParseFCSWidget
 except Exception as exc:  # pragma: no cover - environment-dependent import guard
-    pytestmark = pytest.mark.skip(reason=f"chisurf FCS model import unavailable: {exc}")
+    pytestmark = pytest.mark.skip(reason=f"cs FCS model import unavailable: {exc}")
     ParseFCSWidget = None  # type: ignore[assignment]
 
 
@@ -75,7 +75,7 @@ import pathlib
 
 import pytest
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio.fluorescence.fcs as fcs_io
 import chisurf.core.fio.fluorescence.fcs.sin_correlator as sin_reader
 

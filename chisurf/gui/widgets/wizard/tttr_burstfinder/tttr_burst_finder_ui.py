@@ -5,7 +5,7 @@ import numpy as np
 import pyqtgraph as pg
 import tttrlib
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 from chisurf.gui import QtCore, QtGui, QtWidgets
 
@@ -61,7 +61,7 @@ def setup_ui(
         page.read_tttr()
 
     page.textEdit.setVisible(False)
-    chisurf.gui.decorators.lineEdit_dragFile_injector(
+    cs.gui.decorators.lineEdit_dragFile_injector(
         page.lineEdit,
         call=cc,
         target=page.settings['tttr_filenames']
@@ -122,7 +122,7 @@ def setup_ui(
     page.plot_item_decay.setLogMode(False, True)
     page.plot_item_sel.setLogMode(False, False)
 
-    colors = chisurf.core.settings.gui['plot']['colors']
+    colors = cs.core.settings.gui['plot']['colors']
     ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
     co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
     page.region_selector = pg.LinearRegionItem(

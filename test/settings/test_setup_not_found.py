@@ -1,3 +1,4 @@
+import chisurf as cs
 # Test script to verify that a popup message is displayed when a non-existent setup is specified
 # This script should be run in the chisurf console
 

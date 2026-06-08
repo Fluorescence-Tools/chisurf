@@ -35,7 +35,7 @@ import numpy as np
 
 import chisurf.core.fio as io
 
-import chisurf
+import chisurf as cs
 import chisurf.core.common
 
 try:
@@ -143,7 +143,7 @@ def _imp_keep_residue(res_name: str) -> bool:
     """
 
     try:
-        cfg = getattr(chisurf.core.settings, "structure_data", {})
+        cfg = getattr(cs.core.settings, "structure_data", {})
         imp_cfg = cfg.get("IMP", {})
         filter_nonstd = bool(imp_cfg.get("filter_non_standard_residues", True))
     except Exception:
@@ -269,7 +269,7 @@ def assign_element_to_atom_name(
     'C'
     """
     element = atom_name
-    if atom_name.upper() not in chisurf.core.common.atom_weights:
+    if atom_name.upper() not in cs.core.common.atom_weights:
         # Inorganic elements have their name shifted left by one position
         #  (is a convention in PDB, but not part of the standard).
         # isdigit() check on last two characters to avoid mis-assignment of
@@ -277,7 +277,7 @@ def assign_element_to_atom_name(
         # Hs may have digit in [0]
         putative_element = atom_name[1] if atom_name[0].isdigit() else \
             atom_name[0]
-        if putative_element.capitalize() in chisurf.core.common.atom_weights.keys():
+        if putative_element.capitalize() in cs.core.common.atom_weights.keys():
             element = putative_element
     return element
 
@@ -285,7 +285,7 @@ def assign_element_to_atom_name(
 def parse_string_pdb(
         string: str,
         assign_charge: bool = False,
-        verbose: bool = chisurf.core.settings.cs_settings['verbose']
+        verbose: bool = cs.core.settings.cs_settings['verbose']
 ):
     """
 
@@ -321,13 +321,13 @@ def parse_string_pdb(
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
                 if assign_charge:
-                    if atoms['res_name'][ni] in chisurf.core.common.CHARGE_DICT:
-                        if atoms['atom_name'][ni] == chisurf.core.common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
-                            atoms['charge'][ni] = chisurf.core.common.CHARGE_DICT[
+                    if atoms['res_name'][ni] in cs.core.common.CHARGE_DICT:
+                        if atoms['atom_name'][ni] == cs.core.common.TITR_ATOM_COARSE[atoms['res_name'][ni]]:
+                            atoms['charge'][ni] = cs.core.common.CHARGE_DICT[
                                 atoms['res_name'][ni]
                             ]
-                atoms['mass'][ni] = chisurf.core.common.atom_weights[atoms['element'][ni]]
-                atoms['radius'][ni] = chisurf.core.common.VDW_DICT[atoms['element'][ni]]
+                atoms['mass'][ni] = cs.core.common.atom_weights[atoms['element'][ni]]
+                atoms['radius'][ni] = cs.core.common.VDW_DICT[atoms['element'][ni]]
             except KeyError:
                 print("Cloud not assign parameters to: %s" % line)
             ni += 1
@@ -339,7 +339,7 @@ def parse_string_pdb(
 
 def parse_string_pqr(
         string: str,
-        verbose: bool = chisurf.core.settings.cs_settings['verbose']
+        verbose: bool = cs.core.settings.cs_settings['verbose']
 ):
     """Parse a PQR format string into a structured atom array.
 
@@ -375,7 +375,7 @@ def parse_string_pqr(
             atoms['charge'][ni] = float(line[55:62].strip())
             atoms['element'][ni] = assign_element_to_atom_name(atom_name)
             try:
-                atoms['mass'][ni] = chisurf.core.common.atom_weights[atoms['element'][ni]]
+                atoms['mass'][ni] = cs.core.common.atom_weights[atoms['element'][ni]]
             except KeyError:
                 print("Cloud not assign parameters to: %s" % line)
             ni += 1
@@ -454,8 +454,8 @@ def read_coordinates(
 
     Examples
     --------
-    >>> import chisurf as cs  # doctest: +SKIP
-    >>> import chisurf.core.fio  # doctest: +SKIP
+    >>> import cs as cs  # doctest: +SKIP
+    >>> import cs.core.fio  # doctest: +SKIP
     >>> atoms = cs.fio.structure.read_coordinates('./test/data/1fat.cif')  # doctest: +SKIP
 
     :param filename:
@@ -504,16 +504,16 @@ def read(
 
     Examples
     --------
-    >>> import chisurf.core.fio
+    >>> import cs.core.fio
     >>> pdb_file = './test/data/atomic_coordinates/pdb_files/hGBP1_closed.pdb'
-    >>> pdb = chisurf.core.fio.structure.coordinates.read(pdb_file, verbose=True)
+    >>> pdb = cs.core.fio.structure.coordinates.read(pdb_file, verbose=True)
     >>> pdb[:5]
     array([ (0, ' ', 7, 'MET', 1, 'N', 'N', [72.739, -17.501, 8.879], 0.0, 1.65, 0.0, 14.0067),
            (1, ' ', 7, 'MET', 2, 'CA', 'C', [73.841, -17.042, 9.747], 0.0, 1.76, 0.0, 12.0107),
            ...
     """
     if verbose is None:
-        verbose = chisurf.core.settings.cs_settings['verbose']
+        verbose = cs.core.settings.cs_settings['verbose']
     if os.path.isfile(filename):
         with io.zipped.open_maybe_zipped(
                 filename=filename,

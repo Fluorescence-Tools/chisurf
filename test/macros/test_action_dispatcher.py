@@ -7,7 +7,7 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 from chisurf.history import OperationHistory
-import chisurf
+import chisurf as cs
 from chisurf.core.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher, get_action_catalog
 
 
@@ -83,9 +83,8 @@ class TestActionDispatcher(unittest.TestCase):
         reg = ActionRegistry()
         reg.register(ActionSpec("project_save", debounce_ms=0))
 
-        import chisurf
-        old_reg = getattr(chisurf, "action_registry", None)
-        chisurf.action_registry = reg
+        old_reg = getattr(cs, "action_registry", None)
+        cs.action_registry = reg
         try:
             catalog = get_action_catalog()
             self.assertTrue(len(catalog) > 0)
@@ -96,11 +95,10 @@ class TestActionDispatcher(unittest.TestCase):
             self.assertIn("debounce_ms", first)
             self.assertEqual(first["debounce_ms"], 0)
         finally:
-            chisurf.action_registry = old_reg
+            cs.action_registry = old_reg
 
     def test_chisurf_action_catalog_accessor(self):
-        import chisurf
-        catalog_fn = getattr(chisurf, "action_catalog")
+        catalog_fn = getattr(cs, "action_catalog")
         catalog = catalog_fn()
         self.assertTrue(isinstance(catalog, list))
 
@@ -122,7 +120,7 @@ class TestActionDispatcher(unittest.TestCase):
         self.assertEqual(rows[0]["action_type"], "project_save")
 
     def test_chisurf_action_execute_accessor(self):
-        executor = getattr(chisurf, "action_execute")
+        executor = getattr(cs, "action_execute")
         event = executor(
             name="project.save",
             payload={"target_path": "C:/tmp/demo", "project_name": "demo"},
@@ -133,9 +131,9 @@ class TestActionDispatcher(unittest.TestCase):
     def test_record_action_falls_back_for_unregistered_type(self):
         from chisurf.core.actions._infra import record_action
 
-        backup_history = getattr(chisurf, "history", None)
+        backup_history = getattr(cs, "history", None)
         history = OperationHistory()
-        chisurf.history = history
+        cs.history = history
         try:
             event = record_action(
                 action_type="legacy_unregistered_event",
@@ -147,7 +145,7 @@ class TestActionDispatcher(unittest.TestCase):
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0]["action_type"], "legacy_unregistered_event")
         finally:
-            chisurf.history = backup_history
+            cs.history = backup_history
 
     def test_extra_payload_keys_ignored(self):
         reg = ActionRegistry()

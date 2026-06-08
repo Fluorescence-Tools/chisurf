@@ -15,8 +15,8 @@ import chisurf.gui.decorators
 
 from chisurf.gui import plots
 from chisurf.core.models.global_model.globalfit import GlobalFitModel
-from chisurf.core.models.parameter_transform import ParameterTransformWidget
-from chisurf.core.models import model
+from chisurf.gui.widgets.models.parameter_transform import ParameterTransformWidget
+from chisurf.gui.widgets.models import model_widget as model
 
 
 class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
@@ -453,4 +453,3 @@ class GlobalFitModelWidget(GlobalFitModel, model.ModelWidget):
     def clear_listed_links(self):
         """Qt slot: clear all rows from the global-links table."""
         self.table_GlobalLinks.setRowCount(0)
-

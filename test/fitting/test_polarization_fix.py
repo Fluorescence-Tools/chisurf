@@ -1,5 +1,5 @@
 import logging
-import chisurf
+import chisurf as cs
 from chisurf.core.data import DataCurve
 import numpy as np
 
@@ -12,14 +12,14 @@ def test_single_dataset_polarization():
     logger.info("Testing single dataset polarization setup")
     
     # Clear any existing datasets and fits
-    chisurf.imported_datasets = []
-    chisurf.fits = []
+    cs.imported_datasets = []
+    cs.fits = []
     
     # Add a dataset as described in the issue
     logger.info("Adding dataset")
     try:
-        chisurf.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
-        logger.info(f"Dataset added successfully. Total datasets: {len(chisurf.imported_datasets)}")
+        cs.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
+        logger.info(f"Dataset added successfully. Total datasets: {len(cs.imported_datasets)}")
     except Exception as e:
         logger.error(f"Error adding dataset: {e}")
         
@@ -28,17 +28,17 @@ def test_single_dataset_polarization():
         x = np.linspace(0, 10, 100)
         y = np.exp(-x/2) + 0.1*np.random.randn(100)
         data = DataCurve(x=x, y=y, name="Test Dataset")
-        chisurf.imported_datasets.append(data)
+        cs.imported_datasets.append(data)
     
     # Add a fit with the Lifetime model
     logger.info("Adding fit with Lifetime model")
     try:
-        chisurf.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
-        logger.info(f"Fit added successfully. Total fits: {len(chisurf.fits)}")
+        cs.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
+        logger.info(f"Fit added successfully. Total fits: {len(cs.fits)}")
         
         # Check the polarization type that was set
-        if len(chisurf.fits) > 0:
-            fit = chisurf.fits[0]
+        if len(cs.fits) > 0:
+            fit = cs.fits[0]
             pol_type = fit.model.anisotropy.polarization_type
             logger.info(f"Polarization type set to: {pol_type}")
             
@@ -57,8 +57,8 @@ def test_multiple_datasets_polarization():
     logger.info("\nTesting multiple datasets polarization setup")
     
     # Clear any existing datasets and fits
-    chisurf.imported_datasets = []
-    chisurf.fits = []
+    cs.imported_datasets = []
+    cs.fits = []
     
     # Create two dummy datasets
     logger.info("Creating two dummy datasets")
@@ -69,22 +69,22 @@ def test_multiple_datasets_polarization():
     data1 = DataCurve(x=x, y=y1, name="Dataset 1")
     data2 = DataCurve(x=x, y=y2, name="Dataset 2")
     
-    chisurf.imported_datasets.append(data1)
-    chisurf.imported_datasets.append(data2)
+    cs.imported_datasets.append(data1)
+    cs.imported_datasets.append(data2)
     
-    logger.info(f"Added {len(chisurf.imported_datasets)} datasets")
+    logger.info(f"Added {len(cs.imported_datasets)} datasets")
     
     # Add fits for each dataset individually
     logger.info("Adding fit for dataset 0")
-    chisurf.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
+    cs.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
     
     logger.info("Adding fit for dataset 1")
-    chisurf.macros.add_fit(model_name='Lifetime ', dataset_indices=[1])
+    cs.macros.add_fit(model_name='Lifetime ', dataset_indices=[1])
     
     # Check polarization types
-    if len(chisurf.fits) >= 2:
-        pol_type1 = chisurf.fits[0].model.anisotropy.polarization_type
-        pol_type2 = chisurf.fits[1].model.anisotropy.polarization_type
+    if len(cs.fits) >= 2:
+        pol_type1 = cs.fits[0].model.anisotropy.polarization_type
+        pol_type2 = cs.fits[1].model.anisotropy.polarization_type
         
         logger.info(f"Dataset 0 polarization type: {pol_type1}")
         logger.info(f"Dataset 1 polarization type: {pol_type2}")

@@ -1,5 +1,5 @@
 import logging
-import chisurf
+import chisurf as cs
 from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.models.tcspc.lifetime import LifetimeModel

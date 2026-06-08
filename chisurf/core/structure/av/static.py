@@ -1,7 +1,7 @@
 import numpy as np
 import numba as nb
 
-import chisurf
+import chisurf as cs
 try:
     import LabelLib as ll
     HAS_LABELLIB = True
@@ -57,20 +57,20 @@ def calculate_1_radius(
     --------
     Calculating accessible volume using provided pdb-file
 
-    >>> import chisurf.core.fluorescence
+    >>> import cs.core.fluorescence
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
     >>> residue_number = 18
     >>> atom_name = 'CB'
     >>> attachment_atom = 1
-    >>> av = chisurf.core.structure.av.BasicAV(pdb_filename, attachment_atom=1, verbose=True)
+    >>> av = cs.core.structure.av.BasicAV(pdb_filename, attachment_atom=1, verbose=True)
 
     Calculating accessible volume using provided Structure object
 
-    >>> import chisurf.core.fluorescence
-    >>> import chisurf.core.structure
+    >>> import cs.core.fluorescence
+    >>> import cs.core.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
-    >>> structure = chisurf.core.structure.Structure(pdb_filename)
-    >>> av = chisurf.core.structure.av.BasicAV(structure, attachment_atom=1, verbose=True)
+    >>> structure = cs.core.structure.Structure(pdb_filename)
+    >>> av = cs.core.structure.av.BasicAV(structure, attachment_atom=1, verbose=True)
     Calculating accessible volume
     -----------------------------
     Loading PDB
@@ -89,20 +89,20 @@ def calculate_1_radius(
     Using residue_seq_number and atom_name to calculate accessible volume, this also works without
     chain_identifier. However, only if a single-chain is present.
 
-    >>> import chisurf.core.fluorescence
-    >>> import chisurf.core.structure
+    >>> import cs.core.fluorescence
+    >>> import cs.core.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
-    >>> structure = chisurf.core.structure.Structure(pdb_filename)
-    >>> av = chisurf.core.structure.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
+    >>> structure = cs.core.structure.Structure(pdb_filename)
+    >>> av = cs.core.structure.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True)
 
     If save_av is True the calculated accessible volume is save to disk. The filename of the calculated
     accessible volume is determined by output_file
 
-    >>> import chisurf.core.fluorescence
-    >>> import chisurf.core.structure
+    >>> import cs.core.fluorescence
+    >>> import cs.core.structure
     >>> pdb_filename = './test/data/structure/T4L_Topology.pdb'
-    >>> structure = chisurf.core.structure.Structure(pdb_filename)
-    >>> av = chisurf.core.structure.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
+    >>> structure = cs.core.structure.Structure(pdb_filename)
+    >>> av = cs.core.structure.av.BasicAV(structure, residue_seq_number=11, atom_name='CB', verbose=True, save_av=True, output_file='test')
     Calculating accessible volume
     -----------------------------
     Loading PDB
@@ -124,11 +124,11 @@ def calculate_1_radius(
     -------------------
 
     """
-    # verbose = kwargs.get('verbose', chisurf.core.settings['verbose'])
-    # linkersphere = kwargs.get('linkersphere', chisurf.core.settings['fps']['allowed_sphere_radius'])
-    # linknodes = kwargs.get('linknodes', chisurf.core.settings['fps']['linknodes'])
-    # vdw_max = kwargs.get('vdw_max', chisurf.core.settings['fps']['vdw_max'])
-    dg = kwargs.get('dg', chisurf.core.settings.cs_settings['fps']['simulation_grid_resolution'])
+    # verbose = kwargs.get('verbose', cs.core.settings['verbose'])
+    # linkersphere = kwargs.get('linkersphere', cs.core.settings['fps']['allowed_sphere_radius'])
+    # linknodes = kwargs.get('linknodes', cs.core.settings['fps']['linknodes'])
+    # vdw_max = kwargs.get('vdw_max', cs.core.settings['fps']['vdw_max'])
+    dg = kwargs.get('dg', cs.core.settings.cs_settings['fps']['simulation_grid_resolution'])
     # n_mul = kwargs.get('n_mul', 32)
     #
     # n_atoms = len(vdw)
@@ -238,7 +238,7 @@ def calculate_3_radius(
     :return:
 
     """
-    dg = kwargs.get('dg', chisurf.core.settings['fps']['simulation_grid_resolution'])
+    dg = kwargs.get('dg', cs.core.settings['fps']['simulation_grid_resolution'])
     xyzr = np.vstack(
         [x, y, z, vdw]
     ).T
@@ -274,8 +274,8 @@ def calculate_3_radius(
 #     Example
 #     -------
 #     >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
-#     >>> import chisurf.core.structure
-#     >>> structure = chisurf.core.structure.Structure(pdb_filename)
+#     >>> import cs.core.structure
+#     >>> structure = cs.core.structure.Structure(pdb_filename)
 #     >>> xs, vs = atoms_in_reach(structure.xyz, structure.vdw, 10.0, 1)
 #
 #     """
@@ -463,10 +463,10 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=None, linker_sphere=None,
     Example
     -------
 
-    >>> import chisurf.core.structure
+    >>> import cs.core.structure
     >>> import pylab as p
     >>> pdb_filename = './test/data/modelling/pdb_files/hGBP1_open.pdb'
-    >>> structure = chisurf.core.structure.Structure(pdb_filename)
+    >>> structure = cs.core.structure.Structure(pdb_filename)
     >>> av = calc_av1_py(l=20.0, w=2.0, r=3.5, atom_i=1, ng=33, xyz=structure.xyz, vdw=structure.vdw)
     >>> l=20.0
     >>> w=2.0
@@ -478,11 +478,11 @@ def calc_av1_py(l, w, r, atom_i, ng, xyz, vdw, vdw_max=None, linker_sphere=None,
     >>> p.imshow(linker_length[:, 22,:], interpolation='none')
     """
     if vdw_max is None:
-        vdw_max = chisurf.core.settings.cs_settings['fps']['vdw_max']
+        vdw_max = cs.core.settings.cs_settings['fps']['vdw_max']
     if linker_sphere is None:
-        linker_sphere = chisurf.core.settings.cs_settings['fps']['allowed_sphere_radius']
+        linker_sphere = cs.core.settings.cs_settings['fps']['allowed_sphere_radius']
     if linknodes is None:
-        linknodes = chisurf.core.settings.cs_settings['fps']['linknodes']
+        linknodes = cs.core.settings.cs_settings['fps']['linknodes']
 
     dg = l / ((ng - 1.0) / 2.0)
     density = np.ones((ng, ng, ng), dtype=np.uint32)
@@ -523,8 +523,8 @@ def calc_weights_from_traj(
 
      >>> import mdtraj as md
      >>> import pylab as p
-     >>> import chisurf.core.fluorescence
-     >>> from chisurf.core.structure.av.static import calc_av1_py, calc_weights_from_traj
+     >>> import cs.core.fluorescence
+     >>> from cs.core.structure.av.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
      >>> res_id = 3  # the chromophore
@@ -539,7 +539,7 @@ def calc_weights_from_traj(
      >>> dg = 1.0
      >>> hist_3d, r0 = calc_weights_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r0_atom_name, r0_chain)
      >>> offset = (ng - 1) / 2 * dg
-     >>> chisurf.core.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
+     >>> cs.core.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
 
     >>> pdb_filename = 'e:/simulations_free_dye/peptide.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)
@@ -586,8 +586,8 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
 
      >>> import mdtraj as md
      >>> import pylab as p
-     >>> import chisurf.core.settings as mfm
-     >>> from chisurf.core.structure.av.static import calc_av1_py, calc_weights_from_traj
+     >>> import cs.core.settings as mfm
+     >>> from cs.core.structure.av.static import calc_av1_py, calc_weights_from_traj
      >>> traj = md.load('e:/simulations_free_dye/t_join.h5')
 
      >>> res_id = 3  # the chromophore
@@ -602,7 +602,7 @@ def calc_distance_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r
      >>> dg = 1.0
      >>> hist_3d, r0 = calc_weights_from_traj(traj, res_id, atom_name, chain_id, ng, dg, r0_res, r0_atom_name, r0_chain)
      >>> offset = (ng - 1) / 2 * dg
-     >>> chisurf.core.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
+     >>> cs.core.fio.pdb.write_open_dx("c:/temp/test.dx", hist_3d, r0 - offset, ng, ng, ng, dg, dg, dg)
 
     >>> pdb_filename = 'e:/simulations_free_dye/peptide.pdb'
     >>> structure = mfm.structure.Structure(pdb_filename)

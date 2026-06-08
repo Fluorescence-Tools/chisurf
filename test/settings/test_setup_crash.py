@@ -1,3 +1,4 @@
+import chisurf as cs
 # Test script to reproduce the crash when changing setup
 cs.current_experiment = 'TCSPC'
 # Try changing to a valid setup

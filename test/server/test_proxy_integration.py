@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Integration-style tests for the clean typed proxy classes."""
 
-import chisurf
+import chisurf as cs
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -334,14 +334,14 @@ class TestServerModeGuards:
     def test_plugin_server_mode_guard_pattern(self):
         api = MagicMock()
         api.mode = "server"
-        with patch("chisurf.core.api", api, create=True):
-            assert chisurf.core.api.mode == "server"
+        with patch("cs.core.api", api, create=True):
+            assert cs.core.api.mode == "server"
 
     def test_plugin_local_mode_bypasses_guard(self):
         api = MagicMock()
         api.mode = "local"
-        with patch("chisurf.core.api", api, create=True):
-            assert chisurf.core.api.mode == "local"
+        with patch("cs.core.api", api, create=True):
+            assert cs.core.api.mode == "local"
 
     def test_server_mode_read_works(self):
         """Read-only access works on FitProxy."""
@@ -354,10 +354,10 @@ class TestServerModeGuards:
 
 
 class TestChisurfRunPattern:
-    """chisurf.run() constructs Python strings and execs them against proxies."""
+    """cs.run() constructs Python strings and execs them against proxies."""
 
     def test_run_pattern_index_then_rpc_call(self):
-        """chisurf.run('chisurf.fits[0].set_result_idx(2)') pattern works."""
+        """cs.run('cs.fits[0].set_result_idx(2)') pattern works."""
         client = MagicMock(spec=ChisurfClient)
         client.fit__list.return_value = [
             {"uid": "f1", "name": "Fit1", "chi2": 1.0},
@@ -374,7 +374,7 @@ class TestChisurfRunPattern:
         assert result.get("ok") is True
 
     def test_run_pattern_index_inside_run(self):
-        """Construct the string that chisurf.run() would execute."""
+        """Construct the string that cs.run() would execute."""
         client = MagicMock(spec=ChisurfClient)
         client.fit__list.return_value = [
             {"uid": "f1", "name": "Fit1"},
@@ -384,14 +384,14 @@ class TestChisurfRunPattern:
         flist = ProxyFitList(client)
         fit_idx = 0
         result_idx = 2
-        expr = f"chisurf.fits[{fit_idx}].set_result_idx({result_idx})"
-        assert expr == "chisurf.fits[0].set_result_idx(2)"
+        expr = f"cs.fits[{fit_idx}].set_result_idx({result_idx})"
+        assert expr == "cs.fits[0].set_result_idx(2)"
         fit = flist[fit_idx]
         result = fit.set_result_idx(result_idx=result_idx)
         assert result.get("ok") is True
 
     def test_enumerate_pattern(self):
-        """for fit_idx, f in enumerate(chisurf.fits) GUI pattern."""
+        """for fit_idx, f in enumerate(cs.fits) GUI pattern."""
         client = MagicMock(spec=ChisurfClient)
         client.fit__list.return_value = [
             {"uid": "f1", "name": "Fit1", "chi2": 1.0},

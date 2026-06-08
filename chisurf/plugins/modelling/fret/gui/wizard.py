@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 from typing import Dict, Optional
@@ -15,6 +16,8 @@ from chisurf.plugins.chimol.chimol.renderer.view import MolView
 from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
 from ..core import av, docking, engine, io, results, sampling, screening, evaluate, pair_selection
 from ..core.io import read_fps_json
+
+logger = logging.getLogger("chisurf.plugins.modelling.fret")
 
 
 class _DockWidget(QtWidgets.QWidget):
@@ -35,52 +38,30 @@ class _DockWidget(QtWidgets.QWidget):
 
         # File selection
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel("fps.json:"), 0, 0)
-        self.fps_path = QtWidgets.QLineEdit()
-        self.fps_btn = QtWidgets.QPushButton("Browse...")
-        self.fps_btn.clicked.connect(self._browse_fps)
-        grid.addWidget(self.fps_path, 0, 1)
-        grid.addWidget(self.fps_btn, 0, 2)
-
-        grid.addWidget(QtWidgets.QLabel("PDB:"), 1, 0)
+        grid.addWidget(QtWidgets.QLabel("PDB:"), 0, 0)
         self.pdb_path = QtWidgets.QLineEdit()
         self.pdb_path.textChanged.connect(self._update_initial_viewer)
         self.pdb_btn = QtWidgets.QPushButton("Browse...")
         self.pdb_btn.clicked.connect(self._browse_pdb)
-        grid.addWidget(self.pdb_path, 1, 1)
-        grid.addWidget(self.pdb_btn, 1, 2)
+        grid.addWidget(self.pdb_path, 0, 1)
+        grid.addWidget(self.pdb_btn, 0, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Output dir:"), 2, 0)
+        grid.addWidget(QtWidgets.QLabel("Output dir:"), 1, 0)
         self.out_path = QtWidgets.QLineEdit("dock_out")
         self.out_btn = QtWidgets.QPushButton("Browse...")
         self.out_btn.clicked.connect(self._browse_out)
-        grid.addWidget(self.out_path, 2, 1)
-        grid.addWidget(self.out_btn, 2, 2)
+        grid.addWidget(self.out_path, 1, 1)
+        grid.addWidget(self.out_btn, 1, 2)
         left_layout.addLayout(grid)
 
         # Parameters
         params_group = QtWidgets.QGroupBox("Parameters")
         pgrid = QtWidgets.QGridLayout()
-        pgrid.addWidget(QtWidgets.QLabel("Max iterations:"), 0, 0)
-        self.max_iter = QtWidgets.QSpinBox()
-        self.max_iter.setRange(100, 1_000_000)
-        self.max_iter.setValue(50000)
-        pgrid.addWidget(self.max_iter, 0, 1)
-        pgrid.addWidget(QtWidgets.QLabel("Max force:"), 0, 2)
-        self.max_force = QtWidgets.QDoubleSpinBox()
-        self.max_force.setRange(0.1, 10000)
-        self.max_force.setValue(100.0)
-        pgrid.addWidget(self.max_force, 0, 3)
-        pgrid.addWidget(QtWidgets.QLabel("Trials:"), 1, 0)
+        pgrid.addWidget(QtWidgets.QLabel("Trials:"), 0, 0)
         self.n_trials = QtWidgets.QSpinBox()
         self.n_trials.setRange(1, 100)
         self.n_trials.setValue(3)
-        pgrid.addWidget(self.n_trials, 1, 1)
-        pgrid.addWidget(QtWidgets.QLabel("k_clash:"), 1, 2)
-        self.k_clash = QtWidgets.QDoubleSpinBox()
-        self.k_clash.setRange(0.01, 1000)
-        self.k_clash.setValue(10.0)
-        pgrid.addWidget(self.k_clash, 1, 3)
+        pgrid.addWidget(self.n_trials, 0, 1)
         params_group.setLayout(pgrid)
         left_layout.addWidget(params_group)
 
@@ -122,12 +103,7 @@ class _DockWidget(QtWidgets.QWidget):
         main_layout.addWidget(self.progress)
         main_layout.addWidget(self.log)
 
-    def _browse_fps(self):
-        fn, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select fps.json", "", "fps.json (*.fps.json *.json)"
-        )
-        if fn:
-            self.fps_path.setText(fn)
+    # Shared fps.json browse handles this
 
     def _browse_pdb(self):
         fns, _ = QtWidgets.QFileDialog.getOpenFileNames(
@@ -237,7 +213,7 @@ class _DockWidget(QtWidgets.QWidget):
         QtWidgets.QApplication.processEvents()
 
     def _run(self):
-        fps_path = self.fps_path.text()
+        fps_path = self.window().shared_fps_path.text()
         pdb_path = self.pdb_path.text()
         out_dir = self.out_path.text()
         if not fps_path or not pdb_path:
@@ -254,10 +230,14 @@ class _DockWidget(QtWidgets.QWidget):
                 positions, dists, _, _ = read_fps_json(fps_path)
                 self._log(f"Loaded {len(positions)} positions, {len(dists)} distances")
 
+                import chisurf
+                fret_settings = getattr(chisurf.core.settings, "fret", {})
                 params = engine.SpringParameters(
-                    max_iterations=self.max_iter.value(),
-                    max_force=self.max_force.value(),
-                    k_clash=self.k_clash.value(),
+                    max_iterations=fret_settings.get("max_iterations", 50000),
+                    max_force=fret_settings.get("max_force", 100.0),
+                    k_clash=fret_settings.get("k_clash", 10.0),
+                    viscosity_factor=fret_settings.get("viscosity_factor", 0.85),
+                    time_step_factor=fret_settings.get("time_step_factor", 0.005),
                 )
 
                 self._log("Starting docking...")
@@ -314,29 +294,22 @@ class _ScreenWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
 
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel("fps.json:"), 0, 0)
-        self.fps_path = QtWidgets.QLineEdit()
-        self.fps_btn = QtWidgets.QPushButton("Browse...")
-        self.fps_btn.clicked.connect(self._browse_fps)
-        grid.addWidget(self.fps_path, 0, 1)
-        grid.addWidget(self.fps_btn, 0, 2)
-
-        grid.addWidget(QtWidgets.QLabel("PDB dir:"), 1, 0)
+        grid.addWidget(QtWidgets.QLabel("PDB dir:"), 0, 0)
         self.pdb_dir = QtWidgets.QLineEdit()
         self.pdb_btn = QtWidgets.QPushButton("Browse...")
         self.pdb_btn.clicked.connect(self._browse_pdb_dir)
-        grid.addWidget(self.pdb_dir, 1, 1)
-        grid.addWidget(self.pdb_btn, 1, 2)
+        grid.addWidget(self.pdb_dir, 0, 1)
+        grid.addWidget(self.pdb_btn, 0, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Output CSV:"), 2, 0)
+        grid.addWidget(QtWidgets.QLabel("Output CSV:"), 1, 0)
         self.out_path = QtWidgets.QLineEdit("screening.csv")
-        grid.addWidget(self.out_path, 2, 1)
+        grid.addWidget(self.out_path, 1, 1)
 
-        grid.addWidget(QtWidgets.QLabel("Threads:"), 3, 0)
+        grid.addWidget(QtWidgets.QLabel("Threads:"), 2, 0)
         self.n_threads = QtWidgets.QSpinBox()
         self.n_threads.setRange(1, 64)
         self.n_threads.setValue(4)
-        grid.addWidget(self.n_threads, 3, 1)
+        grid.addWidget(self.n_threads, 2, 1)
         layout.addLayout(grid)
 
         self.run_btn = QtWidgets.QPushButton("Run Screening")
@@ -353,12 +326,7 @@ class _ScreenWidget(QtWidgets.QWidget):
         )
         layout.addWidget(self.table)
 
-    def _browse_fps(self):
-        fn, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select fps.json", "", "fps.json (*.fps.json *.json)"
-        )
-        if fn:
-            self.fps_path.setText(fn)
+    # Shared fps.json browse handles this
 
     def _browse_pdb_dir(self):
         dn = QtWidgets.QFileDialog.getExistingDirectory(
@@ -368,12 +336,16 @@ class _ScreenWidget(QtWidgets.QWidget):
             self.pdb_dir.setText(dn)
 
     def _run(self):
-        fps_path = self.fps_path.text()
+        fps_path = self.window().shared_fps_path.text()
         pdb_dir = self.pdb_dir.text()
         out_path = self.out_path.text()
         n_threads = self.n_threads.value()
         if not fps_path or not pdb_dir:
-            QtWidgets.QMessageBox.warning(self, "Error", "Select fps.json and PDB dir")
+            msg = "Select fps.json and PDB dir"
+            logger.warning(msg)
+            win = self.window()
+            if win and hasattr(win, "statusBar") and win.statusBar() is not None:
+                win.statusBar().showMessage(f"Warning: {msg}", 5000)
             return
 
         self.run_btn.setEnabled(False)
@@ -428,7 +400,10 @@ class _ScreenWidget(QtWidgets.QWidget):
 
     @QtCore.Slot(str)
     def _log_error(self, msg):
-        QtWidgets.QMessageBox.critical(self, "Error", msg)
+        logger.error(msg)
+        win = self.window()
+        if win and hasattr(win, "statusBar") and win.statusBar() is not None:
+            win.statusBar().showMessage(f"Error: {msg}", 5000)
 
 
 class _EvaluatorWidget(QtWidgets.QWidget):
@@ -440,26 +415,19 @@ class _EvaluatorWidget(QtWidgets.QWidget):
 
         # File selection
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel("fps.json:"), 0, 0)
-        self.fps_path = QtWidgets.QLineEdit()
-        self.fps_btn = QtWidgets.QPushButton("Browse...")
-        self.fps_btn.clicked.connect(self._browse_fps)
-        grid.addWidget(self.fps_path, 0, 1)
-        grid.addWidget(self.fps_btn, 0, 2)
-
-        grid.addWidget(QtWidgets.QLabel("Input Type:"), 1, 0)
+        grid.addWidget(QtWidgets.QLabel("Input Type:"), 0, 0)
         self.input_type = QtWidgets.QComboBox()
         self.input_type.addItems(["Single PDB File", "PDB Directory", "MDTraj Trajectory"])
         self.input_type.currentTextChanged.connect(self._on_type_changed)
-        grid.addWidget(self.input_type, 1, 1, 1, 2)
+        grid.addWidget(self.input_type, 0, 1, 1, 2)
 
         self.input_label = QtWidgets.QLabel("PDB File:")
-        grid.addWidget(self.input_label, 2, 0)
+        grid.addWidget(self.input_label, 1, 0)
         self.input_path = QtWidgets.QLineEdit()
         self.input_btn = QtWidgets.QPushButton("Browse...")
         self.input_btn.clicked.connect(self._browse_input)
-        grid.addWidget(self.input_path, 2, 1)
-        grid.addWidget(self.input_btn, 2, 2)
+        grid.addWidget(self.input_path, 1, 1)
+        grid.addWidget(self.input_btn, 1, 2)
 
         # Trajectory path (only for MDTraj Trajectory)
         self.traj_label = QtWidgets.QLabel("Trajectory (XTC/DCD):")
@@ -469,22 +437,18 @@ class _EvaluatorWidget(QtWidgets.QWidget):
         self.traj_btn.clicked.connect(self._browse_traj)
         self.traj_path.hide()
         self.traj_btn.hide()
-        grid.addWidget(self.traj_label, 3, 0)
-        grid.addWidget(self.traj_path, 3, 1)
-        grid.addWidget(self.traj_btn, 3, 2)
+        grid.addWidget(self.traj_label, 2, 0)
+        grid.addWidget(self.traj_path, 2, 1)
+        grid.addWidget(self.traj_btn, 2, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Output CSV:"), 4, 0)
+        grid.addWidget(QtWidgets.QLabel("Output CSV:"), 3, 0)
         self.out_path = QtWidgets.QLineEdit("evaluation_results.csv")
         self.out_btn = QtWidgets.QPushButton("Browse...")
         self.out_btn.clicked.connect(self._browse_out)
-        grid.addWidget(self.out_path, 4, 1)
-        grid.addWidget(self.out_btn, 4, 2)
+        grid.addWidget(self.out_path, 3, 1)
+        grid.addWidget(self.out_btn, 3, 2)
 
-        # Active backend choice
-        grid.addWidget(QtWidgets.QLabel("AV Backend:"), 5, 0)
-        self.backend_combo = QtWidgets.QComboBox()
-        self.backend_combo.addItems(["auto", "labellib", "imp-bff"])
-        grid.addWidget(self.backend_combo, 5, 1, 1, 2)
+        # Active backend choice (configured in Settings menu)
 
         layout.addLayout(grid)
 
@@ -502,12 +466,7 @@ class _EvaluatorWidget(QtWidgets.QWidget):
         self.log.setReadOnly(True)
         layout.addWidget(self.log)
 
-    def _browse_fps(self):
-        fn, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select fps.json", "", "fps.json (*.fps.json *.json)"
-        )
-        if fn:
-            self.fps_path.setText(fn)
+    # Shared fps.json browse handles this
 
     def _on_type_changed(self, text):
         if text == "Single PDB File":
@@ -558,11 +517,13 @@ class _EvaluatorWidget(QtWidgets.QWidget):
         QtWidgets.QApplication.processEvents()
 
     def _run(self):
-        fps = self.fps_path.text()
+        fps = self.window().shared_fps_path.text()
         input_p = self.input_path.text()
         out = self.out_path.text()
         input_t = self.input_type.currentText()
-        backend = self.backend_combo.currentText()
+        import chisurf
+        fret_settings = getattr(chisurf.core.settings, "fret", {})
+        backend = fret_settings.get("av_backend", "auto")
 
         if not fps or not input_p or not out:
             self._log("Please fill in all file paths.")
@@ -631,43 +592,50 @@ class _PairSelectWidget(QtWidgets.QWidget):
 
         # File selection
         grid = QtWidgets.QGridLayout()
-        grid.addWidget(QtWidgets.QLabel("fps.json:"), 0, 0)
-        self.fps_path = QtWidgets.QLineEdit()
-        self.fps_btn = QtWidgets.QPushButton("Browse...")
-        self.fps_btn.clicked.connect(self._browse_fps)
-        grid.addWidget(self.fps_path, 0, 1)
-        grid.addWidget(self.fps_btn, 0, 2)
+        grid.addWidget(QtWidgets.QLabel("Input Type:"), 0, 0)
+        self.input_type = QtWidgets.QComboBox()
+        self.input_type.addItems(["PDB Directory", "MDTraj Trajectory"])
+        self.input_type.currentTextChanged.connect(self._on_type_changed)
+        grid.addWidget(self.input_type, 0, 1, 1, 2)
 
-        grid.addWidget(QtWidgets.QLabel("PDB Directory:"), 1, 0)
+        self.input_label = QtWidgets.QLabel("PDB Directory:")
+        grid.addWidget(self.input_label, 1, 0)
         self.pdb_dir = QtWidgets.QLineEdit()
         self.pdb_btn = QtWidgets.QPushButton("Browse...")
         self.pdb_btn.clicked.connect(self._browse_pdb_dir)
         grid.addWidget(self.pdb_dir, 1, 1)
         grid.addWidget(self.pdb_btn, 1, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Output Report:"), 2, 0)
+        # Trajectory path (only for MDTraj Trajectory)
+        self.traj_label = QtWidgets.QLabel("Trajectory (XTC/DCD):")
+        self.traj_label.hide()
+        self.traj_path = QtWidgets.QLineEdit()
+        self.traj_btn = QtWidgets.QPushButton("Browse...")
+        self.traj_btn.clicked.connect(self._browse_traj)
+        self.traj_path.hide()
+        self.traj_btn.hide()
+        grid.addWidget(self.traj_label, 2, 0)
+        grid.addWidget(self.traj_path, 2, 1)
+        grid.addWidget(self.traj_btn, 2, 2)
+
+        grid.addWidget(QtWidgets.QLabel("Output Report:"), 3, 0)
         self.out_path = QtWidgets.QLineEdit("pair_selection_report.txt")
         self.out_btn = QtWidgets.QPushButton("Browse...")
         self.out_btn.clicked.connect(self._browse_out)
-        grid.addWidget(self.out_path, 2, 1)
-        grid.addWidget(self.out_btn, 2, 2)
+        grid.addWidget(self.out_path, 3, 1)
+        grid.addWidget(self.out_btn, 3, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Max Pairs:"), 3, 0)
+        grid.addWidget(QtWidgets.QLabel("Max Pairs:"), 4, 0)
         self.max_pairs = QtWidgets.QSpinBox()
         self.max_pairs.setRange(1, 50)
         self.max_pairs.setValue(3)
-        grid.addWidget(self.max_pairs, 3, 1, 1, 2)
+        grid.addWidget(self.max_pairs, 4, 1, 1, 2)
 
-        grid.addWidget(QtWidgets.QLabel("Error (err, Å):"), 4, 0)
+        grid.addWidget(QtWidgets.QLabel("Error (err, Å):"), 5, 0)
         self.err_spin = QtWidgets.QDoubleSpinBox()
         self.err_spin.setRange(0.1, 50.0)
         self.err_spin.setValue(5.0)
-        grid.addWidget(self.err_spin, 4, 1, 1, 2)
-
-        grid.addWidget(QtWidgets.QLabel("AV Backend:"), 5, 0)
-        self.backend_combo = QtWidgets.QComboBox()
-        self.backend_combo.addItems(["auto", "labellib", "imp-bff"])
-        grid.addWidget(self.backend_combo, 5, 1, 1, 2)
+        grid.addWidget(self.err_spin, 5, 1, 1, 2)
 
         layout.addLayout(grid)
 
@@ -685,17 +653,37 @@ class _PairSelectWidget(QtWidgets.QWidget):
         self.log.setReadOnly(True)
         layout.addWidget(self.log)
 
-    def _browse_fps(self):
-        fn, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select fps.json", "", "fps.json (*.fps.json *.json)"
-        )
-        if fn:
-            self.fps_path.setText(fn)
+    def _on_type_changed(self, text):
+        if text == "PDB Directory":
+            self.input_label.setText("PDB Directory:")
+            self.traj_label.hide()
+            self.traj_path.hide()
+            self.traj_btn.hide()
+        elif text == "MDTraj Trajectory":
+            self.input_label.setText("Topology PDB:")
+            self.traj_label.show()
+            self.traj_path.show()
+            self.traj_btn.show()
 
     def _browse_pdb_dir(self):
-        dn = QtWidgets.QFileDialog.getExistingDirectory(self, "Select PDB directory")
-        if dn:
-            self.pdb_dir.setText(dn)
+        t = self.input_type.currentText()
+        if t == "PDB Directory":
+            dn = QtWidgets.QFileDialog.getExistingDirectory(self, "Select PDB directory")
+            if dn:
+                self.pdb_dir.setText(dn)
+        else:
+            fn, _ = QtWidgets.QFileDialog.getOpenFileName(
+                self, "Select PDB Topology", "", "PDB (*.pdb *.ent)"
+            )
+            if fn:
+                self.pdb_dir.setText(fn)
+
+    def _browse_traj(self):
+        fn, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Select Trajectory File", "", "Trajectory (*.xtc *.dcd *.trr *.nc)"
+        )
+        if fn:
+            self.traj_path.setText(fn)
 
     def _browse_out(self):
         fn, _ = QtWidgets.QFileDialog.getSaveFileName(
@@ -709,15 +697,18 @@ class _PairSelectWidget(QtWidgets.QWidget):
         QtWidgets.QApplication.processEvents()
 
     def _run(self):
-        fps = self.fps_path.text()
+        fps = self.window().shared_fps_path.text()
         pdb_dir = self.pdb_dir.text()
         out = self.out_path.text()
         max_pairs = self.max_pairs.value()
         err = self.err_spin.value()
-        backend = self.backend_combo.currentText()
+        input_t = self.input_type.currentText()
+        import chisurf
+        fret_settings = getattr(chisurf.core.settings, "fret", {})
+        backend = fret_settings.get("av_backend", "auto")
 
         if not fps or not pdb_dir or not out:
-            self._log("Please select fps.json, PDB dir, and report output paths.")
+            self._log("Please select fps.json, PDB/topology, and report output paths.")
             return
 
         self.run_btn.setEnabled(False)
@@ -730,15 +721,30 @@ class _PairSelectWidget(QtWidgets.QWidget):
                 self._log(f"Reading {fps}...")
                 positions, distances, _, _ = io.read_fps_json(fps)
 
-                # 1. Compute RMSD matrix
-                self._log("Computing RMSD matrix...")
-                rmsds, filenames = pair_selection.compute_rmsd_matrix_from_pdb_dir(pdb_dir)
+                if input_t == "PDB Directory":
+                    # 1. Compute RMSD matrix
+                    self._log("Computing RMSD matrix...")
+                    rmsds, filenames = pair_selection.compute_rmsd_matrix_from_pdb_dir(pdb_dir)
 
-                # 2. Compute FRET efficiencies
-                self._log("Computing FRET efficiencies...")
-                effs, pair_names = pair_selection.compute_efficiency_matrix_from_evaluators(
-                    pdb_dir, positions, distances
-                )
+                    # 2. Compute FRET efficiencies
+                    self._log("Computing FRET efficiencies...")
+                    effs, pair_names = pair_selection.compute_efficiency_matrix_from_evaluators(
+                        pdb_dir, positions, distances
+                    )
+                else:
+                    traj = self.traj_path.text()
+                    if not traj:
+                        self._log("Trajectory file is required.")
+                        return
+                    # 1. Compute RMSD matrix
+                    self._log(f"Computing RMSD matrix for trajectory {traj}...")
+                    rmsds, filenames = pair_selection.compute_rmsd_matrix_from_trajectory(pdb_dir, traj)
+
+                    # 2. Compute FRET efficiencies
+                    self._log(f"Computing FRET efficiencies for trajectory {traj}...")
+                    effs, pair_names = pair_selection.compute_efficiency_matrix_from_evaluators_trajectory(
+                        pdb_dir, traj, positions, distances
+                    )
 
                 # 3. Pre-process NaN values
                 self._log("Pre-processing NaN values...")
@@ -757,7 +763,7 @@ class _PairSelectWidget(QtWidgets.QWidget):
                 # 5. Write decay report
                 self._log("Writing report...")
                 pair_selection.write_pair_selection_report(
-                    selected_pair_names, decay, out, rmsds.mean()
+                    selected_pair_names, decay, rmsds.mean(), out
                 )
                 self._log(f"Done! Report saved to {out}")
                 self._log("\nSelected Pairs:")
@@ -776,6 +782,131 @@ class _PairSelectWidget(QtWidgets.QWidget):
         threading.Thread(target=worker, daemon=True).start()
 
 
+class FretSettingsDialog(QtWidgets.QDialog):
+    """Modal dialog for FRET modeling settings."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("FRET Modeling Settings")
+        self.resize(400, 350)
+        
+        layout = QtWidgets.QVBoxLayout(self)
+        grid = QtWidgets.QGridLayout()
+        
+        import chisurf
+        fret_settings = getattr(chisurf.core.settings, "fret", {})
+        
+        # Initialize default keys
+        fret_settings.setdefault("transfer_function", "Polynomial")
+        fret_settings.setdefault("av_backend", "auto")
+        fret_settings.setdefault("forster_radius", 52.0)
+        fret_settings.setdefault("av_grid_resolution", 1.5)
+        fret_settings.setdefault("max_iterations", 50000)
+        fret_settings.setdefault("max_force", 100.0)
+        fret_settings.setdefault("k_clash", 10.0)
+        fret_settings.setdefault("viscosity_factor", 0.85)
+        fret_settings.setdefault("time_step_factor", 0.005)
+        
+        row = 0
+        
+        # Transfer Function Choice
+        grid.addWidget(QtWidgets.QLabel("Transfer Function:"), row, 0)
+        self.tf_combo = QtWidgets.QComboBox()
+        self.tf_combo.addItems(["Polynomial", "Gaussian", "None"])
+        self.tf_combo.setCurrentText(fret_settings["transfer_function"])
+        grid.addWidget(self.tf_combo, row, 1)
+        row += 1
+        
+        # AV Backend
+        grid.addWidget(QtWidgets.QLabel("AV Backend:"), row, 0)
+        self.backend_combo = QtWidgets.QComboBox()
+        self.backend_combo.addItems(["auto", "labellib", "imp-bff"])
+        self.backend_combo.setCurrentText(fret_settings["av_backend"])
+        grid.addWidget(self.backend_combo, row, 1)
+        row += 1
+        
+        # Forster Radius
+        grid.addWidget(QtWidgets.QLabel("Förster Radius (Å):"), row, 0)
+        self.forster_spin = QtWidgets.QDoubleSpinBox()
+        self.forster_spin.setRange(1.0, 200.0)
+        self.forster_spin.setValue(fret_settings["forster_radius"])
+        grid.addWidget(self.forster_spin, row, 1)
+        row += 1
+        
+        # AV Resolution
+        grid.addWidget(QtWidgets.QLabel("AV Grid Resolution (Å):"), row, 0)
+        self.resolution_spin = QtWidgets.QDoubleSpinBox()
+        self.resolution_spin.setRange(0.1, 10.0)
+        self.resolution_spin.setValue(fret_settings["av_grid_resolution"])
+        grid.addWidget(self.resolution_spin, row, 1)
+        row += 1
+        
+        # Max Iterations
+        grid.addWidget(QtWidgets.QLabel("Max Iterations:"), row, 0)
+        self.max_iter_spin = QtWidgets.QSpinBox()
+        self.max_iter_spin.setRange(100, 1000000)
+        self.max_iter_spin.setValue(fret_settings["max_iterations"])
+        grid.addWidget(self.max_iter_spin, row, 1)
+        row += 1
+        
+        # Max Force
+        grid.addWidget(QtWidgets.QLabel("Max Force:"), row, 0)
+        self.max_force_spin = QtWidgets.QDoubleSpinBox()
+        self.max_force_spin.setRange(0.1, 10000.0)
+        self.max_force_spin.setValue(fret_settings["max_force"])
+        grid.addWidget(self.max_force_spin, row, 1)
+        row += 1
+        
+        # k_clash
+        grid.addWidget(QtWidgets.QLabel("k_clash:"), row, 0)
+        self.k_clash_spin = QtWidgets.QDoubleSpinBox()
+        self.k_clash_spin.setRange(0.01, 10000.0)
+        self.k_clash_spin.setValue(fret_settings["k_clash"])
+        grid.addWidget(self.k_clash_spin, row, 1)
+        row += 1
+        
+        # Viscosity Factor
+        grid.addWidget(QtWidgets.QLabel("Viscosity Factor:"), row, 0)
+        self.visc_spin = QtWidgets.QDoubleSpinBox()
+        self.visc_spin.setRange(0.0, 1.0)
+        self.visc_spin.setValue(fret_settings["viscosity_factor"])
+        grid.addWidget(self.visc_spin, row, 1)
+        row += 1
+        
+        # Time Step Factor
+        grid.addWidget(QtWidgets.QLabel("Time Step Factor:"), row, 0)
+        self.dt_spin = QtWidgets.QDoubleSpinBox()
+        self.dt_spin.setRange(0.0001, 1.0)
+        self.dt_spin.setDecimals(4)
+        self.dt_spin.setValue(fret_settings["time_step_factor"])
+        grid.addWidget(self.dt_spin, row, 1)
+        row += 1
+        
+        layout.addLayout(grid)
+        
+        # Dialog buttons
+        buttons = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            QtCore.Qt.Horizontal, self
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    def save_settings(self):
+        import chisurf
+        fret_settings = getattr(chisurf.core.settings, "fret", {})
+        fret_settings["transfer_function"] = self.tf_combo.currentText()
+        fret_settings["av_backend"] = self.backend_combo.currentText()
+        fret_settings["forster_radius"] = self.forster_spin.value()
+        fret_settings["av_grid_resolution"] = self.resolution_spin.value()
+        fret_settings["max_iterations"] = self.max_iter_spin.value()
+        fret_settings["max_force"] = self.max_force_spin.value()
+        fret_settings["k_clash"] = self.k_clash_spin.value()
+        fret_settings["viscosity_factor"] = self.visc_spin.value()
+        fret_settings["time_step_factor"] = self.dt_spin.value()
+
+
 class FretDockWizard(QtWidgets.QMainWindow):
     """Main docking & screening wizard window."""
 
@@ -783,6 +914,22 @@ class FretDockWizard(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("FRET Docking & Screening")
         self.resize(1000, 750)
+
+        # Main central widget and layout
+        central_widget = QtWidgets.QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QtWidgets.QVBoxLayout(central_widget)
+
+        # Shared fps.json selector at the top
+        shared_layout = QtWidgets.QHBoxLayout()
+        shared_layout.addWidget(QtWidgets.QLabel("fps.json:"))
+        self.shared_fps_path = QtWidgets.QLineEdit()
+        self.shared_fps_path.editingFinished.connect(self._on_shared_fps_editing_finished)
+        self.shared_fps_btn = QtWidgets.QPushButton("Browse...")
+        self.shared_fps_btn.clicked.connect(self._browse_shared_fps)
+        shared_layout.addWidget(self.shared_fps_path)
+        shared_layout.addWidget(self.shared_fps_btn)
+        main_layout.addLayout(shared_layout)
 
         self.tabs = QtWidgets.QTabWidget()
         self.label_structure = LabelStructure()
@@ -796,7 +943,7 @@ class FretDockWizard(QtWidgets.QMainWindow):
         self.tabs.addTab(self.screen_widget, "Screening")
         self.tabs.addTab(self.evaluator_widget, "Evaluators")
         self.tabs.addTab(self.pair_select_widget, "Pair Selection")
-        self.setCentralWidget(self.tabs)
+        main_layout.addWidget(self.tabs)
 
         # Create Menus
         mbar = self.menuBar()
@@ -821,6 +968,11 @@ class FretDockWizard(QtWidgets.QMainWindow):
         close_action = file_menu.addAction("Close")
         close_action.triggered.connect(self.close)
 
+        # Settings Menu
+        settings_menu = mbar.addMenu("&Settings")
+        open_settings_action = settings_menu.addAction("FRET Settings...")
+        open_settings_action.triggered.connect(self.onOpenSettings)
+
     def save_project(self, project_dir: str):
         """Save the FRET modeling wizard state as a ChiSurf project.
 
@@ -832,6 +984,8 @@ class FretDockWizard(QtWidgets.QMainWindow):
         from chisurf.core.project import Project
         from ..core.io import write_fps_json
         import shutil
+        import chisurf
+        fret_settings = getattr(chisurf.core.settings, "fret", {})
 
         os.makedirs(project_dir, exist_ok=True)
 
@@ -917,35 +1071,35 @@ class FretDockWizard(QtWidgets.QMainWindow):
             "fps_json_file": fps_filename,
             "reference_pdb": to_rel(self.label_structure.position_panel._pdb_path, project_dir),
             "docking": {
-                "fps_path": to_rel_single(self.dock_widget.fps_path.text(), project_dir),
+                "fps_path": to_rel_single(self.shared_fps_path.text(), project_dir),
                 "pdb_path": to_rel(self.dock_widget.pdb_path.text(), project_dir),
                 "out_path": to_rel_single(self.dock_widget.out_path.text(), project_dir),
-                "max_iter": self.dock_widget.max_iter.value(),
-                "max_force": self.dock_widget.max_force.value(),
+                "max_iter": fret_settings.get("max_iterations", 50000),
+                "max_force": fret_settings.get("max_force", 100.0),
                 "n_trials": self.dock_widget.n_trials.value(),
-                "k_clash": self.dock_widget.k_clash.value(),
+                "k_clash": fret_settings.get("k_clash", 10.0),
             },
             "screening": {
-                "fps_path": to_rel_single(self.screen_widget.fps_path.text(), project_dir),
+                "fps_path": to_rel_single(self.shared_fps_path.text(), project_dir),
                 "pdb_dir": to_rel_single(self.screen_widget.pdb_dir.text(), project_dir),
                 "out_path": to_rel_single(self.screen_widget.out_path.text(), project_dir),
                 "n_threads": self.screen_widget.n_threads.value(),
             },
             "evaluator": {
-                "fps_path": to_rel_single(self.evaluator_widget.fps_path.text(), project_dir),
+                "fps_path": to_rel_single(self.shared_fps_path.text(), project_dir),
                 "input_type": self.evaluator_widget.input_type.currentText(),
                 "input_path": to_rel_single(self.evaluator_widget.input_path.text(), project_dir),
                 "traj_path": to_rel_single(self.evaluator_widget.traj_path.text(), project_dir),
                 "out_path": to_rel_single(self.evaluator_widget.out_path.text(), project_dir),
-                "backend": self.evaluator_widget.backend_combo.currentText(),
+                "backend": fret_settings.get("av_backend", "auto"),
             },
             "pair_select": {
-                "fps_path": to_rel_single(self.pair_select_widget.fps_path.text(), project_dir),
+                "fps_path": to_rel_single(self.shared_fps_path.text(), project_dir),
                 "pdb_dir": to_rel_single(self.pair_select_widget.pdb_dir.text(), project_dir),
                 "out_path": to_rel_single(self.pair_select_widget.out_path.text(), project_dir),
                 "max_pairs": self.pair_select_widget.max_pairs.value(),
                 "err_spin": self.pair_select_widget.err_spin.value(),
-                "backend": self.pair_select_widget.backend_combo.currentText(),
+                "backend": fret_settings.get("av_backend", "auto"),
             }
         }
 
@@ -1022,21 +1176,34 @@ class FretDockWizard(QtWidgets.QMainWindow):
 
         # Docking settings
         d_state = ui_fret.get("docking", {})
-        self.dock_widget.fps_path.setText(to_abs_single(d_state.get("fps_path", ""), project_dir))
+        
+        import chisurf
+        fret_settings = getattr(chisurf.core.settings, "fret", {})
+        
+        # Load shared fps.json path
+        fps_path_val = ""
+        for state in [d_state, ui_fret.get("screening", {}), ui_fret.get("evaluator", {}), ui_fret.get("pair_select", {})]:
+            if "fps_path" in state and state["fps_path"]:
+                fps_path_val = to_abs_single(state["fps_path"], project_dir)
+                break
+        if fps_path_val:
+            self.shared_fps_path.setText(fps_path_val)
+            self._load_fps_to_editor(fps_path_val)
+
         self.dock_widget.pdb_path.setText(to_abs(d_state.get("pdb_path", ""), project_dir))
         self.dock_widget.out_path.setText(to_abs_single(d_state.get("out_path", ""), project_dir))
+        
         if "max_iter" in d_state:
-            self.dock_widget.max_iter.setValue(d_state["max_iter"])
+            fret_settings["max_iterations"] = d_state["max_iter"]
         if "max_force" in d_state:
-            self.dock_widget.max_force.setValue(d_state["max_force"])
+            fret_settings["max_force"] = d_state["max_force"]
         if "n_trials" in d_state:
             self.dock_widget.n_trials.setValue(d_state["n_trials"])
         if "k_clash" in d_state:
-            self.dock_widget.k_clash.setValue(d_state["k_clash"])
+            fret_settings["k_clash"] = d_state["k_clash"]
 
         # Screening settings
         s_state = ui_fret.get("screening", {})
-        self.screen_widget.fps_path.setText(to_abs_single(s_state.get("fps_path", ""), project_dir))
         self.screen_widget.pdb_dir.setText(to_abs_single(s_state.get("pdb_dir", ""), project_dir))
         self.screen_widget.out_path.setText(to_abs_single(s_state.get("out_path", ""), project_dir))
         if "n_threads" in s_state:
@@ -1044,18 +1211,16 @@ class FretDockWizard(QtWidgets.QMainWindow):
 
         # Evaluator settings
         e_state = ui_fret.get("evaluator", {})
-        self.evaluator_widget.fps_path.setText(to_abs_single(e_state.get("fps_path", ""), project_dir))
         if "input_type" in e_state:
             self.evaluator_widget.input_type.setCurrentText(e_state["input_type"])
         self.evaluator_widget.input_path.setText(to_abs_single(e_state.get("input_path", ""), project_dir))
         self.evaluator_widget.traj_path.setText(to_abs_single(e_state.get("traj_path", ""), project_dir))
         self.evaluator_widget.out_path.setText(to_abs_single(e_state.get("out_path", ""), project_dir))
         if "backend" in e_state:
-            self.evaluator_widget.backend_combo.setCurrentText(e_state["backend"])
+            fret_settings["av_backend"] = e_state["backend"]
 
         # Pair select settings
         ps_state = ui_fret.get("pair_select", {})
-        self.pair_select_widget.fps_path.setText(to_abs_single(ps_state.get("fps_path", ""), project_dir))
         self.pair_select_widget.pdb_dir.setText(to_abs_single(ps_state.get("pdb_dir", ""), project_dir))
         self.pair_select_widget.out_path.setText(to_abs_single(ps_state.get("out_path", ""), project_dir))
         if "max_pairs" in ps_state:
@@ -1063,43 +1228,88 @@ class FretDockWizard(QtWidgets.QMainWindow):
         if "err_spin" in ps_state:
             self.pair_select_widget.err_spin.setValue(ps_state["err_spin"])
         if "backend" in ps_state:
-            self.pair_select_widget.backend_combo.setCurrentText(ps_state["backend"])
+            fret_settings["av_backend"] = ps_state["backend"]
+
+    def _show_status(self, msg: str, level: str = "info"):
+        if level == "info":
+            logger.info(msg)
+        elif level == "warning":
+            logger.warning(msg)
+        elif level == "error":
+            logger.error(msg)
+        sb = self.statusBar()
+        if sb is not None:
+            sb.showMessage(msg, 5000)
 
     def onSaveProject(self):
         dn = QtWidgets.QFileDialog.getExistingDirectory(self, "Select project directory to save")
         if dn:
             try:
                 self.save_project(dn)
-                QtWidgets.QMessageBox.information(self, "Success", f"Project saved to {dn}")
+                self._show_status(f"Project saved to {dn}")
             except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error", f"Failed to save project: {e}")
+                self._show_status(f"Failed to save project: {e}", "error")
 
     def onLoadProject(self):
         dn = QtWidgets.QFileDialog.getExistingDirectory(self, "Select project directory to load")
         if dn:
             try:
                 self.load_project(dn)
-                QtWidgets.QMessageBox.information(self, "Success", f"Project loaded from {dn}")
+                self._show_status(f"Project loaded from {dn}")
             except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error", f"Failed to load project: {e}")
+                self._show_status(f"Failed to load project: {e}", "error")
 
     def onLoadExampleHivRt(self):
         base_dir = os.path.dirname(__file__)
         example_dir = os.path.abspath(os.path.join(base_dir, "..", "examples", "fps_hiv_rt"))
         try:
             self.load_project(example_dir)
-            QtWidgets.QMessageBox.information(self, "Success", "Loaded FPS (HIV:RT complex) example project!")
+            self._show_status("Loaded FPS (HIV:RT complex) example project!")
         except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to load example project: {e}")
+            self._show_status(f"Failed to load example project: {e}", "error")
+
+    def onOpenSettings(self):
+        dialog = FretSettingsDialog(self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            dialog.save_settings()
+            self._show_status("FRET modeling settings updated successfully.")
+
+    def _browse_shared_fps(self):
+        fn, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Select fps.json", "", "fps.json (*.fps.json *.json)"
+        )
+        if fn:
+            self.shared_fps_path.setText(fn)
+            self._load_fps_to_editor(fn)
+
+    def _on_shared_fps_editing_finished(self):
+        fn = self.shared_fps_path.text()
+        if fn and os.path.exists(fn):
+            self._load_fps_to_editor(fn)
+
+    def _load_fps_to_editor(self, fn: str):
+        if os.path.exists(fn):
+            try:
+                positions, distances, score_sets, extra = read_fps_json(fn)
+                fps_payload = {}
+                if extra:
+                    fps_payload.update(extra)
+                fps_payload["Positions"] = positions
+                fps_payload["Distances"] = distances
+                if score_sets:
+                    fps_payload["χ²"] = score_sets
+                self.label_structure.fps_json_payload = fps_payload
+            except Exception as e:
+                print(f"Error loading fps.json to editor: {e}")
 
     def onLoadExampleOlga(self):
         base_dir = os.path.dirname(__file__)
         example_dir = os.path.abspath(os.path.join(base_dir, "..", "examples", "olga_t4l"))
         try:
             self.load_project(example_dir)
-            QtWidgets.QMessageBox.information(self, "Success", "Loaded Olga (md traj screening) example project!")
+            self._show_status("Loaded Olga (md traj screening) example project!")
         except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to load example project: {e}")
+            self._show_status(f"Failed to load example project: {e}", "error")
 
 
 if __name__ == "plugin":

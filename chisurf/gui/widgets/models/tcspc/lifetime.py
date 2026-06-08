@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import chisurf
+import chisurf as cs
 from chisurf import typing
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
@@ -65,7 +65,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             fit_idx = self._amp_widgets[0].fitting_parameter.fit_idx
             for key in self.parameter_dict:
                 p = target.parameters_all_dict[key]
-                chisurf.core.actions.dispatch(
+                cs.core.actions.dispatch(
                     name="parameter.value",
                     payload={
                         "parameter_name": str(key),
@@ -73,7 +73,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
                         "fit_index": int(fit_idx),
                     },
                 )
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_idx)},
             )
@@ -85,7 +85,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         """Build the read-from menu."""
         menu = self.readFrom_menu
         menu.clear()
-        for f in chisurf.fits:
+        for f in cs.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -104,16 +104,15 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             # Find the correct fit index for this model
             fit_index = 0
             try:
-                import chisurf
                 # Try to find which fit contains this model
-                for i, fit_obj in enumerate(chisurf.fits):
+                for i, fit_obj in enumerate(cs.fits):
                     if hasattr(fit_obj, 'model') and fit_obj.model is self:
                         fit_index = i
                         break
             except Exception:
                 pass
             
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -128,16 +127,15 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
             # Find the correct fit index for this model
             fit_index = 0
             try:
-                import chisurf
                 # Try to find which fit contains this model
-                for i, fit_obj in enumerate(chisurf.fits):
+                for i, fit_obj in enumerate(cs.fits):
                     if hasattr(fit_obj, 'model') and fit_obj.model is self:
                         fit_index = i
                         break
             except Exception:
                 pass
             
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="fit.update",
                 payload={"fit_index": int(fit_index)},
             )
@@ -147,7 +145,7 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         """Build the link-from menu."""
         menu = self.linkFrom_menu
         menu.clear()
-        for f in chisurf.fits:
+        for f in cs.fits:
             for fs in f:
                 submenu = QtWidgets.QMenu(menu)
                 submenu.setTitle(fs.name)
@@ -178,8 +176,8 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
 
         self.gb.setLayout(self.lh)
         self.layout.addWidget(self.gb)
-        self._amp_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
-        self._lifetime_widgets: typing.List[chisurf.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._amp_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
+        self._lifetime_widgets: typing.List[cs.gui.widgets.fitting.widgets.FittingParameterWidget] = list()
 
         lh = QtWidgets.QHBoxLayout()
         lh.setContentsMargins(0, 0, 0, 0)
@@ -243,25 +241,25 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
     # TODO: needs docstring
     def onNormalizeAmplitudes(self):
         """Handle normalize amplitudes checkbox."""
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.normalize_amplitudes",
             payload={
                 "component_name": str(self.name),
                 "normalize": bool(self.normalize_amplitude.isChecked()),
             },
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.absolute_amplitudes",
             payload={
                 "component_name": str(self.name),
                 "absolute": bool(self.absolute_amplitude.isChecked()),
             },
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.add_component",
             payload={"component_name": str(self.name)},
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.remove_component",
             payload={"component_name": str(self.name)},
         )
@@ -291,14 +289,14 @@ class LifetimeWidget(Lifetime, QtWidgets.QWidget):
         layout.setSpacing(0)
 
         self._amp_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._amplitudes[-1],
                 layout=layout
             )
         )
 
         self._lifetime_widgets.append(
-            chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+            cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                 self._lifetimes[-1],
                 layout=layout
             )
@@ -319,7 +317,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
 
     plot_classes = [
         (
-            chisurf.gui.plots.LinePlot,
+            cs.gui.plots.LinePlot,
             {
                 'scale_x': 'lin',
                 'd_scaley': 'log',
@@ -328,16 +326,16 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                 'y_label': 'counts'
             }
         ),
-        (chisurf.gui.plots.FitTablePlot, {}),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.FitTablePlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 'distribution_options': {
                     'Lifetime': {
                         'attribute': 'lifetime_spectrum',
-                        'accessor': chisurf.core.math.datatools.interleaved_to_two_columns,
+                        'accessor': cs.core.math.datatools.interleaved_to_two_columns,
                         'accessor_kwargs': {'sort': True},
                         'curve_options': {
                             'stepMode': False,
@@ -349,7 +347,7 @@ class LifetimeModelWidgetBase(ModelWidget, LifetimeModel):
                 }
             }
         ),
-        (chisurf.gui.plots.ResidualPlot, {})
+        (cs.gui.plots.ResidualPlot, {})
     ]
 
     # TODO: needs docstring
@@ -416,7 +414,7 @@ class LifetimeModelWidget(LifetimeModelWidgetBase):
     def __init__(
         self,
         fit: FitGroup,
-        lifetimes: chisurf.core.fitting.parameter.FittingParameterGroup = None,
+        lifetimes: cs.core.fitting.parameter.FittingParameterGroup = None,
         **kwargs
      ):
         """Initialize the instance."""
@@ -460,7 +458,7 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
 
     plot_classes = [
         (
-            chisurf.gui.plots.LinePlot,
+            cs.gui.plots.LinePlot,
             {
                 'd_scalex': 'lin',
                 'd_scaley': 'log',
@@ -471,17 +469,17 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
                 'plot_irf': True
             }
          ),
-        (chisurf.gui.plots.FitTablePlot, {}),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
-        (chisurf.gui.plots.ResidualPlot, {}),
+        (cs.gui.plots.FitTablePlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.ResidualPlot, {}),
         (
-            chisurf.gui.plots.DistributionPlot,
+            cs.gui.plots.DistributionPlot,
             {
                 'distribution_options': {
                     'Lifetime': {
                         'attribute': 'lifetime_spectrum',
-                        'accessor': chisurf.core.math.datatools.interleaved_to_two_columns,
+                        'accessor': cs.core.math.datatools.interleaved_to_two_columns,
                         'accessor_kwargs': {'sort': True},
                         'curve_options': {
                             'stepMode': False,
@@ -495,7 +493,7 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
     ]
 
     # TODO: needs docstring
-    def __init__(self, fit: chisurf.core.fitting.FitGroup, **kwargs):
+    def __init__(self, fit: cs.core.fitting.fit.FitGroup, **kwargs):
         """Initialize the instance."""
         super().__init__(fit=fit, **kwargs)
 
@@ -540,7 +538,7 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -593,12 +591,12 @@ class LifetimeMixtureModelWidget(LifetimeMixtureModel, LifetimeModelWidgetBase):
         """Rebuild the fraction parameter UI."""
         n_columns, row = 2, 1
         layout = self.layout_fractions
-        chisurf.gui.widgets.general.clear_layout(layout)
+        cs.gui.widgets.general.clear_layout(layout)
         layout.addWidget(QtWidgets.QLabel("Fraction"), 0, 0)
         layout.addWidget(QtWidgets.QLabel("Model"), 0, 1)
         for i, (name, fraction) in enumerate(zip(self.model_names, self.fractions)):
             layout.addWidget(
-                chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+                cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
                     fraction,
                     label_text=''
                 ),

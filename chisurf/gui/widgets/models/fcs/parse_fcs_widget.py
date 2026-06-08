@@ -4,7 +4,7 @@ import pathlib
 import numpy as np
 from qtpy import QtGui, QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fitting
 from chisurf.gui import plots
 from chisurf.gui.widgets.models.parse.widget import ParseModelWidget
@@ -86,14 +86,14 @@ class ParseFCSWidget(ParseModelWidget):
             (plots.FitTablePlot, {}),
             (plots.FitInfo, {}),
             (plots.ParameterScanPlot, {}),
-            (chisurf.gui.plots.ResidualPlot, {})
+            (cs.gui.plots.ResidualPlot, {})
         ]
     except Exception:
         plot_classes = []
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             icon: QtGui.QIcon = None,
             **kwargs
     ):
@@ -101,7 +101,7 @@ class ParseFCSWidget(ParseModelWidget):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             The fit group this widget belongs to.
         icon : QtGui.QIcon, optional
             Icon for the model tab.
@@ -111,7 +111,7 @@ class ParseFCSWidget(ParseModelWidget):
         if icon is None:
             icon = QtGui.QIcon(":/icons/icons/fcs.png")
         self.icon = icon
-        fn = pathlib.Path(chisurf.__file__).parent / 'models' / 'fcs' / 'models.yaml'
+        fn = pathlib.Path(cs.__file__).parent / 'core' / 'models' / 'fcs' / 'models.yaml'
         super().__init__(fit=fit, model_file=fn, **kwargs)
 
         self._cpm = FittingParameter(

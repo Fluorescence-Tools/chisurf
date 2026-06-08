@@ -140,7 +140,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Populate fitting_parameters.json with skeleton entries for "
-            "FCS parse-model parameters discovered in models/fcs/models.yaml."
+            "FCS parse-model parameters discovered in core/models/fcs/models.yaml."
         )
     )
     parser.add_argument(
@@ -154,7 +154,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         type=str,
         default=None,
         help=(
-            "Path to the FCS models YAML file (defaults to models/fcs/models.yaml "
+            "Path to the FCS models YAML file (defaults to core/models/fcs/models.yaml "
             "under --root)."
         ),
     )
@@ -181,7 +181,7 @@ def main(argv: Optional[list[str]] = None) -> None:
     if args.yaml is not None:
         yaml_path = Path(args.yaml).resolve()
     else:
-        yaml_path = source_root / "models" / "fcs" / "models.yaml"
+        yaml_path = source_root / "core" / "models" / "fcs" / "models.yaml"
 
     if args.output is not None:
         out_path = Path(args.output).resolve()

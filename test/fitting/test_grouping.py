@@ -7,7 +7,7 @@ from __future__ import annotations
 
 # --- FROM test_group_reference.py ---
 import logging
-import chisurf
+import chisurf as cs
 from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.models.tcspc.lifetime import LifetimeModel
@@ -24,8 +24,8 @@ def test_group_reference():
     logger.info("Testing group reference for polarization assignment")
     
     # Clear any existing datasets and fits
-    chisurf.imported_datasets = []
-    chisurf.fits = []
+    cs.imported_datasets = []
+    cs.fits = []
     
     # Create two simple datasets
     x = np.linspace(0, 10, 100)
@@ -67,13 +67,13 @@ def test_group_reference():
         logger.info("\nTesting with example code from issue description")
         
         # Clear any existing datasets and fits
-        chisurf.imported_datasets = []
-        chisurf.fits = []
+        cs.imported_datasets = []
+        cs.fits = []
         
         # Try to add a dataset as described in the issue
         try:
-            chisurf.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
-            logger.info(f"Dataset added successfully. Total datasets: {len(chisurf.imported_datasets)}")
+            cs.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
+            logger.info(f"Dataset added successfully. Total datasets: {len(cs.imported_datasets)}")
         except Exception as e:
             logger.error(f"Error adding dataset: {e}")
             
@@ -82,16 +82,16 @@ def test_group_reference():
             x = np.linspace(0, 10, 100)
             y = np.exp(-x/2) + 0.1*np.random.randn(100)
             data = DataCurve(x=x, y=y, name="Test Dataset")
-            chisurf.imported_datasets.append(data)
+            cs.imported_datasets.append(data)
         
         # Add a fit with the Lifetime model
         logger.info("Adding fit with Lifetime model")
-        chisurf.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
-        logger.info(f"Fit added successfully. Total fits: {len(chisurf.fits)}")
+        cs.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
+        logger.info(f"Fit added successfully. Total fits: {len(cs.fits)}")
         
         # Check if the fit has a group attribute
-        if len(chisurf.fits) > 0:
-            fit = chisurf.fits[0]
+        if len(cs.fits) > 0:
+            fit = cs.fits[0]
             if hasattr(fit, 'group'):
                 logger.info(f"Fit has group attribute: {fit.group}")
             else:
@@ -109,7 +109,7 @@ from pathlib import Path
 
 
 def test_grouped_fits_auto_link_non_nuisance_parameters_contract():
-    path = Path(__file__).resolve().parents[2] / "chisurf" / "macros" / "core_fit.py"
+    path = Path(__file__).resolve().parents[2] / "cs" / "macros" / "core_fit.py"
     src = path.read_text(encoding="utf-8")
 
     assert "def _auto_link_non_nuisance_group_parameters" in src
@@ -209,12 +209,12 @@ from pathlib import Path
 
 
 def test_core_data_global_fit_guard_contracts():
-    src = Path("chisurf/macros/core_data.py").read_text(encoding="utf-8")
+    src = Path("cs/macros/core_data.py").read_text(encoding="utf-8")
     assert "def _is_global_fit_dataset(" in src
     assert "def restore_global_fit_dataset(" in src
     assert "dataset_restore_global_fit" in src
 
 
 def test_dataset_actions_exposes_restore_global_fit_action_contract():
-    src = Path("chisurf/actions/dataset_actions.py").read_text(encoding="utf-8")
+    src = Path("cs/actions/dataset_actions.py").read_text(encoding="utf-8")
     assert "@action(\"dataset.restore_global_fit\")" in src

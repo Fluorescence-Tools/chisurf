@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui, uic
 import chisurf.gui.decorators
 import chisurf.gui.widgets.fitting
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class CorrectionsWidget(Corrections, QtWidgets.QWidget):
 
-    @chisurf.gui.decorators.init_with_ui("tcspcCorrections.ui")
+    @cs.gui.decorators.init_with_ui("tcspcCorrections.ui")
     # TODO: needs docstring
     def __init__(
             self,
@@ -26,22 +26,22 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
     ):
         """Initialize the instance."""
         self.groupBox.setChecked(False)
-        self.comboBox.addItems(chisurf.core.math.signal.window_function_types)
+        self.comboBox.addItems(cs.core.math.signal.window_function_types)
         if hide_corrections:
             self.hide()
 
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._dead_time,
             layout=self.horizontalLayout_2,
             label_text='t<sub>dead</sub>[ns]'
         )
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._window_length,
             layout=self.horizontalLayout_2,
             label_text='Lin.win.'
         )
 
-        self.lin_select = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
+        self.lin_select = cs.gui.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.onChangeLin,
             fit=fit,
@@ -58,7 +58,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         self.actionSelect_lintable.triggered.connect(self.lin_select.show)
 
         self.checkBox_3.toggled.connect(
-            lambda: chisurf.core.actions.dispatch(
+            lambda: cs.core.actions.dispatch(
                 name="model.set_correction",
                 payload={
                     "correction_type": "correct_pile_up",
@@ -68,7 +68,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         )
 
         self.checkBox_2.toggled.connect(
-            lambda: chisurf.core.actions.dispatch(
+            lambda: cs.core.actions.dispatch(
                 name="model.set_correction",
                 payload={
                     "correction_type": "reverse",
@@ -78,7 +78,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         )
 
         self.checkBox.toggled.connect(
-            lambda: chisurf.core.actions.dispatch(
+            lambda: cs.core.actions.dispatch(
                 name="model.set_correction",
                 payload={
                     "correction_type": "correct_dnl",
@@ -88,7 +88,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         )
 
         self.comboBox.currentIndexChanged.connect(
-            lambda: chisurf.core.actions.dispatch(
+            lambda: cs.core.actions.dispatch(
                 name="model.set_correction",
                 payload={
                     "correction_type": "window_function",
@@ -106,7 +106,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -223,7 +223,7 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
         idx = self.lin_select.selected_curve_index
         lin_name = self.lin_select.curve_name
 
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.set_linearization",
             payload={
                 "idx": int(idx),
@@ -234,12 +234,12 @@ class CorrectionsWidget(Corrections, QtWidgets.QWidget):
     def onUnloadLin(self):
         """Unload the linearization table and reset it to default (array of ones)
         """
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.unload_lintable",
             payload={},
         )
         self.lineEdit.setText("")
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.update",
             payload={},
         )

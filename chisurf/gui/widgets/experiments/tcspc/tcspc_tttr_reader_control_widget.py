@@ -7,7 +7,7 @@ import pathlib
 import numpy as np
 import pyqtgraph as pg
 
-import chisurf
+import chisurf as cs
 from chisurf.core.experiments.core import reader
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import load_detector_setups
 
@@ -25,7 +25,7 @@ class TCSPCTTTRReaderControlWidget(
     - Micro-time coarsening (binning) and optional integer time shift (bins)
     - Drag-and-drop TTTR preview into a log-scaled decay plot
     - An "Add" button that forwards the current TTTR file via
-      chisurf.core.actions.dispatch("dataset.add", ...), mirroring RICS/PCH controllers.
+      cs.core.actions.dispatch("dataset.add", ...), mirroring RICS/PCH controllers.
     """
 
     def __init__(self, *args, **kwargs):
@@ -244,8 +244,6 @@ class TCSPCTTTRReaderControlWidget(
         otherwise open a dialog.
         """
 
-        import chisurf
-
         try:
             self.onParametersChanged()
         except Exception:
@@ -258,7 +256,7 @@ class TCSPCTTTRReaderControlWidget(
         if fn_prev:
             return pathlib.Path(fn_prev)
 
-        fn = chisurf.gui.widgets.open_files(
+        fn = cs.gui.widgets.open_files(
             description='TCSPC TTTR file',
             file_type='TTTR files (*.ptu *.ht3 *.spc *.phu *.photonhdf5);;All files (*.*)',
             working_path=None,
@@ -270,10 +268,8 @@ class TCSPCTTTRReaderControlWidget(
     def updateUI(self):
         """Update UI elements based on cs.current_setup properties."""
 
-        import chisurf
-
         try:
-            setup = chisurf.cs.current_setup
+            setup = cs.cs.current_setup
         except Exception:
             return
 
@@ -372,8 +368,6 @@ class TCSPCTTTRReaderControlWidget(
     def onParametersChanged(self):
         """Push TTTR parameters into cs.current_setup via CLI-style strings."""
 
-        import chisurf
-
         routine = self.combo_routine.currentText()
 
         # Parse routing channel numbers from the line edit (comma/semicolon separated)
@@ -424,7 +418,7 @@ class TCSPCTTTRReaderControlWidget(
             pass
 
         try:
-            chisurf.run(
+            cs.run(
                 "\n".join(
                     [
                         f"cs.current_setup.reading_routine = '{routine}'",
@@ -673,7 +667,6 @@ class TCSPCTTTRReaderControlWidget(
             pass
 
     def _on_add_clicked(self) -> None:
-        import chisurf
         import pathlib as _pathlib
 
         try:
@@ -706,7 +699,7 @@ class TCSPCTTTRReaderControlWidget(
         except Exception:
             return
 
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": s, "experiment_reader": None},
         )
@@ -721,15 +714,13 @@ class TCSPCTTTRReaderControlWidget(
         return np.pad(arr, (0, step), mode="constant")[step:]
 
     def _load_preview_from_file(self, path: pathlib.Path) -> None:
-        import chisurf
-
         try:
             self.onParametersChanged()
         except Exception:
             pass
 
         try:
-            reader_obj = chisurf.cs.current_setup
+            reader_obj = cs.cs.current_setup
         except Exception:
             reader_obj = None
         if reader_obj is None:

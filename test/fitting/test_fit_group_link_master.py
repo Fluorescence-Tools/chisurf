@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.macros.core_fit as core_fit
 from chisurf.core.data import DataCurve, DataGroup
 from chisurf.core.fitting.fit import Fit, FitGroup
@@ -42,12 +42,12 @@ def test_link_fit_group_always_uses_first_fit_as_master(monkeypatch):
     # Select a non-first fit to emulate middle-checkbox clicks from other rows.
     fit_group.selected_fit = 2
 
-    old_cs = getattr(chisurf, "cs", None)
-    monkeypatch.setattr(chisurf, "cs", SimpleNamespace(current_fit=fit_group), raising=False)
+    old_cs = getattr(cs, "cs", None)
+    monkeypatch.setattr(cs, "cs", SimpleNamespace(current_fit=fit_group), raising=False)
     try:
         core_fit.link_fit_group("p0", 2)
     finally:
-        monkeypatch.setattr(chisurf, "cs", old_cs, raising=False)
+        monkeypatch.setattr(cs, "cs", old_cs, raising=False)
 
     p0_first = fit_group.grouped_fits[0].model.parameters_all_dict["p0"]
     p0_second = fit_group.grouped_fits[1].model.parameters_all_dict["p0"]

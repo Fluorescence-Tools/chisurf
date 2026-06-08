@@ -94,11 +94,51 @@ class ExportMixin(BaseCmd):
         else:
             nums = []
 
+        explicit_size = False
         if len(nums) >= 2 and nums[0] > 0 and nums[1] > 0:
             width, height = nums[0], nums[1]
+            explicit_size = True
         elif len(nums) >= 1 and nums[0] > 0:
             width = nums[0]
             height = max(1, int(width * 0.75))
+            explicit_size = True
+
+        if not explicit_size:
+            try:
+                renderer = getattr(viewer, "_renderer", None)
+                widget = renderer.widget() if renderer is not None and hasattr(renderer, "widget") else None
+                if widget is not None and widget.width() > 0 and widget.height() > 0:
+                    width, height = int(widget.width()), int(widget.height())
+            except Exception:
+                pass
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if output_path:
+            out_path = Path(output_path).expanduser()
+        else:
+            out_path = Path(f"chimol_ray_{timestamp}.png")
+        if out_path.suffix.lower() != ".png":
+            out_path = out_path.with_suffix(".png")
+
+        grab_current = None
+        if callable(grab_current):
+            try:
+                image = grab_current(width=width, height=height)
+            except Exception:
+                image = None
+            if image is not None:
+                try:
+                    parent = out_path.parent
+                    parent.mkdir(parents=True, exist_ok=True)
+                    if image.save(str(out_path), "PNG"):
+                        show_overlay = getattr(viewer, "show_ray_overlay", None)
+                        if callable(show_overlay):
+                            show_overlay(image)
+                        self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
+                        return
+                except Exception as exc:
+                    self._emit_error(f"ray: failed to save image: {exc}")
+                    return
 
         try:
             sphere_data = getattr(viewer, "get_atom_sphere_data", None)
@@ -122,7 +162,7 @@ class ExportMixin(BaseCmd):
             self._emit_message("ray: no atom spheres visible; nothing to trace")
             return
 
-        from ..renderer.raytracer import Sphere, RayCamera, _camera_from_view_state, trace
+        from ..renderer.raytracer import Sphere, RayCamera, _camera_from_view_state, render_scene, trace
         from ..config import _DISPLAY_CONFIG
 
         camera = _camera_from_view_state(view)
@@ -182,6 +222,55 @@ class ExportMixin(BaseCmd):
         bg_color = _DISPLAY_CONFIG.get("background", "k")
         bg_rgb = self._parse_background(bg_color)
 
+        scene_func = getattr(viewer, "get_current_scene", None)
+        if callable(scene_func):
+            try:
+                scene = scene_func()
+            except Exception:
+                scene = None
+            if scene is not None and getattr(scene, "objects", None):
+                self._emit_message(f"ray: rendering current scene at {width}x{height} ...")
+                try:
+                    image = render_scene(
+                        scene=scene,
+                        camera=camera,
+                        light_directions=light_dirs_arr,
+                        width=width,
+                        height=height,
+                        background=bg_rgb,
+                        ambient=ambient,
+                        diffuse=diffuse,
+                        specular=specular,
+                        shininess=shininess,
+                        depth_cue=depth_cue,
+                        fog_start=fog_start,
+                        fog_intensity=fog_intensity,
+                    )
+                    from PIL import Image
+                    img = Image.fromarray(image)
+                    parent = out_path.parent
+                    parent.mkdir(parents=True, exist_ok=True)
+                    img.save(str(out_path), "PNG")
+                    show_overlay = getattr(viewer, "show_ray_overlay", None)
+                    if callable(show_overlay):
+                        try:
+                            from qtpy import QtGui
+                            qimg = QtGui.QImage(
+                                image.data,
+                                image.shape[1],
+                                image.shape[0],
+                                image.strides[0],
+                                QtGui.QImage.Format_RGB888,
+                            ).copy()
+                            show_overlay(qimg)
+                        except Exception:
+                            pass
+                    self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
+                    return
+                except Exception as exc:
+                    self._emit_error(f"ray: scene render failed: {exc}")
+                    return
+
         self._emit_message(f"ray: tracing {len(spheres)} spheres at {width}x{height} ...")
 
         try:
@@ -218,18 +307,24 @@ class ExportMixin(BaseCmd):
             self._emit_error(f"ray: trace failed: {exc}")
             return
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        if output_path:
-            out_path = Path(output_path).expanduser()
-        else:
-            out_path = Path(f"chimol_ray_{timestamp}.png")
-        if out_path.suffix.lower() != ".png":
-            out_path = out_path.with_suffix(".png")
-
         try:
             from PIL import Image
             img = Image.fromarray(image)
             img.save(str(out_path), "PNG")
+            show_overlay = getattr(viewer, "show_ray_overlay", None)
+            if callable(show_overlay):
+                try:
+                    from qtpy import QtGui
+                    qimg = QtGui.QImage(
+                        image.data,
+                        image.shape[1],
+                        image.shape[0],
+                        image.strides[0],
+                        QtGui.QImage.Format_RGB888,
+                    ).copy()
+                    show_overlay(qimg)
+                except Exception:
+                    pass
             self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
         except Exception as exc:
             self._emit_error(f"ray: failed to save image: {exc}")

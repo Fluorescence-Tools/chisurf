@@ -1,5 +1,5 @@
 import logging
-import chisurf
+import chisurf as cs
 from chisurf.core.data import DataCurve, ExperimentDataCurveGroup
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.models.tcspc.lifetime import LifetimeModel
@@ -16,8 +16,8 @@ def test_group_reference():
     logger.info("Testing group reference for polarization assignment")
     
     # Clear any existing datasets and fits
-    chisurf.imported_datasets = []
-    chisurf.fits = []
+    cs.imported_datasets = []
+    cs.fits = []
     
     # Create two simple datasets
     x = np.linspace(0, 10, 100)
@@ -59,13 +59,13 @@ def test_group_reference():
         logger.info("\nTesting with example code from issue description")
         
         # Clear any existing datasets and fits
-        chisurf.imported_datasets = []
-        chisurf.fits = []
+        cs.imported_datasets = []
+        cs.fits = []
         
         # Try to add a dataset as described in the issue
         try:
-            chisurf.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
-            logger.info(f"Dataset added successfully. Total datasets: {len(chisurf.imported_datasets)}")
+            cs.macros.add_dataset(filename=r'/test/data/tcspc/Jordi/02_18-577+7.5uM(577)UP_8ps.dat')
+            logger.info(f"Dataset added successfully. Total datasets: {len(cs.imported_datasets)}")
         except Exception as e:
             logger.error(f"Error adding dataset: {e}")
             
@@ -74,16 +74,16 @@ def test_group_reference():
             x = np.linspace(0, 10, 100)
             y = np.exp(-x/2) + 0.1*np.random.randn(100)
             data = DataCurve(x=x, y=y, name="Test Dataset")
-            chisurf.imported_datasets.append(data)
+            cs.imported_datasets.append(data)
         
         # Add a fit with the Lifetime model
         logger.info("Adding fit with Lifetime model")
-        chisurf.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
-        logger.info(f"Fit added successfully. Total fits: {len(chisurf.fits)}")
+        cs.macros.add_fit(model_name='Lifetime ', dataset_indices=[0])
+        logger.info(f"Fit added successfully. Total fits: {len(cs.fits)}")
         
         # Check if the fit has a group attribute
-        if len(chisurf.fits) > 0:
-            fit = chisurf.fits[0]
+        if len(cs.fits) > 0:
+            fit = cs.fits[0]
             if hasattr(fit, 'group'):
                 logger.info(f"Fit has group attribute: {fit.group}")
             else:

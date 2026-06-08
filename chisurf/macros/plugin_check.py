@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 # Import ChiSurf components
-import chisurf
+import chisurf as cs
 from chisurf.plugins import iter_plugins
 
 
@@ -304,7 +304,7 @@ class PluginTestRunner:
                 protected_widgets = set()
                 
                 # Add main ChiSurf window to protected list
-                main_window = getattr(chisurf, 'cs', None)
+                main_window = getattr(cs, 'cs', None)
                 if main_window and hasattr(main_window, 'isVisible') and main_window.isVisible():
                     protected_widgets.add(main_window)
                 
@@ -420,7 +420,7 @@ class PluginTestRunner:
             
             # Check for complex imports
             complex_imports = [
-                'import chisurf', 'from chisurf', 'import numpy', 'from numpy',
+                'import cs', 'from cs', 'import numpy', 'from numpy',
                 'import scipy', 'from scipy', 'import pandas', 'from pandas',
                 'import torch', 'from torch', 'import tensorflow', 'from tensorflow'
             ]
@@ -693,7 +693,7 @@ class PluginTestRunner:
             # Execute using ChiSurf's exact mechanism
             if wizard_path.exists():
                 # Add default adr like ChiSurf does
-                context.setdefault("adr", "https://github.com/fluorescence-tools/chisurf")
+                context.setdefault("adr", "https://github.com/fluorescence-tools/cs")
                 return mock_main_window.onRunMacro(str(wizard_path), executor='exec', globals=context)
             elif init_path.exists():
                 return mock_main_window.onRunMacro(str(init_path), executor='exec', globals=context)
@@ -744,7 +744,7 @@ class PluginTestRunner:
 def main():
     """Main entry point for the plugin check macro"""
     try:
-        parent = getattr(chisurf, 'cs', None)
+        parent = getattr(cs, 'cs', None)
         print("Plugin Check macro - use PluginCheckWidget from the plugin for GUI")
         print("Testing logic is available in PluginTestRunner class")
     except Exception as e:

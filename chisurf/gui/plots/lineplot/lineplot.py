@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 from collections import OrderedDict
 import numpy as np
@@ -68,7 +69,7 @@ class DraggableTextItem(pg.TextItem):
         else:
             event.ignore()
 
-colors = chisurf.core.settings.gui['plot']['colors']
+colors = cs.core.settings.gui['plot']['colors']
 
 
 class LinePlotControl(QtWidgets.QWidget):
@@ -151,7 +152,7 @@ class LinePlotControl(QtWidgets.QWidget):
             item.setCheckState(1, QtCore.Qt.Checked)
         self.treeWidget.blockSignals(False)
 
-    @chisurf.gui.decorators.init_with_ui("linePlotWidget.ui")
+    @cs.gui.decorators.init_with_ui("linePlotWidget.ui")
     def __init__(
             self,
             parent=None,
@@ -342,7 +343,7 @@ class LinePlot(plotbase.Plot):
 
     def get_bounds(
             self,
-            fit: chisurf.core.fitting.fit.Fit,
+            fit: cs.core.fitting.fit.Fit,
             region_selector: pg.LinearRegionItem
     ) -> typing.Tuple[int, int]:
         lb, ub = region_selector.getRegion()
@@ -364,7 +365,7 @@ class LinePlot(plotbase.Plot):
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             scale_x: str = 'lin',
             d_scaley: str = 'lin',
             r_scaley: str = 'lin',
@@ -412,7 +413,7 @@ class LinePlot(plotbase.Plot):
         plots['top_left_plot'].hideAxis('bottom')
         plots['top_right_plot'].hideAxis('bottom')
 
-        hide_dock_title = chisurf.core.settings.gui['plot']['hideTitle']
+        hide_dock_title = cs.core.settings.gui['plot']['hideTitle']
         d1 = pyqtgraph.dockarea.Dock(
             "Residuals",
             size=(250, 80),
@@ -449,7 +450,7 @@ class LinePlot(plotbase.Plot):
         self.text.setPos(100, 0)
 
         # Fitting-region selector
-        if chisurf.core.settings.gui['plot']['enable_region_selector']:
+        if cs.core.settings.gui['plot']['enable_region_selector']:
             ca = list(matplotlib.colors.hex2color(colors["region_selector"]))
             co = [ca[0] * 255, ca[1] * 255, ca[2] * 255, colors["region_selector_alpha"]]
             region = pg.LinearRegionItem(brush=co)
@@ -472,8 +473,7 @@ class LinePlot(plotbase.Plot):
                     lb = np.log10(lb)
                     ub = np.log10(ub)
                 self.region.setRegion((lb, ub))
-                import chisurf
-                chisurf.core.actions.dispatch(
+                cs.core.actions.dispatch(
                     name="fit.range.set",
                     payload={
                         "xmin": int(self.lb_i),
@@ -490,12 +490,12 @@ class LinePlot(plotbase.Plot):
             region.sigRegionChangeFinished.connect(onRegionUpdate)
 
         # Grid
-        if chisurf.core.settings.gui['plot']['enable_grid']:
-            if chisurf.core.settings.gui['plot']['show_data_grid']:
+        if cs.core.settings.gui['plot']['enable_grid']:
+            if cs.core.settings.gui['plot']['show_data_grid']:
                 plots['main_plot'].showGrid(True, True, 0.5)
-            if chisurf.core.settings.gui['plot']['show_residual_grid']:
+            if cs.core.settings.gui['plot']['show_residual_grid']:
                 plots['top_left_plot'].showGrid(True, True, 1.0)
-            if chisurf.core.settings.gui['plot']['show_acorr_grid']:
+            if cs.core.settings.gui['plot']['show_acorr_grid']:
                 plots['top_right_plot'].showGrid(True, True, 1.0)
         # Axis labels: always show for clarity
         plots['top_left_plot'].setLabel('left', "w.res.")
@@ -555,9 +555,9 @@ class LinePlot(plotbase.Plot):
             plot_dict: typing.Dict,
             index: int = 1
     ):
-        color_idx = index % len(chisurf.core.settings.colors)
-        pen_color = chisurf.core.settings.colors[color_idx]['hex']
-        lw = chisurf.core.settings.gui['plot']['line_width']
+        color_idx = index % len(cs.core.settings.colors)
+        pen_color = cs.core.settings.colors[color_idx]['hex']
+        lw = cs.core.settings.gui['plot']['line_width']
 
         director = self.plot_controller.director
 
@@ -590,7 +590,7 @@ class LinePlot(plotbase.Plot):
                     return line
         else:
             curve = curves[curve_key]
-            if isinstance(curve, chisurf.core.data.DataCurve):
+            if isinstance(curve, cs.core.data.DataCurve):
                 curve_options = director['default']
                 target_plot = plot_dict[
                     curve_options.get('target', 'main_plot')
@@ -834,7 +834,7 @@ class LinePlot(plotbase.Plot):
         if xRange or yRange:
             self.plots['main_plot'].setRange(xRange=xRange, yRange=yRange)
 
-        if self._metrics_text_alive() and not bool(getattr(chisurf, "_suspend_plot_metrics_overlay", False)):
+        if self._metrics_text_alive() and not bool(getattr(cs, "_suspend_plot_metrics_overlay", False)):
             try:
                 self.text.updateTextPos()
                 metrics_text = self._build_metrics_overlay_text(current_fit=current_fit)
@@ -855,7 +855,7 @@ class LinePlot(plotbase.Plot):
         font_pt = 8
         try:
             # Keep it compact; allow user override if present.
-            font_pt = int(chisurf.core.settings.gui.get("plot", {}).get("metrics_font_pt", font_pt))
+            font_pt = int(cs.core.settings.gui.get("plot", {}).get("metrics_font_pt", font_pt))
         except Exception:
             font_pt = 8
 
@@ -935,10 +935,10 @@ class LinePlot(plotbase.Plot):
                     reference = fit.model.reference
                     if reference is None:
                         reference = np.ones_like(y)
-                        chisurf.logging.warning("No reference curve provided by the model.")
+                        cs.logging.warning("No reference curve provided by the model.")
                     y /= reference
                 except AttributeError:
-                    chisurf.logging.warning("Model does not have a reference attribute.")
+                    cs.logging.warning("Model does not have a reference attribute.")
 
             if self.plot_controller.is_density and curve_settings['allow_density']:
                 y[1:] = y[1:] / np.diff(x)
@@ -1004,10 +1004,10 @@ class LinePlot(plotbase.Plot):
                     reference = group_fit.model.reference
                     if reference is None:
                         reference = np.ones_like(y)
-                        chisurf.logging.warning("No reference curve provided by the model.")
+                        cs.logging.warning("No reference curve provided by the model.")
                     y /= reference
                 except AttributeError:
-                    chisurf.logging.warning("Model does not have a reference attribute.")
+                    cs.logging.warning("Model does not have a reference attribute.")
 
             if self.plot_controller.is_density and curve_settings['allow_density']:
                 y[1:] = y[1:] / np.diff(x)

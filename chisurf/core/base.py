@@ -13,7 +13,7 @@ import logging
 import weakref
 
 import numpy as np
-import chisurf
+import chisurf as cs
 import chisurf.core.settings
 
 import re
@@ -147,10 +147,10 @@ def to_elementary(
     elif skip_qt_widgets and _is_qt_object(obj):
         logging.warning(f"Skipping element {obj.__class__.__name__}")
         return None
-    elif isinstance(obj, chisurf.core.base.Base):
-        logging.debug(f"to_elementary: Converting chisurf.core.base.Base of type {obj.__class__.__name__}.")
+    elif isinstance(obj, cs.core.base.Base):
+        logging.debug(f"to_elementary: Converting cs.core.base.Base of type {obj.__class__.__name__}.")
         if verbose:
-            print("Converting chisurf.core.base.Base.")
+            print("Converting cs.core.base.Base.")
         return to_elementary(
             obj.to_dict(
                 convert_values_to_elementary=True,
@@ -192,8 +192,8 @@ def clean_string(
     Examples
     --------
 
-    >>> import chisurf.core.base
-    >>> chisurf.core.base.clean_string("kkl ss ##")
+    >>> import cs.core.base
+    >>> cs.core.base.clean_string("kkl ss ##")
     'kkl_ss'
 
     """
@@ -241,7 +241,7 @@ def _is_qt_object(obj) -> bool:
 
 class Base(object):
 
-    _verbose = chisurf.core.settings.cs_settings['verbose']
+    _verbose = cs.core.settings.cs_settings['verbose']
     supported_save_file_types: typing.List[str] = ["yaml", "json", "pkl"]
     meta_data: typing.Dict = dict()
     # Global index of all live Base instances keyed by unique_identifier.
@@ -338,7 +338,7 @@ class Base(object):
         skip_qt_widgets : bool
             If True, skip Qt widgets during serialization.
         """
-        chisurf.logging.info(
+        cs.logging.info(
             "%s of type %s is saving filename %s as file type %s" % (
                 self.name,
                 self.__class__.__name__,
@@ -418,7 +418,7 @@ class Base(object):
         convert_values_to_elementary: bool
             If this parameter is set to True (default False) the values of
             __dict__ are copied to a new dictionary. The copied values will be
-            converted using the function *chisurf.core.base.to_elementary* to an
+            converted using the function *cs.core.base.to_elementary* to an
             elementary data type, i.e., float, int, bool, str and list of these
             types.
         skip_qt_widgets: bool
@@ -443,7 +443,7 @@ class Base(object):
                             value = self.__dict__[key]
                             # Check if it's a Qt widget
                             if _is_qt_object(value):
-                                chisurf.logging.warning(f"Skipping element {key}")
+                                cs.logging.warning(f"Skipping element {key}")
                                 continue
                         
                         if copy_values:
@@ -451,7 +451,7 @@ class Base(object):
                         else:
                             d[key] = self.__dict__[key]
                     except TypeError:
-                        chisurf.logging.warning(f"Skipping element {key}")
+                        cs.logging.warning(f"Skipping element {key}")
         else:
             if copy_values:
                 d = copy.copy(self.__dict__)
@@ -463,7 +463,7 @@ class Base(object):
                             keys_to_remove.append(key)
                     
                     for key in keys_to_remove:
-                        chisurf.logging.warning(f"Skipping element {key}")
+                        cs.logging.warning(f"Skipping element {key}")
                         d.pop(key, None)
                 
                 d["meta_data"] = copy.deepcopy(self.meta_data)
@@ -622,8 +622,8 @@ class Base(object):
 
         Examples
         --------
-        >>> import chisurf.core.data
-        >>> dc = chisurf.core.data.DataCurve()
+        >>> import cs.core.data
+        >>> dc = cs.core.data.DataCurve()
         >>> dc.from_json(filename='./test/data/internal_types/datacurve.json')
         """
         j = dict()
@@ -703,8 +703,8 @@ class Base(object):
         Example
         -------
 
-        >>> import chisurf.core.base
-        >>> bc = chisurf.core.base.Base(parameter="ala", lol=1)
+        >>> import cs.core.base
+        >>> bc = cs.core.base.Base(parameter="ala", lol=1)
         >>> bc.lol
         1
         >>> bc.parameter
@@ -812,9 +812,9 @@ class Data(Base):
         self._filename = None
 
         if embed_data is None:
-            embed_data = chisurf.core.settings.database['embed_data']
+            embed_data = cs.core.settings.database['embed_data']
         if read_file_size_limit is None:
-            read_file_size_limit = chisurf.core.settings.database['read_file_size_limit']
+            read_file_size_limit = cs.core.settings.database['read_file_size_limit']
 
         self._embed_data = embed_data
         self._max_file_size = read_file_size_limit
@@ -882,16 +882,16 @@ class Data(Base):
             if file_size < self._max_file_size and self._embed_data:
                 with open(self._filename, "rb") as fp:
                     data = fp.read()
-                    if len(data) > chisurf.core.settings.database['compression_data_limit']:
+                    if len(data) > cs.core.settings.database['compression_data_limit']:
                         data = zlib.compress(data)
-                    if len(data) < chisurf.core.settings.database['embed_data_limit']:
+                    if len(data) < cs.core.settings.database['embed_data_limit']:
                         self._data = data
             if self.verbose:
                 print("Filename: %s" % self._filename)
                 print("File size [byte]: %s" % file_size)
         except FileNotFoundError:
             if self.verbose:
-                chisurf.logging.warning("Filename: %s not found" % v)
+                cs.logging.warning("Filename: %s not found" % v)
 
     def __str__(self):
         """Return a summary including class name and filename."""
@@ -940,7 +940,7 @@ def safe_import(module_name: str, package_name: str = None, parent=None):
             f"to install the '{package_name}' package."
         )
         _safe_import_notify(title, text)
-        chisurf.logging.warning(
+        cs.logging.warning(
             f"Package '{package_name}' not available. "
             f"Please use ChiSurf's Package Manager to install it."
         )

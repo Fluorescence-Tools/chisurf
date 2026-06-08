@@ -3,7 +3,7 @@ from __future__ import annotations
 import pathlib
 import numpy as np
 from typing import List, Dict
-import chisurf
+import chisurf as cs
 from ..api import compute_filters, compute_filters_mfd, FilterResult
 
 class FilterComputationMixin:
@@ -56,7 +56,7 @@ class FilterComputationMixin:
                     routing_histograms[int(rch)] = hist
                 
             except Exception as e:
-                chisurf.logging.warning(f"Error loading routing channels from {path.name}: {e}")
+                cs.logging.warning(f"Error loading routing channels from {path.name}: {e}")
         
         elif ext == '.bst':
             # For BST files, load the underlying TTTR and extract bursts
@@ -92,7 +92,7 @@ class FilterComputationMixin:
                         routing_histograms[int(rch)] = hist
                         
                 except Exception as e:
-                    chisurf.logging.warning(f"Error loading BST routing channels from {path.name}: {e}")
+                    cs.logging.warning(f"Error loading BST routing channels from {path.name}: {e}")
         
         # Cache the routing histograms
         self._routing_cache[path_str] = routing_histograms
@@ -164,7 +164,7 @@ class FilterComputationMixin:
         # Sum all histograms
         if max_size == 0 or not all_histograms:
             # No valid data - return empty array
-            chisurf.logging.warning(f"No valid histogram data loaded for paths: {[p.name for p in paths]}")
+            cs.logging.warning(f"No valid histogram data loaded for paths: {[p.name for p in paths]}")
             return np.zeros(4096, dtype=np.float64)
         
         summed = np.zeros(max_size, dtype=np.float64)
@@ -253,7 +253,7 @@ class FilterComputationMixin:
 
         except Exception as e:
             import traceback
-            chisurf.logging.error(f"Computation error: {e}\n{traceback.format_exc()}")
+            cs.logging.error(f"Computation error: {e}\n{traceback.format_exc()}")
             QtWidgets.QMessageBox.critical(self, "Computation Error", str(e))
             self._update_status(f"Error: {e}")
 
@@ -361,7 +361,7 @@ class FilterComputationMixin:
             
         except Exception as e:
             import traceback
-            chisurf.logging.error(f"Anisotropy computation error: {e}\n{traceback.format_exc()}")
+            cs.logging.error(f"Anisotropy computation error: {e}\n{traceback.format_exc()}")
             QtWidgets.QMessageBox.critical(self, "Anisotropy Computation Error", str(e))
             self._update_status(f"Anisotropy Error: {e}")
 
@@ -384,7 +384,7 @@ class FilterComputationMixin:
                 routing_chs = det_config.get("chs", [])
                 
                 if len(routing_chs) < 2:
-                    chisurf.logging.warning(f"Detector '{det_name}' has <2 routing channels, skipping")
+                    cs.logging.warning(f"Detector '{det_name}' has <2 routing channels, skipping")
                     continue
                 
                 # Split into par/perp
@@ -473,7 +473,7 @@ class FilterComputationMixin:
             
         except Exception as e:
             import traceback
-            chisurf.logging.error(f"Multi-Anisotropy computation error: {e}\n{traceback.format_exc()}")
+            cs.logging.error(f"Multi-Anisotropy computation error: {e}\n{traceback.format_exc()}")
             QtWidgets.QMessageBox.critical(self, "Multi-Anisotropy Computation Error", str(e))
             self._update_status(f"Multi-Anisotropy Error: {e}")
 
@@ -543,6 +543,6 @@ class FilterComputationMixin:
             
         except Exception as e:
             import traceback
-            chisurf.logging.error(f"Multi-detector computation error: {e}\n{traceback.format_exc()}")
+            cs.logging.error(f"Multi-detector computation error: {e}\n{traceback.format_exc()}")
             QtWidgets.QMessageBox.critical(self, "Multi-Detector Computation Error", str(e))
             self._update_status(f"Multi-Detector Error: {e}")

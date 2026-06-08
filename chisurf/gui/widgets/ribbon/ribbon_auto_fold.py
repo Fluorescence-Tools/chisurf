@@ -10,7 +10,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QToolButton
 from qtpy import QtWidgets
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 
 
@@ -20,8 +20,7 @@ class AutoFoldMethodsMixin:
     def _setup_auto_fold(self):
         """Setup auto-fold functionality based on settings"""
         try:
-            import chisurf
-            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+            gui_settings = cs.core.settings.cs_settings.get('gui', {})
             ribbon_settings = gui_settings.get('ribbon', {})
 
             self.auto_fold_enabled = ribbon_settings.get('auto_fold', True)  # Default to True
@@ -66,8 +65,7 @@ class AutoFoldMethodsMixin:
         try:
             if self.ribbon_bar:
                 # Load settings
-                import chisurf
-                gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+                gui_settings = cs.core.settings.cs_settings.get('gui', {})
                 ribbon_settings = gui_settings.get('ribbon', {})
 
                 # Load pin state from settings, default to pinned
@@ -166,17 +164,16 @@ class AutoFoldMethodsMixin:
 
         # Save pin state to settings and persist to file
         try:
-            import chisurf
             import yaml
             from pathlib import Path
-            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+            gui_settings = cs.core.settings.cs_settings.get('gui', {})
             ribbon_settings = gui_settings.get('ribbon', {})
             ribbon_settings['pinned'] = self.is_pinned
 
             # Persist to user settings file
-            settings_file = chisurf.core.settings.chisurf_settings_path / 'settings_chisurf.yaml'
+            settings_file = cs.core.settings.chisurf_settings_path / 'settings_chisurf.yaml'
             with open(settings_file, 'w', encoding='utf-8') as fh:
-                yaml.safe_dump(chisurf.core.settings.cs_settings, fh, default_flow_style=False)
+                yaml.safe_dump(cs.core.settings.cs_settings, fh, default_flow_style=False)
             self.logger.debug(f"Saved pin state ({self.is_pinned}) to user settings file")
         except Exception as e:
             self.logger.warning(f"Failed to save pin state to settings: {e}")

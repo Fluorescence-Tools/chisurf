@@ -4,9 +4,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-import chisurf
-
-
+import chisurf as cs
 class AvPotential(object):
     """
     A class for calculating accessible volume potentials.
@@ -58,7 +56,7 @@ class AvPotential(object):
         if self.positions is None:
             raise ValueError("Positions not set unable to calculate AVs")
         
-        # This method would need to be implemented with chisurf's AV calculation
+        # This method would need to be implemented with cs's AV calculation
         # For now, we'll leave it as a placeholder
         pass
 
@@ -77,7 +75,7 @@ class AvPotential(object):
         if structure is not None:
             self.structure = structure
             
-        # This method would need to be implemented with chisurf's distance calculation
+        # This method would need to be implemented with cs's distance calculation
         # For now, we'll leave it as a placeholder
         pass
 

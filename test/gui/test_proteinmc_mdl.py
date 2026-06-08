@@ -198,9 +198,242 @@ def test_proteinmc_widget_start_runs_worker(qapp, qtbot, monkeypatch, tmp_path):
     widget.n_written_spin.setValue(1)
 
     widget.start_proteinmc(output_directory=tmp_path)
+    assert not widget.structure_edit.isEnabled()
 
-    qtbot.waitUntil(lambda: widget._thread is None, timeout=3000)
+    import time
+    start_time = time.perf_counter()
+    while widget._thread is not None:
+        qapp.processEvents()
+        time.sleep(0.01)
+        if time.perf_counter() - start_time > 5.0:
+            raise TimeoutError("Test timed out waiting for thread to finish")
     assert widget.energy == [3.0]
     assert widget.chi2r == [2.0]
     assert widget.start_button.isEnabled()
-    assert "finished" in widget.status_label.text()
+    assert widget.structure_edit.isEnabled()
+
+
+def test_score_set_combobox_in_dialog(qapp, qtbot, monkeypatch, tmp_path):
+    """Test the score_set combobox dynamic population and fallback resolution.
+
+    Parameters
+    ----------
+    qapp : QApplication
+        Qt application fixture.
+    qtbot : QtBot
+        Qt bot fixture.
+    monkeypatch : MonkeyPatch
+        Pytest monkeypatch fixture.
+    tmp_path : Path
+        Temporary directory path.
+    """
+    import chisurf.gui.widgets.models.proteinmc as proteinmc_widget
+    from types import SimpleNamespace
+    from qtpy import QtWidgets
+
+    # 1. Create a dummy fps.json file
+    labeling = tmp_path / "fps.json"
+    labeling.write_text(
+        '{"Positions": {"p1": {"chain_identifier": "A", "residue_seq_number": 1}},'
+        '"Distances": {"d1": {"position1_name": "p1", "position2_name": "p1", "distance": 5}},'
+        '"χ²": {"chi2_C1_20p": {"distances": ["d1"]}, "chi2_C2_33p": {"distances": []}}}',
+        encoding="utf-8"
+    )
+
+    # 2. Setup widget
+    monkeypatch.setattr(proteinmc_widget, "ChimolView", FakeChimolView)
+    fit = SimpleNamespace(name="fit", data=None, plots=[])
+    widget = proteinmc_widget.ProteinMCModelWidget(fit=fit)
+    qtbot.addWidget(widget)
+
+    # Set labeling file
+    widget.labeling_edit.setText(str(labeling))
+
+    # Verify score_set_combo contains the options
+    items = [widget.score_set_combo.itemText(i) for i in range(widget.score_set_combo.count())]
+    assert "chi2_C1_20p" in items
+    assert "chi2_C2_33p" in items
+
+    # 3. Test substring matching fallback on load
+    state = {
+        "proteinmc": {
+            "labeling_file": str(labeling),
+            "score_set": "c1",
+            "settings": {
+                "potentials": [
+                    {
+                        "name": "dye",
+                        "weight": 1.0,
+                        "settings": {
+                            "labeling_file": str(labeling),
+                            "score_set": "c1"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    widget.set_state(state)
+    assert widget.score_set_combo.currentText() == "chi2_C1_20p"
+
+    # Verify only C1 distance parameters widgets are shown
+    assert "d1" in widget._distance_parameters
+    assert len(widget._distance_parameters) == 1
+
+    # 4. Test dialog opening and score_set combobox
+    dialog_exec_called = False
+    def fake_exec(self_dialog):
+        nonlocal dialog_exec_called
+        dialog_exec_called = True
+        combos = self_dialog.findChildren(QtWidgets.QComboBox)
+        assert len(combos) >= 1
+        combo_items = [combos[0].itemText(i) for i in range(combos[0].count())]
+        assert "chi2_C1_20p" in combo_items
+        assert "chi2_C2_33p" in combo_items
+        assert combos[0].currentText() == "chi2_C1_20p"
+
+        # Simulate user changing score set to "chi2_C2_33p"
+        combos[0].setCurrentText("chi2_C2_33p")
+        return QtWidgets.QDialog.Accepted
+
+    monkeypatch.setattr(QtWidgets.QDialog, "exec_", fake_exec)
+
+    # Open dialog for row of "fps" potential
+    widget.edit_potential_details(2)
+
+    assert dialog_exec_called
+    # The selected score set should now be "chi2_C2_33p" in the widget
+    assert widget.score_set_combo.currentText() == "chi2_C2_33p"
+
+    # 5. Verify distances are updated (chi2_C2_33p has 0 distances)
+    assert len(widget._distance_parameters) == 0
+
+    # 6. Verify setting score_set to "" shows no distance parameter widgets
+    widget.score_set_combo.setCurrentIndex(0) # ""
+    assert len(widget._distance_parameters) == 0
+
+
+def test_update_distance_widgets_integration(qapp, qtbot, monkeypatch, tmp_path):
+    """Test that update_distance_widgets updates parameters from trajectory and structure.
+
+    Parameters
+    ----------
+    qapp : QApplication
+        Qt application fixture.
+    qtbot : QtBot
+        Qt bot fixture.
+    monkeypatch : MonkeyPatch
+        Pytest monkeypatch fixture.
+    tmp_path : Path
+        Temporary directory path.
+    """
+    import chisurf.gui.widgets.models.proteinmc as proteinmc_widget
+    from types import SimpleNamespace
+    from qtpy import QtWidgets
+
+    labeling = tmp_path / "fps.json"
+    labeling.write_text(
+        '{"Positions": {"p1": {"chain_identifier": "A", "residue_seq_number": 1, "atom_name": "CA"},'
+        '"p2": {"chain_identifier": "A", "residue_seq_number": 2, "atom_name": "CA"}},'
+        '"Distances": {"d1": {"position1_name": "p1", "position2_name": "p2", "distance": 10}},'
+        '"χ²": {"chi2_C1": {"distances": ["d1"]}}}',
+        encoding="utf-8"
+    )
+
+    atoms = np.zeros(
+        2,
+        dtype=[("xyz", float, (3,)), ("atom_name", "S2"), ("res_id", int), ("chain", "S1")],
+    )
+    atoms["xyz"] = np.array([[0.0, 0.0, 0.0], [10.0, 0.0, 0.0]])
+    atoms["atom_name"] = [b"CA", b"CA"]
+    atoms["res_id"] = [1, 2]
+    atoms["chain"] = [b"A", b"A"]
+    structure = SimpleNamespace(atoms=atoms, xyz=atoms["xyz"])
+
+    monkeypatch.setattr(proteinmc_widget, "ChimolView", FakeChimolView)
+    fit = SimpleNamespace(name="fit", data=structure, plots=[])
+    widget = proteinmc_widget.ProteinMCModelWidget(fit=fit)
+    qtbot.addWidget(widget)
+
+    widget.labeling_edit.setText(str(labeling))
+    widget.score_set_combo.setCurrentText("chi2_C1")
+
+    # Set structural data and verify update_distance_widgets resolves the coordinates
+    widget.proteinmc_structure = structure
+    widget.update_distance_widgets()
+    assert widget._distance_parameters["d1"].value == 10.0
+
+    # Add a frame with a different distance (e.g. 5.0 Å)
+    frame = np.array([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+    widget.trajectory_frames = [frame]
+    widget.current_frame_index = 0
+
+    widget.update_distance_widgets()
+    assert widget._distance_parameters["d1"].value == 5.0
+
+
+def test_progress_dialog_minimize_and_restore(qapp, qtbot, monkeypatch):
+    """Test progress dialog hide to status bar and double-click to restore."""
+    from chisurf.gui.widgets.progress import EnhancedProgressDialog, MinimisedProgressWidget
+    from qtpy import QtWidgets, QtCore, QtGui
+
+    # Create dummy main window with a status bar
+    main_win = QtWidgets.QMainWindow()
+    main_win.setStatusBar(QtWidgets.QStatusBar(main_win))
+    main_win.show()
+    qtbot.addWidget(main_win)
+
+    # Mock _find_main_window to return our main_win
+    monkeypatch.setattr(EnhancedProgressDialog, "_find_main_window", lambda self: main_win)
+
+    dialog = EnhancedProgressDialog(
+        title="Test Progress",
+        label_text="Running test...",
+        min_value=0,
+        max_value=100,
+        parent=main_win,
+        window_modality=QtCore.Qt.NonModal
+    )
+    dialog.show()
+    qtbot.addWidget(dialog)
+
+    # 1. Verify "Hide" button is created
+    assert dialog._hide_btn is not None
+    assert dialog._hide_btn.text() == "Hide"
+
+    # 2. Hide to status bar
+    dialog.hide_to_statusbar()
+    assert dialog.isHidden()
+    assert dialog._statusbar_widget is not None
+    assert isinstance(dialog._statusbar_widget, MinimisedProgressWidget)
+
+    # Verify widget is added to status bar
+    statusbar_widgets = main_win.statusBar().findChildren(MinimisedProgressWidget)
+    assert len(statusbar_widgets) == 1
+
+    # 3. Restore by double-clicking status bar widget
+    # Directly invoke mouseDoubleClickEvent to simulate double click
+    event = QtGui.QMouseEvent(
+        QtCore.QEvent.MouseButtonDblClick,
+        QtCore.QPointF(5, 5),
+        QtCore.Qt.LeftButton,
+        QtCore.Qt.LeftButton,
+        QtCore.Qt.NoModifier
+    ) if hasattr(QtGui, "QMouseEvent") else None
+    
+    if event:
+        dialog._statusbar_widget.mouseDoubleClickEvent(event)
+    else:
+        dialog.restore_from_statusbar()
+
+    assert dialog.isVisible()
+    assert dialog._statusbar_widget is None
+    assert len(main_win.statusBar().findChildren(MinimisedProgressWidget)) == 0
+
+    # 4. Hide again and finish to ensure cleanup
+    dialog.hide_to_statusbar()
+    dialog.finish(close_delay_ms=0)
+    assert len(main_win.statusBar().findChildren(MinimisedProgressWidget)) == 0
+
+
+

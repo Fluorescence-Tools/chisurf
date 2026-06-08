@@ -27,7 +27,7 @@ name = "Tools:Miscellaneous:Tetris"
 import sys
 from qtpy.QtWidgets import QApplication
 
-from .tetris import Tetris
+from chisurf.plugins.misc.tetris_game.tetris import Tetris
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

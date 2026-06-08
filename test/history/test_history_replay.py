@@ -14,9 +14,7 @@ TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
 from chisurf.history import OperationHistory
-import chisurf
-
-
+import chisurf as cs
 class TestHistoryPersistence(unittest.TestCase):
     def setUp(self):
         self.history = OperationHistory()

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 
@@ -58,12 +58,12 @@ class PDDEMWidget(PDDEM, QtWidgets.QWidget):
         self.verticalLayout_2.addLayout(self.verticalLayout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._fAB,
             layout=layout,
             label_text='A>B'
         )
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._fBA,
             layout=layout,
             label_text='B>A'
@@ -71,23 +71,23 @@ class PDDEMWidget(PDDEM, QtWidgets.QWidget):
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._pA,
             layout=layout
         )
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._pB,
             layout=layout
         )
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._pxA,
             layout=layout,
             label_text='Ex<sub>A</sub>'
         )
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._pxB,
             layout=layout,
             label_text='Ex<sub>B</sub>'
@@ -95,12 +95,12 @@ class PDDEMWidget(PDDEM, QtWidgets.QWidget):
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._pmA,
             layout=layout,
             label_text='Em<sub>A</sub>'
         )
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._pmB,
             layout=layout,
             label_text='Em<sub>B</sub>'
@@ -108,12 +108,12 @@ class PDDEMWidget(PDDEM, QtWidgets.QWidget):
         self.verticalLayout_3.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._alpha_B,
             layout=layout,
             label_text='&alpha;<sub>A&rarr;B</sub>'
         )
-        chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.make_fitting_parameter_widget(
             fitting_parameter=self._alpha_A,
             layout=layout,
             label_text='&alpha;<sub>B&rarr;A</sub>'
@@ -190,7 +190,7 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
         self.layout.addWidget(self.fa)
         self.layout.addWidget(self.fb)
 
-        self._fret_parameters_widget = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
+        self._fret_parameters_widget = cs.gui.widgets.fitting.widgets.make_fitting_parameter_group_widget(
             self.fret_parameters
         )
         self.layout.addWidget(self._fret_parameters_widget)
@@ -209,7 +209,7 @@ class PDDEMModelWidget(ModelWidget, PDDEMModel):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return

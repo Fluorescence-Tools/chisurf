@@ -4,8 +4,8 @@ from __future__ import annotations
 
 This module contains discrete and Gaussian-distance PDA models that
 operate on S1S2 histograms produced by :mod:`tttrlib` and the
-``chisurf.core.experiments.pda.PdaReader``. The models are built from
-small :class:`~chisurf.core.fitting.parameter.FittingParameterGroup`
+``cs.core.experiments.pda.PdaReader``. The models are built from
+small :class:`~cs.core.fitting.parameter.FittingParameterGroup`
 containers such as :class:`ProbCh0`, and
  :class:`Background`.
 
@@ -20,7 +20,7 @@ import tttrlib
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 import chisurf.core.curve
 import chisurf.core.math.datatools
 
@@ -46,7 +46,7 @@ class ProbCh0(FittingParameterGroup):
     Create a small two-species probability group and inspect the
     normalized amplitudes and probability spectrum::
 
-        >>> from chisurf.core.models.pda.simple import ProbCh0
+        >>> from cs.core.models.pda.simple import ProbCh0
         >>> p = ProbCh0()
         >>> p.append(amplitude=1.0, pch0=0.25)
         >>> p.append(amplitude=3.0, pch0=0.75)
@@ -114,7 +114,7 @@ class ProbCh0(FittingParameterGroup):
     def pch0_spectrum(self) -> np.array:
         """Return interleaved (amplitude, pch0) spectrum for tttrlib.Pda."""
         if self._link is None:
-            return chisurf.core.math.datatools.two_column_to_interleaved(
+            return cs.core.math.datatools.two_column_to_interleaved(
                 self.amplitudes,
                 self.pch0
             )
@@ -134,12 +134,12 @@ class ProbCh0(FittingParameterGroup):
         return len(self._amplitudes)
 
     @property
-    def link(self) -> chisurf.core.fitting.parameter.FittingParameter:
+    def link(self) -> cs.core.fitting.parameter.FittingParameter:
         """Return the linked ProbCh0 group, or None."""
         return self._link
 
     @link.setter
-    def link(self, v: chisurf.core.fitting.parameter.FittingParameter):
+    def link(self, v: cs.core.fitting.parameter.FittingParameter):
         """Link to another ProbCh0 group, or unlink by passing None."""
         if isinstance(v, ProbCh0) or v is None:
             self._link = v
@@ -213,8 +213,8 @@ class ProbCh0(FittingParameterGroup):
         self._pch0.append(pch0)
 
     def pop(self) -> typing.Tuple[
-        chisurf.core.fitting.parameter.FittingParameter,
-        chisurf.core.fitting.parameter.FittingParameter
+        cs.core.fitting.parameter.FittingParameter,
+        cs.core.fitting.parameter.FittingParameter
     ]:
         """Remove and return the last species (amplitude, pch0)."""
         amplitude = self._amplitudes.pop()
@@ -226,8 +226,8 @@ class ProbCh0(FittingParameterGroup):
             short: str = '0',
             absolute_amplitudes: bool = True,
             normalize_amplitudes: bool = True,
-            amplitudes: typing.List[chisurf.core.fitting.parameter.FittingParameter] = None,
-            pch0: typing.List[chisurf.core.fitting.parameter.FittingParameter] = None,
+            amplitudes: typing.List[cs.core.fitting.parameter.FittingParameter] = None,
+            pch0: typing.List[cs.core.fitting.parameter.FittingParameter] = None,
             name: str = 'pch0',
             link: FittingParameter = None,
             **kwargs
@@ -288,7 +288,7 @@ class PdaSimpleModel(ModelCurve):
     The full model requires experimental PDA metadata and a working
     :mod:`tttrlib` installation. A minimal usage sketch is::
 
-        >>> from chisurf.core.models.pda.simple import PdaSimpleModel  # doctest: +SKIP
+        >>> from cs.core.models.pda.simple import PdaSimpleModel  # doctest: +SKIP
         >>> m = PdaSimpleModel(fit)  # doctest: +SKIP
         >>> m.update_model()         # doctest: +SKIP
     """
@@ -302,7 +302,7 @@ class PdaSimpleModel(ModelCurve):
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.Fit,
+            fit: cs.core.fitting.fit.Fit,
             background: Background = None,
             pch0: ProbCh0 = None,
             kw_hist: dict = None,
@@ -312,7 +312,7 @@ class PdaSimpleModel(ModelCurve):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object holding experimental data.
         background : Background, optional
             Background parameter group.
@@ -368,13 +368,13 @@ class PdaSimpleModel(ModelCurve):
             Forwarded to the parent method.
         """
         if verbose is None:
-            verbose = chisurf.core.settings.cs_settings['verbose']
+            verbose = cs.core.settings.cs_settings['verbose']
         self.pda.background_ch1 = self.background.bg0
         self.pda.background_ch2 = self.background.bg1
         p = self.pch0.pch0_spectrum
         # Debug: log probability spectrum passed to tttrlib for discrete PDA
         try:
-            chisurf.logging.debug(
+            cs.logging.debug(
                 {
                     'model': 'PdaSimpleModel',
                     'len_prob_spectrum': int(len(p)),
@@ -396,13 +396,13 @@ class PdaSimpleModel(ModelCurve):
 
     def _get_1d_residuals(
             self,
-            fit: chisurf.core.fitting.fit.Fit,
+            fit: cs.core.fitting.fit.Fit,
     ) -> np.ndarray:
         """Compute 1D weighted residuals from the S1S2 histogram.
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object.
 
         Returns
@@ -423,7 +423,7 @@ class PdaSimpleModel(ModelCurve):
 
     def get_wres(
             self,
-            fit: chisurf.core.fitting.fit.Fit,
+            fit: cs.core.fitting.fit.Fit,
             xmin: int = None,
             xmax: int = None
     ) -> np.ndarray:
@@ -431,7 +431,7 @@ class PdaSimpleModel(ModelCurve):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.Fit
+        fit : cs.core.fitting.fit.Fit
             The fit object.
         xmin : int, optional
             Start index for the residual window.

@@ -3,7 +3,7 @@ from __future__ import annotations
 import pathlib
 from typing import TYPE_CHECKING
 
-import chisurf
+import chisurf as cs
 from chisurf import typing
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.plots
@@ -11,7 +11,7 @@ import chisurf.core.curve
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.core.models.tcspc.parse.tcspc_parse import ParseDecayModel
-import chisurf.core.models.parse.widget
+import chisurf.gui.widgets.models.parse.widget
 
 # These will be imported from the new module structure
 from chisurf.gui.widgets.models.tcspc.convolve import ConvolveWidget
@@ -26,7 +26,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
 
     plot_classes = [
         (
-            chisurf.gui.plots.LinePlot,
+            cs.gui.plots.LinePlot,
             {
                 'd_scalex': 'lin',
                 'd_scaley': 'log',
@@ -37,14 +37,14 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
                 'plot_irf': True
             }
          ),
-        (chisurf.gui.plots.FitTablePlot, {}),
-        (chisurf.gui.plots.FitInfo, {}),
-        (chisurf.gui.plots.ParameterScanPlot, {}),
-        (chisurf.gui.plots.ResidualPlot, {})
+        (cs.gui.plots.FitTablePlot, {}),
+        (cs.gui.plots.FitInfo, {}),
+        (cs.gui.plots.ParameterScanPlot, {}),
+        (cs.gui.plots.ResidualPlot, {})
     ]
 
     # TODO: needs docstring
-    def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, chisurf.core.curve.Curve]:
+    def get_curves(self, copy_curves: bool = False) -> typing.Dict[str, cs.core.curve.Curve]:
         """Return a dictionary of curves for plotting."""
         d = super().get_curves(copy_curves)
         d['IRF'] = self.convolve.irf
@@ -77,7 +77,7 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
             **kwargs
         )
         fn = pathlib.Path(__file__).parent.parent / 'tcspc.models.json'
-        pw = chisurf.core.models.parse.widget.ParseFormulaWidget(
+        pw = cs.gui.widgets.models.parse.widget.ParseFormulaWidget(
             model=self,
             model_file=fn
         )

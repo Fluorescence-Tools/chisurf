@@ -15,7 +15,7 @@ from math import ceil
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 
 # Import mixins from split modules
@@ -48,7 +48,7 @@ class ChiSurfRibbonIntegration(
 
         Parameters
         ----------
-        main_window : chisurf.gui.main.Main
+        main_window : cs.gui.main.Main
             The ChiSurf main window instance
         """
         # Call the base class __init__ from ribbon_base.py
@@ -61,7 +61,7 @@ def setup_chisurf_ribbon(main_window, ribbon_style=None):
     
     Parameters
     ----------
-    main_window : chisurf.gui.main.Main
+    main_window : cs.gui.main.Main
         The ChiSurf main window instance
     ribbon_style : int, optional
         Ribbon style to use (ribbon uses RibbonStyle constants)

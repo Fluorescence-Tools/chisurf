@@ -3,7 +3,7 @@ from __future__ import annotations
 import pathlib
 from typing import TYPE_CHECKING
 
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui, uic
 import chisurf.gui.decorators
 import chisurf.gui.widgets.fitting
@@ -27,7 +27,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         """
         try:
             target = getattr(self.fit, "fit_group", None) or self.fit
-            for idx, fit_group in enumerate(list(getattr(chisurf, "fits", []) or [])):
+            for idx, fit_group in enumerate(list(getattr(cs, "fits", []) or [])):
                 if fit_group is target:
                     return int(idx)
                 try:
@@ -68,7 +68,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         elif self.radioButton_3.isChecked():
             return "full"
 
-    @chisurf.gui.decorators.init_with_ui("tcspc_convolve.ui")
+    @cs.gui.decorators.init_with_ui("tcspc_convolve.ui")
     # TODO: needs docstring
     def __init__(
             self,
@@ -82,32 +82,32 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
             self.radioButton_3.setVisible(not hide_curve_convolution)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._dt, layout=layout)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._n0, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._dt, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._n0, layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._start, layout=layout)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._stop, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._start, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._stop, layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
         # Add IRF start and stop parameters
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._irf_start, layout=layout)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._irf_stop, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._irf_start, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._irf_stop, layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._lb, layout=layout)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._ts, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._lb, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._ts, layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
         layout = QtWidgets.QHBoxLayout()
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._iw, layout=layout)
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._ik, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._iw, layout=layout)
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(self._ik, layout=layout)
         self.verticalLayout_2.addLayout(layout)
 
-        chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             fitting_parameter=self._rep,
             layout=self.horizontalLayout_3,
             label_text='r[MHz]'
@@ -117,7 +117,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         self.unload_button.setToolTip("Unload IRF")
         self.unload_button.clicked.connect(self.onUnloadIRF)
 
-        self.irf_select = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
+        self.irf_select = cs.gui.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.change_irf,
             fit=self.fit,
@@ -141,7 +141,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         """Install a code badge for dev mode source jumping."""
         try:
             import chisurf.core.settings
-            if not chisurf.core.settings.is_dev_mode():
+            if not cs.core.settings.is_dev_mode():
                 return
             if hasattr(self, '_chisurf_code_badge_installed'):
                 return
@@ -160,11 +160,10 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         # For now, we'll use the existing model update action and handle the
         # property changes through the model's own methods
         try:
-            import chisurf
-            for f in chisurf.fits:
+            for f in cs.fits:
                 f.model.convolve.mode = self.gui_mode
-            chisurf.fits[0].model.convolve.do_convolution = self.checkBox.isChecked()
-            chisurf.core.actions.dispatch(
+            cs.fits[0].model.convolve.do_convolution = self.checkBox.isChecked()
+            cs.core.actions.dispatch(
                 name="model.update",
                 payload={},
             )
@@ -250,7 +249,7 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         fit_index = self._resolve_fit_group_index()
         if fit_index is not None:
             payload["fit_index"] = int(fit_index)
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.change_irf",
             payload=payload,
         )
@@ -263,11 +262,11 @@ class ConvolveWidget(Convolve, QtWidgets.QWidget):
         fit_index = self._resolve_fit_group_index()
         if fit_index is not None:
             payload["fit_index"] = int(fit_index)
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.unload_irf",
             payload=payload,
         )
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.update",
             payload={},
         )

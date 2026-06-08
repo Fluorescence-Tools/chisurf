@@ -12,7 +12,7 @@ import os
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import chisurf
+import chisurf as cs
 from chisurf.controllers.action_controller import ActionController
 from chisurf.core.actions import record_action
 
@@ -90,8 +90,8 @@ def run_action_benchmark(action_name, payload, iterations=100):
 def run_history_benchmark(operations=1000):
     """Benchmark history recording performance"""
     # Clear existing history
-    if hasattr(chisurf, 'history') and chisurf.history:
-        initial_count = len(chisurf.history.events)
+    if hasattr(cs, 'history') and cs.history:
+        initial_count = len(cs.history.events)
     else:
         initial_count = 0
     
@@ -114,12 +114,12 @@ def run_history_benchmark(operations=1000):
     avg_time_per_operation_ms = (total_time / operations) * 1000 if operations > 0 else 0
     
     # Check final history state
-    if hasattr(chisurf, 'history') and chisurf.history:
+    if hasattr(cs, 'history') and cs.history:
         # Use the correct attribute name for history events
-        if hasattr(chisurf.history, 'events'):
-            final_count = len(chisurf.history.events)
-        elif hasattr(chisurf.history, '_events'):
-            final_count = len(chisurf.history._events)
+        if hasattr(cs.history, 'events'):
+            final_count = len(cs.history.events)
+        elif hasattr(cs.history, '_events'):
+            final_count = len(cs.history._events)
         else:
             final_count = 0
         operations_recorded = final_count - initial_count
@@ -139,15 +139,15 @@ def run_history_benchmark(operations=1000):
 def setup_test_environment():
     """Set up minimal test environment for benchmarking"""
     # Initialize history if not present
-    if not hasattr(chisurf, 'history'):
+    if not hasattr(cs, 'history'):
         from chisurf.history import OperationHistory
-        chisurf.history = OperationHistory()
+        cs.history = OperationHistory()
     
     # Add a minimal fit for testing
-    if not hasattr(chisurf, 'fits'):
-        chisurf.fits = []
+    if not hasattr(cs, 'fits'):
+        cs.fits = []
     
-    if len(chisurf.fits) == 0:
+    if len(cs.fits) == 0:
         # Create a minimal mock fit object
         class MockFit:
             def __init__(self):
@@ -174,11 +174,11 @@ def setup_test_environment():
             def update(self):
                 pass
         
-        chisurf.fits.append(MockFit())
+        cs.fits.append(MockFit())
     
     # Initialize action controller if not present
-    if not hasattr(chisurf, 'action_controller'):
-        chisurf.action_controller = ActionController()
+    if not hasattr(cs, 'action_controller'):
+        cs.action_controller = ActionController()
 
 
 def run_comprehensive_benchmark():
@@ -186,7 +186,7 @@ def run_comprehensive_benchmark():
     print("=== ChiSurf Foundation Performance Benchmark ===")
     print(f"Python version: {sys.version}")
     print(f"Platform: {sys.platform}")
-    print(f"ChiSurf version: {getattr(chisurf, '__version__', 'unknown')}")
+    print(f"ChiSurf version: {getattr(cs, '__version__', 'unknown')}")
     print()
     
     # Set up test environment
@@ -240,7 +240,7 @@ def run_comprehensive_benchmark():
                 'timestamp': timestamp,
                 'python_version': sys.version,
                 'platform': sys.platform,
-                'chisurf_version': getattr(chisurf, '__version__', 'unknown')
+                'chisurf_version': getattr(cs, '__version__', 'unknown')
             },
             'results': results
         }, f, indent=2)
@@ -251,8 +251,8 @@ def run_comprehensive_benchmark():
 
 if __name__ == "__main__":
     # Initialize ChiSurf if needed
-    if not hasattr(chisurf, 'history'):
+    if not hasattr(cs, 'history'):
         from chisurf.history import OperationHistory
-        chisurf.history = OperationHistory()
+        cs.history = OperationHistory()
     
     run_comprehensive_benchmark()

@@ -6,7 +6,10 @@ pg.setConfigOptions(
 )
 
 import chisurf.gui.plots.global_fit
-import chisurf.gui.plots.global_tcspc
+try:
+    import chisurf.gui.plots.global_tcspc
+except Exception:
+    pass
 from chisurf.gui.plots.distribution import DistributionPlot
 from chisurf.gui.plots.fitinfo import *
 from chisurf.gui.plots.lineplot import *
@@ -26,4 +29,3 @@ def __getattr__(name: str):
         from chisurf.gui.plots import proteinMC
         return proteinMC
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-

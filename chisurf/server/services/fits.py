@@ -301,12 +301,12 @@ def ping(state: SessionState) -> ServiceResult:
         Server-side session state.
 
     """
-    import chisurf
+    import chisurf as cs
     from chisurf.server.protocol import PROTOCOL_VERSION
     return {
         "ok": True,
         "status": "alive",
-        "version": getattr(chisurf, "__version__", "unknown"),
+        "version": getattr(cs, "__version__", "unknown"),
         "protocol_version": PROTOCOL_VERSION,
         "dataset_count": len(state.datasets),
         "fit_count": len(state.fits),

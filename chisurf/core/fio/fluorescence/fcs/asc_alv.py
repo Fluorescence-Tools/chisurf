@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import csv
 
-import chisurf
+import chisurf as cs
 # Import moved to function level to avoid circular imports
 
 from chisurf import typing
@@ -684,7 +684,7 @@ def read_asc(
         
         # Import here to avoid circular import
         import chisurf.core.fluorescence.fcs
-        w = 1. / chisurf.core.fluorescence.fcs.noise(
+        w = 1. / cs.core.fluorescence.fcs.noise(
             correlation_time,
             correlation_amplitude,
             aquisition_time,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chisurf
+import chisurf as cs
 from qtpy import QtWidgets, QtCore, QtGui
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.experiments
@@ -48,12 +48,12 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
     def onUnloadBackground(self):
         """Unload the background curve and reset it to default (None)
         """
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.unload_background_curve",
             payload={},
         )
         self.lineEdit.setText("")
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="model.update",
             payload={},
         )
@@ -81,21 +81,21 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         self.setTitle("Generic")
 
         # Generic parameters
-        sc_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        sc_w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._sc,
             label_text='Sc',
         )
-        bg_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        bg_w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._bg,
             label_text='Bg'
         )
-        tmeas_bg_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        tmeas_bg_w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_bg,
             label_text='t<sub>Bg</sub>',
             callback=self.update,
             hide_bounds = True
         )
-        tmeas_exp_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        tmeas_exp_w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._tmeas_exp,
             label_text='t<sub>Meas</sub>',
             callback=self.update,
@@ -127,7 +127,7 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
         ly.addWidget(unload_bg)
         unload_bg.clicked.connect(self.onUnloadBackground)
 
-        self.background_select = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
+        self.background_select = cs.gui.widgets.experiments.ExperimentalDataSelector(
             parent=None,
             change_event=self.change_bg_curve,
             fit=self.fit,
@@ -150,12 +150,12 @@ class GenericWidget(QtWidgets.QGroupBox, Generic):
             label_text='#PhF'
         )
 
-        nph_bg_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        nph_bg_w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._nph_bg_out,
             label_text='#PhB',
             decimals=1
         )
-        nph_fl_w = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
+        nph_fl_w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(
             self._nph_fl_out,
             label_text='#PhF',
             decimals=1

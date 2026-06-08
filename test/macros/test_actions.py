@@ -7,7 +7,7 @@ import utils
 TOPDIR = pathlib.Path(__file__).parent.parent
 utils.set_search_paths(TOPDIR)
 
-import chisurf
+import chisurf as cs
 from chisurf.core.actions._infra import ActionSpec, ActionRegistry, ActionDispatcher
 from chisurf.core.actions import dispatch
 
@@ -30,13 +30,13 @@ class TestActions(unittest.TestCase):
             history_provider=lambda: self.mock_history
         )
         
-        # Patch chisurf to use our test dispatcher
-        self.old_dispatcher = getattr(chisurf, "action_dispatcher", None)
-        chisurf.action_dispatcher = self.dispatcher
-        chisurf.action_registry = self.registry
+        # Patch cs to use our test dispatcher
+        self.old_dispatcher = getattr(cs, "action_dispatcher", None)
+        cs.action_dispatcher = self.dispatcher
+        cs.action_registry = self.registry
 
     def tearDown(self):
-        chisurf.action_dispatcher = self.old_dispatcher
+        cs.action_dispatcher = self.old_dispatcher
 
     def test_decorator_registers_action(self):
         from chisurf.core.actions._decorator import action
@@ -101,8 +101,8 @@ class TestActions(unittest.TestCase):
             dispatch("test.schema", {"val": 123})
 
     def test_builtin_actions_registered(self):
-        # Import chisurf.core.actions to trigger registration of all modules
-        # Since we patched chisurf.action_registry in setUp, they should register there
+        # Import cs.core.actions to trigger registration of all modules
+        # Since we patched cs.action_registry in setUp, they should register there
         import chisurf.core.actions
         from chisurf.core.actions import dataset_actions, fit_actions, model_actions, parameter_actions, project_actions
         import importlib
@@ -113,7 +113,7 @@ class TestActions(unittest.TestCase):
         importlib.reload(model_actions)
         importlib.reload(parameter_actions)
         importlib.reload(project_actions)
-        importlib.reload(chisurf.core.actions)
+        importlib.reload(cs.core.actions)
         
         # Check a few random ones
         self.assertTrue(self.registry.has("dataset.add"))

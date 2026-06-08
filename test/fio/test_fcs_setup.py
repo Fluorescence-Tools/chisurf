@@ -1,3 +1,4 @@
+import chisurf as cs
 # Test script to verify that changing to an FCS setup doesn't crash
 # This script should be run in the chisurf console
 

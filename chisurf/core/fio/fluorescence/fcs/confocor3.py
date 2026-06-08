@@ -1,6 +1,5 @@
 """ALV .ASC files"""
-import chisurf
-
+import chisurf as cs
 """Confocor .fcs files"""
 import csv
 import pathlib
@@ -450,7 +449,7 @@ def read_zeiss_fcs(
             # Mean aquisition time
             aquisition_time = 0.5 * (aquisition_time_ch1 + aquisition_time_ch2) / 1000.0
 
-            w = 1. / chisurf.core.fluorescence.fcs.noise(
+            w = 1. / cs.core.fluorescence.fcs.noise(
                 correlation_time,
                 correlation_amplitude,
                 aquisition_time,
@@ -491,7 +490,7 @@ def read_zeiss_fcs(
             aquisition_time = intensity_time[-1] / 1000.0
             mean_count_rate = float(np.mean(intensity))
 
-            w = 1. / chisurf.core.fluorescence.fcs.noise(
+            w = 1. / cs.core.fluorescence.fcs.noise(
                 correlation_time,
                 correlation_amplitude,
                 aquisition_time,

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock
 import numpy as np
-import chisurf
+import chisurf as cs
 import chisurf.core.data
 from chisurf.core.project import fit_state
 from chisurf.core.models.tcspc.nusiance import Generic, Convolve
@@ -20,16 +20,16 @@ class TestUIDReattachment(unittest.TestCase):
 
     def setUp(self):
         # Clear imported datasets
-        chisurf.imported_datasets = chisurf.core.data.DataGroup([], name="Datasets")
+        cs.imported_datasets = cs.core.data.DataGroup([], name="Datasets")
         
         # Create mock data curves with UIDs
-        self.irf_curve = chisurf.core.data.DataCurve(
+        self.irf_curve = cs.core.data.DataCurve(
             x=np.arange(10, dtype=float),
             y=np.random.rand(10),
             name="TestIRF",
             unique_identifier="UID-IRF-123"
         )
-        self.bg_curve = chisurf.core.data.DataCurve(
+        self.bg_curve = cs.core.data.DataCurve(
             x=np.arange(10, dtype=float),
             y=np.random.rand(10),
             name="TestBG",
@@ -37,8 +37,8 @@ class TestUIDReattachment(unittest.TestCase):
         )
         
         # Add to global registry
-        chisurf.imported_datasets.append(self.irf_curve)
-        chisurf.imported_datasets.append(self.bg_curve)
+        cs.imported_datasets.append(self.irf_curve)
+        cs.imported_datasets.append(self.bg_curve)
 
     def test_tcspc_uid_roundtrip(self):
         # 1. Setup a "live" model with external curve links

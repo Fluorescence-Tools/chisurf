@@ -23,7 +23,6 @@ Auto-generated documentation for all ChiSurf plugins.
   - calculator
   - chisurf
   - fcs
-  - file_split
   - fluorescence_decay
   - icon_utils
   - microscopy
@@ -33,12 +32,6 @@ Auto-generated documentation for all ChiSurf plugins.
   - tttr
 
 ## Burst
-
-### variance analysis
-
-*Module: `sm_burst_variance_analysis`*
-
-No description available.
 
 ## Main
 
@@ -268,13 +261,7 @@ No description available.
 
 ---
 
-### file_split
 
-*Module: `file_split`*
-
-No description available.
-
----
 
 ### fluorescence_decay
 

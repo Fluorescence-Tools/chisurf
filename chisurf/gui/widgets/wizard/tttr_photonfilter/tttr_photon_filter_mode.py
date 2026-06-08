@@ -1,6 +1,6 @@
 def install_filter_mode_visibility(page, default_filter_mode: str):
     # Find the layout containing the burst filter combobox
-    import chisurf
+    import chisurf as cs
     from chisurf.gui import QtWidgets
     layout = page.comboBox_burst_filter.parentWidget().layout()
 

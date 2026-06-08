@@ -3,7 +3,7 @@ import os
 import pathlib
 from functools import lru_cache
 
-import chisurf
+import chisurf as cs
 from chisurf import typing
 
 from qtpy import QtWidgets, uic
@@ -107,7 +107,7 @@ class lineEdit_dragFile_injector():
                 if url.scheme() == 'file':
                     filepath = str(url.toLocalFile())
                     filepath = pathlib.Path(filepath).as_posix()
-                    chisurf.logging.log(0, f'lineEdit_dragFile_injector::_dropEvent: {filepath}')
+                    cs.logging.log(0, f'lineEdit_dragFile_injector::_dropEvent: {filepath}')
                     self.target.append(filepath)
 
             # Sort the target list of file paths

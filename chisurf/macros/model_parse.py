@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, List
 
-import chisurf
+import chisurf as cs
 import chisurf.core.experiments
 
 try:
@@ -59,11 +59,11 @@ def _resolve_target_fits(fit_idx: Any = None) -> List[Any]:
 
     Resolution order:
       1. If `fit_idx` is a Fit/FitGroup/iterable → normalize directly.
-      2. If `fit_idx` is an int → use chisurf.fits[fit_idx].
+      2. If `fit_idx` is an int → use cs.fits[fit_idx].
       3. Otherwise (including None):
-         - try chisurf.cs.current_fit
-         - then chisurf.fits.selected
-         - then chisurf.fits[0]
+         - try cs.cs.current_fit
+         - then cs.fits.selected
+         - then cs.fits[0]
     Returns an empty list if no targets are available.
     """
     # 1) Directly provided objects
@@ -74,25 +74,25 @@ def _resolve_target_fits(fit_idx: Any = None) -> List[Any]:
     # 2) Integer index
     if isinstance(fit_idx, int):
         try:
-            return _as_iterable_fits(chisurf.fits[fit_idx])
+            return _as_iterable_fits(cs.fits[fit_idx])
         except Exception:
             return []
 
     # 3) Try common selection sources
     candidate = None
     try:
-        candidate = getattr(chisurf.cs, "current_fit", None)
+        candidate = getattr(cs.cs, "current_fit", None)
     except Exception:
         candidate = None
 
     if candidate is None:
-        # Some environments keep selection on chisurf.fits
-        candidate = getattr(chisurf.fits, "selected", None)
+        # Some environments keep selection on cs.fits
+        candidate = getattr(cs.fits, "selected", None)
 
     if candidate is None:
         # Fallback to first group if present
         try:
-            candidate = chisurf.fits[0]
+            candidate = cs.fits[0]
         except Exception:
             candidate = None
 
@@ -106,7 +106,7 @@ def change_model(function_str: str, fit_idx: Any = None) -> bool:
       function_str: The equation to set on the parse model (e.g., "b+1/abs(N)*...").
       fit_idx: Targets to update. Accepted forms:
         - None: use current/selected fits if available; otherwise do nothing.
-        - int: index into chisurf.fits
+        - int: index into cs.fits
         - Fit or FitGroup instance
         - Iterable of Fit instances
 

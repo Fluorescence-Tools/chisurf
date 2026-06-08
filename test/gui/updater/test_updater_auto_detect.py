@@ -2,7 +2,7 @@ from qtpy import QtWidgets
 
 
 def test_updater_auto_detect(qapp, qtbot):
-    from chisurf.plugins.chisurf.updater import UpdaterWidget
+    from chisurf.plugins.core.updater import UpdaterWidget
     widget = UpdaterWidget()
     qtbot.addWidget(widget)
 

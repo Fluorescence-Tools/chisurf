@@ -8,7 +8,7 @@ from functools import partial
 
 import numpy as np
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 from chisurf.gui import QtWidgets, QtGui, QtCore
 from chisurf.gui.gui_tweaks import apply_platform_window_tweaks
@@ -186,20 +186,20 @@ def update_log_filter(window):
 def run_macro(filename=None, executor: str = "console", globals=None, locals=None, main_window=None):
     """Run a macro file via console or exec."""
     if filename is None and main_window is not None:
-        filename = chisurf.gui.widgets.get_filename("Python macros", file_type="Python file (*.py)")
+        filename = cs.gui.widgets.get_filename("Python macros", file_type="Python file (*.py)")
     if filename is None:
         return
-    chisurf.logging.info(f"Running script: {filename}")
+    cs.logging.info(f"Running script: {filename}")
 
     if executor == "console":
-        chisurf.console.run_macro(filename=pathlib.Path(filename).as_posix())
+        cs.console.run_macro(filename=pathlib.Path(filename).as_posix())
         return
 
     # executor == exec
     if globals is None:
         globals = {
             "__name__": "__main__",
-            "chisurf": chisurf,
+            "cs": cs,
             "np": np,
             "os": os,
             "QtCore": QtCore,
@@ -216,12 +216,20 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
     if macro_dir not in sys.path:
         sys.path.insert(0, macro_dir)
 
+    def _get_plugin_separator(filename: str) -> str | None:
+        for sep in ("/plugins/", "\\plugins\\"):
+            if sep in filename:
+                return sep
+        return None
+
     try:
         # Detect plugin package context for reload behavior
-        if str(filename).find("\\plugins\\") > -1:
-            parts = str(filename).split("\\plugins\\")
+        plugin_sep = _get_plugin_separator(str(filename))
+        if plugin_sep is not None:
+            path_sep = "\\" if "\\" in plugin_sep else "/"
+            parts = str(filename).split(plugin_sep)
             if len(parts) > 1:
-                plugin_path = parts[1].split("\\")
+                plugin_path = parts[1].split(path_sep)
                 if len(plugin_path) > 1:
                     module_parts = plugin_path[:-1]
                 elif len(plugin_path) == 1:
@@ -231,7 +239,7 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
 
                 if module_parts:
                     package_name = ".".join(module_parts)
-                    user_plugin_root = pathlib.Path.home() / ".chisurf" / "plugins"
+                    user_plugin_root = pathlib.Path.home() / ".cs" / "plugins"
                     is_user_plugin = str(filename).startswith(str(user_plugin_root))
                     if is_user_plugin:
                         globals.update({"__package__": None})
@@ -246,48 +254,50 @@ def run_macro(filename=None, executor: str = "console", globals=None, locals=Non
                                             if isinstance(target, ast.Name) and target.id == "name":
                                                 if isinstance(node.value, ast.Str):
                                                     plugin_name = node.value.s
-                                                    chisurf.logging.info(f"User plugin name: {plugin_name}")
+                                                    cs.logging.info(f"User plugin name: {plugin_name}")
                                                 elif isinstance(node.value, ast.Constant) and isinstance(
                                                     node.value.value, str
                                                 ):
                                                     plugin_name = node.value.value
-                                                    chisurf.logging.info(f"User plugin name: {plugin_name}")
+                                                    cs.logging.info(f"User plugin name: {plugin_name}")
                             except Exception as e:
-                                chisurf.logging.warning(f"Error extracting name from {user_plugin_path}: {e}")
+                                cs.logging.warning(f"Error extracting name from {user_plugin_path}: {e}")
                     else:
                         globals.update({"__package__": f"chisurf.plugins.{package_name}"})
                         plugin_module_prefix = f"chisurf.plugins.{package_name}"
                         for module_name in list(sys.modules.keys()):
                             if module_name.startswith(plugin_module_prefix):
                                 try:
-                                    chisurf.logging.info(f"Reloading module: {module_name}")
+                                    cs.logging.info(f"Reloading module: {module_name}")
                                     importlib.reload(sys.modules[module_name])
                                 except Exception as e:
-                                    chisurf.logging.warning(f"Failed to reload module {module_name}: {e}")
+                                    cs.logging.warning(f"Failed to reload module {module_name}: {e}")
 
         # Resolve missing user plugin file
         if not pathlib.Path(filename).exists():
-            user_plugin_root = pathlib.Path.home() / ".chisurf" / "plugins"
-            if "\\plugins\\" in str(filename):
-                parts = str(filename).split("\\plugins\\")
+            user_plugin_root = pathlib.Path.home() / ".cs" / "plugins"
+            plugin_sep = _get_plugin_separator(str(filename))
+            if plugin_sep is not None:
+                path_sep = "\\" if "\\" in plugin_sep else "/"
+                parts = str(filename).split(plugin_sep)
                 if len(parts) > 1:
-                    plugin_path = parts[1]
+                    plugin_path = parts[1].replace(path_sep, "/")
                     user_plugin_path = user_plugin_root / plugin_path
                     if user_plugin_path.exists():
                         filename = user_plugin_path
-                        chisurf.logging.info(f"Found file in user plugins directory: {filename}")
+                        cs.logging.info(f"Found file in user plugins directory: {filename}")
                     else:
-                        chisurf.logging.error(f"File not found: {filename}")
-                        chisurf.logging.error(f"Also checked user plugin path: {user_plugin_path}")
+                        cs.logging.error(f"File not found: {filename}")
+                        cs.logging.error(f"Also checked user plugin path: {user_plugin_path}")
                         raise FileNotFoundError(f"File not found: {filename}")
             else:
-                chisurf.logging.error(f"File not found: {filename}")
+                cs.logging.error(f"File not found: {filename}")
                 raise FileNotFoundError(f"File not found: {filename}")
 
         with open(filename, "rb") as file:
             exec(compile(file.read(), filename, "exec"), globals, locals)
     except Exception as e:
-        chisurf.logging.error(f"Error executing macro: {e}")
+        cs.logging.error(f"Error executing macro: {e}")
         raise
     finally:
         sys.path = original_sys_path
@@ -312,7 +322,7 @@ def run_plugin_from_dir(main_window, plugin_dir_to_use):
 
         # Check if wizard.py exists
         if wizard_path.exists():
-            adr = "https://github.com/fluorescence-tools/chisurf"  # Default value
+            adr = "https://github.com/fluorescence-tools/cs"  # Default value
             context.setdefault("adr", adr)
             p = partial(
                 main_window.onRunMacro, str(wizard_path),
@@ -328,6 +338,6 @@ def run_plugin_from_dir(main_window, plugin_dir_to_use):
                 globals=context
             )
         else:
-            chisurf.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
+            cs.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
     except Exception as e:
-        chisurf.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")
+        cs.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")

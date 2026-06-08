@@ -13,7 +13,7 @@ from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QAction
 from qtpy import QtWidgets
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 
 
@@ -124,15 +124,15 @@ class CategoryMethodsMixin:
             from pathlib import Path
 
             # Get plugin settings
-            plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
+            plugin_settings = cs.core.settings.cs_settings.get('plugins', {})
             disabled_plugins = plugin_settings.get('disabled_plugins', [])
             hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
             plugin_order = plugin_settings.get('plugin_order', {})
-            experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
+            experimental_mode = cs.core.settings.cs_settings.get('enable_experimental', False)
 
             # Discover plugins
             try:
-                plugin_infos = list(chisurf.plugins.iter_plugins())
+                plugin_infos = list(cs.plugins.iter_plugins())
             except Exception as e:
                 self.logger.error(f"Failed to enumerate plugins: {e}")
                 return
@@ -147,9 +147,9 @@ class CategoryMethodsMixin:
 
             # Resolve plugins root
             try:
-                plugins_root = Path(chisurf.plugins.__file__).parent.resolve()
+                plugins_root = Path(cs.plugins.__file__).parent.resolve()
             except Exception:
-                plugins_root = Path(chisurf.plugins.__file__).parent
+                plugins_root = Path(cs.plugins.__file__).parent
 
             # Collect setup plugins with hierarchy support
             setup_plugins = []
@@ -356,15 +356,15 @@ class CategoryMethodsMixin:
             from pathlib import Path
 
             # Get plugin settings
-            plugin_settings = chisurf.core.settings.cs_settings.get('plugins', {})
+            plugin_settings = cs.core.settings.cs_settings.get('plugins', {})
             disabled_plugins = plugin_settings.get('disabled_plugins', [])
             hide_disabled_plugins = plugin_settings.get('hide_disabled_plugins', True)
             plugin_order = plugin_settings.get('plugin_order', {})
-            experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
+            experimental_mode = cs.core.settings.cs_settings.get('enable_experimental', False)
 
             # Discover plugins
             try:
-                plugin_infos = list(chisurf.plugins.iter_plugins())
+                plugin_infos = list(cs.plugins.iter_plugins())
             except Exception as e:
                 self.logger.error(f"Failed to enumerate plugins: {e}")
                 return
@@ -379,9 +379,9 @@ class CategoryMethodsMixin:
 
             # Resolve plugins root
             try:
-                plugins_root = Path(chisurf.plugins.__file__).parent.resolve()
+                plugins_root = Path(cs.plugins.__file__).parent.resolve()
             except Exception:
-                plugins_root = Path(chisurf.plugins.__file__).parent
+                plugins_root = Path(cs.plugins.__file__).parent
 
             # Collect help plugins with hierarchy support
             help_plugins = []
@@ -575,7 +575,7 @@ class CategoryMethodsMixin:
         category = self.ribbon_bar.addCategory('Analysis')
 
         # Check if we're in experimental mode
-        experimental_mode = chisurf.core.settings.cs_settings.get('enable_experimental', False)
+        experimental_mode = cs.core.settings.cs_settings.get('enable_experimental', False)
 
         # Discover plugins
         if hasattr(self.main_window, 'comboBox_modelSelect'):

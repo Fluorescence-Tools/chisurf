@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import chisurf
+import chisurf as cs
 import chisurf.logging
 from chisurf import typing
 from collections import deque
@@ -52,11 +52,11 @@ def _raw_fit_name(f) -> str:
     return f"{model_name} - {data_name}"
 
 
-class Fit(chisurf.core.base.Base):
+class Fit(cs.core.base.Base):
     """Fit of a single data set with a single model.
 
-    The :class:`Fit` object owns a :class:`chisurf.core.data.DataCurve` instance
-    (accessible via :attr:`data`) and a :class:`chisurf.core.models.ModelCurve`
+    The :class:`Fit` object owns a :class:`cs.core.data.DataCurve` instance
+    (accessible via :attr:`data`) and a :class:`cs.core.models.ModelCurve`
     instance (via :attr:`model`). It provides convenience properties for
     weighted residuals, chi² statistics, and running a local least-squares
     optimization.
@@ -64,14 +64,14 @@ class Fit(chisurf.core.base.Base):
 
     @property
     def fit_idx(self) -> int:
-        """Index of this fit in ``chisurf.fits``.
+        """Index of this fit in ``cs.fits``.
 
         Returns
         -------
         int
             Position of the fit in the global fit list.
         """
-        return chisurf.core.fitting.find_fit_idx(self)
+        return cs.core.fitting.find_fit_idx(self)
 
     @property
     def xmin(self) -> int:
@@ -121,34 +121,34 @@ class Fit(chisurf.core.base.Base):
             self._xmax = v
 
     @property
-    def data(self) -> chisurf.core.data.DataCurve:
+    def data(self) -> cs.core.data.DataCurve:
         """Data curve being fitted.
 
         Returns
         -------
-        chisurf.core.data.DataCurve
+        cs.core.data.DataCurve
             The experimental data attached to this fit.
         """
         return self._data
 
     @data.setter
-    def data(self, v: chisurf.core.data.DataCurve):
+    def data(self, v: cs.core.data.DataCurve):
         """Set the data curve for this fit.
 
         Parameters
         ----------
-        v : chisurf.core.data.DataCurve
+        v : cs.core.data.DataCurve
             New data curve.
         """
         self._data = v
 
     @property
-    def model(self) -> chisurf.core.models.ModelCurve:
+    def model(self) -> cs.core.models.ModelCurve:
         """Model curve used for fitting.
 
         Returns
         -------
-        chisurf.core.models.ModelCurve
+        cs.core.models.ModelCurve
             The model instance associated with this fit.
         """
         return self._model
@@ -157,7 +157,7 @@ class Fit(chisurf.core.base.Base):
     def model(
             self,
             model_class: typing.Type[
-                chisurf.core.models.model.ModelCurve
+                cs.core.models.model.ModelCurve
             ]
     ):
         """Create a new model from a model class.
@@ -165,23 +165,23 @@ class Fit(chisurf.core.base.Base):
         Parameters
         ----------
         model_class : type
-            A subclass of :class:`chisurf.core.models.ModelCurve` to instantiate.
+            A subclass of :class:`cs.core.models.ModelCurve` to instantiate.
         """
-        if issubclass(model_class, chisurf.core.models.Model):
+        if issubclass(model_class, cs.core.models.Model):
             self._model = model_class(self, **self._model_kw)
 
     @property
-    def weighted_residuals(self) -> chisurf.core.curve.Curve:
+    def weighted_residuals(self) -> cs.core.curve.Curve:
         """Weighted residuals within the current fit range.
 
         Returns
         -------
-        chisurf.core.curve.Curve
+        cs.core.curve.Curve
             Curve whose y-values are ``(data - model) / weights``.
         """
         wres_x, _ = self.model[self.xmin:self.xmax]
         wres_y = self.model.weighted_residuals
-        return chisurf.core.curve.Curve(
+        return cs.core.curve.Curve(
             x=wres_x,
             y=wres_y,
             copy_array=False
@@ -193,13 +193,13 @@ class Fit(chisurf.core.base.Base):
 
         Returns
         -------
-        chisurf.core.curve.Curve
+        cs.core.curve.Curve
             Autocorrelation curve (excluding the zero-lag point).
         """
         wres = self.weighted_residuals
-        return chisurf.core.curve.Curve(
+        return cs.core.curve.Curve(
             x=wres.x[1:],
-            y=chisurf.core.math.signal.autocorr(wres.y)[1:],
+            y=cs.core.math.signal.autocorr(wres.y)[1:],
             copy_array=False
         )
 
@@ -238,7 +238,7 @@ class Fit(chisurf.core.base.Base):
         float
             Test statistic for autocorrelation in residuals.
         """
-        return chisurf.core.math.statistics.durbin_watson(
+        return cs.core.math.statistics.durbin_watson(
             self.weighted_residuals.y
         )
 
@@ -249,7 +249,7 @@ class Fit(chisurf.core.base.Base):
         The base name is derived from the model class and attached data
         ("ModelName - DataName"). If multiple active fits share the same
         base name, a numeric suffix " (1)", " (2)", ... is appended based
-        on the order of appearance in ``chisurf.fits``.
+        on the order of appearance in ``cs.fits``.
         """
 
         try:
@@ -257,11 +257,11 @@ class Fit(chisurf.core.base.Base):
         except Exception:
             return "no name"
 
-        # Try to enforce uniqueness across active fits tracked in chisurf.fits.
+        # Try to enforce uniqueness across active fits tracked in cs.fits.
         # On any error we simply fall back to the base name.
         try:
             all_fits = []
-            for fg in getattr(chisurf, "fits", []):
+            for fg in getattr(cs, "fits", []):
                 if isinstance(fg, Fit):
                     grouped = getattr(fg, "grouped_fits", None)
                     if isinstance(grouped, (list, tuple)) and grouped:
@@ -285,7 +285,7 @@ class Fit(chisurf.core.base.Base):
             try:
                 idx = same_base.index(self)
             except ValueError:
-                # This fit is not registered in chisurf.fits; treat it as
+                # This fit is not registered in cs.fits; treat it as
                 # a standalone instance without suffix.
                 return base_name
 
@@ -413,7 +413,7 @@ class Fit(chisurf.core.base.Base):
         _, grad = approx_grad(
             self.model.parameter_values,
             self,
-            chisurf.core.settings.eps
+            cs.core.settings.eps
         )
         return grad
 
@@ -434,8 +434,8 @@ class Fit(chisurf.core.base.Base):
 
     def __init__(
             self,
-            model_class: typing.Type[chisurf.core.models.Model] = type,
-            data: chisurf.core.data.DataCurve = None,
+            model_class: typing.Type[cs.core.models.Model] = type,
+            data: cs.core.data.DataCurve = None,
             xmin: int = 0,
             xmax: int = 0,
             model_kw: typing.Dict = None,
@@ -448,8 +448,8 @@ class Fit(chisurf.core.base.Base):
         ----------
         model_class : type
             Model class to instantiate, typically a subclass of
-            :class:`chisurf.core.models.ModelCurve`.
-        data : chisurf.core.data.DataCurve, optional
+            :class:`cs.core.models.ModelCurve`.
+        data : cs.core.data.DataCurve, optional
             Data to be fitted. If omitted, a dummy ramp is used.
         xmin, xmax : int, optional
             Initial fitting range indices.
@@ -460,12 +460,12 @@ class Fit(chisurf.core.base.Base):
             into a :class:`FitGroup`.
         """
         super().__init__(**kwargs)
-        self._model: chisurf.core.models.Model = None
+        self._model: cs.core.models.Model = None
         self._result_current = 0
         self.results = deque(maxlen=500)
         self._mask = None
         if data is None:
-            data = chisurf.core.data.DataCurve(
+            data = cs.core.data.DataCurve(
                 x=np.arange(10),
                 y=np.arange(10)
             )
@@ -587,7 +587,7 @@ class Fit(chisurf.core.base.Base):
         pd = self.model.parameters_all_dict
         for k in sorted(pd.keys()):
             p = pd[k]
-            if not isinstance(p, chisurf.core.fitting.parameter.FittingParameter):
+            if not isinstance(p, cs.core.fitting.parameter.FittingParameter):
                 continue
             if getattr(p, 'is_output', False):
                 continue
@@ -618,7 +618,7 @@ class Fit(chisurf.core.base.Base):
             copy_curves: bool = False,
             *,
             full_length: bool = False
-    ) -> typing.OrderedDict[str, chisurf.core.curve.Curve]:
+    ) -> typing.OrderedDict[str, cs.core.curve.Curve]:
         """Return a mapping of named curves associated with this fit.
 
         The dictionary typically contains entries for ``"model"``,
@@ -671,8 +671,8 @@ class Fit(chisurf.core.base.Base):
                 y_wres[xmin:xmin + window_len] = wres_seg[:window_len]
                 y_mdl[xmin:xmin + window_len] = mdl_seg[:window_len]
 
-            d['weighted residuals'] = chisurf.core.curve.Curve(x=x_full, y=y_wres, copy_array=False)
-            d['model'] = chisurf.core.curve.Curve(x=x_full, y=y_mdl, copy_array=False)
+            d['weighted residuals'] = cs.core.curve.Curve(x=x_full, y=y_wres, copy_array=False)
+            d['model'] = cs.core.curve.Curve(x=x_full, y=y_mdl, copy_array=False)
         else:
             d['weighted residuals'] = self.weighted_residuals
         d['autocorrelation'] = self.autocorrelation
@@ -694,7 +694,7 @@ class Fit(chisurf.core.base.Base):
     def get_chi2(
             self,
             parameter=None,
-            model: chisurf.core.models.Model = None,
+            model: cs.core.models.Model = None,
             reduced: bool = True
     ) -> float:
         """Convenience wrapper around :func:`get_chi2` using this fit."""
@@ -749,14 +749,14 @@ class Fit(chisurf.core.base.Base):
 
     def run(self, *args, **kwargs) -> None:
         """Run a local least-squares optimization on this fit."""
-        fitting_options = chisurf.core.settings.cs_settings['optimization']['leastsq']
+        fitting_options = cs.core.settings.cs_settings['optimization']['leastsq']
         self.model.find_parameters(
-            parameter_type=chisurf.core.fitting.parameter.FittingParameter
+            parameter_type=cs.core.fitting.parameter.FittingParameter
         )
         progress_callback = kwargs.get("progress_callback")
         cancelled = False
         try:
-            chisurf.core.math.optimization.leastsqbound(
+            cs.core.math.optimization.leastsqbound(
                 get_wres,
                 self.model.parameter_values,
                 args=(self.model,),
@@ -783,7 +783,7 @@ class Fit(chisurf.core.base.Base):
             self.model.update_model()
             self.model.finalize()
         except KeyError:
-            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+            cs.logging.error(f"Parameter '{name}' not found in model.")
 
     def set_parameter_fixed(self, name: str, fixed: bool):
         """Fix/release a parameter and notify dependents."""
@@ -792,7 +792,7 @@ class Fit(chisurf.core.base.Base):
             p.fixed = bool(fixed)
             self.model.finalize()
         except KeyError:
-            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+            cs.logging.error(f"Parameter '{name}' not found in model.")
 
     def set_parameter_bounds(self, name: str, bounds: typing.Tuple[float, float]):
         """Set parameter bounds and notify dependents."""
@@ -801,7 +801,7 @@ class Fit(chisurf.core.base.Base):
             p.bounds = bounds
             self.model.finalize()
         except KeyError:
-            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+            cs.logging.error(f"Parameter '{name}' not found in model.")
 
     def set_parameter_bounds_on(self, name: str, on: bool):
         """Enable/disable parameter bounds and notify dependents."""
@@ -810,7 +810,7 @@ class Fit(chisurf.core.base.Base):
             p.bounds_on = bool(on)
             self.model.finalize()
         except KeyError:
-            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+            cs.logging.error(f"Parameter '{name}' not found in model.")
 
     def link_parameter(self, target_name: str, source_name: str, source_fit: Fit):
         """Link a parameter to another and notify dependents."""
@@ -830,7 +830,7 @@ class Fit(chisurf.core.base.Base):
                 src_keys = ', '.join(source_fit.model.parameters_all_dict.keys())
             except Exception:
                 src_keys = '<unavailable>'
-            chisurf.logging.error(
+            cs.logging.error(
                 "Parameter link failed: name not found. target='%s' in target_fit(keys=[%s]); "
                 "source='%s' in source_fit(keys=[%s])" % (target_name, tgt_keys, source_name, src_keys)
             )
@@ -842,7 +842,7 @@ class Fit(chisurf.core.base.Base):
             p.link = None
             self.model.finalize()
         except KeyError:
-            chisurf.logging.error(f"Parameter '{name}' not found in model.")
+            cs.logging.error(f"Parameter '{name}' not found in model.")
 
     def set_result_idx(self, idx: int):
         """Restore model state from a stored result by index.
@@ -901,7 +901,7 @@ class Fit(chisurf.core.base.Base):
                 parameter.error_estimate * 3.0 / parameter.value,
                 0.25
             )
-        r = chisurf.core.fitting.support_plane.scan_parameter(
+        r = cs.core.fitting.support_plane.scan_parameter(
             fit=self,
             parameter_name=parameter_name,
             rel_range=rel_range,
@@ -921,10 +921,10 @@ class Fit(chisurf.core.base.Base):
     ) -> typing.Dict:
         """Adaptive F-test-driven chi² scan for a parameter.
 
-        See :func:`chisurf.core.fitting.support_plane.adaptive_scan_parameter`
+        See :func:`cs.core.fitting.support_plane.adaptive_scan_parameter`
         for details.
         """
-        r = chisurf.core.fitting.support_plane.adaptive_scan_parameter(
+        r = cs.core.fitting.support_plane.adaptive_scan_parameter(
             fit=self,
             parameter_name=parameter_name,
             scan_range=scan_range,
@@ -988,40 +988,40 @@ class FitGroup(Fit):
         self._selected_fit_index = v
 
     @property
-    def data(self) -> chisurf.core.data.DataCurve:
+    def data(self) -> cs.core.data.DataCurve:
         """Data of the currently selected grouped fit.
 
         Returns
         -------
-        chisurf.core.data.DataCurve
+        cs.core.data.DataCurve
             Data curve of the selected fit.
         """
         return self.selected_fit.data
 
     @data.setter
-    def data(self, v: chisurf.core.base.Data):
+    def data(self, v: cs.core.base.Data):
         """Set the data on the currently selected grouped fit.
 
         Parameters
         ----------
-        v : chisurf.core.data.DataCurve
+        v : cs.core.data.DataCurve
             New data curve.
         """
         self.selected_fit.data = v
 
     @property
-    def model(self) -> chisurf.core.models.Model:
+    def model(self) -> cs.core.models.Model:
         """Model of the currently selected grouped fit.
 
         Returns
         -------
-        chisurf.core.models.Model
+        cs.core.models.Model
             Model of the selected fit.
         """
         return self.selected_fit.model
 
     @model.setter
-    def model(self, v: typing.Type[chisurf.core.models.Model]):
+    def model(self, v: typing.Type[cs.core.models.Model]):
         """Set the model on the currently selected grouped fit.
 
         Parameters
@@ -1032,12 +1032,12 @@ class FitGroup(Fit):
         self.selected_fit.model = v
 
     @property
-    def weighted_residuals(self) -> chisurf.core.curve.Curve:
+    def weighted_residuals(self) -> cs.core.curve.Curve:
         """Weighted residuals of the currently selected grouped fit.
 
         Returns
         -------
-        chisurf.core.curve.Curve
+        cs.core.curve.Curve
             Weighted residuals curve.
         """
         return self.selected_fit.weighted_residuals
@@ -1062,7 +1062,7 @@ class FitGroup(Fit):
         float
             Test statistic for autocorrelation.
         """
-        return chisurf.core.math.statistics.durbin_watson(
+        return cs.core.math.statistics.durbin_watson(
             self.weighted_residuals.y
         )
 
@@ -1234,7 +1234,7 @@ class FitGroup(Fit):
             idx: int = None,
             *,
             full_length: bool = False
-    ) -> typing.OrderedDict[str, chisurf.core.curve.Curve]:
+    ) -> typing.OrderedDict[str, cs.core.curve.Curve]:
         """Return curves for one or all grouped fits.
 
         If ``idx`` is ``None``, curves from :meth:`super().get_curves` are
@@ -1371,7 +1371,7 @@ class FitGroup(Fit):
         """Run local fits followed by a global least-squares optimization."""
         fit: FitGroup = self
         if local_first is None:
-            local_first = chisurf.core.settings.optimization['global_optimize_local_first']
+            local_first = cs.core.settings.optimization['global_optimize_local_first']
         cancelled = False
         try:
             if local_first:
@@ -1380,10 +1380,10 @@ class FitGroup(Fit):
             for f in fit:
                 f.model.find_parameters()
             fit._model.find_parameters()
-            fitting_options = chisurf.core.settings.optimization['leastsq']
+            fitting_options = cs.core.settings.optimization['leastsq']
             bounds = [pi.bounds for pi in fit._model.parameters]
             progress_callback = kwargs.get("progress_callback")
-            chisurf.core.math.optimization.leastsqbound(
+            cs.core.math.optimization.leastsqbound(
                 func=get_wres,
                 x0=fit._model.parameter_values,
                 args=(fit._model,),
@@ -1403,8 +1403,8 @@ class FitGroup(Fit):
 
     def __init__(
             self,
-            data: chisurf.core.data.DataGroup,
-            model_class: typing.Type[chisurf.core.models.Model] = type,
+            data: cs.core.data.DataGroup,
+            model_class: typing.Type[cs.core.models.Model] = type,
             model_kw: typing.Dict = None
     ):
         """Create a :class:`FitGroup` over a :class:`DataGroup`.
@@ -1429,7 +1429,7 @@ class FitGroup(Fit):
         super().__init__(
             data=data
         )
-        self._model = chisurf.core.models.global_model.GlobalFitModel(
+        self._model = cs.core.models.global_model.GlobalFitModel(
             fit=self,
             fits=self.grouped_fits
         )
@@ -1562,7 +1562,7 @@ def sample_fit(
         Sampling backend to use.
     steps, thin, chi2max, n_runs, step_size, temp : float or int, optional
         Sampling configuration passed through to
-        :mod:`chisurf.core.fitting.sample`.
+        :mod:`cs.core.fitting.sample`.
     """
     # save initial parameter values
     pv = fit.model.parameter_values
@@ -1577,7 +1577,7 @@ def sample_fit(
     save_project(target_path=sampling_dir, project_name="project")
     
     # Save parameters metadata
-    params_meta = chisurf.core.fitting.sampling_meta.get_sampling_metadata(fit)
+    params_meta = cs.core.fitting.sampling_meta.get_sampling_metadata(fit)
     params_path = os.path.join(sampling_dir, "parameters.json")
     with open(params_path, "w") as f:
         json.dump(params_meta, f, indent=4)
@@ -1604,7 +1604,7 @@ def sample_fit(
         scan = np.vstack([chi2[mask], parameter_values[mask].T])
         header = "chi2r\t"
         header += "\t".join(parameter_names)
-        chisurf.core.fio.ascii.Csv().save(
+        cs.core.fio.ascii.Csv().save(
             scan,
             fn_target,
             delimiter='\t',
@@ -1657,7 +1657,7 @@ def sample_fit(
                 progress_callback(current_total_done, total_steps)
 
         if method == 'mcmc':
-            r = chisurf.core.fitting.sample.walk_mcmc(
+            r = cs.core.fitting.sample.walk_mcmc(
                 fit=fit,
                 steps=steps,
                 thin=thin,
@@ -1669,7 +1669,7 @@ def sample_fit(
         else: #'emcee'
             # Ensure at least 10 walkers and at least 2*ndim+2 for robustness
             n_walkers = max(int(fit.n_free * 2) + 2, 10)
-            r = chisurf.core.fitting.sample.sample_emcee(
+            r = cs.core.fitting.sample.sample_emcee(
                 fit,
                 steps=steps,
                 nwalkers=n_walkers,
@@ -1701,7 +1701,7 @@ def sample_fit(
 #@nb.jit#(nopython=True)
 def approx_grad(
         xk: np.array,
-        fit: chisurf.core.fitting.fit.Fit,
+        fit: cs.core.fitting.fit.Fit,
         epsilon: float,
         args=(),
         f0=None
@@ -1747,8 +1747,8 @@ def approx_grad(
 
 
 def covariance_matrix(
-        fit: chisurf.core.fitting.fit.Fit,
-        epsilon: float = 1e-12, #chisurf.core.settings.eps,
+        fit: cs.core.fitting.fit.Fit,
+        epsilon: float = 1e-12, #cs.core.settings.eps,
         **kwargs
 ) -> typing.Tuple[np.array, typing.List[int]]:
     """Estimate the covariance matrix of the fit parameters.
@@ -1790,7 +1790,7 @@ def covariance_matrix(
     try:
         cov_m = scipy.linalg.pinvh(0.5 * m)
     except (scipy.linalg.LinAlgError, np.linalg.LinAlgError) as e:
-        chisurf.logging.debug(f"Failed to compute covariance matrix: {e}")
+        cs.logging.debug(f"Failed to compute covariance matrix: {e}")
         cov_m = np.zeros_like(
             (n_important_parameters, n_important_parameters),
             dtype=float
@@ -1799,7 +1799,7 @@ def covariance_matrix(
 
 
 def _apply_fit_mask(
-        model: chisurf.core.models.Model,
+        model: cs.core.models.Model,
         wres: np.array
 ) -> np.array:
     """Apply an optional Fit-level mask to a residual vector.
@@ -1854,7 +1854,7 @@ def _apply_fit_mask(
 
 def get_wres(
         parameter_values: typing.List[float],
-        model: chisurf.core.models.Model
+        model: cs.core.models.Model
 ) -> np.array:
     """Return weighted residuals for a list of model parameters.
 
@@ -1863,7 +1863,7 @@ def get_wres(
     parameter_values : list of float
         Parameter values to assign before computing residuals. If the list
         is empty, the model is not updated.
-    model : chisurf.core.models.Model
+    model : cs.core.models.Model
         Model providing :attr:`weighted_residuals`.
     """
     if len(parameter_values) > 0:
@@ -1875,7 +1875,7 @@ def get_wres(
 
 def get_chi2(
         parameter_values: typing.List[float],
-        model: chisurf.core.models.model.ModelCurve,
+        model: cs.core.models.model.ModelCurve,
         reduced: bool = True
 ) -> float:
     """Return either the reduced chi² or the sum of squares (chi²).
@@ -1885,7 +1885,7 @@ def get_chi2(
     parameter_values : list of float
         Parameter values to apply before computing residuals. If the list
         is empty, the model is not updated.
-    model : chisurf.core.models.ModelCurve
+    model : cs.core.models.ModelCurve
         Model providing :attr:`weighted_residuals`, :attr:`n_points` and
         :attr:`n_free`.
     reduced : bool, optional
@@ -1930,7 +1930,7 @@ def get_chi2(
 
 def lnprior(
         parameter_values: typing.List[float],
-        fit: chisurf.core.fitting.fit.Fit,
+        fit: cs.core.fitting.fit.Fit,
         bounds: typing.List[
             typing.Tuple[float, float]
         ] = None

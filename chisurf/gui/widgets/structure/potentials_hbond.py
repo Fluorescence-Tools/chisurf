@@ -6,6 +6,7 @@ from qtpy import QtWidgets
 import chisurf.gui.widgets
 from chisurf.core.settings.path_utils import get_path
 from chisurf.core.structure.potential.potentials import HPotential
+from chisurf.gui.widgets.warning_once import show_warning_once
 
 
 class HPotentialWidget(HPotential, QtWidgets.QWidget):
@@ -19,10 +20,10 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             potential=None
     ):
         QtWidgets.QWidget.__init__(self, parent=parent)
-        
+
         # Set default potential path if not provided
         if potential is None:
-            potential = str(get_path('chisurf') / 'structure/potential/database/hb.npy')
+            potential = str(get_path('chisurf') / 'core/structure/potential/database/hb.npy')
 
         layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -105,7 +106,7 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             cutoff_ca,
             cutoff_hbond
         )
-        
+
         # Set initial potential
         self.potential = potential
 
@@ -131,9 +132,9 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             # ).T[1:, :]
             self.hPot = self._hPot
             self.lineEdit_3.setText(str(v))
-        except (FileNotFoundError, IOError) as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+        except (OSError, FileNotFoundError):
+            show_warning_once(
+                "hbond_potential_file",
                 "Missing H-Bond Potential File",
                 f"H-bond potential file not found: {v}\n\n"
                 f"The H-bond potential file should be located at:\n"
@@ -146,8 +147,8 @@ class HPotentialWidget(HPotential, QtWidgets.QWidget):
             self.hPot = self._hPot
             self.lineEdit_3.setText(str(v))
         except Exception as e:
-            QtWidgets.QMessageBox.warning(
-                None,
+            show_warning_once(
+                "hbond_potential_file_error",
                 "H-Bond Potential File Error",
                 f"Error loading H-bond potential file {v}:\n{str(e)}"
             )

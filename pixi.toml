@@ -33,6 +33,7 @@ scipy = "*"
 numba = "*"
 boost-cpp = "*"
 mdtraj = "*"
+pdb2pqr = "*"
 ipython = "*"
 notebook = "*"
 emcee = "*"
@@ -142,12 +143,13 @@ tttrlib = "*"
  chisurf = { cmd = "python -m chisurf" }
 
 test-app-linux = { cmd = "echo 'test-app-linux: requires native pixi environment on Linux'", depends-on = ["build-extensions"] }
-test = { cmd = "pytest test -k 'not gui and not widget and not window'", depends-on = ["build-extensions"] }
-test-gui = { cmd = "pytest test/gui", depends-on = ["build-extensions"] }
+test = { cmd = "pytest test $(find chisurf/plugins -type d -name test -not -path '*/__pycache__/*') chisurf/gui/widgets/node_editor/tests -k 'not gui and not widget and not window'", depends-on = ["build-extensions"] }
+test-gui = { cmd = "pytest $(find chisurf/plugins -type d -name test -not -path '*/__pycache__/*') chisurf/gui/widgets/node_editor/tests -k 'widget or gui'", depends-on = ["build-extensions"] }
+test-doctest = { cmd = "pytest test --doctest-modules", depends-on = ["build-extensions"] }
 lint = { cmd = "ruff check chisurf/ test/ && ruff format --check chisurf/ test/" }
 fmt = { cmd = "ruff format chisurf/ test/ && ruff check --fix chisurf/ test/" }
 typecheck = { cmd = "mypy chisurf/" }
-test-cov = { cmd = "pytest --cov=chisurf --cov-report=term --cov-report=xml --cov-report=html", depends-on = ["build-extensions"] }
+test-cov = { cmd = "pytest test --doctest-modules $(find chisurf/plugins -type d -name test -not -path '*/__pycache__/*') chisurf/gui/widgets/node_editor/tests --cov=chisurf --cov-report=term --cov-report=xml --cov-report=html", depends-on = ["build-extensions"] }
 test-linux = { cmd = "docker build -t chisurf-linux -f Dockerfile.linux . && docker run --rm chisurf-linux" }
 test-smoke = { cmd = "pytest test/test_basic.py -q", depends-on = ["build-extensions"] }
 

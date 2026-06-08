@@ -1,6 +1,6 @@
 import sys
 
-import chisurf
+import chisurf as cs
 import urllib
 
 from qtpy import QtCore, QtWidgets, QtGui
@@ -11,7 +11,7 @@ from qtpy.QtWebEngineWidgets import (
     QWebEngineView as QWebView,
 )
 
-log = chisurf.logging.info
+log = cs.logging.info
 
 SETTING_GEOMETRY = "net.fishandwhistle/JupyterQt/geometry"
 
@@ -89,7 +89,7 @@ class Browser(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         # adr is in global
 
-        url = kwargs.pop('url', globals().get('adr', "https://github.com/fluorescence-tools/chisurf"))  # Default fallback
+        url = kwargs.pop('url', globals().get('adr', "https://github.com/fluorescence-tools/cs"))  # Default fallback
         if isinstance(url, str):  # Ensure it's a string
             url = urllib.parse.quote(url, safe=":/?&=")
         else:

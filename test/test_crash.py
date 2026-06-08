@@ -1,10 +1,10 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('e:/dev/chisurf'))
+sys.path.insert(0, os.path.abspath('e:/dev/cs'))
 import logging
 logging.basicConfig(level=logging.INFO)
-import chisurf
+import chisurf as cs
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.models.tcspc.fret import GaussianModel
 import traceback

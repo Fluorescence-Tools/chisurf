@@ -6,7 +6,7 @@ import pyqtgraph as pg
 from qtpy import QtWidgets, QtCore
 from pyqtgraph.dockarea import DockArea, Dock
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 import chisurf.core.settings
 import chisurf.core.fitting
@@ -15,9 +15,9 @@ import chisurf.core.decorators
 import chisurf.core.models
 from chisurf.gui.plots import plotbase
 
-plot_settings = chisurf.core.settings.gui['plot']
+plot_settings = cs.core.settings.gui['plot']
 colors = plot_settings['colors']
-color_scheme = chisurf.core.settings.colors
+color_scheme = cs.core.settings.colors
 lw = plot_settings['line_width']
 
 OVERLAY_PEN = pg.mkPen((255, 128, 0), width=1.5, style=QtCore.Qt.DashLine)
@@ -28,12 +28,12 @@ class ParameterScanWidget(
     QtWidgets.QWidget
 ):
 
-    @chisurf.gui.decorators.init_with_ui(
+    @cs.gui.decorators.init_with_ui(
         ui_filename="parameter_scan.ui"
     )
     def __init__(
             self,
-            model: chisurf.core.models.Model = None,
+            model: cs.core.models.Model = None,
             parent: QtWidgets.QWidget = None,
             *args,
             **kwargs
@@ -90,9 +90,8 @@ class ParameterScanWidget(
         v_max = (1. + p_max) * v
         n_steps = int(self.spinBox.value())
 
-        # Use action controller if available, otherwise fall back to chisurf.run
-        import chisurf
-        controller = getattr(chisurf, "action_controller", None)
+        # Use action controller if available, otherwise fall back to cs.run
+        controller = getattr(cs, "action_controller", None)
         if controller is not None:
             try:
                 controller.execute(
@@ -105,9 +104,9 @@ class ParameterScanWidget(
                     },
                 )
             except Exception:
-                # Fall back to chisurf.run if action controller fails
-                chisurf.run(
-                    f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
+                # Fall back to cs.run if action controller fails
+                cs.run(
+                    f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
                         self.parameter.name,
                         v_min,
                         v_max,
@@ -115,8 +114,8 @@ class ParameterScanWidget(
                     )
                 )
         else:
-            chisurf.run(
-                f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
+            cs.run(
+                f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].scan(cs.current_fit, scan_range=(%s, %s), n_steps=%s)" % (
                     self.parameter.name,
                     v_min,
                     v_max,
@@ -142,8 +141,7 @@ class ParameterScanWidget(
         else:
             scan_range = (None, None)
 
-        import chisurf
-        controller = getattr(chisurf, "action_controller", None)
+        controller = getattr(cs, "action_controller", None)
         if controller is not None:
             try:
                 controller.execute(
@@ -157,8 +155,8 @@ class ParameterScanWidget(
                     },
                 )
             except Exception:
-                chisurf.run(
-                    f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].adaptive_scan(cs.current_fit, scan_range=%s, p_value=%s, max_points_per_side=%s)" % (
+                cs.run(
+                    f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].adaptive_scan(cs.current_fit, scan_range=%s, p_value=%s, max_points_per_side=%s)" % (
                         self.parameter.name,
                         scan_range,
                         p_value,
@@ -166,8 +164,8 @@ class ParameterScanWidget(
                     )
                 )
         else:
-            chisurf.run(
-                f"chisurf.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].adaptive_scan(cs.current_fit, scan_range=%s, p_value=%s, max_points_per_side=%s)" % (
+            cs.run(
+                f"cs.fits[{self.parameter.fit_idx}].model.parameters_all_dict['%s'].adaptive_scan(cs.current_fit, scan_range=%s, p_value=%s, max_points_per_side=%s)" % (
                     self.parameter.name,
                     scan_range,
                     p_value,
@@ -183,7 +181,7 @@ class ParameterScanWidget(
         return idx, str(name)
 
     @property
-    def parameter(self) -> chisurf.core.parameter.Parameter:
+    def parameter(self) -> cs.core.parameter.Parameter:
         idx, name = self.selected_parameter
         try:
             return self.model.parameters_all_dict[name]
@@ -199,7 +197,7 @@ class ParameterScanPlot(
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             *args,
             **kwargs
     ):
@@ -291,4 +289,4 @@ class ParameterScanPlot(
                         )
                         self._add_overlay(vline)
         except Exception as e:
-            chisurf.logging.warning(f"ParameterScanPlot: update failed: {e}")
+            cs.logging.warning(f"ParameterScanPlot: update failed: {e}")

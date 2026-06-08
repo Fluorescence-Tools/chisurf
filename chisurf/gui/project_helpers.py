@@ -4,14 +4,22 @@ import json
 import os
 import pathlib
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 from chisurf.gui import QtWidgets
 
 
 def _recent_projects_file() -> pathlib.Path:
+    """Return the path to the persisted recent-projects JSON file.
+
+    Returns
+    -------
+    pathlib.Path
+        ``~/.chisurf/recent_projects.json`` (via ``get_path``) or a
+        plain ``~/.chisurf/recent_projects.json`` fallback.
+    """
     try:
-        return chisurf.core.settings.get_path("settings") / "recent_projects.json"
+        return cs.core.settings.get_path("settings") / "recent_projects.json"
     except Exception:
         return pathlib.Path.home() / ".chisurf" / "recent_projects.json"
 
@@ -135,12 +143,12 @@ def open_recent_project(window, project_dir: str) -> None:
         return
 
     try:
-        chisurf.working_path = path
+        cs.working_path = path
     except Exception:
         pass
 
     try:
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="project.load",
             payload={"project_path": path.as_posix()},
         )
@@ -160,49 +168,79 @@ def open_recent_project(window, project_dir: str) -> None:
 
 
 def refresh_recent_projects_menu(window) -> None:
+    """Rebuild the hidden-menubar Recent Projects menu and sync the ribbon button.
+
+    Parameters
+    ----------
+    window : QMainWindow
+        The application main window.
+    """
     menu = getattr(window, "_menu_recent_projects", None)
-    if menu is None:
-        return
-    try:
-        menu.clear()
-    except Exception:
-        return
-
-    try:
-        projects = list(getattr(window, "_recent_projects", []) or [])
-    except Exception:
-        projects = []
-
-    if not projects:
+    if menu is not None:
         try:
-            a = QtWidgets.QAction("No recent projects", window)
-            a.setEnabled(False)
-            menu.addAction(a)
+            menu.clear()
         except Exception:
             pass
-    else:
-        for i, p in enumerate(projects):
+
+        try:
+            projects = list(getattr(window, "_recent_projects", []) or [])
+        except Exception:
+            projects = []
+
+        if not projects:
             try:
-                label = f"&{i + 1} {p}"
-                a = QtWidgets.QAction(label, window)
-                a.triggered.connect(lambda _checked=False, pp=p: open_recent_project(window, pp))
+                a = QtWidgets.QAction("No recent projects", window)
+                a.setEnabled(False)
                 menu.addAction(a)
             except Exception:
-                continue
+                pass
+        else:
+            for i, p in enumerate(projects):
+                try:
+                    label = f"&{i + 1} {p}"
+                    a = QtWidgets.QAction(label, window)
+                    a.triggered.connect(
+                        lambda _checked=False, pp=p: open_recent_project(window, pp)
+                    )
+                    menu.addAction(a)
+                except Exception:
+                    continue
 
+        try:
+            menu.addSeparator()
+        except Exception:
+            pass
+        try:
+            clear_action = QtWidgets.QAction("Clear Recent Projects", window)
+            clear_action.triggered.connect(
+                lambda _checked=False: clear_recent_projects(window)
+            )
+            menu.addAction(clear_action)
+        except Exception:
+            pass
+
+    # Also refresh the ribbon's dedicated Recent Projects drop-down (if present).
     try:
-        menu.addSeparator()
-    except Exception:
-        pass
-    try:
-        clear_action = QtWidgets.QAction("Clear Recent Projects", window)
-        clear_action.triggered.connect(lambda _checked=False: clear_recent_projects(window))
-        menu.addAction(clear_action)
+        integration = getattr(window, "_ribbon_integration", None)
+        if integration is not None and hasattr(integration, "_refresh_ribbon_recent_projects"):
+            integration._refresh_ribbon_recent_projects()
     except Exception:
         pass
 
 
 def init_recent_projects_menu(window) -> None:
+    """Create and insert the Recent Projects submenu into the normal File menu.
+
+    The submenu is inserted into ``menuFile`` before the Exit separator so it
+    appears as ``File > Recent Projects`` in the traditional menu bar.  It is
+    also refreshed whenever a project is opened/saved/cleared via
+    :func:`refresh_recent_projects_menu`.
+
+    Parameters
+    ----------
+    window : QMainWindow
+        The application main window.
+    """
     if getattr(window, "_menu_recent_projects", None) is not None:
         refresh_recent_projects_menu(window)
         return
@@ -213,13 +251,41 @@ def init_recent_projects_menu(window) -> None:
     except Exception:
         return
 
+    # Insert into menuFile before the Exit separator so the item appears as
+    # File > Recent Projects in the normal (non-ribbon) menu bar.
+    inserted = False
     try:
-        window.menuProject.insertMenu(window.actionClose_Project, recent_menu)
+        file_menu = window.menuFile
+        exit_action = getattr(window, "actionExit_2", None)
+        if exit_action is not None:
+            # Find the separator that precedes Exit and insert before it.
+            actions = file_menu.actions()
+            target = None
+            for i, a in enumerate(actions):
+                if a.isSeparator():
+                    # Check if Exit follows this separator
+                    remaining = actions[i + 1:]
+                    if any(r is exit_action for r in remaining):
+                        target = a
+                        break
+            if target is not None:
+                file_menu.insertMenu(target, recent_menu)
+                inserted = True
+            else:
+                file_menu.insertMenu(exit_action, recent_menu)
+                inserted = True
     except Exception:
+        pass
+
+    if not inserted:
+        # Fallback: append to whatever menu is available
         try:
-            window.menuProject.addMenu(recent_menu)
+            window.menuFile.addMenu(recent_menu)
         except Exception:
-            pass
+            try:
+                window.menuProject.addMenu(recent_menu)
+            except Exception:
+                pass
 
     try:
         set_recent_projects(window, load_recent_projects())

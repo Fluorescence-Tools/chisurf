@@ -2,7 +2,7 @@ import typing
 
 import pyqtgraph as pg
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 from chisurf.gui import QtWidgets
 
@@ -15,7 +15,7 @@ def setup_ui(page):
 
     page.correlations: typing.List[dict] = list()
 
-    chisurf.gui.decorators.lineEdit_dragFile_injector(page.lineEdit, call=page.open_correlation_folder)
+    cs.gui.decorators.lineEdit_dragFile_injector(page.lineEdit, call=page.open_correlation_folder)
 
     # Setup plots
     page.pw_fcs = pg.PlotWidget(parent=page, title='FCS')

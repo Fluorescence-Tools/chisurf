@@ -17,7 +17,7 @@ import pandas as pd
 
 import json
 
-import chisurf
+import chisurf as cs
 import chisurf.gui.decorators
 import chisurf.core.settings
 import chisurf.gui.widgets.wizard
@@ -34,7 +34,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     """
     Note on legacy burst processors:
     Older implementations (process_bursts_old, process_bursts_new, process_bursts_new2, process_bursts_new3)
-    were moved to chisurf.plugins.burst_mle_analysis.wizard_old for documentation/archiving.
+    were moved to cs.plugins.burst_mle_analysis.wizard_old for documentation/archiving.
     Only process_bursts_new4 is kept here and exposed as `process_bursts`.
     """
 
@@ -878,7 +878,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         populates IRF/BG selectors, window combobox, and per-channel state.
         """
         dets = list(self.channel_definer.detectors.keys())
-        chisurf.logging.info('_init_channels_from_wizard')
+        cs.logging.info('_init_channels_from_wizard')
         # reset our per-channel state cache and pre-initialize per-detector dicts
         self.channel_settings.clear()
         for d in dets:
@@ -935,7 +935,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.full_range = (0, max_bins)
 
     def _capture_current_ui_state(self):
-        chisurf.logging.info("_capture_current_ui_state")
+        cs.logging.info("_capture_current_ui_state")
         x0, fixed = self.fit_parameters
         start_bin, stop_bin = self.micro_time_range
         d = {
@@ -1314,14 +1314,14 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     def inspect_bursts(self, idx: int, embed: bool = False):
         if self.df_bursts is None or not self.tttrs:
-            chisurf.logging.info("No burst data loaded.")
+            cs.logging.info("No burst data loaded.")
             return
 
         row = self.df_bursts.iloc[idx]
         key = Path(row['First File']).stem
         tttr = self.tttrs.get(key)
         if tttr is None:
-            chisurf.logging.info(f"TTTR with key {key} not found.")
+            cs.logging.info(f"TTTR with key {key} not found.")
             return
         burst = tttr[int(row['First Photon']):int(row['Last Photon'])]
 
@@ -1347,15 +1347,15 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             tp = self.filter_tttr(burst, self.micro_time_range, pchs)
             ts = self.filter_tttr(burst, self.micro_time_range, schs)
             cp = tp.get_microtime_histogram(self.micro_time_binning)[0].astype(np.float64, copy=False)
-            cs = ts.get_microtime_histogram(self.micro_time_binning)[0].astype(np.float64, copy=False)
+            cs_hist = ts.get_microtime_histogram(self.micro_time_binning)[0].astype(np.float64, copy=False)
             # zero outside window for visualization
             if sb > 0:
                 cp[:sb] = 0
-                cs[:sb] = 0
+                cs_hist[:sb] = 0
             if eb < cp.size:
                 cp[eb:] = 0
-                cs[eb:] = 0
-            data = np.hstack([cp, cs])
+                cs_hist[eb:] = 0
+            data = np.hstack([cp, cs_hist])
 
             # plot it
             p.plot(data, pen=None, symbol='o', symbolSize=4)
@@ -1363,9 +1363,9 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
             # move to next row in the grid
             self.burst_layout.nextRow()
 
-    @chisurf.gui.decorators.init_with_ui(
+    @cs.gui.decorators.init_with_ui(
         "burst/burst_mle_analysis/wizard.ui",
-        path=chisurf.core.settings.plugin_path
+        path=cs.core.settings.plugin_path
     )
     def __init__(self, *args, **kwargs):
         # Core attributes
@@ -1399,7 +1399,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.tabWidget.insertTab(0, self.tab_detector, "Detector Definition")
         self.tabWidget.setCurrentIndex(0)  # Start on Detector Wizard page
         self.verticalLayout_detector_tab = QtWidgets.QVBoxLayout(self.tab_detector)
-        self.channel_definer = chisurf.gui.widgets.wizard.DetectorWizardPage(parent=self)
+        self.channel_definer = cs.gui.widgets.wizard.DetectorWizardPage(parent=self)
         self.groupBox_detector = QtWidgets.QGroupBox("Detector Configuration")
         self.verticalLayout_detector = QtWidgets.QVBoxLayout(self.groupBox_detector)
         self.verticalLayout_detector.addWidget(self.channel_definer)
@@ -1450,11 +1450,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         self.combined_plot.setYRange(-1, 5)
 
     def update_variable_fit_parameters(self):
-        chisurf.logging.info("update initial parameters. BLANK")
+        cs.logging.info("update initial parameters. BLANK")
         self.update_fit()
 
     def update_internal_fit_parameters(self):
-        chisurf.logging.info("update internal fit parameters")
+        cs.logging.info("update internal fit parameters")
         # Set fit to none to force recreation of fit
         self._fit = None
         self.update_fit()
@@ -1692,9 +1692,9 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     if repetition_rate > 0:
                         # Convert repetition rate (MHz) to excitation period (ns)
                         excitation_period = 1000.0 / repetition_rate
-                        chisurf.logging.info(f"Updated excitation period to {excitation_period} ns based on repetition rate {repetition_rate} MHz")
+                        cs.logging.info(f"Updated excitation period to {excitation_period} ns based on repetition rate {repetition_rate} MHz")
                 except (AttributeError, ValueError) as e:
-                    chisurf.logging.info(f"Could not extract repetition rate from header: {e}")
+                    cs.logging.info(f"Could not extract repetition rate from header: {e}")
 
         self._update_max_bins_from_tttr()
 
@@ -1731,14 +1731,14 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
     def get_current_jordis(self):
         if self.df_bursts is None:
-            chisurf.logging.info("No burst DataFrame loaded.")
+            cs.logging.info("No burst DataFrame loaded.")
             return
 
         # gather detector channels and microtime settings
         detector_info = getattr(self.channel_definer, 'detectors', {}).get(self.current_detector, {})
         chs = detector_info.get('chs', [])
         if not chs:
-            chisurf.logging.info('Channels not found')
+            cs.logging.info('Channels not found')
             return
 
         mt_bin = self.micro_time_binning
@@ -1748,19 +1748,19 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         # 2) Check if 'burst_file' column exists in the DataFrame
         if 'burst_file' not in self.df_bursts.columns:
-            chisurf.logging.info(f"'burst_file' column not found in DataFrame. Available columns: {list(self.df_bursts.columns)}")
+            cs.logging.info(f"'burst_file' column not found in DataFrame. Available columns: {list(self.df_bursts.columns)}")
             # Try to use the first file if burst_file column doesn't exist
             if len(self.df_bursts) > 0:
                 df_this = self.df_bursts
-                chisurf.logging.info(f"Using all rows in DataFrame as fallback")
+                cs.logging.info(f"Using all rows in DataFrame as fallback")
             else:
-                chisurf.logging.info("DataFrame is empty")
+                cs.logging.info("DataFrame is empty")
                 return
         else:
             # Filter df_bursts to just its rows
             df_this = self.df_bursts[self.df_bursts["burst_file"] == curr_bur]
             if df_this.empty:
-                chisurf.logging.info(f"No bursts found for {curr_bur!r}")
+                cs.logging.info(f"No bursts found for {curr_bur!r}")
                 return
 
         # 3) Now grab the TTTR filename from the first row of that subset
@@ -1768,16 +1768,16 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         # 4) Load or retrieve the TTTR
         key = Path(tttr_name).stem
-        chisurf.logging.debug(f"Looking for TTTR with key: {key}")
+        cs.logging.debug(f"Looking for TTTR with key: {key}")
         tttr = self.tttrs.get(key)
         if tttr is None:
-            chisurf.logging.info(f"TTTR with key {key} not found.")
+            cs.logging.info(f"TTTR with key {key} not found.")
             return
 
         # get the list of photon‐indices for *all* bursts in this file
         indices = self.get_burst_indices_for_current_file()
         if not indices:
-            chisurf.logging.info('No indices found')
+            cs.logging.info('No indices found')
             return
         indices = np.array(indices)
 
@@ -1869,7 +1869,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         Stop the burst processing when the stop button is clicked.
         """
         self.stop_processing = True
-        chisurf.logging.info("Stop button clicked, stopping burst processing")
+        cs.logging.info("Stop button clicked, stopping burst processing")
         
     def update_parameters(self):
         self._fit = None
@@ -1967,7 +1967,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         return sb_vv, eb_vv, sb_vh, eb_vh
 
     def plot_fit_result(self, fit_result):
-        chisurf.logging.info("plot fit result")
+        cs.logging.info("plot fit result")
         # clear both panels
         self.combined_plot.clear()
         self.residual_plot.clear()
@@ -2124,7 +2124,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         if len(det_mbs) == 1:
             global_mb = int(next(iter(det_mbs)))
         else:
-            chisurf.logging.warning(
+            cs.logging.warning(
                 f"Detectors have differing micro_time_binning {det_mbs}; falling back to UI {self.micro_time_binning}"
             )
             global_mb = int(self.micro_time_binning)
@@ -2195,7 +2195,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
         for i, row in self.df_bursts.iterrows():
             if self.stop_processing or progress.wasCanceled():
-                chisurf.logging.info("Burst processing stopped by user")
+                cs.logging.info("Burst processing stopped by user")
                 break
             progress.setValue(i + 1)
             maybe_pump_ui(i + 1)
@@ -2261,29 +2261,29 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
                 # Histograms per half (no TTTR slicing)
                 cp = np.bincount(mt_bins[m_p], minlength=irf_half_len).astype(np.float64, copy=False)
-                cs = np.bincount(mt_bins[m_s], minlength=irf_half_len).astype(np.float64, copy=False)
+                cs_hist = np.bincount(mt_bins[m_s], minlength=irf_half_len).astype(np.float64, copy=False)
 
                 # Photon threshold
                 cp_sum = float(cp.sum());
-                cs_sum = float(cs.sum())
+                cs_sum = float(cs_hist.sum())
                 if (cp_sum + cs_sum) < st['min_photons']:
                     default_record(fname, det, cp_sum, cs_sum)
                     continue
 
                 # Integer VH shift then windowing
                 if self.shift != 0:
-                    cs = np.roll(cs, int(self.shift))
+                    cs_hist = np.roll(cs_hist, int(self.shift))
                 if sb > 0:
                     cp[:sb] = 0.0;
-                    cs[:sb] = 0.0
+                    cs_hist[:sb] = 0.0
                 if eb < cp.size:
                     cp[eb:] = 0.0;
-                    cs[eb:] = 0.0
+                    cs_hist[eb:] = 0.0
 
                 # Assemble decay
-                decay = np.empty(cp.size + cs.size, dtype=np.float64)
+                decay = np.empty(cp.size + cs_hist.size, dtype=np.float64)
                 decay[:cp.size] = cp
-                decay[cp.size:] = cs
+                decay[cp.size:] = cs_hist
 
                 # Fit using pre-made fitter
                 fitter = fitters[det]
@@ -2325,7 +2325,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         One-pass P/S histogram:
           - classify photons as 0(P) / 1(S) via LUTs
           - bincount(mt*2 + cls, minlength=2*half_len)
-          - deinterleave to cp/cs
+          - deinterleave to cp/cs_hist
         Returns uint32 arrays; cast to float only when filling the decay buffer.
         """
         cls = np.full(rc_slice.shape[0], -1, dtype=np.int8)
@@ -2477,7 +2477,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     try:
                         out, nbursts = fut.result()
                     except Exception as e:
-                        chisurf.logging.error(f"Worker failed: {e}")
+                        cs.logging.error(f"Worker failed: {e}")
                         out, nbursts = [], 0
                     results.extend(out)
                     processed += nbursts
@@ -2543,11 +2543,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
 
             # Build full microtime histograms (default uses full range)
             cp = tp.get_microtime_histogram(micro_time_binning)[0].astype(np.float64, copy=False)
-            cs = ts.get_microtime_histogram(micro_time_binning)[0].astype(np.float64, copy=False)
+            cs_hist = ts.get_microtime_histogram(micro_time_binning)[0].astype(np.float64, copy=False)
 
             # Apply integer VH shift BEFORE any other operation
             if apply_vh_shift and self.shift != 0:
-                cs = np.roll(cs, self.shift)
+                cs_hist = np.roll(cs_hist, self.shift)
 
             # Now zero out-of-window bins per channel (after shift), only when shifting/windowing is desired
             if apply_vh_shift:
@@ -2556,9 +2556,9 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 if vv_eb < cp.size:
                     cp[vv_eb:] = 0
                 if vh_sb > 0:
-                    cs[:vh_sb] = 0
-                if vh_eb < cs.size:
-                    cs[vh_eb:] = 0
+                    cs_hist[:vh_sb] = 0
+                if vh_eb < cs_hist.size:
+                    cs_hist[vh_eb:] = 0
 
                 # Apply thresholds
                 th_vv = th_vh = -1.0
@@ -2569,33 +2569,33 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                     if cp.size and cp.max() > 0:
                         cp[cp < th_vv * cp.max()] = 0
                 if th_vh > 0:
-                    if cs.size and cs.max() > 0:
-                        cs[cs < th_vh * cs.max()] = 0
+                    if cs_hist.size and cs_hist.max() > 0:
+                        cs_hist[cs_hist < th_vh * cs_hist.max()] = 0
 
             # Optional normalization
             if normalize_counts == 1:
                 # Normalize by average count rate
-                ct = (cp.sum() + cs.sum()) / 2.0
+                ct = (cp.sum() + cs_hist.sum()) / 2.0
                 if ct > 0:
                     cp /= ct
-                    cs /= ct
+                    cs_hist /= ct
             elif normalize_counts == 2:
                 # Normalize individually
                 cp_sum = cp.sum()
-                cs_sum = cs.sum()
+                cs_sum = cs_hist.sum()
                 if cp_sum > 0:
                     cp = cp / cp_sum
                 if cs_sum > 0:
-                    cs = cs / cs_sum
+                    cs_hist = cs_hist / cs_sum
             elif normalize_counts == 3:
                 # Normalize by acquisition time
                 acquisition_time = (tttr.macro_times[-1] - tttr.macro_times[0]) * tttr.header.macro_time_resolution
                 if acquisition_time > 0:
-                    cs /= acquisition_time
+                    cs_hist /= acquisition_time
                     cp /= acquisition_time
 
             # now build the JORDI vector
-            j = np.hstack([cp, cs])
+            j = np.hstack([cp, cs_hist])
             jordis.append(j)
 
             # Optional save
@@ -2687,11 +2687,11 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
         )
 
         if json_data:
-            chisurf.logging.info(f"Found setup information in {json_file_path}")
+            cs.logging.info(f"Found setup information in {json_file_path}")
             # Extract setup information from JSON
             setup_info = json_data.get("setup_info")
             if setup_info:
-                chisurf.logging.info("Using setup information from JSON file")
+                cs.logging.info("Using setup information from JSON file")
                 # If we have setup information, we can use it to configure the wizard
                 # For example, we could set channel settings, detector settings, etc.
                 # This will depend on what's available in the JSON and what's needed by the wizard
@@ -2700,7 +2700,7 @@ class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
                 if hasattr(self, 'channel_definer') and setup_info.get("windows"):
                     self.channel_definer.windows = setup_info.get("windows", {})
                     self.channel_definer.detectors = setup_info.get("detectors", {})
-                    chisurf.logging.info("Updated channel definitions from JSON file")
+                    cs.logging.info("Updated channel definitions from JSON file")
 
         # 2) Sample first file to infer which cols are numeric and build robust dtype spec
         sample = pd.read_csv(

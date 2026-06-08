@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import scipy.io
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fluorescence.fcs
 
 from chisurf import typing
@@ -202,7 +202,7 @@ def read_ries_mat(
 
     - loads the MATLAB ``g`` structure from ``filename``;
     - builds correlation arrays and minimal intensity traces;
-    - computes photon-noise weights using :func:`chisurf.core.fluorescence.fcs.noise`;
+    - computes photon-noise weights using :func:`cs.core.fluorescence.fcs.noise`;
     - returns a list of :class:`FCSDataset` dictionaries.
     """
 
@@ -238,7 +238,7 @@ def read_ries_mat(
         # Compute Suren-style photon-noise standard deviations and convert
         # them into weights = 1/sigma.
         try:
-            sd = chisurf.core.fluorescence.fcs.noise(
+            sd = cs.core.fluorescence.fcs.noise(
                 times=tau,
                 correlation=amp,
                 measurement_duration=acq_time_s,

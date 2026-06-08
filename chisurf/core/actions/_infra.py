@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 from dataclasses import dataclass, field
 import json
@@ -298,9 +299,7 @@ def build_default_dispatcher(history_provider: typing.Callable[[], typing.Any]) 
 
 
 def get_action_catalog() -> typing.List[typing.Dict[str, typing.Any]]:
-    import chisurf
-
-    reg = getattr(chisurf, "action_registry", None)
+    reg = getattr(cs, "action_registry", None)
     if reg is not None and hasattr(reg, "catalog"):
         return reg.catalog()
 
@@ -314,10 +313,8 @@ def record_action(
         source_uid: typing.Optional[str] = None,
         target_uid: typing.Optional[str] = None,
 ) -> typing.Optional[typing.Dict[str, typing.Any]]:
-    import chisurf
-
     payload_data = payload or {}
-    history_obj = getattr(chisurf, "history", None)
+    history_obj = getattr(cs, "history", None)
     if history_obj is not None and hasattr(history_obj, "record"):
         return history_obj.record(
             action_type=str(action_type),
@@ -337,6 +334,5 @@ def invoke_action(
         source_uid: typing.Optional[str] = None,
         target_uid: typing.Optional[str] = None,
 ) -> typing.Optional[typing.Dict[str, typing.Any]]:
-    """Alias for chisurf.core.actions.dispatch. Prefer using that directly."""
-    import chisurf
-    return chisurf.core.actions.dispatch(name=str(name), payload=payload)
+    """Alias for cs.core.actions.dispatch. Prefer using that directly."""
+    return cs.core.actions.dispatch(name=str(name), payload=payload)

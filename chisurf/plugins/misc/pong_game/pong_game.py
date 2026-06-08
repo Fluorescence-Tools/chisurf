@@ -1,22 +1,49 @@
 import sys
+import math
 import random
-from qtpy.QtCore import Qt, QBasicTimer, QRectF, QPointF
-from qtpy.QtGui import QPainter, QColor, QFont
-from qtpy.QtWidgets import QFrame, QApplication, QMainWindow
+from qtpy.QtCore import Qt, QBasicTimer, QRectF, QPointF, QTimer
+from qtpy.QtGui import QPainter, QColor, QFont, QPen, QBrush, QRadialGradient, QLinearGradient
+from qtpy.QtWidgets import QFrame, QApplication, QMainWindow, QMessageBox
 
-# Game constants
 WindowWidth = 800
 WindowHeight = 600
 
-PaddleWidth = 10
-PaddleHeight = 100
-PaddleSpeed = 10    # You can tweak this for desired speed
+PaddleWidth = 12
+PaddleHeight = 90
+PaddleSpeed = 8
 
-BallSize = 15
-BallSpeedX = 5
-BallSpeedY = 4
+BallSize = 14
+BaseBallSpeedX = 6
+BaseBallSpeedY = 5
 
-CPU_SPEED = 8  # How fast the CPU paddle moves
+CPU_SPEED = 7
+WIN_SCORE = 7
+
+
+class Particle:
+    def __init__(self, x, y, vx, vy, color, life=20):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.color = color
+        self.life = life
+        self.max_life = life
+
+    def update(self):
+        self.x += self.vx
+        self.y += self.vy
+        self.vy += 0.2
+        self.life -= 1
+
+    def draw(self, painter):
+        alpha = int(255 * self.life / self.max_life)
+        c = QColor(self.color)
+        c.setAlpha(alpha)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(c))
+        size = 3 + 2 * (self.life / self.max_life)
+        painter.drawEllipse(QPointF(int(self.x), int(self.y)), size, size)
 
 
 class PongBoard(QFrame):
@@ -25,183 +52,307 @@ class PongBoard(QFrame):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setFixedSize(WindowWidth, WindowHeight)
 
-        # Game mode (True = 1 player vs CPU, False = 2 players)
         self.vsComputer = True
-
-        # Paddle movement state for player 1 (left)
         self.upPressed = False
         self.downPressed = False
-
-        # Paddle movement state for player 2 (right)
         self.wPressed = False
         self.sPressed = False
 
         self.timer = QBasicTimer()
         self.isStarted = False
+        self.isPaused = False
+        self.serve = True
+        self.serve_timer = 0
+        self.rally_count = 0
 
-        # Player 1 paddle (left)
         self.playerY = (WindowHeight - PaddleHeight) / 2
-        # Player 2 or CPU paddle (right)
         self.cpuY = (WindowHeight - PaddleHeight) / 2
 
-        # Ball
         self.ballPos = QPointF(WindowWidth / 2, WindowHeight / 2)
         self.ballVel = QPointF(0, 0)
 
-        # Scores
         self.playerScore = 0
         self.cpuScore = 0
+
+        self.particles = []
+        self.flash_timer = 0
 
         self.startGame()
 
     def startGame(self):
-        self.resetBall()
         self.playerScore = 0
         self.cpuScore = 0
-        self.timer.start(16, self)  # ~60 FPS
+        self.rally_count = 0
+        self.particles.clear()
+        self.beginServe()
+        self.timer.start(16, self)
         self.isStarted = True
+        self.isPaused = False
+
+    def beginServe(self):
+        self.serve = True
+        self.serve_timer = 90
+        self.ballPos = QPointF(WindowWidth / 2 - BallSize / 2, WindowHeight / 2 - BallSize / 2)
+        self.ballVel = QPointF(0, 0)
 
     def resetBall(self):
-        self.ballPos = QPointF(
-            WindowWidth / 2 - BallSize / 2,
-            WindowHeight / 2 - BallSize / 2
-        )
-        vx = BallSpeedX if random.choice([True, False]) else -BallSpeedX
-        vy = random.choice([-BallSpeedY, BallSpeedY])
-        self.ballVel = QPointF(vx, vy)
+        self.beginServe()
+        self.rally_count = 0
+
+    def spawnParticles(self, x, y, color, count=12):
+        for _ in range(count):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(1, 5)
+            self.particles.append(Particle(
+                x, y,
+                math.cos(angle) * speed,
+                math.sin(angle) * speed - 1,
+                color, random.randint(10, 25)
+            ))
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_P:
-            if self.isStarted:
+        k = event.key()
+        if k == Qt.Key_P:
+            if not self.isStarted:
+                return
+            self.isPaused = not self.isPaused
+            if self.isPaused:
                 self.timer.stop()
             else:
                 self.timer.start(16, self)
-            self.isStarted = not self.isStarted
-
-        elif event.key() == Qt.Key_M:
-            # Toggle between 1 player vs CPU and 2 players mode
+            self.update()
+            return
+        if k == Qt.Key_R:
+            self.startGame()
+            return
+        if k == Qt.Key_M:
             self.vsComputer = not self.vsComputer
             self.resetBall()
-            # Update window title based on game mode
-            self.parent().setWindowTitle('Pong with CPU Opponent' if self.vsComputer else 'Pong - 2 Players')
-
-        # Player 1 controls (left paddle)
-        elif event.key() == Qt.Key_Up:
+            self.parent().setWindowTitle(
+                'Pong vs CPU' if self.vsComputer else 'Pong - 2 Players'
+            )
+            return
+        if k == Qt.Key_Up:
             self.upPressed = True
-        elif event.key() == Qt.Key_Down:
+        elif k == Qt.Key_Down:
             self.downPressed = True
-
-        # Player 2 controls (right paddle, only in 2 player mode)
-        elif event.key() == Qt.Key_W:
+        elif k == Qt.Key_W:
             self.wPressed = True
-        elif event.key() == Qt.Key_S:
+        elif k == Qt.Key_S:
             self.sPressed = True
-
         super(PongBoard, self).keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
-        # Player 1 controls (left paddle)
-        if event.key() == Qt.Key_Up:
+        k = event.key()
+        if k == Qt.Key_Up:
             self.upPressed = False
-        elif event.key() == Qt.Key_Down:
+        elif k == Qt.Key_Down:
             self.downPressed = False
-
-        # Player 2 controls (right paddle)
-        elif event.key() == Qt.Key_W:
+        elif k == Qt.Key_W:
             self.wPressed = False
-        elif event.key() == Qt.Key_S:
+        elif k == Qt.Key_S:
             self.sPressed = False
-
         super(PongBoard, self).keyReleaseEvent(event)
 
     def timerEvent(self, event):
         if event.timerId() != self.timer.timerId():
             return
+        if self.isPaused:
+            return
 
-        # Player 1 paddle movement (left)
+        if self.serve:
+            self.serve_timer -= 1
+            if self.serve_timer <= 0:
+                self.serve = False
+                self.launchBall()
+            self.update()
+            return
+
         if self.upPressed:
             self.playerY = max(self.playerY - PaddleSpeed, 0)
         if self.downPressed:
             self.playerY = min(self.playerY + PaddleSpeed, WindowHeight - PaddleHeight)
 
-        # Handle right paddle movement based on game mode
         if self.vsComputer:
-            # CPU controls the right paddle
             self.moveCPUPaddle()
         else:
-            # Player 2 controls the right paddle
             if self.wPressed:
                 self.cpuY = max(self.cpuY - PaddleSpeed, 0)
             if self.sPressed:
                 self.cpuY = min(self.cpuY + PaddleSpeed, WindowHeight - PaddleHeight)
 
         self.moveBall()
+        for p in self.particles[:]:
+            p.update()
+            if p.life <= 0:
+                self.particles.remove(p)
+        if self.flash_timer > 0:
+            self.flash_timer -= 1
         self.update()
+
+    def launchBall(self):
+        angle = random.uniform(-math.pi / 4, math.pi / 4)
+        direction = 1 if random.choice([True, False]) else -1
+        speed = BaseBallSpeedX + self.rally_count * 0.15
+        self.ballVel = QPointF(
+            math.cos(angle) * speed * direction,
+            math.sin(angle) * speed
+        )
 
     def moveBall(self):
         self.ballPos += self.ballVel
 
-        # Top/bottom collisions
-        if self.ballPos.y() <= 0 or self.ballPos.y() + BallSize >= WindowHeight:
-            self.ballVel.setY(-self.ballVel.y())
+        if self.ballPos.y() <= 0:
+            self.ballPos.setY(0)
+            self.ballVel.setY(abs(self.ballVel.y()))
+        elif self.ballPos.y() + BallSize >= WindowHeight:
+            self.ballPos.setY(WindowHeight - BallSize)
+            self.ballVel.setY(-abs(self.ballVel.y()))
 
-        # Left paddle collision
-        playerRect = QRectF(10, self.playerY, PaddleWidth, PaddleHeight)
-        ballRect = QRectF(self.ballPos.x(), self.ballPos.y(), BallSize, BallSize)
-        if ballRect.intersects(playerRect):
-            self.ballVel.setX(abs(self.ballVel.x()))
+        bx = self.ballPos.x()
+        by = self.ballPos.y()
+        bs = BallSize
+        pr = QRectF(10, self.playerY, PaddleWidth, PaddleHeight)
+        br = QRectF(bx, by, bs, bs)
 
-        # Right paddle collision
-        cpuRect = QRectF(WindowWidth - PaddleWidth - 10, self.cpuY, PaddleWidth, PaddleHeight)
-        if ballRect.intersects(cpuRect):
-            self.ballVel.setX(-abs(self.ballVel.x()))
+        if br.intersects(pr) and self.ballVel.x() < 0:
+            offset = ((by + bs / 2) - (self.playerY + PaddleHeight / 2)) / (PaddleHeight / 2)
+            speed = math.hypot(self.ballVel.x(), self.ballVel.y())
+            speed = min(speed + 0.3, BaseBallSpeedX * 3)
+            angle = offset * math.pi / 3
+            self.ballVel = QPointF(abs(math.cos(angle) * speed), math.sin(angle) * speed)
+            self.rally_count += 1
+            self.spawnParticles(10 + PaddleWidth, by + bs / 2, QColor(255, 255, 200), 8)
+            self.flash_timer = 4
 
-        # Score?
-        if self.ballPos.x() < 0:
+        cr = QRectF(WindowWidth - PaddleWidth - 10, self.cpuY, PaddleWidth, PaddleHeight)
+        if br.intersects(cr) and self.ballVel.x() > 0:
+            offset = ((by + bs / 2) - (self.cpuY + PaddleHeight / 2)) / (PaddleHeight / 2)
+            speed = math.hypot(self.ballVel.x(), self.ballVel.y())
+            speed = min(speed + 0.3, BaseBallSpeedX * 3)
+            angle = offset * math.pi / 3
+            self.ballVel = QPointF(-abs(math.cos(angle) * speed), math.sin(angle) * speed)
+            self.rally_count += 1
+            self.spawnParticles(WindowWidth - 10 - PaddleWidth, by + bs / 2, QColor(255, 200, 255), 8)
+            self.flash_timer = 4
+
+        if bx < -BallSize:
             self.cpuScore += 1
-            self.resetBall()
-        elif self.ballPos.x() + BallSize > WindowWidth:
+            self.spawnParticles(0, by + bs / 2, QColor(255, 100, 100), 20)
+            if self.cpuScore >= WIN_SCORE:
+                self.gameOver("CPU wins!")
+            else:
+                self.resetBall()
+        elif bx > WindowWidth:
             self.playerScore += 1
-            self.resetBall()
+            self.spawnParticles(WindowWidth, by + bs / 2, QColor(100, 255, 100), 20)
+            if self.playerScore >= WIN_SCORE:
+                self.gameOver("You win!")
+            else:
+                self.resetBall()
 
     def moveCPUPaddle(self):
-        center = self.cpuY + PaddleHeight / 2
-        if center < self.ballPos.y():
-            self.cpuY += CPU_SPEED
-        elif center > self.ballPos.y() + BallSize:
-            self.cpuY -= CPU_SPEED
+        pred_y = self.ballPos.y() + BallSize / 2
+        if self.ballVel.x() > 0:
+            time_to_reach = (WindowWidth - PaddleWidth - 20 - self.ballPos.x()) / abs(self.ballVel.x())
+            pred_y += self.ballVel.y() * time_to_reach
+            pred_y = max(0, min(pred_y, WindowHeight))
+        target = self.cpuY + PaddleHeight / 2
+        diff = pred_y - target
+        if abs(diff) > 15:
+            self.cpuY += CPU_SPEED * (1 if diff > 0 else -1)
         self.cpuY = max(0, min(self.cpuY, WindowHeight - PaddleHeight))
+
+    def gameOver(self, message):
+        self.timer.stop()
+        self.isStarted = False
+        painter = QPainter(self)
+        painter.fillRect(self.rect(), QColor(0, 0, 0, 200))
+        painter.setPen(QColor(255, 255, 255))
+        painter.setFont(QFont('Arial', 48, QFont.Bold))
+        painter.drawText(self.rect(), Qt.AlignCenter, f"{message}\nPress R to restart")
+        painter.end()
 
     def paintEvent(self, event):
         painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
 
-        # Background
-        painter.fillRect(self.rect(), QColor(0, 0, 0))
+        bg = QLinearGradient(0, 0, 0, WindowHeight)
+        bg.setColorAt(0, QColor(10, 10, 30))
+        bg.setColorAt(1, QColor(20, 20, 50))
+        painter.fillRect(self.rect(), QBrush(bg))
 
-        # Draw center dashed line
         pen = painter.pen()
-        pen.setColor(QColor(200, 200, 200))
+        pen.setColor(QColor(60, 60, 100))
+        pen.setWidth(2)
         painter.setPen(pen)
-        dash_len = 20
+        dash_len = 24
         x_center = WindowWidth // 2
         y = 0
         while y < WindowHeight:
             painter.drawLine(x_center, y, x_center, y + dash_len // 2)
             y += dash_len
 
-        # Draw paddles
-        painter.fillRect(10, int(self.playerY), PaddleWidth, PaddleHeight, QColor(255, 255, 255))
-        painter.fillRect(WindowWidth - PaddleWidth - 10, int(self.cpuY),
-                         PaddleWidth, PaddleHeight, QColor(255, 255, 255))
+        if self.flash_timer > 0:
+            flash = QColor(255, 255, 255, self.flash_timer * 20)
+            painter.fillRect(self.rect(), flash)
 
-        # Draw ball
-        painter.fillRect(int(self.ballPos.x()), int(self.ballPos.y()),
-                         BallSize, BallSize, QColor(255, 255, 255))
+        pad_grad_left = QLinearGradient(0, 0, PaddleWidth, 0)
+        pad_grad_left.setColorAt(0, QColor(100, 200, 255))
+        pad_grad_left.setColorAt(1, QColor(60, 100, 255))
+        painter.setBrush(QBrush(pad_grad_left))
+        painter.setPen(QPen(QColor(200, 230, 255), 1))
+        painter.drawRoundedRect(10, int(self.playerY), PaddleWidth, PaddleHeight, 4, 4)
 
-        # Draw scores
-        painter.setFont(QFont('Arial', 30))
-        painter.drawText(WindowWidth // 4, 50, str(self.playerScore))
-        painter.drawText(WindowWidth * 3 // 4, 50, str(self.cpuScore))
+        if self.vsComputer:
+            pad_grad_right = QLinearGradient(0, 0, PaddleWidth, 0)
+            pad_grad_right.setColorAt(0, QColor(255, 100, 100))
+            pad_grad_right.setColorAt(1, QColor(200, 50, 50))
+        else:
+            pad_grad_right = QLinearGradient(0, 0, PaddleWidth, 0)
+            pad_grad_right.setColorAt(0, QColor(255, 200, 100))
+            pad_grad_right.setColorAt(1, QColor(255, 150, 50))
+        painter.setBrush(QBrush(pad_grad_right))
+        painter.drawRoundedRect(
+            WindowWidth - PaddleWidth - 10, int(self.cpuY),
+            PaddleWidth, PaddleHeight, 4, 4
+        )
+
+        ball_grad = QRadialGradient(BallSize / 2, BallSize / 2, BallSize / 2)
+        ball_grad.setColorAt(0, QColor(255, 255, 255))
+        ball_grad.setColorAt(0.6, QColor(255, 255, 200))
+        ball_grad.setColorAt(1, QColor(200, 200, 100))
+        painter.setBrush(QBrush(ball_grad))
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(
+            int(self.ballPos.x()), int(self.ballPos.y()),
+            BallSize, BallSize
+        )
+
+        for p in self.particles:
+            p.draw(painter)
+
+        painter.setPen(QColor(200, 200, 220))
+        painter.setFont(QFont('Arial', 14))
+        painter.drawText(WindowWidth // 4, 30, f"Player: {self.playerScore}")
+        painter.drawText(WindowWidth * 3 // 4 - 60, 30, f"CPU: {self.cpuScore}")
+
+        info = f"Rally: {self.rally_count}  |  P: pause  R: restart  M: mode"
+        painter.setFont(QFont('Arial', 10))
+        painter.setPen(QColor(120, 120, 150))
+        painter.drawText(WindowWidth // 2 - 150, WindowHeight - 10, info)
+
+        if self.isPaused:
+            painter.fillRect(self.rect(), QColor(0, 0, 0, 160))
+            painter.setPen(QColor(255, 255, 255))
+            painter.setFont(QFont('Arial', 36, QFont.Bold))
+            painter.drawText(self.rect(), Qt.AlignCenter, "PAUSED")
+
+        if self.serve and not self.isPaused:
+            painter.setPen(QColor(255, 255, 200))
+            painter.setFont(QFont('Arial', 20, QFont.Bold))
+            t = max(1, self.serve_timer // 15 + 1)
+            painter.drawText(self.rect(), Qt.AlignCenter, f"{t}...")
 
 
 class Pong(QMainWindow):
@@ -213,9 +364,9 @@ class Pong(QMainWindow):
         self.board = PongBoard(self)
         self.setCentralWidget(self.board)
         self.board.setFocus()
-        self.statusBar().showMessage('Player 1: ↑ ↓ to move | Player 2: W S to move | M to toggle mode | P to pause')
+        self.statusBar().showMessage('↑ ↓ to move | P pause | R restart | M 1p/2p')
         self.resize(WindowWidth, WindowHeight)
-        self.setWindowTitle('Pong with CPU Opponent')
+        self.setWindowTitle('Pong vs CPU')
         self.show()
 
 

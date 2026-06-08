@@ -13,13 +13,16 @@ from qtpy import QtCore, QtWidgets
 
 import chisurf as cs
 import chisurf.core.fitting
+from chisurf.core.fitting.parameter import FittingParameter
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
+from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
 from chisurf.plugins.modelling.proteinmc.model import (
     ProteinMCProgress,
     ProteinMCRunner,
     build_move_map_from_flexfit,
     list_flexfit_sets,
+    load_json,
 )
 from chisurf.gui.plots.proteinMC import ProteinMCDistanceNetworkPlot, ProteinMCPlot, ProteinMCStructurePlot
 from chisurf.gui.widgets.progress import EnhancedProgressDialog, wrap_text
@@ -226,6 +229,15 @@ class ProteinMCModelWidget(ModelWidget):
         self.labeling_weight_spin = QtWidgets.QDoubleSpinBox(self)
         self.labeling_weight_spin.setRange(0.0, 1000.0)
         self.labeling_weight_spin.setValue(1.0)
+        
+        # Distance parameters from FPS file
+        self._distance_parameters: dict[str, FittingParameter] = {}
+        self._distance_widgets: dict[str, FittingParameterWidget] = {}
+        self._distance_position_indices: dict[str, int] = {}
+        self._distance_definitions: dict[str, dict] = {}  # Cache distance definitions from FPS file
+        self._all_positions: dict = {}  # Cache all positions from FPS file
+        self._distances_group: Optional[QtWidgets.QGroupBox] = None
+        
         self._build_ui()
 
     @property
@@ -318,6 +330,15 @@ class ProteinMCModelWidget(ModelWidget):
 
         self.flexfit_use_check.stateChanged.connect(self._on_flexfit_use_changed)
         self.flexfit_set_combo.currentTextChanged.connect(self._on_flexfit_set_changed)
+        
+        # Connect signals for updating distance parameters
+        self.labeling_edit.textChanged.connect(self._on_labeling_file_changed)
+        self.score_set_combo.currentTextChanged.connect(self._on_score_set_changed)
+        
+        # Populate score sets and flexfit sets if labeling file is already set
+        if self.labeling_edit.text().strip():
+            self._populate_score_sets()
+            self._populate_flexfit_sets()
 
         self._build_potential_ui(layout)
 
@@ -379,6 +400,9 @@ class ProteinMCModelWidget(ModelWidget):
 
         layout.addWidget(group)
         self._resize_potential_table()
+        
+        # Add distance parameters below the energy table
+        self._build_distances_ui(layout)
 
     def _resize_potential_table(self) -> None:
         """Fit the energy table height to its rows without wasting vertical space."""
@@ -388,6 +412,354 @@ class ProteinMCModelWidget(ModelWidget):
         row_height = self.potential_table.verticalHeader().defaultSectionSize()
         height = min(max(header + rows * row_height + 8, 82), 130)
         self.potential_table.setFixedHeight(height)
+
+    def _build_distances_ui(self, layout: QtWidgets.QVBoxLayout) -> None:
+        """Create distance parameter widgets below the energy table."""
+        # Remove existing distances group if any
+        if self._distances_group is not None:
+            # Remove from parent layout
+            parent_layout = self._distances_group.parent()
+            if parent_layout is not None:
+                for i in range(parent_layout.count()):
+                    item = parent_layout.itemAt(i)
+                    if item and item.widget() is self._distances_group:
+                        parent_layout.removeWidget(self._distances_group)
+                        break
+            self._distances_group.setParent(None)
+            self._distances_group = None
+        
+        # Load distances from FPS file
+        self._load_distances_from_fps()
+        
+        # Only create UI if we have distances
+        if not self._distance_parameters:
+            return
+        
+        # Create a group box for distances
+        self._distances_group = QtWidgets.QGroupBox("Inter-fluorophore distances", self)
+        group_layout = QtWidgets.QVBoxLayout(self._distances_group)
+        group_layout.setContentsMargins(3, 3, 3, 3)
+        group_layout.setSpacing(2)
+        
+        # Create a grid layout with 2 columns to save space
+        distances_layout = QtWidgets.QGridLayout()
+        distances_layout.setContentsMargins(0, 0, 0, 0)
+        distances_layout.setSpacing(3)
+        
+        # Place parameters in two columns
+        distance_names = list(self._distance_parameters.keys())
+        
+        row = 0
+        col = 0
+        for dist_name in distance_names:
+            param = self._distance_parameters[dist_name]
+            widget = FittingParameterWidget(
+                param,
+                fixable=False,
+                hide_link=True,
+                hide_bounds=True,
+                hide_label=False,
+                hide_error=True,
+                label_text=param.name,
+                suffix=" Å"
+            )
+            self._distance_widgets[dist_name] = widget
+            distances_layout.addWidget(widget, row, col)
+            
+            # Move to next column, then next row when we have 2 columns
+            col += 1
+            if col >= 2:
+                col = 0
+                row += 1
+        
+        group_layout.addLayout(distances_layout)
+        layout.addWidget(self._distances_group)
+
+    def _load_distances_from_fps(self) -> None:
+        """Load distance definitions from the FPS JSON file."""
+        filename = self.labeling_edit.text().strip()
+        score_set = self.score_set_combo.currentText()
+        
+        # Clear existing distance parameters
+        self._distance_parameters.clear()
+        self._distance_widgets.clear()
+        self._distance_position_indices.clear()
+        self._distance_definitions.clear()
+        self._all_positions.clear()
+        
+        if not filename:
+            return
+        
+        try:
+            payload = load_json(filename)
+            all_positions = payload.get("Positions", {})
+            all_distances = payload.get("Distances", {})
+            
+            # Filter distances by score set
+            resolved_score_set = score_set
+            if score_set and "χ²" in payload and score_set not in payload["χ²"]:
+                for key in payload["χ²"].keys():
+                    if score_set.lower() in key.lower() or key.lower() in score_set.lower():
+                        resolved_score_set = key
+                        break
+
+            if resolved_score_set and "χ²" in payload and resolved_score_set in payload["χ²"]:
+                group = payload["χ²"][resolved_score_set]
+                keys = group.get("distances", []) if isinstance(group, dict) else []
+                distances_to_use = {k: all_distances[k] for k in keys if k in all_distances}
+            else:
+                distances_to_use = {}
+            
+            # Cache the distance definitions and positions
+            self._distance_definitions = dict(distances_to_use)
+            self._all_positions = dict(all_positions)
+            
+            # Create FittingParameter for each distance
+            for dist_name, dist_data in distances_to_use.items():
+                param_name = dist_name
+                param = FittingParameter(
+                    name=param_name,
+                    label_text=param_name,
+                    value=float("nan"),
+                    lb=float("-inf"),
+                    ub=float("inf"),
+                    bounds_on=False,
+                    fixed=True,
+                    is_output=True,
+                )
+                self._distance_parameters[param_name] = param
+                
+        except Exception as e:
+            cs.logging.warning(f"Failed to load distances from FPS file: {e}")
+            self._distance_parameters.clear()
+            self._distance_definitions.clear()
+
+    def _update_distance_parameters(self, xyz: np.ndarray) -> None:
+        """Update distance parameter values from current xyz coordinates.
+
+        Parameters
+        ----------
+        xyz : np.ndarray
+            The coordinates array to calculate distances from.
+        """
+        if xyz is None:
+            cs.logging.debug("No xyz coordinates available for distance update")
+            return
+        if not self._distance_parameters:
+            cs.logging.debug("No distance parameters loaded")
+            return
+        if not self._distance_definitions:
+            cs.logging.debug("No distance definitions loaded")
+            return
+        
+        try:
+            struct = self.proteinmc_structure
+            if struct is None:
+                struct = self.structure
+            atoms = getattr(struct, "atoms", None)
+            if atoms is None:
+                cs.logging.debug("No atoms available in structure")
+                return
+            
+            # Rebuild position index map every time to handle structure changes
+            self._distance_position_indices.clear()
+            for pos_name, position in self._all_positions.items():
+                idx = self._resolve_position_index(position, atoms)
+                if idx is not None:
+                    self._distance_position_indices[pos_name] = idx
+                else:
+                    cs.logging.debug(f"Could not resolve position {pos_name}")
+            
+            # Update each distance parameter
+            for dist_name, dist_data in self._distance_definitions.items():
+                if dist_name not in self._distance_parameters:
+                    continue
+                
+                p1_name = dist_data.get("position1_name", "")
+                p2_name = dist_data.get("position2_name", "")
+                
+                p1_idx = self._distance_position_indices.get(p1_name)
+                p2_idx = self._distance_position_indices.get(p2_name)
+                
+                # Guessing residues fallback: if indices are not resolved via JSON mapping,
+                # parse the distance name itself (e.g. "19-119_C3" or "19-119_C1")
+                if p1_idx is None or p2_idx is None:
+                    # Guess position names from the distance name
+                    # e.g., "19-119_C3" -> positions "19_C3" and "119_C3", or "19" and "119"
+                    parts_underscore = dist_name.split("_")
+                    suffix = parts_underscore[1] if len(parts_underscore) > 1 else ""
+                    base_name = parts_underscore[0]
+                    parts = base_name.split("-")
+                    if len(parts) == 2:
+                        p1_res, p2_res = parts[0], parts[1]
+                        
+                        # Build list of potential position names to search in self._all_positions
+                        p1_candidates = []
+                        p2_candidates = []
+                        if suffix:
+                            p1_candidates.extend([f"{p1_res}_{suffix}", f"{p1_res}{suffix}"])
+                            p2_candidates.extend([f"{p2_res}_{suffix}", f"{p2_res}{suffix}"])
+                        p1_candidates.append(p1_res)
+                        p2_candidates.append(p2_res)
+                        
+                        # Try to resolve p1_idx
+                        for cand in p1_candidates:
+                            # 1. Check if cached
+                            if cand in self._distance_position_indices:
+                                p1_idx = self._distance_position_indices[cand]
+                                break
+                            # 2. Check in all_positions
+                            if cand in self._all_positions:
+                                idx = self._resolve_position_index(self._all_positions[cand], atoms)
+                                if idx is not None:
+                                    p1_idx = idx
+                                    self._distance_position_indices[cand] = idx
+                                    break
+                                    
+                        # Try to resolve p2_idx
+                        for cand in p2_candidates:
+                            # 1. Check if cached
+                            if cand in self._distance_position_indices:
+                                p2_idx = self._distance_position_indices[cand]
+                                break
+                            # 2. Check in all_positions
+                            if cand in self._all_positions:
+                                idx = self._resolve_position_index(self._all_positions[cand], atoms)
+                                if idx is not None:
+                                    p2_idx = idx
+                                    self._distance_position_indices[cand] = idx
+                                    break
+                        
+                        # Fallback to structure guessing by residue number
+                        if p1_idx is None:
+                            p1_idx = self._resolve_position_by_guessing(p1_res, atoms)
+                        if p2_idx is None:
+                            p2_idx = self._resolve_position_by_guessing(p2_res, atoms)
+                
+                if p1_idx is not None and p2_idx is not None:
+                    try:
+                        distance_value = float(np.linalg.norm(xyz[p1_idx] - xyz[p2_idx]))
+                        param = self._distance_parameters[dist_name]
+                        param.value = distance_value
+                        
+                        # Update the widget if it exists
+                        if dist_name in self._distance_widgets:
+                            widget = self._distance_widgets[dist_name]
+                            # For output parameters, use widget_value.setValue directly
+                            widget.widget_value.setValue(distance_value)
+                            cs.logging.debug(f"Updated distance {dist_name} to {distance_value:.2f} Å")
+                    except Exception as e:
+                        cs.logging.debug(f"Failed to update distance parameter {dist_name}: {e}")
+                else:
+                    cs.logging.debug(f"Position indices not found for distance {dist_name}: p1={p1_name}, p2={p2_name}")
+        except Exception as e:
+            cs.logging.debug(f"Error in _update_distance_parameters: {e}")
+
+    def update_distance_widgets(self) -> None:
+        """Update distance parameter values and widgets based on the active frame.
+
+        Parameters
+        ----------
+        None
+        """
+        if not self.trajectory_frames:
+            # Fallback to structure coordinates if no trajectory frames exist
+            struct = self.proteinmc_structure
+            if struct is None:
+                struct = self.structure
+            if struct is not None:
+                xyz = getattr(struct, "xyz", None)
+                if xyz is not None:
+                    self._update_distance_parameters(xyz)
+            return
+        idx = max(0, min(self.current_frame_index, len(self.trajectory_frames) - 1))
+        xyz = self.trajectory_frames[idx]
+        self._update_distance_parameters(xyz)
+
+    def _decode_bytes(self, v) -> str:
+        if isinstance(v, bytes):
+            return v.decode("utf-8", errors="ignore").strip()
+        if hasattr(v, "decode"):
+            try:
+                return v.decode("utf-8", errors="ignore").strip()
+            except Exception:
+                pass
+        return str(v).strip()
+
+    def _resolve_position_index(self, position: dict, atoms) -> Optional[int]:
+        """Resolve a labeling position to an atom index in the structure.
+
+        Parameters
+        ----------
+        position : dict
+            The labeling position definition dict.
+        atoms : numpy.ndarray
+            The structural atoms list/array.
+
+        Returns
+        -------
+        Optional[int]
+            The index of the resolved atom in the atoms array.
+        """
+        if "chain_identifier" in position and "residue_seq_number" in position:
+            chain = str(position["chain_identifier"]).strip()
+            residue = int(position["residue_seq_number"])
+            atom_name = str(position.get("atom_name", "CA")).strip()
+            mask = np.ones(len(atoms), dtype=bool)
+            if "chain" in atoms.dtype.names:
+                chain_mask = np.array([self._decode_bytes(v) == chain for v in atoms["chain"]])
+                if np.any(chain_mask):
+                    mask &= chain_mask
+            if "res_id" in atoms.dtype.names:
+                mask &= atoms["res_id"] == residue
+            if "atom_name" in atoms.dtype.names:
+                atom_mask = np.array([self._decode_bytes(v) == atom_name for v in atoms["atom_name"]])
+                fallback_ca = np.array([self._decode_bytes(v) == "CA" for v in atoms["atom_name"]])
+                selected = np.where(mask & atom_mask)[0]
+                if selected.size == 0:
+                    selected = np.where(mask & fallback_ca)[0]
+            else:
+                selected = np.where(mask)[0]
+            if selected.size:
+                return int(selected[0])
+        if "attachment_atom_index" in position:
+            index = int(position["attachment_atom_index"])
+            if 0 <= index < len(atoms):
+                return index
+        return None
+
+    def _resolve_position_by_guessing(self, name: str, atoms) -> Optional[int]:
+        """Guess residue index in structural atoms array from its numeric prefix.
+
+        Parameters
+        ----------
+        name : str
+            The name or number string representing the residue (e.g., "19" or "19D").
+        atoms : numpy.ndarray
+            The structural atoms list/array.
+
+        Returns
+        -------
+        Optional[int]
+            The index of the resolved CA/fallback atom in the atoms array.
+        """
+        import re
+        match = re.search(r'\d+', name)
+        if not match:
+            return None
+        residue = int(match.group())
+        mask = np.ones(len(atoms), dtype=bool)
+        if "res_id" in atoms.dtype.names:
+            mask &= atoms["res_id"] == residue
+        if "atom_name" in atoms.dtype.names:
+            ca_mask = np.array([self._decode_bytes(v) == "CA" for v in atoms["atom_name"]])
+            selected = np.where(mask & ca_mask)[0]
+            if selected.size:
+                return int(selected[0])
+        selected = np.where(mask)[0]
+        if selected.size:
+            return int(selected[0])
+        return None
 
     def _add_potential_row(self, key: str, weight: float = None, settings: dict = None, eval_interval: int = 1) -> None:
         """Add or update one energy-term row."""
@@ -554,21 +926,26 @@ class ProteinMCModelWidget(ModelWidget):
                     form.addRow(param_name, checkbox)
                     controls[param_name] = checkbox
                 elif isinstance(default, str):
-                    line_edit = QtWidgets.QLineEdit(
-                        str(settings.get(param_name, default)), dialog
-                    )
-                    if param_name in ("labeling_file",):
-                        browse_btn = QtWidgets.QPushButton("Browse...", dialog)
-                        browse_btn.clicked.connect(
-                            lambda _checked=False, le=line_edit: self._browse_fps_file(le)
-                        )
-                        row_layout = QtWidgets.QHBoxLayout()
-                        row_layout.addWidget(line_edit)
-                        row_layout.addWidget(browse_btn)
-                        form.addRow(param_name, row_layout)
+                    if key == "fps" and param_name == "score_set":
+                        combo = QtWidgets.QComboBox(dialog)
+                        form.addRow(param_name, combo)
+                        controls[param_name] = combo
                     else:
-                        form.addRow(param_name, line_edit)
-                    controls[param_name] = line_edit
+                        line_edit = QtWidgets.QLineEdit(
+                            str(settings.get(param_name, default)), dialog
+                        )
+                        if param_name in ("labeling_file",):
+                            browse_btn = QtWidgets.QPushButton("Browse...", dialog)
+                            browse_btn.clicked.connect(
+                                lambda _checked=False, le=line_edit: self._browse_fps_file(le)
+                            )
+                            row_layout = QtWidgets.QHBoxLayout()
+                            row_layout.addWidget(line_edit)
+                            row_layout.addWidget(browse_btn)
+                            form.addRow(param_name, row_layout)
+                        else:
+                            form.addRow(param_name, line_edit)
+                        controls[param_name] = line_edit
                 else:
                     spin = QtWidgets.QDoubleSpinBox(dialog)
                     spin.setDecimals(6)
@@ -576,6 +953,47 @@ class ProteinMCModelWidget(ModelWidget):
                     spin.setValue(float(settings.get(param_name, default)))
                     form.addRow(param_name, spin)
                     controls[param_name] = spin
+
+        if key == "fps":
+            lbl_edit = controls.get("labeling_file")
+            score_combo = controls.get("score_set")
+            if lbl_edit is not None and score_combo is not None:
+                def update_score_combo():
+                    path = lbl_edit.text().strip()
+                    old_val = score_combo.currentText()
+                    if not old_val:
+                        old_val = settings.get("score_set", "")
+                    score_combo.blockSignals(True)
+                    score_combo.clear()
+                    score_combo.addItem("")
+                    if path:
+                        try:
+                            from chisurf.plugins.modelling.proteinmc.model import load_json
+                            payload = load_json(path)
+                            group_names = list((payload.get("χ²", {}) or {}).keys())
+                            for name in group_names:
+                                score_combo.addItem(name)
+                        except Exception:
+                            pass
+                    idx = score_combo.findText(old_val)
+                    if idx >= 0:
+                        score_combo.setCurrentIndex(idx)
+                    else:
+                        found_idx = -1
+                        if old_val:
+                            for i in range(score_combo.count()):
+                                item_text = score_combo.itemText(i).lower()
+                                if old_val.lower() in item_text or item_text in old_val.lower():
+                                    found_idx = i
+                                    break
+                        if found_idx >= 0:
+                            score_combo.setCurrentIndex(found_idx)
+                        else:
+                            score_combo.setCurrentIndex(0)
+                    score_combo.blockSignals(False)
+
+                lbl_edit.textChanged.connect(update_score_combo)
+                update_score_combo()
 
         buttons = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
@@ -592,6 +1010,8 @@ class ProteinMCModelWidget(ModelWidget):
                 updated[name] = ctrl.isChecked()
             elif isinstance(ctrl, QtWidgets.QLineEdit):
                 updated[name] = ctrl.text()
+            elif isinstance(ctrl, QtWidgets.QComboBox):
+                updated[name] = ctrl.currentText()
             else:
                 updated[name] = ctrl.value()
         item.setData(QtCore.Qt.UserRole + 1, updated)
@@ -660,12 +1080,53 @@ class ProteinMCModelWidget(ModelWidget):
         idx = self.score_set_combo.findText(old)
         if idx >= 0:
             self.score_set_combo.setCurrentIndex(idx)
-        elif group_names:
-            self.score_set_combo.setCurrentIndex(1)
+        else:
+            # Fallback: check if we can find a substring match
+            found_idx = -1
+            if old:
+                for i in range(self.score_set_combo.count()):
+                    item_text = self.score_set_combo.itemText(i).lower()
+                    if old.lower() in item_text or item_text in old.lower():
+                        found_idx = i
+                        break
+            if found_idx >= 0:
+                self.score_set_combo.setCurrentIndex(found_idx)
+            elif group_names:
+                self.score_set_combo.setCurrentIndex(1)
         self.score_set_combo.blockSignals(False)
 
     def _on_score_set_changed(self, text: str) -> None:
         """React to score-set combo changes (persisted via get_state/set_state)."""
+        # Rebuild distances UI when score set changes
+        self._rebuild_distances_ui()
+
+    def _on_labeling_file_changed(self, text: str) -> None:
+        """React to labeling file path changes."""
+        # Populate score sets and rebuild distances UI
+        self._populate_score_sets()
+        self._populate_flexfit_sets()
+        self._rebuild_distances_ui()
+
+    def _rebuild_distances_ui(self) -> None:
+        """Rebuild the distances UI group."""
+        # Simply rebuild the distances UI by clearing and recreating
+        if hasattr(self, '_distances_group') and self._distances_group is not None:
+            # Remove the old distances group from its parent
+            parent_layout = self._distances_group.parent()
+            if parent_layout is not None:
+                for i in range(parent_layout.count()):
+                    item = parent_layout.itemAt(i)
+                    if item and item.widget() is self._distances_group:
+                        parent_layout.removeWidget(self._distances_group)
+                        break
+            self._distances_group.setParent(None)
+            self._distances_group = None
+        
+        # Rebuild the distances UI - we need to find the layout
+        # For now, just rebuild it in the main layout
+        if hasattr(self, 'layout') and self.layout is not None:
+            self._build_distances_ui(self.layout)
+            self.update_distance_widgets()
 
     # --- FlexFit methods ---
 
@@ -1032,6 +1493,8 @@ class ProteinMCModelWidget(ModelWidget):
         )
         if self.viewer is not None and progress.xyz is not None:
             self._schedule_chimol_update(progress.xyz)
+            # Update distance parameters with current coordinates
+            self._update_distance_parameters(progress.xyz)
         self._schedule_plot_update()
 
         dialog = getattr(self, "_dialog", None)
@@ -1117,6 +1580,7 @@ class ProteinMCModelWidget(ModelWidget):
                 plot.update()
             except Exception:
                 pass
+        self.update_distance_widgets()
 
     def _update_chimol(self, xyz: np.ndarray) -> None:
         """Push one frame to the embedded Chimol viewer by appending it
@@ -1321,6 +1785,7 @@ class ProteinMCModelWidget(ModelWidget):
         self._sync_fps_potential_to_labeling()
  
         self._refresh_structure_plots()
+        self.update_distance_widgets()
 
     def _restore_potential_settings(self, potentials: object) -> None:
         """Restore potential UI controls from serialized settings."""
@@ -1411,8 +1876,17 @@ class ProteinMCModelWidget(ModelWidget):
                     if idx >= 0:
                         self.score_set_combo.setCurrentIndex(idx)
                     else:
-                        self.score_set_combo.addItem(score_set)
-                        self.score_set_combo.setCurrentText(score_set)
+                        found_idx = -1
+                        for i in range(self.score_set_combo.count()):
+                            item_text = self.score_set_combo.itemText(i).lower()
+                            if score_set.lower() in item_text or item_text in score_set.lower():
+                                found_idx = i
+                                break
+                        if found_idx >= 0:
+                            self.score_set_combo.setCurrentIndex(found_idx)
+                        else:
+                            self.score_set_combo.addItem(score_set)
+                            self.score_set_combo.setCurrentText(score_set)
                 break
  
     def _load_starting_structure(self, filename: str) -> None:
@@ -1431,6 +1905,7 @@ class ProteinMCModelWidget(ModelWidget):
 
         self.proteinmc_structure = structure
         self.trajectory_frames = []
+        self.update_distance_widgets()
         if self.viewer is None:
             return
 

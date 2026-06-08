@@ -1,4 +1,5 @@
 """
+import chisurf as cs
 IRF Estimator Plugin
 
 This plugin provides blind instrument response function (IRF) estimation from
@@ -26,6 +27,7 @@ Reference:
 
 name = "Spectroscopy:Fluorescence decay:IRF Extraction"
 
+import chisurf as cs
 import sys
 import os
 import numpy as np
@@ -49,7 +51,6 @@ try:
     from chisurf.core.fio import read_jordi as _read_jordi
     from chisurf.core.fio import write_jordi as _write_jordi
     from chisurf.core.fluorescence.tcspc import IRFEstimator
-    import chisurf
     CHISURF_AVAILABLE = True
 except Exception:
     _read_jordi = None
@@ -329,7 +330,7 @@ class IRFEstimatorPlugin(QWidget):
         if file_path is None:
             # Start in ChiSurf working directory if available
             try:
-                start_dir = str(getattr(chisurf, 'working_path', '') or '')
+                start_dir = str(getattr(cs, 'working_path', '') or '')
             except Exception:
                 start_dir = ""
                 
@@ -886,7 +887,7 @@ class IRFEstimatorPlugin(QWidget):
             
         # Get save file path
         try:
-            start_dir = str(getattr(chisurf, 'working_path', '') or '')
+            start_dir = str(getattr(cs, 'working_path', '') or '')
         except Exception:
             start_dir = ""
             
@@ -907,9 +908,9 @@ class IRFEstimatorPlugin(QWidget):
 
         # Debug logging
         if CHISURF_AVAILABLE:
-            chisurf.logging.debug(f"Saving IRF to {file_path}")
-            chisurf.logging.debug(f"IRF data shape: {irf_data.shape}")
-            chisurf.logging.debug(f"IRF data sample: {irf_data[:5]}")
+            cs.logging.debug(f"Saving IRF to {file_path}")
+            cs.logging.debug(f"IRF data shape: {irf_data.shape}")
+            cs.logging.debug(f"IRF data sample: {irf_data[:5]}")
 
         # Save as Jordi format (two columns with same data)
         if _write_jordi is not None:
@@ -924,7 +925,7 @@ class IRFEstimatorPlugin(QWidget):
             raise RuntimeError("Failed to save IRF file or file is empty")
 
         if CHISURF_AVAILABLE:
-            chisurf.logging.info(f"Successfully saved IRF to {file_path}")
+            cs.logging.info(f"Successfully saved IRF to {file_path}")
 
         QMessageBox.information(
             self, "Success",
@@ -941,7 +942,7 @@ class IRFEstimatorPlugin(QWidget):
 
     def add_to_chisurf(self):
         """
-        Add the computed IRF to chisurf as a dataset.
+        Add the computed IRF to cs as a dataset.
         This method saves the IRF to a temporary file and loads it into ChiSurf.
         """
         if self.irf_data is None or len(self.irf_data) == 0:
@@ -958,7 +959,7 @@ class IRFEstimatorPlugin(QWidget):
             raise ValueError("IRF data contains NaN or infinite values")
 
         if CHISURF_AVAILABLE:
-            chisurf.logging.debug(f"IRF data validated - shape: {irf_data.shape}, dtype: {irf_data.dtype}")
+            cs.logging.debug(f"IRF data validated - shape: {irf_data.shape}, dtype: {irf_data.dtype}")
 
         import tempfile
         import os
@@ -966,13 +967,13 @@ class IRFEstimatorPlugin(QWidget):
 
         # Create a temporary file with a proper extension and explicit file handling
         if CHISURF_AVAILABLE:
-            chisurf.logging.debug("Creating temporary file...")
-            chisurf.logging.debug(f"IRF data type: {type(irf_data)}, shape: {irf_data.shape}, dtype: {irf_data.dtype}")
-            chisurf.logging.debug(f"Sample data: {irf_data[:5]}")
+            cs.logging.debug("Creating temporary file...")
+            cs.logging.debug(f"IRF data type: {type(irf_data)}, shape: {irf_data.shape}, dtype: {irf_data.dtype}")
+            cs.logging.debug(f"Sample data: {irf_data[:5]}")
 
         fd, tmp_path = tempfile.mkstemp(suffix='.dat')
         if CHISURF_AVAILABLE:
-            chisurf.logging.debug(f"Temporary file created at: {tmp_path}")
+            cs.logging.debug(f"Temporary file created at: {tmp_path}")
 
         # Close the file descriptor before writing to avoid locking issues on Windows
         os.close(fd)
@@ -1000,20 +1001,20 @@ class IRFEstimatorPlugin(QWidget):
         os.rename(temp_file, tmp_path)
 
         if CHISURF_AVAILABLE:
-            chisurf.logging.debug(f"File saved to {tmp_path}")
-            chisurf.logging.debug(f"File size: {os.path.getsize(tmp_path)} bytes")
+            cs.logging.debug(f"File saved to {tmp_path}")
+            cs.logging.debug(f"File size: {os.path.getsize(tmp_path)} bytes")
 
             # Debug logging
             if CHISURF_AVAILABLE:
-                chisurf.logging.debug(f"IRF data shape: {irf_data.shape}")
-                chisurf.logging.debug(f"IRF data sample: {irf_data[:5]}")
+                cs.logging.debug(f"IRF data shape: {irf_data.shape}")
+                cs.logging.debug(f"IRF data sample: {irf_data[:5]}")
 
                 # Verify the final file exists and has content
                 if os.path.exists(tmp_path):
                     file_size = os.path.getsize(tmp_path)
-                    chisurf.logging.debug(f"Final file size: {file_size} bytes")
+                    cs.logging.debug(f"Final file size: {file_size} bytes")
                     if file_size == 0:
-                        chisurf.logging.warning("Warning: Final file is empty")
+                        cs.logging.warning("Warning: Final file is empty")
 
 
         # Verify the file was created and has content
@@ -1023,19 +1024,19 @@ class IRFEstimatorPlugin(QWidget):
         file_size = os.path.getsize(tmp_path)
 
         if CHISURF_AVAILABLE:
-            chisurf.logging.debug(f"Temporary file created successfully: {tmp_path} ({file_size} bytes)")
+            cs.logging.debug(f"Temporary file created successfully: {tmp_path} ({file_size} bytes)")
 
         # Get the base filename for display
         filename = Path(tmp_path).name
 
         # Set up ChiSurf experiment settings for TCSPC data
-        if CHISURF_AVAILABLE and hasattr(chisurf, 'cs'):
+        if CHISURF_AVAILABLE and hasattr(cs, 'cs'):
             # Configure the current setup for IRF data
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="experiment.set",
                 payload={"name": "TCSPC"},
             )
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="setup.params.set",
                 payload={
                     "params": {
@@ -1052,7 +1053,7 @@ class IRFEstimatorPlugin(QWidget):
             )
 
             # Add the IRF dataset to ChiSurf
-            chisurf.core.actions.dispatch(
+            cs.core.actions.dispatch(
                 name="dataset.add",
                 payload={"filename": tmp_path, "experiment_reader": None},
             )
@@ -1063,7 +1064,7 @@ class IRFEstimatorPlugin(QWidget):
                 f"IRF '{filename}' has been transferred to ChiSurf."
             )
 
-            chisurf.logging.info(f"Transferred IRF to ChiSurf: {filename}")
+            cs.logging.info(f"Transferred IRF to ChiSurf: {filename}")
 
         else:
             # Fallback if ChiSurf is not available
@@ -1086,7 +1087,7 @@ class IRFEstimatorPlugin(QWidget):
             
             # Get all datasets from ChiSurf's imported datasets
             all_curves = get_data(
-                data_set=chisurf.imported_datasets,
+                data_set=cs.imported_datasets,
                 curve_type='experiment'
             )
             
@@ -1099,7 +1100,7 @@ class IRFEstimatorPlugin(QWidget):
             return datasets
             
         except Exception as e:
-            chisurf.logging.error(f"Error getting available datasets: {str(e)}")
+            cs.logging.error(f"Error getting available datasets: {str(e)}")
             return []
     
     def load_from_dataset(self):

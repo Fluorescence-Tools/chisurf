@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import pathlib
 
@@ -12,7 +13,7 @@ from chisurf.core.experiments.core import reader
 class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
     def get_filename(self) -> pathlib.Path:
-        return chisurf.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
+        return cs.gui.widgets.get_filename('FCS-CSV files', file_type=self.file_type)
 
     def __init__(
             self,
@@ -58,7 +59,7 @@ class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
         self.layout.addLayout(noise_layout)
 
         # CSV-style format controls (header, skiprows, columns, etc.).
-        self.csv_widget = chisurf.gui.widgets.fio.CsvWidget()
+        self.csv_widget = cs.gui.widgets.fio.CsvWidget()
         self.layout.addWidget(self.csv_widget)
 
         # Sync initial combobox selection with the underlying reader, if
@@ -96,9 +97,8 @@ class FCSController(reader.ExperimentReaderController, QtWidgets.QWidget):
 
     def updateUI(self):
         """Update UI elements based on current_setup properties."""
-        import chisurf
         try:
-            setup = chisurf.cs.current_setup
+            setup = cs.cs.current_setup
         except Exception:
             return
 

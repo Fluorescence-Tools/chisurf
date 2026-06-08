@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 import json
 import pathlib
@@ -190,47 +191,45 @@ def save_setup_defaults(data: Dict[str, Any]) -> bool:
         return False
 
 
-def get_current_experiment_index(cs: Any) -> int:
+def get_current_experiment_index(gui: Any) -> int:
     """Get the current experiment index from the main window."""
     try:
-        return int(getattr(cs, "current_experiment_idx", 0))
+        return int(getattr(gui, "current_experiment_idx", 0))
     except Exception:
         return 0
 
 
-def get_current_setup_index(cs: Any) -> int:
+def get_current_setup_index(gui: Any) -> int:
     """Get the current setup index from the main window."""
     try:
-        return int(getattr(cs, "current_setup_idx", 0))
+        return int(getattr(gui, "current_setup_idx", 0))
     except Exception:
         return 0
 
 
-def collect_setup_defaults(cs: Any) -> Dict[str, Any]:
+def collect_setup_defaults(gui: Any) -> Dict[str, Any]:
     """Collect current setup defaults from all readers.
     
     This serializes the state of all readers in all experiments and
     also captures the current experiment/setup selection indices.
     
     Args:
-        cs: The main window's cs object
+        gui: The main window's gui object
         
     Returns:
         Dict with experiments dict containing per-experiment defaults
     """
-    import chisurf
-    
     result = {
         "schema_version": SCHEMA_VERSION,
         "last_selection": {
-            "experiment_index": get_current_experiment_index(cs),
-            "setup_index": get_current_setup_index(cs),
+            "experiment_index": get_current_experiment_index(gui),
+            "setup_index": get_current_setup_index(gui),
         },
         "experiments": {},
     }
     
     try:
-        experiments = chisurf.experiment
+        experiments = cs.experiment
         if not experiments:
             return result
         
@@ -258,7 +257,7 @@ def collect_setup_defaults(cs: Any) -> Dict[str, Any]:
     return result
 
 
-def apply_setup_defaults(cs: Any, defaults: Dict[str, Any]) -> None:
+def apply_setup_defaults(gui: Any, defaults: Dict[str, Any]) -> None:
     """Apply saved setup defaults to all readers.
     
     This applies the serialized state to each matching reader and then
@@ -266,17 +265,15 @@ def apply_setup_defaults(cs: Any, defaults: Dict[str, Any]) -> None:
     but before showing the window.
     
     Args:
-        cs: The main window's cs object
+        gui: The main window's gui object
         defaults: Dict with experiments and last_selection
     """
-    import chisurf
-    
     experiments = defaults.get("experiments", {})
     if not experiments:
         return
     
     try:
-        exp_dict = chisurf.experiment
+        exp_dict = cs.experiment
     except Exception:
         exp_dict = {}
     
@@ -316,22 +313,22 @@ def apply_setup_defaults(cs: Any, defaults: Dict[str, Any]) -> None:
     setup_idx = last_selection.get("setup_index", 0)
     
     try:
-        total_exp = cs.comboBox_experimentSelect.count()
+        total_exp = gui.comboBox_experimentSelect.count()
         if 0 <= exp_idx < total_exp:
-            cs.set_current_experiment_idx(exp_idx)
+            gui.set_current_experiment_idx(exp_idx)
     except Exception:
         pass
     
     try:
-        total_setup = cs.comboBox_setupSelect.count()
+        total_setup = gui.comboBox_setupSelect.count()
         if 0 <= setup_idx < total_setup:
-            cs.set_current_setup_idx(setup_idx)
+            gui.set_current_setup_idx(setup_idx)
     except Exception:
         pass
     
     # Sync UI from the reader state
     try:
-        controller = cs.current_setup
+        controller = gui.current_setup
         if controller is not None:
             # If controller has updateUI, call it with signals blocked
             if hasattr(controller, "updateUI"):

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import chisurf as cs
 
 from datetime import datetime, timezone
 import json
@@ -358,12 +359,11 @@ class OperationHistory:
     def _emit_log(event: typing.Dict[str, typing.Any]) -> None:
         line = f"# HIST {event.get('action_type', '?')}: {event.get('summary', '')}"
         try:
-            import chisurf
-            log_fn = getattr(chisurf, "log", None)
+            log_fn = getattr(cs, "log", None)
             if callable(log_fn):
                 log_fn(line)
             else:
-                chisurf.logging.info(line)
+                cs.logging.info(line)
         except Exception:
             pass
 

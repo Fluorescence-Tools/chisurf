@@ -4,9 +4,7 @@ import json
 
 from chisurf import typing
 from qtpy import QtCore, QtGui, QtWidgets
-import chisurf
-
-
+import chisurf as cs
 class HistoryBrowserWidget(QtWidgets.QWidget):
     cursorChanged = QtCore.Signal(object)
 
@@ -134,7 +132,7 @@ class HistoryBrowserWidget(QtWidgets.QWidget):
     @staticmethod
     def _log_info(message: str) -> None:
         try:
-            chisurf.logging.info(f"HISTNAV: {message}")
+            cs.logging.info(f"HISTNAV: {message}")
         except Exception:
             pass
 

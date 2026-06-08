@@ -43,7 +43,7 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 from .core import (
     TTTRData, ChannelConfig, load_tttr_with_tttrlib,
     compute_microtime_waterfall, make_default_channel_cfg,
-    tttr_to_wav
+    tttr_to_wav, CHORD_TYPE_NAMES
 )
 from .waterfall_plot import WaterfallPlotWidget
 from .sound_playback import SoundPlayer, create_tttr_audio
@@ -89,6 +89,13 @@ class ChannelControl(QWidget):
         self.chk_enable.setChecked(True)
         self.layout.addWidget(self.chk_enable)
 
+        self.combo_chord = QComboBox(self)
+        self.combo_chord.addItems(CHORD_TYPE_NAMES)
+        if cfg.chord_type in CHORD_TYPE_NAMES:
+            self.combo_chord.setCurrentText(cfg.chord_type)
+        self.layout.addWidget(QLabel("Chord:", self))
+        self.layout.addWidget(self.combo_chord)
+
         self.spin_pitch = QDoubleSpinBox(self)
         self.spin_pitch.setRange(-24, 24)
         self.spin_pitch.setValue(cfg.pitch_semitones)
@@ -105,9 +112,10 @@ class ChannelControl(QWidget):
         if not self.chk_enable.isChecked():
             return None
         return ChannelConfig(
-            note_hz=261.63,  # Will be set by default map
+            note_hz=261.63,
+            chord_type=self.combo_chord.currentText(),
             pitch_semitones=self.spin_pitch.value(),
-            micro_min=0,  # Full range, DetWiz handles gating
+            micro_min=0,
             micro_max=2**31 - 1,
             gain=self.spin_gain.value()
         )
@@ -237,6 +245,27 @@ class TTTRAudifierWidget(QWidget):
         self.spin_master_gain.setRange(0, 2)
         self.spin_master_gain.setValue(0.8)
         param_layout.addRow("Master Gain:", self.spin_master_gain)
+
+        self.spin_env_floor = QDoubleSpinBox(self)
+        self.spin_env_floor.setRange(0.0, 0.99)
+        self.spin_env_floor.setValue(0.0)
+        self.spin_env_floor.setSingleStep(0.05)
+        param_layout.addRow("Env Floor:", self.spin_env_floor)
+
+        self.spin_env_scale = QDoubleSpinBox(self)
+        self.spin_env_scale.setRange(0.1, 10.0)
+        self.spin_env_scale.setValue(1.0)
+        param_layout.addRow("Env Scale:", self.spin_env_scale)
+
+        self.spin_attack_frames = QSpinBox(self)
+        self.spin_attack_frames.setRange(0, 100)
+        self.spin_attack_frames.setValue(2)
+        param_layout.addRow("Attack:", self.spin_attack_frames)
+
+        self.spin_release_frames = QSpinBox(self)
+        self.spin_release_frames.setRange(0, 200)
+        self.spin_release_frames.setValue(6)
+        param_layout.addRow("Release:", self.spin_release_frames)
         audio_layout.addWidget(param_group)
 
         # Waterfall parameters
@@ -540,16 +569,15 @@ class TTTRAudifierWidget(QWidget):
         for ch, ctrl in self.channel_controls.items():
             c = ctrl.get_config()
             if c is not None:
-                # Set note_hz from default
                 default_cfg = make_default_channel_cfg([ch])
-                c = ChannelConfig(
+                cfg[ch] = ChannelConfig(
                     note_hz=default_cfg[ch].note_hz,
+                    chord_type=c.chord_type,
                     pitch_semitones=c.pitch_semitones,
                     micro_min=c.micro_min,
                     micro_max=c.micro_max,
                     gain=c.gain
                 )
-                cfg[ch] = c
         return cfg
 
     def _on_waterfall_mode_changed(self, button):
@@ -987,18 +1015,13 @@ class TTTRAudifierWidget(QWidget):
         if _icon_manager is None:
             return
         
-        # Determine current state
+        # Determine current state from sound_player
         if self.data is None:
             state = "idle"
-        elif hasattr(self, 'current_sound') and self.current_sound is not None:
-            # Check if sound is currently playing
-            if hasattr(self, 'sound_start_time') and self.sound_start_time is not None:
-                if hasattr(self, 'sound_is_paused') and self.sound_is_paused:
-                    state = "paused"
-                else:
-                    state = "playing"
-            else:
-                state = "loaded"
+        elif self.sound_player.state.is_playing and not self.sound_player.state.is_paused:
+            state = "playing"
+        elif self.sound_player.state.is_paused:
+            state = "paused"
         elif self.progress.isVisible():
             state = "processing"
         else:
@@ -1006,10 +1029,3 @@ class TTTRAudifierWidget(QWidget):
         
         # Update icon manager state
         _icon_manager.set_state(state)
-        
-        # Update module-level icon for plugin manager
-        try:
-            from . import set_icon_state
-            set_icon_state(state)
-        except ImportError:
-            pass
