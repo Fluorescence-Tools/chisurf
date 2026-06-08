@@ -1,0 +1,95 @@
+"""GUI tests for the FRET Docking & Screening plugin and fps.json editor.
+"""
+
+from __future__ import annotations
+
+import os
+import pytest
+import numpy as np
+from qtpy import QtWidgets
+
+from chisurf.plugins.modelling.fret.gui import FretDockWizard
+from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStructure
+
+
+def test_wizard_opens(qtbot):
+    """The wizard window opens without errors."""
+    window = FretDockWizard()
+    qtbot.addWidget(window)
+    assert window.windowTitle() == "FRET Docking & Screening"
+    assert window.tabs.count() == 5
+    assert window.tabs.tabText(0) == "Edit fps.json"
+    assert window.tabs.tabText(1) == "Docking"
+    assert window.tabs.tabText(2) == "Screening"
+    assert window.tabs.tabText(3) == "Evaluators"
+    assert window.tabs.tabText(4) == "Pair Selection"
+
+
+def test_label_structure_panels(qtbot):
+    """Verify that LabelStructure editor initializes sub-panels correctly."""
+    editor = LabelStructure()
+    qtbot.addWidget(editor)
+
+    assert editor.position_panel is not None
+    assert editor.distance_panel is not None
+    assert editor.flexfit_panel is not None
+    assert editor.json_editor is not None
+
+    # Check that positions list is empty initially
+    assert editor.position_panel.positions_list.count() == 0
+    assert len(editor.positions) == 0
+
+
+def test_label_structure_payload_roundtrip(qtbot):
+    """Test loading and modifying configurations in LabelStructure editor."""
+    editor = LabelStructure()
+    qtbot.addWidget(editor)
+
+    payload = {
+        "Positions": {
+            "D1": {
+                "atom_name": "CA",
+                "chain_identifier": "A",
+                "residue_seq_number": 10,
+                "residue_name": "ALA",
+                "linker_length": 20.0,
+                "linker_width": 1.0,
+                "radius1": 3.5,
+                "radius2": 0.0,
+                "radius3": 0.0,
+                "simulation_grid_resolution": 1.5,
+                "body_id": 0
+            }
+        },
+        "Distances": {
+            "D1_D2": {
+                "Forster_radius": 52.0,
+                "distance_type": "RDAMean",
+                "position1_name": "D1",
+                "position2_name": "D2",
+                "distance": 45.0,
+                "error_neg": 5.0,
+                "error_pos": 5.0
+            }
+        },
+        "χ²": {
+            "Group1": {
+                "distances": ["D1_D2"]
+            }
+        }
+    }
+
+    editor.fps_json_payload = payload
+
+    # Check model contents
+    assert "D1" in editor.positions
+    assert "D1_D2" in editor.distances
+    assert "Group1" in editor.score_sets
+
+    # Check position panel
+    assert editor.position_panel.positions_list.count() == 1
+    assert editor.position_panel.positions_list.item(0).text() == "D1"
+
+    # Check distance table
+    assert editor.distance_panel.distances_table.rowCount() == 1
+    assert editor.distance_panel.distances_table.item(0, 0).text() == "D1_D2"
