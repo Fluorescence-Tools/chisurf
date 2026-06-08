@@ -104,11 +104,29 @@ class GraphWizard(QtWidgets.QWidget):
             w = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(node)
             self.parameter_layout.addWidget(w)
 
+    def _validate_and_link(self, source, target) -> bool:
+        if Parameter.check_recursive_link(target, source):
+            cs.logging.log(0, f"Cycle detected: cannot link {source.name} -> {target.name}")
+            return False
+        source.link = target
+        return True
+
+    def on_link_requested(self, source_idx: int, target_idx: int):
+        source = self.node_data['objects'][source_idx]
+        target = self.node_data['objects'][target_idx]
+        if self._validate_and_link(source, target):
+            self.recompute_graph()
+
+    def on_link_removal_requested(self, source_idx: int):
+        param = self.node_data['objects'][source_idx]
+        param.link = None
+        self.recompute_graph()
+
     def link_selection(self):
         logging.log(0,"link_selection(self)")
         target, source = self.selected_nodes[:2]
-        source.link = target
-        self.recompute_graph()
+        if self._validate_and_link(source, target):
+            self.recompute_graph()
 
     def link_clear(self):
         logging.log(0, "link_clear(self)")
@@ -364,7 +382,11 @@ class GraphWizard(QtWidgets.QWidget):
 
         l.addWidget(s)
 
-        g = GraphPlotWidget(update_callback=update_callback)
+        g = GraphPlotWidget(
+            update_callback=update_callback
+        )
+        g.linkRequested.connect(self.on_link_requested)
+        g.linkRemovalRequested.connect(self.on_link_removal_requested)
         w.g = g
         v.addItem(g)
 
@@ -388,7 +410,8 @@ class GraphWizard(QtWidgets.QWidget):
                 size=node_size,
                 pxMode=False,
                 text=node_data['names'],
-                symbolBrush=symbolBrush
+                symbolBrush=symbolBrush,
+                node_types=node_data['types']
             )
 
         # Replace previous graph container inside the Graph tab
