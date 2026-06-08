@@ -6,12 +6,12 @@ from enum import Enum, auto
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-import chisurf
+import chisurf as cs
 import chisurf.core.fio as io
 from chisurf import logging
 import chisurf.gui.widgets
 import chisurf.core.settings
-from chisurf.plugins.misc.code_editor.agent_panel import AgentPanelWidget
+from chisurf.plugins.core.code_editor.agent_panel import AgentPanelWidget
 
 
 class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
@@ -25,9 +25,9 @@ class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
         self.formats = {}
 
         if font_family is None:
-            font_family = chisurf.core.settings.gui['editor']['font_family']
+            font_family = cs.core.settings.gui['editor']['font_family']
         if font_point_size is None:
-            font_point_size = chisurf.core.settings.gui['editor']['font_size']
+            font_point_size = cs.core.settings.gui['editor']['font_size']
 
         self.default_font = QtGui.QFont(font_family, int(font_point_size))
 
@@ -55,9 +55,9 @@ class PythonHighlighter(SyntaxHighlighter):
         super().__init__(parent, font_family, font_point_size)
 
         if paper_color is None:
-            paper_color = chisurf.core.settings.gui['editor']['paper_color']
+            paper_color = cs.core.settings.gui['editor']['paper_color']
         if default_color is None:
-            default_color = chisurf.core.settings.gui['editor']['default_color']
+            default_color = cs.core.settings.gui['editor']['default_color']
 
         # Create formats for different syntax elements
         keyword_format = QtGui.QTextCharFormat()
@@ -128,9 +128,9 @@ class JSONHighlighter(SyntaxHighlighter):
         super().__init__(parent, font_family, font_point_size)
 
         if paper_color is None:
-            paper_color = chisurf.core.settings.gui['editor']['paper_color']
+            paper_color = cs.core.settings.gui['editor']['paper_color']
         if default_color is None:
-            default_color = chisurf.core.settings.gui['editor']['default_color']
+            default_color = cs.core.settings.gui['editor']['default_color']
 
         # Create formats for different syntax elements
         property_format = QtGui.QTextCharFormat()
@@ -177,9 +177,9 @@ class YAMLHighlighter(SyntaxHighlighter):
         super().__init__(parent, font_family, font_point_size)
 
         if paper_color is None:
-            paper_color = chisurf.core.settings.gui['editor']['paper_color']
+            paper_color = cs.core.settings.gui['editor']['paper_color']
         if default_color is None:
-            default_color = chisurf.core.settings.gui['editor']['default_color']
+            default_color = cs.core.settings.gui['editor']['default_color']
 
         # Create formats for different syntax elements
         key_format = QtGui.QTextCharFormat()
@@ -272,18 +272,18 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         super().__init__(parent)
 
         if font_point_size is None:
-            font_point_size = chisurf.core.settings.gui['editor']['font_size']
+            font_point_size = cs.core.settings.gui['editor']['font_size']
         if font_family is None:
-            font_family = chisurf.core.settings.gui['editor']['font_family']
+            font_family = cs.core.settings.gui['editor']['font_family']
         if margins_background_color is None:
-            margins_background_color = chisurf.core.settings.gui['editor']['margins_background_color']
+            margins_background_color = cs.core.settings.gui['editor']['margins_background_color']
         if marker_background_color is None:
-            marker_background_color = chisurf.core.settings.gui['editor']['marker_background_color']
+            marker_background_color = cs.core.settings.gui['editor']['marker_background_color']
         if caret_line_background_color is None:
-            caret_line_background_color = chisurf.core.settings.gui['editor']['caret_line_background_color']
+            caret_line_background_color = cs.core.settings.gui['editor']['caret_line_background_color']
 
-        paper_color = kwargs.get("paper_color", chisurf.core.settings.gui['editor']['paper_color'])
-        default_color = kwargs.get("default_color", chisurf.core.settings.gui['editor']['default_color'])
+        paper_color = kwargs.get("paper_color", cs.core.settings.gui['editor']['paper_color'])
+        default_color = kwargs.get("default_color", cs.core.settings.gui['editor']['default_color'])
 
         # Set the default font
         font = QtGui.QFont()
@@ -376,7 +376,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     def line_number_area_paint_event(self, event):
         """Paint the line number area."""
         painter = QtGui.QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QtGui.QColor(chisurf.core.settings.gui['editor']['margins_background_color']))
+        painter.fillRect(event.rect(), QtGui.QColor(cs.core.settings.gui['editor']['margins_background_color']))
 
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()
@@ -540,7 +540,7 @@ class CodeEditor(QtWidgets.QWidget):
 
     def load_file(self, filename: str = None, **kwargs):
         """Load a file into the current or a new tab."""
-        filename = filename or chisurf.gui.widgets.get_filename()
+        filename = filename or cs.gui.widgets.get_filename()
         if not filename:
             return
 
@@ -655,7 +655,7 @@ class CodeEditor(QtWidgets.QWidget):
             logging.log(1, "No file to run. Save the file first.")
             return
         self.save_text()
-        chisurf.console.run_macro(filename=filename)
+        cs.console.run_macro(filename=filename)
 
     def save_text(self, event=None):
         """Save the current tab's text to a file."""
@@ -665,7 +665,7 @@ class CodeEditor(QtWidgets.QWidget):
 
         filename = self._get_current_filename()
         if filename == "Untitled" or not filename:
-            new_filename = chisurf.gui.widgets.save_file(file_type="Python script (*.py)")
+            new_filename = cs.gui.widgets.save_file(file_type="Python script (*.py)")
             if not new_filename:
                 return
             filename = new_filename

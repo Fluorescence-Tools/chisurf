@@ -682,7 +682,7 @@ class ProteinMCModelWidget(ModelWidget):
             editor = LabelStructure()
             editor.onLoadJSON(filename)
         except Exception:
-            from chisurf.plugins.misc.code_editor import CodeEditor
+            from chisurf.plugins.core.code_editor import CodeEditor
 
             editor = CodeEditor(language="JSON")
             editor.open_file(filename)

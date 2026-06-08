@@ -1,7 +1,7 @@
 import sys
 
 from chisurf.gui import QtWidgets
-from chisurf.plugins.misc.code_editor import CodeEditor
+from chisurf.plugins.core.code_editor import CodeEditor
 
 
 def main():

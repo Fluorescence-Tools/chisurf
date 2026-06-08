@@ -1,336 +1,217 @@
+"""A slim coordinator widget for the fps.json editor.
 """
-This module contain a small tool to generate JSON-labeling files
-"""
+
 from __future__ import annotations
 
 import sys
 import json
 import traceback
+from typing import Any, Dict, Optional
+from qtpy import QtCore, QtWidgets
 
-from chisurf.gui import QtWidgets, QtCore
-
-import chisurf.core.fio as io
 import chisurf.gui.decorators
 import chisurf.gui.widgets
-import chisurf.gui.widgets.pdb
-import chisurf.gui.widgets.fluorescence.av
-import chisurf.core.decorators
-import chisurf.core.settings
-import chisurf.core.structure
-import chisurf.core.structure
-from chisurf.plugins.misc.code_editor import SimpleCodeEditor
+import chisurf.gui.widgets.general
+from chisurf.plugins.core.code_editor import SimpleCodeEditor
+from .model import FpsJsonModel
+from .position_panel import PositionPanel
+from .distance_panel import DistancePanel
+from .flexfit_panel import FlexFitPanel
 
 
-class LabelStructure(
-    QtWidgets.QWidget
-):
+class LabelStructure(QtWidgets.QWidget):
+    """The main coordinator widget for editing and inspecting fps.json configurations.
+
+    Composes separate panels for position selection, distance restraints, FlexFit,
+    and raw JSON code view.
+    """
 
     name = "LabelStructure"
 
-    @chisurf.gui.decorators.init_with_ui(
-        ui_filename="fps_json_edit.ui"
-    )
-    def __init__(
-            self,
-            *args,
-            **kwargs
-    ):
-        self.atom_select = chisurf.gui.widgets.pdb.PDBSelector()
-        self.verticalLayout_3.addWidget(self.atom_select)
-        self.av_properties = chisurf.gui.widgets.fluorescence.av.AVProperties()
-        self.verticalLayout_4.addWidget(self.av_properties)
+    @chisurf.gui.decorators.init_with_ui(ui_filename="fps_json_edit.ui")
+    def __init__(self, *args, **kwargs) -> None:
+        """Initialize the editor by nesting sub-panels inside the tab widget."""
+        self._model = FpsJsonModel()
 
-        self.textEdit_2 = SimpleCodeEditor(
-            language='JSON'
-        )
-        self.tab_2.layout().addWidget(self.textEdit_2)
+        # Instantiate sub-panels
+        self.position_panel = PositionPanel()
+        self.distance_panel = DistancePanel()
+        self.flexfit_panel = FlexFitPanel()
 
-        self.toolButton_4.clicked.connect(self.onLoadReferencePDB)
-        self.pushButton_2.clicked.connect(self.onAddLabel)
-        self.pushButton_3.clicked.connect(self.onAddDistance)
-        self.actionSave.triggered.connect(self.onSaveLabelingFile)
-        self.actionClear.triggered.connect(self.onClear)
+        # JSON view panel
+        self.json_tab_widget = QtWidgets.QWidget()
+        json_layout = QtWidgets.QVBoxLayout(self.json_tab_widget)
+        json_layout.setContentsMargins(4, 4, 4, 4)
+        
+        self.json_editor = SimpleCodeEditor(language='JSON')
+        json_layout.addWidget(self.json_editor)
+        
+        self.json_update_btn = QtWidgets.QPushButton("Update from Editor Text")
+        self.json_update_btn.clicked.connect(self.onReadTextEdit)
+        json_layout.addWidget(self.json_update_btn)
+
+        # Clear standard UI tabs and add custom panels
+        self.tabWidget.clear()
+        self.tabWidget.addTab(self.position_panel, "Positions")
+        self.tabWidget.addTab(self.distance_panel, "Distances")
+        self.tabWidget.addTab(self.flexfit_panel, "FlexFit")
+        self.tabWidget.addTab(self.json_tab_widget, "JSON")
+
+        # Wire up actions from the .ui file menu/toolbar
         self.actionLoad.triggered.connect(self.onLoadJSON)
-        self.actionReadTextEdit.triggered.connect(self.onReadTextEdit)
-        self.actionRemoveLabelingPosition.triggered.connect(
-            self.onLabelingListDoubleClicked
-        )
-        self.actionRemove_distance.triggered.connect(
-            self.onDistanceListDoubleClicked
-        )
-        self.comboBox.currentIndexChanged[int].connect(
-            self.onSimulationTypeChanged
-        )
+        self.actionSave.triggered.connect(self.onSaveJSON)
+        self.actionClear.triggered.connect(self.onClearAll)
 
-        self.structure = None
-        self.json_file = None
-        self.positions = dict()
-        self.distances = dict()
+        # Connect sub-panel signals
+        self.position_panel.position_added.connect(self._on_position_added)
+        self.position_panel.position_removed.connect(self._on_position_removed)
+        
+        self.distance_panel.distance_added.connect(self._on_distance_added)
+        self.distance_panel.distance_removed.connect(self._on_distance_removed)
+        self.distance_panel.distance_modified.connect(self._on_distance_modified)
+        self.distance_panel.score_set_added.connect(self._on_score_set_added)
+        self.distance_panel.score_set_removed.connect(self._on_score_set_removed)
+        
+        self.flexfit_panel.flexfit_changed.connect(self._on_flexfit_changed)
 
-    def onReadTextEdit(self):
-        s = str(self.textEdit_2.text())
+        self._refresh_ui()
+
+    @property
+    def fps_json_payload(self) -> dict:
+        """Get the current model state as a payload dictionary."""
+        return self._model.fps_json_payload
+
+    @fps_json_payload.setter
+    def fps_json_payload(self, payload: dict) -> None:
+        """Set the model state using a payload dictionary."""
+        self._model.fps_json_payload = payload
+        self._refresh_ui()
+
+    @property
+    def positions(self) -> Dict[str, Dict[str, Any]]:
+        """Backwards compatible getter for positions dict."""
+        return self._model.positions
+
+    @property
+    def distances(self) -> Dict[str, Dict[str, Any]]:
+        """Backwards compatible getter for distances dict."""
+        return self._model.distances
+
+    @property
+    def score_sets(self) -> Dict[str, Dict[str, Any]]:
+        """Backwards compatible getter for score sets."""
+        return self._model.score_sets
+
+    @property
+    def extra_sections(self) -> Dict[str, Any]:
+        """Backwards compatible getter for extra sections."""
+        return self._model.extra_sections
+
+    def _on_position_added(self, name: str, params: dict) -> None:
+        self._model.add_position(name, params)
+        self._refresh_ui()
+
+    def _on_position_removed(self, name: str) -> None:
+        self._model.remove_position(name)
+        self._refresh_ui()
+
+    def _on_distance_added(self, name: str, params: dict, score_set: str) -> None:
+        self._model.add_distance(name, params, score_set)
+        self._refresh_ui()
+
+    def _on_distance_removed(self, name: str) -> None:
+        self._model.remove_distance(name)
+        self._refresh_ui()
+
+    def _on_distance_modified(self, name: str, field_key: str, value: float) -> None:
+        if name:
+            self._model.distances[name][field_key] = value
+            self._refresh_json_tab()
+        else:
+            self._refresh_ui()
+
+    def _on_score_set_added(self, name: str) -> None:
+        self._model.add_score_set(name)
+        self._refresh_ui()
+
+    def _on_score_set_removed(self, name: str) -> None:
+        self._model.remove_score_set(name)
+        self._refresh_ui()
+
+    def _on_flexfit_changed(self) -> None:
+        self._model.extra_sections["FlexFit"] = self.flexfit_panel._extra_sections.get("FlexFit", {})
+        self._refresh_json_tab()
+
+    def _refresh_ui(self) -> None:
+        self.position_panel.update_positions(self._model.positions)
+        
+        label_names = list(self._model.positions.keys())
+        self.distance_panel.update_labels(label_names)
+        self.distance_panel.update_score_sets(list(self._model.score_sets.keys()))
+        self.distance_panel.update_distances_table(self._model.distances, self._model.score_sets)
+        
+        self.flexfit_panel.update_flexfit(self._model.extra_sections)
+        self._refresh_json_tab()
+
+    def _refresh_json_tab(self) -> None:
+        payload = self._model.fps_json_payload
+        s = json.dumps(payload, sort_keys=True, indent=4, separators=(',', ': '))
+        self.json_editor.setText(s)
+
+    def onReadTextEdit(self) -> None:
+        """Parse raw JSON from text edit and rebuild the model."""
+        s = self.json_editor.text()
         try:
             p = json.loads(s)
-            self.distances = p["Distances"]
-            self.positions = p["Positions"]
-            self.onUpdateJSON()
-            self.onUpdateInterface()
-        except json.decoder.JSONDecodeError:
+            self.fps_json_payload = p
+        except json.JSONDecodeError:
             chisurf.gui.widgets.general.MyMessageBox(
-                info="There is a problem parsing the JSON file.\n",
+                info="JSON Parse Error.\n",
                 details=traceback.format_exc()
             )
 
-    def onLoadJSON(
-            self,
-            filename: str = None
-    ):
+    def onLoadJSON(self, filename: Optional[str] = None) -> None:
+        """Load JSON configuration file."""
         if filename is None:
             filename = chisurf.gui.widgets.get_filename(
                 'Open JSON Labeling-File',
                 'JSON-Files (*.fps.json)'
             )
-        try:
-            self.json_file = filename
-            p = json.load(
-                io.zipped.open_maybe_zipped(
-                    filename=self.json_file,
-                    mode='r'
+        if filename:
+            try:
+                self._model.load_file(filename)
+                self._refresh_ui()
+            except Exception:
+                chisurf.gui.widgets.general.MyMessageBox(
+                    info="Failed to load JSON file.\n",
+                    details=traceback.format_exc()
                 )
-            )
-            self.distances = p["Distances"]
-            self.positions = p["Positions"]
-            self.onUpdateJSON()
-            self.onUpdateInterface()
-        except (FileExistsError, FileNotFoundError):
-            chisurf.gui.widgets.general.MyMessageBox(
-                info="There is a problem opening the JSON file.\n",
-                details=traceback.format_exc()
-            )
 
-    def onLabelingListDoubleClicked(
-            self,
-            event: QtCore.QEvent,
-    ):
-        item = self.listWidget.currentItem()
-        if item is None:
-            return
-        label_name = str(item.text())
-        if label_name in self.positions:
-            del self.positions[label_name]
-
-        to_remove = []
-        for dist_name, dist in self.distances.items():
-            if dist.get('position1_name') == label_name or dist.get('position2_name') == label_name:
-                to_remove.append(dist_name)
-        for dist_name in to_remove:
-            del self.distances[dist_name]
-        self.onUpdateInterface()
-        self.onUpdateJSON()
-
-    def onDistanceListDoubleClicked(
-            self,
-            event: QtCore.QEvent,
-    ):
-        item = self.listWidget_2.currentItem()
-        if item is None:
-            return
-        distance_name = str(item.text())
-        if distance_name in self.distances:
-            del self.distances[distance_name]
-        self.onUpdateInterface()
-        self.onUpdateJSON()
-
-    def onSimulationTypeChanged(self, *args):
-        self.av_properties.av_type = self.simulation_type
-
-    def onUpdateInterface(self):
-        self.comboBox_2.clear()
-        self.comboBox_4.clear()
-        self.listWidget.clear()
-        self.listWidget_2.clear()
-        label_names = [label for label in list(self.positions.keys())]
-        distance_names = [label for label in list(self.distances.keys())]
-        self.listWidget.addItems(label_names)
-        self.listWidget_2.addItems(distance_names)
-        self.comboBox_2.addItems(label_names)
-        self.comboBox_4.addItems(label_names)
-
-    @property
-    def distance_type(self) -> str:
-        distance_type = str(self.comboBox_3.currentText())
-        if distance_type == 'dRDA':
-            return 'RDAMean'
-        elif distance_type == 'dRDAE':
-            return 'RDAMeanE'
-        elif distance_type == 'dRmp':
-            return 'Rmp'
-        elif distance_type == 'pRDA':
-            return 'pRDA'
-
-    @property
-    def label1(self) -> str:
-        return str(self.comboBox_2.currentText())
-
-    @property
-    def label2(self) -> str:
-        return str(self.comboBox_4.currentText())
-
-    @property
-    def distance(self) -> float:
-        return float(self.doubleSpinBox.value())
-
-    @property
-    def forster_radius(self) -> float:
-        return float(self.doubleSpinBox_4.value())
-
-    @property
-    def error_pos(self) -> float:
-        return float(self.doubleSpinBox_2.value())
-
-    @property
-    def error_neg(self) -> float:
-        return float(self.doubleSpinBox_3.value())
-
-    @property
-    def pdb_filename(self) -> str:
-        return str(self.lineEdit.text())
-
-    @pdb_filename.setter
-    def pdb_filename(
-            self,
-            v: str
-    ):
-        self.lineEdit.setText(str(v))
-
-    @property
-    def simulation_type(self) -> str:
-        return str(self.comboBox.currentText())
-
-    @property
-    def position_name(self) -> str:
-        return str(self.lineEdit_2.text())
-
-    def onLoadReferencePDB(self):
-        filename = chisurf.gui.widgets.get_filename(
-            'Open PDB-File',
-            'PDB-Files (*.pdb);;PDB-GZ (*.pdb.gz)'
-        )
-        self.pdb_filename = filename
-        self.structure = chisurf.core.structure.Structure(self.pdb_filename)
-        self.atom_select.atoms = self.structure.atoms
-
-    def onAddLabel(self):
-        try:
-            allowed_sphere_radius = float(chisurf.core.settings.fps.get('allowed_sphere_radius', 1.5))
-            simulation_grid_resolution = float(self.av_properties.resolution)
-            label = {
-                "atom_name": str(self.atom_select.atom_name),
-                "chain_identifier": str(self.atom_select.chain_id),
-                "residue_seq_number": int(self.atom_select.residue_id),
-                "residue_name": str(self.atom_select.residue_name),
-                "attachment_atom_index": int(self.atom_select.atom_number),
-                "allowed_sphere_radius": allowed_sphere_radius,
-                "anchor_atoms": "",
-                "chain_weighting": False,
-                "contact_volume_thickness": 0,
-                "contact_volume_trapped_fraction": -1,
-                "simulation_type": str(self.simulation_type),
-                "linker_length": float(self.av_properties.linker_length),
-                "linker_width": float(self.av_properties.linker_width),
-                "min_sphere_volume_fraction": 0,
-                "radius1": float(self.av_properties.radius_1),
-                "radius2": float(self.av_properties.radius_2),
-                "radius3": float(self.av_properties.radius_3),
-                "simulation_grid_resolution": simulation_grid_resolution,
-                "strip_mask": ""
-            }
-            if self.position_name != '' and self.position_name not in list(self.positions.keys()):
-                self.positions[self.position_name] = label
-                self.onUpdateInterface()
-                self.onUpdateJSON()
-        except (ValueError, TypeError):
-            chisurf.gui.widgets.general.MyMessageBox(
-                info="Could not add labeling position.\n",
-                details=traceback.format_exc()
-            )
-
-    def onAddDistance(self):
-        distance = {
-            "Forster_radius": self.forster_radius,
-            "distance_type": self.distance_type,
-            "position1_name": self.label1,
-            "position2_name": self.label2,
-        }
-
-        if self.distance_type == "pRDA":
-            fn = chisurf.gui.widgets.get_filename(
-                "DA-Distance distribution (1st column RDA, 2nd pRDA)"
-            )
-            csv = chisurf.core.fio.ascii.Csv(
-                filename=fn,
-                skiprows=1
-            )
-            distance['rda'] = list(csv.data[0])
-            distance['prda'] = list(csv.data[1])
-        else:
-            distance['distance'] = self.distance
-            distance['error_neg'] = self.error_neg
-            distance['error_pos'] = self.error_pos
-
-        distance_name = self.label1+'_'+self.label2
-        self.distances[distance_name] = distance
-        self.onUpdateInterface()
-        self.onUpdateJSON()
-
-    def onSaveLabelingFile(
-            self,
-            event: QtCore.QEvent = None
-    ):
+    def onSaveJSON(self) -> None:
+        """Save JSON configuration to a file."""
         filename = chisurf.gui.widgets.save_file(
-            'Open FPS-JSON File',
+            'Save JSON Labeling-File',
             'JSON-Files (*.fps.json)'
         )
-        try:
-            with open(
-                    file=filename,
-                    mode='w'
-            ) as fp:
-                fp.write(
-                    self.textEdit_2.text()
+        if filename:
+            try:
+                self._model.save_file(filename)
+            except Exception:
+                chisurf.gui.widgets.general.MyMessageBox(
+                    info="Failed to save JSON file.\n",
+                    details=traceback.format_exc()
                 )
-            self.json_file = filename
-        except (FileNotFoundError, FileExistsError):
-            chisurf.gui.widgets.general.MyMessageBox(
-                info="There is a problem saving the JSON file.\n",
-                details=traceback.format_exc()
-            )
 
-    def onUpdateJSON(self):
-        p = dict()
-        p["Distances"] = self.distances
-        p["Positions"] = self.positions
-        s = json.dumps(
-            p,
-            sort_keys=True,
-            indent=4, separators=(',', ': ')
-        )
-        self.textEdit_2.clear()
-        self.textEdit_2.setText(s)
-
-    def onClear(self):
-        reply = chisurf.gui.widgets.general.MyMessageBox.question(
-            self,
-            'Message',
-            "Are you sure you want to clear all fields?",
-            QtWidgets.QMessageBox.Yes,
-            QtWidgets.QMessageBox.No
+    def onClearAll(self) -> None:
+        """Prompt to clear the entire data model."""
+        reply = QtWidgets.QMessageBox.question(
+            self, 'Clear Configuration',
+            "Are you sure you want to clear all parameters?",
+            QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
         )
         if reply == QtWidgets.QMessageBox.Yes:
-            self.positions = dict()
-            self.distances = dict()
-            self.onUpdateInterface()
-            self.onUpdateJSON()
+            self._model = FpsJsonModel()
+            self._refresh_ui()
 
 
 if __name__ == "__main__":

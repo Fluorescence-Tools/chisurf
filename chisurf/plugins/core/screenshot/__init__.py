@@ -11,7 +11,7 @@ Behavior:
 # Display name used by the Plugins menu (category: name)
 name = "Main:Tools:Screenshot"
 
-import chisurf
+import chisurf as cs
 from chisurf.gui import QtWidgets
 
 
@@ -52,7 +52,7 @@ def _run_screenshot():
     win = _find_main_window()
     if win is None:
         try:
-            chisurf.logging.error("Screenshot plugin: Main window not found.")
+            cs.logging.error("Screenshot plugin: Main window not found.")
         except Exception:
             pass
         return
@@ -131,17 +131,17 @@ def _run_screenshot():
                     pass
 
                 try:
-                    chisurf.logging.info("Screenshot copied to clipboard.")
+                    cs.logging.info("Screenshot copied to clipboard.")
                 except Exception:
                     pass
         else:
             try:
-                chisurf.logging.error("Screenshot plugin: Grabbed pixmap is null.")
+                cs.logging.error("Screenshot plugin: Grabbed pixmap is null.")
             except Exception:
                 pass
     except Exception as e:
         try:
-            chisurf.logging.error(f"Screenshot plugin failed: {e}")
+            cs.logging.error(f"Screenshot plugin failed: {e}")
         except Exception:
             pass
 

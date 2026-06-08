@@ -9,7 +9,7 @@ from qtpy.QtCore import QTimer
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QMessageBox
 
-import chisurf
+import chisurf as cs
 from chisurf import logging
 
 
@@ -101,8 +101,7 @@ class UtilityMethodsMixin:
             self.ribbon_bar.setRibbonStyle(style)
 
             # Save to settings
-            import chisurf
-            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+            gui_settings = cs.core.settings.cs_settings.get('gui', {})
             gui_settings['ribbon_style'] = style
 
             self.logger.info(f"Ribbon style changed to {style}")
@@ -134,8 +133,7 @@ class UtilityMethodsMixin:
                     self.main_window.actionToggle_Ribbon.setChecked(False)
 
                 # Update settings
-                import chisurf
-                gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+                gui_settings = cs.core.settings.cs_settings.get('gui', {})
                 gui_settings['use_ribbon_interface'] = False
 
                 self.logger.info("Switched back to traditional menu bar")
@@ -198,7 +196,7 @@ class UtilityMethodsMixin:
     def _open_code_editor(self):
         """Open code editor"""
         try:
-            import chisurf.plugins.misc.code_editor
+            import chisurf.plugins.core.code_editor
             # Code editor integration would go here
             QMessageBox.information(
                 self.main_window,

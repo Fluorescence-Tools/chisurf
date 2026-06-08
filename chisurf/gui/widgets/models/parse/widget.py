@@ -17,7 +17,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 import sympy
 
 
-import chisurf
+import chisurf as cs
 import chisurf.macros.model_parse as model_parse
 import chisurf.core.decorators
 import chisurf.core.fio as io
@@ -79,13 +79,13 @@ from chisurf.core.models.parse import ParseModel
 class ParseFormulaWidget(QtWidgets.QWidget):
     """Widget for editing and previewing parse-based model equations."""
 
-    @chisurf.gui.decorators.init_with_ui("parseWidget.ui")
+    @cs.gui.decorators.init_with_ui("parseWidget.ui")
     def __init__(
             self,
             n_columns: int = None,
             model_file: pathlib.Path = None,
             model_name: str = None,
-            model: chisurf.core.models.Model = None
+            model: cs.core.models.Model = None
     ):
         """Initialize the parse formula widget.
 
@@ -97,12 +97,12 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             Path to the YAML model definition file.
         model_name : str, optional
             Name of the model to select initially.
-        model : chisurf.core.models.Model
+        model : cs.core.models.Model
             The model instance this widget controls.
         """
-        self.model: chisurf.core.models.parse.ParseModel = model
+        self.model: cs.core.models.parse.ParseModel = model
         if n_columns is None:
-            n_columns = chisurf.core.settings.gui['fit_models']['n_columns']
+            n_columns = cs.core.settings.gui['fit_models']['n_columns']
         self.n_columns = n_columns
 
         # Initialize temp files list
@@ -159,7 +159,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
         self.editor = None
         self._code_editor_available = False
         try:
-            _code_editor_module = importlib.import_module("chisurf.plugins.misc.code_editor")
+            _code_editor_module = importlib.import_module("chisurf.plugins.core.code_editor")
             _CodeEditor = getattr(_code_editor_module, "CodeEditor", None)
             if _CodeEditor is not None:
                 self.editor = _CodeEditor(None, language='yaml', can_load=False)
@@ -239,7 +239,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
             Path to load. If None, a file dialog is shown.
         """
         if filename is None:
-            filename = chisurf.gui.widgets.get_filename("Model-YAML file", file_type='*.yaml')
+            filename = cs.gui.widgets.get_filename("Model-YAML file", file_type='*.yaml')
         self.load_model_file(filename)
 
     def onEdit_model_file(self):
@@ -300,7 +300,7 @@ class ParseFormulaWidget(QtWidgets.QWidget):
 
     def onUpdateFunc(self):
         """Update the model function from the editor contents."""
-        fit_idx = chisurf.core.fitting.find_fit_idx_of_model(model=self.model)
+        fit_idx = cs.core.fitting.find_fit_idx_of_model(model=self.model)
         function_str = str(self.plainTextEdit.toPlainText()).strip()
         try:
             model_parse.change_model(function_str=function_str, fit_idx=fit_idx)
@@ -335,12 +335,12 @@ class ParseFormulaWidget(QtWidgets.QWidget):
     def create_parameter_widgets(self):
         """Rebuild the parameter editor widgets from the current model parameters."""
         layout = self.gridLayout_1
-        chisurf.gui.widgets.clear_layout(layout)
+        cs.gui.widgets.clear_layout(layout)
         n_columns = self.n_columns
         row = 1
         p_eq = self.model._parameters_equation
         for i, p in enumerate(p_eq):
-            pw = chisurf.gui.widgets.fitting.widgets.make_fitting_parameter_widget(p)
+            pw = cs.gui.widgets.fitting.widgets.make_fitting_parameter_widget(p)
             column = i % n_columns
             if column == 0:
                 row += 1
@@ -988,7 +988,7 @@ class ParseModelWidget(ParseModel, ModelWidget):
 
     def __init__(
             self,
-            fit: chisurf.core.fitting.fit.FitGroup,
+            fit: cs.core.fitting.fit.FitGroup,
             *args,
             **kwargs
     ):
@@ -996,7 +996,7 @@ class ParseModelWidget(ParseModel, ModelWidget):
 
         Parameters
         ----------
-        fit : chisurf.core.fitting.fit.FitGroup
+        fit : cs.core.fitting.fit.FitGroup
             The fit group this widget belongs to.
         """
         QtWidgets.QWidget.__init__(self)

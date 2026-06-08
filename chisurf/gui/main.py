@@ -17,7 +17,7 @@ from chisurf.gui.gui_tweaks import apply_dock_tab_colors
 from chisurf.gui import misc_helpers, project_helpers, fit_helpers
 
 
-import chisurf
+import chisurf as cs
 import chisurf.core.decorators
 import chisurf.core.base
 import chisurf.core.fio
@@ -33,11 +33,11 @@ import chisurf.gui.widgets.history_browser
 import chisurf.gui.widgets.experiments.modelling
 
 # Heavy imports moved to deferred/local usage or warmup_imports
-# import chisurf.core.models
-# import chisurf.plugins
-# import chisurf.core.fitting
+# import cs.core.models
+# import cs.plugins
+# import cs.core.fitting
 import chisurf.gui.resources
-import chisurf.plugins.misc.code_editor
+import chisurf.plugins.core.code_editor
 
 
 class _MdiDropEventFilter(QtCore.QObject):
@@ -75,7 +75,7 @@ class _MdiDropEventFilter(QtCore.QObject):
                         obj.close()
                         
                         try:
-                            chisurf.logging.info(f"Converting dock '{title}' to MDI subwindow")
+                            cs.logging.info(f"Converting dock '{title}' to MDI subwindow")
                         except Exception:
                             pass
                         
@@ -97,7 +97,7 @@ class _MdiDropEventFilter(QtCore.QObject):
                         w = sub.widget()
                         if w and w.property("_original_dock_name") == dock_name:
                             try:
-                                chisurf.logging.info(f"Restoring dock '{dock_name}' from MDI")
+                                cs.logging.info(f"Restoring dock '{dock_name}' from MDI")
                             except Exception:
                                 pass
                             # Move back to dock
@@ -130,39 +130,39 @@ class Main(
 
     Attributes
     ----------
-    current_dataset : chisurf.core.base.Data
+    current_dataset : cs.core.base.Data
         The dataset that is currently selected in the ChiSurf GUI. This
         dataset corresponds to the analysis window selected by the user in
         the UI.
-    current_model_class : chisurf.model.Model
+    current_model_class : cs.model.Model
         The model used in the analysis (fit) of the currently selected analysis
         windows.
     fit_idx : int
-        The index of the currently selected fit in the fit list chisurf.fits
+        The index of the currently selected fit in the fit list cs.fits
         The current fit index corresponds to the currently selected fit window
         in the list of all fits of the fit.
     current_experiment_idx : int
         The index of the experiment type currently selected in the UI out of
         the list all supported experiments. This corresponds to the index of
         the UI combo box used to select the experiment.
-    current_experiment : chisurf.core.experiments.core.Experiment
+    current_experiment : cs.core.experiments.core.Experiment
         The experiment currently selected in the GUI.
     current_setup_idx : int
         The index of the setup currently selected in the GUI.
     current_setup_name : str
         The name of the setup currently selected in the GUI.
-    current_setup : chisurf.core.experiments.core.reader.ExperimentReader
+    current_setup : cs.core.experiments.core.reader.ExperimentReader
         The current experiment setup / experiment reader selecetd in the GUI
     experiment_names : list
         A list containing the names of the experiments.
 
     """
 
-    _current_dataset: chisurf.core.base.Data = None
+    _current_dataset: cs.core.base.Data = None
     experiment_names: typing.List[str] = list()
 
     @property
-    def current_dataset(self) -> chisurf.core.base.Data:
+    def current_dataset(self) -> cs.core.base.Data:
         return self._current_dataset
 
     @current_dataset.setter
@@ -186,11 +186,11 @@ class Main(
         self.set_current_experiment_idx(v)
 
     @property
-    def current_experiment(self) -> chisurf.core.experiments.core.Experiment | None:
+    def current_experiment(self) -> cs.core.experiments.core.Experiment | None:
         name = self.comboBox_experimentSelect.currentText()
         if not name:
             return None
-        return chisurf.experiment.get(name)
+        return cs.experiment.get(name)
 
     @current_experiment.setter
     def current_experiment(self, name: str) -> None:
@@ -219,7 +219,7 @@ class Main(
         return self.current_setup.name
 
     @property
-    def current_setup(self) -> chisurf.core.experiments.core.reader.ExperimentReader:
+    def current_setup(self) -> cs.core.experiments.core.reader.ExperimentReader:
         readers = self.current_experiment.readers
         if not readers:
             raise IndexError("No experiment readers defined for the current experiment")
@@ -249,7 +249,7 @@ class Main(
                 setup_found = True
                 break
         if not setup_found:
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="Setup Not Found",
                 info=f"Setup '{name}' does not exist in the current experiment.",
                 show_fortune=False
@@ -283,12 +283,12 @@ class Main(
     def current_experiment_reader(self):
         if isinstance(
             self.current_setup,
-            chisurf.core.experiments.core.reader.ExperimentReader
+            cs.core.experiments.core.reader.ExperimentReader
         ):
             return self.current_setup
         elif isinstance(
                 self.current_setup,
-                chisurf.core.experiments.core.reader.ExperimentReaderController
+                cs.core.experiments.core.reader.ExperimentReaderController
         ):
             return self.current_setup.experiment_reader
 
@@ -297,19 +297,19 @@ class Main(
         return self.current_model_class.name
 
     @property
-    def current_fit(self) -> chisurf.core.fitting.fit.FitGroup:
+    def current_fit(self) -> cs.core.fitting.fit.FitGroup:
         return self._current_fit
 
     @current_fit.setter
-    def current_fit(self, v: chisurf.core.fitting.fit.FitGroup) -> None:
+    def current_fit(self, v: cs.core.fitting.fit.FitGroup) -> None:
         self._current_fit = v
 
     def set_current_experiment_idx(self, v):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
     def closeEvent(self, event: QtGui.QCloseEvent):
-        if chisurf.core.settings.gui['confirm_close_program']:
-            reply = chisurf.gui.widgets.general.MyMessageBox.question(
+        if cs.core.settings.gui['confirm_close_program']:
+            reply = cs.gui.widgets.general.MyMessageBox.question(
                 self,
                 'Message',
                 "Are you sure to quit?",
@@ -338,24 +338,24 @@ class Main(
         sub_window = self.mdiarea.currentSubWindow()
         if sub_window is not None:
             # Clear existing widgets from layouts
-            chisurf.gui.widgets.hide_items_in_layout(self.modelLayout)
+            cs.gui.widgets.hide_items_in_layout(self.modelLayout)
             header_layout = getattr(self, "analysisHeaderLayout", None)
             if header_layout is not None:
-                chisurf.gui.widgets.hide_items_in_layout(header_layout)
-            chisurf.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
+                cs.gui.widgets.hide_items_in_layout(header_layout)
+            cs.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
 
             # Handle fit windows first
             if hasattr(sub_window, 'fit') and sub_window.fit is not None:
-                for fit_idx, f in enumerate(chisurf.fits):
+                for fit_idx, f in enumerate(cs.fits):
                     if f == sub_window.fit:
-                        if self.current_fit is not chisurf.fits[fit_idx]:
-                            chisurf.run(f"cs.current_fit = chisurf.fits[{fit_idx}]")
+                        if self.current_fit is not cs.fits[fit_idx]:
+                            cs.run(f"cs.current_fit = cs.fits[{fit_idx}]")
                             self._fit_idx = fit_idx
                             break
 
                 self.current_fit_widget = sub_window.fit_widget
 
-                window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + self.current_fit.name
+                window_title = cs.__name__ + "(" + cs.__version__ + "): " + self.current_fit.name
                 self.setWindowTitle(window_title)
 
                 self.current_fit.model.show()
@@ -367,7 +367,7 @@ class Main(
                 self.plotOptionsLayout.addWidget(sub_window.current_plot_controller)
                 sub_window.current_plot_controller.show()
                 # Update window title for plugin windows
-                window_title = chisurf.__name__ + "(" + chisurf.__version__ + "): " + sub_window.windowTitle()
+                window_title = cs.__name__ + "(" + cs.__version__ + "): " + sub_window.windowTitle()
                 self.setWindowTitle(window_title)
 
     def onRunMacro(
@@ -395,12 +395,12 @@ class Main(
         self._current_dataset = self.dataset_selector.selected_dataset
         self.comboBox_Model.clear()
         ds = self.current_dataset
-        if chisurf.imported_datasets:
+        if cs.imported_datasets:
             # Get all model names from the experiment
             all_model_names = ds.experiment.get_model_names()
 
             # Get the list of disabled models from settings
-            disabled_models = chisurf.core.settings.cs_settings.get('plugins', {}).get('disabled_models', [])
+            disabled_models = cs.core.settings.cs_settings.get('plugins', {}).get('disabled_models', [])
 
             # Filter out disabled models
             model_names = [name for name in all_model_names if name not in disabled_models]
@@ -435,31 +435,31 @@ class Main(
 
 
     def onLoadFit(self, **kwargs):
-        filename = chisurf.gui.widgets.get_filename(
+        filename = cs.gui.widgets.get_filename(
             file_type="*.fit.json",
             description="Load fit (fit.json)",
             **kwargs
         )
         if not filename:
             return
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="fit.load",
             payload={"filename": str(filename)},
         )
 
 
     def onCloseAllFits(self):
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="fit.close_all",
             payload={},
         )
 
         # Clear the analysis dock layouts
-        chisurf.gui.widgets.clear_layout(self.modelLayout)
+        cs.gui.widgets.clear_layout(self.modelLayout)
         header_layout = getattr(self, "analysisHeaderLayout", None)
         if header_layout is not None:
-            chisurf.gui.widgets.clear_layout(header_layout)
-        chisurf.gui.widgets.clear_layout(self.plotOptionsLayout)
+            cs.gui.widgets.clear_layout(header_layout)
+        cs.gui.widgets.clear_layout(self.plotOptionsLayout)
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
@@ -471,17 +471,17 @@ class Main(
         else:
             s = r"{}".format(filename)
         s = s.replace("\\", "/")
-        chisurf.core.actions.dispatch(
+        cs.core.actions.dispatch(
             name="dataset.add",
             payload={"filename": s, "experiment_reader": None},
         )
 
     def onSaveFits(self, event: QtCore.QEvent = None):
-        path, _ = chisurf.gui.widgets.get_directory()
+        path, _ = cs.gui.widgets.get_directory()
         if not path:
             return
-        chisurf.working_path = path
-        chisurf.core.actions.dispatch(
+        cs.working_path = path
+        cs.core.actions.dispatch(
             name="fit.save_all",
             payload={"target_path": path.as_posix()},
         )
@@ -504,14 +504,14 @@ class Main(
             if ('directory' not in kwargs or kwargs.get('directory') is None) and default_dir is not None:
                 kwargs['directory'] = default_dir
         except Exception as e:
-            chisurf.logging.warning(f"onSaveFit: could not infer data folder from fit.data.filename: {e}")
+            cs.logging.warning(f"onSaveFit: could not infer data folder from fit.data.filename: {e}")
 
-        path, _ = chisurf.gui.widgets.get_directory(**kwargs)
+        path, _ = cs.gui.widgets.get_directory(**kwargs)
         if not path:
             return
         # Keep behavior: user chooses where to save; update working path accordingly
-        chisurf.working_path = path
-        chisurf.core.actions.dispatch(
+        cs.working_path = path
+        cs.core.actions.dispatch(
             name="fit.save",
             payload={"target_path": path.as_posix()},
         )
@@ -521,7 +521,7 @@ class Main(
         try:
             self.open_context_help_for_reader(None)
         except Exception as e:
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="Help Plugin Error",
                 info=f"Error loading help plugin: {str(e)}",
                 show_fortune=False
@@ -542,9 +542,9 @@ class Main(
         import pathlib
         try:
             try:
-                help_plugin = importlib.import_module("chisurf.plugins.chisurf.help")
+                help_plugin = importlib.import_module("chisurf.plugins.core.help")
             except Exception:
-                help_plugin = importlib.import_module("chisurf.plugins.help")
+                help_plugin = importlib.import_module("chisurf.plugins.core.help")
             window = getattr(self, "_help_window", None)
             if window is None or not isinstance(window, help_plugin.HelpWidget):
                 window = help_plugin.HelpWidget()
@@ -579,7 +579,7 @@ class Main(
                                 # core docs discovery).
                                 if not raw_path.is_absolute():
                                     try:
-                                        base = pathlib.Path(chisurf.__file__).resolve().parent
+                                        base = pathlib.Path(cs.__file__).resolve().parent
                                         root = base.parent
                                         candidate = (root / raw_path).resolve()
                                     except Exception:
@@ -609,7 +609,7 @@ class Main(
             except Exception:
                 pass
         except Exception as e:
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="Help Plugin Error",
                 info=f"Error loading help plugin: {str(e)}",
                 show_fortune=False
@@ -621,15 +621,15 @@ class Main(
         import importlib
         try:
             try:
-                updater_plugin = importlib.import_module("chisurf.plugins.chisurf.updater")
+                updater_plugin = importlib.import_module("chisurf.plugins.core.updater")
             except ImportError:
-                updater_plugin = importlib.import_module("chisurf.plugins.updater")
+                updater_plugin = importlib.import_module("chisurf.plugins.core.updater")
 
             window = updater_plugin.UpdaterWidget()
             window.show()
         except Exception as e:
             # Show error message if plugin can't be loaded
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="Updater Plugin Error",
                 info=f"Error loading updater plugin: {str(e)}",
                 show_fortune=False
@@ -640,14 +640,14 @@ class Main(
         import importlib
         try:
             try:
-                about_plugin = importlib.import_module("chisurf.plugins.chisurf.about")
+                about_plugin = importlib.import_module("chisurf.plugins.core.about")
             except ImportError:
-                about_plugin = importlib.import_module("chisurf.plugins.about")
+                about_plugin = importlib.import_module("chisurf.plugins.core.about")
 
             window = about_plugin.AboutDialog(parent=self)
             window.show()
         except Exception as e:
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="About Plugin Error",
                 info=f"Error opening About dialog: {str(e)}",
                 show_fortune=False
@@ -656,10 +656,10 @@ class Main(
     def onClearLocalSettings(self):
         """Reset local settings and show a confirmation popup."""
         # Clear the settings folder
-        chisurf.core.settings.clear_settings_folder()
+        cs.core.settings.clear_settings_folder()
 
         # Show a confirmation popup
-        chisurf.gui.widgets.general.MyMessageBox(
+        cs.gui.widgets.general.MyMessageBox(
             label="Settings Reset",
             info="Local settings have been reset successfully.",
             show_fortune=False
@@ -668,7 +668,7 @@ class Main(
     def onClearUserStyles(self):
         """Clear user style files (QSS) and show a confirmation popup."""
         # Get the path to the user styles folder
-        user_styles_path = chisurf.core.settings.get_path('settings') / 'styles'
+        user_styles_path = cs.core.settings.get_path('settings') / 'styles'
 
         # Check if the folder exists
         if user_styles_path.exists() and user_styles_path.is_dir():
@@ -677,17 +677,17 @@ class Main(
                 try:
                     file.unlink()
                 except Exception as e:
-                    chisurf.logging.warning(f"Could not delete style file {file}: {e}")
+                    cs.logging.warning(f"Could not delete style file {file}: {e}")
 
             # Show a confirmation popup
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="Styles Reset",
                 info="User style files have been cleared successfully. Restart the application to apply default styles.",
                 show_fortune=False
             )
         else:
             # Show a message if the folder doesn't exist
-            chisurf.gui.widgets.general.MyMessageBox(
+            cs.gui.widgets.general.MyMessageBox(
                 label="Styles Reset",
                 info="No user style files found.",
                 show_fortune=False
@@ -696,10 +696,10 @@ class Main(
     def onClearUserPlugins(self):
         """Clear user plugin folder and show a confirmation popup."""
         # Clear the user plugins folder
-        chisurf.core.settings.clear_user_plugins_folder()
+        cs.core.settings.clear_user_plugins_folder()
 
         # Show a confirmation popup
-        chisurf.gui.widgets.general.MyMessageBox(
+        cs.gui.widgets.general.MyMessageBox(
             label="User Plugins Reset",
             info="User plugins folder has been cleared successfully. Restart the application to apply changes.",
             show_fortune=False
@@ -724,7 +724,7 @@ class Main(
         import ast
 
         # Get the list of toolbar plugins from settings
-        toolbar_plugins = chisurf.core.settings.cs_settings.get('plugins', {}).get('toolbar_plugins', [])
+        toolbar_plugins = cs.core.settings.cs_settings.get('plugins', {}).get('toolbar_plugins', [])
 
         if not toolbar_plugins:
             return
@@ -737,7 +737,7 @@ class Main(
             self.plugins_toolbar.setIconSize(QtCore.QSize(16, 16))
 
         # Determine built-in plugin directory
-        plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+        plugin_root = pathlib.Path(cs.plugins.__file__).absolute().parent
 
         # Helper function to read module docstring
         def read_module_docstring(package_path):
@@ -752,9 +752,9 @@ class Main(
             tree = ast.parse(source, filename=str(init_py))
             return ast.get_docstring(tree)
 
-        # Build an index of available plugins using chisurf.plugins.iter_plugins
+        # Build an index of available plugins using cs.plugins.iter_plugins
         try:
-            plugin_infos = list(chisurf.plugins.iter_plugins())
+            plugin_infos = list(cs.plugins.iter_plugins())
         except Exception:
             plugin_infos = []
 
@@ -776,7 +776,7 @@ class Main(
             try:
                 info = _find_plugin_info(plugin_name)
                 if info is None:
-                    chisurf.logging.warning(f"Could not find module for plugin: {plugin_name}")
+                    cs.logging.warning(f"Could not find module for plugin: {plugin_name}")
                     continue
 
                 module_path = info.get('module_path')
@@ -811,10 +811,10 @@ class Main(
                 self.plugins_toolbar.addAction(action)
 
                 # Log the plugin name for debugging
-                chisurf.logging.info(f"Added plugin to toolbar: {plugin_name} (module: {module_name})")
+                cs.logging.info(f"Added plugin to toolbar: {plugin_name} (module: {module_name})")
 
             except Exception as e:
-                chisurf.logging.error(f"Error loading toolbar plugin {plugin_name}: {e}")
+                cs.logging.error(f"Error loading toolbar plugin {plugin_name}: {e}")
 
     def load_and_show_plugin(self, module_path):
         """Load and show a plugin from its module path."""
@@ -823,9 +823,9 @@ class Main(
 
             plugin_dir_to_use = None
 
-            # First try to resolve the plugin via chisurf.plugins.iter_plugins
+            # First try to resolve the plugin via cs.plugins.iter_plugins
             try:
-                for info in chisurf.plugins.iter_plugins():
+                for info in cs.plugins.iter_plugins():
                     if info.get('module_path') == module_path:
                         plugin_dir_to_use = pathlib.Path(info.get('package_dir'))
                         break
@@ -835,9 +835,9 @@ class Main(
             # Fallback to legacy behavior using flat module names
             if plugin_dir_to_use is None:
                 module_name = module_path.split('.')[-1]
-                plugin_root = pathlib.Path(chisurf.plugins.__file__).absolute().parent
+                plugin_root = pathlib.Path(cs.plugins.__file__).absolute().parent
                 plugin_dir = plugin_root / module_name
-                user_plugin_root = pathlib.Path.home() / '.chisurf' / 'plugins'
+                user_plugin_root = pathlib.Path.home() / '.cs' / 'plugins'
                 user_plugin_dir = user_plugin_root / module_name
 
                 if plugin_dir.exists():
@@ -845,27 +845,27 @@ class Main(
                 elif user_plugin_dir.exists():
                     plugin_dir_to_use = user_plugin_dir
                 else:
-                    chisurf.logging.warning(f"Plugin directory not found in either built-in or user locations: {module_path}")
+                    cs.logging.warning(f"Plugin directory not found in either built-in or user locations: {module_path}")
                     return
 
             misc_helpers.run_plugin_from_dir(self, plugin_dir_to_use)
 
         except Exception as e:
-            chisurf.logging.error(f"Error loading plugin {module_path}: {e}")
+            cs.logging.error(f"Error loading plugin {module_path}: {e}")
 
     def init_console(self):
-        self.verticalLayout_4.addWidget(chisurf.console)
-        chisurf.console.pushVariables({'cs': self})
-        chisurf.console.pushVariables({'chisurf': chisurf})
+        self.verticalLayout_4.addWidget(cs.console)
+        cs.console.pushVariables({'cs': self})
+        cs.console.pushVariables({'cs': cs})
         try:
-            chisurf.console.pushVariables({'history': chisurf.history})
+            cs.console.pushVariables({'history': cs.history})
         except Exception:
             pass
-        chisurf.console.pushVariables({'np': np})
-        chisurf.console.pushVariables({'os': os})
-        chisurf.console.pushVariables({'QtCore': QtCore})
-        chisurf.console.pushVariables({'QtGui': QtGui})
-        chisurf.console.set_default_style('linux')
+        cs.console.pushVariables({'np': np})
+        cs.console.pushVariables({'os': os})
+        cs.console.pushVariables({'QtCore': QtCore})
+        cs.console.pushVariables({'QtGui': QtGui})
+        cs.console.set_default_style('linux')
 
         def _run_with_history(code: str = None):
             if code is None:
@@ -884,14 +884,14 @@ class Main(
                 )
             except Exception:
                 pass
-            return chisurf.console.execute_on_gui_thread(code_str)
+            return cs.console.execute_on_gui_thread(code_str)
 
-        chisurf.run = _run_with_history
+        cs.run = _run_with_history
         try:
-            chisurf.log = chisurf.console.log_on_gui_thread
+            cs.log = cs.console.log_on_gui_thread
         except Exception:
             pass
-        chisurf.run(str(chisurf.core.settings.gui['console_init']))
+        cs.run(str(cs.core.settings.gui['console_init']))
 
 
     def __init__(self, *args, **kwargs):
@@ -970,7 +970,7 @@ class Main(
         self._current_project_dir = None
 
         self.experiment_names = list()
-        self.dataset_selector = chisurf.gui.widgets.experiments.ExperimentalDataSelector(
+        self.dataset_selector = cs.gui.widgets.experiments.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,
@@ -979,7 +979,7 @@ class Main(
         )
 
         # widget listing the existing fits
-        self.fit_selector = chisurf.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
+        self.fit_selector = cs.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
 
         # Setup status bar with progress bar and message
         self.status = misc_helpers.TruncatingStatusBar(self)
@@ -1063,7 +1063,7 @@ class Main(
                         if paths:
                             paths.sort()
                             for p in paths:
-                                chisurf.core.actions.dispatch(
+                                cs.core.actions.dispatch(
                                     name="dataset.add",
                                     payload={"filename": str(p), "experiment_reader": None},
                                 )
@@ -1095,10 +1095,10 @@ class Main(
 
         # Resolve context help topic from configurable reader rules in settings.
         try:
-            help_cfg = getattr(chisurf.core.settings, "help", {}) or {}
+            help_cfg = getattr(cs.core.settings, "help", {}) or {}
             rules = help_cfg.get("reader_rules", []) or []
 
-            current_setup = getattr(chisurf.cs, "current_setup", None)
+            current_setup = getattr(cs.cs, "current_setup", None)
             reader_name = None
             is_jordi = False
             try:
@@ -1202,12 +1202,12 @@ class Main(
         #      Push variables to console and add it to           #
         #      user interface                                    #
         ##########################################################
-        self.dockWidgetScriptEdit.setVisible(chisurf.core.settings.gui['show_macro_edit'])
-        self.dockWidget_console.setVisible(chisurf.core.settings.gui['show_console'])
+        self.dockWidgetScriptEdit.setVisible(cs.core.settings.gui['show_macro_edit'])
+        self.dockWidget_console.setVisible(cs.core.settings.gui['show_console'])
         # Set the height of the console dock widget
-        if 'console_height' in chisurf.core.settings.gui:
+        if 'console_height' in cs.core.settings.gui:
             from qtpy.QtCore import Qt
-            self.resizeDocks([self.dockWidget_console], [chisurf.core.settings.gui['console_height']], Qt.Vertical)
+            self.resizeDocks([self.dockWidget_console], [cs.core.settings.gui['console_height']], Qt.Vertical)
         self.init_console()
 
         ##########################################################
@@ -1219,7 +1219,7 @@ class Main(
         self.tabifyDockWidget(self.dockWidgetAnalysis, self.dockWidgetPlot)
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
-        self.editor = chisurf.plugins.misc.code_editor.CodeEditor()
+        self.editor = cs.plugins.core.code_editor.CodeEditor()
 
         self.verticalLayout_10.addWidget(self.editor)
 
@@ -1269,8 +1269,8 @@ class Main(
         ##########################################################
         #      Record and run recorded macros                    #
         ##########################################################
-        self.actionRecord.triggered.connect(chisurf.console.start_recording)
-        self.actionStop.triggered.connect(chisurf.console.save_macro)
+        self.actionRecord.triggered.connect(cs.console.start_recording)
+        self.actionStop.triggered.connect(cs.console.save_macro)
         self.actionRun.triggered.connect(
             lambda: self.onRunMacro(filename=None, executor='console')
         )
@@ -1294,7 +1294,7 @@ class Main(
             self.addAction(self.actionSaveCurrentFit)
         except Exception:
             pass
-        self.actionClose_Fit.triggered.connect(chisurf.macros.core_fit.close_fit)
+        self.actionClose_Fit.triggered.connect(cs.macros.core_fit.close_fit)
         self.actionClose_all_fits.triggered.connect(self.onCloseAllFits)
         self.actionLoad_Data.triggered.connect(self.onAddDataset)
         self.actionLoad_Fit.triggered.connect(self.onLoadFit)
@@ -1361,7 +1361,7 @@ class Main(
             from chisurf.gui.widgets.models.pda.widgets import FretRdaAxisSettingsWidget
         except Exception as e:
             try:
-                chisurf.logging.error(f"Could not load FretRdaAxisSettingsWidget: {e}")
+                cs.logging.error(f"Could not load FretRdaAxisSettingsWidget: {e}")
             except Exception:
                 pass
             try:
@@ -1370,7 +1370,7 @@ class Main(
                     "FRET RDA axis settings",
                     (
                         "The RDA axis settings widget could not be loaded.\n"
-                        "Please check that chisurf.gui.widgets.models.pda is available."
+                        "Please check that cs.gui.widgets.models.pda is available."
                     ),
                 )
             except Exception:
@@ -1396,9 +1396,6 @@ class Main(
             pass
 
     def load_tools(self):
-        import chisurf
-
-
         ##########################################################
         #      Load toolbar plugins                              #
         ##########################################################
@@ -1408,8 +1405,8 @@ class Main(
         #      Settings                                          #
         ##########################################################
         # Configuration editor
-        self.configuration = chisurf.gui.widgets.settings_editor.SettingsEditor(
-            filename=chisurf.core.settings.chisurf_settings_file,
+        self.configuration = cs.gui.widgets.settings_editor.SettingsEditor(
+            filename=cs.core.settings.chisurf_settings_file,
             window_title="ChiSurf Settings"
         )
         self.actionSettings.triggered.connect(self.configuration.show)
@@ -1425,7 +1422,7 @@ class Main(
         # Reset local settings, i.e., the settings file in the user folder
         self.actionClear_local_settings.triggered.connect(self.onClearLocalSettings)
         # Clear logging files, i.e., the log files in the user folder
-        self.actionClear_logging_files.triggered.connect(chisurf.core.settings.clear_logging_files)
+        self.actionClear_logging_files.triggered.connect(cs.core.settings.clear_logging_files)
         # Clear user styles, i.e., the QSS files in the user folder
         self.actionClear_user_styles = QtWidgets.QAction("Clear user styles", self)
         self.actionClear_user_styles.triggered.connect(self.onClearUserStyles)
@@ -1445,16 +1442,15 @@ class Main(
         
         # Restore ribbon interface state from settings
         try:
-            import chisurf
-            gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+            gui_settings = cs.core.settings.cs_settings.get('gui', {})
             use_ribbon = gui_settings.get('use_ribbon_interface', True)
             
             if use_ribbon:
                 # Enable ribbon if it was saved in settings
                 self.toggle_ribbon_interface(True)
-                chisurf.logging.info("Ribbon interface restored from settings")
+                cs.logging.info("Ribbon interface restored from settings")
         except Exception as e:
-            chisurf.logging.warning(f"Failed to restore ribbon interface state: {e}")
+            cs.logging.warning(f"Failed to restore ribbon interface state: {e}")
         
         self.onExperimentChanged()
 
@@ -1477,37 +1473,36 @@ class Main(
             
             if enabled and self._ribbon_integration is None:
                 # Enable ribbon with style from settings
-                import chisurf
-                gui_settings = chisurf.core.settings.cs_settings.get('gui', {})
+                gui_settings = cs.core.settings.cs_settings.get('gui', {})
                 ribbon_style = gui_settings.get('ribbon_style', None)
                 
                 # Hide plugin toolbar when switching to ribbon
                 if hasattr(self, 'plugins_toolbar'):
                     self.plugins_toolbar.hide()
-                    chisurf.logging.info("Plugin toolbar hidden for ribbon mode")
+                    cs.logging.info("Plugin toolbar hidden for ribbon mode")
                 
                 self._ribbon_integration = setup_chisurf_ribbon(self, ribbon_style=ribbon_style)
                 if self._ribbon_integration:
-                    chisurf.logging.info("Ribbon interface enabled")
+                    cs.logging.info("Ribbon interface enabled")
                     # Save to settings persistently
                     from chisurf.core.settings.settings_utils import set_use_ribbon_interface
                     set_use_ribbon_interface(True)
                 else:
-                    chisurf.logging.warning("Failed to setup ribbon interface")
+                    cs.logging.warning("Failed to setup ribbon interface")
             elif not enabled and self._ribbon_integration is not None:
                 # Disable ribbon
                 self._ribbon_integration.restore_original_interface()
                 self._ribbon_integration = None
-                chisurf.logging.info("Ribbon interface disabled")
+                cs.logging.info("Ribbon interface disabled")
                 
                 # Show plugin toolbar when switching back to menu mode
                 if hasattr(self, 'plugins_toolbar'):
                     self.plugins_toolbar.show()
-                    chisurf.logging.info("Plugin toolbar restored for menu mode")
+                    cs.logging.info("Plugin toolbar restored for menu mode")
                 
                 # Save to settings persistently
                 from chisurf.core.settings.settings_utils import set_use_ribbon_interface
                 set_use_ribbon_interface(False)
             
         except Exception as e:
-            chisurf.logging.error(f"Failed to toggle ribbon interface: {e}")
+            cs.logging.error(f"Failed to toggle ribbon interface: {e}")

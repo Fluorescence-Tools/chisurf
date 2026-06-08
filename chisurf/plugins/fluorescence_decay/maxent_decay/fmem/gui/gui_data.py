@@ -218,7 +218,7 @@ class _MaxentDataMixin:
         try:
             # Prefer the generic ChiSurf text editor with JSON highlighting
             # if available.
-            import chisurf.plugins.misc.code_editor.text_editor as _te  # type: ignore
+            import chisurf.plugins.core.code_editor.text_editor as _te  # type: ignore
 
             editor = _te.TextEditor(dialog, language="json")
             editor.setText(initial_text)
