@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from typing import List
+from typing import List, Optional
 
 from .base import BaseCmd
 
@@ -17,6 +17,7 @@ class LifecycleMixin(BaseCmd):
             "reinitialize": self._cmd_reinitialize,
             "reinit": self._cmd_reinitialize,
             "copy": self._cmd_copy,
+            "split_chains": self._cmd_split_chains,
         }
 
     def _cmd_delete(self, args: List[str]) -> None:
@@ -220,3 +221,29 @@ class LifecycleMixin(BaseCmd):
                 window._refresh_objects_from_viewer()
         except Exception:
             pass
+
+    def _cmd_split_chains(self, args: List[str]) -> None:
+        window, viewer = self._require_window_and_viewer()
+        if viewer is None:
+            return
+
+        try:
+            active_id = viewer.get_active_object_id()
+        except Exception:
+            active_id = None
+        if active_id is None:
+            self._emit_error("No active object for split_chains")
+            return
+
+        prefix: Optional[str] = None
+        if args:
+            prefix = args[0] or None
+
+        try:
+            viewer.split_chains(prefix=prefix, object_ids=[active_id])
+        except Exception as exc:
+            self._emit_error(f"Failed to split chains: {exc}")
+            return
+
+        self._refresh_window_objects(window)
+        self._emit_message("Split chains completed")

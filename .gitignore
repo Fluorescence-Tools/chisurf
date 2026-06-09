@@ -35,6 +35,7 @@
 *.pyo
 *_.cpp 
 *scratch
+chimol_ray_*.png
 .*mypy*
 .DS_Store
 Thumbs.db

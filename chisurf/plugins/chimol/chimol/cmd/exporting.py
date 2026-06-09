@@ -223,53 +223,70 @@ class ExportMixin(BaseCmd):
         bg_rgb = self._parse_background(bg_color)
 
         scene_func = getattr(viewer, "get_current_scene", None)
+        use_scene_path = False
         if callable(scene_func):
             try:
                 scene = scene_func()
             except Exception:
                 scene = None
             if scene is not None and getattr(scene, "objects", None):
-                self._emit_message(f"ray: rendering current scene at {width}x{height} ...")
-                try:
-                    image = render_scene(
-                        scene=scene,
-                        camera=camera,
-                        light_directions=light_dirs_arr,
-                        width=width,
-                        height=height,
-                        background=bg_rgb,
-                        ambient=ambient,
-                        diffuse=diffuse,
-                        specular=specular,
-                        shininess=shininess,
-                        depth_cue=depth_cue,
-                        fog_start=fog_start,
-                        fog_intensity=fog_intensity,
-                    )
-                    from PIL import Image
-                    img = Image.fromarray(image)
-                    parent = out_path.parent
-                    parent.mkdir(parents=True, exist_ok=True)
-                    img.save(str(out_path), "PNG")
-                    show_overlay = getattr(viewer, "show_ray_overlay", None)
-                    if callable(show_overlay):
-                        try:
-                            from qtpy import QtGui
-                            qimg = QtGui.QImage(
-                                image.data,
-                                image.shape[1],
-                                image.shape[0],
-                                image.strides[0],
-                                QtGui.QImage.Format_RGB888,
-                            ).copy()
-                            show_overlay(qimg)
-                        except Exception:
-                            pass
-                    self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
-                    return
-                except Exception as exc:
-                    self._emit_error(f"ray: scene render failed: {exc}")
-                    return
+                use_scene_path = True
+        if use_scene_path:
+            self._emit_message(f"ray: rendering current scene at {width}x{height} ...")
+            try:
+                image = render_scene(
+                    scene=scene,
+                    camera=camera,
+                    light_directions=light_dirs_arr,
+                    width=width,
+                    height=height,
+                    background=bg_rgb,
+                    ambient=ambient,
+                    diffuse=diffuse,
+                    specular=specular,
+                    shininess=shininess,
+                    ssaa=ssaa_val,
+                    direct_specular=direct_specular,
+                    direct_specular_power=direct_specular_power,
+                    reflect_power=reflect_power,
+                    legacy_lighting=legacy_lighting,
+                    shadow=shadow_enabled,
+                    shadow_fudge=shadow_fudge,
+                    shadow_decay_factor=shadow_decay_factor,
+                    shadow_decay_range=shadow_decay_range,
+                    gamma=gamma,
+                    depth_cue=depth_cue,
+                    fog_start=fog_start,
+                    fog_intensity=fog_intensity,
+                    color_blend=color_blend,
+                    color_blend_red=color_blend_red,
+                    color_blend_green=color_blend_green,
+                    color_blend_blue=color_blend_blue,
+                )
+                from PIL import Image
+                img = Image.fromarray(image)
+                parent = out_path.parent
+                parent.mkdir(parents=True, exist_ok=True)
+                img.save(str(out_path), "PNG")
+                show_overlay = getattr(viewer, "show_ray_overlay", None)
+                if callable(show_overlay):
+                    try:
+                        from qtpy import QtGui
+                        qimg = QtGui.QImage(
+                            image.data,
+                            image.shape[1],
+                            image.shape[0],
+                            image.strides[0],
+                            QtGui.QImage.Format_RGB888,
+                        ).copy()
+                        show_overlay(qimg)
+                    except Exception:
+                        pass
+                self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
+                return
+            except Exception as exc:
+                self._emit_error(f"ray: scene render failed: {exc}")
+                return
 
         self._emit_message(f"ray: tracing {len(spheres)} spheres at {width}x{height} ...")
 

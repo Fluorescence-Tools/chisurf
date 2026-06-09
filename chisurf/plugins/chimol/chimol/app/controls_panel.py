@@ -182,11 +182,20 @@ class ControlsDock(QtCore.QObject):
             checked=False,
             object_name="chimolRepDots",
         )
+        self.button_rep_metaballs = _make_button(
+            "rep_metaballs",
+            text="Metaball",
+            tool_tip="Toggle metaballs representation",
+            checkable=True,
+            checked=False,
+            object_name="chimolRepMetaball",
+        )
         rep_group.addWidget(self.button_rep_cartoon)
         rep_group.addWidget(self.button_rep_atoms)
         rep_group.addWidget(self.button_rep_sticks)
         rep_group.addWidget(self.button_rep_trace)
         rep_group.addWidget(self.button_rep_dots)
+        rep_group.addWidget(self.button_rep_metaballs)
 
         self.button_info = _make_button(
             "info",

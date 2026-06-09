@@ -20,7 +20,7 @@ from ..colors import (
     _build_ss_color_array,
     _three_to_one_array,
 )
-from ..config import _DISPLAY_CONFIG
+from ..config import _DISPLAY_CONFIG, register_update_listener, unregister_update_listener
 from ..geometry import (
     _build_bond_pairs,
     _build_sphere_mesh,
@@ -35,6 +35,7 @@ from ..geometry import (
     _generate_surface_mesh_edt,
     _generate_surface_mesh_from_gaussians,
     _generate_trace_arrays,
+    _get_surface_atom_mask,
 )
 from .base import Renderer
 from .chimol_state import _MolViewObjectEntry, _MolViewObjectState, _StateField
@@ -872,6 +873,11 @@ class MolView(QtWidgets.QWidget):
             except Exception:
                 chains = np.array([str(c).strip() for c in atoms["chain"]])
 
+            # Compute the original object's center so each chain sub-object
+            # can be positioned relative to the same origin.
+            all_xyz = np.asarray(atoms["xyz"], dtype=float)
+            orig_center, _ = _compute_center_radius(all_xyz)
+
             unique_chains = np.unique(chains)
             for chain_id in unique_chains:
                 chain_str = str(chain_id)
@@ -879,6 +885,12 @@ class MolView(QtWidgets.QWidget):
                 if not mask.any():
                     continue
                 sub_atoms = atoms[mask].copy()
+                # Shift the chain's raw coordinates so its center matches
+                # the original object's center. This ensures the chain
+                # stays in the same position after splitting.
+                sub_xyz = sub_atoms["xyz"]
+                chain_center = np.asarray(sub_xyz, dtype=float).mean(axis=0)
+                sub_xyz[:] = np.asarray(sub_xyz, dtype=float) + (orig_center - chain_center)
                 # Build a simple structure-like container
                 class _Struct:
                     pass
@@ -1189,6 +1201,26 @@ class MolView(QtWidgets.QWidget):
 
         if self._renderer is None:
             self._show_disabled_label()
+
+        # Register to recompute representations when display config changes.
+        self._config_listener = self._on_display_config_changed
+        register_update_listener(self._config_listener)
+        self.destroyed.connect(self._unregister_config_listener)
+
+    def _unregister_config_listener(self) -> None:
+        """Remove the config-change listener on widget destruction."""
+        try:
+            unregister_update_listener(self._config_listener)
+        except Exception:
+            pass
+
+    def _on_display_config_changed(self) -> None:
+        """Recompute scene objects when display config is reloaded."""
+        if getattr(self, "_coords", None) is not None:
+            try:
+                self._update_view()
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Public API
@@ -3207,8 +3239,11 @@ class MolView(QtWidgets.QWidget):
         ao_strength = float(cfg.get("ao_strength", 0.5))
         ao_radius = float(cfg.get("ao_radius", 4.5))
 
+        surface_only = bool(cfg.get("surface_only", True))
+        surface_radius = float(cfg.get("surface_radius", 5.0))
+        surface_max_neighbors = int(cfg.get("surface_max_neighbors", 20))
+
         lighting_cfg = _DISPLAY_CONFIG.get("lighting", {})
-        # Material properties for the jelly look
         material = {
             "shininess": float(cfg.get("shininess", lighting_cfg.get("shininess", 38.0))),
             "specular_strength": float(cfg.get("specular_strength", lighting_cfg.get("specular_strength", 0.18))),
@@ -3216,24 +3251,36 @@ class MolView(QtWidgets.QWidget):
             "rim_power": float(cfg.get("rim_power", lighting_cfg.get("rim_power", 2.4))),
         }
 
-        pts_surface = None
-        colors_surface = None
-
         if self._all_atom_coords is not None:
-            pts_surface = np.asarray(self._all_atom_coords, dtype=float)
+            pts_all = np.asarray(self._all_atom_coords, dtype=float)
         else:
-            pts_surface = coords.copy()
+            pts_all = coords.copy()
 
-        if pts_surface.size == 0:
+        if pts_all.size == 0:
             return None
 
-        n_pts = pts_surface.shape[0]
+        n_all = pts_all.shape[0]
 
-        # Use an array of sigmas. Default roughly 1.5, or use atom radii if available
-        if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_pts:
-            sigmas = np.asarray(self._all_atom_radii, dtype=float) * 1.5
+        if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_all:
+            sigmas_all = np.asarray(self._all_atom_radii, dtype=float) * 1.5
         else:
-            sigmas = np.ones(n_pts, dtype=float) * 1.5
+            sigmas_all = np.ones(n_all, dtype=float) * 1.5
+
+        if surface_only and n_all > surface_max_neighbors:
+            surf_mask = _get_surface_atom_mask(
+                pts_all, radius=surface_radius, max_neighbors=surface_max_neighbors
+            )
+            if surf_mask.any():
+                pts_surface = pts_all[surf_mask]
+                sigmas = sigmas_all[surf_mask]
+            else:
+                pts_surface = pts_all
+                sigmas = sigmas_all
+        else:
+            pts_surface = pts_all
+            sigmas = sigmas_all
+
+        n_pts = pts_surface.shape[0]
 
         field_function = cfg.get("field_function", "wyvill")
         mesh_data = _generate_surface_mesh_from_density(
@@ -3251,17 +3298,19 @@ class MolView(QtWidgets.QWidget):
 
         verts, faces, norms = mesh_data
 
-        # Color the mesh
         base_color = np.asarray(self._base_color_single, dtype=float)
         if base_color.shape[0] != 4:
             base_color = np.array([1.0, 1.0, 1.0, 1.0], dtype=float)
 
-        # Color the mesh with weighted blending
-        mesh_colors = np.zeros((verts.shape[0], 4), dtype=float)
-
-        # Determine atom colors
-        n_pts = pts_surface.shape[0]
         atom_colors = np.tile(base_color, (n_pts, 1))
+
+        if surface_only and n_all > surface_max_neighbors:
+            surf_mask_full = _get_surface_atom_mask(
+                pts_all, radius=surface_radius, max_neighbors=surface_max_neighbors
+            )
+            surf_indices = np.where(surf_mask_full)[0]
+        else:
+            surf_indices = np.arange(n_all)
 
         if (
             self._all_atom_res_ids is not None
@@ -3269,82 +3318,67 @@ class MolView(QtWidgets.QWidget):
             and colors_per_ca is not None
             and len(colors_per_ca) == len(self._residue_ids)
         ):
-            # Create a robust mapping from residue ID to color
             res_id_to_color = {}
             for i_res, rid in enumerate(self._residue_ids):
                 res_id_to_color[rid] = colors_per_ca[i_res]
 
-            for i_atom, rid in enumerate(self._all_atom_res_ids):
-                if rid in res_id_to_color:
-                    atom_colors[i_atom] = res_id_to_color[rid]
+            for i_local, i_global in enumerate(surf_indices):
+                if i_global < len(self._all_atom_res_ids):
+                    rid = self._all_atom_res_ids[i_global]
+                    if rid in res_id_to_color:
+                        atom_colors[i_local] = res_id_to_color[rid]
 
         if getattr(self, "_colors_per_atom_override", None) is not None:
             ov = np.asarray(self._colors_per_atom_override, dtype=float)
-            for i_atom in range(min(n_pts, ov.shape[0])):
-                if np.isfinite(ov[i_atom]).all():
-                    atom_colors[i_atom] = ov[i_atom]
+            for i_local, i_global in enumerate(surf_indices):
+                if i_global < ov.shape[0] and np.isfinite(ov[i_global]).all():
+                    atom_colors[i_local] = ov[i_global]
 
         try:
             from scipy.spatial import cKDTree
             tree = cKDTree(pts_surface)
 
-            # Find atoms contributing to each vertex
             max_sigma = float(np.max(sigmas))
             cutoff = max_sigma * 2.5
 
-            # query_ball_point can be slow for very large systems, but for
-            # typical proteins it provides much nicer blending.
-            indices = tree.query_ball_point(verts, r=cutoff)
+            k = min(32, n_pts)
+            dists, idx = tree.query(verts, k=k)
 
-            for i_v, atom_indices in enumerate(indices):
-                if not atom_indices:
-                    # Fallback to nearest
-                    _, nearest = tree.query(verts[i_v])
-                    mesh_colors[i_v] = atom_colors[nearest]
-                    continue
+            if k == 1:
+                dists = dists[:, np.newaxis]
+                idx = idx[:, np.newaxis]
 
-                v_pos = verts[i_v]
-                w_sum = 0.0
-                c_sum = np.zeros(4, dtype=float)
+            valid = dists < cutoff
+            d2 = dists ** 2
+            s2 = sigmas[idx] ** 2
+            weights = np.exp(-d2 / (2.0 * s2))
+            weights = np.where(valid, weights, 0.0)
 
-                for i_a in atom_indices:
-                    d2 = np.sum((v_pos - pts_surface[i_a])**2)
-                    s2 = sigmas[i_a]**2
-                    w = math.exp(-d2 / (2.0 * s2))
-                    c_sum += atom_colors[i_a] * w
-                    w_sum += w
+            w_sum = weights.sum(axis=1, keepdims=True)
+            w_sum = np.where(w_sum > 0, w_sum, 1.0)
 
-                if w_sum > 0:
-                    mesh_colors[i_v] = c_sum / w_sum
-                else:
-                    _, nearest = tree.query(v_pos)
-                    mesh_colors[i_v] = atom_colors[nearest]
+            neighbor_colors = atom_colors[idx]
+            mesh_colors = (neighbor_colors * weights[:, :, np.newaxis]).sum(axis=1) / w_sum
 
-            # Recalculate normals analytically for buttery smoothness
-            # Normal = -Gradient(Density). Gradient of exp(-d2/2s2) is -(d/s2)*exp(-d2/2s2)
-            # So Normal(v) is proportional to sum_i [ (v - atom_pos_i) / sigma_i^2 * weight_i ]
-            new_norms = np.zeros_like(verts)
-            for i_v, atom_indices in enumerate(indices):
-                if not atom_indices:
-                    continue
-                v_pos = verts[i_v]
-                grad = np.zeros(3, dtype=float)
-                for i_a in atom_indices:
-                    diff = v_pos - pts_surface[i_a]
-                    d2 = np.sum(diff**2)
-                    s2 = sigmas[i_a]**2
-                    w = math.exp(-d2 / (2.0 * s2))
-                    grad += (diff / s2) * w
+            no_neighbors = ~valid.any(axis=1)
+            if no_neighbors.any():
+                _, nearest = tree.query(verts[no_neighbors])
+                mesh_colors[no_neighbors] = atom_colors[nearest]
 
-                mag = np.linalg.norm(grad)
-                if mag > 1e-6:
-                    new_norms[i_v] = grad / mag
-                else:
-                    new_norms[i_v] = norms[i_v] # Fallback
+            diff = verts[:, np.newaxis, :] - pts_surface[idx]
+            grad = (diff / s2[:, :, np.newaxis]) * weights[:, :, np.newaxis]
+            grad_sum = grad.sum(axis=1)
+
+            mag = np.linalg.norm(grad_sum, axis=1, keepdims=True)
+            mag = np.where(mag > 1e-6, mag, 1.0)
+            new_norms = -grad_sum / mag
+
+            fallback = (mag.squeeze() <= 1e-6)
+            if fallback.any():
+                new_norms[fallback] = norms[fallback]
 
             norms = new_norms
 
-            # Estimate Ambient Occlusion for depth
             if ao_strength > 0:
                 occ = _estimate_ambient_occlusion(verts, radius=ao_radius, max_neighbors=32)
                 if occ is not None:
@@ -3352,14 +3386,13 @@ class MolView(QtWidgets.QWidget):
                     mesh_colors[:, :3] *= darken[:, np.newaxis]
 
         except Exception:
-            # Absolute fallback to nearest-neighbor if advanced blending fails
             try:
                 from scipy.spatial import cKDTree
                 tree = cKDTree(pts_surface)
                 _, nearest = tree.query(verts)
                 mesh_colors = atom_colors[nearest]
             except Exception:
-                mesh_colors[:, :] = base_color
+                mesh_colors = np.tile(base_color, (verts.shape[0], 1))
 
         render_mode = "opaque"
         if alpha < 1.0:

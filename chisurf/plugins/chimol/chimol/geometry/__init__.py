@@ -10,7 +10,12 @@ from .cartoon import (
 )
 from .trace import _extract_ca_trace
 from .bonds import _build_bond_pairs
-from .surface import _generate_surface_mesh_from_gaussians
+from .surface import (
+    _generate_surface_mesh_from_gaussians,
+    _generate_surface_mesh_from_density,
+    _generate_surface_mesh_edt,
+    _get_surface_atom_mask,
+)
 
 __all__ = [
     "_compute_center_radius",
@@ -24,4 +29,7 @@ __all__ = [
     "_generate_nucleic_cartoon_arrays",
     "_generate_trace_arrays",
     "_generate_surface_mesh_from_gaussians",
+    "_generate_surface_mesh_from_density",
+    "_generate_surface_mesh_edt",
+    "_get_surface_atom_mask",
 ]

@@ -759,3 +759,26 @@ def test_cmd_ray_uses_config_settings(editing_context, tmp_path):
     # Just verify the command ran without error
     ok = any("ray:" in msg for msg in messages)
     assert ok, f"ray did not produce a message. Messages: {messages}"
+
+
+def test_chimol_split_chains(editing_context):
+    """The split_chains command splits structures by their chains."""
+    viewer, cmd = editing_context
+    state = viewer.get_active_state()
+    atoms = state.atoms
+    atoms['chain_id'][:5] = b'A'
+    atoms['chain_id'][5:] = b'B'
+
+    messages = []
+    errors = []
+    cmd.set_message_callback(messages.append)
+    cmd.set_error_callback(errors.append)
+
+    cmd.do("split_chains")
+    assert not errors, f"split_chains produced errors: {errors}"
+
+    objects = viewer.list_objects()
+    object_names = [obj["name"] for obj in objects]
+    assert "obj1_A" in object_names
+    assert "obj1_B" in object_names
+

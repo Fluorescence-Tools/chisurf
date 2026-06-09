@@ -91,10 +91,9 @@ class MolViewConfigEditor(QtWidgets.QDialog):
 
         # Reload display configuration globally so future redraws see it.
         try:
-            from chisurf.gui.widgets import protview as _pv_mod  # legacy fallback
+            from chisurf.plugins.chimol.chimol import config as _chimol_config
 
-            if hasattr(_pv_mod, "reload_display_config"):
-                _pv_mod.reload_display_config()
+            _chimol_config.reload_display_config()
         except Exception:  # pragma: no cover - optional refresh
             pass
 

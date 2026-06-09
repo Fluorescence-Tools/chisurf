@@ -29,7 +29,6 @@ class RenderingMixin(BaseCmd):
             "color": self._cmd_color,
             "spectrum": self._cmd_spectrum,
             "cartoon": self._cmd_cartoon,
-            "split_chains": self._cmd_split_chains,
             "set_color": self._cmd_set_color,
             "get_color_index": self._cmd_get_color_index,
         }
@@ -720,37 +719,4 @@ class RenderingMixin(BaseCmd):
         except Exception:
             pass
 
-    # ------------------------------------------------------------------ #
-    # Split chains
-    # ------------------------------------------------------------------ #
-    def _cmd_split_chains(self, args: List[str]) -> None:
-        window, viewer = self._require_window_and_viewer()
-        if viewer is None:
-            return
 
-        try:
-            active_id = viewer.get_active_object_id()
-        except Exception:
-            active_id = None
-        if active_id is None:
-            self._emit_error("No active object for split_chains")
-            return
-
-        prefix: Optional[str] = None
-        if args:
-            prefix = args[0] or None
-
-        try:
-            viewer.split_object_by_chains(object_id=active_id, prefix=prefix)
-        except Exception as exc:
-            self._emit_error(f"Failed to split chains: {exc}")
-            return
-
-        # Refresh UI after split
-        try:
-            if window is not None:
-                window._refresh_objects_from_viewer()
-        except Exception:
-            pass
-
-        self._emit_message("Split chains completed")

@@ -1,5 +1,7 @@
 """Protein structure viewer (Chimol) plugin."""
 
+import shutil
+
 import chisurf as cs
 from pathlib import Path
 from typing import Optional, Any, Sequence
@@ -116,6 +118,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.button_rep_sticks = self.controls.button_rep_sticks
         self.button_rep_trace = self.controls.button_rep_trace
         self.button_rep_dots = self.controls.button_rep_dots
+        self.button_rep_metaballs = self.controls.button_rep_metaballs
         self.button_surface = self.controls.button_surface
         self.button_info = self.controls.button_info
         self.button_display_cfg = self.controls.button_display_cfg
@@ -276,6 +279,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.button_rep_trace.toggled.connect(self.viewer.set_trace_visible)
         self.button_rep_dots.toggled.connect(self.viewer.set_dots_visible)
         self.button_surface.toggled.connect(self.viewer.set_surface_visible)
+        self.button_rep_metaballs.toggled.connect(self.viewer.set_metaballs_visible)
         self.button_info.toggled.connect(self.on_toggle_info_panel)
         self.button_display_cfg.clicked.connect(self.on_open_display_config)
 
@@ -323,9 +327,34 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self._update_sequence_view()
         self._update_system_info()
 
+        # Restore window state (geometry/layout)
+        try:
+            from chisurf.gui.misc_helpers import restore_plugin_window_state
+            restore_plugin_window_state(self, "chimol")
+        except Exception:
+            pass
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        """Handle main window close events.
+
+        Saves the window state and geometry before accepting the close event.
+
+        Parameters
+        ----------
+        event : QtGui.QCloseEvent
+            The Qt close event object.
+        """
+        try:
+            from chisurf.gui.misc_helpers import save_plugin_window_state
+            save_plugin_window_state(self, "chimol")
+        except Exception:
+            pass
+        event.accept()
+
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
+
 
     def _on_command_entered(self, line: str) -> None:
         try:
@@ -530,10 +559,19 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         """Open the Chimol display configuration in a built-in editor."""
 
         try:
-            if _cs_settings is not None:
-                json_path = _cs_settings.get_path("settings") / "chimol_display.json"
-            else:
-                json_path = Path(__file__).with_name("chimol_display.json")
+            from chisurf.plugins.chimol.chimol.config import (
+                get_user_display_config_path,
+                get_package_display_config_path,
+            )
+            json_path = get_user_display_config_path()
+            if json_path is None or not json_path.is_file():
+                pkg_path = get_package_display_config_path()
+                if pkg_path.is_file():
+                    if json_path is None:
+                        json_path = pkg_path
+                    else:
+                        json_path.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copyfile(pkg_path, json_path)
         except Exception:
             json_path = Path(__file__).with_name("chimol_display.json")
 
@@ -542,6 +580,12 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
 
     def _update_sequence_view(self, object_id: Optional[str] = None) -> None:
         active_id = object_id or self.viewer.get_active_object_id()
+
+        seq_cfg = self.sequence.sequence_config()
+        seq_view_enabled = bool(seq_cfg.get("seq_view", True))
+        self.sequence_dock.setVisible(seq_view_enabled)
+        if not seq_view_enabled:
+            return
 
         self.seq_numbers_list.clear()
         self.seq_numbers_list.setEnabled(False)
@@ -597,8 +641,15 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         # PDB residue ids are available, this aligns sequences by residue
         # number and exposes explicit gaps; otherwise it falls back to a
         # simple 1..N index axis matching the longest sequence.
+        gap_mode = int(seq_cfg.get("seq_view_gap_mode", 1))
         try:
-            axis, maps = build_residue_alignment(residue_numbers_map, lengths)
+            if gap_mode > 0:
+                axis, maps = build_residue_alignment(residue_numbers_map, lengths)
+                if axis is not None:
+                    axis, maps = self._collapse_alignment_gaps(axis, maps)
+            else:
+                axis = None
+                maps = {}
         except Exception:
             axis = None
             maps = {}
@@ -710,7 +761,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             )
 
         seq_cfg = self.sequence.sequence_config()
-        number_step = max(1, int(seq_cfg.get("number_step", 5)))
+        number_step = max(1, int(seq_cfg.get("seq_view_label_spacing", seq_cfg.get("number_step", 5))))
 
         residue_numbers = None
         try:
@@ -750,6 +801,100 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             pass
 
         self._reset_scroll_targets()
+
+    def _collapse_alignment_gaps(
+        self,
+        axis: np.ndarray,
+        maps: dict[str, Optional[np.ndarray]],
+        max_consecutive_gaps: int = 9,
+    ) -> tuple[np.ndarray, dict[str, Optional[np.ndarray]]]:
+        """Collapse large empty stretches of residue numbers into a 9-column block.
+
+        Parameters
+        ----------
+        axis : np.ndarray
+            1D array representing the global residue numbers alignment axis.
+        maps : dict
+            Mapping from object ID to 1D array of sequence indices.
+        max_consecutive_gaps : int, optional
+            Threshold above which a run of consecutive gaps is collapsed.
+
+        Returns
+        -------
+        new_axis : np.ndarray
+            The collapsed residue number axis.
+        new_maps : dict
+            The collapsed sequence index maps.
+        """
+        if axis is None or len(axis) == 0:
+            return axis, maps
+
+        # Identify objects that have a non-None map of length equal to axis
+        valid_keys = [k for k, v in maps.items() if v is not None and len(v) == len(axis)]
+        if not valid_keys:
+            return axis, maps
+
+        is_empty = np.ones(len(axis), dtype=bool)
+        for k in valid_keys:
+            is_empty &= (np.asarray(maps[k]) == -1)
+
+        new_axis_list = []
+        new_maps_lists = {k: [] for k in maps.keys()}
+
+        i = 0
+        N = len(axis)
+        while i < N:
+            is_run = False
+            if is_empty[i]:
+                run_end = i
+                while run_end + 1 < N and is_empty[run_end + 1]:
+                    run_end += 1
+                run_len = run_end - i + 1
+                if run_len > max_consecutive_gaps:
+                    is_run = True
+
+            if is_run:
+                # Collapse the run from i to run_end into exactly 9 columns:
+                # [-1, -1, -1, -2, -2, -2, -1, -1, -1]
+                # For axis, we keep the boundary residue numbers for the non-dot parts
+                for offset in range(9):
+                    if offset < 3:
+                        orig_idx = i + offset
+                        axis_val = axis[orig_idx]
+                        map_val = -1
+                    elif offset < 6:
+                        axis_val = -1  # Skip number display
+                        map_val = -2  # Render '.' (dot)
+                    else:
+                        orig_idx = run_end - (8 - offset)
+                        axis_val = axis[orig_idx]
+                        map_val = -1
+
+                    new_axis_list.append(axis_val)
+                    for k in maps.keys():
+                        if k in valid_keys:
+                            new_maps_lists[k].append(map_val)
+                        else:
+                            new_maps_lists[k].append(-1)
+                i = run_end + 1
+            else:
+                new_axis_list.append(axis[i])
+                for k, v in maps.items():
+                    if v is not None and i < len(v):
+                        new_maps_lists[k].append(v[i])
+                    else:
+                        new_maps_lists[k].append(-1)
+                i += 1
+
+        new_axis = np.array(new_axis_list, dtype=int)
+        new_maps = {}
+        for k in maps.keys():
+            if maps[k] is not None:
+                new_maps[k] = np.array(new_maps_lists[k], dtype=int)
+            else:
+                new_maps[k] = None
+
+        return new_axis, new_maps
 
     def _clear_extra_sequence_rows(self) -> None:
         self._sequence_rows.clear()
@@ -1620,35 +1765,29 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         step_val = step if step > 0 else 1
         labels: list[str] = ["·"] * max_len
         if max_len > 0:
-            label_positions: list[int] = [1]
-            if step_val > 0:
-                p = step_val
-                while p <= max_len:
-                    if p != 1:
-                        label_positions.append(p)
-                    p += step_val
-
-            for pos in label_positions:
-                if pos <= 0 or pos > max_len:
-                    continue
-                # Use PDB residue number if available for this position,
-                # otherwise fall back to 1-based sequence index.
-                if resno_arr is not None and (pos - 1) < resno_arr.shape[0]:
+            for idx in range(max_len):
+                r = -1
+                if resno_arr is not None and idx < resno_arr.shape[0]:
                     try:
-                        text = str(int(resno_arr[pos - 1]))
+                        r = int(resno_arr[idx])
                     except Exception:
-                        text = str(pos)
+                        pass
                 else:
-                    text = str(pos)
-                start = pos - len(text)
-                if start < 0:
-                    # Should not normally happen, but guard just in case.
-                    text = text[-pos:]
-                    start = 0
-                for j, ch in enumerate(text):
-                    idx_char = start + j
-                    if 0 <= idx_char < max_len:
-                        labels[idx_char] = ch
+                    r = idx + 1
+
+                if r <= 0:
+                    continue
+
+                if r == 1 or r % step_val == 0:
+                    text = str(r)
+                    start = idx + 1 - len(text)
+                    if start < 0:
+                        text = text[-(idx + 1):]
+                        start = 0
+                    for j, ch in enumerate(text):
+                        idx_char = start + j
+                        if 0 <= idx_char < max_len:
+                            labels[idx_char] = ch
 
         size_hint = None
         if self.seq_list.count() > 0:
@@ -1776,6 +1915,8 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             else:
                 seq_index = idx if idx < length else -1
 
+            orig_seq_index = seq_index
+
             if 0 <= seq_index < length:
                 aa = seq_codes[seq_index] if seq_codes is not None else "?"
                 aa_str = str(aa) if aa is not None else "?"
@@ -1819,7 +1960,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                 bg, fg = SequenceDock.default_sequence_palette("C")
                 tooltip = tooltip_hint
                 seq_index = -1
-                text = "-"
+                text = "." if orig_seq_index == -2 else "-"
 
             item.setText(text or " ")
             item.setTextAlignment(QtCore.Qt.AlignCenter)

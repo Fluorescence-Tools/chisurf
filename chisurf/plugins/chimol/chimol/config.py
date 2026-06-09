@@ -4,12 +4,76 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+from collections.abc import Callable
 from pathlib import Path
 
 try:
     import chisurf.core.settings as _cs_settings
 except Exception:  # pragma: no cover - moview can run without chisurf
     _cs_settings = None
+
+DISPLAY_CONFIG_VERSION: int = 1
+"""Current version of the chimol_display.json schema.
+
+Increment this when keys are added, renamed, or removed so that users
+with an older copy in ``~/.chisurf/`` are prompted to update.
+"""
+
+
+_update_listeners: list[Callable[[], None]] = []
+"""Registered callbacks to notify when display config is reloaded."""
+
+
+def register_update_listener(listener: Callable[[], None]) -> None:
+    """Register a callback invoked after each config reload."""
+    _update_listeners.append(listener)
+
+
+def unregister_update_listener(listener: Callable[[], None]) -> None:
+    """Remove a previously registered callback."""
+    try:
+        _update_listeners.remove(listener)
+    except ValueError:
+        pass
+
+
+def get_package_display_config_path() -> Path:
+    """Return the path to the chimol_display.json shipped with the package."""
+    return Path(__file__).with_name("chimol_display.json")
+
+
+def get_user_display_config_path() -> Path | None:
+    """Return the expected user ``chimol_display.json`` path, or ``None``.
+
+    When chisurf is available this is ``~/.chisurf/chimol_display.json``;
+    otherwise ``None`` is returned (standalone Chimol uses the package copy).
+    """
+    if _cs_settings is not None:
+        try:
+            return _cs_settings.get_path("settings") / "chimol_display.json"
+        except Exception:
+            return None
+    return None
+
+
+def check_for_display_config_update() -> bool:
+    """Return ``True`` if the user's ``chimol_display.json`` is outdated.
+
+    Compares the ``_version`` field in the user copy (if any) against
+    :data:`DISPLAY_CONFIG_VERSION`.  Returns ``False`` when there is no
+    user copy or when the versions match.
+    """
+    user_path = get_user_display_config_path()
+    if user_path is None or not user_path.is_file():
+        return False
+    try:
+        with user_path.open("r", encoding="utf-8") as fh:
+            cfg = json.load(fh)
+        user_version = cfg.get("_version", 0)
+        return user_version < DISPLAY_CONFIG_VERSION
+    except Exception:
+        return False
 
 
 def _load_display_config() -> dict:
@@ -23,6 +87,7 @@ def _load_display_config() -> dict:
     """
 
     default = {
+        "_version": DISPLAY_CONFIG_VERSION,
         "background": "k",
         "defaults": {
             "color_mode": "by_sequence",
@@ -101,18 +166,36 @@ def _load_display_config() -> dict:
             "probe_radius": 1.4,
         },
         "metaball": {
+            # Density field function: "wyvill" (compact support, faster) or "gaussian"
             "field_function": "wyvill",
+            # Isosurface threshold for marching cubes (lower = larger surface)
             "iso_value": 0.15,
+            # Grid resolution in Angstroms (smaller = finer mesh, slower)
             "grid_spacing": 0.6,
+            # Extra space around bounding box in Angstroms
             "padding": 5.0,
+            # Maximum grid dimension (auto-coarsens spacing if exceeded)
             "max_dim": 128,
+            # Mesh transparency (1.0 = opaque, <1.0 = transparent)
             "alpha": 0.6,
-            "ao_strength": 0.5,
+            # Ambient occlusion strength (0.0 = off, 1.0 = maximum darkening in crevices)
+            "ao_strength": 0.6,
+            # AO search radius in Angstroms (larger = broader shadows)
             "ao_radius": 4.5,
-            "shininess": 120.0,
-            "specular_strength": 1.0,
-            "rim_strength": 0.6,
+            # Material shininess (higher = sharper specular highlights)
+            "shininess": 40.0,
+            # Specular highlight intensity (0.0 = matte, 1.0 = mirror-like)
+            "specular_strength": 0.3,
+            # Rim lighting strength (edge glow effect)
+            "rim_strength": 0.3,
+            # Rim lighting falloff power (higher = sharper edge)
             "rim_power": 4.0,
+            # Use only surface-exposed atoms (faster, cleaner surface)
+            "surface_only": True,
+            # Neighbor search radius for surface classification (Angstroms)
+            "surface_radius": 5.0,
+            # Max neighbors to be considered surface-exposed
+            "surface_max_neighbors": 20,
         },
         "sticks": {
             "width": 2.0,
@@ -289,6 +372,7 @@ def _load_display_config() -> dict:
     # can override display options without touching the source tree. When
     # chisurf is not available (standalone Chimol), fall back to a JSON file
     # shipped next to this module.
+    package_path = get_package_display_config_path()
     try:
         override_env = os.environ.get("CHIMOL_DISPLAY_CONFIG")
         if override_env:
@@ -296,24 +380,30 @@ def _load_display_config() -> dict:
             if override_path.is_file():
                 path = override_path
             else:
-                path = Path(__file__).with_name("chimol_display.json")
+                path = package_path
         elif _cs_settings is not None:
             settings_dir = _cs_settings.get_path("settings")
-            path = settings_dir / "chimol_display.json"
-            if not path.is_file():
+            user_path = settings_dir / "chimol_display.json"
+            if not user_path.is_file():
                 legacy = settings_dir / "molview_display.json"
                 if legacy.is_file():
                     path = legacy
                 else:
                     legacy2 = settings_dir / "protview_display.json"
-                    path = legacy2 if legacy2.is_file() else path
-                # Fall back to a copy shipped next to this module if present.
-                if not path.is_file():
-                    path = Path(__file__).with_name("chimol_display.json")
+                    path = legacy2 if legacy2.is_file() else user_path
+                # If no user or legacy file exists, copy the package default.
+                if not path.is_file() and package_path.is_file():
+                    settings_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(package_path, user_path)
+                    path = user_path
+                elif not path.is_file():
+                    path = package_path
+            else:
+                path = user_path
         else:
-            path = Path(__file__).with_name("chimol_display.json")
+            path = package_path
     except Exception:
-        path = Path(__file__).with_name("chimol_display.json")
+        path = package_path
 
     try:
         with path.open("r", encoding="utf-8") as fh:
@@ -321,8 +411,17 @@ def _load_display_config() -> dict:
     except Exception:
         return default
 
+    # Track the user copy version for the update-prompt feature.
+    global _DISPLAY_CONFIG_USER_VERSION
+    _DISPLAY_CONFIG_USER_VERSION = cfg.get("_version", 0)
+
+    # Strip meta keys that should not leak into the rendered config.
+    cfg.pop("_version", None)
+
     # Shallow-merge user config with defaults to ensure all keys exist.
     for key, sub in default.items():
+        if key == "_version":
+            continue
         if isinstance(sub, dict):
             section = cfg.setdefault(key, {})
             for sk, sv in sub.items():
@@ -331,6 +430,12 @@ def _load_display_config() -> dict:
             cfg.setdefault(key, sub)
     return cfg
 
+
+_DISPLAY_CONFIG_USER_VERSION: int = 0
+"""Version number read from the user's ``chimol_display.json``, or 0."""
+
+_DISPLAY_CONFIG_PACKAGE_VERSION: int = DISPLAY_CONFIG_VERSION
+"""Version number shipped with the package."""
 
 _DISPLAY_CONFIG: dict = _load_display_config()
 
@@ -342,7 +447,15 @@ def reload_display_config() -> None:
     :data:`_DISPLAY_CONFIG` inside :meth:`MolView._update_view`, so they
     will pick up new parameters on the next redraw after this function is
     called.
+
+    After reloading, all registered :data:`_update_listeners` are invoked so
+    that open viewers recompute their representations.
     """
 
     global _DISPLAY_CONFIG
     _DISPLAY_CONFIG = _load_display_config()
+    for listener in list(_update_listeners):
+        try:
+            listener()
+        except Exception:
+            pass

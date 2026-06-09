@@ -67,6 +67,8 @@ class MockViewer(_get_qobject_base()):
             0.0, 0.0, 0.0,
             0.1, 1000.0, 45.0,
         ]
+        self._show_atoms = True
+        self._show_cartoon = True
         self._reps: Dict[str, bool] = {
             "cartoon": True,
             "ca_trace": False,
@@ -205,6 +207,35 @@ class MockViewer(_get_qobject_base()):
 
     def set_color_mode(self, mode: str):
         self._color_mode = str(mode)
+
+    def split_chains(self, *, prefix: Optional[str] = None, object_ids: Optional[List[str]] = None) -> int:
+        target_ids = object_ids or list(self._objects.keys())
+        created = 0
+        for oid in target_ids:
+            entry = self._objects.get(oid)
+            if entry is None or entry.state.atoms is None:
+                continue
+            atoms = entry.state.atoms
+            dtype = atoms.dtype
+            field = "chain" if "chain" in dtype.names else ("chain_id" if "chain_id" in dtype.names else None)
+            if field is None:
+                continue
+            chains = atoms[field]
+            try:
+                uniq_chains = np.unique(chains)
+            except Exception:
+                continue
+            for ch in uniq_chains:
+                created += 1
+                try:
+                    ch_str = ch.decode('utf-8', errors='ignore') if isinstance(ch, bytes) else str(ch)
+                except Exception:
+                    ch_str = str(ch)
+                new_id = self._create_object(name=f"{prefix or entry.name}_{ch_str}")
+                sub_atoms = atoms[chains == ch].copy()
+                self._objects[new_id].state.atoms = sub_atoms
+            entry.visible = False
+        return created
 
     def clear_color_overrides(self):
         pass

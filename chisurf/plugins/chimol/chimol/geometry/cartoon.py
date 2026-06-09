@@ -812,6 +812,7 @@ def _build_trace_ups(
     atoms: np.ndarray,
     res_ids: Optional[np.ndarray],
     ca_coords: Optional[np.ndarray],
+    chain_ids: Optional[np.ndarray] = None,
 ) -> Optional[np.ndarray]:
     if res_ids is None or ca_coords is None:
         return None
@@ -826,10 +827,20 @@ def _build_trace_ups(
         atom_xyz = np.asarray(atoms["xyz"], dtype=float)
     except Exception:
         return None
+    if "chain" in fields:
+        try:
+            atom_chain = np.char.strip(atoms["chain"].astype(str))
+        except Exception:
+            atom_chain = np.array([str(c).strip() for c in atoms["chain"]])
+    else:
+        atom_chain = None
     n = len(res_ids)
     ups = np.zeros((n, 3), dtype=float)
     for i, rid in enumerate(res_ids):
         mask = atom_res_id == rid
+        if atom_chain is not None and chain_ids is not None:
+            cid = str(chain_ids[i]).strip() if i < len(chain_ids) else ""
+            mask = mask & (atom_chain == cid)
         if not np.any(mask):
             ups[i] = np.array([0.0, 0.0, 1.0], dtype=float)
             continue
@@ -850,6 +861,27 @@ def _build_trace_ups(
     for i in range(1, n):
         if float(np.dot(ups[i - 1], ups[i])) < 0.0:
             ups[i] = -ups[i]
+
+    # PyMOL's exact normal smoothing algorithm (RepCartoonSmoothLoops)
+    # PyMOL defaults: smooth_first=1, smooth_last=1, smooth_cycles=2
+    smooth_first = 1
+    smooth_last = 1
+    smooth_cycles = 2
+    
+    for f in range(smooth_first, smooth_last + 1):
+        for c in range(smooth_cycles):
+            tmp = np.zeros_like(ups)
+            for b in range(f, n - f):
+                t0 = np.zeros(3, dtype=float)
+                for e in range(-f, f + 1):
+                    t0 += ups[b + e]
+                tmp[b] = t0 / (f * 2 + 1)
+            for b in range(f, n - f):
+                ups[b] = tmp[b]
+                norm = float(np.linalg.norm(ups[b]))
+                if norm > 1e-6:
+                    ups[b] /= norm
+
     return ups
 
 
@@ -1085,6 +1117,8 @@ def _generate_nucleic_cartoon_arrays(
     ring_thickness = float(cfg.get("ring_thickness", 0.125)) * coordinate_scale
     backbone_radius = float(cfg.get("backbone_radius", 0.1)) * coordinate_scale
     backbone_quality = int(cfg.get("backbone_quality", 18))
+    
+
 
     fields = set(atoms.dtype.fields or {})
     if not {"res_id", "atom_name"}.issubset(fields):
@@ -1107,7 +1141,7 @@ def _generate_nucleic_cartoon_arrays(
         except Exception:
             atom_chains = np.array([str(c).strip() for c in atoms["chain"]])
     else:
-        atom_chains = np.zeros(len(atoms), dtype=object)
+        atom_chains = np.array([""] * len(atoms), dtype=object)
 
     all_verts = []
     all_norms = []
@@ -1129,12 +1163,13 @@ def _generate_nucleic_cartoon_arrays(
     pur_ring6_names = ["N1", "C2", "N3", "C4", "C5", "C6"]
     pur_ring5_names = ["C4", "C5", "N7", "C8", "N9"]
     
-    # Collect backbone coordinates (P or C1') for backbone trace
+    # Collect backbone coordinates (P or C4') for backbone trace
     backbone_coords = []
     backbone_colors = []
+    backbone_chains = []
 
     for i, rid in enumerate(res_ids):
-        chain_id = chain_ids[i] if chain_ids is not None else ""
+        chain_id = str(chain_ids[i]).strip() if chain_ids is not None else ""
 
         mask = (atom_res_ids == rid) & (atom_chains == chain_id)
         if not np.any(mask):
@@ -1147,10 +1182,12 @@ def _generate_nucleic_cartoon_arrays(
         for name, coord in zip(res_atom_names, res_coords):
             atom_to_coord[name] = coord
 
-        # Use C1' or C1* for backbone to match ladder connection point
-        # Fall back to P if sugar atoms are not available
+        # Select backbone atom: PyMOL uses P (phosphate) as primary trace atom.
+        # Sugar atoms are fallbacks for residues missing P.
+        atom_priority = ["P", "O5'", "C5'", "C4'", "C3'", "O3'", "C1'", "C1*"]
+        
         backbone_atom_name = None
-        for cand in ["C1'", "C1*", "P"]:  # Prefer C1', then C1*, then P
+        for cand in atom_priority:
             if cand in atom_to_coord:
                 backbone_atom_name = cand
                 break
@@ -1162,19 +1199,20 @@ def _generate_nucleic_cartoon_arrays(
         backbone_coord = atom_to_coord[backbone_atom_name]
         res_color = colors[i] if colors is not None else np.array([1.0, 1.0, 1.0, 1.0])
         
-        # Collect backbone coordinates (P or C1')
+        # Collect backbone coordinates (P primary, sugar fallback)
         backbone_coords.append(backbone_coord.copy())
         backbone_colors.append(res_color.copy())
+        backbone_chains.append(chain_id)
         
-        # For ladder and base rings, we need C1' or C1*
+        # For ladder and base rings, we need C1' or C1* atom (sugar to base)
         c1_name = None
-        for cand in ["C1'", "C1*", backbone_atom_name]:  # Try C1', then C1*, then whatever we have
+        for cand in ["C1'", "C1*"]:  # Use sugar atoms for ladder connection
             if cand in atom_to_coord:
                 c1_name = cand
                 break
 
         if not c1_name:
-            # If we have a backbone atom but no C1', just add backbone and skip ladder/rings
+            # If we don't have C1'/C1*, skip ladder/rings for this residue
             continue
 
         c1_coord = atom_to_coord[c1_name]
@@ -1214,28 +1252,42 @@ def _generate_nucleic_cartoon_arrays(
                 r6_mesh = _generate_prism_mesh(coords6, ring_thickness, res_color)
                 add_mesh(*r6_mesh)
 
-    # Generate backbone tube connecting C1' atoms
+    # Generate backbone tube (PyMOL mode 4 style — P trace with 5'/3' sugar fallback)
+    # Split at chain boundaries so the tube doesn't connect across chains
     if len(backbone_coords) >= 2:
         bb_coords = np.array(backbone_coords, dtype=float)
-        bb_colors = np.array(backbone_colors, dtype=float) if backbone_colors else None
-        
-        # Sample the backbone path for smoothness
-        bb_smooth, bb_colors_smooth = _sample_path(bb_coords, bb_colors)
-        
-        # Generate tube arrays for backbone
-        backbone_arrays = _generate_cartoon_tube_arrays(
-            bb_smooth,
-            bb_colors_smooth,
-            None,  # No trace_ups for backbone
-            base_radius=backbone_radius,
-            style="tube",
-            ss_codes=None,
-            config={"coordinate_scale": coordinate_scale, "tube_quality": backbone_quality},
-        )
-        
-        if backbone_arrays is not None:
-            bb_verts, bb_norms, bb_faces, bb_cols = backbone_arrays
-            add_mesh(bb_verts, bb_norms, bb_faces, bb_cols)
+        bb_colors_arr = np.array(backbone_colors, dtype=float) if backbone_colors else None
+        subdivisions = int(cfg.get("cartoon_sampling", 7))
+
+        # Build segment boundaries at chain breaks
+        seg_starts = [0]
+        for j in range(1, len(backbone_chains)):
+            if backbone_chains[j] != backbone_chains[j - 1]:
+                seg_starts.append(j)
+        seg_starts.append(len(backbone_chains))
+
+        for si in range(len(seg_starts) - 1):
+            s, e = seg_starts[si], seg_starts[si + 1]
+            if e - s < 2:
+                continue
+            seg_coords = bb_coords[s:e]
+            seg_colors = bb_colors_arr[s:e] if bb_colors_arr is not None else None
+
+            bb_smooth, bb_colors_smooth = _sample_path(seg_coords, seg_colors, subdivisions=subdivisions)
+
+            backbone_arrays = _generate_cartoon_tube_arrays(
+                bb_smooth,
+                bb_colors_smooth,
+                None,
+                base_radius=backbone_radius,
+                style="tube",
+                ss_codes=None,
+                config={"coordinate_scale": coordinate_scale, "tube_quality": backbone_quality},
+            )
+
+            if backbone_arrays is not None:
+                bb_verts, bb_norms, bb_faces, bb_cols = backbone_arrays
+                add_mesh(bb_verts, bb_norms, bb_faces, bb_cols)
     
     if not all_verts:
         return None

@@ -33,6 +33,46 @@ _AA_THREE_TO_ONE = {
     "TRP": "W",
     "TYR": "Y",
     "VAL": "V",
+    # DNA bases
+    "DA": "A",
+    "DC": "C",
+    "DG": "G",
+    "DT": "T",
+    # RNA bases
+    "A": "A",
+    "C": "C",
+    "G": "G",
+    "T": "T",
+    "U": "U",
+    # RNA variants
+    "RA": "A",
+    "RC": "C",
+    "RG": "G",
+    "RU": "U",
+    # Deoxy variants with numeric prefixes
+    "2DA": "A",
+    "2DC": "C",
+    "2DG": "G",
+    "2DT": "T",
+    "D2A": "A",
+    "D2C": "C",
+    "D2G": "G",
+    "D2T": "T",
+    # RNA variants with numeric prefixes
+    "R2A": "A",
+    "R2C": "C",
+    "R2G": "G",
+    "R2U": "U",
+    # Modified bases — map to their parent letter
+    "5MC": "C",
+    "5HC": "C",
+    "OMC": "C",
+    "H2U": "U",
+    "PSU": "U",
+    "M2G": "G",
+    "1MA": "A",
+    "7MG": "G",
+    "I": "I",
 }
 
 
@@ -289,6 +329,26 @@ def _color_for_resname(res_name: str) -> tuple[float, float, float, float]:
         return _cfg("negative", (0.9, 0.3, 0.3, 1.0))
     if key == "GLY":
         return _cfg("gly", (0.8, 0.8, 0.8, 1.0))
+
+    # Nucleic acid bases — standard IUPAC base pairing colors
+    purines = {"DA", "A", "RA", "2DA", "D2A", "R2A", "1MA"}
+    pyrimidines_c = {"DC", "C", "RC", "2DC", "D2C", "R2C", "5MC", "5HC", "OMC"}
+    guanine = {"DG", "G", "RG", "2DG", "D2G", "R2G", "M2G", "7MG"}
+    thymine = {"DT", "T", "2DT", "D2T"}
+    uracil = {"U", "RU", "R2U", "H2U", "PSU"}
+
+    if key in purines:
+        return (0.3, 0.8, 0.3, 1.0)  # green — adenine
+    if key in guanine:
+        return (0.3, 0.3, 0.9, 1.0)  # blue — guanine
+    if key in pyrimidines_c:
+        return (0.9, 0.3, 0.3, 1.0)  # red — cytosine
+    if key in thymine:
+        return (0.9, 0.9, 0.3, 1.0)  # yellow — thymine
+    if key in uracil:
+        return (0.9, 0.6, 0.3, 1.0)  # orange — uracil
+    if key == "I":
+        return (0.6, 0.3, 0.9, 1.0)  # purple — inosine
 
     base = np.asarray(_DISPLAY_CONFIG.get("colors", {}).get("base", [0.8, 0.8, 1.0, 1.0]), dtype=float)
     if base.shape[0] != 4:
