@@ -71,7 +71,13 @@
     k32:
       value: 1.0
       bounds: [0.0, 1e6]
-  description: "3-state kinetics -> relaxation times, population fractions"
+  description: |
+    <b>3-State Kinetics &rarr; (<i>x</i>, <i>t</i><sub>R</sub>)</b><br/>
+    Calculates relaxation times <i>t</i><sub>R</sub> and population fractions <i>x</i><sub>i</sub> from transition rates <i>k</i><sub>ij</sub>.<br/>
+    <br/>
+    <b>Equations:</b><br/>
+    &nbsp;&nbsp;&bull;&nbsp;Relaxation times: <i>t</i><sub>R,i</sub> = -1 / <i>&lambda;</i><sub>i</sub> (where <i>&lambda;</i><sub>i</sub> are the non-zero eigenvalues of <b>K</b>)<br/>
+    &nbsp;&nbsp;&bull;&nbsp;Populations: <i>x</i><sub>i</sub> correspond to the normalized eigenvector associated with <i>&lambda;</i> = 0
 FRET to PDA:
   code: >
     def g(
@@ -116,7 +122,17 @@ FRET to PDA:
     phiD:
       value: 0.92
       bounds: [0.0, 1.0]
-  description: "FRET eff -> PDA p0"
+  description: |
+    <b>FRET Efficiency &rarr; PDA <i>p</i><sub>0</sub></b><br/>
+    Calculates the peak position <i>p</i><sub>0</sub> in Photon Distribution Analysis (PDA) from FRET efficiency <i>E</i>, donor/acceptor quantum yields, and instrument detection factor <i>g</i>.<br/>
+    <br/>
+    <b>Parameters:</b><br/>
+    &nbsp;&nbsp;&bull;&nbsp;<i>&phi;</i><sub>A</sub>, <i>&phi;</i><sub>D</sub>: Acceptor and donor fluorescence quantum yields<br/>
+    &nbsp;&nbsp;&bull;&nbsp;<i>g</i>: Instrument detection efficiency ratio<br/>
+    &nbsp;&nbsp;&bull;&nbsp;<i>a</i>: Correction factor for background/crosstalk<br/>
+    <br/>
+    <b>Equation:</b><br/>
+    <i>p</i><sub>0</sub> = 1 - [1 + (<i>&phi;</i><sub>A</sub>/<i>&phi;</i><sub>D</sub>) &middot; (1/<i>g</i>) &middot; (<i>E</i> / (1 - <i>E</i>)) + <i>a</i>]<sup>-1</sup>
 2 state kinetics->(x,tR):
   code: >
     def g(k12, k21):
@@ -142,7 +158,13 @@ FRET to PDA:
     k21:
       value: 0.5
       bounds: [0.0, 1e6]
-  description: "2-state kinetics -> relaxation times, population fractions"
+  description: |
+    <b>2-State Kinetics &rarr; (<i>x</i>, <i>t</i><sub>R</sub>)</b><br/>
+    Calculates the relaxation time <i>t</i><sub>R</sub> and population fractions <i>x</i><sub>1</sub>, <i>x</i><sub>2</sub> from transition rates <i>k</i><sub>12</sub> and <i>k</i><sub>21</sub>.<br/>
+    <br/>
+    <b>Equations:</b><br/>
+    &nbsp;&nbsp;&bull;&nbsp;<i>t</i><sub>R</sub> = 1 / (<i>k</i><sub>12</sub> + <i>k</i><sub>21</sub>)<br/>
+    &nbsp;&nbsp;&bull;&nbsp;<i>x</i><sub>1</sub> = <i>k</i><sub>21</sub> / (<i>k</i><sub>12</sub> + <i>k</i><sub>21</sub>), &nbsp; <i>x</i><sub>2</sub> = <i>k</i><sub>12</sub> / (<i>k</i><sub>12</sub> + <i>k</i><sub>21</sub>)
 Gauss->FRET efficiency:
   code: >
     def g(RDA, sDA, k, R0):
@@ -176,4 +198,246 @@ Gauss->FRET efficiency:
     R0:
       value: 52.0
       bounds: [0.0, 100.0]
-  description: "Compute FRET efficiency for generalized Gaussian (with skew, k)"
+  description: |
+    <b>Generalized Gaussian &rarr; FRET Efficiency (<i>E</i>)</b><br/>
+    Computes the mean FRET efficiency by integrating over a generalized Gaussian distance distribution with mean <i>R</i><sub>DA</sub>, width <i>s</i><sub>DA</sub>, and skewness parameter <i>k</i>.<br/>
+    <br/>
+    <b>Equation:</b><br/>
+    <i>E</i> = &int; <i>E</i>(<i>R</i>) &middot; <i>P</i>(<i>R</i>) <i>dR</i> &nbsp; where &nbsp; <i>E</i>(<i>R</i>) = 1 / [1 + (<i>R</i>/<i>R</i><sub>0</sub>)<sup>6</sup>]
+Accessible Volume (Gaussian approx)->RDA, dRDAE, E:
+  code: >
+    def g(dRmp, sD, sA, R0):
+        # Mathematical Explanation:
+        # AVs are approximated as 3D isotropic Gaussians with standard deviations sD and sA.
+        # The vector distance R = rA - rD follows a 3D Gaussian N(Rmp, sigma^2 * I_3) 
+        # where sigma^2 = sD^2 + sA^2. The scalar distance D = |R| follows a distribution 
+        # where (D/sigma)^2 is non-central chi-squared distributed with 3 degrees of freedom 
+        # and non-centrality parameter lambda = (dRmp/sigma)^2.
+        # We calculate expectation values for RDA (mean distance), dRDAE (FRET-averaged distance), 
+        # and E (mean FRET efficiency) over this distribution.
+        
+        import numpy as np
+        from scipy.stats import ncx2
+        
+        sigma = np.sqrt(sD**2 + sA**2)
+        if sigma < 1e-10:
+            E = 1.0 / (1.0 + (dRmp / max(R0, 1e-10))**6) if R0 > 0 else 0.0
+            return {'RDA': float(dRmp), 'dRDAE': float(dRmp), 'E': float(E)}
+            
+        nc = (dRmp / sigma)**2
+        x = np.linspace(max(0.1, dRmp - 8*sigma), dRmp + 8*sigma, 1000)
+        x2_scaled = (x / sigma)**2
+        pdf = ncx2.pdf(x2_scaled, df=3, nc=nc) * (2.0 * x / sigma**2)
+        
+        pdf_sum = np.sum(pdf)
+        if pdf_sum > 0:
+            pdf /= pdf_sum
+        else:
+            pdf = np.zeros_like(x)
+            idx = np.argmin(np.abs(x - dRmp))
+            pdf[idx] = 1.0
+            
+        RDA = np.sum(x * pdf)
+        E_array = 1.0 / (1.0 + (x / max(R0, 1e-10))**6)
+        mean_E = np.sum(E_array * pdf)
+        
+        if 0 < mean_E < 1:
+            dRDAE = R0 * ((1.0 / mean_E) - 1.0)**(1.0/6.0)
+        elif mean_E >= 1:
+            dRDAE = 0.0
+        else:
+            dRDAE = 1e6
+            
+        return {
+            'RDA': float(RDA),
+            'dRDAE': float(dRDAE),
+            'E': float(mean_E)
+        }
+
+  initial:
+    dRmp:
+      value: 50.0
+      bounds: [0.0, 200.0]
+    sD:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    sA:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    R0:
+      value: 52.0
+      bounds: [0.0, 100.0]
+  description: |
+    <b>Accessible Volume (Gaussian approx) &rarr; R<sub>DA</sub>, d<sub>RDAE</sub>, E</b><br/>
+    Approximates donor and acceptor accessible volumes (AVs) as 3D isotropic Gaussians with standard deviations <i>s</i><sub>D</sub> and <i>s</i><sub>A</sub>.<br/>
+    The distance vector <b>R</b> follows a 3D Gaussian: <b>R</b> ~ <i>N</i>(<b>R</b><sub>mp</sub>, <i>&sigma;</i><sup>2</sup> <b>I</b><sub>3</sub>) with <i>&sigma;</i><sup>2</sup> = <i>s</i><sub>D</sub><sup>2</sup> + <i>s</i><sub>A</sub><sup>2</sup>.<br/>
+    The scalar distance <i>D</i> follows a non-central chi distribution.<br/>
+    Calculates expectation values:<br/>
+    &nbsp;&nbsp;&bull;&nbsp;Mean distance: <i>R</i><sub>DA</sub> = &langle;<i>D</i>&rangle;<br/>
+    &nbsp;&nbsp;&bull;&nbsp;Mean FRET efficiency: <i>E</i> = &langle;1 / (1 + (<i>D</i>/<i>R</i><sub>0</sub>)<sup>6</sup>)&rangle;<br/>
+    &nbsp;&nbsp;&bull;&nbsp;FRET-averaged distance: <i>d</i><sub>RDAE</sub> = <i>R</i><sub>0</sub> &middot; [(1/<i>E</i>) - 1]<sup>1/6</sup>
+Accessible Volume (Gaussian approx) RDA -> dRmp, dRDAE, E:
+  code: >
+    def g(RDA, sD, sA, R0):
+        # Inverse transform: Find dRmp that yields the target RDA, then compute dRDAE and E
+        import numpy as np
+        from scipy.stats import ncx2
+        from scipy.optimize import root_scalar
+        
+        def _compute(dRmp):
+            sigma = np.sqrt(sD**2 + sA**2)
+            if sigma < 1e-10:
+                return float(dRmp), float(dRmp), (1.0 / (1.0 + (dRmp / max(R0, 1e-10))**6) if R0 > 0 else 0.0)
+            nc = (dRmp / sigma)**2
+            x = np.linspace(max(0.1, dRmp - 8*sigma), dRmp + 8*sigma, 1000)
+            pdf = ncx2.pdf((x / sigma)**2, df=3, nc=nc) * (2.0 * x / sigma**2)
+            pdf_sum = np.sum(pdf)
+            if pdf_sum > 0: pdf /= pdf_sum
+            else:
+                pdf = np.zeros_like(x)
+                pdf[np.argmin(np.abs(x - dRmp))] = 1.0
+            rda = np.sum(x * pdf)
+            mean_E = np.sum((1.0 / (1.0 + (x / max(R0, 1e-10))**6)) * pdf)
+            drdae = R0 * ((1.0 / mean_E) - 1.0)**(1.0/6.0) if 0 < mean_E < 1 else (0.0 if mean_E >= 1 else 1e6)
+            return float(rda), float(drdae), float(mean_E)
+
+        def objective(dRmp):
+            r, _, _ = _compute(dRmp)
+            return r - RDA
+            
+        try:
+            res = root_scalar(objective, bracket=[0.0, max(200.0, RDA * 2)])
+            dRmp = res.root
+        except ValueError:
+            dRmp = RDA  # Fallback if root not found in bracket
+            
+        _, dRDAE, E = _compute(dRmp)
+        return {'dRmp': float(dRmp), 'dRDAE': float(dRDAE), 'E': float(E)}
+
+  initial:
+    RDA:
+      value: 50.0
+      bounds: [0.0, 200.0]
+    sD:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    sA:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    R0:
+      value: 52.0
+      bounds: [0.0, 100.0]
+  description: |
+    <b>Accessible Volume (Gaussian approx) Inverse: R<sub>DA</sub> &rarr; d<sub>Rmp</sub>, d<sub>RDAE</sub>, E</b><br/>
+    Uses numerical root finding to solve for the mean position distance <i>d</i><sub>Rmp</sub> that satisfies the target mean distance <i>R</i><sub>DA</sub> = &langle;<i>D</i>&rangle;, assuming 3D Gaussian accessible volumes.<br/>
+    Once <i>d</i><sub>Rmp</sub> is found, it calculates the corresponding expectation values for <i>d</i><sub>RDAE</sub> and FRET efficiency <i>E</i>.
+Accessible Volume (Gaussian approx) dRDAE -> dRmp, RDA, E:
+  code: >
+    def g(dRDAE, sD, sA, R0):
+        # Inverse transform: Find dRmp that yields the target dRDAE, then compute RDA and E
+        import numpy as np
+        from scipy.stats import ncx2
+        from scipy.optimize import root_scalar
+        
+        def _compute(dRmp):
+            sigma = np.sqrt(sD**2 + sA**2)
+            if sigma < 1e-10:
+                return float(dRmp), float(dRmp), (1.0 / (1.0 + (dRmp / max(R0, 1e-10))**6) if R0 > 0 else 0.0)
+            nc = (dRmp / sigma)**2
+            x = np.linspace(max(0.1, dRmp - 8*sigma), dRmp + 8*sigma, 1000)
+            pdf = ncx2.pdf((x / sigma)**2, df=3, nc=nc) * (2.0 * x / sigma**2)
+            pdf_sum = np.sum(pdf)
+            if pdf_sum > 0: pdf /= pdf_sum
+            else:
+                pdf = np.zeros_like(x)
+                pdf[np.argmin(np.abs(x - dRmp))] = 1.0
+            rda = np.sum(x * pdf)
+            mean_E = np.sum((1.0 / (1.0 + (x / max(R0, 1e-10))**6)) * pdf)
+            drdae = R0 * ((1.0 / mean_E) - 1.0)**(1.0/6.0) if 0 < mean_E < 1 else (0.0 if mean_E >= 1 else 1e6)
+            return float(rda), float(drdae), float(mean_E)
+
+        def objective(dRmp):
+            _, r, _ = _compute(dRmp)
+            return r - dRDAE
+            
+        try:
+            res = root_scalar(objective, bracket=[0.0, max(200.0, dRDAE * 2)])
+            dRmp = res.root
+        except ValueError:
+            dRmp = dRDAE  # Fallback if root not found in bracket
+            
+        RDA, _, E = _compute(dRmp)
+        return {'dRmp': float(dRmp), 'RDA': float(RDA), 'E': float(E)}
+
+  initial:
+    dRDAE:
+      value: 50.0
+      bounds: [0.0, 200.0]
+    sD:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    sA:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    R0:
+      value: 52.0
+      bounds: [0.0, 100.0]
+  description: |
+    <b>Accessible Volume (Gaussian approx) Inverse: d<sub>RDAE</sub> &rarr; d<sub>Rmp</sub>, R<sub>DA</sub>, E</b><br/>
+    Uses numerical root finding to solve for the mean position distance <i>d</i><sub>Rmp</sub> that satisfies the target FRET-averaged distance <i>d</i><sub>RDAE</sub>, assuming 3D Gaussian accessible volumes.<br/>
+    Once <i>d</i><sub>Rmp</sub> is found, it calculates the corresponding expectation values for <i>R</i><sub>DA</sub> and FRET efficiency <i>E</i>.
+Accessible Volume (Gaussian approx) E -> dRmp, RDA, dRDAE:
+  code: >
+    def g(E, sD, sA, R0):
+        # Inverse transform: Find dRmp that yields the target E, then compute RDA and dRDAE
+        import numpy as np
+        from scipy.stats import ncx2
+        from scipy.optimize import root_scalar
+        
+        def _compute(dRmp):
+            sigma = np.sqrt(sD**2 + sA**2)
+            if sigma < 1e-10:
+                return float(dRmp), float(dRmp), (1.0 / (1.0 + (dRmp / max(R0, 1e-10))**6) if R0 > 0 else 0.0)
+            nc = (dRmp / sigma)**2
+            x = np.linspace(max(0.1, dRmp - 8*sigma), dRmp + 8*sigma, 1000)
+            pdf = ncx2.pdf((x / sigma)**2, df=3, nc=nc) * (2.0 * x / sigma**2)
+            pdf_sum = np.sum(pdf)
+            if pdf_sum > 0: pdf /= pdf_sum
+            else:
+                pdf = np.zeros_like(x)
+                pdf[np.argmin(np.abs(x - dRmp))] = 1.0
+            rda = np.sum(x * pdf)
+            mean_e = np.sum((1.0 / (1.0 + (x / max(R0, 1e-10))**6)) * pdf)
+            drdae = R0 * ((1.0 / mean_e) - 1.0)**(1.0/6.0) if 0 < mean_e < 1 else (0.0 if mean_e >= 1 else 1e6)
+            return float(rda), float(drdae), float(mean_e)
+
+        def objective(dRmp):
+            _, _, e = _compute(dRmp)
+            return e - E
+            
+        try:
+            res = root_scalar(objective, bracket=[0.0, 200.0])
+            dRmp = res.root
+        except ValueError:
+            dRmp = R0 * ((1.0 / max(1e-10, E)) - 1.0)**(1.0/6.0) # Fallback if root not found in bracket
+            
+        RDA, dRDAE, _ = _compute(dRmp)
+        return {'dRmp': float(dRmp), 'RDA': float(RDA), 'dRDAE': float(dRDAE)}
+
+  initial:
+    E:
+      value: 0.5
+      bounds: [0.0, 1.0]
+    sD:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    sA:
+      value: 5.0
+      bounds: [0.0, 50.0]
+    R0:
+      value: 52.0
+      bounds: [0.0, 100.0]
+  description: |
+    <b>Accessible Volume (Gaussian approx) Inverse: E &rarr; d<sub>Rmp</sub>, R<sub>DA</sub>, d<sub>RDAE</sub></b><br/>
+    Uses numerical root finding to solve for the mean position distance <i>d</i><sub>Rmp</sub> that satisfies the target FRET efficiency <i>E</i>, assuming 3D Gaussian accessible volumes.<br/>
+    Once <i>d</i><sub>Rmp</sub> is found, it calculates the corresponding expectation values for <i>R</i><sub>DA</sub> and <i>d</i><sub>RDAE</sub>.
