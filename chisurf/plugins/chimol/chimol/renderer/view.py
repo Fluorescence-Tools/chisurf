@@ -1,43 +1,45 @@
 from __future__ import annotations
 
-from collections import OrderedDict
-from contextlib import contextmanager
-from dataclasses import dataclass, field
-from importlib import import_module
 import copy
-from typing import Optional, Union, Sequence, Any
+import math
+from collections import OrderedDict
+from collections.abc import Sequence
+from contextlib import contextmanager
+from importlib import import_module
+from typing import Any, Optional, Union
 
 import numpy as np
+from qtpy import QtCore, QtGui, QtWidgets
 
-from qtpy import QtCore, QtWidgets, QtGui
-
+from ..analysis.ss import assign_ss_c3_from_atoms
+from ..colors import (
+    _build_chain_color_array,
+    _build_element_color_array,
+    _build_residue_color_array,
+    _build_sequence_gradient_colors,
+    _build_ss_color_array,
+    _three_to_one_array,
+)
 from ..config import _DISPLAY_CONFIG
 from ..geometry import (
-    _compute_center_radius,
-    _estimate_ambient_occlusion,
+    _build_bond_pairs,
     _build_sphere_mesh,
     _build_stick_mesh,
     _build_trace_ups,
+    _compute_center_radius,
+    _estimate_ambient_occlusion,
     _extract_ca_trace,
-    _build_bond_pairs,
     _generate_cartoon_tube_arrays,
     _generate_nucleic_cartoon_arrays,
-    _generate_trace_arrays,
+    _generate_surface_mesh_from_density,
+    _generate_surface_mesh_edt,
     _generate_surface_mesh_from_gaussians,
+    _generate_trace_arrays,
 )
-from ..analysis.ss import assign_ss_c3_from_atoms
 from .base import Renderer
+from .chimol_state import _MolViewObjectEntry, _MolViewObjectState, _StateField
 from .qtgl import QtGLRenderer
-from .scene import Scene, SceneObject, Geometry
-from .chimol_state import _MolViewObjectState, _MolViewObjectEntry, _StateField
-from ..colors import (
-    _three_to_one_array,
-    _build_residue_color_array,
-    _build_ss_color_array,
-    _build_sequence_gradient_colors,
-    _build_element_color_array,
-    _build_chain_color_array,
-)
+from .scene import Geometry, Scene, SceneObject
 
 
 def _get_picking_module():
@@ -187,9 +189,9 @@ class MolView(QtWidgets.QWidget):
         radii: np.ndarray,
         restraints: list[dict] = None,
         rmf_provenance: list[dict] = None,
-        bond_pairs: Optional[np.ndarray] = None,
+        bond_pairs: np.ndarray | None = None,
         *,
-        object_id: Optional[str] = None
+        object_id: str | None = None
     ) -> None:
         """Load full RMF data (hierarchy, trajectory, radii) into an object."""
         with self._activate_object(object_id):
@@ -213,13 +215,13 @@ class MolView(QtWidgets.QWidget):
                 state.cartoon_mask = np.zeros(n_points, dtype=bool)
                 state.ball_mask = np.ones(n_points, dtype=bool)
                 state.sticks_mask = np.ones(n_points, dtype=bool)
-            
+
             # If we have radii, we likely want to show beads (mode 'spheres')
             if radii is not None and np.any(radii > 0):
                 state.show_atoms = True  # We use the atoms/spheres path for beads
                 state.show_cartoon = False
                 state.show_trace = False
-                
+
         self._update_view()
 
     def _prune_placeholders(self) -> None:
@@ -237,8 +239,8 @@ class MolView(QtWidgets.QWidget):
 
     def _create_object(
         self,
-        name: Optional[str] = None,
-        source_path: Optional[str] = None,
+        name: str | None = None,
+        source_path: str | None = None,
         *,
         placeholder: bool = False,
     ) -> _MolViewObjectEntry:
@@ -262,7 +264,7 @@ class MolView(QtWidgets.QWidget):
         self._auto_create_enabled = True
         return entry
 
-    def _ensure_active_entry(self, create_if_missing: bool = True) -> Optional[_MolViewObjectEntry]:
+    def _ensure_active_entry(self, create_if_missing: bool = True) -> _MolViewObjectEntry | None:
         if self._active_object_id in self._objects:
             return self._objects[self._active_object_id]
         if self._objects:
@@ -285,7 +287,7 @@ class MolView(QtWidgets.QWidget):
             raise RuntimeError("No active object available")
         return entry.state
 
-    def get_active_object_id(self) -> Optional[str]:
+    def get_active_object_id(self) -> str | None:
         return self._active_object_id
 
     def set_active_object(self, object_id: str) -> bool:
@@ -305,14 +307,14 @@ class MolView(QtWidgets.QWidget):
 
     def set_atom_features(
         self,
-        features: Optional[dict[str, object]],
+        features: dict[str, object] | None,
         *,
-        meta: Optional[dict[str, dict]] = None,
-        object_id: Optional[str] = None,
+        meta: dict[str, dict] | None = None,
+        object_id: str | None = None,
     ) -> None:
         """Attach arbitrary per-atom feature payloads to the active object."""
 
-        def _sanitize_dict(data: Optional[dict[str, object]]) -> dict[str, object]:
+        def _sanitize_dict(data: dict[str, object] | None) -> dict[str, object]:
             if not data:
                 return {}
             cleaned: dict[str, object] = {}
@@ -339,10 +341,10 @@ class MolView(QtWidgets.QWidget):
         if self._coords is not None:
             self._update_view()
 
-    def clear_atom_features(self, *, object_id: Optional[str] = None) -> None:
+    def clear_atom_features(self, *, object_id: str | None = None) -> None:
         self.set_atom_features(None, object_id=object_id)
 
-    def set_atom_colors(self, colors: Optional[np.ndarray]) -> None:
+    def set_atom_colors(self, colors: np.ndarray | None) -> None:
         if colors is None:
             self._colors_per_atom_override = None
         else:
@@ -361,7 +363,7 @@ class MolView(QtWidgets.QWidget):
         if self._coords is not None:
             self._update_view()
 
-    def set_residue_colors(self, colors: Optional[np.ndarray]) -> None:
+    def set_residue_colors(self, colors: np.ndarray | None) -> None:
         if colors is None:
             self._colors_per_residue_override = None
         else:
@@ -387,7 +389,7 @@ class MolView(QtWidgets.QWidget):
         entry.visible = bool(visible)
         self._update_view()
 
-    def get_residue_positions(self, indices, *, object_id: Optional[str] = None) -> np.ndarray:
+    def get_residue_positions(self, indices, *, object_id: str | None = None) -> np.ndarray:
         with self._activate_object(object_id):
             coords = self._coords
             if coords is None:
@@ -413,7 +415,7 @@ class MolView(QtWidgets.QWidget):
         rotation: np.ndarray,
         translation: np.ndarray,
         *,
-        object_id: Optional[str] = None,
+        object_id: str | None = None,
     ) -> None:
         rot, trans = _coerce_rotation_translation(rotation, translation)
         target_id = object_id if object_id is not None else self._active_object_id
@@ -443,7 +445,7 @@ class MolView(QtWidgets.QWidget):
         self,
         key: str,
         coords: np.ndarray,
-        color: Union[np.ndarray, Sequence[float]] = (0.0, 1.0, 0.5, 0.6),
+        color: np.ndarray | Sequence[float] = (0.0, 1.0, 0.5, 0.6),
         size_scale: float = 0.03,
         min_size: float = 2.5,
         alpha: float = 0.6,
@@ -523,8 +525,8 @@ class MolView(QtWidgets.QWidget):
         center: np.ndarray,
         radius: float = 1.5,
         color: Sequence[float] = (1.0, 0.8, 0.2, 0.9),
-        label: Optional[str] = None,
-        key: Optional[str] = None,
+        label: str | None = None,
+        key: str | None = None,
     ) -> str:
         """Place a single sphere at *center* (e.g. an AV mean position or attachment point).
 
@@ -591,9 +593,8 @@ class MolView(QtWidgets.QWidget):
         self._update_view()
         return True
 
-    def copy_object(self, object_id: str, *, name: Optional[str] = None) -> Optional[str]:
+    def copy_object(self, object_id: str, *, name: str | None = None) -> str | None:
         """Create a deep copy of an existing loaded object."""
-
         entry = self._objects.get(object_id)
         if entry is None:
             return None
@@ -658,7 +659,6 @@ class MolView(QtWidgets.QWidget):
         derived state in one place prevents accidental rendering of the whole
         ``(T, N, 3)`` trajectory array.
         """
-
         frames = getattr(state, "frames", None)
         if frames is None:
             return 0
@@ -741,6 +741,39 @@ class MolView(QtWidgets.QWidget):
             selected_coords = frame
         state.coords = selected_coords
 
+        # Sync atoms["xyz"] to the raw (unscaled) frame coordinates so that
+        # _build_trace_ups uses the current backbone geometry rather than the
+        # stale coordinates from the initial add_structure call.  Without this,
+        # the ribbon normals (C→O vectors) are frozen at the starting
+        # conformation and the cartoon appears twisted/tangled as the MC moves
+        # the backbone.
+        if (
+            frame_matches_all_atoms
+            and state.atoms is not None
+            and state.residue_ids is not None
+        ):
+            try:
+                frames_raw = getattr(state, "frames_raw", None)
+                if frames_raw is not None:
+                    raw_arr = np.asarray(frames_raw, dtype=float)
+                    if raw_arr.ndim == 3 and raw_arr.shape[0] > idx and raw_arr.shape[1:] == frame.shape:
+                        raw_frame = raw_arr[idx]
+                    else:
+                        raw_frame = None
+                else:
+                    raw_frame = None
+                if raw_frame is not None and raw_frame.shape == state.atoms["xyz"].shape:
+                    state.atoms = state.atoms.copy()
+                    state.atoms["xyz"] = raw_frame
+                    state.trace_ups = _build_trace_ups(
+                        state.atoms,
+                        state.residue_ids,
+                        selected_coords,
+                        state.residue_chain_ids,
+                    )
+            except Exception:
+                pass
+
         try:
             center, radius = _compute_center_radius(
                 state.all_atom_coords
@@ -799,7 +832,7 @@ class MolView(QtWidgets.QWidget):
     # ------------------------------------------------------------------
     # Chain utilities
     # ------------------------------------------------------------------
-    def get_chain_ids(self, object_id: Optional[str] = None) -> list[str]:
+    def get_chain_ids(self, object_id: str | None = None) -> list[str]:
         """Return sorted chain identifiers for the given object (or active)."""
         with self._activate_object(object_id):
             state = self._get_active_state()
@@ -814,7 +847,7 @@ class MolView(QtWidgets.QWidget):
             except Exception:
                 return []
 
-    def split_chains(self, *, prefix: Optional[str] = None, object_ids: Optional[list[str]] = None) -> int:
+    def split_chains(self, *, prefix: str | None = None, object_ids: list[str] | None = None) -> int:
         """Create a new object for each chain in the specified objects.
 
         Returns the number of new objects created. Original objects are
@@ -872,8 +905,8 @@ class MolView(QtWidgets.QWidget):
         self,
         structure: object,
         *,
-        name: Optional[str] = None,
-        source_path: Optional[str] = None,
+        name: str | None = None,
+        source_path: str | None = None,
     ) -> str:
         entry = self._create_object(name=name, source_path=source_path)
         self.set_structure(structure)
@@ -898,15 +931,15 @@ class MolView(QtWidgets.QWidget):
         self,
         coords: np.ndarray,
         *,
-        name: Optional[str] = None,
-        source_path: Optional[str] = None,
+        name: str | None = None,
+        source_path: str | None = None,
     ) -> str:
         entry = self._create_object(name=name, source_path=source_path)
         self.set_coordinates(coords)
         return entry.object_id
 
     @contextmanager
-    def _activate_object(self, object_id: Optional[str]):
+    def _activate_object(self, object_id: str | None):
         prev = self._active_object_id
         if object_id is not None and object_id in self._objects:
             self._active_object_id = object_id
@@ -918,47 +951,47 @@ class MolView(QtWidgets.QWidget):
 
     def __init__(
         self,
-        parent: Optional[QtWidgets.QWidget] = None,
-        background: Optional[str] = None,
+        parent: QtWidgets.QWidget | None = None,
+        background: str | None = None,
         *,
-        representation_mode: Optional[str] = None,
-        show_cartoon: Optional[bool] = None,
-        show_trace: Optional[bool] = None,
-        show_atoms: Optional[bool] = None,
-        show_sticks: Optional[bool] = None,
-        sidechains_visible: Optional[bool] = None,
-        grid_visible: Optional[bool] = None,
-        surface_visible: Optional[bool] = None,
-        scale_factor: Optional[float] = None,
+        representation_mode: str | None = None,
+        show_cartoon: bool | None = None,
+        show_trace: bool | None = None,
+        show_atoms: bool | None = None,
+        show_sticks: bool | None = None,
+        sidechains_visible: bool | None = None,
+        grid_visible: bool | None = None,
+        surface_visible: bool | None = None,
+        scale_factor: float | None = None,
     ) -> None:
         super().__init__(parent)
 
         self._objects: OrderedDict[str, _MolViewObjectEntry] = OrderedDict()
-        self._active_object_id: Optional[str] = None
+        self._active_object_id: str | None = None
         self._object_counter: int = 0
         # Allow creating an initial entry during startup; turned off when last object is deleted.
         self._auto_create_enabled: bool = True
-        
+
         # Animation / Timeline state
         self._total_frames: int = 1
         self._current_frame: int = 0  # 0-indexed internally
         self._keyframes: dict[int, dict] = {}
         self._animation_running: bool = False
-        self._animation_timer: Optional[QtCore.QTimer] = None
+        self._animation_timer: QtCore.QTimer | None = None
         self.selection_mode: str = "Residues"
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.view: Optional[QtWidgets.QWidget] = None
-        self._disabled_label: Optional[QtWidgets.QLabel] = None
-        self._container: Optional[QtWidgets.QWidget] = None
-        self._ray_overlay: Optional[QtWidgets.QLabel] = None
+        self.view: QtWidgets.QWidget | None = None
+        self._disabled_label: QtWidgets.QLabel | None = None
+        self._container: QtWidgets.QWidget | None = None
+        self._ray_overlay: QtWidgets.QLabel | None = None
 
         # Stored geometry
-        self._coords: Optional[np.ndarray] = None
-        self._center: Optional[np.ndarray] = None
+        self._coords: np.ndarray | None = None
+        self._center: np.ndarray | None = None
         self._radius: float = 1.0
 
         self._atoms = None
@@ -997,7 +1030,7 @@ class MolView(QtWidgets.QWidget):
 
         rep_mode_default = str(display_defaults.get("representation_mode", "cartoon")).lower()
         self._representation_mode = str(
-            (representation_mode or rep_mode_default)
+            representation_mode or rep_mode_default
         ).lower()
         self._trace_ups = None
 
@@ -1032,10 +1065,10 @@ class MolView(QtWidgets.QWidget):
 
         self._info_text: str = ""
         self._info_visible: bool = False
-        self._info_overlay: Optional[QtWidgets.QPlainTextEdit] = None
+        self._info_overlay: QtWidgets.QPlainTextEdit | None = None
 
         # Render backend
-        self._renderer: Optional[Renderer] = None
+        self._renderer: Renderer | None = None
         self._point_overlays = {}
 
         # Reference plane (grid) is hidden by default; the toolbar button
@@ -1075,7 +1108,7 @@ class MolView(QtWidgets.QWidget):
         # Camera defaults
         self._default_elevation = 20
         self._default_azimuth = 45
-        self._scene: Optional[Scene] = None
+        self._scene: Scene | None = None
 
         info_cfg = _DISPLAY_CONFIG.get("info_overlay", {})
 
@@ -1168,7 +1201,6 @@ class MolView(QtWidgets.QWidget):
           ``'atom_name'`` (as in :mod:`chisurf.core.structure`), or
         - ``xyz``: array-like of shape ``(N, 3)``.
         """
-
         self._atoms = None
         self._all_atom_coords = None
         self._all_atom_res_ids = None
@@ -1188,7 +1220,7 @@ class MolView(QtWidgets.QWidget):
             self._atoms = atoms
             fields_atoms = set(atoms.dtype.fields or {})
 
-            coords_all_raw: Optional[np.ndarray]
+            coords_all_raw: np.ndarray | None
             try:
                 coords_all_raw = np.asarray(atoms["xyz"], dtype=float)
             except Exception:
@@ -1264,7 +1296,7 @@ class MolView(QtWidgets.QWidget):
                     )[0]
                 except Exception:
                     self._ca_indices = None
-            self._trace_ups = _build_trace_ups(atoms, self._residue_ids, self._coords)
+            self._trace_ups = _build_trace_ups(atoms, self._residue_ids, self._coords, chain_ids)
 
             try:
                 n_res = int(self._coords.shape[0])
@@ -1283,11 +1315,11 @@ class MolView(QtWidgets.QWidget):
 
             n_res = self._coords.shape[0]
             self._cartoon_mask = np.ones(n_res, dtype=bool)
-            
+
             n_atoms = self._all_atom_coords.shape[0] if self._all_atom_coords is not None else 0
             self._ball_mask = np.zeros(n_atoms, dtype=bool)
             self._sticks_mask = np.zeros(n_atoms, dtype=bool)
-            
+
             self._update_view()
             return
 
@@ -1309,7 +1341,6 @@ class MolView(QtWidgets.QWidget):
         xyz:
             Array of shape ``(N, 3)`` with Cartesian coordinates.
         """
-
         arr = np.asarray(xyz, dtype=float)
         if arr.ndim != 2 or arr.shape[1] != 3:
             raise ValueError("xyz must have shape (N, 3)")
@@ -1343,8 +1374,8 @@ class MolView(QtWidgets.QWidget):
         self,
         frames: np.ndarray,
         *,
-        object_id: Optional[str] = None,
-        active_frame: Optional[int] = None,
+        object_id: str | None = None,
+        active_frame: int | None = None,
     ) -> None:
         arr = np.asarray(frames, dtype=float)
         if arr.ndim != 3 or arr.shape[2] != 3:
@@ -1377,7 +1408,7 @@ class MolView(QtWidgets.QWidget):
             except Exception:
                 pass
 
-    def append_frame(self, frame: np.ndarray, *, object_id: Optional[str] = None) -> int:
+    def append_frame(self, frame: np.ndarray, *, object_id: str | None = None) -> int:
         """Append one raw coordinate frame to an object's trajectory.
 
         Parameters
@@ -1409,7 +1440,7 @@ class MolView(QtWidgets.QWidget):
         self.set_active_frame(frames.shape[0] - 1, object_id=object_id)
         return int(frames.shape[0])
 
-    def set_active_frame(self, index: int, *, object_id: Optional[str] = None) -> None:
+    def set_active_frame(self, index: int, *, object_id: str | None = None) -> None:
         with self._activate_object(object_id):
             state = self._get_active_state()
             frames = getattr(state, "frames", None)
@@ -1443,7 +1474,7 @@ class MolView(QtWidgets.QWidget):
             except Exception:
                 pass
 
-    def get_frame_count(self, object_id: Optional[str] = None) -> int:
+    def get_frame_count(self, object_id: str | None = None) -> int:
         with self._activate_object(object_id):
             state = self._get_active_state()
             frames = getattr(state, "frames", None)
@@ -1457,7 +1488,7 @@ class MolView(QtWidgets.QWidget):
                 return 0
             return int(arr.shape[0])
 
-    def get_active_frame_index(self, object_id: Optional[str] = None) -> int:
+    def get_active_frame_index(self, object_id: str | None = None) -> int:
         with self._activate_object(object_id):
             state = self._get_active_state()
             try:
@@ -1486,7 +1517,6 @@ class MolView(QtWidgets.QWidget):
         method and accepts the same Qt-compatible color values (strings like
         "black" or RGB(A) tuples).
         """
-
         renderer = self._renderer
         if renderer is None:
             return
@@ -1521,7 +1551,6 @@ class MolView(QtWidgets.QWidget):
 
     def get_view_state(self) -> list[float]:
         """Return an 18-float view tuple for PyMOL-style ``get_view``."""
-
         renderer = self._renderer
         if renderer is not None and hasattr(renderer, "get_view_state"):
             return list(renderer.get_view_state())
@@ -1536,7 +1565,6 @@ class MolView(QtWidgets.QWidget):
 
     def set_view_state(self, view) -> None:
         """Restore an 18-float view tuple from PyMOL-style ``set_view``."""
-
         vals = [float(v) for v in view]
         if len(vals) != 18:
             raise ValueError("view must contain 18 floats")
@@ -1544,7 +1572,7 @@ class MolView(QtWidgets.QWidget):
         if renderer is not None and hasattr(renderer, "set_view_state"):
             renderer.set_view_state(vals)
 
-    def center(self, indices: Optional[Sequence[int]] = None, *, object_id: Optional[str] = None) -> None:
+    def center(self, indices: Sequence[int] | None = None, *, object_id: str | None = None) -> None:
         """Center camera on the geometric center of target residues."""
         coords = self.get_residue_positions(indices, object_id=object_id)
         if coords.size == 0 or self._renderer is None:
@@ -1552,7 +1580,7 @@ class MolView(QtWidgets.QWidget):
         center = coords.mean(axis=0)
         self._renderer.look_at(center)
 
-    def zoom(self, indices: Optional[Sequence[int]] = None, *, buffer: float = 2.0, object_id: Optional[str] = None) -> None:
+    def zoom(self, indices: Sequence[int] | None = None, *, buffer: float = 2.0, object_id: str | None = None) -> None:
         """Zoom camera to fit target residues."""
         coords = self.get_residue_positions(indices, object_id=object_id)
         if coords.size == 0:
@@ -1573,7 +1601,7 @@ class MolView(QtWidgets.QWidget):
             self._renderer.look_at(center)
             self._renderer.fit_to_radius(radius + float(buffer))
 
-    def orient(self, indices: Optional[Sequence[int]] = None, *, object_id: Optional[str] = None) -> None:
+    def orient(self, indices: Sequence[int] | None = None, *, object_id: str | None = None) -> None:
         """Orient view to principal axes of target residues."""
         # TODO: Implement PCA-based alignment once QtGLRenderer supports arbitrary rotation matrices.
         # For now, zoom to fit provides the best "orient" approximation.
@@ -1585,10 +1613,10 @@ class MolView(QtWidgets.QWidget):
     def set_residue_representation(
         self,
         indices,
-        cartoon: Optional[bool] = None,
-        ball: Optional[bool] = None,
+        cartoon: bool | None = None,
+        ball: bool | None = None,
         *,
-        object_id: Optional[str] = None,
+        object_id: str | None = None,
     ) -> None:
         """Enable/disable cartoon and ball view for selected residues.
 
@@ -1603,7 +1631,6 @@ class MolView(QtWidgets.QWidget):
             If True, enable ball view for these residues; if False, disable;
             if None, leave unchanged.
         """
-
         changed = False
         with self._activate_object(object_id):
             coords = self._coords
@@ -1659,7 +1686,6 @@ class MolView(QtWidgets.QWidget):
             Iterable of single-character secondary-structure labels (e.g.
             'H', 'E', 'C') aligned to the CA trace.
         """
-
         try:
             arr = np.asarray(list(codes), dtype="U1")
         except Exception:
@@ -1673,7 +1699,6 @@ class MolView(QtWidgets.QWidget):
 
     def set_plane_visible(self, visible: bool) -> None:
         """Show or hide the reference plane (grid)."""
-
         self._grid_visible = bool(visible)
         if self._renderer is not None:
             try:
@@ -1704,7 +1729,6 @@ class MolView(QtWidgets.QWidget):
             acids differently, or "by_secondary_structure" to color by
             secondary-structure state.
         """
-
         if mode not in (
             "single",
             "by_residue",
@@ -1719,7 +1743,7 @@ class MolView(QtWidgets.QWidget):
         if self._coords is not None:
             self._update_view(fit_camera=False)
 
-    def set_representation(self, mode: str, *, object_id: Optional[str] = None) -> None:
+    def set_representation(self, mode: str, *, object_id: str | None = None) -> None:
         """Legacy mode-style API (cartoon / ca_trace / atoms).
 
         This is primarily used by keyboard shortcuts and :class:`MolViewPlot`.
@@ -1727,7 +1751,6 @@ class MolView(QtWidgets.QWidget):
         (``_show_cartoon``, ``_show_trace``, ``_show_atoms``) and the
         per-residue ball mask, then refreshes the view.
         """
-
         mode_l = str(mode).lower()
         if mode_l not in ("cartoon", "ca_trace", "atoms"):
             return
@@ -1771,21 +1794,18 @@ class MolView(QtWidgets.QWidget):
 
     def set_cartoon_visible(self, visible: bool) -> None:
         """Enable or disable the cartoon tube globally."""
-
         self._show_cartoon = bool(visible)
         if self._coords is not None:
             self._update_view()
 
     def set_trace_visible(self, visible: bool) -> None:
         """Enable or disable the CA trace line globally."""
-
         self._show_trace = bool(visible)
         if self._coords is not None:
             self._update_view()
 
     def set_atoms_visible(self, visible: bool) -> None:
         """Enable or disable the atom/ball representation globally."""
-
         state = self._get_active_state()
         self._set_state_atoms_visible(state, bool(visible))
         self._update_view(fit_camera=False)
@@ -1805,7 +1825,6 @@ class MolView(QtWidgets.QWidget):
 
     def set_atoms_visible_all(self, visible: bool) -> None:
         """Toggle atoms representation for every loaded object."""
-
         changed = False
         vis = bool(visible)
         for entry in self._objects.values():
@@ -1830,7 +1849,6 @@ class MolView(QtWidgets.QWidget):
 
     def set_sticks_visible(self, visible: bool) -> None:
         """Enable or disable the sticks (bond) representation globally."""
-
         self._show_sticks = bool(visible)
         if visible and self._all_atom_coords is not None:
             n_atoms = int(np.asarray(self._all_atom_coords).shape[0])
@@ -1852,7 +1870,6 @@ class MolView(QtWidgets.QWidget):
         s - toggle sidechains on/off (atoms view)
         q - close the containing window
         """
-
         try:
             ch = ev.text().lower()
         except Exception:
@@ -1893,7 +1910,6 @@ class MolView(QtWidgets.QWidget):
         A left-click near the backbone/CA trace selects the nearest residue;
         clicking in empty space clears the selection.
         """
-
         indices = []
         mods = None
         if self._coords is not None and getattr(self, "_gl_enabled", False) and self.view is not None:
@@ -2035,7 +2051,7 @@ class MolView(QtWidgets.QWidget):
         except Exception:
             pass
 
-    def _show_disabled_label(self, reason: Optional[str] = None) -> None:
+    def _show_disabled_label(self, reason: str | None = None) -> None:
         message = (
             "Chimol OpenGL viewer is disabled.\n"
             "Enable OpenGL support to use this tool."
@@ -2062,9 +2078,8 @@ class MolView(QtWidgets.QWidget):
         except Exception:
             pass
 
-    def set_selected_residues(self, indices, *, object_id: Optional[str] = None) -> None:
+    def set_selected_residues(self, indices, *, object_id: str | None = None) -> None:
         """Update selection from external widgets (e.g. sequence view)."""
-
         try:
             idx_iter = list(indices)
         except Exception:
@@ -2097,28 +2112,27 @@ class MolView(QtWidgets.QWidget):
             pass
 
     def get_sequence_arrays(
-        self, object_id: Optional[str] = None
-    ) -> tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+        self, object_id: str | None = None
+    ) -> tuple[np.ndarray | None, np.ndarray | None]:
         with self._activate_object(object_id):
             seq = _copy_array(self._residue_oneletter)
             res = _copy_array(self._residue_names)
         return seq, res
 
-    def get_residue_numbers(self, object_id: Optional[str] = None) -> Optional[np.ndarray]:
+    def get_residue_numbers(self, object_id: str | None = None) -> np.ndarray | None:
         with self._activate_object(object_id):
             ids = _copy_array(self._residue_ids)
         return ids
 
     def get_residue_colors(
-        self, object_id: Optional[str] = None
-    ) -> Optional[np.ndarray]:
+        self, object_id: str | None = None
+    ) -> np.ndarray | None:
         """Return per-residue RGBA colors for an object.
 
         The result matches the colors used for the CA trace and other
         residue-based representations, including the current ``color_mode``
         and any explicit per-residue overrides.
         """
-
         with self._activate_object(object_id):
             coords = self._coords
             if coords is None or getattr(coords, "size", 0) <= 0:
@@ -2150,7 +2164,7 @@ class MolView(QtWidgets.QWidget):
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def _has_nucleic_acids(self, residue_names: Optional[np.ndarray] = None) -> bool:
+    def _has_nucleic_acids(self, residue_names: np.ndarray | None = None) -> bool:
         """Check if the current structure contains nucleic acid residues."""
         if residue_names is None:
             residue_names = getattr(self, "_residue_names", None)
@@ -2173,23 +2187,35 @@ class MolView(QtWidgets.QWidget):
                 pass
 
     def _update_cartoon(
-        self, coords: np.ndarray, n_points: int, config: dict, colors: Optional[np.ndarray]
+        self, coords: np.ndarray, n_points: int, config: dict, colors: np.ndarray | None
     ) -> list[SceneObject]:
         scene_objects: list[SceneObject] = []
         if not self._show_cartoon:
             return scene_objects
-        
-        # Skip regular cartoon for nucleic acids; use nucleic cartoon instead
-        skip_regular = (
-            self._has_nucleic_acids()
-            and self._atoms is not None
-            and self._all_atom_coords is not None
-        )
-        
-        if not skip_regular:
-            ao_radius = float(config.get("ao_radius", 4.0))
+
+        ao_radius = float(config.get("ao_radius", 4.0))
         ao_max = int(config.get("ao_max_neighbors", 16))
         ao_strength = float(config.get("ao_strength", 0.45))
+
+        # Check for nucleic acid residues to exclude them from the regular cartoon path
+        nucleic_names = {
+            "DA", "DC", "DG", "DT", "A", "C", "G", "T", "U",
+            "2DA", "2DC", "2DG", "2DT",
+            "RA", "RC", "RG", "RU", "I",
+            "5MC", "5HC", "OMC", "H2U", "PSU", "M2G", "1MA", "7MG",
+            "D2A", "D2C", "D2G", "D2T", "R2A", "R2C", "R2G", "R2U",
+        }
+        is_nuc_residue = np.zeros(n_points, dtype=bool)
+        if self._residue_names is not None and len(self._residue_names) == n_points:
+            for i, rname in enumerate(self._residue_names):
+                try:
+                    rname_str = str(rname).strip().upper()
+                except Exception:
+                    rname_str = ""
+                if rname_str in nucleic_names:
+                    is_nuc_residue[i] = True
+
+        non_nuc_mask = ~is_nuc_residue
 
         coords_cartoon = coords
         colors_for_tube = colors
@@ -2197,17 +2223,16 @@ class MolView(QtWidgets.QWidget):
         idx_cartoon = idx_all
 
         # Apply per-residue cartoon mask by subselecting the CA points
-        # used to build the tube.
+        # used to build the tube, and exclude nucleic residues.
         if self._cartoon_mask is not None and len(self._cartoon_mask) == n_points:
-            mask = self._cartoon_mask.astype(bool)
-            if mask.any():
-                coords_cartoon = coords[mask]
-                idx_cartoon = idx_all[mask]
-                if colors_for_tube is not None:
-                    colors_for_tube = colors_for_tube[mask]
-            else:
-                coords_cartoon = coords[:0]
-                idx_cartoon = idx_all[:0]
+            mask = self._cartoon_mask.astype(bool) & non_nuc_mask
+        else:
+            mask = non_nuc_mask
+
+        coords_cartoon = coords[mask]
+        idx_cartoon = idx_all[mask]
+        if colors_for_tube is not None:
+            colors_for_tube = colors_for_tube[mask]
 
         try:
             occ_ca = _estimate_ambient_occlusion(
@@ -2347,9 +2372,9 @@ class MolView(QtWidgets.QWidget):
                     scene_objects.append(
                         SceneObject(id="cartoon", geometry=geom, render_mode="opaque")
                     )
-        
+
         # Generate nucleic cartoon for DNA/RNA structures
-        if skip_regular and self._atoms is not None and self._all_atom_coords is not None:
+        if self._has_nucleic_acids() and self._atoms is not None and self._all_atom_coords is not None:
             nuc_arrays = _generate_nucleic_cartoon_arrays(
                 self._atoms,
                 self._all_atom_coords,
@@ -2373,27 +2398,62 @@ class MolView(QtWidgets.QWidget):
 
         return scene_objects
 
-    def _update_trace(self, coords: np.ndarray, colors: Optional[np.ndarray]) -> list[SceneObject]:
+    def _update_trace(self, coords: np.ndarray, colors: np.ndarray | None) -> list[SceneObject]:
         scene_objects: list[SceneObject] = []
         if not self._show_trace:
             return scene_objects
 
-        coords_line, colors_line = _generate_trace_arrays(coords, colors)
-        if colors_line is None:
-            colors_line = colors
+        res_ids = getattr(self, "_residue_ids", None)
+        chain_ids = getattr(self, "_residue_chain_ids", None)
 
-        geom = Geometry(kind="line", positions=coords_line, colors=colors_line)
-        scene_objects.append(SceneObject(id="trace", geometry=geom, render_mode="opaque"))
+        # Build segment boundaries at chain/residue-number breaks
+        n = coords.shape[0]
+        seg_bounds = [(0, n)]
+        if n >= 2 and (res_ids is not None or chain_ids is not None):
+            seg_bounds = []
+            start = 0
+            for i in range(n - 1):
+                gap = False
+                if chain_ids is not None and i < len(chain_ids) and (i + 1) < len(chain_ids):
+                    ch0 = str(chain_ids[i]).strip()
+                    ch1 = str(chain_ids[i + 1]).strip()
+                    if ch0 != ch1:
+                        gap = True
+                if not gap and res_ids is not None and i < len(res_ids) and (i + 1) < len(res_ids):
+                    try:
+                        r0 = int(res_ids[i])
+                        r1 = int(res_ids[i + 1])
+                        if (r1 - r0) != 1:
+                            gap = True
+                    except Exception:
+                        pass
+                if gap:
+                    if i + 1 - start >= 2:
+                        seg_bounds.append((start, i + 1))
+                    start = i + 1
+            if n - start >= 2:
+                seg_bounds.append((start, n))
+            if not seg_bounds and n >= 2:
+                seg_bounds = [(0, n)]
+
+        for s, e in seg_bounds:
+            seg_coords = coords[s:e]
+            seg_colors = colors[s:e] if colors is not None and s < len(colors) else None
+            coords_line, colors_line = _generate_trace_arrays(seg_coords, seg_colors)
+            if colors_line is None:
+                colors_line = seg_colors
+            geom = Geometry(kind="line", positions=coords_line, colors=colors_line)
+            scene_objects.append(SceneObject(id="trace", geometry=geom, render_mode="opaque"))
 
         return scene_objects
 
     def _update_atoms(
-        self, 
-        coords: np.ndarray, 
-        n_points: int, 
+        self,
+        coords: np.ndarray,
+        n_points: int,
         balls_cfg: dict,
-        colors_per_ca: Optional[np.ndarray]
-    ) -> Optional[list[SceneObject]]:
+        colors_per_ca: np.ndarray | None
+    ) -> list[SceneObject] | None:
         scene_objects: list[SceneObject] = []
         if not self._show_atoms:
             return scene_objects
@@ -2446,7 +2506,7 @@ class MolView(QtWidgets.QWidget):
 
             if atom_xyz is not None and atom_res_id is not None:
                 n_atoms_total = atom_xyz.shape[0]
-                
+
                 if self._ball_mask is not None and len(self._ball_mask) == n_atoms_total:
                     # Per-atom mask
                     atom_mask = self._ball_mask.astype(bool)
@@ -2463,11 +2523,11 @@ class MolView(QtWidgets.QWidget):
                     backbone_names = np.array(["N", "CA", "C", "O", "CB"], dtype=atom_names.dtype)
                     backbone_mask = np.isin(atom_names, backbone_names)
                     atom_mask = atom_mask & backbone_mask
-                
+
                 pts = atom_xyz[atom_mask]
                 if pts.size:
                     pts = np.asarray(pts, dtype=float)
-                    radii_sel: Optional[np.ndarray]
+                    radii_sel: np.ndarray | None
                     if (
                         self._all_atom_radii is not None
                         and len(self._all_atom_radii) == atom_xyz.shape[0]
@@ -2769,7 +2829,7 @@ class MolView(QtWidgets.QWidget):
                 0.0, 0.0, 0.0,
                 0.1, 100.0, 45.0]
 
-    def get_current_scene(self) -> Optional[Scene]:
+    def get_current_scene(self) -> Scene | None:
         """Return the currently visible scene description.
 
         Returns
@@ -2782,9 +2842,9 @@ class MolView(QtWidgets.QWidget):
     def grab_current_view_image(
         self,
         *,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
-    ) -> Optional[QtGui.QImage]:
+        width: int | None = None,
+        height: int | None = None,
+    ) -> QtGui.QImage | None:
         """Grab the currently visible OpenGL view as a QImage.
 
         Parameters
@@ -2869,7 +2929,7 @@ class MolView(QtWidgets.QWidget):
                 return True
         return super().eventFilter(obj, event)
 
-    def _update_atom_gaussians(self, config: dict) -> Optional[list[SceneObject]]:
+    def _update_atom_gaussians(self, config: dict) -> list[SceneObject] | None:
         if not self._show_atom_gaussians:
             return None
 
@@ -3022,7 +3082,7 @@ class MolView(QtWidgets.QWidget):
         render_mode = "transparent" if np.any(colors[:, 3] < 0.999) else "opaque"
         return [SceneObject(id="atom_gaussians", geometry=geom, render_mode=render_mode)]
 
-    def _update_sticks(self, sticks_cfg: dict, colors_per_ca: Optional[np.ndarray]) -> Optional[list[SceneObject]]:
+    def _update_sticks(self, sticks_cfg: dict, colors_per_ca: np.ndarray | None) -> list[SceneObject] | None:
         if not self._show_sticks:
             return None
         if self._bond_pairs is None or self._all_atom_coords is None:
@@ -3105,15 +3165,15 @@ class MolView(QtWidgets.QWidget):
 
         return None
 
-    def _update_restraints(self, state: _MolViewObjectState) -> Optional[list[SceneObject]]:
+    def _update_restraints(self, state: _MolViewObjectState) -> list[SceneObject] | None:
         """Build geometry for RMF restraint pseudobonds."""
         if not state.restraints or state.all_atom_coords is None:
             return None
-        
+
         pts = state.all_atom_coords
         n_restraints = len(state.restraints)
         seg_pos = np.empty((n_restraints * 2, 3), dtype=np.float32)
-        
+
         for i, r in enumerate(state.restraints):
             idx1, idx2 = r["indices"]
             if idx1 < pts.shape[0] and idx2 < pts.shape[0]:
@@ -3122,19 +3182,19 @@ class MolView(QtWidgets.QWidget):
             else:
                 seg_pos[i*2] = [0, 0, 0]
                 seg_pos[i*2 + 1] = [0, 0, 0]
-            
+
         geom = Geometry(kind="line", positions=seg_pos)
         # Warm orange/yellow for restraints
         geom.colors = np.tile([1.0, 0.6, 0.2, 1.0], (n_restraints * 2, 1)).astype(np.float32)
-        
+
         return [SceneObject(id="restraints", geometry=geom, render_mode="opaque")]
 
     def _update_metaballs(
         self,
         coords: np.ndarray,
         cfg: dict,
-        colors_per_ca: Optional[np.ndarray],
-    ) -> Optional[list[SceneObject]]:
+        colors_per_ca: np.ndarray | None,
+    ) -> list[SceneObject] | None:
         if not getattr(self, "_metaballs_visible", False):
             return None
 
@@ -3175,13 +3235,15 @@ class MolView(QtWidgets.QWidget):
         else:
             sigmas = np.ones(n_pts, dtype=float) * 1.5
 
-        mesh_data = _generate_surface_mesh_from_gaussians(
+        field_function = cfg.get("field_function", "wyvill")
+        mesh_data = _generate_surface_mesh_from_density(
             pts_surface,
             sigmas,
             grid_spacing=grid_spacing,
             padding=padding,
             iso_value=iso_value,
             max_dim=max_dim,
+            field_function=field_function,
         )
 
         if mesh_data is None:
@@ -3196,11 +3258,11 @@ class MolView(QtWidgets.QWidget):
 
         # Color the mesh with weighted blending
         mesh_colors = np.zeros((verts.shape[0], 4), dtype=float)
-        
+
         # Determine atom colors
         n_pts = pts_surface.shape[0]
         atom_colors = np.tile(base_color, (n_pts, 1))
-        
+
         if (
             self._all_atom_res_ids is not None
             and self._residue_ids is not None
@@ -3211,7 +3273,7 @@ class MolView(QtWidgets.QWidget):
             res_id_to_color = {}
             for i_res, rid in enumerate(self._residue_ids):
                 res_id_to_color[rid] = colors_per_ca[i_res]
-                
+
             for i_atom, rid in enumerate(self._all_atom_res_ids):
                 if rid in res_id_to_color:
                     atom_colors[i_atom] = res_id_to_color[rid]
@@ -3225,33 +3287,33 @@ class MolView(QtWidgets.QWidget):
         try:
             from scipy.spatial import cKDTree
             tree = cKDTree(pts_surface)
-            
+
             # Find atoms contributing to each vertex
             max_sigma = float(np.max(sigmas))
             cutoff = max_sigma * 2.5
-            
-            # query_ball_point can be slow for very large systems, but for 
+
+            # query_ball_point can be slow for very large systems, but for
             # typical proteins it provides much nicer blending.
             indices = tree.query_ball_point(verts, r=cutoff)
-            
+
             for i_v, atom_indices in enumerate(indices):
                 if not atom_indices:
                     # Fallback to nearest
                     _, nearest = tree.query(verts[i_v])
                     mesh_colors[i_v] = atom_colors[nearest]
                     continue
-                
+
                 v_pos = verts[i_v]
                 w_sum = 0.0
                 c_sum = np.zeros(4, dtype=float)
-                
+
                 for i_a in atom_indices:
                     d2 = np.sum((v_pos - pts_surface[i_a])**2)
                     s2 = sigmas[i_a]**2
                     w = math.exp(-d2 / (2.0 * s2))
                     c_sum += atom_colors[i_a] * w
                     w_sum += w
-                
+
                 if w_sum > 0:
                     mesh_colors[i_v] = c_sum / w_sum
                 else:
@@ -3273,13 +3335,13 @@ class MolView(QtWidgets.QWidget):
                     s2 = sigmas[i_a]**2
                     w = math.exp(-d2 / (2.0 * s2))
                     grad += (diff / s2) * w
-                
+
                 mag = np.linalg.norm(grad)
                 if mag > 1e-6:
                     new_norms[i_v] = grad / mag
                 else:
                     new_norms[i_v] = norms[i_v] # Fallback
-            
+
             norms = new_norms
 
             # Estimate Ambient Occlusion for depth
@@ -3312,18 +3374,18 @@ class MolView(QtWidgets.QWidget):
             colors=mesh_colors,
         )
         return [SceneObject(
-            id="metaballs", 
-            geometry=geom, 
+            id="metaballs",
+            geometry=geom,
             render_mode=render_mode,
             material=material
         )]
 
     def _update_surface(
-        self, 
-        coords: np.ndarray, 
-        surface_cfg: dict, 
-        colors_per_ca: Optional[np.ndarray]
-    ) -> Optional[list[SceneObject]]:
+        self,
+        coords: np.ndarray,
+        surface_cfg: dict,
+        colors_per_ca: np.ndarray | None
+    ) -> list[SceneObject] | None:
         if not self._surface_visible:
             return None
 
@@ -3356,24 +3418,45 @@ class MolView(QtWidgets.QWidget):
         mesh_sigma_factor = float(surface_cfg.get("mesh_sigma_factor", 1.0))
         mesh_sigma_default = float(surface_cfg.get("mesh_sigma_default", 1.8))
 
-        if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_pts:
-            sigmas = np.asarray(self._all_atom_radii, dtype=float) * mesh_sigma_factor
-        else:
-            sigmas = np.full(n_pts, mesh_sigma_default, dtype=float)
+        method = str(surface_cfg.get("method", "gaussian")).lower()
+        probe_radius = float(surface_cfg.get("probe_radius", 1.4))
 
-        mesh_data = _generate_surface_mesh_from_gaussians(
-            pts_surface,
-            sigmas,
-            grid_spacing=grid_spacing,
-            padding=padding,
-            iso_value=iso_value,
-            max_dim=max_dim,
-        )
+        if method in ("sas", "ses"):
+            if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_pts:
+                atom_radii = np.asarray(self._all_atom_radii, dtype=float)
+            else:
+                atom_radii = np.full(n_pts, mesh_sigma_default, dtype=float)
+
+            mesh_data = _generate_surface_mesh_edt(
+                pts_surface,
+                atom_radii,
+                method=method,
+                probe_radius=probe_radius,
+                grid_spacing=grid_spacing,
+                padding=padding,
+                max_dim=max_dim,
+            )
+            mesh_sigmas = atom_radii
+        else:
+            if self._all_atom_radii is not None and self._all_atom_radii.shape[0] == n_pts:
+                sigmas = np.asarray(self._all_atom_radii, dtype=float) * mesh_sigma_factor
+            else:
+                sigmas = np.full(n_pts, mesh_sigma_default, dtype=float)
+
+            mesh_data = _generate_surface_mesh_from_gaussians(
+                pts_surface,
+                sigmas,
+                grid_spacing=grid_spacing,
+                padding=padding,
+                iso_value=iso_value,
+                max_dim=max_dim,
+            )
+            mesh_sigmas = sigmas
 
         if mesh_data is not None:
             verts, faces, norms = mesh_data
             return self._build_surface_mesh_scene(
-                verts, faces, norms, pts_surface, sigmas,
+                verts, faces, norms, pts_surface, mesh_sigmas,
                 surface_cfg, colors_per_ca, surface_base_color, surface_alpha,
             )
 
@@ -3434,9 +3517,9 @@ class MolView(QtWidgets.QWidget):
         self,
         pts_surface: np.ndarray,
         surface_cfg: dict,
-        colors_per_ca: Optional[np.ndarray],
+        colors_per_ca: np.ndarray | None,
         surface_base_color: np.ndarray,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """Build per-atom/point colors for the surface representation."""
         surface_color_mode = str(surface_cfg.get("color_mode", "ao_gray")).lower()
         n_pts = pts_surface.shape[0]
@@ -3476,10 +3559,10 @@ class MolView(QtWidgets.QWidget):
         pts_surface: np.ndarray,
         sigmas: np.ndarray,
         surface_cfg: dict,
-        colors_per_ca: Optional[np.ndarray],
+        colors_per_ca: np.ndarray | None,
         surface_base_color: np.ndarray,
         surface_alpha: float,
-    ) -> Optional[list[SceneObject]]:
+    ) -> list[SceneObject] | None:
         """Build a colored mesh SceneObject for the Gaussian surface."""
         surface_ao_radius = float(surface_cfg.get("ao_radius", 4.5))
         surface_ao_strength = float(surface_cfg.get("ao_strength", 0.6))
@@ -3529,24 +3612,26 @@ class MolView(QtWidgets.QWidget):
                     mesh_colors[i_v] = atom_colors[nearest]
 
             # Analytical normals from Gaussian gradient
-            new_norms = np.zeros_like(verts)
-            for i_v, atom_indices in enumerate(indices):
-                if not atom_indices:
-                    continue
-                v_pos = verts[i_v]
-                grad = np.zeros(3, dtype=float)
-                for i_a in atom_indices:
-                    diff = v_pos - pts_surface[i_a]
-                    d2 = np.sum(diff**2)
-                    s2 = sigmas[i_a]**2
-                    w = math.exp(-d2 / (2.0 * s2))
-                    grad += (diff / s2) * w
-                mag = np.linalg.norm(grad)
-                if mag > 1e-6:
-                    new_norms[i_v] = grad / mag
-                else:
-                    new_norms[i_v] = norms[i_v]
-            norms = new_norms
+            method = str(surface_cfg.get("method", "gaussian")).lower()
+            if method not in ("sas", "ses"):
+                new_norms = np.zeros_like(verts)
+                for i_v, atom_indices in enumerate(indices):
+                    if not atom_indices:
+                        continue
+                    v_pos = verts[i_v]
+                    grad = np.zeros(3, dtype=float)
+                    for i_a in atom_indices:
+                        diff = v_pos - pts_surface[i_a]
+                        d2 = np.sum(diff**2)
+                        s2 = sigmas[i_a]**2
+                        w = math.exp(-d2 / (2.0 * s2))
+                        grad += (diff / s2) * w
+                    mag = np.linalg.norm(grad)
+                    if mag > 1e-6:
+                        new_norms[i_v] = grad / mag
+                    else:
+                        new_norms[i_v] = norms[i_v]
+                norms = new_norms
 
             if surface_ao_strength > 0:
                 occ = _estimate_ambient_occlusion(verts, radius=surface_ao_radius, max_neighbors=32)
@@ -3580,8 +3665,8 @@ class MolView(QtWidgets.QWidget):
     def _update_dots(
         self,
         coords: np.ndarray,
-        colors_per_ca: Optional[np.ndarray],
-    ) -> Optional[list[SceneObject]]:
+        colors_per_ca: np.ndarray | None,
+    ) -> list[SceneObject] | None:
         if not self._show_dots:
             return None
 
@@ -3611,8 +3696,8 @@ class MolView(QtWidgets.QWidget):
         except Exception:
             min_size = 3.0
 
-        positions: Optional[np.ndarray]
-        colors_local: Optional[np.ndarray]
+        positions: np.ndarray | None
+        colors_local: np.ndarray | None
 
         if self._all_atom_coords is not None and self._all_atom_coords.size:
             positions = np.asarray(self._all_atom_coords, dtype=float)
@@ -3641,7 +3726,7 @@ class MolView(QtWidgets.QWidget):
         else:
             positions = np.asarray(coords, dtype=float) if coords is not None else None
             colors_local = None if colors_per_ca is None else np.asarray(colors_per_ca, dtype=float)
-        
+
         if positions is None or positions.size == 0:
             return None
 
@@ -3650,7 +3735,7 @@ class MolView(QtWidgets.QWidget):
             positions = positions[::step]
             if colors_local is not None and colors_local.shape[0] >= positions.shape[0]:
                 colors_local = colors_local[::step]
-        
+
         if colors_local is None:
             base = np.asarray(dots_cfg.get("base_color", self._base_color_single), dtype=float)
             if base.shape[0] != 4:
@@ -3681,7 +3766,7 @@ class MolView(QtWidgets.QWidget):
         )
         return [SceneObject(id="dots", geometry=geom, render_mode="opaque")]
 
-    def _update_custom_overlays(self, surface_cfg: dict) -> Optional[list[SceneObject]]:
+    def _update_custom_overlays(self, surface_cfg: dict) -> list[SceneObject] | None:
         overlays = getattr(self, "_point_overlays", None)
         if not overlays:
             return None
@@ -3765,32 +3850,32 @@ class MolView(QtWidgets.QWidget):
         measurements = getattr(self, "_measurements", None)
         if not measurements:
             return []
-            
+
         scene_objects = []
         for mid, mdata in measurements.items():
             kind = mdata.get("kind", "distance")
             coords = np.asarray(mdata.get("positions", []), dtype=float)
             if coords.size == 0: continue
-            
+
             color = np.asarray(mdata.get("color", [1.0, 1.0, 1.0, 1.0]), dtype=float)
             label = str(mdata.get("label", ""))
-            
+
             if kind == "distance" and coords.shape[0] >= 2:
                  # Line between two points
                  line_geom = Geometry(kind="line", positions=coords[:2], colors=np.tile(color, (2, 1)))
                  scene_objects.append(SceneObject(id=f"meas_line_{mid}", geometry=line_geom, render_mode="overlay"))
-                 
+
                  # Label at midpoint
                  midpoint = np.mean(coords[:2], axis=0)
                  label_geom = Geometry(kind="text", positions=midpoint.reshape(1, 3), colors=color.reshape(1, 4), meta={"labels": [label]})
                  scene_objects.append(SceneObject(id=f"meas_text_{mid}", geometry=label_geom, render_mode="overlay"))
-            
+
             elif kind == "angle" and coords.shape[0] >= 3:
                  # Lines 0-1, 1-2
                  line_coords = np.array([coords[0], coords[1], coords[1], coords[2]])
                  line_geom = Geometry(kind="line", positions=line_coords, colors=np.tile(color, (4, 1)))
                  scene_objects.append(SceneObject(id=f"meas_line_{mid}", geometry=line_geom, render_mode="overlay"))
-                 
+
                  # Label at center point (1)
                  label_geom = Geometry(kind="text", positions=coords[1].reshape(1, 3), colors=color.reshape(1, 4), meta={"labels": [label]})
                  scene_objects.append(SceneObject(id=f"meas_text_{mid}", geometry=label_geom, render_mode="overlay"))
@@ -3800,7 +3885,7 @@ class MolView(QtWidgets.QWidget):
                  line_coords = np.array([coords[0], coords[1], coords[1], coords[2], coords[2], coords[3]])
                  line_geom = Geometry(kind="line", positions=line_coords, colors=np.tile(color, (6, 1)))
                  scene_objects.append(SceneObject(id=f"meas_line_{mid}", geometry=line_geom, render_mode="overlay"))
-                 
+
                  # Label at midpoint of central bond (1-2)
                  midpoint = np.mean(coords[1:3], axis=0)
                  label_geom = Geometry(kind="text", positions=midpoint.reshape(1, 3), colors=color.reshape(1, 4), meta={"labels": [label]})
@@ -3808,7 +3893,7 @@ class MolView(QtWidgets.QWidget):
 
         return scene_objects
 
-    def _update_selection_highlight(self, coords: np.ndarray) -> Optional[list[SceneObject]]:
+    def _update_selection_highlight(self, coords: np.ndarray) -> list[SceneObject] | None:
         sel = getattr(self, "_selected_residues", None)
         if not sel or self._coords is None:
             return None
@@ -3964,7 +4049,7 @@ class MolView(QtWidgets.QWidget):
         except Exception:
             pass
 
-    def _build_scene_for_current_object(self, object_prefix: Optional[str] = None) -> list[SceneObject]:
+    def _build_scene_for_current_object(self, object_prefix: str | None = None) -> list[SceneObject]:
         if self._coords is None or self._coords.size == 0:
             return []
 
@@ -4050,10 +4135,10 @@ class MolView(QtWidgets.QWidget):
             scene_objects += self._update_atom_gaussians(gaussian_cfg) or []
         scene_objects += self._update_sticks(sticks_cfg, self._colors_per_ca) or []
         scene_objects += self._update_surface(coords, surface_cfg, self._colors_per_ca) or []
-        
+
         metaball_cfg = _DISPLAY_CONFIG.get("metaball", {})
         scene_objects += self._update_metaballs(coords, metaball_cfg, self._colors_per_ca) or []
-        
+
         scene_objects += self._update_dots(coords, self._colors_per_ca) or []
         scene_objects += self._update_custom_overlays(surface_cfg) or []
         scene_objects += self._update_measurements() or []

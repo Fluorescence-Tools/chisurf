@@ -97,8 +97,11 @@ def _load_display_config() -> dict:
             "max_dim": 96,
             "mesh_sigma_factor": 1.0,
             "mesh_sigma_default": 1.8,
+            "method": "gaussian",
+            "probe_radius": 1.4,
         },
         "metaball": {
+            "field_function": "wyvill",
             "iso_value": 0.15,
             "grid_spacing": 0.6,
             "padding": 5.0,
@@ -174,10 +177,19 @@ def _load_display_config() -> dict:
             "number_color": [0.25, 0.25, 0.25, 1.0],
             "number_bg_color": [0.12, 0.12, 0.12, 1.0],
             "independent_scroll": False,
+            # PyMOL-compatible sequence viewer globals
+            "seq_view": True,
+            "seq_view_gap_mode": 1,
+            "seq_view_label_spacing": 5,
+            "seq_view_format": 0,
+            "seq_view_color": -1,
+            "seq_view_fill_color": -1,
+            "seq_view_label_color": [1.0, 1.0, 1.0, 1.0],
+            "seq_view_overlay": False,
         },
         "backbone_trace": {
             "protein_atoms": ["CA"],
-            "nucleic_atoms": ["P", "C4'", "C1'", "C4*", "C1*"],
+            "nucleic_atoms": ["P", "O5'", "C5'", "C4'", "C3'", "O3'", "C1'", "C1*"],
         },
         "lighting": {
             "light_direction": [0.0, 0.0, 1.0],
@@ -221,6 +233,56 @@ def _load_display_config() -> dict:
                 [0.5, 0.3, 1.0]
             ],
         },
+        # PyMOL Global Settings (flat namespace)
+        # Category: General / Viewport / Camera / Fog
+        "bg_rgb": [0.0, 0.0, 0.0],  # Background color of the viewer window.
+        "orthoscopic": False,  # Controls whether perspective projection (False) or orthoscopic projection (True) is used.
+        "field_of_view": 20.0,  # Vertical field of view in degrees.
+        "depth_cue": True,  # Controls whether or not a depth-cue fog effect is used.
+        "fog": 1.0,  # Fog density level.
+        "fog_start": 0.45,  # Depth coordinate where fog begins.
+
+        # Category: Cartoon Representation
+        "cartoon_color": -1,  # Color index of cartoons (-1 = default to atom colors).
+        "cartoon_transparency": 0.0,  # Transparency level of cartoons (0.0 = opaque, 1.0 = invisible).
+        "cartoon_loop_radius": 0.2,  # Radius of loop segments.
+        "cartoon_tube_radius": 0.5,  # Radius of tube segments.
+        "cartoon_oval_width": 0.25,  # Width/thickness of oval cartoon profiles (used for alpha helices).
+        "cartoon_oval_length": 1.35,  # Length/width of oval cartoon profiles.
+        "cartoon_rect_width": 0.4,  # Thickness of rectangular cartoon profiles (used for beta sheets).
+        "cartoon_rect_length": 1.4,  # Width of rectangular cartoon profiles.
+        "cartoon_fancy_helices": False,  # Whether or not dumbbell/fancy helices are drawn.
+        "cartoon_fancy_sheets": False,  # Whether or not beta strands end in fancy arrows.
+        "cartoon_flat_sheets": True,  # Whether or not beta strands are flattened.
+        "cartoon_smooth_loops": False,  # Whether or not loops are smoothed.
+        "cartoon_trace_atoms": False,  # Whether or not cartoons trace through all guide C-alpha atoms.
+
+        # Category: Sphere / Ball Representation
+        "sphere_color": -1,  # Color index of sphere representations (-1 = default to atom colors).
+        "sphere_scale": 1.0,  # Scale multiplier for sphere representation radii.
+
+        # Category: Stick / Bond Representation
+        "stick_color": -1,  # Color index of stick representation (-1 = default to atom/bond colors).
+        "stick_radius": 0.25,  # Radius of cylinders used for stick representation.
+        "stick_transparency": 0.0,  # Transparency level of sticks.
+
+        # Category: Line Representation
+        "line_color": -1,  # Color index of line representation (-1 = default to atom colors).
+        "line_width": 1.4,  # Width in pixels of lines.
+
+        # Category: Ribbon Representation
+        "ribbon_color": -1,  # Color index of ribbon representation (-1 = default to atom colors).
+        "ribbon_width": 0.75,  # Width of ribbons.
+
+        # Category: Raytracing / Lighting
+        "ray_trace_mode": 0,  # Raytracing outline mode: 0=normal, 1=outlines, 2=outlines only.
+        "ray_trace_frames": 0,  # Controls whether frames are ray-traced during movie compilation.
+        "ray_shadow": True,  # Controls whether shadows are cast during raytracing.
+        "specular": 0.5,  # Intensity of specular highlights.
+        "shininess": 55.0,  # Exponent/power of specular reflections.
+        "ambient": 0.2,  # Strength of ambient lighting.
+        "direct": 0.45,  # Camera direct light source strength.
+        "light_count": 2,  # Number of active light sources.
     }
 
     # Prefer a JSON file in the global chisurf settings folder so the user
