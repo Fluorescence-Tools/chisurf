@@ -156,3 +156,27 @@ This model will appear in the model list for both TCSPC and FCS experiments.
 - [ ] Set a `name` attribute on your class.
 - [ ] Implement at least `update_model` (and `update_widgets` for widget-based models).
 - [ ] Restart ChiSurf and select the corresponding experiment; your model should appear in the model dropdown.
+
+---
+
+## 7. In-Place Model Code Editing (Front Face / Back Face)
+
+ChiSurf provides a powerful feature to view and edit the source code of models directly from the GUI. This allows you to rapidly prototype, refine, and modify mathematical models and fitting logic without leaving the application.
+
+### 7.1 Using the Code View
+Inside any **Fit Window**, you will see a toggle button labeled **View Model Code** above the standard plots (the "Front Face"). Clicking this button flips the view to the "Back Face", revealing a fully functional Python code editor populated with the source code of the active model.
+
+### 7.2 Saving and Applying Changes
+Once you have modified the code in the editor, you can click **Save and Apply Model**. ChiSurf handles your changes automatically based on your permissions:
+1. **Writable Installations**: If you have write access to the original source file (e.g., if you installed ChiSurf in editable mode `pip install -e .`), ChiSurf will save your changes directly to the original file.
+2. **Versioned User Overrides**: Regardless of write access, ChiSurf will automatically save a backup of your overridden code to your user directory at `~/.chisurf/models/`. The filename will include the fully qualified module name and a datetime stamp (e.g., `chisurf.core.models.tcspc.fret__override__20260609_120000.py`).
+
+### 7.3 Instant Application and Startup Injection
+When you click "Save and Apply", the new code is dynamically injected into the running Python session, immediately updating the logic of your active fit.
+Additionally, ChiSurf includes a **Startup Hook**. Every time you launch the application, it scans the `~/.chisurf/models/` directory for these `__override__` files. For each module, it automatically selects the latest version (based on the datetime stamp) and injects it over the built-in models. This ensures your modifications persist across sessions!
+
+### 7.4 Reverting Changes
+If you wish to revert to the factory default or an older version of your model:
+- Navigate to your `~/.chisurf/models/` folder.
+- Delete or rename the corresponding `__override__` files.
+- Restart ChiSurf to load the default built-in models.

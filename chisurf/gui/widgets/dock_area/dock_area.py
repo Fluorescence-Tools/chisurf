@@ -47,6 +47,7 @@ class DockTabWidget(QtWidgets.QTabWidget):
         self.dock_area = dock_area
         self.tab_bar = DockTabBar(self)
         self.setTabBar(self.tab_bar)
+        self.setDocumentMode(True)
         self.setAcceptDrops(True)
 
         self.setStyleSheet("""
@@ -159,6 +160,8 @@ class DockArea(QtWidgets.QWidget):
         self._root_widget = None
         self._active_tab_widget = None
         self._last_emitted_index = -1
+        self._corner_widget = None
+        self._corner = QtCore.Qt.TopRightCorner
 
         # Setup main layout
         self._layout = QtWidgets.QVBoxLayout(self)
@@ -187,6 +190,14 @@ class DockArea(QtWidgets.QWidget):
                 self.set_active_tab_widget(p)
                 break
             p = p.parentWidget()
+
+
+    def setCornerWidget(self, widget: QtWidgets.QWidget, corner: QtCore.Qt.Corner = QtCore.Qt.TopRightCorner) -> None:
+        self._corner_widget = widget
+        self._corner = corner
+        main_tw = self.find_main_tab_widget()
+        if main_tw is not None:
+            main_tw.setCornerWidget(widget, corner)
 
     def set_root_widget(self, widget: QtWidgets.QWidget) -> None:
         """Set the root widget of the dock area.
@@ -258,6 +269,8 @@ class DockArea(QtWidgets.QWidget):
         self._all_widgets.append(widget)
         if self._root_widget is None:
             tab_widget = DockTabWidget(self)
+            if self._corner_widget is not None:
+                tab_widget.setCornerWidget(self._corner_widget, self._corner)
             self.set_root_widget(tab_widget)
             tab_widget.addTab(widget, name)
             self.set_active_tab_widget(tab_widget)

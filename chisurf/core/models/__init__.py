@@ -134,3 +134,43 @@ def function_to_model_decorator(**kws):
         return ModelDecorator
 
     return decorator
+
+def inject_user_models():
+    import os
+    import sys
+    import importlib
+    from chisurf.core.settings.path_utils import get_path
+    from chisurf import logging
+    
+    models_dir = get_path('settings') / 'models'
+    if not models_dir.exists():
+        return
+        
+    overrides = {}
+    for filename in os.listdir(models_dir):
+        if not filename.endswith('.py'):
+            continue
+        if '__override__' in filename:
+            parts = filename.replace('.py', '').split('__override__')
+            if len(parts) == 2:
+                module_name, timestamp = parts
+                if module_name not in overrides or overrides[module_name]['timestamp'] < timestamp:
+                    overrides[module_name] = {
+                        'timestamp': timestamp,
+                        'path': models_dir / filename
+                    }
+                    
+    for module_name, info in overrides.items():
+        try:
+            logging.info(f"Injecting user model override for {module_name} from {info['path']}")
+            # Import original module
+            module = importlib.import_module(module_name)
+            # Exec the override code in the module's dict
+            with open(info['path'], 'r') as f:
+                code = f.read()
+            exec(code, module.__dict__)
+        except Exception as e:
+            logging.error(f"Failed to inject model override for {module_name}: {e}")
+
+# Run injection on startup
+inject_user_models()

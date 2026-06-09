@@ -235,6 +235,79 @@ class LineNumberArea(QtWidgets.QWidget):
     def sizeHint(self):
         return QtCore.QSize(self.editor.line_number_area_width(), 0)
 
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        # Ctrl+Click or Cmd+Click for jump to definition
+        if event.modifiers() & QtCore.Qt.ControlModifier or event.modifiers() & QtCore.Qt.MetaModifier:
+            cursor = self.cursorForPosition(event.pos())
+            cursor.select(QtGui.QTextCursor.WordUnderCursor)
+            word = cursor.selectedText()
+            if word:
+                self.jump_to_definition(word)
+
+
+    def navigate_back(self):
+        if self._nav_index > 0:
+            self._nav_index -= 1
+            file_path, line_number = self._nav_history[self._nav_index]
+            self.goto_file_line(file_path, line_number)
+
+    def navigate_forward(self):
+        if self._nav_index < len(self._nav_history) - 1:
+            self._nav_index += 1
+            file_path, line_number = self._nav_history[self._nav_index]
+            self.goto_file_line(file_path, line_number)
+
+    def goto_file_line(self, file_path, line_number):
+        # Notify parent to load file if different
+        if hasattr(self, "file_load_callback") and getattr(self, "current_file", "") != file_path:
+            self.file_load_callback(file_path)
+        
+        doc = self.document()
+        block = doc.findBlockByNumber(line_number)
+        cursor = self.textCursor()
+        cursor.setPosition(block.position())
+        self.setTextCursor(cursor)
+        self.centerCursor()
+
+    def push_nav_history(self, file_path=None, line_number=None):
+        if file_path is None:
+            # We assume the parent or holder sets a property, or we just store line number
+            file_path = getattr(self, "current_file", "")
+        if line_number is None:
+            line_number = self.textCursor().blockNumber()
+            
+        # truncate future history if we are in the past
+        if self._nav_index < len(self._nav_history) - 1:
+            self._nav_history = self._nav_history[:self._nav_index + 1]
+            
+        # don't push if it's the exact same as last
+        if self._nav_history and self._nav_history[-1] == (file_path, line_number):
+            return
+            
+        self._nav_history.append((file_path, line_number))
+        self._nav_index = len(self._nav_history) - 1
+
+    def jump_to_definition(self, word):
+        import re
+        content = self.toPlainText()
+        lines = content.split('\n')
+        # Simple regex to find def word or class word
+        pattern = re.compile(r'^ *(def |class )' + re.escape(word) + r'\b')
+        for i, line in enumerate(lines):
+            if pattern.match(line):
+                self.push_nav_history() # save current position
+                # jump to i
+                doc = self.document()
+                block = doc.findBlockByNumber(i)
+                cursor = self.textCursor()
+                cursor.setPosition(block.position())
+                self.setTextCursor(cursor)
+                self.centerCursor()
+                self.push_nav_history() # save new position
+                return
+
     def paintEvent(self, event):
         self.editor.line_number_area_paint_event(event)
 
@@ -302,6 +375,10 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self.current_line_color = QtGui.QColor(caret_line_background_color)
         self.caret_line_visible = caret_line_visible
 
+        # Navigation history
+        self._nav_history = []
+        self._nav_index = -1
+
         # Set up syntax highlighting
         if language:
             language = language.lower()
@@ -347,7 +424,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             max_num //= 10
             digits += 1
 
-        space = 3 + self.fontMetrics().width('9') * digits
+        space = 10 + self.fontMetrics().horizontalAdvance('9') * digits
         return space
 
     def update_line_number_area_width(self, _):
@@ -386,14 +463,88 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 number = str(block_number + 1)
-                painter.setPen(QtCore.Qt.darkGray)
-                rect = QtCore.QRect(0, int(top), self.line_number_area.width(), self.fontMetrics().height())
+                painter.setPen(QtGui.QColor('#D0D0D0'))
+                painter.setFont(self.font())
+                rect = QtCore.QRect(0, int(top), self.line_number_area.width() - 4, self.fontMetrics().height())
                 painter.drawText(rect, QtCore.Qt.AlignRight, number)
 
             block = block.next()
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             block_number += 1
+
+
+    def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+        # Ctrl+Click or Cmd+Click for jump to definition
+        if event.modifiers() & QtCore.Qt.ControlModifier or event.modifiers() & QtCore.Qt.MetaModifier:
+            cursor = self.cursorForPosition(event.pos())
+            cursor.select(QtGui.QTextCursor.WordUnderCursor)
+            word = cursor.selectedText()
+            if word:
+                self.jump_to_definition(word)
+
+
+    def navigate_back(self):
+        if self._nav_index > 0:
+            self._nav_index -= 1
+            file_path, line_number = self._nav_history[self._nav_index]
+            self.goto_file_line(file_path, line_number)
+
+    def navigate_forward(self):
+        if self._nav_index < len(self._nav_history) - 1:
+            self._nav_index += 1
+            file_path, line_number = self._nav_history[self._nav_index]
+            self.goto_file_line(file_path, line_number)
+
+    def goto_file_line(self, file_path, line_number):
+        # Notify parent to load file if different
+        if hasattr(self, "file_load_callback") and getattr(self, "current_file", "") != file_path:
+            self.file_load_callback(file_path)
+        
+        doc = self.document()
+        block = doc.findBlockByNumber(line_number)
+        cursor = self.textCursor()
+        cursor.setPosition(block.position())
+        self.setTextCursor(cursor)
+        self.centerCursor()
+
+    def push_nav_history(self, file_path=None, line_number=None):
+        if file_path is None:
+            # We assume the parent or holder sets a property, or we just store line number
+            file_path = getattr(self, "current_file", "")
+        if line_number is None:
+            line_number = self.textCursor().blockNumber()
+            
+        # truncate future history if we are in the past
+        if self._nav_index < len(self._nav_history) - 1:
+            self._nav_history = self._nav_history[:self._nav_index + 1]
+            
+        # don't push if it's the exact same as last
+        if self._nav_history and self._nav_history[-1] == (file_path, line_number):
+            return
+            
+        self._nav_history.append((file_path, line_number))
+        self._nav_index = len(self._nav_history) - 1
+
+    def jump_to_definition(self, word):
+        import re
+        content = self.toPlainText()
+        lines = content.split('\n')
+        # Simple regex to find def word or class word
+        pattern = re.compile(r'^ *(def |class )' + re.escape(word) + r'\b')
+        for i, line in enumerate(lines):
+            if pattern.match(line):
+                self.push_nav_history() # save current position
+                # jump to i
+                doc = self.document()
+                block = doc.findBlockByNumber(i)
+                cursor = self.textCursor()
+                cursor.setPosition(block.position())
+                self.setTextCursor(cursor)
+                self.centerCursor()
+                self.push_nav_history() # save new position
+                return
 
     def paintEvent(self, event):
         """Paint the editor, including the current line highlight."""
