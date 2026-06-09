@@ -307,7 +307,28 @@ class Main(
     def set_current_experiment_idx(self, v):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
+    def _save_window_state(self):
+        """Persist dock layout and window geometry via QSettings."""
+        settings = QtCore.QSettings("ChiSurf", "MainWindow")
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("state", self.saveState())
+
+    def _restore_window_state(self):
+        """Restore dock layout and window geometry from QSettings."""
+        settings = QtCore.QSettings("ChiSurf", "MainWindow")
+        geo = settings.value("geometry")
+        if geo is not None:
+            self.restoreGeometry(geo)
+        state = settings.value("state")
+        if state is not None:
+            self.restoreState(state)
+
     def closeEvent(self, event: QtGui.QCloseEvent):
+        # Always save window state regardless of confirmation
+        try:
+            self._save_window_state()
+        except Exception:
+            pass
         if cs.core.settings.gui['confirm_close_program']:
             reply = cs.gui.widgets.general.MyMessageBox.question(
                 self,
@@ -1236,6 +1257,14 @@ class Main(
         apply_dock_tab_colors(self)
 
         self._install_dev_mode_code_badges()
+
+        # Restore persisted dock layout and window geometry, if available.
+        # This must run after the default tabify setup so the saved layout
+        # overrides the defaults when a previous session exists.
+        try:
+            self._restore_window_state()
+        except Exception:
+            pass
 
     def filter_log_content(self):
         """
