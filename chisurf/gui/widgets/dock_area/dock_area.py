@@ -57,7 +57,7 @@ class DockTabWidget(QtWidgets.QTabWidget):
             }
             QTabBar::tab {
                 background-color: rgba(128, 128, 128, 30);
-                padding: 1px 10px;
+                padding: 0px 8px;
                 border: 1px solid rgba(128, 128, 128, 30);
                 border-bottom: none;
                 border-top-left-radius: 3px;
@@ -75,6 +75,10 @@ class DockTabWidget(QtWidgets.QTabWidget):
         self.currentChanged.connect(self._on_current_changed)
         self.tab_bar.doubleClickedTab.connect(self._on_tab_double_clicked)
         self.tab_bar.doubleClickedTabBar.connect(self._on_tab_bar_double_clicked)
+        self.tab_bar.contextMenuRequested.connect(self._on_tab_context_menu)
+        self.tabCloseRequested.connect(
+            lambda idx, tw=self: self.dock_area._on_tab_close_requested(tw, idx)
+        )
 
     def _on_current_changed(self, index: int) -> None:
         if index >= 0:
@@ -85,6 +89,10 @@ class DockTabWidget(QtWidgets.QTabWidget):
 
     def _on_tab_bar_double_clicked(self) -> None:
         self.dock_area.restore_all_tabs(self)
+
+    def _on_tab_context_menu(self, local_index: int, global_pos: QtCore.QPoint) -> None:
+        """Forward context menu requests to the owning DockArea."""
+        self.dock_area._on_tab_context_menu(self, local_index, global_pos)
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         """Accept dragging of dock tabs.
@@ -146,6 +154,9 @@ class DockArea(QtWidgets.QWidget):
     """
 
     currentChanged = QtCore.Signal(int)
+    tabCloseRequested = QtCore.Signal(int)
+    tabActionRequested = QtCore.Signal(str, int)
+    newTabRequested = QtCore.Signal()
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         """Initialize the DockArea.
@@ -157,11 +168,16 @@ class DockArea(QtWidgets.QWidget):
         """
         super().__init__(parent)
         self._all_widgets = []
+        self._tab_names: dict[QtWidgets.QWidget, str] = {}
         self._root_widget = None
         self._active_tab_widget = None
         self._last_emitted_index = -1
         self._corner_widget = None
         self._corner = QtCore.Qt.TopRightCorner
+        self._tabs_closable = False
+        self._new_tab_button = None
+        self._context_menu_enabled = False
+        self._close_tab_callback = None
 
         # Setup main layout
         self._layout = QtWidgets.QVBoxLayout(self)
@@ -193,11 +209,47 @@ class DockArea(QtWidgets.QWidget):
 
 
     def setCornerWidget(self, widget: QtWidgets.QWidget, corner: QtCore.Qt.Corner = QtCore.Qt.TopRightCorner) -> None:
+        """Set the widget in the given corner of the tab bar.
+
+        Parameters
+        ----------
+        widget : QWidget
+        corner : Qt.Corner, optional
+        """
         self._corner_widget = widget
         self._corner = corner
         main_tw = self.find_main_tab_widget()
         if main_tw is not None:
             main_tw.setCornerWidget(widget, corner)
+
+    def setContextMenuEnabled(self, enabled: bool = True) -> None:
+        """Enable or disable the right-click context menu on tabs.
+
+        Parameters
+        ----------
+        enabled : bool
+        """
+        self._context_menu_enabled = enabled
+
+    def setNewTabButtonVisible(self, visible: bool = True) -> None:
+        """Show or hide the ``+`` new-tab button in the left corner of the tab bar.
+
+        Parameters
+        ----------
+        visible : bool
+        """
+        if visible:
+            if self._new_tab_button is None:
+                self._new_tab_button = QtWidgets.QToolButton()
+                self._new_tab_button.setText("+")
+                self._new_tab_button.setAutoRaise(True)
+                self._new_tab_button.clicked.connect(self.newTabRequested.emit)
+                for tw in self.findChildren(DockTabWidget):
+                    tw.setCornerWidget(self._new_tab_button, QtCore.Qt.TopLeftCorner)
+            self._new_tab_button.show()
+        else:
+            if self._new_tab_button is not None:
+                self._new_tab_button.hide()
 
     def set_root_widget(self, widget: QtWidgets.QWidget) -> None:
         """Set the root widget of the dock area.
@@ -267,10 +319,14 @@ class DockArea(QtWidgets.QWidget):
             The name to display on the tab.
         """
         self._all_widgets.append(widget)
+        self._tab_names[widget] = name
         if self._root_widget is None:
             tab_widget = DockTabWidget(self)
+            tab_widget.setTabsClosable(self._tabs_closable)
             if self._corner_widget is not None:
                 tab_widget.setCornerWidget(self._corner_widget, self._corner)
+            if self._new_tab_button is not None:
+                tab_widget.setCornerWidget(self._new_tab_button, QtCore.Qt.TopLeftCorner)
             self.set_root_widget(tab_widget)
             tab_widget.addTab(widget, name)
             self.set_active_tab_widget(tab_widget)
@@ -278,6 +334,27 @@ class DockArea(QtWidgets.QWidget):
             main_tw = self.find_main_tab_widget()
             if main_tw is not None:
                 main_tw.addTab(widget, name)
+
+    def setCloseTabCallback(self, callback) -> None:
+        """Set a callable to handle tab close requests instead of the signal.
+
+        Parameters
+        ----------
+        callback : callable(int)
+            Called with the absolute tab index when a close button is clicked.
+        """
+        self._close_tab_callback = callback
+
+    def _on_tab_close_requested(self, tw: 'DockTabWidget', local_idx: int) -> None:
+        """Translate a local DockTabWidget tab-close to an absolute index and forward."""
+        w = tw.widget(local_idx)
+        if w not in self._all_widgets:
+            return
+        abs_idx = self._all_widgets.index(w)
+        if self._close_tab_callback is not None:
+            self._close_tab_callback(abs_idx)
+        else:
+            self.tabCloseRequested.emit(abs_idx)
 
     def add_panel(self, widget: QtWidgets.QWidget, name: str) -> None:
         """Alternative name for addTab.
@@ -290,6 +367,16 @@ class DockArea(QtWidgets.QWidget):
             The name to display on the tab.
         """
         self.addTab(widget, name)
+
+    def setCurrentWidget(self, widget: QtWidgets.QWidget) -> None:
+        """Activate the tab containing the given widget.
+
+        Parameters
+        ----------
+        widget : QWidget
+        """
+        if widget in self._all_widgets:
+            self.setCurrentIndex(self._all_widgets.index(widget))
 
     def currentIndex(self) -> int:
         """Get the absolute index of the currently active tab/plot.
@@ -318,6 +405,136 @@ class DockArea(QtWidgets.QWidget):
         if active_tw is not None:
             return active_tw.currentWidget()
         return None
+
+    def count(self) -> int:
+        """Return the total number of tabs across all DockTabWidgets.
+
+        Returns
+        -------
+        int
+        """
+        return len(self._all_widgets)
+
+    def widget(self, index: int) -> QtWidgets.QWidget:
+        """Return the page widget at the given absolute index.
+
+        Parameters
+        ----------
+        index : int
+
+        Returns
+        -------
+        QWidget or None
+        """
+        if 0 <= index < len(self._all_widgets):
+            return self._all_widgets[index]
+        return None
+
+    def tabText(self, index: int) -> str:
+        """Return the tab text at the given absolute index.
+
+        Parameters
+        ----------
+        index : int
+
+        Returns
+        -------
+        str
+        """
+        w = self.widget(index)
+        if w is not None:
+            return self._tab_names.get(w, "")
+        return ""
+
+    def setTabText(self, index: int, text: str) -> None:
+        """Set the tab text at the given absolute index.
+
+        Parameters
+        ----------
+        index : int
+        text : str
+        """
+        w = self.widget(index)
+        if w is None:
+            return
+        self._tab_names[w] = text
+        for tw in self.findChildren(DockTabWidget):
+            for i in range(tw.count()):
+                if tw.widget(i) is w:
+                    tw.setTabText(i, text)
+                    return
+
+    def removeTab(self, index: int) -> None:
+        """Remove the tab at the given absolute index.
+
+        Parameters
+        ----------
+        index : int
+        """
+        w = self.widget(index)
+        if w is None:
+            return
+        self._all_widgets.pop(index)
+        self._tab_names.pop(w, None)
+        for tw in self.findChildren(DockTabWidget):
+            for i in range(tw.count()):
+                if tw.widget(i) is w:
+                    tw.removeTab(i)
+                    self.cleanup_empty_tab_widget(tw)
+                    return
+
+    def setCurrentIndex(self, index: int) -> None:
+        """Activate the tab at the given absolute index.
+
+        Parameters
+        ----------
+        index : int
+        """
+        w = self.widget(index)
+        if w is None:
+            return
+        for tw in self.findChildren(DockTabWidget):
+            for i in range(tw.count()):
+                if tw.widget(i) is w:
+                    tw.setCurrentIndex(i)
+                    self.set_active_tab_widget(tw)
+                    return
+
+    def indexOf(self, widget: QtWidgets.QWidget) -> int:
+        """Return the absolute index of the given widget.
+
+        Parameters
+        ----------
+        widget : QWidget
+
+        Returns
+        -------
+        int
+        """
+        if widget in self._all_widgets:
+            return self._all_widgets.index(widget)
+        return -1
+
+    def setTabsClosable(self, closable: bool) -> None:
+        """Set whether tabs are closable on all internal DockTabWidgets.
+
+        Parameters
+        ----------
+        closable : bool
+        """
+        self._tabs_closable = closable
+        for tw in self.findChildren(DockTabWidget):
+            tw.setTabsClosable(closable)
+
+    def setDocumentMode(self, enabled: bool) -> None:
+        """Set document mode on all internal DockTabWidgets.
+
+        Parameters
+        ----------
+        enabled : bool
+        """
+        for tw in self.findChildren(DockTabWidget):
+            tw.setDocumentMode(enabled)
 
     def update(self, *args, **kwargs) -> None:
         """Repaint the dock area and trigger updates on all child widgets."""
@@ -558,3 +775,101 @@ class DockArea(QtWidgets.QWidget):
 
         self.cleanup_empty_tab_widget(tw)
         self.set_active_tab_widget(main_tw)
+
+    def _request_close_tab(self, abs_index: int) -> None:
+        """Request a tab close through the callback or fall back to direct removal."""
+        if self._close_tab_callback is not None:
+            self._close_tab_callback(abs_index)
+        else:
+            self.tabCloseRequested.emit(abs_index)
+
+    def _on_tab_context_menu(
+        self, tw: 'DockTabWidget', local_index: int, global_pos: QtCore.QPoint
+    ) -> None:
+        """Build and show the right-click context menu for a tab.
+
+        Close-related actions are handled directly. Save/Copy/Rename/Reload
+        actions are delegated via the ``tabActionRequested`` signal.
+        """
+        if not self._context_menu_enabled:
+            return
+        # Resolve absolute index
+        w = tw.widget(local_index)
+        if w not in self._all_widgets:
+            return
+        abs_index = self._all_widgets.index(w)
+
+        menu = QtWidgets.QMenu(self)
+
+        # --- Close section ---
+        action_close = menu.addAction("Close")
+        action_close.triggered.connect(lambda idx=abs_index: self._request_close_tab(idx))
+
+        action_close_except = menu.addAction("Close All Except Active Document")
+        action_close_except.triggered.connect(lambda idx=abs_index: self._close_all_except(idx))
+
+        action_close_left = menu.addAction("Close All to the Left")
+        action_close_left.triggered.connect(lambda idx=abs_index: self._close_all_left(idx))
+
+        action_close_right = menu.addAction("Close All to the Right")
+        action_close_right.triggered.connect(lambda idx=abs_index: self._close_all_right(idx))
+
+        menu.addSeparator()
+
+        # --- Save / Rename / Reload section ---
+        action_save = menu.addAction("Save")
+        action_save.triggered.connect(
+            lambda: self.tabActionRequested.emit("save", abs_index)
+        )
+
+        action_save_as = menu.addAction("Save As...")
+        action_save_as.triggered.connect(
+            lambda: self.tabActionRequested.emit("save_as", abs_index)
+        )
+
+        action_rename = menu.addAction("Rename...")
+        action_rename.triggered.connect(
+            lambda: self.tabActionRequested.emit("rename", abs_index)
+        )
+
+        action_reload = menu.addAction("Reload")
+        action_reload.triggered.connect(
+            lambda: self.tabActionRequested.emit("reload", abs_index)
+        )
+
+        menu.addSeparator()
+
+        # --- Copy section ---
+        action_copy_path = menu.addAction("Copy Full Path")
+        action_copy_path.triggered.connect(
+            lambda: self.tabActionRequested.emit("copy_path", abs_index)
+        )
+
+        action_copy_name = menu.addAction("Copy File Name")
+        action_copy_name.triggered.connect(
+            lambda: self.tabActionRequested.emit("copy_name", abs_index)
+        )
+
+        action_copy_dir = menu.addAction("Copy File Directory")
+        action_copy_dir.triggered.connect(
+            lambda: self.tabActionRequested.emit("copy_dir", abs_index)
+        )
+
+        menu.exec_(global_pos)
+
+    def _close_all_except(self, keep_index: int) -> None:
+        """Close every tab except the one at ``keep_index``."""
+        for i in range(self.count() - 1, keep_index, -1):
+            self._request_close_tab(i)
+        for _ in range(keep_index):
+            self._request_close_tab(0)
+
+    def _close_all_left(self, anchor: int) -> None:
+        """Close all tabs to the left of ``anchor``."""
+        for _ in range(anchor):
+            self._request_close_tab(0)
+
+    def _close_all_right(self, anchor: int) -> None:
+        """Close all tabs to the right of ``anchor``."""
+        for i in range(self.count() - 1, anchor, -1):
+            self._request_close_tab(i)

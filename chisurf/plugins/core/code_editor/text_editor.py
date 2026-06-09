@@ -12,6 +12,7 @@ from chisurf import logging
 import chisurf.gui.widgets
 import chisurf.core.settings
 from chisurf.plugins.core.code_editor.agent_panel import AgentPanelWidget
+from chisurf.gui.widgets.dock_area import DockArea
 
 
 class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
@@ -235,79 +236,6 @@ class LineNumberArea(QtWidgets.QWidget):
     def sizeHint(self):
         return QtCore.QSize(self.editor.line_number_area_width(), 0)
 
-
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-        # Ctrl+Click or Cmd+Click for jump to definition
-        if event.modifiers() & QtCore.Qt.ControlModifier or event.modifiers() & QtCore.Qt.MetaModifier:
-            cursor = self.cursorForPosition(event.pos())
-            cursor.select(QtGui.QTextCursor.WordUnderCursor)
-            word = cursor.selectedText()
-            if word:
-                self.jump_to_definition(word)
-
-
-    def navigate_back(self):
-        if self._nav_index > 0:
-            self._nav_index -= 1
-            file_path, line_number = self._nav_history[self._nav_index]
-            self.goto_file_line(file_path, line_number)
-
-    def navigate_forward(self):
-        if self._nav_index < len(self._nav_history) - 1:
-            self._nav_index += 1
-            file_path, line_number = self._nav_history[self._nav_index]
-            self.goto_file_line(file_path, line_number)
-
-    def goto_file_line(self, file_path, line_number):
-        # Notify parent to load file if different
-        if hasattr(self, "file_load_callback") and getattr(self, "current_file", "") != file_path:
-            self.file_load_callback(file_path)
-        
-        doc = self.document()
-        block = doc.findBlockByNumber(line_number)
-        cursor = self.textCursor()
-        cursor.setPosition(block.position())
-        self.setTextCursor(cursor)
-        self.centerCursor()
-
-    def push_nav_history(self, file_path=None, line_number=None):
-        if file_path is None:
-            # We assume the parent or holder sets a property, or we just store line number
-            file_path = getattr(self, "current_file", "")
-        if line_number is None:
-            line_number = self.textCursor().blockNumber()
-            
-        # truncate future history if we are in the past
-        if self._nav_index < len(self._nav_history) - 1:
-            self._nav_history = self._nav_history[:self._nav_index + 1]
-            
-        # don't push if it's the exact same as last
-        if self._nav_history and self._nav_history[-1] == (file_path, line_number):
-            return
-            
-        self._nav_history.append((file_path, line_number))
-        self._nav_index = len(self._nav_history) - 1
-
-    def jump_to_definition(self, word):
-        import re
-        content = self.toPlainText()
-        lines = content.split('\n')
-        # Simple regex to find def word or class word
-        pattern = re.compile(r'^ *(def |class )' + re.escape(word) + r'\b')
-        for i, line in enumerate(lines):
-            if pattern.match(line):
-                self.push_nav_history() # save current position
-                # jump to i
-                doc = self.document()
-                block = doc.findBlockByNumber(i)
-                cursor = self.textCursor()
-                cursor.setPosition(block.position())
-                self.setTextCursor(cursor)
-                self.centerCursor()
-                self.push_nav_history() # save new position
-                return
-
     def paintEvent(self, event):
         self.editor.line_number_area_paint_event(event)
 
@@ -378,6 +306,8 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         # Navigation history
         self._nav_history = []
         self._nav_index = -1
+        self.current_file = None
+        self.external_definition_callback = None
 
         # Set up syntax highlighting
         if language:
@@ -498,16 +428,19 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             self.goto_file_line(file_path, line_number)
 
     def goto_file_line(self, file_path, line_number):
-        # Notify parent to load file if different
+        # Notify parent to load file if different; the callback handles
+        # navigation when the file changes (including cursor positioning).
         if hasattr(self, "file_load_callback") and getattr(self, "current_file", "") != file_path:
-            self.file_load_callback(file_path)
-        
+            self.file_load_callback(file_path, line_number=line_number)
+            return
+
         doc = self.document()
         block = doc.findBlockByNumber(line_number)
-        cursor = self.textCursor()
-        cursor.setPosition(block.position())
-        self.setTextCursor(cursor)
-        self.centerCursor()
+        if block.isValid():
+            cursor = self.textCursor()
+            cursor.setPosition(block.position())
+            self.setTextCursor(cursor)
+            self.centerCursor()
 
     def push_nav_history(self, file_path=None, line_number=None):
         if file_path is None:
@@ -531,20 +464,61 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         import re
         content = self.toPlainText()
         lines = content.split('\n')
-        # Simple regex to find def word or class word
         pattern = re.compile(r'^ *(def |class )' + re.escape(word) + r'\b')
         for i, line in enumerate(lines):
             if pattern.match(line):
-                self.push_nav_history() # save current position
-                # jump to i
+                self.push_nav_history()
                 doc = self.document()
                 block = doc.findBlockByNumber(i)
                 cursor = self.textCursor()
                 cursor.setPosition(block.position())
                 self.setTextCursor(cursor)
                 self.centerCursor()
-                self.push_nav_history() # save new position
+                self.push_nav_history()
                 return
+
+        # Not found in current file — try external modules
+        if self.external_definition_callback is not None:
+            self._jump_to_external_definition(word)
+
+    def _jump_to_external_definition(self, word):
+        import re
+        import inspect
+        import importlib
+
+        content = self.toPlainText()
+        lines = content.split('\n')
+
+        imports = []
+        for line in lines:
+            m = re.match(r'^\s*import\s+(\S+)', line)
+            if m:
+                imports.append(m.group(1).split('.')[0])
+            m = re.match(r'^\s*from\s+(\S+)\s+import', line)
+            if m:
+                imports.append(m.group(1).split('.')[0])
+
+        for mod_name in set(imports):
+            try:
+                mod = importlib.import_module(mod_name)
+            except Exception:
+                continue
+            try:
+                obj = getattr(mod, word, None)
+            except Exception:
+                continue
+            if obj is None:
+                continue
+            try:
+                source_file = inspect.getsourcefile(obj)
+                if source_file is None:
+                    continue
+                _, line_num = inspect.getsourcelines(obj)
+                self.push_nav_history()
+                self.external_definition_callback(source_file, line_num)
+                return
+            except Exception:
+                continue
 
     def paintEvent(self, event):
         """Paint the editor, including the current line highlight."""
@@ -571,12 +545,12 @@ class TextEditor(QtWidgets.QPlainTextEdit):
 
 
 class CodeEditor(QtWidgets.QWidget):
-    """Widget that combines a tabbed text editor with load, save, and run buttons."""
+    """Tabbed text editor with DockArea tabs and an AI agent side panel."""
 
     def __init__(
         self,
         *args,
-        filename: str = 'None',
+        filename: str = None,
         language: str = "Python",
         can_load: bool = True,
         **kwargs
@@ -588,78 +562,93 @@ class CodeEditor(QtWidgets.QWidget):
         main_layout.setSpacing(0)
 
         self.filename = filename
-        self._open_files: dict = {}
+        self._open_files: dict[str, QtWidgets.QWidget] = {}
         self._agent_panel_visible = False
         self.setLayout(main_layout)
 
-        self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
-        main_layout.addWidget(self.splitter)
-
-        self.tab_widget = QtWidgets.QTabWidget()
-        self.tab_widget.setTabsClosable(True)
-        self.tab_widget.tabCloseRequested.connect(self._close_tab)
-        self.tab_widget.setDocumentMode(True)
-        self.splitter.addWidget(self.tab_widget)
+        self.tab_widget = DockArea()
+        self.tab_widget.tabActionRequested.connect(self._on_tab_action)
+        self.tab_widget.newTabRequested.connect(self._add_new_editor_tab)
+        self.tab_widget.setCloseTabCallback(self._close_tab)
+        main_layout.addWidget(self.tab_widget)
 
         self._create_editor_tab(filename=filename, language=language)
+        self.tab_widget.setTabsClosable(True)
+        self.tab_widget.setNewTabButtonVisible(True)
+        self.tab_widget.setContextMenuEnabled(True)
 
         self.agent_panel = AgentPanelWidget(
-            self,
+            parent=None,
             get_context_callback=self._get_editor_context
         )
-        self.splitter.addWidget(self.agent_panel)
-        self.agent_panel.hide()
-        self.splitter.setSizes([800, 0])
 
-        self.line_edit = QtWidgets.QLineEdit()
-
-        button_layout = QtWidgets.QHBoxLayout()
-        self.load_button = QtWidgets.QPushButton("Load")
-        self.save_button = QtWidgets.QPushButton("Save")
-        self.run_button = QtWidgets.QPushButton("Run")
-        self.agent_button = QtWidgets.QPushButton("Agent")
-
-        button_layout.addWidget(self.line_edit)
-        button_layout.addWidget(self.load_button)
-        button_layout.addWidget(self.save_button)
-        button_layout.addWidget(self.run_button)
-        button_layout.addWidget(self.agent_button)
-        main_layout.addLayout(button_layout)
-
-        self.save_button.clicked.connect(self.save_text)
-        self.load_button.clicked.connect(self.load_file_event)
-        self.run_button.clicked.connect(self.run_macro)
-        self.agent_button.clicked.connect(self._toggle_agent_panel)
-
-        if not can_load:
-            self.load_button.hide()
+    def _add_new_editor_tab(self):
+        """Create a new blank editor tab with a unique name."""
+        base = "Untitled"
+        used = set()
+        for i in range(self.tab_widget.count()):
+            if self.tab_widget.widget(i) is self.agent_panel:
+                continue
+            text = self.tab_widget.tabText(i)
+            used.add(text[:-2] if text.endswith(" *") else text)
+        if base not in used:
+            name = base
+        else:
+            n = 1
+            while f"{base}-{n}" in used:
+                n += 1
+            name = f"{base}-{n}"
+        self._create_editor_tab(filename=name)
 
     def _create_editor_tab(self, filename: str = None, language: str = "Python"):
         """Create a new editor tab."""
         editor = TextEditor(parent=self, language=language)
-        tab_index = self.tab_widget.addTab(editor, filename or "Untitled")
+        self.tab_widget.addTab(editor, filename or "Untitled")
+        editor.document().modificationChanged.connect(
+            lambda modified, e=editor: self._on_modification_changed(e, modified)
+        )
+        tab_index = self.tab_widget.indexOf(editor)
+        if hasattr(self, '_on_editor_created'):
+            self._on_editor_created(editor)
         return editor, tab_index
 
     def _get_current_editor(self):
         """Get the current editor widget."""
-        return self.tab_widget.currentWidget()
+        w = self.tab_widget.currentWidget()
+        if w is self.agent_panel:
+            return None
+        return w
 
     def _get_current_filename(self):
-        """Get the filename of the current tab."""
+        """Get the filename of the current tab (without dirty marker)."""
         idx = self.tab_widget.currentIndex()
         if idx >= 0:
-            return self.tab_widget.tabText(idx)
+            text = self.tab_widget.tabText(idx)
+            return text[:-2] if text.endswith(" *") else text
         return None
+
+    def _on_modification_changed(self, editor: QtWidgets.QWidget, modified: bool) -> None:
+        """Update the `` *`` marker on the tab when the document's modified state changes."""
+        idx = self.tab_widget.indexOf(editor)
+        if idx < 0:
+            return
+        text = self.tab_widget.tabText(idx)
+        base = text[:-2] if text.endswith(" *") else text
+        self.tab_widget.setTabText(idx, base + " *" if modified else base)
 
     def _toggle_agent_panel(self):
         """Toggle the AI agent panel visibility."""
         if self._agent_panel_visible:
-            self.agent_panel.hide()
-            self.splitter.setSizes([self.width(), 0])
+            idx = self.tab_widget.indexOf(self.agent_panel)
+            if idx >= 0:
+                self.tab_widget.removeTab(idx)
             self._agent_panel_visible = False
         else:
+            idx = self.tab_widget.indexOf(self.agent_panel)
+            if idx < 0:
+                self.tab_widget.addTab(self.agent_panel, "Agent")
+            self.tab_widget.setCurrentWidget(self.agent_panel)
             self.agent_panel.show()
-            self.splitter.setSizes([int(self.width() * 0.6), int(self.width() * 0.4)])
             self._agent_panel_visible = True
 
     def _get_editor_context(self) -> str:
@@ -674,17 +663,157 @@ class CodeEditor(QtWidgets.QWidget):
         return f"File: {filename}\n\n```{content}\n```"
 
     def _close_tab(self, index: int):
-        """Close a tab at the given index."""
-        if self.tab_widget.count() <= 1:
+        """Close a tab at the given absolute index."""
+        widget = self.tab_widget.widget(index)
+
+        # Agent panel close = toggle off
+        if widget is self.agent_panel:
+            self._agent_panel_visible = False
+            self.tab_widget.removeTab(index)
             return
 
-        widget = self.tab_widget.widget(index)
-        filename = self.tab_widget.tabText(index)
-        if filename in self._open_files:
-            del self._open_files[filename]
+        # Confirm close if dirty (check the tab-text marker which is always in sync)
+        if widget is not self.agent_panel:
+            tab_text = self.tab_widget.tabText(index)
+            if tab_text.endswith(" *"):
+                name = tab_text[:-2]
+                msg = QtWidgets.QMessageBox(self)
+                msg.setWindowTitle("Unsaved Changes")
+                msg.setText(f"Do you want to save changes to {name}?")
+                msg.setIcon(QtWidgets.QMessageBox.Question)
+                msg.setStandardButtons(
+                    QtWidgets.QMessageBox.Save
+                    | QtWidgets.QMessageBox.Discard
+                    | QtWidgets.QMessageBox.Cancel
+                )
+                msg.setDefaultButton(QtWidgets.QMessageBox.Save)
+                reply = msg.exec_()
+                if reply == QtWidgets.QMessageBox.Save:
+                    self._save_tab(widget, name, index)
+                elif reply == QtWidgets.QMessageBox.Cancel:
+                    return
+
+        # Remove from _open_files by matching the widget
+        to_remove = [k for k, v in self._open_files.items() if v is widget]
+        for k in to_remove:
+            del self._open_files[k]
+
+        # Compute editor count BEFORE removing
+        editor_count = sum(
+            1 for i in range(self.tab_widget.count())
+            if self.tab_widget.widget(i) not in (self.agent_panel, None)
+        )
+
         self.tab_widget.removeTab(index)
         if widget:
             widget.deleteLater()
+
+        # Open a blank Untitled tab if the last editor was just closed
+        if editor_count <= 1:
+            self._add_new_editor_tab()
+
+    def _on_tab_action(self, action: str, index: int):
+        """Handle context-menu actions on tabs.
+
+        Parameters
+        ----------
+        action : str
+            One of ``"save"``, ``"save_as"``, ``"rename"``, ``"reload"``,
+            ``"copy_path"``, ``"copy_name"``, ``"copy_dir"``.
+        index : int
+            The absolute tab index.
+        """
+        editor = self.tab_widget.widget(index)
+        if editor is None or editor is self.agent_panel:
+            return
+        tab_text = self.tab_widget.tabText(index)
+        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
+
+        if action == "save":
+            self._save_tab(editor, clean, index)
+        elif action == "save_as":
+            self._save_tab_as(editor, clean, index)
+        elif action == "rename":
+            self._rename_tab(editor, clean, index)
+        elif action == "reload":
+            self._reload_tab(editor, clean, index)
+        elif action == "copy_path":
+            self._copy_to_clipboard(clean)
+        elif action == "copy_name":
+            self._copy_to_clipboard(pathlib.Path(clean).name)
+        elif action == "copy_dir":
+            self._copy_to_clipboard(str(pathlib.Path(clean).parent))
+
+    def _save_tab(self, editor, tab_text: str, index: int):
+        """Save the tab content to its file."""
+        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
+        if clean and clean != "Untitled":
+            try:
+                with io.zipped.open_maybe_zipped(clean, "w") as f:
+                    f.write(editor.text())
+            except IOError as e:
+                logging.log(1, f"Error saving {clean}: {e}")
+                return
+        else:
+            self._save_tab_as(editor, clean, index)
+            return
+        editor.document().setModified(False)
+
+    def _save_tab_as(self, editor, tab_text: str, index: int):
+        """Open a save-as dialog and save the tab content."""
+        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
+        new_filename = cs.gui.widgets.save_file(file_type="Python script (*.py)")
+        if not new_filename:
+            return
+        new_path = str(new_filename)
+        try:
+            with io.zipped.open_maybe_zipped(new_path, "w") as f:
+                f.write(editor.text())
+        except IOError as e:
+            logging.log(1, f"Error saving {new_path}: {e}")
+            return
+        self.tab_widget.setTabText(index, new_path)
+        old_key = next((k for k, v in self._open_files.items() if v is editor), None)
+        if old_key:
+            del self._open_files[old_key]
+        self._open_files[new_path] = editor
+        editor.document().setModified(False)
+
+    def _rename_tab(self, editor, tab_text: str, index: int):
+        """Prompt for a new tab name and update accordingly."""
+        new_name, ok = QtWidgets.QInputDialog.getText(
+            self, "Rename Tab", "New name:", text=tab_text
+        )
+        if not ok or not new_name or new_name == tab_text:
+            return
+        self.tab_widget.setTabText(index, new_name)
+        if editor.document().isModified():
+            self.tab_widget.setTabText(index, new_name + " *")
+        old_key = next((k for k, v in self._open_files.items() if v is editor), None)
+        if old_key:
+            del self._open_files[old_key]
+        self._open_files[new_name] = editor
+
+    def _reload_tab(self, editor, tab_text: str, index: int):
+        """Re-read the file from disk and replace editor content."""
+        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
+        if clean == "Untitled":
+            return
+        try:
+            with open(clean, encoding="utf-8") as f:
+                editor.blockSignals(True)
+                editor.setText(f.read())
+                editor.blockSignals(False)
+        except IOError as e:
+            logging.log(1, f"Error reloading {clean}: {e}")
+            return
+        editor.document().setModified(False)
+
+    @staticmethod
+    def _copy_to_clipboard(text: str):
+        """Copy *text* to the system clipboard."""
+        cb = QtWidgets.QApplication.clipboard()
+        cb.setText(text)
 
     def load_file_event(self, event, filename: str = None, **kwargs):
         self.load_file(filename)
@@ -698,9 +827,8 @@ class CodeEditor(QtWidgets.QWidget):
         filename_str = str(filename)
 
         if filename_str in self._open_files:
-            tab_idx = self._open_files[filename_str]
-            self.tab_widget.setCurrentIndex(tab_idx)
-            self._update_line_edit()
+            editor = self._open_files[filename_str]
+            self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
             return
 
         try:
@@ -711,25 +839,21 @@ class CodeEditor(QtWidgets.QWidget):
             logging.log(1, f"Error loading file {filename_str}: {e}")
             return
 
-        editor, tab_idx = self._create_editor_tab(filename=filename_str)
+        editor, _ = self._create_editor_tab(filename=filename_str)
+        editor.blockSignals(True)
         editor.setText(content)
-        self._open_files[filename_str] = tab_idx
-        self.tab_widget.setCurrentIndex(tab_idx)
-        self._update_line_edit()
-
-    def _update_line_edit(self):
-        """Update the line edit with current file path."""
-        filename = self._get_current_filename()
-        if filename:
-            self.line_edit.setText(filename)
+        editor.blockSignals(False)
+        editor.document().setModified(False)
+        self._open_files[filename_str] = editor
+        self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
 
     def open_file(self, path: str, line: int = None, col: int = None):
         """Open a file in a new tab or switch to existing tab, optionally jump to line."""
         path_str = str(path)
 
         if path_str in self._open_files:
-            tab_idx = self._open_files[path_str]
-            self.tab_widget.setCurrentIndex(tab_idx)
+            editor = self._open_files[path_str]
+            self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
         else:
             try:
                 with open(path_str, encoding="utf-8") as file:
@@ -738,12 +862,13 @@ class CodeEditor(QtWidgets.QWidget):
                 logging.log(1, f"Error opening file {path_str}: {e}")
                 return
 
-            editor, tab_idx = self._create_editor_tab(filename=path_str)
+            editor, _ = self._create_editor_tab(filename=path_str)
+            editor.blockSignals(True)
             editor.setText(content)
-            self._open_files[path_str] = tab_idx
-            self.tab_widget.setCurrentIndex(tab_idx)
-
-        self._update_line_edit()
+            editor.blockSignals(False)
+            editor.document().setModified(False)
+            self._open_files[path_str] = editor
+            self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
 
         if line and line > 0:
             self.goto_line(line)
@@ -822,14 +947,15 @@ class CodeEditor(QtWidgets.QWidget):
             filename = new_filename
             idx = self.tab_widget.currentIndex()
             self.tab_widget.setTabText(idx, filename)
-            self._open_files[str(filename)] = idx
+            self._open_files[str(filename)] = editor
 
         try:
             with io.zipped.open_maybe_zipped(filename, "w") as file:
                 file.write(editor.text())
-            self.line_edit.setText(str(pathlib.Path(filename).as_posix()))
         except IOError as e:
             logging.log(1, f"Error saving file {filename}: {e}")
+            return
+        editor.document().setModified(False)
 
 
 if __name__ == "__main__":
