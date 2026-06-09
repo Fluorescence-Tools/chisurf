@@ -32,7 +32,10 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
         layout = self.w.gridLayout
         chisurf.gui.widgets.clear_layout(layout)
 
-        n_columns = chisurf.core.settings.gui['fit_models']['n_columns']
+        try:
+            n_columns = chisurf.core.settings.gui['fit_models']['n_columns']
+        except Exception:
+            n_columns = 2
         row = 1
 
         p_dict = self.parameters_all_dict
@@ -43,7 +46,16 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
 
         for i, pk in enumerate(p_keys):
             p = p_dict[pk]
-            pw = chisurf.gui.widgets.fitting.make_fitting_parameter_widget(p, callback=self.finalize)
+            # Optimize for space in 2-column layout by hiding the error estimates
+            pw = chisurf.gui.widgets.fitting.make_fitting_parameter_widget(
+                p,
+                callback=self.finalize,
+                hide_error=True
+            )
+            try:
+                pw.label.setMinimumWidth(35)
+            except Exception:
+                pass
             column = i % n_columns
             if column == 0:
                 row += 1
@@ -103,11 +115,64 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
         code_keys = list(v.keys())
         self.w.comboBox.addItems(code_keys)
 
+    def format_description(self, desc: str) -> str:
+        """Format the description string, converting Markdown and simple math formulas to HTML.
+
+        Parameters
+        ----------
+        desc : str
+            The raw description string.
+
+        Returns
+        -------
+        str
+            The formatted HTML description.
+        """
+        if not desc:
+            return ""
+
+        # If the description already contains HTML tags, return it as is
+        if "<p>" in desc or "<b>" in desc or "<i>" in desc or "<br/>" in desc:
+            return desc
+
+        # Otherwise, perform simple markdown and math formatting:
+        # Convert newlines to breaks
+        html = desc.replace("\n", "<br/>")
+
+        # Format inline variables (e.g. sD, sA, R0, RDA, dRDAE, dRmp) as italicized with subscripts
+        import re
+
+        # Replace -> with &rarr;
+        html = html.replace("->", "&rarr;")
+
+        # Common variables formatting
+        replacements = {
+            r"\bsD\b": "<i>s</i><sub>D</sub>",
+            r"\bsA\b": "<i>s</i><sub>A</sub>",
+            r"\bR0\b": "<i>R</i><sub>0</sub>",
+            r"\bRDA\b": "<i>R</i><sub>DA</sub>",
+            r"\bdRDAE\b": "<i>d</i><sub>RDAE</sub>",
+            r"\bdRmp\b": "<i>d</i><sub>Rmp</sub>",
+            r"\bsDA\b": "<i>s</i><sub>DA</sub>",
+            r"\bE\b": "<i>E</i>",
+            r"\bk\b": "<i>k</i>",
+        }
+        for pattern, repl in replacements.items():
+            html = re.sub(pattern, repl, html)
+
+        return html
+
     def onCodeChanged(self):
         """Handle selection of a different code definition from the combo box."""
         try:
             code = self.codes[self.code_name]['code']
             self.w.textEdit.setPlainText(code)
+
+            # Retrieve, format, and display the model description
+            desc = self.codes[self.code_name].get('description', '')
+            formatted_desc = self.format_description(desc)
+            self.w.descriptionBrowser.setHtml(formatted_desc)
+
             self.onFunctionUpdate()
         except Exception as e:
             # Log the error and show a message to the user
@@ -151,7 +216,16 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
             self._code_file = filename
             yaml_content = yaml.safe_load(fp)
             self.codes = yaml_content
-            self.w.lineEdit.setText(str(filename.as_posix()))
+            
+            # Shorten the displayed path and add full path as tooltip
+            self.w.lineEdit.setToolTip(str(filename.as_posix()))
+            parts = filename.parts
+            if len(parts) > 3:
+                display_path = ".../" + "/".join(parts[-3:])
+            else:
+                display_path = str(filename.as_posix())
+            self.w.lineEdit.setText(display_path)
+            self.w.lineEdit.setReadOnly(True)
 
     def __init__(
             self,
@@ -181,7 +255,8 @@ class ParameterTransformWidget(model.ModelWidget, ParameterTransformModel):
 
         self._codes = {}
         if code_file is None:
-            code_file = pathlib.Path(cs.__file__).parent / 'core' / 'models' / 'parameter_transform' / 'models.yaml'
+            import chisurf
+            code_file = pathlib.Path(chisurf.__file__).parent / 'core' / 'models' / 'parameter_transform' / 'models.yaml'
         self._code_file = code_file.absolute().as_posix()
 
         self.load_model_file(code_file)
