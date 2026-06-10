@@ -1,0 +1,239 @@
+import pathlib
+import tempfile
+import numpy as np
+import pytest
+from chisurf.core.fio.mmcif.db import FluorophoreDatabase
+
+
+@pytest.fixture
+def db():
+    return FluorophoreDatabase(":memory:")
+
+
+class TestFluorophoreDatabaseProbes:
+
+    def test_add_probe_type(self, db):
+        tid = db.add_probe_type("organic_dye", "Organic dye")
+        assert isinstance(tid, int)
+        row = db.conn.execute("SELECT * FROM probe_types WHERE type_id=?", (tid,)).fetchone()
+        assert row is not None
+        assert row["type_name"] == "organic_dye"
+        assert row["display_name"] == "Organic dye"
+
+    def test_add_probe(self, db):
+        tid = db.add_probe_type("organic_dye", "Organic dye")
+        probe_id = db.add_probe("Alexa488", tid, category="organic_dye")
+        assert isinstance(probe_id, int)
+        row = db.conn.execute("SELECT * FROM probes WHERE probe_id=?", (probe_id,)).fetchone()
+        assert row is not None
+        assert row["chromophore_name"] == "Alexa488"
+
+    def test_add_spectrum(self, db):
+        tid = db.add_probe_type("organic_dye", "Organic dye")
+        probe_id = db.add_probe("Cy5", tid, category="organic_dye")
+        x = np.array([600.0, 620.0, 640.0])
+        y = np.array([0.1, 0.9, 0.3])
+        db.add_spectrum(probe_id, "emission", x, y, wavelength_unit="nm")
+        row = db.conn.execute(
+            "SELECT * FROM spectra WHERE probe_id=? AND spectrum_type='emission'",
+            (probe_id,),
+        ).fetchone()
+        assert row is not None
+        assert row["wavelength_unit"] == "nm"
+
+    def test_add_spectrum_wavelength_unit_default(self, db):
+        tid = db.add_probe_type("organic_dye", "Organic dye")
+        probe_id = db.add_probe("Cy5", tid, category="organic_dye")
+        x = np.array([600.0, 620.0, 640.0])
+        y = np.array([0.1, 0.9, 0.3])
+        db.add_spectrum(probe_id, "emission", x, y)
+        row = db.conn.execute(
+            "SELECT * FROM spectra WHERE probe_id=? AND spectrum_type='emission'",
+            (probe_id,),
+        ).fetchone()
+        assert row is not None
+        assert row["wavelength_unit"] == "nm"
+
+    def test_get_spectrum_record(self, db):
+        tid = db.add_probe_type("organic_dye", "Organic dye")
+        probe_id = db.add_probe("Cy5", tid, category="organic_dye")
+        x = np.array([600.0, 620.0, 640.0])
+        y = np.array([0.1, 0.9, 0.3])
+        db.add_spectrum(probe_id, "emission", x, y)
+        record = db.get_spectrum_record(probe_id, "emission")
+        assert record is not None
+        assert record["probe_id"] == probe_id
+        assert record["spectrum_type"] == "emission"
+
+    def test_get_spectrum_record_missing(self, db):
+        record = db.get_spectrum_record(999999, "emission")
+        assert record is None
+
+    def test_add_optical_property(self, db):
+        tid = db.add_probe_type("organic_dye", "Organic dye")
+        probe_id = db.add_probe("Alexa488", tid, category="organic_dye")
+        db.add_optical_property(probe_id, "qy", "0.92", unit="")
+        row = db.conn.execute(
+            "SELECT * FROM optical_properties WHERE probe_id=? AND property_name='qy'",
+            (probe_id,),
+        ).fetchone()
+        assert row is not None
+        assert row["property_value"] == "0.92"
+
+
+class TestFluorophoreDatabaseAnalysis:
+
+    def test_update_analysis_record(self, db):
+        db.update_analysis_record("analysis_1", sample_id="sample_1", type="intensity-based")
+        row = db.conn.execute(
+            "SELECT * FROM flr_fret_analysis WHERE analysis_id='analysis_1'"
+        ).fetchone()
+        assert row is not None
+        assert row["sample_id"] == "sample_1"
+        assert row["type"] == "intensity-based"
+
+    def test_analysis_metadata(self, db):
+        db.update_analysis_record("analysis_2", sample_id="sample_2")
+        db.set_analysis_metadata("analysis_2", {"pH": "7.4", "temperature": "298 K"})
+        meta = db.get_analysis_metadata("analysis_2")
+        assert meta == {"pH": "7.4", "temperature": "298 K"}
+
+    def test_delete_analysis_metadata(self, db):
+        db.update_analysis_record("analysis_3", sample_id="sample_3")
+        db.set_analysis_metadata("analysis_3", {"key1": "val1", "key2": "val2"})
+        db.delete_analysis_metadata("analysis_3", "key1")
+        meta = db.get_analysis_metadata("analysis_3")
+        assert "key1" not in meta
+        assert meta["key2"] == "val2"
+
+    def test_add_analysis_metadata(self, db):
+        db.update_analysis_record("analysis_4", sample_id="sample_4")
+        db.add_analysis_metadata("analysis_4", "key1", "value1")
+        db.add_analysis_metadata("analysis_4", "key2", "value2")
+        meta = db.get_analysis_metadata("analysis_4")
+        assert meta["key1"] == "value1"
+        assert meta["key2"] == "value2"
+
+    def test_add_analysis_metadata_duplicate_key_replaces(self, db):
+        db.update_analysis_record("analysis_5", sample_id="sample_5")
+        db.add_analysis_metadata("analysis_5", "key", "old")
+        db.add_analysis_metadata("analysis_5", "key", "new")
+        meta = db.get_analysis_metadata("analysis_5")
+        assert meta["key"] == "new"
+
+
+class TestFluorophoreDatabaseExternalFiles:
+
+    def test_add_external_file(self, db):
+        with tempfile.TemporaryDirectory() as d:
+            fpath = pathlib.Path(d) / "test.ptu"
+            fpath.write_text("fake ptu data")
+            file_id = db.add_external_file(fpath, file_format="ptu")
+            assert isinstance(file_id, int)
+            row = db.conn.execute(
+                "SELECT * FROM ihm_external_files WHERE id=?", (file_id,)
+            ).fetchone()
+            assert row is not None
+            assert row["file_path"] == str(fpath)
+            assert row["file_format"] == "ptu"
+
+    def test_get_external_file(self, db):
+        with tempfile.TemporaryDirectory() as d:
+            fpath = pathlib.Path(d) / "test.ptu"
+            fpath.write_text("fake ptu data")
+            file_id = db.add_external_file(fpath, file_format="ptu")
+            row = db.get_external_file(file_id)
+            assert row is not None
+            assert row["id"] == file_id
+
+    def test_add_photon_stream(self, db):
+        with tempfile.TemporaryDirectory() as d:
+            db.update_analysis_record("analysis_ps", sample_id="sample_ps")
+            fpath = pathlib.Path(d) / "photons.ptu"
+            fpath.write_text("fake photon data")
+            db.add_photon_stream(
+                "analysis_ps", fpath, file_format="ptu", detector_id="det1"
+            )
+            streams = db.get_photon_streams("analysis_ps")
+            assert len(streams) == 1
+            row = streams[0]
+            assert row["analysis_id"] == "analysis_ps"
+            assert row["detector_id"] == "det1"
+
+    def test_add_photon_stream_multiple(self, db):
+        with tempfile.TemporaryDirectory() as d:
+            db.update_analysis_record("analysis_ps2", sample_id="sample_ps2")
+            f1 = pathlib.Path(d) / "photons1.ptu"
+            f2 = pathlib.Path(d) / "photons2.ptu"
+            f1.write_text("data1")
+            f2.write_text("data2")
+            db.add_photon_stream(
+                "analysis_ps2", f1, file_format="ptu", detector_id="det1"
+            )
+            db.add_photon_stream(
+                "analysis_ps2", f2, file_format="ptu", detector_id="det2"
+            )
+            streams = db.get_photon_streams("analysis_ps2")
+            assert len(streams) == 2
+
+
+class TestFluorophoreDatabaseExport:
+
+    def test_export_flr_cif_basic(self, db):
+        with tempfile.TemporaryDirectory() as d:
+            tid = db.add_probe_type("organic_dye", "Organic dye")
+            probe_id = db.add_probe("mCherry", tid, category="organic_dye")
+            db.add_spectrum(
+                probe_id,
+                "emission",
+                np.array([580.0, 600.0, 620.0]),
+                np.array([0.2, 1.0, 0.4]),
+            )
+            db.add_optical_property(probe_id, "qy", "0.22", unit="")
+            db.update_analysis_record(
+                "analysis_export", sample_id="sample_export", type="intensity-based"
+            )
+            db.set_analysis_metadata("analysis_export", {"buffer": "PBS"})
+            fpath = pathlib.Path(d) / "photons.ptu"
+            fpath.write_text("fake")
+            db.add_photon_stream(
+                "analysis_export", fpath, file_format="ptu", detector_id="det1"
+            )
+            out = pathlib.Path(d) / "export.cif"
+            db.export_flr_cif(out, analysis_id="analysis_export")
+            text = out.read_text()
+            assert "_chisurf_probe_spectrum" in text
+            assert "_chisurf_photon_stream" in text
+            assert "mCherry" in text
+
+    def test_export_flr_cif_fallback_analysis_id(self, db):
+        """Export works without specifying analysis_id (auto-fallback to first)."""
+        with tempfile.TemporaryDirectory() as d:
+            db.update_analysis_record("test_analysis", sample_id="test_s")
+            out = pathlib.Path(d) / "export.cif"
+            db.export_flr_cif(out)  # no analysis_id given
+            text = out.read_text()
+            assert "_flr_fret_analysis" in text
+
+    def test_export_flr_cif_unknown_analysis_id(self, db):
+        """Export with a non-existent analysis_id still succeeds (writes empty)."""
+        with tempfile.TemporaryDirectory() as d:
+            out = pathlib.Path(d) / "export.cif"
+            db.export_flr_cif(out, analysis_id="nonexistent")
+            assert out.exists()
+
+
+class TestFluorophoreDatabaseMigration:
+
+    def test_empty_db_schema(self, db):
+        tables = db.conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+        ).fetchall()
+        names = {r["name"] for r in tables}
+        assert "probes" in names
+        assert "spectra" in names
+        assert "optical_properties" in names
+        assert "flr_fret_analysis" in names
+        assert "analysis_metadata" in names
+        assert "flr_photon_stream" in names
+        assert "ihm_external_files" in names

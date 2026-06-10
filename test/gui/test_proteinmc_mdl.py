@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from qtpy import QtWidgets
 
-from chisurf.plugins.modelling.proteinmc.model import ProteinMCProgress
+from chisurf.core.models.structure.proteinmc import ProteinMCProgress
 
 
 def test_proteinmc_widget_registers_structure_and_trajectory_plots():
@@ -426,6 +426,8 @@ def test_progress_dialog_minimize_and_restore(qapp, qtbot, monkeypatch):
     else:
         dialog.restore_from_statusbar()
 
+    qapp.processEvents()
+
     assert dialog.isVisible()
     assert dialog._statusbar_widget is None
     assert len(main_win.statusBar().findChildren(MinimisedProgressWidget)) == 0
@@ -433,6 +435,7 @@ def test_progress_dialog_minimize_and_restore(qapp, qtbot, monkeypatch):
     # 4. Hide again and finish to ensure cleanup
     dialog.hide_to_statusbar()
     dialog.finish(close_delay_ms=0)
+    qapp.processEvents()
     assert len(main_win.statusBar().findChildren(MinimisedProgressWidget)) == 0
 
 

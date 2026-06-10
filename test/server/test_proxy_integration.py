@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 """Integration-style tests for the clean typed proxy classes."""
-
 import chisurf as cs
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from chisurf.core.api._client import ChisurfClient
 from chisurf.core.api._proxies import (
-    ProxyDatasetList, ProxyFitList,
-    FitProxy, DatasetProxy, ParameterProxy, DataProxy,
+    FitProxy,
+    DatasetProxy,
+    DataProxy,
+    ParameterProxy,
+    ProxyDatasetList,
+    ProxyFitList,
 )
 from chisurf.macros.model_parse import _is_proxy_for
 
@@ -334,13 +335,13 @@ class TestServerModeGuards:
     def test_plugin_server_mode_guard_pattern(self):
         api = MagicMock()
         api.mode = "server"
-        with patch("cs.core.api", api, create=True):
+        with patch("chisurf.core.api", api, create=True):
             assert cs.core.api.mode == "server"
 
     def test_plugin_local_mode_bypasses_guard(self):
         api = MagicMock()
         api.mode = "local"
-        with patch("cs.core.api", api, create=True):
+        with patch("chisurf.core.api", api, create=True):
             assert cs.core.api.mode == "local"
 
     def test_server_mode_read_works(self):

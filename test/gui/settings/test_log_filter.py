@@ -1,6 +1,10 @@
 import time
 import pytest
 from qtpy.QtWidgets import QMainWindow, QPlainTextEdit, QLineEdit, QVBoxLayout, QWidget, QPushButton, QLabel
+from qtpy.QtWidgets import QCheckBox
+
+from chisurf.gui import misc_helpers
+from chisurf.gui.widgets.general import LogListWidget
 
 
 class LogFilterWindow(QMainWindow):
@@ -151,3 +155,69 @@ def test_add_log_entry_updates_content(qapp, qtbot):
 
     content = window.plainTextEditLog.toPlainText()
     assert "New log entry at" in content
+
+
+def test_log_list_widget_uses_multiple_columns(qapp, qtbot):
+    widget = LogListWidget()
+    qtbot.addWidget(widget)
+
+    record = type(
+        "Record",
+        (),
+        {
+            "asctime": "2026-06-10 12:00:00,001",
+            "levelname": "INFO",
+            "pathname": "/Users/tpeulen/dev/chisurf/full_origin.py",
+            "module": "module",
+            "name": "name",
+        },
+    )()
+    widget.addItem("2026-06-10 12:00:00,001 - INFO - started", record=record)
+    widget.addItem("2026-06-10 12:00:00,002 - WARNING - slow fit")
+
+    assert widget.columnCount() == 4
+    assert widget.horizontalHeaderItem(0).text() == "Time"
+    assert widget.horizontalHeaderItem(1).text() == "Level"
+    assert widget.horizontalHeaderItem(3).text() == "Message"
+    assert widget.verticalHeader().defaultSectionSize() <= 22
+    assert widget.item(0, 0).text() == "12:00:00"
+    assert widget.item(0, 0).toolTip() == "2026-06-10 12:00:00,001"
+    assert widget.item(0, 2).toolTip() == "/Users/tpeulen/dev/chisurf/full_origin.py"
+    assert widget.item(0, 3).toolTip() == "started"
+    assert widget.item(0, 1).text() == "INFO"
+    assert widget.item(0, 3).text() == "started"
+    assert widget.item(1, 1).text() == "WARNING"
+
+
+def test_log_list_widget_filter_hides_rows(qapp, qtbot):
+    widget = LogListWidget()
+    qtbot.addWidget(widget)
+    window = QWidget()
+    window.plainTextEditLog = widget
+    window.lineEdit_LogFilter = QLineEdit()
+    window.checkBox_filter_hide = QCheckBox()
+
+    widget.addItem("2026-06-10 12:00:00,001 - INFO - alpha message")
+    widget.addItem("2026-06-10 12:00:00,002 - INFO - beta message")
+
+    window.lineEdit_LogFilter.setText("alpha")
+    window.checkBox_filter_hide.setChecked(True)
+    misc_helpers.filter_log_content(window)
+
+    assert widget.isRowHidden(0) is False
+    assert widget.isRowHidden(1) is True
+
+
+def test_log_list_widget_copy_selected_rows(qapp, qtbot):
+    widget = LogListWidget()
+    qtbot.addWidget(widget)
+
+    widget.addItem("2026-06-10 12:00:00,001 - INFO - alpha")
+    widget.addItem("2026-06-10 12:00:00,002 - WARNING - beta")
+    widget.selectRow(1)
+    widget.copy_selected_items()
+
+    clipboard_text = qapp.clipboard().text()
+    assert "2026-06-10 12:00:00,002" in clipboard_text
+    assert "WARNING" in clipboard_text
+    assert "beta" in clipboard_text
