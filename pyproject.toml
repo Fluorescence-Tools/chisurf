@@ -3,7 +3,6 @@ requires = [
     "setuptools>=64",
     "wheel",
     "numpy<2.0",
-    "Cython>=0.29,<3.1",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -53,10 +52,12 @@ dependencies = [
     "tables",
     "matplotlib",
     "python-docx",
+    "markdown",
     "mdtraj",
     "ipython",
     "click",
     "pyzmq>=25.0",
+    "pyarrow",
 ]
 
 [project.optional-dependencies]
@@ -129,7 +130,7 @@ version = {attr = "chisurf.core.info.__version__"}
 [tool.pytest.ini_options]
 addopts = "--cov=chisurf --cov-report=html"
 norecursedirs = ["build_tools", "modules", "conda-bld", ".pixi", "dist", "rattler-recipe", "repro"]
-testpaths = ["test"]
+testpaths = ["test", "chisurf/plugins/burst/burst_selection/tests"]
 markers = [
     "slow: marks tests as slow (reader-heavy) and excluded from default runs",
 ]
