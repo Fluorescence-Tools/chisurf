@@ -4,6 +4,11 @@ from qtpy.QtCore import Qt, QBasicTimer, QPoint
 from qtpy.QtGui import QPainter, QColor
 from qtpy.QtWidgets import QFrame, QApplication, QMainWindow
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Dimensions
 BoardWidth = 10
 BoardHeight = 22
@@ -251,6 +256,7 @@ class Board(QFrame):
             x + self.squareWidth() - 1, y + 1
         )
 
+@persist_plugin_state("tetris")
 class Tetris(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -260,7 +266,7 @@ class Tetris(QMainWindow):
         self.board = Board(self)
         self.setCentralWidget(self.board)
         self.statusBar().showMessage('Press P to pause — Press R to restart')
-        self.resize(BoardWidth * 20, BoardHeight * 20)
+        self.setFixedSize(BoardWidth * 20, BoardHeight * 20)
         self.setWindowTitle('Tetris')
         self.show()
 

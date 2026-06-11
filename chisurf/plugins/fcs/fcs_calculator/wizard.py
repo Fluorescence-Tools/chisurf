@@ -11,6 +11,11 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # ========= Constants & conversions =========
 KB = 1.380649e-23  # J/K
 NA = 6.02214076e23 # 1/mol
@@ -484,6 +489,7 @@ DYE_DATA: Dict[str, Dict] = {
 }
 
 # ========= GUI =========
+@persist_plugin_state("fcs_calculator")
 class ConfocalCalcWidget(QWidget):
     """Interactive FCS confocal diffusion/volume calculator.
 

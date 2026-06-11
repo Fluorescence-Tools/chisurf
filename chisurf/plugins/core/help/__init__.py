@@ -26,6 +26,12 @@ import chisurf.core.settings
 from chisurf.core import info
 
 try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
+try:
     import markdown
 except Exception:
     markdown = None
@@ -59,6 +65,7 @@ class HelpTextBrowser(QTextBrowser):
         return super().loadResource(type, name)
 
 
+@persist_plugin_state("help_documentation")
 class HelpWidget(QWidget):
     """
     A widget that provides access to ChiSurf documentation and help resources.

@@ -64,6 +64,12 @@ from chisurf.gui.widgets.wizard.tttr_channeldefinition import (
 # Logging
 from chisurf import logging
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 def save_burst_ids(hmm_states, time_axis, time_window_s, tttr_obj, output_dir=".", file_path=None):
     burst_ids = {}
@@ -660,6 +666,7 @@ class IntensityPlotWidget(QtWidgets.QWidget):
         except Exception:
             pass
 
+@persist_plugin_state("intensity_trace")
 class IntensityTrace(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()

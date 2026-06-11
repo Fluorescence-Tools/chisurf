@@ -9,6 +9,11 @@ import chisurf.gui.decorators
 import chisurf.core.settings
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 VERBOSE = False
 
 SPECIAL_FILETYPES = {'.spc'}
@@ -108,6 +113,7 @@ class FileListWidget(QtWidgets.QListWidget):
         return [Path(self.item(i).text()) for i in range(self.count()) if self.item(i).checkState() == QtCore.Qt.Checked]
 
 
+@persist_plugin_state("microtime_histogram")
 class MicrotimeHistogram(QtWidgets.QWidget):
     # Class variable to store the singleton instance
     _instance = None

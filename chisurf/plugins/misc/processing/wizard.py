@@ -9,6 +9,11 @@ import chisurf as cs
 import urllib
 
 from qtpy import QtCore, QtWidgets
+
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 try:
     from qtpy.QtWebEngineCore import QWebEngineUrlRequestInterceptor
     from qtpy.QtWebEngineWidgets import (
@@ -73,6 +78,7 @@ class CustomWebView(QWebView):
             log("disconnecting on close and linkClicked signals")
             self.loadedPage.windowCloseRequested.disconnect(self.close)
 
+@persist_plugin_state("processing")
 class Browser(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

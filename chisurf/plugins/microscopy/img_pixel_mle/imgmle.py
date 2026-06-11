@@ -42,6 +42,11 @@ import chisurf.gui.widgets.wizard
 
 import tttrlib
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 
 class CombinedProgressDialog(QDialog):
     """
@@ -203,6 +208,7 @@ class FileListWidget(QtWidgets.QListWidget):
         return files
 
 
+@persist_plugin_state("img_pixel_mle")
 class LifetimeMleAnalysisWizard(QtWidgets.QMainWindow):
     """
     Main wizard for Lifetime MLE Analysis.

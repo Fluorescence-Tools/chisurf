@@ -19,6 +19,12 @@ from qtpy.QtWidgets import QWidget
 from qtpy.QtGui import QIcon
 
 try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
+try:
     from chisurf.plugins.fcs.fcs_2d.gui import TwoDFCSWizard
 except ImportError:
     # Fallback for direct testing
@@ -42,6 +48,7 @@ except Exception:
 
 # Main widget class that ChiSurf will instantiate
 if TwoDFCSWizard is not None:
+    @persist_plugin_state("fcs_2d")
     class TwoDFCSPlugin(TwoDFCSWizard):
         """Main 2D-FLCS plugin widget."""
         

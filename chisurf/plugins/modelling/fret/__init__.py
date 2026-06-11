@@ -22,7 +22,7 @@ description = (
     "and Metropolis Monte Carlo sampling using accessible-volume (AV) "
     "calculations."
 )
-cli_entrypoint = "fret"
+cli_entrypoint = "fret=chisurf.plugins.modelling.fret.cli.main:main"
 
 # Expose core modules and actions.
 from .core import av, clash, distance, docking, engine, io, results, sampling, screening, refine, bootstrap, evaluate, pair_selection, olga_greedy, trajectory

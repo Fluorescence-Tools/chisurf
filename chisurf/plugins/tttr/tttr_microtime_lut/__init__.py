@@ -45,6 +45,11 @@ try:
 except Exception as e:
     raise SystemExit("ERROR: qtpy/pyqtgraph are required for GUI mode.") from e
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Define the plugin name - this will appear in the Plugins menu
 name = "TTTR:Compute Microtime LUT"
 
@@ -276,9 +281,7 @@ def save_lut(path, table):
         raise click.UsageError(f"Unknown output extension '{ext}'. Use .txt / .csv / .npy / .npz.")
 
 
-# ---------------------------------------
-# GUI (pyqtgraph) for interactive tuning + parameter controls
-# ---------------------------------------
+@persist_plugin_state("tttr_microtime_lut")
 class TACLinearizationWidget(QtW.QMainWindow):
     def __init__(self):
         super().__init__()

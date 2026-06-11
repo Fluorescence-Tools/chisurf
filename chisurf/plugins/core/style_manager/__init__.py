@@ -25,6 +25,11 @@ from qtpy.QtGui import QTextCharFormat, QFont, QColor, QSyntaxHighlighter
 import chisurf as cs
 import chisurf.core.settings
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Define the plugin name - this will appear in the Plugins menu
 name = "Setup:Styles"
 
@@ -122,6 +127,7 @@ class QssSyntaxHighlighter(QSyntaxHighlighter):
                 index = expression.indexIn(text, index + length)
 
 
+@persist_plugin_state("style_manager")
 class StyleManagerWidget(QMainWindow):
     """
     A widget for managing QSS styles in ChiSurf.

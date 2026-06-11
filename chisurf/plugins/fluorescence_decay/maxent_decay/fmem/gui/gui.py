@@ -19,7 +19,13 @@ try:
 except Exception:  # pragma: no cover
     QtWidgets = None
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+@persist_plugin_state("maxent_decay")
 class MaxentDecayWidget(
     _MaxentActionsMixin,
     _MaxentDataMixin,

@@ -2,17 +2,210 @@ from __future__ import annotations
 
 import pathlib
 import sys
-from enum import Enum, auto
 
+import yaml
 from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
 import chisurf.core.fio as io
-from chisurf import logging
-import chisurf.gui.widgets
 import chisurf.core.settings
-from chisurf.plugins.core.code_editor.agent_panel import AgentPanelWidget
+import chisurf.gui.widgets
+from chisurf import logging
 from chisurf.gui.widgets.dock_area import DockArea
+from chisurf.plugins.core.code_editor.agent_panel import AgentPanelWidget
+
+EDITOR_DEFAULT_FONTS = [
+    "Courier New",
+    "Consolas",
+    "SF Mono",
+    "Menlo",
+    "Monaco",
+    "DejaVu Sans Mono",
+    "Liberation Mono",
+    "Courier",
+    "Monospace",
+]
+
+EDITOR_LANGUAGE_OPTIONS = ["Python", "JSON", "YAML", "Plain text"]
+
+EDITOR_COLOR_SCHEMES = {
+    "ChiSurf": {
+        "paper_color": "#cfcfcf",
+        "default_color": "#000006",
+        "margins_background_color": "#808080",
+        "marker_background_color": "#f0f0f0",
+        "caret_line_background_color": "#afafaf",
+    },
+    "Light": {
+        "paper_color": "#ffffff",
+        "default_color": "#000000",
+        "margins_background_color": "#f0f0f0",
+        "marker_background_color": "#d8e8ff",
+        "caret_line_background_color": "#eef4ff",
+    },
+    "Dark": {
+        "paper_color": "#1e1e1e",
+        "default_color": "#d4d4d4",
+        "margins_background_color": "#252526",
+        "marker_background_color": "#3c3c3c",
+        "caret_line_background_color": "#2d2d30",
+    },
+    "Monokai": {
+        "paper_color": "#272822",
+        "default_color": "#f8f8f2",
+        "margins_background_color": "#1e1f1c",
+        "marker_background_color": "#3e3d32",
+        "caret_line_background_color": "#3e3d32",
+    },
+}
+
+EDITOR_SETTINGS_KEYS = [
+    "font_family",
+    "font_size",
+    "language",
+    "color_scheme",
+    "paper_color",
+    "default_color",
+    "margins_background_color",
+    "marker_background_color",
+    "caret_line_background_color",
+    "caret_line_visible",
+]
+
+
+def editor_language_key(language: str | None) -> str:
+    """Return the normalized internal language key for *language*."""
+    key = str(language or "").strip().lower().replace("_", "-")
+    if key in {"plain-text", "plain text"}:
+        return "plain"
+    return key
+
+
+def normalize_editor_language(language: str | None) -> str:
+    """Return a display language name for *language*."""
+    key = editor_language_key(language)
+    if key in {"json"}:
+        return "JSON"
+    if key in {"yaml", "yml"}:
+        return "YAML"
+    if key in {"plain", "text"}:
+        return "Plain text"
+    return "Python"
+
+
+def default_editor_settings() -> dict[str, str | int | bool]:
+    """Return the default editor settings dictionary."""
+    settings: dict[str, str | int | bool] = {
+        "font_family": "Courier New",
+        "font_size": 9,
+        "language": "Python",
+        "color_scheme": "ChiSurf",
+        "caret_line_visible": False,
+    }
+    settings.update(EDITOR_COLOR_SCHEMES["ChiSurf"])
+    return settings
+
+
+def get_editor_settings() -> dict[str, str | int | bool]:
+    """Return editor settings merged with the current ChiSurf GUI settings."""
+    settings = default_editor_settings()
+    cfg = cs.core.settings.gui.get("editor", {})
+    if not isinstance(cfg, dict):
+        cfg = {}
+    for key, value in cfg.items():
+        if key in EDITOR_SETTINGS_KEYS:
+            settings[key] = value
+    scheme = settings.get("color_scheme")
+    if scheme in EDITOR_COLOR_SCHEMES:
+        settings.update(EDITOR_COLOR_SCHEMES[scheme])
+    for key, value in cfg.items():
+        if key in EDITOR_SETTINGS_KEYS:
+            settings[key] = value
+    settings["language"] = normalize_editor_language(settings.get("language"))
+    return settings
+
+
+def make_editor_font(settings: dict | None = None) -> QtGui.QFont:
+    """Create a QFont from editor settings."""
+    cfg = settings or get_editor_settings()
+    font = QtGui.QFont()
+    font.setFamily(str(cfg.get("font_family", "Courier New")))
+    try:
+        font.setPointSize(int(cfg.get("font_size", 9)))
+    except (TypeError, ValueError):
+        font.setPointSize(9)
+    return font
+
+
+def save_editor_settings(settings: dict) -> bool:
+    """Persist editor settings to the user ChiSurf settings file."""
+    editor_settings = {
+        key: settings[key]
+        for key in EDITOR_SETTINGS_KEYS
+        if key in settings
+    }
+    if not editor_settings:
+        return False
+
+    try:
+        settings_file = cs.core.settings.chisurf_settings_file
+        data = cs.core.settings.safe_open_file(
+            file_path=settings_file,
+            processor=yaml.safe_load,
+            default_value={},
+            error_message=f"Error opening settings file {settings_file}",
+        )
+        if not isinstance(data, dict):
+            data = {}
+
+        gui_cfg = data.setdefault("gui", {})
+        if not isinstance(gui_cfg, dict):
+            gui_cfg = {}
+            data["gui"] = gui_cfg
+
+        editor_cfg = gui_cfg.setdefault("editor", {})
+        if not isinstance(editor_cfg, dict):
+            editor_cfg = {}
+            gui_cfg["editor"] = editor_cfg
+
+        editor_cfg.update(editor_settings)
+
+        cs_settings = cs.core.settings.cs_settings
+        if not isinstance(cs_settings, dict):
+            cs.core.settings.cs_settings = {}
+            cs_settings = cs.core.settings.cs_settings
+        cs_gui = cs_settings.setdefault("gui", {})
+        if not isinstance(cs_gui, dict):
+            cs_gui = {}
+            cs_settings["gui"] = cs_gui
+        cs_editor = cs_gui.setdefault("editor", {})
+        if not isinstance(cs_editor, dict):
+            cs_editor = {}
+            cs_gui["editor"] = cs_editor
+        cs_editor.update(editor_settings)
+
+        gui = cs.core.settings.gui
+        if not isinstance(gui, dict):
+            cs.core.settings.gui = {}
+            gui = cs.core.settings.gui
+        gui_editor = gui.setdefault("editor", {})
+        if not isinstance(gui_editor, dict):
+            gui_editor = {}
+            gui["editor"] = gui_editor
+        gui_editor.update(editor_settings)
+
+        with open(settings_file, "w", encoding="utf-8") as file:
+            yaml.safe_dump(data, file, default_flow_style=False, sort_keys=False)
+        return True
+    except Exception as e:
+        logging.log(1, f"Error saving editor settings: {e}")
+        return False
+
+
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
 
 class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
@@ -249,101 +442,87 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             self,
             parent=None,
             font_family: str = None,
-            font_point_size: float = 10.0,
+            font_point_size: float = None,
             margins_background_color: str = None,
             marker_background_color: str = None,
             caret_line_background_color: str = None,
-            caret_line_visible: bool = False,
+            caret_line_visible: bool = None,
             language: str = None,
             **kwargs
     ):
         """
         Initialize the text editor.
 
-        :param parent: Parent widget
-        :param font_family: Font family to use
-        :param font_point_size: Font size
-        :param margins_background_color: Background color for margins
-        :param marker_background_color: Background color for markers
-        :param caret_line_background_color: Background color for current line
-        :param caret_line_visible: Whether to highlight the current line
-        :param language: Language for syntax highlighting (Python, JSON, or YAML)
-        :param kwargs: Additional keyword arguments
+        Parameters
+        ----------
+        parent : QWidget, optional
+            Parent widget.
+        font_family : str, optional
+            Font family to use.
+        font_point_size : float, optional
+            Font size in points.
+        margins_background_color : str, optional
+            Background color for line-number margins.
+        marker_background_color : str, optional
+            Background color for selection markers.
+        caret_line_background_color : str, optional
+            Background color for the current line highlight.
+        caret_line_visible : bool, optional
+            Whether to highlight the current line.
+        language : str, optional
+            Language for syntax highlighting: Python, JSON, YAML, or Plain text.
+        kwargs : dict
+            Additional color options: ``paper_color`` and ``default_color``.
         """
         super().__init__(parent)
 
-        if font_point_size is None:
-            font_point_size = cs.core.settings.gui['editor']['font_size']
-        if font_family is None:
-            font_family = cs.core.settings.gui['editor']['font_family']
-        if margins_background_color is None:
-            margins_background_color = cs.core.settings.gui['editor']['margins_background_color']
-        if marker_background_color is None:
-            marker_background_color = cs.core.settings.gui['editor']['marker_background_color']
-        if caret_line_background_color is None:
-            caret_line_background_color = cs.core.settings.gui['editor']['caret_line_background_color']
+        settings = get_editor_settings()
+        if font_family is not None:
+            settings["font_family"] = font_family
+        if font_point_size is not None:
+            settings["font_size"] = font_point_size
+        if margins_background_color is not None:
+            settings["margins_background_color"] = margins_background_color
+        if marker_background_color is not None:
+            settings["marker_background_color"] = marker_background_color
+        if caret_line_background_color is not None:
+            settings["caret_line_background_color"] = caret_line_background_color
+        if caret_line_visible is not None:
+            settings["caret_line_visible"] = caret_line_visible
+        if language is not None:
+            settings["language"] = language
+        if "paper_color" in kwargs:
+            settings["paper_color"] = kwargs["paper_color"]
+        if "default_color" in kwargs:
+            settings["default_color"] = kwargs["default_color"]
 
-        paper_color = kwargs.get("paper_color", cs.core.settings.gui['editor']['paper_color'])
-        default_color = kwargs.get("default_color", cs.core.settings.gui['editor']['default_color'])
+        self._editor_settings = settings
+        self.language = normalize_editor_language(settings.get("language"))
+        self.paper_color = settings["paper_color"]
+        self.default_color = settings["default_color"]
+        self.margins_background_color = settings["margins_background_color"]
+        self.marker_background_color = settings["marker_background_color"]
+        self.current_line_color = QtGui.QColor(settings["caret_line_background_color"])
+        self.caret_line_visible = bool(settings["caret_line_visible"])
+        self.highlighter = None
 
-        # Set the default font
-        font = QtGui.QFont()
-        font.setFamily(font_family)
-        font.setPointSize(int(font_point_size))
-        self.setFont(font)
+        self.setFont(make_editor_font(settings))
 
-        # Set up line numbers
         self.line_number_area = LineNumberArea(self)
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
         self.update_line_number_area_width(0)
 
-        # Set up current line highlighting
         self.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
-        self.current_line_color = QtGui.QColor(caret_line_background_color)
-        self.caret_line_visible = caret_line_visible
 
-        # Navigation history
         self._nav_history = []
         self._nav_index = -1
         self.current_file = None
         self.external_definition_callback = None
 
-        # Set up syntax highlighting
-        if language:
-            language = language.lower()
-            if language == "python":
-                self.highlighter = PythonHighlighter(
-                    self.document(), 
-                    font_family, 
-                    font_point_size,
-                    paper_color,
-                    default_color
-                )
-            elif language == "json":
-                self.highlighter = JSONHighlighter(
-                    self.document(), 
-                    font_family, 
-                    font_point_size,
-                    paper_color,
-                    default_color
-                )
-            else:  # Default to YAML
-                self.highlighter = YAMLHighlighter(
-                    self.document(), 
-                    font_family, 
-                    font_point_size,
-                    paper_color,
-                    default_color
-                )
+        self._rebuild_highlighter()
+        self._apply_palette()
 
-        # Set up colors
-        palette = self.palette()
-        palette.setColor(QtGui.QPalette.Base, QtGui.QColor(paper_color))
-        palette.setColor(QtGui.QPalette.Text, QtGui.QColor(default_color))
-        self.setPalette(palette)
-
-        # Set minimum size
         self.setMinimumSize(400, 200)
 
     def line_number_area_width(self):
@@ -383,7 +562,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     def line_number_area_paint_event(self, event):
         """Paint the line number area."""
         painter = QtGui.QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QtGui.QColor(cs.core.settings.gui['editor']['margins_background_color']))
+        painter.fillRect(event.rect(), QtGui.QColor(self.margins_background_color))
 
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()
@@ -403,17 +582,14 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             bottom = top + self.blockBoundingRect(block).height()
             block_number += 1
 
-
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
-        # Ctrl+Click or Cmd+Click for jump to definition
         if event.modifiers() & QtCore.Qt.ControlModifier or event.modifiers() & QtCore.Qt.MetaModifier:
             cursor = self.cursorForPosition(event.pos())
             cursor.select(QtGui.QTextCursor.WordUnderCursor)
             word = cursor.selectedText()
             if word:
                 self.jump_to_definition(word)
-
 
     def navigate_back(self):
         if self._nav_index > 0:
@@ -428,8 +604,6 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             self.goto_file_line(file_path, line_number)
 
     def goto_file_line(self, file_path, line_number):
-        # Notify parent to load file if different; the callback handles
-        # navigation when the file changes (including cursor positioning).
         if hasattr(self, "file_load_callback") and getattr(self, "current_file", "") != file_path:
             self.file_load_callback(file_path, line_number=line_number)
             return
@@ -444,19 +618,16 @@ class TextEditor(QtWidgets.QPlainTextEdit):
 
     def push_nav_history(self, file_path=None, line_number=None):
         if file_path is None:
-            # We assume the parent or holder sets a property, or we just store line number
             file_path = getattr(self, "current_file", "")
         if line_number is None:
             line_number = self.textCursor().blockNumber()
-            
-        # truncate future history if we are in the past
+
         if self._nav_index < len(self._nav_history) - 1:
             self._nav_history = self._nav_history[:self._nav_index + 1]
-            
-        # don't push if it's the exact same as last
+
         if self._nav_history and self._nav_history[-1] == (file_path, line_number):
             return
-            
+
         self._nav_history.append((file_path, line_number))
         self._nav_index = len(self._nav_history) - 1
 
@@ -477,14 +648,13 @@ class TextEditor(QtWidgets.QPlainTextEdit):
                 self.push_nav_history()
                 return
 
-        # Not found in current file — try external modules
         if self.external_definition_callback is not None:
             self._jump_to_external_definition(word)
 
     def _jump_to_external_definition(self, word):
-        import re
-        import inspect
         import importlib
+        import inspect
+        import re
 
         content = self.toPlainText()
         lines = content.split('\n')
@@ -525,15 +695,13 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         super().paintEvent(event)
 
         if self.caret_line_visible:
-            # Highlight current line
             selection = QtWidgets.QTextEdit.ExtraSelection()
             selection.format.setBackground(self.current_line_color)
             selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
 
-            extra_selections = [selection]
-            self.setExtraSelections(extra_selections)
+            self.setExtraSelections([selection])
 
     def text(self):
         """Get the text content of the editor."""
@@ -543,9 +711,294 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         """Set the text content of the editor."""
         self.setPlainText(text)
 
+    def set_editor_settings(self, settings: dict) -> None:
+        """Apply editor settings to this widget."""
+        if not isinstance(settings, dict):
+            return
 
+        merged = dict(self._editor_settings)
+        scheme = settings.get("color_scheme")
+        if scheme in EDITOR_COLOR_SCHEMES:
+            merged.update(EDITOR_COLOR_SCHEMES[scheme])
+        merged.update({
+            key: value
+            for key, value in settings.items()
+            if key in EDITOR_SETTINGS_KEYS
+        })
+
+        self._editor_settings = merged
+        self.language = normalize_editor_language(merged.get("language"))
+        self.paper_color = merged["paper_color"]
+        self.default_color = merged["default_color"]
+        self.margins_background_color = merged["margins_background_color"]
+        self.marker_background_color = merged["marker_background_color"]
+        self.current_line_color = QtGui.QColor(merged["caret_line_background_color"])
+        self.caret_line_visible = bool(merged["caret_line_visible"])
+
+        self.setFont(make_editor_font(merged))
+        self._rebuild_highlighter()
+        self._apply_palette()
+        self.update_line_number_area_width(0)
+        self.viewport().update()
+
+    def get_editor_settings(self) -> dict:
+        """Return the current editor settings."""
+        settings = dict(self._editor_settings)
+        settings["font_family"] = self.font().family() or settings.get("font_family", "Courier New")
+        settings["font_size"] = self.font().pointSize()
+        settings["language"] = self.language
+        return settings
+
+    def set_font_family(self, font_family: str) -> None:
+        """Set the editor font family."""
+        self.set_editor_settings({"font_family": font_family})
+
+    def set_font_size(self, font_size: int) -> None:
+        """Set the editor font size in points."""
+        self.set_editor_settings({"font_size": font_size})
+
+    def set_language(self, language: str) -> None:
+        """Set the syntax highlighting language."""
+        self.set_editor_settings({"language": language})
+
+    def set_color_scheme(self, color_scheme: str) -> None:
+        """Set the editor color scheme."""
+        self.set_editor_settings({"color_scheme": color_scheme})
+
+    def set_caret_line_visible(self, visible: bool) -> None:
+        """Enable or disable current-line highlighting."""
+        self.set_editor_settings({"caret_line_visible": visible})
+
+    def _rebuild_highlighter(self) -> None:
+        """Recreate the syntax highlighter for the current language."""
+        if hasattr(self, "highlighter") and self.highlighter is not None:
+            self.highlighter.deleteLater()
+
+        key = editor_language_key(self.language)
+        if key == "plain":
+            self.highlighter = None
+            return
+
+        highlighter_classes = {
+            "python": PythonHighlighter,
+            "json": JSONHighlighter,
+            "yaml": YAMLHighlighter,
+            "yml": YAMLHighlighter,
+        }
+        highlighter_class = highlighter_classes.get(key, YAMLHighlighter)
+        self.highlighter = highlighter_class(
+            self.document(),
+            self.font().family(),
+            int(self._editor_settings.get("font_size", 9)),
+            self.paper_color,
+            self.default_color,
+        )
+
+    def _apply_palette(self) -> None:
+        """Apply editor colors to the widget palette."""
+        palette = self.palette()
+        palette.setColor(QtGui.QPalette.Base, QtGui.QColor(self.paper_color))
+        palette.setColor(QtGui.QPalette.Text, QtGui.QColor(self.default_color))
+        palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(self.marker_background_color))
+        palette.setColor(QtGui.QPalette.HighlightedText, QtGui.QColor(self.default_color))
+        self.setPalette(palette)
+
+
+class EditorSettingsDialog(QtWidgets.QDialog):
+    """Dialog for persistent code editor settings."""
+
+    settings_applied = QtCore.Signal(dict)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.color_buttons = {}
+        self.color_labels = {
+            "paper_color": "Paper color",
+            "default_color": "Text color",
+            "margins_background_color": "Margin color",
+            "marker_background_color": "Marker color",
+            "caret_line_background_color": "Current line color",
+        }
+        self.setWindowTitle("Editor Settings")
+        self.resize(420, 520)
+        self.setup_ui()
+        self._set_controls_from_settings(get_editor_settings())
+
+    def setup_ui(self) -> None:
+        """Create the settings dialog widgets."""
+        layout = QtWidgets.QVBoxLayout(self)
+
+        form = QtWidgets.QFormLayout()
+        self.language_combo = QtWidgets.QComboBox()
+        self.language_combo.setObjectName("language_combo")
+        for language in EDITOR_LANGUAGE_OPTIONS:
+            self.language_combo.addItem(language)
+        form.addRow("Formatting language:", self.language_combo)
+
+        self.font_combo = QtWidgets.QComboBox()
+        self.font_combo.setObjectName("font_combo")
+        self.font_combo.setEditable(True)
+        self._populate_fonts()
+        form.addRow("Font:", self.font_combo)
+
+        self.font_size_spin = QtWidgets.QSpinBox()
+        self.font_size_spin.setObjectName("font_size_spin")
+        self.font_size_spin.setRange(4, 72)
+        form.addRow("Font size:", self.font_size_spin)
+
+        self.color_scheme_combo = QtWidgets.QComboBox()
+        self.color_scheme_combo.setObjectName("color_scheme_combo")
+        for scheme in EDITOR_COLOR_SCHEMES:
+            self.color_scheme_combo.addItem(scheme)
+        self.color_scheme_combo.currentTextChanged.connect(self._on_color_scheme_changed)
+        form.addRow("Color scheme:", self.color_scheme_combo)
+
+        layout.addLayout(form)
+
+        group = QtWidgets.QGroupBox("Colors")
+        colors_layout = QtWidgets.QFormLayout()
+        for key, label in self.color_labels.items():
+            button = QtWidgets.QPushButton("#ffffff")
+            button.setObjectName(f"{key}_button")
+            button.setFixedWidth(120)
+            button.clicked.connect(lambda _checked, item=key: self._choose_color(item))
+            self.color_buttons[key] = button
+            colors_layout.addRow(label, button)
+        group.setLayout(colors_layout)
+        layout.addWidget(group)
+
+        self.caret_line_check = QtWidgets.QCheckBox("Highlight current line")
+        self.caret_line_check.setObjectName("caret_line_check")
+        layout.addWidget(self.caret_line_check)
+
+        button_layout = QtWidgets.QHBoxLayout()
+        self.apply_button = QtWidgets.QPushButton("Apply & Save")
+        self.apply_button.setObjectName("apply_settings_button")
+        self.restore_button = QtWidgets.QPushButton("Restore Defaults")
+        self.restore_button.setObjectName("restore_defaults_button")
+        self.close_button = QtWidgets.QPushButton("Close")
+        self.close_button.setObjectName("close_settings_button")
+
+        self.apply_button.clicked.connect(self._apply_clicked)
+        self.restore_button.clicked.connect(self.restore_defaults)
+        self.close_button.clicked.connect(self.reject)
+
+        button_layout.addWidget(self.apply_button)
+        button_layout.addWidget(self.restore_button)
+        button_layout.addStretch()
+        button_layout.addWidget(self.close_button)
+        layout.addLayout(button_layout)
+
+    def _populate_fonts(self) -> None:
+        """Populate the font combo box with common monospace fonts first."""
+        added = set()
+        try:
+            available = set(QtGui.QFontDatabase.families())
+        except Exception:
+            available = set()
+
+        for font in EDITOR_DEFAULT_FONTS:
+            if font in available or not available:
+                self.font_combo.addItem(font)
+                added.add(font)
+
+        for font in sorted(available):
+            if font not in added:
+                self.font_combo.addItem(font)
+
+        if self.font_combo.count() == 0:
+            self.font_combo.addItem("Courier New")
+
+    def _set_controls_from_settings(self, settings: dict) -> None:
+        """Populate dialog controls from *settings*."""
+        language = normalize_editor_language(settings.get("language"))
+        index = self.language_combo.findText(language)
+        if index >= 0:
+            self.language_combo.setCurrentIndex(index)
+
+        font_family = str(settings.get("font_family", "Courier New"))
+        index = self.font_combo.findText(font_family, QtCore.Qt.MatchFixedString)
+        if index < 0:
+            index = self.font_combo.findText(font_family, QtCore.Qt.MatchContains)
+        if index >= 0:
+            self.font_combo.setCurrentIndex(index)
+        else:
+            self.font_combo.setCurrentText(font_family)
+
+        try:
+            self.font_size_spin.setValue(int(settings.get("font_size", 9)))
+        except (TypeError, ValueError):
+            self.font_size_spin.setValue(9)
+
+        scheme = str(settings.get("color_scheme", "ChiSurf"))
+        index = self.color_scheme_combo.findText(scheme)
+        if index >= 0:
+            self.color_scheme_combo.setCurrentIndex(index)
+
+        for key, button in self.color_buttons.items():
+            button.setText(str(settings.get(key, "#ffffff")))
+            self._update_color_button(button)
+
+        self.caret_line_check.setChecked(bool(settings.get("caret_line_visible", False)))
+
+    def _on_color_scheme_changed(self, scheme: str) -> None:
+        """Update color controls when the color scheme changes."""
+        if scheme in EDITOR_COLOR_SCHEMES:
+            for key, value in EDITOR_COLOR_SCHEMES[scheme].items():
+                button = self.color_buttons.get(key)
+                if button is not None:
+                    button.setText(str(value))
+                    self._update_color_button(button)
+
+    def _choose_color(self, key: str) -> None:
+        """Open a color picker and update the selected color button."""
+        button = self.color_buttons[key]
+        color = QtWidgets.QColorDialog.getColor(QtGui.QColor(button.text()), self)
+        if color.isValid():
+            text = f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
+            button.setText(text)
+            self._update_color_button(button)
+
+    @staticmethod
+    def _update_color_button(button: QtWidgets.QPushButton) -> None:
+        """Update a color button's text color for readability."""
+        color = QtGui.QColor(button.text())
+        brightness = sum(color.getRgb()[:3])
+        button.setStyleSheet(
+            f"background-color: {button.text()}; "
+            f"color: {'black' if brightness > 382 else 'white'};"
+        )
+
+    def editor_settings(self) -> dict:
+        """Return the settings currently selected in the dialog."""
+        settings = {
+            "font_family": self.font_combo.currentText(),
+            "font_size": self.font_size_spin.value(),
+            "language": self.language_combo.currentText(),
+            "color_scheme": self.color_scheme_combo.currentText(),
+            "caret_line_visible": self.caret_line_check.isChecked(),
+        }
+        settings.update({
+            key: button.text()
+            for key, button in self.color_buttons.items()
+        })
+        return settings
+
+    def restore_defaults(self) -> None:
+        """Reset dialog controls to default editor settings."""
+        self._set_controls_from_settings(default_editor_settings())
+
+    def _apply_clicked(self) -> None:
+        """Save and apply the current dialog settings."""
+        self.settings_applied.emit(self.editor_settings())
+        self.accept()
+
+
+@persist_plugin_state("code_editor")
 class CodeEditor(QtWidgets.QWidget):
     """Tabbed text editor with DockArea tabs and an AI agent side panel."""
+
+    settings_changed = QtCore.Signal(dict)
 
     def __init__(
         self,
@@ -562,6 +1015,7 @@ class CodeEditor(QtWidgets.QWidget):
         main_layout.setSpacing(0)
 
         self.filename = filename
+        self._can_load = can_load
         self._open_files: dict[str, QtWidgets.QWidget] = {}
         self._agent_panel_visible = False
         self.setLayout(main_layout)
@@ -572,7 +1026,8 @@ class CodeEditor(QtWidgets.QWidget):
         self.tab_widget.setCloseTabCallback(self._close_tab)
         main_layout.addWidget(self.tab_widget)
 
-        self._create_editor_tab(filename=filename, language=language)
+        if can_load or filename:
+            self._create_editor_tab(filename=filename, language=language)
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setNewTabButtonVisible(True)
         self.tab_widget.setContextMenuEnabled(True)
@@ -581,6 +1036,43 @@ class CodeEditor(QtWidgets.QWidget):
             parent=None,
             get_context_callback=self._get_editor_context
         )
+        self._sync_agent_font()
+
+    def create_settings_button(self, parent=None):
+        """Create a gear button that opens the editor settings dialog."""
+        button = QtWidgets.QToolButton(parent)
+        button.setText("⚙")
+        button.setToolTip("Settings")
+        button.clicked.connect(self.show_editor_settings)
+        return button
+
+    def show_editor_settings(self) -> None:
+        """Open the persistent editor settings dialog."""
+        dialog = EditorSettingsDialog(self)
+        dialog.settings_applied.connect(self._save_and_apply_editor_settings)
+        dialog.exec_()
+
+    def _save_and_apply_editor_settings(self, settings: dict) -> None:
+        """Persist editor settings and apply them to editor widgets."""
+        if save_editor_settings(settings):
+            self._apply_editor_settings(settings, apply_to_all=True)
+            self.settings_changed.emit(settings)
+
+    def _apply_editor_settings(self, settings: dict, apply_to_all: bool = True) -> None:
+        """Apply editor settings to existing editor tabs and the agent panel."""
+        editors = self._iter_editor_tabs() if apply_to_all else [self._get_current_editor()]
+        for editor in editors:
+            if editor is not None:
+                editor.set_editor_settings(settings)
+        if hasattr(self, "agent_panel"):
+            self._sync_agent_font()
+
+    def _iter_editor_tabs(self):
+        """Yield open text editor tabs."""
+        for index in range(self.tab_widget.count()):
+            widget = self.tab_widget.widget(index)
+            if widget is not None and widget is not getattr(self, "agent_panel", None):
+                yield widget
 
     def _add_new_editor_tab(self):
         """Create a new blank editor tab with a unique name."""
@@ -602,7 +1094,7 @@ class CodeEditor(QtWidgets.QWidget):
 
     def _create_editor_tab(self, filename: str = None, language: str = "Python"):
         """Create a new editor tab."""
-        editor = TextEditor(parent=self, language=language)
+        editor = TextEditor(parent=self, language=language or get_editor_settings()["language"])
         self.tab_widget.addTab(editor, filename or "Untitled")
         editor.document().modificationChanged.connect(
             lambda modified, e=editor: self._on_modification_changed(e, modified)
@@ -650,6 +1142,10 @@ class CodeEditor(QtWidgets.QWidget):
             self.tab_widget.setCurrentWidget(self.agent_panel)
             self.agent_panel.show()
             self._agent_panel_visible = True
+
+    def _sync_agent_font(self):
+        """Apply the editor font to the agent panel."""
+        self.agent_panel.set_editor_font(make_editor_font(get_editor_settings()))
 
     def _get_editor_context(self) -> str:
         """Get the current editor content for the agent context."""
@@ -709,7 +1205,7 @@ class CodeEditor(QtWidgets.QWidget):
             widget.deleteLater()
 
         # Open a blank Untitled tab if the last editor was just closed
-        if editor_count <= 1:
+        if editor_count <= 1 and self._can_load:
             self._add_new_editor_tab()
 
     def _on_tab_action(self, action: str, index: int):
@@ -761,7 +1257,6 @@ class CodeEditor(QtWidgets.QWidget):
 
     def _save_tab_as(self, editor, tab_text: str, index: int):
         """Open a save-as dialog and save the tab content."""
-        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
         new_filename = cs.gui.widgets.save_file(file_type="Python script (*.py)")
         if not new_filename:
             return

@@ -42,6 +42,12 @@ from qtpy.QtCore import Qt
 import pyqtgraph as pg
 
 try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
+try:
     _DASH_LINE_STYLE = Qt.PenStyle.DashLine
 except Exception:
     _DASH_LINE_STYLE = getattr(Qt, "DashLine", 2)
@@ -385,6 +391,7 @@ class JordiDecayBatchWindow(QDialog):
             QMessageBox.critical(self, "Save CSV", f"Failed to save CSV: {e}")
 
 
+@persist_plugin_state("jordi_g_factor")
 class JordiGFactorCalculator(QWidget):
     """Main widget for the Jordi G-Factor Calculator plugin."""
 

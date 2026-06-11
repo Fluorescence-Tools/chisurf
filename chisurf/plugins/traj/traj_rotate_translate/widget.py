@@ -11,7 +11,14 @@ import chisurf.gui.decorators
 import chisurf.gui.widgets
 from chisurf.core.structure import translate, rotate
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+
+@persist_plugin_state("traj_rotate_translate")
 class RotateTranslateTrajectoryWidget(QtWidgets.QWidget):
     # WORKS
 

@@ -35,9 +35,15 @@ from quest.lib.tools.dye_diffusion import TransientDecayGenerator
 
 from qtpy import QtWidgets
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 log = cs.logging.info
 
 
+@persist_plugin_state("quenching_estimator")
 class QuEstWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):

@@ -48,11 +48,17 @@ from chisurf.core.fluorescence.fcs.channel_setups import (
     build_channels_from_setup,
 )
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 
 # Plugin category/name for the ChiSurf menu
 name = "Setup:FCS Definitions"
 
 
+@persist_plugin_state("fcs_channel_preset")
 class FCSChannelDialog(QtWidgets.QDialog):
     """Minimal editor for FCS channel-pair definitions per detector setup."""
 

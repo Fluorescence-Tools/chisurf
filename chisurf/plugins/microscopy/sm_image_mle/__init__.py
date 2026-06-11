@@ -20,6 +20,11 @@ from typing import List, Tuple
 
 from chisurf.gui import QtCore, QtGui, QtWidgets
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 
 class FileListWidget(QtWidgets.QListWidget):
     """
@@ -388,6 +393,7 @@ class BrowserWidget(QtWidgets.QWidget):
             self.lbl_decay.clear()
 
 
+@persist_plugin_state("sm_image_mle")
 class MainWindow(QtWidgets.QMainWindow):
     """
     Main application window with three tabs:

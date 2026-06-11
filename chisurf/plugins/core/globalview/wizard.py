@@ -14,7 +14,13 @@ from chisurf import logging
 from chisurf.plugins.core.globalview.graphplotwidget import GraphPlotWidget
 from chisurf.plugins.core.globalview.parameter_table_view import ParameterTableView
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+@persist_plugin_state("globalview")
 class GraphWizard(QtWidgets.QWidget):
 
     graph_layouts = [

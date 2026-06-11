@@ -13,6 +13,11 @@ import contextlib
 import shutil
 import uuid
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 @contextlib.contextmanager
 def safe_tttr_path(path):
     """
@@ -65,6 +70,7 @@ class FileLineEdit(QLineEdit):
                 main_win.load_file(path)
         event.acceptProposedAction()
 
+@persist_plugin_state("tttr_microtime_shifter")
 class MicroTimeShifter(QMainWindow):
     def __init__(self):
         super().__init__()

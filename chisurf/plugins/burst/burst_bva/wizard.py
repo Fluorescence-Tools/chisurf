@@ -26,6 +26,11 @@ from qtpy.QtCore import Qt, QCoreApplication
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 class ProgressWindow(QDialog):
     def __init__(self, title="Progress", message="Processing...", max_value=100, parent=None):
         super().__init__(parent)
@@ -600,6 +605,7 @@ class MplCanvas(FigureCanvas):
         self.setParent(parent)
 
 
+@persist_plugin_state("burst_bva")
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

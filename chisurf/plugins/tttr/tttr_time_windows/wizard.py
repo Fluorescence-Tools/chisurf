@@ -25,6 +25,11 @@ except Exception:  # pragma: no cover
 # Logging
 from chisurf import logging
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Get supported TTTR extensions dynamically (via tttrlib through Trace Browser)
 try:
     from chisurf.plugins.tttr.trace_browser.__init__ import get_tttr_supported_exts
@@ -123,6 +128,7 @@ def compute_bids_from_tttr(tttr: "tttrlib.TTTR", time_window_s: float) -> np.nda
     return bids
 
 
+@persist_plugin_state("tttr_time_windows")
 class TTTRTimeWindowTool(QtWidgets.QWidget):
     """Single-window TTTR→BID tool with preview.
 

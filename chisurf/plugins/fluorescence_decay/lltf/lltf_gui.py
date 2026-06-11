@@ -27,6 +27,11 @@ import matplotlib.pyplot as plt
 
 from chisurf.plugins.fluorescence_decay.lltf.core.settings import get_default_settings
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 LLTF_MODULE_PATH = "chisurf.plugins.fluorescence_decay.lltf.core"
 
 class QTextLogger(QtCore.QObject):
@@ -256,6 +261,7 @@ class ProcessOutputWidget(QtWidgets.QWidget):
         self.output_text.clear()
 
 
+@persist_plugin_state("lltf")
 class LLTFGUIWizard(QtWidgets.QMainWindow):
     """
     Wizard for LLTF (Lazy Lifetime Fitter) analysis.

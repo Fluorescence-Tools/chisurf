@@ -1,175 +1,133 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, List
+import webbrowser
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtCore, QtWidgets
 
 from chisurf.core.settings import ai_settings
-from chisurf.core.settings.ai_settings import MISTRAL_CHAT_MODELS, MISTRAL_EMBED_MODELS
+from chisurf.core.settings.ai_settings import PROVIDERS
+
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    def persist_plugin_state(name):
+        """Fallback no-op decorator."""
+        def decorator(cls):
+            return cls
+        return decorator
+
 
 _LOG = logging.getLogger(__name__)
 
 
+@persist_plugin_state("ai_settings")
 class AISettingsWidget(QtWidgets.QWidget):
-    """Widget for configuring Mistral AI API settings - unified for Chato and coding agent."""
+    """Widget for configuring AI LLM API settings."""
 
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None):
+    def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent)
-        self._advanced_widgets: List[QtWidgets.QWidget] = []
-        self._advanced_labels: List[QtWidgets.QLabel] = []
         self.setup_ui()
         self.load_settings()
 
     def setup_ui(self) -> None:
-        """Set up the user interface with Mistral-only settings."""
+        """Set up the user interface."""
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        title_label = QtWidgets.QLabel("<h2>Mistral AI Settings</h2>")
+        title_label = QtWidgets.QLabel("<h2>AI Settings</h2>")
         layout.addWidget(title_label)
 
         info_label = QtWidgets.QLabel(
-            "Configure Mistral AI for chat and embeddings. "
-            "Get your API key from <a href='https://console.mistral.ai/'>console.mistral.ai</a>"
+            "Configure remote LLM endpoints. "
+            "Select a provider, sign in to get an API key, or enter a custom endpoint."
         )
-        info_label.setOpenExternalLinks(True)
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
 
-        form_layout = QtWidgets.QFormLayout()
-        form_layout.setSpacing(10)
-
-        # API Key (required)
-        self.api_key_input = QtWidgets.QLineEdit()
-        self.api_key_input.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.api_key_input.setPlaceholderText("Your Mistral API key")
-        form_layout.addRow("API Key:", self.api_key_input)
-
-        # Base URL
-        self.base_url_input = QtWidgets.QLineEdit()
-        self.base_url_input.setPlaceholderText("https://api.mistral.ai/v1")
-        form_layout.addRow("Base URL:", self.base_url_input)
+        # API Configuration Group
+        api_group = QtWidgets.QGroupBox("API Configuration")
+        api_layout = QtWidgets.QFormLayout(api_group)
+        api_layout.setSpacing(10)
 
         # Provider
         self.provider_combo = QtWidgets.QComboBox()
-        self.provider_combo.addItem("Local (llama.cpp)", "local_llm")
-        self.provider_combo.addItem("Mistral API", "mistral_api")
-        self.provider_combo.addItem("OpenAI API", "openai_api")
-        form_layout.addRow("LLM Provider:", self.provider_combo)
+        for display_name, (key, _url, _api_url, _env) in PROVIDERS.items():
+            self.provider_combo.addItem(display_name, key)
+        self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
+        api_layout.addRow("Provider:", self.provider_combo)
 
-        # Chat Model
-        self.chat_model_combo = QtWidgets.QComboBox()
-        self.chat_model_combo.setEditable(True)
-        for model in MISTRAL_CHAT_MODELS:
-            self.chat_model_combo.addItem(model, model)
-        form_layout.addRow("Chat Model:", self.chat_model_combo)
+        # Sign in via browser button
+        self.signin_button = QtWidgets.QPushButton("Sign in via Browser")
+        self.signin_button.setToolTip("Open the provider's console to get an API key")
+        self.signin_button.clicked.connect(self._open_browser_signin)
+        api_layout.addRow("", self.signin_button)
 
-        # Local LLM settings
-        self.hf_repo_input = QtWidgets.QLineEdit()
-        self.hf_repo_input.setPlaceholderText("e.g. paultimothymooney/Qwen2.5-7B-Instruct-Q4_K_M-GGUF")
-        form_layout.addRow("Local Model Repo:", self.hf_repo_input)
+        # Base URL
+        self.base_url_input = QtWidgets.QLineEdit()
+        self.base_url_input.setPlaceholderText("https://api.openai.com/v1")
+        api_layout.addRow("Base URL:", self.base_url_input)
 
-        self.hf_file_input = QtWidgets.QLineEdit()
-        self.hf_file_input.setPlaceholderText("e.g. qwen2.5-7b-instruct-q4_k_m.gguf")
-        form_layout.addRow("Local Model File:", self.hf_file_input)
+        # API Key
+        self.api_key_input = QtWidgets.QLineEdit()
+        self.api_key_input.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.api_key_input.setPlaceholderText("Enter API key (optional for local endpoints)")
+        api_layout.addRow("API Key:", self.api_key_input)
+
+        # Show/Hide API key button
+        self.toggle_key_visibility = QtWidgets.QPushButton("Show")
+        self.toggle_key_visibility.setFixedWidth(50)
+        self.toggle_key_visibility.setCheckable(True)
+        self.toggle_key_visibility.toggled.connect(self._toggle_key_visibility)
+        api_layout.addRow("", self.toggle_key_visibility)
+
+        layout.addWidget(api_group)
+
+        # Model Selection Group
+        model_group = QtWidgets.QGroupBox("Model")
+        model_layout = QtWidgets.QFormLayout(model_group)
+        model_layout.setSpacing(10)
+
+        # Model Combo
+        model_row_layout = QtWidgets.QHBoxLayout()
+        self.model_combo = QtWidgets.QComboBox()
+        self.model_combo.setEditable(True)
+        model_row_layout.addWidget(self.model_combo)
+
+        self.fetch_models_btn = QtWidgets.QPushButton("Fetch Models")
+        self.fetch_models_btn.clicked.connect(self._fetch_models)
+        model_row_layout.addWidget(self.fetch_models_btn)
+
+        model_layout.addRow("Model:", model_row_layout)
+
+        layout.addWidget(model_group)
+
+        # Generation Settings Group
+        gen_group = QtWidgets.QGroupBox("Generation Settings")
+        gen_layout = QtWidgets.QFormLayout(gen_group)
+        gen_layout.setSpacing(10)
 
         # Temperature
         self.temperature = QtWidgets.QDoubleSpinBox()
         self.temperature.setRange(0.0, 2.0)
         self.temperature.setSingleStep(0.1)
         self.temperature.setValue(0.3)
-        form_layout.addRow("Temperature:", self.temperature)
+        gen_layout.addRow("Temperature:", self.temperature)
 
         # Top-p
         self.top_p = QtWidgets.QDoubleSpinBox()
         self.top_p.setRange(0.0, 1.0)
         self.top_p.setSingleStep(0.05)
         self.top_p.setValue(0.9)
-        form_layout.addRow("Top-p:", self.top_p)
+        gen_layout.addRow("Top-p:", self.top_p)
 
         # Max Tokens
         self.max_tokens = QtWidgets.QSpinBox()
-        self.max_tokens.setRange(1, 100000)
+        self.max_tokens.setRange(1, 1000000)
         self.max_tokens.setValue(4096)
-        form_layout.addRow("Max Tokens:", self.max_tokens)
+        gen_layout.addRow("Max Tokens:", self.max_tokens)
 
-        # Embedding Models Section
-        embed_label = QtWidgets.QLabel("<h3>Embedding Models</h3>")
-        layout.addWidget(embed_label)
-
-        embed_layout = QtWidgets.QFormLayout()
-        embed_layout.setSpacing(10)
-
-        # Text Embedding Model
-        self.text_embed_combo = QtWidgets.QComboBox()
-        for model in MISTRAL_EMBED_MODELS.get("text", []):
-            self.text_embed_combo.addItem(model, model)
-        embed_layout.addRow("Text Embedding:", self.text_embed_combo)
-
-        # Code Embedding Model  
-        self.code_embed_combo = QtWidgets.QComboBox()
-        for model in MISTRAL_EMBED_MODELS.get("code", []):
-            self.code_embed_combo.addItem(model, model)
-        embed_layout.addRow("Code Embedding:", self.code_embed_combo)
-
-        layout.addLayout(form_layout)
-        layout.addLayout(embed_layout)
-
-        # RAG Settings Section
-        rag_label = QtWidgets.QLabel("<h3>RAG & Agent Settings</h3>")
-        layout.addWidget(rag_label)
-
-        rag_layout = QtWidgets.QFormLayout()
-        rag_layout.setSpacing(10)
-
-        self.persistent_ingest_cb = QtWidgets.QCheckBox("Persistent Index")
-        self.persistent_ingest_cb.setChecked(True)
-        rag_layout.addRow("Storage:", self.persistent_ingest_cb)
-
-        self.graphrag_enable_cb = QtWidgets.QCheckBox("Enable GraphRAG")
-        self.graphrag_enable_cb.setChecked(True)
-        rag_layout.addRow("GraphRAG:", self.graphrag_enable_cb)
-
-        self.graphrag_mode_combo = QtWidgets.QComboBox()
-        self.graphrag_mode_combo.addItem("Per Chunk", "per_chunk")
-        self.graphrag_mode_combo.addItem("Per File", "per_file")
-        rag_layout.addRow("GraphRAG Mode:", self.graphrag_mode_combo)
-
-        self.rag_debug_cb = QtWidgets.QCheckBox("Enable RAG Debugging")
-        rag_layout.addRow("Debug:", self.rag_debug_cb)
-
-        # Advanced options layout (hidden by default)
-        self.advanced_container = QtWidgets.QWidget()
-        advanced_layout = QtWidgets.QFormLayout(self.advanced_container)
-        advanced_layout.setContentsMargins(0, 0, 0, 0)
-        
-        self.log_level_combo = QtWidgets.QComboBox()
-        self.log_level_combo.addItem("DEBUG", logging.DEBUG)
-        self.log_level_combo.addItem("INFO", logging.INFO)
-        self.log_level_combo.addItem("WARNING", logging.WARNING)
-        self.log_level_combo.addItem("ERROR", logging.ERROR)
-        advanced_layout.addRow("Log Level:", self.log_level_combo)
-
-        self.rag_max_hits_spin = QtWidgets.QSpinBox()
-        self.rag_max_hits_spin.setRange(1, 100)
-        self.rag_max_hits_spin.setValue(8)
-        advanced_layout.addRow("RAG Debug Max Hits:", self.rag_max_hits_spin)
-
-        self.rag_preview_spin = QtWidgets.QSpinBox()
-        self.rag_preview_spin.setRange(10, 2000)
-        self.rag_preview_spin.setValue(220)
-        advanced_layout.addRow("RAG Preview Chars:", self.rag_preview_spin)
-        
-        rag_layout.addRow("", self.advanced_container)
-
-        self.advanced_toggle = QtWidgets.QPushButton("Show Advanced")
-        self.advanced_toggle.setCheckable(True)
-        self.advanced_toggle.toggled.connect(self._toggle_advanced)
-        rag_layout.addRow("", self.advanced_toggle)
-        self.advanced_container.setVisible(False)
-
-        layout.addLayout(rag_layout)
+        layout.addWidget(gen_group)
 
         # Test Connection Button
         self.test_button = QtWidgets.QPushButton("Test Connection")
@@ -195,90 +153,90 @@ class AISettingsWidget(QtWidgets.QWidget):
         button_layout.addWidget(self.reset_button)
 
         layout.addLayout(button_layout)
+        layout.addStretch()
+
+    def _on_provider_changed(self, index: int) -> None:
+        """Update base URL and visibility when provider changes."""
+        provider_key = self.provider_combo.currentData()
+        # Find the provider info
+        for _display, (key, default_url, _api_url, _env) in PROVIDERS.items():
+            if key == provider_key:
+                self.base_url_input.setText(default_url)
+                # Local providers don't need API key
+                is_local = provider_key in ("local", "custom")
+                self.api_key_input.setEnabled(not is_local)
+                self.signin_button.setEnabled(not is_local)
+                break
+
+    def _toggle_key_visibility(self, checked: bool) -> None:
+        """Toggle API key visibility."""
+        if checked:
+            self.api_key_input.setEchoMode(QtWidgets.QLineEdit.Normal)
+            self.toggle_key_visibility.setText("Hide")
+        else:
+            self.api_key_input.setEchoMode(QtWidgets.QLineEdit.Password)
+            self.toggle_key_visibility.setText("Show")
+
+    def _open_browser_signin(self) -> None:
+        """Open the provider's console/API key page in the default browser."""
+        provider_key = self.provider_combo.currentData()
+        for _display, (key, _url, api_url, _env) in PROVIDERS.items():
+            if key == provider_key and api_url:
+                webbrowser.open(api_url)
+                self.status_label.setText(
+                    f"<span style='color: blue;'>Opened {api_url} in browser</span>"
+                )
+                return
+        self.status_label.setText(
+            "<span style='color: orange;'>No browser sign-in available for this provider</span>"
+        )
 
     def load_settings(self) -> None:
         """Load settings from the ai_settings module."""
         settings = ai_settings.get_api_settings()
 
-        self.base_url_input.setText(settings.get("base_url", ""))
-        
-        model = settings.get("model", "mistral-small-latest")
-        idx = self.chat_model_combo.findData(model)
-        if idx >= 0:
-            self.chat_model_combo.setCurrentIndex(idx)
-        
-        self.api_key_input.setText(settings.get("api_key", ""))
-        
-        text_model = settings.get("text_embed_model", "mistral-embed")
-        idx = self.text_embed_combo.findData(text_model)
-        if idx >= 0:
-            self.text_embed_combo.setCurrentIndex(idx)
-        
-        code_model = settings.get("code_embed_model", "codestral-embed")
-        idx = self.code_embed_combo.findData(code_model)
-        if idx >= 0:
-            self.code_embed_combo.setCurrentIndex(idx)
-        
-        self.temperature.setValue(float(settings.get("temperature", 0.3)))
-        self.top_p.setValue(float(settings.get("top_p", 0.9)))
-        self.max_tokens.setValue(int(settings.get("max_tokens", 4096)))
-
-        provider = settings.get("provider", "local_llm")
+        # Provider
+        provider = settings.get("provider", "openai")
         idx = self.provider_combo.findData(provider)
         if idx >= 0:
             self.provider_combo.setCurrentIndex(idx)
 
-        self.hf_repo_input.setText(settings.get("hf_repo", ""))
-        self.hf_file_input.setText(settings.get("hf_file", ""))
-        self.persistent_ingest_cb.setChecked(bool(settings.get("persistent_ingest", True)))
-        self.graphrag_enable_cb.setChecked(bool(settings.get("graphrag_enable", True)))
-        
-        gmode = settings.get("graphrag_mode", "per_chunk")
-        idx = self.graphrag_mode_combo.findData(gmode)
-        if idx >= 0:
-            self.graphrag_mode_combo.setCurrentIndex(idx)
-            
-        self.rag_debug_cb.setChecked(bool(settings.get("rag_debug", False)))
-        
-        log_lvl = settings.get("log_level", logging.INFO)
-        idx = self.log_level_combo.findData(int(log_lvl))
-        if idx >= 0:
-            self.log_level_combo.setCurrentIndex(idx)
-            
-        self.rag_max_hits_spin.setValue(int(settings.get("rag_debug_max_hits", 8)))
-        self.rag_preview_spin.setValue(int(settings.get("rag_debug_preview_chars", 220)))
+        # Base URL
+        self.base_url_input.setText(settings.get("base_url", ""))
 
-    def _toggle_advanced(self, checked: bool) -> None:
-        self.advanced_container.setVisible(checked)
-        self.advanced_toggle.setText("Hide Advanced" if checked else "Show Advanced")
+        # API Key
+        self.api_key_input.setText(settings.get("api_key", ""))
+
+        # Model
+        model = settings.get("model", "")
+        if model:
+            self.model_combo.setEditText(model)
+
+        # Generation Settings
+        self.temperature.setValue(float(settings.get("temperature", 0.3)))
+        self.top_p.setValue(float(settings.get("top_p", 0.9)))
+        self.max_tokens.setValue(int(settings.get("max_tokens", 4096)))
 
     def save_settings(self) -> None:
         """Save settings to the ai_settings module."""
         base_url = self.base_url_input.text().strip()
-        if not base_url:
-            base_url = "https://api.mistral.ai/v1"
+        provider_key = self.provider_combo.currentData()
 
-        api_key = self.api_key_input.text().strip()
+        # Find default URL for non-custom providers
+        for _display, (key, default_url, _api_url, _env) in PROVIDERS.items():
+            if key == provider_key:
+                if provider_key != "custom" and not base_url:
+                    base_url = default_url
+                break
 
         settings = {
+            "provider": provider_key,
             "base_url": base_url,
-            "model": self.chat_model_combo.currentText(),
-            "api_key": api_key,
-            "text_embed_model": self.text_embed_combo.currentData(),
-            "code_embed_model": self.code_embed_combo.currentData(),
+            "api_key": self.api_key_input.text().strip(),
+            "model": self.model_combo.currentText().strip(),
             "temperature": self.temperature.value(),
             "top_p": self.top_p.value(),
             "max_tokens": self.max_tokens.value(),
-            "provider": self.provider_combo.currentData(),
-            "hf_repo": self.hf_repo_input.text().strip(),
-            "hf_file": self.hf_file_input.text().strip(),
-            "persistent_ingest": self.persistent_ingest_cb.isChecked(),
-            "graphrag_enable": self.graphrag_enable_cb.isChecked(),
-            "graphrag_mode": self.graphrag_mode_combo.currentData(),
-            "rag_debug": self.rag_debug_cb.isChecked(),
-            "log_level": self.log_level_combo.currentData(),
-            "rag_debug_max_hits": self.rag_max_hits_spin.value(),
-            "rag_debug_preview_chars": self.rag_preview_spin.value(),
         }
 
         success = ai_settings.save_api_settings(settings)
@@ -290,76 +248,102 @@ class AISettingsWidget(QtWidgets.QWidget):
 
     def reset_to_defaults(self) -> None:
         """Reset settings to defaults."""
-        self.base_url_input.setText("https://api.mistral.ai/v1")
-        self.chat_model_combo.setCurrentText("mistral-small-latest")
+        self.provider_combo.setCurrentIndex(0)
+        self.base_url_input.setText("https://api.openai.com/v1")
         self.api_key_input.clear()
-        self.text_embed_combo.setCurrentIndex(0)
-        self.code_embed_combo.setCurrentIndex(0)
+        self.model_combo.clearEditText()
         self.temperature.setValue(0.3)
         self.top_p.setValue(0.9)
         self.max_tokens.setValue(4096)
-        
-        self.provider_combo.setCurrentIndex(0)
-        self.hf_repo_input.clear()
-        self.hf_file_input.clear()
-        self.persistent_ingest_cb.setChecked(True)
-        self.graphrag_enable_cb.setChecked(True)
-        self.graphrag_mode_combo.setCurrentIndex(0)
-        self.rag_debug_cb.setChecked(False)
-        self.log_level_combo.setCurrentIndex(1) # INFO
-        self.rag_max_hits_spin.setValue(8)
-        self.rag_preview_spin.setValue(220)
-        
         self.status_label.setText("<span style='color: blue;'>Settings reset to defaults (not saved).</span>")
 
     def test_connection(self) -> None:
-        """Test the Mistral API connection."""
+        """Test the API connection."""
         self.status_label.setText("<span style='color: blue;'>Testing connection...</span>")
         self.test_button.setEnabled(False)
         QtWidgets.QApplication.processEvents()
 
         base_url = self.base_url_input.text().strip()
-        if not base_url:
-            base_url = "https://api.mistral.ai/v1"
-
         api_key = self.api_key_input.text().strip()
-        if not api_key:
-            api_key = ai_settings.get_api_key()
 
-        if not api_key:
-            self.status_label.setText("<span style='color: red;'>No API key provided. Please enter your Mistral API key.</span>")
+        if not base_url:
+            self.status_label.setText("<span style='color: red;'>No base URL provided.</span>")
             self.test_button.setEnabled(True)
             return
 
         try:
-            self._test_mistral(base_url, api_key)
+            self._test_connection(base_url, api_key)
         except Exception as e:
             self.status_label.setText(f"<span style='color: red;'>Connection failed: {str(e)}</span>")
         finally:
             self.test_button.setEnabled(True)
 
-    def _test_mistral(self, base_url: str, api_key: str) -> None:
-        """Test Mistral API connection."""
+    def _test_connection(self, base_url: str, api_key: str) -> None:
+        """Test API connection using the /v1/models endpoint."""
         import requests
 
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
 
-        # Test chat completion
-        response = requests.post(
-            base_url.rstrip('/') + "/chat/completions",
-            headers=headers,
-            json={
-                "model": "mistral-small-latest",
-                "messages": [{"role": "user", "content": "Hi"}],
-                "max_tokens": 1
-            },
-            timeout=30,
-        )
+        url = base_url.rstrip('/') + "/models"
+        response = requests.get(url, headers=headers, timeout=10)
 
         if response.status_code == 200:
             self.status_label.setText("<span style='color: green;'>Connection successful!</span>")
         else:
-            self.status_label.setText(f"<span style='color: red;'>API error: {response.status_code} - {response.text[:100]}</span>")
+            self.status_label.setText(
+                f"<span style='color: red;'>API error: {response.status_code} - {response.text[:100]}</span>"
+            )
+
+    def _fetch_models(self) -> None:
+        """Fetch available models from the API endpoint."""
+        base_url = self.base_url_input.text().strip()
+        api_key = self.api_key_input.text().strip()
+
+        if not base_url:
+            self.status_label.setText("<span style='color: red;'>Enter a base URL first.</span>")
+            return
+
+        self.fetch_models_btn.setEnabled(False)
+        self.status_label.setText("<span style='color: blue;'>Fetching models...</span>")
+        QtWidgets.QApplication.processEvents()
+
+        try:
+            import requests
+
+            headers = {"Content-Type": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+
+            url = base_url.rstrip('/') + "/models"
+            response = requests.get(url, headers=headers, timeout=15)
+
+            if response.status_code == 200:
+                data = response.json()
+                models = [m.get("id", "") for m in data.get("data", [])]
+                models.sort()
+
+                current_model = self.model_combo.currentText()
+                self.model_combo.clear()
+                for model_id in models:
+                    self.model_combo.addItem(model_id, model_id)
+
+                # Restore previous selection if still available
+                idx = self.model_combo.findText(current_model)
+                if idx >= 0:
+                    self.model_combo.setCurrentIndex(idx)
+                elif current_model:
+                    self.model_combo.setEditText(current_model)
+
+                self.status_label.setText(
+                    f"<span style='color: green;'>Found {len(models)} models.</span>"
+                )
+            else:
+                self.status_label.setText(
+                    f"<span style='color: red;'>Error: {response.status_code}</span>"
+                )
+        except Exception as e:
+            self.status_label.setText(f"<span style='color: red;'>Failed: {str(e)}</span>")
+        finally:
+            self.fetch_models_btn.setEnabled(True)

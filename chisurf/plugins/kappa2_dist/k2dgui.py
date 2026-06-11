@@ -17,7 +17,13 @@ from .k2dfun import (
     p_isotropic_orientation_factor,
 )
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+@persist_plugin_state("kappa2_dist")
 class Kappa2Dist(QtWidgets.QWidget):
 
     name = "Kappa2Dist"

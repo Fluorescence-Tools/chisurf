@@ -5,6 +5,11 @@ from qtpy.QtCore import Qt, QBasicTimer, QRectF, QPointF, QTimer
 from qtpy.QtGui import QPainter, QColor, QFont, QPen, QBrush, QRadialGradient, QLinearGradient
 from qtpy.QtWidgets import QFrame, QApplication, QMainWindow, QMessageBox
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 WindowWidth = 800
 WindowHeight = 600
 
@@ -355,6 +360,7 @@ class PongBoard(QFrame):
             painter.drawText(self.rect(), Qt.AlignCenter, f"{t}...")
 
 
+@persist_plugin_state("pong")
 class Pong(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -365,7 +371,7 @@ class Pong(QMainWindow):
         self.setCentralWidget(self.board)
         self.board.setFocus()
         self.statusBar().showMessage('↑ ↓ to move | P pause | R restart | M 1p/2p')
-        self.resize(WindowWidth, WindowHeight)
+        self.setFixedSize(WindowWidth, WindowHeight)
         self.setWindowTitle('Pong vs CPU')
         self.show()
 

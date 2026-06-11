@@ -46,5 +46,7 @@ if __name__ == '__main__':
     sys.exit(app.exec())
 
 if __name__ == "plugin":
-    clsm = clsmview.gui.CLSMPixelSelect()
+    from chisurf.gui.misc_helpers import persist_plugin_state
+    CLSMDrawWidget = persist_plugin_state("clsm_draw")(clsmview.gui.CLSMPixelSelect)
+    clsm = CLSMDrawWidget()
     clsm.show()

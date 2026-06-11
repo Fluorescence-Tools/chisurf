@@ -17,6 +17,11 @@ from chisurf.plugins.modelling.fps_json_editor.label_structure import LabelStruc
 from ..core import av, docking, engine, io, results, sampling, screening, evaluate, pair_selection
 from ..core.io import read_fps_json
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 logger = logging.getLogger("chisurf.plugins.modelling.fret")
 
 
@@ -907,6 +912,7 @@ class FretSettingsDialog(QtWidgets.QDialog):
         fret_settings["time_step_factor"] = self.dt_spin.value()
 
 
+@persist_plugin_state("fret_wizard")
 class FretDockWizard(QtWidgets.QMainWindow):
     """Main docking & screening wizard window."""
 

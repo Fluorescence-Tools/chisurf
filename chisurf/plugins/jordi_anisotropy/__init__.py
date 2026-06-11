@@ -37,6 +37,12 @@ from qtpy.QtGui import QIcon
 import pyqtgraph as pg
 
 try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
+try:
     from chisurf.core.fio import read_jordi as _read_jordi
 except Exception:
     _read_jordi = None
@@ -286,6 +292,7 @@ class JordiAnisotropyBatchWindow(QWidget):
             QMessageBox.critical(self, "Save CSV", f"Failed to save CSV: {e}")
 
 
+@persist_plugin_state("jordi_anisotropy")
 class JordiAnisotropyCalculator(QWidget):
     """
     Jordi Anisotropy Calculator

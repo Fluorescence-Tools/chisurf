@@ -28,6 +28,11 @@ from .package_widget import PackageManagerDialog
 from chisurf.core import info
 import chisurf.core.settings as _cs_settings_mod
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Define the plugin name - this will appear in the Plugins menu
 name = "Help:Updates and Packages"
 
@@ -35,6 +40,7 @@ class UpdaterWorker(QtCore.QThread):
     finished = QtCore.Signal(bool, object, str)
     progress = QtCore.Signal(str)
 
+@persist_plugin_state("updater")
 class UpdaterWidget(QtWidgets.QWidget):
     """
     A widget that provides a UI for checking for and installing updates.

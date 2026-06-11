@@ -12,6 +12,11 @@ from qtpy import QtCore, QtWidgets
 import chisurf as cs
 import chisurf.gui.widgets
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 from ..core.olga_greedy import select_informative_pairs
 from ..core.trajectory import (
     build_atom_pairs,
@@ -27,6 +32,7 @@ from ..core.trajectory import (
 )
 
 
+@persist_plugin_state("fret_pair_selection")
 class FRETPairSelectionWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

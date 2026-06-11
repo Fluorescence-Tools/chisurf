@@ -12,7 +12,14 @@ import chisurf.gui.widgets
 from .traj2fret import CalculateTransfer
 from chisurf.gui.widgets.pdb import PDBSelector
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+
+@persist_plugin_state("fret_trajectory")
 class Structure2Transfer(
     QtWidgets.QWidget,
     CalculateTransfer

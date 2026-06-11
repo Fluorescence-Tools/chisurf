@@ -57,6 +57,12 @@ from chisurf import logging
 from chisurf.plugins.tttr.intensity_trace.__init__ import IntensityPlotWidget, IntensityTrace
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 # Import TTTR Time Window plugin
 try:
     from chisurf.plugins.tttr.tttr_time_windows.wizard import TTTRTimeWindowWizard, compute_bids_from_tttr
@@ -365,6 +371,7 @@ class NoHoverSelectTable(QTableWidget):
         return super().event(event)
 
 
+@persist_plugin_state("trace_browser")
 class TraceBrowser(QWidget):
     def __init__(self):
         super().__init__()

@@ -29,7 +29,13 @@ import tttrlib
 from typing import Dict
 from chisurf.core.fio import write_jordi
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+@persist_plugin_state("burst_mle_analysis")
 class MLELifetimeAnalysisWizard(QtWidgets.QMainWindow):
     """
     Note on legacy burst processors:

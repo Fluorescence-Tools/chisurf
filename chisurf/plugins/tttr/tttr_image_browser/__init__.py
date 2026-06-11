@@ -46,6 +46,12 @@ from chisurf.plugins.tttr.trace_browser.__init__ import get_tttr_supported_exts,
 # Logging
 from chisurf import logging
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 name = "Imaging:Tools:Image Browser"
 
 META_FILENAME = ".image_browser_meta.json"
@@ -76,6 +82,7 @@ def _save_meta(folder: pathlib.Path, data: Dict[str, Dict]):
     tmp.replace(p)
 
 
+@persist_plugin_state("tttr_image_browser")
 class TTTRImageBrowser(QWidget):
     def __init__(self):
         super().__init__()

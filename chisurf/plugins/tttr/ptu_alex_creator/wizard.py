@@ -21,6 +21,11 @@ from qtpy.QtCore import Qt
 import pyqtgraph as pg
 import tttrlib  # ensure tttrlib is in your PYTHONPATH
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Container type information for file format conversion
 CONTAINER_INFO = {
     'PTU':              ('ptu', 4,  0),   # PQ_PTU_CONTAINER → PQ_RECORD_TYPE_HHT3v2
@@ -55,6 +60,7 @@ class FileLineEdit(QLineEdit):
                 main_win.load_file(path)
         event.acceptProposedAction()
 
+@persist_plugin_state("ptu_alex_creator")
 class AlexPTUCreator(QMainWindow):
     @property
     def tttr_filetype(self) -> str | None:

@@ -69,6 +69,11 @@ from qtpy.QtWidgets import (
     QCheckBox,
 )
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 
 def parse_diffusion_coefficient(res_path: Path) -> Optional[float]:
     """Extract the translational diffusion coefficient from a HYDRO++/PRO
@@ -606,6 +611,7 @@ class SettingsDialog(QDialog):
             QMessageBox.warning(self, "Invalid settings", f"{exc}")
 
 
+@persist_plugin_state("hydropro")
 class HydroGui(QMainWindow):
     """Main window for the HYDRO++/PRO GUI."""
 

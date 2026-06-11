@@ -45,8 +45,19 @@ if __name__ == '__main__':
     sys.exit(app.exec())
 
 if __name__ == "plugin":
+    import sys
+    import pathlib
+    _ndxplorer_module = pathlib.Path(__file__).resolve().parents[3] / "modules" / "ndxplorer"
+    if _ndxplorer_module.is_dir():
+        p = str(_ndxplorer_module)
+        if p not in sys.path:
+            sys.path.insert(0, p)
     import ndxplorer
-    ndx = ndxplorer.NDXplorer()
+    try:
+        ndx = ndxplorer.NDXplorer()
+    except Exception:
+        log("Could not load ndXplorer plugin (missing optional dependencies)")
+        raise
     ndx.show()
     ndx.raise_()
     ndx.activateWindow()

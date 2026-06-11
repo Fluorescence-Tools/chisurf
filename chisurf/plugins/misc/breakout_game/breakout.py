@@ -5,6 +5,11 @@ from qtpy.QtCore import Qt, QBasicTimer, QRectF, QPointF, QSize
 from qtpy.QtGui import QPainter, QColor, QFont, QBrush, QPen, QLinearGradient, QRadialGradient
 from qtpy.QtWidgets import QFrame, QApplication, QMainWindow
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 W = 800
 H = 650
 
@@ -359,6 +364,7 @@ class BreakoutBoard(QFrame):
             painter.drawText(W // 2 - 80, H // 2 + 40, "Press SPACE or click to launch")
 
 
+@persist_plugin_state("breakout")
 class Breakout(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -369,7 +375,7 @@ class Breakout(QMainWindow):
         self.setCentralWidget(self.board)
         self.board.setFocus()
         self.statusBar().showMessage('← → or mouse to move | SPACE launch | P pause | R restart')
-        self.resize(W, H)
+        self.setFixedSize(W, H)
         self.setWindowTitle('Breakout')
         self.show()
 

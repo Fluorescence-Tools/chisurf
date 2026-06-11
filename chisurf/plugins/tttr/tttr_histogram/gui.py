@@ -19,11 +19,17 @@ import chisurf.gui.decorators
 import chisurf.gui.widgets.experiments.widgets
 import chisurf.gui.widgets.fio
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 
 plot_settings = chisurf.core.settings.gui['plot']
 lw = plot_settings['line_width']
 
 
+@persist_plugin_state("tttr_histogram")
 class HistogramTTTR(
     QtWidgets.QWidget,
     chisurf.core.curve.CurveGroup
@@ -111,6 +117,7 @@ class HistogramTTTR(
         super().add_curve(v)
 
 
+@persist_plugin_state("tcspc_tttr")
 class TcspcTTTRWidget(
     QtWidgets.QWidget
 ):

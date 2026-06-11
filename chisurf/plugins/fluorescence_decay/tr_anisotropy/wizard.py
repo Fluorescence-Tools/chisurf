@@ -25,12 +25,19 @@ import chisurf.macros
 
 import pyqtgraph as pg
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 colors = ['b', 'r']
 
 name = "Tools:Anisotropy-Wizard"
 
 
+@persist_plugin_state("tr_anisotropy")
 class ChisurfWizard(QtWidgets.QWizard):
 
     data: typing.Dict[str, chisurf.core.curve.Curve] = {

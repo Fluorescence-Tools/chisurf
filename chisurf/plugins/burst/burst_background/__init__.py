@@ -40,7 +40,14 @@ from qtpy.QtGui import QDragEnterEvent, QDropEvent
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 import chisurf.core.fluorescence.burst
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+
+@persist_plugin_state("burst_background")
 class BurstBackgroundEstimator(QWidget):
     """Main widget for the Burst Background Estimation plugin."""
 

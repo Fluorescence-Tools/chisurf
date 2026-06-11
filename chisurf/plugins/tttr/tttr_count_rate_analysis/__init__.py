@@ -53,6 +53,12 @@ import tttrlib
 
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+@persist_plugin_state("tttr_count_rate_analysis")
 class CountRateAnalyzer(QWidget):
     """Main widget for the Count Rate Analysis plugin."""
     

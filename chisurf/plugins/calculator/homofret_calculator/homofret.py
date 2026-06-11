@@ -5,7 +5,14 @@ from chisurf.gui import QtWidgets
 import chisurf as cs
 import chisurf.gui.decorators
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+
+@persist_plugin_state("homofret_calculator")
 class HomoFRETCalculator(QtWidgets.QWidget):
 
     name = "HomoFRET-Calculator"

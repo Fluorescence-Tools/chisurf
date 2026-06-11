@@ -4,6 +4,11 @@ import chisurf as cs
 import urllib
 
 from qtpy import QtCore, QtWidgets, QtGui
+
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 from qtpy.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from qtpy.QtWebEngineWidgets import (
     QWebEnginePage as QWebPage,
@@ -84,6 +89,7 @@ class MyUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
             info.block(True)
 
 
+@persist_plugin_state("browser")
 class Browser(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):

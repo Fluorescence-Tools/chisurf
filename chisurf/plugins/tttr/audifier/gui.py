@@ -38,6 +38,11 @@ try:
 except ImportError:
     tttrlib = None
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 from chisurf.gui.widgets.wizard.tttr_channeldefinition import DetectorWizardPage
 
 from .core import (
@@ -160,6 +165,7 @@ class DetectorControl(QWidget):
         return self._color
 
 
+@persist_plugin_state("tttr_audifier")
 class TTTRAudifierWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

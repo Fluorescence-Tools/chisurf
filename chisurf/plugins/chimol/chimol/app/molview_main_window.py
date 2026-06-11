@@ -49,6 +49,11 @@ from .hierarchy_panel import HierarchyDock
 from .config_editor import MolViewConfigEditor
 from ..cmd import cmd as _cmd
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 
 # Plugin name as it appears in the Plugins menu
 # The "Structure:" prefix groups it with other structure tools.
@@ -58,6 +63,7 @@ name = "Structure:Chimol (protein viewer)"
 _SEQ_INDEX_ROLE = QtCore.Qt.UserRole + 150
 
 
+@persist_plugin_state("chimol")
 class MolViewPluginWindow(QtWidgets.QMainWindow):
     """Chimol main window wiring together viewer, docks, and toolbar."""
 
@@ -326,30 +332,6 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         # Initialize panels with placeholder content.
         self._update_sequence_view()
         self._update_system_info()
-
-        # Restore window state (geometry/layout)
-        try:
-            from chisurf.gui.misc_helpers import restore_plugin_window_state
-            restore_plugin_window_state(self, "chimol")
-        except Exception:
-            pass
-
-    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        """Handle main window close events.
-
-        Saves the window state and geometry before accepting the close event.
-
-        Parameters
-        ----------
-        event : QtGui.QCloseEvent
-            The Qt close event object.
-        """
-        try:
-            from chisurf.gui.misc_helpers import save_plugin_window_state
-            save_plugin_window_state(self, "chimol")
-        except Exception:
-            pass
-        event.accept()
 
     # ------------------------------------------------------------------
     # Actions

@@ -45,6 +45,12 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import Qt
 import pyqtgraph as pg
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 # ChiSurf imports
 try:
@@ -59,6 +65,7 @@ except Exception:
     CHISURF_AVAILABLE = False
 
 
+@persist_plugin_state("irf_estimator")
 class IRFEstimatorPlugin(QWidget):
     """Main widget for the IRF Estimator plugin."""
     

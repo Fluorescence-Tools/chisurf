@@ -8,7 +8,14 @@ from chisurf.core.fluorescence.general import \
     distance_to_fret_rate_constant, distance_to_fret_efficiency, fret_efficiency_to_lifetime, \
     lifetime_to_fret_efficiency, fretrate_to_distance, fret_efficiency_to_distance, gaussian2rates
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+
+@persist_plugin_state("fret_calculator")
 class FRETCalculator(QtWidgets.QWidget):
 
     name = "FRET-Calculator"
@@ -324,4 +331,3 @@ class FRETCalculator(QtWidgets.QWidget):
         # When sigma changes, recalculate based on the current distance
         self.onRChanged()
         self.blockSignals(False)
-

@@ -18,7 +18,13 @@ from qtpy.QtWidgets import (
     QFileDialog,
 )
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+@persist_plugin_state("ptu_header_edit")
 class TagsEditor(QMainWindow):
     TYPE_MAPPING = {
         0xFFFF0008: "Empty",

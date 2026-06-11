@@ -12,7 +12,13 @@ import chisurf.core.models
 import chisurf.core.fitting.fit
 import chisurf.core.math.statistics
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+@persist_plugin_state("f_test")
 class FTestWidget(QtWidgets.QWidget):
 
     def read_values(self, target):

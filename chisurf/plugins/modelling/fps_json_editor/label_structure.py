@@ -18,7 +18,14 @@ from .position_panel import PositionPanel
 from .distance_panel import DistancePanel
 from .flexfit_panel import FlexFitPanel
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
 
+
+
+@persist_plugin_state("fps_json_editor")
 class LabelStructure(QtWidgets.QWidget):
     """The main coordinator widget for editing and inspecting fps.json configurations.
 

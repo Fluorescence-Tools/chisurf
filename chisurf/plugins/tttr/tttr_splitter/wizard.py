@@ -6,6 +6,11 @@ import tttrlib
 import chisurf.gui.decorators
 import chisurf.core.settings
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 VERBOSE = False
 
 # Unified mapping: container name → (file‐extension stem, default record type id)
@@ -82,6 +87,7 @@ def enable_folder_drop(line_edit: QtWidgets.QLineEdit):
     line_edit.dropEvent = dropEvent
 
 
+@persist_plugin_state("tttr_splitter")
 class PTUSplitter(QtWidgets.QWidget):
 
     @chisurf.gui.decorators.init_with_ui("tttr/tttr_splitter/wizard.ui",

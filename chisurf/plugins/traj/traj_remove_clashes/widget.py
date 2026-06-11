@@ -13,6 +13,12 @@ import chisurf.core.decorators
 import chisurf.gui.decorators
 import chisurf.gui.widgets
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 @nb.jit(nopython=True)
 def below_min_distance(
@@ -71,6 +77,7 @@ def below_min_distance(
     return re
 
 
+@persist_plugin_state("traj_remove_clashes")
 class RemoveClashedFrames(
     QtWidgets.QWidget
 ):

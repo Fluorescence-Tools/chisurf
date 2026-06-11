@@ -24,6 +24,12 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.experiments
 import chisurf.gui.widgets.fio
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 class Correlator(QtCore.QThread):
 
@@ -513,6 +519,7 @@ class CrFilterWidget(QtWidgets.QWidget):
             return photons
 
 
+@persist_plugin_state("tttr_correlate")
 class CorrelateTTTR(
     QtWidgets.QWidget
 ):

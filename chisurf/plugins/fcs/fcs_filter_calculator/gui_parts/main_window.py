@@ -12,6 +12,12 @@ from ..api import compute_filters, FilterResult
 from .widgets import SpeciesListWidget
 from .data_loading import load_vector
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+@persist_plugin_state("fcs_filter_calculator")
 class FcsFilterCalculatorWidget(QtWidgets.QWidget):
     """A modular implementation of the Filtered FCS: Lifetime Filter Calculator."""
 

@@ -28,6 +28,11 @@ from qtpy import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 import tttrlib
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 VALID_EXTS = {".spc", ".ht3", ".ptu", ".phu", ".photonhdf5"}
 EPS = 1e-12  # for log10 plots
 
@@ -390,7 +395,7 @@ class ChannelCheckList(QtWidgets.QWidget):
     def selected_channels(self):
         return [ch for ch, cb in self._checks.items() if cb.isChecked()]
 
-# Main Window adapted from original script
+@persist_plugin_state("tttr_settings_generator")
 class TTTRSettingsGenerator(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()

@@ -23,10 +23,17 @@ from qtpy.QtWidgets import (
 
 import pyqtgraph as pg
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 name = "Imaging:PSF Determination"
 
 
+@persist_plugin_state("psf_determination")
 class PSFDeterminationWidget(QWidget):
     """PSF Determination plugin with 3D stack visualization and Gaussian PSF fitting.
 

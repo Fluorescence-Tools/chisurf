@@ -30,10 +30,16 @@ import chisurf.core.models
 import chisurf.core.experiments
 import chisurf.core.settings
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 # Define the plugin name - this will appear in the Plugins menu
 name = "Setup:Models"
 
 
+@persist_plugin_state("model_manager")
 class ModelManagerWidget(QMainWindow):
     def __init__(self):
         super().__init__()

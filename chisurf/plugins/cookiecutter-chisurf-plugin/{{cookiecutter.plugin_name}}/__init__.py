@@ -1,44 +1,28 @@
-import sys
-from qtpy.QtWidgets import QMainWindow, QWidget, QVBoxLayout
+"""{{ cookiecutter.plugin_display_name }}
 
-# Define the plugin name - this will appear in the Plugins menu
-name = "PLUGIN_CATEGORY:PLUGIN_DISPLAY_NAME"
+{{ cookiecutter.plugin_description }}
 
-"""
-PLUGIN_DISPLAY_NAME
-
-PLUGIN_DESCRIPTION
-
-Author: AUTHOR_NAME <AUTHOR_EMAIL>
-Year: YEAR
+Author: {{ cookiecutter.author_name }} <{{ cookiecutter.author_email }}>
+Year: {{ cookiecutter.year }}
 """
 
-class WIDGET_CLASS_NAME(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("PLUGIN_DISPLAY_NAME")
-        self.resize(800, 600)
-        
-        # Create central widget and layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        
-        # Add your plugin UI components here
-        # Example:
-        # self.button = QPushButton("Click Me")
-        # main_layout.addWidget(self.button)
-        # self.button.clicked.connect(self.on_button_clicked)
-        
-    # Add your plugin methods here
-    # Example:
-    # def on_button_clicked(self):
-    #     print("Button clicked!")
+from __future__ import annotations
 
-# When the plugin is loaded as a module with __name__ == "plugin",
-# this code will be executed
-if __name__ == "plugin":
-    # Create an instance of the plugin widget class
-    window = WIDGET_CLASS_NAME()
-    # Show the window
-    window.show()
+from pathlib import Path
+
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import PluginRegistry
+
+# Load manifest as source of truth
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+    cli_entrypoint = _manifest.entrypoints.cli or ""
+else:
+    name = "{{ cookiecutter.plugin_category }}:{{ cookiecutter.plugin_display_name }}"
+    cli_entrypoint = ""
+
+# Re-export the main widget class
+from .gui.tool import {{ cookiecutter.widget_class_name }}
+
+__all__ = ["{{ cookiecutter.widget_class_name }}"]

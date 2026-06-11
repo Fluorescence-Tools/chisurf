@@ -39,6 +39,11 @@ from qtpy.QtWidgets import (
 )
 import pyqtgraph as pg
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
 name = "Spectroscopy:Single-Molecule:PCH"
 
 
@@ -95,6 +100,7 @@ def pch_mixture(k_vals, epsilons, avgNs):
         pk = fftconvolve(pk, pj)[:len(k_vals)]
     return pk
 
+@persist_plugin_state("pch")
 class PCHApp(QMainWindow):
     def __init__(self):
         super().__init__()

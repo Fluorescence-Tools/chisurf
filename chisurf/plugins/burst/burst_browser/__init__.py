@@ -8,6 +8,12 @@ from qtpy import QtCore, QtWidgets
 from chisurf import logging
 from chisurf.core.fio.fluorescence import burst as burstio
 
+try:
+    from chisurf.gui.misc_helpers import persist_plugin_state
+except ImportError:
+    persist_plugin_state = lambda n: lambda c: c
+
+
 
 name = "Spectroscopy:Single-Molecule:Burst Browser"
 
@@ -82,6 +88,7 @@ class BurstTableModel(QtCore.QAbstractTableModel):
             return str(section + 1)
 
 
+@persist_plugin_state("burst_browser")
 class BurstBrowserWidget(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget | None = None):
         super().__init__(parent)
