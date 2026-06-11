@@ -1,18 +1,26 @@
-"""
-Single Molecule Burst Selection Plugin
+"""Single Molecule Burst Selection Plugin."""
 
-This plugin provides tools for analyzing single-molecule fluorescence bursts in TTTR data.
-It allows users to:
-1. Load and process TTTR files for burst analysis
-2. Visualize burst data in histograms
-3. Fit Gaussian mixtures to the histograms
-4. Display fit results in a table
+from __future__ import annotations
 
-The plugin supports drag-and-drop file loading and provides interactive visualization
-of proximity ratio distributions, which is particularly useful for single-molecule
-FRET experiments. It can fit multiple Gaussian components to identify different
-conformational states or populations in the data.
-"""
+from pathlib import Path
 
-name = "Spectroscopy:Single-Molecule:Burst-Selection"
+from chisurf.core.plugin import load_manifest
 
+# Load manifest as source of truth
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+    cli_entrypoint = _manifest.entrypoints.cli or ""
+else:
+    # Legacy fallback
+    name = "Spectroscopy:Single-Molecule:Burst-Selection"
+    cli_entrypoint = "burst-selection=chisurf.plugins.burst.burst_selection.cli:cli"
+
+USE_LEGACY_GUI = False
+
+if USE_LEGACY_GUI:
+    from .gui.legacy.burst_selector import BurstSelectionTool
+else:
+    from .gui.tool import BurstSelectionTool
+
+__all__ = ["BurstSelectionTool", "USE_LEGACY_GUI"]

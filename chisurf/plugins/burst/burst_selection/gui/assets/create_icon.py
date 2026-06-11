@@ -1,7 +1,11 @@
 from PIL import Image, ImageDraw
+import logging
 import os
 import math
 import random
+
+
+logger = logging.getLogger(__name__)
 
 # Create a 64x64 image with a transparent background
 icon = Image.new('RGBA', (64, 64), (0, 0, 0, 0))
@@ -84,4 +88,4 @@ for width, height in zip(bar_widths, bar_heights):
 
 # Save the icon
 icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+logger.info("Icon created at %s", os.path.abspath('icon.png'))

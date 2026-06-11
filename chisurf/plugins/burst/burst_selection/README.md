@@ -19,6 +19,28 @@ different conformational states or populations in the data.
 
 ## Technical Details
 
+### Workflow/API Contract
+
+Burst Selection is the reference plugin for workflow-ready ChiSurf plugins. It
+defines explicit JSON-safe inputs and outputs for API, CLI, ZMQ/RPC, and GUI
+usage. The contract is implemented in `api/contract.py` and documented in
+`docs/CONTRACT.md`.
+
+Integration surfaces:
+
+- Python API: `chisurf.plugins.burst.burst_selection.api`
+- CLI: `chisurf burst-selection`
+- Contract discovery: `chisurf burst-selection contract`
+- Canonical RPC methods:
+  - `burst_selection.jobs.analyze_files`
+  - `burst_selection.results.inspect_bur`
+  - `burst_selection.gmm.fit`
+  - `burst_selection.diagnostics.load`
+  - `burst_selection.contract.describe`
+
+The GUI is an adapter over `BurstSelectionClient`; analysis behavior belongs in
+`api/` and JSON/RPC adaptation belongs in `backend/services.py`.
+
 ### Burst Selection Process
 
 The plugin uses a multi-step process for burst selection:
