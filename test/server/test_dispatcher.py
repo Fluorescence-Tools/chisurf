@@ -2,6 +2,8 @@ from __future__ import annotations
 
 """Tests for chisurf.server.dispatcher."""
 
+import logging
+
 import pytest
 from chisurf.server.dispatcher import ServiceDispatcher
 from chisurf.server.services import service_error, NOT_FOUND, INVALID_INPUT, OPERATION_FAILED
@@ -131,3 +133,39 @@ class TestServiceDispatcher:
         assert d.has_method("graph.build_fits")
         assert d.has_method("fit.create")
         assert d.has_method("fit.add")
+        assert d.has_method("log.write")
+
+    def test_log_write_dispatches_to_logging(self, caplog):
+        d = ServiceDispatcher(SessionState())
+        d._build_default_registry()
+        logger_name = "chisurf.test.rpc"
+
+        with caplog.at_level(logging.INFO, logger=logger_name):
+            result = d.dispatch(
+                "log.write",
+                {
+                    "level": "info",
+                    "message": "diagnostic update",
+                    "logger_name": logger_name,
+                    "extra": {"file": "m006.spc"},
+                },
+            )
+
+        assert result == {"ok": True}
+        assert "diagnostic update" in caplog.text
+        assert "m006.spc" in caplog.text
+
+    def test_log_write_rejects_invalid_level(self):
+        d = ServiceDispatcher(SessionState())
+        d._build_default_registry()
+
+        result = d.dispatch(
+            "log.write",
+            {
+                "level": "verbose",
+                "message": "invalid",
+            },
+        )
+
+        assert result["ok"] is False
+        assert result["error_code"] == INVALID_INPUT

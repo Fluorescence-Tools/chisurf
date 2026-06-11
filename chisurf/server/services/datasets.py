@@ -483,7 +483,9 @@ def clear_datasets(state: SessionState, event_bus: Any = None) -> ServiceResult:
 
     """
     count = len(state.datasets)
+    global_datasets = [d for d in state.datasets if _is_global_fit_dataset(d)]
     state.datasets.clear()
+    state.datasets.extend(global_datasets)
     if event_bus is not None:
         event_bus.publish("dataset.cleared", {"cleared_count": count})
     return {"ok": True, "cleared_count": count}

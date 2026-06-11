@@ -84,10 +84,22 @@
     {"rpc": "model.set_parse_function", "service": "models.model_set_parse_function"},
     {"rpc": "graph.build_fits", "service": "graph.build_fit_graph"},
     {"rpc": "graph.build", "service": "graph.build_fit_graph"},
+    {"rpc": "log.write", "service": "log_svc.write_log"},
 
     {"rpc": "list_methods", "meta": "methods"},
     {"rpc": "meta.methods", "meta": "methods"},
     {"rpc": "meta.protocol", "meta": "protocol"},
-    {"rpc": "meta.ping", "service": "fits.ping"}
+    {"rpc": "meta.ping", "service": "fits.ping"},
+
+    {"rpc": "flr.metadata.get", "service": "flr.flr_metadata_get"},
+    {"rpc": "flr.metadata.set", "service": "flr.flr_metadata_set"},
+    {"rpc": "flr.metadata.add", "service": "flr.flr_metadata_add"},
+    {"rpc": "flr.metadata.delete", "service": "flr.flr_metadata_delete"},
+    {"rpc": "flr.analysis.update", "service": "flr.flr_analysis_update"},
+    {"rpc": "flr.photon_stream.add", "service": "flr.flr_photon_stream_add"},
+    {"rpc": "flr.photon_stream.list", "service": "flr.flr_photon_stream_list"},
+    {"rpc": "flr.export", "service": "flr.flr_export"},
+    {"rpc": "flr.probe_types", "service": "flr.flr_probe_types"},
+    {"rpc": "flr.probes", "service": "flr.flr_probes"}
   ]
 }

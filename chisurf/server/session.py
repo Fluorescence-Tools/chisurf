@@ -18,6 +18,7 @@ class SessionState:
     current_experiment: Optional[str] = None
     current_setup: Optional[str] = None
     current_fit_uid: Optional[str] = None
+    flr_database: Optional[Any] = None
 
     def __post_init__(self):
         """Initialise the project registry after dataclass field assignment."""

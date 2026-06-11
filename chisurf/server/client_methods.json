@@ -45,9 +45,21 @@
 
     {"name": "graph__build", "rpc": "graph.build", "params": [{"name": "fit_indices", "default": null}, {"name": "fit_uids", "default": null}, {"name": "include_fixed", "default": true}, {"name": "connect_fits", "default": false}]},
     {"name": "graph__build_fits", "rpc": "graph.build_fits", "params": [{"name": "fit_indices", "default": null}, {"name": "fit_uids", "default": null}, {"name": "include_fixed", "default": true}, {"name": "connect_fits", "default": false}]},
+    {"name": "log__write", "rpc": "log.write", "params": [{"name": "level", "default": "info"}, {"name": "message", "required": true}, {"name": "logger_name", "default": "chisurf.rpc"}, {"name": "extra", "default": null}]},
 
     {"name": "meta__ping", "rpc": "meta.ping", "params": []},
     {"name": "meta__methods", "rpc": "meta.methods", "params": [], "result_key": "result", "default": []},
-    {"name": "meta__protocol", "rpc": "meta.protocol", "params": []}
+    {"name": "meta__protocol", "rpc": "meta.protocol", "params": []},
+
+    {"name": "flr__metadata_get", "rpc": "flr.metadata.get", "params": [{"name": "analysis_id", "default": "analysis_1"}], "result_key": "metadata", "default": {}},
+    {"name": "flr__metadata_set", "rpc": "flr.metadata.set", "params": [{"name": "analysis_id", "default": "analysis_1"}, {"name": "metadata", "default": {}}]},
+    {"name": "flr__metadata_add", "rpc": "flr.metadata.add", "params": [{"name": "analysis_id", "default": "analysis_1"}, {"name": "key", "default": ""}, {"name": "value", "default": ""}]},
+    {"name": "flr__metadata_delete", "rpc": "flr.metadata.delete", "params": [{"name": "analysis_id", "default": "analysis_1"}, {"name": "key", "default": ""}]},
+    {"name": "flr__analysis_update", "rpc": "flr.analysis.update", "params": [{"name": "analysis_id", "default": "analysis_1"}], "allow_extra": true},
+    {"name": "flr__photon_stream_add", "rpc": "flr.photon_stream.add", "params": [{"name": "analysis_id", "default": "analysis_1"}, {"name": "file_path", "default": ""}, {"name": "detector_id", "default": ""}, {"name": "stream_id", "default": ""}, {"name": "file_format", "default": ""}]},
+    {"name": "flr__photon_stream_list", "rpc": "flr.photon_stream.list", "params": [{"name": "analysis_id", "default": "analysis_1"}], "result_key": "streams", "default": []},
+    {"name": "flr__export", "rpc": "flr.export", "params": [{"name": "analysis_id", "default": "analysis_1"}, {"name": "file_path", "default": ""}], "result_key": "path", "default": ""},
+    {"name": "flr__probe_types", "rpc": "flr.probe_types", "params": [], "result_key": "probe_types", "default": []},
+    {"name": "flr__probes", "rpc": "flr.probes", "params": [{"name": "type_id", "default": null}], "result_key": "probes", "default": []}
   ]
 }
