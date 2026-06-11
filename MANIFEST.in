@@ -6,6 +6,9 @@ include chisurf/settings/*.yaml
 include chisurf/settings/constants/*.json
 include chisurf/gui/styles/*.css
 include chisurf/plugins/spectra_viewer/*.db
+include chisurf/core/fio/mmcif/db/sample_management.db
+include chisurf/core/fio/mmcif/db/data/mmcif_pdbx_v50.dic
+global-exclude *.db-wal *.db-shm
 include notebooks/*.ipynb
 recursive-include modules/chinet/chinet *.py
 recursive-include docs *.md *.png *.svg *.jpg *.jpeg *.gif

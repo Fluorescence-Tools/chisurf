@@ -27,6 +27,7 @@
 *.egg-info
 *.exe
 *.json
+!chisurf/plugins/sample_database/manifest.json
 !chisurf/server/client_methods.json
 !chisurf/server/server_methods.json
 *.log

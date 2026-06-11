@@ -120,7 +120,7 @@ namespaces = true
     "*.png", "*.svg",
     "*.csv", "*.npy", "*.dat",
     "*.dll", "*.so", "*.pyd", "*.ipynb",
-    "*.db", "*.txt"
+    "*.db", "*.txt", "*.dic"
 ]
 "chisurf.settings.constants" = ["*.json"]
 

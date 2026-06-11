@@ -87,7 +87,25 @@ class Node(BaseObject):
                 default = param.default
             p = Port(name=name); p.value = default
             self.add_input_port(name, p)
-        self.add_output_port("out_00", Port(name="out_00", is_output=True))
+
+        # Evaluate with default arguments to see if it returns a dictionary of named output ports
+        default_args = {}
+        for name, param in sig.parameters.items():
+            if param.default is not inspect.Parameter.empty:
+                default_args[name] = param.default
+            else:
+                default_args[name] = 0.0
+
+        try:
+            res = func(**default_args)
+        except Exception:
+            res = None
+
+        if isinstance(res, dict):
+            for k in res.keys():
+                self.add_output_port(k, Port(name=k, is_output=True))
+        else:
+            self.add_output_port("out_00", Port(name="out_00", is_output=True))
 
     def inputs_valid(self):
         for input_port in self.in_.values():
@@ -131,7 +149,10 @@ class Node(BaseObject):
                 args = {k: v.value for k, v in self.in_.items()}
                 try:
                     res = self.callback_class(**args)
-                    if isinstance(res, (tuple, list)) and len(res) > 1:
+                    if isinstance(res, dict):
+                        for k, val in res.items():
+                            if k in self.out_: self.out_[k].value = val
+                    elif isinstance(res, (tuple, list)) and len(res) > 1:
                         for i, val in enumerate(res):
                             oname = f"out_{i:02d}"
                             if oname in self.out_: self.out_[oname].value = val
