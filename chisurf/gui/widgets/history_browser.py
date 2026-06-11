@@ -5,6 +5,8 @@ import json
 from chisurf import typing
 from qtpy import QtCore, QtGui, QtWidgets
 import chisurf as cs
+from chisurf.gui.widgets.general import apply_compact_table_style
+
 class HistoryBrowserWidget(QtWidgets.QWidget):
     cursorChanged = QtCore.Signal(object)
 
@@ -31,14 +33,14 @@ class HistoryBrowserWidget(QtWidgets.QWidget):
         self.table = QtWidgets.QTreeWidget(self)
         self.table.setColumnCount(3)
         self.table.setHeaderLabels(["Time", "Action", "Summary"])
-        self.table.setUniformRowHeights(True)
         self.table.setRootIsDecorated(False)
         self.table.setAlternatingRowColors(True)
-        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.table.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.table.setSortingEnabled(False)
         self.table.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         self.table.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
         self.table.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        apply_compact_table_style(self.table)
 
         self.details = QtWidgets.QPlainTextEdit(self)
         self.details.setReadOnly(True)
@@ -55,6 +57,30 @@ class HistoryBrowserWidget(QtWidgets.QWidget):
         self.table.itemSelectionChanged.connect(self._show_selected_details)
         self.table.itemClicked.connect(self._on_item_clicked)
         self.clear_button.clicked.connect(self._on_clear_clicked)
+
+    def keyPressEvent(self, event):
+        """Copy selected history rows with Ctrl+C."""
+        if event.key() == QtCore.Qt.Key_C and event.modifiers() & QtCore.Qt.ControlModifier:
+            self.copy_selected_items()
+        else:
+            super().keyPressEvent(event)
+
+    def copy_selected_items(self) -> None:
+        """Copy selected history rows and full event payloads to the clipboard."""
+        items = self.table.selectedItems()
+        if not items:
+            return
+
+        lines = []
+        for item in items:
+            event = item.data(0, QtCore.Qt.UserRole)
+            values = [item.text(column) for column in range(self.table.columnCount())]
+            if isinstance(event, dict):
+                values.append(json.dumps(event, indent=2, sort_keys=True, default=str))
+            lines.append("\t".join(values))
+
+        QtWidgets.QApplication.clipboard().setText("\n".join(lines))
+        cs.logging.info(f"Copied {len(lines)} history entries to clipboard")
 
     @staticmethod
     def _is_incomplete_start_event(

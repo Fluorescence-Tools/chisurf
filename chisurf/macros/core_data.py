@@ -709,7 +709,10 @@ def reinitialize_application(
             global_datasets = []
         try:
             cs.imported_datasets.clear()
-            cs.imported_datasets.extend(global_datasets)
+            if global_datasets:
+                cs.imported_datasets.extend(global_datasets)
+            else:
+                restore_global_fit_dataset(_from_controller=True, update_ui=False)
         except Exception:
             _log_exception('clear imported_datasets')
 

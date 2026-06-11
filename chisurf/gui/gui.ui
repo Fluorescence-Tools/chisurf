@@ -547,7 +547,7 @@
   </widget>
   <widget class="QDockWidget" name="dockWidgetHistory">
    <property name="windowTitle">
-    <string>History / Log</string>
+    <string>Logging</string>
    </property>
    <attribute name="dockWidgetArea">
     <number>2</number>

@@ -609,22 +609,21 @@ class FittingParameterWidget(Controller):
             callback: typing.Callable = None
     ):
         if hide_link is None:
-            hide_link = parameter_settings['hide_link']
+            hide_link = parameter_settings.get('hide_link', False)
         if hide_bounds is None:
-            hide_bounds = parameter_settings['hide_bounds']
+            hide_bounds = parameter_settings.get('hide_bounds', False)
         if name is None:
             name = self.__class__.__name__
         if label_text is None:
             label_text = name
         if fixable is None:
-            fixable = parameter_settings['fixable']
-        hide_fix_checkbox = fixable
+            fixable = True
         if hide_error is None:
-            hide_error = parameter_settings['hide_error']
+            hide_error = parameter_settings.get('hide_error', False)
         if hide_label is None:
-            hide_label = parameter_settings['hide_label']
+            hide_label = parameter_settings.get('hide_label', False)
         if decimals is None:
-            decimals = parameter_settings['decimals']
+            decimals = parameter_settings.get('decimals', 3)
 
         self.callback = callback
         self.name = fitting_parameter.name
@@ -665,6 +664,7 @@ class FittingParameterWidget(Controller):
             finite=False
         )
         self.widget_value.opts['compactHeight'] = False
+        self.widget_value.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         self.horizontalLayout.addWidget(self.widget_value)
 
         self.widget_lower_bound = pg.SpinBox(
@@ -695,6 +695,12 @@ class FittingParameterWidget(Controller):
                 sp = self.label.sizePolicy()
                 sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Preferred)
                 self.label.setSizePolicy(sp)
+            except Exception:
+                pass
+            try:
+                self.lineEdit.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+                self.lineEdit.setMinimumSize(0, 0)
+                self.lineEdit.setMaximumSize(0, 0)
             except Exception:
                 pass
 

@@ -307,6 +307,8 @@ class Main(
     def set_current_experiment_idx(self, v):
         self.comboBox_experimentSelect.setCurrentIndex(v)
 
+    _READ_DATA_DOCK_WIDTH = 390
+
     def _save_window_state(self):
         """Persist dock layout and window geometry via QSettings."""
         settings = QtCore.QSettings("ChiSurf", "MainWindow")
@@ -322,6 +324,16 @@ class Main(
         state = settings.value("state")
         if state is not None:
             self.restoreState(state)
+
+    def _apply_read_data_dock_width(self) -> None:
+        """Apply the startup width for the left read-data dock."""
+        dock = getattr(self, "dockWidgetReadData", None)
+        if dock is None:
+            return
+        try:
+            self.resizeDocks([dock], [self._READ_DATA_DOCK_WIDTH], QtCore.Qt.Horizontal)
+        except Exception:
+            dock.resize(self._READ_DATA_DOCK_WIDTH, dock.height())
 
     def closeEvent(self, event: QtGui.QCloseEvent):
         # Always save window state regardless of confirmation
@@ -1241,8 +1253,56 @@ class Main(
         self.tabifyDockWidget(self.dockWidgetPlot, self.dockWidgetScriptEdit)
         self.tabifyDockWidget(self.dockWidgetDatasets, self.dockWidgetHistory)
         self.editor = cs.plugins.core.code_editor.CodeEditor()
+        self.editor._on_editor_created = self._on_code_editor_created
+
+        # --- Code dock navigation toolbar (same as FitSubWindow) ---
+        self._code_toolbar = QtWidgets.QHBoxLayout()
+        self._code_toolbar.setContentsMargins(5, 5, 5, 5)
+
+        self._code_agent_btn = QtWidgets.QToolButton()
+        self._code_agent_btn.setText("\U0001f916")
+        self._code_agent_btn.setToolTip("Toggle AI agent panel")
+
+        self._code_nav_back_btn = QtWidgets.QToolButton()
+        self._code_nav_back_btn.setText("\u2190")
+        self._code_nav_back_btn.setToolTip("Navigate back to previous cursor position")
+
+        self._code_nav_forward_btn = QtWidgets.QToolButton()
+        self._code_nav_forward_btn.setText("\u2192")
+        self._code_nav_forward_btn.setToolTip("Navigate forward to next cursor position")
+
+        self._code_file_combo = QtWidgets.QComboBox()
+        self._code_func_combo = QtWidgets.QComboBox()
+
+        self._code_save_btn = QtWidgets.QToolButton()
+        self._code_save_btn.setText("Save/Apply")
+        self._code_save_btn.setToolTip("Save the current editor content")
+
+        self._code_settings_btn = self.editor.create_settings_button(self)
+
+        self._code_toolbar.addWidget(self._code_agent_btn)
+        self._code_toolbar.addWidget(self._code_nav_back_btn)
+        self._code_toolbar.addWidget(self._code_nav_forward_btn)
+        self._code_toolbar.addWidget(QtWidgets.QLabel("File:"))
+        self._code_toolbar.addWidget(self._code_file_combo, 1)
+        self._code_toolbar.addWidget(QtWidgets.QLabel("  Jump to:"))
+        self._code_toolbar.addWidget(self._code_func_combo, 1)
+        self._code_toolbar.addStretch()
+        self._code_toolbar.addWidget(self._code_settings_btn)
+        self._code_toolbar.addWidget(self._code_save_btn)
+
+        self.verticalLayout_10.addLayout(self._code_toolbar)
 
         self.verticalLayout_10.addWidget(self.editor)
+
+        # Wire toolbar signals
+        self._code_nav_back_btn.clicked.connect(self._code_nav_back)
+        self._code_nav_forward_btn.clicked.connect(self._code_nav_forward)
+        self._code_file_combo.currentIndexChanged.connect(self._on_code_file_selected)
+        self._code_func_combo.currentIndexChanged.connect(self._on_code_func_selected)
+        self._code_save_btn.clicked.connect(self._code_save)
+        self._code_agent_btn.clicked.connect(self.editor._toggle_agent_panel)
+        self.editor.settings_changed.connect(self._on_code_editor_settings_changed)
 
         # Add data selector widget
         self.verticalLayout_8.addWidget(self.dataset_selector)
@@ -1266,11 +1326,107 @@ class Main(
         except Exception:
             pass
 
+        QtCore.QTimer.singleShot(0, self._apply_read_data_dock_width)
+
+    # ---- Code dock navigation callbacks ------------------------------------
+
+    def _on_code_editor_created(self, editor):
+        """Called when a new editor tab is created inside the code editor."""
+        editor.file_load_callback = self._code_load_file
+
+    def _code_nav_back(self):
+        editor = self.editor._get_current_editor()
+        if editor is not None:
+            editor.navigate_back()
+
+    def _code_nav_forward(self):
+        editor = self.editor._get_current_editor()
+        if editor is not None:
+            editor.navigate_forward()
+
+    def _code_load_file(self, file_path, line_number: int = 0):
+        """Load a source file into the code editor and populate the function combo."""
+        import re
+        self.editor.open_file(file_path)
+        editor = self.editor._get_current_editor()
+        if editor is None:
+            return
+
+        if line_number > 0:
+            doc = editor.document()
+            block = doc.findBlockByNumber(line_number)
+            if block.isValid():
+                cursor = editor.textCursor()
+                cursor.setPosition(block.position())
+                editor.setTextCursor(cursor)
+                editor.centerCursor()
+
+        code = editor.toPlainText()
+        self._code_func_combo.blockSignals(True)
+        self._code_func_combo.clear()
+        self._code_func_combo.addItem("Select...", -1)
+
+        for i, line in enumerate(code.split('\n')):
+            m = re.match(r'^ *(def |class )([a-zA-Z0-9_]+)', line)
+            if m:
+                indent = len(line) - len(line.lstrip())
+                prefix = " " * indent
+                self._code_func_combo.addItem(f"{prefix}{m.group(1)}{m.group(2)}", i)
+
+        self._code_func_combo.blockSignals(False)
+        if not editor._nav_history:
+            editor.push_nav_history(file_path, 0)
+
+    def _on_code_file_selected(self, idx):
+        if idx < 0:
+            return
+        file_path = self._code_file_combo.itemData(idx)
+        if file_path:
+            self._code_load_file(file_path)
+
+    def _on_code_func_selected(self, idx):
+        if idx < 0:
+            return
+        line_num = self._code_func_combo.itemData(idx)
+        if line_num is not None and line_num >= 0:
+            editor = self.editor._get_current_editor()
+            if editor is None:
+                return
+            doc = editor.document()
+            block = doc.findBlockByNumber(line_num)
+            cursor = editor.textCursor()
+            cursor.setPosition(block.position())
+            editor.setTextCursor(cursor)
+            editor.centerCursor()
+            editor.setFocus()
+
+    def _code_save(self):
+        """Save the current editor content to its file."""
+        editor = self.editor._get_current_editor()
+        if editor is None:
+            return
+        self.editor.save_text()
+
+    def _on_code_editor_settings_changed(self, settings: dict) -> None:
+        """Apply editor font settings to dependent code widgets."""
+        font = QtGui.QFont()
+        font.setFamily(str(settings.get("font_family", cs.core.settings.gui["editor"]["font_family"])))
+        try:
+            font.setPointSize(int(settings.get("font_size", cs.core.settings.gui["editor"]["font_size"])))
+        except (TypeError, ValueError):
+            font.setPointSize(int(cs.core.settings.gui["editor"]["font_size"]))
+
+        try:
+            if hasattr(cs, "console") and hasattr(cs.console, "set_editor_font"):
+                cs.console.set_editor_font(font)
+        except Exception as e:
+            logging.log(1, f"Error updating console font: {e}")
+
     def filter_log_content(self):
         """
         Filter log content based on filter text and hide checkbox state.
-        If checkBox_filter_hide is checked, hide non-matching lines.
-        If unchecked, highlight matching lines and gray out non-matching lines.
+        Matching rows are highlighted. If hide is enabled, non-matching rows
+        are hidden as well.
         """
         misc_helpers.filter_log_content(self)
             
@@ -1286,8 +1442,10 @@ class Main(
         # GUI ACTIONS
         ##########################################################
         # Connect log filter and hide checkbox
-        self.lineEdit_LogFilter.textChanged.connect(self.filter_log_content)
-        self.checkBox_filter_hide.stateChanged.connect(self.filter_log_content)
+        log_widget = getattr(self, "plainTextEditLog", None)
+        if log_widget is None or not hasattr(log_widget, "filter_log_content"):
+            self.lineEdit_LogFilter.textChanged.connect(self.filter_log_content)
+            self.checkBox_filter_hide.stateChanged.connect(self.filter_log_content)
         
         self.actionTile_windows.triggered.connect(self.onTileWindows)
         self.actionTab_windows.triggered.connect(self.onTabWindows)

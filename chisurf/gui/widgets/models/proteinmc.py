@@ -17,7 +17,7 @@ from chisurf.core.fitting.parameter import FittingParameter
 
 from chisurf.gui.widgets.models.model_widget import ModelWidget
 from chisurf.gui.widgets.fitting.widgets import FittingParameterWidget
-from chisurf.plugins.modelling.proteinmc.model import (
+from chisurf.core.models.structure.proteinmc import (
     ProteinMCProgress,
     ProteinMCRunner,
     build_move_map_from_flexfit,
@@ -348,12 +348,11 @@ class ProteinMCModelWidget(ModelWidget):
         self.start_button.hide()
         self.start_button.clicked.connect(self.start_proteinmc)
 
-        if ChimolView is not None:
-            self.viewer = ChimolView(parent=self, representation_mode="atoms")
-            layout.addWidget(self.viewer, stretch=1)
-        else:
-            self.viewer = None
-            layout.addWidget(QtWidgets.QLabel("Chimol viewer unavailable", self))
+        # No Chimol viewer is created here. The 3D structure view is provided
+        # exclusively by the ProteinMCStructurePlot tab in the fitting window.
+        # Live updates during MC sampling are pushed to that plot's viewer via
+        # the existing _flush_plot_update mechanism.
+        self.viewer = None
 
         self.setLayout(layout)
         self.layout = layout
@@ -968,7 +967,7 @@ class ProteinMCModelWidget(ModelWidget):
                     score_combo.addItem("")
                     if path:
                         try:
-                            from chisurf.plugins.modelling.proteinmc.model import load_json
+                            from chisurf.core.models.structure.proteinmc import load_json
                             payload = load_json(path)
                             group_names = list((payload.get("χ²", {}) or {}).keys())
                             for name in group_names:
@@ -1179,7 +1178,7 @@ class ProteinMCModelWidget(ModelWidget):
         if not filename or not set_name:
             return 0, 0
         try:
-            from chisurf.plugins.modelling.proteinmc.model import load_json
+            from chisurf.core.models.structure.proteinmc import load_json
             payload = load_json(filename)
             flexfit = payload.get("FlexFit", {}) or {}
             entry = flexfit.get(set_name, {})
@@ -1194,7 +1193,7 @@ class ProteinMCModelWidget(ModelWidget):
     def _estimate_total_residues(self, labeling_file: str) -> int:
         """Estimate total residues from Positions section (upper bound)."""
         try:
-            from chisurf.plugins.modelling.proteinmc.model import load_json
+            from chisurf.core.models.structure.proteinmc import load_json
             payload = load_json(labeling_file)
             positions = payload.get("Positions", {}) or {}
             # Count unique residue numbers (upper bound on structure residues)
@@ -1365,11 +1364,14 @@ class ProteinMCModelWidget(ModelWidget):
         self._pending_xyz = None
         self._last_chimol_update_ms = 0
         self._chimol_frame_count = 0
-        if not continuing and isinstance(source, (str, Path)):
-            try:
-                self._load_starting_structure(str(source))
-            except Exception:
-                pass
+        # NOTE: Do NOT pre-load the raw PDB here.  ProteinMCRunner protonates
+        # the structure with pdb2pqr, producing a ProteinCentroid with a
+        # different atom count (more atoms due to added hydrogens).  Loading
+        # the raw PDB now would set state.all_atom_coords to the wrong shape;
+        # when the first MC frame arrives in append_frame its shape would
+        # differ, causing _select_state_frame to wipe state.atoms /
+        # state.secondary_structure and fall back to a dot-cloud render.
+        # on_prepared() already loads the correct protonated structure.
         if not continuing:
             self.rmsd = []
             self.drmsd = []
@@ -1461,14 +1463,30 @@ class ProteinMCModelWidget(ModelWidget):
 
     @QtCore.Slot(object)
     def on_prepared(self, structure) -> None:
-        """Initialize structure metadata before live coordinate frames arrive."""
+        """Initialize structure metadata before live coordinate frames arrive.
+
+        This is called from the worker thread (via Qt signal) once
+        ProteinMCRunner has finished building the protonated ProteinCentroid.
+        It is the authoritative place to load the correct structure into the
+        viewer, because only at this point do we know the exact atom count
+        that trajectory frames will have.
+        """
         self.proteinmc_structure = structure
-        if self.viewer is not None and self._chimol_object_id is None:
-            self._chimol_object_id = self.viewer.add_structure(structure, name="ProteinMC")
+        if self.viewer is not None:
+            # Always replace any previous object so there is no stale atom
+            # array with the wrong shape left over from a prior run or from
+            # _load_starting_structure.
+            if self._chimol_object_id is not None:
+                try:
+                    self.viewer.remove_object(self._chimol_object_id)
+                except Exception:
+                    pass
+                self._chimol_object_id = None
             try:
-                self.viewer.set_representation("atoms", object_id=self._chimol_object_id)
+                self._chimol_object_id = self.viewer.add_structure(structure, name="ProteinMC")
+                self.viewer.set_representation("cartoon", object_id=self._chimol_object_id)
             except Exception:
-                pass
+                self._chimol_object_id = None
         cs.logging.info("ProteinMC prepared starting structure")
 
     @QtCore.Slot(object)

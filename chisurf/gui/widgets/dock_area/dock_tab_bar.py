@@ -10,10 +10,13 @@ class DockTabBar(QtWidgets.QTabBar):
         Emitted when a tab at the given index is double clicked.
     doubleClickedTabBar : QtCore.Signal()
         Emitted when empty area of the tab bar is double clicked.
+    contextMenuRequested : QtCore.Signal(int, QtCore.QPoint)
+        Emitted when a tab is right-clicked; carries the tab index and global position.
     """
 
     doubleClickedTab = QtCore.Signal(int)
     doubleClickedTabBar = QtCore.Signal()
+    contextMenuRequested = QtCore.Signal(int, QtCore.QPoint)
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         """Initialize the custom dock tab bar.
@@ -115,3 +118,16 @@ class DockTabBar(QtWidgets.QTabBar):
         else:
             self.doubleClickedTabBar.emit()
         super().mouseDoubleClickEvent(event)
+
+    def contextMenuEvent(self, event: QtGui.QContextMenuEvent) -> None:
+        """Emit contextMenuRequested when right-clicking on a tab.
+
+        Parameters
+        ----------
+        event : QContextMenuEvent
+            The context menu event.
+        """
+        index = self.tabAt(event.pos())
+        if index >= 0:
+            self.contextMenuRequested.emit(index, event.globalPos())
+        super().contextMenuEvent(event)

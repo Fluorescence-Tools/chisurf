@@ -500,12 +500,12 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
 
         addLifetime = QtWidgets.QPushButton()
         addLifetime.setText("add")
-        addLifetime.clicked.connect(self.onAddLifetime)
+        addLifetime.clicked.connect(self.onAddComponent)
         lh.addWidget(addLifetime)
 
         removeLifetime = QtWidgets.QPushButton()
         removeLifetime.setText("del")
-        removeLifetime.clicked.connect(self.onRemoveLifetime)
+        removeLifetime.clicked.connect(self.onRemoveComponent)
         lh.addWidget(removeLifetime)
 
         readFrom = QtWidgets.QToolButton()
@@ -537,7 +537,7 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         absolute_amplitude = QtWidgets.QCheckBox("Abs.")
         absolute_amplitude.setChecked(True)
         absolute_amplitude.setToolTip("Take absolute value of amplitudes\nNo negative amplitudes")
-        absolute_amplitude.clicked.connect(self.onAbsoluteAmplitudes)
+        absolute_amplitude.clicked.connect(self.onNormalizeAmplitudes)
         self.absolute_amplitude = absolute_amplitude
 
         lh.addWidget(absolute_amplitude)
@@ -623,6 +623,20 @@ class ProbCh0Widget(ProbCh0, QtWidgets.QWidget):
         self._pch0.pop()
         self._amp_widgets.pop().close()
         self._pch0_widgets.pop().close()
+
+    def onAddComponent(self):
+        """Add a new species component via the action system."""
+        cs.core.actions.dispatch(
+            name="model.add_component",
+            payload={"component_name": str(self.name)},
+        )
+
+    def onRemoveComponent(self):
+        """Remove the last species component via the action system."""
+        cs.core.actions.dispatch(
+            name="model.remove_component",
+            payload={"component_name": str(self.name)},
+        )
 
 
 class PdaGaussianDistancesWidget(PdaGaussianDistances, QtWidgets.QWidget):

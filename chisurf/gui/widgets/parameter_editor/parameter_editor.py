@@ -69,7 +69,7 @@ def parameter_tree_to_dict(parameter_tree) -> typing.Dict:
             if child.opts.get('call', None):
                 target[name] = child.opts['call']
             elif isinstance(child, pg.parametertree.parameterTypes.ListParameter):
-                values = child.opts['values']
+                values = child.opts.get('values', [])
                 values = [None if value == 'None' else value for value in values]
                 target[name] = values
             elif isinstance(child.opts['value'], QtGui.QColor):

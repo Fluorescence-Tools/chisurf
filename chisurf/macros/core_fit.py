@@ -442,6 +442,134 @@ def _deserialize_reader(
     return reader
 
 
+_BULK_PDA_KEYS = frozenset({
+    's1s2', 'ps', 'row_indices', 'col_indices', 'tttr_indices',
+})
+
+
+def _flatten_metadata(
+        src: dict,
+        *,
+        skip_keys: typing.Collection[str] = (),
+        prefix: str = '',
+) -> typing.Dict[str, str]:
+    """Flatten a nested metadata dict into ``{key: str(value)}`` pairs.
+
+    Parameters
+    ----------
+    src : dict
+        Source metadata dictionary.
+    skip_keys : collection of str
+        Top-level keys to skip entirely.
+    prefix : str
+        Optional prefix for output keys.
+    """
+    result: typing.Dict[str, str] = {}
+    for k, v in src.items():
+        if k in skip_keys:
+            continue
+        if v is None or v == '':
+            continue
+        pkey = f'{prefix}{k}'
+        if isinstance(v, dict):
+            result.update(_flatten_metadata(v, prefix=f'{pkey}.'))
+        elif isinstance(v, (list, tuple)):
+            # Flatten short lists inline; skip large arrays
+            if len(v) <= 12:
+                result[pkey] = str(v)
+        elif isinstance(v, float):
+            result[pkey] = f'{v:.6e}'
+        else:
+            result[pkey] = str(v)
+    return result
+
+
+def _attach_tttr_header(fit_group, data_group):
+    """Extract metadata from the first data curve onto the fit group.
+
+    Parsed TTTR header tags and other reader-level metadata (PDA, etc.)
+    are stored on ``fit_group.flr_metadata``, giving GUI components a
+    unified view of reader-provided metadata without re-opening files.
+    """
+    try:
+        d = data_group[0] if hasattr(data_group, '__getitem__') else data_group
+        meta = getattr(d, 'meta_data', None) or {}
+    except Exception:
+        return
+
+    if not hasattr(fit_group, "flr_metadata") or fit_group.flr_metadata is None:
+        fit_group.flr_metadata = {}
+
+    entries: typing.Dict[str, str] = {}
+
+    # 1) Parse TTTR header JSON tags
+    hdr = meta.get('tttr_header_json')
+    if hdr:
+        try:
+            raw = json.loads(hdr) if isinstance(hdr, str) else hdr
+        except Exception:
+            raw = None
+        if raw:
+            tags = raw.get('tags', [])
+            for tag in tags:
+                name = tag.get('name', '')
+                value = tag.get('value', '')
+                idx = tag.get('idx', 0)
+                if value is None or value == '':
+                    continue
+                if isinstance(value, float):
+                    value = f'{value:.6e}'
+                key = name
+                if idx and idx > 0:
+                    key = f'{name}[{idx}]'
+                if key not in entries:
+                    entries[str(key)] = str(value)
+
+    # 2) Surface non-bulk keys from meta_data
+    entries.update(
+        _flatten_metadata(meta, skip_keys={'tttr_header_json'})
+    )
+
+    # 3) Surface non-bulk keys from the pda dict
+    pda = getattr(d, 'pda', None) or {}
+    entries.update(
+        _flatten_metadata(pda, skip_keys=_BULK_PDA_KEYS, prefix='pda.')
+    )
+
+    # Add entries to flr_metadata (user metadata takes precedence)
+    for k, v in entries.items():
+        if k not in fit_group.flr_metadata:
+            fit_group.flr_metadata[k] = v
+
+    # 4) Populate photon streams from source filenames in meta_data
+    raw_filenames = meta.get('filenames')
+    if not raw_filenames:
+        try:
+            raw_filenames = [
+                str(getattr(d, 'filename', ''))
+                for d in (data_group if hasattr(data_group, '__getitem__') else [data_group])
+                if getattr(d, 'filename', None)
+            ]
+        except Exception:
+            raw_filenames = []
+    if raw_filenames:
+        streams = []
+        for i, entry in enumerate(raw_filenames, 1):
+            if isinstance(entry, dict):
+                streams.append({
+                    "stream_id": f"stream_{i}",
+                    "file_path": entry.get('path', ''),
+                    "file_format": entry.get('format', ''),
+                })
+            else:
+                streams.append({
+                    "stream_id": f"stream_{i}",
+                    "file_path": str(entry),
+                    "file_format": "",
+                })
+        fit_group.flr_photon_streams = streams
+
+
 def add_fit(
     dataset_indices: typing.List[int] = None,
     model_name: str = None,
@@ -685,6 +813,12 @@ def add_fit(
                 data=data_group, model_class=model_class, model_kw=dataset_model_kw
             )
             _apply_anisotropy_calibration_to_fit(fit_group, dataset_calibration)
+            # Extract TTTR header metadata from the data's meta_data (populated
+            # during the initial file read — no second file access).
+            try:
+                _attach_tttr_header(fit_group, data_group)
+            except Exception:
+                pass
             linked_masters, linked_followers = _auto_link_non_nuisance_group_parameters(fit_group)
             cs.fits.append(fit_group)
             _record_history(
@@ -2529,6 +2663,12 @@ def load_project(project_path: str):
         restored_datasets.append(dc)
 
     cs.imported_datasets[:] = restored_datasets
+
+    from chisurf.macros.core_data import restore_global_fit_dataset
+    try:
+        restore_global_fit_dataset(_from_controller=True, update_ui=False)
+    except Exception:
+        pass
 
     if gui is not None:
         try:

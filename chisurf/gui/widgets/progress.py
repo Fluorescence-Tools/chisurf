@@ -168,33 +168,41 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
         self._statusbar_widget = None
         self._hide_btn = QtWidgets.QPushButton("Hide", self)
         self._hide_btn.clicked.connect(self.hide_to_statusbar)
+
+    def resizeEvent(self, event):
+        """Handle resize events to dynamically position the Hide button.
+
+        Parameters
+        ----------
+        event : QResizeEvent
+            The resize event parameters.
+        """
+        super().resizeEvent(event)
         
-        # Find the Cancel button and its parent layout to insert Hide button next to it
         cancel_btn = None
         for btn in self.findChildren(QtWidgets.QPushButton):
             if btn.text() == "Cancel":
                 cancel_btn = btn
                 break
         
+        # Determine button size
+        btn_w = 80
+        btn_h = 30
         if cancel_btn is not None:
-            parent_widget = cancel_btn.parentWidget()
-            layout = parent_widget.layout() if parent_widget else None
-            if isinstance(layout, QtWidgets.QGridLayout):
-                idx = layout.indexOf(cancel_btn)
-                if idx != -1:
-                    res = layout.getItemPosition(idx)
-                    row, col, row_span, col_span = res
-                    # Move cancel button to next column and put hide button in its place
-                    layout.removeWidget(cancel_btn)
-                    layout.addWidget(self._hide_btn, row, col, row_span, col_span)
-                    layout.addWidget(cancel_btn, row, col + 1, row_span, col_span)
-            elif isinstance(layout, QtWidgets.QBoxLayout):
-                idx = layout.indexOf(cancel_btn)
-                if idx != -1:
-                    layout.insertWidget(idx, self._hide_btn)
-            else:
-                if layout is not None:
-                    layout.addWidget(self._hide_btn)
+            btn_w = cancel_btn.width()
+            btn_h = cancel_btn.height()
+            y = cancel_btn.y()
+        else:
+            y = self.height() - btn_h - 12
+        
+        # Left margin - symmetric with the right margin of cancel button if possible
+        if cancel_btn is not None and self.width() > (cancel_btn.x() + cancel_btn.width()):
+            margin_right = self.width() - (cancel_btn.x() + cancel_btn.width())
+            x = max(12, margin_right)
+        else:
+            x = 12
+            
+        self._hide_btn.setGeometry(x, y, btn_w, btn_h)
 
     def _find_main_window(self) -> QtWidgets.QMainWindow | None:
         app = QtWidgets.QApplication.instance()
@@ -217,6 +225,10 @@ class EnhancedProgressDialog(QtWidgets.QProgressDialog):
                     sb = main_win.statusBar()
                     if sb is not None:
                         sb.removeWidget(self._statusbar_widget)
+            except Exception:
+                pass
+            try:
+                self._statusbar_widget.setParent(None)
             except Exception:
                 pass
             try:

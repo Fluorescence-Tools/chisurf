@@ -629,6 +629,51 @@ class SetupMixin:
             self.experiment_names
         )
 
+        # Chimol display config version check
+        try:
+            from chisurf.plugins.chimol.chimol.config import (
+                check_for_display_config_update,
+                get_user_display_config_path,
+                get_package_display_config_path,
+                DISPLAY_CONFIG_VERSION,
+            )
+            if check_for_display_config_update():
+                user_path = get_user_display_config_path()
+                package_path = get_package_display_config_path()
+                msg = QtWidgets.QMessageBox(self)
+                msg.setWindowTitle("Chimol display configuration update")
+                msg.setIcon(QtWidgets.QMessageBox.Information)
+                msg.setText(
+                    "The Chimol display configuration in your settings folder "
+                    "is outdated."
+                )
+                msg.setInformativeText(
+                    f"Your version is older than the current version "
+                    f"(v{DISPLAY_CONFIG_VERSION}) shipped with the package.\n\n"
+                    "Do you want to update? This will overwrite your current "
+                    "user configuration."
+                )
+                yes_button = msg.addButton("Update", QtWidgets.QMessageBox.YesRole)
+                msg.addButton("Skip", QtWidgets.QMessageBox.NoRole)
+                msg.exec_()
+                if msg.clickedButton() is yes_button:
+                    if package_path.is_file() and user_path is not None:
+                        try:
+                            user_path.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copyfile(package_path, user_path)
+                            from chisurf.plugins.chimol.chimol import config as _chimol_config
+                            _chimol_config.reload_display_config()
+                        except Exception as e:
+                            cs.logging.error(
+                                f"Failed to update chimol display config: {e}"
+                            )
+        except ImportError:
+            pass
+        except Exception as e:
+            cs.logging.warning(
+                f"Failed to check chimol display config update: {e}"
+            )
+
     def reinitialize(self: Main):
         """Reinitialize ChiSurf application with user confirmation and feedback"""
         reply = QtWidgets.QMessageBox.question(
@@ -685,18 +730,99 @@ class SetupMixin:
 class HistoryMixin:
     def _init_history_browser(self: Main) -> None:
         try:
+            from qtpy import QtCore, QtWidgets
+
+            log_widget = getattr(self, "plainTextEditLog", None)
+            filter_edit = getattr(self, "lineEdit_LogFilter", None)
+            hide_checkbox = getattr(self, "checkBox_filter_hide", None)
+            if log_widget is None:
+                return
+
             placeholder = getattr(self, "historyBrowserContainer", None)
             if placeholder is None:
-                return
-            parent = placeholder.parent()
+                placeholder = self.findChild(QtWidgets.QWidget, "historyBrowserContainer")
+            parent = placeholder.parent() if placeholder is not None else log_widget.parent()
             if parent is None:
                 return
             parent_layout = parent.layout()
             if parent_layout is None:
                 return
-            idx = parent_layout.indexOf(placeholder)
-            if idx < 0:
-                return
+            insert_index = parent_layout.indexOf(log_widget)
+
+            widgets_to_remove = [
+                log_widget,
+                filter_edit,
+                hide_checkbox,
+                placeholder,
+            ]
+            for i in range(parent_layout.count()):
+                item = parent_layout.itemAt(i)
+                w = item.widget()
+                if w is not None and isinstance(w, QtWidgets.QLabel) and w.text() in {"Logging", "History"}:
+                    widgets_to_remove.append(w)
+
+            seen = set()
+            for widget in widgets_to_remove:
+                if widget is None or widget in seen:
+                    continue
+                seen.add(widget)
+                try:
+                    parent_layout.removeWidget(widget)
+                    widget.setParent(None)
+                except Exception:
+                    pass
+
+            # Logging tab: wrap in a container with filter below the table
+            log_container = QtWidgets.QWidget(parent)
+            log_container.setObjectName("logContainer")
+            log_layout = QtWidgets.QVBoxLayout(log_container)
+            log_layout.setContentsMargins(0, 0, 0, 0)
+            log_layout.setSpacing(4)
+            log_layout.addWidget(log_widget, 1)
+
+            filter_row = QtWidgets.QHBoxLayout()
+            if filter_edit is None:
+                filter_edit = QtWidgets.QLineEdit(log_container)
+                filter_edit.setObjectName("lineEdit_LogFilter")
+                self.lineEdit_LogFilter = filter_edit
+            else:
+                filter_edit.setParent(log_container)
+            if hide_checkbox is None:
+                hide_checkbox = QtWidgets.QCheckBox("hide", log_container)
+                hide_checkbox.setObjectName("checkBox_filter_hide")
+                self.checkBox_filter_hide = hide_checkbox
+            else:
+                hide_checkbox.setParent(log_container)
+            filter_row.addWidget(filter_edit, 1)
+            filter_row.addWidget(hide_checkbox)
+            log_layout.addLayout(filter_row)
+
+            shared_tabs = QtWidgets.QTabWidget(parent)
+            shared_tabs.setObjectName("logRpcTabs")
+            shared_tabs.addTab(log_container, "Logging")
+            shared_tabs.tabBar().setDocumentMode(True)
+
+            try:
+                from chisurf.gui.widgets.rpc_monitor import RPCMonitorWidget
+
+                rpc_monitor = RPCMonitorWidget(shared_tabs)
+                rpc_monitor.setObjectName("rpcMonitor")
+                shared_tabs.addTab(rpc_monitor, "RPC Monitor")
+                self.rpcMonitor = rpc_monitor
+            except Exception as exc:
+                try:
+                    cs.logging.debug(f"RPC monitor disabled: {exc}")
+                except Exception:
+                    pass
+
+            parent_layout.insertWidget(insert_index, shared_tabs)
+            insert_index += 1
+
+            history_label = QtWidgets.QLabel("History", parent)
+            history_label.setObjectName("historyLabel")
+            parent_layout.insertWidget(insert_index, history_label)
+            insert_index += 1
+
             browser = cs.gui.widgets.history_browser.HistoryBrowserWidget(parent)
             browser.setObjectName("historyBrowser")
             browser.set_history(cs.history)
@@ -710,12 +836,15 @@ class HistoryMixin:
                 )
             except Exception:
                 pass
-            parent_layout.removeWidget(placeholder)
-            placeholder.setParent(None)
-            parent_layout.insertWidget(idx, browser)
+            parent_layout.insertWidget(insert_index, browser, 1)
+
             self.historyBrowser = browser
             self._sync_history_navigation_actions()
-        except Exception:
+        except Exception as exc:
+            try:
+                cs.logging.debug(f"Failed to initialize history/log dock: {exc}")
+            except Exception:
+                pass
             self.historyBrowser = None
 
     @staticmethod

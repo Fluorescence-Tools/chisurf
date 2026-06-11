@@ -74,3 +74,5 @@ from chisurf.gui.widgets.models.tcspc.worm_like_chain import WormLikeChainModelW
 from chisurf.gui.widgets.models.tcspc.parse_decay import ParseDecayModelWidget
 from chisurf.gui.widgets.models.tcspc.lifetime_mix import LifetimeMixModelWidget
 from chisurf.gui.widgets.models.tcspc.et import EtModelFreeWidget
+from chisurf.gui.widgets.models.tcspc.fret_structure import FRETStructureWidget
+

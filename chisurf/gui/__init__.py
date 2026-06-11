@@ -264,19 +264,31 @@ class QTextEditLogger(logging.Handler):
                 except Exception:
                     pass
         elif self.mode == "append":
-            # Check if widget is QListWidget or QPlainTextEdit
+            # Check if widget is QListWidget, QTableWidget, or QPlainTextEdit
             if hasattr(self.widget, 'addItem'):
-                # QListWidget
-                self.widget.addItem(msg)
+                # QListWidget/QTableWidget
+                try:
+                    self.widget.addItem(msg, record)
+                except TypeError:
+                    self.widget.addItem(msg)
                 # Scroll to the bottom to show the latest entry
                 self.widget.scrollToBottom()
             else:
                 # QPlainTextEdit
                 self.widget.appendPlainText(msg)
-            
-            # If this is the log widget and the parent has a filter method, call it
-            if hasattr(self.widget.parent(), 'update_log_filter'):
-                self.widget.parent().update_log_filter()
+
+            # If this is the log widget, ask the nearest owner to update filtering.
+            owner = self._find_log_filter_owner()
+            if owner is not None and hasattr(owner, 'update_log_filter'):
+                owner.update_log_filter()
+
+    def _find_log_filter_owner(self):
+        parent = self.widget.parent()
+        while parent is not None:
+            if hasattr(parent, 'update_log_filter'):
+                return parent
+            parent = parent.parent()
+        return None
 
 
 def setup_logging_widgets(window):

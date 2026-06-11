@@ -94,27 +94,42 @@ class RibbonBar(QtWidgets.QWidget):
 
         # Search functionality
         self._searchField = QtWidgets.QLineEdit(self)
+        self._searchField.setObjectName("ribbonSearchField")
         self._searchField.setPlaceholderText("Search...")
         self._searchField.setClearButtonEnabled(True)
-        self._searchField.setFixedWidth(150)
+        self._searchField.textChanged.connect(self._onSearchChanged)
+
+        # Wrap in container with explicit background to override app palette
+        self._searchContainer = QtWidgets.QWidget(self)
+        self._searchContainer.setObjectName("ribbonSearchContainer")
+        self._searchContainer.setFixedWidth(150)
+        self._searchContainer.setFixedHeight(22)
+        container_layout = QtWidgets.QHBoxLayout(self._searchContainer)
+        container_layout.setContentsMargins(4, 0, 4, 0)
+        container_layout.setSpacing(0)
+        container_layout.addWidget(self._searchField)
+        self._searchField.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self._searchField.setStyleSheet("""
-            QLineEdit {
-                background-color: #454545;
-                color: white;
-                border: 1px solid #666;
-                border-radius: 3px;
-                padding: 2px 5px;
+            #ribbonSearchField {
+                background-color: transparent;
+                color: #d0d0d0;
+                border: none;
+                padding: 0px;
             }
-            QLineEdit:focus {
-                border: 1px solid #1e90ff;
+            #ribbonSearchField:focus {
+                background-color: transparent;
+                color: white;
             }
         """)
-        self._searchField.textChanged.connect(self._onSearchChanged)
+        self._searchContainer.setStyleSheet("""
+            #ribbonSearchContainer {
+                background-color: #4a4a4a;
+                border: 1px solid #666;
+                border-radius: 3px;
+            }
+        """)
+        self._titleWidget.rightToolBar().insertWidget(self._titleWidget._collapseRibbonButtonAction, self._searchContainer)
         
-        # Add search field to right toolbar (to the left of other buttons)
-        # Use insertWidget before the collapse button
-        self._titleWidget.rightToolBar().insertWidget(self._titleWidget._collapseRibbonButtonAction, self._searchField)
-
         # Connect signals
         self._titleWidget.helpButtonClicked.connect(self.helpButtonClicked)
         self._titleWidget.collapseRibbonButtonClicked.connect(self._collapseButtonClicked)

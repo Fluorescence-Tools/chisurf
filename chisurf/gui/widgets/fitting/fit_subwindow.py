@@ -1,10 +1,11 @@
 from __future__ import annotations
 import chisurf as cs
 
+import json
 import os
-import typing
 import pathlib
 import textwrap
+import typing
 
 import numpy as np
 import pyqtgraph as pg
@@ -34,7 +35,7 @@ class FitSubWindow(CustomMdiSubWindow):
             self,
             fit: cs.core.fitting.fit.FitGroup,
             control_layout: QtWidgets.QLayout,
-            fit_widget: 'FittingControllerWidget' = None,
+            fit_widget: object = None,
             *args,
             **kwargs
     ):
@@ -68,6 +69,7 @@ class FitSubWindow(CustomMdiSubWindow):
 
         # Create DockArea
         self.plot_tab_widget = DockArea(self)
+        self.plot_tab_widget.setNewTabButtonVisible(False)
         self.flip_to_code_btn = QtWidgets.QToolButton()
         self.flip_to_code_btn.setText("Code")
         self.flip_to_code_btn.setFixedSize(50, 20)
@@ -95,25 +97,28 @@ class FitSubWindow(CustomMdiSubWindow):
 
         self.back_toolbar = QtWidgets.QHBoxLayout()
         self.back_toolbar.setContentsMargins(5, 5, 5, 5)
-        
+
         self.nav_back_btn = QtWidgets.QToolButton()
-        self.nav_back_btn.setText("<")
-        self.nav_back_btn.clicked.connect(lambda: self.code_editor.navigate_back())
-        
+        self.nav_back_btn.setText("←")
+        self.nav_back_btn.setToolTip("Navigate back to previous cursor position")
+        self.nav_back_btn.clicked.connect(self._code_nav_back)
+
         self.nav_forward_btn = QtWidgets.QToolButton()
-        self.nav_forward_btn.setText(">")
-        self.nav_forward_btn.clicked.connect(lambda: self.code_editor.navigate_forward())
-        
+        self.nav_forward_btn.setText("→")
+        self.nav_forward_btn.setToolTip("Navigate forward to next cursor position")
+        self.nav_forward_btn.clicked.connect(self._code_nav_forward)
+
         self.file_combo = QtWidgets.QComboBox()
         self.file_combo.currentIndexChanged.connect(self.on_code_file_selected)
-        
+
         self.func_combo = QtWidgets.QComboBox()
         self.func_combo.currentIndexChanged.connect(self.on_code_func_selected)
 
         self.save_code_btn = QtWidgets.QToolButton()
         self.save_code_btn.setText("Save/Apply")
+        self.save_code_btn.setToolTip("Save the current editor content to the model")
         self.save_code_btn.clicked.connect(self.save_model_code)
-        
+
         self.back_toolbar.addWidget(self.nav_back_btn)
         self.back_toolbar.addWidget(self.nav_forward_btn)
         self.back_toolbar.addWidget(QtWidgets.QLabel("File:"))
@@ -125,10 +130,17 @@ class FitSubWindow(CustomMdiSubWindow):
         
         self.back_layout.addLayout(self.back_toolbar)
 
-        from chisurf.plugins.core.code_editor.text_editor import TextEditor
-        self.code_editor = TextEditor(self, language="python")
-        self.code_editor.file_load_callback = self.load_code_file
+        from chisurf.plugins.core.code_editor import CodeEditor
+        self.code_editor = CodeEditor(self, language="python", can_load=False)
+        # Wire the fit window's own toolbar nav buttons to the current editor
+        self.code_editor._on_editor_created = self._on_code_editor_created
         self.back_layout.addWidget(self.code_editor)
+
+        self.agent_btn = QtWidgets.QToolButton()
+        self.agent_btn.setText("🤖")
+        self.agent_btn.setToolTip("Toggle AI agent panel")
+        self.agent_btn.clicked.connect(self.code_editor._toggle_agent_panel)
+        self.back_toolbar.insertWidget(0, self.agent_btn)
         self.stack.addWidget(self.back_widget)
 
         rect = self.plot_tab_widget.geometry()
@@ -149,10 +161,12 @@ class FitSubWindow(CustomMdiSubWindow):
             container.setLayout(QtWidgets.QVBoxLayout())
             container.layout().setContentsMargins(0, 0, 0, 0)
             container.layout().setSpacing(0)
-            self._plot_containers.append(container)
             tab_name = getattr(plot_class, 'name', None)
             if not isinstance(tab_name, str):
                 tab_name = getattr(plot_class, '__name__', str(plot_class))
+            container.setProperty("fit_plot_index", idx)
+            container.setProperty("fit_plot_name", tab_name)
+            self._plot_containers.append(container)
             self.plot_tab_widget.addTab(container, tab_name)
         # Share created plot list with FitGroup and its member Fits
         fit.plots = self._created_plots
@@ -196,6 +210,99 @@ class FitSubWindow(CustomMdiSubWindow):
         # Resize window
         xs, ys = cs.core.settings.gui['fit_windows_size']
         self.resize(xs, ys)
+
+        self.plot_tab_widget.layoutChanged.connect(self.save_fit_dock_layout_state)
+        self.restore_fit_dock_layout_state()
+
+    def _fit_model_class_key(self) -> str:
+        """Return the persistent layout key for this fit's model class.
+
+        Returns
+        -------
+        str
+            Fully qualified model class name.
+        """
+        model = getattr(self.fit, "model", None)
+        model_cls = model.__class__ if model is not None else self.fit.__class__
+        return f"{model_cls.__module__}.{model_cls.__name__}"
+
+    def _plot_widget_key(self, widget: QtWidgets.QWidget) -> str:
+        """Return the persistent layout key for a plot widget.
+
+        Parameters
+        ----------
+        widget : QWidget
+            Plot page widget.
+
+        Returns
+        -------
+        str
+            Stable plot key.
+        """
+        idx = widget.property("fit_plot_index")
+        name = widget.property("fit_plot_name")
+        try:
+            return f"{int(idx)}:{name or ''}"
+        except Exception:
+            return str(name or "")
+
+    def _fit_dock_layout_settings(self) -> QtCore.QSettings:
+        """Return QSettings for fit-window dock layouts in the user folder.
+
+        Returns
+        -------
+        QSettings
+            Settings object backed by ``~/.chisurf/fit_window_dock_layouts.ini``.
+        """
+        settings_path = cs.core.settings.get_path("settings") / "fit_window_dock_layouts.ini"
+        return QtCore.QSettings(str(settings_path), QtCore.QSettings.IniFormat)
+
+    def get_fit_dock_layout_state(self) -> dict:
+        """Return the current dock layout state for this fit's model class.
+
+        Returns
+        -------
+        dict
+            Serialized dock layout.
+        """
+        return self.plot_tab_widget.get_layout_state(key_func=self._plot_widget_key)
+
+    def save_fit_dock_layout_state(self) -> None:
+        """Persist the current dock layout for this fit's model class."""
+        try:
+            if self.plot_tab_widget.count() <= 0:
+                return
+            state = self.get_fit_dock_layout_state()
+            settings = self._fit_dock_layout_settings()
+            settings.setValue(self._fit_model_class_key(), json.dumps(state, sort_keys=True))
+            settings.sync()
+        except Exception as exc:
+            try:
+                cs.logging.warning(f"Failed to save fit dock layout: {exc}")
+            except Exception:
+                pass
+
+    def restore_fit_dock_layout_state(self) -> None:
+        """Restore the saved dock layout for this fit's model class."""
+        try:
+            settings = self._fit_dock_layout_settings()
+            value = settings.value(self._fit_model_class_key())
+            if isinstance(value, str):
+                state = json.loads(value)
+            elif isinstance(value, dict):
+                state = value
+            else:
+                return
+            self.plot_tab_widget.set_layout_state(
+                state,
+                key_func=self._plot_widget_key,
+                emit_change=False,
+            )
+        except Exception as exc:
+            try:
+                cs.logging.warning(f"Failed to restore fit dock layout: {exc}")
+            except Exception:
+                pass
 
     def ensure_plot_created(self, idx: int):
         # Create plot for given index if not yet created
@@ -271,6 +378,7 @@ class FitSubWindow(CustomMdiSubWindow):
         self.statusBar().showMessage(msg)
 
     def closeEvent(self, event: QtCore.QEvent):
+        self.save_fit_dock_layout_state()
         # Honour a per-window opt-out flag (used by macros/app shutdown) as
         # well as the global confirm_close_fit setting.
         if getattr(self, 'close_confirm', True) and cs.core.settings.gui['confirm_close_fit']:
@@ -336,18 +444,52 @@ class FitSubWindow(CustomMdiSubWindow):
             from qtpy import QtWidgets
             QtWidgets.QMessageBox.warning(self, "Error", f"Failed to load model source: {e}")
 
-    def load_code_file(self, file_path):
+    def _get_current_text_editor(self):
+        """Return the currently active TextEditor inside the CodeEditor."""
+        return self.code_editor._get_current_editor()
+
+    def _code_nav_back(self):
+        editor = self._get_current_text_editor()
+        if editor is not None:
+            editor.navigate_back()
+
+    def _code_nav_forward(self):
+        editor = self._get_current_text_editor()
+        if editor is not None:
+            editor.navigate_forward()
+
+    def _on_code_editor_created(self, editor):
+        """Called when a new editor tab is created inside CodeEditor."""
+        editor.external_definition_callback = self._open_external_definition
+        editor.file_load_callback = self.load_code_file
+
+    def _open_external_definition(self, file_path, line_number):
+        """Open an external file in the code editor and jump to the given line."""
+        self.code_editor.open_file(file_path, line=line_number)
+
+    def load_code_file(self, file_path, line_number: int = 0):
         import re
         self.original_source_file = file_path
-        self.code_editor.current_file = file_path
-        with open(file_path, "r") as f:
-            code = f.read()
-        self.code_editor.setText(code)
-        
+        self.code_editor.open_file(file_path)
+        editor = self._get_current_text_editor()
+        if editor is None:
+            return
+        editor.current_file = file_path
+
+        if line_number > 0:
+            doc = editor.document()
+            block = doc.findBlockByNumber(line_number)
+            if block.isValid():
+                cursor = editor.textCursor()
+                cursor.setPosition(block.position())
+                editor.setTextCursor(cursor)
+                editor.centerCursor()
+
+        code = editor.toPlainText()
         self.func_combo.blockSignals(True)
         self.func_combo.clear()
         self.func_combo.addItem("Select...", -1)
-        
+
         lines = code.split('\n')
         for i, line in enumerate(lines):
             m = re.match(r'^ *(def |class )([a-zA-Z0-9_]+)', line)
@@ -355,10 +497,10 @@ class FitSubWindow(CustomMdiSubWindow):
                 indent = len(line) - len(line.lstrip())
                 prefix = " " * indent
                 self.func_combo.addItem(f"{prefix}{m.group(1)}{m.group(2)}", i)
-                
+
         self.func_combo.blockSignals(False)
-        if not self.code_editor._nav_history:
-            self.code_editor.push_nav_history(file_path, 0)
+        if not editor._nav_history:
+            editor.push_nav_history(file_path, 0)
 
     def on_code_file_selected(self, idx):
         if idx < 0: return
@@ -366,19 +508,26 @@ class FitSubWindow(CustomMdiSubWindow):
         self.load_code_file(file_path)
 
     def on_code_func_selected(self, idx):
-        if idx < 0: return
+        if idx < 0:
+            return
         line_num = self.func_combo.itemData(idx)
         if line_num >= 0:
-            doc = self.code_editor.document()
+            editor = self._get_current_text_editor()
+            if editor is None:
+                return
+            doc = editor.document()
             block = doc.findBlockByNumber(line_num)
-            cursor = self.code_editor.textCursor()
+            cursor = editor.textCursor()
             cursor.setPosition(block.position())
-            self.code_editor.setTextCursor(cursor)
-            self.code_editor.centerCursor()
-            self.code_editor.setFocus()
+            editor.setTextCursor(cursor)
+            editor.centerCursor()
+            editor.setFocus()
 
     def save_model_code(self):
-        code = self.code_editor.text()
+        editor = self._get_current_text_editor()
+        if editor is None:
+            return
+        code = editor.text()
         if not hasattr(self, 'original_source_file'):
             return
 

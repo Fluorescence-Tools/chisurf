@@ -117,7 +117,7 @@ def setup_log_list_widget(window) -> None:
 
 
 def filter_log_content(window):
-    """Filter log list widget based on filter text and hide checkbox state."""
+    """Highlight matching log rows and optionally hide non-matching rows."""
     try:
         filter_text = window.lineEdit_LogFilter.text().strip().lower()
     except Exception:
@@ -127,59 +127,47 @@ def filter_log_content(window):
     except Exception:
         hide_non_matching = False
 
-    if not hasattr(window, "_original_log_items"):
-        window._original_log_items = []
-        try:
-            for i in range(window.plainTextEditLog.count()):
-                window._original_log_items.append(window.plainTextEditLog.item(i).text())
-        except Exception:
-            window._original_log_items = []
-
-    if not filter_text:
-        try:
-            window.plainTextEditLog.clear()
-            for item_text in window._original_log_items:
-                item = QtWidgets.QListWidgetItem(item_text)
-                window.plainTextEditLog.addItem(item)
-        except Exception:
-            pass
+    widget = getattr(window, "plainTextEditLog", None)
+    if widget is None:
+        return
+    if hasattr(widget, "filter_log_content"):
+        previous_external_filter = getattr(widget, "_external_filter", None)
+        widget._external_filter = (filter_text, hide_non_matching)
+        widget.filter_log_content()
+        if previous_external_filter is None:
+            del widget._external_filter
+        else:
+            widget._external_filter = previous_external_filter
+        return
+    if not hasattr(widget, "rowCount"):
         return
 
-    try:
-        window.plainTextEditLog.clear()
-        if window._original_log_items:
-            for item_text in window._original_log_items:
-                if filter_text in item_text.lower():
-                    item = QtWidgets.QListWidgetItem(item_text)
-                    item.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
-                    item.setBackground(QtGui.QBrush(QtGui.QColor(255, 255, 0, 50)))
-                    font = item.font()
-                    font.setBold(True)
-                    item.setFont(font)
-                    window.plainTextEditLog.addItem(item)
-                elif not hide_non_matching:
-                    item = QtWidgets.QListWidgetItem(item_text)
-                    item.setForeground(QtGui.QBrush(QtGui.QColor(150, 150, 150)))
-                    window.plainTextEditLog.addItem(item)
+    for row in range(widget.rowCount()):
+        message = widget.item(row, 3)
+        row_text = widget.row_text(row) if hasattr(widget, "row_text") else message.text()
+        match = not filter_text or filter_text in row_text.lower()
+        widget.setRowHidden(row, hide_non_matching and not match)
+        if hasattr(widget, "reset_row_styles"):
+            widget.reset_row_styles(row)
 
-            if window.plainTextEditLog.count() == 0:
-                window.plainTextEditLog.addItem("No matching log entries found.")
-        else:
-            window.plainTextEditLog.addItem("No log entries found.")
-    except Exception:
-        pass
+        if filter_text and match:
+            for column in range(widget.columnCount()):
+                item = widget.item(row, column)
+                if item is None:
+                    continue
+                item.setBackground(QtGui.QBrush(QtGui.QColor(255, 255, 0, 50)))
+                font = item.font()
+                font.setBold(True)
+                item.setFont(font)
+
+    if filter_text and hide_non_matching:
+        visible_rows = [row for row in range(widget.rowCount()) if not widget.isRowHidden(row)]
+        if not visible_rows:
+            cs.logging.debug("No log entries match the current filter.")
 
 
 def update_log_filter(window):
     """Update log filtering when new entries are added."""
-    try:
-        if window.plainTextEditLog.count() > 0:
-            latest_item = window.plainTextEditLog.item(window.plainTextEditLog.count() - 1).text()
-            if hasattr(window, "_original_log_items"):
-                window._original_log_items.append(latest_item)
-    except Exception:
-        pass
-
     filter_log_content(window)
 
 
@@ -341,3 +329,134 @@ def run_plugin_from_dir(main_window, plugin_dir_to_use):
             cs.logging.warning(f"No wizard.py or __init__.py found for plugin directory: {plugin_dir_to_use}")
     except Exception as e:
         cs.logging.error(f"Error running plugin from {plugin_dir_to_use}: {e}")
+
+
+def get_plugin_settings_path(plugin_name: str) -> pathlib.Path:
+    """Get the path to the settings file for a given plugin inside the chisurf user settings folder.
+
+    Parameters
+    ----------
+    plugin_name : str
+        The name of the plugin.
+
+    Returns
+    -------
+    pathlib.Path
+        The path to the settings file.
+    """
+    try:
+        from chisurf.core.settings import get_path
+        settings_dir = get_path('settings')
+    except Exception:
+        settings_dir = pathlib.Path.home() / '.chisurf'
+    settings_dir.mkdir(parents=True, exist_ok=True)
+    return settings_dir / f"plugin_{plugin_name}_settings.ini"
+
+
+def save_plugin_window_state(window, plugin_name: str) -> None:
+    """Save the window geometry and state (dock layout) of a plugin.
+
+    Parameters
+    ----------
+    window : QMainWindow
+        The main window widget of the plugin.
+    plugin_name : str
+        The name of the plugin.
+    """
+    try:
+        ini_path = get_plugin_settings_path(plugin_name)
+        settings = QtCore.QSettings(str(ini_path), QtCore.QSettings.IniFormat)
+        settings.setValue("geometry", window.saveGeometry())
+        if hasattr(window, "saveState"):
+            settings.setValue("state", window.saveState())
+    except Exception as e:
+        try:
+            logging.warning(f"Failed to save window state for plugin {plugin_name}: {e}")
+        except Exception:
+            pass
+
+
+def restore_plugin_window_state(window, plugin_name: str) -> None:
+    """Restore the window geometry and state (dock layout) of a plugin.
+
+    Parameters
+    ----------
+    window : QMainWindow
+        The main window widget of the plugin.
+    plugin_name : str
+        The name of the plugin.
+    """
+    try:
+        ini_path = get_plugin_settings_path(plugin_name)
+        if ini_path.exists():
+            settings = QtCore.QSettings(str(ini_path), QtCore.QSettings.IniFormat)
+            geo = settings.value("geometry")
+            if geo is not None:
+                window.restoreGeometry(geo)
+            if hasattr(window, "restoreState"):
+                state = settings.value("state")
+                if state is not None:
+                    window.restoreState(state)
+    except Exception as e:
+        try:
+            logging.warning(f"Failed to restore window state for plugin {plugin_name}: {e}")
+        except Exception:
+            pass
+
+
+def persist_plugin_state(plugin_name: str):
+    """Class decorator that adds automatic window state persistence to a plugin widget.
+
+    When the widget is shown, it restores its geometry/state from the user settings folder.
+    When the widget is closed, it saves its geometry/state.
+
+    Parameters
+    ----------
+    plugin_name : str
+        Unique identifier for this plugin (used as the settings filename key).
+
+    Examples
+    --------
+    @persist_plugin_state("my_plugin")
+    class MyPluginWidget(QMainWindow):
+        ...
+    """
+    def decorator(cls):
+        orig_init = cls.__init__
+        orig_close = getattr(cls, 'closeEvent', None)
+        orig_show = getattr(cls, 'showEvent', None)
+
+        def _new_init(self, *args, **kwargs):
+            self._persist_plugin_name = plugin_name
+            self._persist_state_restored = False
+            orig_init(self, *args, **kwargs)
+
+        def _new_showEvent(self, event):
+            if not self._persist_state_restored:
+                self._persist_state_restored = True
+                try:
+                    restore_plugin_window_state(self, self._persist_plugin_name)
+                except Exception:
+                    pass
+            if orig_show is not None:
+                orig_show(self, event)
+            else:
+                event.accept()
+
+        def _new_closeEvent(self, event):
+            try:
+                save_plugin_window_state(self, self._persist_plugin_name)
+            except Exception:
+                pass
+            if orig_close is not None:
+                orig_close(self, event)
+            else:
+                event.accept()
+
+        cls.__init__ = _new_init
+        cls.showEvent = _new_showEvent
+        cls.closeEvent = _new_closeEvent
+        return cls
+
+    return decorator
+

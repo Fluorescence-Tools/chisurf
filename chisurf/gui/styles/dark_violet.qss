@@ -468,7 +468,7 @@ QTextEdit {
     selection-background-color: #767662;
 }
 
-/* Use a unified monospace font and size for the History / Log dock */
+/* Use a unified monospace font and size for the Logging dock */
 QListWidget#plainTextEditLog,
 QWidget#historyBrowser,
 QWidget#historyBrowser QTreeWidget,

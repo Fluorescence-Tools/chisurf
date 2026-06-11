@@ -87,6 +87,9 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
     current mode can be queried from the `used_filter` property.
     """
 
+    # Signal for status messages to be displayed in the main window's statusbar
+    status_message = QtCore.Signal(str, int)
+
     @property
     def photon_number_threshold(self):
         return self.spinBox.value()
@@ -1676,13 +1679,11 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
         """
         Save the burst selection parameters to the current setup.
         """
+        logger = logging.getLogger(__name__)
         setup_name = self.comboBox.currentText()
         if not setup_name or setup_name == "No setups available":
-            QtWidgets.QMessageBox.warning(
-                self,
-                "No Setup Selected",
-                "Please select a setup first to save burst selection parameters."
-            )
+            logger.warning("No setup selected - cannot save burst selection parameters")
+            self.status_message.emit("No setup selected - please select a setup first", 5000)
             return False
 
         # Load setups from the detector setups file
@@ -1699,25 +1700,16 @@ class WizardTTTRPhotonFilter(QtWidgets.QWizardPage):
 
             # Save the updated setups
             if save_detector_setups(setups):
-                QtWidgets.QMessageBox.information(
-                    self,
-                    "Success",
-                    f"Burst selection parameters saved to setup '{setup_name}' successfully."
-                )
+                logger.info(f"Burst selection parameters saved to setup '{setup_name}' successfully")
+                self.status_message.emit(f"Burst selection parameters saved to setup '{setup_name}'", 3000)
                 return True
             else:
-                QtWidgets.QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Failed to save burst selection parameters to setup '{setup_name}'."
-                )
+                logger.error(f"Failed to save burst selection parameters to setup '{setup_name}'")
+                self.status_message.emit(f"Failed to save burst selection parameters to setup '{setup_name}'", 5000)
                 return False
         else:
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Invalid Setup",
-                f"The selected setup '{setup_name}' does not exist."
-            )
+            logger.warning(f"The selected setup '{setup_name}' does not exist")
+            self.status_message.emit(f"Setup '{setup_name}' does not exist", 5000)
             return False
 
     def update_micro_time_binning(self, setup_name=None):

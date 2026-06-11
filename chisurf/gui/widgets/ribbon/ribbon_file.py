@@ -167,6 +167,7 @@ class FileCategoryMixin:
                         icon=icon,
                         slot=lambda _chk=False, pp=p: self._open_recent_from_ribbon(pp),
                         tooltip=str(p),
+                        alignment=Qt.AlignLeft | Qt.AlignTop
                     )
                 except Exception:
                     continue
@@ -179,6 +180,7 @@ class FileCategoryMixin:
                     icon=clear_icon,
                     slot=lambda _chk=False: self._clear_recent_from_ribbon(),
                     tooltip="Clear recent projects list",
+                    alignment=Qt.AlignLeft | Qt.AlignTop
                 )
             except Exception:
                 pass
@@ -194,6 +196,13 @@ class FileCategoryMixin:
                         w.show()
                         for child in w.findChildren(QtWidgets.QWidget):
                             child.show()
+        except Exception:
+            pass
+
+        # Fix alignment to ensure everything aligns to top-left instead of center
+        try:
+            if hasattr(self, "_fix_panel_alignment"):
+                self._fix_panel_alignment(panel_recent)
         except Exception:
             pass
 

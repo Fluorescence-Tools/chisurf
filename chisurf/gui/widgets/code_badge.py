@@ -11,9 +11,8 @@ import inspect
 import typing
 from typing import Callable, Optional, Tuple
 
-from chisurf.gui import QtWidgets, QtGui, QtCore
-
 import chisurf.core.settings
+from chisurf.gui import QtCore, QtGui, QtWidgets
 
 
 class CodeBadgeButton(QtWidgets.QToolButton):
@@ -37,7 +36,16 @@ class CodeBadgeButton(QtWidgets.QToolButton):
         self._opacity_hover = 1.0
 
         self._setup_ui()
+        self.set_editor_font_from_settings()
         self._update_visibility()
+
+    def set_editor_font_from_settings(self) -> None:
+        """Apply the configured code editor font family to the badge."""
+        font = QtGui.QFont()
+        font.setFamily(chisurf.core.settings.gui['editor']['font_family'])
+        font.setStyleHint(QtGui.QFont.Monospace)
+        font.setPointSize(max(7, min(10, int(chisurf.core.settings.gui['editor']['font_size']) - 1)))
+        self.setFont(font)
 
     def _setup_ui(self):
         self.setText("</>")
@@ -46,10 +54,6 @@ class CodeBadgeButton(QtWidgets.QToolButton):
         self.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.setCursor(QtCore.Qt.PointingHandCursor)
         self.setToolTip("Open source (Dev mode)")
-
-        font = QtGui.QFont("Consolas", 8)
-        font.setStyleHint(QtGui.QFont.Monospace)
-        self.setFont(font)
 
         self.setStyleSheet("""
             QToolButton {
@@ -69,6 +73,13 @@ class CodeBadgeButton(QtWidgets.QToolButton):
         self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
 
         self.clicked.connect(self._on_clicked)
+
+    def set_editor_font(self, font: QtGui.QFont) -> None:
+        """Apply an editor font to the badge while keeping it compact."""
+        badge_font = QtGui.QFont(font)
+        badge_font.setStyleHint(QtGui.QFont.Monospace)
+        badge_font.setPointSize(max(7, min(10, int(font.pointSize()) - 1)))
+        self.setFont(badge_font)
 
     def _update_visibility(self):
         visible = chisurf.core.settings.is_dev_mode()

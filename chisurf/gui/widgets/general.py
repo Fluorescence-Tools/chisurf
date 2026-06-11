@@ -5,6 +5,8 @@ import fnmatch
 import numbers
 import os
 import pathlib
+import re
+import time
 
 from chisurf.gui import QtGui, QtWidgets, QtCore
 from io import BytesIO
@@ -183,40 +185,200 @@ class FileList(QtWidgets.QListWidget):
         self.setWindowIcon(icon)
 
 
-class LogListWidget(QtWidgets.QListWidget):
-    """
-    Custom QListWidget that handles Ctrl+C to copy all selected items.
-    """
+def table_font() -> QtGui.QFont:
+    """Return the globally configured table font."""
+    gui_settings = cs.core.settings.gui
+    table_settings = gui_settings.get("table", {})
+    font_family = table_settings.get("font_family")
+    font_size = int(table_settings.get("font_size", 10))
+    font = QtGui.QFont(font_family) if font_family else QtGui.QFont()
+    font.setPointSize(max(1, font_size))
+    font.setBold(bool(table_settings.get("font_bold", False)))
+    return font
+
+
+def table_row_height() -> int:
+    """Return the globally configured compact table row height."""
+    row_height = cs.core.settings.gui.get("table", {}).get("row_height", 18)
+    return max(12, int(row_height))
+
+
+def apply_compact_table_style(table) -> None:
+    """Apply compact styling to a table-like widget."""
+    table.setFont(table_font())
+    table.setAlternatingRowColors(True)
+    table.setSortingEnabled(False)
+
+    if hasattr(table, "verticalHeader"):
+        table.verticalHeader().setDefaultSectionSize(table_row_height())
+        table.verticalHeader().setVisible(False)
+
+    if hasattr(table, "horizontalHeader"):
+        header = table.horizontalHeader()
+        header.setDefaultSectionSize(table_header_height())
+        header.setStretchLastSection(True)
+        header.setSectionsClickable(False)
+        header.setHighlightSections(False)
+
+
+def table_header_height() -> int:
+    """Return the globally configured compact table header height."""
+    header_height = cs.core.settings.gui.get("table", {}).get("header_height", table_row_height())
+    return max(12, int(header_height))
+
+
+class LogListWidget(QtWidgets.QTableWidget):
+    """Multi-column log table with basic filtering and clipboard support."""
+
+    _LOG_PATTERN = re.compile(
+        r"^(?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:,\d{3})?)\s+-\s+"
+        r"(?P<level>[A-Z]+)\s+-\s+(?P<message>.*)$"
+    )
+
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(0, 4, parent)
+        self.setHorizontalHeaderLabels(["Time", "Level", "Origin", "Message"])
+        self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.setUniformItemSizes(True)
-        
-    def keyPressEvent(self, event):
-        """Handle key press events, specifically Ctrl+C for copying selected items."""
-        # Check if Ctrl+C was pressed
+        apply_compact_table_style(self)
+        self.horizontalHeader().setStretchLastSection(False)
+        self.setColumnWidth(0, 65)
+        self.setColumnWidth(1, 50)
+        self.setColumnWidth(2, 130)
+        self.setColumnWidth(3, 220)
+
+    def addItem(self, text, record=None):  # type: ignore[override]
+        """Add one log row to the table."""
+        full_time, time_text, level, source, message = self._parse_log_entry(str(text), record)
+        row = self.rowCount()
+        self.insertRow(row)
+        self._set_item(row, 0, time_text, full_time)
+        self.item(row, 0).setData(QtCore.Qt.UserRole, full_time)
+        self._set_item(row, 1, level)
+        self._set_item(row, 2, source, source)
+        self._set_item(row, 3, message, message)
+        self._style_level(row, level)
+        self.scrollToBottom()
+
+    def count(self):  # type: ignore[override]
+        """Return the number of log rows."""
+        return self.rowCount()
+
+    def item(self, row, column=3):  # type: ignore[override]
+        """Return the message item for a row by default."""
+        return super().item(row, column)
+
+    def row_text(self, row):
+        """Return the full text of a log row."""
+        parts = []
+        for column in range(self.columnCount()):
+            item = self.item(row, column)
+            if item is None:
+                continue
+            parts.append(str(item.data(QtCore.Qt.UserRole) or item.text()))
+        return " | ".join(parts)
+
+    def keyPressEvent(self, event):  # type: ignore[override]
+        """Copy selected log rows with Ctrl+C."""
         if event.key() == QtCore.Qt.Key_C and event.modifiers() & QtCore.Qt.ControlModifier:
             self.copy_selected_items()
         else:
-            # For all other key events, use the default handler
             super().keyPressEvent(event)
-            
+
     def copy_selected_items(self):
-        """Copy the text of all selected items to the clipboard."""
+        """Copy selected log rows to the clipboard as tab-separated text."""
         selected_items = self.selectedItems()
         if not selected_items:
             return
-            
-        # Collect text from all selected items
-        texts = [item.text() for item in selected_items]
-        text_to_copy = '\n'.join(texts)
-        
-        # Copy to clipboard
-        clipboard = QtWidgets.QApplication.clipboard()
-        clipboard.setText(text_to_copy)
-        
-        # Optional: Log that items were copied
-        cs.logging.info(f"Copied {len(selected_items)} log entries to clipboard")
+
+        rows = {}
+        for item in selected_items:
+            rows.setdefault(item.row(), {})[item.column()] = item.text()
+
+        lines = []
+        for row_index in sorted(rows):
+            values = []
+            for column in range(self.columnCount()):
+                item = self.item(row_index, column)
+                if column in {0, 2, 3} and item is not None:
+                    values.append(str(item.data(QtCore.Qt.UserRole) or item.text()))
+                elif item is not None:
+                    values.append(item.text())
+                else:
+                    values.append("")
+            lines.append("\t".join(values))
+
+        QtWidgets.QApplication.clipboard().setText("\n".join(lines))
+        cs.logging.info(f"Copied {len(rows)} log entries to clipboard")
+
+    def reset_row_styles(self, row):
+        """Reset foreground, background, and font styles for a log row."""
+        for column in range(self.columnCount()):
+            item = self.item(row, column)
+            if item is None:
+                continue
+            item.setBackground(QtGui.QBrush())
+            item.setFont(table_font())
+
+    def _set_item(self, row, column, text, tooltip=None):
+        visible_text = self._visible_text(str(text), column)
+        item = QtWidgets.QTableWidgetItem(visible_text)
+        item.setFlags(item.flags() & ~QtCore.Qt.ItemIsEditable)
+        if tooltip is not None:
+            item.setToolTip(str(tooltip))
+            item.setData(QtCore.Qt.UserRole, str(tooltip))
+        self.setItem(row, column, item)
+
+    def _visible_text(self, text: str, column: int) -> str:
+        if column not in {2, 3}:
+            return text
+        max_len = 34 if column == 2 else 90
+        if len(text) <= max_len:
+            return text
+        return f"{text[: max_len - 1]}…"
+
+    def _style_level(self, row, level):
+        color_map = {
+            "DEBUG": QtGui.QColor(90, 120, 160),
+            "INFO": QtGui.QColor(30, 130, 30),
+            "WARNING": QtGui.QColor(190, 130, 0),
+            "ERROR": QtGui.QColor(200, 50, 50),
+            "CRITICAL": QtGui.QColor(150, 0, 150),
+        }
+        item = self.item(row, 1)
+        if item is not None:
+            color = color_map.get(level.upper(), QtGui.QColor(0, 0, 0))
+            item.setForeground(QtGui.QBrush(color))
+
+    def _parse_log_entry(self, text, record=None):
+        full_time = ""
+        level = ""
+        source = ""
+        message = text
+
+        if record is not None:
+            full_time = getattr(record, "asctime", "")
+            level = getattr(record, "levelname", "")
+            source = getattr(record, "pathname", "") or getattr(record, "module", "") or getattr(record, "name", "")
+
+        match = self._LOG_PATTERN.match(text)
+        if match:
+            full_time = match.group("time")
+            level = match.group("level")
+            message = match.group("message")
+
+        return full_time, self._display_time(full_time), level, source, message
+
+    @staticmethod
+    def _display_time(full_time: str) -> str:
+        if not full_time:
+            return ""
+        for fmt in ("%Y-%m-%d %H:%M:%S,%f", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return time.strftime("%H:%M:%S", time.strptime(full_time, fmt))
+            except ValueError:
+                continue
+        return full_time
 
 
 

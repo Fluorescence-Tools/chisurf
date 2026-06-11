@@ -1,18 +1,25 @@
 from __future__ import annotations
 
-from chisurf import typing
-from qtpy import QtCore
-from chisurf.gui import QtWidgets
-
 import qtconsole
-import qtconsole.qtconsoleapp
 import qtconsole.inprocess
-import qtconsole.styles
 import qtconsole.manager
+import qtconsole.qtconsoleapp
+import qtconsole.styles
+from qtpy import QtCore, QtGui
 
 import chisurf.core.fio as io
-import chisurf.gui
 import chisurf.core.settings
+import chisurf.gui
+from chisurf import typing
+from chisurf.gui import QtWidgets
+
+
+def make_editor_font_from_settings() -> QtGui.QFont:
+    """Create a font matching the code editor settings."""
+    editor_font = QtGui.QFont()
+    editor_font.setFamily(chisurf.core.settings.gui['editor']['font_family'])
+    editor_font.setPointSize(int(chisurf.core.settings.gui['editor']['font_size']))
+    return editor_font
 
 
 class QIPythonWidget(
@@ -108,6 +115,15 @@ class QIPythonWidget(
         self.session_file = chisurf.core.settings.session_file
         self.set_default_style(chisurf.core.settings.gui['console_style'])
         self.style_sheet = qtconsole.styles.default_light_style_sheet
+
+        # Use the same font as the code editor for visual consistency
+        self.set_editor_font(make_editor_font_from_settings())
+
+    def set_editor_font(self, font: QtGui.QFont) -> None:
+        """Apply the code editor font to the console widgets."""
+        self.setFont(font)
+        if hasattr(self, '_control'):
+            self._control.setFont(font)
 
     def pushVariables(self, variableDict: typing.Dict[str, object]) -> None:
         """ Given a dictionary containing name / value pairs, push those

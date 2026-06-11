@@ -66,21 +66,32 @@ class ParseDecayModelWidget(ParseDecayModel, ModelWidget):
         self.convolve = ConvolveWidget(
             fit=fit,
             model=self,
-            show_convolution_mode=False,
+            hide_curve_convolution=False,
             dt=fit.data.dx,
             **kwargs
         )
+        # Parse models have no lifetime spectrum — only "full" (numpy)
+        # convolution is valid.  Hide the per/exp mode radio buttons.
+        self.convolve.radioButton.hide()
+        self.convolve.radioButton_2.hide()
+
         generic = GenericWidget(
             fit=fit,
             parent=self,
             model=self,
             **kwargs
         )
-        fn = pathlib.Path(__file__).parent.parent / 'tcspc.models.json'
+        fn = pathlib.Path(__file__).parent.parent.parent.parent.parent / 'core' / 'models' / 'tcspc' / 'tcspc.models.json'
         pw = cs.gui.widgets.models.parse.widget.ParseFormulaWidget(
             model=self,
             model_file=fn
         )
+        # Hide the FCS parameters group box — those are exclusive to FCS models
+        try:
+            pw.groupBox_fcs.hide()
+        except Exception:
+            pass
+
         corrections = CorrectionsWidget(
             fit=fit,
             model=self,
