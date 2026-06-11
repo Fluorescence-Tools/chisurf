@@ -314,13 +314,17 @@ def _init_local_python_modules() -> None:
     try:
         # Project root is two levels up from this file: chisurf/settings/...
         project_root = pathlib.Path(__file__).resolve().parents[2]
-        saribbon_src = project_root / "modules" / "SARibbon-pyqt5" / "src"
-        if saribbon_src.is_dir():
-            p = str(saribbon_src)
-            if p not in sys.path:
+        modules = [
+            ("SARibbon-pyqt5", "src"),
+            ("ndxplorer", None),
+        ]
+        for mod_name, sub in modules:
+            mod_dir = project_root / "modules" / mod_name
+            p = str(mod_dir / sub) if sub else str(mod_dir)
+            if pathlib.Path(p).is_dir() and p not in sys.path:
                 sys.path.append(p)
                 try:
-                    log.debug("Added SARibbon-pyqt5 src to sys.path: %s", p)
+                    log.debug("Added %s to sys.path: %s", mod_name, p)
                 except Exception:
                     pass
     except Exception:

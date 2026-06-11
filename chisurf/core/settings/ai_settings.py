@@ -1,46 +1,56 @@
 from __future__ import annotations
 
-import os
 import json
+import logging
+import os
 import pathlib
 
 from chisurf.core.settings.path_utils import get_path
 
-# Mistral-only defaults
-DEFAULT_BASE_URL = "https://api.mistral.ai/v1"
+_LOG = logging.getLogger(__name__)
 
-DEFAULT_SETTINGS = {
-    "base_url": DEFAULT_BASE_URL,
-    "model": "mistral-small-latest",
-    "api_key": "",
-    "text_embed_model": "mistral-embed",
-    "code_embed_model": "codestral-embed",
-    "temperature": 0.3,
-    "top_p": 0.9,
-    "max_tokens": 4096,
-    "provider": "local_llm",
-    "hf_repo": "",
-    "hf_file": "",
-    "persistent_ingest": True,
-    "log_level": 20,
-    "rag_debug": False,
-    "rag_debug_max_hits": 8,
-    "rag_debug_preview_chars": 220,
-    "graphrag_enable": True,
-    "graphrag_mode": "per_chunk",
+# Provider definitions: display_name -> (key, default_base_url, api_key_url, env_var)
+PROVIDERS: dict[str, tuple[str, str, str, str]] = {
+    "OpenAI (ChatGPT)": ("openai", "https://api.openai.com/v1", "https://platform.openai.com/api-keys", "OPENAI_API_KEY"),
+    "Mistral": ("mistral", "https://api.mistral.ai/v1", "https://console.mistral.ai/api-keys/", "MISTRAL_API_KEY"),
+    "Local (Ollama, LMStudio, ...)": ("local", "http://localhost:11434/v1", "", ""),
+    "Custom (OpenAI-compatible)": ("custom", "", "", ""),
 }
 
-# Chat models
-MISTRAL_CHAT_MODELS = [
-    "mistral-small-latest",
-    "mistral-medium-latest", 
-    "mistral-large-latest",
-]
-
-# Embedding models
-MISTRAL_EMBED_MODELS = {
-    "text": ["mistral-embed"],
-    "code": ["codestral-embed"],
+# Default settings for each provider
+DEFAULT_PROVIDER_SETTINGS = {
+    "openai": {
+        "base_url": "https://api.openai.com/v1",
+        "model": "gpt-4o",
+        "api_key": "",
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 4096,
+    },
+    "mistral": {
+        "base_url": "https://api.mistral.ai/v1",
+        "model": "mistral-small-latest",
+        "api_key": "",
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 4096,
+    },
+    "local": {
+        "base_url": "http://localhost:11434/v1",
+        "model": "llama3.2",
+        "api_key": "",
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 4096,
+    },
+    "custom": {
+        "base_url": "",
+        "model": "",
+        "api_key": "",
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_tokens": 4096,
+    },
 }
 
 
@@ -49,86 +59,112 @@ def _get_settings_path() -> pathlib.Path:
     return get_path('settings') / 'ai_api_settings.json'
 
 
-def get_api_settings() -> dict:
+def get_api_settings(provider: str | None = None) -> dict:
     """
     Load AI API settings from JSON file with env var fallbacks.
-    Priority: settings file > environment variables
+
+    Priority: settings file > environment variables > defaults.
+    
+    Args:
+        provider: If specified, return settings for this provider.
+                 If None, return settings for the currently selected provider.
+    
+    Returns:
+        dict: Settings for the specified/provider
     """
     settings_path = _get_settings_path()
 
+    # Load all settings from file
+    all_settings = {}
     if settings_path.is_file():
         try:
-            with open(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-            if isinstance(settings, dict):
-                return {**DEFAULT_SETTINGS, **settings}
+            with open(settings_path, encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    all_settings = data
         except Exception:
             pass
 
-    return {**DEFAULT_SETTINGS}
+    # Determine which provider to get settings for
+    if provider is None:
+        # Get currently selected provider from settings or default to openai
+        provider = all_settings.get('selected_provider', 'openai')
+    
+    # Get settings for the specified provider, falling back to defaults
+    provider_settings = all_settings.get(provider, {})
+    
+    # Merge with defaults for this provider
+    defaults = DEFAULT_PROVIDER_SETTINGS.get(provider, {})
+    result = {**defaults, **provider_settings}
+    
+    # Ensure we have the provider field
+    result['provider'] = provider
+    
+    return result
 
 
-def save_api_settings(settings: dict) -> bool:
-    """Save AI API settings to JSON file."""
+def save_api_settings(settings: dict, provider: str | None = None) -> bool:
+    """Save AI API settings for a specific provider to JSON file."""
     settings_path = _get_settings_path()
     settings_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Load existing settings
+    all_settings = {}
+    if settings_path.is_file():
+        try:
+            with open(settings_path, encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    all_settings = data
+        except Exception:
+            pass
+
+    # Determine which provider to save settings for
+    if provider is None:
+        provider = settings.get('provider', 'openai')
+    
+    # Update settings for this provider
+    all_settings[provider] = {
+        k: v for k, v in settings.items() 
+        if k in ['base_url', 'model', 'api_key', 'temperature', 'top_p', 'max_tokens']
+    }
+    
+    # Update selected provider
+    all_settings['selected_provider'] = provider
+
     try:
         with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, indent=2)
+            json.dump(all_settings, f, indent=2)
         return True
     except Exception:
         return False
 
 
 def get_api_key() -> str:
-    """Get Mistral API key."""
+    """Get API key from settings or environment variable."""
     settings = get_api_settings()
     api_key = settings.get('api_key', '')
 
     if not api_key:
-        api_key = os.environ.get('MISTRAL_API_KEY', '')
+        provider = settings.get('provider', '')
+        for _display, (key, _url, _api_url, env_var) in PROVIDERS.items():
+            if key == provider and env_var:
+                api_key = os.environ.get(env_var, '')
+                break
 
     return api_key.strip()
 
 
 def get_base_url() -> str:
-    """Get base URL for Mistral API."""
+    """Get base URL for API."""
     settings = get_api_settings()
-    base_url = settings.get('base_url', '')
-
-    if not base_url:
-        base_url = DEFAULT_BASE_URL
-
-    return base_url.strip().rstrip('/')
+    return settings.get('base_url', '').strip().rstrip('/')
 
 
 def get_model() -> str:
     """Get chat model name."""
     settings = get_api_settings()
-    model = settings.get('model', '')
-
-    if not model:
-        model = "mistral-small-latest"
-
-    return model.strip()
-
-
-def get_text_embed_model() -> str:
-    """Get text embedding model name."""
-    settings = get_api_settings()
-    return settings.get('text_embed_model', 'mistral-embed')
-
-
-def get_code_embed_model() -> str:
-    """Get code embedding model name."""
-    settings = get_api_settings()
-    return settings.get('code_embed_model', 'codestral-embed')
-
-
-def get_embed_model() -> str:
-    """Get default embedding model (text)."""
-    return get_text_embed_model()
+    return settings.get('model', '').strip()
 
 
 def get_temperature() -> float:
@@ -150,60 +186,27 @@ def get_max_tokens() -> int:
 
 
 def get_provider() -> str:
-    """Get the LLM provider."""
+    """Get the LLM provider key."""
     settings = get_api_settings()
-    return settings.get('provider', 'local_llm')
+    return settings.get('provider', 'openai')
 
 
-def get_hf_repo() -> str:
-    """Get the Hugging Face repo for local LLM."""
-    settings = get_api_settings()
-    return settings.get('hf_repo', '')
-
-
-def get_hf_file() -> str:
-    """Get the Hugging Face file for local LLM."""
-    settings = get_api_settings()
-    return settings.get('hf_file', '')
-
-
-def get_persistent_ingest() -> bool:
-    """Get the persistent ingest setting."""
-    settings = get_api_settings()
-    return bool(settings.get('persistent_ingest', True))
-
-
-def get_log_level() -> int:
-    """Get the log level for Chato/AI."""
-    settings = get_api_settings()
-    return int(settings.get('log_level', 20))
-
-
-def get_rag_debug() -> bool:
-    """Get the RAG debug setting."""
-    settings = get_api_settings()
-    return bool(settings.get('rag_debug', False))
-
-
-def get_rag_debug_max_hits() -> int:
-    """Get the RAG debug max hits."""
-    settings = get_api_settings()
-    return int(settings.get('rag_debug_max_hits', 8))
-
-
-def get_rag_debug_preview_chars() -> int:
-    """Get the RAG debug preview characters."""
-    settings = get_api_settings()
-    return int(settings.get('rag_debug_preview_chars', 220))
-
-
-def get_graphrag_enable() -> bool:
-    """Get the GraphRAG enable setting."""
-    settings = get_api_settings()
-    return bool(settings.get('graphrag_enable', True))
-
-
-def get_graphrag_mode() -> str:
-    """Get the GraphRAG mode."""
-    settings = get_api_settings()
-    return settings.get('graphrag_mode', 'per_chunk')
+def get_available_providers() -> list[str]:
+    """Get list of providers that have saved settings."""
+    settings_path = _get_settings_path()
+    if not settings_path.is_file():
+        return list(DEFAULT_PROVIDER_SETTINGS.keys())
+    
+    try:
+        with open(settings_path, encoding='utf-8') as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                # Return providers that have settings plus the selected one
+                providers = set(data.keys()) - {'selected_provider'}
+                selected = data.get('selected_provider', 'openai')
+                providers.add(selected)
+                return list(providers)
+    except Exception:
+        pass
+    
+    return list(DEFAULT_PROVIDER_SETTINGS.keys())

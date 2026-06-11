@@ -56,6 +56,8 @@ tcspc:
     - chisurf.gui.widgets.models.tcspc.ParseDecayModelWidget
     - chisurf.gui.widgets.models.tcspc.LifetimeMixtureModelWidget
     - chisurf.gui.widgets.models.tcspc.EtModelFreeWidget
+    - chisurf.gui.widgets.models.tcspc.FRETStructureWidget
+
 
 stopped_flow:
   readers:

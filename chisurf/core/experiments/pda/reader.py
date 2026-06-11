@@ -23,6 +23,7 @@ from typing import Dict, Sequence, Tuple
 
 from chisurf import typing
 
+import json
 import tttrlib
 
 import chisurf.core.settings
@@ -143,6 +144,19 @@ class PdaReader(ExperimentReader):
         -------
         chisurf.core.data.ExperimentDataGroup
             Group containing :class:`DataCurve` objects with S1S2 histograms.
+            Each curve carries the following metadata:
+
+            - ``curve.pda`` — PDA-specific dict with keys:
+              ``maximum_number_of_photons``, ``minimum_number_of_photons``,
+              ``minimum_time_window_length``, ``channels``, ``s1s2``,
+              ``ps``, ``row_indices``, ``col_indices``, ``ndim``, ``shape``,
+              ``size``, ``reading_routine``, ``micro_time_ranges``,
+              ``tttr_indices``.
+            - ``curve.meta_data`` — generic metadata dict with keys:
+              ``filenames`` (list of source file paths), ``grid`` (2D grid
+              description), ``tttr_header_json`` (TTTR file header JSON
+              string), ``tw_configs`` (list of time-window configurations
+              used).
         """
         if isinstance(filename, str):
             filename = [filename]
@@ -156,7 +170,16 @@ class PdaReader(ExperimentReader):
             pass
 
         filename.sort()
-        fn = pathlib.Path(filename[0])
+        from chisurf.core.file_formats import FILE_FORMATS as _FILE_FORMATS
+        source_filenames = [
+            {
+                'path': str(p),
+                'format': _FILE_FORMATS.get(p.suffix.lower(), {}).get('name', ''),
+            }
+            for p in (pathlib.Path(f) for f in filename)
+            if p.is_file()
+        ]
+        fn = pathlib.Path(source_filenames[0]['path']) if source_filenames else pathlib.Path(filename[0])
         data_group = chisurf.core.data.ExperimentDataGroup([])
 
         # Optional burst slicing: dict[str, List[Tuple[int,int]]]
@@ -290,6 +313,14 @@ class PdaReader(ExperimentReader):
                         t.append(d)
 
         if t is not None:
+            # Passthrough TTTR metadata: extract header JSON once for reuse
+            # across all time-window configurations.
+            tttr_header_json = None
+            try:
+                tttr_header_json = t.get_header().get_json()
+            except Exception:
+                pass
+
             channels_1 = self.channels[0]
             channels_2 = self.channels[1]
 
@@ -396,6 +427,7 @@ class PdaReader(ExperimentReader):
                     'shape': s1s2_shape,
                     # Total number of 1D points in the PDA-specific flattening
                     'size': int(len(row_indices)),
+                    'tttr_indices': tttr_indices,
                 }
 
                 # Generic grid metadata describing the 2D S1S2 support and the
@@ -413,6 +445,11 @@ class PdaReader(ExperimentReader):
 
                 meta_all = {
                     'grid': grid_meta,
+                    'tttr_header_json': tttr_header_json,
+                    'tw_configs': getattr(self, 'tw_configs', None),
+                    'filenames': source_filenames,
+                    'reading_routine': self.reading_routine,
+                    'micro_time_ranges': self.micro_time_ranges,
                 }
 
                 # Use the full S1S2 matrix as data, flattened in row-major
@@ -439,6 +476,8 @@ class PdaReader(ExperimentReader):
                     pass
                 data = chisurf.core.data.DataCurve(
                     name=name,
+                    filename=source_filenames[0]['path'] if source_filenames else str(fn),
+                    load_filename_on_init=False,
                     data_reader=self,
                     pda=d,
                     meta_data=meta_all,

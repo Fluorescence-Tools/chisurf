@@ -295,7 +295,15 @@ def write_bur_file_old(bur_filename, start_stop, filename, tttr, windows, detect
     summary_df.to_csv(bur_filename, sep='\t', index=False)
 
 
-def generate_burst_dataframe(start_stop, filename, tttr, windows, detectors, include_interleaved_zeros=True):
+def generate_burst_dataframe(
+        start_stop,
+        filename,
+        tttr,
+        windows,
+        detectors,
+        include_interleaved_zeros=True,
+        macro_time_resolution=None
+):
     """
     Generate a DataFrame with burst summary information.
     
@@ -321,6 +329,9 @@ def generate_burst_dataframe(start_stop, filename, tttr, windows, detectors, inc
         Whether to include interleaved zero rows in the output DataFrame.
         Default is True for backward compatibility with BUR format.
         Set to False when saving to HDF5 format where interleaved zeros are not necessary.
+    macro_time_resolution : float, optional
+        Macro-time resolution override. If omitted, uses
+        ``tttr.header.macro_time_resolution``.
         
     Returns:
     --------
@@ -333,7 +344,7 @@ def generate_burst_dataframe(start_stop, filename, tttr, windows, detectors, inc
     macro = tttr.macro_times
     micro = tttr.micro_times
     rout  = tttr.routing_channel
-    res   = tttr.header.macro_time_resolution
+    res   = tttr.header.macro_time_resolution if macro_time_resolution is None else float(macro_time_resolution)
     n_ph  = len(tttr)
 
     # build column list

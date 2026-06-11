@@ -5,16 +5,23 @@ from __future__ import annotations
 import ast
 import importlib
 import logging
-import os
 import pathlib
-import pkgutil
 import sys
-from typing import Optional, Tuple, Dict, Iterable
+from typing import Dict, Iterable, Optional, Tuple
 
 import click
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+class PluginCLI(click.Group):
+    """Click group that registers plugin CLIs before parsing arguments."""
+
+    def parse_args(self, ctx: click.Context, args: list[str]) -> list[str]:
+        """Register plugin CLIs before Click resolves subcommands."""
+        _register_plugin_clis()
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=PluginCLI, context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(package_name="chisurf", prog_name="csc")
 def cli() -> None:
     """Command-line interface for chisurf tools and plugins.
@@ -81,8 +88,9 @@ def _forward_plugin_cli(
 
     runner = getattr(target, "main", None)
     if callable(runner):
+        prog = command_name or (friendly_name or module_path).split(".")[-1]
         try:
-            runner(args=argv, standalone_mode=True)
+            runner(args=argv, prog_name=prog, standalone_mode=True)
         except SystemExit as exc:  # pragma: no cover - normal Click exit path
             code = int(exc.code or 0)
             if code != 0:
@@ -155,7 +163,7 @@ def _discover_plugin_metadata() -> Iterable[Dict[str, object]]:
     """
 
     package_root = pathlib.Path(__file__).resolve().parent
-    built_in_root = package_root / "plugins"
+    built_in_root = package_root.parent / "plugins"
     user_root = pathlib.Path.home() / ".chisurf" / "plugins"
 
     search_roots = [
@@ -284,7 +292,11 @@ def _register_plugin_clis() -> None:
         command = click.Command(
             name=command_name,
             callback=click.pass_context(_callback),
-            context_settings={"ignore_unknown_options": True, "allow_extra_args": True},
+            context_settings={
+                "ignore_unknown_options": True,
+                "allow_extra_args": True,
+                "help_option_names": [],
+            },
             help=help_text,
         )
         cli.add_command(command)

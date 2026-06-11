@@ -204,7 +204,7 @@ class ProbCh0(FittingParameterGroup):
             lb=lower_bound_pch0,
             ub=upper_bound_pch0,
             value=pch0,
-            name=f't{self.short}{i}',
+            name=f'p{self.short}{i}',
             label_text=f'p<sub>{self.short},{i}</sub>',
             fixed=fixed,
             bounds_on=bound_on

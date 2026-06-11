@@ -14,7 +14,12 @@ import chisurf.core.fio.structure.coordinates
 import chisurf.core.parameter
 import chisurf.core.structure
 
-from . import fps_ as fps
+try:
+    from . import fps_ as fps
+    _HAS_FPS = True
+except ImportError:
+    _HAS_FPS = False
+    fps = None
 from chisurf.core.parameter import ParameterGroup
 
 
@@ -48,9 +53,12 @@ def simulate_trajectory(
 
     http://labs.physics.berkeley.edu/mediawiki/index.php/Simulating_Brownian_Motion
     """
-    return fps.simulate_traj_point(
-        d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact
-    )
+    if _HAS_FPS:
+        return fps.simulate_traj_point(
+            d, ds, dg, t_max, t_step, diffusion_coefficient, slow_fact
+        )
+    else:
+        raise ImportError("fps_ module not available (Cython code removed)")
 
 
 class DiffusionSimulationParameter(

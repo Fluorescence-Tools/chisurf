@@ -71,6 +71,8 @@ class Experiment(chisurf.core.base.Base):
         model : type
             A :class:`chisurf.core.models.Model` subclass to register.
         """
+        if model is None:
+            return
         if model not in self.model_classes:
             self._model_classes.append(model)
 
@@ -155,14 +157,16 @@ class Experiment(chisurf.core.base.Base):
         """Return the names of all registered readers."""
         names = list()
         for s in self.readers:
-            names.append(s.name)
+            if s is not None:
+                names.append(s.name)
         return names
 
     def get_model_names(self) -> typing.List[str]:
         """Return the names of all registered model classes."""
         names = list()
         for s in self.model_classes:
-            names.append(str(s.name))
+            if s is not None:
+                names.append(str(s.name))
         return names
 
     def __getstate__(self):

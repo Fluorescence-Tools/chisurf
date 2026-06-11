@@ -1,0 +1,1 @@
+"""Sample database plugin backend."""

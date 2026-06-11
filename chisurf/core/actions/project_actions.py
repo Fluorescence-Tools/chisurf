@@ -95,6 +95,11 @@ def close_project(main_window: typing.Any = None):
             # Clear imported datasets
             if hasattr(cs, 'imported_datasets'):
                 cs.imported_datasets.clear()
+                from chisurf.macros.core_data import restore_global_fit_dataset
+                try:
+                    restore_global_fit_dataset(_from_controller=True, update_ui=False)
+                except Exception:
+                    pass
 
             # Reset project path
             main_window._current_project_dir = None

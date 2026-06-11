@@ -65,8 +65,8 @@ class ParameterTransformModel(model.Model):
 
     @property
     def n_free(self):
-        """Number of free parameters; always 0 (outputs are fixed)."""
-        return 0
+        """Number of free parameters (inputs that are not fixed or linked)."""
+        return len(self.parameters)
 
     @property
     def weighted_residuals(self) -> np.ndarray:
@@ -131,7 +131,7 @@ class ParameterTransformModel(model.Model):
         m = chisurf.core.models.function_to_model_decorator(name=self.name)
 
         # Create the model class with the function
-        model_class = m(fun)
+        model_class = m(function_obj)
 
         if self.fit is None:
             raise ValueError("Fit object cannot be None")

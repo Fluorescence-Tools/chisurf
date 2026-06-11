@@ -711,13 +711,17 @@ class FRETModel(LifetimeModel):
         self.orientation_parameter = OrientationParameter(
             orientation_mode=cs.core.settings.cs_settings['fret']['orientation_mode']
         )
-        super().__init__(fit, **kwargs)
+        if getattr(self, "donor", None) is None:
+            if lifetimes is not None:
+                self.donor = lifetimes
+            else:
+                self.donor = Lifetime(name='donor', fit=fit, **kwargs)
+
+        super().__init__(fit, lifetimes=self.donor, **kwargs)
 
         # Ensure the canonical lifetime group is the donor widget
-        if getattr(self, "donor", None) is not None:
-            self.lifetimes = self.donor
-        self._reference = LifetimeModel(fit, **kwargs)
-        self._reference.lifetimes = self.donor
+        self.lifetimes = self.donor
+        self._reference = LifetimeModel(fit, lifetimes=self.donor, **kwargs)
         self._reference.convolve = self.convolve
 
     def get_parameter_widgets(self):

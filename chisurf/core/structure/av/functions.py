@@ -3,7 +3,12 @@ from chisurf import typing
 
 import chisurf.core.fio as io
 import chisurf.core.fluorescence
-import chisurf.core.structure.av.fps_
+try:
+    import chisurf.core.structure.av.fps_ as fps_
+    _HAS_FPS = True
+except ImportError:
+    _HAS_FPS = False
+    fps_ = None
 import chisurf.core.settings
 import numpy as np
 import numba as nb
@@ -148,11 +153,10 @@ def dRmp(
 def density2points(ng, dg, density, r0):
     """Convert a 3D density grid to a list of (x, y, z, weight) points."""
     r = np.empty((ng**3, 4), dtype=np.float64)
-    npm = (ng - 1) / 2 + 1
-
+    npm = (ng - 1) // 2
     gd = np.empty(ng, dtype=np.float64)
-    for i in range(-npm, npm):
-        gd[i + npm] = i * dg
+    for i in range(ng):
+        gd[i] = (i - npm) * dg
 
     x0, y0, z0 = r0[0], r0[1], r0[2]
 
@@ -679,7 +683,8 @@ def reset_density_av(density):
     :return:
     """
     ng = density.shape[0]
-    chisurf.core.structure.av.fps_.reset_density_av(density, ng)
+    if _HAS_FPS:
+        chisurf.core.structure.av.fps_.reset_density_av(density, ng)
 
 
 @nb.jit(nopython=True)
@@ -735,9 +740,9 @@ def split_av_acv(density, dg, radius, rs, r0):
     ng = density.shape[0]
     n_radii = rs.shape[0]
 
-    radius = np.array(radius, dtype=np.float64)
+    radius = np.ascontiguousarray(radius).astype(np.float64)
     if len(radius) != n_radii:
-        radius = np.zeros(n_radii, dtpye=np.float64) + radius[0]
+        radius = np.zeros(n_radii, dtype=np.float64) + radius[0]
 
     d1 = np.zeros_like(density)
     d2 = np.zeros_like(density)
@@ -798,8 +803,8 @@ def modify_av(density, dg, radius, rs, r0, factor):
         radius = np.zeros(n_radii, dtpye=np.float64) + radius[0]
 
     density = np.copy(density)
-
-    chisurf.core.structure.av.fps_.modify_av(
-        density, ng, dg,
-        radius, rs, r0, n_radii, factor
-    )
+    if _HAS_FPS:
+        chisurf.core.structure.av.fps_.modify_av(
+            density, ng, dg,
+            radius, rs, r0, n_radii, factor
+        )

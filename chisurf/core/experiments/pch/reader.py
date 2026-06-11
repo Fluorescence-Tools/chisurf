@@ -300,6 +300,11 @@ class PCHReader(ExperimentReader):
         x = k_vals.astype(float)
         y = p_exp.astype(float)
 
+        try:
+            tttr_header_json = tttr.header.json
+        except Exception:
+            tttr_header_json = ""
+
         meta_pch = {
             "k_vals": k_vals.astype(float),
             "p_exp": p_exp.astype(float),
@@ -312,6 +317,9 @@ class PCHReader(ExperimentReader):
             "hist_counts": hist_counts.astype(float),
             "total_bins": float(total_bins),
         }
+        meta_all = {"pch": meta_pch}
+        if tttr_header_json:
+            meta_all["tttr_header_json"] = tttr_header_json
 
         data = chisurf.core.data.DataCurve(
             name=fn.stem,
@@ -321,7 +329,7 @@ class PCHReader(ExperimentReader):
             filename=str(fn),
             data_reader=self,
             experiment=self.experiment,
-            meta_data={"pch": meta_pch},
+            meta_data=meta_all,
             load_filename_on_init=False,
         )
         group.append(data)

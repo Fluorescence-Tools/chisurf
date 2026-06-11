@@ -10,7 +10,19 @@ import numba as nb
 import chisurf.core.fluorescence
 import chisurf.core.structure.av
 import chisurf.core.structure
-import chisurf.core.structure.potential.cPotentials_
+
+# Numba kernels from imp-tricks (hard requirement)
+from IMP.cgmol.statpot._kernels import (
+    _mj_kernel,
+    _hbond_kernel,
+)
+from IMP.cgmol.sterics._kernels import (
+    _go_init as _go_init_kernel,
+    _go_kernel,
+    _clash_kernel,
+    _sphere_points,
+    _asa_kernel,
+)
 
 
 @nb.njit
@@ -331,8 +343,6 @@ class Electrostatics(object):
         """
         self.structure = structure
         self.name = 'ele'
-        if type == 'gb':
-            self.p = chisurf.core.structure.potential.cPotentials_.gb
 
     def getEnergy(self) -> float:
         """Calculate and return the electrostatic (GB) energy."""
@@ -391,7 +401,7 @@ class HPotential(object):
         s1 = self.structure
         cca2 = self.cutoffCA ** 2
         ch2 = self.cutoffH ** 2
-        nHbond, Ehbond = chisurf.core.structure.potential.cPotentials_.hBondLookUpAll(
+        nHbond, Ehbond = _hbond_kernel(
             s1.l_res, s1.dist_ca, s1.xyz, self._hPot, cca2, ch2
         )
         self.E = Ehbond
@@ -459,14 +469,14 @@ class GoPotential(object):
         c = self.structure
         nnEFactor = getattr(self, 'nnEFactor', 0.7) if getattr(self, 'non_native_contact_on', True) else 0.0
         cutoff = getattr(self, 'cutoff', 6.5) if getattr(self, 'native_cutoff_on', True) else 1e6
-        self.eMatrix, self.sMatrix = chisurf.core.structure.potential.cPotentials_.go_init(
+        self.eMatrix, self.sMatrix = _go_init_kernel(
             c.dist_ca, self.epsilon, nnEFactor, cutoff
         )
 
     def getEnergy(self):
         """Calculate and return the Gō potential energy."""
         c = self.structure
-        Etot = chisurf.core.structure.potential.cPotentials_.go(
+        Etot = _go_kernel(
             c.dist_ca, self.eMatrix, self.sMatrix
         )
         self.E = Etot
@@ -525,7 +535,7 @@ class MJPotential(object):
     def getEnergy(self):
         """Calculate and return the Miyazawa-Jernigan potential energy."""
         c = self.structure
-        nCont, Emj = chisurf.core.structure.potential.cPotentials_.mj(
+        nCont, Emj = _mj_kernel(
             c.l_res, c.residue_types, c.dist_ca, c.xyz, self.mjPot, cutoff=self.ca_cutoff
         )
         self.E = Emj
@@ -640,17 +650,13 @@ class ASA(object):
         self.structure = structure
         self.probe = probe
         self.n_sphere_point = n_sphere_point
-        self.sphere_points = chisurf.core.structure.potential.cPotentials_.spherePoints(
-            n_sphere_point
-        )
+        self.sphere_points = _sphere_points(n_sphere_point)
         self.radius = radius
 
     def getEnergy(self) -> float:
         """Calculate and return the accessible surface area."""
         c = self.structure
-        #def asa(double[:, :] xyz, int[:, :] resLookUp, double[:, :] caDist, double[:, :] sphere_points,
-        #double probe=1.0, double radius = 2.5, char sum=1)
-        asa = chisurf.core.structure.potential.cPotentials_.asa(
+        asa_val = _asa_kernel(
             c.xyz,
             c.l_res,
             c.dist_ca,
@@ -658,7 +664,7 @@ class ASA(object):
             self.probe,
             self.radius
         )
-        return asa
+        return asa_val
 
 
 class ClashPotential(object):
@@ -693,7 +699,7 @@ class ClashPotential(object):
     def getEnergy(self) -> float:
         """Calculate and return the clash (steric) potential energy."""
         c = self.structure
-        return chisurf.core.structure.potential.cPotentials_.clash_potential(
+        return _clash_kernel(
             c.xyz,
             c.vdw,
             self.clash_tolerance,

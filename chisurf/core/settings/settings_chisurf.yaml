@@ -62,6 +62,8 @@ gui:
   console_height: 100
   editor:
     caret_line_background_color: "#afafaf"
+    caret_line_visible: false
+    color_scheme: ChiSurf
     default_color: "#000006"
     font_family: Courier New
     font_size: 9
@@ -69,6 +71,12 @@ gui:
     margins_background_color: "#808080"
     marker_background_color: "#f0f0f0"
     paper_color: "#cfcfcf"
+  table:
+    font_family: ""
+    font_size: 10
+    font_bold: false
+    row_height: 18
+    header_height: 18
   fit_models:
     n_columns: 2
   fit_window_style: "border: 2px solid rgba(0, 0, 0, 0.10);background-color: gray;"
@@ -235,7 +243,7 @@ parameter:
   error_color_large: magenta
   error_threshold_small: 20
   error_threshold_large: 100
-  fixable: false
+  fixable: true
   fixed: false
   hide_bounds: false
   hide_error: false

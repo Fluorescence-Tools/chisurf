@@ -151,6 +151,11 @@ class TCSPCTTTRReader(TCSPCReader):
             tttr = tttrlib.TTTR(filename, routine)
         else:
             tttr = tttrlib.TTTR(filename)
+        # Save header JSON for later metadata display (avoids re-reading the file)
+        try:
+            self._tttr_header_json = tttr.header.json
+        except Exception:
+            self._tttr_header_json = ""
         chs = self._get_channels()
         coarsening = self._get_micro_time_coarsening()
         shift = self._get_micro_time_shift()
@@ -210,10 +215,15 @@ class TCSPCTTTRReader(TCSPCReader):
         except Exception:
             ch_text = ""
         name = f"{fn}_ch({ch_text})"
+        meta_data = {}
+        hdr = getattr(self, "_tttr_header_json", "")
+        if hdr:
+            meta_data["tttr_header_json"] = hdr
         data_set = chisurf.core.data.DataCurve(
             x=t,
             y=y,
             name=name,
+            meta_data=meta_data,
             experiment=self.experiment,
             data_reader=self,
             ey=chisurf.core.fluorescence.tcspc.counting_noise(y)

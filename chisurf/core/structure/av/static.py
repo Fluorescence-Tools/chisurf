@@ -170,10 +170,10 @@ def calculate_1_radius(
     # return d2, ng_n, r0
     xyzr = np.vstack(
         [x, y, z, vdw]
-    ).T
+    ).astype(np.float32)
     dye_attachment_point = np.array(
-        [x[atom_i], y[atom_i], z[atom_i]]
-    )
+        [[x[atom_i]], [y[atom_i]], [z[atom_i]]]
+    ).astype(np.float32)
     linker_length = l
     linker_width = w
     dye_radius = r
@@ -188,7 +188,9 @@ def calculate_1_radius(
         dye_radius,
         simulation_grid_spacing
     )
-    return av1.grid, av1.grid.shape[0], dye_attachment_point
+    grid_np = np.array(av1.grid, dtype=np.float64).reshape(av1.shape)
+    # The return value dye_attachment_point needs to be 1D for compatibility with other parts
+    return grid_np, grid_np.shape[0], dye_attachment_point.flatten()
 
 
 def calculate_3_radius(
@@ -238,13 +240,13 @@ def calculate_3_radius(
     :return:
 
     """
-    dg = kwargs.get('dg', cs.core.settings['fps']['simulation_grid_resolution'])
+    dg = kwargs.get('dg', cs.core.settings.cs_settings['fps']['simulation_grid_resolution'])
     xyzr = np.vstack(
         [x, y, z, vdw]
-    ).T
+    ).astype(np.float32)
     dye_attachment_point = np.array(
-        [x[atom_i], y[atom_i], z[atom_i]]
-    )
+        [[x[atom_i]], [y[atom_i]], [z[atom_i]]]
+    ).astype(np.float32)
     linker_length = l
     linker_width = w
     simulation_grid_spacing = dg
@@ -258,7 +260,8 @@ def calculate_3_radius(
         [r1, r2, r3],
         simulation_grid_spacing
     )
-    return av1.grid, av1.grid.shape[0], dye_attachment_point
+    grid_np = np.array(av1.grid, dtype=np.float64).reshape(av1.shape)
+    return grid_np, grid_np.shape[0], dye_attachment_point.flatten()
 
 #
 # @nb.jit(nopython=True)
