@@ -6,7 +6,6 @@ import pathlib
 
 from chisurf.core.plugin.manifest import load_manifest, validate_manifest
 
-
 _MANIFEST_PATH = pathlib.Path(__file__).resolve().parents[3] / "chisurf" / "plugins" / "burst" / "burst_selection" / "manifest.json"
 
 
@@ -28,7 +27,7 @@ class TestBurstSelectionManifest:
     def test_manifest_version(self):
         manifest = load_manifest(_MANIFEST_PATH)
         assert manifest is not None
-        assert manifest.version == "2.0.0"
+        assert manifest.version == "2.1.0"
 
     def test_manifest_display_name(self):
         manifest = load_manifest(_MANIFEST_PATH)
@@ -45,7 +44,7 @@ class TestBurstSelectionManifest:
     def test_manifest_has_rpc_methods(self):
         manifest = load_manifest(_MANIFEST_PATH)
         assert manifest is not None
-        assert len(manifest.rpc_methods) == 4
+        assert len(manifest.rpc_methods) == 5
 
     def test_manifest_rpc_method_names(self):
         manifest = load_manifest(_MANIFEST_PATH)
@@ -59,6 +58,13 @@ class TestBurstSelectionManifest:
         manifest = load_manifest(_MANIFEST_PATH)
         assert manifest is not None
         assert manifest.state_namespace == "burst_selection"
+
+    def test_manifest_has_statefulness(self):
+        manifest = load_manifest(_MANIFEST_PATH)
+        assert manifest is not None
+        assert manifest.statefulness.enabled is True
+        assert manifest.statefulness.window.enabled is True
+        assert manifest.statefulness.window.settings_key is None
 
     def test_manifest_validates(self):
         import json

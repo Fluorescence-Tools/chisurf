@@ -23,6 +23,7 @@ from ..api.models import (
 from ..api.selection import analyze_file
 
 UI_COLUMNS = [
+    "File Idx",
     "First Photon",
     "Last Photon",
     "Duration (ms)",
@@ -32,6 +33,35 @@ UI_COLUMNS = [
     "Number of Photons (red)",
     "Number of Photons (green)",
 ]
+
+PROXIMITY_RATIO_COLUMN = "Proximity Ratio"
+
+
+def _numeric_series(frame: pd.DataFrame, column: str) -> pd.Series | None:
+    """Return a numeric series for ``column`` when present."""
+    if column not in frame.columns:
+        return None
+    return pd.to_numeric(frame[column], errors="coerce")
+
+
+def _ratio_series(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
+    """Return a ratio series with invalid denominators masked."""
+    return (numerator / denominator.where(denominator > 0)).replace([np.inf, -np.inf], np.nan)
+
+
+def proximity_ratio_from_frame(frame: pd.DataFrame) -> pd.Series | None:
+    """Compute or return a proximity-ratio series when source columns exist."""
+    if PROXIMITY_RATIO_COLUMN in frame.columns:
+        return pd.to_numeric(frame[PROXIMITY_RATIO_COLUMN], errors="coerce")
+    red = _numeric_series(frame, "Number of Photons (red)")
+    green = _numeric_series(frame, "Number of Photons (green)")
+    if red is not None and green is not None:
+        return _ratio_series(red, red + green)
+    red_rate = _numeric_series(frame, "Red Count Rate (KHz)")
+    green_rate = _numeric_series(frame, "Green Count Rate (KHz)")
+    if red_rate is not None and green_rate is not None:
+        return _ratio_series(red_rate, red_rate + green_rate)
+    return None
 
 
 def analysis_settings_from_wizard(wizard: Any) -> AnalysisSettings:
@@ -157,11 +187,9 @@ def make_ui_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         if column not in ui_df.columns:
             ui_df[column] = 0
     ui_df = ui_df[UI_COLUMNS].copy()
-    red = ui_df["Number of Photons (red)"]
-    green = ui_df["Number of Photons (green)"]
-    ui_df["Proximity Ratio"] = (
-        red / (red + green)
-    ).where((red + green) > 0, 0).round(3)
+    proximity_ratio = proximity_ratio_from_frame(ui_df)
+    if proximity_ratio is not None:
+        ui_df[PROXIMITY_RATIO_COLUMN] = proximity_ratio.fillna(0).round(6)
     return ui_df
 
 
@@ -219,5 +247,9 @@ def gmm_settings_from_wizard(wizard: Any) -> dict[str, Any]:
 
 def selected_histogram_data(current_df: pd.DataFrame, selected_feature: str) -> np.ndarray:
     """Return numeric histogram data for the selected GUI feature."""
+    if selected_feature == PROXIMITY_RATIO_COLUMN:
+        data = proximity_ratio_from_frame(current_df)
+        if data is not None:
+            return data.dropna().to_numpy(dtype=float)
     data = pd.to_numeric(burst_rows_for_display(current_df)[selected_feature], errors="coerce").dropna()
     return data.to_numpy(dtype=float)

@@ -9,6 +9,13 @@ import pandas as pd
 
 from chisurf.core.fio.fluorescence.burst import generate_burst_dataframe
 from chisurf.plugins.burst.burst_selection.api import selection as selection_module
+from chisurf.plugins.burst.burst_selection.api.contract import (
+    METHOD_ANALYZE_FILES,
+    analysis_request_from_payload,
+    analysis_request_to_payload,
+    analysis_result_to_payload,
+    contract_descriptor,
+)
 from chisurf.plugins.burst.burst_selection.api.features import extract_features, fit_gmm
 from chisurf.plugins.burst.burst_selection.api.io import load_tttr
 from chisurf.plugins.burst.burst_selection.api.models import (
@@ -29,15 +36,11 @@ from chisurf.plugins.burst.burst_selection.api.selection import (
     legacy_output_folder_name,
     summarize_bursts,
 )
-from chisurf.plugins.burst.burst_selection.api.contract import (
-    METHOD_ANALYZE_FILES,
-    analysis_request_from_payload,
-    analysis_request_to_payload,
-    analysis_result_to_payload,
-    contract_descriptor,
-)
 from chisurf.plugins.burst.burst_selection.api.serialization import settings_from_dict, to_jsonable
-from chisurf.plugins.burst.burst_selection.gui.adapter import burst_rows_for_display, make_ui_dataframe
+from chisurf.plugins.burst.burst_selection.gui.adapter import (
+    burst_rows_for_display,
+    make_ui_dataframe,
+)
 
 DATA_DIR = Path(__file__).resolve().parent / "data" / "bh_spc132_sm_dna"
 BH_SPC_FILE = DATA_DIR / "m000.spc"

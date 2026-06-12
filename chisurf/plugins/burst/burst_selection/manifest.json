@@ -1,6 +1,6 @@
 {
   "id": "burst_selection",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "display_name": "Spectroscopy:Single-Molecule:Burst Selection",
   "description": "Burst selection and FRET analysis for single-molecule fluorescence data.",
   "authors": ["Thomas-Otavio Peulen"],
@@ -16,6 +16,13 @@
       "last_job_status": {"type": ["string", "null"]},
       "last_result_summary": {"type": ["object", "null"]},
       "settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
     }
   },
   "entrypoints": {

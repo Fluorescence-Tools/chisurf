@@ -49,7 +49,6 @@ class DockDropOverlay(QtWidgets.QWidget):
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        # Use premium styling with a vibrant translucent blue color
         color = QtGui.QColor(0, 150, 255, 60)
         border_color = QtGui.QColor(0, 150, 255, 180)
 
@@ -57,7 +56,5 @@ class DockDropOverlay(QtWidgets.QWidget):
         path.addRoundedRect(QtCore.QRectF(self.rect().adjusted(2, 2, -2, -2)), 6, 6)
 
         painter.fillPath(path, color)
-
-        pen = QtGui.QPen(border_color, 2)
-        painter.setPen(pen)
+        painter.setPen(QtGui.QPen(border_color, 2))
         painter.drawPath(path)

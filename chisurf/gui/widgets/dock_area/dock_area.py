@@ -69,6 +69,7 @@ class DockTabWidget(QtWidgets.QTabWidget):
         self.setTabBar(self.tab_bar)
         self.setDocumentMode(True)
         self.setAcceptDrops(True)
+        self._new_tab_btn = None
 
         self.setStyleSheet("""
             QTabWidget::pane {
@@ -91,6 +92,18 @@ class DockTabWidget(QtWidgets.QTabWidget):
                 background-color: rgba(128, 128, 128, 50);
             }
         """)
+        transparent = QtGui.QColor(0, 0, 0, 0)
+        pal = self.palette()
+        pal.setColor(QtGui.QPalette.Window, transparent)
+        pal.setColor(QtGui.QPalette.Base, transparent)
+        self.setPalette(pal)
+        stacked = self.findChild(QtWidgets.QStackedWidget)
+        if stacked is not None:
+            stacked.setAutoFillBackground(False)
+            sp = stacked.palette()
+            sp.setColor(QtGui.QPalette.Window, transparent)
+            sp.setColor(QtGui.QPalette.Base, transparent)
+            stacked.setPalette(sp)
 
         self.currentChanged.connect(self._on_current_changed)
         self.tab_bar.doubleClickedTab.connect(self._on_tab_double_clicked)
@@ -99,6 +112,20 @@ class DockTabWidget(QtWidgets.QTabWidget):
         self.tabCloseRequested.connect(
             lambda idx, tw=self: self.dock_area._on_tab_close_requested(tw, idx)
         )
+
+    def setNewTabButtonVisible(self, visible: bool = True) -> None:
+        """Show or hide the local '+' new-tab button in the left corner of the tab bar."""
+        if visible:
+            if self._new_tab_btn is None:
+                self._new_tab_btn = QtWidgets.QToolButton(self)
+                self._new_tab_btn.setText("+")
+                self._new_tab_btn.setAutoRaise(True)
+                self._new_tab_btn.clicked.connect(self.dock_area.newTabRequested.emit)
+                self.setCornerWidget(self._new_tab_btn, QtCore.Qt.TopLeftCorner)
+            self._new_tab_btn.show()
+            return
+        if self._new_tab_btn is not None:
+            self._new_tab_btn.hide()
 
     def _on_current_changed(self, index: int) -> None:
         if index >= 0:
@@ -197,22 +224,27 @@ class DockArea(QtWidgets.QWidget):
         super().__init__(parent)
         self._all_widgets = []
         self._tab_names: dict[QtWidgets.QWidget, str] = {}
+        self._hidden_widgets: list[QtWidgets.QWidget] = []
+        self._tab_close_modes: dict[QtWidgets.QWidget, str] = {}
         self._root_widget = None
         self._active_tab_widget = None
         self._last_emitted_index = -1
         self._corner_widget = None
         self._corner = QtCore.Qt.TopRightCorner
         self._tabs_closable = False
-        self._new_tab_button = None
+        self._new_tab_button_visible = False
         self._context_menu_enabled = False
         self._context_menu_callback = None
         self._context_menu_mode = "document"
         self._close_tab_callback = None
+        self._tab_bar_visible = True
 
         # Setup main layout
         self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
+        self.setAutoFillBackground(False)
+        self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
 
         # Add overlay child
         self._overlay = DockDropOverlay(self)
@@ -297,26 +329,12 @@ class DockArea(QtWidgets.QWidget):
         Parameters
         ----------
         visible : bool
-            Whether the new-tab button is visible.
+            Whether the new-tab button should be visible.
         """
-        if visible:
-            if self._new_tab_button is None:
-                self._new_tab_button = QtWidgets.QToolButton()
-                self._new_tab_button.setText("+")
-                self._new_tab_button.setAutoRaise(True)
-                self._new_tab_button.clicked.connect(self.newTabRequested.emit)
-                tws = self.findChildren(DockTabWidget)
-                if tws:
-                    for tw in tws:
-                        tw.setCornerWidget(self._new_tab_button, QtCore.Qt.TopLeftCorner)
-                    self._new_tab_button.show()
-                # If no DockTabWidget exists yet, the button will be added and
-                # shown when the first tab is created (see addTab).
-            else:
-                self._new_tab_button.show()
-        else:
-            if self._new_tab_button is not None:
-                self._new_tab_button.hide()
+        self._new_tab_button_visible = visible
+        for tw in self.findChildren(DockTabWidget):
+            tw.setNewTabButtonVisible(visible)
+
 
     def set_root_widget(self, widget: QtWidgets.QWidget) -> None:
         """Set the root widget of the dock area.
@@ -590,11 +608,10 @@ class DockArea(QtWidgets.QWidget):
         if node_type == "tab":
             tab_widget = DockTabWidget(self)
             tab_widget.setTabsClosable(self._tabs_closable)
+            tab_widget.tabBar().setVisible(self._tab_bar_visible)
+            tab_widget.setNewTabButtonVisible(self._new_tab_button_visible)
             if self._corner_widget is not None:
                 tab_widget.setCornerWidget(self._corner_widget, self._corner)
-            if self._new_tab_button is not None:
-                tab_widget.setCornerWidget(self._new_tab_button, QtCore.Qt.TopLeftCorner)
-                self._new_tab_button.show()
             for tab_state in state.get("tabs", []):
                 if not isinstance(tab_state, dict):
                     continue
@@ -639,6 +656,32 @@ class DockArea(QtWidgets.QWidget):
             return splitter
         return None
 
+    @staticmethod
+    def _has_parent_in(
+        widget: QtWidgets.QWidget | None,
+        parents: set[QtWidgets.QWidget]
+    ) -> bool:
+        """Return whether ``widget`` is one of ``parents`` or below one."""
+        node = widget
+        while node is not None:
+            if node in parents:
+                return True
+            node = node.parentWidget()
+        return False
+
+    def _detach_page_widget(
+        self,
+        widget: QtWidgets.QWidget | None,
+        mark_hidden: bool = False
+    ) -> None:
+        """Detach a registered page widget without destroying it."""
+        if widget is None:
+            return
+        widget.setParent(self)
+        widget.hide()
+        if mark_hidden and widget in self._all_widgets and widget not in self._hidden_widgets:
+            self._hidden_widgets.append(widget)
+
     def _clear_root_widgets(self, exclude_widgets=None) -> None:
         """Clear existing dock-tree widgets without deleting page widgets.
 
@@ -651,17 +694,26 @@ class DockArea(QtWidgets.QWidget):
             Newly restored dock widgets that must not be deleted.
         """
         excluded = set(exclude_widgets or [])
+        for widget in list(self._all_widgets):
+            if self._has_parent_in(widget, excluded):
+                continue
+            self._detach_page_widget(widget, mark_hidden=True)
         if self._root_widget is not None and self._root_widget not in excluded:
             self._layout.removeWidget(self._root_widget)
             self._root_widget = None
         for tab_widget in list(self.findChildren(DockTabWidget)):
-            if tab_widget in excluded:
+            if self._has_parent_in(tab_widget, excluded):
                 continue
             for idx in range(tab_widget.count() - 1, -1, -1):
+                widget = tab_widget.widget(idx)
                 tab_widget.removeTab(idx)
+                if not self._has_parent_in(widget, excluded):
+                    self._detach_page_widget(widget, mark_hidden=True)
             tab_widget.deleteLater()
         for splitter in list(self.findChildren(DockSplitter)):
-            if splitter in excluded:
+            if self._has_parent_in(splitter, excluded):
+                continue
+            if splitter in self._all_widgets:
                 continue
             splitter.deleteLater()
 
@@ -695,6 +747,7 @@ class DockArea(QtWidgets.QWidget):
         restored_root = self._build_widget_from_state(root_state, key_func)
         if restored_root is None:
             return False
+        self._hidden_widgets.clear()
         excluded_widgets = set(restored_root.findChildren(DockTabWidget))
         excluded_widgets.update(restored_root.findChildren(DockSplitter))
         if isinstance(restored_root, (DockTabWidget, DockSplitter)):
@@ -754,7 +807,7 @@ class DockArea(QtWidgets.QWidget):
                 return tw
         return None
 
-    def addTab(self, widget: QtWidgets.QWidget, name: str) -> None:
+    def addTab(self, widget: QtWidgets.QWidget, name: str, close_mode: str = "hide") -> None:
         """Add a tab with the given widget and name.
 
         Parameters
@@ -763,18 +816,23 @@ class DockArea(QtWidgets.QWidget):
             The page widget to add.
         name : str
             The name to display on the tab.
+        close_mode : {"hide", "remove"}, default="hide"
+            Whether close requests hide the dock for later restore or remove it.
         """
+        self.setTabCloseMode(widget, close_mode)
         display, tooltip = _shorten_path(name)
-        self._all_widgets.append(widget)
+        if widget not in self._all_widgets:
+            self._all_widgets.append(widget)
         self._tab_names[widget] = name
+        if widget in self._hidden_widgets:
+            self._hidden_widgets.remove(widget)
         if self._root_widget is None:
             tab_widget = DockTabWidget(self)
             tab_widget.setTabsClosable(self._tabs_closable)
+            tab_widget.tabBar().setVisible(self._tab_bar_visible)
+            tab_widget.setNewTabButtonVisible(self._new_tab_button_visible)
             if self._corner_widget is not None:
                 tab_widget.setCornerWidget(self._corner_widget, self._corner)
-            if self._new_tab_button is not None:
-                tab_widget.setCornerWidget(self._new_tab_button, QtCore.Qt.TopLeftCorner)
-                self._new_tab_button.show()
             self.set_root_widget(tab_widget)
             tab_widget.addTab(widget, display)
             self._set_tab_tooltip(tab_widget, tab_widget.count() - 1, tooltip)
@@ -784,6 +842,22 @@ class DockArea(QtWidgets.QWidget):
             if main_tw is not None:
                 main_tw.addTab(widget, display)
                 self._set_tab_tooltip(main_tw, main_tw.count() - 1, tooltip)
+
+    def setTabCloseMode(self, widget: QtWidgets.QWidget, mode: str) -> None:
+        """Set close behavior for a dock widget.
+
+        Parameters
+        ----------
+        widget : QWidget
+            Dock page widget.
+        mode : {"hide", "remove"}
+            ``"hide"`` keeps the dock available for restore. ``"remove"``
+            removes it from the dock registry.
+        """
+        normalized = mode.lower()
+        if normalized not in {"hide", "remove"}:
+            raise ValueError("dock close mode must be 'hide' or 'remove'")
+        self._tab_close_modes[widget] = normalized
 
     def setCloseTabCallback(self, callback) -> None:
         """Set a callable to handle tab close requests instead of the signal.
@@ -948,13 +1022,105 @@ class DockArea(QtWidgets.QWidget):
             return
         self._all_widgets.pop(index)
         self._tab_names.pop(w, None)
+        self._tab_close_modes.pop(w, None)
+        if w in self._hidden_widgets:
+            self._hidden_widgets.remove(w)
         for tw in self.findChildren(DockTabWidget):
             for i in range(tw.count()):
                 if tw.widget(i) is w:
                     tw.removeTab(i)
+                    self._detach_page_widget(w)
                     self.cleanup_empty_tab_widget(tw)
                     self.layoutChanged.emit()
                     return
+
+    def hideTab(self, index: int) -> bool:
+        """Hide the tab at ``index`` without removing its dock widget.
+
+        Parameters
+        ----------
+        index : int
+            Absolute tab index.
+
+        Returns
+        -------
+        bool
+            ``True`` if the dock was hidden.
+        """
+        if not self.canCloseTab(index):
+            return False
+        w = self.widget(index)
+        if w is None or w in self._hidden_widgets:
+            return False
+        for tw in self.findChildren(DockTabWidget):
+            for local_index in range(tw.count()):
+                if tw.widget(local_index) is w:
+                    tw.removeTab(local_index)
+                    w.setParent(self)
+                    w.hide()
+                    self._hidden_widgets.append(w)
+                    self.cleanup_empty_tab_widget(tw)
+                    self.layoutChanged.emit()
+                    return True
+        return False
+
+    def showTab(self, index: int) -> bool:
+        """Restore a hidden tab by absolute index."""
+        w = self.widget(index)
+        if w is None:
+            return False
+        if w not in self._hidden_widgets and self._tab_widget_for_page(w) is not None:
+            return False
+        if w in self._hidden_widgets:
+            self._hidden_widgets.remove(w)
+        display, tooltip = _shorten_path(self._tab_names.get(w, ""))
+        tab_widget = self.find_main_tab_widget()
+        if tab_widget is None:
+            tab_widget = DockTabWidget(self)
+            tab_widget.setTabsClosable(self._tabs_closable)
+            tab_widget.tabBar().setVisible(self._tab_bar_visible)
+            tab_widget.setNewTabButtonVisible(self._new_tab_button_visible)
+            if self._corner_widget is not None:
+                tab_widget.setCornerWidget(self._corner_widget, self._corner)
+            self.set_root_widget(tab_widget)
+        tab_widget.addTab(w, display)
+        self._set_tab_tooltip(tab_widget, tab_widget.count() - 1, tooltip)
+        tab_widget.setCurrentWidget(w)
+        w.show()
+        self.set_active_tab_widget(tab_widget)
+        self.layoutChanged.emit()
+        return True
+
+    def isTabVisible(self, index: int) -> bool:
+        """Return whether the tab at ``index`` is currently visible."""
+        w = self.widget(index)
+        if w is None or w in self._hidden_widgets:
+            return False
+        return self._tab_widget_for_page(w) is not None
+
+    def visibleCount(self) -> int:
+        """Return the number of currently visible dock tabs."""
+        return sum(1 for index in range(self.count()) if self.isTabVisible(index))
+
+    def hiddenIndexes(self) -> list[int]:
+        """Return absolute indexes of hidden dock tabs."""
+        return [
+            self._all_widgets.index(widget)
+            for widget in self._hidden_widgets
+            if widget in self._all_widgets
+        ]
+
+    def canCloseTab(self, index: int) -> bool:
+        """Return whether a close request may close or hide ``index``."""
+        return self.isTabVisible(index) and self.visibleCount() > 1
+
+    def _tab_widget_for_page(self, widget: QtWidgets.QWidget) -> DockTabWidget | None:
+        """Return the tab widget containing ``widget``."""
+        for tw in self.findChildren(DockTabWidget):
+            for local_index in range(tw.count()):
+                if tw.widget(local_index) is widget:
+                    return tw
+        return None
 
 
     def setCurrentIndex(self, index: int) -> None:
@@ -1000,6 +1166,18 @@ class DockArea(QtWidgets.QWidget):
         self._tabs_closable = closable
         for tw in self.findChildren(DockTabWidget):
             tw.setTabsClosable(closable)
+
+    def setTabBarVisible(self, visible: bool) -> None:
+        """Show or hide the tab bar on all internal DockTabWidgets.
+
+        Parameters
+        ----------
+        visible : bool
+            Whether the tab bar should be visible.
+        """
+        self._tab_bar_visible = visible
+        for tw in self.findChildren(DockTabWidget):
+            tw.tabBar().setVisible(visible)
 
     def setDocumentMode(self, enabled: bool) -> None:
         """Set document mode on all internal DockTabWidgets.
@@ -1131,11 +1309,10 @@ class DockArea(QtWidgets.QWidget):
             source_tw.removeTab(source_idx)
             new_tw = DockTabWidget(self)
             new_tw.setTabsClosable(self._tabs_closable)
+            new_tw.tabBar().setVisible(self._tab_bar_visible)
+            new_tw.setNewTabButtonVisible(self._new_tab_button_visible)
             if self._corner_widget is not None:
                 new_tw.setCornerWidget(self._corner_widget, self._corner)
-            if self._new_tab_button is not None:
-                new_tw.setCornerWidget(self._new_tab_button, QtCore.Qt.TopLeftCorner)
-                self._new_tab_button.show()
             new_tw.addTab(widget, display)
             self._set_tab_tooltip(new_tw, new_tw.count() - 1, tooltip)
             self.split_tab_widget(target_tw, new_tw, zone)
@@ -1269,11 +1446,19 @@ class DockArea(QtWidgets.QWidget):
         self.layoutChanged.emit()
 
     def _request_close_tab(self, abs_index: int) -> None:
-        """Request a tab close through the callback or fall back to direct removal."""
+        """Request a tab close through the configured close policy."""
+        if not self.canCloseTab(abs_index):
+            return
         if self._close_tab_callback is not None:
             self._close_tab_callback(abs_index)
+            return
+        widget = self.widget(abs_index)
+        close_mode = self._tab_close_modes.get(widget, "hide")
+        if close_mode == "remove":
+            self.removeTab(abs_index)
         else:
-            self.tabCloseRequested.emit(abs_index)
+            self.hideTab(abs_index)
+        self.tabCloseRequested.emit(abs_index)
 
     @staticmethod
     def _set_tab_tooltip(tw: DockTabWidget, local_index: int, tooltip: str) -> None:
@@ -1302,6 +1487,7 @@ class DockArea(QtWidgets.QWidget):
 
         # --- Close section ---
         action_close = menu.addAction("Close")
+        action_close.setEnabled(self.canCloseTab(abs_index))
         action_close.triggered.connect(lambda idx=abs_index: self._request_close_tab(idx))
 
         action_close_except = menu.addAction("Close All Except Active Document")
@@ -1312,6 +1498,8 @@ class DockArea(QtWidgets.QWidget):
 
         action_close_right = menu.addAction("Close All to the Right")
         action_close_right.triggered.connect(lambda idx=abs_index: self._close_all_right(idx))
+
+        self._add_dock_visibility_actions(menu)
 
         if self._context_menu_mode == "document":
             menu.addSeparator()
@@ -1386,14 +1574,41 @@ class DockArea(QtWidgets.QWidget):
             ``True`` when a menu was shown.
 
         """
-        if not self._context_menu_enabled or self._context_menu_callback is None:
+        if not self._context_menu_enabled:
             return False
         menu = QtWidgets.QMenu(self)
-        self._context_menu_callback(menu, self.currentIndex())
+        self._add_dock_visibility_actions(menu)
+        if self._context_menu_callback is not None:
+            self._context_menu_callback(menu, self.currentIndex())
         if not menu.actions():
             return False
         menu.exec_(global_pos)
         return True
+
+    def _add_dock_visibility_actions(self, menu: QtWidgets.QMenu) -> None:
+        """Add checkable dock visibility actions to ``menu``."""
+        if not self._all_widgets:
+            return
+        if menu.actions():
+            menu.addSeparator()
+        visible_count = self.visibleCount()
+        for index in range(self.count()):
+            action = menu.addAction(self.tabText(index))
+            action.setCheckable(True)
+            visible = self.isTabVisible(index)
+            action.setChecked(visible)
+            if visible and visible_count <= 1:
+                action.setEnabled(False)
+            action.triggered.connect(
+                lambda checked=False, idx=index: self._set_dock_visible(idx, checked)
+            )
+
+    def _set_dock_visible(self, index: int, visible: bool) -> None:
+        """Set dock visibility from a checkable context-menu action."""
+        if visible:
+            self.showTab(index)
+        else:
+            self.hideTab(index)
 
     def _close_all_except(self, keep_index: int) -> None:
         """Close every tab except the one at ``keep_index``."""

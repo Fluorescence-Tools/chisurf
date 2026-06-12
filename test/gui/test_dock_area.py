@@ -103,3 +103,99 @@ def test_dock_area_restore(qtbot):
     assert dock_area._root_widget.count() == 2
     assert dock_area._root_widget.widget(0) == w1
     assert dock_area._root_widget.widget(1) == w2
+
+
+def test_dock_area_close_hides_by_default_and_restores(qtbot):
+    """Default close behavior should hide docks without destroying them."""
+    dock_area = DockArea()
+    qtbot.addWidget(dock_area)
+
+    w1 = QtWidgets.QWidget()
+    w2 = QtWidgets.QWidget()
+    dock_area.addTab(w1, "Keep")
+    dock_area.addTab(w2, "Hide")
+
+    assert dock_area.count() == 2
+    assert dock_area.visibleCount() == 2
+
+    dock_area._request_close_tab(1)
+
+    assert dock_area.count() == 2
+    assert dock_area.visibleCount() == 1
+    assert dock_area.hiddenIndexes() == [1]
+    assert dock_area.widget(1) is w2
+    assert w2.parentWidget() is dock_area
+    assert dock_area.showTab(1) is True
+    assert dock_area.visibleCount() == 2
+
+
+def test_dock_area_does_not_close_last_visible_dock(qtbot):
+    """The last visible dock must stay open."""
+    dock_area = DockArea()
+    qtbot.addWidget(dock_area)
+
+    dock_area.addTab(QtWidgets.QWidget(), "Only")
+
+    assert dock_area.canCloseTab(0) is False
+    dock_area._request_close_tab(0)
+    assert dock_area.visibleCount() == 1
+    assert dock_area.hiddenIndexes() == []
+
+
+def test_dock_area_remove_close_mode_removes_dock(qtbot):
+    """Docks marked with remove close mode should be removed from registry."""
+    dock_area = DockArea()
+    qtbot.addWidget(dock_area)
+
+    keep = QtWidgets.QWidget()
+    files = QtWidgets.QWidget()
+    dock_area.addTab(keep, "Keep")
+    dock_area.addTab(files, "Files", close_mode="remove")
+
+    dock_area._request_close_tab(1)
+
+    assert dock_area.count() == 1
+    assert dock_area.widget(0) is keep
+    assert dock_area.hiddenIndexes() == []
+
+
+def test_layout_restore_preserves_pages_missing_from_saved_layout(qtbot):
+    """Restoring a partial layout must not destroy registered page widgets."""
+    dock_area = DockArea()
+    qtbot.addWidget(dock_area)
+
+    keep = QtWidgets.QWidget()
+    filter_page = QtWidgets.QWidget()
+    filter_layout = QtWidgets.QVBoxLayout(filter_page)
+    combo = QtWidgets.QComboBox(filter_page)
+    combo.addItem("Test")
+    filter_layout.addWidget(combo)
+
+    dock_area.addTab(keep, "Keep")
+    dock_area.addTab(filter_page, "Filter Settings")
+    state = {
+        "version": 1,
+        "root": {
+            "type": "tab",
+            "tabs": [
+                {
+                    "widget_key": "Keep",
+                    "tab_name": "Keep",
+                    "tab_text": "Keep",
+                }
+            ],
+            "current_index": 0,
+        },
+        "active_tab_widget": [],
+        "current_index": 0,
+    }
+
+    assert dock_area.set_layout_state(state)
+    QtWidgets.QApplication.processEvents()
+
+    assert combo.currentText() == "Test"
+    assert filter_page.parentWidget() is dock_area
+    assert dock_area.hiddenIndexes() == [1]
+    assert dock_area.showTab(1) is True
+    assert combo.currentText() == "Test"
+    assert dock_area.isTabVisible(1) is True
