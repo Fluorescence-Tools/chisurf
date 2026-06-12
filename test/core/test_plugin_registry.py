@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 import tempfile
+import types
 from unittest.mock import MagicMock, patch
 
-import pytest
-
+from chisurf.core.plugin.manifest import PluginManifest, PluginStatefulness, PluginWindowState
 from chisurf.core.plugin.registry import (
     PluginRegistry,
+    _apply_manifest_statefulness,
     _read_legacy_metadata,
+    resolve_plugin_statefulness,
 )
 
 
@@ -155,6 +158,142 @@ class TestPluginRegistryCLI:
                 reg.register_cli(group)
 
             group.add_command.assert_called_once()
+
+
+class _Event:
+    """Minimal event object for plugin statefulness tests."""
+
+    def __init__(self):
+        self.accepted = False
+
+    def accept(self):
+        self.accepted = True
+
+
+class _FakeWindow:
+    """Minimal window-like object for plugin statefulness tests."""
+
+    def __init__(self):
+        self.show_events = []
+        self.close_events = []
+        self.geometry = None
+        self.state = None
+
+    def showEvent(self, event):
+        self.show_events.append(event)
+
+    def closeEvent(self, event):
+        self.close_events.append(event)
+
+    def saveGeometry(self):
+        return b"geometry"
+
+    def restoreGeometry(self, geometry):
+        self.geometry = geometry
+
+    def saveState(self):
+        return b"state"
+
+    def restoreState(self, state):
+        self.state = state
+
+
+class TestPluginRegistryStatefulness:
+    """PluginRegistry manifest-driven window statefulness."""
+
+    def test_resolve_plugin_statefulness_uses_manifest_default(self):
+        manifest = PluginManifest(
+            id="test_plugin",
+            version="1.0.0",
+            statefulness=PluginStatefulness(enabled=True),
+        )
+        assert resolve_plugin_statefulness(manifest, {"statefulness": {}}) is True
+
+        manifest.statefulness.enabled = False
+        assert resolve_plugin_statefulness(manifest, {"statefulness": {}}) is False
+
+    def test_resolve_plugin_statefulness_global_override(self):
+        manifest = PluginManifest(
+            id="test_plugin",
+            version="1.0.0",
+            statefulness=PluginStatefulness(enabled=False),
+        )
+        assert resolve_plugin_statefulness(
+            manifest,
+            {"statefulness": {"mode": "enabled"}},
+        ) is True
+        assert resolve_plugin_statefulness(
+            manifest,
+            {"statefulness": {"mode": "disabled"}},
+        ) is False
+
+    def test_resolve_plugin_statefulness_per_plugin_override(self):
+        manifest = PluginManifest(
+            id="test_plugin",
+            version="1.0.0",
+            state_namespace="namespace_plugin",
+            statefulness=PluginStatefulness(enabled=True),
+        )
+        plugin_settings = {
+            "statefulness": {
+                "mode": "enabled",
+                "per_plugin": {
+                    "test_plugin": False,
+                    "namespace_plugin": "plugin_default",
+                },
+            }
+        }
+        assert resolve_plugin_statefulness(manifest, plugin_settings) is False
+
+        manifest.id = "namespace_plugin"
+        assert resolve_plugin_statefulness(manifest, plugin_settings) is True
+
+    def test_apply_manifest_statefulness_wraps_window_events(self, monkeypatch):
+        calls = []
+        fake_helpers = types.SimpleNamespace(
+            restore_plugin_window_state=lambda window, key: calls.append(("restore", key)),
+            save_plugin_window_state=lambda window, key: calls.append(("save", key)),
+        )
+        monkeypatch.setitem(sys.modules, "chisurf.gui.misc_helpers", fake_helpers)
+        manifest = PluginManifest(
+            id="test_plugin",
+            version="1.0.0",
+            statefulness=PluginStatefulness(
+                enabled=True,
+                window=PluginWindowState(settings_key="test_window"),
+            ),
+        )
+        window = _FakeWindow()
+        show_event = _Event()
+        close_event = _Event()
+
+        _apply_manifest_statefulness(window, manifest)
+        window.showEvent(show_event)
+        window.closeEvent(close_event)
+
+        assert calls == [("restore", "test_window"), ("save", "test_window")]
+        assert show_event in window.show_events
+        assert close_event in window.close_events
+
+    def test_apply_manifest_statefulness_skips_existing_persistence(self, monkeypatch):
+        calls = []
+        fake_helpers = types.SimpleNamespace(
+            restore_plugin_window_state=lambda window, key: calls.append(key),
+            save_plugin_window_state=lambda window, key: calls.append(key),
+        )
+        monkeypatch.setitem(sys.modules, "chisurf.gui.misc_helpers", fake_helpers)
+        manifest = PluginManifest(
+            id="test_plugin",
+            version="1.0.0",
+            statefulness=PluginStatefulness(enabled=True),
+        )
+        window = _FakeWindow()
+        window._persist_plugin_name = "legacy_key"
+
+        _apply_manifest_statefulness(window, manifest)
+        window.showEvent(_Event())
+
+        assert calls == []
 
 
 class TestPluginRegistryState:

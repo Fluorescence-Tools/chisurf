@@ -9,9 +9,11 @@ import tempfile
 import pytest
 
 from chisurf.core.plugin.manifest import (
-    PluginManifest,
-    RPCMethodSpec,
     PluginEntrypoints,
+    PluginManifest,
+    PluginStatefulness,
+    PluginWindowState,
+    RPCMethodSpec,
     load_manifest,
     validate_manifest,
 )
@@ -57,6 +59,30 @@ class TestPluginManifest:
         assert len(m.rpc_methods) == 1
         assert m.rpc_methods[0].name == "burst_selection.jobs.analyze_files"
         assert m.rpc_methods[0].long_running is True
+        assert m.statefulness.enabled is False
+        assert m.statefulness.window.enabled is True
+
+    def test_statefulness_from_dict(self):
+        """Statefulness parses boolean and nested window settings."""
+        data = {
+            "id": "test",
+            "version": "1.0.0",
+            "statefulness": {
+                "enabled": True,
+                "window": {
+                    "enabled": True,
+                    "settings_key": "test_window",
+                },
+            },
+        }
+        m = PluginManifest.from_dict(data)
+        assert m.statefulness.enabled is True
+        assert m.statefulness.window.enabled is True
+        assert m.statefulness.window.settings_key == "test_window"
+
+        m = PluginManifest.from_dict({"id": "test", "version": "1.0.0", "statefulness": True})
+        assert m.statefulness.enabled is True
+        assert m.statefulness.window.enabled is True
 
     def test_to_dict_roundtrip(self):
         """to_dict() produces a dict that can rebuild the manifest."""
@@ -67,6 +93,10 @@ class TestPluginManifest:
             description="A test plugin",
             authors=["Author"],
             categories=["Tools"],
+            statefulness=PluginStatefulness(
+                enabled=True,
+                window=PluginWindowState(settings_key="test_window"),
+            ),
             entrypoints=PluginEntrypoints(cli="test=mod:cli"),
             rpc_methods=[RPCMethodSpec(name="test.ping")],
         )
@@ -76,6 +106,8 @@ class TestPluginManifest:
         assert m2.version == m1.version
         assert m2.display_name == m1.display_name
         assert m2.entrypoints.cli == m1.entrypoints.cli
+        assert m2.statefulness.enabled is True
+        assert m2.statefulness.window.settings_key == "test_window"
         assert m2.rpc_methods[0].name == m1.rpc_methods[0].name
 
     def test_to_json_roundtrip(self):
@@ -206,6 +238,40 @@ class TestValidateManifest:
         data = {"id": "test", "version": "1.0.0", "rpc_methods": [{"summary": "no name"}]}
         errors = validate_manifest(data)
         assert any("name" in e for e in errors)
+
+    def test_statefulness_valid(self):
+        data = {
+            "id": "test",
+            "version": "1.0.0",
+            "statefulness": {
+                "enabled": True,
+                "window": {
+                    "enabled": True,
+                    "settings_key": None,
+                },
+            },
+        }
+        errors = validate_manifest(data)
+        assert errors == []
+
+    def test_statefulness_invalid_type(self):
+        data = {"id": "test", "version": "1.0.0", "statefulness": "yes"}
+        errors = validate_manifest(data)
+        assert any("statefulness" in e for e in errors)
+
+    def test_statefulness_invalid_settings_key(self):
+        data = {
+            "id": "test",
+            "version": "1.0.0",
+            "statefulness": {
+                "enabled": True,
+                "window": {
+                    "settings_key": "",
+                },
+            },
+        }
+        errors = validate_manifest(data)
+        assert any("settings_key" in e for e in errors)
 
     def test_non_dict_input(self):
         errors = validate_manifest("not a dict")
