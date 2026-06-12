@@ -1,211 +1,42 @@
 from __future__ import annotations
 
-import pathlib
 import sys
 
-import yaml
 from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
-import chisurf.core.fio as io
-import chisurf.core.settings
-import chisurf.gui.widgets
-from chisurf import logging
-from chisurf.gui.widgets.dock_area import DockArea
-from chisurf.plugins.core.code_editor.agent_panel import AgentPanelWidget
+from chisurf.plugins.core.code_editor.settings import (
+    EDITOR_COLOR_SCHEMES,
+    EDITOR_SETTINGS_KEYS,
+    EditorSettingsDialog,
+    default_editor_settings,
+    editor_language_key,
+    get_editor_settings,
+    make_editor_font,
+    normalize_editor_language,
+    save_editor_settings,
+)
+from chisurf.plugins.core.code_editor.symbols import (
+    CodeSymbol,
+    extract_python_symbols,
+)
 
-EDITOR_DEFAULT_FONTS = [
-    "Courier New",
-    "Consolas",
-    "SF Mono",
-    "Menlo",
-    "Monaco",
-    "DejaVu Sans Mono",
-    "Liberation Mono",
-    "Courier",
-    "Monospace",
+__all__ = [
+    "CodeSymbol",
+    "EditorSettingsDialog",
+    "JSONHighlighter",
+    "PythonHighlighter",
+    "SyntaxHighlighter",
+    "TextEditor",
+    "YAMLHighlighter",
+    "default_editor_settings",
+    "editor_language_key",
+    "extract_python_symbols",
+    "get_editor_settings",
+    "make_editor_font",
+    "normalize_editor_language",
+    "save_editor_settings",
 ]
-
-EDITOR_LANGUAGE_OPTIONS = ["Python", "JSON", "YAML", "Plain text"]
-
-EDITOR_COLOR_SCHEMES = {
-    "ChiSurf": {
-        "paper_color": "#cfcfcf",
-        "default_color": "#000006",
-        "margins_background_color": "#808080",
-        "marker_background_color": "#f0f0f0",
-        "caret_line_background_color": "#afafaf",
-    },
-    "Light": {
-        "paper_color": "#ffffff",
-        "default_color": "#000000",
-        "margins_background_color": "#f0f0f0",
-        "marker_background_color": "#d8e8ff",
-        "caret_line_background_color": "#eef4ff",
-    },
-    "Dark": {
-        "paper_color": "#1e1e1e",
-        "default_color": "#d4d4d4",
-        "margins_background_color": "#252526",
-        "marker_background_color": "#3c3c3c",
-        "caret_line_background_color": "#2d2d30",
-    },
-    "Monokai": {
-        "paper_color": "#272822",
-        "default_color": "#f8f8f2",
-        "margins_background_color": "#1e1f1c",
-        "marker_background_color": "#3e3d32",
-        "caret_line_background_color": "#3e3d32",
-    },
-}
-
-EDITOR_SETTINGS_KEYS = [
-    "font_family",
-    "font_size",
-    "language",
-    "color_scheme",
-    "paper_color",
-    "default_color",
-    "margins_background_color",
-    "marker_background_color",
-    "caret_line_background_color",
-    "caret_line_visible",
-]
-
-
-def editor_language_key(language: str | None) -> str:
-    """Return the normalized internal language key for *language*."""
-    key = str(language or "").strip().lower().replace("_", "-")
-    if key in {"plain-text", "plain text"}:
-        return "plain"
-    return key
-
-
-def normalize_editor_language(language: str | None) -> str:
-    """Return a display language name for *language*."""
-    key = editor_language_key(language)
-    if key in {"json"}:
-        return "JSON"
-    if key in {"yaml", "yml"}:
-        return "YAML"
-    if key in {"plain", "text"}:
-        return "Plain text"
-    return "Python"
-
-
-def default_editor_settings() -> dict[str, str | int | bool]:
-    """Return the default editor settings dictionary."""
-    settings: dict[str, str | int | bool] = {
-        "font_family": "Courier New",
-        "font_size": 9,
-        "language": "Python",
-        "color_scheme": "ChiSurf",
-        "caret_line_visible": False,
-    }
-    settings.update(EDITOR_COLOR_SCHEMES["ChiSurf"])
-    return settings
-
-
-def get_editor_settings() -> dict[str, str | int | bool]:
-    """Return editor settings merged with the current ChiSurf GUI settings."""
-    settings = default_editor_settings()
-    cfg = cs.core.settings.gui.get("editor", {})
-    if not isinstance(cfg, dict):
-        cfg = {}
-    for key, value in cfg.items():
-        if key in EDITOR_SETTINGS_KEYS:
-            settings[key] = value
-    scheme = settings.get("color_scheme")
-    if scheme in EDITOR_COLOR_SCHEMES:
-        settings.update(EDITOR_COLOR_SCHEMES[scheme])
-    for key, value in cfg.items():
-        if key in EDITOR_SETTINGS_KEYS:
-            settings[key] = value
-    settings["language"] = normalize_editor_language(settings.get("language"))
-    return settings
-
-
-def make_editor_font(settings: dict | None = None) -> QtGui.QFont:
-    """Create a QFont from editor settings."""
-    cfg = settings or get_editor_settings()
-    font = QtGui.QFont()
-    font.setFamily(str(cfg.get("font_family", "Courier New")))
-    try:
-        font.setPointSize(int(cfg.get("font_size", 9)))
-    except (TypeError, ValueError):
-        font.setPointSize(9)
-    return font
-
-
-def save_editor_settings(settings: dict) -> bool:
-    """Persist editor settings to the user ChiSurf settings file."""
-    editor_settings = {
-        key: settings[key]
-        for key in EDITOR_SETTINGS_KEYS
-        if key in settings
-    }
-    if not editor_settings:
-        return False
-
-    try:
-        settings_file = cs.core.settings.chisurf_settings_file
-        data = cs.core.settings.safe_open_file(
-            file_path=settings_file,
-            processor=yaml.safe_load,
-            default_value={},
-            error_message=f"Error opening settings file {settings_file}",
-        )
-        if not isinstance(data, dict):
-            data = {}
-
-        gui_cfg = data.setdefault("gui", {})
-        if not isinstance(gui_cfg, dict):
-            gui_cfg = {}
-            data["gui"] = gui_cfg
-
-        editor_cfg = gui_cfg.setdefault("editor", {})
-        if not isinstance(editor_cfg, dict):
-            editor_cfg = {}
-            gui_cfg["editor"] = editor_cfg
-
-        editor_cfg.update(editor_settings)
-
-        cs_settings = cs.core.settings.cs_settings
-        if not isinstance(cs_settings, dict):
-            cs.core.settings.cs_settings = {}
-            cs_settings = cs.core.settings.cs_settings
-        cs_gui = cs_settings.setdefault("gui", {})
-        if not isinstance(cs_gui, dict):
-            cs_gui = {}
-            cs_settings["gui"] = cs_gui
-        cs_editor = cs_gui.setdefault("editor", {})
-        if not isinstance(cs_editor, dict):
-            cs_editor = {}
-            cs_gui["editor"] = cs_editor
-        cs_editor.update(editor_settings)
-
-        gui = cs.core.settings.gui
-        if not isinstance(gui, dict):
-            cs.core.settings.gui = {}
-            gui = cs.core.settings.gui
-        gui_editor = gui.setdefault("editor", {})
-        if not isinstance(gui_editor, dict):
-            gui_editor = {}
-            gui["editor"] = gui_editor
-        gui_editor.update(editor_settings)
-
-        with open(settings_file, "w", encoding="utf-8") as file:
-            yaml.safe_dump(data, file, default_flow_style=False, sort_keys=False)
-        return True
-    except Exception as e:
-        logging.log(1, f"Error saving editor settings: {e}")
-        return False
-
-
-try:
-    from chisurf.gui.misc_helpers import persist_plugin_state
-except ImportError:
-    persist_plugin_state = lambda n: lambda c: c
 
 
 class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
@@ -244,7 +75,7 @@ class SyntaxHighlighter(QtGui.QSyntaxHighlighter):
 class PythonHighlighter(SyntaxHighlighter):
     """Syntax highlighter for Python code."""
 
-    def __init__(self, parent=None, font_family=None, font_point_size=None, 
+    def __init__(self, parent=None, font_family=None, font_point_size=None,
                  paper_color=None, default_color=None):
         super().__init__(parent, font_family, font_point_size)
 
@@ -437,6 +268,10 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     """Text editor with syntax highlighting and line numbers."""
 
     ARROW_MARKER_NUM = 8
+    statusChanged = QtCore.Signal(dict)
+    filePathChanged = QtCore.Signal(str)
+    symbolsChanged = QtCore.Signal(list)
+    definitionRequested = QtCore.Signal(str, int, int)
 
     def __init__(
             self,
@@ -447,6 +282,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             marker_background_color: str = None,
             caret_line_background_color: str = None,
             caret_line_visible: bool = None,
+            line_numbers_visible: bool = None,
             language: str = None,
             **kwargs
     ):
@@ -469,6 +305,8 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             Background color for the current line highlight.
         caret_line_visible : bool, optional
             Whether to highlight the current line.
+        line_numbers_visible : bool, optional
+            Whether to show the line-number margin.
         language : str, optional
             Language for syntax highlighting: Python, JSON, YAML, or Plain text.
         kwargs : dict
@@ -489,6 +327,8 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             settings["caret_line_background_color"] = caret_line_background_color
         if caret_line_visible is not None:
             settings["caret_line_visible"] = caret_line_visible
+        if line_numbers_visible is not None:
+            settings["line_numbers_visible"] = line_numbers_visible
         if language is not None:
             settings["language"] = language
         if "paper_color" in kwargs:
@@ -504,11 +344,13 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self.marker_background_color = settings["marker_background_color"]
         self.current_line_color = QtGui.QColor(settings["caret_line_background_color"])
         self.caret_line_visible = bool(settings["caret_line_visible"])
+        self.line_numbers_visible = bool(settings.get("line_numbers_visible", True))
         self.highlighter = None
 
         self.setFont(make_editor_font(settings))
 
         self.line_number_area = LineNumberArea(self)
+        self.line_number_area.setVisible(self.line_numbers_visible)
         self.blockCountChanged.connect(self.update_line_number_area_width)
         self.updateRequest.connect(self.update_line_number_area)
         self.update_line_number_area_width(0)
@@ -519,11 +361,101 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self._nav_index = -1
         self.current_file = None
         self.external_definition_callback = None
+        self._definition_uses_host = False
+        self._symbols: list[CodeSymbol] = []
+        self._symbol_timer = QtCore.QTimer(self)
+        self._symbol_timer.setSingleShot(True)
+        self._symbol_timer.setInterval(250)
+        self._symbol_timer.timeout.connect(self.refresh_symbols)
+        self.cursorPositionChanged.connect(self._emit_status_changed)
+        self.textChanged.connect(self._schedule_symbol_refresh)
+        self.document().modificationChanged.connect(lambda _modified: self._emit_status_changed())
 
         self._rebuild_highlighter()
         self._apply_palette()
+        self.refresh_symbols()
 
         self.setMinimumSize(400, 200)
+
+    def set_current_file(self, path: str | None) -> None:
+        """Set the file path represented by this editor."""
+        path_str = str(path) if path else ""
+        if self.current_file == path_str:
+            return
+        self.current_file = path_str
+        self.filePathChanged.emit(path_str)
+        self.refresh_symbols()
+        self._emit_status_changed()
+
+    def line_column(self) -> tuple[int, int]:
+        """Return the current one-based line and zero-based column."""
+        cursor = self.textCursor()
+        return cursor.blockNumber() + 1, cursor.positionInBlock()
+
+    def current_word(self) -> str:
+        """Return the word under the cursor."""
+        cursor = self.textCursor()
+        cursor.select(QtGui.QTextCursor.WordUnderCursor)
+        return cursor.selectedText()
+
+    def symbols(self) -> list[CodeSymbol]:
+        """Return the current document symbols."""
+        return list(self._symbols)
+
+    def refresh_symbols(self) -> list[CodeSymbol]:
+        """Refresh and emit the symbol list for the current document."""
+        if editor_language_key(self.language) == "python":
+            self._symbols = extract_python_symbols(self.toPlainText(), self.current_file or "")
+        else:
+            self._symbols = []
+        self.symbolsChanged.emit(self.symbols())
+        return self.symbols()
+
+    def goto_symbol(self, symbol: CodeSymbol | dict) -> None:
+        """Move the cursor to *symbol* and record navigation history."""
+        if isinstance(symbol, dict):
+            line = int(symbol.get("line", 1))
+            column = int(symbol.get("column", 0))
+        else:
+            line = symbol.line
+            column = symbol.column
+        self.goto_line_column(line, column)
+
+    def goto_line_column(self, line: int, column: int = 0, record: bool = True) -> None:
+        """Move the cursor to a one-based line and zero-based column."""
+        if line < 1:
+            return
+        if record:
+            self.push_nav_history()
+        doc = self.document()
+        block = doc.findBlockByNumber(line - 1)
+        if not block.isValid():
+            return
+        cursor = self.textCursor()
+        cursor.setPosition(block.position() + max(0, min(column, block.length() - 1)))
+        self.setTextCursor(cursor)
+        self.centerCursor()
+        if record:
+            self.push_nav_history()
+        self._emit_status_changed()
+
+    def _schedule_symbol_refresh(self) -> None:
+        """Schedule a debounced symbol refresh."""
+        self._symbol_timer.start()
+        self._emit_status_changed()
+
+    def _emit_status_changed(self) -> None:
+        """Emit reusable editor status for host widgets."""
+        line, column = self.line_column()
+        self.statusChanged.emit(
+            {
+                "file": self.current_file or "",
+                "line": line,
+                "column": column,
+                "modified": self.document().isModified(),
+                "language": self.language,
+            }
+        )
 
     def line_number_area_width(self):
         """Calculate the width of the line number area."""
@@ -562,7 +494,9 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     def line_number_area_paint_event(self, event):
         """Paint the line number area."""
         painter = QtGui.QPainter(self.line_number_area)
-        painter.fillRect(event.rect(), QtGui.QColor(self.margins_background_color))
+        bg_color = QtGui.QColor('green')
+        text_color = QtGui.QColor('white')
+        painter.fillRect(event.rect(), bg_color)
 
         block = self.firstVisibleBlock()
         block_number = block.blockNumber()
@@ -572,9 +506,14 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
                 number = str(block_number + 1)
-                painter.setPen(QtGui.QColor('#D0D0D0'))
+                painter.setPen(text_color)
                 painter.setFont(self.font())
-                rect = QtCore.QRect(0, int(top), self.line_number_area.width() - 4, self.fontMetrics().height())
+                rect = QtCore.QRect(
+                    0,
+                    int(top),
+                    self.line_number_area.width() - 4,
+                    self.fontMetrics().height(),
+                )
                 painter.drawText(rect, QtCore.Qt.AlignRight, number)
 
             block = block.next()
@@ -583,27 +522,37 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             block_number += 1
 
     def mousePressEvent(self, event):
+        """Handle Ctrl/Cmd-click definition navigation."""
         super().mousePressEvent(event)
-        if event.modifiers() & QtCore.Qt.ControlModifier or event.modifiers() & QtCore.Qt.MetaModifier:
+        if (
+            event.modifiers() & QtCore.Qt.ControlModifier
+            or event.modifiers() & QtCore.Qt.MetaModifier
+        ):
             cursor = self.cursorForPosition(event.pos())
             cursor.select(QtGui.QTextCursor.WordUnderCursor)
             word = cursor.selectedText()
             if word:
-                self.jump_to_definition(word)
+                line, column = self.line_column()
+                self.definitionRequested.emit(word, line, column)
+                if not self._definition_uses_host:
+                    self.jump_to_definition(word)
 
     def navigate_back(self):
+        """Navigate backward in this editor's cursor history."""
         if self._nav_index > 0:
             self._nav_index -= 1
             file_path, line_number = self._nav_history[self._nav_index]
             self.goto_file_line(file_path, line_number)
 
     def navigate_forward(self):
+        """Navigate forward in this editor's cursor history."""
         if self._nav_index < len(self._nav_history) - 1:
             self._nav_index += 1
             file_path, line_number = self._nav_history[self._nav_index]
             self.goto_file_line(file_path, line_number)
 
     def goto_file_line(self, file_path, line_number):
+        """Open or focus *file_path* and move to a zero-based line number."""
         if hasattr(self, "file_load_callback") and getattr(self, "current_file", "") != file_path:
             self.file_load_callback(file_path, line_number=line_number)
             return
@@ -615,8 +564,10 @@ class TextEditor(QtWidgets.QPlainTextEdit):
             cursor.setPosition(block.position())
             self.setTextCursor(cursor)
             self.centerCursor()
+            self._emit_status_changed()
 
     def push_nav_history(self, file_path=None, line_number=None):
+        """Record the current file and zero-based line in navigation history."""
         if file_path is None:
             file_path = getattr(self, "current_file", "")
         if line_number is None:
@@ -632,19 +583,11 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self._nav_index = len(self._nav_history) - 1
 
     def jump_to_definition(self, word):
-        import re
-        content = self.toPlainText()
-        lines = content.split('\n')
-        pattern = re.compile(r'^ *(def |class )' + re.escape(word) + r'\b')
-        for i, line in enumerate(lines):
-            if pattern.match(line):
+        """Jump to the local or externally resolved definition for *word*."""
+        for symbol in self.refresh_symbols():
+            if symbol.name == word:
                 self.push_nav_history()
-                doc = self.document()
-                block = doc.findBlockByNumber(i)
-                cursor = self.textCursor()
-                cursor.setPosition(block.position())
-                self.setTextCursor(cursor)
-                self.centerCursor()
+                self.goto_line_column(symbol.line, symbol.column, record=False)
                 self.push_nav_history()
                 return
 
@@ -734,11 +677,12 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self.marker_background_color = merged["marker_background_color"]
         self.current_line_color = QtGui.QColor(merged["caret_line_background_color"])
         self.caret_line_visible = bool(merged["caret_line_visible"])
+        self.line_numbers_visible = bool(merged.get("line_numbers_visible", True))
 
         self.setFont(make_editor_font(merged))
         self._rebuild_highlighter()
         self._apply_palette()
-        self.update_line_number_area_width(0)
+        self.set_line_numbers_visible(self.line_numbers_visible)
         self.viewport().update()
 
     def get_editor_settings(self) -> dict:
@@ -747,6 +691,7 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         settings["font_family"] = self.font().family() or settings.get("font_family", "Courier New")
         settings["font_size"] = self.font().pointSize()
         settings["language"] = self.language
+        settings["line_numbers_visible"] = self.line_numbers_visible
         return settings
 
     def set_font_family(self, font_family: str) -> None:
@@ -768,6 +713,12 @@ class TextEditor(QtWidgets.QPlainTextEdit):
     def set_caret_line_visible(self, visible: bool) -> None:
         """Enable or disable current-line highlighting."""
         self.set_editor_settings({"caret_line_visible": visible})
+
+    def set_line_numbers_visible(self, visible: bool) -> None:
+        """Enable or disable the line-number margin."""
+        self.line_numbers_visible = bool(visible)
+        self.line_number_area.setVisible(self.line_numbers_visible)
+        self.update_line_number_area_width(0)
 
     def _rebuild_highlighter(self) -> None:
         """Recreate the syntax highlighter for the current language."""
@@ -804,657 +755,21 @@ class TextEditor(QtWidgets.QPlainTextEdit):
         self.setPalette(palette)
 
 
-class EditorSettingsDialog(QtWidgets.QDialog):
-    """Dialog for persistent code editor settings."""
 
-    settings_applied = QtCore.Signal(dict)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.color_buttons = {}
-        self.color_labels = {
-            "paper_color": "Paper color",
-            "default_color": "Text color",
-            "margins_background_color": "Margin color",
-            "marker_background_color": "Marker color",
-            "caret_line_background_color": "Current line color",
-        }
-        self.setWindowTitle("Editor Settings")
-        self.resize(420, 520)
-        self.setup_ui()
-        self._set_controls_from_settings(get_editor_settings())
-
-    def setup_ui(self) -> None:
-        """Create the settings dialog widgets."""
-        layout = QtWidgets.QVBoxLayout(self)
-
-        form = QtWidgets.QFormLayout()
-        self.language_combo = QtWidgets.QComboBox()
-        self.language_combo.setObjectName("language_combo")
-        for language in EDITOR_LANGUAGE_OPTIONS:
-            self.language_combo.addItem(language)
-        form.addRow("Formatting language:", self.language_combo)
-
-        self.font_combo = QtWidgets.QComboBox()
-        self.font_combo.setObjectName("font_combo")
-        self.font_combo.setEditable(True)
-        self._populate_fonts()
-        form.addRow("Font:", self.font_combo)
-
-        self.font_size_spin = QtWidgets.QSpinBox()
-        self.font_size_spin.setObjectName("font_size_spin")
-        self.font_size_spin.setRange(4, 72)
-        form.addRow("Font size:", self.font_size_spin)
-
-        self.color_scheme_combo = QtWidgets.QComboBox()
-        self.color_scheme_combo.setObjectName("color_scheme_combo")
-        for scheme in EDITOR_COLOR_SCHEMES:
-            self.color_scheme_combo.addItem(scheme)
-        self.color_scheme_combo.currentTextChanged.connect(self._on_color_scheme_changed)
-        form.addRow("Color scheme:", self.color_scheme_combo)
-
-        layout.addLayout(form)
-
-        group = QtWidgets.QGroupBox("Colors")
-        colors_layout = QtWidgets.QFormLayout()
-        for key, label in self.color_labels.items():
-            button = QtWidgets.QPushButton("#ffffff")
-            button.setObjectName(f"{key}_button")
-            button.setFixedWidth(120)
-            button.clicked.connect(lambda _checked, item=key: self._choose_color(item))
-            self.color_buttons[key] = button
-            colors_layout.addRow(label, button)
-        group.setLayout(colors_layout)
-        layout.addWidget(group)
-
-        self.caret_line_check = QtWidgets.QCheckBox("Highlight current line")
-        self.caret_line_check.setObjectName("caret_line_check")
-        layout.addWidget(self.caret_line_check)
-
-        button_layout = QtWidgets.QHBoxLayout()
-        self.apply_button = QtWidgets.QPushButton("Apply & Save")
-        self.apply_button.setObjectName("apply_settings_button")
-        self.restore_button = QtWidgets.QPushButton("Restore Defaults")
-        self.restore_button.setObjectName("restore_defaults_button")
-        self.close_button = QtWidgets.QPushButton("Close")
-        self.close_button.setObjectName("close_settings_button")
-
-        self.apply_button.clicked.connect(self._apply_clicked)
-        self.restore_button.clicked.connect(self.restore_defaults)
-        self.close_button.clicked.connect(self.reject)
-
-        button_layout.addWidget(self.apply_button)
-        button_layout.addWidget(self.restore_button)
-        button_layout.addStretch()
-        button_layout.addWidget(self.close_button)
-        layout.addLayout(button_layout)
-
-    def _populate_fonts(self) -> None:
-        """Populate the font combo box with common monospace fonts first."""
-        added = set()
-        try:
-            available = set(QtGui.QFontDatabase.families())
-        except Exception:
-            available = set()
-
-        for font in EDITOR_DEFAULT_FONTS:
-            if font in available or not available:
-                self.font_combo.addItem(font)
-                added.add(font)
-
-        for font in sorted(available):
-            if font not in added:
-                self.font_combo.addItem(font)
-
-        if self.font_combo.count() == 0:
-            self.font_combo.addItem("Courier New")
-
-    def _set_controls_from_settings(self, settings: dict) -> None:
-        """Populate dialog controls from *settings*."""
-        language = normalize_editor_language(settings.get("language"))
-        index = self.language_combo.findText(language)
-        if index >= 0:
-            self.language_combo.setCurrentIndex(index)
-
-        font_family = str(settings.get("font_family", "Courier New"))
-        index = self.font_combo.findText(font_family, QtCore.Qt.MatchFixedString)
-        if index < 0:
-            index = self.font_combo.findText(font_family, QtCore.Qt.MatchContains)
-        if index >= 0:
-            self.font_combo.setCurrentIndex(index)
-        else:
-            self.font_combo.setCurrentText(font_family)
-
-        try:
-            self.font_size_spin.setValue(int(settings.get("font_size", 9)))
-        except (TypeError, ValueError):
-            self.font_size_spin.setValue(9)
-
-        scheme = str(settings.get("color_scheme", "ChiSurf"))
-        index = self.color_scheme_combo.findText(scheme)
-        if index >= 0:
-            self.color_scheme_combo.setCurrentIndex(index)
-
-        for key, button in self.color_buttons.items():
-            button.setText(str(settings.get(key, "#ffffff")))
-            self._update_color_button(button)
-
-        self.caret_line_check.setChecked(bool(settings.get("caret_line_visible", False)))
-
-    def _on_color_scheme_changed(self, scheme: str) -> None:
-        """Update color controls when the color scheme changes."""
-        if scheme in EDITOR_COLOR_SCHEMES:
-            for key, value in EDITOR_COLOR_SCHEMES[scheme].items():
-                button = self.color_buttons.get(key)
-                if button is not None:
-                    button.setText(str(value))
-                    self._update_color_button(button)
-
-    def _choose_color(self, key: str) -> None:
-        """Open a color picker and update the selected color button."""
-        button = self.color_buttons[key]
-        color = QtWidgets.QColorDialog.getColor(QtGui.QColor(button.text()), self)
-        if color.isValid():
-            text = f"#{color.red():02x}{color.green():02x}{color.blue():02x}"
-            button.setText(text)
-            self._update_color_button(button)
-
-    @staticmethod
-    def _update_color_button(button: QtWidgets.QPushButton) -> None:
-        """Update a color button's text color for readability."""
-        color = QtGui.QColor(button.text())
-        brightness = sum(color.getRgb()[:3])
-        button.setStyleSheet(
-            f"background-color: {button.text()}; "
-            f"color: {'black' if brightness > 382 else 'white'};"
-        )
-
-    def editor_settings(self) -> dict:
-        """Return the settings currently selected in the dialog."""
-        settings = {
-            "font_family": self.font_combo.currentText(),
-            "font_size": self.font_size_spin.value(),
-            "language": self.language_combo.currentText(),
-            "color_scheme": self.color_scheme_combo.currentText(),
-            "caret_line_visible": self.caret_line_check.isChecked(),
-        }
-        settings.update({
-            key: button.text()
-            for key, button in self.color_buttons.items()
-        })
-        return settings
-
-    def restore_defaults(self) -> None:
-        """Reset dialog controls to default editor settings."""
-        self._set_controls_from_settings(default_editor_settings())
-
-    def _apply_clicked(self) -> None:
-        """Save and apply the current dialog settings."""
-        self.settings_applied.emit(self.editor_settings())
-        self.accept()
-
-
-@persist_plugin_state("code_editor")
-class CodeEditor(QtWidgets.QWidget):
-    """Tabbed text editor with DockArea tabs and an AI agent side panel."""
-
-    settings_changed = QtCore.Signal(dict)
-
-    def __init__(
-        self,
-        *args,
-        filename: str = None,
-        language: str = "Python",
-        can_load: bool = True,
-        **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-
-        main_layout = QtWidgets.QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        self.filename = filename
-        self._can_load = can_load
-        self._open_files: dict[str, QtWidgets.QWidget] = {}
-        self._agent_panel_visible = False
-        self.setLayout(main_layout)
-
-        self.tab_widget = DockArea()
-        self.tab_widget.tabActionRequested.connect(self._on_tab_action)
-        self.tab_widget.newTabRequested.connect(self._add_new_editor_tab)
-        self.tab_widget.setCloseTabCallback(self._close_tab)
-        main_layout.addWidget(self.tab_widget)
-
-        if can_load or filename:
-            self._create_editor_tab(filename=filename, language=language)
-        self.tab_widget.setTabsClosable(True)
-        self.tab_widget.setNewTabButtonVisible(True)
-        self.tab_widget.setContextMenuEnabled(True)
-
-        self.agent_panel = AgentPanelWidget(
-            parent=None,
-            get_context_callback=self._get_editor_context
-        )
-        self._sync_agent_font()
-
-    def create_settings_button(self, parent=None):
-        """Create a gear button that opens the editor settings dialog."""
-        button = QtWidgets.QToolButton(parent)
-        button.setText("⚙")
-        button.setToolTip("Settings")
-        button.clicked.connect(self.show_editor_settings)
-        return button
-
-    def show_editor_settings(self) -> None:
-        """Open the persistent editor settings dialog."""
-        dialog = EditorSettingsDialog(self)
-        dialog.settings_applied.connect(self._save_and_apply_editor_settings)
-        dialog.exec_()
-
-    def _save_and_apply_editor_settings(self, settings: dict) -> None:
-        """Persist editor settings and apply them to editor widgets."""
-        if save_editor_settings(settings):
-            self._apply_editor_settings(settings, apply_to_all=True)
-            self.settings_changed.emit(settings)
-
-    def _apply_editor_settings(self, settings: dict, apply_to_all: bool = True) -> None:
-        """Apply editor settings to existing editor tabs and the agent panel."""
-        editors = self._iter_editor_tabs() if apply_to_all else [self._get_current_editor()]
-        for editor in editors:
-            if editor is not None:
-                editor.set_editor_settings(settings)
-        if hasattr(self, "agent_panel"):
-            self._sync_agent_font()
-
-    def _iter_editor_tabs(self):
-        """Yield open text editor tabs."""
-        for index in range(self.tab_widget.count()):
-            widget = self.tab_widget.widget(index)
-            if widget is not None and widget is not getattr(self, "agent_panel", None):
-                yield widget
-
-    def _add_new_editor_tab(self):
-        """Create a new blank editor tab with a unique name."""
-        base = "Untitled"
-        used = set()
-        for i in range(self.tab_widget.count()):
-            if self.tab_widget.widget(i) is self.agent_panel:
-                continue
-            text = self.tab_widget.tabText(i)
-            used.add(text[:-2] if text.endswith(" *") else text)
-        if base not in used:
-            name = base
-        else:
-            n = 1
-            while f"{base}-{n}" in used:
-                n += 1
-            name = f"{base}-{n}"
-        self._create_editor_tab(filename=name)
-
-    def _create_editor_tab(self, filename: str = None, language: str = "Python"):
-        """Create a new editor tab."""
-        editor = TextEditor(parent=self, language=language or get_editor_settings()["language"])
-        self.tab_widget.addTab(editor, filename or "Untitled")
-        editor.document().modificationChanged.connect(
-            lambda modified, e=editor: self._on_modification_changed(e, modified)
-        )
-        tab_index = self.tab_widget.indexOf(editor)
-        if hasattr(self, '_on_editor_created'):
-            self._on_editor_created(editor)
-        return editor, tab_index
-
-    def _get_current_editor(self):
-        """Get the current editor widget."""
-        w = self.tab_widget.currentWidget()
-        if w is self.agent_panel:
-            return None
-        return w
-
-    def _get_current_filename(self):
-        """Get the filename of the current tab (without dirty marker)."""
-        idx = self.tab_widget.currentIndex()
-        if idx >= 0:
-            text = self.tab_widget.tabText(idx)
-            return text[:-2] if text.endswith(" *") else text
-        return None
-
-    def _on_modification_changed(self, editor: QtWidgets.QWidget, modified: bool) -> None:
-        """Update the `` *`` marker on the tab when the document's modified state changes."""
-        idx = self.tab_widget.indexOf(editor)
-        if idx < 0:
-            return
-        text = self.tab_widget.tabText(idx)
-        base = text[:-2] if text.endswith(" *") else text
-        self.tab_widget.setTabText(idx, base + " *" if modified else base)
-
-    def _toggle_agent_panel(self):
-        """Toggle the AI agent panel visibility."""
-        if self._agent_panel_visible:
-            idx = self.tab_widget.indexOf(self.agent_panel)
-            if idx >= 0:
-                self.tab_widget.removeTab(idx)
-            self._agent_panel_visible = False
-        else:
-            idx = self.tab_widget.indexOf(self.agent_panel)
-            if idx < 0:
-                self.tab_widget.addTab(self.agent_panel, "Agent")
-            self.tab_widget.setCurrentWidget(self.agent_panel)
-            self.agent_panel.show()
-            self._agent_panel_visible = True
-
-    def _sync_agent_font(self):
-        """Apply the editor font to the agent panel."""
-        self.agent_panel.set_editor_font(make_editor_font(get_editor_settings()))
-
-    def _get_editor_context(self) -> str:
-        """Get the current editor content for the agent context."""
-        editor = self._get_current_editor()
-        if editor is None:
-            return ""
-
-        filename = self._get_current_filename() or "Untitled"
-        content = editor.toPlainText()
-
-        return f"File: {filename}\n\n```{content}\n```"
-
-    def _close_tab(self, index: int):
-        """Close a tab at the given absolute index."""
-        widget = self.tab_widget.widget(index)
-
-        # Agent panel close = toggle off
-        if widget is self.agent_panel:
-            self._agent_panel_visible = False
-            self.tab_widget.removeTab(index)
-            return
-
-        # Confirm close if dirty (check the tab-text marker which is always in sync)
-        if widget is not self.agent_panel:
-            tab_text = self.tab_widget.tabText(index)
-            if tab_text.endswith(" *"):
-                name = tab_text[:-2]
-                msg = QtWidgets.QMessageBox(self)
-                msg.setWindowTitle("Unsaved Changes")
-                msg.setText(f"Do you want to save changes to {name}?")
-                msg.setIcon(QtWidgets.QMessageBox.Question)
-                msg.setStandardButtons(
-                    QtWidgets.QMessageBox.Save
-                    | QtWidgets.QMessageBox.Discard
-                    | QtWidgets.QMessageBox.Cancel
-                )
-                msg.setDefaultButton(QtWidgets.QMessageBox.Save)
-                reply = msg.exec_()
-                if reply == QtWidgets.QMessageBox.Save:
-                    self._save_tab(widget, name, index)
-                elif reply == QtWidgets.QMessageBox.Cancel:
-                    return
-
-        # Remove from _open_files by matching the widget
-        to_remove = [k for k, v in self._open_files.items() if v is widget]
-        for k in to_remove:
-            del self._open_files[k]
-
-        # Compute editor count BEFORE removing
-        editor_count = sum(
-            1 for i in range(self.tab_widget.count())
-            if self.tab_widget.widget(i) not in (self.agent_panel, None)
-        )
-
-        self.tab_widget.removeTab(index)
-        if widget:
-            widget.deleteLater()
-
-        # Open a blank Untitled tab if the last editor was just closed
-        if editor_count <= 1 and self._can_load:
-            self._add_new_editor_tab()
-
-    def _on_tab_action(self, action: str, index: int):
-        """Handle context-menu actions on tabs.
-
-        Parameters
-        ----------
-        action : str
-            One of ``"save"``, ``"save_as"``, ``"rename"``, ``"reload"``,
-            ``"copy_path"``, ``"copy_name"``, ``"copy_dir"``.
-        index : int
-            The absolute tab index.
-        """
-        editor = self.tab_widget.widget(index)
-        if editor is None or editor is self.agent_panel:
-            return
-        tab_text = self.tab_widget.tabText(index)
-        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
-
-        if action == "save":
-            self._save_tab(editor, clean, index)
-        elif action == "save_as":
-            self._save_tab_as(editor, clean, index)
-        elif action == "rename":
-            self._rename_tab(editor, clean, index)
-        elif action == "reload":
-            self._reload_tab(editor, clean, index)
-        elif action == "copy_path":
-            self._copy_to_clipboard(clean)
-        elif action == "copy_name":
-            self._copy_to_clipboard(pathlib.Path(clean).name)
-        elif action == "copy_dir":
-            self._copy_to_clipboard(str(pathlib.Path(clean).parent))
-
-    def _save_tab(self, editor, tab_text: str, index: int):
-        """Save the tab content to its file."""
-        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
-        if clean and clean != "Untitled":
-            try:
-                with io.zipped.open_maybe_zipped(clean, "w") as f:
-                    f.write(editor.text())
-            except IOError as e:
-                logging.log(1, f"Error saving {clean}: {e}")
-                return
-        else:
-            self._save_tab_as(editor, clean, index)
-            return
-        editor.document().setModified(False)
-
-    def _save_tab_as(self, editor, tab_text: str, index: int):
-        """Open a save-as dialog and save the tab content."""
-        new_filename = cs.gui.widgets.save_file(file_type="Python script (*.py)")
-        if not new_filename:
-            return
-        new_path = str(new_filename)
-        try:
-            with io.zipped.open_maybe_zipped(new_path, "w") as f:
-                f.write(editor.text())
-        except IOError as e:
-            logging.log(1, f"Error saving {new_path}: {e}")
-            return
-        self.tab_widget.setTabText(index, new_path)
-        old_key = next((k for k, v in self._open_files.items() if v is editor), None)
-        if old_key:
-            del self._open_files[old_key]
-        self._open_files[new_path] = editor
-        editor.document().setModified(False)
-
-    def _rename_tab(self, editor, tab_text: str, index: int):
-        """Prompt for a new tab name and update accordingly."""
-        new_name, ok = QtWidgets.QInputDialog.getText(
-            self, "Rename Tab", "New name:", text=tab_text
-        )
-        if not ok or not new_name or new_name == tab_text:
-            return
-        self.tab_widget.setTabText(index, new_name)
-        if editor.document().isModified():
-            self.tab_widget.setTabText(index, new_name + " *")
-        old_key = next((k for k, v in self._open_files.items() if v is editor), None)
-        if old_key:
-            del self._open_files[old_key]
-        self._open_files[new_name] = editor
-
-    def _reload_tab(self, editor, tab_text: str, index: int):
-        """Re-read the file from disk and replace editor content."""
-        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
-        if clean == "Untitled":
-            return
-        try:
-            with open(clean, encoding="utf-8") as f:
-                editor.blockSignals(True)
-                editor.setText(f.read())
-                editor.blockSignals(False)
-        except IOError as e:
-            logging.log(1, f"Error reloading {clean}: {e}")
-            return
-        editor.document().setModified(False)
-
-    @staticmethod
-    def _copy_to_clipboard(text: str):
-        """Copy *text* to the system clipboard."""
-        cb = QtWidgets.QApplication.clipboard()
-        cb.setText(text)
-
-    def load_file_event(self, event, filename: str = None, **kwargs):
-        self.load_file(filename)
-
-    def load_file(self, filename: str = None, **kwargs):
-        """Load a file into the current or a new tab."""
-        filename = filename or cs.gui.widgets.get_filename()
-        if not filename:
-            return
-
-        filename_str = str(filename)
-
-        if filename_str in self._open_files:
-            editor = self._open_files[filename_str]
-            self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
-            return
-
-        try:
-            logging.log(0, f"Loading file: {filename_str}")
-            with open(filename_str, encoding="utf-8") as file:
-                content = file.read()
-        except IOError as e:
-            logging.log(1, f"Error loading file {filename_str}: {e}")
-            return
-
-        editor, _ = self._create_editor_tab(filename=filename_str)
-        editor.blockSignals(True)
-        editor.setText(content)
-        editor.blockSignals(False)
-        editor.document().setModified(False)
-        self._open_files[filename_str] = editor
-        self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
-
-    def open_file(self, path: str, line: int = None, col: int = None):
-        """Open a file in a new tab or switch to existing tab, optionally jump to line."""
-        path_str = str(path)
-
-        if path_str in self._open_files:
-            editor = self._open_files[path_str]
-            self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
-        else:
-            try:
-                with open(path_str, encoding="utf-8") as file:
-                    content = file.read()
-            except IOError as e:
-                logging.log(1, f"Error opening file {path_str}: {e}")
-                return
-
-            editor, _ = self._create_editor_tab(filename=path_str)
-            editor.blockSignals(True)
-            editor.setText(content)
-            editor.blockSignals(False)
-            editor.document().setModified(False)
-            self._open_files[path_str] = editor
-            self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
-
-        if line and line > 0:
-            self.goto_line(line)
-
-    def goto_line(self, line: int):
-        """Move the cursor to a specific line number in the current editor."""
-        editor = self._get_current_editor()
-        if editor is None:
-            return
-
-        if line < 1:
-            return
-
-        doc = editor.document()
-        block = doc.findBlockByNumber(line - 1)
-        if block.isValid():
-            cursor = editor.textCursor()
-            cursor.setPosition(block.position())
-            editor.setTextCursor(cursor)
-            editor.ensureCursorVisible()
-
-            self._highlight_line_temporarily(editor, line)
-
-    def _highlight_line_temporarily(self, editor, line: int, duration_ms: int = 2000):
-        """Temporarily highlight a line in the given editor."""
-        doc = editor.document()
-        block = doc.findBlockByNumber(line - 1)
-        if not block.isValid():
-            return
-
-        selection = QtWidgets.QTextEdit.ExtraSelection()
-        selection.format.setBackground(QtGui.QColor(255, 255, 0, 100))
-        selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
-        selection.cursor = editor.textCursor()
-        selection.cursor.setPosition(block.position())
-        selection.cursor.movePosition(
-            QtGui.QTextCursor.EndOfBlock,
-            QtGui.QTextCursor.KeepAnchor
-        )
-
-        extra_selections = editor.extraSelections() + [selection]
-        editor.setExtraSelections(extra_selections)
-
-        QtCore.QTimer.singleShot(
-            duration_ms,
-            lambda: self._clear_temporary_highlight(editor, selection)
-        )
-
-    def _clear_temporary_highlight(self, editor, selection: QtWidgets.QTextEdit.ExtraSelection):
-        """Clear a temporary line highlight."""
-        extra_selections = editor.extraSelections()
-        if selection in extra_selections:
-            extra_selections.remove(selection)
-            editor.setExtraSelections(extra_selections)
-
-    def run_macro(self, event):
-        """Execute the currently loaded Python script."""
-        filename = self._get_current_filename()
-        if not filename or filename == "Untitled":
-            logging.log(1, "No file to run. Save the file first.")
-            return
-        self.save_text()
-        cs.console.run_macro(filename=filename)
-
-    def save_text(self, event=None):
-        """Save the current tab's text to a file."""
-        editor = self._get_current_editor()
-        if editor is None:
-            return
-
-        filename = self._get_current_filename()
-        if filename == "Untitled" or not filename:
-            new_filename = cs.gui.widgets.save_file(file_type="Python script (*.py)")
-            if not new_filename:
-                return
-            filename = new_filename
-            idx = self.tab_widget.currentIndex()
-            self.tab_widget.setTabText(idx, filename)
-            self._open_files[str(filename)] = editor
-
-        try:
-            with io.zipped.open_maybe_zipped(filename, "w") as file:
-                file.write(editor.text())
-        except IOError as e:
-            logging.log(1, f"Error saving file {filename}: {e}")
-            return
-        editor.document().setModified(False)
+def __getattr__(name: str):
+    """Lazily expose compatibility imports from split editor modules."""
+    if name == "CodeEditor":
+        from chisurf.plugins.core.code_editor.editor import CodeEditor
+        return CodeEditor
+    if name == "CodeEditorWindow":
+        from chisurf.plugins.core.code_editor.window import CodeEditorWindow
+        return CodeEditorWindow
+    raise AttributeError(name)
 
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    editor = CodeEditor()
+    from chisurf.plugins.core.code_editor.window import CodeEditorWindow
+    editor = CodeEditorWindow()
     editor.show()
     app.exec_()
