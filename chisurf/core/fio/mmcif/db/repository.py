@@ -1251,6 +1251,7 @@ class FluorophoreDatabase:
         ended_at: str | None = None,
         status: str | None = None,
         details: str | None = None,
+        setup_definition_id: str | None = None,
     ) -> None:
         """Add or replace an experiment record.
 
@@ -1276,6 +1277,8 @@ class FluorophoreDatabase:
             Experiment status.
         details : str, optional
             Additional notes.
+        setup_definition_id : str, optional
+            Linked setup definition identifier.
         """
         if not experiment_id:
             raise ValueError("experiment_id is required")
@@ -1283,8 +1286,8 @@ class FluorophoreDatabase:
             self.conn.execute(
                 """INSERT OR REPLACE INTO flr_experiment
                    (experiment_id, type_id, sample_id, project_id, measured_by_user_id,
-                    measured_by_device_id, started_at, ended_at, status, details)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    measured_by_device_id, started_at, ended_at, status, details, setup_definition_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     experiment_id,
                     type_id,
@@ -1296,6 +1299,7 @@ class FluorophoreDatabase:
                     ended_at,
                     status,
                     details,
+                    setup_definition_id,
                 ),
             )
 
@@ -1315,12 +1319,13 @@ class FluorophoreDatabase:
         return self.conn.execute(
             """SELECT e.*, et.name AS experiment_type, et.category AS experiment_category,
                       s.description AS sample_description, u.display_name AS measured_by_user,
-                      d.name AS measured_by_device
+                      d.name AS measured_by_device, sd.name AS setup_name
                  FROM flr_experiment AS e
                  LEFT JOIN flr_experiment_type AS et ON et.type_id = e.type_id
                  LEFT JOIN flr_sample AS s ON s.sample_id = e.sample_id
                  LEFT JOIN flr_sample_users AS u ON u.user_id = e.measured_by_user_id
                  LEFT JOIN flr_sample_devices AS d ON d.device_id = e.measured_by_device_id
+                 LEFT JOIN fdb_setup_definition AS sd ON sd.setup_id = e.setup_definition_id
                 WHERE e.experiment_id = ?""",
             (experiment_id,),
         ).fetchone()
@@ -1583,7 +1588,7 @@ class FluorophoreDatabase:
                 "DELETE FROM flr_experiment WHERE experiment_id = ?", (experiment_id,)
             )
 
-    # ── fdb4chembio raw/process/product provenance ─────────────────────────
+    # ── fdb raw/process/product provenance ─────────────────────────
 
     def add_raw_data_reference(
         self,
@@ -1672,7 +1677,14 @@ class FluorophoreDatabase:
             "has_raw_data",
             checksum_snapshot={"raw_data": checksum} if checksum else None,
         )
+        self.add_audit_log(
+            action="create",
+            target_type="raw_data",
+            target_id=raw_data_id,
+            details={"experiment_id": experiment_id, "data_type": data_type, "file_path": file_path},
+        )
         return raw_data_id
+
 
     def get_raw_data(self, raw_data_id: str) -> sqlite3.Row | None:
         """Return one raw-data reference.
@@ -1837,7 +1849,15 @@ class FluorophoreDatabase:
                     "settings": settings_hash,
                 },
             )
+        self.add_audit_log(
+            action="create",
+            target_type="processing_run",
+            target_id=processing_id,
+            operator_user_id=operator_user_id,
+            details={"experiment_id": experiment_id, "processing_type": processing_type, "status": status},
+        )
         return processing_id
+
 
     def update_processing_run_status(
         self,
@@ -1884,6 +1904,13 @@ class FluorophoreDatabase:
                     processing_id,
                 ),
             )
+        self.add_audit_log(
+            action="update",
+            target_type="processing_run",
+            target_id=processing_id,
+            details={"status": status, "photon_count": photon_count, "burst_count": burst_count},
+        )
+
 
     def get_processing_run(self, processing_id: str) -> sqlite3.Row | None:
         """Return one processing run.
@@ -2073,7 +2100,14 @@ class FluorophoreDatabase:
             software_version=run["software_version"] if run else None,
             checksum_snapshot={"processed_data": checksum} if checksum else None,
         )
+        self.add_audit_log(
+            action="create",
+            target_type="processed_data",
+            target_id=processed_data_id,
+            details={"processing_id": processing_id, "product_type": product_type, "file_path": file_path},
+        )
         return processed_data_id
+
 
     def get_processed_data(self, processed_data_id: str) -> sqlite3.Row | None:
         """Return one processed-data product.
@@ -2233,6 +2267,771 @@ class FluorophoreDatabase:
         query += " ORDER BY timestamp, edge_id"
         return self.conn.execute(query, params).fetchall()
 
+    def get_downstream_dependencies(
+        self,
+        node_type: str,
+        node_id: str,
+    ) -> list[sqlite3.Row]:
+        """Perform a recursive search for downstream provenance edges.
+
+        Parameters
+        ----------
+        node_type : str
+            Type of the starting node (e.g., 'raw_data', 'processing_run').
+        node_id : str
+            Identifier of the starting node.
+
+        Returns
+        -------
+        list of sqlite3.Row
+            A list of all downstream fdb_provenance_edge records.
+        """
+        if not node_type or not node_id:
+            return []
+        query = """
+            WITH RECURSIVE downstream_trace(
+                edge_id,
+                source_node_type, source_node_id,
+                target_node_type, target_node_id,
+                relationship_type, processing_id, settings_hash, timestamp, software_version,
+                checksum_snapshot_json, metadata_json,
+                depth
+            ) AS (
+                SELECT
+                    edge_id,
+                    source_node_type, source_node_id,
+                    target_node_type, target_node_id,
+                    relationship_type, processing_id, settings_hash, timestamp, software_version,
+                    checksum_snapshot_json, metadata_json,
+                    1 AS depth
+                FROM fdb_provenance_edge
+                WHERE source_node_type = ? AND source_node_id = ?
+
+                UNION ALL
+
+                SELECT
+                    e.edge_id,
+                    e.source_node_type, e.source_node_id,
+                    e.target_node_type, e.target_node_id,
+                    e.relationship_type, e.processing_id, e.settings_hash, e.timestamp, e.software_version,
+                    e.checksum_snapshot_json, e.metadata_json,
+                    dt.depth + 1
+                FROM fdb_provenance_edge e
+                JOIN downstream_trace dt ON e.source_node_type = dt.target_node_type AND e.source_node_id = dt.target_node_id
+                WHERE dt.depth < 100
+            )
+            SELECT DISTINCT
+                edge_id,
+                source_node_type, source_node_id,
+                target_node_type, target_node_id,
+                relationship_type, processing_id, settings_hash, timestamp, software_version,
+                checksum_snapshot_json, metadata_json,
+                depth
+            FROM downstream_trace
+            ORDER BY depth, timestamp, edge_id
+        """
+        return self.conn.execute(query, (node_type, node_id)).fetchall()
+
+    def get_upstream_dependencies(
+        self,
+        node_type: str,
+        node_id: str,
+    ) -> list[sqlite3.Row]:
+        """Perform a recursive search for upstream provenance edges.
+
+        Parameters
+        ----------
+        node_type : str
+            Type of the starting node (e.g., 'processed_data', 'processing_run').
+        node_id : str
+            Identifier of the starting node.
+
+        Returns
+        -------
+        list of sqlite3.Row
+            A list of all upstream fdb_provenance_edge records.
+        """
+        if not node_type or not node_id:
+            return []
+        query = """
+            WITH RECURSIVE upstream_trace(
+                edge_id,
+                source_node_type, source_node_id,
+                target_node_type, target_node_id,
+                relationship_type, processing_id, settings_hash, timestamp, software_version,
+                checksum_snapshot_json, metadata_json,
+                depth
+            ) AS (
+                SELECT
+                    edge_id,
+                    source_node_type, source_node_id,
+                    target_node_type, target_node_id,
+                    relationship_type, processing_id, settings_hash, timestamp, software_version,
+                    checksum_snapshot_json, metadata_json,
+                    1 AS depth
+                FROM fdb_provenance_edge
+                WHERE target_node_type = ? AND target_node_id = ?
+
+                UNION ALL
+
+                SELECT
+                    e.edge_id,
+                    e.source_node_type, e.source_node_id,
+                    e.target_node_type, e.target_node_id,
+                    e.relationship_type, e.processing_id, e.settings_hash, e.timestamp, e.software_version,
+                    e.checksum_snapshot_json, e.metadata_json,
+                    ut.depth + 1
+                FROM fdb_provenance_edge e
+                JOIN upstream_trace ut ON e.target_node_type = ut.source_node_type AND e.target_node_id = ut.source_node_id
+                WHERE ut.depth < 100
+            )
+            SELECT DISTINCT
+                edge_id,
+                source_node_type, source_node_id,
+                target_node_type, target_node_id,
+                relationship_type, processing_id, settings_hash, timestamp, software_version,
+                checksum_snapshot_json, metadata_json,
+                depth
+            FROM upstream_trace
+            ORDER BY depth, timestamp, edge_id
+        """
+        return self.conn.execute(query, (node_type, node_id)).fetchall()
+
+    def export_provenance_graph(
+        self,
+        seed_node_type: str,
+        seed_node_id: str,
+    ) -> dict[str, list[dict]]:
+        """Export a JSON-serializable provenance graph of all related nodes and edges.
+
+        Parameters
+        ----------
+        seed_node_type : str
+            The seed node type (e.g. 'analysis_run' or 'processed_data').
+        seed_node_id : str
+            The seed node identifier.
+
+        Returns
+        -------
+        dict
+            Dict with "nodes" and "edges" keys.
+        """
+        upstream = self.get_upstream_dependencies(seed_node_type, seed_node_id)
+        downstream = self.get_downstream_dependencies(seed_node_type, seed_node_id)
+
+        edges_map = {}
+        for edge_row in upstream + downstream:
+            edge = dict(edge_row)
+            if "checksum_snapshot_json" in edge:
+                edge["checksum_snapshot"] = _json_loads(edge.pop("checksum_snapshot_json", None))
+            if "metadata_json" in edge:
+                edge["metadata"] = _json_loads(edge.pop("metadata_json", None))
+            edges_map[edge["edge_id"]] = edge
+
+        nodes_to_fetch = set()
+        nodes_to_fetch.add((seed_node_type, seed_node_id))
+        for edge in edges_map.values():
+            nodes_to_fetch.add((edge["source_node_type"], edge["source_node_id"]))
+            nodes_to_fetch.add((edge["target_node_type"], edge["target_node_id"]))
+
+        nodes_list = []
+        for node_type, node_id in sorted(list(nodes_to_fetch)):
+            node_data = {"node_type": node_type, "node_id": node_id}
+            if node_type == "raw_data":
+                row = self.conn.execute("SELECT * FROM fdb_raw_data WHERE raw_data_id = ?", (node_id,)).fetchone()
+                if row:
+                    node_data.update(dict(row))
+            elif node_type == "processed_data":
+                row = self.get_processed_data(node_id)
+                if row:
+                    node_data.update(dict(row))
+            elif node_type == "processing_run":
+                row = self.conn.execute("SELECT * FROM fdb_processing_run WHERE processing_id = ?", (node_id,)).fetchone()
+                if row:
+                    pr = dict(row)
+                    pr["settings"] = _json_loads(pr.pop("settings_json", None))
+                    node_data.update(pr)
+            elif node_type == "analysis_run":
+                row = self.conn.execute("SELECT ar.*, pr.experiment_id, pr.status, pr.created_at FROM fdb_analysis_run ar JOIN fdb_processing_run pr ON pr.processing_id = ar.analysis_id WHERE ar.analysis_id = ?", (node_id,)).fetchone()
+                if row:
+                    node_data.update(dict(row))
+            elif node_type == "sample":
+                row = self.conn.execute("SELECT * FROM flr_sample WHERE sample_id = ?", (node_id,)).fetchone()
+                if row:
+                    node_data.update(dict(row))
+            elif node_type == "experiment":
+                row = self.conn.execute("SELECT * FROM flr_experiment WHERE experiment_id = ?", (node_id,)).fetchone()
+                if row:
+                    node_data.update(dict(row))
+            nodes_list.append(node_data)
+
+        return {
+            "nodes": nodes_list,
+            "edges": list(edges_map.values())
+        }
+
+    def backup_database(self, target_path: str) -> None:
+        """Create a hot backup of the SQLite database to the specified target path.
+
+        Parameters
+        ----------
+        target_path : str
+            Output file path for the backup.
+        """
+        import sqlite3
+        dest_conn = sqlite3.connect(target_path)
+        try:
+            with dest_conn:
+                self.conn.backup(dest_conn)
+        finally:
+            dest_conn.close()
+
+    def add_analysis_run(
+        self,
+        analysis_type: str,
+        experiment_id: str | None = None,
+        model_name: str | None = None,
+        model_type: str | None = None,
+        model_version: str | None = None,
+        fit_structure: list[dict[str, Any]] | None = None,
+        parameter_links: list[tuple[Any, ...]] | None = None,
+        software_package: str | None = "chisurf",
+        software_module: str | None = None,
+        software_version: str | None = None,
+        optimizer_settings: dict[str, Any] | None = None,
+        covariance_matrix: list[list[float]] | dict[str, Any] | None = None,
+        convergence_status: str | None = None,
+        goodness_of_fit: dict[str, Any] | None = None,
+        notes: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        analysis_id: str | None = None,
+    ) -> str:
+        """Register a repeatable analysis/fit run.
+
+        Parameters
+        ----------
+        analysis_type : str
+            Type of the analysis (e.g. 'local_fit', 'global_fit').
+        experiment_id : str, optional
+            Optional linked experiment.
+        model_name : str, optional
+            Name of the model.
+        model_type : str, optional
+            Type of the model class.
+        model_version : str, optional
+            Version of the model.
+        fit_structure : list of dict, optional
+            Grouped fits and dataset mappings.
+        parameter_links : list of tuple, optional
+            Global model link formulas and mappings.
+        software_package : str, optional
+            Software package name.
+        software_module : str, optional
+            Software module name.
+        software_version : str, optional
+            Software version.
+        optimizer_settings : dict, optional
+            Optimizer parameters.
+        covariance_matrix : list of list of float or dict, optional
+            Covariance matrix.
+        convergence_status : str, optional
+            Convergence state.
+        goodness_of_fit : dict, optional
+            Goodness-of-fit metrics.
+        notes : str, optional
+            Operator notes.
+        metadata : dict, optional
+            Fit parameters widget states / extra properties.
+        analysis_id : str, optional
+            Explicit stable identifier. Generates UUID if omitted.
+
+        Returns
+        -------
+        str
+            Analysis-run identifier (UUID).
+        """
+        if not analysis_type:
+            raise ValueError("analysis_type is required")
+        analysis_id = analysis_id or f"anal_{uuid.uuid4()}"
+        now = _utc_now()
+        with self.conn:
+            # Insert/replace parent processing run
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_processing_run
+                   (processing_id, processing_type, experiment_id, settings_json,
+                    software_package, software_module, software_version, status,
+                    created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    analysis_id,
+                    analysis_type,
+                    experiment_id,
+                    _json_dumps(optimizer_settings),
+                    software_package,
+                    software_module,
+                    software_version,
+                    convergence_status or "succeeded",
+                    now,
+                    now,
+                ),
+            )
+            # Insert/replace subclass analysis run
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_analysis_run
+                   (analysis_id, model_name, model_type, model_version,
+                    fit_structure_json, parameter_links_json, covariance_matrix_json,
+                    goodness_of_fit_json, notes, metadata_json, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    analysis_id,
+                    model_name,
+                    model_type,
+                    model_version,
+                    _json_dumps(fit_structure),
+                    _json_dumps(parameter_links),
+                    _json_dumps(covariance_matrix),
+                    _json_dumps(goodness_of_fit),
+                    notes,
+                    _json_dumps(metadata),
+                    now,
+                    now,
+                ),
+            )
+        self.add_audit_log(
+            action="create",
+            target_type="analysis_run",
+            target_id=analysis_id,
+            details={"analysis_type": analysis_type, "model_name": model_name, "model_type": model_type},
+        )
+        return analysis_id
+
+
+    def get_analysis_run(self, analysis_id: str) -> sqlite3.Row | None:
+        """Return one analysis run.
+
+        Parameters
+        ----------
+        analysis_id : str
+            Analysis run identifier.
+
+        Returns
+        -------
+        sqlite3.Row or None
+            The analysis run record.
+        """
+        return self.conn.execute(
+            """SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
+                      pr.software_package, pr.software_module, pr.software_version,
+                      pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
+               FROM fdb_analysis_run AS ar
+               JOIN fdb_processing_run AS pr ON pr.processing_id = ar.analysis_id
+               WHERE ar.analysis_id = ?""",
+            (analysis_id,),
+        ).fetchone()
+
+    def get_analysis_run_full(self, analysis_id: str) -> dict[str, Any] | None:
+        """Return an analysis run with parameters, inputs, products, and provenance.
+
+        Parameters
+        ----------
+        analysis_id : str
+            Analysis run identifier.
+
+        Returns
+        -------
+        dict or None
+            Expanded analysis-run record.
+        """
+        run_row = self.get_analysis_run(analysis_id)
+        if run_row is None:
+            return None
+        run = self._decode_analysis_run_row(run_row)
+        
+        # Get parameters
+        run["parameters"] = [
+            self._decode_analysis_parameter_row(row)
+            for row in self.conn.execute(
+                "SELECT * FROM fdb_analysis_parameter WHERE analysis_id = ? ORDER BY parameter_id",
+                (analysis_id,),
+            ).fetchall()
+        ]
+
+        # Get input processed data via provenance edges
+        run["input_processed_data"] = [
+            self._decode_processed_data_row(row)
+            for row in self.conn.execute(
+                """SELECT pd.*
+                   FROM fdb_provenance_edge AS pe
+                   JOIN fdb_processed_data AS pd ON pd.processed_data_id = pe.source_node_id
+                   WHERE pe.target_node_type = 'analysis_run' AND pe.target_node_id = ?
+                     AND pe.source_node_type = 'processed_data' AND pe.relationship_type = 'input_to'
+                   ORDER BY pe.edge_id""",
+                (analysis_id,),
+            ).fetchall()
+        ]
+
+        # Get output processed data via provenance edges
+        run["processed_data"] = [
+            self._decode_processed_data_row(row)
+            for row in self.conn.execute(
+                """SELECT pd.*
+                   FROM fdb_provenance_edge AS pe
+                   JOIN fdb_processed_data AS pd ON pd.processed_data_id = pe.target_node_id
+                   WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
+                     AND pe.target_node_type = 'processed_data' AND pe.relationship_type = 'produced'
+                   ORDER BY pe.edge_id""",
+                (analysis_id,),
+            ).fetchall()
+        ]
+
+        # Get sub-fits grouped in this analysis
+        run["grouped_fits"] = [
+            self._decode_analysis_run_row(row)
+            for row in self.conn.execute(
+                """SELECT ar.*
+                   FROM fdb_provenance_edge AS pe
+                   JOIN fdb_analysis_run AS ar ON ar.analysis_id = pe.target_node_id
+                   WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
+                     AND pe.target_node_type = 'analysis_run' AND pe.relationship_type = 'grouped_in'
+                   ORDER BY pe.edge_id""",
+                (analysis_id,),
+            ).fetchall()
+        ]
+
+        # Get provenance edges referencing this run
+        run["provenance_edges"] = [
+            self._decode_provenance_edge_row(row)
+            for row in self.get_provenance_edges(processing_id=analysis_id)
+        ]
+
+        return run
+
+    def list_analysis_runs(
+        self,
+        experiment_id: str | None = None,
+        analysis_type: str | None = None,
+    ) -> list[sqlite3.Row]:
+        """List analysis runs.
+
+        Parameters
+        ----------
+        experiment_id : str, optional
+            Filter by experiment.
+        analysis_type : str, optional
+            Filter by analysis type.
+
+        Returns
+        -------
+        list of sqlite3.Row
+            Matching analysis run records.
+        """
+        query = """
+            SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
+                   pr.software_package, pr.software_module, pr.software_version,
+                   pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
+            FROM fdb_analysis_run AS ar
+            JOIN fdb_processing_run AS pr ON pr.processing_id = ar.analysis_id
+            WHERE 1=1
+        """
+        params: list[Any] = []
+        if experiment_id is not None:
+            query += " AND pr.experiment_id = ?"
+            params.append(experiment_id)
+        if analysis_type is not None:
+            query += " AND pr.processing_type = ?"
+            params.append(analysis_type)
+        query += " ORDER BY ar.created_at DESC"
+        return self.conn.execute(query, params).fetchall()
+
+    def delete_analysis_run(self, analysis_id: str) -> None:
+        """Delete an analysis run and its dependencies.
+
+        Parameters
+        ----------
+        analysis_id : str
+            Analysis run identifier.
+        """
+        with self.conn:
+            self.conn.execute("DELETE FROM fdb_analysis_run WHERE analysis_id = ?", (analysis_id,))
+            self.conn.execute(
+                """DELETE FROM fdb_provenance_edge
+                   WHERE (source_node_type = 'analysis_run' AND source_node_id = ?)
+                      OR (target_node_type = 'analysis_run' AND target_node_id = ?)
+                      OR processing_id = ?""",
+                (analysis_id, analysis_id, analysis_id),
+            )
+        self.add_audit_log(
+            action="delete",
+            target_type="analysis_run",
+            target_id=analysis_id,
+        )
+
+
+    def add_analysis_parameter(
+        self,
+        analysis_id: str,
+        name: str,
+        value: float | None = None,
+        standard_error: float | None = None,
+        confidence_interval_low: float | None = None,
+        confidence_interval_high: float | None = None,
+        initial_value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+        bounds_on: bool = False,
+        units: str | None = None,
+        parameter_type: str = "free",
+        expression: str | None = None,
+        prior: dict[str, Any] | None = None,
+        mapping: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        parameter_uuid: str | None = None,
+    ) -> str:
+        """Insert a model parameter record.
+
+        Parameters
+        ----------
+        analysis_id : str
+            Associated analysis run.
+        name : str
+            Parameter name.
+
+        Returns
+        -------
+        str
+            The parameter UUID.
+        """
+        if not analysis_id:
+            raise ValueError("analysis_id is required")
+        if not name:
+            raise ValueError("name is required")
+        parameter_uuid = parameter_uuid or f"param_{uuid.uuid4()}"
+        now = _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_analysis_parameter
+                   (parameter_uuid, analysis_id, name, value, standard_error,
+                    confidence_interval_low, confidence_interval_high, initial_value,
+                    lower_bound, upper_bound, bounds_on, units, parameter_type,
+                    expression, prior_json, mapping_json, metadata_json, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    parameter_uuid,
+                    analysis_id,
+                    name,
+                    value,
+                    standard_error,
+                    confidence_interval_low,
+                    confidence_interval_high,
+                    initial_value,
+                    lower_bound,
+                    upper_bound,
+                    1 if bounds_on else 0,
+                    units,
+                    parameter_type,
+                    expression,
+                    _json_dumps(prior),
+                    _json_dumps(mapping),
+                    _json_dumps(metadata),
+                    now,
+                    now,
+                ),
+            )
+        return parameter_uuid
+
+    def get_analysis_parameter(self, parameter_uuid: str) -> sqlite3.Row | None:
+        """Return one parameter.
+
+        Parameters
+        ----------
+        parameter_uuid : str
+            Parameter UUID.
+
+        Returns
+        -------
+        sqlite3.Row or None
+            The parameter record.
+        """
+        return self.conn.execute(
+            "SELECT * FROM fdb_analysis_parameter WHERE parameter_uuid = ?",
+            (parameter_uuid,),
+        ).fetchone()
+
+    def add_analysis_product(
+        self,
+        analysis_id: str,
+        product_type: str,
+        storage_mode: str,
+        processed_data_id: str | None = None,
+        file_path: str | None = None,
+        url: str | None = None,
+        folder_path: str | None = None,
+        mime_type: str | None = None,
+        size_bytes: int | None = None,
+        checksum: str | None = None,
+        checksum_algorithm: str = "sha256",
+        row_count: int | None = None,
+        product_summary: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        data_json: str | None = None,
+        data_blob: bytes | None = None,
+        validation_status: str = "unvalidated",
+        validation_message: str | None = None,
+    ) -> str:
+        """Register a processed data product produced by an analysis run.
+
+        Parameters
+        ----------
+        analysis_id : str
+            Analysis run.
+        product_type : str
+            Product type.
+        storage_mode : str
+            Storage location.
+
+        Returns
+        -------
+        str
+            The registered processed data identifier.
+        """
+        if not analysis_id:
+            raise ValueError("analysis_id is required")
+        if not product_type:
+            raise ValueError("product_type is required")
+        if not storage_mode:
+            raise ValueError("storage_mode is required")
+        processed_data_id = processed_data_id or f"prod_{uuid.uuid4()}"
+        now = _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_processed_data
+                   (processed_data_id, processing_id, product_type, storage_mode,
+                    file_path, url, folder_path, mime_type, size_bytes, checksum,
+                    checksum_algorithm, row_count, product_summary_json, metadata_json,
+                    data_json, data_blob, validation_status, validation_message,
+                    created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    processed_data_id,
+                    analysis_id,
+                    product_type,
+                    storage_mode,
+                    file_path,
+                    url,
+                    folder_path,
+                    mime_type,
+                    size_bytes,
+                    checksum,
+                    checksum_algorithm,
+                    row_count,
+                    _json_dumps(product_summary),
+                    _json_dumps(metadata),
+                    data_json,
+                    data_blob,
+                    validation_status,
+                    validation_message,
+                    now,
+                    now,
+                ),
+            )
+        run = self.get_analysis_run(analysis_id)
+        self.add_provenance_edge(
+            "analysis_run",
+            analysis_id,
+            "processed_data",
+            processed_data_id,
+            "produced",
+            processing_id=analysis_id,
+            software_version=run["software_version"] if run else None,
+            checksum_snapshot={"processed_data": checksum} if checksum else None,
+        )
+        return processed_data_id
+
+    def link_grouped_fits(self, local_fit_uuid: str, global_fit_uuid: str) -> None:
+        """Link a local fit to its parent global fit in the provenance graph.
+
+        Parameters
+        ----------
+        local_fit_uuid : str
+            Local fit analysis UUID.
+        global_fit_uuid : str
+            Global/parent fit analysis UUID.
+        """
+        local_run = self.get_analysis_run(local_fit_uuid)
+        self.add_provenance_edge(
+            "analysis_run",
+            global_fit_uuid,
+            "analysis_run",
+            local_fit_uuid,
+            "grouped_in",
+            processing_id=global_fit_uuid,
+            software_version=local_run["software_version"] if local_run else None,
+        )
+
+    def link_analysis_parameters(self, source_param_uuid: str, target_param_uuid: str) -> None:
+        """Link a dependent parameter to its target parameter in the provenance graph.
+
+        Parameters
+        ----------
+        source_param_uuid : str
+            Dependent/follower parameter UUID.
+        target_param_uuid : str
+            Target/master parameter UUID.
+        """
+        src = self.get_analysis_parameter(source_param_uuid)
+        self.add_provenance_edge(
+            "analysis_parameter",
+            target_param_uuid,
+            "analysis_parameter",
+            source_param_uuid,
+            "linked_to",
+            processing_id=src["analysis_id"] if src else None,
+        )
+
+    @staticmethod
+    def _decode_analysis_run_row(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+        """Decode JSON fields in an analysis run row.
+
+        Parameters
+        ----------
+        row : sqlite3.Row or dict
+            Analysis run record.
+
+        Returns
+        -------
+        dict
+            JSON-compatible row.
+        """
+        data = dict(row)
+        data["fit_structure"] = _json_loads(data.pop("fit_structure_json", None))
+        data["parameter_links"] = _json_loads(data.pop("parameter_links_json", None))
+        data["optimizer_settings"] = _json_loads(data.pop("optimizer_settings_json", None))
+        data["covariance_matrix"] = _json_loads(data.pop("covariance_matrix_json", None))
+        data["goodness_of_fit"] = _json_loads(data.pop("goodness_of_fit_json", None))
+        data["metadata"] = _json_loads(data.pop("metadata_json", None))
+        return data
+
+    @staticmethod
+    def _decode_analysis_parameter_row(row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+        """Decode JSON fields in a parameter row.
+
+        Parameters
+        ----------
+        row : sqlite3.Row or dict
+            Parameter record.
+
+        Returns
+        -------
+        dict
+            JSON-compatible row.
+        """
+        data = dict(row)
+        data["bounds_on"] = bool(data["bounds_on"])
+        data["prior"] = _json_loads(data.pop("prior_json", None))
+        data["mapping"] = _json_loads(data.pop("mapping_json", None))
+        data["metadata"] = _json_loads(data.pop("metadata_json", None))
+        return data
+
     def trace_processed_data(self, processed_data_id: str) -> dict[str, Any] | None:
         """Trace a product back to its processing run and raw inputs.
 
@@ -2292,7 +3091,7 @@ class FluorophoreDatabase:
             for row in self.get_provenance_edges(processing_id=processing_id)
         ]
         return {
-            "schema": "fdb4chembio.burst_processing_manifest.v1",
+            "schema": "fdb.burst_processing_manifest.v1",
             "exported_at": _utc_now(),
             "experiment": experiment,
             "processing_run": run,
@@ -3510,3 +4309,253 @@ class FluorophoreDatabase:
         buffer = io.StringIO()
         self.export_flr_cif(buffer, analysis_id=analysis_id, include_extension=include_extension)
         return buffer.getvalue()
+
+    # ── fdb setups ──────────────────────────────────────────────────
+
+    def add_setup_definition(
+        self,
+        setup_id: str,
+        name: str,
+        version: int = 1,
+        instrument_id: str | None = None,
+        description: str | None = None,
+        configuration: dict[str, Any] | None = None,
+        detectors: dict[str, Any] | None = None,
+        timing_calibration: dict[str, Any] | None = None,
+        irf_definition: dict[str, Any] | None = None,
+        burst_defaults: dict[str, Any] | None = None,
+        fcs_calibration: dict[str, Any] | None = None,
+    ) -> None:
+        """Register or update a setup definition.
+
+        Parameters
+        ----------
+        setup_id : str
+            Unique setup identifier.
+        name : str
+            Display name of the setup.
+        version : int, optional
+            Setup version.
+        instrument_id : str, optional
+            Linked instrument identifier.
+        description : str, optional
+            Text description.
+        configuration : dict, optional
+            Optical configurations.
+        detectors : dict, optional
+            Detector and polarization configurations.
+        timing_calibration : dict, optional
+            Timing configurations.
+        irf_definition : dict, optional
+            IRF references.
+        burst_defaults : dict, optional
+            Default settings for burst selection.
+        fcs_calibration : dict, optional
+            FCS calibration parameters.
+        """
+        if not setup_id:
+            raise ValueError("setup_id is required")
+        if not name:
+            raise ValueError("name is required")
+        now = _utc_now()
+        with self.conn:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_setup_definition
+                   (setup_id, name, version, instrument_id, description, configuration_json,
+                    detectors_json, timing_calibration_json, irf_definition_json,
+                    burst_defaults_json, fcs_calibration_json, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    setup_id,
+                    name,
+                    version,
+                    instrument_id,
+                    description,
+                    _json_dumps(configuration),
+                    _json_dumps(detectors),
+                    _json_dumps(timing_calibration),
+                    _json_dumps(irf_definition),
+                    _json_dumps(burst_defaults),
+                    _json_dumps(fcs_calibration),
+                    now,
+                    now,
+                ),
+            )
+        self.add_audit_log(
+            action="create",
+            target_type="setup_definition",
+            target_id=setup_id,
+            details={"name": name, "version": version, "instrument_id": instrument_id},
+        )
+
+
+    def get_setup_definition(self, setup_id: str) -> sqlite3.Row | None:
+        """Return one setup definition row.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+
+        Returns
+        -------
+        sqlite3.Row or None
+            Setup row.
+        """
+        return self.conn.execute(
+            "SELECT * FROM fdb_setup_definition WHERE setup_id = ?", (setup_id,)
+        ).fetchone()
+
+    def _decode_setup_definition_row(self, row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+        """Decode JSON fields in a setup definition row.
+
+        Parameters
+        ----------
+        row : sqlite3.Row or dict
+            Setup row.
+
+        Returns
+        -------
+        dict
+            JSON-decoded row.
+        """
+        data = dict(row)
+        for key in [
+            "configuration",
+            "detectors",
+            "timing_calibration",
+            "irf_definition",
+            "burst_defaults",
+            "fcs_calibration",
+        ]:
+            data[key] = _json_loads(data.pop(f"{key}_json", None))
+        return data
+
+    def list_setup_definitions(self) -> list[sqlite3.Row]:
+        """List all setup definitions.
+
+        Returns
+        -------
+        list of sqlite3.Row
+            Setup rows.
+        """
+        return self.conn.execute(
+            "SELECT * FROM fdb_setup_definition ORDER BY name, setup_id"
+        ).fetchall()
+
+    def delete_setup_definition(self, setup_id: str) -> None:
+        """Delete one setup definition.
+
+        Parameters
+        ----------
+        setup_id : str
+            Setup identifier.
+        """
+        with self.conn:
+            self.conn.execute(
+                "DELETE FROM fdb_setup_definition WHERE setup_id = ?", (setup_id,)
+            )
+
+    def add_audit_log(
+        self,
+        action: str,
+        target_type: str,
+        target_id: str,
+        operator_user_id: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> int:
+        """Insert a new audit log record.
+
+        Parameters
+        ----------
+        action : str
+            Action type (e.g. 'create', 'update', 'delete', 'archive', 'restore', 'backup').
+        target_type : str
+            Type of the target entity (e.g. 'sample', 'experiment', 'raw_data', etc.).
+        target_id : str
+            Identifier of the target entity.
+        operator_user_id : str, optional
+            Identifier of the user performing the action.
+        details : dict, optional
+            JSON-serializable metadata details.
+
+        Returns
+        -------
+        int
+            The generated audit log record ID.
+        """
+        now = _utc_now()
+        with self.conn:
+            cursor = self.conn.execute(
+                """INSERT INTO fdb_audit_log
+                   (action, target_type, target_id, operator_user_id, details_json, timestamp, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    action,
+                    target_type,
+                    target_id,
+                    operator_user_id,
+                    _json_dumps(details),
+                    now,
+                    now,
+                ),
+            )
+            return cursor.lastrowid
+
+    def get_audit_logs(
+        self,
+        action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Retrieve audit log records with optional filtering.
+
+        Parameters
+        ----------
+        action : str, optional
+            Filter by action type.
+        target_type : str, optional
+            Filter by target entity type.
+        target_id : str, optional
+            Filter by target entity ID.
+        limit : int, default=100
+            Maximum number of logs to return.
+
+        Returns
+        -------
+        list of dict
+            List of audit log dictionaries.
+        """
+        query = "SELECT * FROM fdb_audit_log WHERE 1=1"
+        params = []
+        if action is not None:
+            query += " AND action = ?"
+            params.append(action)
+        if target_type is not None:
+            query += " AND target_type = ?"
+            params.append(target_type)
+        if target_id is not None:
+            query += " AND target_id = ?"
+            params.append(target_id)
+        query += " ORDER BY timestamp DESC, log_id DESC LIMIT ?"
+        params.append(limit)
+
+        rows = self.conn.execute(query, tuple(params)).fetchall()
+        result = []
+        for r in rows:
+            details = _json_loads(r["details_json"])
+            result.append(
+                {
+                    "log_id": r["log_id"],
+                    "timestamp": r["timestamp"],
+                    "action": r["action"],
+                    "target_type": r["target_type"],
+                    "target_id": r["target_id"],
+                    "operator_user_id": r["operator_user_id"],
+                    "details": details,
+                    "created_at": r["created_at"],
+                }
+            )
+        return result
+

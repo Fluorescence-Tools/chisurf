@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 13
+SCHEMA_VERSION = 16
 
 CREATE_TABLES_SQL = [
     "CREATE TABLE IF NOT EXISTS _schema_version (version INTEGER)",
@@ -102,7 +102,8 @@ CREATE_TABLES_SQL = [
         started_at TEXT,
         ended_at TEXT,
         status TEXT,
-        details TEXT
+        details TEXT,
+        setup_definition_id TEXT REFERENCES fdb_setup_definition(setup_id) ON DELETE SET NULL
     )""",
     """CREATE TABLE IF NOT EXISTS flr_experiment_key_value (
         experiment_id TEXT NOT NULL REFERENCES flr_experiment(experiment_id) ON DELETE CASCADE,
@@ -254,7 +255,8 @@ CREATE_TABLES_SQL = [
         inst_setting_id TEXT,
         exp_condition_id TEXT,
         sample_id TEXT,
-        details TEXT
+        details TEXT,
+        setup_definition_id TEXT REFERENCES fdb_setup_definition(setup_id) ON DELETE SET NULL
     )""",
     """CREATE TABLE IF NOT EXISTS ihm_chemical_component_descriptor (
         id INTEGER PRIMARY KEY,
@@ -401,6 +403,67 @@ CREATE_TABLES_SQL = [
         checksum_snapshot_json TEXT,
         metadata_json TEXT
     )""",
+    """CREATE TABLE IF NOT EXISTS fdb_setup_definition (
+        setup_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        version INTEGER DEFAULT 1,
+        instrument_id TEXT REFERENCES flr_instrument(instrument_id),
+        description TEXT,
+        configuration_json TEXT,
+        detectors_json TEXT,
+        timing_calibration_json TEXT,
+        irf_definition_json TEXT,
+        burst_defaults_json TEXT,
+        fcs_calibration_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )""",
+    """CREATE TABLE IF NOT EXISTS fdb_analysis_run (
+        analysis_id TEXT PRIMARY KEY REFERENCES fdb_processing_run(processing_id) ON DELETE CASCADE,
+        model_name TEXT,
+        model_type TEXT,
+        model_version TEXT,
+        fit_structure_json TEXT,
+        parameter_links_json TEXT,
+        covariance_matrix_json TEXT,
+        goodness_of_fit_json TEXT,
+        notes TEXT,
+        metadata_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )""",
+    """CREATE TABLE IF NOT EXISTS fdb_analysis_parameter (
+        parameter_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        parameter_uuid TEXT UNIQUE NOT NULL,
+        analysis_id TEXT REFERENCES fdb_analysis_run(analysis_id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        value REAL,
+        standard_error REAL,
+        confidence_interval_low REAL,
+        confidence_interval_high REAL,
+        initial_value REAL,
+        lower_bound REAL,
+        upper_bound REAL,
+        bounds_on INTEGER DEFAULT 0,
+        units TEXT,
+        parameter_type TEXT NOT NULL DEFAULT 'free',
+        expression TEXT,
+        prior_json TEXT,
+        mapping_json TEXT,
+        metadata_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )""",
+    """CREATE TABLE IF NOT EXISTS fdb_audit_log (
+        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+        action TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        operator_user_id TEXT,
+        details_json TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )""",
 ]
 
 CREATE_INDICES_SQL = [
@@ -420,6 +483,12 @@ CREATE_INDICES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_fdb_provenance_source ON fdb_provenance_edge (source_node_type, source_node_id)",
     "CREATE INDEX IF NOT EXISTS idx_fdb_provenance_target ON fdb_provenance_edge (target_node_type, target_node_id)",
     "CREATE INDEX IF NOT EXISTS idx_fdb_provenance_processing ON fdb_provenance_edge (processing_id)",
+    "CREATE INDEX IF NOT EXISTS idx_fdb_setup_definition_instrument ON fdb_setup_definition (instrument_id)",
+    "CREATE INDEX IF NOT EXISTS idx_experiment_setup ON flr_experiment (setup_definition_id)",
+    "CREATE INDEX IF NOT EXISTS idx_fdb_analysis_parameter_analysis ON fdb_analysis_parameter (analysis_id)",
+    "CREATE INDEX IF NOT EXISTS idx_fdb_analysis_parameter_uuid ON fdb_analysis_parameter (parameter_uuid)",
+    "CREATE INDEX IF NOT EXISTS idx_fdb_audit_log_target ON fdb_audit_log (target_type, target_id)",
+    "CREATE INDEX IF NOT EXISTS idx_fdb_audit_log_timestamp ON fdb_audit_log (timestamp)",
 ]
 
 
@@ -759,7 +828,7 @@ def migrate_schema(conn: sqlite3.Connection):
                 set_schema_version(conn, 12)
                 version = 12
 
-            # Phase 13: fdb4chembio burst TTTR provenance records (v12 -> v13)
+            # Phase 13: fdb burst TTTR provenance records (v12 -> v13)
             if version < 13:
                 for sql in CREATE_TABLES_SQL:
                     if "fdb_" in sql:
@@ -769,6 +838,40 @@ def migrate_schema(conn: sqlite3.Connection):
                         cursor.execute(sql)
                 set_schema_version(conn, 13)
                 version = 13
+
+            # Phase 14: fdb setup definitions and linkage (v13 -> v14)
+            if version < 14:
+                for sql in CREATE_TABLES_SQL:
+                    if "fdb_setup_definition" in sql:
+                        cursor.execute(sql)
+                _ensure_column(cursor, "flr_experiment", "setup_definition_id", "TEXT REFERENCES fdb_setup_definition(setup_id) ON DELETE SET NULL")
+                for sql in CREATE_INDICES_SQL:
+                    if "idx_fdb_setup_definition" in sql or "idx_experiment_setup" in sql:
+                        cursor.execute(sql)
+                set_schema_version(conn, 14)
+                version = 14
+
+            # Phase 15: fdb analysis, model, parameter provenance (v14 -> v15)
+            if version < 15:
+                for sql in CREATE_TABLES_SQL:
+                    if "fdb_analysis_run" in sql or "fdb_analysis_parameter" in sql:
+                        cursor.execute(sql)
+                for sql in CREATE_INDICES_SQL:
+                    if "idx_fdb_analysis_run" in sql or "idx_fdb_analysis_parameter" in sql:
+                        cursor.execute(sql)
+                set_schema_version(conn, 15)
+                version = 15
+
+            # Phase 16: fdb audit logging (v15 -> v16)
+            if version < 16:
+                for sql in CREATE_TABLES_SQL:
+                    if "fdb_audit_log" in sql:
+                        cursor.execute(sql)
+                for sql in CREATE_INDICES_SQL:
+                    if "idx_fdb_audit_log" in sql:
+                        cursor.execute(sql)
+                set_schema_version(conn, 16)
+                version = 16
         finally:
             cursor.close()
 

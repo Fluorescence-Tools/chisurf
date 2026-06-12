@@ -1,0 +1,83 @@
+{
+  "id": "burst_selection",
+  "version": "2.0.0",
+  "display_name": "Spectroscopy:Single-Molecule:Burst Selection",
+  "description": "Burst selection and FRET analysis for single-molecule fluorescence data.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Spectroscopy", "Single-Molecule"],
+  "icon": "icon.png",
+  "state_namespace": "burst_selection",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "selected_files": {"type": "array", "items": {"type": "string"}},
+      "last_job_id": {"type": ["string", "null"]},
+      "last_job_status": {"type": ["string", "null"]},
+      "last_result_summary": {"type": ["object", "null"]},
+      "settings": {"type": "object"}
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.burst.burst_selection.gui.tool:BurstSelectionTool",
+    "cli": "burst-selection=chisurf.plugins.burst.burst_selection.cli:cli",
+    "services": "chisurf.plugins.burst.burst_selection.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "burst_selection.jobs.analyze_files",
+      "summary": "Run burst selection analysis over TTTR files.",
+      "params_schema": "api.contract#/inputs/AnalyzeFiles",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": true,
+      "cancelable": true,
+      "events": [
+        "burst_selection.jobs.progress",
+        "burst_selection.jobs.completed",
+        "burst_selection.jobs.failed"
+      ]
+    },
+    {
+      "name": "burst_selection.results.inspect_bur",
+      "summary": "Inspect a saved ChiSurf .bur file.",
+      "params_schema": "api.contract#/inputs/InspectBur",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "burst_selection.gmm.fit",
+      "summary": "Fit a GMM to features extracted from a .bur file.",
+      "params_schema": "api.contract#/inputs/FitGmm",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "burst_selection.diagnostics.load",
+      "summary": "Run photon filtering and burst finding for diagnostic plots.",
+      "params_schema": "api.contract#/inputs/DiagnosticsLoad",
+      "result_schema": "api.contract#/outputs/ServiceResult",
+      "long_running": false,
+      "cancelable": false
+    },
+    {
+      "name": "burst_selection.contract.describe",
+      "summary": "Return the Burst Selection workflow contract.",
+      "params_schema": {},
+      "result_schema": "api.contract",
+      "long_running": false,
+      "cancelable": false
+    }
+  ],
+  "events": [
+    {
+      "topic": "burst_selection.state.*",
+      "description": "State patch events for burst selection plugin"
+    },
+    {
+      "topic": "burst_selection.jobs.*",
+      "description": "Job lifecycle events"
+    }
+  ]
+}
