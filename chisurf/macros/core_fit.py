@@ -1523,43 +1523,10 @@ def change_selected_fit_of_group(selected_fit: int) -> None:
         pass
 
 
-def save_project(target_path: str, project_name: str = "chisurf_project"):
-    """Save the current state of the application as a project.
-
-    This implementation writes a JSON ``project.json`` file using
-    :class:`cs.core.project.Project` together with a snapshot of all datasets,
-    fits and UI state. It no longer creates per-fit folders, screenshots or
-    DOCX reports; everything is embedded in ``project.json``.
-
-    Works in headless mode (without GUI / ``cs.cs``). UI state is
-    only captured when a main window is available.
-
-    Parameters
-    ----------
-    target_path : str
-        Directory in which the project folder will be created.
-    project_name : str
-        Name of the project subfolder (default: ``"chisurf_project"``).
-    """
+def get_project_payload(project_name: str = "chisurf_project") -> CSProject:
+    """Gather the entire current project state as a serialized CSProject instance."""
     log = cs.logging
     gui = getattr(cs, "cs", None)
-
-    base_dir = os.path.abspath(str(target_path))
-    project_dir = os.path.join(base_dir, project_name)
-
-    # Clean the target directory to avoid stale files from earlier saves
-    try:
-        if os.path.isdir(project_dir):
-            shutil.rmtree(project_dir)
-    except Exception as exc:
-        log.error(f"save_project: could not clean existing project directory {project_dir}: {exc}")
-        return
-
-    try:
-        os.makedirs(project_dir, exist_ok=True)
-    except Exception as exc:
-        log.error(f"save_project: could not create project directory {project_dir}: {exc}")
-        return
 
     # --- Collect datasets as plain arrays ---------------------------------
     datasets: typing.Dict[str, typing.Dict] = {}
@@ -1583,11 +1550,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             y = np.asarray([], dtype=float)
             ex = np.asarray([], dtype=float)
             ey = np.asarray([], dtype=float)
-        # Track a human-readable dataset name and, if available, the
-        # original filename/path the data was loaded from. The filename is
-        # stored as-is (typically an absolute path for file-based imports)
-        # but is *not* re-read on project load; it is only restored to the
-        # DataCurve.filename attribute for user reference.
         filename = getattr(dc, "filename", "")
         datasets[ds_id] = {
             "name": getattr(dc, "name", ""),
@@ -1602,7 +1564,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         dataset_id_by_obj[key] = ds_id
         return ds_id
 
-    # Register all DataCurve objects reachable from imported_datasets
     for item in cs.imported_datasets:
         if isinstance(item, cs.core.data.DataCurve):
             register_datacurve(item)
@@ -1652,10 +1613,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
 
     # --- Collect fits & global links --------------------------------------
     manifest_fits: typing.List[typing.Dict[str, typing.Any]] = []
-
-    # Headless: iterate core model list (cs.fits) directly.
-    # Falls back to cs.gui.fit_windows only when fits list is empty
-    # but GUI windows exist (legacy compat).
     fit_sources = cs.fits
     for i, fit_group in enumerate(fit_sources):
         if fit_group is None:
@@ -1674,7 +1631,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             if isinstance(data_obj, cs.core.data.DataCurve):
                 ds_id = register_datacurve(data_obj)
 
-            # Derive human-readable model label from experiment, if available
             if model_name is None and data_obj is not None:
                 try:
                     exp = getattr(data_obj, "experiment", None)
@@ -1690,14 +1646,12 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
                 except Exception:
                     pass
 
-            # Headless fallback: use the model class's own 'name' attribute if experiment mapping is missing
             if model_name is None and local_fit is not None:
                 try:
                     model_name = getattr(local_fit.model, "name", None)
                 except Exception:
                     pass
 
-            # Capture per-fit model state and current x-range
             try:
                 get_state = getattr(local_fit, "get_state", None)
                 if callable(get_state):
@@ -1726,7 +1680,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
 
             local_fits_state.append(rec)
 
-        # Capture global links if a GlobalFitModel is present
         global_model = getattr(fit_group, "_model", None)
         global_links_state: typing.Dict[str, typing.Any] = {}
         if global_model is not None:
@@ -1749,7 +1702,6 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
     if dataset_layout:
         ui_state["dataset_layout"] = dataset_layout
 
-    # Capture UI state only when a main window is available (headless-safe)
     if gui is not None:
         ui_state["current_fit_index"] = getattr(gui, "fit_idx", 0)
         ui_state["current_experiment_idx"] = getattr(gui, "current_experiment_idx", 0)
@@ -1768,7 +1720,7 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
         description=f"ChiSurf project '{project_name}'",
         chisurf_version=getattr(cs.core.info, "__version__", None),
         datasets=datasets,
-        experiments={},  # reserved for future structured experiment state
+        experiments={},
         fits=manifest_fits,
         ui_state=ui_state,
     )
@@ -1778,15 +1730,54 @@ def save_project(target_path: str, project_name: str = "chisurf_project"):
             "filename": HISTORY_FILENAME,
             "event_count": _history_event_count(),
         }
+        history_obj = getattr(cs, "history", None)
+        if history_obj is not None and hasattr(history_obj, "list_events"):
+            proj.extra["history_events"] = history_obj.list_events()
     except Exception:
         pass
 
     try:
+        from chisurf.core.actions._infra import get_action_catalog
+
         proj.extra["action_catalog"] = {
             "entries": get_action_catalog(),
         }
     except Exception:
         pass
+
+    return proj
+
+
+def save_project(target_path: str, project_name: str = "chisurf_project"):
+    """Save the current state of the application as a project.
+
+    This implementation writes a JSON ``project.json`` file using
+    :class:`cs.core.project.Project` together with a snapshot of all datasets,
+    fits and UI state. Everything is embedded in ``project.json``.
+
+    Works in headless mode (without GUI).
+    """
+    log = cs.logging
+    gui = getattr(cs, "cs", None)
+
+    base_dir = os.path.abspath(str(target_path))
+    project_dir = os.path.join(base_dir, project_name)
+
+    # Clean the target directory to avoid stale files from earlier saves
+    try:
+        if os.path.isdir(project_dir):
+            shutil.rmtree(project_dir)
+    except Exception as exc:
+        log.error(f"save_project: could not clean existing project directory {project_dir}: {exc}")
+        return
+
+    try:
+        os.makedirs(project_dir, exist_ok=True)
+    except Exception as exc:
+        log.error(f"save_project: could not create project directory {project_dir}: {exc}")
+        return
+
+    proj = get_project_payload(project_name)
 
     project_save_json(proj, project_dir)
     hist_path = _save_history_snapshot(project_dir)
@@ -2027,12 +2018,12 @@ def _is_file_backed_dataset(payload: typing.Any) -> bool:
 
 def _restore_chimol_project_files(
     gui: typing.Any,
-    project_root: pathlib.Path,
+    project_root: pathlib.Path | None,
     ui_state: typing.Dict[str, typing.Any],
     log: typing.Any,
 ) -> None:
     """Open project-local Chimol files in a Chimol plugin window."""
-    if gui is None:
+    if gui is None or project_root is None:
         return
     chimol_state = ui_state.get("chimol") if isinstance(ui_state, dict) else None
     if not isinstance(chimol_state, dict):
@@ -2082,10 +2073,10 @@ def _restore_chimol_project_files(
 
 def _resolve_project_local_model_state(
     state: typing.Any,
-    project_root: pathlib.Path,
+    project_root: pathlib.Path | None,
 ) -> typing.Any:
     """Resolve known model-state file paths relative to a project root."""
-    if not isinstance(state, dict):
+    if project_root is None or not isinstance(state, dict):
         return state
     proteinmc = state.get("proteinmc")
     if not isinstance(proteinmc, dict):
@@ -2434,39 +2425,37 @@ def load_fit_project(project_path: str):
     )
 
 
-def load_project(project_path: str):
-    """Load a project from a JSON-based project folder.
-
-    The folder must contain a ``project.json`` file created by
-    :func:`save_project`. Datasets are reconstructed from the stored x/y/ex/ey
-    arrays, :func:`add_fit` is used to rebuild each :class:`FitGroup`, and
-    per-fit parameter state plus global links are restored via
-    :mod:`cs.core.project.fit_state`.
+def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = None):
+    """Restore a project state from a Project dataclass instance.
 
     Parameters
     ----------
-    project_path : str
-        Path to the project folder containing ``project.json``.
+    proj : Project
+        The project instance containing the serialized project state.
+    project_path : str, optional
+        The project directory path on disk (if restored from files).
     """
     log = cs.logging
     gui = getattr(cs, "cs", None)
 
-    if not os.path.isdir(project_path):
-        log.error(f"Project path {project_path} does not exist")
-        return
-
-    try:
-        proj = project_load_json(project_path)
-    except Exception as exc:
-        log.error(f"load_project: failed to read project.json from {project_path}: {exc}")
-        return
-
     # Full project load replaces current operation history when available.
     history_loaded = False
-    try:
-        history_loaded = bool(_load_history_snapshot(project_path, replace=True))
-    except Exception:
-        pass
+    if project_path is not None:
+        try:
+            history_loaded = bool(_load_history_snapshot(project_path, replace=True))
+        except Exception:
+            pass
+
+    if not history_loaded:
+        events = proj.extra.get("history_events")
+        if events:
+            try:
+                history_obj = getattr(cs, "history", None)
+                if history_obj is not None and hasattr(history_obj, "load_events"):
+                    history_obj.load_events(events, replace=True)
+                    history_loaded = True
+            except Exception:
+                pass
 
     if gui is not None:
         try:
@@ -2490,10 +2479,6 @@ def load_project(project_path: str):
         cs.gui.fit_windows.clear()
     except Exception:
         pass
-    # We rely on reinit() to have cleared headless state as needed.
-    # cs.imported_datasets.clear() is NOT called here because reinit()
-    # already clears it while preserving the Global Dataset instance if possible.
-    # We will overwrite it later with [:] slice assignment.
 
     # --- Restore experiment/setup state early so we can attach it to datasets
     ui_state = proj.ui_state or {}
@@ -2534,16 +2519,12 @@ def load_project(project_path: str):
             ey = np.asarray(payload.get("ey", np.ones_like(y)), dtype=float)
             dc = cs.core.data.DataCurve(x=x, y=y, ex=ex, ey=ey, name=name)
 
-            # Preserve the original filename for user reference without
-            # triggering a reload from disk (DataCurve.__init__ only loads
-            # when given a filename argument).
             if filename:
                 try:
                     dc.filename = filename
                 except Exception:
                     pass
 
-            # Rehydrate and attach the experiment reader if stored
             reader_info = payload.get("data_reader")
             reader_obj = _deserialize_reader(reader_info)
             if reader_obj is not None:
@@ -2552,27 +2533,22 @@ def load_project(project_path: str):
                 except Exception:
                     pass
 
-            # Re-associate with the correct experiment object if possible.
             exp_obj = None
             stored_exp_name = payload.get("experiment_name")
 
-            # 1) Try to find experiment by stored name
             if stored_exp_name:
                 exp_obj = cs.experiment.get(stored_exp_name)
 
-            # 2) Special case for global datasets (fallback for older projects)
             if exp_obj is None:
                 ds_name_lower = str(name or ds_id).lower()
                 if "global" in ds_name_lower:
                     exp_obj = cs.experiment.get("Global")
                     if exp_obj is None:
-                        # try case variants
                         for en in ("Global", "Global-Fit", "Global fit"):
                             exp_obj = cs.experiment.get(en)
                             if exp_obj is not None:
                                 break
 
-            # 3) Final fallback to current experiment
             if exp_obj is None and gui is not None:
                 exp_obj = getattr(gui, "current_experiment", None)
 
@@ -2598,8 +2574,6 @@ def load_project(project_path: str):
         except Exception:
             pass
 
-    # Rebuild dataset tree/list (including grouped datasets) if a layout
-    # snapshot is available; otherwise fall back to plain flat curves.
     dataset_layout = ui_state.get("dataset_layout")
     restored_datasets: typing.List[typing.Any] = []
     used_dataset_ids: typing.Set[str] = set()
@@ -2655,7 +2629,6 @@ def load_project(project_path: str):
                         dataset_indices[ds_id] = dataset_idx
                         used_dataset_ids.add(ds_id)
 
-    # Append any datasets missing from layout (backstop for partial records).
     for ds_id, dc in dataset_objects.items():
         if ds_id in used_dataset_ids:
             continue
@@ -2676,11 +2649,12 @@ def load_project(project_path: str):
         except Exception:
             pass
 
-    _restore_chimol_project_files(gui, pathlib.Path(project_path), ui_state, log)
+    project_root = pathlib.Path(project_path) if project_path is not None else None
+    _restore_chimol_project_files(gui, project_root, ui_state, log)
 
     # --- Rebuild fit groups and restore their state -----------------------
     fits_list = proj.fits or []
-    fits_root = pathlib.Path(project_path)
+    fits_root = project_root
     for rec in fits_list:
         if not isinstance(rec, dict):
             continue
@@ -2690,7 +2664,6 @@ def load_project(project_path: str):
             log.warning(f"load_project: fit record {key} has no local_fits; skipping")
             continue
 
-        # Determine dataset indices for this group
         group_indices: typing.List[int] = []
         for lf in local_fits:
             if not isinstance(lf, dict):
@@ -2702,8 +2675,6 @@ def load_project(project_path: str):
             if idx is not None:
                 group_indices.append(idx)
 
-        # Keep first occurrence order while removing duplicates; grouped
-        # datasets intentionally map multiple local fits to one dataset index.
         deduped_indices: typing.List[int] = []
         seen_indices: typing.Set[int] = set()
         for idx in group_indices:
@@ -2727,7 +2698,6 @@ def load_project(project_path: str):
             log.warning(f"load_project: add_fit failed for record {key}: {exc}")
             continue
 
-        # Newly created FitGroup is appended to cs.fits
         try:
             fit_group = cs.fits[-1]
         except Exception:
@@ -2735,7 +2705,6 @@ def load_project(project_path: str):
 
         grouped_new = getattr(fit_group, "grouped_fits", [])
         for lf_rec, new_fit in zip(local_fits, grouped_new):
-            # Load per-fit state directly from manifest (no external files)
             state = lf_rec.get("fit_state") or {}
             state = _resolve_project_local_model_state(state, fits_root)
 
@@ -2760,7 +2729,6 @@ def load_project(project_path: str):
                         f"load_project: could not restore fit_range for local fit in {key}: {exc}"
                     )
 
-        # Restore global links (if any)
         global_links_state = rec.get("global_links") or {}
         if isinstance(global_links_state, dict):
             global_model = getattr(fit_group, "_model", None)
@@ -2784,17 +2752,12 @@ def load_project(project_path: str):
         except Exception:
             pass
 
-        # Restore main-window and MDI geometry/state if present. This should be
-        # done only after datasets and fits (and thus subwindows) have been
-        # recreated so that Qt has matching widgets to apply the layout to.
         try:
             from chisurf.core.project.ui_state import set_ui_state
-
             set_ui_state(gui, ui_state)
         except Exception as exc:
             log.warning(f"load_project: could not restore UI state from dict: {exc}")
 
-        # Trigger a single GUI refresh now that datasets, fits and layout are consistent.
         try:
             gui.update()
         except Exception:
@@ -2803,18 +2766,48 @@ def load_project(project_path: str):
     _refresh_history_browser()
     _record_history(
         action_type="project_load",
-        summary=f"load project from '{project_path}'",
+        summary=f"load project from '{project_path}'" if project_path is not None else "load project from database",
         payload={
-            "project_path": str(project_path),
+            "project_path": str(project_path) if project_path is not None else "",
             "history_loaded": bool(history_loaded),
         },
     )
 
-    log.info(f"Project loaded from {project_path}")
-    try:
-        if gui is not None:
-            from chisurf.gui.project_helpers import add_recent_project
+    if project_path is not None:
+        log.info(f"Project loaded from {project_path}")
+        try:
+            if gui is not None:
+                from chisurf.gui.project_helpers import add_recent_project
+                add_recent_project(gui, project_path)
+        except Exception:
+            pass
+    else:
+        log.info("Project loaded from database")
 
-            add_recent_project(gui, project_path)
-    except Exception:
-        pass
+
+def load_project(project_path: str):
+    """Load a project from a JSON-based project folder.
+
+    The folder must contain a ``project.json`` file created by
+    :func:`save_project`. Datasets are reconstructed from the stored x/y/ex/ey
+    arrays, :func:`add_fit` is used to rebuild each :class:`FitGroup`, and
+    per-fit parameter state plus global links are restored via
+    :mod:`cs.core.project.fit_state`.
+
+    Parameters
+    ----------
+    project_path : str
+        Path to the project folder containing ``project.json``.
+    """
+    log = cs.logging
+    if not os.path.isdir(project_path):
+        log.error(f"Project path {project_path} does not exist")
+        return
+
+    try:
+        proj = project_load_json(project_path)
+    except Exception as exc:
+        log.error(f"load_project: failed to read project.json from {project_path}: {exc}")
+        return
+
+    load_project_payload(proj, project_path)

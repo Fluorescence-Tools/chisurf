@@ -80,6 +80,15 @@ class OperationHistory:
             self._events.clear()
             self._checkpoints.clear()
 
+    def load_events(self, events: typing.List[typing.Dict[str, typing.Any]], replace: bool = True) -> None:
+        """Load a list of history events directly."""
+        with self._lock:
+            if replace:
+                self._events = list(events)
+                self._checkpoints.clear()
+            else:
+                self._events.extend(events)
+
     def subscribe(self, callback: typing.Callable[[typing.Dict[str, typing.Any]], None]) -> None:
         with self._lock:
             self._subscribers.append(callback)

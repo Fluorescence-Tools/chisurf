@@ -31,6 +31,7 @@ class Project:
     links: List[Dict[str, Any]] = field(default_factory=list)
     ui_state: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    extra: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert this project into a deterministic JSON-serializable dictionary."""
@@ -53,6 +54,7 @@ class Project:
             "fits": self.fits,
             "links": self.links,
             "ui": self.ui_state,
+            "extra": self.extra,
         }
 
     @classmethod
@@ -83,6 +85,7 @@ class Project:
             links=data.get("links") or [],
             ui_state=data.get("ui") or {},
             metadata=metadata,
+            extra=data.get("extra") or {},
         )
 
     def get_dataset(self, uid: str) -> Optional[Dict[str, Any]]:
