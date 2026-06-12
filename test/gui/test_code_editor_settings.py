@@ -29,6 +29,8 @@ class TestCodeEditorSettings:
         assert dialog.font_size_spin.maximum() == 72
         assert dialog.language_combo.count() == 4
         assert dialog.color_scheme_combo.count() >= 4
+        assert dialog.line_numbers_check.objectName() == "line_numbers_check"
+        assert dialog.lsp_check.objectName() == "lsp_check"
 
         settings = dialog.editor_settings()
         for key in [
@@ -42,12 +44,17 @@ class TestCodeEditorSettings:
             "marker_background_color",
             "caret_line_background_color",
             "caret_line_visible",
+            "line_numbers_visible",
+            "enable_lsp",
         ]:
             assert key in settings
 
     def test_text_editor_settings_apply_to_widget(self, qapp):
-        """Editor settings should update font, language, and highlight state."""
-        editor = TextEditor(language="JSON")
+        """Editor settings should update font, language, line numbers, and highlight state."""
+        editor = TextEditor(language="JSON", line_numbers_visible=False)
+
+        assert editor.line_numbers_visible is False
+        assert editor.line_number_area.isVisible() is False
 
         editor.set_editor_settings(
             {
@@ -57,6 +64,7 @@ class TestCodeEditorSettings:
                 "paper_color": "#ffffff",
                 "default_color": "#000000",
                 "caret_line_visible": True,
+                "line_numbers_visible": True,
             }
         )
 
@@ -64,6 +72,8 @@ class TestCodeEditorSettings:
         assert editor.font().pointSize() == 12
         assert editor.language == "Python"
         assert editor.caret_line_visible is True
+        assert editor.line_numbers_visible is True
+        assert editor.line_number_area.isVisible() is True
 
     def test_save_editor_settings_persists_to_yaml(self, tmp_path, monkeypatch):
         """Editor settings should be written to the ChiSurf settings YAML."""
@@ -84,10 +94,20 @@ class TestCodeEditorSettings:
             {"editor": {"font_family": "Courier New", "font_size": 9}},
         )
 
-        assert save_editor_settings({"font_family": "Consolas", "font_size": 11})
+        assert save_editor_settings({
+            "font_family": "Consolas",
+            "font_size": 11,
+            "line_numbers_visible": False,
+            "enable_lsp": False,
+        })
 
         data = yaml.safe_load(settings_file.read_text(encoding="utf-8"))
         assert data["gui"]["editor"]["font_family"] == "Consolas"
         assert data["gui"]["editor"]["font_size"] == 11
+        assert data["gui"]["editor"]["line_numbers_visible"] is False
+        assert data["gui"]["editor"]["enable_lsp"] is False
         assert cs.core.settings.gui["editor"]["font_family"] == "Consolas"
         assert cs.core.settings.gui["editor"]["font_size"] == 11
+        assert cs.core.settings.gui["editor"]["line_numbers_visible"] is False
+        assert cs.core.settings.gui["editor"]["enable_lsp"] is False
+

@@ -1,0 +1,32 @@
+{
+  "id": "code_editor",
+  "version": "2.1.0",
+  "display_name": "Tools:Miscellaneous:Code Editor",
+  "description": "Shared multi-document code/text editor with project navigation, symbols, diagnostics, and optional Python LSP integration.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Tools", "Miscellaneous"],
+  "icon": "icon.png",
+  "state_namespace": "code_editor",
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "recent_files": {"type": "array", "items": {"type": "string"}},
+      "project_root": {"type": ["string", "null"]},
+      "settings": {"type": "object"}
+    }
+  },
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": "code_editor_window"
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.code_editor.window:CodeEditorWindow"
+  },
+  "dependencies": {
+    "python-lsp-server": ">=1.14"
+  }
+}
