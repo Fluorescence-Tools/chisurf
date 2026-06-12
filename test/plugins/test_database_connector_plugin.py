@@ -24,6 +24,7 @@ def test_database_connector_manifest_is_valid():
     manifest = load_manifest(manifest_path)
     assert manifest is not None
     assert manifest.id == "database_connector"
+    assert manifest.statefulness.enabled is False
     assert "database_connector.status" in [method.name for method in manifest.rpc_methods]
     assert "database_connector.repository" in [method.name for method in manifest.rpc_methods]
 
