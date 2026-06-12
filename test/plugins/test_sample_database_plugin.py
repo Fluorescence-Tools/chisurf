@@ -47,7 +47,7 @@ def test_sample_database_services_register():
 
 
 def test_measurement_provenance_services_roundtrip(tmp_path, monkeypatch):
-    """Exercise the fdb4chembio RPC handlers through the dispatcher."""
+    """Exercise the fdb RPC handlers through the dispatcher."""
     db_path = tmp_path / "service.db"
     raw_path = tmp_path / "input.spc"
     raw_path.write_bytes(b"fake photons")

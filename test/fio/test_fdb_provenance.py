@@ -1,4 +1,4 @@
-"""Tests for fdb4chembio Phase 1 provenance storage."""
+"""Tests for fdb Phase 1 provenance storage."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def test_v12_database_migrates_to_v13_without_losing_existing_rows(tmp_path: Pat
     conn = sqlite3.connect(db_path)
     try:
         for sql in schema.CREATE_TABLES_SQL:
-            if "fdb_" not in sql:
+            if "CREATE TABLE IF NOT EXISTS fdb_" not in sql:
                 conn.execute(sql)
         conn.execute("DELETE FROM _schema_version")
         conn.execute("INSERT INTO _schema_version (version) VALUES (12)")
@@ -37,7 +37,8 @@ def test_v12_database_migrates_to_v13_without_losing_existing_rows(tmp_path: Pat
         conn.close()
 
     with FluorophoreDatabase(db_path) as db:
-        assert db._get_schema_version() == 13
+        assert db._get_schema_version() == schema.SCHEMA_VERSION
+
         assert db.get_experiment("exp_1")["sample_id"] == "sample_1"
         assert len(db.get_experiment_data("exp_1")) == 1
         tables = {
@@ -102,7 +103,7 @@ def test_burst_provenance_chain_and_manifest(tmp_path: Path) -> None:
         assert trace["processing_run"]["input_raw_data"][0]["raw_data_id"] == raw_id
 
         manifest = db.export_burst_processing_manifest(processing_id)
-        assert manifest["schema"] == "fdb4chembio.burst_processing_manifest.v1"
+        assert manifest["schema"] == "fdb.burst_processing_manifest.v1"
         assert manifest["raw_data"][0]["checksum"] == "raw-sha"
         assert manifest["processed_data"][0]["checksum"] == "bur-sha"
 
