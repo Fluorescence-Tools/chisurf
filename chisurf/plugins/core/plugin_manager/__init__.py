@@ -13,31 +13,45 @@ from external directories, with automatic handling of security elevation
 when needed for protected system locations on Windows, macOS, and Linux.
 """
 
-import sys
+import ast
+import ctypes
+import importlib
 import os
 import pathlib
-import importlib
 import pkgutil
-import yaml
-import ast
-import shutil
-import ctypes
 import platform
+import shutil
 import subprocess
-from typing import Optional
+import sys
 
-from qtpy.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QListWidget, QListWidgetItem, QCheckBox,
-    QMessageBox, QGroupBox, QScrollArea, QSplitter, QTextEdit, QLineEdit,
-    QFileDialog, QInputDialog,
-)
-from qtpy.QtCore import Qt, QSize
+import yaml
+from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 import chisurf as cs
-import chisurf.plugins
 import chisurf.core.settings
+import chisurf.plugins
+from chisurf.core.plugin import load_manifest
 
 try:
     from chisurf.gui.misc_helpers import persist_plugin_state
@@ -64,7 +78,7 @@ except ImportError:
 name = "Setup:Plugins"
 
 
-def read_module_docstring(package_path: pathlib.Path) -> Optional[str]:
+def read_module_docstring(package_path: pathlib.Path) -> str | None:
     """
     Given a path to a package directory, reads its __init__.py
     and returns the module docstring (or None if there isn’t one).
@@ -94,6 +108,13 @@ class PluginManagerWidget(QMainWindow):
         self.hide_disabled_plugins = self.plugin_settings.get('hide_disabled_plugins', True)  # Keep the key for backward compatibility
         self.plugin_order = self.plugin_settings.get('plugin_order', {})
         self.toolbar_plugins = self.plugin_settings.get('toolbar_plugins', [])
+        statefulness_settings = self.plugin_settings.get('statefulness', {})
+        if not isinstance(statefulness_settings, dict):
+            statefulness_settings = {}
+        self.statefulness_mode = statefulness_settings.get('mode', 'plugin_default')
+        self.statefulness_overrides = statefulness_settings.get('per_plugin', {})
+        if not isinstance(self.statefulness_overrides, dict):
+            self.statefulness_overrides = {}
 
         # Create central widget and layout
         central_widget = QWidget()
@@ -153,6 +174,12 @@ class PluginManagerWidget(QMainWindow):
         self.toolbar_checkbox.stateChanged.connect(self.on_toolbar_changed)
         status_layout.addWidget(self.toolbar_checkbox)
 
+        # Statefulness override
+        self.statefulness_checkbox = QCheckBox("Remember window state")
+        self.statefulness_checkbox.setTristate(True)
+        self.statefulness_checkbox.stateChanged.connect(self.on_statefulness_changed)
+        status_layout.addWidget(self.statefulness_checkbox)
+
         status_layout.addStretch()
         details_layout.addLayout(status_layout)
 
@@ -198,6 +225,34 @@ class PluginManagerWidget(QMainWindow):
         self.hide_disabled_checkbox.stateChanged.connect(self.on_hide_disabled_changed)
         settings_layout.addWidget(self.hide_disabled_checkbox)
 
+        mode_layout = QHBoxLayout()
+        mode_label = QLabel("Plugin statefulness:")
+        mode_layout.addWidget(mode_label)
+        self.statefulness_mode_combo = QComboBox()
+        self.statefulness_mode_combo.addItems([
+            "Plugin default",
+            "Enable all",
+            "Disable all",
+        ])
+        mode_index = {
+            "plugin_default": 0,
+            "enabled": 1,
+            "force_enabled": 1,
+            "disabled": 2,
+            "force_disabled": 2,
+        }.get(str(self.statefulness_mode).lower(), 0)
+        self.statefulness_mode_combo.setCurrentIndex(mode_index)
+        self.statefulness_mode_combo.currentTextChanged.connect(self.on_statefulness_mode_changed)
+        mode_layout.addWidget(self.statefulness_mode_combo)
+        mode_layout.addStretch()
+        settings_layout.addLayout(mode_layout)
+
+        statefulness_hint = QLabel(
+            "Per-plugin checkbox: checked = force remember, "
+            "unchecked = force forget, partial = plugin default."
+        )
+        statefulness_hint.setWordWrap(True)
+        settings_layout.addWidget(statefulness_hint)
 
         main_layout.addWidget(settings_group)
 
@@ -222,6 +277,33 @@ class PluginManagerWidget(QMainWindow):
 
         # Current selected plugin
         self.current_plugin = None
+
+    def _statefulness_key(
+        self,
+        name: str,
+        module_name: str,
+        manifest=None,
+    ) -> str:
+        """Return the settings key used for a plugin statefulness override."""
+        if manifest is not None:
+            return manifest.id
+        clean_name = name.split(':')[-1].strip() if ':' in name else name
+        return clean_name or module_name
+
+    def _statefulness_override_state(self, key: str) -> Qt.CheckState:
+        """Return the checkbox state for a plugin statefulness override."""
+        if key not in self.statefulness_overrides:
+            return Qt.PartiallyChecked
+        return Qt.Checked if bool(self.statefulness_overrides[key]) else Qt.Unchecked
+
+    def _statefulness_summary(self, key: str) -> str:
+        """Return a short statefulness summary for the plugin manager."""
+        state = self._statefulness_override_state(key)
+        if state == Qt.Checked:
+            return "stateful"
+        if state == Qt.Unchecked:
+            return "stateless"
+        return "plugin default"
 
     def load_plugins(self):
         """Load all available plugins, sorted by custom order or module name, and display them in the list."""
@@ -290,6 +372,8 @@ class PluginManagerWidget(QMainWindow):
                         sys.path = original_sys_path
 
                 name = getattr(module, 'name', plugin_name)
+                manifest = load_manifest(pathlib.Path(package_dir) / "manifest.json")
+                statefulness_key = self._statefulness_key(name, module_name, manifest)
 
                 # Re-evaluate disabled status based on the resolved name
                 clean_name = name.split(':')[-1].strip() if ':' in name else name
@@ -300,7 +384,7 @@ class PluginManagerWidget(QMainWindow):
                 )
 
                 # Create list item
-                display_name = f"{name} [{source}]"
+                display_name = f"{name} [{source}] ({self._statefulness_summary(statefulness_key)})"
                 item = QListWidgetItem(display_name)
                 # Track plugins by full module path so nested packages are unique
                 item.setData(Qt.UserRole, module_path)
@@ -310,7 +394,7 @@ class PluginManagerWidget(QMainWindow):
                 try:
                     icon = create_plugin_icon_with_fallback(module, package_dir, size=32)
                     item.setIcon(icon)
-                except Exception as e:
+                except Exception:
                     # Fallback to original system if enhanced system fails
                     try:
                         if hasattr(module, 'icon'):
@@ -318,26 +402,26 @@ class PluginManagerWidget(QMainWindow):
                                 item.setIcon(module.icon)
                             elif isinstance(module.icon, str):
                                 # Try to create a simple text icon as fallback
-                                from qtpy.QtGui import QPixmap, QPainter, QFont, QColor
-                                
+                                from qtpy.QtGui import QColor, QFont, QPainter, QPixmap
+
                                 pm = QPixmap(32, 32)
                                 pm.fill(Qt.transparent)
                                 painter = QPainter(pm)
                                 painter.setRenderHint(QPainter.Antialiasing, True)
                                 painter.setRenderHint(QPainter.TextAntialiasing, True)
-                                
+
                                 # Check if it's an emoji
                                 if any(ord(char) > 0x1F000 for char in module.icon):
                                     font = QFont("Segoe UI Emoji", 16)
                                 else:
                                     font = QFont("Arial", 12, QFont.Bold)
-                                
+
                                 painter.setFont(font)
                                 painter.setPen(QColor(0, 0, 0))
                                 rect = pm.rect()
                                 painter.drawText(rect, Qt.AlignCenter, module.icon)
                                 painter.end()
-                                
+
                                 item.setIcon(QIcon(pm))
                             else:
                                 item.setIcon(QIcon())
@@ -353,7 +437,10 @@ class PluginManagerWidget(QMainWindow):
                 # Mark plugins based on status
                 if is_disabled:
                     item.setForeground(Qt.gray)
-                    item.setText(f"{name} [DISABLED] [{source}]")
+                    item.setText(
+                        f"{name} [DISABLED] [{source}] "
+                        f"({self._statefulness_summary(statefulness_key)})"
+                    )
 
                 # Add to list widget
                 self.plugin_list.addItem(item)
@@ -368,7 +455,12 @@ class PluginManagerWidget(QMainWindow):
                     'module': module,
                     'is_disabled': is_disabled,
                     'path': str(plugin_path),
-                    'doc': doc
+                    'doc': doc,
+                    'manifest': manifest,
+                    'statefulness_key': statefulness_key,
+                    'statefulness_default': bool(manifest.statefulness.enabled) if manifest is not None else False,
+                    'statefulness_override': self._statefulness_override_state(statefulness_key),
+                    'source': source,
                 }
                 self.plugins[module_path] = d
             except Exception as e:
@@ -386,6 +478,7 @@ class PluginManagerWidget(QMainWindow):
             self.plugin_path_label.setText("Not available")
             self.disabled_checkbox.setChecked(False)
             self.toolbar_checkbox.setChecked(False)
+            self.statefulness_checkbox.setCheckState(Qt.PartiallyChecked)
             self.description_edit.clear()
             self.rename_button.setEnabled(False)
             return
@@ -401,11 +494,22 @@ class PluginManagerWidget(QMainWindow):
         plugin_name = plugin_info['name']
         self.toolbar_checkbox.setChecked(plugin_name in self.toolbar_plugins)
 
+        # Set statefulness override state
+        statefulness_key = plugin_info.get('statefulness_key', plugin_name)
+        self.statefulness_checkbox.setCheckState(
+            self._statefulness_override_state(statefulness_key)
+        )
+
         # Display the plugin path
         self.plugin_path_label.setText(plugin_info['path'])
 
         # Get plugin description if available
         description = plugin_info['doc']
+        statefulness_key = plugin_info.get('statefulness_key', plugin_name)
+        description = (
+            f"{description}\n\nStatefulness: "
+            f"{self._statefulness_summary(statefulness_key)}"
+        )
         self.description_edit.setText(description)
 
         # Enable the rename button
@@ -432,11 +536,18 @@ class PluginManagerWidget(QMainWindow):
         for i in range(self.plugin_list.count()):
             item = self.plugin_list.item(i)
             if item.data(Qt.UserRole) == self.current_plugin:
+                statefulness_key = plugin_info.get('statefulness_key', plugin_name)
                 if plugin_info['is_disabled']:
                     item.setForeground(Qt.gray)
-                    item.setText(f"{plugin_name} [DISABLED]")
+                    item.setText(
+                        f"{plugin_name} [DISABLED] "
+                        f"({self._statefulness_summary(statefulness_key)})"
+                    )
                 else:
-                    item.setText(plugin_name)
+                    item.setText(
+                        f"{plugin_name} "
+                        f"({self._statefulness_summary(statefulness_key)})"
+                    )
 
                 # Re-apply current filter
                 current_filter = self.filter_line_edit.text()
@@ -459,6 +570,31 @@ class PluginManagerWidget(QMainWindow):
             if plugin_name in self.toolbar_plugins:
                 self.toolbar_plugins.remove(plugin_name)
 
+    def on_statefulness_changed(self, state):
+        """Handle per-plugin statefulness override changes."""
+        if self.current_plugin is None:
+            return
+
+        plugin_info = self.plugins[self.current_plugin]
+        key = plugin_info.get('statefulness_key') or plugin_info['name']
+        if state == Qt.PartiallyChecked:
+            self.statefulness_overrides.pop(key, None)
+        else:
+            self.statefulness_overrides[key] = state == Qt.Checked
+        plugin_info['statefulness_override'] = state
+
+        for i in range(self.plugin_list.count()):
+            item = self.plugin_list.item(i)
+            if item.data(Qt.UserRole) == self.current_plugin:
+                info = self.plugins[self.current_plugin]
+                item.setText(
+                    f"{info['name']} [{info.get('source', '')}] "
+                    f"({self._statefulness_summary(key)})"
+                )
+                if info.get('is_disabled', False):
+                    item.setForeground(Qt.gray)
+                break
+
     def on_hide_disabled_changed(self, state):
         """Handle hide disabled plugins checkbox state change."""
         self.hide_disabled_plugins = (state == Qt.Checked)
@@ -469,6 +605,14 @@ class PluginManagerWidget(QMainWindow):
             if current_filter:
                 self.on_filter_text_changed(current_filter)
 
+    def on_statefulness_mode_changed(self, text):
+        """Handle global plugin statefulness mode changes."""
+        mode_by_text = {
+            "Plugin default": "plugin_default",
+            "Enable all": "enabled",
+            "Disable all": "disabled",
+        }
+        self.statefulness_mode = mode_by_text.get(text, "plugin_default")
 
     def on_filter_text_changed(self, text):
         """Filter plugins based on the entered text."""
@@ -515,7 +659,6 @@ class PluginManagerWidget(QMainWindow):
         plugin_name = plugin_info['name']
 
         # Update the order value
-        current_order = self.plugin_order.get(plugin_name, 0)
         # Find the plugin above this one
         above_item = self.plugin_list.item(current_row - 1)
         above_module_name = above_item.data(Qt.UserRole)
@@ -551,7 +694,6 @@ class PluginManagerWidget(QMainWindow):
         plugin_name = plugin_info['name']
 
         # Update the order value
-        current_order = self.plugin_order.get(plugin_name, 0)
         # Find the plugin below this one
         below_item = self.plugin_list.item(current_row + 1)
         below_module_name = below_item.data(Qt.UserRole)
@@ -579,6 +721,10 @@ class PluginManagerWidget(QMainWindow):
         self.plugin_settings['hide_disabled_plugins'] = self.hide_disabled_plugins  # Keep the key for backward compatibility
         self.plugin_settings['plugin_order'] = self.plugin_order
         self.plugin_settings['toolbar_plugins'] = self.toolbar_plugins
+        self.plugin_settings['statefulness'] = {
+            'mode': self.statefulness_mode,
+            'per_plugin': self.statefulness_overrides,
+        }
 
         # Update settings in cs
         cs.core.settings.cs_settings['plugins'] = self.plugin_settings
@@ -675,7 +821,7 @@ class PluginManagerWidget(QMainWindow):
         # Check if the selected directory is a valid plugin
         init_file = plugin_dir_path / "__init__.py"
         if not init_file.exists():
-            QMessageBox.critical(self, "Error", f"The selected directory is not a valid plugin. Missing __init__.py file.")
+            QMessageBox.critical(self, "Error", "The selected directory is not a valid plugin. Missing __init__.py file.")
             return
 
         # Determine the destination directory
@@ -684,7 +830,7 @@ class PluginManagerWidget(QMainWindow):
 
         # Check if plugin already exists
         if destination_dir.exists():
-            reply = QMessageBox.question(self, "Plugin Exists", 
+            reply = QMessageBox.question(self, "Plugin Exists",
                                         f"A plugin named '{plugin_name}' already exists. Do you want to overwrite it?",
                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.No:
@@ -727,7 +873,7 @@ class PluginManagerWidget(QMainWindow):
             elevation_message = "The plugin directory is in a Linux system location and requires administrator privileges to modify."
 
         if needs_elevation and not self.is_admin():
-            reply = QMessageBox.question(self, "Elevation Required", 
+            reply = QMessageBox.question(self, "Elevation Required",
                                         f"{elevation_message} "
                                         "Do you want to restart the application with administrator privileges?",
                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -785,8 +931,8 @@ class PluginManagerWidget(QMainWindow):
 
         # Show input dialog to get new name
         new_name, ok = QInputDialog.getText(
-            self, 
-            "Rename Plugin", 
+            self,
+            "Rename Plugin",
             "Enter new plugin name:",
             text=current_name
         )
@@ -840,7 +986,7 @@ class PluginManagerWidget(QMainWindow):
             elevation_message = "The plugin directory is in a Linux system location and requires administrator privileges to modify."
 
         if needs_elevation and not self.is_admin():
-            reply = QMessageBox.question(self, "Elevation Required", 
+            reply = QMessageBox.question(self, "Elevation Required",
                                         f"{elevation_message} "
                                         "Do you want to restart the application with administrator privileges?",
                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)

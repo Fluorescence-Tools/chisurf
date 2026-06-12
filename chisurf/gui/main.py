@@ -1303,6 +1303,7 @@ class Main(
         self._code_save_btn.clicked.connect(self._code_save)
         self._code_agent_btn.clicked.connect(self.editor._toggle_agent_panel)
         self.editor.settings_changed.connect(self._on_code_editor_settings_changed)
+        self.editor.symbolsChanged.connect(self._sync_code_symbol_combo)
 
         # Add data selector widget
         self.verticalLayout_8.addWidget(self.dataset_selector)
@@ -1334,6 +1335,19 @@ class Main(
         """Called when a new editor tab is created inside the code editor."""
         editor.file_load_callback = self._code_load_file
 
+    def _sync_code_symbol_combo(self, symbols):
+        """Populate the code dock symbol combo from shared editor symbols."""
+        self._code_func_combo.blockSignals(True)
+        self._code_func_combo.clear()
+        self._code_func_combo.addItem("Select...", -1)
+        for symbol in symbols:
+            line = getattr(symbol, "line", 1)
+            kind = getattr(symbol, "kind", "")
+            name = getattr(symbol, "display_name", getattr(symbol, "name", ""))
+            prefix = "  " if kind == "method" else ""
+            self._code_func_combo.addItem(f"{prefix}{name}", max(0, int(line) - 1))
+        self._code_func_combo.blockSignals(False)
+
     def _code_nav_back(self):
         editor = self.editor._get_current_editor()
         if editor is not None:
@@ -1346,7 +1360,6 @@ class Main(
 
     def _code_load_file(self, file_path, line_number: int = 0):
         """Load a source file into the code editor and populate the function combo."""
-        import re
         self.editor.open_file(file_path)
         editor = self.editor._get_current_editor()
         if editor is None:
@@ -1361,19 +1374,7 @@ class Main(
                 editor.setTextCursor(cursor)
                 editor.centerCursor()
 
-        code = editor.toPlainText()
-        self._code_func_combo.blockSignals(True)
-        self._code_func_combo.clear()
-        self._code_func_combo.addItem("Select...", -1)
-
-        for i, line in enumerate(code.split('\n')):
-            m = re.match(r'^ *(def |class )([a-zA-Z0-9_]+)', line)
-            if m:
-                indent = len(line) - len(line.lstrip())
-                prefix = " " * indent
-                self._code_func_combo.addItem(f"{prefix}{m.group(1)}{m.group(2)}", i)
-
-        self._code_func_combo.blockSignals(False)
+        self._sync_code_symbol_combo(editor.refresh_symbols())
         if not editor._nav_history:
             editor.push_nav_history(file_path, 0)
 

@@ -65,9 +65,11 @@ gui:
     caret_line_visible: false
     color_scheme: ChiSurf
     default_color: "#000006"
+    enable_lsp: true
     font_family: Courier New
     font_size: 9
     language: Python
+    line_numbers_visible: true
     margins_background_color: "#808080"
     marker_background_color: "#f0f0f0"
     paper_color: "#cfcfcf"
@@ -267,6 +269,9 @@ plugins:
   hide_disabled_plugins: true
   icons_enabled: true
   plugin_order: {}
+  statefulness:
+    mode: plugin_default
+    per_plugin: {}
   toolbar_plugins:
     - Tools:Histogram-Microtime
     - FCS:Correlator
