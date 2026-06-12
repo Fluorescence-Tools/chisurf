@@ -187,8 +187,101 @@ class SampleDatabaseClient:
     def reset_from_source(self) -> dict[str, Any]:
         return self._call("sample_database.reset_from_source")
 
+    def archive_project(
+        self,
+        project_id: str,
+        project_name: str,
+        project_payload: dict[str, Any],
+        experiment_id: str | None = None,
+        input_processed_data_ids: list[str] | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Archive a complete project state to the database."""
+        return self._call(
+            "project.archive",
+            {
+                "project_id": project_id,
+                "project_name": project_name,
+                "project_payload": project_payload,
+                "experiment_id": experiment_id,
+                "input_processed_data_ids": input_processed_data_ids,
+                "notes": notes,
+            },
+        )
+
+    def restore_project(self, project_id: str) -> dict[str, Any]:
+        """Retrieve an archived project state from the database."""
+        return self._call("project.restore", {"project_id": project_id})
+
+    def list_projects(self) -> list[dict[str, Any]]:
+        """List all archived projects."""
+        return self._call("analysis.run.list", {"analysis_type": "project"}).get("analysis_runs", [])
+
+    def delete_project(self, project_id: str) -> dict[str, Any]:
+        """Delete an archived project from the database."""
+        return self._call("analysis.run.delete", {"analysis_id": project_id})
+
+    def export_provenance_graph(
+        self,
+        target_path: str | None,
+        seed_node_type: str,
+        seed_node_id: str,
+    ) -> dict[str, Any]:
+        """Export the provenance subgraph as a JSON-serializable structure."""
+        return self._call(
+            "provenance.graph.export",
+            {
+                "seed_node_type": seed_node_type,
+                "seed_node_id": seed_node_id,
+                "output_path": target_path,
+            },
+        )
+
+    def backup_to_path(self, target_path: str) -> dict[str, Any]:
+        """Create a hot backup of the SQLite database to the specified target path."""
+        return self._call("database.backup", {"target_path": target_path})
+
+    def export_zip_archive(
+        self,
+        target_zip_path: str,
+        seed_node_type: str,
+        seed_node_id: str,
+        include_external_data: bool = False,
+        base_path_map: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """Package a full ZIP archive containing DB snapshot, graph, manifest and optionally data."""
+        return self._call(
+            "archive.zip.export",
+            {
+                "target_zip_path": target_zip_path,
+                "seed_node_type": seed_node_type,
+                "seed_node_id": seed_node_id,
+                "include_external_data": include_external_data,
+                "base_path_map": base_path_map,
+            },
+        )
+
+    def list_audit_logs(
+        self,
+        action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Retrieve audit log records with optional filtering."""
+        return self._call(
+            "audit_log.list",
+            {
+                "action": action,
+                "target_type": target_type,
+                "target_id": target_id,
+                "limit": limit,
+            },
+        ).get("audit_logs", [])
+
     def _call(self, method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         result = self._client.call(method, params or {})
         if not result.get("ok", True):
             raise RuntimeError(result.get("error", method))
         return result.get("result", result)
+

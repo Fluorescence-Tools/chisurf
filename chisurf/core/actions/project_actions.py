@@ -81,6 +81,48 @@ def load_project(project_path: str):
     return core_fit.load_project(project_path=project_path)
 
 
+@action("project.archive", schema={"project_id": str, "project_name": str, "experiment_id": None, "input_processed_data_ids": list, "notes": str})
+def archive_project(
+    project_id: str,
+    project_name: str,
+    experiment_id: str | None = None,
+    input_processed_data_ids: list[str] | None = None,
+    notes: str | None = None,
+):
+    """Archive the current project state to the database."""
+    from chisurf.macros.core_fit import get_project_payload
+    from chisurf.plugins.sample_database.gui.client import SampleDatabaseClient
+
+    proj = get_project_payload(project_name)
+    client = SampleDatabaseClient()
+    return client.archive_project(
+        project_id=project_id,
+        project_name=project_name,
+        project_payload=proj.to_dict(),
+        experiment_id=experiment_id,
+        input_processed_data_ids=input_processed_data_ids,
+        notes=notes,
+    )
+
+
+@action("project.restore", schema={"project_id": str})
+def restore_project(project_id: str):
+    """Restore the project state from the database."""
+    from chisurf.macros.core_fit import load_project_payload
+    from chisurf.core.project import Project as CSProject
+    from chisurf.plugins.sample_database.gui.client import SampleDatabaseClient
+
+    client = SampleDatabaseClient()
+    res = client.restore_project(project_id=project_id)
+    payload = res.get("project_payload")
+    if not payload:
+        raise ValueError(f"No project payload found in restored record for: {project_id}")
+    proj = CSProject.from_dict(payload)
+    load_project_payload(proj, project_path=None)
+    return res
+
+
+
 @action("project.close")
 def close_project(main_window: typing.Any = None):
     """Close the current project."""

@@ -1,4 +1,4 @@
-"""JSON-RPC handlers for fdb4chembio measurement provenance."""
+"""JSON-RPC handlers for fdb measurement provenance."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from chisurf.server.services import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, 
 
 
 def register_measurement_services(dispatcher: Any) -> None:
-    """Register fdb4chembio Phase 1 RPC handlers.
+    """Register fdb Phase 1 RPC handlers.
 
     Parameters
     ----------
@@ -36,6 +36,19 @@ def register_measurement_services(dispatcher: Any) -> None:
         "provenance.edges.list": list_provenance_edges_handler,
         "provenance.trace_processed_data": trace_processed_data_handler,
         "archive.burst_processing_manifest.export": export_burst_manifest_handler,
+        "provenance.dependencies.upstream": get_upstream_dependencies_handler,
+        "provenance.dependencies.downstream": get_downstream_dependencies_handler,
+        "processing.run.record": record_general_processing_run_handler,
+        "analysis.run.record": record_analysis_run_handler,
+        "analysis.run.get": get_analysis_run_handler,
+        "analysis.run.list": list_analysis_runs_handler,
+        "analysis.run.delete": delete_analysis_run_handler,
+        "project.archive": archive_project_handler,
+        "project.restore": restore_project_handler,
+        "provenance.graph.export": export_provenance_graph_handler,
+        "database.backup": database_backup_handler,
+        "archive.zip.export": export_zip_archive_handler,
+        "audit_log.list": list_audit_logs_handler,
     }.items():
         dispatcher.register(name, lambda params, _handler=handler: _handler(**params))
 
@@ -902,6 +915,15 @@ def _infer_product_type(payload: dict[str, Any]) -> str:
         ".zip": "zip",
         ".mti": "mti_summary",
         ".json": "json_summary",
+        ".fcs": "fcs_correlation",
+        ".dec": "tcspc_decay",
+        ".tcspc": "tcspc_decay",
+        ".irf": "irf_curve",
+        ".spc": "spectra",
+        ".spectra": "spectra",
+        ".aniso": "anisotropy_curve",
+        ".pda": "pda_histogram",
+        ".fit": "fit_results",
     }.get(suffix, "derived_product")
 
 
@@ -964,3 +986,734 @@ def traceback_summary_for_current_exception() -> str:
 
     """
     return "".join(traceback.format_exc(limit=8))
+
+
+def record_general_processing_run_handler(
+    experiment_id: str,
+    processing_type: str,
+    input_raw_data_ids: list[str] | None = None,
+    input_processed_data_ids: list[str] | None = None,
+    settings: dict[str, Any] | None = None,
+    selected_setup: str | None = None,
+    detectors: dict[str, Any] | None = None,
+    windows: dict[str, Any] | None = None,
+    products: list[dict[str, Any]] | None = None,
+    result_metadata: dict[str, Any] | None = None,
+    processing_id: str | None = None,
+    operator_user_id: str | None = None,
+    software_package: str | None = "chisurf",
+    software_module: str | None = None,
+    software_version: str | None = None,
+    status: str = "succeeded",
+    error_message: str | None = None,
+    traceback_summary: str | None = None,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Record a general processing run and its inputs/products.
+
+    Parameters
+    ----------
+    experiment_id : str
+        Experiment identifier.
+    processing_type : str
+        The type of processing run (e.g., 'fcs_correlation', 'tcspc_fitting').
+    input_raw_data_ids : list of str, optional
+        Identifiers of raw input files.
+    input_processed_data_ids : list of str, optional
+        Identifiers of processed data inputs.
+    settings : dict, optional
+        Parameters/settings used in the processing run.
+    selected_setup : str, optional
+        Instrument setup name.
+    detectors : dict, optional
+        Detector configuration.
+    windows : dict, optional
+        Window definitions.
+    products : list of dict, optional
+        Product specifications to be registered.
+    result_metadata : dict, optional
+        Additional metadata about the processing run.
+    processing_id : str, optional
+        Explicit identifier for the run.
+    operator_user_id : str, optional
+        Identifier of the operator.
+    software_package : str, optional
+        Software package name.
+    software_module : str, optional
+        Software module name.
+    software_version : str, optional
+        Software version.
+    status : str
+        Run status (e.g., 'succeeded', 'failed').
+    error_message : str, optional
+        Error message if failed.
+    traceback_summary : str, optional
+        Traceback summary if failed.
+    **kwargs : Any
+        Catch-all for extra parameters.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result with the recorded processing run and its products.
+    """
+    try:
+        raw_ids = input_raw_data_ids or []
+        proc_ids = input_processed_data_ids or []
+        product_specs = products or []
+        settings_hash = None
+        if settings:
+            settings_hash = hashlib.sha256(
+                json.dumps(settings, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+            ).hexdigest()
+
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            run_id = db.add_processing_run(
+                experiment_id=experiment_id,
+                processing_type=processing_type,
+                processing_id=processing_id,
+                input_raw_data_ids=raw_ids,
+                settings=settings,
+                selected_setup_name=selected_setup,
+                detector_definitions=detectors,
+                pie_window_definitions=windows,
+                operator_user_id=operator_user_id,
+                software_package=software_package,
+                software_module=software_module,
+                software_version=software_version,
+                started_at=(result_metadata or {}).get("started_at"),
+                ended_at=(result_metadata or {}).get("ended_at"),
+                status=status,
+                error_message=error_message,
+                traceback_summary=traceback_summary,
+            )
+
+            # Record input processed data dependencies
+            for input_id in proc_ids:
+                in_prod = db.get_processed_data(input_id)
+                db.add_provenance_edge(
+                    source_node_type="processed_data",
+                    source_node_id=input_id,
+                    target_node_type="processing_run",
+                    target_node_id=run_id,
+                    relationship_type="input_to",
+                    processing_id=run_id,
+                    settings_hash=settings_hash,
+                    software_version=software_version,
+                    checksum_snapshot={
+                        "input_processed_data": in_prod["checksum"] if in_prod else None,
+                        "settings": settings_hash,
+                    },
+                )
+
+            # Record output products
+            registered_products = []
+            for product in product_specs:
+                prod_id = _register_product(db, run_id, product)
+                registered_products.append(
+                    db._decode_processed_data_row(db.get_processed_data(prod_id))
+                )
+
+            return {
+                "ok": True,
+                "processing_run": db.get_processing_run_full(run_id),
+                "products": registered_products,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
+
+
+def get_upstream_dependencies_handler(node_type: str, node_id: str) -> dict[str, Any]:
+    """Retrieve upstream dependencies for a node.
+
+    Parameters
+    ----------
+    node_type : str
+        The node type.
+    node_id : str
+        The node identifier.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result with the list of upstream provenance edges.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            rows = db.get_upstream_dependencies(node_type, node_id)
+            edges = [db._decode_provenance_edge_row(row) for row in rows]
+            return {"ok": True, "edges": edges}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def get_downstream_dependencies_handler(node_type: str, node_id: str) -> dict[str, Any]:
+    """Retrieve downstream dependencies for a node.
+
+    Parameters
+    ----------
+    node_type : str
+        The node type.
+    node_id : str
+        The node identifier.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result with the list of downstream provenance edges.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            rows = db.get_downstream_dependencies(node_type, node_id)
+            edges = [db._decode_provenance_edge_row(row) for row in rows]
+            return {"ok": True, "edges": edges}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def record_analysis_run_handler(
+    analysis_type: str,
+    experiment_id: str | None = None,
+    model_name: str | None = None,
+    model_type: str | None = None,
+    model_version: str | None = None,
+    fit_structure: list[dict[str, Any]] | None = None,
+    parameter_links: list[tuple[Any, ...]] | None = None,
+    software_package: str | None = "chisurf",
+    software_module: str | None = None,
+    software_version: str | None = None,
+    optimizer_settings: dict[str, Any] | None = None,
+    covariance_matrix: list[list[float]] | dict[str, Any] | None = None,
+    convergence_status: str | None = None,
+    goodness_of_fit: dict[str, Any] | None = None,
+    notes: str | None = None,
+    metadata: dict[str, Any] | None = None,
+    analysis_id: str | None = None,
+    input_processed_data_ids: list[str] | None = None,
+    products: list[dict[str, Any]] | None = None,
+    parameters: list[dict[str, Any]] | None = None,
+    grouped_fit_uuids: list[str] | None = None,
+    parameter_linkages: list[tuple[str, str]] | None = None,
+) -> dict[str, Any]:
+    """Record an analysis run with its parameters, inputs, products, and linkages.
+
+    Parameters
+    ----------
+    analysis_type : str
+        Type of analysis run (e.g. 'local_fit', 'global_fit').
+    experiment_id : str, optional
+        Optional experiment ID.
+    model_name : str, optional
+        Model name.
+    model_type : str, optional
+        Model type.
+    model_version : str, optional
+        Model version.
+    fit_structure : list of dict, optional
+        Structured grouped fits and dataset maps.
+    parameter_links : list of tuple, optional
+        Formula parameter links.
+    software_package : str, optional
+        Software package name.
+    software_module : str, optional
+        Software module.
+    software_version : str, optional
+        Software version.
+    optimizer_settings : dict, optional
+        Optimizer settings.
+    covariance_matrix : list of list of float or dict, optional
+        Covariance matrix.
+    convergence_status : str, optional
+        Convergence status.
+    goodness_of_fit : dict, optional
+        Goodness-of-fit metrics.
+    notes : str, optional
+        Operator notes.
+    metadata : dict, optional
+        Fit parameters widget settings/properties.
+    analysis_id : str, optional
+        Stable identifier. Generates UUID if omitted.
+    input_processed_data_ids : list of str, optional
+        Processed data inputs consumed by this analysis.
+    products : list of dict, optional
+        Products produced by this analysis.
+    parameters : list of dict, optional
+        Model parameter dictionaries to register.
+    grouped_fit_uuids : list of str, optional
+        UUIDs of local fits to group into this run.
+    parameter_linkages : list of tuple of str, optional
+        Explicit parameter linkages `(source_uuid, target_uuid)`.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            # Add analysis run
+            run_id = db.add_analysis_run(
+                analysis_type=analysis_type,
+                experiment_id=experiment_id,
+                model_name=model_name,
+                model_type=model_type,
+                model_version=model_version,
+                fit_structure=fit_structure,
+                parameter_links=parameter_links,
+                software_package=software_package,
+                software_module=software_module,
+                software_version=software_version,
+                optimizer_settings=optimizer_settings,
+                covariance_matrix=covariance_matrix,
+                convergence_status=convergence_status,
+                goodness_of_fit=goodness_of_fit,
+                notes=notes,
+                metadata=metadata,
+                analysis_id=analysis_id,
+            )
+
+            # Record input dependencies
+            for input_id in (input_processed_data_ids or []):
+                in_prod = db.get_processed_data(input_id)
+                db.add_provenance_edge(
+                    source_node_type="processed_data",
+                    source_node_id=input_id,
+                    target_node_type="analysis_run",
+                    target_node_id=run_id,
+                    relationship_type="input_to",
+                    processing_id=run_id,
+                    checksum_snapshot={
+                        "input_processed_data": in_prod["checksum"] if in_prod else None,
+                    },
+                )
+
+            # Record parameters
+            registered_parameters = []
+            for param in (parameters or []):
+                param_uuid = db.add_analysis_parameter(
+                    analysis_id=run_id,
+                    name=param["name"],
+                    value=param.get("value"),
+                    standard_error=param.get("standard_error"),
+                    confidence_interval_low=param.get("confidence_interval_low"),
+                    confidence_interval_high=param.get("confidence_interval_high"),
+                    initial_value=param.get("initial_value"),
+                    lower_bound=param.get("lower_bound"),
+                    upper_bound=param.get("upper_bound"),
+                    bounds_on=param.get("bounds_on", False),
+                    units=param.get("units"),
+                    parameter_type=param.get("parameter_type", "free"),
+                    expression=param.get("expression"),
+                    prior=param.get("prior"),
+                    mapping=param.get("mapping"),
+                    metadata=param.get("metadata"),
+                    parameter_uuid=param.get("parameter_uuid"),
+                )
+                db.add_provenance_edge(
+                    source_node_type="analysis_parameter",
+                    source_node_id=param_uuid,
+                    target_node_type="analysis_run",
+                    target_node_id=run_id,
+                    relationship_type="parameter_of",
+                    processing_id=run_id,
+                )
+                registered_parameters.append(
+                    db._decode_analysis_parameter_row(db.get_analysis_parameter(param_uuid))
+                )
+
+            # Record products
+            registered_products = []
+            for prod in (products or []):
+                prod_payload = _fill_location_metadata(prod)
+                data_json = prod_payload.get("data_json")
+                if isinstance(prod_payload.get("data"), (dict, list)):
+                    data_json = json.dumps(prod_payload["data"], sort_keys=True)
+                prod_id = db.add_analysis_product(
+                    analysis_id=run_id,
+                    product_type=str(prod_payload.get("product_type") or _infer_product_type(prod_payload)),
+                    storage_mode=str(prod_payload.get("storage_mode") or _storage_mode_for(prod_payload)),
+                    processed_data_id=prod_payload.get("processed_data_id"),
+                    file_path=prod_payload.get("file_path"),
+                    url=prod_payload.get("url"),
+                    folder_path=prod_payload.get("folder_path"),
+                    mime_type=prod_payload.get("mime_type"),
+                    size_bytes=_int_or_none(prod_payload.get("size_bytes")),
+                    checksum=prod_payload.get("checksum"),
+                    checksum_algorithm=prod_payload.get("checksum_algorithm") or "sha256",
+                    row_count=_int_or_none(prod_payload.get("row_count")),
+                    product_summary=prod_payload.get("product_summary"),
+                    metadata=prod_payload.get("metadata"),
+                    data_json=data_json,
+                    validation_status=prod_payload.get("validation_status") or "unvalidated",
+                    validation_message=prod_payload.get("validation_message"),
+                )
+                registered_products.append(
+                    db._decode_processed_data_row(db.get_processed_data(prod_id))
+                )
+
+            # Link grouped sub-fits
+            for sub_uuid in (grouped_fit_uuids or []):
+                db.link_grouped_fits(sub_uuid, run_id)
+
+            # Link analysis parameters
+            for src_param, tgt_param in (parameter_linkages or []):
+                db.link_analysis_parameters(src_param, tgt_param)
+
+            return {
+                "ok": True,
+                "analysis_run": db.get_analysis_run_full(run_id),
+                "products": registered_products,
+                "parameters": registered_parameters,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
+
+
+def get_analysis_run_handler(analysis_id: str) -> dict[str, Any]:
+    """Retrieve one analysis run with all details.
+
+    Parameters
+    ----------
+    analysis_id : str
+        Analysis run identifier.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            run = db.get_analysis_run_full(analysis_id)
+            if run is None:
+                return service_error(f"analysis run not found: {analysis_id}", error_code=NOT_FOUND)
+            return {"ok": True, "analysis_run": run}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def list_analysis_runs_handler(
+    experiment_id: str | None = None,
+    analysis_type: str | None = None,
+) -> dict[str, Any]:
+    """List registered analysis runs.
+
+    Parameters
+    ----------
+    experiment_id : str, optional
+        Filter by experiment ID.
+    analysis_type : str, optional
+        Filter by analysis type.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result list.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            rows = db.list_analysis_runs(experiment_id=experiment_id, analysis_type=analysis_type)
+            runs = [db._decode_analysis_run_row(row) for row in rows]
+            return {"ok": True, "analysis_runs": runs}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def delete_analysis_run_handler(analysis_id: str) -> dict[str, Any]:
+    """Delete an analysis run.
+
+    Parameters
+    ----------
+    analysis_id : str
+        Analysis run identifier.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            db.delete_analysis_run(analysis_id)
+            return {"ok": True, "deleted_analysis_id": analysis_id}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def archive_project_handler(
+    project_id: str,
+    project_name: str,
+    project_payload: dict[str, Any],
+    experiment_id: str | None = None,
+    input_processed_data_ids: list[str] | None = None,
+    notes: str | None = None,
+) -> dict[str, Any]:
+    """Archive a complete project state to the database."""
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            run_id = db.add_analysis_run(
+                analysis_type="project",
+                experiment_id=experiment_id,
+                model_name=project_name,
+                model_type="project_archive",
+                fit_structure=project_payload,
+                notes=notes,
+                analysis_id=project_id,
+            )
+
+            # Record input dependencies from processed datasets
+            for input_id in (input_processed_data_ids or []):
+                in_prod = db.get_processed_data(input_id)
+                db.add_provenance_edge(
+                    source_node_type="processed_data",
+                    source_node_id=input_id,
+                    target_node_type="analysis_run",
+                    target_node_id=run_id,
+                    relationship_type="input_to",
+                    processing_id=run_id,
+                    checksum_snapshot={
+                        "input_processed_data": in_prod["checksum"] if in_prod else None,
+                    },
+                )
+
+            db.add_audit_log(
+                action="archive",
+                target_type="project",
+                target_id=run_id,
+                details={"project_name": project_name, "experiment_id": experiment_id},
+            )
+
+            return {
+                "ok": True,
+                "project_id": run_id,
+                "project_name": project_name,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)
+
+
+def restore_project_handler(project_id: str) -> dict[str, Any]:
+    """Retrieve an archived project state from the database."""
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            run = db.get_analysis_run_full(project_id)
+            if not run:
+                return service_error(f"Project not found: {project_id}", error_code=NOT_FOUND)
+
+            payload = run.get("fit_structure")
+            db.add_audit_log(
+                action="restore",
+                target_type="project",
+                target_id=project_id,
+                details={"project_name": run.get("model_name")},
+            )
+            return {
+                "ok": True,
+                "project_id": project_id,
+                "project_name": run.get("model_name"),
+                "project_payload": payload,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def export_provenance_graph_handler(
+    seed_node_type: str,
+    seed_node_id: str,
+    output_path: str | None = None,
+) -> dict[str, Any]:
+    """Export the provenance subgraph as a JSON-serializable structure."""
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            graph = db.export_provenance_graph(seed_node_type, seed_node_id)
+            if output_path:
+                import json
+                with open(output_path, "w", encoding="utf-8") as f:
+                    if output_path.lower().endswith(".jsonl"):
+                        for node in graph["nodes"]:
+                            f.write(json.dumps({"type": "node", "data": node}) + "\n")
+                        for edge in graph["edges"]:
+                            f.write(json.dumps({"type": "edge", "data": edge}) + "\n")
+                    else:
+                        json.dump(graph, f, indent=2)
+
+            return {
+                "ok": True,
+                "graph": graph,
+                "output_path": output_path,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def database_backup_handler(target_path: str) -> dict[str, Any]:
+    """Create a hot backup of the SQLite database to the specified target path."""
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            db.backup_database(target_path)
+            db.add_audit_log(
+                action="backup",
+                target_type="database",
+                target_id=target_path,
+            )
+            return {"ok": True, "backup_path": target_path}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def export_zip_archive_handler(
+    target_zip_path: str,
+    seed_node_type: str,
+    seed_node_id: str,
+    include_external_data: bool = False,
+    base_path_map: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Package a full ZIP archive containing DB snapshot, graph, manifest and optionally data."""
+    import tempfile
+    import shutil
+    import os
+    import zipfile
+    import json
+    from datetime import datetime
+
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            graph = db.export_provenance_graph(seed_node_type, seed_node_id)
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                db_snapshot_path = os.path.join(tmpdir, "database_snapshot.db")
+                db.backup_database(db_snapshot_path)
+
+                graph_json_path = os.path.join(tmpdir, "provenance_graph.json")
+                with open(graph_json_path, "w", encoding="utf-8") as f:
+                    json.dump(graph, f, indent=2)
+
+                manifest = {
+                    "archive_format_version": 1,
+                    "seed_node": {"type": seed_node_type, "id": seed_node_id},
+                    "created_at": datetime.now().isoformat(),
+                    "files": [],
+                }
+
+                def resolve_path(p: str) -> str:
+                    if not p:
+                        return p
+                    if base_path_map:
+                        for old_prefix, new_prefix in base_path_map.items():
+                            if p.startswith(old_prefix):
+                                return p.replace(old_prefix, new_prefix, 1)
+                    return p
+
+                manifest["files"].append({
+                    "relative_path": "database_snapshot.db",
+                    "type": "database_snapshot",
+                })
+                manifest["files"].append({
+                    "relative_path": "provenance_graph.json",
+                    "type": "provenance_graph",
+                })
+
+                if include_external_data:
+                    os.makedirs(os.path.join(tmpdir, "external_data"), exist_ok=True)
+
+                for node in graph["nodes"]:
+                    node_type = node.get("node_type")
+                    orig_path = node.get("file_path") or node.get("path")
+                    if not orig_path:
+                        continue
+
+                    resolved_path = resolve_path(orig_path)
+                    checksum = node.get("checksum")
+
+                    file_info = {
+                        "node_type": node_type,
+                        "node_id": node.get("raw_data_id") or node.get("processed_data_id") or node.get("analysis_id"),
+                        "original_path": orig_path,
+                        "resolved_path": resolved_path,
+                        "checksum": checksum,
+                        "copied": False,
+                    }
+
+                    if include_external_data and resolved_path and os.path.isfile(resolved_path):
+                        filename = os.path.basename(resolved_path)
+                        dest_rel = f"external_data/{filename}"
+                        dest_full = os.path.join(tmpdir, dest_rel)
+                        shutil.copy2(resolved_path, dest_full)
+                        file_info["relative_path"] = dest_rel
+                        file_info["copied"] = True
+
+                    manifest["files"].append(file_info)
+
+                manifest_path = os.path.join(tmpdir, "manifest.json")
+                with open(manifest_path, "w", encoding="utf-8") as f:
+                    json.dump(manifest, f, indent=2)
+
+                target_dir = os.path.dirname(os.path.abspath(target_zip_path))
+                if target_dir:
+                    os.makedirs(target_dir, exist_ok=True)
+
+                with zipfile.ZipFile(target_zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                    zf.write(manifest_path, "manifest.json")
+                    zf.write(db_snapshot_path, "database_snapshot.db")
+                    zf.write(graph_json_path, "provenance_graph.json")
+                    if include_external_data:
+                        for file_info in manifest["files"]:
+                            if file_info.get("copied"):
+                                zf.write(
+                                    os.path.join(tmpdir, file_info["relative_path"]),
+                                    file_info["relative_path"]
+                                )
+
+                db.add_audit_log(
+                    action="archive",
+                    target_type="zip_archive",
+                    target_id=target_zip_path,
+                    details={"seed_node_type": seed_node_type, "seed_node_id": seed_node_id, "include_external_data": include_external_data},
+                )
+
+                return {
+                    "ok": True,
+                    "zip_path": target_zip_path,
+                    "manifest": manifest,
+                }
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def list_audit_logs_handler(
+    action: str | None = None,
+    target_type: str | None = None,
+    target_id: str | None = None,
+    limit: int = 100,
+) -> dict[str, Any]:
+    """Retrieve audit log records with optional filtering.
+
+    Parameters
+    ----------
+    action : str, optional
+        Filter by action type.
+    target_type : str, optional
+        Filter by target entity type.
+    target_id : str, optional
+        Filter by target entity ID.
+    limit : int, default=100
+        Maximum number of logs to return.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result containing audit log rows.
+    """
+    try:
+        with FluorophoreDatabase(resolve_database_path()) as db:
+            logs = db.get_audit_logs(
+                action=action,
+                target_type=target_type,
+                target_id=target_id,
+                limit=limit,
+            )
+            return {"ok": True, "audit_logs": logs}
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+

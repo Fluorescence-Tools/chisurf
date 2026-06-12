@@ -32,7 +32,7 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
         super().__init__(parent)
         self.client = SampleDatabaseClient()
         self._loading = False
-        self.setWindowTitle("Sample Database")
+        self.setWindowTitle("Measurement and Data Analysis Database")
         self.resize(1100, 760)
         self.setup_ui()
         self.setup_menu_bar()
@@ -63,7 +63,7 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
 
-        header = QtWidgets.QLabel("<h2>Fluorescence Sample Database</h2>")
+        header = QtWidgets.QLabel("<h2>Measurement and Data Analysis Database</h2>")
         header.setContentsMargins(4, 4, 4, 0)
         layout.addWidget(header)
 
@@ -94,8 +94,15 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
         self.tabs.addTab(self.metadata_tab(), "Metadata")
         self.tabs.addTab(self.users_tab(), "Users")
         self.tabs.addTab(self.devices_tab(), "Devices")
+        self.tabs.addTab(self.setups_tab(), "Setups")
+        self.tabs.addTab(self.raw_data_tab(), "Raw data")
+        self.tabs.addTab(self.processing_runs_tab(), "Processing runs")
+        self.tabs.addTab(self.processed_products_tab(), "Processed products")
+        self.tabs.addTab(self.analyses_tab(), "Analyses")
+        self.tabs.addTab(self.provenance_tab(), "Provenance")
         self.tabs.addTab(self.experiment_types_tab(), "Experiment types")
         self.tabs.addTab(self.experiments_tab(), "Experiments")
+        self.tabs.addTab(self.projects_tab(), "Projects")
         self.tabs.addTab(self.import_export_tab(), "Import/Export")
         self.splitter.addWidget(self.tabs)
         self.splitter.setSizes([360, 740])
@@ -117,10 +124,10 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
         settings_menu.addAction("&Reset window layout", self.reset_window_layout)
 
         help_menu = self.menuBar().addMenu("&Help")
-        help_menu.addAction("&About Sample Database", self.show_about)
+        help_menu.addAction("&About Measurement and Data Analysis Database", self.show_about)
 
     def setup_toolbar(self) -> None:
-        toolbar = self.addToolBar("Sample Database")
+        toolbar = self.addToolBar("Measurement and Data Analysis Database")
         toolbar.setObjectName("sampleDatabaseToolBar")
         toolbar.addAction("New", self.new_sample)
         toolbar.addAction("Import", self.import_file)
@@ -144,8 +151,8 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
     def show_about(self) -> None:
         QtWidgets.QMessageBox.about(
             self,
-            "About Sample Database",
-            "Fluorescence Sample Database\n\nBrowse, edit, import, and export fluorescence sample metadata.",
+            "About Measurement and Data Analysis Database",
+            "Measurement and Data Analysis Database\n\nBrowse, edit, import, and export fluorescence measurements, samples, setups, and analysis runs.",
         )
 
     def sample_tab(self) -> QtWidgets.QWidget:
@@ -543,9 +550,15 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
             self.fill_experiment_types()
             self.fill_experiment_type_table()
             self.fill_experiment_table()
+            self.fill_project_table()
             self.fill_experiment_sample_combo()
             self.fill_experiment_user_combo()
             self.fill_experiment_device_combo()
+            self.fill_setup_table()
+            self.fill_raw_data_table()
+            self.fill_processing_runs_table()
+            self.fill_processed_products_table()
+            self.fill_analyses_table()
             if self.sample_table.rowCount() > 0:
                 self.sample_table.selectRow(0)
             else:
@@ -1390,3 +1403,818 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
         result = self.client.reset_from_source()
         self.status_label.setText(f"Reset complete. Backup: {result.get('backup_path')}")
         self.refresh()
+
+    def projects_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        self.projects_table = QtWidgets.QTableWidget(0, 5)
+        self.projects_table.setHorizontalHeaderLabels(
+            ["project id", "name", "experiment id", "created at", "notes"]
+        )
+        self.projects_table.horizontalHeader().setStretchLastSection(True)
+        self.projects_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.projects_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.projects_table.itemSelectionChanged.connect(self.load_project_details)
+        layout.addWidget(self.projects_table)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.project_id_edit = QtWidgets.QLineEdit()
+        self.project_id_edit.setReadOnly(True)
+        self.project_name_edit = QtWidgets.QLineEdit()
+        self.project_name_edit.setReadOnly(True)
+        self.project_notes_edit = QtWidgets.QPlainTextEdit()
+        self.project_notes_edit.setReadOnly(True)
+        self.project_notes_edit.setMaximumHeight(100)
+
+        form.addRow("Project ID", self.project_id_edit)
+        form.addRow("Name", self.project_name_edit)
+        form.addRow("Notes", self.project_notes_edit)
+        layout.addLayout(form)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(2)
+        restore_button = QtWidgets.QPushButton("Restore project to ChiSurf")
+        delete_button = QtWidgets.QPushButton("Delete archived project")
+        restore_button.clicked.connect(self.restore_selected_project)
+        delete_button.clicked.connect(self.delete_selected_project)
+        buttons.addWidget(restore_button)
+        buttons.addWidget(delete_button)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+
+        return widget
+
+    def fill_project_table(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.projects_table):
+            return
+        self.projects_table.setRowCount(0)
+        for item in self.client.list_projects():
+            row = self.projects_table.rowCount()
+            self.projects_table.insertRow(row)
+            values = [
+                item.get("analysis_id", ""),
+                item.get("model_name", ""),
+                item.get("experiment_id", ""),
+                item.get("created_at", ""),
+                item.get("notes", ""),
+            ]
+            for column, value in enumerate(values):
+                self.projects_table.setItem(
+                    row, column, QtWidgets.QTableWidgetItem(str(value or ""))
+                )
+
+    def load_project_details(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.projects_table):
+            return
+        selected = self.projects_table.selectedItems()
+        if not selected:
+            self.project_id_edit.clear()
+            self.project_name_edit.clear()
+            self.project_notes_edit.clear()
+            return
+
+        row = selected[0].row()
+        project_id = self.projects_table.item(row, 0).text()
+        project_name = self.projects_table.item(row, 1).text()
+        project_notes = self.projects_table.item(row, 4).text()
+
+        self.project_id_edit.setText(project_id)
+        self.project_name_edit.setText(project_name)
+        self.project_notes_edit.setPlainText(project_notes)
+
+    def restore_selected_project(self) -> None:
+        project_id = self.project_id_edit.text()
+        if not project_id:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a project to restore.")
+            return
+
+        try:
+            from chisurf.core.actions import dispatch
+            dispatch("project.restore", {"project_id": project_id})
+            QtWidgets.QMessageBox.information(
+                self,
+                "Project Restored",
+                "Successfully restored project state from database."
+            )
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Restore Failed",
+                f"Failed to restore project: {exc}"
+            )
+
+    def delete_selected_project(self) -> None:
+        project_id = self.project_id_edit.text()
+        if not project_id:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a project to delete.")
+            return
+
+        confirm = QtWidgets.QMessageBox.question(
+            self,
+            "Delete Project",
+            f"Are you sure you want to delete the archived project '{project_id}' from the database?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
+        )
+        if confirm != QtWidgets.QMessageBox.Yes:
+            return
+
+        try:
+            self.client.delete_project(project_id)
+            QtWidgets.QMessageBox.information(
+                self,
+                "Project Deleted",
+                "Project successfully deleted from the database."
+            )
+            self.refresh()
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Delete Failed",
+                f"Failed to delete project: {exc}"
+            )
+
+    def setups_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.setups_table = QtWidgets.QTableWidget(0, 5)
+        self.setups_table.setHorizontalHeaderLabels(
+            ["setup id", "name", "instrument type", "details", "lasers/detectors"]
+        )
+        self.setups_table.horizontalHeader().setStretchLastSection(True)
+        self.setups_table.itemSelectionChanged.connect(self.load_setup)
+        layout.addWidget(self.setups_table)
+        
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.setup_id_edit = QtWidgets.QLineEdit()
+        self.setup_name_edit = QtWidgets.QLineEdit()
+        self.setup_instrument_edit = QtWidgets.QLineEdit()
+        self.setup_lasers_edit = QtWidgets.QLineEdit()
+        self.setup_detectors_edit = QtWidgets.QLineEdit()
+        self.setup_details_edit = QtWidgets.QPlainTextEdit()
+        self.setup_details_edit.setMaximumHeight(70)
+        
+        form.addRow("Setup id", self.setup_id_edit)
+        form.addRow("Name", self.setup_name_edit)
+        form.addRow("Instrument type", self.setup_instrument_edit)
+        form.addRow("Laser wavelengths (JSON)", self.setup_lasers_edit)
+        form.addRow("Detector channels (JSON)", self.setup_detectors_edit)
+        form.addRow("Details/JSON", self.setup_details_edit)
+        layout.addLayout(form)
+        
+        self.setup_validation_label = QtWidgets.QLabel("")
+        self.setup_validation_label.setWordWrap(True)
+        layout.addWidget(self.setup_validation_label)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(2)
+        save_setup_button = QtWidgets.QPushButton("Save setup")
+        delete_setup_button = QtWidgets.QPushButton("Delete setup")
+        validate_setup_button = QtWidgets.QPushButton("Validate setup")
+        save_setup_button.clicked.connect(self.save_setup)
+        delete_setup_button.clicked.connect(self.delete_setup)
+        validate_setup_button.clicked.connect(self.validate_setup)
+        buttons.addWidget(save_setup_button)
+        buttons.addWidget(delete_setup_button)
+        buttons.addWidget(validate_setup_button)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        return widget
+
+    def fill_setup_table(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.setups_table):
+            return
+        self.setups_table.setRowCount(0)
+        try:
+            setups = self.client._call("sample_database.setups.list").get("setups", [])
+        except Exception:
+            setups = []
+        for item in setups:
+            row = self.setups_table.rowCount()
+            self.setups_table.insertRow(row)
+            lasers = item.get("laser_wavelengths", [])
+            detectors = item.get("detector_channels", {})
+            ld_str = f"Lasers: {lasers} | Detectors: {detectors}"
+            values = [
+                item.get("setup_id", ""),
+                item.get("name", ""),
+                item.get("instrument_type", ""),
+                item.get("details", ""),
+                ld_str
+            ]
+            for column, value in enumerate(values):
+                self.setups_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def load_setup(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.setups_table):
+            return
+        selected = self.setups_table.selectedItems()
+        if not selected:
+            self.setup_id_edit.clear()
+            self.setup_name_edit.clear()
+            self.setup_instrument_edit.clear()
+            self.setup_lasers_edit.clear()
+            self.setup_detectors_edit.clear()
+            self.setup_details_edit.clear()
+            self.setup_validation_label.clear()
+            return
+        row = selected[0].row()
+        setup_id = self.setups_table.item(row, 0).text()
+        try:
+            setup = self.client._call("sample_database.setups.get", {"setup_id": setup_id}).get("setup", {})
+        except Exception:
+            setup = {}
+        self.setup_id_edit.setText(setup.get("setup_id", ""))
+        self.setup_name_edit.setText(setup.get("name", ""))
+        self.setup_instrument_edit.setText(setup.get("instrument_type", ""))
+        import json
+        self.setup_lasers_edit.setText(json.dumps(setup.get("laser_wavelengths", [])))
+        self.setup_detectors_edit.setText(json.dumps(setup.get("detector_channels", {})))
+        self.setup_details_edit.setPlainText(setup.get("details", "") or "")
+        self.setup_validation_label.clear()
+
+    def collect_setup(self) -> dict[str, Any]:
+        import json
+        try:
+            lasers = json.loads(self.setup_lasers_edit.text() or "[]")
+        except Exception:
+            lasers = []
+        try:
+            detectors = json.loads(self.setup_detectors_edit.text() or "{}")
+        except Exception:
+            detectors = {}
+        return {
+            "setup_id": self.setup_id_edit.text().strip(),
+            "name": self.setup_name_edit.text().strip(),
+            "instrument_type": self.setup_instrument_edit.text().strip() or None,
+            "laser_wavelengths": lasers,
+            "detector_channels": detectors,
+            "details": self.setup_details_edit.toPlainText().strip() or None,
+        }
+
+    def save_setup(self) -> None:
+        try:
+            setup = self.collect_setup()
+            self.client._call("sample_database.setups.save", {"setup": setup})
+            QtWidgets.QMessageBox.information(self, "Setup Saved", "Setup definition successfully saved.")
+            self.fill_setup_table()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Save Failed", f"Failed to save setup:\n{e}")
+
+    def delete_setup(self) -> None:
+        setup_id = self.setup_id_edit.text().strip()
+        if not setup_id:
+            return
+        confirm = QtWidgets.QMessageBox.question(
+            self,
+            "Delete Setup",
+            f"Are you sure you want to delete the setup definition '{setup_id}'?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+            QtWidgets.QMessageBox.No
+        )
+        if confirm != QtWidgets.QMessageBox.Yes:
+            return
+        try:
+            self.client._call("sample_database.setups.delete", {"setup_id": setup_id})
+            QtWidgets.QMessageBox.information(self, "Setup Deleted", "Setup definition successfully deleted.")
+            self.fill_setup_table()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Delete Failed", f"Failed to delete setup:\n{e}")
+
+    def validate_setup(self) -> None:
+        setup_id = self.setup_id_edit.text().strip()
+        if not setup_id:
+            return
+        try:
+            res = self.client._call("sample_database.setups.validate", {"setup_id": setup_id})
+            valid = res.get("valid", False)
+            errors = res.get("errors", [])
+            if valid:
+                self.setup_validation_label.setText("<font color='green'><b>Validation PASS</b>: Setup is valid and fully specified.</font>")
+            else:
+                err_str = "<br>".join(errors)
+                self.setup_validation_label.setText(f"<font color='red'><b>Validation FAIL</b>:<br>{err_str}</font>")
+        except Exception as e:
+            self.setup_validation_label.setText(f"<font color='red'><b>Error validating setup</b>: {e}</font>")
+
+    def raw_data_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.raw_data_table = QtWidgets.QTableWidget(0, 6)
+        self.raw_data_table.setHorizontalHeaderLabels(
+            ["raw data id", "experiment id", "storage mode", "file path", "checksum", "details"]
+        )
+        self.raw_data_table.horizontalHeader().setStretchLastSection(True)
+        self.raw_data_table.itemSelectionChanged.connect(self.load_raw_data)
+        layout.addWidget(self.raw_data_table)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.raw_id_edit = QtWidgets.QLineEdit()
+        self.raw_exp_edit = QtWidgets.QLineEdit()
+        self.raw_storage_edit = QtWidgets.QLineEdit()
+        self.raw_path_edit = QtWidgets.QLineEdit()
+        self.raw_checksum_edit = QtWidgets.QLineEdit()
+        self.raw_details_edit = QtWidgets.QPlainTextEdit()
+        self.raw_details_edit.setMaximumHeight(70)
+
+        for w in (self.raw_id_edit, self.raw_exp_edit, self.raw_storage_edit, self.raw_path_edit, self.raw_checksum_edit, self.raw_details_edit):
+            w.setReadOnly(True)
+
+        form.addRow("Raw Data ID", self.raw_id_edit)
+        form.addRow("Experiment ID", self.raw_exp_edit)
+        form.addRow("Storage Mode", self.raw_storage_edit)
+        form.addRow("File Path/URL", self.raw_path_edit)
+        form.addRow("Checksum (SHA-256)", self.raw_checksum_edit)
+        form.addRow("Details/JSON", self.raw_details_edit)
+        layout.addLayout(form)
+        return widget
+
+    def fill_raw_data_table(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.raw_data_table):
+            return
+        self.raw_data_table.setRowCount(0)
+        try:
+            raw_list = self.client._call("raw_data.list").get("raw_datasets", [])
+        except Exception:
+            raw_list = []
+        for item in raw_list:
+            row = self.raw_data_table.rowCount()
+            self.raw_data_table.insertRow(row)
+            values = [
+                item.get("raw_data_id", ""),
+                item.get("experiment_id", ""),
+                item.get("storage_mode", ""),
+                item.get("file_path", "") or item.get("url", ""),
+                item.get("checksum", ""),
+                item.get("details", "")
+            ]
+            for column, value in enumerate(values):
+                self.raw_data_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def load_raw_data(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.raw_data_table):
+            return
+        selected = self.raw_data_table.selectedItems()
+        if not selected:
+            self.raw_id_edit.clear()
+            self.raw_exp_edit.clear()
+            self.raw_storage_edit.clear()
+            self.raw_path_edit.clear()
+            self.raw_checksum_edit.clear()
+            self.raw_details_edit.clear()
+            return
+        row = selected[0].row()
+        raw_id = self.raw_data_table.item(row, 0).text()
+        try:
+            item = self.client._call("raw_data.get", {"raw_data_id": raw_id}).get("raw_data", {})
+        except Exception:
+            item = {}
+        self.raw_id_edit.setText(item.get("raw_data_id", ""))
+        self.raw_exp_edit.setText(item.get("experiment_id", ""))
+        self.raw_storage_edit.setText(item.get("storage_mode", ""))
+        self.raw_path_edit.setText(item.get("file_path", "") or item.get("url", ""))
+        self.raw_checksum_edit.setText(item.get("checksum", ""))
+        self.raw_details_edit.setPlainText(str(item.get("details", "") or ""))
+
+    def processing_runs_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.processing_runs_table = QtWidgets.QTableWidget(0, 6)
+        self.processing_runs_table.setHorizontalHeaderLabels(
+            ["processing id", "experiment id", "type", "started at", "status", "operator"]
+        )
+        self.processing_runs_table.horizontalHeader().setStretchLastSection(True)
+        self.processing_runs_table.itemSelectionChanged.connect(self.load_processing_run)
+        layout.addWidget(self.processing_runs_table)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.proc_id_edit = QtWidgets.QLineEdit()
+        self.proc_exp_edit = QtWidgets.QLineEdit()
+        self.proc_type_edit = QtWidgets.QLineEdit()
+        self.proc_status_edit = QtWidgets.QLineEdit()
+        self.proc_settings_edit = QtWidgets.QPlainTextEdit()
+        self.proc_settings_edit.setMaximumHeight(70)
+
+        for w in (self.proc_id_edit, self.proc_exp_edit, self.proc_type_edit, self.proc_status_edit, self.proc_settings_edit):
+            w.setReadOnly(True)
+
+        form.addRow("Processing ID", self.proc_id_edit)
+        form.addRow("Experiment ID", self.proc_exp_edit)
+        form.addRow("Type", self.proc_type_edit)
+        form.addRow("Status", self.proc_status_edit)
+        form.addRow("Settings/JSON", self.proc_settings_edit)
+        layout.addLayout(form)
+        return widget
+
+    def fill_processing_runs_table(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.processing_runs_table):
+            return
+        self.processing_runs_table.setRowCount(0)
+        try:
+            proc_list = self.client._call("processing.burst_selection.list").get("processing_runs", [])
+        except Exception:
+            proc_list = []
+        for item in proc_list:
+            row = self.processing_runs_table.rowCount()
+            self.processing_runs_table.insertRow(row)
+            values = [
+                item.get("processing_id", ""),
+                item.get("experiment_id", ""),
+                item.get("processing_type", ""),
+                item.get("started_at", ""),
+                item.get("status", ""),
+                item.get("operator_user_id", "")
+            ]
+            for column, value in enumerate(values):
+                self.processing_runs_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def load_processing_run(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.processing_runs_table):
+            return
+        selected = self.processing_runs_table.selectedItems()
+        if not selected:
+            self.proc_id_edit.clear()
+            self.proc_exp_edit.clear()
+            self.proc_type_edit.clear()
+            self.proc_status_edit.clear()
+            self.proc_settings_edit.clear()
+            return
+        row = selected[0].row()
+        proc_id = self.processing_runs_table.item(row, 0).text()
+        try:
+            item = self.client._call("processing.burst_selection.get", {"processing_id": proc_id}).get("processing_run", {})
+        except Exception:
+            item = {}
+        self.proc_id_edit.setText(item.get("processing_id", ""))
+        self.proc_exp_edit.setText(item.get("experiment_id", ""))
+        self.proc_type_edit.setText(item.get("processing_type", ""))
+        self.proc_status_edit.setText(item.get("status", ""))
+        self.proc_settings_edit.setPlainText(str(item.get("settings", "") or ""))
+
+    def processed_products_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.processed_products_table = QtWidgets.QTableWidget(0, 6)
+        self.processed_products_table.setHorizontalHeaderLabels(
+            ["product id", "processing id", "file path", "data type", "checksum", "experiment id"]
+        )
+        self.processed_products_table.horizontalHeader().setStretchLastSection(True)
+        self.processed_products_table.itemSelectionChanged.connect(self.load_processed_product)
+        layout.addWidget(self.processed_products_table)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.prod_id_edit = QtWidgets.QLineEdit()
+        self.prod_proc_edit = QtWidgets.QLineEdit()
+        self.prod_path_edit = QtWidgets.QLineEdit()
+        self.prod_type_edit = QtWidgets.QLineEdit()
+        self.prod_checksum_edit = QtWidgets.QLineEdit()
+        self.prod_exp_edit = QtWidgets.QLineEdit()
+
+        for w in (self.prod_id_edit, self.prod_proc_edit, self.prod_path_edit, self.prod_type_edit, self.prod_checksum_edit, self.prod_exp_edit):
+            w.setReadOnly(True)
+
+        form.addRow("Product ID", self.prod_id_edit)
+        form.addRow("Processing Run ID", self.prod_proc_edit)
+        form.addRow("File Path/URL", self.prod_path_edit)
+        form.addRow("Data Type", self.prod_type_edit)
+        form.addRow("Checksum (SHA-256)", self.prod_checksum_edit)
+        form.addRow("Experiment ID", self.prod_exp_edit)
+        layout.addLayout(form)
+
+        buttons = QtWidgets.QHBoxLayout()
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(2)
+        ndx_button = QtWidgets.QPushButton("Open in NDXplorer")
+        ndx_button.clicked.connect(self.open_in_ndxplorer)
+        buttons.addWidget(ndx_button)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        return widget
+
+    def fill_processed_products_table(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.processed_products_table):
+            return
+        self.processed_products_table.setRowCount(0)
+        try:
+            prod_list = self.client._call("processed_data.list").get("processed_datasets", [])
+        except Exception:
+            prod_list = []
+        for item in prod_list:
+            row = self.processed_products_table.rowCount()
+            self.processed_products_table.insertRow(row)
+            values = [
+                item.get("processed_data_id", ""),
+                item.get("processing_id", ""),
+                item.get("file_path", "") or item.get("url", ""),
+                item.get("data_type", ""),
+                item.get("checksum", ""),
+                item.get("experiment_id", "")
+            ]
+            for column, value in enumerate(values):
+                self.processed_products_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def load_processed_product(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.processed_products_table):
+            return
+        selected = self.processed_products_table.selectedItems()
+        if not selected:
+            self.prod_id_edit.clear()
+            self.prod_proc_edit.clear()
+            self.prod_path_edit.clear()
+            self.prod_type_edit.clear()
+            self.prod_checksum_edit.clear()
+            self.prod_exp_edit.clear()
+            return
+        row = selected[0].row()
+        prod_id = self.processed_products_table.item(row, 0).text()
+        try:
+            item = self.client._call("processed_data.get", {"processed_data_id": prod_id}).get("processed_data", {})
+        except Exception:
+            item = {}
+        self.prod_id_edit.setText(item.get("processed_data_id", ""))
+        self.prod_proc_edit.setText(item.get("processing_id", ""))
+        self.prod_path_edit.setText(item.get("file_path", "") or item.get("url", ""))
+        self.prod_type_edit.setText(item.get("data_type", ""))
+        self.prod_checksum_edit.setText(item.get("checksum", ""))
+        self.prod_exp_edit.setText(item.get("experiment_id", ""))
+
+    def open_in_ndxplorer(self) -> None:
+        selected = self.processed_products_table.selectedItems()
+        if not selected:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a processed product.")
+            return
+        row = selected[0].row()
+        prod_id = self.processed_products_table.item(row, 0).text()
+        path_str = self.processed_products_table.item(row, 2).text()
+        exp_id = self.processed_products_table.item(row, 5).text()
+        if not path_str:
+            QtWidgets.QMessageBox.warning(self, "No Path", "Selected product has no associated file path.")
+            return
+
+        from pathlib import Path
+        path = Path(path_str)
+        if not path.exists():
+            QtWidgets.QMessageBox.critical(self, "File Not Found", f"The file or directory does not exist:\n{path_str}")
+            return
+
+        import sys
+        root = Path(__file__).resolve().parents[4]
+        ndx_path = root / "modules" / "ndxplorer"
+        if ndx_path.is_dir() and str(ndx_path) not in sys.path:
+            sys.path.insert(0, str(ndx_path))
+
+        try:
+            from ndxplorer.plot_main import NDXplorer
+            import ndxplorer.io.reader as ndx_reader
+            
+            if path.is_dir():
+                ds = ndx_reader.read_burst_analysis(str(path))
+                ndx = NDXplorer(
+                    data_source=ds, 
+                    zmq_cmd_port=8765, 
+                    processed_data_id=prod_id, 
+                    experiment_id=exp_id
+                )
+                ndx.working_path = str(path)
+                ndx.setWindowTitle(f"NDXplorer - {path.name}")
+                ndx.show()
+                ndx.raise_()
+                ndx.activateWindow()
+                try:
+                    ndx.open_files(file_handles=str(path), file_type="burst_dir", append=False)
+                except Exception:
+                    pass
+            else:
+                ndx = NDXplorer(
+                    zmq_cmd_port=8765, 
+                    processed_data_id=prod_id, 
+                    experiment_id=exp_id
+                )
+                ndx.setWindowTitle(f"NDXplorer - {path.name}")
+                ndx.show()
+                ndx.raise_()
+                ndx.activateWindow()
+                file_type = "h5" if path.suffix == ".h5" else "zip"
+                try:
+                    ndx.open_files(file_handles=str(path), file_type=file_type, append=False)
+                except Exception:
+                    pass
+            
+            if not hasattr(self, "_ndxplorer_windows"):
+                self._ndxplorer_windows = []
+            self._ndxplorer_windows.append(ndx)
+            self.statusBar().showMessage(f"Opened {path.name} in NDXplorer")
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to open in NDXplorer:\n{e}")
+
+    def analyses_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.analyses_table = QtWidgets.QTableWidget(0, 5)
+        self.analyses_table.setHorizontalHeaderLabels(
+            ["analysis id", "experiment id", "type", "model name", "created at"]
+        )
+        self.analyses_table.horizontalHeader().setStretchLastSection(True)
+        self.analyses_table.itemSelectionChanged.connect(self.load_analysis)
+        layout.addWidget(self.analyses_table)
+
+        form = QtWidgets.QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(2)
+        self.analysis_id_field = QtWidgets.QLineEdit()
+        self.analysis_exp_field = QtWidgets.QLineEdit()
+        self.analysis_type_field = QtWidgets.QLineEdit()
+        self.analysis_model_field = QtWidgets.QLineEdit()
+        self.analysis_settings_field = QtWidgets.QPlainTextEdit()
+        self.analysis_settings_field.setMaximumHeight(70)
+
+        for w in (self.analysis_id_field, self.analysis_exp_field, self.analysis_type_field, self.analysis_model_field, self.analysis_settings_field):
+            w.setReadOnly(True)
+
+        form.addRow("Analysis ID", self.analysis_id_field)
+        form.addRow("Experiment ID", self.analysis_exp_field)
+        form.addRow("Type", self.analysis_type_field)
+        form.addRow("Model Name", self.analysis_model_field)
+        form.addRow("Settings/JSON", self.analysis_settings_field)
+        layout.addLayout(form)
+        return widget
+
+    def fill_analyses_table(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.analyses_table):
+            return
+        self.analyses_table.setRowCount(0)
+        try:
+            res = self.client._call("analysis.run.list")
+            analysis_list = res.get("analysis_runs", [])
+        except Exception:
+            analysis_list = []
+        for item in analysis_list:
+            if item.get("analysis_type") == "project":
+                continue
+            row = self.analyses_table.rowCount()
+            self.analyses_table.insertRow(row)
+            values = [
+                item.get("analysis_id", ""),
+                item.get("experiment_id", ""),
+                item.get("analysis_type", ""),
+                item.get("model_name", ""),
+                item.get("created_at", "")
+            ]
+            for column, value in enumerate(values):
+                self.analyses_table.setItem(row, column, QtWidgets.QTableWidgetItem(str(value or "")))
+
+    def load_analysis(self) -> None:
+        if self._is_deleted() or self._is_widget_deleted(self.analyses_table):
+            return
+        selected = self.analyses_table.selectedItems()
+        if not selected:
+            self.analysis_id_field.clear()
+            self.analysis_exp_field.clear()
+            self.analysis_type_field.clear()
+            self.analysis_model_field.clear()
+            self.analysis_settings_field.clear()
+            return
+        row = selected[0].row()
+        analysis_id = self.analyses_table.item(row, 0).text()
+        try:
+            item = self.client._call("analysis.run.get", {"analysis_id": analysis_id}).get("analysis_run", {})
+        except Exception:
+            item = {}
+        self.analysis_id_field.setText(item.get("analysis_id", ""))
+        self.analysis_exp_field.setText(item.get("experiment_id", ""))
+        self.analysis_type_field.setText(item.get("analysis_type", ""))
+        self.analysis_model_field.setText(item.get("model_name", ""))
+        self.analysis_settings_field.setPlainText(str(item.get("settings", "") or ""))
+
+    def provenance_tab(self) -> QtWidgets.QWidget:
+        widget = QtWidgets.QWidget()
+        layout = QtWidgets.QVBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        
+        top_layout = QtWidgets.QHBoxLayout()
+        top_layout.addWidget(QtWidgets.QLabel("Seed Node ID:"))
+        self.provenance_seed_edit = QtWidgets.QLineEdit()
+        top_layout.addWidget(self.provenance_seed_edit)
+        
+        self.provenance_type_combo = QtWidgets.QComboBox()
+        self.provenance_type_combo.addItems(["processed_data", "raw_data", "analysis_run"])
+        top_layout.addWidget(self.provenance_type_combo)
+        
+        layout.addLayout(top_layout)
+        
+        buttons = QtWidgets.QHBoxLayout()
+        trace_up_button = QtWidgets.QPushButton("Trace Upstream")
+        trace_down_button = QtWidgets.QPushButton("Trace Downstream")
+        export_graph_button = QtWidgets.QPushButton("Export Graph to ZIP...")
+        trace_up_button.clicked.connect(self.trace_upstream)
+        trace_down_button.clicked.connect(self.trace_downstream)
+        export_graph_button.clicked.connect(self.export_provenance_zip)
+        buttons.addWidget(trace_up_button)
+        buttons.addWidget(trace_down_button)
+        buttons.addWidget(export_graph_button)
+        buttons.addStretch()
+        layout.addLayout(buttons)
+        
+        self.provenance_results_table = QtWidgets.QTableWidget(0, 4)
+        self.provenance_results_table.setHorizontalHeaderLabels(
+            ["node id", "node type", "details", "relation/distance"]
+        )
+        self.provenance_results_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.provenance_results_table)
+        return widget
+
+    def trace_upstream(self) -> None:
+        seed_id = self.provenance_seed_edit.text().strip()
+        if not seed_id:
+            QtWidgets.QMessageBox.warning(self, "No Seed ID", "Please enter a seed node ID.")
+            return
+        self.provenance_results_table.setRowCount(0)
+        try:
+            res = self.client._call("provenance.dependencies.upstream", {"seed_id": seed_id})
+            nodes = res.get("upstream_nodes", [])
+            for node in nodes:
+                row = self.provenance_results_table.rowCount()
+                self.provenance_results_table.insertRow(row)
+                self.provenance_results_table.setItem(row, 0, QtWidgets.QTableWidgetItem(node.get("id", "")))
+                self.provenance_results_table.setItem(row, 1, QtWidgets.QTableWidgetItem(node.get("type", "")))
+                self.provenance_results_table.setItem(row, 2, QtWidgets.QTableWidgetItem(node.get("label", "")))
+                self.provenance_results_table.setItem(row, 3, QtWidgets.QTableWidgetItem(f"Distance: {node.get('distance', 0)}"))
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Trace Failed", f"Failed to trace upstream:\n{e}")
+
+    def trace_downstream(self) -> None:
+        seed_id = self.provenance_seed_edit.text().strip()
+        if not seed_id:
+            QtWidgets.QMessageBox.warning(self, "No Seed ID", "Please enter a seed node ID.")
+            return
+        self.provenance_results_table.setRowCount(0)
+        try:
+            res = self.client._call("provenance.dependencies.downstream", {"seed_id": seed_id})
+            nodes = res.get("downstream_nodes", [])
+            for node in nodes:
+                row = self.provenance_results_table.rowCount()
+                self.provenance_results_table.insertRow(row)
+                self.provenance_results_table.setItem(row, 0, QtWidgets.QTableWidgetItem(node.get("id", "")))
+                self.provenance_results_table.setItem(row, 1, QtWidgets.QTableWidgetItem(node.get("type", "")))
+                self.provenance_results_table.setItem(row, 2, QtWidgets.QTableWidgetItem(node.get("label", "")))
+                self.provenance_results_table.setItem(row, 3, QtWidgets.QTableWidgetItem(f"Distance: {node.get('distance', 0)}"))
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Trace Failed", f"Failed to trace downstream:\n{e}")
+
+    def export_provenance_zip(self) -> None:
+        seed_id = self.provenance_seed_edit.text().strip()
+        if not seed_id:
+            QtWidgets.QMessageBox.warning(self, "No Seed ID", "Please enter a seed node ID.")
+            return
+        seed_type = self.provenance_type_combo.currentText()
+        
+        path_str, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self,
+            "Export Provenance ZIP Archive",
+            "",
+            "ZIP Archives (*.zip)"
+        )
+        if not path_str:
+            return
+        
+        try:
+            self.client.export_zip_archive(
+                target_zip_path=path_str,
+                seed_node_type=seed_type,
+                seed_node_id=seed_id,
+                include_external_data=False
+            )
+            QtWidgets.QMessageBox.information(
+                self,
+                "Export Complete",
+                f"Provenance archive successfully exported to:\n{path_str}"
+            )
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Export Failed", f"Failed to export zip archive:\n{e}")
+

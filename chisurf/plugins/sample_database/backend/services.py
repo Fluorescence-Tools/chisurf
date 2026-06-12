@@ -19,11 +19,19 @@ from chisurf.core.fio.mmcif.db import (
 from chisurf.plugins.sample_database.backend.measurement_services import (
     register_measurement_services,
 )
+from chisurf.plugins.sample_database.backend.ndxplorer_services import (
+    register_ndxplorer_services,
+)
+from chisurf.plugins.sample_database.backend.setup_services import (
+    register_setup_services,
+)
 
 
 def register_services(dispatcher: Any) -> None:
     """Register sample database RPC handlers."""
     register_measurement_services(dispatcher)
+    register_ndxplorer_services(dispatcher)
+    register_setup_services(dispatcher)
     dispatcher.register("sample_database.status", lambda params: status_handler(**params))
     dispatcher.register(
         "sample_database.samples.list", lambda params: list_samples_handler(**params)
@@ -258,6 +266,7 @@ def save_experiment_handler(experiment: dict[str, Any]) -> dict[str, Any]:
             ended_at=experiment.get("ended_at") or None,
             status=experiment.get("status") or None,
             details=experiment.get("details") or None,
+            setup_definition_id=experiment.get("setup_definition_id") or None,
         )
         db.clear_experiment_key_values(experiment_id)
         for item in experiment.get("key_values", []):
