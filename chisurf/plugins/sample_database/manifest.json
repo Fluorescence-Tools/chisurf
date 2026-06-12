@@ -1,12 +1,19 @@
 {
   "id": "sample_database",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "display_name": "Tools:Sample Database",
   "description": "Manage curated and user fluorescence sample and experiment databases with PDBx, PDB-IHM, and FLR CIF import/export.",
   "authors": ["Thomas-Otavio Peulen"],
   "categories": ["Tools", "Fluorescence"],
   "icon": "icon.png",
   "state_namespace": "sample_database",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
   "entrypoints": {
     "gui": "chisurf.plugins.sample_database.gui.tool:SampleDatabaseWidget",
     "services": "chisurf.plugins.sample_database.backend.services:register_services"
@@ -51,6 +58,34 @@
     {"name": "sample_database.export_sample"},
     {"name": "sample_database.export_table"},
     {"name": "sample_database.backup"},
-    {"name": "sample_database.reset_from_source"}
+    {"name": "sample_database.reset_from_source"},
+    {"name": "fdb.v1.artifacts.register"},
+    {"name": "fdb.v1.artifacts.get"},
+    {"name": "fdb.v1.artifacts.list"},
+    {"name": "fdb.v1.operations.record"},
+    {"name": "fdb.v1.operations.get"},
+    {"name": "fdb.v1.operations.list"},
+    {"name": "fdb.v1.operations.link"},
+    {"name": "fdb.v1.graph.traverse"},
+    {"name": "fdb.v1.graph.traverse_legacy"},
+    {"name": "fdb.v1.parameters.record"},
+    {"name": "fdb.v1.parameters.get"},
+    {"name": "fdb.v1.setups.save"},
+    {"name": "fdb.v1.setups.get"},
+    {"name": "fdb.v1.audit.list"},
+    {"name": "mfdb.v1.artifacts.register"},
+    {"name": "mfdb.v1.artifacts.get"},
+    {"name": "mfdb.v1.artifacts.list"},
+    {"name": "mfdb.v1.operations.record"},
+    {"name": "mfdb.v1.operations.get"},
+    {"name": "mfdb.v1.operations.list"},
+    {"name": "mfdb.v1.operations.link"},
+    {"name": "mfdb.v1.graph.traverse"},
+    {"name": "mfdb.v1.graph.traverse_legacy"},
+    {"name": "mfdb.v1.parameters.record"},
+    {"name": "mfdb.v1.parameters.get"},
+    {"name": "mfdb.v1.setups.save"},
+    {"name": "mfdb.v1.setups.get"},
+    {"name": "mfdb.v1.audit.list"}
   ]
 }

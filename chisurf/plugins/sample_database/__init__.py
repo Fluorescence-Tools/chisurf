@@ -10,9 +10,18 @@ except ImportError:
     except ImportError:
         sip = None
 
+from pathlib import Path
+
+from chisurf.core.plugin import load_manifest
+from chisurf.core.plugin.registry import apply_manifest_statefulness
+
 from .gui.tool import SampleDatabaseWidget
 
-name = "Tools:Sample Database"
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Tools:Sample Database"
 
 __all__ = ["SampleDatabaseWidget", "name"]
 
@@ -23,6 +32,8 @@ if __name__ == "plugin":
         existing = None
     if existing is None:
         window = SampleDatabaseWidget()
+        if _manifest is not None:
+            apply_manifest_statefulness(window, _manifest)
     else:
         window = existing
     window.show()

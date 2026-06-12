@@ -17,14 +17,13 @@ except ImportError:
     except ImportError:
         sip = None
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, resolve_database_path
-from chisurf.gui.misc_helpers import get_plugin_settings_path, persist_plugin_state
+from chisurf.core.fio.mmcif.db import FluorescenceDatabase, resolve_database_path
+from chisurf.gui.misc_helpers import get_plugin_settings_path
 from chisurf.gui.widgets.dock_area import DockArea
 
 from .client import SampleDatabaseClient
 
 
-@persist_plugin_state("sample_database")
 class SampleDatabaseWidget(QtWidgets.QMainWindow):
     """Window for browsing, editing, importing, and exporting samples."""
 
@@ -718,7 +717,7 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
 
     def fill_probes(self) -> None:
         self.probes_table.setRowCount(0)
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             for row in db.get_probes():
                 index = self.probes_table.rowCount()
                 self.probes_table.insertRow(index)
@@ -1987,16 +1986,16 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
             sys.path.insert(0, str(ndx_path))
 
         try:
-            from ndxplorer.plot_main import NDXplorer
             import ndxplorer.io.reader as ndx_reader
-            
+            from ndxplorer.plot_main import NDXplorer
+
             if path.is_dir():
                 ds = ndx_reader.read_burst_analysis(str(path))
                 ndx = NDXplorer(
-                    data_source=ds, 
-                    zmq_cmd_port=8765, 
-                    processed_data_id=prod_id, 
-                    experiment_id=exp_id
+                    data_source=ds,
+                    zmq_cmd_port=8765,
+                    processed_data_id=prod_id,
+                    experiment_id=exp_id,
                 )
                 ndx.working_path = str(path)
                 ndx.setWindowTitle(f"NDXplorer - {path.name}")
@@ -2009,9 +2008,9 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
                     pass
             else:
                 ndx = NDXplorer(
-                    zmq_cmd_port=8765, 
-                    processed_data_id=prod_id, 
-                    experiment_id=exp_id
+                    zmq_cmd_port=8765,
+                    processed_data_id=prod_id,
+                    experiment_id=exp_id,
                 )
                 ndx.setWindowTitle(f"NDXplorer - {path.name}")
                 ndx.show()
@@ -2022,7 +2021,7 @@ class SampleDatabaseWidget(QtWidgets.QMainWindow):
                     ndx.open_files(file_handles=str(path), file_type=file_type, append=False)
                 except Exception:
                     pass
-            
+
             if not hasattr(self, "_ndxplorer_windows"):
                 self._ndxplorer_windows = []
             self._ndxplorer_windows.append(ndx)

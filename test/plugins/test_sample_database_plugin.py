@@ -25,6 +25,8 @@ def test_sample_database_manifest_is_valid():
     manifest = load_manifest(manifest_path)
     assert manifest is not None
     assert manifest.id == "sample_database"
+    assert manifest.statefulness.enabled is True
+    assert manifest.statefulness.window.settings_key is None
     assert "sample_database.samples.list" in [method.name for method in manifest.rpc_methods]
     assert "sample_database.export_table" in [method.name for method in manifest.rpc_methods]
     assert "raw_data.register" in [method.name for method in manifest.rpc_methods]
