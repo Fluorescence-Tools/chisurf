@@ -1503,6 +1503,28 @@ class Main(
         except Exception:
             pass
 
+        try:
+            action_from_db = QtWidgets.QAction("from DB", self)
+            action_from_db.triggered.connect(self.onRestoreProjectFromDb)
+            self.actionRestore_Project_From_Db = action_from_db
+            try:
+                self.menuProject.insertAction(self.actionClose_Project, action_from_db)
+            except Exception:
+                self.menuProject.addAction(action_from_db)
+        except Exception:
+            pass
+
+        try:
+            action_to_db = QtWidgets.QAction("to DB", self)
+            action_to_db.triggered.connect(self.onArchiveProjectToDb)
+            self.actionArchive_Project_To_Db = action_to_db
+            try:
+                self.menuProject.insertAction(self.actionClose_Project, action_to_db)
+            except Exception:
+                self.menuProject.addAction(action_to_db)
+        except Exception:
+            pass
+
         self.actionOpen_Project.triggered.connect(self.onLoadProject)
         self.actionOpen_Project.setEnabled(True)
         self.actionClose_Project.triggered.connect(self.onCloseProject)

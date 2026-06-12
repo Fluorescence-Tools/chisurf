@@ -42,7 +42,9 @@ class FileCategoryMixin:
         action_groups = {
             "Project": [
                 ("actionOpen_Project", QStyle.SP_DialogOpenButton),
+                ("actionRestore_Project_From_Db", QStyle.SP_DialogOpenButton),
                 ("actionSave_Project", QStyle.SP_DialogSaveButton),
+                ("actionArchive_Project_To_Db", QStyle.SP_DriveHDIcon),
                 ("actionClose_Project", QStyle.SP_DialogCloseButton),
             ],
             "Data": [

@@ -185,6 +185,82 @@ class ProjectMixin:
         except Exception:
             pass
 
+    def onRestoreProjectFromDb(self: Main, event: QtCore.QEvent = None):
+        try:
+            self.load_and_show_plugin("chisurf.plugins.sample_database")
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Restore Failed",
+                f"Failed to open database manager: {exc}"
+            )
+
+    def onArchiveProjectToDb(self: Main, event: QtCore.QEvent = None):
+        import uuid
+
+        project_name, ok1 = QtWidgets.QInputDialog.getText(
+            self,
+            "Archive Project to Database",
+            "Project name:",
+            QtWidgets.QLineEdit.Normal,
+            self._current_project_dir.name if getattr(self, "_current_project_dir", None) else "chisurf_project"
+        )
+        if not ok1 or not project_name:
+            return
+
+        notes, ok2 = QtWidgets.QInputDialog.getMultiLineText(
+            self,
+            "Archive Project to Database",
+            "Notes (optional):",
+        )
+        if not ok2:
+            return
+
+        input_processed_data_ids = []
+        for dc in getattr(cs, "imported_datasets", []):
+            pid = getattr(dc, "processed_data_id", None)
+            if not pid and hasattr(dc, "metadata") and isinstance(dc.metadata, dict):
+                pid = dc.metadata.get("processed_data_id")
+            if not pid and hasattr(dc, "extra") and isinstance(dc.extra, dict):
+                pid = dc.extra.get("processed_data_id")
+            if pid:
+                input_processed_data_ids.append(pid)
+
+        experiment_id = None
+        current_exp = getattr(self, "current_experiment", None)
+        if current_exp is not None:
+            experiment_id = getattr(current_exp, "experiment_id", None)
+            if not experiment_id and hasattr(current_exp, "metadata") and isinstance(current_exp.metadata, dict):
+                experiment_id = current_exp.metadata.get("experiment_id")
+            if not experiment_id and hasattr(current_exp, "extra") and isinstance(current_exp.extra, dict):
+                experiment_id = current_exp.extra.get("experiment_id")
+
+        project_id = f"proj_{uuid.uuid4()}"
+
+        try:
+            res = cs.core.actions.dispatch(
+                name="project.archive",
+                payload={
+                    "project_id": project_id,
+                    "project_name": project_name,
+                    "experiment_id": experiment_id,
+                    "input_processed_data_ids": input_processed_data_ids,
+                    "notes": notes,
+                },
+            )
+            QtWidgets.QMessageBox.information(
+                self,
+                "Project Archived",
+                f"Project successfully archived to database.\nProject ID: {project_id}"
+            )
+        except Exception as exc:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Archive Failed",
+                f"Failed to archive project to database: {exc}"
+            )
+
+
 
 class SetupMixin:
     def _restore_setup_defaults(self: Main) -> None:
