@@ -1,0 +1,32 @@
+{
+  "id": "{{ cookiecutter.plugin_name }}",
+  "version": "1.1.0",
+  "display_name": "{{ cookiecutter.plugin_category }}:{{ cookiecutter.plugin_display_name }}",
+  "description": "{{ cookiecutter.plugin_description }}",
+  "authors": ["{{ cookiecutter.author_name }} <{{ cookiecutter.author_email }}>"],
+  "categories": ["{{ cookiecutter.plugin_category }}"],
+  "icon": "icon.png",
+  "state_namespace": "{{ cookiecutter.plugin_name }}",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "state_schema": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {}
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.{{ cookiecutter.plugin_name }}.gui.tool:{{ cookiecutter.widget_class_name }}",
+    "cli": "{{ cookiecutter.plugin_name }}=chisurf.plugins.{{ cookiecutter.plugin_name }}.cli:cli",
+    "services": "chisurf.plugins.{{ cookiecutter.plugin_name }}.backend.services:register_services"
+  },
+  "rpc_methods": [],
+  "events": [],
+  "dependencies": {},
+  "menu_hidden": false,
+  "deprecated": false
+}
