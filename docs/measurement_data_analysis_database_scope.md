@@ -1,10 +1,10 @@
-# fdb4chembio Measurement and Data Analysis Database Scope
+# fdb Measurement and Data Analysis Database Scope
 
 Status date: 2026-06-11
 
 ## Project Goal
 
-`fdb4chembio` is the planned fluorescence database for chemical biology workflows in
+`fdb` is the planned fluorescence database for chemical biology workflows in
 ChiSurf. It should become a provenance-aware archive for fluorescence samples,
 measurements, TTTR/raw data references, processing workflows, derived burst-wise and
 analysis data products, model fits, parameter dependencies, and final archived
@@ -38,7 +38,7 @@ core data model.
 ## Current Foundation
 
 The current ChiSurf database work already provides enough infrastructure to start
-`fdb4chembio` without a reset:
+`fdb` without a reset:
 
 - Core database connector/plugin architecture for sample and experiment metadata.
 - Source/user database separation and backup-before-migration behavior.
@@ -178,7 +178,7 @@ Each edge stores:
 ### Phase 0 - Project framing and compatibility
 
 - Rename the scope and project language from generic "sample database" expansion to
-  `fdb4chembio`, the later fluorescence database for chemical biology.
+  `fdb`, the later fluorescence database for chemical biology.
 - Keep existing sample database APIs and GUI names working during the transition.
 - Document that database records are provenance metadata and not a replacement for
   raw TTTR storage.
@@ -268,6 +268,16 @@ Each edge stores:
 - Add audit logging for create/update/delete/archive actions.
 - Add authentication and authorization hooks only when a remote multi-user server
   becomes an actual target.
+
+### Phase 9 - Project Archive/Restore
+
+- Add "to db" menu item under `File` in ChiSurf to archive the current project to the `fdb` database.
+- Implement archiving of the entire analysis project state, including all ChiNet parameters, fit parameters, fit parameter widgets, and model types.
+- Map the fit structure and interdependence of parameters introduced by the user during analysis.
+- Ensure fits have UUIDs and are correctly linked across each other to preserve provenance.
+- Add option in the database explorer to restore analysis projects directly from the database.
+- Track how the analysis was created by saving the preprocessing steps from raw data to the final analysis project.
+
 
 ## Target Domain Model
 
@@ -470,7 +480,7 @@ Phase 1 is successful when ChiSurf can:
 - export a manifest that can reproduce the burst-wise provenance chain
 - keep existing sample database and experiment-data behavior working
 
-The broader `fdb4chembio` project is successful when the same provenance model
+The broader `fdb` project is successful when the same provenance model
 extends from burst-wise TTTR processing to ndxplorer, setup definitions, general
 processing, analysis/fitting, parameter dependencies, archives, ZMQ services, and a
 future fluorescence archiving web server.

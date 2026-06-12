@@ -23,53 +23,55 @@ Upgrade Chimol render quality to match/exceed PyMOL while keeping ChiSurf workin
 
 ## Milestone Plan
 
-### Milestone 1: Materials + Render Passes [NOW]
+### Milestone 1: Materials + Render Passes [DONE]
 **Files changed:** `scene.py`, `qtgl.py`
 
-- Add `Material` dataclass to `scene.py` with fields: `ambient`, `diffuse`, `specular`, `shininess`, `opacity`, `metallic`, `roughness`, `rim_strength`, `rim_power`
-- Make `SceneObject.material` typed as `Optional[Material]` instead of `Optional[Dict]`
-- Add render pass sorting in `QtGLRenderer.paintGL`: collect calls by `render_mode`, draw opaque first, then transparent (back-to-front sorted by depth), then overlay
-- Enhance fragment shader to accept per-material uniforms (already partially done; ensure `material` dict is always applied)
-- Add `blending_mode` field to material for future use
+- [x] Add `Material` dataclass to `scene.py` with fields: `ambient`, `diffuse`, `specular`, `shininess`, `opacity`, `metallic`, `roughness`, `rim_strength`, `rim_power`
+- [x] Make `SceneObject.material` typed as `Optional[Material]` instead of `Optional[Dict]`
+- [x] Add render pass sorting in `QtGLRenderer.paintGL`: collect calls by `render_mode`, draw opaque first, then transparent (back-to-front sorted by depth), then overlay
+- [x] Enhance fragment shader to accept per-material uniforms (already partially done; ensure `material` dict is always applied)
+- [x] Add `blending_mode` field to material for future use
 
-### Milestone 2: High-Quality Spheres [SOON]
+### Milestone 2: High-Quality Spheres [DONE]
 **Files changed:** `primitives.py`, `geometry/__init__.py`, `view.py`
 
-- Increase sphere mesh resolution and cache it
-- Add instanced sphere rendering path (GL instancing or merged mesh)
-- Keep fallback to point-sprite impostor for very large atom counts
+- [x] Increase sphere mesh resolution and cache it
+- [x] Add instanced sphere rendering path (GL instancing or merged mesh)
+- [x] Keep fallback to point-sprite impostor for very large atom counts
 
-### Milestone 3: Cylinder Sticks [NOW - highest visual impact]
+### Milestone 3: Cylinder Sticks [DONE]
 **Files changed:** `geometry/__init__.py`, `view.py`
 
-- `_build_stick_mesh` already exists in `primitives.py` — export it from `geometry/__init__.py`
-- In `view.py:_update_sticks`, replace GL_LINES path with cylinder mesh path using `_build_stick_mesh`
-- Keep lines as a performance fallback for >X bonds
+- [x] `_build_stick_mesh` already exists in `primitives.py` — export it from `geometry/__init__.py`
+- [x] In `view.py:_update_sticks`, replace GL_LINES path with cylinder mesh path using `_build_stick_mesh`
+- [x] Keep lines as a performance fallback for >X bonds
 
 ### Milestone 4: Cartoon Quality [LATER]
 **Files changed:** `cartoon.py`, `view.py`
+for that look at pymol code: /Users/tpeulen/dev/pymol-open-source
 
-- Split cartoon builder into sampler → profile → extruder stages (like PyMOL's `RepCartoon`)
-- Add proper arrow heads for beta strands
-- Improve smooth interpolation at SS transitions
+- [ ] Split cartoon builder into sampler → profile → extruder stages (like PyMOL's `RepCartoon`)
+- [ ] Add proper arrow heads for beta strands
+- [ ] Improve smooth interpolation at SS transitions
 
-### Milestone 5: Mesh Surface [LATER]
+### Milestone 5: Mesh Surface [DONE]
 **Files changed:** `surface.py`, `view.py`
 
-- Current `_update_surface` returns points — change to mesh when possible
-- Add proper SAS/SES computation (EDT-based)
-- Keep Gaussian metaballs as optional fallback
+- [x] ~~Current `_update_surface` returns points — change to mesh when possible~~ (Marching cubes mesh generated from Gaussian density is now implemented)
+- [x] Add proper SAS/SES computation (EDT-based Solvent Surface using scipy EDT and marching cubes)
+- [x] ~~Keep Gaussian metaballs as optional fallback~~ (Metaballs are now fully rendered as meshes with proper normal calculations and ambient occlusion)
 
 ### Milestone 6: PyMOL Compat Widget [LATER]
 **Files changed:** `MolView.py` (legacy), `view.py`
 
-- Replace `chisurf/gui/plots/molview/MolView.py` with Chimol compat wrapper
+- [ ] Replace `chisurf/gui/plots/molview/MolView.py` with Chimol compat wrapper
 
 ### Milestone 7: High-Quality Export [LATER]
 **Files changed:** `qtgl.py`, `view.py`
 
-- Offscreen FBO rendering at arbitrary resolution with MSAA
-- PNG/TIFF export with transparent background option
+- [ ] Offscreen FBO rendering at arbitrary resolution with MSAA
+- [ ] PNG/TIFF export with transparent background option
+
 
 ## Detailed File-by-File Plan
 
