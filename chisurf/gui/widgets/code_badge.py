@@ -58,8 +58,8 @@ class CodeBadgeButton(QtWidgets.QToolButton):
         self.setStyleSheet("""
             QToolButton {
                 border: none;
-                background: transparent;
-                color: rgba(120, 180, 220, 180);
+                background: red;
+                color: white;
                 padding: 0px;
                 margin: 0px;
             }
@@ -68,7 +68,8 @@ class CodeBadgeButton(QtWidgets.QToolButton):
             }
         """)
 
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.NoDropShadowWindowHint)
+        # Ensure the badge remains a child widget and does not become a top-level window,
+        # which causes a gray rectangle glitch on macOS.
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
 

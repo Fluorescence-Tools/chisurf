@@ -134,6 +134,7 @@ class FitSubWindow(CustomMdiSubWindow):
         self.code_editor = CodeEditor(self, language="python", can_load=False)
         # Wire the fit window's own toolbar nav buttons to the current editor
         self.code_editor._on_editor_created = self._on_code_editor_created
+        self.code_editor.symbolsChanged.connect(self._sync_code_symbol_combo)
         self.back_layout.addWidget(self.code_editor)
 
         self.agent_btn = QtWidgets.QToolButton()
@@ -463,12 +464,24 @@ class FitSubWindow(CustomMdiSubWindow):
         editor.external_definition_callback = self._open_external_definition
         editor.file_load_callback = self.load_code_file
 
+    def _sync_code_symbol_combo(self, symbols):
+        """Populate the function combo from shared editor symbols."""
+        self.func_combo.blockSignals(True)
+        self.func_combo.clear()
+        self.func_combo.addItem("Select...", -1)
+        for symbol in symbols:
+            line = getattr(symbol, "line", 1)
+            kind = getattr(symbol, "kind", "")
+            name = getattr(symbol, "display_name", getattr(symbol, "name", ""))
+            prefix = "  " if kind == "method" else ""
+            self.func_combo.addItem(f"{prefix}{name}", max(0, int(line) - 1))
+        self.func_combo.blockSignals(False)
+
     def _open_external_definition(self, file_path, line_number):
         """Open an external file in the code editor and jump to the given line."""
         self.code_editor.open_file(file_path, line=line_number)
 
     def load_code_file(self, file_path, line_number: int = 0):
-        import re
         self.original_source_file = file_path
         self.code_editor.open_file(file_path)
         editor = self._get_current_text_editor()
@@ -485,20 +498,7 @@ class FitSubWindow(CustomMdiSubWindow):
                 editor.setTextCursor(cursor)
                 editor.centerCursor()
 
-        code = editor.toPlainText()
-        self.func_combo.blockSignals(True)
-        self.func_combo.clear()
-        self.func_combo.addItem("Select...", -1)
-
-        lines = code.split('\n')
-        for i, line in enumerate(lines):
-            m = re.match(r'^ *(def |class )([a-zA-Z0-9_]+)', line)
-            if m:
-                indent = len(line) - len(line.lstrip())
-                prefix = " " * indent
-                self.func_combo.addItem(f"{prefix}{m.group(1)}{m.group(2)}", i)
-
-        self.func_combo.blockSignals(False)
+        self._sync_code_symbol_combo(editor.refresh_symbols())
         if not editor._nav_history:
             editor.push_nav_history(file_path, 0)
 
