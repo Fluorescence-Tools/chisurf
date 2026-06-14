@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from chisurf.server.service_startup import ServiceStartupManager, StartupServiceContext, StartupServiceSpec
 from chisurf.server.session import SessionState
 from chisurf.server.app import ChiSurfServer
 from chisurf.server.dispatcher import ServiceDispatcher
@@ -15,9 +14,6 @@ __all__ = [
     "EventBus",
     "InProcessEventBus",
     "JobManager",
-    "ServiceStartupManager",
-    "StartupServiceContext",
-    "StartupServiceSpec",
     "ZmqServer",
     "ZmqClient",
 ]

@@ -1,0 +1,111 @@
+{
+  "services": [
+    {
+      "id": "gui_imports",
+      "entrypoint": "chisurf.startup.gui_services:gui_imports",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Loading modules",
+      "progress": 10,
+      "order": 10
+    },
+    {
+      "id": "setup_ipython",
+      "entrypoint": "chisurf.startup.gui_services:setup_ipython",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Setup IPython",
+      "progress": 30,
+      "order": 20
+    },
+    {
+      "id": "startup_interface",
+      "entrypoint": "chisurf.startup.gui_services:startup_interface",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Starting interface",
+      "progress": 40,
+      "order": 30
+    },
+    {
+      "id": "setup_logging",
+      "entrypoint": "chisurf.startup.gui_services:setup_logging",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Setup logging",
+      "progress": 45,
+      "order": 40,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "init_setups",
+      "entrypoint": "chisurf.startup.gui_services:init_setups",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Initialize setups",
+      "progress": 50,
+      "order": 50,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "restore_setup_defaults",
+      "entrypoint": "chisurf.startup.gui_services:restore_setup_defaults",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Restore setup defaults",
+      "progress": 52,
+      "order": 52,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "define_actions",
+      "entrypoint": "chisurf.startup.gui_services:define_actions",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Defining actions",
+      "progress": 55,
+      "order": 55,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "load_tools",
+      "entrypoint": "chisurf.startup.gui_services:load_tools",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Loading tools",
+      "progress": 65,
+      "order": 60,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "init_executors",
+      "entrypoint": "chisurf.startup.gui_services:init_executors",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Initialize executors",
+      "progress": 68,
+      "order": 65,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "arrange_widgets",
+      "entrypoint": "chisurf.startup.gui_services:arrange_widgets",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Arrange widgets",
+      "progress": 75,
+      "order": 70,
+      "depends_on": ["startup_interface"]
+    },
+    {
+      "id": "setup_style",
+      "entrypoint": "chisurf.startup.gui_services:setup_style",
+      "surface": "gui",
+      "phase": "splash",
+      "label": "Applying theme",
+      "progress": 90,
+      "order": 80,
+      "depends_on": ["startup_interface"]
+    }
+  ]
+}

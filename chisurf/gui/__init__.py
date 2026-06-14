@@ -1317,46 +1317,29 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
     except Exception:
         pass
 
-    # Update progress as the setup progresses
-    try:
-        _gui_cfg = cs.core.settings.cs_settings.get('gui') or {}
-        _start_jupyter = bool(_gui_cfg.get('start_jupyter_on_startup', False))
-    except Exception:
-        _start_jupyter = False
+    # Create app startup service manager
+    from chisurf.startup.services import AppStartupServiceManager
 
-    # --- Phase 1: critical path stages (run during splash, sequential) ---
-    # Only the minimum needed to display a responsive main window.
-    critical_stages = [
-        ("Loading modules",       "gui_imports",           10),
-        ("Setup IPython",         "setup_ipython",         30),
-        ("Starting interface",    "startup_interface",     40),
-        ("Setup logging",         "setup_logging",         45),
-        ("Initialize setups",     "init_setups",           50),
-        ("Restore setup defaults","restore_setup_defaults",52),
-        ("Defining actions",      "define_actions",        55),
-        ("Loading tools",         "load_tools",            65),
-        ("Initialize executors",  "init_executors",        68),
-        ("Arrange widgets",       "arrange_widgets",       75),
-        ("Applying theme",        "setup_style",           90),
-    ]
+    manager = AppStartupServiceManager()
 
-    window = None
-    for message, stage, progress_value in critical_stages:
-        logging.info(f"Startup stage '{stage}' starting: {message}")
-        splash.update_message(message)
-        splash.update_progress(progress_value)
+    # --- Phase 1: splash phase (GUI critical path) -------------------------
+    def _on_splash_start(payload):
+        splash.update_message(payload.get("label", ""))
+        splash.update_progress(payload.get("progress", 0))
         app.processEvents()
-        w2 = setup_gui(app=app, stage=stage, window=window)
-        logging.info(f"Startup stage '{stage}' finished")
-        if w2 is not None:
-            window = w2
-        # If user chose to open updater, interrupt startup immediately
-        try:
-            if getattr(cs, "__startup_interrupt_for_updater__", False):
-                break
-        except Exception:
-            pass
 
+    try:
+        manager.start(
+            surface="gui",
+            phase="splash",
+            on_stage_start=_on_splash_start,
+        )
+    except Exception:
+        logging.exception("Splash startup failed")
+
+    window = manager.get_service_result("startup_interface")
+
+    # If user chose to open updater, interrupt startup immediately
     try:
         if getattr(cs, "__startup_interrupt_for_updater__", False):
             try:
@@ -1382,7 +1365,7 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
     except Exception:
         pass
 
-    # --- Phase 2: deferred stages via BackgroundStartupRunner ------------
+    # --- Phase 2: deferred stages via BackgroundStartupRunner adapter ----
     # Add a placeholder in the Plugins menu so it's never empty while loading
     _placeholder_action = None
     try:
@@ -1397,36 +1380,6 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
             _plugin_menu.addAction(_placeholder_action)
     except Exception:
         pass
-
-    def _make_bg_stage(stage_name):
-        """Return a zero-argument callable for the given setup_gui stage."""
-        def _fn():
-            setup_gui(app=app, stage=stage_name, window=window)
-        _fn.__name__ = stage_name
-        return _fn
-
-    deferred_stages = [
-        ("Loading heavy modules", _make_bg_stage("deferred_gui_imports")),
-        ("Loading plugins",       _make_bg_stage("populate_plugins")),
-        ("Checking for updates",  _make_bg_stage("check_updates"))
-    ]
-
-    if _start_jupyter:
-        deferred_stages.append(("Starting Jupyter (background)", _make_bg_stage("start_jupyter")))
-        deferred_stages.append(("Loading plugins",               _make_bg_stage("populate_plugins")))
-        deferred_stages.append(("Populating notebooks",          _make_bg_stage("populate_notebooks")))
-    else:
-        deferred_stages.append(("Loading plugins", _make_bg_stage("populate_plugins")))
-
-
-    def _warmup():
-        try:
-            from chisurf.gui.misc_helpers import warmup_imports
-            warmup_imports()
-        except Exception:
-            pass
-
-    deferred_stages.append(("Preloading modules", _warmup))
 
     def _on_bg_complete():
         # Remove the placeholder once plugins are really loaded
@@ -1512,21 +1465,20 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
     except Exception:
         pass
 
-    # Launch the background runner (held as window attribute to prevent GC)
+    # Launch the background runner adapter (held as window attribute to prevent GC)
     try:
         from chisurf.gui.background_startup import BackgroundStartupRunner
         _bg_runner = BackgroundStartupRunner(
-            window, deferred_stages, on_complete=_on_bg_complete
+            window, manager, on_complete=_on_bg_complete
         )
         window._bg_startup_runner = _bg_runner
         _bg_runner.start()
     except Exception as _bg_err:
         logging.warning(f"Background startup runner failed to start: {_bg_err}")
-        for _lbl, _fn in deferred_stages:
-            try:
-                _fn()
-            except Exception:
-                pass
+        try:
+            manager.start(surface="gui", phase="post_gui_show")
+        except Exception:
+            pass
         _on_bg_complete()
 
     return window

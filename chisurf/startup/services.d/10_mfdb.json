@@ -3,7 +3,9 @@
     {
       "id": "mfdb",
       "entrypoint": "chisurf.plugins.core.mfdb_admin.backend.services:register_services",
-      "background": true,
+      "surface": "server",
+      "phase": "pre_server_listen",
+      "thread": "background",
       "methods": [
         "mfdb.status",
         "mfdb.samples.list",

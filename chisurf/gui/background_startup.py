@@ -1,101 +1,100 @@
-"""background_startup.py — deferred post-startup stage runner.
+"""background_startup.py — deferred post-startup stage runner (adapter).
 
-import chisurf as cs
-After the main window becomes visible, certain non-critical initialisation
-tasks (plugin discovery, Jupyter start, update check, module warm-up) are
-scheduled here so they do not block the splash-screen phase.
-
-Usage
------
-    runner = BackgroundStartupRunner(window, stages, on_complete=None)
-    runner.start()
-
-Each *stage* is a tuple ``(label: str, callable: Callable[[], None])``.
-The runner executes them one-at-a-time via ``QTimer.singleShot(0, …)`` so the
-Qt event loop stays responsive between stages. Progress is reflected on:
-
-* ``window.progress_bar``  — a ``QProgressBar`` in the status bar
-* ``window.status_label``  — a ``QLabel`` next to the progress bar
+This module provides a ``QTimer``-driven runner that executes ``post_gui_show``
+app startup services one-at-a-time so the Qt event loop stays responsive.
+It is a thin adapter over ``chisurf.startup.services.AppStartupServiceManager``.
 """
+
 from __future__ import annotations
 
 import chisurf as cs
 import traceback
-from typing import Callable, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 from qtpy import QtCore
 
+from chisurf.startup.services import (
+    AppStartupContext,
+    AppStartupServiceManager,
+    AppStartupServiceSpec,
+    _DefaultEntrypointLoader,
+)
+
 
 class BackgroundStartupRunner(QtCore.QObject):
-    """Run a list of (label, callable) stages sequentially on the GUI thread.
-
-    Each stage is kicked off via ``QTimer.singleShot(0, ...)`` so control
-    returns to the event loop between stages and the UI stays responsive.
+    """Run post-show app startup services sequentially on the GUI thread.
 
     Parameters
     ----------
     window:
         The ``Main`` window instance.  Must have ``progress_bar``
         (``QProgressBar``) and ``status_label`` (``QLabel``) attributes.
-    stages:
-        Ordered list of ``(label, callable)`` pairs.  The callable receives
-        no arguments.
+    manager:
+        An ``AppStartupServiceManager`` with loaded specs.
     on_complete:
-        Optional callback invoked (with no arguments) after all stages finish.
+        Optional callback invoked after all stages finish.
     """
 
-    # Emitted when all stages are done
     finished = QtCore.Signal()
 
     def __init__(
         self,
         window,
-        stages: List[Tuple[str, Callable[[], None]]],
+        manager: AppStartupServiceManager,
         on_complete: Optional[Callable[[], None]] = None,
         parent: Optional[QtCore.QObject] = None,
     ) -> None:
         super().__init__(parent)
         self._window = window
-        self._stages = list(stages)
+        self._manager = manager
+        self._specs: list[AppStartupServiceSpec] = []
         self._on_complete = on_complete
         self._index = 0
-        self._total = len(self._stages)
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+        self._loader = _DefaultEntrypointLoader()
 
     def start(self) -> None:
-        """Schedule the first stage and return immediately."""
-        if not self._stages:
+        """Evaluate conditions, report skips, and schedule the first stage."""
+        self._specs = self._manager.resolve_enabled(surface="gui", phase="post_gui_show")
+        if not self._specs:
             self._finalize()
             return
+        self._index = 0
         self._schedule_next()
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     def _schedule_next(self) -> None:
         QtCore.QTimer.singleShot(0, self._run_next)
 
     def _run_next(self) -> None:
-        if self._index >= self._total:
+        if self._index >= len(self._specs):
             self._finalize()
             return
 
-        label, fn = self._stages[self._index]
+        spec = self._specs[self._index]
 
-        # --- update status bar ---
-        self._set_status(label, self._index, self._total)
+        self._set_status(spec.label, self._index, len(self._specs))
 
-        # --- run stage ---
+        dependencies = {
+            dep: self._manager.get_service_result(dep)
+            for dep in spec.depends_on
+        }
+        context = AppStartupContext(
+            dispatcher=self._manager.dispatcher,
+            state=self._manager.state,
+            event_bus=self._manager.event_bus,
+            job_manager=self._manager.job_manager,
+            stop_event=self._manager._stop_event,
+            dependencies=dependencies,
+            surface=spec.surface,
+            phase=spec.phase,
+        )
+
         try:
-            fn()
+            register_fn = self._loader.load(spec.entrypoint)
+            register_fn(context)
         except Exception:
             try:
                 cs.logging.error(
-                    f"Background startup stage '{label}' failed:\n"
+                    f"Background startup stage '{spec.id}' failed:\n"
                     + traceback.format_exc()
                 )
             except Exception:
@@ -105,7 +104,6 @@ class BackgroundStartupRunner(QtCore.QObject):
         self._schedule_next()
 
     def _finalize(self) -> None:
-        """Called after all stages finish."""
         self._set_ready()
         self.finished.emit()
         if callable(self._on_complete):
@@ -114,16 +112,11 @@ class BackgroundStartupRunner(QtCore.QObject):
             except Exception:
                 pass
 
-    # ------------------------------------------------------------------
-    # Status-bar helpers
-    # ------------------------------------------------------------------
-
     def _set_status(self, label: str, index: int, total: int) -> None:
         try:
             cs.logging.info(f"[BG] {label}")
         except Exception:
             pass
-
         try:
             pb = getattr(self._window, "progress_bar", None)
             if pb is not None:
@@ -132,23 +125,18 @@ class BackgroundStartupRunner(QtCore.QObject):
                 pb.setValue(pct)
         except Exception:
             pass
-
         try:
             lbl = getattr(self._window, "status_label", None)
             if lbl is not None:
                 lbl.setText(label)
         except Exception:
             pass
-
-        # Also update the status bar message
         try:
             status = getattr(self._window, "status", None)
             if status is not None:
                 status.showMessage(label)
         except Exception:
             pass
-
-        # Keep the UI responsive
         try:
             from qtpy import QtWidgets
             app = QtWidgets.QApplication.instance()
@@ -162,18 +150,15 @@ class BackgroundStartupRunner(QtCore.QObject):
             pb = getattr(self._window, "progress_bar", None)
             if pb is not None:
                 pb.setValue(100)
-                # Hide progress bar when done — status bar has more space for messages
                 pb.setVisible(False)
         except Exception:
             pass
-
         try:
             lbl = getattr(self._window, "status_label", None)
             if lbl is not None:
                 lbl.setText("Ready")
         except Exception:
             pass
-
         try:
             status = getattr(self._window, "status", None)
             if status is not None:

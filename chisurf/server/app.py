@@ -6,7 +6,7 @@ from chisurf.core.plugin.registry import PluginRegistry
 from chisurf.server.dispatcher import ServiceDispatcher
 from chisurf.server.eventbus import EventBus, InProcessEventBus
 from chisurf.server.jobs import JobManager
-from chisurf.server.service_startup import ServiceStartupManager
+from chisurf.startup.services import AppStartupServiceManager
 from chisurf.server.session import SessionState
 from chisurf.server.transport.zmq import ZmqServer
 
@@ -60,13 +60,13 @@ class ChiSurfServer:
         )
         self.dispatcher = ServiceDispatcher(self.state, event_bus=self.event_bus)
         self.dispatcher._build_default_registry()
-        self.service_startup_manager = ServiceStartupManager(
+        self.service_startup_manager = AppStartupServiceManager(
             dispatcher=self.dispatcher,
             state=self.state,
             event_bus=self.event_bus,
             job_manager=self.job_manager,
         )
-        self.service_startup_manager.start()
+        self.service_startup_manager.start(surface="server", phase="pre_server_listen")
         # Auto-discover and register all plugin services from manifests.
         # Services declared in startup config files are owned by that flow.
         self.plugin_registry = PluginRegistry()

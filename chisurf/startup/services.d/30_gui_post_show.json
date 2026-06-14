@@ -1,0 +1,65 @@
+{
+  "services": [
+    {
+      "id": "deferred_gui_imports",
+      "entrypoint": "chisurf.startup.gui_services:deferred_gui_imports",
+      "surface": "gui",
+      "phase": "post_gui_show",
+      "label": "Loading heavy modules",
+      "progress": 10,
+      "order": 10
+    },
+    {
+      "id": "populate_plugins",
+      "entrypoint": "chisurf.startup.gui_services:populate_plugins",
+      "surface": "gui",
+      "phase": "post_gui_show",
+      "label": "Loading plugins",
+      "progress": 30,
+      "order": 20,
+      "depends_on": ["deferred_gui_imports"]
+    },
+    {
+      "id": "check_updates",
+      "entrypoint": "chisurf.startup.gui_services:check_updates",
+      "surface": "gui",
+      "phase": "post_gui_show",
+      "label": "Checking for updates",
+      "progress": 50,
+      "order": 30,
+      "depends_on": ["populate_plugins"]
+    },
+    {
+      "id": "gui.start_jupyter",
+      "entrypoint": "chisurf.startup.gui_services:start_jupyter",
+      "surface": "gui",
+      "phase": "post_gui_show",
+      "label": "Starting Jupyter",
+      "progress": 70,
+      "order": 40,
+      "enabled_if": {
+        "setting": "gui.start_jupyter_on_startup",
+        "equals": true
+      }
+    },
+    {
+      "id": "gui.populate_notebooks",
+      "entrypoint": "chisurf.startup.gui_services:populate_notebooks",
+      "surface": "gui",
+      "phase": "post_gui_show",
+      "label": "Populating notebooks",
+      "progress": 80,
+      "order": 50,
+      "depends_on": ["gui.start_jupyter"]
+    },
+    {
+      "id": "warmup_imports",
+      "entrypoint": "chisurf.startup.gui_services:warmup_imports",
+      "surface": "gui",
+      "phase": "post_gui_show",
+      "label": "Preloading modules",
+      "progress": 90,
+      "order": 60
+    }
+  ]
+}
