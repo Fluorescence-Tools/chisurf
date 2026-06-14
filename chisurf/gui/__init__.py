@@ -1639,6 +1639,9 @@ class LoginDialog(QtWidgets.QDialog):
         header_layout = QtWidgets.QHBoxLayout()
         logo_label = QtWidgets.QLabel()
         logo = QtGui.QPixmap(":/icons/icons/cs_logo.png")
+        if logo.isNull():
+            logo_path = pathlib.Path(chisurf.__file__).parent / "gui" / "resources" / "icons" / "cs_logo.png"
+            logo = QtGui.QPixmap(str(logo_path))
         if not logo.isNull():
             logo_label.setPixmap(logo.scaled(64, 64, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
         header_layout.addWidget(logo_label, 0, QtCore.Qt.AlignTop)
