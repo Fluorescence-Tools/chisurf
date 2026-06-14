@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, TYPE_CHECKING
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from qtpy import QtWidgets
+    pass
 
 
 from .model import PortSpec
@@ -24,6 +24,14 @@ class NodeType:
     default_config: Optional[Dict] = None
     width: float = 190.0
 
+    # Workflow metadata extensions (optional)
+    description: str = ""
+    tags: List[str] = field(default_factory=list)
+    config_schema: Optional[Dict] = None
+    runtime: Optional[str] = None
+    operation: Optional[str] = None
+    executor: Optional[Callable] = None
+
     def __post_init__(self):
         if self.default_config is None:
             self.default_config = {}
@@ -40,6 +48,29 @@ class NodeRegistry:
         if node_type.id in self._types:
             raise ValueError(f"Node type '{node_type.id}' already registered")
         self._types[node_type.id] = node_type
+
+    def unregister(self, type_id: str) -> None:
+        """Unregister a node type by ID."""
+        if type_id in self._types:
+            del self._types[type_id]
+
+    def replace(self, node_type: NodeType) -> None:
+        """Replace or register a node type."""
+        self._types[node_type.id] = node_type
+
+    def by_category(self) -> Dict[str, List[NodeType]]:
+        """Group registered node types by their category."""
+        grouped: Dict[str, List[NodeType]] = {}
+        for nt in self._types.values():
+            grouped.setdefault(nt.category, []).append(nt)
+        return grouped
+
+    def workflow_types(self) -> List[NodeType]:
+        """Return nodes that define a runtime or executor."""
+        return [
+            nt for nt in self._types.values()
+            if nt.runtime is not None or nt.executor is not None
+        ]
 
     def get(self, type_id: str) -> Optional[NodeType]:
         """Get a node type by ID."""

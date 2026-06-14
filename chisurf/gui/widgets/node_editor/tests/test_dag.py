@@ -15,6 +15,29 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+class MockMouseEvent:
+    def __init__(self, scene_pos=None, button=None):
+        self._scene_pos = scene_pos
+        self._button = button
+        self._accepted = False
+
+    def scenePos(self):
+        return self._scene_pos
+
+    def button(self):
+        return self._button
+
+    def accept(self):
+        self._accepted = True
+
+    def setScenePos(self, pos):
+        self._scene_pos = pos
+
+    def setButton(self, btn):
+        self._button = btn
+
+
+
 @pytest.fixture
 def app():
     """Ensure a QApplication exists for the duration of the DAG tests."""
@@ -116,9 +139,6 @@ def test_cycle_detection(scene):
     scene.addItem(edge1)
     scene.register_edge(edge1)
 
-    edge2 = EdgeGraphicsItem(items[1].port_items[1], items[0].port_items[0])  # Back to input? Wait, need to adjust
-    # Node1 has output[0], Node2 has input[0], output[1]
-
     # Actually, to create cycle: Node1 output -> Node2 input, Node2 output -> Node1 input
     # But Node1 has no input, so add input to Node1
     model1.inputs = [PortSpec(name="In", is_output=False)]
@@ -132,7 +152,7 @@ def test_cycle_detection(scene):
     assert scene.has_cycles() is True
 
 
-def test_enforce_acyclic_flag(scene):
+def test_enforce_acyclic_flag(scene, monkeypatch):
     """Test enforce_acyclic prevents cycle-creating edges."""
     scene.enforce_acyclic = True
 
@@ -166,13 +186,15 @@ def test_enforce_acyclic_flag(scene):
 
     # Simulate mouse press on port1_out
     scene._current_edge = None
-    event_press = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMousePress)
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: port1_out)
+    event_press = MockMouseEvent()
     event_press.setScenePos(port1_out.scene_pos())
     event_press.setButton(QtCore.Qt.LeftButton)
     scene.mousePressEvent(event_press)
 
     # Simulate mouse release on port2_in
-    event_release = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMouseRelease)
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: port2_in)
+    event_release = MockMouseEvent()
     event_release.setScenePos(port2_in.scene_pos())
     event_release.setButton(QtCore.Qt.LeftButton)
     scene.mouseReleaseEvent(event_release)
@@ -185,12 +207,14 @@ def test_enforce_acyclic_flag(scene):
     port1_in = item1.port_items[0]
 
     scene._current_edge = None
-    event_press2 = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMousePress)
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: port2_out)
+    event_press2 = MockMouseEvent()
     event_press2.setScenePos(port2_out.scene_pos())
     event_press2.setButton(QtCore.Qt.LeftButton)
     scene.mousePressEvent(event_press2)
 
-    event_release2 = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMouseRelease)
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: port1_in)
+    event_release2 = MockMouseEvent()
     event_release2.setScenePos(port1_in.scene_pos())
     event_release2.setButton(QtCore.Qt.LeftButton)
     scene.mouseReleaseEvent(event_release2)

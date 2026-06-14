@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import math
 from typing import Optional
 
@@ -25,6 +26,7 @@ class EdgeGraphicsItem(QtWidgets.QGraphicsPathItem):
         self._cycle_color_override: Optional[QtGui.QColor] = None
         self._arrow_color_override: Optional[QtGui.QColor] = None
         self._style_config = {}
+        self._config = {}
 
         self.set_cycle(False)
 
@@ -171,6 +173,7 @@ class EdgeGraphicsItem(QtWidgets.QGraphicsPathItem):
         if not isinstance(cfg, dict):
             return
 
+        self._config = copy.deepcopy(cfg)
         style = {}
 
         col = _to_qcolor(cfg.get("color"))

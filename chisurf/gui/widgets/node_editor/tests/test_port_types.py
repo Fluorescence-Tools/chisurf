@@ -8,6 +8,29 @@ from chisurf.gui.widgets.node_editor.node_item import NodeGraphicsItem
 from chisurf.gui.widgets.node_editor.model import NodeModel, PortSpec
 
 
+class MockMouseEvent:
+    def __init__(self, scene_pos=None, button=None):
+        self._scene_pos = scene_pos
+        self._button = button
+        self._accepted = False
+
+    def scenePos(self):
+        return self._scene_pos
+
+    def button(self):
+        return self._button
+
+    def accept(self):
+        self._accepted = True
+
+    def setScenePos(self, pos):
+        self._scene_pos = pos
+
+    def setButton(self, btn):
+        self._button = btn
+
+
+
 @pytest.fixture
 def app():
     """Ensure a QApplication exists for the duration of the tests."""
@@ -52,7 +75,7 @@ def test_validate_connection_types(scene):
     assert scene.validate_connection(MockPort(p1), MockPort(p5)) is False
 
 
-def test_mouse_release_prevents_mismatch(scene):
+def test_mouse_release_prevents_mismatch(scene, monkeypatch):
     """Test that mouse release on an incompatible port cancels the connection."""
     # Create two nodes with mismatching ports
     m1 = NodeModel(
@@ -81,7 +104,9 @@ def test_mouse_release_prevents_mismatch(scene):
     p2_in = i2.port_items[0]
     
     # Start edge creation
-    event_press = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMousePress)
+    scene._current_edge = None
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: p1_out)
+    event_press = MockMouseEvent()
     event_press.setScenePos(p1_out.scene_pos())
     event_press.setButton(QtCore.Qt.LeftButton)
     scene.mousePressEvent(event_press)
@@ -89,7 +114,8 @@ def test_mouse_release_prevents_mismatch(scene):
     assert scene._current_edge is not None
     
     # Release on mismatching port
-    event_release = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMouseRelease)
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: p2_in)
+    event_release = MockMouseEvent()
     event_release.setScenePos(p2_in.scene_pos())
     event_release.setButton(QtCore.Qt.LeftButton)
     scene.mouseReleaseEvent(event_release)
@@ -99,7 +125,7 @@ def test_mouse_release_prevents_mismatch(scene):
     assert scene._current_edge is None
 
 
-def test_mouse_release_allows_match(scene):
+def test_mouse_release_allows_match(scene, monkeypatch):
     """Test that mouse release on a matching port completes the connection."""
     m1 = NodeModel(
         title="N1", 
@@ -125,13 +151,16 @@ def test_mouse_release_allows_match(scene):
     p2_in = i2.port_items[0]
     
     # Start edge creation
-    event_press = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMousePress)
+    scene._current_edge = None
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: p1_out)
+    event_press = MockMouseEvent()
     event_press.setScenePos(p1_out.scene_pos())
     event_press.setButton(QtCore.Qt.LeftButton)
     scene.mousePressEvent(event_press)
     
     # Release on matching port
-    event_release = QtWidgets.QGraphicsSceneMouseEvent(QtCore.QEvent.GraphicsSceneMouseRelease)
+    monkeypatch.setattr(scene, "itemAt", lambda pos, tf: p2_in)
+    event_release = MockMouseEvent()
     event_release.setScenePos(p2_in.scene_pos())
     event_release.setButton(QtCore.Qt.LeftButton)
     scene.mouseReleaseEvent(event_release)

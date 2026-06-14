@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
-
+import copy
 import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -11,10 +11,12 @@ try:  # optional dependency
 except Exception:  # pragma: no cover
     nx = None  # type: ignore
 
-from .port_item import NodePortGraphicsItem
 from .model import NodeModel, PortSpec
-from .theme import color as theme_color, metric as theme_metric, flag as theme_flag, text as theme_text
-
+from .port_item import NodePortGraphicsItem
+from .theme import color as theme_color
+from .theme import flag as theme_flag
+from .theme import metric as theme_metric
+from .theme import text as theme_text
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -73,8 +75,11 @@ class NodeScene(QtWidgets.QGraphicsScene):
         background_pattern_enabled: Optional[bool] = None,
         enable_cycle_highlighting: bool = True,
         enforce_acyclic: bool = False,
+        read_only: bool = False,
     ):
         super().__init__(parent)
+        self.read_only = read_only
+        self.meta = {}
 
         # Visual configuration
         self.background_color = background_color or theme_color("scene_background", (35, 35, 35))
@@ -224,28 +229,31 @@ class NodeScene(QtWidgets.QGraphicsScene):
                     # Underlying C++ item is gone.
                     continue
                 edge.update_path()
-                
+
     def validate_connection(self, src_port: NodePortGraphicsItem, tgt_port: NodePortGraphicsItem) -> bool:
         """Return True if a connection between src_port and tgt_port is allowed.
-        
+
         Checks:
         1. Direction: One must be output, one must be input.
         2. Port types: Must be compatible (exact match or one is 'any').
         """
         if src_port.spec.is_output == tgt_port.spec.is_output:
             return False
-            
+
         src_type = getattr(src_port.spec, "port_type", "spectral") or "spectral"
         tgt_type = getattr(tgt_port.spec, "port_type", "spectral") or "spectral"
-        
+
         # 'any' type connects to anything
         if src_type == "any" or tgt_type == "any":
             return True
-            
+
         return src_type == tgt_type
 
     # ----- Mouse interaction for creating edges --------------------------
     def mousePressEvent(self, event: QtWidgets.QGraphicsSceneMouseEvent):
+        if self.read_only:
+            super().mousePressEvent(event)
+            return
         item = self.itemAt(event.scenePos(), QtGui.QTransform())
         if isinstance(item, NodePortGraphicsItem) and event.button() == QtCore.Qt.LeftButton:
             # Start a temporary edge from this port
@@ -413,6 +421,14 @@ class NodeScene(QtWidgets.QGraphicsScene):
         return closest
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
+        if self.read_only:
+            # Only allow copy (Ctrl+C)
+            if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_C:
+                self._copy_selection_to_clipboard()
+                event.accept()
+                return
+            super().keyPressEvent(event)
+            return
         # Delete selected nodes/edges with the Delete key
         if event.key() == QtCore.Qt.Key_Delete:
             owner = self.parent()
@@ -795,24 +811,33 @@ class NodeScene(QtWidgets.QGraphicsScene):
         from .edge_item import EdgeGraphicsItem
         from .node_item import NodeGraphicsItem
 
-        if isinstance(item, EdgeGraphicsItem):
-            chosen_edge = item
-            act_del_edge = menu.addAction("Delete connection")
-            menu.addSeparator()
-            act_toggle = act_dup_node = act_del_node = None  # type: ignore
-        elif isinstance(item, NodeGraphicsItem):
-            chosen_node = item
-            act_toggle = menu.addAction("Open node" if item.collapsed else "Close node")
-            act_dup_node = menu.addAction("Duplicate node")
-            act_del_node = menu.addAction("Delete node")
-            act_raise_node = menu.addAction("Bring to front")
-            menu.addSeparator()
-            act_del_edge = None  # type: ignore
+        if not self.read_only:
+            if isinstance(item, EdgeGraphicsItem):
+                chosen_edge = item
+                act_del_edge = menu.addAction("Delete connection")
+                menu.addSeparator()
+                act_toggle = act_dup_node = act_del_node = None  # type: ignore
+            elif isinstance(item, NodeGraphicsItem):
+                chosen_node = item
+                act_toggle = menu.addAction("Open node" if item.collapsed else "Close node")
+                act_dup_node = menu.addAction("Duplicate node")
+                act_del_node = menu.addAction("Delete node")
+                act_raise_node = menu.addAction("Bring to front")
+                menu.addSeparator()
+                act_del_edge = None  # type: ignore
+            else:
+                act_toggle = act_dup_node = act_del_node = act_del_edge = None  # type: ignore
         else:
-            act_toggle = act_dup_node = act_del_node = act_del_edge = None  # type: ignore
+            if isinstance(item, NodeGraphicsItem):
+                chosen_node = item
+                act_toggle = menu.addAction("Open node" if item.collapsed else "Close node")
+                menu.addSeparator()
+            else:
+                act_toggle = None
+            act_del_edge = act_dup_node = act_del_node = act_raise_node = None
 
         # Node creation submenu: only on scene background (no node/edge under cursor)
-        if chosen_node is None and chosen_edge is None:
+        if not self.read_only and chosen_node is None and chosen_edge is None:
             groups = self._group_node_types_for_menu()
             if groups:
                 add_menu = menu.addMenu("Add node")
@@ -1179,7 +1204,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
     # ----- Layout using networkx ------------------------------------------
     def auto_layout(self):
         """Automatically arrange nodes using a hierarchical spring approach.
-        
+
         This algorithm:
         1. Assigns nodes to horizontal levels (columns) based on graph flow.
         2. Uses a spring layout guess for vertical ordering.
@@ -1197,7 +1222,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
         G_undirected, G_directed, index_by_node = graphs
         if not index_by_node:
             return
-            
+
         # node_by_idx[int] -> NodeGraphicsItem
         node_by_idx = {i: n for n, i in index_by_node.items()}
 
@@ -1207,7 +1232,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
         roots = [n for n, d in G_directed.in_degree() if d == 0]
         if not roots and len(G_directed.nodes) > 0:
             roots = [list(G_directed.nodes)[0]] # Handle cycles by picking an arbitrary root
-            
+
         queue = [(r, 0) for r in roots]
         processed = set()
         while queue:
@@ -1217,7 +1242,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
                 processed.add(idx)
                 for succ in G_directed.successors(idx):
                     queue.append((succ, lvl+1))
-        
+
         # Ensure every node has a level (e.g. disconnected nodes)
         for idx in G_directed.nodes:
             if idx not in levels:
@@ -1231,42 +1256,42 @@ class NodeScene(QtWidgets.QGraphicsScene):
         nodes_by_level = {}
         for idx, lvl in levels.items():
             nodes_by_level.setdefault(lvl, []).append(idx)
-            
+
         h_gap = 100.0 # horizontal gap between columns
         v_gap = 40.0  # vertical gap between nodes
-        
+
         current_x = 0.0
-        
+
         # To avoid visual jump, we'll store moves in the parent's undo if available
         owner = self.parent()
         if owner and hasattr(owner, "begin_undo"):
              pass # Already called in contextMenuEvent
-             
+
         for lvl in sorted(nodes_by_level.keys()):
             level_nodes = nodes_by_level[lvl]
             # Order nodes in this level by their spring layout Y position
             level_nodes.sort(key=lambda idx: pos[idx][1])
-            
+
             max_w = 0.0
             # Calculate total height of this column to center it
             col_height = sum(node_by_idx[idx].boundingRect().height() for idx in level_nodes)
             col_height += v_gap * (len(level_nodes) - 1)
-            
+
             current_y = -col_height / 2.0
-            
+
             for idx in level_nodes:
                 node = node_by_idx[idx]
                 br = node.boundingRect()
-                
-                # Snap to horizontal center of its intended column? 
+
+                # Snap to horizontal center of its intended column?
                 # Better: Left align in column and track max width.
                 node.setPos(current_x, current_y)
-                
+
                 max_w = max(max_w, br.width())
                 current_y += br.height() + v_gap
-                
+
             current_x += max_w + h_gap
-            
+
         self.update()
 
     def _build_nx_graphs(self):
@@ -1274,7 +1299,6 @@ class NodeScene(QtWidgets.QGraphicsScene):
             return None
 
         from .node_item import NodeGraphicsItem
-        from .edge_item import EdgeGraphicsItem
 
         nodes: List[NodeGraphicsItem] = [
             item for item in self.items() if isinstance(item, NodeGraphicsItem)
@@ -1333,7 +1357,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
         if graphs is None:
             return None
         _, G_directed, index_by_node = graphs
-        if len(G_directed.nodes) == 0:
+        if len(G_directed.edges) == 0:
             return None
         return G_directed, index_by_node
 
@@ -1442,8 +1466,6 @@ class NodeScene(QtWidgets.QGraphicsScene):
         allowing richer port descriptions.
         """
         from .node_item import NodeGraphicsItem
-        from .edge_item import EdgeGraphicsItem
-        from .model import PortSpec
 
         def _port_to_entry(p: PortSpec):
             # When no extra metadata is present, store the port as a plain
@@ -1529,20 +1551,26 @@ class NodeScene(QtWidgets.QGraphicsScene):
                 "target_port": int(dst_idx),
             }
 
-            cfg = getattr(edge, "_style_config", None)
+            cfg = getattr(edge, "_config", None)
+            if cfg is None:
+                cfg = getattr(edge, "_style_config", None)
             if isinstance(cfg, dict) and cfg:
-                edge_entry["config"] = dict(cfg)
+                edge_entry["config"] = copy.deepcopy(cfg)
 
             edges.append(edge_entry)
 
-        return {"nodes": nodes, "edges": edges, "version": 1}
+        res = {"nodes": nodes, "edges": edges, "version": 1}
+        if getattr(self, "meta", None):
+            res["meta"] = self.meta
+        return res
 
     def from_dict(self, data: Dict[str, Any]) -> None:
         """Load scene from a dictionary (JSON schema v1), validating first."""
-        from .validation import validate_graph_dict
-        from .node_item import NodeGraphicsItem
+        self.meta = data.get("meta", {})
         from .edge_item import EdgeGraphicsItem
+        from .node_item import NodeGraphicsItem
         from .registry import registry
+        from .validation import validate_graph_dict
 
         validate_graph_dict(data)
 
@@ -1649,6 +1677,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
                 node_type=node_type,
                 config=cfg,
                 content_factory=factory,
+                id=node_id,
             )
 
             # Create item using owner's method if available
@@ -1659,6 +1688,8 @@ class NodeScene(QtWidgets.QGraphicsScene):
                     item = NodeGraphicsItem(model)
             else:
                 item = NodeGraphicsItem(model)
+            if self.read_only:
+                item.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable, False)
             self.addItem(item)
 
             pos = node_desc.get("pos")
@@ -1711,6 +1742,7 @@ class NodeScene(QtWidgets.QGraphicsScene):
             edge = EdgeGraphicsItem(src_port, dst_port)
             cfg = edge_desc.get("config")
             if isinstance(cfg, dict):
+                edge._config = copy.deepcopy(cfg)
                 try:
                     edge.apply_config(cfg)
                 except Exception:

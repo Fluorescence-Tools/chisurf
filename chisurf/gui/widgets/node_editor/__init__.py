@@ -15,4 +15,5 @@ __all__ = [
     "InlineLabeledSlider",
     "Vector1DWidget",
     "NodeEditorWidget",
+    "NodeViewerWidget",
 ]

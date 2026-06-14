@@ -60,8 +60,9 @@ def test_registry_get_missing():
 
 def test_builtin_nodes_registered():
     """Test that built-in nodes are registered."""
-    # Assuming editor.py registers them on import
-    from chisurf.gui.widgets.node_editor.editor import NodeEditorWidget  # noqa: F401
+    # Instantiating NodeEditorWidget registers them
+    from chisurf.gui.widgets.node_editor.editor import NodeEditorWidget
+    _ = NodeEditorWidget()
 
     # Check that built-in types are available
     ids = registry.available_ids()

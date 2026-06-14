@@ -1,48 +1,45 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence
-
 import json
 import logging
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-import chinet as cn
+from qtpy import QtCore, QtGui, QtWidgets
 
-from qtpy import QtCore, QtWidgets, QtGui
-
-from .py_syntax import PythonHighlighter, CodeEditor
-
+from .chinet_eval import evaluate_pt_graph
 from .model import NodeModel, PortSpec
 from .node_item import NodeGraphicsItem
-from .scene import NodeScene
+from .node_viewer import NodeViewerWidget
+from .py_syntax import CodeEditor, PythonHighlighter
+from .registry import NodeType, registry
 from .state_tracker import SceneStateTracker
+from .theme import metric as theme_metric
 from .timeline_widget import TimelineWidget
-from .view import NodeView
 from .ui import (
     InlineLabeledSlider,
     NumericValueWidget,
+    PtPlotWidget,
     StyledComboBox,
     TextBoxWidget,
     Vector1DWidget,
     WidgetPalette,
-    PtPlotWidget,
     apply_node_ui_theme,
 )
-from .theme import metric as theme_metric
-from .registry import registry, NodeType
-from .chinet_eval import evaluate_pt_graph
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class NodeEditorWidget(QtWidgets.QWidget):
+class NodeEditorWidget(NodeViewerWidget):
     graphChanged = QtCore.Signal()
+    nodeSelected = QtCore.Signal(dict)
+    edgeSelected = QtCore.Signal(dict)
 
-    """High-level node editor widget with an example arithmetic graph.
+    _node_viewer_layout_owner = False
 
-    Convenience wrapper around NodeScene and NodeView. Includes a side panel
+    """Editable node editor widget with an example arithmetic graph.
+
+    Convenience wrapper around NodeViewerWidget. Includes a side panel
     with JSON load/save for the example.
     """
 
@@ -55,9 +52,22 @@ class NodeEditorWidget(QtWidgets.QWidget):
         node_min_body_height: float = 60.0,
         node_radius: float = 8.0,
         scene_kwargs: Optional[Dict] = None,
+        build_example: bool = True,
+        show_side_panel: bool = True,
+        show_timeline: bool = True,
+        read_only: bool = False,
+        graph_purpose: str = "example",
     ):
-        super().__init__(parent)
+        super().__init__(
+            parent,
+            read_only=read_only,
+            scene_kwargs=scene_kwargs,
+            show_toolbar=False,
+            graph_purpose=graph_purpose,
+            client=None,
+        )
         self.setWindowTitle("Node Editor Example")
+        self.graph_purpose = graph_purpose
 
         # Store style parameters for nodes
         # Allow theme to override core geometry so the overall node size can
@@ -71,7 +81,7 @@ class NodeEditorWidget(QtWidgets.QWidget):
         # This list controls which node IDs appear in the scene context menu.
         # The actual behaviour and widgets for each type are defined by the
         # node type registry in ``registry.py``.
-        self._available_node_types: List[str] = [
+        self._available_node_types = [
             "constant",
             "binary_op",
             "vector",
@@ -89,145 +99,138 @@ class NodeEditorWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)
-        layout.addWidget(splitter)
+        if show_side_panel:
+            splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)
+            layout.addWidget(splitter)
 
-        # Left panel: scene view + timeline navigation controls
-        left_panel = QtWidgets.QWidget()
-        left_layout = QtWidgets.QVBoxLayout(left_panel)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(2)
+            # Right panel: widget palette + JSON tools for the example graph
+            right_panel = QtWidgets.QWidget()
+            right_layout = QtWidgets.QVBoxLayout(right_panel)
 
-        # Scene + view
-        if scene_kwargs is None:
-            scene_kwargs = {}
-        self.scene = NodeScene(self, **scene_kwargs)
-        # Let the scene delegate node creation requests back to this widget
+            # Palette of node types (widgets) loaded from widgets_palette.json
+            right_layout.addWidget(QtWidgets.QLabel("Widget palette:"))
+            self.widget_palette = WidgetPalette(right_panel)
+            self.widget_palette.setMinimumHeight(120)
+            self.widget_palette.setMaximumHeight(220)
+            right_layout.addWidget(self.widget_palette)
+
+            right_layout.addWidget(QtWidgets.QLabel("Graph JSON (example):"))
+
+            btn_bar = QtWidgets.QHBoxLayout()
+            self.btn_load_json = QtWidgets.QToolButton()
+            self.btn_load_json.setText("Load JSON")
+            self.btn_save_json = QtWidgets.QToolButton()
+            self.btn_save_json.setText("Save JSON")
+            self.btn_evaluate_chinet = QtWidgets.QToolButton()
+            self.btn_evaluate_chinet.setText("Evaluate (chinet)")
+            # Wire JSON panel buttons to the helper callbacks so they operate on
+            # the live scene.
+            self.btn_load_json.clicked.connect(self._on_load_json_clicked)
+            self.btn_save_json.clicked.connect(self._on_save_json_clicked)
+            self.btn_evaluate_chinet.clicked.connect(self._on_evaluate_chinet_clicked)
+            btn_bar.addWidget(self.btn_load_json)
+            btn_bar.addWidget(self.btn_save_json)
+            btn_bar.addWidget(self.btn_evaluate_chinet)
+            btn_bar.addStretch(1)
+            right_layout.addLayout(btn_bar)
+
+            self.json_edit = QtWidgets.QPlainTextEdit()
+            self.json_edit.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
+            self.json_edit.setPlaceholderText("Graph JSON will appear here...")
+            right_layout.addWidget(self.json_edit, stretch=1)
+
+            # Add panels to splitter so the user can resize scene vs JSON
+            splitter.addWidget(self.viewer_panel)
+            splitter.addWidget(right_panel)
+            try:
+                splitter.setStretchFactor(0, 3)
+                splitter.setStretchFactor(1, 2)
+            except Exception:
+                pass
+
+            # Connect widget palette to create nodes at the view center
+            try:
+                self.widget_palette.nodeTypeActivated.connect(self._on_palette_node_type_activated)
+            except Exception:
+                pass
+        else:
+            layout.addWidget(self.viewer_panel)
+
         self.scene.node_adder = self._on_add_node_requested
-        self.view = NodeView(self.scene, self)
-        left_layout.addWidget(self.view, stretch=1)
-
-        # Right panel: widget palette + JSON tools for the example graph
-        right_panel = QtWidgets.QWidget()
-        right_layout = QtWidgets.QVBoxLayout(right_panel)
-
-        # Palette of node types (widgets) loaded from widgets_palette.json
-        right_layout.addWidget(QtWidgets.QLabel("Widget palette:"))
-        self.widget_palette = WidgetPalette(right_panel)
-        self.widget_palette.setMinimumHeight(120)
-        self.widget_palette.setMaximumHeight(220)
-        right_layout.addWidget(self.widget_palette)
-
-        right_layout.addWidget(QtWidgets.QLabel("Graph JSON (example):"))
-
-        btn_bar = QtWidgets.QHBoxLayout()
-        self.btn_load_json = QtWidgets.QToolButton()
-        self.btn_load_json.setText("Load JSON")
-        self.btn_save_json = QtWidgets.QToolButton()
-        self.btn_save_json.setText("Save JSON")
-        self.btn_evaluate_chinet = QtWidgets.QToolButton()
-        self.btn_evaluate_chinet.setText("Evaluate (chinet)")
-        # Wire JSON panel buttons to the helper callbacks so they operate on
-        # the live scene.
-        self.btn_load_json.clicked.connect(self._on_load_json_clicked)
-        self.btn_save_json.clicked.connect(self._on_save_json_clicked)
-        self.btn_evaluate_chinet.clicked.connect(self._on_evaluate_chinet_clicked)
-        btn_bar.addWidget(self.btn_load_json)
-        btn_bar.addWidget(self.btn_save_json)
-        btn_bar.addWidget(self.btn_evaluate_chinet)
-        btn_bar.addStretch(1)
-        right_layout.addLayout(btn_bar)
-
-        self.json_edit = QtWidgets.QPlainTextEdit()
-        self.json_edit.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
-        self.json_edit.setPlaceholderText("Graph JSON will appear here...")
-        right_layout.addWidget(self.json_edit, stretch=1)
-
-        # Add panels to splitter so the user can resize scene vs JSON
-        splitter.addWidget(left_panel)
-        splitter.addWidget(right_panel)
-        try:
-            splitter.setStretchFactor(0, 3)
-            splitter.setStretchFactor(1, 2)
-        except Exception:
-            pass
-
-        # Connect widget palette to create nodes at the view center
-        try:
-            self.widget_palette.nodeTypeActivated.connect(self._on_palette_node_type_activated)
-        except Exception:
-            pass
 
         # Undo/redo infrastructure
         self.undo_stack = QtWidgets.QUndoStack(self)
         # Centralised scene state tracker used by all graph-level undo/redo.
         self.state_tracker = SceneStateTracker(self, self.scene, self.undo_stack)
 
-        # Timeline: separate widget placed directly below the scene view.
-        # It uses its own QGraphicsScene/QGraphicsView so that the timeline
-        # geometry is completely decoupled from the node scene, avoiding
-        # overlay positioning issues.
-        self.timeline_scene = QtWidgets.QGraphicsScene(self)
-        self.timeline_view = QtWidgets.QGraphicsView(self.timeline_scene)
-        self.timeline_view.setRenderHint(QtGui.QPainter.Antialiasing)
-        self.timeline_view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.timeline_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.timeline_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.timeline_view.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        self.timeline_view.setStyleSheet("background: transparent; border: 0px;")
-        self.timeline_view.setMinimumHeight(40)
-        self.timeline_view.setMaximumHeight(44)
+        if show_timeline:
+            # Timeline: separate widget placed directly below the scene view.
+            # It uses its own QGraphicsScene/QGraphicsView so that the timeline
+            # geometry is completely decoupled from the node scene, avoiding
+            # overlay positioning issues.
+            self.timeline_scene = QtWidgets.QGraphicsScene(self)
+            self.timeline_view = QtWidgets.QGraphicsView(self.timeline_scene)
+            self.timeline_view.setRenderHint(QtGui.QPainter.Antialiasing)
+            self.timeline_view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            self.timeline_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            self.timeline_view.setFrameShape(QtWidgets.QFrame.NoFrame)
+            self.timeline_view.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+            self.timeline_view.setStyleSheet("background: transparent; border: 0px;")
+            self.timeline_view.setMinimumHeight(40)
+            self.timeline_view.setMaximumHeight(44)
 
-        timeline_bar = QtWidgets.QHBoxLayout()
-        timeline_bar.setContentsMargins(4, 0, 4, 4)
-        timeline_bar.setSpacing(2)
-        timeline_bar.addStretch(1)
-        timeline_bar.addWidget(self.timeline_view, stretch=0)
-        timeline_bar.addStretch(1)
-        left_layout.addLayout(timeline_bar)
+            timeline_bar = QtWidgets.QHBoxLayout()
+            timeline_bar.setContentsMargins(4, 0, 4, 4)
+            timeline_bar.setSpacing(2)
+            timeline_bar.addStretch(1)
+            timeline_bar.addWidget(self.timeline_view, stretch=0)
+            timeline_bar.addStretch(1)
+            self.viewer_layout.addLayout(timeline_bar)
 
-        # Keyboard shortcuts for undo/redo: bind to the view so they work when
-        # the scene has focus, and keep references to avoid premature GC.
-        self._undo_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Undo, self.view)
-        self._undo_shortcut.activated.connect(self._on_undo_shortcut)
-        self._redo_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Redo, self.view)
-        self._redo_shortcut.activated.connect(self._on_redo_shortcut)
+            # Keyboard shortcuts for undo/redo: bind to the view so they work when
+            # the scene has focus, and keep references to avoid premature GC.
+            self._undo_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Undo, self.view)
+            self._undo_shortcut.activated.connect(self._on_undo_shortcut)
+            self._redo_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Redo, self.view)
+            self._redo_shortcut.activated.connect(self._on_redo_shortcut)
 
-        # Graphics-based timeline hosted in its own scene/view below the main
-        # editor view. The back/forward buttons are embedded via
-        # QGraphicsProxyWidget so everything appears as one integrated control
-        # strip.
-        self.timeline = TimelineWidget()
-        self.timeline.set_undo_stack(self.undo_stack)
-        # Hide less relevant operations by default; users can enable them
-        # from the context menu if desired.
-        self.timeline.set_show_moves(False)
-        try:
-            self.timeline.set_show_folds(False)
-        except Exception:
-            pass
-        self.btn_timeline_back = QtWidgets.QToolButton()
-        self.btn_timeline_back.setText("\u25c0")
-        self.btn_timeline_back.setToolTip("Step backward in history")
-        self.btn_timeline_back.setAutoRaise(True)
-        self.btn_timeline_back.setFixedSize(20, 20)
-        self.btn_timeline_forward = QtWidgets.QToolButton()
-        self.btn_timeline_forward.setText("\u25b6")
-        self.btn_timeline_forward.setToolTip("Step forward in history")
-        self.btn_timeline_forward.setAutoRaise(True)
-        self.btn_timeline_forward.setFixedSize(20, 20)
-        self.timeline.set_navigation_buttons(self.btn_timeline_back, self.btn_timeline_forward)
-        # Add the graphics item to the dedicated timeline scene and size the
-        # scene rect so the view can keep it centered.
-        self.timeline_scene.addItem(self.timeline)
-        try:
-            br = self.timeline.path().boundingRect()
-            self.timeline_scene.setSceneRect(br)
-        except Exception:
-            pass
+            # Graphics-based timeline hosted in its own scene/view below the main
+            # editor view. The back/forward buttons are embedded via
+            # QGraphicsProxyWidget so everything appears as one integrated control
+            # strip.
+            self.timeline = TimelineWidget()
+            self.timeline.set_undo_stack(self.undo_stack)
+            # Hide less relevant operations by default; users can enable them
+            # from the context menu if desired.
+            self.timeline.set_show_moves(False)
+            try:
+                self.timeline.set_show_folds(False)
+            except Exception:
+                pass
+            self.btn_timeline_back = QtWidgets.QToolButton()
+            self.btn_timeline_back.setText("\u25c0")
+            self.btn_timeline_back.setToolTip("Step backward in history")
+            self.btn_timeline_back.setAutoRaise(True)
+            self.btn_timeline_back.setFixedSize(20, 20)
+            self.btn_timeline_forward = QtWidgets.QToolButton()
+            self.btn_timeline_forward.setText("\u25b6")
+            self.btn_timeline_forward.setToolTip("Step forward in history")
+            self.btn_timeline_forward.setAutoRaise(True)
+            self.btn_timeline_forward.setFixedSize(20, 20)
+            self.timeline.set_navigation_buttons(self.btn_timeline_back, self.btn_timeline_forward)
+            # Add the graphics item to the dedicated timeline scene and size the
+            # scene rect so the view can keep it centered.
+            self.timeline_scene.addItem(self.timeline)
+            try:
+                br = self.timeline.path().boundingRect()
+                self.timeline_scene.setSceneRect(br)
+            except Exception:
+                pass
 
-        self.btn_timeline_back.clicked.connect(self._on_timeline_back)
-        self.btn_timeline_forward.clicked.connect(self._on_timeline_forward)
+            self.btn_timeline_back.clicked.connect(self._on_timeline_back)
+            self.btn_timeline_forward.clicked.connect(self._on_timeline_forward)
+        else:
+            self.timeline = None
 
         # Reactively evaluate chinet PT graphs when the graph changes.
         try:
@@ -238,7 +241,8 @@ class NodeEditorWidget(QtWidgets.QWidget):
         # Register example node types
         self._register_example_node_types()
 
-        self._build_example_graph()
+        if build_example:
+            self._build_example_graph()
 
     def _register_example_node_types(self):
         """Register the built-in example node types."""
@@ -1416,6 +1420,91 @@ class NodeEditorWidget(QtWidgets.QWidget):
                 pass
         except Exception as exc:
             logger.error("Error during redo: %s", exc)
+
+    def load_graph_dict(self, data: dict[str, Any]) -> None:
+        """Load a graph structure from a dictionary and fit to view."""
+        self.scene.from_dict(data)
+        self.fit_graph()
+
+    def graph_dict(self) -> dict[str, Any]:
+        """Return the dictionary representation of the current graph."""
+        return self.scene.to_dict()
+
+    def fit_graph(self) -> None:
+        """Fit the entire graph scene into the view."""
+        self.view.fit_all()
+
+    def _on_scene_selection_changed(self) -> None:
+        """Handle selection changes in the scene, emitting signals for nodes/edges."""
+        from .edge_item import EdgeGraphicsItem
+        from .node_item import NodeGraphicsItem
+
+        selected_items = self.scene.selectedItems()
+        selected_nodes = [item for item in selected_items if isinstance(item, NodeGraphicsItem)]
+        selected_edges = [item for item in selected_items if isinstance(item, EdgeGraphicsItem)]
+
+        if selected_nodes:
+            item = selected_nodes[-1]
+            node_id = str(getattr(item.model, "id", ""))
+            model = item.model
+
+            # Helper to get port entry (safe fallback)
+            def _port_to_entry(p):
+                has_type = bool(getattr(p, "port_type", ""))
+                is_fixed = bool(getattr(p, "fixed", False))
+                has_min = getattr(p, "min_value", None) is not None
+                has_max = getattr(p, "max_value", None) is not None
+                if not (has_type or is_fixed or has_min or has_max):
+                    return p.name
+                entry = {"name": p.name}
+                if has_type:
+                    entry["type"] = str(getattr(p, "port_type", ""))
+                if is_fixed:
+                    entry["fixed"] = True
+                if has_min:
+                    try:
+                        entry["min"] = float(getattr(p, "min_value", 0.0))
+                    except Exception:
+                        pass
+                if has_max:
+                    try:
+                        entry["max"] = float(getattr(p, "max_value", 0.0))
+                    except Exception:
+                        pass
+                return entry
+
+            node_dict = {
+                "id": node_id,
+                "title": model.title,
+                "inputs": [_port_to_entry(p) for p in model.inputs],
+                "outputs": [_port_to_entry(p) for p in model.outputs],
+                "type": model.node_type,
+                "config": model.config or {},
+                "pos": [float(item.pos().x()), float(item.pos().y())],
+                "collapsed": bool(getattr(item, "collapsed", False)),
+                "z": float(item.zValue()),
+            }
+            self.nodeSelected.emit(node_dict)
+
+        if selected_edges:
+            edge = selected_edges[-1]
+            if edge.start_port is not None and edge.end_port is not None:
+                src_item = edge.start_port.node_item
+                dst_item = edge.end_port.node_item
+                src_id = str(getattr(src_item.model, "id", ""))
+                dst_id = str(getattr(dst_item.model, "id", ""))
+                edge_dict = {
+                    "source": src_id,
+                    "source_port": int(edge.start_port.index),
+                    "target": dst_id,
+                    "target_port": int(edge.end_port.index),
+                }
+                cfg = getattr(edge, "_config", None)
+                if cfg is None:
+                    cfg = getattr(edge, "_style_config", None)
+                if isinstance(cfg, dict) and cfg:
+                    edge_dict["config"] = dict(cfg)
+                self.edgeSelected.emit(edge_dict)
 
 
 __all__ = ["NodeEditorWidget"]

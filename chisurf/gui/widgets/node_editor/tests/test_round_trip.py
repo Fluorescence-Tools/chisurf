@@ -4,9 +4,8 @@ import pytest
 from qtpy import QtWidgets
 
 from chisurf.gui.widgets.node_editor.editor import NodeEditorWidget
-from chisurf.gui.widgets.node_editor.scene import NodeScene
 from chisurf.gui.widgets.node_editor.node_item import NodeGraphicsItem
-from chisurf.gui.widgets.node_editor.edge_item import EdgeGraphicsItem
+from chisurf.gui.widgets.node_editor.scene import NodeScene
 
 
 @pytest.fixture
@@ -110,15 +109,89 @@ def test_empty_scene_round_trip(app):  # noqa: ARG001 - ensures QApplication exi
     assert len(scene.edges) == 0
 
 
+def test_node_ids_and_edge_metadata_round_trip(editor):
+    """Round-trip a graph with explicit node IDs and edge metadata."""
+    graph = {
+        "version": 1,
+        "meta": {"purpose": "provenance_view", "schema_name": "test"},
+        "nodes": [
+            {
+                "id": "raw:1",
+                "title": "Raw",
+                "inputs": [{"name": "in", "type": "mfdb"}],
+                "outputs": [{"name": "out", "type": "mfdb"}],
+                "type": "mfdb_record",
+                "config": {"record": {"node_type": "raw_data", "node_id": "1"}, "extra": 1},
+                "pos": [0.0, 0.0],
+                "collapsed": False,
+                "z": 1.0,
+            },
+            {
+                "id": "product:1",
+                "title": "Product",
+                "inputs": [{"name": "in", "type": "mfdb"}],
+                "outputs": [{"name": "out", "type": "mfdb"}],
+                "type": "mfdb_record",
+                "config": {"record": {"node_type": "processed_data", "node_id": "1"}, "extra": 2},
+                "pos": [260.0, 0.0],
+                "collapsed": False,
+                "z": 1.0,
+            },
+        ],
+        "edges": [
+            {
+                "source": "raw:1",
+                "source_port": 1,
+                "target": "product:1",
+                "target_port": 0,
+                "config": {
+                    "edge_id": "edge-1",
+                    "relationship_type": "produced",
+                    "metadata": {"source": "mfdb"},
+                    "color": [70, 180, 100],
+                },
+            }
+        ],
+    }
+
+    editor.clear_graph()
+    editor.load_graph_dict(graph)
+
+    loaded = editor.graph_dict()
+    assert {node["id"] for node in loaded["nodes"]} == {"raw:1", "product:1"}
+    assert loaded["meta"] == graph["meta"]
+    assert loaded["edges"][0]["config"]["edge_id"] == "edge-1"
+    assert loaded["edges"][0]["config"]["metadata"] == {"source": "mfdb"}
+    assert loaded["edges"][0]["config"]["color"] == [70, 180, 100]
+
+
+def test_load_graph_dict_loads_valid_graph(editor):
+    """load_graph_dict should load a valid graph and fit the view."""
+    graph = {
+        "version": 1,
+        "nodes": [
+            {
+                "id": "n1",
+                "title": "Node",
+                "inputs": [],
+                "outputs": [],
+                "type": "text_note",
+                "config": {"label": "Note", "text": "hello"},
+                "pos": [0.0, 0.0],
+                "collapsed": False,
+            }
+        ],
+        "edges": [],
+    }
+
+    editor.clear_graph()
+    editor.load_graph_dict(graph)
+
+    assert len([item for item in editor.scene.items() if isinstance(item, NodeGraphicsItem)]) == 1
+
+
 def test_invalid_json_handling(editor):
     """Test that invalid JSON is handled gracefully."""
-    # Invalid JSON
     editor.load_graph_from_json("{invalid")
 
-    # Scene should remain empty or unchanged
-    items = [it for it in editor.scene.items() if isinstance(it, NodeGraphicsItem)]
-    # May have example graph, but no crash
-
-    # Invalid data
     editor.load_graph_from_json('{"nodes": "invalid"}')
-    # Should not crash
