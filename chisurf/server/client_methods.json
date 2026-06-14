@@ -47,6 +47,13 @@
     {"name": "graph__build_fits", "rpc": "graph.build_fits", "params": [{"name": "fit_indices", "default": null}, {"name": "fit_uids", "default": null}, {"name": "include_fixed", "default": true}, {"name": "connect_fits", "default": false}]},
     {"name": "log__write", "rpc": "log.write", "params": [{"name": "level", "default": "info"}, {"name": "message", "required": true}, {"name": "logger_name", "default": "chisurf.rpc"}, {"name": "extra", "default": null}]},
 
+    {"name": "editor__document_list", "rpc": "editor.document.list", "params": [], "result_key": "documents", "default": []},
+    {"name": "editor__document_get", "rpc": "editor.document.get", "params": [{"name": "document_id", "default": null}, {"name": "path", "default": null}, {"name": "include_content", "default": true}], "result_key": "document", "default": {}},
+    {"name": "editor__document_set", "rpc": "editor.document.set", "params": [{"name": "document_id", "default": null}, {"name": "path", "default": null}, {"name": "content", "required": true}, {"name": "expected_revision", "default": null}, {"name": "source", "default": "agent"}]},
+    {"name": "editor__document_apply_edits", "rpc": "editor.document.apply_edits", "params": [{"name": "document_id", "default": null}, {"name": "path", "default": null}, {"name": "edits", "required": true}, {"name": "expected_revision", "default": null}, {"name": "source", "default": "agent"}]},
+    {"name": "editor__document_ruff_check", "rpc": "editor.document.ruff_check", "params": [{"name": "document_id", "default": null}, {"name": "path", "default": null}, {"name": "content", "default": null}, {"name": "extra_args", "default": null}, {"name": "timeout_ms", "default": null}]},
+    {"name": "editor__document_ruff_fix", "rpc": "editor.document.ruff_fix", "params": [{"name": "document_id", "default": null}, {"name": "path", "default": null}, {"name": "expected_revision", "default": null}, {"name": "apply_to_document", "default": true}, {"name": "extra_args", "default": null}, {"name": "timeout_ms", "default": null}]},
+
     {"name": "meta__ping", "rpc": "meta.ping", "params": []},
     {"name": "meta__methods", "rpc": "meta.methods", "params": [], "result_key": "result", "default": []},
     {"name": "meta__protocol", "rpc": "meta.protocol", "params": []},

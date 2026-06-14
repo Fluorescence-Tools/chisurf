@@ -4,8 +4,7 @@ import json
 import logging
 import queue
 import threading
-import time
-from typing import Any, Callable, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 if TYPE_CHECKING:
     import zmq
@@ -57,6 +56,11 @@ class ZmqServer:
         self._cmd_port = cmd_port
         self._pub_port = pub_port
         self._host = host
+        if host not in ("127.0.0.1", "localhost", "::1", ""):
+            raise ValueError(
+                f"Non-loopback host '{host}' requires CURVE/ZAP transport security "
+                "which is not yet implemented. Use 127.0.0.1 (loopback) instead."
+            )
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._ctx: zmq.Context | None = None
@@ -229,18 +233,42 @@ class ZmqClient:
                 self._req_socket.close(linger=0)
             except Exception:
                 pass
+            self._req_socket = None
         if self._sub_socket is not None:
             try:
                 self._sub_socket.close(linger=0)
             except Exception:
                 pass
+            self._sub_socket = None
         if self._ctx is not None:
             try:
                 self._ctx.term()
             except Exception:
                 pass
+            self._ctx = None
         self._subscribers.clear()
         self._event_queue = None
+
+    def _reset_socket(self) -> None:
+        """Tear down the REQ socket so the next call() creates a fresh one.
+
+        After a timeout or any error that leaves the REQ socket in
+        "reply pending" state, ZMQ's strict state machine rejects
+        further send_json() calls.  Closing the socket and clearing
+        the reference forces connect() to start from a clean state.
+        """
+        if self._req_socket is not None:
+            try:
+                self._req_socket.close(linger=0)
+            except Exception:
+                pass
+            self._req_socket = None
+        if self._ctx is not None:
+            try:
+                self._ctx.term()
+            except Exception:
+                pass
+            self._ctx = None
 
     def call(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Send a JSON-RPC request and wait for the response."""
@@ -259,6 +287,7 @@ class ZmqClient:
         try:
             self._req_socket.send_json(msg)
         except zmq.ZMQError as e:
+            self._reset_socket()
             return {"ok": False, "error": f"send failed: {e}"}
 
         poller = zmq.Poller()
@@ -266,14 +295,17 @@ class ZmqClient:
         try:
             socks = dict(poller.poll(timeout=self._timeout_ms))
         except zmq.ZMQError as e:
+            self._reset_socket()
             return {"ok": False, "error": f"poll failed: {e}"}
 
         if self._req_socket not in socks:
+            self._reset_socket()
             return {"ok": False, "error": "timeout: no response within {}ms".format(self._timeout_ms)}
 
         try:
             return self._req_socket.recv_json()
         except zmq.ZMQError as e:
+            self._reset_socket()
             return {"ok": False, "error": f"recv failed: {e}"}
 
     def subscribe(self, topic: str = "", callback: Optional[Callable] = None) -> Any:

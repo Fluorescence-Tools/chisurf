@@ -133,7 +133,7 @@ class TestProtocolConstants:
         assert len(PROTOCOL_VERSION) > 0
 
     def test_method_catalogue_has_all_namespaces(self):
-        expected = {"meta", "dataset", "fit", "parameter", "project", "session", "model", "graph"}
+        expected = {"meta", "dataset", "fit", "parameter", "project", "session", "model", "graph", "log", "editor"}
         assert set(METHOD_CATALOGUE.keys()) == expected
 
     def test_method_catalogue_methods_are_strings(self):
@@ -144,10 +144,10 @@ class TestProtocolConstants:
                 assert isinstance(m, str)
                 assert m.startswith(ns + ".")
 
-    def test_method_schemas_cover_meta_dataset_fit(self):
-        expected = set(METHOD_CATALOGUE["meta"]["methods"])
-        expected.update(METHOD_CATALOGUE["dataset"]["methods"])
-        expected.update(METHOD_CATALOGUE["fit"]["methods"])
+    def test_method_schemas_cover_all_catalogue_methods(self):
+        expected = set()
+        for namespace in METHOD_CATALOGUE.values():
+            expected.update(namespace["methods"])
         assert expected <= set(METHOD_SCHEMAS.keys())
 
     def test_method_schema_shape(self):

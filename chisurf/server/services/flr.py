@@ -1,4 +1,4 @@
-"""FLR database service — wraps FluorophoreDatabase behind JSON-RPC.
+"""FLR database service — wraps FluorescenceDatabase behind JSON-RPC.
 
 All methods are exposed via a single generic ``flr.call`` entry point
 for flexibility, plus dedicated methods for the most common operations

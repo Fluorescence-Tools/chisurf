@@ -104,6 +104,7 @@ def test_client_meta_methods(zmq_server):
     assert "project.save" in methods
     assert "meta.ping" in methods
     assert "meta.methods" in methods
+    assert "editor.document.list" in methods
     client.close()
 
 

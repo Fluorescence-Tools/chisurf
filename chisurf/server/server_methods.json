@@ -85,6 +85,12 @@
     {"rpc": "graph.build_fits", "service": "graph.build_fit_graph"},
     {"rpc": "graph.build", "service": "graph.build_fit_graph"},
     {"rpc": "log.write", "service": "log_svc.write_log"},
+    {"rpc": "editor.document.list", "service": "code_editor.list_documents"},
+    {"rpc": "editor.document.get", "service": "code_editor.get_document"},
+    {"rpc": "editor.document.set", "service": "code_editor.set_document"},
+    {"rpc": "editor.document.apply_edits", "service": "code_editor.apply_document_edits"},
+    {"rpc": "editor.document.ruff_check", "service": "code_editor.ruff_check"},
+    {"rpc": "editor.document.ruff_fix", "service": "code_editor.ruff_fix"},
 
     {"rpc": "list_methods", "meta": "methods"},
     {"rpc": "meta.methods", "meta": "methods"},

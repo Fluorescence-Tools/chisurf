@@ -6,6 +6,7 @@ from chisurf.core.plugin.registry import PluginRegistry
 from chisurf.server.dispatcher import ServiceDispatcher
 from chisurf.server.eventbus import EventBus, InProcessEventBus
 from chisurf.server.jobs import JobManager
+from chisurf.server.service_startup import ServiceStartupManager
 from chisurf.server.session import SessionState
 from chisurf.server.transport.zmq import ZmqServer
 
@@ -59,10 +60,21 @@ class ChiSurfServer:
         )
         self.dispatcher = ServiceDispatcher(self.state, event_bus=self.event_bus)
         self.dispatcher._build_default_registry()
-        # Auto-discover and register all plugin services from manifests
+        self.service_startup_manager = ServiceStartupManager(
+            dispatcher=self.dispatcher,
+            state=self.state,
+            event_bus=self.event_bus,
+            job_manager=self.job_manager,
+        )
+        self.service_startup_manager.start()
+        # Auto-discover and register all plugin services from manifests.
+        # Services declared in startup config files are owned by that flow.
         self.plugin_registry = PluginRegistry()
         self.plugin_registry.discover()
-        self.plugin_registry.register_services(self.dispatcher)
+        self.plugin_registry.register_services(
+            self.dispatcher,
+            exclude_entrypoints=self.service_startup_manager.entrypoints,
+        )
         # Bridge in-process event bus to ZMQ broadcast
         self.event_bus.subscribe("*", self._broadcast_bridge)
 
@@ -92,6 +104,8 @@ class ChiSurfServer:
     def stop(self) -> None:
         """Gracefully stop the server."""
         _log.info("ChiSurfServer stopping")
+        if hasattr(self, "service_startup_manager"):
+            self.service_startup_manager.stop()
         self._zmq_server.stop()
 
     # ── internal helpers ──────────────────────────────────────────
@@ -99,8 +113,8 @@ class ChiSurfServer:
     @staticmethod
     def _init_flr_database():
         """Create or attach the FLR database."""
-        from chisurf.core.fio.mmcif.db import FluorophoreDatabase
-        return FluorophoreDatabase()
+        from chisurf.core.fio.mmcif.db import FluorescenceDatabase
+        return FluorescenceDatabase()
 
     def _zmq_dispatch(self, method: str, params: dict | None = None) -> dict:
         """Bridge ZMQ REQ → dispatcher."""

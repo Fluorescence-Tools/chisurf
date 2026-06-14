@@ -190,6 +190,20 @@ class ServiceDispatcher:
             self.register(spec["rpc"], self._handler_from_spec(spec))
 
     @classmethod
+    def _redact_params(cls, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Return a copy of *params* with sensitive fields redacted."""
+        SENSITIVE_KEYS = {"auth", "password", "token", "new_password", "old_password"}
+        redacted: Dict[str, Any] = {}
+        for k, v in params.items():
+            if k in SENSITIVE_KEYS:
+                redacted[k] = "***REDACTED***"
+            elif isinstance(v, dict):
+                redacted[k] = cls._redact_params(v)
+            else:
+                redacted[k] = v
+        return redacted
+
+    @classmethod
     def _notify_monitors(
         cls,
         method: str,
@@ -197,10 +211,15 @@ class ServiceDispatcher:
         result: Dict[str, Any],
         elapsed: float,
     ) -> None:
-        """Call all registered monitor callbacks, swallowing exceptions."""
+        """Call all registered monitor callbacks, swallowing exceptions.
+
+        Sensitive fields (auth, password, token) are redacted from params
+        before forwarding to monitors.
+        """
+        safe_params = cls._redact_params(params)
         for cb in cls._monitors:
             try:
-                cb(method, params, result, elapsed)
+                cb(method, safe_params, result, elapsed)
             except Exception:
                 pass
 
