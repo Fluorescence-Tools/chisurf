@@ -1,6 +1,0 @@
-[submodule "tools"]
-	path = tools
-	url = https://gitlab.peulen.xyz/build/tools
-[submodule "thirdparty/rttr"]
-	path = thirdparty/rttr
-	url = https://github.com/rttrorg/rttr

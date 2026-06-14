@@ -3,11 +3,11 @@ from .db import DB
 from .base import BaseObject
 from .node import Node
 from .port import Port
+from .schema import session_from_schema, session_to_schema
 
 class Session(BaseObject):
     """
     Enhanced Session class for managing a graph of Nodes and Ports.
-    Mirrors the C++ Session class logic 1:1.
     """
     def __init__(self, nodes=None):
         super().__init__(name="session")
@@ -28,6 +28,8 @@ class Session(BaseObject):
         return self.nodes
 
     def write_to_db(self):
+        if DB.has_backend():
+            return DB.get_backend().write_object(self)
         res = super().write_to_db()
         for node in self.nodes.values():
             if not node.is_connected_to_db:
@@ -37,6 +39,8 @@ class Session(BaseObject):
 
     def read_from_db(self, oid):
         self.oid = oid
+        if DB.has_backend():
+            return DB.get_backend().read_object(self, oid)
         # Try to recover state from global DB if already present
         stored = DB.get(oid)
         if stored:
@@ -93,6 +97,15 @@ class Session(BaseObject):
 
     def update(self):
         for node in self.nodes.values(): node.update()
+
+    def to_schema(self) -> dict:
+        """Return the canonical ``chinet.session.v1`` schema payload."""
+        return session_to_schema(self)
+
+    @classmethod
+    def from_schema(cls, payload: dict) -> "Session":
+        """Reconstruct a session from a canonical ``chinet.session.v1`` payload."""
+        return session_from_schema(payload)
 
     def to_dict(self):
         objs = DB.dump_all()

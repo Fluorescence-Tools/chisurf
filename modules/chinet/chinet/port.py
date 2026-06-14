@@ -27,7 +27,6 @@ class ValueType(int):
 class Port(BaseObject):
     """
     Enhanced Port class that wraps a numpy array and provides metadata.
-    Mirrors the C++ Port class and Python SWIG extension logic 1:1.
     """
     def __init__(self, *args, **kwargs):
         arg_names = ["fixed", "is_output", "is_reactive", "is_bounded", "lb", "ub", "value_type", "name"]

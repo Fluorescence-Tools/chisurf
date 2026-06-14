@@ -2,7 +2,7 @@
 name = "chinet"
 version = "0.3.0"
 requires-python = ">=3.10"
-description = "A simplified dependency management and linking system."
+description = "Pure-Python graph and parameter runtime for ChiSurf."
 readme = "README.md"
 authors = [
     {name = "Thomas-Otavio Peulen", email = "thomas.otavio.peulen@gmail.com"},
@@ -20,4 +20,3 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["chinet*"]
-exclude = ["old*", "build*", "test*", "doc*", "examples*", "cmake*", "conda-recipe*", "tools*"]

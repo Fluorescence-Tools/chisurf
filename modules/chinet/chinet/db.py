@@ -4,9 +4,12 @@ import os
 class DB:
     """
     In-memory singleton registry for chinet objects.
-    Persistence is lazy and only occurs on explicit save/load.
+
+    Optional backend adapters may be configured for transparent durable storage,
+    but the registry itself remains process-local.
     """
     _objects = {}
+    _backend = None
 
     @classmethod
     def register(cls, obj):
@@ -27,6 +30,31 @@ class DB:
     @classmethod
     def clear(cls):
         cls._objects.clear()
+
+    @classmethod
+    def set_backend(cls, backend):
+        """Configure an optional transparent persistence backend."""
+        cls._backend = backend
+
+    @classmethod
+    def clear_backend(cls):
+        """Remove the optional transparent persistence backend."""
+        cls._backend = None
+
+    @classmethod
+    def get_backend(cls):
+        """Return the configured optional backend, if any."""
+        return cls._backend
+
+    @classmethod
+    def has_backend(cls):
+        """Return whether a transparent persistence backend is configured."""
+        return cls._backend is not None
+
+    @classmethod
+    def iter_objects(cls):
+        """Iterate over currently registered chinet objects."""
+        return iter(cls._objects.values())
 
     @classmethod
     def dump_all(cls):

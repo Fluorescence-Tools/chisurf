@@ -15,19 +15,13 @@ utils.set_search_paths(TOPDIR)
 
 
 
-class CallbackNodePassOn(cn.NodeCallback):
-
-    def __init__(self, *args, **kwargs):
-        super(CallbackNodePassOn, self).__init__(*args, **kwargs)
+class CallbackNodePassOn:
 
     def run(self, inputs, outputs):
         outputs["outA"].value = inputs["inA"].value
 
 
-class NodeCallbackMultiply(cn.NodeCallback):
-
-    def __init__(self, *args, **kwargs):
-        super(NodeCallbackMultiply, self).__init__(*args, **kwargs)
+class NodeCallbackMultiply:
 
     def run(self, inputs, outputs):
         mul = 1.0
@@ -53,7 +47,7 @@ class Tests(unittest.TestCase):
         }
         node_with_ports = cn.Node(**d)
         self.assertEqual(
-            node_with_ports.get_input_ports().keys(),
+            list(node_with_ports.get_input_ports().keys()),
             ['inA', 'inB']
         )
         values = np.hstack(

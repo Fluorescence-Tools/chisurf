@@ -7,7 +7,6 @@ from .db import DB
 class Node(BaseObject):
     """
     Enhanced Node class with port management and lazy evaluation.
-    Mirrors the C++ Node class logic 1:1.
     """
     def __init__(self, name="", ports=None, callback_class=None, **kwargs):
         super().__init__(name=name)
@@ -200,10 +199,8 @@ class Node(BaseObject):
             "callback": self.callback,
             "callback_type": self.callback_type_string,
             "valid": self.node_valid_,
-            "nodes": {k: p.oid for k, p in self.ports.items()} # C++ used 'nodes' for port OIDs in Node doc?
+            "ports": {k: p.oid for k, p in self.ports.items()}
         })
-        # Wait, C++ uses 'ports' key. Let's stick to 'ports'.
-        doc["ports"] = {k: p.oid for k, p in self.ports.items()}
 
     def set_document(self, doc):
         super().set_document(doc)

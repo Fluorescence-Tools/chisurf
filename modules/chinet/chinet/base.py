@@ -3,10 +3,54 @@ import json
 import numpy as np
 from .db import DB
 
+
+def _is_mfdb_request(args, kwargs):
+    """Return whether connect arguments request the optional MFDB backend."""
+    if args and args[0] == "mfdb":
+        return True
+    return (
+        kwargs.get("backend") == "mfdb"
+        or str(kwargs.get("uri_string", "")).lower().startswith(("mfdb:", "mfdb://"))
+    )
+
+
+def _configure_backend_from_request(args, kwargs):
+    """Configure and return a backend requested through connect_to_db."""
+    backend = kwargs.get("backend")
+    if backend == "mfdb":
+        kwargs.pop("backend", None)
+    if backend is not None and backend != "mfdb":
+        DB.set_backend(backend)
+        return backend
+    if _is_mfdb_request(args, kwargs):
+        from chisurf.core.mfdb.chinet_adapter import configure_mfdb_backend
+
+        if args and args[0] == "mfdb":
+            db_path = kwargs.pop("db_path", None)
+            operation_id = kwargs.pop("operation_id", None)
+            experiment_id = kwargs.pop("experiment_id", None)
+            store_node_artifacts = kwargs.pop("store_node_artifacts", True)
+            parameters = kwargs.pop("parameters", None)
+            operation_type = kwargs.pop("operation_type", "model_fitting")
+            metadata = kwargs.pop("metadata", None)
+            backend = configure_mfdb_backend(
+                db_path=db_path,
+                operation_id=operation_id,
+                experiment_id=experiment_id,
+                store_node_artifacts=store_node_artifacts,
+                parameters=parameters,
+                operation_type=operation_type,
+                metadata=metadata,
+            )
+        else:
+            backend = configure_mfdb_backend(**kwargs)
+        return backend
+    return None
+
+
 class BaseObject:
     """
     Base class for all chinet objects.
-    Mirrors MemoryObject 1:1.
     """
     def __init__(self, name=""):
         self.object_name = name
@@ -41,11 +85,30 @@ class BaseObject:
     def is_connected_to_db(self): return self._connected
 
     def connect_to_db(self, *args, **kwargs):
+        backend = _configure_backend_from_request(args, kwargs)
+        if backend is not None or DB.has_backend():
+            DB.register(self)
+            active_backend = backend or DB.get_backend()
+            try:
+                result = active_backend.connect_object(self, *args, **kwargs)
+            except TypeError:
+                if args or kwargs:
+                    raise
+                result = active_backend.connect_object(self)
+                if result is None:
+                    result = True
+            self._connected = bool(result)
+            return self._connected
         self._connected = True
         DB.register(self)
         return True
 
     def disconnect_from_db(self):
+        if DB.has_backend():
+            try:
+                DB.get_backend().disconnect_object(self)
+            except AttributeError:
+                pass
         self._connected = False
         return True
 
@@ -54,6 +117,11 @@ class BaseObject:
         return False
 
     def read_from_db(self, oid):
+        if DB.has_backend():
+            try:
+                return bool(DB.get_backend().read_object(self, oid))
+            except AttributeError:
+                return False
         self.oid = oid
         stored = DB.get(oid)
         if stored:
@@ -62,6 +130,13 @@ class BaseObject:
         return False
 
     def write_to_db(self):
+        if DB.has_backend():
+            try:
+                result = DB.get_backend().write_object(self)
+            except AttributeError:
+                result = False
+            self._connected = bool(result)
+            return result
         if not self._connected: return False
         doc = self._document
         if hasattr(self, '_update_doc_from_data'):
@@ -81,41 +156,6 @@ class BaseObject:
             self._update_doc_from_data(doc)
         return json.dumps(doc, indent=indent if indent > 0 else None, 
                           default=lambda x: x.tolist() if isinstance(x, np.ndarray) else x)
-
-    # Legacy attribute helpers
-    def set_singleton_double(self, k, v): self._document[k] = float(v)
-    def set_singleton_int(self, k, v): self._document[k] = int(v)
-    def set_singleton_bool(self, k, v): self._document[k] = bool(v)
-    def get_singleton_double(self, k): return float(self._document.get(k, 0.0))
-    def get_singleton_int(self, k): return int(self._document.get(k, 0))
-    def get_singleton_bool(self, k): return bool(self._document.get(k, False))
-    def set_array_double(self, k, v): self._document[k] = [float(x) for x in v]
-    def set_array_int(self, k, v): self._document[k] = [int(x) for x in v]
-    def get_array_double(self, k): return tuple(self._document.get(k, []))
-    def get_array_int(self, k): return tuple(self._document.get(k, []))
-
-    # SWIG names
-    def get_own_oid(self): return self.oid
-    def set_own_oid(self, v): self.oid = v
-    def get_name(self): return self.name
-    def set_name(self, v): self.name = v
-
-    def connect_to_db_mongo(self, *args, **kwargs):
-        return self.connect_to_db(*args, **kwargs)
-
-    def connect_object_to_db_mongo(self, obj):
-        return self.connect_object_to_db(obj)
-
-    def read_from_db_mongo(self, oid):
-        return self.read_from_db(oid)
-
-    def set_value_vector(self, v): 
-        # For Port subclasses this might be overridden, 
-        # but BaseObject needs it for some TestMemoryObject tests
-        self._document["value"] = [x for x in v]
-        
-    def get_value_vector(self): 
-        return self._document.get("value", [])
 
     def create_copy_in_db(self):
         new_obj = self.__class__(name=self.object_name + "_copy")
