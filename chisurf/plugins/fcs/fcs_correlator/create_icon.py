@@ -86,5 +86,6 @@ draw.ellipse([(merge_x - 2, merge_y - 2), (merge_x + 2, merge_y + 2)],
              fill=(0, 100, 200, 200), outline=(0, 0, 0, 255))
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

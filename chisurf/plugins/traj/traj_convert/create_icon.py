@@ -34,5 +34,6 @@ draw.ellipse([(49, 24), (51, 26)], fill=(0, 0, 200, 200), outline=(0, 0, 0, 255)
 draw.ellipse([(44, 44), (46, 46)], fill=(0, 0, 200, 200), outline=(0, 0, 0, 255))
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

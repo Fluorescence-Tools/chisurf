@@ -1,26 +1,25 @@
-"""
-Enhanced icon utilities for ChiSurf plugins supporting emojis and text icons.
-"""
-import os
+"""Enhanced icon utilities for ChiSurf plugins supporting image, emoji, and text icons."""
 import pathlib
-from typing import Union, Optional
-from qtpy import QtGui, QtCore, QtWidgets
-from qtpy.QtGui import QIcon, QPixmap, QPainter, QFont, QColor, QPen
-from qtpy.QtCore import Qt, QSize
+
+from qtpy import QtCore
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
+
+ICON_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".svg", ".ico"}
 
 
 def create_text_icon(
     text: str,
     size: int = 64,
-    bg_color: Optional[str] = None,
+    bg_color: str | None = None,
     text_color: str = "#000000",
-    font_size: Optional[int] = None,
+    font_size: int | None = None,
     font_family: str = "Arial",
     shape: str = "square"  # "square", "circle", "rounded"
 ) -> QIcon:
     """
     Create an icon from text or emoji.
-    
+
     Parameters
     ----------
     text : str
@@ -37,7 +36,7 @@ def create_text_icon(
         Font family name
     shape : str
         Icon shape: "square", "circle", or "rounded"
-    
+
     Returns
     -------
     QIcon
@@ -46,18 +45,18 @@ def create_text_icon(
     # Create pixmap
     pm = QPixmap(size, size)
     pm.fill(Qt.transparent)
-    
+
     # Setup painter
     painter = QPainter(pm)
     painter.setRenderHint(QPainter.Antialiasing, True)
     painter.setRenderHint(QPainter.TextAntialiasing, True)
-    
+
     # Draw background if specified
     if bg_color:
         bg_color_obj = QColor(bg_color)
         painter.setBrush(bg_color_obj)
         painter.setPen(Qt.NoPen)
-        
+
         if shape == "circle":
             painter.drawEllipse(0, 0, size, size)
         elif shape == "rounded":
@@ -65,7 +64,7 @@ def create_text_icon(
             painter.drawRoundedRect(0, 0, size, size, radius, radius)
         else:  # square
             painter.drawRect(0, 0, size, size)
-    
+
     # Setup font
     font = QFont(font_family)
     if font_size is None:
@@ -79,25 +78,25 @@ def create_text_icon(
     font.setPointSize(font_size)
     font.setBold(True)
     painter.setFont(font)
-    
+
     # Setup text color
     text_color_obj = QColor(text_color)
     painter.setPen(QPen(text_color_obj))
-    
+
     # Draw text centered
     rect = QtCore.QRect(0, 0, size, size)
     flags = Qt.AlignCenter | Qt.AlignVCenter
     painter.drawText(rect, flags, text)
-    
+
     painter.end()
-    
+
     return QIcon(pm)
 
 
-def create_emoji_icon(emoji: str, size: int = 64, bg_color: Optional[str] = None) -> QIcon:
+def create_emoji_icon(emoji: str, size: int = 64, bg_color: str | None = None) -> QIcon:
     """
     Create an icon from an emoji character.
-    
+
     Parameters
     ----------
     emoji : str
@@ -106,7 +105,7 @@ def create_emoji_icon(emoji: str, size: int = 64, bg_color: Optional[str] = None
         Icon size in pixels
     bg_color : str, optional
         Background color. If None, uses transparent background
-    
+
     Returns
     -------
     QIcon
@@ -124,13 +123,14 @@ def create_emoji_icon(emoji: str, size: int = 64, bg_color: Optional[str] = None
 
 
 def resolve_plugin_icon(
-    icon_value: Union[str, QIcon, None],
+    icon_value: str | QIcon | None,
     size: int = 64,
-    fallback_text: Optional[str] = None
+    fallback_text: str | None = None,
+    base_dir: str | pathlib.Path | None = None,
 ) -> QIcon:
     """
     Resolve various icon formats into a QIcon object.
-    
+
     Parameters
     ----------
     icon_value : str, QIcon, or None
@@ -142,7 +142,9 @@ def resolve_plugin_icon(
         Default size for generated icons
     fallback_text : str, optional
         Text to use if icon_value is None
-    
+    base_dir : str or pathlib.Path, optional
+        Directory used to resolve relative image paths.
+
     Returns
     -------
     QIcon
@@ -153,41 +155,45 @@ def resolve_plugin_icon(
             return create_text_icon(fallback_text, size=size)
         else:
             return create_text_icon("?", size=size, bg_color="#cccccc")
-    
+
     if isinstance(icon_value, QIcon):
         return icon_value
-    
+
     if isinstance(icon_value, str):
         # Check if it's an emoji (contains Unicode emoji characters)
         if any(ord(char) > 0x1F000 for char in icon_value):
             return create_emoji_icon(icon_value, size=size)
-        
+
         # Check if it's a file path
-        if os.path.exists(icon_value):
-            return QIcon(icon_value)
-        
+        path = pathlib.Path(icon_value).expanduser()
+        if not path.is_absolute() and base_dir is not None:
+            path = pathlib.Path(base_dir) / path
+        if path.exists() and path.suffix.lower() in ICON_IMAGE_SUFFIXES:
+            return QIcon(str(path))
+
         # Check if it's a color name (create a solid color icon)
         color = QColor(icon_value)
         if color.isValid():
             pm = QPixmap(size, size)
             pm.fill(color)
             return QIcon(pm)
-        
+
         # Treat as text
         return create_text_icon(icon_value, size=size)
-    
+
     # Fallback
     return create_text_icon(str(icon_value), size=size)
 
 
 def create_plugin_icon_with_fallback(
     module,
-    package_dir: Union[str, pathlib.Path],
-    size: int = 64
+    package_dir: str | pathlib.Path,
+    size: int = 64,
+    manifest=None,
 ) -> QIcon:
     """
     Create plugin icon with comprehensive fallback system.
-    
+
     Parameters
     ----------
     module : module
@@ -196,58 +202,85 @@ def create_plugin_icon_with_fallback(
         Plugin package directory
     size : int
         Icon size
-    
+    manifest : PluginManifest, optional
+        Plugin manifest. If present, its icon field is preferred over legacy
+        module attributes because it is user-editable metadata.
+
     Returns
     -------
     QIcon
         Resolved icon
     """
     package_dir = pathlib.Path(package_dir)
-    
-    # 1. Check for module-level icon attribute
+
+    # 1. Prefer manifest icon metadata when available.
+    if manifest is not None and getattr(manifest, "icon", None):
+        try:
+            return resolve_plugin_icon(manifest.icon, size=size, base_dir=package_dir)
+        except Exception:
+            pass
+
+    # 2. Check for common image files before module-level text or emoji icons.
+    for icon_name in ("icon.png", "icon.svg", "icon.jpg", "icon.jpeg", "icon.ico"):
+        icon_path = package_dir / icon_name
+        if icon_path.exists():
+            try:
+                return QIcon(str(icon_path))
+            except Exception:
+                pass
+
+    # 3. Check for module-level icon attribute
     if hasattr(module, 'icon'):
         try:
-            return resolve_plugin_icon(module.icon, size=size)
+            return resolve_plugin_icon(module.icon, size=size, base_dir=package_dir)
         except Exception:
             pass
-    
-    # 2. Check for icon.png file
-    icon_png_path = package_dir / 'icon.png'
-    if icon_png_path.exists():
-        try:
-            return QIcon(str(icon_png_path))
-        except Exception:
-            pass
-    
-    # 3. Check for icon.svg file
-    icon_svg_path = package_dir / 'icon.svg'
-    if icon_svg_path.exists():
-        try:
-            return QIcon(str(icon_svg_path))
-        except Exception:
-            pass
-    
+
     # 4. Create fallback from plugin name
     plugin_name = getattr(module, 'name', None)
     if plugin_name:
-        # Extract first letter or create abbreviation
-        if ':' in plugin_name:
-            # Use the last part after colon for abbreviation
-            parts = plugin_name.split(':')
-            name_part = parts[-1]
-        else:
-            name_part = plugin_name
-        
-        # Create abbreviation (first 2-3 letters)
-        if len(name_part) >= 3:
-            fallback_text = name_part[:3].upper()
-        else:
-            fallback_text = name_part.upper()
-        
-        return create_text_icon(fallback_text, size=size, bg_color="#e0e0e0")
-    
+        return create_text_icon(_plugin_icon_label(plugin_name), size=size, bg_color="#e0e0e0")
+
     # 5. Ultimate fallback
     return create_text_icon("?", size=size, bg_color="#cccccc")
+
+
+def plugin_icon_path(package_dir: str | pathlib.Path) -> pathlib.Path:
+    """
+    Return the canonical editable icon image path for a plugin.
+
+    Parameters
+    ----------
+    package_dir : str or pathlib.Path
+        Plugin package directory.
+
+    Returns
+    -------
+    pathlib.Path
+        Path to ``icon.png`` in the plugin package.
+    """
+    return pathlib.Path(package_dir) / "icon.png"
+
+
+def _plugin_icon_label(plugin_name: str) -> str:
+    """
+    Return a compact text label for generated plugin icons.
+
+    Parameters
+    ----------
+    plugin_name : str
+        Human-readable plugin name.
+
+    Returns
+    -------
+    str
+        Uppercase one- to three-letter label.
+    """
+    name_part = plugin_name.split(":")[-1].strip()
+    words = [word for word in name_part.replace("-", " ").replace("_", " ").split() if word]
+    if len(words) >= 2:
+        return "".join(word[0] for word in words[:3]).upper()
+    return (name_part[:3] or "?").upper()
 
 
 # Utility functions for common icon patterns

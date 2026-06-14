@@ -70,5 +70,6 @@ for i in range(8):
 draw.line(curve_points, fill=(0, 200, 0, 255), width=1)
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

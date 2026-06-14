@@ -25,5 +25,6 @@ for i, height in enumerate(bar_heights):
     draw.rectangle([(x1, y1), (x2, y2)], fill=color, outline=(0, 0, 0, 255))
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

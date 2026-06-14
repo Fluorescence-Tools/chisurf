@@ -84,5 +84,6 @@ for width, height, color in zip(bar_widths, bar_heights, bar_colors):
     start_x += width + bar_spacing
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

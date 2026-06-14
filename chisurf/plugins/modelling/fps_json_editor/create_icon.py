@@ -19,5 +19,6 @@ draw.line([(20, 32), (44, 32)], fill=(0, 100, 200, 255), width=2)  # Line 2
 draw.line([(20, 40), (44, 40)], fill=(0, 100, 200, 255), width=2)  # Line 3
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

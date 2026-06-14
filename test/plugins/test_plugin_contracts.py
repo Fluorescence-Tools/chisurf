@@ -18,7 +18,10 @@ def _extract_string_constant(node):
 def _resolve_decorator_base(py_file: pathlib.Path, path_expr: str, plugins_root: pathlib.Path):
     if not path_expr:
         return py_file.parent
-    if "chisurf.core.settings.plugin_path" in path_expr:
+    if (
+        "chisurf.core.settings.plugin_path" in path_expr
+        or "cs.core.settings.plugin_path" in path_expr
+    ):
         parts = [a or b for a, b in re.findall(r'"([^"]+)"|\'([^\']+)\'', path_expr)]
         base = plugins_root
         for part in parts:
@@ -271,4 +274,3 @@ def convert_from_ui_representation(data):
             result[key] = value
     
     return result
-

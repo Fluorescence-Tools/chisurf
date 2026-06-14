@@ -75,5 +75,6 @@ for i, (x, y) in enumerate(plugin_positions):
         draw.line([(x - 3, y + 3), (x + 3, y - 3)], fill=(200, 0, 0, 255), width=2)
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

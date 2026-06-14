@@ -62,5 +62,6 @@ for pos in small_file_positions:
 draw.text((18, 50), "PTU Splitter", fill=(0, 0, 0, 255))
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

@@ -108,18 +108,27 @@ class PluginRegistry:
 
     # ── registration ───────────────────────────────────────────────
 
-    def register_services(self, dispatcher: Any) -> None:
+    def register_services(
+        self,
+        dispatcher: Any,
+        exclude_entrypoints: set[str] | None = None,
+    ) -> None:
         """Call each plugin's ``services`` entrypoint.
 
         Parameters
         ----------
         dispatcher : ServiceDispatcher
             The server's service dispatcher.
+        exclude_entrypoints : set of str, optional
+            Entrypoints already registered through central startup config.
 
         """
+        excluded = exclude_entrypoints or set()
         for manifest in self._manifests.values():
             entrypoint = manifest.entrypoints.services
             if not entrypoint:
+                continue
+            if entrypoint in excluded:
                 continue
             try:
                 register_fn = self._loader.load(entrypoint)

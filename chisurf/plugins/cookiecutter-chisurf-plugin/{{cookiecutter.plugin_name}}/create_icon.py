@@ -58,8 +58,9 @@ if __name__ == "__main__":
     icon = create_icon()
     
     # Save the icon
-    icon.save('icon.png')
-    print(f"Icon created at {os.path.abspath('icon.png')}")
+    icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+    icon.save(icon_path)
+    print(f"Icon created at {icon_path}")
     
     # Uncomment to display the icon (requires matplotlib)
     # import matplotlib.pyplot as plt

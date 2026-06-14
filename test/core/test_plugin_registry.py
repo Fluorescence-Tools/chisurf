@@ -120,6 +120,38 @@ class TestPluginRegistryServices:
 
             register_fn.assert_called_once_with(dispatcher)
 
+    def test_register_services_excludes_startup_entrypoints(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = pathlib.Path(tmp)
+            _make_plugin_dir(base, "mfdb", {
+                "id": "mfdb_plugin",
+                "version": "1.0.0",
+                "entrypoints": {
+                    "services": "mfdb_register_fn",
+                },
+            })
+            _make_plugin_dir(base, "other", {
+                "id": "other_plugin",
+                "version": "1.0.0",
+                "entrypoints": {
+                    "services": "other_register_fn",
+                },
+            })
+            dispatcher = MagicMock()
+
+            reg = PluginRegistry()
+            reg.discover(search_paths=[base])
+
+            with patch.object(reg._loader, "load") as load:
+                load.side_effect = lambda entrypoint: MagicMock()
+                reg.register_services(
+                    dispatcher,
+                    exclude_entrypoints={"mfdb_register_fn"},
+                )
+
+            loaded = [call.args[0] for call in load.call_args_list]
+            assert loaded == ["other_register_fn"]
+
     def test_register_services_skip_no_entrypoint(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = pathlib.Path(tmp)

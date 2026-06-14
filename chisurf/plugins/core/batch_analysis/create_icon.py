@@ -49,5 +49,6 @@ draw.rectangle([(progress_x1, progress_y1), (progress_fill_x2, progress_y2)],
                outline=None)
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

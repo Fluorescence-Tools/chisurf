@@ -72,5 +72,6 @@ draw.arc([(globe_x - 3, globe_y - 6), (globe_x + 3, globe_y + 6)],
          0, 360, fill=(0, 120, 200, 200))
 
 # Save the icon
-icon.save('icon.png')
-print(f"Icon created at {os.path.abspath('icon.png')}")
+icon_path = os.path.join(os.path.dirname(__file__), 'icon.png')
+icon.save(icon_path)
+print(f"Icon created at {icon_path}")

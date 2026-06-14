@@ -11,6 +11,7 @@ No arguments. No parsing. Just run it.
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
+import os
 
 # ==== Tunables (edit here if you like) ====
 SIZE = 512           # output size (pixels)
@@ -152,7 +153,7 @@ def main():
     # Downsample & save
     if SCALE != 1:
         img = img.resize((SIZE, SIZE), Image.LANCZOS)
-    img.save('icon.png', 'PNG')
+    img.save(os.path.join(os.path.dirname(__file__), 'icon.png'), 'PNG')
 
 
 if __name__ == '__main__':
