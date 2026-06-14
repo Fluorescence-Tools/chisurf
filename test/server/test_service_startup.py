@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
-
 import pytest
 
 from chisurf.server.service_startup import (
@@ -31,16 +28,6 @@ def _loader(calls: list[tuple[str, list[str]]]):
     return load
 
 
-def _load_password_services_module():
-    """Load password_services without importing the MFDB GUI package."""
-    path = Path(__file__).resolve().parents[2] / "chisurf" / "plugins" / "core" / "mfdb_admin" / "backend" / "password_services.py"
-    spec = importlib.util.spec_from_file_location("password_services_test_module", path)
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
-
-
 class _FakeDispatcher:
     """Minimal dispatcher used by password service registration tests."""
 
@@ -56,10 +43,8 @@ class _FakeDispatcher:
 def test_load_startup_services_uses_prefixed_config_order():
     """Prefixed config filenames define default startup order."""
     specs = load_startup_services()
-    assert [spec.id for spec in specs] == ["mfdb", "password"]
+    assert [spec.id for spec in specs] == ["mfdb"]
     assert specs[0].order == 10
-    assert specs[1].order == 20
-    assert specs[1].depends_on == ("mfdb",)
 
 
 def test_load_startup_services_explicit_order_overrides_prefix(tmp_path):
@@ -104,14 +89,20 @@ def test_service_startup_manager_orders_dependencies_before_order():
     assert [spec.id for spec in manager.ordered_specs()] == ["a", "b"]
 
 
-def test_password_service_registers_auth_methods():
-    """The separate password service exposes only auth methods."""
-    password_services = _load_password_services_module()
+def test_mfdb_auth_service_registers_auth_methods():
+    """The MFDB auth service exposes auth methods."""
+    from chisurf.plugins.core.mfdb_admin.backend import auth_services
+
     dispatcher = _FakeDispatcher()
 
-    password_services.register_services(dispatcher)
+    auth_services.register_services(dispatcher)
 
-    assert set(dispatcher.handlers) == {"mfdb.users.login", "mfdb.users.change_password"}
+    assert {
+        "mfdb.auth.login",
+        "mfdb.auth.logout",
+        "mfdb.auth.me",
+        "mfdb.auth.change_password",
+    }.issubset(dispatcher.handlers)
 
 
 def test_service_startup_manager_starts_background_services_in_order():

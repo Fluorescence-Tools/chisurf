@@ -1,0 +1,25 @@
+{
+  "services": [
+    {
+      "id": "mfdb",
+      "entrypoint": "chisurf.plugins.core.mfdb_admin.backend.services:register_services",
+      "background": true,
+      "methods": [
+        "mfdb.status",
+        "mfdb.samples.list",
+        "mfdb.samples.get",
+        "mfdb.samples.save",
+        "mfdb.samples.delete",
+        "mfdb.samples.search",
+        "mfdb.users.list",
+        "mfdb.users.save",
+        "mfdb.users.delete",
+        "mfdb.devices.list",
+        "mfdb.experiments.list",
+        "mfdb.v1.samples.list",
+        "mfdb.v1.experiments.list",
+        "mfdb.v1.graph.traverse"
+      ]
+    }
+  ]
+}
