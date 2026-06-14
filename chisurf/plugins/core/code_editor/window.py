@@ -4,7 +4,12 @@ import pathlib
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from chisurf.plugins.core.code_editor.editor import CodeEditor
+from chisurf.plugins.core.code_editor.editor import (
+    CodeEditor,
+    get_editor_settings,
+    save_editor_settings,
+)
+from chisurf.plugins.icon_utils import create_emoji_icon
 
 
 class CodeEditorWindow(QtWidgets.QMainWindow):
@@ -92,22 +97,80 @@ class CodeEditorWindow(QtWidgets.QMainWindow):
 
         run_menu = self.menuBar().addMenu("Run")
         run_menu.addAction(self.actions["run"])
+        run_menu.addAction(self.actions["ruff"])
 
     def _create_toolbar(self) -> None:
         """Create the main editor toolbar."""
         toolbar = QtWidgets.QToolBar("Editor", self)
         toolbar.setObjectName("code_editor_toolbar")
         toolbar.setMovable(True)
+        toolbar.setIconSize(QtCore.QSize(18, 18))
+        toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+
         for name in ["new", "open", "save"]:
             toolbar.addAction(self.actions[name])
         toolbar.addSeparator()
         for name in ["back", "forward", "definition", "completion"]:
             toolbar.addAction(self.actions[name])
         toolbar.addSeparator()
-        toolbar.addAction(self.actions["run"])
+
+        run_btn = QtWidgets.QToolButton(toolbar)
+        run_btn.setIcon(create_emoji_icon("▶", size=24))
+        run_btn.setText("Run")
+        run_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        run_btn.setToolTip("Run the current file")
+        run_btn.clicked.connect(lambda _checked=False: self.editor.run_macro(None))
+        toolbar.addWidget(run_btn)
+
+        stop_btn = QtWidgets.QToolButton(toolbar)
+        stop_btn.setIcon(create_emoji_icon("⏹", size=24))
+        stop_btn.setText("Stop")
+        stop_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        stop_btn.setToolTip("Stop execution")
+        stop_btn.setEnabled(False)
+        stop_btn.clicked.connect(self.editor.stop_macro)
+        toolbar.addWidget(stop_btn)
+
+        self.editor.runStateChanged.connect(
+            lambda running: (
+                run_btn.setEnabled(not running),
+                stop_btn.setEnabled(running),
+            )
+        )
+
+        endpoint = QtWidgets.QComboBox(toolbar)
+        endpoint.addItem(create_emoji_icon("🖥", size=16), "Console")
+        endpoint.addItem(create_emoji_icon("⚙", size=16), "Process")
+        settings = get_editor_settings()
+        current = settings.get("run_endpoint", "process")
+        endpoint.setCurrentIndex(1 if current == "process" else 0)
+        endpoint.setToolTip("Execution endpoint")
+        endpoint.currentIndexChanged.connect(
+            lambda idx: self._set_run_endpoint(
+                "process" if idx == 1 else "console"
+            )
+        )
+        toolbar.addWidget(endpoint)
+
+        toolbar.addSeparator()
+        toolbar.addAction(self.actions["ruff"])
         toolbar.addAction(self.actions["settings"])
+
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred
+        )
+        toolbar.addWidget(spacer)
+
+        toolbar.addSeparator()
         toolbar.addAction(self.actions["agent"])
         self.addToolBar(toolbar)
+
+    def _set_run_endpoint(self, mode: str) -> None:
+        """Persist the selected execution endpoint."""
+        settings = get_editor_settings()
+        settings["run_endpoint"] = mode
+        save_editor_settings(settings)
 
     def _create_status_bar(self) -> None:
         """Create status labels for editor state."""
@@ -142,6 +205,8 @@ class CodeEditorWindow(QtWidgets.QMainWindow):
         """Stop editor services when the window closes."""
         if self.editor._lsp_client is not None:
             self.editor._lsp_client.stop()
+        if self.editor._rpc_server is not None:
+            self.editor._rpc_server.stop()
         super().closeEvent(event)
 
 

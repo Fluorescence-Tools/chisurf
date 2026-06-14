@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import ctypes
 import os
 import pathlib
+import queue
+import sys
+import tempfile
+import threading
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -11,7 +16,10 @@ import chisurf.gui.widgets
 from chisurf import logging
 from chisurf.gui.widgets.dock_area import DockArea
 from chisurf.plugins.core.code_editor.agent_panel import AgentPanelWidget
+from chisurf.plugins.core.code_editor.document_store import DocumentStore
 from chisurf.plugins.core.code_editor.lsp_client import PythonLspClient
+from chisurf.plugins.core.code_editor.rpc_server import EditorRpcServer
+from chisurf.plugins.core.code_editor.ruff_runner import RuffRunner
 from chisurf.plugins.core.code_editor.symbols import CodeSymbol, find_project_root
 from chisurf.plugins.core.code_editor.text_editor import (
     EditorSettingsDialog,
@@ -21,6 +29,20 @@ from chisurf.plugins.core.code_editor.text_editor import (
     make_editor_font,
     save_editor_settings,
 )
+from chisurf.plugins.icon_utils import create_emoji_icon
+
+
+def _async_raise(tid: int, exc_type: type) -> None:
+    """Raise an exception in a thread by its thread id."""
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+        ctypes.c_long(tid), ctypes.py_object(exc_type)
+    )
+    if res == 0:
+        raise ValueError("Invalid thread ID")
+    elif res > 1:
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(tid), None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+
 
 try:
     from chisurf.gui.misc_helpers import persist_plugin_state
@@ -40,6 +62,7 @@ class CodeEditor(QtWidgets.QWidget):
     currentFileChanged = QtCore.Signal(str)
     symbolsChanged = QtCore.Signal(list)
     lspStatusChanged = QtCore.Signal(str)
+    runStateChanged = QtCore.Signal(bool)
 
     def __init__(
         self,
@@ -50,7 +73,7 @@ class CodeEditor(QtWidgets.QWidget):
         project_root: str | pathlib.Path | None = None,
         enable_lsp: bool | None = None,
         show_tab_bar: bool = True,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -61,7 +84,18 @@ class CodeEditor(QtWidgets.QWidget):
         self.filename = filename
         self._can_load = can_load
         self._open_files: dict[str, QtWidgets.QWidget] = {}
+        self._document_ids: dict[QtWidgets.QWidget, str] = {}
+        self._applying_remote_document = False
+        self.document_store = DocumentStore()
+        self.ruff_runner = RuffRunner()
+        self._rpc_event_queue: queue.Queue[dict] = queue.Queue()
+        self._rpc_event_timer = QtCore.QTimer(self)
+        self._rpc_event_timer.setSingleShot(False)
+        self._rpc_event_timer.setInterval(50)
+        self._rpc_event_timer.timeout.connect(self._drain_rpc_events)
+        self._rpc_server: EditorRpcServer | None = None
         self._agent_panel_visible = False
+        self._run_process: QtCore.QProcess | None = None
         self.project_root = find_project_root(project_root or filename or pathlib.Path.cwd())
         editor_settings = get_editor_settings()
         if enable_lsp is None:
@@ -75,9 +109,9 @@ class CodeEditor(QtWidgets.QWidget):
         self.setLayout(main_layout)
 
         self.agent_panel = AgentPanelWidget(
-            parent=None,
-            get_context_callback=self._get_editor_context
+            parent=None, get_context_callback=self._get_editor_context
         )
+        self.agent_panel.editor = self
 
         self.tab_widget = DockArea()
         self.tab_widget.tabActionRequested.connect(self._on_tab_action)
@@ -96,20 +130,23 @@ class CodeEditor(QtWidgets.QWidget):
         self.tab_widget.setContextMenuEnabled(True)
 
         self._sync_agent_font()
+        self._sync_rpc_server()
 
     def _create_navigation_widgets(self) -> None:
         """Create reusable project, symbol, and diagnostics widgets."""
         self.file_model = QtWidgets.QFileSystemModel(self)
         self.file_model.setRootPath(str(self.project_root))
-        self.file_model.setNameFilters([
-            "*.py",
-            "*.pyw",
-            "*.json",
-            "*.yaml",
-            "*.yml",
-            "*.txt",
-            "*.md",
-        ])
+        self.file_model.setNameFilters(
+            [
+                "*.py",
+                "*.pyw",
+                "*.json",
+                "*.yaml",
+                "*.yml",
+                "*.txt",
+                "*.md",
+            ]
+        )
         self.file_model.setNameFilterDisables(False)
 
         self.file_tree = QtWidgets.QTreeView(self)
@@ -156,18 +193,19 @@ class CodeEditor(QtWidgets.QWidget):
         """Create shared editor actions for menus and toolbars."""
         parent = parent or self
         actions = {
-            "new": QtWidgets.QAction("New", parent),
-            "open": QtWidgets.QAction("Open...", parent),
-            "save": QtWidgets.QAction("Save", parent),
-            "save_as": QtWidgets.QAction("Save As...", parent),
-            "reload": QtWidgets.QAction("Reload", parent),
-            "run": QtWidgets.QAction("Run Macro", parent),
-            "back": QtWidgets.QAction("Back", parent),
-            "forward": QtWidgets.QAction("Forward", parent),
-            "definition": QtWidgets.QAction("Go to Definition", parent),
-            "completion": QtWidgets.QAction("Complete", parent),
-            "settings": QtWidgets.QAction("Editor Settings...", parent),
-            "agent": QtWidgets.QAction("Agent", parent),
+            "new": QtWidgets.QAction(create_emoji_icon("📄", size=20), "New", parent),
+            "open": QtWidgets.QAction(create_emoji_icon("📂", size=20), "Open...", parent),
+            "save": QtWidgets.QAction(create_emoji_icon("💾", size=20), "Save", parent),
+            "save_as": QtWidgets.QAction(create_emoji_icon("💾", size=20), "Save As...", parent),
+            "reload": QtWidgets.QAction(create_emoji_icon("🔄", size=20), "Reload", parent),
+            "run": QtWidgets.QAction(create_emoji_icon("▶", size=20), "Run Macro", parent),
+            "ruff": QtWidgets.QAction(create_emoji_icon("🧹", size=20), "Run Ruff", parent),
+            "back": QtWidgets.QAction(create_emoji_icon("◀", size=20), "Back", parent),
+            "forward": QtWidgets.QAction(create_emoji_icon("▶", size=20), "Forward", parent),
+            "definition": QtWidgets.QAction(create_emoji_icon("🔍", size=20), "Go to Definition", parent),
+            "completion": QtWidgets.QAction(create_emoji_icon("✨", size=20), "Complete", parent),
+            "settings": QtWidgets.QAction(create_emoji_icon("⚙", size=20), "Editor Settings...", parent),
+            "agent": QtWidgets.QAction(create_emoji_icon("🤖", size=20), "Agent", parent),
             "toggle_line_numbers": QtWidgets.QAction("Show Line Numbers", parent),
             "toggle_lsp": QtWidgets.QAction("Enable Python LSP", parent),
         }
@@ -191,6 +229,7 @@ class CodeEditor(QtWidgets.QWidget):
         actions["save_as"].triggered.connect(self.save_current_as)
         actions["reload"].triggered.connect(self.reload_current)
         actions["run"].triggered.connect(lambda _checked=False: self.run_macro(None))
+        actions["ruff"].triggered.connect(lambda _checked=False: self.run_ruff_current())
         actions["back"].triggered.connect(self.navigate_back)
         actions["forward"].triggered.connect(self.navigate_forward)
         actions["definition"].triggered.connect(self.go_to_definition_current)
@@ -286,6 +325,10 @@ class CodeEditor(QtWidgets.QWidget):
                 self._lsp_client.stop()
                 self._lsp_client = None
             self.lspStatusChanged.emit("LSP disabled" if not self._enable_lsp else "LSP idle")
+        if any(
+            key in settings for key in ["enable_rpc", "rpc_host", "rpc_cmd_port", "rpc_pub_port"]
+        ):
+            self._sync_rpc_server()
 
     def _iter_editor_tabs(self):
         """Yield open text editor tabs."""
@@ -317,6 +360,68 @@ class CodeEditor(QtWidgets.QWidget):
         settings = get_editor_settings()
         settings[key] = bool(checked)
         self._save_and_apply_editor_settings(settings)
+
+    def _sync_rpc_server(self) -> None:
+        """Start or stop the GUI-owned editor RPC server from settings."""
+        settings = get_editor_settings()
+        enabled = bool(settings.get("enable_rpc", False))
+        if enabled and self._rpc_server is None:
+            self._rpc_server = EditorRpcServer(
+                host=str(settings.get("rpc_host", "127.0.0.1")),
+                cmd_port=int(settings.get("rpc_cmd_port", 8775)),
+                pub_port=int(settings.get("rpc_pub_port", 8776)),
+                store=self.document_store,
+                runner=self.ruff_runner,
+            )
+            try:
+                self._rpc_server.start()
+                self._rpc_event_timer.start()
+                self.lspStatusChanged.emit("Editor RPC ready")
+            except OSError as exc:
+                self._rpc_server = None
+                self.lspStatusChanged.emit(f"Editor RPC unavailable: {exc}")
+        elif not enabled and self._rpc_server is not None:
+            self._rpc_server.stop()
+            self._rpc_server = None
+            self._rpc_event_timer.stop()
+            self.lspStatusChanged.emit("Editor RPC stopped")
+
+    def _document_id_for_editor(self, editor: QtWidgets.QWidget) -> str:
+        """Return or create the document id for an editor widget."""
+        existing = self._document_ids.get(editor)
+        if isinstance(editor, TextEditor) and editor.current_file:
+            document_id = DocumentStore.document_id_for_path(editor.current_file)
+            if existing and existing != document_id:
+                self.document_store.remove(existing)
+            self._document_ids[editor] = document_id
+            return document_id
+        if existing:
+            return existing
+        document_id = f"untitled:{id(editor)}"
+        self._document_ids[editor] = document_id
+        return document_id
+
+    def _sync_editor_document(self, editor: QtWidgets.QWidget) -> None:
+        """Sync an editor widget into the JSON document store."""
+        if not isinstance(editor, TextEditor):
+            return
+        document_id = self._document_id_for_editor(editor)
+        path = editor.current_file or self._get_current_filename() or document_id
+        name = pathlib.Path(path).name if path else document_id
+        self.document_store.upsert(
+            document_id=document_id,
+            path=path,
+            name=name,
+            language=editor.language,
+            content=editor.toPlainText(),
+            modified=editor.document().isModified(),
+        )
+
+    def _remove_editor_document(self, editor: QtWidgets.QWidget) -> None:
+        """Remove an editor widget from the JSON document store."""
+        document_id = self._document_ids.pop(editor, None)
+        if document_id is not None:
+            self.document_store.remove(document_id)
 
     def _add_new_editor_tab(self):
         """Create a new blank editor tab with a unique name."""
@@ -352,8 +457,9 @@ class CodeEditor(QtWidgets.QWidget):
         if self._is_real_file(filename):
             editor.set_current_file(str(pathlib.Path(filename).resolve()))
         tab_index = self.tab_widget.indexOf(editor)
-        if hasattr(self, '_on_editor_created'):
+        if hasattr(self, "_on_editor_created"):
             self._on_editor_created(editor)
+        self._sync_editor_document(editor)
         return editor, tab_index
 
     def _get_current_editor(self):
@@ -394,13 +500,17 @@ class CodeEditor(QtWidgets.QWidget):
         editor = self._get_current_editor()
         if editor is None:
             return
-        self._on_editor_status_changed({
-            "file": editor.current_file or self._get_current_filename() or "",
-            "line": editor.line_column()[0],
-            "column": editor.line_column()[1],
-            "modified": editor.document().isModified(),
-            "language": editor.language,
-        })
+        doc_id = self._document_id_for_editor(editor)
+        self.document_store.active_document_id = doc_id
+        self._on_editor_status_changed(
+            {
+                "file": editor.current_file or self._get_current_filename() or "",
+                "line": editor.line_column()[0],
+                "column": editor.line_column()[1],
+                "modified": editor.document().isModified(),
+                "language": editor.language,
+            }
+        )
         self._on_editor_symbols_changed(editor.refresh_symbols())
 
     def _on_editor_status_changed(self, status: dict) -> None:
@@ -416,7 +526,9 @@ class CodeEditor(QtWidgets.QWidget):
 
     def _on_editor_text_changed(self) -> None:
         """Schedule LSP synchronization after edits."""
-        if self.sender() is self._get_current_editor():
+        editor = self.sender()
+        if editor is self._get_current_editor() and not self._applying_remote_document:
+            self._sync_editor_document(editor)
             self._lsp_sync_timer.start()
 
     def _populate_symbol_tree(self, symbols: list[CodeSymbol]) -> None:
@@ -624,6 +736,8 @@ class CodeEditor(QtWidgets.QWidget):
         self.tab_widget.setTabText(idx, base + " *" if modified else base)
         if editor is self._get_current_editor() and hasattr(editor, "_emit_status_changed"):
             editor._emit_status_changed()
+        if not self._applying_remote_document:
+            self._sync_editor_document(editor)
 
     def _toggle_agent_panel(self):
         """Toggle the AI agent panel visibility."""
@@ -645,15 +759,21 @@ class CodeEditor(QtWidgets.QWidget):
         self.agent_panel.set_editor_font(make_editor_font(get_editor_settings()))
 
     def _get_editor_context(self) -> str:
-        """Get the current editor content for the agent context."""
-        editor = self._get_current_editor()
-        if editor is None:
-            return ""
+        """Get the context of all open documents for the agent."""
+        context_parts = []
+        current_editor = self._get_current_editor()
 
-        filename = self._get_current_filename() or "Untitled"
-        content = editor.toPlainText()
+        for index in range(self.tab_widget.count()):
+            widget = self.tab_widget.widget(index)
+            if widget is not None and widget is not getattr(self, "agent_panel", None):
+                filename = getattr(widget, "current_file", None) or self.tab_widget.tabText(index)
+                if filename.endswith(" *"):
+                    filename = filename[:-2]
+                content = widget.toPlainText()
+                is_active = " (active)" if widget is current_editor else ""
+                context_parts.append(f"File: {filename}{is_active}\n\n```{content}\n```")
 
-        return f"File: {filename}\n\n```{content}\n```"
+        return "\n\n---\n\n".join(context_parts)
 
     def _close_tab(self, index: int):
         """Close a tab at the given absolute index."""
@@ -665,28 +785,13 @@ class CodeEditor(QtWidgets.QWidget):
             self.tab_widget.removeTab(index)
             return
 
-        # Confirm close if dirty (check the tab-text marker which is always in sync)
+        # Confirm close if the editor document has unsaved changes.
         if widget is not self.agent_panel:
-            tab_text = self.tab_widget.tabText(index)
-            if tab_text.endswith(" *"):
-                name = tab_text[:-2]
-                msg = QtWidgets.QMessageBox(self)
-                msg.setWindowTitle("Unsaved Changes")
-                msg.setText(f"Do you want to save changes to {name}?")
-                msg.setIcon(QtWidgets.QMessageBox.Question)
-                msg.setStandardButtons(
-                    QtWidgets.QMessageBox.Save
-                    | QtWidgets.QMessageBox.Discard
-                    | QtWidgets.QMessageBox.Cancel
-                )
-                msg.setDefaultButton(QtWidgets.QMessageBox.Save)
-                reply = msg.exec_()
-                if reply == QtWidgets.QMessageBox.Save:
-                    self._save_tab(widget, name, index)
-                elif reply == QtWidgets.QMessageBox.Cancel:
-                    return
+            if not self._confirm_close_editor(widget, index):
+                return
 
         # Remove from _open_files by matching the widget
+        self._remove_editor_document(widget)
         to_remove = [k for k, v in self._open_files.items() if v is widget]
         for k in to_remove:
             if self._lsp_client is not None:
@@ -695,7 +800,8 @@ class CodeEditor(QtWidgets.QWidget):
 
         # Compute editor count BEFORE removing
         editor_count = sum(
-            1 for i in range(self.tab_widget.count())
+            1
+            for i in range(self.tab_widget.count())
             if self.tab_widget.widget(i) not in (self.agent_panel, None)
         )
 
@@ -706,6 +812,34 @@ class CodeEditor(QtWidgets.QWidget):
         # Open a blank Untitled tab if the last editor was just closed
         if editor_count <= 1 and self._can_load:
             self._add_new_editor_tab()
+
+    def _confirm_close_editor(self, editor: QtWidgets.QWidget, index: int) -> bool:
+        """Return whether an editor tab with unsaved changes may close."""
+        modified = bool(
+            hasattr(editor, "document")
+            and editor.document() is not None
+            and editor.document().isModified()
+        )
+        tab_text = self.tab_widget.tabText(index)
+        if not modified and not tab_text.endswith(" *"):
+            return True
+
+        name = tab_text[:-2] if tab_text.endswith(" *") else tab_text
+        msg = QtWidgets.QMessageBox(self)
+        msg.setWindowTitle("Unsaved Changes")
+        msg.setText(f"Save changes to {name} before closing?")
+        msg.setInformativeText("Choose Discard to close without saving.")
+        msg.setIcon(QtWidgets.QMessageBox.Question)
+        msg.setStandardButtons(
+            QtWidgets.QMessageBox.Save
+            | QtWidgets.QMessageBox.Discard
+            | QtWidgets.QMessageBox.Cancel
+        )
+        msg.setDefaultButton(QtWidgets.QMessageBox.Save)
+        reply = msg.exec_()
+        if reply == QtWidgets.QMessageBox.Save:
+            return self._save_tab(editor, name, index)
+        return reply == QtWidgets.QMessageBox.Discard
 
     def _on_tab_action(self, action: str, index: int):
         """Handle context-menu actions on tabs.
@@ -739,7 +873,7 @@ class CodeEditor(QtWidgets.QWidget):
         elif action == "copy_dir":
             self._copy_to_clipboard(str(pathlib.Path(clean).parent))
 
-    def _save_tab(self, editor, tab_text: str, index: int):
+    def _save_tab(self, editor, tab_text: str, index: int) -> bool:
         """Save the tab content to its file."""
         clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
         if clean and clean != "Untitled":
@@ -749,26 +883,29 @@ class CodeEditor(QtWidgets.QWidget):
                     f.write(editor.text())
             except OSError as e:
                 logging.log(1, f"Error saving {clean}: {e}")
-                return
+                return False
         else:
-            self._save_tab_as(editor, clean, index)
-            return
+            return self._save_tab_as(editor, clean, index)
         if hasattr(editor, "set_current_file"):
             editor.set_current_file(clean)
         editor.document().setModified(False)
+        self._sync_editor_document(editor)
+        if get_editor_settings().get("run_ruff_on_save", False):
+            self.run_ruff_current()
+        return True
 
-    def _save_tab_as(self, editor, tab_text: str, index: int):
+    def _save_tab_as(self, editor, tab_text: str, index: int) -> bool:
         """Open a save-as dialog and save the tab content."""
         new_filename = cs.gui.widgets.save_file(file_type="Python script (*.py)")
         if not new_filename:
-            return
+            return False
         new_path = str(new_filename)
         try:
             with io.zipped.open_maybe_zipped(new_path, "w") as f:
                 f.write(editor.text())
         except OSError as e:
             logging.log(1, f"Error saving {new_path}: {e}")
-            return
+            return False
         self.tab_widget.setTabText(index, new_path)
         editor.set_current_file(new_path)
         old_key = next((k for k, v in self._open_files.items() if v is editor), None)
@@ -776,6 +913,10 @@ class CodeEditor(QtWidgets.QWidget):
             del self._open_files[old_key]
         self._open_files[new_path] = editor
         editor.document().setModified(False)
+        self._sync_editor_document(editor)
+        if get_editor_settings().get("run_ruff_on_save", False):
+            self.run_ruff_current()
+        return True
 
     def _rename_tab(self, editor, tab_text: str, index: int):
         """Prompt for a new tab name and update accordingly."""
@@ -791,6 +932,7 @@ class CodeEditor(QtWidgets.QWidget):
         if old_key:
             del self._open_files[old_key]
         self._open_files[new_name] = editor
+        self._sync_editor_document(editor)
 
     def _reload_tab(self, editor, tab_text: str, index: int):
         """Re-read the file from disk and replace editor content."""
@@ -806,6 +948,7 @@ class CodeEditor(QtWidgets.QWidget):
             logging.log(1, f"Error reloading {clean}: {e}")
             return
         editor.document().setModified(False)
+        self._sync_editor_document(editor)
         if hasattr(editor, "refresh_symbols"):
             editor.refresh_symbols()
         self._notify_lsp_open(editor)
@@ -866,6 +1009,7 @@ class CodeEditor(QtWidgets.QWidget):
         editor.set_current_file(filename_str)
         editor.document().setModified(False)
         self._open_files[filename_str] = editor
+        self._sync_editor_document(editor)
         self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
         editor.refresh_symbols()
         self._notify_lsp_open(editor)
@@ -894,6 +1038,7 @@ class CodeEditor(QtWidgets.QWidget):
             editor.blockSignals(False)
             editor.set_current_file(path_str)
             editor.document().setModified(False)
+            self._sync_editor_document(editor)
             self._open_files[path_str] = editor
             self.tab_widget.setCurrentIndex(self.tab_widget.indexOf(editor))
             editor.refresh_symbols()
@@ -938,17 +1083,13 @@ class CodeEditor(QtWidgets.QWidget):
         selection.format.setProperty(QtGui.QTextFormat.FullWidthSelection, True)
         selection.cursor = editor.textCursor()
         selection.cursor.setPosition(block.position())
-        selection.cursor.movePosition(
-            QtGui.QTextCursor.EndOfBlock,
-            QtGui.QTextCursor.KeepAnchor
-        )
+        selection.cursor.movePosition(QtGui.QTextCursor.EndOfBlock, QtGui.QTextCursor.KeepAnchor)
 
         extra_selections = editor.extraSelections() + [selection]
         editor.setExtraSelections(extra_selections)
 
         QtCore.QTimer.singleShot(
-            duration_ms,
-            lambda: self._clear_temporary_highlight(editor, selection)
+            duration_ms, lambda: self._clear_temporary_highlight(editor, selection)
         )
 
     def _clear_temporary_highlight(self, editor, selection: QtWidgets.QTextEdit.ExtraSelection):
@@ -958,14 +1099,196 @@ class CodeEditor(QtWidgets.QWidget):
             extra_selections.remove(selection)
             editor.setExtraSelections(extra_selections)
 
-    def run_macro(self, event):
-        """Execute the currently loaded Python script."""
-        filename = self._get_current_filename()
-        if not filename or filename == "Untitled":
-            logging.log(1, "No file to run. Save the file first.")
+    def _drain_rpc_events(self) -> None:
+        """Apply editor document changes requested through RPC."""
+        if self._rpc_server is not None:
+            events = self._rpc_server.drain_events()
+        else:
+            events = []
+            while True:
+                try:
+                    events.append(self._rpc_event_queue.get_nowait())
+                except queue.Empty:
+                    break
+        for event in events:
+            self._apply_rpc_event(event)
+
+    def _apply_rpc_event(self, event: dict) -> None:
+        """Apply a remote document-change event to the matching editor."""
+        document_id = event.get("document_id")
+        editor = None
+        for widget, widget_id in self._document_ids.items():
+            if widget_id == document_id:
+                editor = widget
+                break
+        if editor is None or not isinstance(editor, TextEditor):
             return
-        self.save_text()
-        cs.console.run_macro(filename=filename)
+        content = event.get("content")
+        if content is None:
+            return
+        self._applying_remote_document = True
+        try:
+            editor.blockSignals(True)
+            if event.get("path"):
+                editor.set_current_file(event["path"])
+            editor.setText(content)
+            editor.blockSignals(False)
+            editor.document().setModified(True)
+            self._sync_editor_document(editor)
+            editor.refresh_symbols()
+            self._on_current_tab_changed(self.tab_widget.currentIndex())
+        finally:
+            self._applying_remote_document = False
+
+    def run_ruff_current(self) -> None:
+        """Run Ruff on the current editor document."""
+        settings = get_editor_settings()
+        if not bool(settings.get("enable_ruff", True)):
+            self.lspStatusChanged.emit("Ruff disabled")
+            return
+        editor = self._get_current_editor()
+        if editor is None or not isinstance(editor, TextEditor):
+            return
+        document_id = self._document_id_for_editor(editor)
+        path = editor.current_file or document_id
+        result = self.ruff_runner.check(
+            path=path,
+            content=editor.toPlainText(),
+            extra_args=list(settings.get("ruff_extra_args", [])),
+            timeout_ms=int(settings.get("ruff_timeout_ms", 5000)),
+        )
+        self._show_ruff_result(result)
+
+    def _show_ruff_result(self, result: dict) -> None:
+        """Display Ruff diagnostics in the shared diagnostics widget."""
+        self.diagnostics_list.clear()
+        if not isinstance(result, dict):
+            self.lspStatusChanged.emit("Ruff failed")
+            return
+        if result.get("ok") is False:
+            item = QtWidgets.QListWidgetItem(f"Ruff failed: {result.get('error', 'unknown error')}")
+            item.setForeground(QtGui.QColor("#b00020"))
+            self.diagnostics_list.addItem(item)
+            self.lspStatusChanged.emit("Ruff failed")
+            return
+        diagnostics = result.get("diagnostics", [])
+        if not diagnostics:
+            item = QtWidgets.QListWidgetItem("Ruff: no issues found")
+            item.setForeground(QtGui.QColor("#2e7d32"))
+            self.diagnostics_list.addItem(item)
+            self.lspStatusChanged.emit("Ruff clean")
+            return
+        for diagnostic in diagnostics:
+            if not isinstance(diagnostic, dict):
+                continue
+            path = diagnostic.get("path") or result.get("path", "")
+            line = int(diagnostic.get("line", 0) or 0)
+            column = int(diagnostic.get("column", 0) or 0)
+            code = diagnostic.get("code", "")
+            message = diagnostic.get("message", "")
+            prefix = f"{path}:{line}:{column}" if path and line else path
+            item = QtWidgets.QListWidgetItem(f"{prefix} {code}: {message}")
+            item.setData(QtCore.Qt.UserRole, diagnostic)
+            self.diagnostics_list.addItem(item)
+        self.lspStatusChanged.emit(f"Ruff: {len(diagnostics)} issue(s)")
+
+    def _write_and_get_filepath(self, content: str, filename: str) -> str:
+        """Write editor content to a file and return its path."""
+        if filename and filename != "Untitled" and self._is_real_file(filename):
+            try:
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(content)
+            except OSError as e:
+                logging.log(1, f"Error writing {filename}: {e}")
+                return ""
+            return str(pathlib.Path(filename).resolve())
+        fd, filepath = tempfile.mkstemp(suffix=".py", prefix="chisurf_run_")
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        return filepath
+
+    def run_macro(self, event):
+        """Execute the current editor content without requiring a prior save."""
+        editor = self._get_current_editor()
+        if editor is None:
+            return
+
+        content = editor.toPlainText()
+        filename = self._get_current_filename()
+        filepath = self._write_and_get_filepath(content, filename)
+        if not filepath:
+            return
+
+        settings = get_editor_settings()
+        mode = settings.get("run_endpoint", "process")
+
+        if mode == "console":
+            self._run_console(content, filepath)
+        else:
+            self._run_process_impl(filepath)
+
+    def _run_process_impl(self, filepath: str) -> None:
+        """Run a file as a subprocess via QProcess."""
+        self._run_process = QtCore.QProcess(self)
+        self._run_process.finished.connect(self._on_run_finished)
+        self._run_process.errorOccurred.connect(self._on_run_error)
+        self._run_process.setProcessChannelMode(QtCore.QProcess.ForwardedChannels)
+        self._run_process.started.connect(lambda: self.runStateChanged.emit(True))
+        self._run_process.start(sys.executable, [filepath])
+
+    def _run_console(self, content: str, filepath: str) -> None:
+        """Run content in-process via exec wrapped in a stoppable thread."""
+        self._run_thread = threading.Thread(
+            target=self._exec_in_thread,
+            args=(content, filepath),
+            daemon=True,
+        )
+        self._run_thread.start()
+        self.runStateChanged.emit(True)
+
+    def _exec_in_thread(self, content: str, filepath: str) -> None:
+        """Execute code in a thread, catching KeyboardInterrupt for stop."""
+        namespace = {
+            "__name__": "__main__",
+            "__file__": filepath,
+            "cs": cs,
+            "np": __import__("numpy"),
+            "os": os,
+            "sys": sys,
+        }
+        try:
+            exec(compile(content, filepath, "exec"), namespace)
+        except KeyboardInterrupt:
+            pass
+        except SystemExit:
+            pass
+        finally:
+            self._run_thread = None
+            self.runStateChanged.emit(False)
+
+    def stop_macro(self):
+        """Stop a currently running script."""
+        if self._run_process is not None and self._run_process.state() != QtCore.QProcess.NotRunning:
+            self._run_process.kill()
+            self._run_process.waitForFinished(3000)
+            self._run_process = None
+            self.runStateChanged.emit(False)
+            return
+        if self._run_thread is not None and self._run_thread.is_alive():
+            _async_raise(self._run_thread.ident, KeyboardInterrupt)
+            self._run_thread = None
+            self.runStateChanged.emit(False)
+
+    def _on_run_finished(self, _exit_code: int, _exit_status: QtCore.QProcess.ExitStatus) -> None:
+        """Clean up after a script process finishes."""
+        self._run_process = None
+        self.runStateChanged.emit(False)
+
+    def _on_run_error(self, _error: QtCore.QProcess.ProcessError) -> None:
+        """Handle errors from the script process."""
+        self._run_process = None
+        self.runStateChanged.emit(False)
+        logging.log(1, "Failed to start script process.")
 
     def save_text(self, event=None):
         """Save the current tab's text to a file."""
@@ -991,6 +1314,9 @@ class CodeEditor(QtWidgets.QWidget):
             return
         editor.set_current_file(str(filename))
         editor.document().setModified(False)
+        self._sync_editor_document(editor)
+        if get_editor_settings().get("run_ruff_on_save", False):
+            self.run_ruff_current()
 
 
 __all__ = ["CodeEditor"]

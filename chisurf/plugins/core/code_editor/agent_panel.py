@@ -1,10 +1,16 @@
 from __future__ import annotations
 
 import json
-import logging
+import logging as std_logging
 import pathlib
+import re
+import threading
 
-from qtpy import QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
+
+from chisurf.plugins.core.code_editor.context_retriever import retrieve_context
+from chisurf.plugins.core.code_editor.validation import validate_writes
+from chisurf.plugins.core.code_editor.wiki_indexer import build_api_index
 
 try:
     from chisurf.gui.widgets.general import EnterAwarePlainTextEdit
@@ -14,8 +20,6 @@ except ImportError:
     from chisurf.core.settings import ai_settings
     from chisurf.core.settings.path_utils import get_path
     from chisurf.gui.widgets.general import EnterAwarePlainTextEdit  # noqa: E402
-
-_LOG = logging.getLogger(__name__)
 
 _PROVIDER_NAMES: dict[str, str] = {
     "openai": "OpenAI (ChatGPT)",
@@ -53,7 +57,7 @@ def _save_history(history: list[dict[str, str]]) -> None:
         with open(history_path, 'w', encoding='utf-8') as f:
             json.dump(history, f, indent=2)
     except Exception as e:
-        _LOG.warning(f"Could not save agent history: {e}")
+        std_logging.warning(f"Could not save agent history: {e}")
 
 
 def _get_input_history_path() -> pathlib.Path:
@@ -83,7 +87,7 @@ def _save_input_history(history: list[str]) -> None:
         with open(history_path, 'w', encoding='utf-8') as f:
             json.dump(history[-100:], f, indent=2)
     except Exception as e:
-        _LOG.warning(f"Could not save agent input history: {e}")
+        std_logging.warning(f"Could not save agent input history: {e}")
 
 
 class WikiDialog(QtWidgets.QDialog):
@@ -108,11 +112,11 @@ class WikiDialog(QtWidgets.QDialog):
         self.search_input.textChanged.connect(self._filter_pages)
         search_layout.addWidget(self.search_input)
 
-        self.refresh_btn = QtWidgets.QPushButton("Refresh")
+        self.refresh_btn = QtWidgets.QPushButton("🔄 Refresh")
         self.refresh_btn.clicked.connect(self.load_wiki_index)
         search_layout.addWidget(self.refresh_btn)
 
-        self.populate_btn = QtWidgets.QPushButton("Populate Wiki")
+        self.populate_btn = QtWidgets.QPushButton("📡 Populate Wiki")
         self.populate_btn.setToolTip("Feed current codebase to LLM Wiki")
         if self._populate_callback:
             self.populate_btn.clicked.connect(self._on_populate_clicked)
@@ -243,12 +247,18 @@ class WikiDialog(QtWidgets.QDialog):
 class AgentPanelWidget(QtWidgets.QWidget):
     """AI coding agent panel for the code editor."""
 
+    responseReceived = QtCore.Signal(str)
+    errorReceived = QtCore.Signal(str)
+    fixResponseReceived = QtCore.Signal(str, int)
+    validationReceived = QtCore.Signal(int, object, str)
+
     def __init__(
         self,
         parent: QtWidgets.QWidget | None = None,
         get_context_callback: callable | None = None,
     ):
         super().__init__(parent)
+        self.editor = None
         self._get_context_callback = get_context_callback
         self._chat_history: list = _load_history()
         self._input_history: list[str] = _load_input_history()
@@ -257,10 +267,22 @@ class AgentPanelWidget(QtWidgets.QWidget):
             "You are a helpful coding assistant for ChiSurf, a fluorescence "
             "spectroscopy analysis application. Help the user with their code "
             "questions. Be concise and direct. "
-            "You have access to the LLM Wiki for codebase context. "
+            "You have access to the LLM Wiki and verified ChiSurf API context. "
+            "When writing ChiSurf scripts, prefer existing APIs from the verified context. "
+            "Do not invent function, class, or method names that are not present in the retrieved context or current editor. "
+            "If the requested API is missing, say that you need to inspect the codebase before suggesting code. "
             "Format your responses with markdown: use **bold** for emphasis, "
             "`code` for inline code, ```python for code blocks, and LaTeX "
-            "\\[ ... \\] for equations. Use numbered lists for steps."
+            "\\[ ... \\] for equations. Use numbered lists for steps.\n\n"
+            "If the user asks you to write, edit, create, or insert code into a document/file (e.g., 'write to current open document', 'write to foo.py'), "
+            "you MUST output a complete replacement code block with a special header comment on the very first line:\n"
+            "```python\n"
+            "# WRITE_FILE: <filename_or_current>\n"
+            "<your complete code here>\n"
+            "```\n"
+            "Use '# WRITE_FILE: current' to write to the active editor document, or specify the file name/path. "
+            "The editor will automatically capture this block and update the corresponding document tab. "
+            "After code is written, it will be checked with py_compile and ruff; if diagnostics remain, output another complete corrected WRITE_FILE block."
         )
         self.setup_ui()
         self._restore_history()
@@ -269,12 +291,12 @@ class AgentPanelWidget(QtWidgets.QWidget):
         """Set up the user interface."""
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(2)
 
         header_layout = QtWidgets.QHBoxLayout()
         header_layout.setContentsMargins(4, 4, 4, 2)
 
-        header_label = QtWidgets.QLabel("AI Assistant")
+        header_label = QtWidgets.QLabel("🤖 AI Assistant")
         header_label.setStyleSheet("font-weight: bold; font-size: 10pt;")
         header_layout.addWidget(header_label)
 
@@ -285,7 +307,7 @@ class AgentPanelWidget(QtWidgets.QWidget):
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         header_layout.addWidget(self.provider_combo)
 
-        self.wiki_btn = QtWidgets.QPushButton("Wiki")
+        self.wiki_btn = QtWidgets.QPushButton("📚 Wiki")
         self.wiki_btn.setToolTip("Open LLM Wiki")
         self.wiki_btn.clicked.connect(self._open_wiki)
         header_layout.addWidget(self.wiki_btn)
@@ -298,6 +320,18 @@ class AgentPanelWidget(QtWidgets.QWidget):
         self.transcript.setMinimumHeight(200)
         layout.addWidget(self.transcript)
 
+        self.progress_bar = QtWidgets.QProgressBar(self)
+        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setVisible(False)
+        self.progress_bar.setMaximumHeight(6)
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet(
+            "QProgressBar { background: #333; border: none; border-radius: 3px; }"
+            "QProgressBar::chunk { background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+            " stop:0 #7aa2f7, stop:1 #9ece6a); border-radius: 3px; }"
+        )
+        layout.addWidget(self.progress_bar)
+
         self.input = EnterAwarePlainTextEdit(self)
         self.input.setPlaceholderText("Ask something... (Enter to send, Shift+Enter for newline)")
         self.input.setMaximumHeight(80)
@@ -309,14 +343,16 @@ class AgentPanelWidget(QtWidgets.QWidget):
 
         button_layout = QtWidgets.QHBoxLayout()
 
-        self.restart_btn = QtWidgets.QPushButton("Restart")
+        self.restart_btn = QtWidgets.QPushButton("🔄 Restart")
+        self.restart_btn.setToolTip("Clear chat history")
         self.restart_btn.clicked.connect(self.clear_history)
         button_layout.addWidget(self.restart_btn)
 
         button_layout.addStretch()
 
-        self.send_btn = QtWidgets.QPushButton("Send")
+        self.send_btn = QtWidgets.QPushButton("➡ Send")
         self.send_btn.setEnabled(False)
+        self.send_btn.setToolTip("Send message (Enter)")
         self.send_btn.clicked.connect(self._on_send)
         button_layout.addWidget(self.send_btn)
 
@@ -327,15 +363,20 @@ class AgentPanelWidget(QtWidgets.QWidget):
         self.status_label.setWordWrap(True)
         layout.addWidget(self.status_label)
 
+        self.responseReceived.connect(self._on_response_received)
+        self.errorReceived.connect(self._on_error_received)
+        self.fixResponseReceived.connect(self._on_fix_response_received)
+        self.validationReceived.connect(self._on_validation_received)
+
         self._populate_providers()
         self._append_sys(
-            "I'm an AI coding assistant. Select code in the editor and ask me to:\n"
-            "• Explain the selected code\n"
-            "• Refactor or improve it\n"
-            "• Find bugs or issues\n"
-            "• Write tests\n"
-            "• Add documentation\n\n"
-            "Use 'Populate Wiki' to feed the current codebase to the LLM Wiki."
+            "👋 I'm an AI coding assistant. Select code in the editor and ask me to:\n"
+            "• 🔍 Explain the selected code\n"
+            "• 🔧 Refactor or improve it\n"
+            "• 🐛 Find bugs or issues\n"
+            "• 🧪 Write tests\n"
+            "• 📝 Add documentation\n\n"
+            "📚 Use 'Wiki' to feed the current codebase to the LLM Wiki."
         )
 
     def _populate_providers(self) -> None:
@@ -349,7 +390,7 @@ class AgentPanelWidget(QtWidgets.QWidget):
         for i, (key, name) in enumerate(_PROVIDER_NAMES.items()):
             settings = ai_settings.get_api_settings(key)
             has_key = bool(settings.get("api_key"))
-            model = settings.get("model", "")
+            model = settings.get("text_model", settings.get("model", ""))
 
             label = name
             if has_key:
@@ -394,6 +435,7 @@ class AgentPanelWidget(QtWidgets.QWidget):
 
         try:
             count = self._write_codebase_to_wiki()
+            build_api_index(pathlib.Path(__file__).resolve().parents[4])
             self.status_label.setText(f"LLM Wiki populated with {count} codebase files.")
             if hasattr(self, "_wiki_progress_callback"):
                 self._wiki_progress_callback(f"LLM Wiki populated with {count} codebase files.")
@@ -402,7 +444,7 @@ class AgentPanelWidget(QtWidgets.QWidget):
             self.status_label.setText(f"Failed to populate wiki: {e}")
             if hasattr(self, "_wiki_progress_callback"):
                 self._wiki_progress_callback(f"Failed to populate wiki: {e}")
-            _LOG.error(f"Failed to populate wiki: {e}")
+            std_logging.error(f"Failed to populate wiki: {e}")
 
     def _write_codebase_to_wiki(self) -> int:
         """Write codebase files to the LLM Wiki in meaningful chunks."""
@@ -778,50 +820,293 @@ updated: 2026-06-09
         self._process_message(text)
 
     def _process_message(self, text: str) -> None:
-        """Process the user's message and generate a response."""
+        """Process the user's message asynchronously without blocking the UI."""
         context = self._get_context() if self._get_context_callback else ""
-        wiki_context = self._get_wiki_context(text)
+        self.status_label.setText("🔎 Retrieving ChiSurf API context...")
+        self.progress_bar.setVisible(True)
+        self.send_btn.setEnabled(False)
+        self.input.setEnabled(False)
+        self._chat_history.append({"role": "user", "content": text})
 
-        full_prompt = context + ("\n\n" if context else "")
-        if wiki_context:
-            full_prompt += f"LLM Wiki Context:\n{wiki_context}\n\n"
-        full_prompt += f"User: {text}"
+        def _run():
+            try:
+                wiki_context = self._get_wiki_context(text, current_context=context)
+                full_prompt = context + ("\n\n" if context else "")
+                if wiki_context:
+                    full_prompt += f"LLM Wiki Context:\n{wiki_context}\n\n"
+                full_prompt += f"User: {text}"
+                request = self._build_agent_request(full_prompt)
+                result = self._call_agent_request(request)
+                self.responseReceived.emit(result)
+            except Exception as e:
+                self.errorReceived.emit(f"{e}")
 
-        self.status_label.setText("Thinking...")
-        QtWidgets.QApplication.processEvents()
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
 
-        try:
-            response = self._call_agent(full_prompt)
-            self._append_assistant(response)
-            self._chat_history.append({"role": "user", "content": text})
-            self._chat_history.append({"role": "assistant", "content": response})
-            _save_history(self._chat_history)
-        except Exception as e:
-            error_msg = f"Error: {str(e)}"
-            self._append_sys(error_msg)
-            _LOG.error(f"Agent error: {e}")
-        finally:
+    def _on_response_received(self, response: str) -> None:
+        """Handle a successful agent response on the main thread."""
+        self.progress_bar.setVisible(True)
+        self.status_label.setText("")
+
+        self._append_assistant(response)
+        self._chat_history.append({"role": "assistant", "content": response})
+
+        writes = self._apply_file_writes(response)
+        if writes:
+            self._append_sys("📝 Applying generated code to the editor...")
+            self._start_validation(writes, iteration=0, label="Initial code")
+        else:
+            self._append_sys("💬 No code was written; no compile or ruff checks run.")
+            self.send_btn.setEnabled(True)
+            self.input.setEnabled(True)
+            self.progress_bar.setVisible(False)
             self.status_label.setText("")
 
-    def _call_agent(self, user_text: str) -> str:
-        """Call the LLM API directly using settings from AI Settings."""
-        import requests
+    def _on_error_received(self, error_msg: str) -> None:
+        """Handle an agent error on the main thread."""
+        self.progress_bar.setVisible(False)
+        self.send_btn.setEnabled(True)
+        self.input.setEnabled(True)
+        self.status_label.setText("⚠️ Error")
 
+        self._append_sys(f"Error: {error_msg}")
+        std_logging.error(f"Agent error: {error_msg}")
+
+    def _start_fix_loop(self, issues: list[tuple[str, list[dict]]], iteration: int = 0) -> None:
+        """Send validation issues back to the agent for auto-fixing."""
+        max_iterations = 5
+        if iteration >= max_iterations:
+            self.send_btn.setEnabled(True)
+            self.input.setEnabled(True)
+            self._append_sys(f"⚠️ Reached max {max_iterations} fix iterations, some issues remain.")
+            _save_history(self._chat_history)
+            self.progress_bar.setVisible(False)
+            self.status_label.setText("")
+            return
+
+        total_issues = sum(len(d) for _, d in issues)
+        kind = self._issue_kind(issues)
+        fix_lines = [
+            "Fix the following validation issues in the written code. "
+            "Output only a complete corrected code block with the WRITE_FILE header.",
+        ]
+        for fname, diags in issues:
+            fix_lines.append(f"\nFile: `{fname}`")
+            for diagnostic in diags[:15]:
+                line = diagnostic.get("line", "?")
+                code = diagnostic.get("code", "?")
+                msg = diagnostic.get("message", "?")
+                fix_lines.append(f"  L{line} {code}: {msg}")
+        fix_prompt = "\n".join(fix_lines)
+
+        self._append_sys(
+            f"🔄 Auto-fix round {iteration + 1}: {total_issues} {kind} issue(s) found — asking agent to fix..."
+        )
+        self.status_label.setText(f"🔄 Fixing ({kind})... round {iteration + 1}/{max_iterations}")
+        self.progress_bar.setVisible(True)
+
+        def _run():
+            try:
+                request = self._build_agent_request(fix_prompt)
+                result = self._call_agent_request(request)
+                self.fixResponseReceived.emit(result, iteration)
+            except Exception as e:
+                self.errorReceived.emit(f"{e}")
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+
+    def _on_fix_response_received(self, response: str, iteration: int) -> None:
+        """Apply a fix response and start validation off the UI thread."""
+        writes = self._apply_file_writes(response)
+        if writes:
+            self._append_sys(f"📝 Applying auto-fix round {iteration + 1} to the editor...")
+            self._start_validation(writes, iteration + 1, f"Fix round {iteration + 1}")
+        else:
+            self._append_sys("⚠️ Fix response did not contain WRITE_FILE code; leaving current diagnostics visible.")
+            self.send_btn.setEnabled(True)
+            self.input.setEnabled(True)
+            self.progress_bar.setVisible(False)
+            self.status_label.setText("")
+
+    def _start_validation(self, writes: list[tuple[str, str]], iteration: int, label: str) -> None:
+        """Validate generated writes in a worker thread."""
+        self.progress_bar.setVisible(True)
+        self.status_label.setText(f"🐍 Validating {label}...")
+        self._append_sys(f"🐍 Running py_compile and ruff for {label}...")
+
+        def _run():
+            try:
+                issues = validate_writes(writes, editor=self.editor)
+                self.validationReceived.emit(iteration, issues, label)
+            except Exception as e:
+                self.errorReceived.emit(f"{e}")
+
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+
+    def _on_validation_received(self, iteration: int, issues: list[tuple[str, list[dict]]], label: str) -> None:
+        """Handle validation results on the main thread."""
+        if issues:
+            total = sum(len(d) for _, d in issues)
+            kind = self._issue_kind(issues)
+            self._append_sys(f"🔍 Validation found {total} {kind} issue(s) in {label}.")
+            QtCore.QTimer.singleShot(0, lambda: self._start_fix_loop(issues, iteration))
+            return
+
+        self._append_sys("✅ All checks pass — code is clean.")
+        self.send_btn.setEnabled(True)
+        self.input.setEnabled(True)
+        self.progress_bar.setVisible(False)
+        self.status_label.setText("")
+        _save_history(self._chat_history)
+
+    @staticmethod
+    def _issue_kind(issues: list[tuple[str, list[dict]]]) -> str:
+        """Return the dominant validation issue kind."""
+        if any(diagnostic.get("code") == "E999" for _, diagnostics in issues for diagnostic in diagnostics):
+            return "compile"
+        return "ruff"
+
+    def _apply_file_writes(self, response: str) -> list[tuple[str, str]]:
+        """Parse and apply file writes from the assistant.
+
+        Returns
+        -------
+        list[tuple[str, str]]
+            Filename and content pairs found in the response.
+        """
+        writes = []
+
+        # 1. Match XML-like tags: <write_file filename="xyz">content</write_file>
+        xml_pattern = re.compile(r"<write_file\s+filename=\"([^\"]+)\"\s*>(.*?)</write_file>", re.DOTALL)
+        for filename, content in xml_pattern.findall(response):
+            writes.append((filename.strip(), content.strip()))
+
+        # 2. Match markdown code blocks containing a # WRITE_FILE header
+        block_pattern = re.compile(r"```[a-zA-Z0-9_-]*\s*\n(.*?)\n```", re.DOTALL)
+        for block in block_pattern.findall(response):
+            match = re.match(r"^\s*(?:#|//)\s*WRITE_FILE:?\s*([^\r\n]+)\r?\n(.*)$", block, re.DOTALL)
+            if match:
+                writes.append((match.group(1).strip(), match.group(2)))
+
+        for filename, content in writes:
+            self._write_to_editor_document(filename, content)
+
+        return writes
+
+    def _write_to_editor_document(self, filename: str, content: str) -> None:
+        """Write content to the matching open editor document or create a new one."""
+        if self.editor is None:
+            std_logging.warning("No editor reference in AgentPanelWidget")
+            return
+
+        filename = filename.strip()
+        target_editor = None
+        is_current = filename.lower() in (
+            "current",
+            "active",
+            "current open document",
+            "current_document",
+            "current file",
+            "untitled",
+            "untitled document",
+        )
+
+        if is_current:
+            target_editor = self.editor._get_current_editor()
+            if target_editor is None:
+                self.editor._add_new_editor_tab()
+                target_editor = self.editor._get_current_editor()
+        else:
+            open_files = self.editor._open_files
+            # Exact path match
+            for path, widget in open_files.items():
+                if path == filename:
+                    target_editor = widget
+                    break
+                try:
+                    same_path = pathlib.Path(path).resolve() == pathlib.Path(filename).resolve()
+                except (OSError, RuntimeError, ValueError):
+                    same_path = False
+                if same_path:
+                    target_editor = widget
+                    break
+
+            # Base name match
+            if target_editor is None:
+                for path, widget in open_files.items():
+                    if pathlib.Path(path).name == pathlib.Path(filename).name:
+                        target_editor = widget
+                        break
+
+            # Tab title match
+            if target_editor is None:
+                for index in range(self.editor.tab_widget.count()):
+                    widget = self.editor.tab_widget.widget(index)
+                    if widget is not self.editor.agent_panel and widget is not None:
+                        tab_text = self.editor.tab_widget.tabText(index)
+                        clean = tab_text[:-2] if tab_text.endswith(" *") else tab_text
+                        if clean == filename or pathlib.Path(clean).name == pathlib.Path(filename).name:
+                            target_editor = widget
+                            break
+
+        if target_editor is not None:
+            target_editor.blockSignals(True)
+            target_editor.setPlainText(content)
+            target_editor.blockSignals(False)
+            target_editor.document().setModified(True)
+            idx = self.editor.tab_widget.indexOf(target_editor)
+            if idx != -1:
+                self.editor.tab_widget.setCurrentIndex(idx)
+            self.editor._sync_editor_document(target_editor)
+        else:
+            if self.editor._is_real_file(filename) or "/" in filename or "\\" in filename:
+                try:
+                    path = pathlib.Path(filename).resolve()
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(content, encoding="utf-8")
+                    self.editor.load_file(str(path))
+                except Exception as e:
+                    std_logging.error(f"Failed to write file to disk: {e}")
+                    editor, idx = self.editor._create_editor_tab(filename=filename)
+                    editor.blockSignals(True)
+                    editor.setPlainText(content)
+                    editor.blockSignals(False)
+                    editor.document().setModified(True)
+                    self.editor.tab_widget.setCurrentIndex(idx)
+            else:
+                editor, idx = self.editor._create_editor_tab(filename=filename)
+                editor.blockSignals(True)
+                editor.setPlainText(content)
+                editor.blockSignals(False)
+                editor.document().setModified(True)
+                self.editor.tab_widget.setCurrentIndex(idx)
+
+    def _build_agent_request(self, user_text: str) -> dict:
+        """Build an LLM request from the selected provider and chat history."""
         provider_key = self.provider_combo.currentData()
         if not provider_key:
-            return "No provider selected."
+            return {"error": "No provider selected."}
 
         settings = ai_settings.get_api_settings(provider_key)
         api_key = settings.get("api_key", "")
         base_url = settings.get("base_url", "").strip().rstrip("/")
-        model = settings.get("model", "")
+        model = settings.get("text_model", settings.get("model", ""))
 
         if not base_url:
-            return "No base URL configured. Please set your AI API settings in Tools > AI Settings."
+            return {
+                "error": "No base URL configured. Please set your AI API settings in Tools > AI Settings."
+            }
         if not model:
-            return "No model configured. Please set your AI API settings in Tools > AI Settings."
+            return {
+                "error": "No model configured. Please set your AI API settings in Tools > AI Settings."
+            }
         if not api_key:
-            return "No API key configured. Please set your AI API key in Tools > AI Settings."
+            return {
+                "error": "No API key configured. Please set your AI API key in Tools > AI Settings."
+            }
 
         messages = [{"role": "system", "content": self._system_prompt}]
         for msg in self._chat_history[-10:]:
@@ -831,30 +1116,45 @@ updated: 2026-06-09
                 messages.append({"role": role, "content": content})
         messages.append({"role": "user", "content": user_text})
 
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
+        return {
+            "url": base_url + "/chat/completions",
+            "headers": {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            "json": {
+                "model": model,
+                "messages": messages,
+                "temperature": settings.get("temperature", 0.3),
+                "max_tokens": settings.get("max_tokens", 4096),
+            },
         }
 
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": settings.get("temperature", 0.3),
-            "max_tokens": settings.get("max_tokens", 4096),
-        }
+    @staticmethod
+    def _call_agent_request(request: dict) -> str:
+        """Call the LLM API using a prebuilt request."""
+        import requests
 
-        url = base_url + "/chat/completions"
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
-
+        error = request.get("error")
+        if error:
+            return str(error)
+        response = requests.post(
+            request["url"],
+            headers=request.get("headers", {}),
+            json=request.get("json", {}),
+            timeout=60,
+        )
         if response.status_code != 200:
             return f"API error {response.status_code}: {response.text[:200]}"
-
         data = response.json()
         choices = data.get("choices", [])
         if choices:
             return choices[0].get("message", {}).get("content", "No response content.")
-
         return "No response from API."
+
+    def _call_agent(self, user_text: str) -> str:
+        """Call the LLM API directly using settings from AI Settings."""
+        return self._call_agent_request(self._build_agent_request(user_text))
 
     def _get_context(self) -> str:
         """Get the current editor context."""
@@ -886,7 +1186,7 @@ updated: 2026-06-09
         self._chat_history = []
         _save_history([])
         self.transcript.clear()
-        self._append_sys("History cleared. Current file context will be included with your next question.")
+        self._append_sys("🗑️ History cleared. Current file context will be included with your next question.")
 
     def _update_provider_label(self, provider_key: str | None = None) -> None:
         """Update the provider status label."""
@@ -895,162 +1195,11 @@ updated: 2026-06-09
         model = ai_settings.get_model()
         name = _PROVIDER_NAMES.get(provider_key, provider_key)
         if model:
-            self.status_label.setText(f"Active: {name} | Model: {model}")
+            self.status_label.setText(f"🔌 Active: {name} | 🧠 Model: {model}")
         else:
-            self.status_label.setText(f"Active: {name}")
+            self.status_label.setText(f"🔌 Active: {name}")
 
-    def _get_wiki_context(self, text: str) -> str:
-        """Get relevant wiki and source code context for the user's question."""
+    def _get_wiki_context(self, text: str, current_context: str = "") -> str:
+        """Get verified ChiSurf API context for the user's question."""
         repo_root = pathlib.Path(__file__).resolve().parents[4]
-        wiki_dir = repo_root / "llm-wiki" / "wiki"
-        contexts = []
-
-        # Get wiki context
-        if wiki_dir.exists():
-            index_path = wiki_dir / "index.md"
-            if index_path.exists():
-                try:
-                    with open(index_path, encoding="utf-8") as f:
-                        f.read()
-                except Exception:
-                    pass
-
-                keywords = [word.lower() for word in text.split() if len(word) > 3]
-                if keywords:
-                    for section in ["entities", "concepts", "sources", "synthesis"]:
-                        section_dir = wiki_dir / section
-                        if not section_dir.exists():
-                            continue
-
-                        for page_path in section_dir.glob("*.md"):
-                            try:
-                                with open(page_path, encoding="utf-8") as f:
-                                    content = f.read()
-                            except Exception:
-                                continue
-
-                            content_lower = content.lower()
-                            if any(keyword in content_lower for keyword in keywords):
-                                title = self._extract_wiki_title(page_path)
-                                contexts.append(f"\n\n[[Wiki: {title}]]\n{content[:3000]}")
-                                if len(contexts) >= 2:
-                                    break
-                        if len(contexts) >= 2:
-                            break
-
-        # Get source code context
-        source_context = self._get_source_code_context(text, repo_root)
-        if source_context:
-            contexts.append(source_context)
-
-        if contexts:
-            return "\n".join(contexts[:3])
-        return ""
-
-    def _get_source_code_context(self, text: str, repo_root: pathlib.Path) -> str:
-        """Get relevant source code context for the user's question."""
-        keywords = [word.lower() for word in text.split() if len(word) > 3]
-        if not keywords:
-            return ""
-
-        matches = []
-        package_dir = repo_root / "chisurf"
-        for py_file in package_dir.rglob("*.py"):
-            if "__pycache__" in py_file.parts or "test" in py_file.parts:
-                continue
-
-            try:
-                content = py_file.read_text(encoding="utf-8")
-            except Exception:
-                continue
-
-            content_lower = content.lower()
-            score = sum(1 for keyword in keywords if keyword in content_lower)
-            if score > 0:
-                rel_path = py_file.relative_to(repo_root)
-                matches.append((score, rel_path.as_posix(), content[:4000]))
-
-        matches.sort(reverse=True, key=lambda x: x[0])
-        if not matches:
-            return ""
-
-        contexts = []
-        for score, path, content in matches[:2]:
-            contexts.append(f"\n\n[[Source: {path}]]\n```python\n{content}\n```")
-
-        return "\n".join(contexts)
-
-    def _extract_wiki_title(self, page_path: pathlib.Path) -> str:
-        """Extract title from a wiki page."""
-        try:
-            with open(page_path, encoding="utf-8") as f:
-                content = f.read()
-        except Exception:
-            return page_path.stem
-
-        lines = content.split("\n")
-        if len(lines) > 1 and lines[0] == "---":
-            for line in lines[1:]:
-                if line == "---":
-                    break
-                if line.startswith("title:"):
-                    return line.split(":", 1)[1].strip()
-
-        for line in lines:
-            if line.startswith("# "):
-                return line[2:].strip()
-
-        return page_path.stem
-
-    def _call_agent(self, user_text: str) -> str:
-        """Call the LLM API directly using settings from AI Settings."""
-        import requests
-
-        provider_key = self.provider_combo.currentData()
-        if not provider_key:
-            return "No provider selected."
-
-        settings = ai_settings.get_api_settings(provider_key)
-        api_key = settings.get("api_key", "")
-        base_url = settings.get("base_url", "").strip().rstrip("/")
-        model = settings.get("model", "")
-
-        if not base_url:
-            return "No base URL configured. Please set your AI API settings in Tools > AI Settings."
-        if not model:
-            return "No model configured. Please set your AI API settings in Tools > AI Settings."
-        if not api_key:
-            return "No API key configured. Please set your AI API key in Tools > AI Settings."
-
-        messages = [{"role": "system", "content": self._system_prompt}]
-        for msg in self._chat_history[-10:]:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            if role in ("user", "assistant"):
-                messages.append({"role": role, "content": content})
-        messages.append({"role": "user", "content": user_text})
-
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        }
-
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": settings.get("temperature", 0.3),
-            "max_tokens": settings.get("max_tokens", 4096),
-        }
-
-        url = base_url + "/chat/completions"
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
-
-        if response.status_code != 200:
-            return f"API error {response.status_code}: {response.text[:200]}"
-
-        data = response.json()
-        choices = data.get("choices", [])
-        if choices:
-            return choices[0].get("message", {}).get("content", "No response content.")
-
-        return "No response from API."
+        return retrieve_context(text, current_context, repo_root=repo_root, limit=8)

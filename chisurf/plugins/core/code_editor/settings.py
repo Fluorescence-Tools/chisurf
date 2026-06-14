@@ -65,6 +65,14 @@ EDITOR_SETTINGS_KEYS = [
     "caret_line_visible",
     "line_numbers_visible",
     "enable_lsp",
+    "enable_ruff",
+    "run_ruff_on_save",
+    "ruff_timeout_ms",
+    "ruff_extra_args",
+    "enable_rpc",
+    "rpc_host",
+    "rpc_cmd_port",
+    "rpc_pub_port",
 ]
 
 
@@ -88,9 +96,9 @@ def normalize_editor_language(language: str | None) -> str:
     return "Python"
 
 
-def default_editor_settings() -> dict[str, str | int | bool]:
+def default_editor_settings() -> dict[str, str | int | bool | list[str]]:
     """Return the default editor settings dictionary."""
-    settings: dict[str, str | int | bool] = {
+    settings: dict[str, str | int | bool | list[str]] = {
         "font_family": "Courier New",
         "font_size": 9,
         "language": "Python",
@@ -98,12 +106,20 @@ def default_editor_settings() -> dict[str, str | int | bool]:
         "caret_line_visible": False,
         "line_numbers_visible": True,
         "enable_lsp": True,
+        "enable_ruff": True,
+        "run_ruff_on_save": False,
+        "ruff_timeout_ms": 5000,
+        "ruff_extra_args": [],
+        "enable_rpc": False,
+        "rpc_host": "127.0.0.1",
+        "rpc_cmd_port": 8775,
+        "rpc_pub_port": 8776,
     }
     settings.update(EDITOR_COLOR_SCHEMES["ChiSurf"])
     return settings
 
 
-def get_editor_settings() -> dict[str, str | int | bool]:
+def get_editor_settings() -> dict[str, str | int | bool | list[str]]:
     """Return editor settings merged with the current ChiSurf GUI settings."""
     settings = default_editor_settings()
     cfg = cs.core.settings.gui.get("editor", {})
@@ -136,11 +152,7 @@ def make_editor_font(settings: dict | None = None) -> QtGui.QFont:
 
 def save_editor_settings(settings: dict) -> bool:
     """Persist editor settings to the user ChiSurf settings file."""
-    editor_settings = {
-        key: settings[key]
-        for key in EDITOR_SETTINGS_KEYS
-        if key in settings
-    }
+    editor_settings = {key: settings[key] for key in EDITOR_SETTINGS_KEYS if key in settings}
     if not editor_settings:
         return False
 
@@ -197,7 +209,6 @@ def save_editor_settings(settings: dict) -> bool:
     except Exception as e:
         logging.log(1, f"Error saving editor settings: {e}")
         return False
-
 
 
 class EditorSettingsDialog(QtWidgets.QDialog):
@@ -274,8 +285,37 @@ class EditorSettingsDialog(QtWidgets.QDialog):
         self.line_numbers_check.setObjectName("line_numbers_check")
         self.lsp_check = QtWidgets.QCheckBox("Enable Python LSP")
         self.lsp_check.setObjectName("lsp_check")
+        self.ruff_check = QtWidgets.QCheckBox("Enable Ruff checks")
+        self.ruff_check.setObjectName("ruff_check")
+        self.ruff_on_save_check = QtWidgets.QCheckBox("Run Ruff after save")
+        self.ruff_on_save_check.setObjectName("ruff_on_save_check")
+        self.ruff_timeout_spin = QtWidgets.QSpinBox()
+        self.ruff_timeout_spin.setObjectName("ruff_timeout_spin")
+        self.ruff_timeout_spin.setRange(1000, 60000)
+        self.ruff_timeout_spin.setSingleStep(500)
+        self.ruff_timeout_spin.setSuffix(" ms")
+        self.ruff_args_edit = QtWidgets.QLineEdit()
+        self.ruff_args_edit.setObjectName("ruff_args_edit")
+        self.rpc_check = QtWidgets.QCheckBox("Enable editor RPC server")
+        self.rpc_check.setObjectName("rpc_check")
+        self.rpc_host_edit = QtWidgets.QLineEdit()
+        self.rpc_host_edit.setObjectName("rpc_host_edit")
+        self.rpc_cmd_spin = QtWidgets.QSpinBox()
+        self.rpc_cmd_spin.setObjectName("rpc_cmd_spin")
+        self.rpc_cmd_spin.setRange(1024, 65535)
+        self.rpc_pub_spin = QtWidgets.QSpinBox()
+        self.rpc_pub_spin.setObjectName("rpc_pub_spin")
+        self.rpc_pub_spin.setRange(1024, 65535)
         behavior_layout.addRow(self.line_numbers_check)
         behavior_layout.addRow(self.lsp_check)
+        behavior_layout.addRow(self.ruff_check)
+        behavior_layout.addRow(self.ruff_on_save_check)
+        behavior_layout.addRow("Ruff timeout:", self.ruff_timeout_spin)
+        behavior_layout.addRow("Ruff extra args:", self.ruff_args_edit)
+        behavior_layout.addRow(self.rpc_check)
+        behavior_layout.addRow("RPC host:", self.rpc_host_edit)
+        behavior_layout.addRow("RPC command port:", self.rpc_cmd_spin)
+        behavior_layout.addRow("RPC publish port:", self.rpc_pub_spin)
         behavior_group.setLayout(behavior_layout)
         layout.addWidget(behavior_group)
 
@@ -350,6 +390,25 @@ class EditorSettingsDialog(QtWidgets.QDialog):
         self.caret_line_check.setChecked(bool(settings.get("caret_line_visible", False)))
         self.line_numbers_check.setChecked(bool(settings.get("line_numbers_visible", True)))
         self.lsp_check.setChecked(bool(settings.get("enable_lsp", True)))
+        self.ruff_check.setChecked(bool(settings.get("enable_ruff", True)))
+        self.ruff_on_save_check.setChecked(bool(settings.get("run_ruff_on_save", False)))
+        try:
+            self.ruff_timeout_spin.setValue(int(settings.get("ruff_timeout_ms", 5000)))
+        except (TypeError, ValueError):
+            self.ruff_timeout_spin.setValue(5000)
+        extra_args = settings.get("ruff_extra_args", [])
+        if isinstance(extra_args, list):
+            self.ruff_args_edit.setText(" ".join(str(arg) for arg in extra_args))
+        else:
+            self.ruff_args_edit.setText(str(extra_args))
+        self.rpc_check.setChecked(bool(settings.get("enable_rpc", False)))
+        self.rpc_host_edit.setText(str(settings.get("rpc_host", "127.0.0.1")))
+        try:
+            self.rpc_cmd_spin.setValue(int(settings.get("rpc_cmd_port", 8775)))
+            self.rpc_pub_spin.setValue(int(settings.get("rpc_pub_port", 8776)))
+        except (TypeError, ValueError):
+            self.rpc_cmd_spin.setValue(8775)
+            self.rpc_pub_spin.setValue(8776)
 
     def _on_color_scheme_changed(self, scheme: str) -> None:
         """Update color controls when the color scheme changes."""
@@ -375,8 +434,7 @@ class EditorSettingsDialog(QtWidgets.QDialog):
         color = QtGui.QColor(button.text())
         brightness = sum(color.getRgb()[:3])
         button.setStyleSheet(
-            f"background-color: {button.text()}; "
-            f"color: {'black' if brightness > 382 else 'white'};"
+            f"background-color: {button.text()}; color: {'black' if brightness > 382 else 'white'};"
         )
 
     def editor_settings(self) -> dict:
@@ -389,12 +447,27 @@ class EditorSettingsDialog(QtWidgets.QDialog):
             "caret_line_visible": self.caret_line_check.isChecked(),
             "line_numbers_visible": self.line_numbers_check.isChecked(),
             "enable_lsp": self.lsp_check.isChecked(),
+            "enable_ruff": self.ruff_check.isChecked(),
+            "run_ruff_on_save": self.ruff_on_save_check.isChecked(),
+            "ruff_timeout_ms": self.ruff_timeout_spin.value(),
+            "ruff_extra_args": self._split_extra_args(self.ruff_args_edit.text()),
+            "enable_rpc": self.rpc_check.isChecked(),
+            "rpc_host": self.rpc_host_edit.text().strip() or "127.0.0.1",
+            "rpc_cmd_port": self.rpc_cmd_spin.value(),
+            "rpc_pub_port": self.rpc_pub_spin.value(),
         }
-        settings.update({
-            key: button.text()
-            for key, button in self.color_buttons.items()
-        })
+        settings.update({key: button.text() for key, button in self.color_buttons.items()})
         return settings
+
+    @staticmethod
+    def _split_extra_args(text: str) -> list[str]:
+        """Return shell-like extra arguments from a single text field."""
+        import shlex
+
+        try:
+            return shlex.split(text)
+        except ValueError:
+            return text.split()
 
     def restore_defaults(self) -> None:
         """Reset dialog controls to default editor settings."""
@@ -404,7 +477,6 @@ class EditorSettingsDialog(QtWidgets.QDialog):
         """Save and apply the current dialog settings."""
         self.settings_applied.emit(self.editor_settings())
         self.accept()
-
 
 
 __all__ = [

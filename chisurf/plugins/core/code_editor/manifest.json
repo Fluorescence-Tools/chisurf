@@ -24,9 +24,37 @@
     }
   },
   "entrypoints": {
-    "gui": "chisurf.plugins.core.code_editor.window:CodeEditorWindow"
+    "gui": "chisurf.plugins.core.code_editor.window:CodeEditorWindow",
+    "services": "chisurf.plugins.core.code_editor.backend.services:register_services"
   },
+  "rpc_methods": [
+    {
+      "name": "editor.document.list",
+      "summary": "List open editor documents."
+    },
+    {
+      "name": "editor.document.get",
+      "summary": "Get an open editor document."
+    },
+    {
+      "name": "editor.document.set",
+      "summary": "Replace an open editor document."
+    },
+    {
+      "name": "editor.document.apply_edits",
+      "summary": "Apply text edits to an open editor document."
+    },
+    {
+      "name": "editor.document.ruff_check",
+      "summary": "Run Ruff on an open editor document."
+    },
+    {
+      "name": "editor.document.ruff_fix",
+      "summary": "Run Ruff fixes on an open editor document."
+    }
+  ],
   "dependencies": {
-    "python-lsp-server": ">=1.14"
+    "python-lsp-server": ">=1.14",
+    "ruff": ">=0.4"
   }
 }

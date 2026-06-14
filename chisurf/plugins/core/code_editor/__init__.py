@@ -8,6 +8,7 @@ from pathlib import Path
 
 from chisurf.core.plugin import load_manifest
 from chisurf.core.plugin.registry import apply_manifest_statefulness
+from chisurf.plugins.core.code_editor.document_store import DocumentSnapshot, DocumentStore
 from chisurf.plugins.core.code_editor.editor import CodeEditor
 from chisurf.plugins.core.code_editor.symbols import CodeSymbol, extract_python_symbols
 from chisurf.plugins.core.code_editor.text_editor import (
@@ -40,6 +41,8 @@ __all__ = [
     "icon",
     "CodeEditor",
     "CodeEditorWindow",
+    "DocumentSnapshot",
+    "DocumentStore",
     "CodeSymbol",
     "JSONHighlighter",
     "PythonHighlighter",
