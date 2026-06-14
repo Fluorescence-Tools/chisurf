@@ -1,0 +1,226 @@
+"""JSON-RPC handlers for fdb ndxplorer analysis and selection provenance."""
+
+from __future__ import annotations
+
+import datetime
+import pathlib
+import sys
+import uuid
+from typing import Any
+
+from chisurf.core.fio.mmcif.db import FluorescenceDatabase, resolve_database_path
+from chisurf.server.services import (
+    INVALID_INPUT,
+    NOT_FOUND,
+    OPERATION_FAILED,
+    service_error,
+)
+
+
+def _ensure_ndxplorer_import() -> Any:
+    """Ensure modules/ndxplorer is on sys.path and import ndxplorer.io.reader."""
+    for attempt in range(2):
+        try:
+            import ndxplorer.io.reader as ndx_reader
+            return ndx_reader
+        except Exception:
+            if attempt == 0:
+                root = pathlib.Path(__file__).resolve().parents[4]
+                ndx_path = root / "modules" / "ndxplorer"
+                if ndx_path.is_dir() and str(ndx_path) not in sys.path:
+                    sys.path.insert(0, str(ndx_path))
+            else:
+                raise
+
+
+def _utc_now() -> str:
+    """Return the current UTC timestamp formatted as YYYY-MM-DD HH:MM:SS."""
+    return datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def register_ndxplorer_services(dispatcher: Any) -> None:
+    """Register fdb Phase 2 RPC handlers for ndxplorer.
+
+    Parameters
+    ----------
+    dispatcher : object
+        Service dispatcher exposing a ``register`` method.
+    """
+    for name, handler in {
+        "ndxplorer.load_burst_product": load_burst_product_handler,
+        "ndxplorer.record_analysis": record_analysis_handler,
+    }.items():
+        dispatcher.register(name, lambda params, _handler=handler: _handler(**params))
+
+
+def load_burst_product_handler(processed_data_id: str) -> dict[str, Any]:
+    """Load a registered burst product into ndxplorer data structures.
+
+    Parameters
+    ----------
+    processed_data_id : str
+        The ID of the processed product record.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result with parameter names and values.
+    """
+    try:
+        with FluorescenceDatabase(resolve_database_path()) as db:
+            row = db.get_processed_data(processed_data_id)
+            if row is None:
+                return service_error(
+                    f"processed data not found: {processed_data_id}",
+                    error_code=NOT_FOUND,
+                )
+
+            product = dict(row)
+
+            # Determine path based on storage mode
+            file_path = product.get("file_path")
+            folder_path = product.get("folder_path")
+
+            path_to_read = folder_path or file_path
+            if not path_to_read:
+                return service_error(
+                    f"no file/folder path associated with product: {processed_data_id}",
+                    error_code=INVALID_INPUT,
+                )
+
+            path = pathlib.Path(path_to_read)
+            if not path.exists():
+                return service_error(
+                    f"path does not exist: {path_to_read}",
+                    error_code=NOT_FOUND,
+                )
+
+            # Import reader
+            ndx_reader = _ensure_ndxplorer_import()
+
+            # Load according to product type
+            product_type = product.get("product_type", "").lower()
+
+            if product_type == "bur" or (path.is_file() and path.suffix.lower() == ".bur"):
+                ds = ndx_reader.read_csv([str(path)])
+            elif product_type in ("hdf5", "h5") or path.suffix.lower() in (".h5", ".hdf5"):
+                ds = ndx_reader.read_mfd_hdf5([str(path)])
+            else:
+                ds = ndx_reader.read_burst_analysis(path)
+
+            return {
+                "ok": True,
+                "parameter_names": ds.parameter_names,
+                "values": ds.values,
+                "processed_data_id": processed_data_id,
+                "product_type": product_type,
+                "file_path": file_path,
+                "folder_path": folder_path,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=OPERATION_FAILED, exception=exc)
+
+
+def record_analysis_handler(
+    experiment_id: str,
+    input_processed_data_ids: list[str],
+    analysis_type: str,
+    settings: dict[str, Any] | None = None,
+    products: list[dict[str, Any]] | None = None,
+    operator_user_id: str | None = None,
+    software_version: str | None = None,
+    status: str = "succeeded",
+    error_message: str | None = None,
+    traceback_summary: str | None = None,
+) -> dict[str, Any]:
+    """Record an ndxplorer analysis run and its generated products.
+
+    Parameters
+    ----------
+    experiment_id : str
+        Experiment identifier.
+    input_processed_data_ids : list of str
+        The input processed data product IDs.
+    analysis_type : str
+        The type of analysis, e.g., 'selection', 'gmm_clustering'.
+    settings : dict, optional
+        Analysis settings/parameters.
+    products : list of dict, optional
+        Products generated by the analysis.
+    operator_user_id : str, optional
+        Operator/user identifier.
+    software_version : str, optional
+        Software version.
+    status : str
+        Status of the run.
+    error_message : str, optional
+        Error message if failed.
+    traceback_summary : str, optional
+        Traceback summary if failed.
+
+    Returns
+    -------
+    dict
+        JSON-RPC result.
+    """
+    try:
+        from chisurf.core.mfdb.repository import _json_hash
+        from chisurf.plugins.core.mfdb_admin.backend.measurement_services import (
+            _register_product,
+        )
+
+        product_specs = list(products or [])
+        now = _utc_now()
+        run_id = f"proc_ndx_{uuid.uuid4()}"
+        settings_hash = _json_hash(settings)
+
+        with FluorescenceDatabase(resolve_database_path()) as db:
+            db.add_processing_run(
+                experiment_id=experiment_id,
+                processing_type=f"ndxplorer_{analysis_type}",
+                processing_id=run_id,
+                input_raw_data_ids=[],  # provenance edges are used for input products
+                settings=settings or {},
+                operator_user_id=operator_user_id,
+                software_package="ndxplorer",
+                software_version=software_version,
+                started_at=now,
+                ended_at=now,
+                status=status,
+                error_message=error_message,
+                traceback_summary=traceback_summary,
+            )
+
+            # Register the input_to edges linking inputs to this run
+            for input_id in input_processed_data_ids:
+                in_prod = db.get_processed_data(input_id)
+                db.add_provenance_edge(
+                    source_node_type="processed_data",
+                    source_node_id=input_id,
+                    target_node_type="processing_run",
+                    target_node_id=run_id,
+                    relationship_type="input_to",
+                    processing_id=run_id,
+                    settings_hash=settings_hash,
+                    software_version=software_version,
+                    checksum_snapshot={
+                        "input_processed_data": in_prod["checksum"] if in_prod else None,
+                        "settings": settings_hash,
+                    },
+                )
+
+            # Register output products
+            registered_products = []
+            for product in product_specs:
+                prod_id = _register_product(db, run_id, product)
+                registered_products.append(
+                    db._decode_processed_data_row(db.get_processed_data(prod_id))
+                )
+
+            return {
+                "ok": True,
+                "processing_run": db.get_processing_run_full(run_id),
+                "products": registered_products,
+            }
+    except Exception as exc:
+        return service_error(str(exc), error_code=INVALID_INPUT, exception=exc)

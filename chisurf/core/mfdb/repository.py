@@ -1,0 +1,4702 @@
+import hashlib
+import json
+import logging
+import os
+import platform
+import re
+import sqlite3
+import uuid
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+from chisurf.core.mfdb import schema
+from chisurf.core.mfdb.database_resolver import resolve_database_path
+from chisurf.core.mfdb.graph import map_legacy_node_type
+from chisurf.core.mfdb.models import (
+    DIRECTIONS,
+    OPERATION_TYPES,
+    PARAMETER_TYPES,
+    RELATIONSHIP_TYPES,
+    STATUS_VALUES,
+    STORAGE_MODES,
+    VALIDATION_STATUS_VALUES,
+    validate_vocabulary,
+)
+from chisurf.core.mfdb.transactions import transaction as _transaction
+
+logger = logging.getLogger(__name__)
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _json_dumps(value: Any) -> str | None:
+    if value is None:
+        return None
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def _json_loads(value: str | None) -> Any:
+    if not value:
+        return None
+    return json.loads(value)
+
+
+def _json_hash(value: Any) -> str | None:
+    text = _json_dumps(value)
+    if text is None:
+        return None
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _validate_checksum(checksum: str | None, algorithm: str | None) -> None:
+    """Validate checksum length and hexadecimal encoding for supported algorithms."""
+    if checksum is None or algorithm is None:
+        return
+    checksum_text = str(checksum)
+    algorithm_text = str(algorithm).lower()
+    if not re.fullmatch(r"[0-9a-fA-F]+", checksum_text):
+        return
+    expected_lengths = {"md5": 32, "sha256": 64}
+    expected = expected_lengths.get(algorithm_text)
+    if expected is not None and len(checksum_text) != expected:
+        raise ValueError(f"{algorithm} checksum must be {expected} hexadecimal characters")
+    int(checksum_text, 16)
+
+
+def _row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    return {key: row[key] for key in row.keys()}
+
+
+def _exists(conn: sqlite3.Connection, table: str, column: str, value: Any) -> bool:
+    row = conn.execute(f"SELECT 1 FROM {table} WHERE {column} = ?", (value,)).fetchone()
+    return row is not None
+
+
+class MFDatabase:
+
+    _VALID_ENUMS = {
+        "category": ["organic_dye", "protein", "nanoparticle", "quantum_dot", "other"],
+        "probe_origin": ["extrinsic", "intrinsic", "other"],
+        "probe_link_type": ["covalent", "non-covalent", "other"],
+        "fluorophore_type": ["unspecified", "small_molecule", "protein_domain"],
+        "reactive_probe_flag": ["yes", "no"],
+    }
+
+    _PROP_ALIASES = {
+        "abs_max": ["abs_max", "absorption maximum", "λabs", "excitation max", "ex_max", "abs_peak", "λex"],
+        "em_max": ["em_max", "emission maximum", "λfl", "emission max", "em_max", "em_peak", "λem"],
+        "qy": ["qy", "fluorescence quantum yield", "ηfl", "quantum yield", "phi_acceptor", "phi", "qy_d", "phi_d"],
+        "lifetime": ["lifetime", "fluorescence lifetime", "τfl", "tau", "tau_d", "tau_0"],
+        "ext_coeff": ["ext_coeff", "molar extinction coefficient", "εmax", "extinction coefficient", "epsilon", "molar_ec"],
+    }
+
+    def __init__(self, db_path: str | os.PathLike | None = None, readonly: bool = False, connection: sqlite3.Connection | None = None, enforce_foreign_keys: bool = True):
+        import os as _os
+        self._os = _os
+        if db_path is None:
+            db_path = resolve_database_path()
+        self.db_path = str(db_path) if db_path == ":memory:" else (_os.path.abspath(str(db_path)) if db_path else None)
+        self.readonly = readonly
+        self.enforce_foreign_keys = enforce_foreign_keys
+        self._conn: sqlite3.Connection | None = None
+        self.migration_report = None
+        if connection is not None:
+            self._conn = connection
+            self.readonly = readonly
+        elif db_path is not None:
+            self.connect()
+            self.migration_report = schema.migrate_schema(self.conn)
+            if not self.readonly and hasattr(schema, "_ensure_lifecycle_columns"):
+                schema._ensure_lifecycle_columns(self.conn)
+
+    @property
+    def conn(self) -> sqlite3.Connection:
+        if self._conn is None:
+            raise RuntimeError("Database not connected. Call connect() first.")
+        return self._conn
+
+    def connect(self):
+        if self._conn is not None:
+            return
+        self._conn = sqlite3.connect(str(self.db_path))
+        self._conn.row_factory = sqlite3.Row
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        if self.enforce_foreign_keys:
+            self._conn.execute("PRAGMA foreign_keys=ON")
+        else:
+            self._conn.execute("PRAGMA foreign_keys=OFF")
+        self._conn.execute("PRAGMA busy_timeout=5000")
+
+    def close(self):
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
+
+    def backup_database(self, target_path: str | os.PathLike) -> str:
+        """Create a SQLite backup at ``target_path``.
+
+        Parameters
+        ----------
+        target_path : str or os.PathLike
+            Destination path for the copied SQLite database.
+
+        Returns
+        -------
+        str
+            Absolute path to the backup database.
+        """
+        target = Path(target_path)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        dest = sqlite3.connect(str(target))
+        try:
+            self.conn.backup(dest)
+        finally:
+            dest.close()
+        return str(target)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
+
+    def _transaction(self):
+        """Return a savepoint-backed transaction context for compound writes."""
+        @contextmanager
+        def _wrapper():
+            with _transaction(self.conn):
+                yield self
+        return _wrapper()
+
+    def transaction(self):
+        """Transaction context manager for the database connection."""
+        from contextlib import contextmanager
+
+        from chisurf.core.mfdb.transactions import transaction as _transaction
+        @contextmanager
+        def _wrapper():
+            with _transaction(self.conn):
+                yield self
+        return _wrapper()
+
+    def validate_extensible_vocab(self, field_name: str, value: str | None) -> None:
+        """Validate that value is active in mfdb_vocabulary for field_name."""
+        if value is None:
+            return
+        row = self.conn.execute(
+            "SELECT is_active FROM mfdb_vocabulary WHERE field_name = ? AND value = ?",
+            (field_name, value)
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"Unknown extensible vocabulary value {value!r} for field {field_name!r}")
+        if not row["is_active"]:
+            raise ValueError(f"Inactive extensible vocabulary value {value!r} for field {field_name!r}")
+
+    def register_vocabulary_value(
+        self,
+        field_name: str,
+        value: str,
+        display_name: str | None = None,
+        description: str | None = None,
+        is_builtin: bool = False,
+        is_active: bool = True,
+    ) -> None:
+        """Register an extensible vocabulary value."""
+        with self._transaction():
+            now = _utc_now()
+            self.conn.execute(
+                """INSERT OR REPLACE INTO mfdb_vocabulary (
+                    field_name, value, display_name, description, is_builtin, is_active,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (field_name, value, display_name or value, description, int(is_builtin), int(is_active),
+                 now, now, None)
+            )
+
+    # -- schema / migration --
+
+    def create_tables(self):
+        schema.create_tables(self.conn)
+
+    def migrate(self):
+        schema.migrate(self.conn)
+
+    def register_migration(self, version, description, applied_by):
+        schema.register_migration(self.conn, version, description, applied_by)
+
+    def get_schema_version(self):
+        return schema.get_schema_version(self.conn)
+
+    # -- legacy alias --
+    _get_schema_version = get_schema_version
+
+    # -- materialized views --
+
+    def refresh_materialized_views(self):
+        for view_name in schema.MATERIALIZED_VIEWS:
+            self.conn.execute("DELETE FROM " + view_name)
+            self.conn.execute("INSERT INTO " + view_name + " SELECT * FROM " + view_name + "__source")
+
+    # -- external files --
+
+    def add_external_file(self, file_path, file_format=None, content_type=None, file_size_bytes=None, md5=None, details=None):
+        if not file_path:
+            raise ValueError("file_path is required")
+        file_uuid = str(uuid.uuid4())
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO ihm_external_files "
+                "(reference_id, file_path, file_format, content_type, file_size_bytes, md5, uuid, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (None, str(file_path), file_format, content_type, file_size_bytes, md5, file_uuid, details,
+                 now, now, None)
+            )
+            row = self.conn.execute("SELECT id FROM ihm_external_files WHERE uuid = ?", (file_uuid,)).fetchone()
+            return int(row["id"]) if row else 0
+
+    def get_external_file(self, file_id):
+        return self.conn.execute("SELECT * FROM ihm_external_files WHERE id = ?", (file_id,)).fetchone()
+
+    def resolve_external_path(self, file_path: str) -> str:
+        raw = str(file_path)
+        if raw.startswith("~"):
+            raw = self._os.path.expanduser(raw)
+        if not self._os.path.isabs(raw) and self.db_path:
+            raw = self._os.path.join(self._os.path.dirname(self.db_path), raw)
+        return self._os.path.normpath(raw)
+
+    # -- CiteULike / citations --
+
+    def get_citations(self, citeulike_ids=None):
+        if citeulike_ids is None:
+            return self.conn.execute("SELECT * FROM citeulike ORDER BY authors, title").fetchall()
+        placeholders = ",".join("?" for _ in citeulike_ids)
+        return self.conn.execute(f"SELECT * FROM citeulike WHERE citeulike_id IN ({placeholders}) ORDER BY authors, title", citeulike_ids).fetchall()
+
+    def add_citation(self, citeulike_id, title, authors, journal=None, year=None, volume=None, number=None, pages=None, doi=None, pmid=None, pmcid=None, details=None):
+        if not citeulike_id:
+            raise ValueError("citeulike_id is required")
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO citeulike "
+                "(citeulike_id, title, authors, journal, year, volume, number, pages, doi, pmid, pmcid, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (citeulike_id, title, authors, journal, year, volume, number, pages, doi, pmid, pmcid, details,
+                 now, now, None)
+            )
+
+    def delete_citation(self, citeulike_id):
+        with self.conn:
+            self.conn.execute("UPDATE citeulike SET deleted_at = ? WHERE citeulike_id = ?", (_utc_now(), citeulike_id))
+
+    # -- probes / spectra / entities --
+
+    def get_probe_types(self):
+        return self.conn.execute("SELECT * FROM probe_types ORDER BY type_id").fetchall()
+
+    def add_probe_type(self, name, description=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            cursor = self.conn.execute(
+                "INSERT OR REPLACE INTO probe_types (type_name, display_name, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?)",
+                (name, description or name, now, now, None)
+            )
+            return cursor.lastrowid
+
+    def get_probe_categories(self):
+        return self.conn.execute("SELECT DISTINCT category FROM probes WHERE category IS NOT NULL AND deleted_at IS NULL ORDER BY category").fetchall()
+
+    def get_probe(self, probe_id):
+        return self.conn.execute("SELECT * FROM probes WHERE probe_id = ?", (probe_id,)).fetchone()
+
+    def get_probe_by_uuid(self, uuid_str):
+        # Fallback to chromophore_name if uuid column doesn't exist
+        return self.conn.execute("SELECT * FROM probes WHERE chromophore_name = ?", (uuid_str,)).fetchone()
+
+    def get_probes(self, category=None, probe_type_id=None, include_inactive=False):
+        query = "SELECT * FROM probes WHERE 1=1 AND deleted_at IS NULL"
+        params = []
+        if category:
+            query += " AND category = ?"
+            params.append(category)
+        if probe_type_id:
+            query += " AND type_id = ?"
+            params.append(probe_type_id)
+        if not include_inactive:
+            pass
+        query += " ORDER BY probe_id"
+        return self.conn.execute(query, params).fetchall()
+
+    def add_probe(self, probe_id, uuid_str=None, name=None, category=None, probe_type_id=None, probe_origin=None, probe_link_type=None, fluorophore_type=None, reactive_probe_flag=None, is_active=1, description=None, details=None, **kwargs):
+        import uuid as _uuid
+        is_legacy = False
+        if isinstance(probe_id, str) and (isinstance(uuid_str, int) or (uuid_str is None and "type_id" in kwargs)):
+            is_legacy = True
+        elif isinstance(probe_id, str) and uuid_str is not None:
+            try:
+                _uuid.UUID(str(uuid_str))
+            except ValueError:
+                if str(uuid_str).isdigit():
+                    is_legacy = True
+
+        if is_legacy:
+            chromophore_name = probe_id
+            type_id = int(uuid_str) if uuid_str is not None else kwargs.get("type_id")
+            category = category or "other"
+            description = description or ""
+            row = self.conn.execute(
+                "SELECT probe_id FROM probes WHERE chromophore_name = ? AND type_id = ?",
+                (chromophore_name, type_id)
+            ).fetchone()
+            if row:
+                return row["probe_id"]
+            with self.conn:
+                now = _utc_now()
+                cursor = self.conn.execute(
+                    "INSERT INTO probes (chromophore_name, type_id, category, description, reactive_probe_flag, probe_origin, probe_link_type, fluorophore_type, "
+                    "created_at, updated_at, deleted_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (chromophore_name, type_id, category, description, reactive_probe_flag or "no", probe_origin or "extrinsic", probe_link_type or "covalent", fluorophore_type or "unspecified",
+                     now, now, None,)
+                )
+                return cursor.lastrowid
+        else:
+            c_name = name or probe_id
+            if isinstance(c_name, int):
+                c_name = name or f"probe_{probe_id}"
+            t_id = probe_type_id or uuid_str
+            if isinstance(t_id, str) and t_id.isdigit():
+                t_id = int(t_id)
+            elif not isinstance(t_id, int):
+                t_id = None
+
+            cols = ["chromophore_name"]
+            vals = [c_name]
+            if isinstance(probe_id, int):
+                cols.append("probe_id")
+                vals.append(probe_id)
+            if t_id is not None:
+                cols.append("type_id")
+                vals.append(t_id)
+            if category is not None:
+                cols.append("category")
+                vals.append(category)
+            if description is not None:
+                cols.append("description")
+                vals.append(description)
+            if probe_origin is not None:
+                cols.append("probe_origin")
+                vals.append(probe_origin)
+            if probe_link_type is not None:
+                cols.append("probe_link_type")
+                vals.append(probe_link_type)
+            if fluorophore_type is not None:
+                cols.append("fluorophore_type")
+                vals.append(fluorophore_type)
+            if reactive_probe_flag is not None:
+                cols.append("reactive_probe_flag")
+                vals.append(reactive_probe_flag)
+
+            now = _utc_now()
+            cols += ["created_at", "updated_at", "deleted_at"]
+            vals += [now, now, None]
+            placeholders = ", ".join(["?"] * len(cols))
+            with self.conn:
+                cursor = self.conn.execute(
+                    f"INSERT OR REPLACE INTO probes ({', '.join(cols)}) VALUES ({placeholders})",
+                    tuple(vals)
+                )
+                return cursor.lastrowid or probe_id
+
+    def update_probe(self, probe_id, **kwargs):
+        allowed = {"name", "category", "probe_type_id", "probe_origin", "probe_link_type", "fluorophore_type", "reactive_probe_flag", "is_active", "description", "details"}
+        if not kwargs:
+            return
+        cols, vals = [], []
+        for key, value in kwargs.items():
+            if key not in allowed:
+                raise ValueError(f"Unsupported probe column: {key}")
+            cols.append(f"{key} = ?")
+            vals.append(value)
+        vals.append(probe_id)
+        with self.conn:
+            self.conn.execute(f"UPDATE probes SET {', '.join(cols)}, updated_at = ? WHERE probe_id = ?", vals[:-1] + [_utc_now(), probe_id])
+
+    def delete_probe(self, probe_id):
+        with self.conn:
+            self.conn.execute("UPDATE probes SET deleted_at = ? WHERE probe_id = ?", (_utc_now(), probe_id))
+
+    # -- spectra --
+
+    def get_spectra(self, probe_id=None, spectrum_type=None):
+        query = "SELECT * FROM spectra WHERE 1=1 AND deleted_at IS NULL"
+        params = []
+        if probe_id is not None:
+            query += " AND probe_id = ?"
+            params.append(probe_id)
+        if spectrum_type is not None:
+            query += " AND spectrum_type = ?"
+            params.append(spectrum_type)
+        query += " ORDER BY spectrum_id"
+        return self.conn.execute(query, params).fetchall()
+
+    def get_spectrum(self, spectrum_id):
+        return self.conn.execute("SELECT * FROM spectra WHERE spectrum_id = ?", (spectrum_id,)).fetchone()
+
+    def add_spectrum(self, *args, **kwargs):
+        probe_id = None
+        spectrum_type = None
+        wavelengths = None
+        intensity_values = None
+        wavelength_unit = kwargs.get("wavelength_unit", "nm")
+        intensity_unit = kwargs.get("intensity_unit", "normalized")
+        details = kwargs.get("details", None)
+
+        if len(args) >= 4 and isinstance(args[1], str) and args[1] in ("emission", "excitation", "absorption"):
+            probe_id = args[0]
+            spectrum_type = args[1]
+            wavelengths = args[2]
+            intensity_values = args[3]
+            if len(args) > 4:
+                wavelength_unit = args[4]
+            if len(args) > 5:
+                intensity_unit = args[5]
+            if len(args) > 6:
+                details = args[6]
+        elif len(args) >= 5 and isinstance(args[2], str) and args[2] in ("emission", "excitation", "absorption"):
+            probe_id = args[1]
+            spectrum_type = args[2]
+            wavelengths = args[3]
+            intensity_values = args[4]
+            if len(args) > 5:
+                details = args[5]
+        else:
+            probe_id = kwargs.get("probe_id", args[0] if len(args) > 0 else None)
+            spectrum_type = kwargs.get("spectrum_type", args[1] if len(args) > 1 else None)
+            wavelengths = kwargs.get("wavelengths", kwargs.get("wavelength_nm", args[2] if len(args) > 2 else None))
+            intensity_values = kwargs.get("intensity_values", kwargs.get("value", args[3] if len(args) > 3 else None))
+
+        if isinstance(wavelengths, (list, np.ndarray)):
+            wavelengths = np.asarray(wavelengths, dtype=np.float64)
+        if isinstance(intensity_values, (list, np.ndarray)):
+            intensity_values = np.asarray(intensity_values, dtype=np.float64)
+
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO spectra "
+                "(probe_id, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (probe_id, spectrum_type, wavelengths, intensity_values, wavelength_unit, intensity_unit, details,
+                 now, now, None)
+            )
+
+    def get_spectrum_record(self, probe_id, spectrum_type):
+        row = self.conn.execute(
+            "SELECT * FROM spectra WHERE probe_id = ? AND spectrum_type = ?",
+            (probe_id, spectrum_type)
+        ).fetchone()
+        if row is None:
+            return None
+        res = dict(row)
+        if res.get("wavelengths"):
+            res["wavelengths"] = np.frombuffer(res["wavelengths"], dtype=np.float64)
+        if res.get("intensity_values"):
+            res["intensity_values"] = np.frombuffer(res["intensity_values"], dtype=np.float64)
+        return res
+
+    def delete_spectrum(self, spectrum_id):
+        with self.conn:
+            self.conn.execute("UPDATE spectra SET deleted_at = ? WHERE spectrum_id = ?", (_utc_now(), spectrum_id))
+
+    # -- entities --
+
+    def get_entities(self):
+        return self.conn.execute("SELECT * FROM entities WHERE deleted_at IS NULL ORDER BY entity_id").fetchall()
+
+    def add_entity(self, entity_id, name, sequence=None, entity_type=None, organism=None, entity_source=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO entities "
+                "(entity_id, name, sequence, entity_type, organism, entity_source, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (entity_id, name, sequence, entity_type, organism, entity_source, details,
+                 now, now, None)
+            )
+
+    def get_entity_by_name(self, name):
+        return self.conn.execute("SELECT * FROM entities WHERE name = ?", (name,)).fetchone()
+
+    # -- mfdb operation management --
+
+    def add_operation(
+        self,
+        operation_id: str,
+        operation_type: str,
+        name: str | None = None,
+        description: str | None = None,
+        status: str = "pending",
+        workflow_id: str | None = None,
+        parent_operation_id: str | None = None,
+        details: dict[str, Any] | str | None = None,
+    ) -> str:
+        """Register an operation using the canonical operation table.
+
+        Parameters
+        ----------
+        operation_id : str
+            Unique operation identifier.
+        operation_type : str
+            Operation vocabulary value.
+        name : str, optional
+            Display name stored in operation metadata.
+        description : str, optional
+            Description stored in operation metadata.
+        status : str, default='pending'
+            Lifecycle status.
+        workflow_id : str, optional
+            Parent workflow identifier stored in operation metadata.
+        parent_operation_id : str, optional
+            Parent operation identifier stored in operation metadata.
+        details : dict or str, optional
+            Additional metadata stored in operation metadata.
+
+        Returns
+        -------
+        str
+            The operation identifier.
+        """
+        metadata: dict[str, Any] | None = None
+        if any(value is not None for value in (name, description, workflow_id, parent_operation_id, details)):
+            metadata = {
+                "name": name,
+                "description": description,
+                "workflow_id": workflow_id,
+                "parent_operation_id": parent_operation_id,
+                "details": details,
+            }
+        return self.record_operation(operation_id, operation_type, status=status, metadata=metadata)
+
+    def update_operation(self, operation_id, **kwargs):
+        allowed = {
+            "operation_type", "experiment_id", "setup_id", "status", "operator_user_id",
+            "software_package", "software_module", "software_version",
+            "runtime_environment_json", "started_at", "ended_at", "error_message",
+            "traceback_summary", "settings_json", "metadata_json",
+        }
+        if not kwargs:
+            return
+        kwargs["updated_at"] = _utc_now()
+        cols, vals = [], []
+        for key, value in kwargs.items():
+            if key not in allowed and key != "updated_at":
+                raise ValueError(f"Unsupported operation column: {key}")
+            cols.append(f"{key} = ?")
+            vals.append(value)
+        vals.append(operation_id)
+        with self._transaction():
+            self.conn.execute(f"UPDATE mfdb_operation SET {', '.join(cols)} WHERE operation_id = ?", vals)
+
+    def update_operation_settings(self, operation_id, settings: dict):
+        now = _utc_now()
+        blob = _json_dumps(settings)
+        with self._transaction():
+            self.conn.execute("UPDATE mfdb_operation SET settings_json = ?, updated_at = ? WHERE operation_id = ?", (blob, now, operation_id))
+
+    def update_operation_status(self, operation_id, status):
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute("UPDATE mfdb_operation SET status = ?, updated_at = ? WHERE operation_id = ?", (status, now, operation_id))
+
+    def get_operations(self, operation_type=None, status=None, workflow_id=None):
+        query = "SELECT * FROM mfdb_operation WHERE 1=1 AND deleted_at IS NULL"
+        params = []
+        if operation_type:
+            query += " AND operation_type = ?"
+            params.append(operation_type)
+        if status:
+            query += " AND status = ?"
+            params.append(status)
+        if workflow_id:
+            query += " AND json_extract(metadata_json, '$.workflow_id') = ?"
+            params.append(workflow_id)
+        query += " ORDER BY created_at DESC"
+        return self.conn.execute(query, params).fetchall()
+
+    # -- mfdb artifact management --
+
+    def add_artifact(
+        self,
+        artifact_id: str,
+        artifact_kind: str,
+        name: str | None = None,
+        description: str | None = None,
+        storage_mode: str = "local_file",
+        file_path: str | None = None,
+        file_format: str | None = None,
+        content_type: str | None = None,
+        file_size_bytes: int | None = None,
+        md5: str | None = None,
+        data_format: str | None = None,
+        external_id: str | None = None,
+        details: dict[str, Any] | str | None = None,
+    ) -> str:
+        """Register an artifact using the canonical artifact table.
+
+        Parameters
+        ----------
+        artifact_id : str
+            Unique artifact identifier.
+        artifact_kind : str
+            Artifact vocabulary value.
+        name : str, optional
+            Display name stored in artifact metadata.
+        description : str, optional
+            Description stored in artifact metadata.
+        storage_mode : str, default='local_file'
+            Storage mode vocabulary value.
+        file_path : str, optional
+            File path passed through as legacy metadata.
+        file_format : str, optional
+            Legacy data format.
+        content_type : str, optional
+            MIME type passed through as legacy metadata.
+        file_size_bytes : int, optional
+            Size passed through as legacy metadata.
+        md5 : str, optional
+            Checksum passed through as legacy metadata.
+        data_format : str, optional
+            Canonical data format.
+        external_id : str, optional
+            External identifier.
+        details : dict or str, optional
+            Additional metadata.
+
+        Returns
+        -------
+        str
+            The artifact identifier.
+        """
+        metadata = {
+            "name": name,
+            "description": description,
+            "file_format": file_format,
+            "content_type": content_type,
+            "file_size_bytes": file_size_bytes,
+            "md5": md5,
+            "external_id": external_id,
+            "details": details,
+        }
+        checksum_value = md5
+        checksum_algorithm = "md5" if md5 else None
+        return self.register_artifact(
+            artifact_id=artifact_id,
+            artifact_kind=artifact_kind,
+            storage_mode=storage_mode,
+            file_path=file_path,
+            data_format=data_format or file_format,
+            checksum=checksum_value,
+            checksum_algorithm=checksum_algorithm,
+            size_bytes=file_size_bytes,
+            mime_type=content_type,
+            metadata=metadata,
+        )
+
+    def update_artifact(self, artifact_id, **kwargs):
+        allowed = {
+            "artifact_kind", "data_format", "experiment_id", "storage_mode", "file_path",
+            "url", "folder_path", "mime_type", "size_bytes", "checksum",
+            "checksum_algorithm", "row_count", "validation_status", "validation_message",
+            "data_json", "data_blob", "metadata_json",
+        }
+        if not kwargs:
+            return
+        kwargs["updated_at"] = _utc_now()
+        cols, vals = [], []
+        for key, value in kwargs.items():
+            if key not in allowed and key != "updated_at":
+                raise ValueError(f"Unsupported artifact column: {key}")
+            cols.append(f"{key} = ?")
+            vals.append(value)
+        vals.append(artifact_id)
+        with self._transaction():
+            self.conn.execute(f"UPDATE mfdb_artifact SET {', '.join(cols)} WHERE artifact_id = ?", vals)
+
+    def get_artifacts(self, artifact_kind=None):
+        query = "SELECT * FROM mfdb_artifact WHERE 1=1 AND deleted_at IS NULL"
+        params = []
+        if artifact_kind:
+            query += " AND artifact_kind = ?"
+            params.append(artifact_kind)
+        query += " ORDER BY artifact_id"
+        return self.conn.execute(query, params).fetchall()
+
+    # -- artifacts linked to operations --
+
+    def add_operation_artifact(self, operation_id, artifact_id, role="output", direction="output"):
+        with self._transaction():
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO mfdb_operation_artifact "
+                "(operation_id, artifact_id, role, direction, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (operation_id, artifact_id, role, direction, now, now, None)
+            )
+
+    def get_operation_artifacts(self, operation_id, direction=None):
+        query = (
+            "SELECT mfdb_artifact.*, mfdb_operation_artifact.role, "
+            "mfdb_operation_artifact.direction, mfdb_operation_artifact.artifact_note "
+            "FROM mfdb_operation_artifact "
+            "JOIN mfdb_artifact ON mfdb_artifact.artifact_id = mfdb_operation_artifact.artifact_id "
+            "WHERE mfdb_operation_artifact.operation_id = ?"
+            " AND mfdb_operation_artifact.deleted_at IS NULL"
+            " AND mfdb_artifact.deleted_at IS NULL"
+        )
+        params = [operation_id]
+        if direction:
+            query += " AND mfdb_operation_artifact.direction = ?"
+            params.append(direction)
+        query += " ORDER BY mfdb_operation_artifact.role"
+        return self.conn.execute(query, params).fetchall()
+
+    def remove_operation_artifact(self, operation_id, artifact_id):
+        with self._transaction():
+            now = _utc_now()
+            self.conn.execute(
+                "UPDATE mfdb_operation_artifact SET deleted_at = ? "
+                "WHERE operation_id = ? AND artifact_id = ?",
+                (now, operation_id, artifact_id)
+            )
+
+    # -- provenance edges (mfdb) --
+
+    def add_provenance_edge(
+        self,
+        edge_id: str | None = None,
+        source_artifact_id: str | None = None,
+        target_artifact_id: str | None = None,
+        relationship_type: str | None = None,
+        direction: str = "downstream",
+        details: str | None = None,
+        **kwargs,
+    ):
+        src_id = kwargs.get("source_node_id", source_artifact_id)
+        tgt_id = kwargs.get("target_node_id", target_artifact_id)
+        rel_type = relationship_type or kwargs.get("relationship_type", None)
+        if rel_type not in {"input_to", "produced"}:
+            validate_vocabulary(rel_type or "derived_from", RELATIONSHIP_TYPES, "relationship_type")
+
+        if rel_type == "input_to":
+            self.record_operation_link(
+                operation_id=tgt_id,
+                artifact_id=src_id,
+                direction="input",
+                role=kwargs.get("role"),
+                checksum_snapshot=kwargs.get("checksum_snapshot"),
+            )
+            return
+        elif rel_type == "produced":
+            self.record_operation_link(
+                operation_id=src_id,
+                artifact_id=tgt_id,
+                direction="output",
+                role=kwargs.get("role"),
+                checksum_snapshot=kwargs.get("checksum_snapshot"),
+            )
+            return
+
+        with self._transaction():
+            src_id = kwargs.pop("source_node_id", source_artifact_id)
+            tgt_id = kwargs.pop("target_node_id", target_artifact_id)
+            src_type = kwargs.pop("source_node_type", None)
+            tgt_type = kwargs.pop("target_node_type", None)
+            rel_type = relationship_type or kwargs.pop("relationship_type", None)
+            metadata = {}
+            op_id = None
+            if kwargs.get("processing_id"):
+                op_id = kwargs.pop("processing_id")
+                metadata["processing_id"] = op_id
+            if kwargs.get("settings_hash"):
+                metadata["settings_hash"] = kwargs.pop("settings_hash")
+            if kwargs.get("checksum_snapshot"):
+                metadata["checksum_snapshot"] = kwargs.pop("checksum_snapshot")
+            if kwargs.get("software_version"):
+                metadata["software_version"] = kwargs.pop("software_version")
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO mfdb_edge "
+                "(source_node_type, source_node_id, target_node_type, "
+                "target_node_id, relationship_type, operation_id, metadata_json, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (src_type or "artifact", src_id, tgt_type or "artifact", tgt_id,
+                 rel_type or "derived_from", op_id,
+                 _json_dumps(metadata) if metadata else None,
+                 now, now, None)
+            )
+
+    def get_downstream_artifacts(self, artifact_id):
+        return self.conn.execute(
+            "SELECT * FROM mfdb_edge WHERE source_node_id = ? AND deleted_at IS NULL", (artifact_id,)
+        ).fetchall()
+
+    def get_upstream_artifacts(self, artifact_id):
+        return self.conn.execute(
+            "SELECT * FROM mfdb_edge WHERE target_node_id = ? AND deleted_at IS NULL", (artifact_id,)
+        ).fetchall()
+
+    # -- legacy fdb provenance for graph traversal (read-only) --
+
+    def get_downstream_dependencies(
+        self, node_type: str, node_id: str
+    ) -> list[dict[str, Any]]:
+        if not node_type or not node_id:
+            return []
+        from chisurf.core.mfdb.graph import traverse_canonical_graph
+        edges = traverse_canonical_graph(self.conn, node_type, node_id, direction="downstream")
+        results = []
+        for edge in edges:
+            meta = edge.get("metadata") or {}
+            d = {
+                "edge_id": edge["edge_id"],
+                "source_node_type": edge["source_node_type"],
+                "source_node_id": edge["source_node_id"],
+                "target_node_type": edge["target_node_type"],
+                "target_node_id": edge["target_node_id"],
+                "relationship_type": edge["relationship_type"],
+                "operation_id": meta.get("processing_id") or meta.get("operation_id") or edge.get("operation_id"),
+                "settings_hash": meta.get("settings_hash"),
+                "timestamp": meta.get("timestamp"),
+                "software_version": meta.get("software_version"),
+                "checksum_snapshot_json": _json_dumps(meta.get("checksum_snapshot")),
+                "metadata_json": _json_dumps(meta),
+            }
+            results.append(d)
+        return results
+
+    def get_upstream_dependencies(
+        self, node_type: str, node_id: str
+    ) -> list[dict[str, Any]]:
+        if not node_type or not node_id:
+            return []
+        from chisurf.core.mfdb.graph import traverse_canonical_graph
+        edges = traverse_canonical_graph(self.conn, node_type, node_id, direction="upstream")
+        results = []
+        for edge in edges:
+            meta = edge.get("metadata") or {}
+            d = {
+                "edge_id": edge["edge_id"],
+                "source_node_type": edge["source_node_type"],
+                "source_node_id": edge["source_node_id"],
+                "target_node_type": edge["target_node_type"],
+                "target_node_id": edge["target_node_id"],
+                "relationship_type": edge["relationship_type"],
+                "operation_id": meta.get("processing_id") or meta.get("operation_id") or edge.get("operation_id"),
+                "settings_hash": meta.get("settings_hash"),
+                "timestamp": meta.get("timestamp"),
+                "software_version": meta.get("software_version"),
+                "checksum_snapshot_json": _json_dumps(meta.get("checksum_snapshot")),
+                "metadata_json": _json_dumps(meta),
+            }
+            results.append(d)
+        return results
+
+    def traverse_legacy_provenance_graph(self, start_id, direction="downstream", max_depth=10):
+        visited = set()
+        result = []
+        def _traverse(node_id, depth):
+            if depth > max_depth or node_id in visited:
+                return
+            visited.add(node_id)
+            if direction == "downstream":
+                edges = self.conn.execute(
+                    "SELECT * FROM fdb_provenance_edge WHERE source_artifact_id = ? AND deleted_at IS NULL",
+                    (node_id,)
+                ).fetchall()
+            else:
+                edges = self.conn.execute(
+                    "SELECT * FROM fdb_provenance_edge WHERE target_artifact_id = ? AND deleted_at IS NULL",
+                    (node_id,)
+                ).fetchall()
+            for edge in edges:
+                result.append(dict(edge))
+                neighbor = edge["target_artifact_id"] if direction == "downstream" else edge["source_artifact_id"]
+                _traverse(neighbor, depth + 1)
+        _traverse(start_id, 0)
+        return result
+
+    def export_provenance_graph(
+        self,
+        seed_node_type: str,
+        seed_node_id: str,
+    ) -> dict[str, Any]:
+        """Export a JSON-serializable provenance graph of all related nodes and edges.
+
+        Parameters
+        ----------
+        seed_node_type : str
+            The seed node type (e.g. 'analysis_run' or 'processed_data').
+        seed_node_id : str
+            The seed node identifier.
+
+        Returns
+        -------
+        dict
+            Dict with "nodes" and "edges" keys.
+        """
+        from chisurf.core.mfdb.graph import normalize_node_type, traverse_canonical_graph
+
+        upstream_edges = traverse_canonical_graph(self.conn, seed_node_type, seed_node_id, direction="upstream")
+        downstream_edges = traverse_canonical_graph(self.conn, seed_node_type, seed_node_id, direction="downstream")
+
+        seen_edges = set()
+        edges = []
+        for edge in upstream_edges + downstream_edges:
+            eid = edge.get("edge_id")
+            if eid not in seen_edges:
+                seen_edges.add(eid)
+                edges.append(edge)
+
+        node_keys = {(seed_node_type, seed_node_id)}
+        for edge in edges:
+            node_keys.add((edge["source_node_type"], edge["source_node_id"]))
+            node_keys.add((edge["target_node_type"], edge["target_node_id"]))
+
+        nodes = []
+        for n_type, n_id in sorted(node_keys):
+            node_dict = {
+                "node_id": n_id,
+                "node_type": n_type,
+            }
+            norm_type = normalize_node_type(n_type)
+            if norm_type == "artifact":
+                row = self.conn.execute("SELECT * FROM mfdb_artifact WHERE artifact_id = ?", (n_id,)).fetchone()
+                if row:
+                    node_dict.update(dict(row))
+            elif norm_type == "operation":
+                row = self.conn.execute("SELECT * FROM mfdb_operation WHERE operation_id = ?", (n_id,)).fetchone()
+                if row:
+                    node_dict.update(dict(row))
+            nodes.append(node_dict)
+
+        return {
+            "nodes": nodes,
+            "edges": edges,
+        }
+
+
+    # -- mfdb parameters --
+
+    def add_parameter(self, param_id, name, value, param_type="string", unit=None, description=None, operation_id=None, artifact_id=None, details=None):
+        if not param_id:
+            raise ValueError("param_id is required")
+        metadata = details or {}
+        if isinstance(metadata, dict):
+            metadata = metadata.copy()
+            if unit is not None:
+                metadata["unit"] = unit
+            if description is not None:
+                metadata["description"] = description
+        return self.record_parameter(
+            parameter_uuid=param_id,
+            operation_id=operation_id,
+            name=name,
+            value=value,
+            units=unit,
+            parameter_type=param_type,
+            metadata=metadata,
+        )
+
+    def get_parameters(self, operation_id=None, artifact_id=None):
+        if artifact_id is not None:
+            operation_ids = [
+                row["operation_id"]
+                for row in self.conn.execute(
+                    "SELECT DISTINCT operation_id FROM mfdb_operation_artifact WHERE artifact_id = ? AND deleted_at IS NULL",
+                    (artifact_id,),
+                ).fetchall()
+            ]
+            if not operation_ids:
+                return []
+            placeholders = ",".join("?" for _ in operation_ids)
+            params: list[Any] = operation_ids
+            query = f"SELECT * FROM mfdb_parameter WHERE operation_id IN ({placeholders}) AND deleted_at IS NULL"
+        elif operation_id is not None:
+            query = "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL"
+            params = [operation_id]
+        else:
+            query = "SELECT * FROM mfdb_parameter WHERE deleted_at IS NULL"
+            params = []
+        query += " ORDER BY parameter_id"
+        return [dict(row) for row in self.conn.execute(query, params).fetchall()]
+
+    def delete_parameter(self, param_id):
+        with self._transaction():
+            self.conn.execute("UPDATE mfdb_parameter SET deleted_at = ? WHERE parameter_uuid = ?", (_utc_now(), param_id))
+            self.conn.execute("UPDATE mfdb_parameter SET deleted_at = ? WHERE parameter_id = ?", (_utc_now(), param_id))
+
+    # -- mfdb setup / setup definitions --
+
+    def add_setup(self, setup_id, name, description=None, setup_type=None, config_json=None, details=None):
+        if not setup_id:
+            raise ValueError("setup_id is required")
+        configuration = config_json or {}
+        if setup_type is not None:
+            configuration["setup_type"] = setup_type
+        if details is not None:
+            configuration["details"] = details
+        return self.save_setup(
+            setup_id=setup_id,
+            name=name,
+            description=description,
+            configuration=configuration,
+        )
+
+    def get_setups(self, setup_type=None):
+        setups = self.list_setups()
+        if setup_type is None:
+            return setups
+        return [
+            setup
+            for setup in setups
+            if _json_loads(setup.get("configuration_json")).get("setup_type") == setup_type
+        ]
+    def delete_setup(self, setup_id):
+        with self.conn:
+            self.conn.execute("UPDATE mfdb_setup SET deleted_at = ? WHERE setup_id = ?", (_utc_now(), setup_id))
+
+    # -- analysis runs --
+
+    def add_analysis_run(
+        self,
+        analysis_id: str | None = None,
+        operation_id: str | None = None,
+        name: str | None = None,
+        description: str | None = None,
+        status: str = "pending",
+        settings_json: Any = None,
+        details: Any = None,
+        **kwargs,
+    ) -> str:
+        import uuid
+        aid = analysis_id or kwargs.pop("analysis_run_id", None) or operation_id or f"anal_{uuid.uuid4().hex[:12]}"
+        analysis_type = kwargs.pop("analysis_type", operation_id or "local_fit")
+        experiment_id = kwargs.pop("experiment_id", None)
+        model_name = kwargs.pop("model_name", name)
+        model_type = kwargs.pop("model_type", None)
+        model_version = kwargs.pop("model_version", None)
+        fit_structure = kwargs.pop("fit_structure", None)
+        parameter_links = kwargs.pop("parameter_links", None)
+        software_package = kwargs.pop("software_package", "chisurf")
+        software_module = kwargs.pop("software_module", None)
+        software_version = kwargs.pop("software_version", None)
+        optimizer_settings = kwargs.pop("optimizer_settings", settings_json)
+        covariance_matrix = kwargs.pop("covariance_matrix", None)
+        goodness_of_fit = kwargs.pop("goodness_of_fit", kwargs.pop("goodness_of_fit_json", None))
+        notes = kwargs.pop("notes", description)
+        metadata = kwargs.pop("metadata", details)
+
+        meta_dict = metadata if isinstance(metadata, dict) else {}
+        meta_dict.update({
+            "model_name": model_name,
+            "model_type": model_type,
+            "model_version": model_version,
+            "fit_structure": fit_structure,
+            "parameter_links": parameter_links,
+            "goodness_of_fit": goodness_of_fit,
+            "covariance_matrix": covariance_matrix,
+            "notes": notes,
+        })
+
+        self.record_operation(
+            operation_id=aid,
+            operation_type=analysis_type,
+            experiment_id=experiment_id,
+            settings=optimizer_settings if isinstance(optimizer_settings, dict) else None,
+            software_package=software_package,
+            software_module=software_module,
+            software_version=software_version,
+            status=status,
+            metadata=meta_dict,
+        )
+        try:
+            table_names = {
+                row[0]
+                for row in self.conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                ).fetchall()
+            }
+        except sqlite3.OperationalError:
+            table_names = set()
+        if "fdb_processing_run" in table_names:
+            now = _utc_now()
+            self.conn.execute(
+                """INSERT OR IGNORE INTO fdb_processing_run (
+                    processing_id, processing_type, experiment_id, settings_json,
+                    settings_hash, software_package, software_module, software_version,
+                    status, created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    aid,
+                    analysis_type,
+                    experiment_id,
+                    _json_dumps(optimizer_settings),
+                    _json_hash(optimizer_settings),
+                    software_package,
+                    software_module,
+                    software_version,
+                    status,
+                    now, now, None,
+                ),
+            )
+        if "fdb_analysis_run" in table_names:
+            now = _utc_now()
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_analysis_run (
+                    analysis_id, model_name, model_type, model_version,
+                    fit_structure_json, parameter_links_json, covariance_matrix_json,
+                    goodness_of_fit_json, notes, metadata_json,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    aid,
+                    model_name,
+                    model_type,
+                    model_version,
+                    _json_dumps(fit_structure),
+                    _json_dumps(parameter_links),
+                    _json_dumps(covariance_matrix),
+                    _json_dumps(goodness_of_fit),
+                    notes,
+                    _json_dumps(meta_dict),
+                    now, now, None,
+                ),
+            )
+
+        self.add_audit_log(
+            action="create",
+            target_type="analysis_run",
+            target_id=aid,
+            details={"analysis_type": analysis_type, "model_name": model_name, "model_type": model_type},
+        )
+        return aid
+
+
+    def update_analysis_run(self, analysis_run_id, **kwargs):
+        allowed = {
+            "operation_type", "experiment_id", "setup_id", "settings", "status",
+            "operator_user_id", "software_package", "software_module",
+            "software_version", "runtime_environment", "started_at", "ended_at",
+            "error_message", "traceback_summary", "metadata",
+        }
+        if not kwargs:
+            return
+        kwargs["updated_at"] = _utc_now()
+        cols, vals = [], []
+        for key, value in kwargs.items():
+            if key not in allowed and key != "updated_at":
+                raise ValueError(f"Unsupported analysis run column: {key}")
+            cols.append(f"{key} = ?")
+            vals.append(value)
+        vals.append(analysis_run_id)
+        with self._transaction():
+            self.conn.execute(f"UPDATE mfdb_operation SET {', '.join(cols)} WHERE operation_id = ?", vals)
+
+    def get_analysis_runs(self, operation_id=None, status=None):
+        query = "SELECT * FROM mfdb_operation WHERE 1=1 AND deleted_at IS NULL"
+        params = []
+        if operation_id:
+            query += " AND operation_id = ?"
+            params.append(operation_id)
+        if status:
+            query += " AND status = ?"
+            params.append(status)
+        query += " ORDER BY created_at DESC"
+        return [dict(row) for row in self.conn.execute(query, params).fetchall()]
+    # -- audit log --
+
+    def add_audit_entry(self, action, entity_type, entity_id, user_id=None, old_values=None, new_values=None, details=None):
+        details_json = details or {}
+        if isinstance(details_json, dict):
+            details_json = details_json.copy()
+            details_json.update({"old_values": old_values, "new_values": new_values})
+        return self.add_audit_log(
+            action=action,
+            target_type=entity_type,
+            target_id=entity_id,
+            operator_user_id=user_id,
+            details=details_json,
+        )
+
+    def get_audit_log(self, entity_type=None, entity_id=None, action=None, limit=100):
+        return self.get_audit_logs(
+            action=action,
+            target_type=entity_type,
+            target_id=entity_id,
+            limit=limit,
+        )
+
+    # -- products / standards --
+
+    def get_product_categories(self):
+        return self.conn.execute("SELECT * FROM product_categories ORDER BY name").fetchall()
+
+    def add_product_category(self, name, description=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO product_categories (name, description, details, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (name, description, details, now, now, None)
+            )
+
+    def get_products(self, category_id=None, supplier_id=None):
+        query = "SELECT * FROM products WHERE 1=1"
+        params = []
+        if category_id:
+            query += " AND category_id = ?"
+            params.append(category_id)
+        if supplier_id:
+            query += " AND supplier_id = ?"
+            params.append(supplier_id)
+        query += " ORDER BY product_id"
+        return self.conn.execute(query, params).fetchall()
+
+    def add_product(self, product_id, name, catalog_number=None, supplier_id=None, category_id=None, cas_number=None, description=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO products "
+                "(product_id, name, catalog_number, supplier_id, category_id, cas_number, description, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (product_id, name, catalog_number, supplier_id, category_id, cas_number, description, details,
+                 now, now, None)
+            )
+
+    def get_standards(self):
+        return self.conn.execute("SELECT * FROM standards ORDER BY name").fetchall()
+
+    def add_standard(self, standard_id, name, probe_id=None, reference_id=None, certification_details=None, valid_until=None, description=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO standards "
+                "(standard_id, name, probe_id, reference_id, certification_details, valid_until, description, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (standard_id, name, probe_id, reference_id, certification_details, valid_until, description, details,
+                 now, now, None)
+            )
+
+    # -- flr sample / experiment (read-only wrappers for Core API) --
+
+    def add_photon_stream(self, analysis_id, file_path, file_format=None, content_type=None, stream_id=None, detector_id=None, description=None, details=None):
+        external_id = self.add_external_file(file_path, file_format, content_type, details=details)
+        if stream_id is None:
+            stream_id = f"stream_{external_id}"
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_photon_stream "
+                "(stream_id, analysis_id, external_file_id, detector_id, description, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (stream_id, analysis_id, external_id, detector_id, description, details,
+                 now, now, None)
+            )
+        return stream_id
+
+    def list_samples(self):
+        return self.conn.execute(
+            "SELECT s.sample_id, s.sample_uuid, s.description, s.details, "
+            "s.num_of_probes, s.solvent_phase, s.sample_condition_id, "
+            "s.entity_assembly_id, s.project_id, s.measured_by_user_id, "
+            "s.measured_by_device_id, s.measured_at, "
+            "COUNT(sp.sample_probe_id) AS mapped_probe_count, "
+            "u.display_name AS measured_by_user, "
+            "d.name AS measured_by_device "
+            "FROM flr_sample AS s "
+            "LEFT JOIN flr_sample_probe AS sp ON sp.sample_id = s.sample_id "
+            "LEFT JOIN flr_sample_users AS u ON u.user_id = s.measured_by_user_id "
+            "LEFT JOIN flr_sample_devices AS d ON d.device_id = s.measured_by_device_id "
+            "WHERE s.deleted_at IS NULL "
+            "GROUP BY s.sample_id "
+            "ORDER BY s.sample_id"
+        ).fetchall()
+
+    def get_sample(self, sample_id):
+        return self.conn.execute(
+            "SELECT sample_id, sample_uuid, description, details, num_of_probes, "
+            "solvent_phase, sample_condition_id, entity_assembly_id, project_id, "
+            "measured_by_user_id, measured_by_device_id, measured_at "
+            "FROM flr_sample WHERE sample_id = ?",
+            (sample_id,)
+        ).fetchone()
+
+    def add_sample(self, sample_id, uuid=None, description="", details="", num_of_probes=None, solvent_phase=None, sample_condition_id=None, entity_assembly_id=None, project_id=None, measured_by_user_id=None, measured_by_device_id=None, measured_at=None):
+        if measured_by_user_id is None:
+            try:
+                import chisurf.core.settings
+                measured_by_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
+            except Exception:
+                measured_by_user_id = "user_default"
+        import uuid as _uuid
+        if uuid is None:
+            existing = self.get_sample(sample_id)
+            uuid = existing["sample_uuid"] if existing else str(_uuid.uuid4())
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_sample "
+                "(sample_id, sample_uuid, description, details, num_of_probes, solvent_phase, "
+                "sample_condition_id, entity_assembly_id, project_id, measured_by_user_id, "
+                "measured_by_device_id, measured_at, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (sample_id, uuid, description, details, num_of_probes, solvent_phase,
+                 sample_condition_id, entity_assembly_id, project_id, measured_by_user_id,
+                 measured_by_device_id, measured_at,
+                 now, now, None)
+            )
+
+    def update_sample(self, sample_id, **kwargs):
+        if not kwargs:
+            return
+        allowed = {"sample_uuid", "description", "details", "num_of_probes", "solvent_phase", "sample_condition_id", "entity_assembly_id"}
+        cols, vals = [], []
+        for key, value in kwargs.items():
+            if key not in allowed:
+                raise ValueError(f"Unsupported sample column: {key}")
+            cols.append(f"{key} = ?")
+            vals.append(value)
+        vals.append(sample_id)
+        with self.conn:
+            self.conn.execute(f"UPDATE flr_sample SET {', '.join(cols)}, updated_at = ? WHERE sample_id = ?", vals[:-1] + [_utc_now(), sample_id])
+
+    def delete_sample(self, sample_id):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute("UPDATE flr_sample_probe SET deleted_at = ? WHERE sample_id = ?", (now, sample_id))
+            self.conn.execute("UPDATE flr_sample SET deleted_at = ? WHERE sample_id = ?", (now, sample_id))
+
+    def set_sample_key_value(self, sample_id: str, key: str, value: str, details: str | None = None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_sample_key_value (sample_id, key, value, details, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (sample_id, key, value, details, now, now, None)
+            )
+
+    def clear_sample_key_values(self, sample_id: str) -> None:
+        self.conn.execute(
+            "DELETE FROM flr_sample_key_value WHERE sample_id = ?",
+            (sample_id,),
+        )
+
+    def get_sample_key_values(self, sample_id: str) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            "SELECT key, value, details FROM flr_sample_key_value WHERE sample_id = ? AND deleted_at IS NULL",
+            (sample_id,)
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def get_sample_full(self, sample_id: str) -> dict[str, Any] | None:
+        row = self.get_sample(sample_id)
+        if row is None:
+            return None
+        res = dict(row)
+        res["key_values"] = self.get_sample_key_values(sample_id)
+        return res
+
+    def add_sample_probe(self, sample_id, probe_id, fluorophore_type="unspecified", description=None, poly_probe_position_id=None):
+        with self.conn:
+            now = _utc_now()
+            cursor = self.conn.execute(
+                "INSERT OR REPLACE INTO flr_sample_probe (sample_id, probe_id, fluorophore_type, description, poly_probe_position_id, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (sample_id, probe_id, fluorophore_type, description, poly_probe_position_id, now, now, None)
+            )
+            return cursor.lastrowid
+
+    def get_sample_probe_mappings(self, sample_id):
+        rows = self.conn.execute(
+            "SELECT sp.*, p.chromophore_name FROM flr_sample_probe AS sp "
+            "JOIN probes AS p ON p.probe_id = sp.probe_id "
+            "WHERE sp.sample_id = ? AND sp.deleted_at IS NULL AND p.deleted_at IS NULL",
+            (sample_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def clear_sample_probes(self, sample_id):
+        with self.conn:
+            self.conn.execute("UPDATE flr_sample_probe SET deleted_at = ? WHERE sample_id = ?", (_utc_now(), sample_id))
+
+    def set_experiment_key_value(self, experiment_id: str, key: str, value: str, details: str | None = None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_experiment_key_value (experiment_id, key, value, details, created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (experiment_id, key, value, details, now, now, None)
+            )
+
+    def clear_experiment_key_values(self, experiment_id: str) -> None:
+        self.conn.execute(
+            "DELETE FROM flr_experiment_key_value WHERE experiment_id = ?",
+            (experiment_id,),
+        )
+
+    def get_experiment_key_values(self, experiment_id: str) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            "SELECT key, value, details FROM flr_experiment_key_value WHERE experiment_id = ? AND deleted_at IS NULL",
+            (experiment_id,)
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def get_experiment_full(self, experiment_id: str) -> dict[str, Any] | None:
+        row = self.get_experiment(experiment_id)
+        if row is None:
+            return None
+        res = dict(row)
+        data_rows = self.conn.execute(
+            "SELECT * FROM flr_experiment_data WHERE experiment_id = ? AND deleted_at IS NULL",
+            (experiment_id,)
+        ).fetchall()
+        res["data"] = [dict(r) for r in data_rows]
+        res["key_values"] = self.get_experiment_key_values(experiment_id)
+        return res
+
+    def update_analysis_record(self, analysis_id: str, **kwargs):
+        existing = self.conn.execute(
+            "SELECT * FROM flr_fret_analysis WHERE analysis_id = ?",
+            (analysis_id,)
+        ).fetchone()
+        allowed = {
+            "experiment_id", "sample_id", "type", "method",
+            "sample_probe_id_1", "sample_probe_id_2", "forster_radius_id",
+            "dataset_list_id", "external_file_id", "software_id", "details"
+        }
+        if existing:
+            cols, vals = [], []
+            for key, value in kwargs.items():
+                if key in allowed:
+                    cols.append(f"{key} = ?")
+                    vals.append(value)
+            if cols:
+                vals.append(analysis_id)
+                with self._transaction():
+                    self.conn.execute(
+                        f"UPDATE flr_fret_analysis SET {', '.join(cols)}, updated_at = ? WHERE analysis_id = ?",
+                        vals[:-1] + [_utc_now(), analysis_id]
+                    )
+        else:
+            cols = ["analysis_id"]
+            vals = [analysis_id]
+            for key, value in kwargs.items():
+                if key in allowed:
+                    cols.append(key)
+                    vals.append(value)
+            now = _utc_now()
+            cols += ["created_at", "updated_at", "deleted_at"]
+            vals += [now, now, None]
+            placeholders = ", ".join(["?"] * len(cols))
+            with self.conn:
+                self.conn.execute(
+                    f"INSERT INTO flr_fret_analysis ({', '.join(cols)}) VALUES ({placeholders})",
+                    vals
+                )
+
+    def get_raw_data(self, raw_data_id: str) -> dict[str, Any] | None:
+        return self.get_artifact(raw_data_id)
+
+    def add_analysis_metadata(self, analysis_id: str, key: str, value: Any, details: str | None = None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO analysis_metadata (analysis_id, key, value, details, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (analysis_id, key, str(value), details, now, now, None),
+            )
+
+    def get_analysis_metadata(self, analysis_id: str) -> dict[str, str]:
+        rows = self.conn.execute(
+            "SELECT key, value FROM analysis_metadata WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY key",
+            (analysis_id,),
+        ).fetchall()
+        return {r["key"]: r["value"] for r in rows}
+
+    def set_analysis_metadata(self, analysis_id: str, metadata: dict[str, Any]):
+        old = self.get_analysis_metadata(analysis_id)
+        with self.conn:
+            for key in set(old) - set(metadata):
+                now = _utc_now()
+                self.conn.execute(
+                    "UPDATE analysis_metadata SET deleted_at = ? WHERE analysis_id = ? AND key = ?",
+                    (now, analysis_id, key),
+                )
+            for key, value in metadata.items():
+                now = _utc_now()
+                self.conn.execute(
+                    "INSERT OR REPLACE INTO analysis_metadata (analysis_id, key, value, details, created_at, updated_at, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (analysis_id, key, str(value), None, now, now, None),
+                )
+
+    def delete_analysis_metadata(self, analysis_id: str, key: str):
+        with self.conn:
+            self.conn.execute(
+                "UPDATE analysis_metadata SET deleted_at = ? WHERE analysis_id = ? AND key = ?",
+                (_utc_now(), analysis_id, key),
+            )
+
+    def get_photon_streams(self, analysis_id: str) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            """SELECT ps.*, ef.file_path, ef.file_format, ef.content_type, ef.file_size_bytes
+               FROM flr_photon_stream ps
+               LEFT JOIN ihm_external_files ef ON ef.id = ps.external_file_id
+               WHERE ps.analysis_id = ? AND ps.deleted_at IS NULL
+               ORDER BY ps.stream_id""",
+            (analysis_id,),
+        ).fetchall()
+
+    def add_analysis_data(self, analysis_id: str, data_type: str, x_values: np.ndarray, y_values: np.ndarray, data_name: str | None = None, x_unit: str | None = None, y_unit: str | None = None, details: str | None = None) -> int:
+        x_values = np.asarray(x_values, dtype=np.float64)
+        y_values = np.asarray(y_values, dtype=np.float64)
+        x_blob = x_values.tobytes()
+        y_blob = y_values.tobytes()
+        with self.conn:
+            where = "analysis_id = ? AND data_type = ?"
+            params = [analysis_id, data_type]
+            if data_name is None:
+                where += " AND data_name IS NULL"
+            else:
+                where += " AND data_name = ?"
+                params.append(data_name)
+            self.conn.execute(f"UPDATE analysis_data SET deleted_at = ? WHERE {where}", [_utc_now()] + params)
+            now = _utc_now()
+            self.conn.execute(
+                """INSERT OR REPLACE INTO analysis_data
+                   (analysis_id, data_type, data_name, x_values, y_values, x_unit, y_unit, details,
+                    created_at, updated_at, deleted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (analysis_id, data_type, data_name, x_blob, y_blob, x_unit, y_unit, details,
+                 now, now, None),
+            )
+        row = self.conn.execute(
+            "SELECT id FROM analysis_data WHERE analysis_id = ? AND data_type = ? AND data_name IS ? ORDER BY id DESC LIMIT 1",
+            (analysis_id, data_type, data_name),
+        ).fetchone()
+        return int(row["id"]) if row else 0
+
+    def get_analysis_data(self, analysis_id: str) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            "SELECT * FROM analysis_data WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY data_type, data_name, id",
+            (analysis_id,),
+        ).fetchall()
+
+    def export_flr_cif(self, path, analysis_id: str | None = None, include_extension: bool = True):
+        import io
+
+        import ihm.format
+        is_stream = isinstance(path, io.TextIOBase)
+
+        if analysis_id is None:
+            row = self.conn.execute(
+                "SELECT analysis_id FROM flr_fret_analysis WHERE deleted_at IS NULL ORDER BY analysis_id LIMIT 1"
+            ).fetchone()
+            analysis_id = row["analysis_id"] if row else "analysis_1"
+
+        analysis = dict(
+            self.conn.execute(
+                "SELECT * FROM flr_fret_analysis WHERE analysis_id = ?", (analysis_id,)
+            ).fetchone()
+            or {}
+        )
+        sample_id = analysis.get("sample_id") or analysis_id
+
+        def _row_dict(row):
+            return dict(row) if row is not None else {}
+
+        _row_dict(
+            self.conn.execute(
+                "SELECT * FROM flr_sample WHERE sample_id = ?", (sample_id,)
+            ).fetchone()
+        )
+        probes = [
+            dict(row)
+            for row in self.conn.execute("SELECT * FROM probes WHERE deleted_at IS NULL ORDER BY probe_id").fetchall()
+        ]
+        positions = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM flr_poly_probe_position WHERE deleted_at IS NULL ORDER BY id"
+            ).fetchall()
+        ]
+        sample_probes = [dict(row) for row in self.get_sample_probe_mappings(sample_id=sample_id)]
+        if not sample_probes:
+            first_probe = probes[0] if probes else None
+            first_position = positions[0] if positions else None
+            if first_probe is not None or first_position is not None:
+                sample_probes = [
+                    {
+                        "sample_probe_id": 1,
+                        "sample_id": sample_id,
+                        "probe_id": first_probe.get("probe_id") if first_probe is not None else None,
+                        "poly_probe_position_id": first_position.get("id") if first_position is not None else None,
+                        "chromophore_name": first_probe.get("chromophore_name") if first_probe is not None else None,
+                        "fluorophore_type": "unspecified",
+                        "description": "ChiSurf legacy sample probe mapping",
+                    }
+                ]
+        distances = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM flr_fret_distance_restraint WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY id",
+                (analysis_id,),
+            ).fetchall()
+        ]
+        forster = [
+            dict(row)
+            for row in self.conn.execute(
+                "SELECT * FROM flr_fret_forster_radius WHERE deleted_at IS NULL ORDER BY id"
+            ).fetchall()
+        ]
+        metadata = self.get_analysis_metadata(analysis_id)
+        streams = [dict(row) for row in self.get_photon_streams(analysis_id)]
+        external_files = [
+            dict(row)
+            for row in self.conn.execute("SELECT * FROM ihm_external_files ORDER BY id").fetchall()
+        ]
+        properties = [
+            dict(row)
+            for row in self.conn.execute("SELECT * FROM optical_properties WHERE deleted_at IS NULL ORDER BY id").fetchall()
+        ]
+        spectra = [
+            dict(row)
+            for row in self.conn.execute("SELECT * FROM spectra WHERE deleted_at IS NULL ORDER BY id").fetchall()
+        ]
+        analysis_data = [dict(row) for row in self.get_analysis_data(analysis_id)]
+
+        def _array_to_text(blob, dtype=np.float64):
+            if not blob:
+                return ""
+            return " ".join(f"{float(v):.8g}" for v in np.frombuffer(blob, dtype=dtype))
+
+        def _write_content(writer):
+            writer.start_block("chisurf_flr_export")
+
+            with writer.loop(
+                "_flr_probe_list",
+                [
+                    "probe_id",
+                    "chromophore_name",
+                    "reactive_probe_flag",
+                    "reactive_probe_name",
+                    "probe_origin",
+                    "probe_link_type",
+                    "fluorophore_type",
+                    "chromophore_chem_descriptor_id",
+                    "reactive_probe_chem_descriptor_id",
+                    "chromophore_center_atom",
+                    "details",
+                ],
+            ) as loop:
+                for row in probes:
+                    loop.write(
+                        probe_id=row.get("probe_id"),
+                        chromophore_name=row.get("chromophore_name"),
+                        reactive_probe_flag=row.get("reactive_probe_flag"),
+                        reactive_probe_name=row.get("reactive_probe_name"),
+                        probe_origin=row.get("probe_origin"),
+                        probe_link_type=row.get("probe_link_type"),
+                        fluorophore_type=row.get("fluorophore_type"),
+                        chromophore_chem_descriptor_id=row.get("chromophore_chem_descriptor_id"),
+                        reactive_probe_chem_descriptor_id=row.get("reactive_probe_chem_descriptor_id"),
+                        chromophore_center_atom=row.get("chromophore_center_atom"),
+                        details=row.get("description"),
+                    )
+
+            with writer.loop(
+                "_flr_poly_probe_position",
+                ["id", "entity_id", "asym_id", "residue_number", "residue_name", "details"],
+            ) as loop:
+                for row in positions:
+                    loop.write(
+                        id=row.get("id"),
+                        entity_id=row.get("entity_id"),
+                        asym_id=row.get("asym_id"),
+                        residue_number=row.get("residue_number"),
+                        residue_name=row.get("residue_name"),
+                        details=row.get("description"),
+                    )
+
+            with writer.loop(
+                "_flr_sample_probe_details",
+                [
+                    "sample_probe_id",
+                    "sample_id",
+                    "probe_id",
+                    "poly_probe_position_id",
+                    "fluorophore_type",
+                    "description",
+                ],
+            ) as loop:
+                for row in sample_probes:
+                    loop.write(
+                        sample_probe_id=row.get("sample_probe_id"),
+                        sample_id=row.get("sample_id"),
+                        probe_id=row.get("probe_id"),
+                        poly_probe_position_id=row.get("poly_probe_position_id"),
+                        fluorophore_type=row.get("fluorophore_type"),
+                        description=row.get("description"),
+                    )
+
+            with writer.loop(
+                "_flr_fret_forster_radius",
+                [
+                    "id",
+                    "donor_probe_id",
+                    "acceptor_probe_id",
+                    "forster_radius",
+                    "forster_radius_error_plus",
+                    "forster_radius_error_minus",
+                    "kappa_squared_mode",
+                    "refractive_index",
+                    "citation_id",
+                    "details",
+                ],
+            ) as loop:
+                for row in forster:
+                    loop.write(
+                        id=row.get("id"),
+                        donor_probe_id=row.get("donor_probe_id"),
+                        acceptor_probe_id=row.get("acceptor_probe_id"),
+                        forster_radius=row.get("forster_radius"),
+                        forster_radius_error_plus=row.get("forster_radius_error_plus"),
+                        forster_radius_error_minus=row.get("forster_radius_error_minus"),
+                        kappa_squared_mode=row.get("kappa_squared_mode"),
+                        refractive_index=row.get("refractive_index"),
+                        citation_id=row.get("citation_id"),
+                        details=row.get("details"),
+                    )
+
+            with writer.loop(
+                "_flr_fret_analysis",
+                [
+                    "analysis_id",
+                    "experiment_id",
+                    "sample_id",
+                    "type",
+                    "method",
+                    "sample_probe_id_1",
+                    "sample_probe_id_2",
+                    "forster_radius_id",
+                    "dataset_list_id",
+                    "external_file_id",
+                    "software_id",
+                    "details",
+                ],
+            ) as loop:
+                loop.write(
+                    analysis_id=analysis.get("analysis_id"),
+                    experiment_id=analysis.get("experiment_id"),
+                    sample_id=analysis.get("sample_id"),
+                    type=analysis.get("type"),
+                    method=analysis.get("method"),
+                    sample_probe_id_1=analysis.get("sample_probe_id_1"),
+                    sample_probe_id_2=analysis.get("sample_probe_id_2"),
+                    forster_radius_id=analysis.get("forster_radius_id"),
+                    dataset_list_id=analysis.get("dataset_list_id"),
+                    external_file_id=analysis.get("external_file_id"),
+                    software_id=analysis.get("software_id"),
+                    details=analysis.get("details"),
+                )
+
+            sample_probe_by_probe = {
+                row.get("probe_id"): row.get("sample_probe_id")
+                for row in sample_probes
+                if row.get("probe_id") is not None
+            }
+            with writer.loop(
+                "_flr_fret_distance_restraint",
+                [
+                    "ordinal_id",
+                    "id",
+                    "group_id",
+                    "sample_probe_id_1",
+                    "sample_probe_id_2",
+                    "state_id",
+                    "analysis_id",
+                    "distance",
+                    "distance_error_plus",
+                    "distance_error_minus",
+                    "distance_type",
+                    "population_fraction",
+                    "peak_assignment_id",
+                ],
+            ) as loop:
+                for i, row in enumerate(distances, 1):
+                    loop.write(
+                        ordinal_id=i,
+                        id=row.get("id"),
+                        group_id=1,
+                        sample_probe_id_1=row.get("sample_probe_id_1")
+                        or sample_probe_by_probe.get(row.get("probe_id_1")),
+                        sample_probe_id_2=row.get("sample_probe_id_2")
+                        or sample_probe_by_probe.get(row.get("probe_id_2")),
+                        state_id=row.get("state_id"),
+                        analysis_id=row.get("analysis_id") or analysis_id,
+                        distance=row.get("distance"),
+                        distance_error_plus=row.get("distance_error_plus"),
+                        distance_error_minus=row.get("distance_error_minus"),
+                        distance_type=row.get("distance_type"),
+                        population_fraction=row.get("population_fraction"),
+                        peak_assignment_id=row.get("peak_assignment_id"),
+                    )
+
+            with writer.loop(
+                "_ihm_dataset_list", ["id", "data_type", "details", "database_hosted"]
+            ) as loop:
+                loop.write(
+                    id=1,
+                    data_type="analysis_metadata",
+                    details="ChiSurf FLR analysis metadata",
+                    database_hosted="no",
+                )
+
+            with writer.loop(
+                "_ihm_external_files",
+                [
+                    "id",
+                    "reference_id",
+                    "file_path",
+                    "file_format",
+                    "content_type",
+                    "file_size_bytes",
+                    "md5",
+                    "uuid",
+                    "details",
+                ],
+            ) as loop:
+                for external in external_files:
+                    loop.write(
+                        **{
+                            k: external.get(k)
+                            for k in [
+                                "id",
+                                "reference_id",
+                                "file_path",
+                                "file_format",
+                                "content_type",
+                                "file_size_bytes",
+                                "md5",
+                                "uuid",
+                                "details",
+                            ]
+                        }
+                    )
+
+            if include_extension:
+                with writer.loop(
+                    "_chisurf_analysis_metadata", ["analysis_id", "key", "value"]
+                ) as loop:
+                    for key, value in sorted(metadata.items()):
+                        loop.write(analysis_id=analysis_id, key=key, value=value)
+
+                with writer.loop(
+                    "_chisurf_probe_property",
+                    ["probe_id", "property_name", "property_value", "unit", "details"],
+                ) as loop:
+                    for prop in properties:
+                        loop.write(
+                            **{
+                                k: prop.get(k)
+                                for k in [
+                                    "probe_id",
+                                    "property_name",
+                                    "property_value",
+                                    "unit",
+                                    "details",
+                                ]
+                            }
+                        )
+
+                with writer.loop(
+                    "_chisurf_probe_spectrum",
+                    [
+                        "probe_id",
+                        "spectrum_type",
+                        "wavelengths",
+                        "intensity_values",
+                        "wavelength_unit",
+                        "intensity_unit",
+                        "details",
+                    ],
+                ) as loop:
+                    for spec in spectra:
+                        loop.write(
+                            probe_id=spec.get("probe_id"),
+                            spectrum_type=spec.get("spectrum_type"),
+                            wavelengths=_array_to_text(spec.get("wavelengths")),
+                            intensity_values=_array_to_text(spec.get("intensity_values")),
+                            wavelength_unit=spec.get("wavelength_unit") or "nm",
+                            intensity_unit=spec.get("intensity_unit") or "normalized",
+                            details=spec.get("details"),
+                        )
+
+                with writer.loop(
+                    "_chisurf_photon_stream",
+                    [
+                        "stream_id",
+                        "analysis_id",
+                        "external_file_id",
+                        "detector_id",
+                        "description",
+                        "details",
+                    ],
+                ) as loop:
+                    for stream in streams:
+                        loop.write(
+                            **{
+                                k: stream.get(k)
+                                for k in [
+                                    "stream_id",
+                                    "analysis_id",
+                                    "external_file_id",
+                                    "detector_id",
+                                    "description",
+                                    "details",
+                                ]
+                            }
+                        )
+
+                with writer.loop(
+                    "_chisurf_analysis_data",
+                    [
+                        "analysis_id",
+                        "data_type",
+                        "data_name",
+                        "x_values",
+                        "y_values",
+                        "x_unit",
+                        "y_unit",
+                        "details",
+                    ],
+                ) as loop:
+                    for data in analysis_data:
+                        loop.write(
+                            analysis_id=analysis_id,
+                            data_type=data.get("data_type"),
+                            data_name=data.get("data_name"),
+                            x_values=_array_to_text(data.get("x_values")),
+                            y_values=_array_to_text(data.get("y_values")),
+                            x_unit=data.get("x_unit"),
+                            y_unit=data.get("y_unit"),
+                            details=data.get("details"),
+                        )
+
+        if is_stream:
+            writer = ihm.format.CifWriter(path)
+            _write_content(writer)
+        else:
+            path = Path(path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w") as out:
+                writer = ihm.format.CifWriter(out)
+                _write_content(writer)
+            return path
+
+    def export_flr_cif_to_text(self, analysis_id: str | None = None, include_extension: bool = True) -> str:
+        import io
+        buffer = io.StringIO()
+        self.export_flr_cif(buffer, analysis_id=analysis_id, include_extension=include_extension)
+        return buffer.getvalue()
+
+    def get_raw_data_references(self, experiment_id=None, data_type=None):
+        query = "SELECT * FROM mfdb_artifact WHERE artifact_kind = 'raw_data' AND deleted_at IS NULL"
+        params = []
+        if experiment_id is not None:
+            query += " AND experiment_id = ?"
+            params.append(experiment_id)
+        rows = self.conn.execute(query, params).fetchall()
+        res = []
+        for r in rows:
+            d = dict(r)
+            meta = _json_loads(d.get("metadata_json")) or {}
+            if data_type is not None:
+                if meta.get("data_type") != data_type:
+                    continue
+            res.append(d)
+        return res
+
+    def get_users(self):
+        return self.conn.execute("SELECT * FROM flr_sample_users WHERE deleted_at IS NULL ORDER BY user_id").fetchall()
+
+    def add_user(self, user_id, display_name, email=None, affiliation=None, department=None, role=None, address=None, website=None, phone=None, details=None, user_uuid=None, is_admin=0, password_hash=None, allow_passwordless_login=None):
+        import uuid
+        if not user_uuid:
+            # Check if user already has a uuid
+            row = self.conn.execute("SELECT user_uuid FROM flr_sample_users WHERE user_id = ?", (user_id,)).fetchone()
+            if row and row[0]:
+                user_uuid = row[0]
+            else:
+                user_uuid = str(uuid.uuid4())
+
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_sample_users "
+                "(user_id, user_uuid, display_name, email, affiliation, department, role, address, website, phone, is_admin, allow_passwordless_login, password_hash, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user_id, user_uuid, display_name, email, affiliation, department, role, address, website, phone, is_admin, allow_passwordless_login, password_hash, details,
+                 now, now, None)
+            )
+
+    def delete_user(self, user_id):
+        with self.conn:
+            self.conn.execute("UPDATE flr_sample_users SET deleted_at = ? WHERE user_id = ?", (_utc_now(), user_id))
+
+    def get_devices(self):
+        return self.conn.execute("SELECT * FROM flr_sample_devices WHERE deleted_at IS NULL ORDER BY device_id").fetchall()
+
+    def add_device(self, device_id, name, device_type=None, model=None, serial_number=None, location=None, owner=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_sample_devices "
+                "(device_id, name, device_type, model, serial_number, location, owner, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (device_id, name, device_type, model, serial_number, location, owner, details,
+                 now, now, None)
+            )
+
+    def delete_device(self, device_id):
+        with self.conn:
+            self.conn.execute("UPDATE flr_sample_devices SET deleted_at = ? WHERE device_id = ?", (_utc_now(), device_id))
+
+    def add_experiment_type(self, name, category=None, description=None, details=None):
+        if not name:
+            raise ValueError("experiment type name is required")
+        row = self.conn.execute("SELECT type_id FROM flr_experiment_type WHERE name = ?", (name,)).fetchone()
+        if row:
+            type_id = row["type_id"]
+            with self.conn:
+                self.conn.execute(
+                    "UPDATE flr_experiment_type SET category = ?, description = ?, details = ?, updated_at = ? WHERE type_id = ?",
+                    (category, description, details, _utc_now(), type_id)
+                )
+            return type_id
+        else:
+            with self.conn:
+                now = _utc_now()
+                cursor = self.conn.execute(
+                    "INSERT INTO flr_experiment_type (name, category, description, details, created_at, updated_at, deleted_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (name, category, description, details, now, now, None)
+                )
+                return cursor.lastrowid
+
+    def get_experiment_types(self):
+        return self.conn.execute("SELECT * FROM flr_experiment_type WHERE deleted_at IS NULL ORDER BY category, name").fetchall()
+
+    def delete_experiment_type(self, type_id):
+        with self.conn:
+            self.conn.execute("UPDATE flr_experiment_type SET deleted_at = ? WHERE type_id = ?", (_utc_now(), type_id))
+
+    def add_experiment(self, experiment_id, type_id=None, sample_id=None, project_id=None, measured_by_user_id=None, measured_by_device_id=None, started_at=None, ended_at=None, status=None, details=None, setup_definition_id=None):
+        if not experiment_id:
+            raise ValueError("experiment_id is required")
+        if measured_by_user_id is None:
+            try:
+                import chisurf.core.settings
+                measured_by_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
+            except Exception:
+                measured_by_user_id = "user_default"
+        with self._transaction():
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO flr_experiment "
+                "(experiment_id, type_id, sample_id, project_id, measured_by_user_id, "
+                "measured_by_device_id, started_at, ended_at, status, details, setup_definition_id, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (experiment_id, type_id, sample_id, project_id, measured_by_user_id,
+                 measured_by_device_id, started_at, ended_at, status, details, setup_definition_id,
+                 now, now, None)
+            )
+
+    def get_experiment(self, experiment_id):
+        return self.conn.execute(
+            "SELECT e.*, et.name AS experiment_type, et.category AS experiment_category, "
+            "s.description AS sample_description, u.display_name AS measured_by_user, "
+            "d.name AS measured_by_device, sd.name AS setup_name "
+            "FROM flr_experiment AS e "
+            "LEFT JOIN flr_experiment_type AS et ON et.type_id = e.type_id "
+            "LEFT JOIN flr_sample AS s ON s.sample_id = e.sample_id "
+            "LEFT JOIN flr_sample_users AS u ON u.user_id = e.measured_by_user_id "
+            "LEFT JOIN flr_sample_devices AS d ON d.device_id = e.measured_by_device_id "
+            "LEFT JOIN mfdb_setup AS sd ON sd.setup_id = e.setup_definition_id "
+            "WHERE e.experiment_id = ?",
+            (experiment_id,)
+        ).fetchone()
+
+    def get_experiments(self, sample_id=None, project_id=None, type_id=None):
+        query = (
+            "SELECT e.*, et.name AS experiment_type, et.category AS experiment_category, "
+            "s.description AS sample_description, u.display_name AS measured_by_user, "
+            "d.name AS measured_by_device "
+            "FROM flr_experiment AS e "
+            "LEFT JOIN flr_experiment_type AS et ON et.type_id = e.type_id "
+            "LEFT JOIN flr_sample AS s ON s.sample_id = e.sample_id "
+            "LEFT JOIN flr_sample_users AS u ON u.user_id = e.measured_by_user_id "
+            "LEFT JOIN flr_sample_devices AS d ON d.device_id = e.measured_by_device_id "
+            "WHERE 1=1 AND e.deleted_at IS NULL"
+        )
+        params = []
+        if sample_id is not None:
+            query += " AND e.sample_id = ?"
+            params.append(sample_id)
+        if project_id is not None:
+            query += " AND e.project_id = ?"
+            params.append(project_id)
+        if type_id is not None:
+            query += " AND e.type_id = ?"
+            params.append(type_id)
+        query += " ORDER BY e.started_at, e.experiment_id"
+        return self.conn.execute(query, params).fetchall()
+
+    def add_experiment_data(self, experiment_id, data_type, storage_mode, file_path=None, url=None, folder_path=None, mime_type=None, size_bytes=None, checksum=None, data_json=None, data_blob=None, reading_options_json=None, details=None):
+        if not data_type:
+            raise ValueError("data_type is required")
+        if not storage_mode:
+            raise ValueError("storage_mode is required")
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT INTO flr_experiment_data "
+                "(experiment_id, data_type, storage_mode, file_path, url, folder_path, "
+                "mime_type, size_bytes, checksum, data_json, data_blob, reading_options_json, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (experiment_id, data_type, storage_mode, file_path, url, folder_path,
+                 mime_type, size_bytes, checksum, data_json, data_blob, reading_options_json, details,
+                 now, now, None)
+            )
+            return int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+
+    def get_experiment_data(self, experiment_id):
+        return self.conn.execute(
+            "SELECT * FROM flr_experiment_data WHERE experiment_id = ? AND deleted_at IS NULL ORDER BY data_type, data_id",
+            (experiment_id,)
+        ).fetchall()
+
+    def update_experiment_data(self, data_id, experiment_id, data_type, storage_mode, file_path=None, url=None, folder_path=None, mime_type=None, size_bytes=None, checksum=None, data_json=None, data_blob=None, reading_options_json=None, details=None):
+        with self.conn:
+            self.conn.execute(
+                "UPDATE flr_experiment_data SET experiment_id=?, data_type=?, storage_mode=?, "
+                "file_path=?, url=?, folder_path=?, mime_type=?, size_bytes=?, checksum=?, "
+                "data_json=?, data_blob=?, reading_options_json=?, details=?, updated_at=? WHERE data_id=?",
+                (experiment_id, data_type, storage_mode, file_path, url, folder_path,
+                 mime_type, size_bytes, checksum, data_json, data_blob, reading_options_json,
+                 details, _utc_now(), data_id)
+            )
+
+    def delete_experiment_data(self, data_id):
+        with self.conn:
+            self.conn.execute("UPDATE flr_experiment_data SET deleted_at = ? WHERE data_id = ?", (_utc_now(), data_id))
+
+    def delete_experiment(self, experiment_id):
+        with self.conn:
+            self.conn.execute("UPDATE flr_experiment SET deleted_at = ? WHERE experiment_id = ?", (_utc_now(), experiment_id))
+
+    # -- chem_descriptors / optical_properties / images --
+
+    def get_chemical_descriptors(self, probe_id=None):
+        return self.conn.execute(
+            "SELECT * FROM chem_descriptors WHERE probe_id = ? ORDER BY descriptor_type, descriptor_id",
+            (probe_id,)
+        ).fetchall()
+
+    def add_chemical_descriptor(self, probe_id, descriptor_type, value, unit=None, method=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO chem_descriptors "
+                "(probe_id, descriptor_type, value, unit, method, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (probe_id, descriptor_type, value, unit, method, details,
+                 now, now, None)
+            )
+
+    def get_optical_properties(self, probe_id=None):
+        if probe_id is not None:
+            rows = self.conn.execute(
+                "SELECT id, probe_id, property_name, property_value, unit, details FROM optical_properties WHERE probe_id = ? AND deleted_at IS NULL ORDER BY property_name, id",
+                (probe_id,)
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT id, probe_id, property_name, property_value, unit, details FROM optical_properties WHERE deleted_at IS NULL ORDER BY property_name, id"
+            ).fetchall()
+        new_rows = []
+        for r in rows:
+            d = dict(r)
+            d["property_id"] = d["id"]
+            d["property_type"] = d["property_name"]
+            d["value"] = d["property_value"]
+            new_rows.append(d)
+        return new_rows
+
+    def add_optical_property(self, probe_id, property_type, value, unit=None, method=None, condition_json=None, details=None):
+        extra = {}
+        if method:
+            extra["method"] = method
+        if condition_json:
+            extra["condition"] = condition_json
+        details_str = details
+        if extra:
+            details_str = (details or "") + " " + _json_dumps(extra)
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO optical_properties "
+                "(probe_id, property_name, property_value, unit, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (probe_id, property_type, value, unit, details_str,
+                 now, now, None)
+            )
+
+    def get_images(self, probe_id=None):
+        return self.conn.execute(
+            "SELECT * FROM images WHERE probe_id = ? AND deleted_at IS NULL ORDER BY image_id",
+            (probe_id,)
+        ).fetchall()
+
+    def add_image(self, probe_id, image_path, image_type, description=None, details=None):
+        with self.conn:
+            now = _utc_now()
+            self.conn.execute(
+                "INSERT OR REPLACE INTO images "
+                "(probe_id, image_path, image_type, description, details, "
+                "created_at, updated_at, deleted_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (probe_id, image_path, image_type, description, details,
+                 now, now, None)
+            )
+
+    # -- _decode helpers (adapted for mfdb_* metadata columns) --
+
+    def _decode_analysis_run_row(self, row: dict[str, Any] | sqlite3.Row | None) -> dict[str, Any] | None:
+        if row is None:
+            return None
+        data = dict(row)
+        settings_raw = data.pop("settings_json", None) or data.pop("settings", None)
+        metadata_raw = data.pop("metadata_json", None)
+        if settings_raw:
+            data["settings"] = _json_loads(settings_raw)
+        if metadata_raw:
+            data["metadata"] = _json_loads(metadata_raw)
+        return data
+
+    def _decode_raw_data_row(self, row: dict[str, Any] | sqlite3.Row | None) -> dict[str, Any] | None:
+        if row is None:
+            return None
+        data = dict(row)
+        metadata_raw = data.pop("metadata_json", None) or data.pop("metadata", None) or data.pop("settings_json", None)
+        if metadata_raw:
+            data["metadata"] = _json_loads(metadata_raw)
+        if "artifact_id" in data and "raw_data_id" not in data:
+            data["raw_data_id"] = data["artifact_id"]
+        if "data_format" in data and "data_type" not in data:
+            data["data_type"] = data["data_format"]
+        return data
+
+    def _decode_processed_data_row(self, row: dict[str, Any] | sqlite3.Row | None) -> dict[str, Any] | None:
+        if row is None:
+            return None
+        data = dict(row)
+        settings_raw = data.pop("settings_json", None) or data.pop("settings", None) or data.pop("metadata_json", None)
+        if settings_raw:
+            data["settings"] = _json_loads(settings_raw)
+        if "artifact_id" in data and "processed_data_id" not in data:
+            data["processed_data_id"] = data["artifact_id"]
+        return data
+
+    # -- update_processing_run_status --
+
+    def update_processing_run_status(
+        self,
+        run_id: str | None = None,
+        status: str = "pending",
+        photon_count: int | None = None,
+        burst_count: int | None = None,
+        selected_photon_count: int | None = None,
+        error_message: str | None = None,
+        traceback_summary: str | None = None,
+        **kwargs,
+    ):
+        run_id = run_id or kwargs.pop("processing_id", None)
+        if not run_id:
+            raise ValueError("processing_id is required")
+        now = _utc_now()
+        updates = ["status = ?", "updated_at = ?"]
+        params = [status, now]
+        for key, value in (
+            ("photon_count", photon_count),
+            ("burst_count", burst_count),
+            ("selected_photon_count", selected_photon_count),
+            ("error_message", error_message),
+            ("traceback_summary", traceback_summary),
+        ):
+            if value is not None:
+                updates.append(f"{key} = ?")
+                params.append(value)
+        params.append(run_id)
+        with self.conn:
+            try:
+                self.conn.execute(
+                    f"UPDATE fdb_processing_run SET {', '.join(updates)} WHERE processing_id = ?",
+                    params
+                )
+            except sqlite3.OperationalError:
+                pass
+            self.conn.execute(
+                """UPDATE mfdb_operation
+                   SET status = ?,
+                       error_message = COALESCE(?, error_message),
+                       traceback_summary = COALESCE(?, traceback_summary),
+                       updated_at = ?
+                   WHERE operation_id = ?""",
+                (status, error_message, traceback_summary, now, run_id),
+            )
+        self.add_audit_log(
+            action="update",
+            target_type="processing_run",
+            target_id=run_id,
+            details={"status": status, "error_message": error_message},
+        )
+
+    # ============================================================
+    # Canonical API — matches the signatures expected by api.py,
+    # pipeline.py, and the PRD specification.
+    # ============================================================
+
+    def default_runtime_environment(self) -> dict[str, Any]:
+        return {
+            "platform": platform.platform(),
+            "processor": platform.processor(),
+            "python_version": platform.python_version(),
+        }
+
+    def register_artifact(
+        self,
+        artifact_id: str,
+        artifact_type: str | None = None,
+        storage_mode: str = "local_file",
+        experiment_id: str | None = None,
+        file_path: str | None = None,
+        url: str | None = None,
+        folder_path: str | None = None,
+        mime_type: str | None = None,
+        size_bytes: int | None = None,
+        checksum: str | None = None,
+        checksum_algorithm: str = "sha256",
+        row_count: int | None = None,
+        validation_status: str = "unvalidated",
+        validation_message: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        data_json: str | None = None,
+        data_blob: bytes | None = None,
+        artifact_kind: str | None = None,
+        data_format: str | None = None,
+    ) -> str:
+        """Register or update an artifact in the canonical MFDB tables.
+
+        Parameters
+        ----------
+        artifact_id : str
+            Unique artifact identifier.
+        artifact_type : str, optional
+            Backward-compatible artifact kind name.
+        storage_mode : str, default='local_file'
+            Artifact storage vocabulary value.
+        experiment_id : str, optional
+            Associated experiment identifier.
+        file_path : str, optional
+            Local file path.
+        url : str, optional
+            Remote URL.
+        folder_path : str, optional
+            Local folder path.
+        mime_type : str, optional
+            MIME type.
+        size_bytes : int, optional
+            File size in bytes.
+        checksum : str, optional
+            Artifact checksum.
+        checksum_algorithm : str, default='sha256'
+            Checksum algorithm.
+        row_count : int, optional
+            Row count for tabular artifacts.
+        validation_status : str, default='unvalidated'
+            Validation status.
+        validation_message : str, optional
+            Validation message.
+        metadata : dict, optional
+            JSON-serializable metadata.
+        data_json : str, optional
+            Inline JSON payload.
+        data_blob : bytes, optional
+            Inline binary payload.
+        artifact_kind : str, optional
+            Canonical artifact kind.
+        data_format : str, optional
+            Data format vocabulary value.
+
+        Returns
+        -------
+        str
+            The artifact identifier.
+        """
+        kind = artifact_kind or artifact_type or "raw_data"
+        self.validate_extensible_vocab("artifact_kind", kind)
+        if data_format is not None:
+            self.validate_extensible_vocab("data_format", data_format)
+        validate_vocabulary(storage_mode, STORAGE_MODES, "storage_mode")
+        validate_vocabulary(validation_status, VALIDATION_STATUS_VALUES, "validation_status")
+        _validate_checksum(checksum, checksum_algorithm)
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                """INSERT INTO mfdb_artifact (
+                    artifact_id, artifact_kind, data_format, experiment_id, storage_mode,
+                    file_path, url, folder_path, mime_type, size_bytes, checksum,
+                    checksum_algorithm, row_count, validation_status, validation_message,
+                    metadata_json, data_json, data_blob, created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(artifact_id) DO UPDATE SET
+                    artifact_kind=excluded.artifact_kind,
+                    data_format=excluded.data_format,
+                    experiment_id=excluded.experiment_id,
+                    storage_mode=excluded.storage_mode,
+                    file_path=excluded.file_path,
+                    url=excluded.url,
+                    folder_path=excluded.folder_path,
+                    mime_type=excluded.mime_type,
+                    size_bytes=excluded.size_bytes,
+                    checksum=excluded.checksum,
+                    checksum_algorithm=excluded.checksum_algorithm,
+                    row_count=excluded.row_count,
+                    validation_status=excluded.validation_status,
+                    validation_message=excluded.validation_message,
+                    metadata_json=excluded.metadata_json,
+                    data_json=excluded.data_json,
+                    data_blob=excluded.data_blob,
+                    updated_at=excluded.updated_at,
+                    deleted_at=excluded.deleted_at""",
+                (
+                    artifact_id,
+                    kind,
+                    data_format,
+                    experiment_id,
+                    storage_mode,
+                    file_path,
+                    url,
+                    folder_path,
+                    mime_type,
+                    size_bytes,
+                    checksum,
+                    checksum_algorithm,
+                    row_count,
+                    validation_status,
+                    validation_message,
+                    _json_dumps(metadata),
+                    data_json,
+                    data_blob,
+                    now,
+                    now,
+                    None,
+                ),
+            )
+            self.add_audit_log(
+                action="create",
+                target_type=kind,
+                target_id=artifact_id,
+                details={"artifact_kind": kind, "storage_mode": storage_mode},
+            )
+        return artifact_id
+
+    def get_artifact(self, artifact_id: str) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_artifact WHERE artifact_id = ?", (artifact_id,)
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def list_artifacts(
+        self,
+        artifact_type: str | None = None,
+        experiment_id: str | None = None,
+        artifact_kind: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = "SELECT * FROM mfdb_artifact WHERE 1=1 AND deleted_at IS NULL"
+        params: list[Any] = []
+        kind = artifact_kind or artifact_type
+        if kind is not None:
+            query += " AND artifact_kind = ?"
+            params.append(kind)
+        if experiment_id is not None:
+            query += " AND experiment_id = ?"
+            params.append(experiment_id)
+        query += " ORDER BY created_at, artifact_id"
+        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+
+    def record_operation(
+        self,
+        operation_id: str,
+        operation_type: str,
+        experiment_id: str | None = None,
+        setup_id: str | None = None,
+        settings: dict[str, Any] | None = None,
+        operator_user_id: str | None = None,
+        software_package: str | None = "chisurf",
+        software_module: str | None = None,
+        software_version: str | None = None,
+        runtime_environment: dict[str, Any] | None = None,
+        started_at: str | None = None,
+        ended_at: str | None = None,
+        status: str = "pending",
+        error_message: str | None = None,
+        traceback_summary: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        setup_version: int | None = None,
+    ) -> str:
+        if operator_user_id is None:
+            try:
+                import chisurf.core.settings
+                operator_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
+            except Exception:
+                operator_user_id = "user_default"
+        self.validate_extensible_vocab("operation_type", operation_type)
+        validate_vocabulary(status, STATUS_VALUES, "status")
+        settings_hash = _json_hash(settings)
+        now = _utc_now()
+        with self._transaction():
+            operation_existed = _exists(self.conn, "mfdb_operation", "operation_id", operation_id)
+            self.conn.execute(
+                """INSERT INTO mfdb_operation (
+                    operation_id, operation_type, experiment_id, setup_id,
+                    settings_json, settings_hash, operator_user_id,
+                    software_package, software_module, software_version,
+                    runtime_environment_json, started_at, ended_at, status,
+                    error_message, traceback_summary, metadata_json,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(operation_id) DO UPDATE SET
+                    operation_type=excluded.operation_type,
+                    experiment_id=excluded.experiment_id,
+                    setup_id=excluded.setup_id,
+                    settings_json=excluded.settings_json,
+                    settings_hash=excluded.settings_hash,
+                    operator_user_id=excluded.operator_user_id,
+                    software_package=excluded.software_package,
+                    software_module=excluded.software_module,
+                    software_version=excluded.software_version,
+                    runtime_environment_json=excluded.runtime_environment_json,
+                    started_at=excluded.started_at,
+                    ended_at=excluded.ended_at,
+                    status=excluded.status,
+                    error_message=excluded.error_message,
+                    traceback_summary=excluded.traceback_summary,
+                    metadata_json=excluded.metadata_json,
+                    updated_at=excluded.updated_at,
+                    deleted_at=excluded.deleted_at""",
+                (
+                    operation_id,
+                    operation_type,
+                    experiment_id,
+                    setup_id,
+                    _json_dumps(settings),
+                    settings_hash,
+                    operator_user_id,
+                    software_package,
+                    software_module,
+                    software_version,
+                    _json_dumps(runtime_environment or self.default_runtime_environment()),
+                    started_at,
+                    ended_at,
+                    status,
+                    error_message,
+                    traceback_summary,
+                    _json_dumps(metadata),
+                    now,
+                    now,
+                    None,
+                ),
+            )
+            if not operation_existed:
+                active_branch_row = self.conn.execute(
+                    "SELECT active_branch_uuid FROM flr_sample_users WHERE user_id = ?",
+                    (operator_user_id,)
+                ).fetchone()
+                active_branch_uuid = active_branch_row[0] if active_branch_row else None
+                if not active_branch_uuid:
+                    active_branch_uuid = "00000000-0000-0000-0000-000000000000"
+                    if _exists(self.conn, "flr_sample_users", "user_id", operator_user_id):
+                        self.conn.execute(
+                            "UPDATE flr_sample_users SET active_branch_uuid = ? WHERE user_id = ?",
+                            (active_branch_uuid, operator_user_id)
+                        )
+                if not _exists(self.conn, "mfdb_branch", "branch_uuid", active_branch_uuid):
+                    self.conn.execute(
+                        "INSERT OR IGNORE INTO mfdb_branch (branch_uuid, name, description) VALUES (?, 'main', 'Default main branch')",
+                        (active_branch_uuid,)
+                    )
+                self.conn.execute(
+                    "UPDATE mfdb_branch SET head_operation_id = ?, updated_at = ? WHERE branch_uuid = ?",
+                    (operation_id, now, active_branch_uuid)
+                )
+            self.add_audit_log(
+                action=f"Operation recorded: {operation_id}",
+                target_type="operation",
+                target_id=operation_id,
+                details={"operation_type": operation_type, "status": status},
+            )
+        return operation_id
+
+    def get_operation(self, operation_id: str) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_operation WHERE operation_id = ?", (operation_id,)
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def list_operations(
+        self,
+        operation_type: str | None = None,
+        experiment_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = "SELECT * FROM mfdb_operation WHERE 1=1 AND deleted_at IS NULL"
+        params: list[Any] = []
+        if operation_type is not None:
+            query += " AND operation_type = ?"
+            params.append(operation_type)
+        if experiment_id is not None:
+            query += " AND experiment_id = ?"
+            params.append(experiment_id)
+        query += " ORDER BY created_at, operation_id"
+        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+
+    def transition_operation_status(
+        self,
+        operation_id: str,
+        status: str,
+        error_message: str | None = None,
+        traceback_summary: str | None = None,
+        operator_user_id: str | None = None,
+    ) -> str:
+        """Transition an operation status inside one audited transaction.
+
+        Parameters
+        ----------
+        operation_id : str
+            Existing operation identifier.
+        status : str
+            Target lifecycle status.
+        error_message : str, optional
+            Failure message for failed/cancelled transitions.
+        traceback_summary : str, optional
+            Traceback summary for failed transitions.
+        operator_user_id : str, optional
+            User performing the transition.
+
+        Returns
+        -------
+        str
+            The operation identifier.
+        """
+        validate_vocabulary(status, STATUS_VALUES, "status")
+        now = _utc_now()
+        with self._transaction():
+            row = self.get_operation(operation_id)
+            if row is None:
+                raise ValueError(f"Unknown operation_id {operation_id!r}")
+            self.conn.execute(
+                """UPDATE mfdb_operation
+                   SET status = ?, error_message = COALESCE(?, error_message),
+                       traceback_summary = COALESCE(?, traceback_summary),
+                       updated_at = ?
+                   WHERE operation_id = ?""",
+                (status, error_message, traceback_summary, now, operation_id),
+            )
+            self.add_audit_log(
+                action="transition_status",
+                target_type="operation",
+                target_id=operation_id,
+                operator_user_id=operator_user_id,
+                details={
+                    "previous_status": row["status"],
+                    "status": status,
+                    "error_message": error_message,
+                },
+            )
+        return operation_id
+
+    def record_operation_link(
+        self,
+        operation_id: str,
+        artifact_id: str,
+        direction: str,
+        role: str | None = None,
+        ordinal: int = 0,
+        checksum_snapshot: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        validate_vocabulary(direction, DIRECTIONS, "direction")
+        role = role or "generic"
+        if isinstance(checksum_snapshot, (dict, list)):
+            checksum_snapshot = _json_dumps(checksum_snapshot)
+        with self._transaction():
+            self.conn.execute(
+                """INSERT INTO mfdb_operation_artifact (
+                    operation_id, artifact_id, direction, role, ordinal,
+                    checksum_snapshot, metadata_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(operation_id, artifact_id, direction, role) DO UPDATE SET
+                    role=excluded.role,
+                    ordinal=excluded.ordinal,
+                    checksum_snapshot=excluded.checksum_snapshot,
+                    metadata_json=excluded.metadata_json""",
+                (
+                    operation_id,
+                    artifact_id,
+                    direction,
+                    role,
+                    ordinal,
+                    checksum_snapshot,
+                    _json_dumps(metadata),
+                ),
+            )
+            self.add_audit_log(
+                action=f"Link added: {operation_id} -> {artifact_id}",
+                target_type="operation_artifact",
+                target_id=f"{operation_id}/{artifact_id}",
+                details={"direction": direction, "role": role},
+            )
+
+    def _normalize_artifact_payload(
+        self,
+        artifact: dict[str, Any],
+        default_experiment_id: str | None = None,
+    ) -> dict[str, Any]:
+        if not isinstance(artifact, dict):
+            raise ValueError("artifact payload must be a mapping")
+        artifact_id = artifact.get("artifact_id", artifact.get("id"))
+        if not artifact_id:
+            raise ValueError("artifact_id is required")
+        kind = artifact.get("artifact_kind", artifact.get("artifact_type", "raw_data"))
+        storage_mode = artifact.get("storage_mode", "local_file")
+        validation_status = artifact.get("validation_status", "unvalidated")
+        data_format = artifact.get("data_format")
+        self.validate_extensible_vocab("artifact_kind", kind)
+        if data_format is not None:
+            self.validate_extensible_vocab("data_format", data_format)
+        validate_vocabulary(storage_mode, STORAGE_MODES, "storage_mode")
+        validate_vocabulary(validation_status, VALIDATION_STATUS_VALUES, "validation_status")
+        return {
+            "artifact_id": artifact_id,
+            "artifact_kind": kind,
+            "storage_mode": storage_mode,
+            "experiment_id": artifact.get("experiment_id", default_experiment_id),
+            "file_path": artifact.get("file_path"),
+            "url": artifact.get("url"),
+            "folder_path": artifact.get("folder_path"),
+            "mime_type": artifact.get("mime_type"),
+            "size_bytes": artifact.get("size_bytes"),
+            "checksum": artifact.get("checksum"),
+            "checksum_algorithm": artifact.get("checksum_algorithm", "sha256"),
+            "row_count": artifact.get("row_count"),
+            "validation_status": validation_status,
+            "validation_message": artifact.get("validation_message"),
+            "metadata": artifact.get("metadata"),
+            "data_json": artifact.get("data_json"),
+            "data_blob": artifact.get("data_blob"),
+            "data_format": data_format,
+            "role": artifact.get("role"),
+            "ordinal": artifact.get("ordinal", 0),
+            "link_metadata": artifact.get("link_metadata"),
+        }
+
+    def _normalize_parameter_payload(self, parameter: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(parameter, dict):
+            raise ValueError("parameter payload must be a mapping")
+        parameter_uuid = parameter.get("parameter_uuid", parameter.get("id"))
+        name = parameter.get("name")
+        if not parameter_uuid or not name:
+            raise ValueError("parameter_uuid and name are required")
+        parameter_type = parameter.get("parameter_type", "free")
+        validate_vocabulary(parameter_type, PARAMETER_TYPES, "parameter_type")
+        return {
+            "parameter_uuid": parameter_uuid,
+            "name": name,
+            "value": parameter.get("value"),
+            "standard_error": parameter.get("standard_error"),
+            "confidence_interval_low": parameter.get("confidence_interval_low"),
+            "confidence_interval_high": parameter.get("confidence_interval_high"),
+            "initial_value": parameter.get("initial_value"),
+            "lower_bound": parameter.get("lower_bound"),
+            "upper_bound": parameter.get("upper_bound"),
+            "bounds_on": parameter.get("bounds_on", False),
+            "units": parameter.get("units"),
+            "parameter_type": parameter_type,
+            "expression": parameter.get("expression"),
+            "prior": parameter.get("prior"),
+            "mapping": parameter.get("mapping"),
+            "metadata": parameter.get("metadata"),
+        }
+
+    def record_operation_with_artifacts(
+        self,
+        operation_id: str,
+        operation_type: str,
+        status: str = "pending",
+        experiment_id: str | None = None,
+        setup_id: str | None = None,
+        settings: dict[str, Any] | None = None,
+        operator_user_id: str | None = None,
+        software_package: str | None = None,
+        software_module: str | None = None,
+        software_version: str | None = None,
+        runtime_environment: dict[str, Any] | None = None,
+        started_at: str | None = None,
+        ended_at: str | None = None,
+        input_artifacts: list[dict[str, Any]] | None = None,
+        output_artifacts: list[dict[str, Any]] | None = None,
+        parameters: list[dict[str, Any]] | None = None,
+        error_message: str | None = None,
+        traceback_summary: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Record an operation, artifacts, links, and parameters atomically.
+
+        Parameters
+        ----------
+        operation_id : str
+            Unique operation identifier.
+        operation_type : str
+            Operation vocabulary value.
+        status : str, default='pending'
+            Initial operation status.
+        experiment_id : str, optional
+            Associated experiment identifier.
+        setup_id : str, optional
+            Associated setup identifier.
+        settings : dict, optional
+            Operation settings.
+        operator_user_id : str, optional
+            Operator user identifier.
+        software_package : str, optional
+            Software package name.
+        software_module : str, optional
+            Software module name.
+        software_version : str, optional
+            Software version.
+        runtime_environment : dict, optional
+            Runtime environment metadata.
+        started_at : str, optional
+            Start timestamp.
+        ended_at : str, optional
+            End timestamp.
+        input_artifacts : list of dict, optional
+            Artifact payloads to register and link as inputs.
+        output_artifacts : list of dict, optional
+            Artifact payloads to register and link as outputs.
+        parameters : list of dict, optional
+            Parameter payloads linked to the operation.
+        error_message : str, optional
+            Failure message.
+        traceback_summary : str, optional
+            Traceback summary.
+        metadata : dict, optional
+            Operation metadata.
+
+        Returns
+        -------
+        dict
+            Counts of registered artifacts, links, and parameters.
+        """
+        validate_vocabulary(operation_type, OPERATION_TYPES, "operation_type")
+        validate_vocabulary(status, STATUS_VALUES, "status")
+        input_payloads = [self._normalize_artifact_payload(art, experiment_id) for art in (input_artifacts or [])]
+        output_payloads = [self._normalize_artifact_payload(art, experiment_id) for art in (output_artifacts or [])]
+        parameter_payloads = [self._normalize_parameter_payload(param) for param in (parameters or [])]
+
+        counts = {
+            "operation_inserted": 0,
+            "input_artifact_inserted": 0,
+            "output_artifact_inserted": 0,
+            "input_link_inserted": 0,
+            "output_link_inserted": 0,
+            "parameter_inserted": 0,
+        }
+
+        with self._transaction():
+            operation_existed = _exists(self.conn, "mfdb_operation", "operation_id", operation_id)
+            self.record_operation(
+                operation_id=operation_id,
+                operation_type=operation_type,
+                status=status,
+                experiment_id=experiment_id,
+                setup_id=setup_id,
+                settings=settings,
+                operator_user_id=operator_user_id,
+                software_package=software_package,
+                software_module=software_module,
+                software_version=software_version,
+                runtime_environment=runtime_environment,
+                started_at=started_at,
+                ended_at=ended_at,
+                error_message=error_message,
+                traceback_summary=traceback_summary,
+                metadata=metadata,
+            )
+            counts["operation_inserted"] = 0 if operation_existed else 1
+
+            for art in input_payloads:
+                artifact_kwargs = art.copy()
+                role = artifact_kwargs.pop("role", None)
+                ordinal = artifact_kwargs.pop("ordinal", 0)
+                link_metadata = artifact_kwargs.pop("link_metadata", None)
+                artifact_id = artifact_kwargs["artifact_id"]
+                artifact_existed = _exists(self.conn, "mfdb_artifact", "artifact_id", artifact_id)
+                self.register_artifact(**artifact_kwargs)
+                counts["input_artifact_inserted"] += 0 if artifact_existed else 1
+                link_existed = self.conn.execute(
+                    """SELECT 1 FROM mfdb_operation_artifact
+                       WHERE operation_id = ? AND artifact_id = ? AND direction = 'input'
+                         AND role = ?""",
+                    (operation_id, artifact_id, role or "generic"),
+                ).fetchone() is not None
+                self.record_operation_link(
+                    operation_id=operation_id,
+                    artifact_id=artifact_id,
+                    direction="input",
+                    role=role,
+                    ordinal=ordinal,
+                    metadata=link_metadata,
+                )
+                counts["input_link_inserted"] += 0 if link_existed else 1
+
+            for art in output_payloads:
+                artifact_kwargs = art.copy()
+                role = artifact_kwargs.pop("role", None)
+                ordinal = artifact_kwargs.pop("ordinal", 0)
+                link_metadata = artifact_kwargs.pop("link_metadata", None)
+                artifact_id = artifact_kwargs["artifact_id"]
+                artifact_existed = _exists(self.conn, "mfdb_artifact", "artifact_id", artifact_id)
+                self.register_artifact(**artifact_kwargs)
+                counts["output_artifact_inserted"] += 0 if artifact_existed else 1
+                link_existed = self.conn.execute(
+                    """SELECT 1 FROM mfdb_operation_artifact
+                       WHERE operation_id = ? AND artifact_id = ? AND direction = 'output'
+                         AND role = ?""",
+                    (operation_id, artifact_id, role or "generic"),
+                ).fetchone() is not None
+                self.record_operation_link(
+                    operation_id=operation_id,
+                    artifact_id=artifact_id,
+                    direction="output",
+                    role=role,
+                    ordinal=ordinal,
+                    metadata=link_metadata,
+                )
+                counts["output_link_inserted"] += 0 if link_existed else 1
+
+            for param in parameter_payloads:
+                parameter_uuid = param["parameter_uuid"]
+                parameter_existed = _exists(self.conn, "mfdb_parameter", "parameter_uuid", parameter_uuid)
+                self.record_parameter(operation_id=operation_id, **param)
+                counts["parameter_inserted"] += 0 if parameter_existed else 1
+
+        return {
+            "operation_id": operation_id,
+            "operation_inserted": counts["operation_inserted"],
+            "input_artifact_inserted": counts["input_artifact_inserted"],
+            "output_artifact_inserted": counts["output_artifact_inserted"],
+            "parameter_inserted": counts["parameter_inserted"],
+            "input_link_inserted": counts["input_link_inserted"],
+            "output_link_inserted": counts["output_link_inserted"],
+            "input_count": counts["input_artifact_inserted"],
+            "output_count": counts["output_artifact_inserted"],
+            "parameter_count": counts["parameter_inserted"],
+            "input_link_count": counts["input_link_inserted"],
+            "output_link_count": counts["output_link_inserted"],
+        }
+
+    def record_parameter(
+        self,
+        parameter_uuid: str,
+        operation_id: str,
+        name: str,
+        value: float | None = None,
+        standard_error: float | None = None,
+        confidence_interval_low: float | None = None,
+        confidence_interval_high: float | None = None,
+        initial_value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+        bounds_on: bool = False,
+        units: str | None = None,
+        parameter_type: str = "free",
+        expression: str | None = None,
+        prior: dict[str, Any] | None = None,
+        mapping: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> str:
+        validate_vocabulary(parameter_type, PARAMETER_TYPES, "parameter_type")
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                """INSERT INTO mfdb_parameter (
+                    parameter_uuid, operation_id, name, value, standard_error,
+                    confidence_interval_low, confidence_interval_high, initial_value,
+                    lower_bound, upper_bound, bounds_on, units, parameter_type,
+                    expression, prior_json, mapping_json, metadata_json,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(parameter_uuid) DO UPDATE SET
+                    operation_id=excluded.operation_id,
+                    name=excluded.name,
+                    value=excluded.value,
+                    standard_error=excluded.standard_error,
+                    confidence_interval_low=excluded.confidence_interval_low,
+                    confidence_interval_high=excluded.confidence_interval_high,
+                    initial_value=excluded.initial_value,
+                    lower_bound=excluded.lower_bound,
+                    upper_bound=excluded.upper_bound,
+                    bounds_on=excluded.bounds_on,
+                    units=excluded.units,
+                    parameter_type=excluded.parameter_type,
+                    expression=excluded.expression,
+                    prior_json=excluded.prior_json,
+                    mapping_json=excluded.mapping_json,
+                    metadata_json=excluded.metadata_json,
+                    updated_at=excluded.updated_at,
+                    deleted_at=excluded.deleted_at""",
+                (
+                    parameter_uuid,
+                    operation_id,
+                    name,
+                    value,
+                    standard_error,
+                    confidence_interval_low,
+                    confidence_interval_high,
+                    initial_value,
+                    lower_bound,
+                    upper_bound,
+                    1 if bounds_on else 0,
+                    units,
+                    parameter_type,
+                    expression,
+                    _json_dumps(prior),
+                    _json_dumps(mapping),
+                    _json_dumps(metadata),
+                    now,
+                    now,
+                    None,
+                ),
+            )
+            self.add_audit_log(
+                action="create",
+                target_type="parameter",
+                target_id=parameter_uuid,
+                details={"operation_id": operation_id, "name": name},
+            )
+        return parameter_uuid
+
+    def get_parameter(self, parameter_uuid: str) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_parameter WHERE parameter_uuid = ?", (parameter_uuid,)
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def list_parameters(
+        self,
+        operation_id: str | None = None,
+        parameter_type: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List parameters with optional filters.
+
+        Parameters
+        ----------
+        operation_id : str, optional
+            Filter by operation identifier.
+        parameter_type : str, optional
+            Filter by parameter vocabulary value.
+
+        Returns
+        -------
+        list of dict
+            Parameter dictionaries.
+        """
+        query = "SELECT * FROM mfdb_parameter WHERE 1=1 AND deleted_at IS NULL"
+        params: list[Any] = []
+        if operation_id is not None:
+            query += " AND operation_id = ?"
+            params.append(operation_id)
+        if parameter_type is not None:
+            query += " AND parameter_type = ?"
+            params.append(parameter_type)
+        query += " ORDER BY parameter_id"
+        return [dict(r) for r in self.conn.execute(query, params).fetchall()]
+
+    def save_setup(
+        self,
+        setup_id: str,
+        name: str,
+        version: int = 1,
+        instrument_id: str | None = None,
+        description: str | None = None,
+        configuration: dict[str, Any] | None = None,
+        detectors: dict[str, Any] | None = None,
+        timing_calibration: dict[str, Any] | None = None,
+        irf_definition: dict[str, Any] | None = None,
+        dark_count: dict[str, Any] | None = None,
+        timing_resolution: dict[str, Any] | None = None,
+        burst_defaults: dict[str, Any] | None = None,
+        fcs_calibration: dict[str, Any] | None = None,
+    ) -> None:
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                """INSERT INTO mfdb_setup (
+                    setup_id, name, version, instrument_id, description,
+                    configuration_json, detectors_json, timing_calibration_json,
+                    irf_definition_json, dark_count_json, timing_resolution_json,
+                    burst_defaults_json, fcs_calibration_json,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(setup_id) DO UPDATE SET
+                    name=excluded.name,
+                    version=excluded.version,
+                    instrument_id=excluded.instrument_id,
+                    description=excluded.description,
+                    configuration_json=excluded.configuration_json,
+                    detectors_json=excluded.detectors_json,
+                    timing_calibration_json=excluded.timing_calibration_json,
+                    irf_definition_json=excluded.irf_definition_json,
+                    dark_count_json=excluded.dark_count_json,
+                    timing_resolution_json=excluded.timing_resolution_json,
+                    burst_defaults_json=excluded.burst_defaults_json,
+                    fcs_calibration_json=excluded.fcs_calibration_json,
+                    updated_at=excluded.updated_at,
+                    deleted_at=excluded.deleted_at""",
+                (
+                    setup_id,
+                    name,
+                    version,
+                    instrument_id,
+                    description,
+                    _json_dumps(configuration),
+                    _json_dumps(detectors),
+                    _json_dumps(timing_calibration),
+                    _json_dumps(irf_definition),
+                    _json_dumps(dark_count),
+                    _json_dumps(timing_resolution),
+                    _json_dumps(burst_defaults),
+                    _json_dumps(fcs_calibration),
+                    now,
+                    now,
+                    None,
+                ),
+            )
+            self.add_audit_log(
+                action="create",
+                target_type="setup",
+                target_id=setup_id,
+                details={"name": name, "version": version},
+            )
+
+    def get_setup(self, setup_id: str) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_setup WHERE setup_id = ?", (setup_id,)
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def list_setups(self) -> list[dict[str, Any]]:
+        """List setup snapshots.
+
+        Returns
+        -------
+        list of dict
+            Setup dictionaries.
+        """
+        rows = self.conn.execute("SELECT * FROM mfdb_setup WHERE deleted_at IS NULL ORDER BY name, version").fetchall()
+        return [dict(r) for r in rows]
+
+    def create_branch(
+        self,
+        branch_uuid: str | None = None,
+        name: str | None = None,
+        parent_branch_uuid: str | None = None,
+        head_operation_id: str | None = None,
+        created_by_user_id: str | None = None,
+        description: str | None = None,
+    ) -> str:
+        if not branch_uuid:
+            branch_uuid = str(uuid.uuid4())
+        if not name:
+            raise ValueError("Branch name cannot be empty")
+        if parent_branch_uuid is not None and self.get_branch(parent_branch_uuid) is None:
+            raise ValueError(f"Parent branch {parent_branch_uuid!r} does not exist")
+        if head_operation_id is not None:
+            if not _exists(self.conn, "mfdb_operation", "operation_id", head_operation_id):
+                raise ValueError(f"Operation {head_operation_id!r} does not exist")
+        
+        now = _utc_now()
+        with self._transaction():
+            existing = self.conn.execute(
+                "SELECT branch_uuid FROM mfdb_branch WHERE name = ? AND deleted_at IS NULL",
+                (name,)
+            ).fetchone()
+            if existing:
+                raise ValueError(f"Branch name {name!r} already exists")
+
+            self.conn.execute(
+                """INSERT INTO mfdb_branch (
+                    branch_uuid, name, description, parent_branch_uuid,
+                    head_operation_id, created_by_user_id, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    branch_uuid,
+                    name,
+                    description,
+                    parent_branch_uuid,
+                    head_operation_id,
+                    created_by_user_id,
+                    now,
+                    now,
+                ),
+            )
+            self.add_audit_log(
+                action=f"Branch created: {name} ({branch_uuid})",
+                target_type="branch",
+                target_id=branch_uuid,
+                details={"name": name, "parent_branch_uuid": parent_branch_uuid, "head_operation_id": head_operation_id},
+            )
+        return branch_uuid
+
+    def fork_branch(
+        self,
+        source_branch_uuid: str,
+        name: str,
+        branch_uuid: str | None = None,
+        head_operation_id: str | None = None,
+        created_by_user_id: str | None = None,
+        description: str | None = None,
+    ) -> str:
+        """Create a parallel branch from an existing branch head or older operation.
+
+        Parameters
+        ----------
+        source_branch_uuid : str
+            Existing branch used as the parent branch.
+        name : str
+            Name for the new branch.
+        branch_uuid : str, optional
+            Explicit branch UUID. A UUID is generated when omitted.
+        head_operation_id : str, optional
+            Operation that becomes the new branch head. When omitted, the
+            source branch head is used.
+        created_by_user_id : str, optional
+            User creating the branch.
+        description : str, optional
+            Branch description.
+
+        Returns
+        -------
+        str
+            UUID of the created branch.
+        """
+        source = self.get_branch(source_branch_uuid)
+        if source is None:
+            raise ValueError(f"Source branch {source_branch_uuid!r} does not exist")
+        fork_head = head_operation_id
+        if fork_head is None:
+            fork_head = source.get("head_operation_id")
+        return self.create_branch(
+            branch_uuid=branch_uuid,
+            name=name,
+            parent_branch_uuid=source["branch_uuid"],
+            head_operation_id=fork_head,
+            created_by_user_id=created_by_user_id,
+            description=description,
+        )
+
+    def jump_user_to_operation(
+        self,
+        user_id: str,
+        operation_id: str,
+        branch_name: str | None = None,
+        branch_uuid: str | None = None,
+        parent_branch_uuid: str | None = None,
+        description: str | None = None,
+    ) -> dict[str, Any]:
+        """Move a user to a new branch rooted at a historical operation.
+
+        Parameters
+        ----------
+        user_id : str
+            User whose active branch should change.
+        operation_id : str
+            Existing operation to use as the new branch head.
+        branch_name : str, optional
+            Name for the created branch. A readable name is generated when
+            omitted.
+        branch_uuid : str, optional
+            Explicit branch UUID. A UUID is generated when omitted.
+        parent_branch_uuid : str, optional
+            Parent branch for provenance. Defaults to the user's current active
+            branch, or main when the user has no active branch.
+        description : str, optional
+            Branch description.
+
+        Returns
+        -------
+        dict
+            Created branch dictionary.
+        """
+        if not _exists(self.conn, "flr_sample_users", "user_id", user_id):
+            raise ValueError(f"User {user_id!r} does not exist")
+        if not _exists(self.conn, "mfdb_operation", "operation_id", operation_id):
+            raise ValueError(f"Operation {operation_id!r} does not exist")
+
+        if parent_branch_uuid is None:
+            active = self.get_user_active_branch(user_id)
+            parent_branch_uuid = (
+                active["branch_uuid"]
+                if active is not None
+                else "00000000-0000-0000-0000-000000000000"
+            )
+        parent = self.get_branch(parent_branch_uuid)
+        if parent is None:
+            raise ValueError(f"Parent branch {parent_branch_uuid!r} does not exist")
+
+        if not branch_name:
+            short_operation = str(operation_id).replace(" ", "_")[:24]
+            branch_name = f"{user_id}-at-{short_operation}"
+        if description is None:
+            description = f"Time-travel branch for {user_id} at operation {operation_id}"
+
+        with self._transaction():
+            created_uuid = self.create_branch(
+                branch_uuid=branch_uuid,
+                name=branch_name,
+                parent_branch_uuid=parent["branch_uuid"],
+                head_operation_id=operation_id,
+                created_by_user_id=user_id,
+                description=description,
+            )
+            self.set_user_active_branch(user_id, created_uuid)
+            branch = self.get_branch(created_uuid)
+            self.add_audit_log(
+                action=f"User {user_id} jumped to operation {operation_id}",
+                target_type="user",
+                target_id=user_id,
+                details={
+                    "branch_uuid": created_uuid,
+                    "parent_branch_uuid": parent["branch_uuid"],
+                    "head_operation_id": operation_id,
+                },
+            )
+        return branch
+
+    def get_branch(self, branch_uuid_or_name: str) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM mfdb_branch WHERE (branch_uuid = ? OR name = ?) AND deleted_at IS NULL",
+            (branch_uuid_or_name, branch_uuid_or_name)
+        ).fetchone()
+        return _row_to_dict(row)
+
+    def list_branches(self) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            "SELECT * FROM mfdb_branch WHERE deleted_at IS NULL ORDER BY name"
+        ).fetchall()
+        return [_row_to_dict(r) for r in rows]
+
+    def update_branch_head(self, branch_uuid: str, head_operation_id: str | None) -> None:
+        if head_operation_id is not None:
+            if not _exists(self.conn, "mfdb_operation", "operation_id", head_operation_id):
+                raise ValueError(f"Operation {head_operation_id!r} does not exist")
+        
+        now = _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                "UPDATE mfdb_branch SET head_operation_id = ?, updated_at = ? WHERE branch_uuid = ?",
+                (head_operation_id, now, branch_uuid)
+            )
+            self.add_audit_log(
+                action=f"Branch {branch_uuid} head updated to {head_operation_id}",
+                target_type="branch",
+                target_id=branch_uuid,
+                details={"head_operation_id": head_operation_id},
+            )
+
+    def delete_branch(self, branch_uuid: str) -> None:
+        if branch_uuid == "00000000-0000-0000-0000-000000000000":
+            raise ValueError("Cannot delete the main branch")
+        
+        with self._transaction():
+            active_count = self.conn.execute(
+                "SELECT COUNT(*) FROM flr_sample_users WHERE active_branch_uuid = ?",
+                (branch_uuid,)
+            ).fetchone()[0]
+            if active_count > 0:
+                raise ValueError("Cannot delete branch because it is currently the active branch for one or more users")
+
+            now = _utc_now()
+            self.conn.execute(
+                "UPDATE mfdb_branch SET deleted_at = ?, updated_at = ? WHERE branch_uuid = ?",
+                (now, now, branch_uuid)
+            )
+            self.add_audit_log(
+                action=f"Branch deleted: {branch_uuid}",
+                target_type="branch",
+                target_id=branch_uuid,
+            )
+
+    def set_user_active_branch(self, user_id: str, branch_uuid: str) -> None:
+        with self._transaction():
+            if not _exists(self.conn, "flr_sample_users", "user_id", user_id):
+                raise ValueError(f"User {user_id!r} does not exist")
+            if not _exists(self.conn, "mfdb_branch", "branch_uuid", branch_uuid):
+                raise ValueError(f"Branch {branch_uuid!r} does not exist")
+            
+            self.conn.execute(
+                "UPDATE flr_sample_users SET active_branch_uuid = ? WHERE user_id = ?",
+                (branch_uuid, user_id)
+            )
+            self.add_audit_log(
+                action=f"User {user_id} active branch set to {branch_uuid}",
+                target_type="user",
+                target_id=user_id,
+                details={"active_branch_uuid": branch_uuid},
+            )
+
+    def get_user_active_branch(self, user_id: str) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            """SELECT b.* FROM mfdb_branch b
+               JOIN flr_sample_users u ON u.active_branch_uuid = b.branch_uuid
+               WHERE u.user_id = ? AND b.deleted_at IS NULL""",
+            (user_id,)
+        ).fetchone()
+        if row:
+            return _row_to_dict(row)
+        return self.get_branch("00000000-0000-0000-0000-000000000000")
+
+    def add_audit_log(
+        self,
+        action: str,
+        target_type: str,
+        target_id: str,
+        operator_user_id: str | None = None,
+        details: dict[str, Any] | None = None,
+        timestamp: str | None = None,
+    ) -> int:
+        if operator_user_id is None:
+            try:
+                import chisurf.core.settings
+                operator_user_id = chisurf.core.settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
+            except Exception:
+                operator_user_id = "user_default"
+        now = timestamp or _utc_now()
+        with self._transaction():
+            self.conn.execute(
+                """INSERT INTO mfdb_audit_log
+                   (action, target_type, target_id, operator_user_id, details_json, timestamp, created_at, updated_at, deleted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (action, target_type, target_id, operator_user_id, _json_dumps(details), now, now, now, None),
+            )
+            return int(self.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+
+    def get_audit_logs(
+        self,
+        action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        query = "SELECT * FROM mfdb_audit_log WHERE 1=1 AND deleted_at IS NULL"
+        params: list[Any] = []
+        if action is not None:
+            query += " AND action = ?"
+            params.append(action)
+        if target_type is not None:
+            query += " AND target_type = ?"
+            params.append(target_type)
+        if target_id is not None:
+            query += " AND target_id = ?"
+            params.append(target_id)
+        query += " ORDER BY timestamp DESC, log_id DESC LIMIT ?"
+        params.append(limit)
+        logs = []
+        for row in self.conn.execute(query, params).fetchall():
+            data = dict(row)
+            data["details"] = _json_loads(data.get("details_json"))
+            logs.append(data)
+        return logs
+
+    # -- backward compat aliases --
+
+    def add_fdb_raw_data(self, *args, **kwargs):
+        return self.add_artifact(*args, artifact_kind=kwargs.pop("artifact_kind", "raw_data"), **kwargs)
+
+    def add_fdb_processing_run(self, *args, **kwargs):
+        return self.add_operation(*args, operation_type=kwargs.pop("operation_type", "processing"), **kwargs)
+
+    def add_fdb_processed_data(self, *args, **kwargs):
+        return self.add_artifact(*args, artifact_kind=kwargs.pop("artifact_kind", "processed_data"), **kwargs)
+
+    def get_fdb_processing_run(self, run_id):
+        return self.get_operation(run_id)
+
+    def get_fdb_analysis_run(self, run_id):
+        return self.get_analysis_run(run_id)
+
+    def get_fdb_processed_data(self, data_id):
+        return self.get_artifact(data_id)
+
+    def get_fdb_raw_data(self, data_id):
+        return self.get_artifact(data_id)
+
+    def get_fdb_provenance_edges(self, *args, **kwargs):
+        return self.get_downstream_artifacts(*args, **kwargs)
+
+    def get_fdb_parameters(self, *args, **kwargs):
+        return self.get_parameters(*args, **kwargs)
+
+    # ── Legacy backward-compat stubs ───────────────────────────────────
+
+    def add_raw_data_reference(
+        self,
+        raw_data_id: str | None = None,
+        experiment_id: str | None = None,
+        data_type: str = "PTU",
+        storage_mode: str = "local_file",
+        file_path: str | None = None,
+        acquired_at: str | None = None,
+        validation_status: str = "unvalidated",
+        **kwargs,
+    ) -> str:
+        import uuid
+        art_id = raw_data_id or f"raw_{uuid.uuid4().hex[:12]}"
+        checksum = kwargs.pop("checksum", None)
+        size_bytes = kwargs.pop("size_bytes", None)
+        checksum_algorithm = kwargs.pop("checksum_algorithm", "sha256")
+        mime_type = kwargs.pop("mime_type", None)
+        row_count = kwargs.pop("row_count", None)
+        return self.register_artifact(
+            artifact_id=art_id,
+            artifact_kind="raw_data",
+            storage_mode=storage_mode,
+            experiment_id=experiment_id,
+            file_path=file_path,
+            validation_status=validation_status,
+            checksum=checksum,
+            size_bytes=size_bytes,
+            checksum_algorithm=checksum_algorithm,
+            mime_type=mime_type,
+            row_count=row_count,
+            metadata={"data_type": data_type, "acquired_at": acquired_at, **kwargs},
+        )
+
+
+    def add_processing_run(
+        self,
+        run_id: str | None = None,
+        processing_type: str = "burst_selection",
+        **kwargs,
+    ):
+        import uuid
+        processing_id = kwargs.pop("processing_id", None)
+        oid = run_id or processing_id or f"proc_{uuid.uuid4().hex[:12]}"
+        input_raw_data_ids = kwargs.pop("input_raw_data_ids", None) or []
+        experiment_id = kwargs.pop("experiment_id", None)
+        operator_user_id = kwargs.pop("operator_user_id", None)
+        kwargs.pop("selected_setup_name", None)
+        kwargs.pop("detector_definitions", None)
+        kwargs.pop("pie_window_definitions", None)
+        kwargs.pop("file_count", None)
+        kwargs.pop("result_metadata", None)
+        kwargs.pop("photon_count", None)
+        kwargs.pop("burst_count", None)
+        kwargs.pop("selected_photon_count", None)
+        settings = kwargs.get("settings")
+        settings_hash = _json_hash(settings) if settings else None
+        with self._transaction():
+            missing_inputs = [
+                raw_id for raw_id in input_raw_data_ids
+                if not _exists(self.conn, "mfdb_artifact", "artifact_id", raw_id)
+            ]
+            if missing_inputs:
+                raise sqlite3.IntegrityError(
+                    "Missing input raw data artifact(s): " + ", ".join(missing_inputs)
+                )
+            self.record_operation(
+                operation_id=oid,
+                operation_type=processing_type,
+                experiment_id=experiment_id,
+                operator_user_id=operator_user_id,
+                **kwargs,
+            )
+            for raw_id in input_raw_data_ids:
+                self.add_provenance_edge(
+                    source_node_type="raw_data",
+                    source_node_id=raw_id,
+                    target_node_type="processing_run",
+                    target_node_id=oid,
+                    relationship_type="input_to",
+                    processing_id=oid,
+                    settings_hash=settings_hash,
+                )
+            self.add_audit_log(
+                action="create",
+                target_type="processing_run",
+                target_id=oid,
+                operator_user_id=operator_user_id,
+                details={"experiment_id": experiment_id, "processing_type": processing_type},
+            )
+        return oid
+
+    def add_processed_data_product(
+        self,
+        processing_id: str | None = None,
+        product_type: str | None = None,
+        storage_mode: str | None = None,
+        product: dict[str, Any] | None = None,
+        **kwargs,
+    ) -> str:
+        import uuid
+        prod_dict = product if product else kwargs
+        pt = product_type or prod_dict.get("product_type", "processed_data")
+        sm = storage_mode or prod_dict.get("storage_mode", "local_file")
+        prod_id = prod_dict.get("processed_data_id") or f"prod_{uuid.uuid4().hex[:12]}"
+        pid = processing_id or prod_dict.get("processing_id") or "unknown"
+        with self._transaction():
+            self.register_artifact(
+                artifact_id=prod_id,
+                artifact_kind=pt,
+                storage_mode=sm,
+                file_path=prod_dict.get("file_path"),
+                folder_path=prod_dict.get("folder_path"),
+                checksum=prod_dict.get("checksum"),
+                row_count=prod_dict.get("row_count"),
+                validation_status=prod_dict.get("validation_status", "unvalidated"),
+                metadata=prod_dict,
+            )
+            self.record_operation_link(
+                operation_id=pid,
+                artifact_id=prod_id,
+                direction="output",
+            )
+            self.add_audit_log(
+                action="create",
+                target_type="processed_data",
+                target_id=prod_id,
+                details={"processing_id": pid, "product_type": pt},
+            )
+        return prod_id
+
+    def get_processed_data(self, data_id: str) -> dict[str, Any] | None:
+        return self.get_artifact(data_id)
+
+    def get_processed_data_products(
+        self, processing_id: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
+        if processing_id:
+            links = self.conn.execute(
+                "SELECT artifact_id FROM mfdb_operation_artifact WHERE operation_id = ? AND direction = 'output' AND deleted_at IS NULL",
+                (processing_id,),
+            ).fetchall()
+            return [self.get_artifact(r["artifact_id"]) for r in links if self.get_artifact(r["artifact_id"])]
+        return self.list_artifacts(**kwargs)
+
+    def get_provenance_edges(self, **kwargs) -> list[dict[str, Any]]:
+        # 1. Fetch edges from mfdb_edge
+        query = "SELECT * FROM mfdb_edge WHERE 1=1 AND deleted_at IS NULL"
+        params = []
+        for key in ("source_node_id", "target_node_id", "relationship_type"):
+            val = kwargs.get(key)
+            if val is not None:
+                query += f" AND {key} = ?"
+                params.append(val)
+        pid = kwargs.get("processing_id") or kwargs.get("operation_id")
+        if pid is not None:
+            query += " AND (operation_id = ? OR (metadata_json IS NOT NULL AND json_extract(metadata_json, '$.processing_id') = ?))"
+            params.extend([pid, pid])
+        query += " ORDER BY edge_id"
+        rows = self.conn.execute(query, params).fetchall()
+        res = []
+
+        src_type_filter = kwargs.get("source_node_type")
+        tgt_type_filter = kwargs.get("target_node_type")
+
+        for r in rows:
+            d = dict(r)
+            if "source_node_id" in d and "source_artifact_id" not in d:
+                d["source_artifact_id"] = d["source_node_id"]
+            if "target_node_id" in d and "target_artifact_id" not in d:
+                d["target_artifact_id"] = d["target_node_id"]
+
+            if src_type_filter:
+                f_mapped = map_legacy_node_type(src_type_filter)
+                r_mapped = map_legacy_node_type(d["source_node_type"])
+                if f_mapped != r_mapped and src_type_filter != "artifact" and d["source_node_type"] != "artifact":
+                    continue
+            if tgt_type_filter:
+                f_mapped = map_legacy_node_type(tgt_type_filter)
+                r_mapped = map_legacy_node_type(d["target_node_type"])
+                if f_mapped != r_mapped and tgt_type_filter != "artifact" and d["target_node_type"] != "artifact":
+                    continue
+            res.append(d)
+
+        # Track seen edges for deduplication
+        seen_edges = set()
+        for d in res:
+            seen_edges.add((
+                map_legacy_node_type(d["source_node_type"]),
+                d["source_node_id"],
+                map_legacy_node_type(d["target_node_type"]),
+                d["target_node_id"],
+                d["relationship_type"]
+            ))
+
+        # 2. Fetch edges from mfdb_operation_artifact
+        oa_query = "SELECT * FROM mfdb_operation_artifact WHERE 1=1 AND deleted_at IS NULL"
+        oa_params = []
+
+        def is_op_type(t):
+            if not t:
+                return False
+            return map_legacy_node_type(t) in ("processing_run", "analysis_run")
+
+        def is_art_type(t):
+            if not t:
+                return False
+            return map_legacy_node_type(t) in ("processed_data", "raw_data")
+
+        oa_op_id = kwargs.get("source_node_id") if is_op_type(kwargs.get("source_node_type")) else None
+        if not oa_op_id:
+            oa_op_id = kwargs.get("target_node_id") if is_op_type(kwargs.get("target_node_type")) else None
+        if not oa_op_id:
+            oa_op_id = pid
+
+        oa_art_id = kwargs.get("source_node_id") if is_art_type(kwargs.get("source_node_type")) else None
+        if not oa_art_id:
+            oa_art_id = kwargs.get("target_node_id") if is_art_type(kwargs.get("target_node_type")) else None
+
+        if oa_op_id:
+            oa_query += " AND operation_id = ?"
+            oa_params.append(oa_op_id)
+        if oa_art_id:
+            oa_query += " AND artifact_id = ?"
+            oa_params.append(oa_art_id)
+        rel = kwargs.get("relationship_type")
+        if rel == "input_to":
+            oa_query += " AND direction = 'input'"
+        elif rel == "produced":
+            oa_query += " AND direction = 'output'"
+        oa_rows = self.conn.execute(oa_query, oa_params).fetchall()
+        for r in oa_rows:
+            art_kind = "artifact"
+            art_row = self.conn.execute("SELECT artifact_kind FROM mfdb_artifact WHERE artifact_id = ?", (r["artifact_id"],)).fetchone()
+            if art_row:
+                art_kind = art_row["artifact_kind"]
+            op_type = "processing_run"
+            op_row = self.conn.execute("SELECT operation_type FROM mfdb_operation WHERE operation_id = ?", (r["operation_id"],)).fetchone()
+            if op_row:
+                op_type = op_row["operation_type"]
+                if op_type in ("local_fit", "global_fit", "analysis"):
+                    op_type = "analysis_run"
+            if r["direction"] == "input":
+                src_type = art_kind
+                src_id = r["artifact_id"]
+                tgt_type = op_type
+                tgt_id = r["operation_id"]
+                rel_type = "input_to"
+            else:
+                src_type = op_type
+                src_id = r["operation_id"]
+                tgt_type = art_kind
+                tgt_id = r["artifact_id"]
+                rel_type = "produced"
+
+            if src_type_filter:
+                f_mapped = map_legacy_node_type(src_type_filter)
+                r_mapped = map_legacy_node_type(src_type)
+                if f_mapped != r_mapped and src_type_filter != "artifact" and src_type != "artifact":
+                    continue
+            if tgt_type_filter:
+                f_mapped = map_legacy_node_type(tgt_type_filter)
+                r_mapped = map_legacy_node_type(tgt_type)
+                if f_mapped != r_mapped and tgt_type_filter != "artifact" and tgt_type != "artifact":
+                    continue
+            if kwargs.get("relationship_type") and kwargs.get("relationship_type") != rel_type:
+                continue
+
+            edge_key = (
+                map_legacy_node_type(src_type),
+                src_id,
+                map_legacy_node_type(tgt_type),
+                tgt_id,
+                rel_type
+            )
+            if edge_key in seen_edges:
+                continue
+            seen_edges.add(edge_key)
+
+            d = {
+                "edge_id": f"op_art_{r['operation_id']}_{r['artifact_id']}_{r['direction']}",
+                "source_node_type": src_type,
+                "source_node_id": src_id,
+                "source_artifact_id": src_id,
+                "target_node_type": tgt_type,
+                "target_node_id": tgt_id,
+                "target_artifact_id": tgt_id,
+                "relationship_type": rel_type,
+                "operation_id": r["operation_id"],
+                "metadata_json": r["metadata_json"],
+            }
+            res.append(d)
+        return res
+
+    def _decode_processed_data_row(self, row: dict[str, Any] | None) -> dict[str, Any] | None:
+        if row is None:
+            return None
+        row = dict(row)
+        if "artifact_kind" in row and "product_type" not in row:
+            row["product_type"] = row["artifact_kind"]
+        if "artifact_id" in row and "processed_data_id" not in row:
+            row["processed_data_id"] = row["artifact_id"]
+        return row
+
+    def get_processing_run_full(self, run_id: str) -> dict[str, Any] | None:
+        row = self.get_operation(run_id)
+        if row is None:
+            return None
+        row = dict(row)
+        if "operation_type" in row and "processing_type" not in row:
+            row["processing_type"] = row["operation_type"]
+        if "operation_id" in row and "processing_id" not in row:
+            row["processing_id"] = row["operation_id"]
+        if "settings_json" in row and "settings" not in row:
+            try:
+                row["settings"] = json.loads(row["settings_json"]) if isinstance(row["settings_json"], str) else row["settings_json"]
+            except (json.JSONDecodeError, TypeError):
+                row["settings"] = row.get("settings_json")
+
+        # Fetch inputs: raw_data ids from edges and operation_artifacts
+        op_arts = self.conn.execute(
+            "SELECT artifact_id FROM mfdb_operation_artifact WHERE operation_id = ? AND direction = 'input' AND deleted_at IS NULL",
+            (run_id,)
+        ).fetchall()
+        raw_ids = [r["artifact_id"] for r in op_arts]
+
+        raw_data_list = []
+        for rid in raw_ids:
+            art = self.get_artifact(rid)
+            if art:
+                art = dict(art)
+                art["raw_data_id"] = art.get("artifact_id")
+                if art.get("metadata_json"):
+                    try:
+                        meta = json.loads(art["metadata_json"]) if isinstance(art["metadata_json"], str) else art["metadata_json"]
+                        if isinstance(meta, dict):
+                            for k, v in meta.items():
+                                if k not in art:
+                                    art[k] = v
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                raw_data_list.append(art)
+        row["input_raw_data"] = raw_data_list
+
+        # Fetch outputs: processed_data products
+        products = self.get_processed_data_products(processing_id=run_id)
+        row["processed_data"] = [self._decode_processed_data_row(p) for p in products]
+
+        # Fetch edges
+        row["provenance_edges"] = self.get_provenance_edges(processing_id=run_id)
+
+        return row
+
+    def get_processing_runs(self, **kwargs) -> list[dict[str, Any]]:
+        return self.list_operations(**kwargs)
+
+    def get_processing_run(self, run_id: str) -> dict[str, Any] | None:
+        return self.get_operation(run_id)
+
+    def add_setup_definition(self, setup_id: str, name: str, **kwargs):
+        try:
+            with self.conn:
+                now = _utc_now()
+                self.conn.execute(
+                    """INSERT OR REPLACE INTO fdb_setup_definition (
+                        setup_id, name, version, instrument_id, description,
+                        configuration_json, detectors_json, timing_calibration_json,
+                        irf_definition_json, burst_defaults_json, fcs_calibration_json,
+                        created_at, updated_at, deleted_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (
+                        setup_id,
+                        name,
+                        kwargs.get("version", 1),
+                        kwargs.get("instrument_id"),
+                        kwargs.get("description"),
+                        _json_dumps(kwargs.get("configuration")),
+                        _json_dumps(kwargs.get("detectors")),
+                        _json_dumps(kwargs.get("timing_calibration")),
+                        _json_dumps(kwargs.get("irf_definition")),
+                        _json_dumps(kwargs.get("burst_defaults")),
+                        _json_dumps(kwargs.get("fcs_calibration")),
+                        now, now, None,
+                    ),
+                )
+        except sqlite3.OperationalError:
+            pass
+        result = self.save_setup(setup_id=setup_id, name=name, **kwargs)
+        self.add_audit_log(
+            action="create",
+            target_type="setup_definition",
+            target_id=setup_id,
+            details={"name": name},
+        )
+        return result
+
+    def get_setup_definition(self, setup_id: str, **kwargs):
+        return self.get_setup(setup_id, **kwargs)
+
+    def delete_setup_definition(self, setup_id: str, **kwargs):
+        try:
+            with self.conn:
+                self.conn.execute("UPDATE fdb_setup_definition SET deleted_at = ? WHERE setup_id = ?", (_utc_now(), setup_id))
+        except sqlite3.OperationalError:
+            pass
+        return self.delete_setup(setup_id)
+
+    def _decode_setup_definition_row(self, row):
+        if row is None:
+            return None
+        row = dict(row)
+        for json_field in ("configuration", "detectors", "timing_calibration", "irf_definition",
+                           "dark_count", "timing_resolution", "burst_defaults", "fcs_calibration"):
+            col = f"{json_field}_json"
+            if col in row and isinstance(row[col], str):
+                try:
+                    row[json_field] = json.loads(row[col])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            if col in row:
+                del row[col]
+        return row
+
+    def list_setup_definitions(self, **kwargs):
+        return self.get_setups(**kwargs)
+
+    def _decode_provenance_edge_row(self, row):
+        data = dict(row)
+        if isinstance(data.get("checksum_snapshot_json"), str):
+            try:
+                data["checksum_snapshot"] = json.loads(data.pop("checksum_snapshot_json"))
+            except json.JSONDecodeError:
+                data["checksum_snapshot"] = data.pop("checksum_snapshot_json", None)
+        else:
+            data["checksum_snapshot"] = data.pop("checksum_snapshot_json", None)
+        if isinstance(data.get("metadata_json"), str):
+            try:
+                data["metadata"] = json.loads(data.pop("metadata_json"))
+            except json.JSONDecodeError:
+                data["metadata"] = data.pop("metadata_json", None)
+        else:
+            data["metadata"] = data.pop("metadata_json", None)
+        return data
+
+    def trace_processed_data(self, processed_data_id: str, **kwargs) -> dict[str, Any] | None:
+        product = self.get_processed_data(processed_data_id)
+        if product is None:
+            return None
+        product = self._decode_processed_data_row(product)
+
+        # Find the operation linked to this artifact
+        op_row = self.conn.execute(
+            "SELECT operation_id FROM mfdb_operation_artifact WHERE artifact_id = ? AND direction = 'output' AND deleted_at IS NULL",
+            (processed_data_id,)
+        ).fetchone()
+        processing_id = op_row["operation_id"] if op_row else None
+
+        if not processing_id:
+            raise ValueError(f"No producing operation found for processed_data_id {processed_data_id!r}")
+
+        product["processing_id"] = processing_id
+
+        run = None
+        if processing_id:
+            run = self.get_processing_run_full(processing_id)
+
+        included_edges = [
+            dict(row)
+            for row in self.get_provenance_edges(
+                source_node_type="processed_data",
+                source_node_id=processed_data_id,
+                relationship_type="included_in",
+            )
+        ]
+        return {
+            "processed_data": product,
+            "processing_run": run,
+            "included_in": included_edges,
+        }
+
+    def add_trace_processed_data(self, processed_data_id: str, **kwargs):
+        return self.get_processed_data(processed_data_id)
+
+    def export_burst_processing_manifest(self, processing_id: str) -> dict[str, Any]:
+        run = self.get_processing_run_full(processing_id)
+        if run is None:
+            raise KeyError(f"processing run not found: {processing_id}")
+        experiment = _row_to_dict(self.get_experiment(str(run.get("experiment_id"))))
+        products = [
+            self._decode_processed_data_row(row)
+            for row in self.get_processed_data_products(processing_id=processing_id)
+        ]
+        raw_data = [self._decode_raw_data_row(row) for row in run.get("input_raw_data", [])]
+        edges = [
+            self._decode_provenance_edge_row(row)
+            for row in self.get_provenance_edges(processing_id=processing_id)
+        ]
+        return {
+            "schema": "mfdb.burst_processing_manifest.v1",
+            "exported_at": _utc_now(),
+            "experiment": experiment,
+            "processing_run": run,
+            "raw_data": raw_data,
+            "processed_data": products,
+            "provenance_edges": edges,
+        }
+
+    def register_archive_manifest(
+        self,
+        processing_id: str,
+        manifest: dict[str, Any] | None = None,
+        output_path: str | None = None,
+    ) -> str:
+        manifest = manifest or self.export_burst_processing_manifest(processing_id)
+        data_json = _json_dumps(manifest)
+        product_id = self.add_processed_data_product(
+            processing_id,
+            "archive_manifest",
+            "local_file" if output_path else "embedded_json",
+            file_path=output_path,
+            mime_type="application/json",
+            size_bytes=len(data_json.encode("utf-8")) if data_json else None,
+            checksum=hashlib.sha256(data_json.encode("utf-8")).hexdigest()
+            if data_json
+            else None,
+            data_json=data_json,
+            validation_status="valid",
+        )
+        run = self.get_processing_run(processing_id)
+        for product in self.get_processed_data_products(processing_id=processing_id):
+            other_id = product.get("processed_data_id") or product.get("artifact_id")
+            if other_id == product_id:
+                continue
+            self.add_provenance_edge(
+                source_node_type="processed_data",
+                source_node_id=other_id,
+                target_node_type="processed_data",
+                target_node_id=product_id,
+                relationship_type="included_in",
+                processing_id=processing_id,
+                settings_hash=run.get("settings_hash") if run else None,
+                software_version=run.get("software_version") if run else None,
+                checksum_snapshot={
+                    "source": product.get("checksum"),
+                    "archive_manifest": hashlib.sha256(data_json.encode("utf-8")).hexdigest()
+                    if data_json
+                    else None,
+                },
+            )
+        return product_id
+
+
+    # ── PRD-named aliases ──────────────────────────────────────────────
+
+    link_operation_artifact = record_operation_link
+    save_setup_snapshot = save_setup
+
+    def register_sample(self, sample_id, **kwargs):
+        return self.add_sample(sample_id, **kwargs)
+
+    def register_experiment(self, experiment_id, **kwargs):
+        return self.add_experiment(experiment_id, **kwargs)
+
+    def add_edge(
+        self,
+        source_node_type: str,
+        source_node_id: str,
+        target_node_type: str,
+        target_node_id: str,
+        relationship_type: str,
+        **kwargs,
+    ) -> None:
+        if relationship_type in ("input_to", "produced"):
+            raise ValueError("Operation input/output links must use record_operation_link")
+        validate_vocabulary(relationship_type, RELATIONSHIP_TYPES, "relationship_type")
+        with self._transaction():
+            now = _utc_now()
+            self.conn.execute(
+                """INSERT INTO mfdb_edge (
+                    source_node_type, source_node_id, target_node_type,
+                    target_node_id, relationship_type, operation_id, metadata_json,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    source_node_type, source_node_id,
+                    target_node_type, target_node_id,
+                    relationship_type, kwargs.get("operation_id"), _json_dumps(kwargs.get("metadata")),
+                    now, now, None,
+                ),
+            )
+            self.add_audit_log(
+                action="create",
+                target_type="edge",
+                target_id=f"{source_node_type}:{source_node_id}->{target_node_type}:{target_node_id}",
+                details={"relationship_type": relationship_type, "metadata": kwargs.get("metadata")},
+            )
+
+    def graph_upstream(self, node_type: str, node_id: str, max_depth: int = 100) -> list[dict[str, Any]]:
+        from chisurf.core.mfdb.graph import traverse_canonical_graph
+        return traverse_canonical_graph(
+            self.conn,
+            node_type,
+            node_id,
+            direction="upstream",
+            max_depth=max_depth,
+            canonical=True,
+        )
+
+    def graph_downstream(self, node_type: str, node_id: str, max_depth: int = 100) -> list[dict[str, Any]]:
+        from chisurf.core.mfdb.graph import traverse_canonical_graph
+        return traverse_canonical_graph(
+            self.conn,
+            node_type,
+            node_id,
+            direction="downstream",
+            max_depth=max_depth,
+            canonical=True,
+        )
+
+    list_audit_logs = get_audit_logs
+
+    def get_analysis_run(self, analysis_id: str) -> sqlite3.Row | dict[str, Any] | None:
+        try:
+            return self.conn.execute(
+                """SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
+                          pr.software_package, pr.software_module, pr.software_version,
+                          pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
+                   FROM fdb_analysis_run AS ar
+                   JOIN fdb_processing_run AS pr ON pr.processing_id = ar.analysis_id
+                   WHERE ar.analysis_id = ?""",
+                (analysis_id,),
+            ).fetchone()
+        except sqlite3.OperationalError:
+            row = self.conn.execute(
+                """SELECT operation_id AS analysis_id, operation_type AS analysis_type,
+                          experiment_id, software_package, software_module, software_version,
+                          settings_json AS optimizer_settings_json, status AS convergence_status,
+                          metadata_json, created_at, updated_at, deleted_at
+                   FROM mfdb_operation
+                   WHERE operation_id = ?""",
+                (analysis_id,),
+            ).fetchone()
+            if row:
+                d = dict(row)
+                m = _json_loads(d.pop("metadata_json", None)) or {}
+                d["model_name"] = m.get("model_name")
+                d["model_type"] = m.get("model_type")
+                d["model_version"] = m.get("model_version")
+                d["notes"] = m.get("notes")
+                d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
+                d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
+                d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
+                d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
+                d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
+                d["metadata_json"] = _json_dumps(m)
+                return d
+            return None
+
+    def get_analysis_run_full(self, analysis_id: str) -> dict[str, Any] | None:
+        run_row = self.get_analysis_run(analysis_id)
+        if run_row is None:
+            return None
+        run = self._decode_analysis_run_row(run_row)
+
+        # Get parameters
+        try:
+            param_rows = self.conn.execute(
+                "SELECT * FROM fdb_analysis_parameter WHERE analysis_id = ? AND deleted_at IS NULL ORDER BY parameter_id",
+                (analysis_id,),
+            ).fetchall()
+            run["parameters"] = [self._decode_analysis_parameter_row(row) for row in param_rows]
+        except sqlite3.OperationalError:
+            param_rows = self.conn.execute(
+                "SELECT * FROM mfdb_parameter WHERE operation_id = ? AND deleted_at IS NULL ORDER BY parameter_id",
+                (analysis_id,),
+            ).fetchall()
+            run["parameters"] = []
+            for row in param_rows:
+                d = dict(row)
+                d["analysis_id"] = d.pop("operation_id", None)
+                run["parameters"].append(self._decode_analysis_parameter_row(d))
+
+        # Get input processed data via operation-artifact links
+        run["input_processed_data"] = [
+            self._decode_processed_data_row(self.get_artifact(row["artifact_id"]))
+            for row in self.conn.execute(
+                """SELECT artifact_id
+                   FROM mfdb_operation_artifact
+                   WHERE operation_id = ? AND direction = 'input' AND deleted_at IS NULL
+                   ORDER BY ordinal, artifact_id""",
+                (analysis_id,),
+            ).fetchall()
+        ]
+
+        # Get output processed data via operation-artifact links
+        run["processed_data"] = [
+            self._decode_processed_data_row(self.get_artifact(row["artifact_id"]))
+            for row in self.conn.execute(
+                """SELECT artifact_id
+                   FROM mfdb_operation_artifact
+                   WHERE operation_id = ? AND direction = 'output' AND deleted_at IS NULL
+                   ORDER BY ordinal, artifact_id""",
+                (analysis_id,),
+            ).fetchall()
+        ]
+
+        # Get sub-fits grouped in this analysis
+        try:
+            grouped_rows = self.conn.execute(
+                """SELECT ar.*
+                   FROM mfdb_edge AS pe
+                   JOIN fdb_analysis_run AS ar ON ar.analysis_id = pe.target_node_id
+                   WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
+                     AND pe.target_node_type = 'analysis_run' AND pe.relationship_type = 'grouped_in'
+                     AND pe.deleted_at IS NULL AND ar.deleted_at IS NULL
+                   ORDER BY pe.edge_id""",
+                (analysis_id,),
+            ).fetchall()
+            run["grouped_fits"] = [self._decode_analysis_run_row(row) for row in grouped_rows]
+        except sqlite3.OperationalError:
+            grouped_rows = self.conn.execute(
+                """SELECT op.operation_id AS analysis_id, op.operation_type AS analysis_type,
+                          op.experiment_id, op.software_package, op.software_module, op.software_version,
+                          op.settings_json AS optimizer_settings_json, op.status AS convergence_status,
+                          op.metadata_json, op.created_at, op.updated_at
+                   FROM mfdb_edge AS pe
+                   JOIN mfdb_operation AS op ON op.operation_id = pe.target_node_id
+                   WHERE pe.source_node_type = 'analysis_run' AND pe.source_node_id = ?
+                     AND pe.target_node_type = 'analysis_run' AND pe.relationship_type = 'grouped_in'
+                     AND pe.deleted_at IS NULL AND op.deleted_at IS NULL
+                   ORDER BY pe.edge_id""",
+                (analysis_id,),
+            ).fetchall()
+            run["grouped_fits"] = []
+            for row in grouped_rows:
+                d = dict(row)
+                m = _json_loads(d.pop("metadata_json", None)) or {}
+                d["model_name"] = m.get("model_name")
+                d["model_type"] = m.get("model_type")
+                d["model_version"] = m.get("model_version")
+                d["notes"] = m.get("notes")
+                d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
+                d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
+                d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
+                d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
+                d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
+                d["metadata_json"] = _json_dumps(m)
+                run["grouped_fits"].append(self._decode_analysis_run_row(d))
+
+        # Get provenance edges referencing this run
+        run["provenance_edges"] = [
+            self._decode_provenance_edge_row(row)
+            for row in self.get_provenance_edges(processing_id=analysis_id)
+        ]
+
+        return run
+
+    def list_analysis_runs(
+        self,
+        experiment_id: str | None = None,
+        analysis_type: str | None = None,
+    ) -> list[sqlite3.Row | dict[str, Any]]:
+        try:
+            query = """
+                SELECT ar.*, pr.processing_type AS analysis_type, pr.experiment_id,
+                       pr.software_package, pr.software_module, pr.software_version,
+                       pr.settings_json AS optimizer_settings_json, pr.status AS convergence_status
+                FROM fdb_analysis_run AS ar
+                JOIN fdb_processing_run AS pr ON pr.processing_id = ar.analysis_id
+                WHERE 1=1 AND ar.deleted_at IS NULL AND pr.deleted_at IS NULL
+            """
+            params: list[Any] = []
+            if experiment_id is not None:
+                query += " AND pr.experiment_id = ?"
+                params.append(experiment_id)
+            if analysis_type is not None:
+                query += " AND pr.processing_type = ?"
+                params.append(analysis_type)
+            query += " ORDER BY ar.created_at DESC"
+            return self.conn.execute(query, params).fetchall()
+        except sqlite3.OperationalError:
+            query = """
+                SELECT operation_id AS analysis_id, operation_type AS analysis_type, experiment_id,
+                       software_package, software_module, software_version,
+                       settings_json AS optimizer_settings_json, status AS convergence_status,
+                       metadata_json, created_at, updated_at
+                FROM mfdb_operation
+                WHERE 1=1 AND deleted_at IS NULL
+            """
+            params = []
+            if experiment_id is not None:
+                query += " AND experiment_id = ?"
+                params.append(experiment_id)
+            if analysis_type is not None:
+                query += " AND operation_type = ?"
+                params.append(analysis_type)
+            else:
+                query += " AND operation_type IN ('local_fit', 'global_fit', 'analysis', 'fitting', 'project_archive', 'project', 'decay_fit')"
+            query += " ORDER BY created_at DESC"
+            rows = self.conn.execute(query, params).fetchall()
+            results = []
+            for row in rows:
+                d = dict(row)
+                m = _json_loads(d.pop("metadata_json", None)) or {}
+                d["model_name"] = m.get("model_name")
+                d["model_type"] = m.get("model_type")
+                d["model_version"] = m.get("model_version")
+                d["notes"] = m.get("notes")
+                d["fit_structure_json"] = _json_dumps(m.get("fit_structure"))
+                d["parameter_links_json"] = _json_dumps(m.get("parameter_links"))
+                d["optimizer_settings_json"] = d["optimizer_settings_json"] or _json_dumps(m.get("optimizer_settings"))
+                d["covariance_matrix_json"] = _json_dumps(m.get("covariance_matrix"))
+                d["goodness_of_fit_json"] = _json_dumps(m.get("goodness_of_fit"))
+                d["metadata_json"] = _json_dumps(m)
+                results.append(d)
+            return results
+
+    def delete_analysis_run(self, analysis_id: str) -> None:
+        try:
+            parameter_ids = [
+                row["parameter_uuid"]
+                for row in self.conn.execute(
+                    "SELECT parameter_uuid FROM fdb_analysis_parameter WHERE analysis_id = ?",
+                    (analysis_id,),
+                ).fetchall()
+            ]
+        except sqlite3.OperationalError:
+            parameter_ids = [
+                row["parameter_uuid"]
+                for row in self.conn.execute(
+                    "SELECT parameter_uuid FROM mfdb_parameter WHERE operation_id = ?",
+                    (analysis_id,),
+                ).fetchall()
+            ]
+
+        with self.conn:
+            now = _utc_now()
+            for parameter_id in parameter_ids:
+                self.conn.execute(
+                    """UPDATE mfdb_edge SET deleted_at = ?
+                       WHERE (source_node_type IN ('analysis_parameter', 'parameter') AND source_node_id = ?)
+                          OR (target_node_type IN ('analysis_parameter', 'parameter') AND target_node_id = ?)""",
+                    (now, parameter_id, parameter_id),
+                )
+                try:
+                    self.conn.execute(
+                        "UPDATE fdb_analysis_parameter SET deleted_at = ? WHERE parameter_uuid = ?",
+                        (now, parameter_id),
+                    )
+                except sqlite3.OperationalError:
+                    pass
+                self.conn.execute(
+                    "UPDATE mfdb_parameter SET deleted_at = ? WHERE parameter_uuid = ?",
+                    (now, parameter_id),
+                )
+            self.conn.execute(
+                """UPDATE mfdb_edge SET deleted_at = ?
+                   WHERE (source_node_type = 'analysis_run' AND source_node_id = ?)
+                      OR (target_node_type = 'analysis_run' AND target_node_id = ?)
+                      OR operation_id = ?
+                      OR (metadata_json IS NOT NULL AND json_extract(metadata_json, '$.processing_id') = ?)""",
+                (now, analysis_id, analysis_id, analysis_id, analysis_id),
+            )
+            try:
+                self.conn.execute("UPDATE fdb_analysis_run SET deleted_at = ? WHERE analysis_id = ?", (now, analysis_id))
+            except sqlite3.OperationalError:
+                pass
+            try:
+                self.conn.execute("UPDATE fdb_processing_run SET deleted_at = ? WHERE processing_id = ?", (now, analysis_id))
+            except sqlite3.OperationalError:
+                pass
+            self.conn.execute("UPDATE mfdb_operation SET deleted_at = ? WHERE operation_id = ?", (now, analysis_id))
+        self.add_audit_log(
+            action="delete",
+            target_type="analysis_run",
+            target_id=analysis_id,
+        )
+
+    def add_analysis_parameter(
+        self,
+        analysis_id: str,
+        name: str,
+        value: float | None = None,
+        standard_error: float | None = None,
+        confidence_interval_low: float | None = None,
+        confidence_interval_high: float | None = None,
+        initial_value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+        bounds_on: bool = False,
+        units: str | None = None,
+        parameter_type: str = "free",
+        expression: str | None = None,
+        prior: dict[str, Any] | None = None,
+        mapping: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        parameter_uuid: str | None = None,
+        **kwargs,
+    ) -> str:
+        if not analysis_id:
+            raise ValueError("analysis_id is required")
+        if not name:
+            raise ValueError("name is required")
+        uuid_str = parameter_uuid or f"param_{uuid.uuid4().hex[:12]}"
+        now = _utc_now()
+        try:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_analysis_parameter
+                   (parameter_uuid, analysis_id, name, value, standard_error,
+                    confidence_interval_low, confidence_interval_high, initial_value,
+                    lower_bound, upper_bound, bounds_on, units, parameter_type,
+                    expression, prior_json, mapping_json, metadata_json, created_at, updated_at, deleted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    uuid_str,
+                    analysis_id,
+                    name,
+                    value,
+                    standard_error,
+                    confidence_interval_low,
+                    confidence_interval_high,
+                    initial_value,
+                    lower_bound,
+                    upper_bound,
+                    1 if bounds_on else 0,
+                    units,
+                    parameter_type,
+                    expression,
+                    _json_dumps(prior),
+                    _json_dumps(mapping),
+                    _json_dumps(metadata),
+                    now,
+                    now,
+                    None,
+                ),
+            )
+        except sqlite3.OperationalError:
+            pass
+        self.record_parameter(
+            parameter_uuid=uuid_str,
+            operation_id=analysis_id,
+            name=name,
+            value=value,
+            standard_error=standard_error,
+            lower_bound=lower_bound,
+            upper_bound=upper_bound,
+            bounds_on=bounds_on,
+            units=units,
+            parameter_type=parameter_type,
+            metadata=metadata,
+        )
+        return uuid_str
+
+    def get_analysis_parameter(self, parameter_uuid: str) -> sqlite3.Row | dict[str, Any] | None:
+        try:
+            return self.conn.execute(
+                "SELECT * FROM fdb_analysis_parameter WHERE parameter_uuid = ?",
+                (parameter_uuid,),
+            ).fetchone()
+        except sqlite3.OperationalError:
+            row = self.conn.execute(
+                "SELECT * FROM mfdb_parameter WHERE parameter_uuid = ?",
+                (parameter_uuid,),
+            ).fetchone()
+            if row:
+                d = dict(row)
+                d["analysis_id"] = d.pop("operation_id", None)
+                return d
+            return None
+
+    def add_analysis_product(
+        self,
+        analysis_id: str,
+        product_type: str,
+        storage_mode: str,
+        processed_data_id: str | None = None,
+        file_path: str | None = None,
+        url: str | None = None,
+        folder_path: str | None = None,
+        mime_type: str | None = None,
+        size_bytes: int | None = None,
+        checksum: str | None = None,
+        checksum_algorithm: str = "sha256",
+        row_count: int | None = None,
+        product_summary: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        data_json: str | None = None,
+        data_blob: bytes | None = None,
+        validation_status: str = "unvalidated",
+        validation_message: str | None = None,
+        **kwargs,
+    ) -> str:
+        if not analysis_id:
+            raise ValueError("analysis_id is required")
+        if not product_type:
+            raise ValueError("product_type is required")
+        if not storage_mode:
+            raise ValueError("storage_mode is required")
+        prod_id = processed_data_id or f"prod_{uuid.uuid4().hex[:12]}"
+        now = _utc_now()
+        try:
+            self.conn.execute(
+                """INSERT OR REPLACE INTO fdb_processed_data (
+                    processed_data_id, processing_id, product_type, storage_mode,
+                    file_path, url, folder_path, mime_type, size_bytes, checksum,
+                    checksum_algorithm, row_count, product_summary_json, metadata_json,
+                    data_json, data_blob, validation_status, validation_message,
+                    created_at, updated_at, deleted_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    prod_id,
+                    analysis_id,
+                    product_type,
+                    storage_mode,
+                    file_path,
+                    url,
+                    folder_path,
+                    mime_type,
+                    size_bytes,
+                    checksum,
+                    checksum_algorithm,
+                    row_count,
+                    _json_dumps(product_summary),
+                    _json_dumps(metadata),
+                    data_json,
+                    data_blob,
+                    validation_status,
+                    validation_message,
+                    now,
+                    now,
+                    None,
+                ),
+            )
+        except sqlite3.OperationalError:
+            pass
+        self.add_processed_data_product(
+            processing_id=analysis_id,
+            product_type=product_type,
+            storage_mode=storage_mode,
+            processed_data_id=prod_id,
+            file_path=file_path,
+            url=url,
+            folder_path=folder_path,
+            mime_type=mime_type,
+            size_bytes=size_bytes,
+            checksum=checksum,
+            checksum_algorithm=checksum_algorithm,
+            row_count=row_count,
+            metadata=metadata,
+            data_json=data_json,
+            data_blob=data_blob,
+            validation_status=validation_status,
+            validation_message=validation_message,
+        )
+        self.add_provenance_edge(
+            source_node_type="analysis_run",
+            source_node_id=analysis_id,
+            target_node_type="processed_data",
+            target_node_id=prod_id,
+            relationship_type="produced",
+            processing_id=analysis_id,
+        )
+        return prod_id
+
+    def _decode_analysis_run_row(self, row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+        data = dict(row)
+        data["fit_structure"] = _json_loads(data.pop("fit_structure_json", None))
+        data["parameter_links"] = _json_loads(data.pop("parameter_links_json", None))
+        data["optimizer_settings"] = _json_loads(data.pop("optimizer_settings_json", None))
+        data["covariance_matrix"] = _json_loads(data.pop("covariance_matrix_json", None))
+        data["goodness_of_fit"] = _json_loads(data.pop("goodness_of_fit_json", None))
+        data["metadata"] = _json_loads(data.pop("metadata_json", None))
+        return data
+
+    def _decode_analysis_parameter_row(self, row: sqlite3.Row | dict[str, Any]) -> dict[str, Any]:
+        data = dict(row)
+        data["bounds_on"] = bool(data["bounds_on"])
+        data["prior"] = _json_loads(data.pop("prior_json", None))
+        data["mapping"] = _json_loads(data.pop("mapping_json", None))
+        data["metadata"] = _json_loads(data.pop("metadata_json", None))
+        return data
+
+    def link_grouped_fits(self, local_fit_uuid: str, global_fit_uuid: str) -> None:
+        local_run = self.get_analysis_run(local_fit_uuid)
+        self.add_provenance_edge(
+            source_node_type="analysis_run",
+            source_node_id=global_fit_uuid,
+            target_node_type="analysis_run",
+            target_node_id=local_fit_uuid,
+            relationship_type="grouped_in",
+            processing_id=global_fit_uuid,
+            software_version=local_run["software_version"] if local_run else None,
+        )
+
+    def link_analysis_parameters(self, source_param_uuid: str, target_param_uuid: str) -> None:
+        src = self.get_analysis_parameter(source_param_uuid)
+        self.add_provenance_edge(
+            source_node_type="analysis_parameter",
+            source_node_id=target_param_uuid,
+            target_node_type="analysis_parameter",
+            target_node_id=source_param_uuid,
+            relationship_type="linked_to",
+            processing_id=src["analysis_id"] if src else None,
+        )
+
+

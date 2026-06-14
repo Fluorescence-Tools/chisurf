@@ -124,7 +124,7 @@ class TestPluginRegistryServices:
         with tempfile.TemporaryDirectory() as tmp:
             base = pathlib.Path(tmp)
             _make_plugin_dir(base, "mfdb", {
-                "id": "mfdb_plugin",
+                "id": "mfdb_admin",
                 "version": "1.0.0",
                 "entrypoints": {
                     "services": "mfdb_register_fn",

@@ -10,7 +10,7 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from chisurf.core.fio.mmcif.db import FluorophoreDatabase, resolve_database_path
+from chisurf.core.fio.mmcif.db import FluorescenceDatabase, resolve_database_path
 from chisurf.server.services import INVALID_INPUT, NOT_FOUND, OPERATION_FAILED, service_error
 
 
@@ -76,7 +76,7 @@ def register_raw_data_handler(
     payload = {**(raw_data or {}), **kwargs}
     try:
         payload = _fill_location_metadata(payload)
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             raw_data_id = db.add_raw_data_reference(
                 experiment_id=str(payload.get("experiment_id") or ""),
                 data_type=str(payload.get("data_type") or payload.get("file_type") or "TTTR"),
@@ -122,7 +122,7 @@ def list_raw_data_handler(
         JSON-RPC result containing raw-data rows.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         rows = db.get_raw_data_references(experiment_id=experiment_id, data_type=data_type)
         return {"ok": True, "raw_data": [db._decode_raw_data_row(row) for row in rows]}
 
@@ -141,7 +141,7 @@ def get_raw_data_handler(raw_data_id: str) -> dict[str, Any]:
         JSON-RPC result containing one raw-data row.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         row = db.get_raw_data(raw_data_id)
         if row is None:
             return service_error(f"raw data not found: {raw_data_id}", error_code=NOT_FOUND)
@@ -210,7 +210,7 @@ def record_burst_selection_handler(
         product_specs = list(products or [])
         product_specs.extend(_products_from_output_paths(output_paths or {}, result_metadata or {}))
         counts = _counts_from_metadata(result_metadata or {}, raw_data_ids or [])
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             with db.transaction():
                 run_id = db.add_processing_run(
                     experiment_id=experiment_id,
@@ -380,7 +380,7 @@ def get_processing_run_handler(processing_id: str) -> dict[str, Any]:
         JSON-RPC result containing the expanded run.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         run = db.get_processing_run_full(processing_id)
         if run is None:
             return service_error(f"processing run not found: {processing_id}", error_code=NOT_FOUND)
@@ -406,7 +406,7 @@ def list_processing_runs_handler(
         JSON-RPC result containing processing runs.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         rows = db.get_processing_runs(
             experiment_id=experiment_id,
             processing_type="burst_selection",
@@ -441,7 +441,7 @@ def register_processed_data_handler(
     """
     payload = {**(processed_data or {}), **kwargs}
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             product_id = _register_product(
                 db,
                 str(payload.get("processing_id") or ""),
@@ -474,7 +474,7 @@ def list_processed_data_handler(
         JSON-RPC result containing products.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         rows = db.get_processed_data_products(
             processing_id=processing_id,
             product_type=product_type,
@@ -496,7 +496,7 @@ def get_processed_data_handler(processed_data_id: str) -> dict[str, Any]:
         JSON-RPC result containing one product.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         row = db.get_processed_data(processed_data_id)
         if row is None:
             return service_error(
@@ -528,7 +528,7 @@ def list_provenance_edges_handler(**filters: Any) -> dict[str, Any]:
         "relationship_type",
         "processing_id",
     }
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         rows = db.get_provenance_edges(
             **{key: value for key, value in filters.items() if key in allowed}
         )
@@ -552,7 +552,7 @@ def trace_processed_data_handler(processed_data_id: str) -> dict[str, Any]:
         JSON-RPC result containing the trace.
 
     """
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         trace = db.trace_processed_data(processed_data_id)
         if trace is None:
             return service_error(
@@ -585,7 +585,7 @@ def export_burst_manifest_handler(
 
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             manifest = db.export_burst_processing_manifest(processing_id)
             if output_path:
                 path = Path(output_path)
@@ -631,7 +631,7 @@ def _register_input_files(
 
     """
     raw_ids: list[str] = []
-    with FluorophoreDatabase(resolve_database_path()) as db:
+    with FluorescenceDatabase(resolve_database_path()) as db:
         for file_name in files:
             payload = _fill_location_metadata(
                 {
@@ -659,7 +659,7 @@ def _register_input_files(
 
 
 def _register_product(
-    db: FluorophoreDatabase,
+    db: FluorescenceDatabase,
     processing_id: str,
     product: dict[str, Any],
 ) -> str:
@@ -667,7 +667,7 @@ def _register_product(
 
     Parameters
     ----------
-    db : FluorophoreDatabase
+    db : FluorescenceDatabase
         Open repository.
     processing_id : str
         Processing-run identifier.
@@ -1069,7 +1069,7 @@ def record_general_processing_run_handler(
                 json.dumps(settings, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
             ).hexdigest()
 
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             with db.transaction():
                 missing_processed_inputs = [
                     input_id for input_id in proc_ids
@@ -1150,7 +1150,7 @@ def get_upstream_dependencies_handler(node_type: str, node_id: str) -> dict[str,
         JSON-RPC result with the list of upstream provenance edges.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             rows = db.get_upstream_dependencies(node_type, node_id)
             edges = [db._decode_provenance_edge_row(row) for row in rows]
             return {"ok": True, "edges": edges}
@@ -1174,7 +1174,7 @@ def get_downstream_dependencies_handler(node_type: str, node_id: str) -> dict[st
         JSON-RPC result with the list of downstream provenance edges.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             rows = db.get_downstream_dependencies(node_type, node_id)
             edges = [db._decode_provenance_edge_row(row) for row in rows]
             return {"ok": True, "edges": edges}
@@ -1261,7 +1261,7 @@ def record_analysis_run_handler(
         JSON-RPC result.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             with db.transaction():
                 # Add analysis run
                 run_id = db.add_analysis_run(
@@ -1395,7 +1395,7 @@ def get_analysis_run_handler(analysis_id: str) -> dict[str, Any]:
         JSON-RPC result.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             run = db.get_analysis_run_full(analysis_id)
             if run is None:
                 return service_error(f"analysis run not found: {analysis_id}", error_code=NOT_FOUND)
@@ -1423,7 +1423,7 @@ def list_analysis_runs_handler(
         JSON-RPC result list.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             rows = db.list_analysis_runs(experiment_id=experiment_id, analysis_type=analysis_type)
             runs = [db._decode_analysis_run_row(row) for row in rows]
             return {"ok": True, "analysis_runs": runs}
@@ -1445,7 +1445,7 @@ def delete_analysis_run_handler(analysis_id: str) -> dict[str, Any]:
         JSON-RPC result.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             db.delete_analysis_run(analysis_id)
             return {"ok": True, "deleted_analysis_id": analysis_id}
     except Exception as exc:
@@ -1462,7 +1462,7 @@ def archive_project_handler(
 ) -> dict[str, Any]:
     """Archive a complete project state to the database."""
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             with db.transaction():
                 run_id = db.add_analysis_run(
                     analysis_type="project",
@@ -1508,7 +1508,7 @@ def archive_project_handler(
 def restore_project_handler(project_id: str) -> dict[str, Any]:
     """Retrieve an archived project state from the database."""
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             run = db.get_analysis_run_full(project_id)
             if not run:
                 return service_error(f"Project not found: {project_id}", error_code=NOT_FOUND)
@@ -1537,7 +1537,7 @@ def export_provenance_graph_handler(
 ) -> dict[str, Any]:
     """Export the provenance subgraph as a JSON-serializable structure."""
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             graph = db.export_provenance_graph(seed_node_type, seed_node_id)
             if output_path:
                 import json
@@ -1562,7 +1562,7 @@ def export_provenance_graph_handler(
 def database_backup_handler(target_path: str) -> dict[str, Any]:
     """Create a hot backup of the SQLite database to the specified target path."""
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             db.backup_database(target_path)
             db.add_audit_log(
                 action="backup",
@@ -1582,15 +1582,15 @@ def export_zip_archive_handler(
     base_path_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Package a full ZIP archive containing DB snapshot, graph, manifest and optionally data."""
-    import json
-    import os
-    import shutil
     import tempfile
+    import shutil
+    import os
     import zipfile
+    import json
     from datetime import datetime
 
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             graph = db.export_provenance_graph(seed_node_type, seed_node_id)
 
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -1718,7 +1718,7 @@ def list_audit_logs_handler(
         JSON-RPC result containing audit log rows.
     """
     try:
-        with FluorophoreDatabase(resolve_database_path()) as db:
+        with FluorescenceDatabase(resolve_database_path()) as db:
             logs = db.get_audit_logs(
                 action=action,
                 target_type=target_type,

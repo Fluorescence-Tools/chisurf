@@ -187,7 +187,7 @@ class ProjectMixin:
 
     def onRestoreProjectFromDb(self: Main, event: QtCore.QEvent = None):
         try:
-            self.load_and_show_plugin("chisurf.plugins.sample_database")
+            self.load_and_show_plugin("chisurf.plugins.core.mfdb_admin")
         except Exception as exc:
             QtWidgets.QMessageBox.critical(
                 self,

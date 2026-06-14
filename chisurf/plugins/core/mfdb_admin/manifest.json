@@ -1,0 +1,347 @@
+{
+  "id": "mfdb_admin",
+  "version": "1.1.0",
+  "display_name": "Tools:MFDB Admin",
+  "description": "Manage the Multiparametric Fluorescence Database (MFDB): samples, experiments, setups, raw/processed data, provenance, and project archives.",
+  "authors": [
+    "Thomas-Otavio Peulen"
+  ],
+  "categories": [
+    "Tools",
+    "Fluorescence",
+    "Database"
+  ],
+  "icon": "icon.png",
+  "state_namespace": "mfdb_admin",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.core.mfdb_admin.gui.tool:MFDBWidget",
+    "services": "chisurf.plugins.core.mfdb_admin.backend.services:register_services"
+  },
+  "rpc_methods": [
+    {
+      "name": "mfdb.status"
+    },
+    {
+      "name": "mfdb.samples.list"
+    },
+    {
+      "name": "mfdb.samples.get"
+    },
+    {
+      "name": "mfdb.samples.save"
+    },
+    {
+      "name": "mfdb.samples.delete"
+    },
+    {
+      "name": "mfdb.samples.search"
+    },
+    {
+      "name": "mfdb.samples.key_values.save"
+    },
+    {
+      "name": "mfdb.sample_conditions.get"
+    },
+    {
+      "name": "mfdb.sample_conditions.save"
+    },
+    {
+      "name": "mfdb.probes.list"
+    },
+    {
+      "name": "mfdb.probes.get"
+    },
+    {
+      "name": "mfdb.probes.optical_properties.get"
+    },
+    {
+      "name": "mfdb.users.list"
+    },
+    {
+      "name": "mfdb.users.save"
+    },
+    {
+      "name": "mfdb.users.delete"
+    },
+    {
+      "name": "mfdb.devices.list"
+    },
+    {
+      "name": "mfdb.devices.save"
+    },
+    {
+      "name": "mfdb.devices.delete"
+    },
+    {
+      "name": "mfdb.experiment_types.list"
+    },
+    {
+      "name": "mfdb.experiment_types.save"
+    },
+    {
+      "name": "mfdb.experiment_types.delete"
+    },
+    {
+      "name": "mfdb.experiments.list"
+    },
+    {
+      "name": "mfdb.experiments.get"
+    },
+    {
+      "name": "mfdb.experiments.save"
+    },
+    {
+      "name": "mfdb.experiments.delete"
+    },
+    {
+      "name": "mfdb.experiments.key_values.save"
+    },
+    {
+      "name": "mfdb.experiments.data.save"
+    },
+    {
+      "name": "mfdb.experiments.data.delete"
+    },
+    {
+      "name": "raw_data.register"
+    },
+    {
+      "name": "raw_data.list"
+    },
+    {
+      "name": "raw_data.get"
+    },
+    {
+      "name": "processing.burst_selection.record"
+    },
+    {
+      "name": "processing.burst_selection.run"
+    },
+    {
+      "name": "processing.burst_selection.get"
+    },
+    {
+      "name": "processing.burst_selection.list"
+    },
+    {
+      "name": "processed_data.register"
+    },
+    {
+      "name": "processed_data.list"
+    },
+    {
+      "name": "processed_data.get"
+    },
+    {
+      "name": "provenance.edges.list"
+    },
+    {
+      "name": "provenance.trace_processed_data"
+    },
+    {
+      "name": "archive.burst_processing_manifest.export"
+    },
+    {
+      "name": "mfdb.import_file"
+    },
+    {
+      "name": "mfdb.export_sample"
+    },
+    {
+      "name": "mfdb.export_table"
+    },
+    {
+      "name": "mfdb.backup"
+    },
+    {
+      "name": "mfdb.reset_from_source"
+    },
+    {
+      "name": "mfdb.v1.samples.register"
+    },
+    {
+      "name": "mfdb.v1.samples.get"
+    },
+    {
+      "name": "mfdb.v1.samples.list"
+    },
+    {
+      "name": "mfdb.v1.experiments.register"
+    },
+    {
+      "name": "mfdb.v1.experiments.get"
+    },
+    {
+      "name": "mfdb.v1.experiments.list"
+    },
+    {
+      "name": "mfdb.v1.artifacts.register"
+    },
+    {
+      "name": "mfdb.v1.artifacts.get"
+    },
+    {
+      "name": "mfdb.v1.artifacts.list"
+    },
+    {
+      "name": "mfdb.v1.operations.record"
+    },
+    {
+      "name": "mfdb.v1.operations.record_with_artifacts"
+    },
+    {
+      "name": "mfdb.v1.operations.get"
+    },
+    {
+      "name": "mfdb.v1.operations.list"
+    },
+    {
+      "name": "mfdb.v1.operations.link_artifact"
+    },
+    {
+      "name": "mfdb.v1.operations.link"
+    },
+    {
+      "name": "mfdb.v1.operations.transition_status"
+    },
+    {
+      "name": "mfdb.v1.graph.traverse"
+    },
+    {
+      "name": "mfdb.v1.graph.upstream"
+    },
+    {
+      "name": "mfdb.v1.graph.downstream"
+    },
+    {
+      "name": "mfdb.v1.graph.export"
+    },
+    {
+      "name": "mfdb.v1.graph.traverse_legacy"
+    },
+    {
+      "name": "mfdb.v1.parameters.record"
+    },
+    {
+      "name": "mfdb.v1.parameters.get"
+    },
+    {
+      "name": "mfdb.v1.parameters.list"
+    },
+    {
+      "name": "mfdb.v1.chinet.sessions.save"
+    },
+    {
+      "name": "mfdb.v1.chinet.sessions.get"
+    },
+    {
+      "name": "mfdb.v1.chinet.sessions.list"
+    },
+    {
+      "name": "mfdb.v1.chinet.sessions.restore"
+    },
+    {
+      "name": "mfdb.v1.setups.save"
+    },
+    {
+      "name": "mfdb.v1.setups.get"
+    },
+    {
+      "name": "mfdb.v1.setups.list"
+    },
+    {
+      "name": "mfdb.v1.audit.list"
+    },
+    {
+      "name": "mfdb.v1.branches.create"
+    },
+    {
+      "name": "mfdb.v1.branches.fork"
+    },
+    {
+      "name": "mfdb.v1.branches.get"
+    },
+    {
+      "name": "mfdb.v1.branches.list"
+    },
+    {
+      "name": "mfdb.v1.branches.update_head"
+    },
+    {
+      "name": "mfdb.v1.branches.delete"
+    },
+    {
+      "name": "mfdb.v1.users.set_active_branch"
+    },
+    {
+      "name": "mfdb.v1.users.get_active_branch"
+    },
+    {
+      "name": "mfdb.v1.users.jump_to_operation"
+    },
+    {
+      "name": "mfdb.auth.login"
+    },
+    {
+      "name": "mfdb.auth.logout"
+    },
+    {
+      "name": "mfdb.auth.me"
+    },
+    {
+      "name": "mfdb.auth.sessions.list"
+    },
+    {
+      "name": "mfdb.auth.sessions.revoke"
+    },
+    {
+      "name": "mfdb.groups.list"
+    },
+    {
+      "name": "mfdb.groups.get"
+    },
+    {
+      "name": "mfdb.groups.create"
+    },
+    {
+      "name": "mfdb.groups.update"
+    },
+    {
+      "name": "mfdb.groups.delete"
+    },
+    {
+      "name": "mfdb.groups.members.list"
+    },
+    {
+      "name": "mfdb.groups.members.add"
+    },
+    {
+      "name": "mfdb.groups.members.remove"
+    },
+    {
+      "name": "mfdb.permissions.get"
+    },
+    {
+      "name": "mfdb.permissions.chmod"
+    },
+    {
+      "name": "mfdb.permissions.chown"
+    },
+    {
+      "name": "mfdb.permissions.chgrp"
+    },
+    {
+      "name": "mfdb.permissions.grant"
+    },
+    {
+      "name": "mfdb.permissions.revoke"
+    }
+  ]
+}

@@ -1,44 +1,7 @@
-"""Sample database management plugin."""
+"""Legacy compatibility wrapper — delegates to chisurf.plugins.core.mfdb_admin."""
 
 from __future__ import annotations
 
-try:
-    from qtpy import sip
-except ImportError:
-    try:
-        import sip
-    except ImportError:
-        sip = None
+from chisurf.plugins.core.mfdb_admin import MFDBWidget as SampleDatabaseWidget
 
-from pathlib import Path
-
-from chisurf.core.plugin import load_manifest
-from chisurf.core.plugin.registry import apply_manifest_statefulness
-
-from .gui.tool import SampleDatabaseWidget
-
-_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
-if _manifest is not None:
-    name = _manifest.display_name
-else:
-    name = "Tools:Sample Database"
-
-__all__ = ["SampleDatabaseWidget", "name"]
-
-
-if __name__ == "plugin":
-    existing = globals().get("window")
-    if existing is not None and sip is not None and sip.isdeleted(existing):
-        existing = None
-    if existing is None:
-        window = SampleDatabaseWidget()
-        if _manifest is not None:
-            apply_manifest_statefulness(window, _manifest)
-    else:
-        window = existing
-    window.show()
-    try:
-        window.raise_()
-        window.activateWindow()
-    except Exception:
-        pass
+__all__ = ["SampleDatabaseWidget"]

@@ -1559,6 +1559,216 @@ def set_app_style(app: QtWidgets.QApplication):
             pass
 
 
+def _mfdb_rpc_config() -> dict[str, int | str]:
+    """Return MFDB JSON-RPC connection settings."""
+    mfdb_cfg = chisurf.core.settings.cs_settings.get("mfdb", {}) or {}
+    return {
+        "host": str(mfdb_cfg.get("rpc_host", "127.0.0.1")),
+        "cmd_port": int(mfdb_cfg.get("cmd_port", 8765)),
+        "pub_port": int(mfdb_cfg.get("pub_port", 8766)),
+    }
+
+
+def _mfdb_rpc_is_available(timeout_ms: int = 500) -> bool:
+    """Return whether the configured MFDB RPC endpoint responds."""
+    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+
+    cfg = _mfdb_rpc_config()
+    try:
+        MFDBClient(
+            host=str(cfg["host"]),
+            cmd_port=int(cfg["cmd_port"]),
+            pub_port=int(cfg["pub_port"]),
+            timeout_ms=timeout_ms,
+        ).list_users()
+        return True
+    except Exception:
+        return False
+
+
+def _ensure_mfdb_rpc_server() -> None:
+    """Start the embedded MFDB RPC server when no external server responds."""
+    if _mfdb_rpc_is_available(timeout_ms=300):
+        return
+
+    existing = getattr(chisurf, "__mfdb_rpc_server__", None)
+    if existing is not None:
+        if _mfdb_rpc_is_available(timeout_ms=1000):
+            return
+        raise RuntimeError("Embedded MFDB RPC server exists but is not responding")
+
+    cfg = _mfdb_rpc_config()
+    from chisurf.server.app import ChiSurfServer
+
+    server = ChiSurfServer(
+        host=str(cfg["host"]),
+        cmd_port=int(cfg["cmd_port"]),
+        pub_port=int(cfg["pub_port"]),
+    )
+    thread = threading.Thread(
+        target=server.serve_forever,
+        daemon=True,
+        name="chisurf-mfdb-rpc-server",
+    )
+    thread.start()
+
+    chisurf.__mfdb_rpc_server__ = server
+    chisurf.__mfdb_rpc_server_thread__ = thread
+    atexit.register(server.stop)
+
+    deadline = time.time() + 5.0
+    while time.time() < deadline:
+        if _mfdb_rpc_is_available(timeout_ms=200):
+            return
+        time.sleep(0.05)
+    raise RuntimeError("Embedded MFDB RPC server did not become ready")
+
+
+class LoginDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("ChiSurf Login")
+        self.setModal(True)
+        self.setMinimumSize(360, 260)
+        self.resize(420, 300)
+
+        root_layout = QtWidgets.QVBoxLayout(self)
+        root_layout.setSpacing(10)
+        root_layout.setContentsMargins(14, 14, 14, 14)
+
+        header_layout = QtWidgets.QHBoxLayout()
+        logo_label = QtWidgets.QLabel()
+        logo = QtGui.QPixmap(":/icons/icons/cs_logo.png")
+        if not logo.isNull():
+            logo_label.setPixmap(logo.scaled(64, 64, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+        header_layout.addWidget(logo_label, 0, QtCore.Qt.AlignTop)
+
+        title_layout = QtWidgets.QVBoxLayout()
+        title = QtWidgets.QLabel("ChiSurf")
+        title_font = title.font()
+        title_font.setPointSize(title_font.pointSize() + 8)
+        title_font.setBold(True)
+        title.setFont(title_font)
+        subtitle = QtWidgets.QLabel("Sign in to the MFDB workspace")
+        subtitle.setStyleSheet("color: palette(mid);")
+        title_layout.addWidget(title)
+        title_layout.addWidget(subtitle)
+        title_layout.addStretch(1)
+        header_layout.addLayout(title_layout, 1)
+        root_layout.addLayout(header_layout)
+
+        layout = QtWidgets.QFormLayout()
+        layout.setSpacing(8)
+        
+        self.user_combo = QtWidgets.QComboBox()
+        self.password_edit = QtWidgets.QLineEdit()
+        self.password_edit.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.save_login_check = QtWidgets.QCheckBox("Save selected user")
+        self.auto_login_check = QtWidgets.QCheckBox("Log in automatically when allowed")
+        
+        self.btn_login = QtWidgets.QPushButton("Login")
+        self.btn_cancel = QtWidgets.QPushButton("Cancel")
+        
+        # Load users
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        try:
+            self.client = MFDBClient()
+            self.users = self.client.list_users()
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Database Error", f"Failed to connect to database:\n{e}")
+            self.users = []
+            
+        for u in self.users:
+            display = f"{u['display_name']} ({u['user_id']})"
+            if u.get("is_admin"):
+                display += " [Admin]"
+            self.user_combo.addItem(display, u["user_id"])
+            
+        # Select default user
+        import chisurf.core.settings as cs_settings
+        mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
+        default_user = mfdb_settings.get("default_user_id", "user_default")
+        idx = self.user_combo.findData(default_user)
+        if idx >= 0:
+            self.user_combo.setCurrentIndex(idx)
+        self.save_login_check.setChecked(bool(mfdb_settings.get("save_login", True)))
+        self.auto_login_check.setChecked(bool(mfdb_settings.get("autologin", False)))
+            
+        layout.addRow("Select User:", self.user_combo)
+        layout.addRow("Password:", self.password_edit)
+        layout.addRow("", self.save_login_check)
+        layout.addRow("", self.auto_login_check)
+        root_layout.addLayout(layout)
+        
+        btn_layout = QtWidgets.QHBoxLayout()
+        btn_layout.addStretch(1)
+        btn_layout.addWidget(self.btn_login)
+        btn_layout.addWidget(self.btn_cancel)
+        root_layout.addLayout(btn_layout)
+        
+        self.btn_login.clicked.connect(self.handle_login)
+        self.btn_cancel.clicked.connect(self.reject)
+        
+        self.user_combo.currentIndexChanged.connect(self.on_user_changed)
+        self.on_user_changed()
+        
+    def on_user_changed(self):
+        user_id = self.user_combo.currentData()
+        user_data = next((u for u in self.users if u["user_id"] == user_id), None)
+        if user_data:
+            has_pw = user_data.get("has_password", False)
+            self.password_edit.setEnabled(has_pw)
+            if not has_pw:
+                self.password_edit.clear()
+                
+    def handle_login(self):
+        user_id = self.user_combo.currentData()
+        password = self.password_edit.text()
+        
+        try:
+            res = self.client.login(user_id=user_id, password=password)
+            if res.get("ok") or res.get("authenticated"):
+                # Check if this user had NO password
+                user_data = next((u for u in self.users if u["user_id"] == user_id), None)
+                if user_data and not user_data.get("has_password", False):
+                    reply = QtWidgets.QMessageBox.question(
+                        self,
+                        "Set Password",
+                        "You do not have a password set for this account.\nWould you like to set a password now to secure your account?",
+                        QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                        QtWidgets.QMessageBox.Yes
+                    )
+                    if reply == QtWidgets.QMessageBox.Yes:
+                        from chisurf.plugins.core.user_editor.gui import PasswordChangeDialog
+                        is_admin = bool(user_data.get("is_admin", False))
+                        dlg = PasswordChangeDialog(user_id=user_id, is_admin=is_admin, parent=self)
+                        if dlg.exec() == QtWidgets.QDialog.Accepted:
+                            try:
+                                self.client.change_password(user_id=user_id, password=dlg.password, requester_id=user_id)
+                                QtWidgets.QMessageBox.information(self, "Success", "Password successfully updated.")
+                            except Exception as e:
+                                QtWidgets.QMessageBox.critical(self, "Error", f"Failed to save password:\n{e}")
+                
+                import chisurf.core.settings as cs_settings
+                if "mfdb" not in cs_settings.cs_settings:
+                    cs_settings.cs_settings["mfdb"] = {}
+                if self.save_login_check.isChecked():
+                    cs_settings.cs_settings["mfdb"]["default_user_id"] = user_id
+                cs_settings.cs_settings["mfdb"]["save_login"] = self.save_login_check.isChecked()
+                cs_settings.cs_settings["mfdb"]["autologin"] = self.auto_login_check.isChecked()
+                if hasattr(cs_settings, "mfdb"):
+                    if self.save_login_check.isChecked():
+                        cs_settings.mfdb["default_user_id"] = user_id
+                    cs_settings.mfdb["save_login"] = self.save_login_check.isChecked()
+                    cs_settings.mfdb["autologin"] = self.auto_login_check.isChecked()
+                    
+                self.accept()
+            else:
+                QtWidgets.QMessageBox.warning(self, "Login Failed", res.get("error", "Incorrect credentials"))
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Login failed: {e}")
+
+
 def get_app():
     app = QtWidgets.QApplication(sys.argv)
     if sys.platform == 'darwin':
@@ -1568,7 +1778,45 @@ def get_app():
         font.setPointSize(13)
         app.setFont(font)
     set_app_style(app)
+    setup_gui(app=app, stage="setup_style")
     app.processEvents()
+    
+    try:
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        import chisurf.core.settings as cs_settings
+
+        _ensure_mfdb_rpc_server()
+        
+        default_user = cs_settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
+        autologin = cs_settings.cs_settings.get("mfdb", {}).get("autologin", False)
+        
+        client = MFDBClient()
+        users = client.list_users()
+        user_data = next((u for u in users if u["user_id"] == default_user), None)
+        
+        trigger_login = False
+        if not autologin:
+            trigger_login = True
+        else:
+            if user_data:
+                if user_data.get("has_password") or user_data.get("is_admin"):
+                    trigger_login = True
+            else:
+                trigger_login = True
+            
+        if trigger_login:
+            login_dialog = LoginDialog()
+            if login_dialog.exec() != QtWidgets.QDialog.Accepted:
+                sys.exit(0)
+    except Exception as e:
+        logging.warning(f"Could not perform startup authentication check: {e}")
+        QtWidgets.QMessageBox.critical(
+            None,
+            "MFDB Login Unavailable",
+            f"Could not start or reach the MFDB JSON-RPC service:\n{e}",
+        )
+        sys.exit(1)
+
     win = get_win(app=app)
 
     # If startup was interrupted to open the updater, do not touch/show the main window

@@ -212,6 +212,10 @@ mc_settings:
       weight: 1
   scale: 0.0025
   update_rmsd: false
+mfdb:
+  default_user_id: user_default
+  save_login: true
+  autologin: false
 n_threads: 4
 optimization:
   global_optimize_local_first: false

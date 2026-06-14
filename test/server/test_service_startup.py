@@ -33,7 +33,7 @@ def _loader(calls: list[tuple[str, list[str]]]):
 
 def _load_password_services_module():
     """Load password_services without importing the MFDB GUI package."""
-    path = Path(__file__).resolve().parents[2] / "chisurf" / "plugins" / "mfdb_plugin" / "backend" / "password_services.py"
+    path = Path(__file__).resolve().parents[2] / "chisurf" / "plugins" / "core" / "mfdb_admin" / "backend" / "password_services.py"
     spec = importlib.util.spec_from_file_location("password_services_test_module", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
