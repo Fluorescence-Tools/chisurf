@@ -28,6 +28,8 @@
 *.exe
 *.json
 !chisurf/plugins/sample_database/manifest.json
+!chisurf/plugins/chimol/manifest.json
+!chisurf/plugins/burst/burst_selection/manifest.json
 !chisurf/server/client_methods.json
 !chisurf/server/server_methods.json
 *.log
@@ -46,6 +48,7 @@ Thumbs.db
 .ruff_cache
 .omx
 .kilocode
+.opencode
 .benchmarks
 .ipynb_checkpoints
 .mypy*
