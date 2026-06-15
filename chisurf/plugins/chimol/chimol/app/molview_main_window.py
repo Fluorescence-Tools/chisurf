@@ -46,6 +46,7 @@ from .state_control_panel import StateControlDock
 from .objects_panel import ObjectsDock
 from .sequence_dock import SequenceDock
 from .hierarchy_panel import HierarchyDock
+from .rmf_panel import RmfPanel
 from .config_editor import MolViewConfigEditor
 from ..cmd import cmd as _cmd
 
@@ -150,7 +151,11 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.hierarchy = HierarchyDock(self)
         self.hierarchy_dock = self.hierarchy
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.hierarchy_dock)
+        self.rmf_panel = RmfPanel(self, self.viewer)
+        self.rmf_panel_dock = self.rmf_panel.dock_widget
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.rmf_panel_dock)
         self.tabifyDockWidget(self.objects_dock, self.hierarchy_dock)
+        self.tabifyDockWidget(self.hierarchy_dock, self.rmf_panel_dock)
         self.objects_dock.raise_()
 
         try:
@@ -1259,6 +1264,9 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                 radii = data["radii"]
                 restraints = data.get("restraints")
                 rmf_provenance = data.get("rmf_provenance")
+                rmf_frame_series = data.get("rmf_frame_series", {})
+                rmf_frame_metadata = data.get("rmf_frame_metadata", {})
+                rmf_resolutions = data.get("rmf_resolutions", set())
                 bond_pairs = data.get("bond_pairs")
                 
                 object_id = self.viewer._create_object(name=display_name, source_path=source_path).object_id
@@ -1268,6 +1276,9 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                     radii=radii,
                     restraints=restraints,
                     rmf_provenance=rmf_provenance,
+                    rmf_frame_series=rmf_frame_series,
+                    rmf_frame_metadata=rmf_frame_metadata,
+                    rmf_resolutions=rmf_resolutions,
                     bond_pairs=bond_pairs,
                     object_id=object_id
                 )
@@ -1513,9 +1524,12 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             self._active_object_id = None
             self._update_sequence_view(None)
             self._update_system_info(None)
-            if hasattr(self, "hierarchy"):
-                self.hierarchy.set_hierarchy(None)
-            return
+        if hasattr(self, "hierarchy"):
+            self.hierarchy.set_hierarchy(None)
+        if hasattr(self, "rmf_panel"):
+            self.rmf_panel.set_state(None)
+        return
+
 
         self._active_object_id = object_id
         try:
@@ -1533,6 +1547,12 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                 self.hierarchy.set_hierarchy(state.rmf_hierarchy)
             except Exception:
                 self.hierarchy.set_hierarchy(None)
+        if hasattr(self, "rmf_panel"):
+            try:
+                state = self.viewer._get_active_state()
+                self.rmf_panel.set_state(state)
+            except Exception:
+                self.rmf_panel.set_state(None)
 
     def on_object_selection_changed(self) -> None:
         if self._block_object_list_signals:

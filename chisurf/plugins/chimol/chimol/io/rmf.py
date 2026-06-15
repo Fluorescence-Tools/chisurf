@@ -117,6 +117,13 @@ class _RmfLoader:
         if num_particles == 0:
             raise RuntimeError(f"No particles/coordinates found in {path}")
             
+        rmf_frame_series: Dict[str, list[float]] = {}
+        rmf_frame_metadata: Dict[str, list[Any]] = {}
+        stat_keys = self._extract_stat_keys(r)
+        for _key, name in stat_keys:
+            rmf_frame_series[name] = []
+            rmf_frame_metadata[name] = []
+            
         frames_arr = np.zeros((num_frames, num_particles, 3), dtype=np.float32)
         coord_buffer = np.zeros((num_particles, 3), dtype=np.float64)
         
@@ -128,13 +135,19 @@ class _RmfLoader:
                 for i, node in enumerate(self.particle_nodes):
                     coord_buffer[i] = self.particlef.get(node).get_coordinates()
             frames_arr[f] = coord_buffer.astype(np.float32)
+            self._extract_stat_values(
+                r.get_root_node(),
+                stat_keys,
+                rmf_frame_series,
+                rmf_frame_metadata,
+            )
             
         # 3. Extract radii
         radii_arr = np.zeros(num_particles, dtype=np.float32)
         for i, node in enumerate(self.particle_nodes):
             radii_arr[i] = self.particlef.get(node).get_radius()
             
-        # 4. Extract metadata (restraints, states, PROVENANCE, BONDS)
+        # 4. Extract metadata (restraints, states, PROVENANCE, BONDS, stat)
         restraints = []
         rmf_provenance = []
         states = []
@@ -149,7 +162,12 @@ class _RmfLoader:
             "states": states,
             "restraints": restraints,
             "rmf_provenance": rmf_provenance,
-            "bond_pairs": np.array(bond_pairs, dtype=np.int32) if bond_pairs else None
+            "bond_pairs": np.array(bond_pairs, dtype=np.int32) if bond_pairs else None,
+            "rmf_frame_series": {
+                name: np.asarray(values, dtype=float)
+                for name, values in rmf_frame_series.items()
+            },
+            "rmf_frame_metadata": rmf_frame_metadata,
         }
         
     def _handle_node(self, node: RMF.NodeConstHandle, parent_rhi: _RmfHierarchyInfo) -> RmfHierarchyNode:
@@ -196,6 +214,33 @@ class _RmfLoader:
             
         return h_node
 
+    def _extract_stat_keys(self, rmf_handle: Any) -> list[tuple[Any, str]]:
+        """Return RMF stat keys that can be read as frame metadata."""
+        try:
+            category = rmf_handle.get_category("stat")
+            keys = rmf_handle.get_keys(category)
+            return [(key, rmf_handle.get_name(key)) for key in keys]
+        except Exception:
+            return []
+
+    def _extract_stat_values(
+        self,
+        root_node: RMF.NodeConstHandle,
+        stat_keys: list[tuple[Any, str]],
+        series: Dict[str, list[float]],
+        metadata: Dict[str, list[Any]],
+    ) -> None:
+        """Append current-frame RMF stat values to series containers."""
+        for key, name in stat_keys:
+            try:
+                value = root_node.get_value(key)
+                numeric = _as_numeric_stat_value(value)
+                metadata[name].append(value)
+                series[name].append(numeric)
+            except Exception:
+                metadata[name].append(None)
+                series[name].append(float("nan"))
+
     def _extract_metadata(self, node: RMF.NodeConstHandle, restraints: list, provenance: list, states: list, bond_pairs: list):
         # Software
         if self.softwaref and self.softwaref.get_is(node):
@@ -239,6 +284,22 @@ class _RmfLoader:
             
         for child in node.get_children():
             self._extract_metadata(child, restraints, provenance, states, bond_pairs)
+
+def _as_numeric_stat_value(value: Any) -> float:
+    """Convert RMF stat values to floats for Chimol plotting."""
+    if isinstance(value, (bool, np.bool_)):
+        return float(value)
+    if isinstance(value, (int, float, np.integer, np.floating)):
+        numeric = float(value)
+    else:
+        try:
+            numeric = float(value)
+        except Exception:
+            return float("nan")
+    if not np.isfinite(numeric):
+        return float("nan")
+    return numeric
+
 
 def load_rmf_full(path: Path) -> Dict[str, Any]:
     loader = _RmfLoader()

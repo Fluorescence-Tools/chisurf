@@ -91,6 +91,9 @@ class _MolViewObjectState:
     rmf_hierarchy: Optional[object] = None  # RmfHierarchyNode
     restraints: list[dict] = field(default_factory=list)
     rmf_provenance: list[dict] = field(default_factory=list)
+    rmf_frame_series: dict[str, object] = field(default_factory=dict)
+    rmf_frame_metadata: dict[str, object] = field(default_factory=dict)
+    rmf_resolutions: set[object] = field(default_factory=set)
     _ca_indices: Optional[np.ndarray] = None
 
 

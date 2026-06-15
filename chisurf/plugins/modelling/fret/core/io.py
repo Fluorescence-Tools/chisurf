@@ -130,35 +130,20 @@ def write_pdb(
 # RMF writing (requires IMP.rmf)
 # ---------------------------------------------------------------------------
 
-_HAS_RMF = False
-try:
-    import IMP
-    import IMP.algebra
-    import IMP.atom
-    import IMP.core
-    import IMP.rmf
-    import RMF
-
-    _HAS_RMF = True
-except ImportError:
-    pass
-
-
 def write_rmf(
     atoms: np.ndarray,
     path: str | os.PathLike,
     model_name: str = "structure",
     transform: Optional[np.ndarray] = None,
+    metadata: Optional[Dict] = None,
 ) -> None:
-    """Write (N,3) coordinates to an RMF file.
+    """Write ``(N, 3)`` coordinates to a PMI-compatible RMF file.
 
     Requires ``IMP`` + ``IMP.rmf``.
     """
-    if not _HAS_RMF:
-        raise RuntimeError(
-            "RMF output requires IMP and IMP.rmf.  Install with: conda install imp"
-        )
-    coords = atoms[:, :3].copy()
+    from chisurf.core.models.structure.rmf import StructureRmfWriter
+
+    coords = np.asarray(atoms[:, :3], dtype=np.float64).copy()
     if transform is not None:
         t = np.asarray(transform, dtype=np.float64)
         if t.shape == (4, 4):
@@ -167,23 +152,17 @@ def write_rmf(
             coords = coords @ t.T
         elif t.shape == (3,):
             coords = coords + t
+        else:
+            raise ValueError(f"Unexpected transform shape {t.shape}")
 
-    model = IMP.Model()
-    root = IMP.atom.Hierarchy.setup_particle(IMP.Particle(model))
-    mol = IMP.atom.Hierarchy.setup_particle(IMP.Particle(model))
-    mol.set_name(model_name)
-    root.add_child(mol)
-
-    for i in range(coords.shape[0]):
-        p = IMP.Particle(model)
-        IMP.core.XYZ.setup_particle(p, IMP.algebra.Vector3D(*coords[i]))
-        h = IMP.atom.Hierarchy.setup_particle(p)
-        h.set_name(f"atom_{i}")
-        mol.add_child(h)
-
-    rmf_fh = RMF.create_rmf_file(str(path))
-    IMP.rmf.add_hierarchy(rmf_fh, root)
-    IMP.rmf.save_frame(rmf_fh, 0)
+    with StructureRmfWriter.from_coordinates(
+        str(path),
+        atoms,
+        model_name=model_name,
+        transform=transform,
+        metadata=metadata,
+    ) as writer:
+        writer.append(coords)
 
 
 # ---------------------------------------------------------------------------

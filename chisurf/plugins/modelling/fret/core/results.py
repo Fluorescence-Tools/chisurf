@@ -5,6 +5,9 @@ from typing import Dict, List, Optional
 
 import numpy as np
 
+from chisurf.core.fio.structure.coordinates import formats, keys
+from chisurf.core.structure.structure import Structure
+
 from . import io
 
 
@@ -91,58 +94,65 @@ def write_docking_results_pdb(
     return written
 
 
+def _make_coordinates_structure(
+    atoms_per_body: List[np.ndarray],
+) -> Structure:
+    """Create a ChiSurf structure whose chains correspond to docking bodies."""
+    atoms_list = []
+    for body_idx, atoms_local in enumerate(atoms_per_body):
+        atoms = np.zeros(len(atoms_local), dtype={"names": keys, "formats": formats})
+        atoms["i"] = np.arange(1, len(atoms_local) + 1)
+        atoms["atom_id"] = atoms["i"]
+        atoms["atom_name"] = "CA"
+        atoms["res_name"] = "UNK"
+        atoms["res_id"] = atoms["i"]
+        atoms["chain"] = chr(65 + body_idx)
+        atoms["element"] = "C"
+        atoms["xyz"] = atoms_local[:, :3]
+        atoms["radius"] = 1.0
+        atoms_list.append(atoms)
+    structure = Structure()
+    if atoms_list:
+        structure.atoms = np.concatenate(atoms_list)
+    else:
+        structure.atoms = np.zeros(0, dtype={"names": keys, "formats": formats})
+    return structure
+
+
 def write_docking_results_rmf(
     results: List[SimulationResult],
     atoms_per_body: List[np.ndarray],
     output_path: str,
 ) -> None:
-    """Write docking results as a multi-frame RMF file.
+    """Write docking results as a multi-frame PMI-compatible RMF file.
 
-    Requires IMP.rmf.  Each frame is one docking trial.
+    Requires IMP.rmf. Each frame is one docking trial.
     """
-    try:
-        import IMP
-        import IMP.atom
-        import IMP.core
-        import IMP.rmf
-        import IMP.algebra
-        import RMF
-    except ImportError:
-        raise RuntimeError("IMP.rmf required for RMF output")
+    from chisurf.core.models.structure.rmf import StructureRmfWriter
 
-    model = IMP.Model()
-    root = IMP.atom.Hierarchy.setup_particle(IMP.Particle(model))
-    body_particles = []
-    for body_idx, atoms_local in enumerate(atoms_per_body):
-        mol = IMP.atom.Hierarchy.setup_particle(IMP.Particle(model))
-        mol.set_name(f"body_{body_idx}")
-        root.add_child(mol)
-        body_particles.append(mol)
-        for i in range(atoms_local.shape[0]):
-            p = IMP.Particle(model)
-            IMP.core.XYZ.setup_particle(p, IMP.algebra.Vector3D(*atoms_local[i, :3]))
-            h = IMP.atom.Hierarchy.setup_particle(p)
-            h.set_name(f"atom_{i}")
-            mol.add_child(h)
-
-    rmf_fh = RMF.create_rmf_file(str(output_path))
-    IMP.rmf.add_hierarchy(rmf_fh, root)
-
-    for trial_idx, sr in enumerate(results):
-        # Apply transforms to each body
-        for body_idx in range(len(body_particles)):
-            if trial_idx < len(sr.translations) and trial_idx < len(sr.rotations):
-                trans = sr.translations[trial_idx]
-                rot = sr.rotations[trial_idx]
-                leaves = IMP.atom.get_leaves(body_particles[body_idx])
-                for i, leaf in enumerate(leaves):
-                    if i < atoms_per_body[body_idx].shape[0]:
-                        xyz_local = atoms_per_body[body_idx][i, :3]
-                        xyz_global = xyz_local @ rot.T + trans
-                        IMP.core.XYZ(leaf).set_coordinates(
-                            IMP.algebra.Vector3D(*xyz_global)
-                        )
-        IMP.rmf.save_frame(rmf_fh, trial_idx)
+    structure = _make_coordinates_structure(atoms_per_body)
+    with StructureRmfWriter(str(output_path), structure, root_name="FRETDocking") as writer:
+        for trial_idx, sr in enumerate(results):
+            frames = []
+            for body_idx, atoms_local in enumerate(atoms_per_body):
+                if trial_idx < len(sr.translations) and trial_idx < len(sr.rotations):
+                    trans = sr.translations[trial_idx]
+                    rot = sr.rotations[trial_idx]
+                    xyz_global = atoms_local[:, :3] @ rot.T + trans
+                    frames.append(xyz_global)
+                else:
+                    frames.append(atoms_local[:, :3])
+            coords = np.vstack(frames) if frames else np.zeros((0, 3))
+            metadata = {
+                "Simulation_Energy": sr.energy,
+                "Simulation_Clash_Energy": sr.clash_energy,
+                "Simulation_Restraint_Energy": sr.restraint_energy,
+                "Simulation_RMSD": sr.rmsd,
+                "Simulation_Internal_Number": sr.internal_number,
+                "Simulation_n_Translations": len(sr.translations),
+                "Simulation_n_Rotations": len(sr.rotations),
+            }
+            writer.append(coords, name=str(trial_idx), metadata=metadata)
 
 
 def write_screening_results_csv(

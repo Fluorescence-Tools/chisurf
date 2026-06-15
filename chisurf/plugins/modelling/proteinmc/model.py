@@ -583,17 +583,20 @@ class ProteinMCRunner:
                 np.copyto(self.structure.internal_coordinates, coord_back)
                 self.structure.update()
 
-        return ProteinMCResult(
-            output_file=self.output_file,
-            n_frames=len(self.energies),
-            accepted=accepted,
-            rejected=rejected,
-            rmsd=list(self.rmsd),
-            drmsd=list(self.drmsd),
-            energies=list(self.energies),
-            labeling_energies=list(self.labeling_energies),
-            structure=self.structure,
-        )
+        try:
+            return ProteinMCResult(
+                output_file=self.output_file,
+                n_frames=len(self.energies),
+                accepted=accepted,
+                rejected=rejected,
+                rmsd=list(self.rmsd),
+                drmsd=list(self.drmsd),
+                energies=list(self.energies),
+                labeling_energies=list(self.labeling_energies),
+                structure=self.structure,
+            )
+        finally:
+            writer.close()
 
     def _append_frame(
         self,
@@ -607,13 +610,25 @@ class ProteinMCRunner:
     ) -> None:
         """Append one frame and emit progress."""
         xyz = np.array(self.structure.xyz, copy=True)
-        writer.append(xyz, name=str(len(self.energies)))
         if self._reference_xyz is None:
             self._reference_xyz = np.array(xyz, copy=True)
         if self._previous_xyz is None:
             self._previous_xyz = np.array(xyz, copy=True)
-        self.rmsd.append(_rmsd(xyz, self._reference_xyz))
-        self.drmsd.append(_rmsd(xyz, self._previous_xyz))
+        rmsd = _rmsd(xyz, self._reference_xyz)
+        drmsd = _rmsd(xyz, self._previous_xyz)
+        metadata = {
+            "Total_Score": float(energy),
+            "ProteinMC_Energy": float(energy),
+            "ProteinMC_Labeling_Energy": float(labeling_energy),
+            "ProteinMC_RMSD": float(rmsd),
+            "ProteinMC_dRMSD": float(drmsd),
+            "ProteinMC_Iteration": int(iteration),
+            "ProteinMC_Accepted": int(accepted),
+            "ProteinMC_Rejected": int(rejected),
+        }
+        writer.append(xyz, name=str(len(self.energies)), metadata=metadata)
+        self.rmsd.append(rmsd)
+        self.drmsd.append(drmsd)
         self.energies.append(float(energy))
         self.labeling_energies.append(float(labeling_energy))
         self._previous_xyz = np.array(xyz, copy=True)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import shutil
+from types import SimpleNamespace
 
 from click.testing import CliRunner
 import numpy as np
@@ -124,6 +125,8 @@ def test_runner_writes_rmf3_readable_by_chimol(tmp_path: Path) -> None:
     data = load_rmf_full(output)
     assert data["frames"].shape[0] >= 1
     assert data["frames"].shape[2] == 3
+    assert "Total_Score" in data["rmf_frame_series"]
+    assert data["rmf_frame_series"]["Total_Score"].size == data["frames"].shape[0]
 
 
 def test_rmf_writer_replaces_blank_chain_ids(tmp_path: Path) -> None:
@@ -137,7 +140,46 @@ def test_rmf_writer_replaces_blank_chain_ids(tmp_path: Path) -> None:
     output = tmp_path / "blank_chain.rmf3"
     writer = ProteinMCRmfWriter(output, structure)
     writer.append(structure.xyz)
+    writer.close()
     assert output.exists()
+
+
+def test_rmf_writer_writes_pmi_stat_metadata(tmp_path: Path) -> None:
+    pytest.importorskip("RMF")
+    pytest.importorskip("IMP")
+    from chisurf.plugins.chimol.chimol.io.rmf import load_rmf_full
+    from chisurf.plugins.modelling.proteinmc.rmf import ProteinMCRmfWriter
+
+    atoms = np.zeros(
+        2,
+        dtype={
+            "names": ["xyz", "chain", "res_id", "res_name", "atom_name", "radius"],
+            "formats": ["(3,)f8", "S1", "i4", "S3", "S4", "f8"],
+        },
+    )
+    atoms["xyz"] = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+    atoms["chain"] = [b"A", b"A"]
+    atoms["res_id"] = [1, 2]
+    atoms["res_name"] = [b"ALA", b"GLY"]
+    atoms["atom_name"] = [b"CA", b"CA"]
+    atoms["radius"] = [1.0, 1.0]
+    structure = SimpleNamespace(atoms=atoms)
+
+    output = tmp_path / "stat.rmf3"
+    writer = ProteinMCRmfWriter(output, structure)
+    writer.append(
+        atoms["xyz"],
+        metadata={
+            "Total_Score": 1.25,
+            "ProteinMC_Iteration": 7,
+            "rmf_file": "stat.rmf3",
+        },
+    )
+    writer.close()
+
+    data = load_rmf_full(output)
+    assert data["rmf_frame_series"]["Total_Score"][0] == pytest.approx(1.25)
+    assert int(data["rmf_frame_series"]["ProteinMC_Iteration"][0]) == 7
 
 
 def test_cli_writes_rmf3(tmp_path: Path) -> None:

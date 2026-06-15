@@ -190,6 +190,9 @@ class MolView(QtWidgets.QWidget):
         radii: np.ndarray,
         restraints: list[dict] = None,
         rmf_provenance: list[dict] = None,
+        rmf_frame_series: dict[str, object] | None = None,
+        rmf_frame_metadata: dict[str, object] | None = None,
+        rmf_resolutions: set[object] | None = None,
         bond_pairs: np.ndarray | None = None,
         *,
         object_id: str | None = None
@@ -205,6 +208,12 @@ class MolView(QtWidgets.QWidget):
                 state.restraints = restraints
             if rmf_provenance:
                 state.rmf_provenance = rmf_provenance
+            if rmf_frame_series is not None:
+                state.rmf_frame_series = rmf_frame_series
+            if rmf_frame_metadata is not None:
+                state.rmf_frame_metadata = rmf_frame_metadata
+            if rmf_resolutions is not None:
+                state.rmf_resolutions = rmf_resolutions
             if bond_pairs is not None:
                 state.bond_pairs = bond_pairs
                 state.show_sticks = True
