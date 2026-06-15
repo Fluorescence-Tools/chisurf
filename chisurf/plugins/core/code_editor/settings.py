@@ -73,6 +73,21 @@ EDITOR_SETTINGS_KEYS = [
     "rpc_host",
     "rpc_cmd_port",
     "rpc_pub_port",
+    "agent_actions_enabled",
+    "agent_autofit_enabled",
+    "agent_code_run_enabled",
+    "agent_default_mode",
+    "agent_max_tool_iterations",
+    "agent_invalid_json_retries",
+    "agent_tool_timeout_ms",
+    "agent_code_timeout_ms",
+    "agent_output_max_chars",
+    "agent_chisurf_rpc_host",
+    "agent_chisurf_rpc_cmd_port",
+    "agent_chisurf_rpc_pub_port",
+    "agent_editor_rpc_host",
+    "agent_editor_rpc_cmd_port",
+    "agent_editor_rpc_pub_port",
 ]
 
 
@@ -114,6 +129,21 @@ def default_editor_settings() -> dict[str, str | int | bool | list[str]]:
         "rpc_host": "127.0.0.1",
         "rpc_cmd_port": 8775,
         "rpc_pub_port": 8776,
+        "agent_actions_enabled": True,
+        "agent_autofit_enabled": True,
+        "agent_code_run_enabled": False,
+        "agent_default_mode": "chat_only",
+        "agent_max_tool_iterations": 25,
+        "agent_invalid_json_retries": 2,
+        "agent_tool_timeout_ms": 30000,
+        "agent_code_timeout_ms": 5000,
+        "agent_output_max_chars": 20000,
+        "agent_chisurf_rpc_host": "127.0.0.1",
+        "agent_chisurf_rpc_cmd_port": 8765,
+        "agent_chisurf_rpc_pub_port": 8766,
+        "agent_editor_rpc_host": "127.0.0.1",
+        "agent_editor_rpc_cmd_port": 8775,
+        "agent_editor_rpc_pub_port": 8776,
     }
     settings.update(EDITOR_COLOR_SCHEMES["ChiSurf"])
     return settings

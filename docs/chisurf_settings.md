@@ -649,6 +649,15 @@ Used by: `chisurf.experiments.tcspc.TCSPCReader` and its GUI controller via
 
 ---
 
+### 1.17 `mfdb` (Measurement File Database settings)
+
+Used by: Measurement File Database APIs and repository code.
+
+- **`default_user_id`**  
+  The default `user_id` used to attribute database operations and entities when no explicit user is provided. Defaults to `"user_default"`.
+
+---
+
 ## 2. `experiment_configs.yaml` (experiment registry)
 
 This file defines how high‑level "experiment types" are mapped to

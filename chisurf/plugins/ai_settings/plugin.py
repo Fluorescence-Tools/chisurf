@@ -39,8 +39,7 @@ class AISettingsWidget(QtWidgets.QWidget):
         layout.addWidget(title_label)
 
         info_label = QtWidgets.QLabel(
-            "Configure remote LLM endpoints. "
-            "Select a provider, sign in to get an API key, or enter a custom endpoint."
+            "Configure one endpoint per provider, with separate models for chat/code tasks and image generation."
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
@@ -84,21 +83,29 @@ class AISettingsWidget(QtWidgets.QWidget):
         layout.addWidget(api_group)
 
         # Model Selection Group
-        model_group = QtWidgets.QGroupBox("Model")
+        model_group = QtWidgets.QGroupBox("Models")
         model_layout = QtWidgets.QFormLayout(model_group)
         model_layout.setSpacing(10)
 
-        # Model Combo
-        model_row_layout = QtWidgets.QHBoxLayout()
+        # Text model
+        text_model_row_layout = QtWidgets.QHBoxLayout()
         self.model_combo = QtWidgets.QComboBox()
         self.model_combo.setEditable(True)
-        model_row_layout.addWidget(self.model_combo)
+        self.chat_model_combo = self.model_combo
+        self.model_combo.setToolTip("Used for chat, code editing, explanations, and other text tasks.")
+        text_model_row_layout.addWidget(self.model_combo)
 
         self.fetch_models_btn = QtWidgets.QPushButton("Fetch Models")
         self.fetch_models_btn.clicked.connect(self._fetch_models)
-        model_row_layout.addWidget(self.fetch_models_btn)
+        text_model_row_layout.addWidget(self.fetch_models_btn)
 
-        model_layout.addRow("Model:", model_row_layout)
+        model_layout.addRow("Text model:", text_model_row_layout)
+
+        self.image_model_input = QtWidgets.QComboBox()
+        self.image_model_input.setEditable(True)
+        self.image_model_input.setPlaceholderText("gpt-image-2 or provider image-capable model")
+        self.image_model_input.setToolTip("Used only for plugin icon and other image-generation tasks.")
+        model_layout.addRow("Image model:", self.image_model_input)
 
         layout.addWidget(model_group)
 
@@ -156,17 +163,27 @@ class AISettingsWidget(QtWidgets.QWidget):
         layout.addStretch()
 
     def _on_provider_changed(self, index: int) -> None:
-        """Update base URL and visibility when provider changes."""
+        """Load provider-specific settings and visibility when provider changes."""
         provider_key = self.provider_combo.currentData()
-        # Find the provider info
-        for _display, (key, default_url, _api_url, _env) in PROVIDERS.items():
-            if key == provider_key:
-                self.base_url_input.setText(default_url)
-                # Local providers don't need API key
-                is_local = provider_key in ("local", "custom")
-                self.api_key_input.setEnabled(not is_local)
-                self.signin_button.setEnabled(not is_local)
-                break
+        if not provider_key:
+            return
+        settings = ai_settings.get_api_settings(provider_key)
+        self._apply_provider_settings(settings)
+
+    def _apply_provider_settings(self, settings: dict) -> None:
+        """Apply settings for the selected provider to the visible controls."""
+        provider_key = settings.get("provider", self.provider_combo.currentData())
+        self.base_url_input.setText(settings.get("base_url", ""))
+        self.api_key_input.setText(settings.get("api_key", ""))
+        self.model_combo.setEditText(settings.get("text_model", settings.get("model", "")))
+        self.image_model_input.setEditText(settings.get("image_model", ""))
+        is_local = provider_key == "local"
+        self.api_key_input.setEnabled(not is_local)
+        has_signin_url = any(
+            key == provider_key and bool(api_url)
+            for _display, (key, _url, api_url, _env) in PROVIDERS.items()
+        )
+        self.signin_button.setEnabled(has_signin_url)
 
     def _toggle_key_visibility(self, checked: bool) -> None:
         """Toggle API key visibility."""
@@ -201,16 +218,7 @@ class AISettingsWidget(QtWidgets.QWidget):
         if idx >= 0:
             self.provider_combo.setCurrentIndex(idx)
 
-        # Base URL
-        self.base_url_input.setText(settings.get("base_url", ""))
-
-        # API Key
-        self.api_key_input.setText(settings.get("api_key", ""))
-
-        # Model
-        model = settings.get("model", "")
-        if model:
-            self.model_combo.setEditText(model)
+        self._apply_provider_settings(settings)
 
         # Generation Settings
         self.temperature.setValue(float(settings.get("temperature", 0.3)))
@@ -233,7 +241,8 @@ class AISettingsWidget(QtWidgets.QWidget):
             "provider": provider_key,
             "base_url": base_url,
             "api_key": self.api_key_input.text().strip(),
-            "model": self.model_combo.currentText().strip(),
+            "text_model": self.model_combo.currentText().strip(),
+            "image_model": self.image_model_input.currentText().strip(),
             "temperature": self.temperature.value(),
             "top_p": self.top_p.value(),
             "max_tokens": self.max_tokens.value(),
@@ -249,12 +258,14 @@ class AISettingsWidget(QtWidgets.QWidget):
     def reset_to_defaults(self) -> None:
         """Reset settings to defaults."""
         self.provider_combo.setCurrentIndex(0)
-        self.base_url_input.setText("https://api.openai.com/v1")
+        settings = ai_settings.DEFAULT_PROVIDER_SETTINGS["openai"]
+        self.base_url_input.setText(settings["base_url"])
         self.api_key_input.clear()
-        self.model_combo.clearEditText()
-        self.temperature.setValue(0.3)
-        self.top_p.setValue(0.9)
-        self.max_tokens.setValue(4096)
+        self.model_combo.setEditText(settings["text_model"])
+        self.image_model_input.setEditText(settings["image_model"])
+        self.temperature.setValue(float(settings["temperature"]))
+        self.top_p.setValue(float(settings["top_p"]))
+        self.max_tokens.setValue(int(settings["max_tokens"]))
         self.status_label.setText("<span style='color: blue;'>Settings reset to defaults (not saved).</span>")
 
     def test_connection(self) -> None:
@@ -321,23 +332,28 @@ class AISettingsWidget(QtWidgets.QWidget):
 
             if response.status_code == 200:
                 data = response.json()
-                models = [m.get("id", "") for m in data.get("data", [])]
-                models.sort()
+                model_data = data.get("data", [])
+                provider_key = self.provider_combo.currentData() or ""
+                text_models, image_models = ai_settings.split_models_by_capability(
+                    model_data,
+                    provider=provider_key,
+                )
+                all_models = []
+                for model in model_data:
+                    if isinstance(model, dict):
+                        model_id = model.get("id") or model.get("name") or ""
+                    else:
+                        model_id = model
+                    model_id = str(model_id).strip()
+                    if model_id:
+                        all_models.append(model_id)
+                all_models = sorted(set(all_models))
 
-                current_model = self.model_combo.currentText()
-                self.model_combo.clear()
-                for model_id in models:
-                    self.model_combo.addItem(model_id, model_id)
-
-                # Restore previous selection if still available
-                idx = self.model_combo.findText(current_model)
-                if idx >= 0:
-                    self.model_combo.setCurrentIndex(idx)
-                elif current_model:
-                    self.model_combo.setEditText(current_model)
+                self._populate_model_combo(self.model_combo, text_models or all_models)
+                self._populate_model_combo(self.image_model_input, image_models)
 
                 self.status_label.setText(
-                    f"<span style='color: green;'>Found {len(models)} models.</span>"
+                    f"<span style='color: green;'>Found {len(text_models)} text and {len(image_models)} image models.</span>"
                 )
             else:
                 self.status_label.setText(
@@ -347,3 +363,16 @@ class AISettingsWidget(QtWidgets.QWidget):
             self.status_label.setText(f"<span style='color: red;'>Failed: {str(e)}</span>")
         finally:
             self.fetch_models_btn.setEnabled(True)
+
+    def _populate_model_combo(self, combo: QtWidgets.QComboBox, models: list[str]) -> None:
+        """Populate a model combo while preserving the current selection."""
+        current_model = combo.currentText()
+        combo.clear()
+        for model_id in models:
+            combo.addItem(model_id, model_id)
+
+        idx = combo.findText(current_model)
+        if idx >= 0:
+            combo.setCurrentIndex(idx)
+        elif current_model:
+            combo.setEditText(current_model)
