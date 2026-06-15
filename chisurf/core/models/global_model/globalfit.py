@@ -43,22 +43,6 @@ class GlobalFitModel(model.Model, Curve):
         return [f.name for f in self.fits]
 
     @property
-    def links(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
-        """List of link definitions between local-fit parameters."""
-        return self._links
-
-    @links.setter
-    def links(self, v: typing.List[cs.core.fitting.parameter.FittingParameter]):
-        """Set the list of link definitions.
-
-        Parameters
-        ----------
-        v : list
-            List of link tuples ``(enabled, fit_idx, param_name, formula)``.
-        """
-        self._links = v if isinstance(v, list) else list()
-
-    @property
     def n_points(self) -> int:
         """Total number of data points across all local fits."""
         nbr_points = 0
@@ -90,11 +74,6 @@ class GlobalFitModel(model.Model, Curve):
     def global_parameters_bound_all(self) -> typing.List[typing.Tuple[float, float]]:
         """Bounds for all global parameters."""
         return [pi.bounds for pi in self.global_parameters_all]
-
-    @property
-    def global_parameter_linked_all(self) -> typing.List[bool]:
-        """Whether each global parameter is linked."""
-        return [p.is_linked for p in self.global_parameters_all]
 
     @property
     def parameters(self) -> typing.List[cs.core.fitting.parameter.FittingParameter]:
@@ -213,8 +192,6 @@ class GlobalFitModel(model.Model, Curve):
         self.fits = fits
         self.fit = fit
         self._global_parameters = dict()
-        self.parameters_calculated = list()
-        self._links = list()
         super().__init__(fit, *args, **kwargs)
 
 
@@ -332,28 +309,6 @@ class GlobalFitModel(model.Model, Curve):
         if variable_name not in list(self._global_parameters.keys()):
             self._global_parameters[parameter.name] = parameter
 
-    def setLinks(self):
-        """Evaluate link formulas and set up parameter links."""
-        self.parameters_calculated = list()
-        if self.clear_on_update:
-            self.clear_all_links()
-        f = [fit.model.parameters_all_dict for fit in self.fits]
-        g = self._global_parameters
-        for link in self.links:
-            en, origin_fit, origin_name, formula = link
-            if not en:
-                continue
-            try:
-                origin_parameter = f[origin_fit][origin_name]
-                target = eval(str(formula), {"__builtins__": {}}, {"f": f, "g": g})
-                if not isinstance(target, cs.core.parameter.Parameter):
-                    cs.logging.warning("Global link formula did not resolve to a Parameter: %r" % (formula,))
-                    continue
-                origin_parameter.link = target
-                print("f[%s][%s] linked to %s" % (origin_fit, origin_parameter.name, target.name))
-            except IndexError:
-                print("not enough fits index out of range")
-
     def autofitrange(self, fit: FitGroup):
         """Reset auto-fit range to cover all data.
 
@@ -384,27 +339,16 @@ class GlobalFitModel(model.Model, Curve):
         """
         del self.fits[fit_index]
 
-    def clear_all_links(self) -> None:
-        """Unlink all parameters in all local fits."""
-        for fit in self.fits:
-            for p in fit.model.parameters_all:
-                p.link = None
-
-    def clear_listed_links(self):
-        """Clear the link definition list."""
-        self.links = list()
-
     def __str__(self):
         """Return a string summary of the global model."""
         s = "\n"
         s += "Model: Global-fit\n"
         s += "Global-parameters:"
         p0 = list(zip(self.global_parameters_all_names, self.global_parameters_values_all,
-                 self.global_parameters_bound_all, self.global_parameters_fixed_all,
-                 self.global_parameter_linked_all))
-        s += "Parameter \t Value \t Bounds \t Fixed \t Linked\n"
+                 self.global_parameters_bound_all, self.global_parameters_fixed_all))
+        s += "Parameter \t Value \t Bounds \t Fixed\n"
         for p in p0:
-            s += "%s \t %.4f \t %s \t %s \t %s \n" % p
+            s += "%s \t %.4f \t %s \t %s\n" % p
         for fit in self.fits:
             s += "\n"
             s += fit.name + "\n"

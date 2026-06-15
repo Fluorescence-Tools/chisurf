@@ -208,12 +208,6 @@ class TestProjectV3Format(unittest.TestCase):
                     {"uid": "lf-uid-1", "name": "local1", "parameters": []}
                 ]
             })
-            p.links.append({
-                "source_fit_uid": "fit-uid-1",
-                "source_param_uid": "p-uid-1",
-                "target_fit_uid": "fit-uid-2",
-                "target_param_uid": "p-uid-2",
-            })
             p.ui_state["current_experiment_id"] = "exp-uid-1"
             p.metadata["checkpoint_interval"] = 50
 
@@ -227,7 +221,6 @@ class TestProjectV3Format(unittest.TestCase):
             self.assertIn("meta", raw)
             self.assertEqual(raw["meta"]["name"], "v3_test_project")
             self.assertIn("ds1", raw["datasets"])
-            self.assertIn("links", raw)
 
             loaded = load_project(project_dir)
             self.assertEqual(loaded.project_format_version, 3)
@@ -235,7 +228,6 @@ class TestProjectV3Format(unittest.TestCase):
             self.assertEqual(len(loaded.datasets), 2)
             self.assertEqual(len(loaded.fits), 1)
             self.assertEqual(loaded.fits[0]["uid"], "fit-uid-1")
-            self.assertEqual(len(loaded.links), 1)
 
     def test_v3_deterministic_ordering(self):
         with tempfile.TemporaryDirectory() as tmpdir:

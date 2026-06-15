@@ -28,7 +28,6 @@ class Project:
     datasets: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     experiments: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     fits: List[Dict[str, Any]] = field(default_factory=list)
-    links: List[Dict[str, Any]] = field(default_factory=list)
     ui_state: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
     extra: Dict[str, Any] = field(default_factory=dict)
@@ -52,7 +51,6 @@ class Project:
             "datasets": sorted_datasets,
             "experiments": sorted_experiments,
             "fits": self.fits,
-            "links": self.links,
             "ui": self.ui_state,
             "extra": self.extra,
         }
@@ -82,7 +80,6 @@ class Project:
             datasets=data.get("datasets") or {},
             experiments=data.get("experiments") or {},
             fits=data.get("fits") or [],
-            links=data.get("links") or [],
             ui_state=data.get("ui") or {},
             metadata=metadata,
             extra=data.get("extra") or {},

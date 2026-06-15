@@ -957,7 +957,6 @@ def save_fit(target_path: str = None, use_complex_name: bool = False, fit_window
             register_datacurve=lambda dc: "",
             log=log,
             group_index=0,
-            include_global_links=False,
         )
         # embed dataset in-place to avoid cross-fit collisions; reuse fit.data arrays
         datasets: typing.Dict[str, typing.Dict] = {}
@@ -1680,21 +1679,12 @@ def get_project_payload(project_name: str = "chisurf_project") -> CSProject:
 
             local_fits_state.append(rec)
 
-        global_model = getattr(fit_group, "_model", None)
-        global_links_state: typing.Dict[str, typing.Any] = {}
-        if global_model is not None:
-            try:
-                global_links_state = project_fit_state.global_links_to_state(global_model)
-            except Exception as exc:
-                log.warning(f"save_project: could not serialize global links for {fg_id}: {exc}")
-
         manifest_fits.append(
             {
                 "id": fg_id,
                 "name": getattr(fit_group, "name", fg_id),
                 "model_name": model_name,
                 "local_fits": local_fits_state,
-                "global_links": global_links_state,
             }
         )
 
@@ -1894,7 +1884,6 @@ def _build_fitgroup_payload(
     register_datacurve: typing.Callable[[cs.core.data.DataCurve], str],
     log: typing.Any,
     group_index: int = 0,
-    include_global_links: bool = True,
 ) -> typing.Tuple[str, typing.Dict]:
     """Helper to serialize a FitGroup into the Project payload.
 
@@ -1959,25 +1948,12 @@ def _build_fitgroup_payload(
 
         local_fits_state.append(rec)
 
-    # Capture global links if a GlobalFitModel is present and requested
-    global_links_state: typing.Dict[str, typing.Any] = {}
-    if include_global_links:
-        global_model = getattr(fit_group, "_model", None)
-        if global_model is not None:
-            try:
-                global_links_state = project_fit_state.global_links_to_state(global_model)
-            except Exception as exc:
-                log.warning(
-                    f"save_fit: could not serialize global links for fit group #{group_index}: {exc}"
-                )
-
     fg_key = f"fitgroup_{group_index:03d}"
     return fg_key, {
         "type": "fit_group",
         "name": getattr(fit_group, "name", fg_key),
         "model_name": model_name,
         "local_fits": local_fits_state,
-        "global_links": global_links_state,
     }
 
 
@@ -1986,12 +1962,11 @@ def _build_fitgroup_payload_from_window(
     register_datacurve: typing.Callable[[cs.core.data.DataCurve], str],
     log: typing.Any,
     group_index: int = 0,
-    include_global_links: bool = True,
 ) -> typing.Tuple[str, typing.Dict]:
     """Legacy wrapper: extract FitGroup from a GUI window, then delegate."""
     fit_group = getattr(fit_window, "fit", None)
     return _build_fitgroup_payload(
-        fit_group, register_datacurve, log, group_index, include_global_links
+        fit_group, register_datacurve, log, group_index
     )
 
 
@@ -2382,17 +2357,6 @@ def load_fit_project(project_path: str):
                         f"load_fit_project: could not restore fit_range for local fit in {key}: {exc}"
                     )
 
-        global_links_state = rec.get("global_links") or {}
-        if isinstance(global_links_state, dict):
-            global_model = getattr(fit_group, "_model", None)
-            if global_model is not None:
-                try:
-                    project_fit_state.apply_global_links_state(global_model, global_links_state)
-                except Exception as exc:
-                    log.warning(
-                        f"load_fit_project: could not restore global links for {key}: {exc}"
-                    )
-
     # Best-effort: bring the newest fit window to front (GUI only)
     if gui is not None:
         try:
@@ -2728,15 +2692,6 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
                     log.warning(
                         f"load_project: could not restore fit_range for local fit in {key}: {exc}"
                     )
-
-        global_links_state = rec.get("global_links") or {}
-        if isinstance(global_links_state, dict):
-            global_model = getattr(fit_group, "_model", None)
-            if global_model is not None:
-                try:
-                    project_fit_state.apply_global_links_state(global_model, global_links_state)
-                except Exception as exc:
-                    log.warning(f"load_project: could not restore global links for {key}: {exc}")
 
     # --- Restore UI state (current fit and window layout) -----------------
     if gui is not None:

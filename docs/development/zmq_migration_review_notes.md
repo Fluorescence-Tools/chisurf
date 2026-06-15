@@ -54,3 +54,14 @@ Failures to check:
 - `test_json_rpc_versioned_services` now fails with `Authentication required`,
   so the versioned API tests need an authenticated principal or a deliberate
   public-test path.
+- The project/global-fit cleanup removes the old global link state and now
+  rejects project format versions below v4 during `Project.from_dict`. The
+  targeted project command below produced 9 passing tests and 5 failures, all
+  from tests that still expect v3 projects to load:
+
+```bash
+PYTHONPATH="modules/chinet:modules/imp-tricks/src:." python -m pytest \
+  test/project/test_project_roundtrip.py \
+  test/project/test_project_v3.py \
+  -q --no-cov
+```
