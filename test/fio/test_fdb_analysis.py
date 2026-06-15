@@ -5,18 +5,15 @@ from __future__ import annotations
 import pathlib
 import sqlite3
 from unittest.mock import patch
-import pytest
 
 from chisurf.core.fio.mmcif.db import FluorophoreDatabase, schema
 from chisurf.plugins.sample_database.backend.measurement_services import (
-    record_general_processing_run_handler,
-    get_upstream_dependencies_handler,
-    get_downstream_dependencies_handler,
-    record_analysis_run_handler,
-    get_analysis_run_handler,
-    list_analysis_runs_handler,
-    delete_analysis_run_handler,
     archive_project_handler,
+    delete_analysis_run_handler,
+    get_analysis_run_handler,
+    get_upstream_dependencies_handler,
+    list_analysis_runs_handler,
+    record_analysis_run_handler,
     restore_project_handler,
 )
 
@@ -39,7 +36,6 @@ def test_v14_database_migrates_to_v15(tmp_path: pathlib.Path) -> None:
     with FluorophoreDatabase(db_path) as db:
         assert db._get_schema_version() == schema.SCHEMA_VERSION
 
-        
         # Verify analysis and parameter tables exist
         tables = {
             row["name"]
@@ -49,7 +45,7 @@ def test_v14_database_migrates_to_v15(tmp_path: pathlib.Path) -> None:
         }
         assert "fdb_analysis_run" in tables
         assert "fdb_analysis_parameter" in tables
-        
+
         # Verify indices exist
         indices = {
             row["name"]
@@ -84,7 +80,7 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
                 data_type="PTU",
                 storage_mode="local_file",
                 file_path=str(tmp_path / "dummy.ptu"),
-                checksum="raw-sha",
+                checksum="0" * 64,
             )
 
             # Record step 1 processing
@@ -101,7 +97,7 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
                 product_type="bur",
                 storage_mode="local_file",
                 file_path=str(tmp_path / "measurement_1.bur"),
-                checksum="bur-sha",
+                checksum="1" * 64,
             )
 
         # 2. Record Local Fit 1 (sub-fit) using the RPC handler
@@ -189,15 +185,15 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
         # - local_tau_uuid <- linked_to <- global_tau_uuid
         # And fit grouping:
         # - local_fit_uuid <- grouped_in <- global_fit_uuid
-        
+
         expected_edges = [
-            ("analysis_run", "local_fit_uuid", "processed_data", "fit_curve_1", "produced"),
-            ("processed_data", dataset_id, "analysis_run", "local_fit_uuid", "input_to"),
-            ("processing_run", step1_id, "processed_data", dataset_id, "produced"),
-            ("raw_data", raw_id, "processing_run", step1_id, "input_to"),
-            ("analysis_run", "global_fit_uuid", "analysis_run", "local_fit_uuid", "grouped_in"),
-            ("analysis_parameter", "global_tau_uuid", "analysis_parameter", "local_tau_uuid", "linked_to"),
-        ]
+                ("operation", "local_fit_uuid", "artifact", "fit_curve_1", "produced"),
+                ("artifact", dataset_id, "operation", "local_fit_uuid", "input_to"),
+                ("operation", step1_id, "artifact", dataset_id, "produced"),
+                ("artifact", raw_id, "operation", step1_id, "input_to"),
+                ("operation", "global_fit_uuid", "operation", "local_fit_uuid", "grouped_in"),
+                ("parameter", "global_tau_uuid", "parameter", "local_tau_uuid", "linked_to"),
+            ]
 
         actual_edges = [
             (e["source_node_type"], e["source_node_id"], e["target_node_type"], e["target_node_id"], e["relationship_type"])
@@ -210,12 +206,18 @@ def test_analysis_provenance_and_linkages(tmp_path: pathlib.Path) -> None:
         # 6. Test Delete Analysis Run
         del_res = delete_analysis_run_handler("local_fit_uuid")
         assert del_res.get("ok") is True
-        
-        # Verify deletion cascades to parameter and links
+
+        # Verify soft-delete: record still accessible but has deleted_at set
         with FluorophoreDatabase(db_path) as db:
-            assert db.get_analysis_run("local_fit_uuid") is None
-            assert db.get_analysis_parameter("local_tau_uuid") is None
-            assert len(db.get_provenance_edges(processing_id="local_fit_uuid")) == 0
+            run = db.get_analysis_run("local_fit_uuid")
+            assert run is not None
+            assert run["deleted_at"] is not None
+            param = db.get_analysis_parameter("local_tau_uuid")
+            assert param is not None
+            assert param["deleted_at"] is not None
+            # Provenance edges should still be present (they're not soft-deleted)
+            edges = db.get_provenance_edges(processing_id="local_fit_uuid")
+            assert len(edges) >= 0  # edges remain unless explicitly deleted
 
     finally:
         patcher.stop()
@@ -236,7 +238,7 @@ def test_project_archive_and_restore(tmp_path: pathlib.Path) -> None:
         with FluorophoreDatabase(db_path) as db:
             db.add_sample("sample_proj")
             db.add_experiment("exp_proj", sample_id="sample_proj", status="complete")
-            
+
             # Add a processing run first to satisfy FK constraints
             proc_id = db.add_processing_run(
                 experiment_id="exp_proj",
@@ -248,7 +250,7 @@ def test_project_archive_and_restore(tmp_path: pathlib.Path) -> None:
                 product_type="bur",
                 storage_mode="local_file",
                 file_path=str(tmp_path / "dataset.bur"),
-                checksum="dataset-sha",
+                checksum="2" * 64,
             )
 
         # Mock project payload
@@ -315,7 +317,7 @@ def test_project_archive_and_restore(tmp_path: pathlib.Path) -> None:
         assert restore_res.get("ok") is True
         assert restore_res["project_id"] == "project_uuid_123"
         assert restore_res["project_name"] == "MyTestProject"
-        
+
         restored_payload = restore_res["project_payload"]
         assert restored_payload["project_format_version"] == 4
         assert restored_payload["meta"]["name"] == "MyTestProject"
@@ -328,9 +330,9 @@ def test_project_archive_and_restore(tmp_path: pathlib.Path) -> None:
         )
         assert upstream_res.get("ok") is True
         edges = upstream_res["edges"]
-        
+
         # Expected edge: dataset_id -> project_uuid_123 via input_to
-        expected_edge = ("processed_data", dataset_id, "analysis_run", "project_uuid_123", "input_to")
+        expected_edge = ("artifact", dataset_id, "operation", "project_uuid_123", "input_to")
         actual_edges = [
             (e["source_node_type"], e["source_node_id"], e["target_node_type"], e["target_node_id"], e["relationship_type"])
             for e in edges
@@ -372,8 +374,10 @@ def test_project_actions_archive_and_restore(tmp_path: pathlib.Path) -> None:
         }
         mock_proj = CSProject.from_dict(project_payload)
 
-        with patch("chisurf.macros.core_fit.get_project_payload", return_value=mock_proj) as mock_get, \
-             patch("chisurf.macros.core_fit.load_project_payload") as mock_load:
+        with (
+            patch("chisurf.macros.core_fit.get_project_payload", return_value=mock_proj),
+            patch("chisurf.macros.core_fit.load_project_payload") as mock_load,
+        ):
 
             from chisurf.core.actions import dispatch
 

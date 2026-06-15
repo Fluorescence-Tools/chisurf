@@ -1,16 +1,13 @@
 import pathlib
 from unittest.mock import patch
-import pytest
 
 from chisurf.core.fio.mmcif.db import FluorophoreDatabase
-from chisurf.plugins.sample_database.gui.client import SampleDatabaseClient
 from chisurf.plugins.sample_database.backend.measurement_services import (
-    resolve_database_path,
-    database_backup_handler,
-    export_zip_archive_handler,
     archive_project_handler,
+    database_backup_handler,
     restore_project_handler,
 )
+from chisurf.plugins.sample_database.gui.client import SampleDatabaseClient
 
 
 def test_automatic_repository_audit_logging(tmp_path: pathlib.Path) -> None:
@@ -30,7 +27,7 @@ def test_automatic_repository_audit_logging(tmp_path: pathlib.Path) -> None:
             data_type="ptu",
             storage_mode="local_file",
             file_path=str(tmp_path / "raw.ptu"),
-            checksum="raw-sha123",
+            checksum="0" * 64,
         )
 
         logs = db.get_audit_logs(target_type="raw_data")
@@ -69,7 +66,7 @@ def test_automatic_repository_audit_logging(tmp_path: pathlib.Path) -> None:
             product_type="bur",
             storage_mode="local_file",
             file_path=str(tmp_path / "output.bur"),
-            checksum="bur-sha123",
+            checksum="1" * 64,
         )
 
         logs = db.get_audit_logs(target_type="processed_data")
@@ -190,7 +187,7 @@ def test_client_list_audit_logs(tmp_path: pathlib.Path) -> None:
                 data_type="ptu",
                 storage_mode="local_file",
                 file_path=str(tmp_path / "raw.ptu"),
-                checksum="raw-sha",
+                checksum="0" * 64,
             )
 
         client = SampleDatabaseClient()

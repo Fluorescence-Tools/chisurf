@@ -69,7 +69,7 @@ def test_burst_provenance_chain_and_manifest(tmp_path: Path) -> None:
             storage_mode="local_file",
             file_path=str(raw_path),
             size_bytes=raw_path.stat().st_size,
-            checksum="raw-sha",
+            checksum="0" * 64,
             header_metadata={"CreatorSW_Name": "test"},
             detector_mapping={"green": [0, 1]},
             validation_status="valid",
@@ -93,7 +93,7 @@ def test_burst_provenance_chain_and_manifest(tmp_path: Path) -> None:
             "local_file",
             file_path=str(bur_path),
             size_bytes=bur_path.stat().st_size,
-            checksum="bur-sha",
+            checksum="1" * 64,
             row_count=1,
             validation_status="valid",
         )
@@ -103,9 +103,9 @@ def test_burst_provenance_chain_and_manifest(tmp_path: Path) -> None:
         assert trace["processing_run"]["input_raw_data"][0]["raw_data_id"] == raw_id
 
         manifest = db.export_burst_processing_manifest(processing_id)
-        assert manifest["schema"] == "fdb.burst_processing_manifest.v1"
-        assert manifest["raw_data"][0]["checksum"] == "raw-sha"
-        assert manifest["processed_data"][0]["checksum"] == "bur-sha"
+        assert manifest["schema"] == "mfdb.burst_processing_manifest.v1"
+        assert manifest["raw_data"][0]["checksum"] == "0" * 64
+        assert manifest["processed_data"][0]["checksum"] == "1" * 64
 
         archive_id = db.register_archive_manifest(processing_id, manifest)
         included_edges = db.get_provenance_edges(

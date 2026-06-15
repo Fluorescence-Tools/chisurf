@@ -97,12 +97,15 @@ def test_setup_definition_repository_crud_and_linkage(tmp_path: pathlib.Path) ->
 
         # 4. Test Delete
         db.delete_setup_definition("setup_mfd_1")
-        assert db.get_setup_definition("setup_mfd_1") is None
+        setup = db.get_setup_definition("setup_mfd_1")
+        assert setup is not None
+        assert setup["deleted_at"] is not None
         
-        # Link remains NULL or legacy value (SQLite cascade does not delete experiment)
+        # Link remains intact because soft-delete keeps the setup record in the DB
         exp_row = db.get_experiment("exp_mfd")
         assert exp_row is not None
-        assert exp_row["setup_definition_id"] is None or exp_row["setup_name"] is None
+        assert exp_row["setup_definition_id"] == "setup_mfd_1"
+        assert exp_row["setup_name"] == "MFD Setup 1"
 
 
 def test_setup_configuration_validation() -> None:

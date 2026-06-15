@@ -2,6 +2,10 @@
 
 This document defines the requirements, scope, architecture, and current implementation progress of `fdb` (Fluorescence Database for Chemical Biology workflows in ChiSurf).
 
+Architecture migration note: the canonical target for consolidating the current
+phase-grown implementation is defined in
+[`prd_fdb_architecture_migration.md`](prd_fdb_architecture_migration.md).
+
 ---
 
 ## 📋 Status Checklist

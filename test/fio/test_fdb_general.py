@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import pathlib
 from unittest.mock import patch
-import pytest
 
 from chisurf.core.fio.mmcif.db import FluorophoreDatabase
 from chisurf.plugins.sample_database.backend.measurement_services import (
-    record_general_processing_run_handler,
-    get_upstream_dependencies_handler,
     get_downstream_dependencies_handler,
+    get_upstream_dependencies_handler,
+    record_general_processing_run_handler,
 )
 
 
@@ -37,7 +36,7 @@ def test_dependency_trace_and_general_processing(tmp_path: pathlib.Path) -> None
                 data_type="PTU",
                 storage_mode="local_file",
                 file_path=str(tmp_path / "dummy.ptu"),
-                checksum="raw-sha",
+                checksum="0" * 64,
             )
 
         # 2. Record Step 1: Raw data -> burst selection -> burst table product.
@@ -120,12 +119,12 @@ def test_dependency_trace_and_general_processing(tmp_path: pathlib.Path) -> None
         # - step1_run (target) <- input_to <- raw_id (source)
         
         expected_upstream = [
-            ("processing_run", "step3_run", "processed_data", "step3_product", "produced"),
-            ("processed_data", "step2_product", "processing_run", "step3_run", "input_to"),
-            ("processing_run", "step2_run", "processed_data", "step2_product", "produced"),
-            ("processed_data", "step1_product", "processing_run", "step2_run", "input_to"),
-            ("processing_run", "step1_run", "processed_data", "step1_product", "produced"),
-            ("raw_data", raw_id, "processing_run", "step1_run", "input_to"),
+            ("operation", "step3_run", "artifact", "step3_product", "produced"),
+            ("artifact", "step2_product", "operation", "step3_run", "input_to"),
+            ("operation", "step2_run", "artifact", "step2_product", "produced"),
+            ("artifact", "step1_product", "operation", "step2_run", "input_to"),
+            ("operation", "step1_run", "artifact", "step1_product", "produced"),
+            ("artifact", raw_id, "operation", "step1_run", "input_to"),
         ]
         
         actual_upstream = [

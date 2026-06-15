@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pathlib
 from unittest.mock import patch
+
 import numpy as np
 
 from chisurf.core.fio.mmcif.db import FluorophoreDatabase
@@ -44,7 +45,7 @@ def test_ndxplorer_load_and_record(tmp_path: pathlib.Path) -> None:
             data_type="PTU",
             storage_mode="local_file",
             file_path=str(tmp_path / "dummy.ptu"),
-            checksum="raw-sha",
+            checksum="0" * 64,
         )
         
         # Add dummy burst selection run
@@ -61,7 +62,7 @@ def test_ndxplorer_load_and_record(tmp_path: pathlib.Path) -> None:
             product_type="derived_product",
             storage_mode="folder",
             folder_path=str(bur_dir),
-            checksum="folder-sha",
+            checksum="1" * 64,
             row_count=4,
             validation_status="valid",
         )

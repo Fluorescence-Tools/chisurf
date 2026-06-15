@@ -9,7 +9,7 @@ from typing import Optional
 import numpy as np
 import zmq
 
-from .repository import FluorophoreDatabase
+from .repository import FluorescenceDatabase
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +51,10 @@ def _decode(obj):
 
 
 class FlrDatabaseServer:
-    """ZMQ server wrapping a FluorophoreDatabase instance.
+    """ZMQ server wrapping a FluorescenceDatabase instance.
 
     Runs a REP socket in a daemon thread.  Handles method dispatch for
-    all public methods of FluorophoreDatabase.
+    all public methods of FluorescenceDatabase.
     """
 
     def __init__(
@@ -62,9 +62,9 @@ class FlrDatabaseServer:
         db_path: Optional[str] = None,
         bind: str = "tcp://127.0.0.1:5559",
         *,
-        database: Optional[FluorophoreDatabase] = None,
+        database: Optional[FluorescenceDatabase] = None,
     ):
-        self.db = database or FluorophoreDatabase(db_path)
+        self.db = database or FluorescenceDatabase(db_path)
         self._bind = bind
         self._context: Optional[zmq.Context] = None
         self._socket: Optional[zmq.Socket] = None

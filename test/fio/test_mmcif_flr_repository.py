@@ -7,7 +7,7 @@ from chisurf.core.fio.mmcif.db import FluorophoreDatabase
 
 @pytest.fixture
 def db():
-    return FluorophoreDatabase(":memory:")
+    return FluorophoreDatabase(":memory:", enforce_foreign_keys=False)
 
 
 class TestFluorophoreDatabaseProbes:

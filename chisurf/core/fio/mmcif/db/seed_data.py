@@ -7,8 +7,8 @@ from typing import Optional
 
 import numpy as np
 
+from .repository import FluorescenceDatabase
 from .database_resolver import source_database_path
-from .repository import FluorophoreDatabase
 
 T4_LYSOZYME_SEQUENCE = "MSTLQEK"
 
@@ -27,7 +27,7 @@ def seed_curated_database(db_path: Optional[str | Path] = None) -> Path:
         Database path.
     """
     path = Path(db_path) if db_path is not None else source_database_path()
-    db = FluorophoreDatabase(path)
+    db = FluorescenceDatabase(path)
     try:
         _seed_probe_types(db)
         _seed_probes(db)
@@ -44,13 +44,13 @@ def seed_curated_database(db_path: Optional[str | Path] = None) -> Path:
     return path
 
 
-def _seed_probe_types(db: FluorophoreDatabase) -> None:
+def _seed_probe_types(db: FluorescenceDatabase) -> None:
     db.add_probe_type("organic_dye", "Organic dye")
     db.add_probe_type("amino_acid", "Amino acid fluorophore")
     db.add_probe_type("nucleic_acid", "Nucleic acid fluorophore")
 
 
-def _seed_probes(db: FluorophoreDatabase) -> None:
+def _seed_probes(db: FluorescenceDatabase) -> None:
     types = {row["type_name"]: row["type_id"] for row in db.get_probe_types()}
     probes = [
         ("Alexa488", "organic_dye", "organic_dye", 495.0, 519.0, 0.92, 73000.0),
@@ -77,7 +77,7 @@ def _seed_probes(db: FluorophoreDatabase) -> None:
         )
 
 
-def _seed_entities(db: FluorophoreDatabase) -> None:
+def _seed_entities(db: FluorescenceDatabase) -> None:
     db.add_entity(
         "148L",
         type="polymer",
@@ -94,7 +94,7 @@ def _seed_entities(db: FluorophoreDatabase) -> None:
     db.set_sequence("1RTD_DNA", list("ACGTACGTACGTACGTACGT"))
 
 
-def _seed_conditions_and_assemblies(db: FluorophoreDatabase) -> None:
+def _seed_conditions_and_assemblies(db: FluorescenceDatabase) -> None:
     db.add_sample_condition(
         "pbs_ph74_25c",
         ph=7.4,
@@ -121,7 +121,7 @@ def _seed_conditions_and_assemblies(db: FluorophoreDatabase) -> None:
     )
 
 
-def _seed_users_and_devices(db: FluorophoreDatabase) -> None:
+def _seed_users_and_devices(db: FluorescenceDatabase) -> None:
     db.add_user("thomas", "Thomas Peulen", "thomas.peulen@tu-dortmund.de", "TU Dortmund")
     db.add_user("operator_demo", "Demo Operator", "operator@example.org", "Demo lab")
     db.add_device(
@@ -146,7 +146,7 @@ def _seed_users_and_devices(db: FluorophoreDatabase) -> None:
     )
 
 
-def _seed_positions(db: FluorophoreDatabase) -> None:
+def _seed_positions(db: FluorescenceDatabase) -> None:
     alexa488 = _probe_id(db, "Alexa488")
     alexa594 = _probe_id(db, "Alexa594")
     cy3 = _probe_id(db, "Cy3")
@@ -173,7 +173,7 @@ def _seed_positions(db: FluorophoreDatabase) -> None:
     )
 
 
-def _seed_samples(db: FluorophoreDatabase) -> None:
+def _seed_samples(db: FluorescenceDatabase) -> None:
     db.add_sample(
         "148L_65_141_A488_A594",
         uuid="00000000-0000-4000-8000-000000000001",
@@ -248,7 +248,7 @@ def _seed_samples(db: FluorophoreDatabase) -> None:
     )
 
 
-def _seed_experiment_types(db: FluorophoreDatabase) -> None:
+def _seed_experiment_types(db: FluorescenceDatabase) -> None:
     experiment_types = [
         ("imaging", "Imaging", "Optical fluorescence imaging experiment"),
         ("flim", "Imaging", "Fluorescence lifetime imaging microscopy"),
@@ -262,7 +262,7 @@ def _seed_experiment_types(db: FluorophoreDatabase) -> None:
         db.add_experiment_type(name, category=category, description=description)
 
 
-def _seed_experiments(db: FluorophoreDatabase) -> None:
+def _seed_experiments(db: FluorescenceDatabase) -> None:
     type_ids = {row["name"]: row["type_id"] for row in db.get_experiment_types()}
     db.add_experiment(
         "148L_tcspc_001",
@@ -351,7 +351,7 @@ def _seed_experiments(db: FluorophoreDatabase) -> None:
     )
 
 
-def _seed_analyses(db: FluorophoreDatabase) -> None:
+def _seed_analyses(db: FluorescenceDatabase) -> None:
     a488_pos = _position_id(db, "Alexa488", "148L", 65)
     a594_pos = _position_id(db, "Alexa594", "148L", 141)
     sp1 = db.add_sample_probe(
@@ -403,7 +403,7 @@ def _seed_analyses(db: FluorophoreDatabase) -> None:
     )
 
 
-def _probe_id(db: FluorophoreDatabase, name: str) -> int:
+def _probe_id(db: FluorescenceDatabase, name: str) -> int:
     row = db.conn.execute(
         "SELECT probe_id FROM probes WHERE chromophore_name=?", (name,)
     ).fetchone()
@@ -413,7 +413,7 @@ def _probe_id(db: FluorophoreDatabase, name: str) -> int:
 
 
 def _position_id(
-    db: FluorophoreDatabase, probe_name: str, entity_id: str, residue_number: int
+    db: FluorescenceDatabase, probe_name: str, entity_id: str, residue_number: int
 ) -> int:
     row = db.conn.execute(
         "SELECT id FROM flr_poly_probe_position WHERE probe_id=? AND entity_id=? AND residue_number=?",

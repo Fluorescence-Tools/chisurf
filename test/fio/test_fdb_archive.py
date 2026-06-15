@@ -1,15 +1,14 @@
 import json
-import os
 import pathlib
 import zipfile
 from unittest.mock import patch
+
 import pytest
 
 from chisurf.core.fio.mmcif.db import FluorophoreDatabase
 from chisurf.plugins.sample_database.backend.measurement_services import (
-    resolve_database_path,
-    export_provenance_graph_handler,
     database_backup_handler,
+    export_provenance_graph_handler,
     export_zip_archive_handler,
 )
 
@@ -32,7 +31,7 @@ def temp_db_setup(tmp_path):
             data_type="ptu",
             storage_mode="local_file",
             file_path=str(tmp_path / "raw.ptu"),
-            checksum="raw-sha123",
+            checksum="0" * 64,
         )
         
         # 4. Add processing run
@@ -59,7 +58,7 @@ def temp_db_setup(tmp_path):
             product_type="bur",
             storage_mode="local_file",
             file_path=str(real_file_path),
-            checksum="proc-sha456",
+            checksum="1" * 64,
         )
         
         # Link processing_run -> processed_data
