@@ -4,6 +4,7 @@ import numpy as np
 
 import chisurf.core.experiments
 import chisurf.core.fitting
+import chisurf.core.fitting.fit
 import chisurf.core.models
 import chisurf.core.models.tcspc.fret
 
@@ -140,7 +141,7 @@ class FRETLineGenerator(object):
 
         self.fret_efficiencies = np.zeros(
             self.n_points,
-            dtype=np.float
+            dtype=np.float64
         )
         self.fluorescence_averaged_lifetimes = np.zeros_like(
             self.fret_efficiencies

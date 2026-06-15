@@ -181,3 +181,183 @@ class Tests(unittest.TestCase):
                 f
             ), True
         )
+
+    def test_static_fret_line_with_specified_params(self):
+        """Test StaticFRETLine with R0=52, sigma=6, tau0=4 parameters."""
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
+            start=np.log(1),
+            stop=np.log(500)
+        )
+        # Create StaticFRETLine with default parameters
+        fl = chisurf.core.fluorescence.fret.fret_line.StaticFRETLine(
+            n_points=50,
+            parameter_range=(10, 100)
+        )
+        
+        # Verify default R0 is 52
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['R0'].value,
+            52.0,
+            places=5
+        )
+        
+        # Verify default tau0 is 4 ns
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['t0'].value,
+            4.0,
+            places=5
+        )
+        
+        # Set sigma to 6 Angstrom
+        fl.sigma = 6.0
+        
+        # Verify sigma is set correctly
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['s(G,1)'].value,
+            6.0,
+            places=5
+        )
+        
+        # Calculate the FRET line
+        fl.update()
+        
+        # Verify we have the expected number of points
+        self.assertEqual(len(fl.parameter_values), 50)
+        
+        # Verify parameter values are in the expected range
+        self.assertGreaterEqual(fl.parameter_values[0], 10)
+        self.assertLessEqual(fl.parameter_values[-1], 100)
+        
+        # Verify species_averaged_lifetimes and fluorescence_averaged_lifetimes are computed
+        self.assertEqual(len(fl.species_averaged_lifetimes), 50)
+        self.assertEqual(len(fl.fluorescence_averaged_lifetimes), 50)
+        
+        # Verify conversion function is available
+        x, y = fl.conversion_function
+        self.assertEqual(len(x), 50)
+        self.assertEqual(len(y), 50)
+        
+        # Verify transfer efficiency can be computed
+        self.assertGreaterEqual(fl.transfer_efficiency, 0.0)
+        self.assertLessEqual(fl.transfer_efficiency, 1.0)
+
+    def test_dynamic_fret_line_with_specified_params(self):
+        """Test DynamicFRETLine with R0=52, sigma=6, tau0=4 for two states."""
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
+            start=np.log(1),
+            stop=np.log(500)
+        )
+        
+        # Create DynamicFRETLine with specific parameters
+        fl = chisurf.core.fluorescence.fret.fret_line.DynamicFRETLine(
+            distance_1=40.0,
+            distance_2=80.0,
+            sigma_1=6.0,
+            sigma_2=6.0,
+            n_points=50,
+            parameter_range=(0, 1)
+        )
+        
+        # Verify default R0 is 52
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['R0'].value,
+            52.0,
+            places=5
+        )
+        
+        # Verify default tau0 is 4 ns
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['t0'].value,
+            4.0,
+            places=5
+        )
+        
+        # Verify the two states have correct mean distances
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['R(G,1)'].value,
+            40.0,
+            places=5
+        )
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['R(G,2)'].value,
+            80.0,
+            places=5
+        )
+        
+        # Verify the two states have correct sigmas
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['s(G,1)'].value,
+            6.0,
+            places=5
+        )
+        self.assertAlmostEqual(
+            fl.model.parameter_dict['s(G,2)'].value,
+            6.0,
+            places=5
+        )
+        
+        # Calculate the FRET line
+        fl.update()
+        
+        # Verify we have the expected number of points
+        self.assertEqual(len(fl.parameter_values), 50)
+        
+        # Verify parameter values are in the expected range [0, 1]
+        self.assertGreaterEqual(fl.parameter_values[0], 0)
+        self.assertLessEqual(fl.parameter_values[-1], 1)
+        
+        # Verify species_averaged_lifetimes and fluorescence_averaged_lifetimes are computed
+        self.assertEqual(len(fl.species_averaged_lifetimes), 50)
+        self.assertEqual(len(fl.fluorescence_averaged_lifetimes), 50)
+        
+        # Verify conversion function is available
+        x, y = fl.conversion_function
+        self.assertEqual(len(x), 50)
+        self.assertEqual(len(y), 50)
+        
+        # Verify transfer efficiency can be computed
+        self.assertGreaterEqual(fl.transfer_efficiency, 0.0)
+        self.assertLessEqual(fl.transfer_efficiency, 1.0)
+
+    def test_fret_line_properties(self):
+        """Test that all FRET line properties work correctly."""
+        chisurf.core.models.tcspc.fret.rda_axis = np.logspace(
+            start=np.log(1),
+            stop=np.log(500)
+        )
+        
+        # Test StaticFRETLine
+        static_fl = chisurf.core.fluorescence.fret.fret_line.StaticFRETLine(
+            n_points=20
+        )
+        static_fl.update()
+        
+        # Test all properties
+        self.assertIsNotNone(static_fl.conversion_function)
+        self.assertIsNotNone(static_fl.conversion_function_string)
+        self.assertIsNotNone(static_fl.transfer_efficency_string)
+        self.assertIsNotNone(static_fl.fdfa_string)
+        self.assertIsNotNone(static_fl.fret_species_averaged_lifetime)
+        self.assertIsNotNone(static_fl.fret_fluorescence_averaged_lifetime)
+        self.assertIsNotNone(static_fl.donor_species_averaged_lifetime)
+        self.assertIsNotNone(static_fl.transfer_efficiency)
+        self.assertIsNotNone(static_fl.polynom_coefficients)
+        self.assertIsNotNone(static_fl.parameter_values)
+        
+        # Test DynamicFRETLine
+        dynamic_fl = chisurf.core.fluorescence.fret.fret_line.DynamicFRETLine(
+            n_points=20
+        )
+        dynamic_fl.update()
+        
+        # Test all properties
+        self.assertIsNotNone(dynamic_fl.conversion_function)
+        self.assertIsNotNone(dynamic_fl.conversion_function_string)
+        self.assertIsNotNone(dynamic_fl.transfer_efficency_string)
+        self.assertIsNotNone(dynamic_fl.fdfa_string)
+        self.assertIsNotNone(dynamic_fl.fret_species_averaged_lifetime)
+        self.assertIsNotNone(dynamic_fl.fret_fluorescence_averaged_lifetime)
+        self.assertIsNotNone(dynamic_fl.donor_species_averaged_lifetime)
+        self.assertIsNotNone(dynamic_fl.transfer_efficiency)
+        self.assertIsNotNone(dynamic_fl.polynom_coefficients)
+        self.assertIsNotNone(dynamic_fl.parameter_values)

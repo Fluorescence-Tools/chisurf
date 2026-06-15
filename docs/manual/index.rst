@@ -22,6 +22,7 @@ ChiSurf Manual
    Nuisances <nuisances>
    Equation parsing <equation_parsing>
    Fluorescence Lifetime <fluorescence_lifetime>
+   FRET Lines <fret_lines>
    Discrete FRET rate constants <discrete_fret_rate_constants>
    Partial donor-donor energy migration <partial_donordonor_energy_migration>
    Worm-like chain <wormlike_chain>
