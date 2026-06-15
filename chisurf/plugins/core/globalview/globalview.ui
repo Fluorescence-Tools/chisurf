@@ -20,6 +20,21 @@
    <string>🕸️ ChiSurf Network Visualization</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <property name="spacing">
+    <number>1</number>
+   </property>
    <item row="0" column="0">
     <widget class="QGroupBox" name="groupBox_2">
      <property name="sizePolicy">
@@ -100,7 +115,7 @@
       <item row="2" column="0">
        <widget class="QCheckBox" name="checkBox_connect_fits">
         <property name="toolTip">
-         <string>Connect fits is only to improve the vizual representation</string>
+         <string>🔗 Connect fits is only to improve the vizual representation</string>
         </property>
         <property name="text">
          <string>🔗 Connect fits</string>
@@ -248,13 +263,45 @@
       <attribute name="title">
        <string>🕸️ Graph</string>
       </attribute>
-      <layout class="QVBoxLayout" name="graphTabLayout"/>
+      <layout class="QVBoxLayout" name="graphTabLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>1</number>
+       </property>
+      </layout>
      </widget>
      <widget class="QWidget" name="paramsTab">
       <attribute name="title">
        <string>🎛️ Parameters</string>
       </attribute>
-      <layout class="QVBoxLayout" name="paramsTabLayout"/>
+      <layout class="QVBoxLayout" name="paramsTabLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <property name="spacing">
+        <number>1</number>
+       </property>
+      </layout>
      </widget>
     </widget>
    </item>

@@ -44,12 +44,69 @@ GRAPH_LAYOUTS = [
 ]
 
 
+COMPACT_STYLE = """
+QGroupBox {
+    margin-top: 10px;
+    padding: 1px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 4px;
+    padding: 0 2px;
+}
+QToolButton {
+    margin: 0;
+    padding: 1px 4px;
+}
+QCheckBox {
+    margin: 0;
+    padding: 0;
+    spacing: 2px;
+}
+QLabel {
+    margin: 0;
+    padding: 0;
+}
+QLineEdit,
+QComboBox,
+QDoubleSpinBox {
+    margin: 0;
+    padding: 1px 3px;
+}
+QTabWidget::pane {
+    margin: 0;
+    padding: 0;
+}
+QTabBar::tab {
+    margin: 0;
+    padding: 2px 6px;
+}
+QTableView {
+    margin: 0;
+    padding: 0;
+}
+"""
+
+
 @persist_plugin_state("globalview")
 class GraphWizard(QtWidgets.QWidget):
 
     graph_layouts = GRAPH_LAYOUTS
 
     node_colors = dict(NODE_COLORS)
+
+    @staticmethod
+    def _compact_layouts(widget: QtWidgets.QWidget) -> None:
+        """Tighten layout margins and spacing for this plugin.
+
+        Parameters
+        ----------
+        widget : QWidget
+            Root widget whose descendant layouts should be compacted.
+        """
+        for layout in widget.findChildren(QtWidgets.QLayout):
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(1)
 
     def recompute_graph(self):
         node_data = self.make_graph_plot(
@@ -402,6 +459,7 @@ class GraphWizard(QtWidgets.QWidget):
         if hasattr(self, "graphTabLayout") and self.graphTabLayout is not None:
             self.graphTabLayout.addWidget(w)
         self.graph_widget = w
+        self._compact_layouts(w)
         return node_data
 
     @cs.gui.decorators.init_with_ui(
@@ -452,6 +510,8 @@ class GraphWizard(QtWidgets.QWidget):
         self.checkBox_include_fixed.stateChanged.connect(self.recompute_graph)
         self.comboBox_layout.currentIndexChanged.connect(self.recompute_graph)
         self.comboBox_layout.addItems(self.graph_layouts)
+        self.setStyleSheet(COMPACT_STYLE)
+        self._compact_layouts(self)
 
 
 if __name__ == "plugin":
@@ -464,6 +524,6 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     app.aboutToQuit.connect(app.deleteLater)
     graph_wiz = GraphWizard()
-    graph_wiz.setWindowTitle("ChiSurf Parameter Network")
+    graph_wiz.setWindowTitle("🕸️ ChiSurf Parameter Network")
     graph_wiz.show()
     sys.exit(app.exec_())

@@ -63,7 +63,7 @@ class ParameterFilterProxy(QtCore.QSortFilterProxyModel):
 
     def setFilterMode(self, mode: str):
 # TODO: needs docstring
-        self._filter_mode = mode
+        self._filter_mode = mode.split()[-1].strip().lower()
         self.invalidateFilter()
 
     def filterAcceptsRow(
@@ -364,11 +364,12 @@ class ParameterTableView(QtWidgets.QWidget):
     def _build_ui(self):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+        layout.setSpacing(0)
 
         # toolbar
         toolbar = QtWidgets.QHBoxLayout()
-        toolbar.setSpacing(4)
+        toolbar.setContentsMargins(0, 0, 0, 0)
+        toolbar.setSpacing(1)
 
         self._filter_edit = QtWidgets.QLineEdit()
         self._filter_edit.setPlaceholderText("🔎 filter: fit:name param:name…")
@@ -377,50 +378,50 @@ class ParameterTableView(QtWidgets.QWidget):
         toolbar.addWidget(self._filter_edit)
 
         self._mode_combo = QtWidgets.QComboBox()
-        self._mode_combo.addItems(["all", "free", "fixed", "linked"])
-        self._mode_combo.setToolTip("Show only parameters matching status")
+        self._mode_combo.addItems(["☰ all", "🟢 free", "📌 fixed", "🔗 linked"])
+        self._mode_combo.setToolTip("🔎 Show only parameters matching status")
         toolbar.addWidget(self._mode_combo)
 
         toolbar.addStretch()
 
         self._btn_link = QtWidgets.QToolButton()
         self._btn_link.setText("🔗 Link")
-        self._btn_link.setToolTip("Link selected parameters (first = master)")
+        self._btn_link.setToolTip("🔗 Link selected parameters (first = master)")
         toolbar.addWidget(self._btn_link)
 
         self._btn_unlink = QtWidgets.QToolButton()
         self._btn_unlink.setText("⛓️ Unlink")
-        self._btn_unlink.setToolTip("Unlink selected parameters")
+        self._btn_unlink.setToolTip("⛓️ Unlink selected parameters")
         toolbar.addWidget(self._btn_unlink)
 
         self._btn_fix = QtWidgets.QToolButton()
         self._btn_fix.setText("📌 Fix")
-        self._btn_fix.setToolTip("Fix selected parameters")
+        self._btn_fix.setToolTip("📌 Fix selected parameters")
         toolbar.addWidget(self._btn_fix)
 
         self._btn_unfix = QtWidgets.QToolButton()
         self._btn_unfix.setText("🧷 Unfix")
-        self._btn_unfix.setToolTip("Unfix selected parameters")
+        self._btn_unfix.setToolTip("🧷 Unfix selected parameters")
         toolbar.addWidget(self._btn_unfix)
 
         self._btn_set_value = QtWidgets.QToolButton()
         self._btn_set_value.setText("🎯 Set value…")
-        self._btn_set_value.setToolTip("Set value for all selected parameters")
+        self._btn_set_value.setToolTip("🎯 Set value for all selected parameters")
         toolbar.addWidget(self._btn_set_value)
 
         self._btn_link_by_name = QtWidgets.QToolButton()
         self._btn_link_by_name.setText("🔤 Link by name…")
-        self._btn_link_by_name.setToolTip("Link parameters by name across fits")
+        self._btn_link_by_name.setToolTip("🔤 Link parameters by name across fits")
         toolbar.addWidget(self._btn_link_by_name)
 
         self._btn_refresh = QtWidgets.QToolButton()
         self._btn_refresh.setText("🔄 Refresh")
-        self._btn_refresh.setToolTip("Reload all parameters from fits")
+        self._btn_refresh.setToolTip("🔄 Reload all parameters from fits")
         toolbar.addWidget(self._btn_refresh)
 
         self._btn_find_uid = QtWidgets.QToolButton()
         self._btn_find_uid.setText("🔎 Find by UUID…")
-        self._btn_find_uid.setToolTip("Look up a parameter or fit by its unique identifier")
+        self._btn_find_uid.setToolTip("🔎 Look up a parameter or fit by its unique identifier")
         toolbar.addWidget(self._btn_find_uid)
 
         layout.addLayout(toolbar)
@@ -451,7 +452,7 @@ class ParameterTableView(QtWidgets.QWidget):
 
         # Vertical header: show row numbers
         vhdr = self._table.verticalHeader()
-        vhdr.setDefaultSectionSize(24)
+        vhdr.setDefaultSectionSize(20)
         vhdr.setHighlightSections(False)
 
         # Font: monospace for data cells
@@ -459,7 +460,8 @@ class ParameterTableView(QtWidgets.QWidget):
         font.setStyleHint(QtGui.QFont.Monospace)
         self._table.setFont(font)
         hdr.setFont(QtGui.QFont("SF Mono", 10))
-        hdr.setDefaultSectionSize(24)
+        hdr.setDefaultSectionSize(20)
+        hdr.setMinimumSectionSize(18)
 
         # Frozen columns: first 3 columns always visible
         if hasattr(self._table, "setColumnHidden"):
@@ -475,6 +477,10 @@ class ParameterTableView(QtWidgets.QWidget):
         self._table.setColumnWidth(COL_BOUNDS_ON, 70)
         self._table.setColumnWidth(COL_ERROR, 80)
         self._table.setColumnWidth(COL_LINK_ROW, 90)
+        self._table.setStyleSheet(
+            "QTableView { margin: 0; padding: 0; } "
+            "QHeaderView::section { padding: 1px 3px; margin: 0; }"
+        )
 
         # delegates
         self._table.setItemDelegateForColumn(
@@ -676,7 +682,7 @@ class ParameterTableView(QtWidgets.QWidget):
         value, ok = QtWidgets.QInputDialog.getDouble(
             self,
             "🎯 Set value",
-            f"New value for {len(params_with_idx)} parameter(s):",
+            f"🎯 New value for {len(params_with_idx)} parameter(s):",
             params_with_idx[0][2].value,
             -1e12,
             1e12,
@@ -714,7 +720,7 @@ class ParameterTableView(QtWidgets.QWidget):
         name, ok = QtWidgets.QInputDialog.getItem(
             self,
             "🔤 Link by name",
-            "Parameter name to link across fits:",
+            "🔤 Parameter name to link across fits:",
             sorted(names),
             editable=False,
         )
@@ -766,7 +772,7 @@ class ParameterTableView(QtWidgets.QWidget):
         uid, ok = QtWidgets.QInputDialog.getText(
             self,
             "🔎 Find by UUID",
-            "Enter a unique identifier (UUID):",
+            "🔎 Enter a unique identifier (UUID):",
         )
         if not ok or not uid:
             return
