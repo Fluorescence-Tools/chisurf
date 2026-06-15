@@ -131,7 +131,7 @@ def build_fit_graph(
         for m in nodes:
             if m["node_type"] != "parameter":
                 continue
-            if m["name"] == link_name and m["fit_idx"] != n["fit_idx"]:
+            if m["name"] == link_name:
                 edges.append({"source": n["node_idx"], "target": m["node_idx"]})
 
     # Optional: connect all fit nodes to each other

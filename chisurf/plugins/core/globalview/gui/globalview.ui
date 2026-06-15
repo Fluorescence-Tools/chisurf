@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>🕸️ ChiSurf Network Visualization</string>
+   <string>ChiSurf Network Visualization</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
@@ -29,7 +29,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>🕸️ Visualization</string>
+      <string>Visualization</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <property name="leftMargin">
@@ -50,7 +50,7 @@
       <item row="1" column="2" colspan="2">
        <widget class="QToolButton" name="toolButton_3">
         <property name="text">
-         <string>🔄 redraw</string>
+         <string>redraw</string>
         </property>
        </widget>
       </item>
@@ -73,7 +73,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>📏 Graph scale</string>
+         <string>Graph scale</string>
         </property>
        </widget>
       </item>
@@ -93,7 +93,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>⚪ Node size</string>
+         <string>Node size</string>
         </property>
        </widget>
       </item>
@@ -103,14 +103,14 @@
          <string>Connect fits is only to improve the vizual representation</string>
         </property>
         <property name="text">
-         <string>🔗 Connect fits</string>
+         <string>Connect fits</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
        <widget class="QCheckBox" name="checkBox_include_fixed">
         <property name="text">
-         <string>📌 Include fixed</string>
+         <string>Include fixed</string>
         </property>
        </widget>
       </item>
@@ -126,7 +126,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>🕸️ Network</string>
+      <string>Network</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -150,14 +150,14 @@
       <item>
        <widget class="QToolButton" name="toolButton_4">
         <property name="text">
-         <string>💾 save</string>
+         <string>save</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_5">
         <property name="text">
-         <string>📂 load</string>
+         <string>load</string>
         </property>
        </widget>
       </item>
@@ -173,7 +173,7 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>🔗 Link</string>
+      <string>Link</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <property name="leftMargin">
@@ -194,14 +194,14 @@
       <item row="3" column="2">
        <widget class="QCheckBox" name="checkBox_3">
         <property name="text">
-         <string>☑️ all</string>
+         <string>all</string>
         </property>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QToolButton" name="toolButton_2">
         <property name="text">
-         <string>🧹 clear</string>
+         <string>clear</string>
         </property>
        </widget>
       </item>
@@ -232,7 +232,7 @@
       <item row="1" column="1" colspan="2">
        <widget class="QToolButton" name="toolButton">
         <property name="text">
-         <string>🔗 link</string>
+         <string>link</string>
         </property>
        </widget>
       </item>
@@ -246,13 +246,13 @@
      </property>
      <widget class="QWidget" name="graphTab">
       <attribute name="title">
-       <string>🕸️ Graph</string>
+       <string>Graph</string>
       </attribute>
       <layout class="QVBoxLayout" name="graphTabLayout"/>
      </widget>
      <widget class="QWidget" name="paramsTab">
       <attribute name="title">
-       <string>🎛️ Parameters</string>
+       <string>Parameters</string>
       </attribute>
       <layout class="QVBoxLayout" name="paramsTabLayout"/>
      </widget>

@@ -1,0 +1,26 @@
+from chisurf.plugins.core.globalview.parameter_table_model import (  # noqa: F401
+    ParameterTableModel,
+    COL_ROW,
+    COL_FIT,
+    COL_LOCAL_FIT,
+    COL_PARAM,
+    COL_VALUE,
+    COL_FIXED,
+    COL_BOUNDS_LO,
+    COL_BOUNDS_HI,
+    COL_BOUNDS_ON,
+    COL_ERROR,
+    COL_LINK_ROW,
+    COL_LINK_FITGROUP,
+    COL_LINK_FIT,
+    COL_LINK_SUBFIT,
+    COL_LINK_PARAM,
+    COL_LINKED,
+    HEADERS,
+    _fit_name,
+    _local_fit_name,
+    _link_summary,
+    _get_rows,
+)
+
+# Compatibility re-export — canonical implementation lives at root level

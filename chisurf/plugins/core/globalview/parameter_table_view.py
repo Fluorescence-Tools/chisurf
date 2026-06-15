@@ -9,10 +9,11 @@ from chisurf import logging
 from chisurf.core.fitting.fit import Fit, FitGroup
 from chisurf.core.fitting.parameter import FittingParameter
 from chisurf.gui.plots.table_plot import BooleanToggleDelegate
+from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
 from chisurf.core.base import Base, find_by_uuid
 
 from chisurf.plugins.core.globalview.parameter_table_model import (
-    ParameterTableModel,
+    COL_ROW,
     COL_FIT,
     COL_LOCAL_FIT,
     COL_PARAM,
@@ -22,13 +23,14 @@ from chisurf.plugins.core.globalview.parameter_table_model import (
     COL_BOUNDS_HI,
     COL_BOUNDS_ON,
     COL_ERROR,
+    COL_LINK_ROW,
     COL_LINKED,
-    COL_DESCRIPTION,
+    ParameterTableModel,
 )
 
 
-NUMERIC_COLS = {COL_VALUE, COL_BOUNDS_LO, COL_BOUNDS_HI, COL_ERROR}
-FROZEN_COLS = 3  # Fit, Local fit, Parameter
+NUMERIC_COLS = {COL_ROW, COL_VALUE, COL_BOUNDS_LO, COL_BOUNDS_HI, COL_ERROR}
+FROZEN_COLS = 4  # Row, Fit, Local fit, Parameter
 
 
 class ParameterFilterProxy(QtCore.QSortFilterProxyModel):
@@ -104,6 +106,95 @@ class ParameterFilterProxy(QtCore.QSortFilterProxyModel):
                 return False
 
         return True
+
+    def data(self, index: QtCore.QModelIndex, role: int = QtCore.Qt.DisplayRole):
+        """Return link rows in visible table coordinates.
+
+        Parameters
+        ----------
+        index : QModelIndex
+            Proxy-model index.
+        role : int
+            Qt data role.
+
+        Returns
+        -------
+        object
+            Display value for the requested role.
+        """
+        if index.isValid() and index.column() == COL_ROW and role in (
+            QtCore.Qt.DisplayRole,
+            QtCore.Qt.EditRole,
+        ):
+            return str(index.row() + 1)
+
+        if index.isValid() and index.column() == COL_LINK_ROW and role in (
+            QtCore.Qt.DisplayRole,
+            QtCore.Qt.EditRole,
+        ):
+            src = self.sourceModel()
+            if isinstance(src, ParameterTableModel):
+                source_index = self.mapToSource(index)
+                target_source_row = src.link_target_source_row(source_index.row())
+                if target_source_row >= 0:
+                    target_proxy_index = self.mapFromSource(
+                        src.index(target_source_row, COL_LINK_ROW)
+                    )
+                    if target_proxy_index.isValid():
+                        return str(target_proxy_index.row() + 1)
+        if index.isValid() and index.column() == COL_LINK_ROW and role == QtCore.Qt.ToolTipRole:
+            src = self.sourceModel()
+            if isinstance(src, ParameterTableModel):
+                source_index = self.mapToSource(index)
+                target_source_row = src.link_target_source_row(source_index.row())
+                if target_source_row >= 0:
+                    target_proxy_index = self.mapFromSource(
+                        src.index(target_source_row, COL_LINK_ROW)
+                    )
+                    target = src._rows[target_source_row]
+                    target_label = src._link_target_label(target)
+                    if target_proxy_index.isValid():
+                        return f"Linked to row {target_proxy_index.row() + 1}: {target_label}"
+                    return f"Linked to {target_label}"
+        return super().data(index, role)
+
+    def setData(
+        self,
+        index: QtCore.QModelIndex,
+        value,
+        role: int = QtCore.Qt.EditRole,
+    ) -> bool:
+        """Map visible link-row edits to source-model row numbers.
+
+        Parameters
+        ----------
+        index : QModelIndex
+            Proxy-model index being edited.
+        value : object
+            User-entered row number.
+        role : int
+            Qt edit role.
+
+        Returns
+        -------
+        bool
+            ``True`` when the source model accepted the edit.
+        """
+        if index.isValid() and index.column() == COL_LINK_ROW and role == QtCore.Qt.EditRole:
+            text = str(value).strip()
+            if text:
+                try:
+                    visible_row = int(text) - 1
+                except ValueError:
+                    return False
+                if visible_row < 0 or visible_row >= self.rowCount():
+                    return False
+                target_proxy_index = self.index(visible_row, COL_LINK_ROW)
+                target_source_index = self.mapToSource(target_proxy_index)
+                if not target_source_index.isValid():
+                    return False
+                value = str(target_source_index.row() + 1)
+        return super().setData(index, value, role)
 
     def lessThan(self, left: QtCore.QModelIndex, right: QtCore.QModelIndex) -> bool:
         """Numeric sort for value, bounds, and error columns."""
@@ -280,7 +371,7 @@ class ParameterTableView(QtWidgets.QWidget):
         toolbar.setSpacing(4)
 
         self._filter_edit = QtWidgets.QLineEdit()
-        self._filter_edit.setPlaceholderText("filter: fit:name param:name…")
+        self._filter_edit.setPlaceholderText("🔎 filter: fit:name param:name…")
         self._filter_edit.setClearButtonEnabled(True)
         self._filter_edit.setMaximumWidth(250)
         toolbar.addWidget(self._filter_edit)
@@ -293,42 +384,42 @@ class ParameterTableView(QtWidgets.QWidget):
         toolbar.addStretch()
 
         self._btn_link = QtWidgets.QToolButton()
-        self._btn_link.setText("Link")
+        self._btn_link.setText("🔗 Link")
         self._btn_link.setToolTip("Link selected parameters (first = master)")
         toolbar.addWidget(self._btn_link)
 
         self._btn_unlink = QtWidgets.QToolButton()
-        self._btn_unlink.setText("Unlink")
+        self._btn_unlink.setText("⛓️ Unlink")
         self._btn_unlink.setToolTip("Unlink selected parameters")
         toolbar.addWidget(self._btn_unlink)
 
         self._btn_fix = QtWidgets.QToolButton()
-        self._btn_fix.setText("Fix")
+        self._btn_fix.setText("📌 Fix")
         self._btn_fix.setToolTip("Fix selected parameters")
         toolbar.addWidget(self._btn_fix)
 
         self._btn_unfix = QtWidgets.QToolButton()
-        self._btn_unfix.setText("Unfix")
+        self._btn_unfix.setText("🧷 Unfix")
         self._btn_unfix.setToolTip("Unfix selected parameters")
         toolbar.addWidget(self._btn_unfix)
 
         self._btn_set_value = QtWidgets.QToolButton()
-        self._btn_set_value.setText("Set value…")
+        self._btn_set_value.setText("🎯 Set value…")
         self._btn_set_value.setToolTip("Set value for all selected parameters")
         toolbar.addWidget(self._btn_set_value)
 
         self._btn_link_by_name = QtWidgets.QToolButton()
-        self._btn_link_by_name.setText("Link by name…")
+        self._btn_link_by_name.setText("🔤 Link by name…")
         self._btn_link_by_name.setToolTip("Link parameters by name across fits")
         toolbar.addWidget(self._btn_link_by_name)
 
         self._btn_refresh = QtWidgets.QToolButton()
-        self._btn_refresh.setText("Refresh")
+        self._btn_refresh.setText("🔄 Refresh")
         self._btn_refresh.setToolTip("Reload all parameters from fits")
         toolbar.addWidget(self._btn_refresh)
 
         self._btn_find_uid = QtWidgets.QToolButton()
-        self._btn_find_uid.setText("Find by UUID…")
+        self._btn_find_uid.setText("🔎 Find by UUID…")
         self._btn_find_uid.setToolTip("Look up a parameter or fit by its unique identifier")
         toolbar.addWidget(self._btn_find_uid)
 
@@ -373,6 +464,7 @@ class ParameterTableView(QtWidgets.QWidget):
         # Frozen columns: first 3 columns always visible
         if hasattr(self._table, "setColumnHidden"):
             pass
+        self._table.setColumnWidth(COL_ROW, 48)
         self._table.setColumnWidth(COL_FIT, 160)
         self._table.setColumnWidth(COL_LOCAL_FIT, 120)
         self._table.setColumnWidth(COL_PARAM, 140)
@@ -382,8 +474,7 @@ class ParameterTableView(QtWidgets.QWidget):
         self._table.setColumnWidth(COL_BOUNDS_HI, 80)
         self._table.setColumnWidth(COL_BOUNDS_ON, 70)
         self._table.setColumnWidth(COL_ERROR, 80)
-        self._table.setColumnWidth(COL_LINKED, 160)
-        self._table.setColumnWidth(COL_DESCRIPTION, 200)
+        self._table.setColumnWidth(COL_LINK_ROW, 90)
 
         # delegates
         self._table.setItemDelegateForColumn(
@@ -472,93 +563,140 @@ class ParameterTableView(QtWidgets.QWidget):
     def _show_context_menu(self, pos: QtCore.QPoint):
         menu = QtWidgets.QMenu(self)
 
-        copy_action = menu.addAction("Copy", self._table._copy_selection)
+        copy_action = menu.addAction("📋 Copy", self._table._copy_selection)
         copy_action.setShortcut(QtGui.QKeySequence.Copy)
-        paste_action = menu.addAction("Paste", self._table._paste_to_selection)
+        paste_action = menu.addAction("📥 Paste", self._table._paste_to_selection)
         paste_action.setShortcut(QtGui.QKeySequence.Paste)
 
         menu.addSeparator()
-        menu.addAction("Link selected", self._on_link)
-        menu.addAction("Unlink selected", self._on_unlink)
+        menu.addAction("🔗 Link selected", self._on_link)
+        menu.addAction("⛓️ Unlink selected", self._on_unlink)
         menu.addSeparator()
-        menu.addAction("Fix selected", self._on_fix)
-        menu.addAction("Unfix selected", self._on_unfix)
+        menu.addAction("📌 Fix selected", self._on_fix)
+        menu.addAction("🧷 Unfix selected", self._on_unfix)
         menu.addSeparator()
-        menu.addAction("Set value…", self._on_set_value)
+        menu.addAction("🎯 Set value…", self._on_set_value)
         menu.addSeparator()
-        menu.addAction("Link by name across fits…", self._on_link_by_name)
+        menu.addAction("🔤 Link by name across fits…", self._on_link_by_name)
         menu.addSeparator()
-        menu.addAction("Refresh", self._on_refresh)
+        menu.addAction("🔄 Refresh", self._on_refresh)
         menu.exec(self._table.viewport().mapToGlobal(pos))
 
     # ── bulk actions ──────────────────────────────────────────────────
 
+    def _selected_params_with_idx(self):
+        rows = self._selected_source_rows()
+        return [(self._model.fit_idx_at_row(r), self._model.param_at_row(r)) for r in rows]
+
+    def _selected_params_with_local_idx(self):
+        rows = self._selected_source_rows()
+        result = []
+        for r in rows:
+            fi = self._model.fit_idx_at_row(r)
+            p = self._model.param_at_row(r)
+            _, fit, local_idx, _ = self._model._rows[r]
+            result.append((fi, local_idx, p))
+        return result
+
     def _on_link(self):
-        # TODO: needs docstring
         params = self._selected_params()
         if len(params) < 2:
             logging.log(0, "Select at least two parameters to link")
             return
-        master = params[0]
-        for follower in params[1:]:
-            """Handle the fix event (internal)."""
+        params_idx = self._selected_params_with_local_idx()
+        master_idx, master_local_idx, master = params_idx[0]
+        fc = get_fitting_client()
+        for follower_idx, follower_local_idx, follower in params_idx[1:]:
             if follower is master:
                 continue
             try:
-                follower.link = master
+                if fc is not None:
+                    fc.link_parameters(
+                        parameter_name=str(follower.name),
+                        target_parameter_name=str(master.name),
+                        fit_index=follower_idx,
+                        target_fit_index=master_idx,
+                        local_idx=follower_local_idx,
+                        target_local_idx=master_local_idx,
+                    )
             except Exception as e:
-                """Handle the unfix event (internal)."""
                 logging.log(0, f"Link failed: {e}")
         self._notify_changed()
 
     def _on_unlink(self):
-        for p in self._selected_params():
+        fc = get_fitting_client()
+        for fit_idx, local_idx, p in self._selected_params_with_local_idx():
             try:
-                p.link = None
+                if fc is not None:
+                    fc.unlink_parameter(
+                        parameter_name=str(p.name),
+                        fit_index=fit_idx,
+                        local_idx=local_idx,
+                    )
             except Exception:
-                """Handle the set_value event (internal)."""
                 pass
         self._notify_changed()
 
     def _on_fix(self):
-        for p in self._selected_params():
+        fc = get_fitting_client()
+        for fit_idx, local_idx, p in self._selected_params_with_local_idx():
             try:
-                p.fixed = True
+                if fc is not None:
+                    fc.set_parameter_fixed(
+                        parameter_name=str(p.name),
+                        fixed=True,
+                        fit_index=fit_idx,
+                        local_idx=local_idx,
+                    )
             except Exception:
                 pass
-        self._finalize_all()
+        self._finalize_all(fc)
         self._notify_changed()
 
     def _on_unfix(self):
-        for p in self._selected_params():
+        fc = get_fitting_client()
+        for fit_idx, local_idx, p in self._selected_params_with_local_idx():
             try:
-                p.fixed = False
+                if fc is not None:
+                    fc.set_parameter_fixed(
+                        parameter_name=str(p.name),
+                        fixed=False,
+                        fit_index=fit_idx,
+                        local_idx=local_idx,
+                    )
             except Exception:
                 pass
-        self._finalize_all()
+        self._finalize_all(fc)
         self._notify_changed()
 
     def _on_set_value(self):
-        params = self._selected_params()
-        if not params:
+        params_with_idx = self._selected_params_with_local_idx()
+        if not params_with_idx:
             return
         value, ok = QtWidgets.QInputDialog.getDouble(
             self,
-            "Set value",
-            f"New value for {len(params)} parameter(s):",
-            params[0].value,
+            "🎯 Set value",
+            f"New value for {len(params_with_idx)} parameter(s):",
+            params_with_idx[0][2].value,
             -1e12,
             1e12,
             6,
         )
         if not ok:
             return
-        for p in params:
+        fc = get_fitting_client()
+        for fit_idx, local_idx, p in params_with_idx:
             try:
-                p.value = value
+                if fc is not None:
+                    fc.set_parameter_value(
+                        parameter_name=str(p.name),
+                        value=value,
+                        fit_index=fit_idx,
+                        local_idx=local_idx,
+                    )
             except Exception:
                 pass
-        self._finalize_all()
+        self._finalize_all(fc)
         self._notify_changed()
 
     def _on_link_by_name(self):
@@ -575,7 +713,7 @@ class ParameterTableView(QtWidgets.QWidget):
 
         name, ok = QtWidgets.QInputDialog.getItem(
             self,
-            "Link by name",
+            "🔤 Link by name",
             "Parameter name to link across fits:",
             sorted(names),
             editable=False,
@@ -583,32 +721,34 @@ class ParameterTableView(QtWidgets.QWidget):
         if not ok or not name:
             return
 
-        # Find all params with this name
         matches: list = []
         for i in range(self._model.rowCount()):
             idx = self._model.index(i, COL_PARAM)
             if (self._model.data(idx) or "") == name:
-                params_idx = self._model.index(i, COL_VALUE)
+                _, fit, local_idx, _ = self._model._rows[i]
                 matches.append(
-                    (self._model.fit_at_row(i), self._model.param_at_row(i))
+                    (self._model.fit_idx_at_row(i), fit, self._model.param_at_row(i), local_idx)
                 )
 
         if len(matches) < 2:
             logging.log(0, "Need at least two parameters with that name to link")
             return
 
-        # Use the first as master
-        master_fit, master_param = matches[0]
-        for fit_obj, param in matches[1:]:
+        master_idx, master_fit, master_param, master_local_idx = matches[0]
+        fc = get_fitting_client()
+        for fit_idx, fit_obj, param, local_idx in matches[1:]:
             if param is master_param:
                 continue
             try:
-                target_name = getattr(param, "name", "")
-                master_name = getattr(master_param, "name", "")
-                if target_name and master_name:
-                    if isinstance(fit_obj, FitGroup):
-                        pass
-                    param.link = master_param
+                if fc is not None:
+                    fc.link_parameters(
+                        parameter_name=str(param.name),
+                        target_parameter_name=str(master_param.name),
+                        fit_index=fit_idx,
+                        target_fit_index=master_idx,
+                        local_idx=local_idx,
+                        target_local_idx=master_local_idx,
+                    )
             except Exception as e:
                 logging.log(0, f"Link by name failed: {e}")
         self._notify_changed()
@@ -625,7 +765,7 @@ class ParameterTableView(QtWidgets.QWidget):
         """Open a dialog to look up an object by UUID and select its row."""
         uid, ok = QtWidgets.QInputDialog.getText(
             self,
-            "Find by UUID",
+            "🔎 Find by UUID",
             "Enter a unique identifier (UUID):",
         )
         if not ok or not uid:
@@ -638,7 +778,7 @@ class ParameterTableView(QtWidgets.QWidget):
         if obj is None:
             QtWidgets.QMessageBox.information(
                 self,
-                "Not found",
+                "❓ Not found",
                 f"No live object found with UID:\n{uid}",
             )
             return
@@ -662,7 +802,7 @@ class ParameterTableView(QtWidgets.QWidget):
 # TODO: needs docstring
                 QtWidgets.QMessageBox.information(
                     self,
-                    "Found but not in table",
+                    "🔎 Found but not in table",
                     f"Parameter '{obj.name}' was found but is not in the current table view.\n"
                     f"Try changing the filter or refreshing.",
                 )
@@ -671,7 +811,7 @@ class ParameterTableView(QtWidgets.QWidget):
             QtWidgets.QMessageBox.information(
 # TODO: needs docstring
                 self,
-                    "Found",
+                    "✅ Found",
                 f"Found: {type(obj).__name__} '{getattr(obj, 'name', '')}'\n"
                 f"UID: {uid}",
             )
@@ -679,15 +819,35 @@ class ParameterTableView(QtWidgets.QWidget):
         else:
             QtWidgets.QMessageBox.information(
                 self,
-                "Found",
+                "✅ Found",
                 f"Found: {type(obj).__name__} '{getattr(obj, 'name', '')}'\n"
                 f"UID: {uid}",
             )
 
-    def _finalize_all(self):
-        fits = self._model.get_all_fits()
-        for f in fits:
+    def _finalize_all(self, fc=None):
+        if fc is None:
+            fc = get_fitting_client()
+        # Build a mapping: fit object uid → fit index from the model's rows
+        fit_idx_map: dict = {}
+        for row_idx in range(self._model.rowCount()):
+            fi = self._model.fit_idx_at_row(row_idx)
+            p = self._model.param_at_row(row_idx)
+            if p is not None:
+                owner = getattr(p, "parent_fit", None) or getattr(
+                    getattr(p, "controller", None), "fit", None
+                )
+                if owner is not None:
+                    uid = str(id(owner))
+                    if uid not in fit_idx_map:
+                        fit_idx_map[uid] = fi
+        for f in self._model.get_all_fits():
             try:
+                if fc is not None:
+                    uid = str(id(f))
+                    fi = fit_idx_map.get(uid)
+                    if fi is not None:
+                        fc.model_finalize(fit_index=fi)
+                        continue
                 m = getattr(f, "model", None)
                 if m is not None and hasattr(m, "finalize"):
                     m.finalize()
