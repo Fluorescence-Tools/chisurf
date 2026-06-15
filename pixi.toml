@@ -57,6 +57,7 @@ pytest-cov = "*"
 pytest-qt = "*"
 ruff = "*"
 mypy = "*"
+python-lsp-server = ">=1.14"
 pip = "*"
 eigen = ">=5.0.1,<6"
 pybind11 = ">=3.0.3,<4"
@@ -130,9 +131,8 @@ tttrlib = "*"
  ] }
  build-chinet = { cmd = "pip install -e modules/chinet --no-deps", inputs = [
      "modules/chinet/setup.py",
+     "modules/chinet/pyproject.toml",
      "modules/chinet/chinet/**",
-     "modules/chinet/src/**",
-     "modules/chinet/include/**",
      ] }
      build-extensions = { depends-on = [
      "build-ndxplorer",

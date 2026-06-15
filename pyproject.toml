@@ -58,6 +58,7 @@ dependencies = [
     "click",
     "pyzmq>=25.0",
     "pyarrow",
+    "ruff>=0.4",
 ]
 
 [project.optional-dependencies]
@@ -65,6 +66,7 @@ ml = [
     "scikit-learn>=1.0.0",
 ]
 dev = [
+    "python-lsp-server>=1.14",
     "pytest",
     "pytest-cov",
     "pytest-qt",

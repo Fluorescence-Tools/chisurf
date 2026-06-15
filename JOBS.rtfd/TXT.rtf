@@ -20,8 +20,7 @@ ACTIVE\
 Improve support for fps.json - check imp.bff (/Users/tpeulen/dev/imp.bff), there are multiple scoring groups, let user select scoring group, also definition of mobile amino acids, etc. use imp.bff fps.json format. Improve chisurf fps.json editor to support fully imp.bff fps.json format.\
 \
 Expose inter fluorophore distances as parameters, so that fits can tap into distances (link to sampling)\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
-\cf2 \
+\
 TODO\
 \
 Add support for other sampling methods (should not only work with emcee)\
@@ -45,8 +44,15 @@ Add mdl for ensemble refinement (not ProteinMC) mdl should load ensemble with pr
 Front face and backface of fit / models: I want a plot that displays the code of the model, ie, the user should see what code is used in the fit. Ideally the user should have the option to edit the fit inplace (there should be a front face and a back face of the fits). The backface is usually hidden, this requires likely a large architecture change. This is find, no need for backward compatibility. But all must always be tested. Objective: make it possible to develop and modify the software from within the software, ie, develop and refine fits and models from within chisurf, without the need for a separate development environment.\
 \
 \
+Create parameter transform, parameter transforms are models, their parameters serve the purpose of linking (adapters) to other models. Make such adapter for dRDAE, RDA, dRMP, FRET efficiency for accessible volumes - purpose: user inputs for instance distance between mean positions, mdl output mean distance or mean fret averaged distance. This way more complex global models can be built and PDA (RDAE) can be combined with TCSPC (RDA)\
+\
+\
+BUGS:\
+PDA Parameter scan broken:\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
-\cf2 Create parameter transform, parameter transforms are models, their parameters serve the purpose of linking (adapters) to other models. Make such adapter for dRDAE, RDA, dRMP, FRET efficiency for accessible volumes - purpose: user inputs for instance distance between mean positions, mdl output mean distance or mean fret averaged distance. This way more complex global models can be built and PDA (RDAE) can be combined with TCSPC (RDA)\
+\cf2 {{\NeXTGraphic Pasted Graphic.png \width9880 \height7760 \appleattachmentpadding0 \appleembedtype0 \appleaqc
+}¬}\
+\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 \cf2 \
 \
