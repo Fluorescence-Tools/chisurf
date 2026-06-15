@@ -1094,7 +1094,7 @@ class IRFEstimatorPlugin(QWidget):
             
             # Get all datasets from ChiSurf's imported datasets
             all_curves = get_data(
-                data_set=cs.imported_datasets,
+                data_set=getattr(cs, "imported_datasets", []),
                 curve_type='experiment'
             )
             
