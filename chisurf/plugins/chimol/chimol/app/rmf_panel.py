@@ -87,7 +87,7 @@ class RmfPlotWidget(QtWidgets.QWidget):
 
 
 class RmfPanel(QtCore.QObject):
-    """Dock widget for RMF features and frame-score plotting."""
+    """Panel for RMF features and frame-score plotting (no outer QDockWidget)."""
 
     def __init__(self, parent: QtWidgets.QMainWindow, viewer: object) -> None:
         """Create the RMF panel attached to *viewer*."""
@@ -95,14 +95,8 @@ class RmfPanel(QtCore.QObject):
         self.parent_window = parent
         self.viewer = viewer
 
-        self._dock = QtWidgets.QDockWidget("RMF", parent)
-        self._dock.setObjectName("ChimolRmfDock")
-        self._dock.setAllowedAreas(
-            QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea
-        )
-
-        container = QtWidgets.QWidget(parent)
-        layout = QtWidgets.QVBoxLayout(container)
+        self._widget = QtWidgets.QWidget(parent)
+        layout = QtWidgets.QVBoxLayout(self._widget)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
@@ -110,29 +104,27 @@ class RmfPanel(QtCore.QObject):
         header.setStyleSheet("font-weight: bold;")
         layout.addWidget(header)
 
-        self.series_combo = QtWidgets.QComboBox(container)
+        self.series_combo = QtWidgets.QComboBox(self._widget)
         self.series_combo.currentIndexChanged.connect(self._on_series_changed)
         layout.addWidget(self.series_combo)
 
-        self.plot = RmfPlotWidget(container)
+        self.plot = RmfPlotWidget(self._widget)
         layout.addWidget(self.plot, stretch=1)
 
         self.value_label = QtWidgets.QLabel("Current: --")
         layout.addWidget(self.value_label)
 
         button_row = QtWidgets.QHBoxLayout()
-        self.refresh_button = QtWidgets.QPushButton("Refresh RMF", container)
+        self.refresh_button = QtWidgets.QPushButton("Refresh RMF", self._widget)
         self.refresh_button.clicked.connect(self.refresh_active_rmf)
         button_row.addWidget(self.refresh_button)
         button_row.addStretch(1)
         layout.addLayout(button_row)
 
-        self._dock.setWidget(container)
-
     @property
-    def dock_widget(self) -> QtWidgets.QDockWidget:
-        """Return the underlying dock widget."""
-        return self._dock
+    def widget(self) -> QtWidgets.QWidget:
+        """Return the content widget."""
+        return self._widget
 
     def set_state(self, state: object | None) -> None:
         """Update the panel for the active Chimol object state."""
@@ -201,10 +193,10 @@ class RmfPanel(QtCore.QObject):
         try:
             data = load_rmf_full(Path(path))
         except RmfNotAvailableError as exc:
-            QtWidgets.QMessageBox.warning(self._dock, "RMF Not Available", str(exc))
+            QtWidgets.QMessageBox.warning(self._widget, "RMF Not Available", str(exc))
             return
         except Exception as exc:
-            QtWidgets.QMessageBox.warning(self._dock, "RMF Refresh Failed", f"{exc}")
+            QtWidgets.QMessageBox.warning(self._widget, "RMF Refresh Failed", f"{exc}")
             return
 
         try:
@@ -226,7 +218,7 @@ class RmfPanel(QtCore.QObject):
                 self.viewer.set_current_frame(min(old_frame, n_frames - 1))
             self.set_state(state)
         except Exception as exc:
-            QtWidgets.QMessageBox.warning(self._dock, "RMF Refresh Failed", f"{exc}")
+            QtWidgets.QMessageBox.warning(self._widget, "RMF Refresh Failed", f"{exc}")
 
 
 def _active_state(viewer: object) -> object | None:

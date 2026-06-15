@@ -1,5 +1,6 @@
 """Protein structure viewer (Chimol) plugin."""
 
+import json
 import shutil
 
 import chisurf as cs
@@ -41,7 +42,7 @@ from ..analysis import (
 )
 from .command_dock import CommandDock
 from .timeline_panel import TimelineDock
-from .controls_panel import ControlsDock
+from .controls_panel import ControlsToolbar
 from .state_control_panel import StateControlDock
 from .objects_panel import ObjectsDock
 from .sequence_dock import SequenceDock
@@ -51,22 +52,79 @@ from .config_editor import MolViewConfigEditor
 from ..cmd import cmd as _cmd
 
 try:
-    from chisurf.gui.misc_helpers import persist_plugin_state
+    from chisurf.gui.misc_helpers import persist_plugin_state, get_plugin_settings_path
 except ImportError:
     persist_plugin_state = lambda n: lambda c: c
+    get_plugin_settings_path = lambda n: Path.home() / ".chisurf" / f"plugin_{n}_settings.ini"
 
-
-# Plugin name as it appears in the Plugins menu
-# The "Structure:" prefix groups it with other structure tools.
-name = "Structure:Chimol (protein viewer)"
+try:
+    from chisurf.gui.widgets.dock_area import DockArea
+except ImportError:
+    DockArea = None
 
 
 _SEQ_INDEX_ROLE = QtCore.Qt.UserRole + 150
 
+_DEFAULT_DOCK_AREA_STATE: dict = {
+    "version": 1,
+    "root": {
+        "type": "splitter",
+        "orientation": "vertical",
+        "sizes": [600, 150, 40],
+        "children": [
+            {
+                "type": "splitter",
+                "orientation": "horizontal",
+                "sizes": [3, 1],
+                "children": [
+                    {
+                        "type": "tab",
+                        "tabs": [
+                            {
+                                "widget_key": "3D View",
+                                "tab_name": "3D View",
+                                "tab_text": "3D View",
+                            },
+                        ],
+                        "current_index": 0,
+                    },
+                    {
+                        "type": "tab",
+                        "tabs": [
+                            {"widget_key": "Objects", "tab_name": "Objects", "tab_text": "Objects"},
+                            {"widget_key": "Hierarchy", "tab_name": "Hierarchy", "tab_text": "Hierarchy"},
+                            {"widget_key": "RMF", "tab_name": "RMF", "tab_text": "RMF"},
+                            {"widget_key": "State", "tab_name": "State", "tab_text": "State"},
+                            {"widget_key": "Command", "tab_name": "Command", "tab_text": "Command"},
+                        ],
+                        "current_index": 0,
+                    },
+                ],
+            },
+            {
+                "type": "tab",
+                "tabs": [
+                    {"widget_key": "Sequence", "tab_name": "Sequence", "tab_text": "Sequence"},
+                ],
+                "current_index": 0,
+            },
+            {
+                "type": "tab",
+                "tabs": [
+                    {"widget_key": "Timeline", "tab_name": "Timeline", "tab_text": "Timeline"},
+                ],
+                "current_index": 0,
+            },
+        ],
+    },
+    "active_tab_widget": [0],
+    "current_index": 0,
+}
+
 
 @persist_plugin_state("chimol")
 class MolViewPluginWindow(QtWidgets.QMainWindow):
-    """Chimol main window wiring together viewer, docks, and toolbar."""
+    """Chimol main window — toolbar, statusbar, DockArea panels, and 3D view."""
 
     def __init__(
         self,
@@ -76,6 +134,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
     ):
         super().__init__(parent)
         self.setWindowTitle("Chimol - Protein Viewer")
+        self._dock_area_restored = False
 
         self._object_store: dict[str, dict[str, Any]] = {}
         self._block_object_list_signals = False
@@ -101,19 +160,12 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         dock_margins = (l, t, r, b)
 
         self.viewer = MolView(self)
-        self.setCentralWidget(self.viewer)
-        self.controls = ControlsDock(
-            self,
-            margins=dock_margins,
-            spacing=spacing,
-            button_overrides=button_overrides,
-        )
 
-        # ------------------------------------------------------------------
-        # Toolbar (all buttons as tool buttons)
-        # ------------------------------------------------------------------
-        self.controls_dock = self.controls.dock_widget
-        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.controls_dock)
+        # ── Toolbar ───────────────────────────────────────────────────
+        self.controls = ControlsToolbar(
+            self, button_overrides=button_overrides,
+        )
+        self.addToolBar(self.controls.toolbar)
 
         self.button_open = self.controls.button_open
         self.button_plane = self.controls.button_plane
@@ -129,53 +181,46 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.button_surface = self.controls.button_surface
         self.button_info = self.controls.button_info
         self.button_display_cfg = self.controls.button_display_cfg
+        self.button_mouse_mode = self.controls.button_mouse_mode
 
-        # ------------------------------------------------------------------
-        # Object list (per-molecule visibility and activation)
-        # ------------------------------------------------------------------
+        # ── Status bar ────────────────────────────────────────────────
+        self.status_bar = self.statusBar()
+        self._status_label = QtWidgets.QLabel("Ready")
+        self.status_bar.addPermanentWidget(self._status_label)
+        self._status_timer = QtCore.QTimer(self)
+        self._status_timer.timeout.connect(self._update_status_bar)
+        self._status_timer.start(2000)
+
+        # ── Single DockArea (all panels as tabs) ──────────────────────
         self.objects = ObjectsDock(
             self,
             margins=dock_margins,
             spacing=spacing,
         )
-        self.objects_dock = self.objects.dock_widget
         self.object_list = self.objects.object_list
-        self.object_list.itemSelectionChanged.connect(self.on_object_selection_changed)
+        self.object_list.itemSelectionChanged.connect(
+            self.on_object_selection_changed,
+        )
         self.object_list.itemChanged.connect(self.on_object_item_changed)
         self.object_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.object_list.customContextMenuRequested.connect(
-            self._on_object_list_context_menu
+            self._on_object_list_context_menu,
         )
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.objects_dock)
 
         self.hierarchy = HierarchyDock(self)
-        self.hierarchy_dock = self.hierarchy
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.hierarchy_dock)
         self.rmf_panel = RmfPanel(self, self.viewer)
-        self.rmf_panel_dock = self.rmf_panel.dock_widget
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.rmf_panel_dock)
-        self.tabifyDockWidget(self.objects_dock, self.hierarchy_dock)
-        self.tabifyDockWidget(self.hierarchy_dock, self.rmf_panel_dock)
-        self.objects_dock.raise_()
-
-        try:
-            self.resizeDocks(
-                [self.objects_dock],
-                [220],
-                QtCore.Qt.Horizontal,
-            )
-        except Exception:
-            pass
-
-        # ------------------------------------------------------------------
-        # Sequence viewer (per-residue selection)
-        # ------------------------------------------------------------------
+        self.state_control = StateControlDock(
+            self,
+            self.viewer,
+            _cmd,
+            margins=dock_margins,
+            spacing=spacing,
+        )
         self.sequence = SequenceDock(
             self,
             margins=dock_margins,
             spacing=spacing,
         )
-        self.sequence_dock = self.sequence.dock_widget
         self.seq_label = self.sequence.seq_label
         self.seq_numbers_label = self.sequence.seq_numbers_label
         self.seq_numbers_list = self.sequence.seq_numbers_list
@@ -186,17 +231,13 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self._sequence_number_font = self.sequence.sequence_number_font
         self._sequence_number_bold_font = self.sequence.sequence_number_bold_font
         self._sequence_font = self.sequence.sequence_font
-        self.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.sequence_dock)
 
         self.command_panel = CommandDock(
             self,
             margins=dock_margins,
             spacing=spacing,
         )
-        self.addDockWidget(
-            QtCore.Qt.TopDockWidgetArea, self.command_panel.dock_widget
-        )
-        
+
         self.timeline = TimelineDock(
             self,
             self.viewer,
@@ -204,54 +245,37 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             margins=dock_margins,
             spacing=spacing,
         )
-        self.addDockWidget(
-            QtCore.Qt.BottomDockWidgetArea, self.timeline.dock_widget
-        )
 
-        self.state_control = StateControlDock(
-            self,
-            self.viewer,
-            _cmd,
-            margins=dock_margins,
-            spacing=spacing,
-        )
-        self.addDockWidget(
-            QtCore.Qt.RightDockWidgetArea, self.state_control.dock_widget
-        )
-        try:
-            # Stack Controls, Sequence, Command at the Top
-            self.splitDockWidget(
-                self.controls_dock,
-                self.sequence_dock,
-                QtCore.Qt.Vertical,
-            )
-            self.splitDockWidget(
-                self.sequence_dock,
-                self.command_panel.dock_widget,
-                QtCore.Qt.Vertical,
-            )
-            # Put state control below/tabbed with objects on the right
-            self.splitDockWidget(
-                self.objects_dock,
-                self.state_control.dock_widget,
-                QtCore.Qt.Vertical
-            )
-        except Exception:
-            pass
+        # Build central widget with single DockArea
+        central = QtWidgets.QWidget(self)
+        central_layout = QtWidgets.QVBoxLayout(central)
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        central_layout.setSpacing(0)
+        self.setCentralWidget(central)
 
-        try:
-            self.resizeDocks(
-                [self.controls_dock, self.sequence_dock, self.command_panel.dock_widget],
-                [40, 200, 60],
-                QtCore.Qt.Vertical,
-            )
-            self.resizeDocks(
-                [self.objects_dock, self.state_control.dock_widget],
-                [400, 300],
-                QtCore.Qt.Vertical
-            )
-        except Exception:
-            pass
+        self.dock_area: Optional[DockArea] = None
+        if DockArea is not None:
+            self.dock_area = DockArea(self)
+            self.dock_area.addTab(self.viewer, "3D View", close_mode="hide")
+            self.dock_area.addTab(self.objects.widget, "Objects", close_mode="hide")
+            self.dock_area.addTab(self.hierarchy, "Hierarchy", close_mode="hide")
+            self.dock_area.addTab(self.rmf_panel.widget, "RMF", close_mode="hide")
+            self.dock_area.addTab(self.state_control.widget, "State", close_mode="hide")
+            self.dock_area.addTab(self.sequence.widget, "Sequence", close_mode="hide")
+            self.dock_area.addTab(self.command_panel.widget, "Command", close_mode="hide")
+            self.dock_area.addTab(self.timeline.widget, "Timeline", close_mode="hide")
+            try:
+                self.dock_area.set_layout_state(
+                    dict(_DEFAULT_DOCK_AREA_STATE), emit_change=False,
+                )
+            except Exception:
+                pass
+            central_layout.addWidget(self.dock_area)
+        else:
+            central_layout.addWidget(self.viewer)
+
+        # ── View menu (after DockArea creation) ───────────────────────
+        self._build_view_menu()
 
         self._sequence_visible = True
         self._sequence_rows: dict[str, dict[str, Any]] = {}
@@ -264,21 +288,15 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
 
         self._reset_scroll_targets()
 
-        # ------------------------------------------------------------------
-        # Viewer + system-info panel (split horizontally)
-        # ------------------------------------------------------------------
-
-        # Keep sequence selection and 3D picking in sync.
+        # ── Viewer signal connections ─────────────────────────────────
         try:
             self.viewer.objectResidueSelectionChanged.connect(
-                self.on_viewer_residue_selection_changed
+                self.on_viewer_residue_selection_changed,
             )
         except Exception:
             pass
 
-        # ------------------------------------------------------------------
-        # Connections
-        # ------------------------------------------------------------------
+        # ── Button signal connections ─────────────────────────────────
         self.button_open.clicked.connect(self.on_open_structure)
         self.button_plane.toggled.connect(self.viewer.set_plane_visible)
         self.button_color.toggled.connect(self.on_color_aa_toggled)
@@ -293,8 +311,9 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self.button_rep_metaballs.toggled.connect(self.viewer.set_metaballs_visible)
         self.button_info.toggled.connect(self.on_toggle_info_panel)
         self.button_display_cfg.clicked.connect(self.on_open_display_config)
+        self.button_mouse_mode.toggled.connect(self.on_mouse_mode_toggled)
 
-        # Synchronize initial color-mode toggles with the viewer's default.
+        # Sync initial color-mode toggles with viewer default
         try:
             mode = getattr(self.viewer, "_color_mode", "single") or "single"
         except Exception:
@@ -316,8 +335,29 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             except Exception:
                 pass
 
-        # Update system-info text when sequence selection changes.
-        self.seq_list.itemSelectionChanged.connect(self.on_sequence_selection_changed)
+        # Sync initial mouse-rotation mode with the viewer/config default.
+        try:
+            mouse_mode = self.viewer.get_mouse_mode()
+        except Exception:
+            mouse_mode = "pymol"
+        try:
+            self.button_mouse_mode.blockSignals(True)
+            pymol_active = mouse_mode == "pymol"
+            self.button_mouse_mode.setChecked(pymol_active)
+            self.button_mouse_mode.setText(
+                "\U0001f5b1\ufe0f PyMOL" if pymol_active else "\U0001f5b1\ufe0f Chimol"
+            )
+        except Exception:
+            pass
+        finally:
+            try:
+                self.button_mouse_mode.blockSignals(False)
+            except Exception:
+                pass
+
+        self.seq_list.itemSelectionChanged.connect(
+            self.on_sequence_selection_changed,
+        )
 
         self._default_object_name_counter = 0
 
@@ -334,9 +374,167 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         except Exception:
             pass
 
-        # Initialize panels with placeholder content.
         self._update_sequence_view()
         self._update_system_info()
+
+    # ── View menu ─────────────────────────────────────────────────────
+
+    def _build_view_menu(self) -> None:
+        menu_bar = self.menuBar()
+        view_menu = menu_bar.addMenu("&View")
+        self._view_menu_actions: list[QtGui.QAction] = []
+
+        if self.dock_area is not None:
+            self._act_toggle_sequence = view_menu.addAction(
+                "\U0001f9ec Toggle Sequence",
+            )
+            self._act_toggle_sequence.setCheckable(True)
+            self._act_toggle_sequence.setChecked(True)
+            self._act_toggle_sequence.triggered.connect(
+                lambda c: self._set_tab_visible("Sequence", c),
+            )
+            self._view_menu_actions.append(self._act_toggle_sequence)
+
+            self._act_toggle_command = view_menu.addAction(
+                "\U0001f4bb Toggle Command",
+            )
+            self._act_toggle_command.setCheckable(True)
+            self._act_toggle_command.setChecked(True)
+            self._act_toggle_command.triggered.connect(
+                lambda c: self._set_tab_visible("Command", c),
+            )
+            self._view_menu_actions.append(self._act_toggle_command)
+
+            self._act_toggle_timeline = view_menu.addAction(
+                "\U000023f3 Toggle Timeline",
+            )
+            self._act_toggle_timeline.setCheckable(True)
+            self._act_toggle_timeline.setChecked(True)
+            self._act_toggle_timeline.triggered.connect(
+                lambda c: self._set_tab_visible("Timeline", c),
+            )
+            self._view_menu_actions.append(self._act_toggle_timeline)
+
+            view_menu.addSeparator()
+            sub = view_menu.addMenu("\U0001f4cb Panel Tabs")
+            sub.addAction("Objects").triggered.connect(
+                lambda: self._show_tab("Objects"),
+            )
+            sub.addAction("Hierarchy").triggered.connect(
+                lambda: self._show_tab("Hierarchy"),
+            )
+            sub.addAction("RMF").triggered.connect(
+                lambda: self._show_tab("RMF"),
+            )
+            sub.addAction("State").triggered.connect(
+                lambda: self._show_tab("State"),
+            )
+
+            view_menu.addSeparator()
+            reset_action = view_menu.addAction("\U0001f504 Reset Layout")
+            reset_action.triggered.connect(self._reset_panel_layout)
+
+    def _set_tab_visible(self, name: str, visible: bool) -> None:
+        if self.dock_area is None:
+            return
+        for idx in range(self.dock_area.count()):
+            if self.dock_area.tabText(idx) == name:
+                if visible:
+                    self.dock_area.showTab(idx)
+                else:
+                    self.dock_area.hideTab(idx)
+                return
+
+    def _show_tab(self, name: str) -> None:
+        if self.dock_area is None:
+            return
+        for idx in range(self.dock_area.count()):
+            if self.dock_area.tabText(idx) == name:
+                self.dock_area.showTab(idx)
+                self.dock_area.setCurrentIndex(idx)
+                return
+
+    def _reset_panel_layout(self) -> None:
+        if self.dock_area is not None:
+            self.dock_area.set_layout_state(
+                dict(_DEFAULT_DOCK_AREA_STATE), emit_change=True,
+            )
+
+    # ── DockArea state persistence ────────────────────────────────────
+
+    def _save_dock_area_state(self) -> None:
+        if self.dock_area is None:
+            return
+        try:
+            ini_path = get_plugin_settings_path("chimol")
+            settings = QtCore.QSettings(
+                str(ini_path), QtCore.QSettings.IniFormat,
+            )
+            state = self.dock_area.get_layout_state()
+            settings.setValue("main_dock_area", json.dumps(state))
+        except Exception:
+            pass
+
+    def _restore_dock_area_state(self) -> None:
+        if self.dock_area is None:
+            return
+        try:
+            ini_path = get_plugin_settings_path("chimol")
+            if not ini_path.exists():
+                return
+            settings = QtCore.QSettings(
+                str(ini_path), QtCore.QSettings.IniFormat,
+            )
+            raw = settings.value("main_dock_area")
+            if raw is None:
+                return
+            state = json.loads(str(raw))
+            self.dock_area.set_layout_state(state, emit_change=True)
+        except Exception:
+            pass
+
+    def closeEvent(self, event: QtCore.QEvent) -> None:
+        try:
+            self._save_dock_area_state()
+        except Exception:
+            pass
+        super().closeEvent(event)
+
+    def showEvent(self, event: QtGui.QShowEvent) -> None:
+        if not self._dock_area_restored:
+            self._dock_area_restored = True
+            try:
+                self._restore_dock_area_state()
+            except Exception:
+                pass
+        super().showEvent(event)
+
+    # ── Status bar ────────────────────────────────────────────────────
+
+    def _update_status_bar(self) -> None:
+        parts = ["\U0001f9ec Chimol"]
+        try:
+            obj_count = len(self._object_store)
+            parts.append(f"{obj_count} object{'s' if obj_count != 1 else ''}")
+        except Exception:
+            pass
+        try:
+            oid = self.viewer.get_active_object_id()
+            if oid is not None:
+                n_atoms = self.viewer.get_atom_count(oid)
+                parts.append(f"{n_atoms} atoms")
+                n_res = len(self.viewer.get_sequence_arrays(oid)[0] or [])
+                parts.append(f"{n_res} residues")
+        except Exception:
+            pass
+        try:
+            frame = self.viewer.get_current_frame()
+            total = self.viewer.get_total_frames()
+            if total > 1:
+                parts.append(f"frame {frame + 1}/{total}")
+        except Exception:
+            pass
+        self._status_label.setText(" \u00b7 ".join(parts))
 
     # ------------------------------------------------------------------
     # Actions
@@ -404,6 +602,21 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
                 self._update_system_info()
             except Exception:
                 pass
+
+    def on_mouse_mode_toggled(self, checked: bool) -> None:
+        """Switch between PyMOL and Chimol left-drag rotation styles."""
+        if self.viewer is None:
+            return
+        mode = "pymol" if checked else "chimol"
+        try:
+            self.viewer.set_mouse_mode(mode)
+        except Exception:
+            pass
+        try:
+            text = "\U0001f5b1\ufe0f PyMOL" if checked else "\U0001f5b1\ufe0f Chimol"
+            self.button_mouse_mode.setText(text)
+        except Exception:
+            pass
 
     def on_rep_cartoon_toggled(self, checked: bool) -> None:
         """Toggle cartoon representation for selected or all residues."""
@@ -570,7 +783,7 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
 
         seq_cfg = self.sequence.sequence_config()
         seq_view_enabled = bool(seq_cfg.get("seq_view", True))
-        self.sequence_dock.setVisible(seq_view_enabled)
+        self._set_tab_visible("Sequence", seq_view_enabled)
         if not seq_view_enabled:
             return
 
@@ -1524,12 +1737,11 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
             self._active_object_id = None
             self._update_sequence_view(None)
             self._update_system_info(None)
-        if hasattr(self, "hierarchy"):
-            self.hierarchy.set_hierarchy(None)
-        if hasattr(self, "rmf_panel"):
-            self.rmf_panel.set_state(None)
-        return
-
+            if hasattr(self, "hierarchy"):
+                self.hierarchy.set_hierarchy(None)
+            if hasattr(self, "rmf_panel"):
+                self.rmf_panel.set_state(None)
+            return
 
         self._active_object_id = object_id
         try:
@@ -1540,7 +1752,6 @@ class MolViewPluginWindow(QtWidgets.QMainWindow):
         self._update_sequence_view(object_id)
         self._update_system_info(object_id)
 
-        # Update hierarchy dock
         if hasattr(self, "hierarchy"):
             try:
                 state = self.viewer._get_active_state()

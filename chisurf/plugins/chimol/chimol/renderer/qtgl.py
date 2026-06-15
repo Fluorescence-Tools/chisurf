@@ -173,6 +173,90 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         self._panning = False
         self._pan_offset = np.zeros(3, dtype=float)
 
+        camera_cfg = (_DISPLAY_CONFIG.get("camera") or {})
+        self._mouse_mode = self._normalize_mouse_mode(
+            camera_cfg.get("mouse_mode", "pymol")
+        )
+
+    # ------------------------------------------------------------------
+    # Mouse rotation mode
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _rotation_delta_multiplier(mouse_mode: str) -> float:
+        """Return the multiplier applied to left-drag rotation deltas.
+
+        In PyMOL-style rotation the object (protein) appears to follow the
+        cursor; in Chimol-style rotation the camera / plane follows the cursor.
+
+        Parameters
+        ----------
+        mouse_mode : str
+            ``"pymol"`` or ``"chimol"``.
+
+        Returns
+        -------
+        float
+            ``-1.0`` for PyMOL-style object rotation, ``1.0`` for
+            Chimol-style camera rotation.
+        """
+        return -1.0 if mouse_mode == "pymol" else 1.0
+
+    @staticmethod
+    def _pan_delta_multiplier(mouse_mode: str) -> float:
+        """Return the multiplier applied to middle-drag pan deltas.
+
+        In PyMOL-style panning the object (protein) appears to follow the
+        cursor; in Chimol-style panning the camera / plane follows the cursor,
+        so the object moves opposite to the cursor.
+
+        Parameters
+        ----------
+        mouse_mode : str
+            ``"pymol"`` or ``"chimol"``.
+
+        Returns
+        -------
+        float
+            ``1.0`` for PyMOL-style object panning, ``-1.0`` for
+            Chimol-style camera / plane panning.
+        """
+        return 1.0 if mouse_mode == "pymol" else -1.0
+
+    @staticmethod
+    def _normalize_mouse_mode(mode: Any) -> str:
+        """Return a valid mouse rotation mode string.
+
+        Parameters
+        ----------
+        mode : Any
+            Candidate mode value (typically ``"pymol"`` or ``"chimol"``).
+
+        Returns
+        -------
+        str
+            ``"pymol"`` or ``"chimol"``. Unrecognised values fall back to
+            ``"pymol"``.
+        """
+        mode_str = str(mode).lower().strip()
+        if mode_str == "chimol":
+            return "chimol"
+        return "pymol"
+
+    def set_mouse_mode(self, mode: str) -> None:
+        """Set the left-drag rotation style.
+
+        Parameters
+        ----------
+        mode : str
+            ``"pymol"`` rotates the object in the camera view (follows the
+            cursor); ``"chimol"`` rotates the camera / moves the plane.
+        """
+        self._mouse_mode = self._normalize_mouse_mode(mode)
+
+    def get_mouse_mode(self) -> str:
+        """Return the current left-drag rotation style."""
+        return self._mouse_mode
+
     # ------------------------------------------------------------------
     # Renderer interface
     # ------------------------------------------------------------------
@@ -1032,8 +1116,11 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
 
         if event.buttons() & QtCore.Qt.LeftButton and hasattr(self, "_last_mouse_pos"):
             delta = event.pos() - self._last_mouse_pos
-            self._azimuth += delta.x() * 0.5
-            self._elevation = (self._elevation + delta.y() * 0.5) % 360.0
+            # PyMOL mode rotates the object in the camera view so it appears
+            # to follow the cursor (inverse of Chimol's camera-rotation).
+            mult = self._rotation_delta_multiplier(self._mouse_mode)
+            self._azimuth += mult * delta.x() * 0.5
+            self._elevation = (self._elevation + mult * delta.y() * 0.5) % 360.0
             self._last_mouse_pos = event.pos()
             self.update()
         super().mouseMoveEvent(event)
@@ -1087,7 +1174,10 @@ class QtGLRenderer(QtWidgets.QOpenGLWidget, Renderer):
         right = self._camera_right_vector()
         up = self._camera_up_vector()
 
-        shift = (-dx * scale_x) * right + (dy * scale_y) * up
+        # Panning direction depends on the mouse mode: PyMOL moves the object
+        # with the cursor; Chimol moves the camera / plane with the cursor.
+        mult = self._pan_delta_multiplier(self._mouse_mode)
+        shift = (mult * -dx * scale_x) * right + (mult * dy * scale_y) * up
         self._pan_offset += shift
         self._update_center_opt()
         self.update()

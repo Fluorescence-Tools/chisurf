@@ -19,11 +19,6 @@ class TimelineDock(QtCore.QObject):
         self.viewer = viewer
         self.cmd = cmd
 
-        self._dock = QtWidgets.QDockWidget("Timeline", parent)
-        self._dock.setObjectName("ChimolTimelineDock")
-        self._dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.TopDockWidgetArea)
-        self._dock.setFeatures(QtWidgets.QDockWidget.DockWidgetMovable | QtWidgets.QDockWidget.DockWidgetFloatable)
-
         container = QtWidgets.QWidget(parent)
         layout = QtWidgets.QHBoxLayout(container)
         layout.setContentsMargins(4, 2, 4, 2)
@@ -66,16 +61,23 @@ class TimelineDock(QtCore.QObject):
         layout.addWidget(self.slider, 1)
         layout.addWidget(self.lbl_frame)
 
-        self._dock.setWidget(container)
+        self._widget = container
 
         # Periodic update from viewer state
         self._update_timer = QtCore.QTimer(self)
         self._update_timer.timeout.connect(self.refresh_ui)
         self._update_timer.start(100) # 10Hz UI refresh
+        container.destroyed.connect(self._on_container_destroyed)
+
+    def _on_container_destroyed(self) -> None:
+        try:
+            self._update_timer.stop()
+        except Exception:
+            pass
 
     @property
-    def dock_widget(self) -> QtWidgets.QDockWidget:
-        return self._dock
+    def widget(self) -> QtWidgets.QWidget:
+        return self._widget
 
     def _on_slider_changed(self, value: int) -> None:
         if not self.viewer._animation_running:
@@ -83,16 +85,24 @@ class TimelineDock(QtCore.QObject):
 
     def refresh_ui(self) -> None:
         """Sync slider and label with viewer state."""
-        curr = self.viewer.get_current_frame() + 1
-        total = self.viewer.get_total_frames()
+        try:
+            curr = self.viewer.get_current_frame() + 1
+            total = self.viewer.get_total_frames()
 
-        if self.slider.maximum() != total:
-            self.slider.setMaximum(total)
-            self.slider.setTickInterval(max(1, total // 10))
-        
-        if not self.slider.isSliderDown():
-            self.slider.blockSignals(True)
-            self.slider.setValue(curr)
-            self.slider.blockSignals(False)
+            if self.slider.maximum() != total:
+                self.slider.setMaximum(total)
+                self.slider.setTickInterval(max(1, total // 10))
 
-        self.lbl_frame.setText(f"{curr} / {total}")
+            if not self.slider.isSliderDown():
+                self.slider.blockSignals(True)
+                self.slider.setValue(curr)
+                self.slider.blockSignals(False)
+
+            self.lbl_frame.setText(f"{curr} / {total}")
+        except RuntimeError:
+            # C++ widgets were destroyed (e.g. during plugin reload). Stop the
+            # timer so we don't keep hitting deleted objects.
+            try:
+                self._update_timer.stop()
+            except Exception:
+                pass

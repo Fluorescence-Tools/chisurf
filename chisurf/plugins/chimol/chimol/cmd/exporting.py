@@ -2,11 +2,40 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Callable, List, Optional
+import time
 
 import numpy as np
 
+from qtpy import QtCore, QtWidgets
+
 from .base import BaseCmd
+
+
+class RayRenderThread(QtCore.QThread):
+    """Background thread for Chimol ray-tracing.
+
+    Runs a render callable that returns an (H, W, 3) uint8 image and emits
+    the result (or an error message) back to the GUI thread.
+    """
+
+    finished = QtCore.Signal(object)
+    error = QtCore.Signal(str)
+
+    def __init__(
+        self,
+        render_func: Callable[[], np.ndarray],
+        parent: Optional[QtCore.QObject] = None,
+    ) -> None:
+        super().__init__(parent)
+        self._render_func = render_func
+
+    def run(self) -> None:
+        try:
+            image = self._render_func()
+            self.finished.emit(image)
+        except Exception as exc:
+            self.error.emit(str(exc))
 
 
 class ExportMixin(BaseCmd):
@@ -224,6 +253,7 @@ class ExportMixin(BaseCmd):
 
         scene_func = getattr(viewer, "get_current_scene", None)
         use_scene_path = False
+        scene = None
         if callable(scene_func):
             try:
                 scene = scene_func()
@@ -231,10 +261,16 @@ class ExportMixin(BaseCmd):
                 scene = None
             if scene is not None and getattr(scene, "objects", None):
                 use_scene_path = True
+
+        progress = np.zeros(1, dtype=np.int64)
+        cancel = np.zeros(1, dtype=np.int64)
+        total_rows = height * max(1, ssaa_val)
+
         if use_scene_path:
             self._emit_message(f"ray: rendering current scene at {width}x{height} ...")
-            try:
-                image = render_scene(
+
+            def _render_scene() -> np.ndarray:
+                return render_scene(
                     scene=scene,
                     camera=camera,
                     light_directions=light_dirs_arr,
@@ -262,71 +298,195 @@ class ExportMixin(BaseCmd):
                     color_blend_red=color_blend_red,
                     color_blend_green=color_blend_green,
                     color_blend_blue=color_blend_blue,
+                    progress=progress,
+                    cancel=cancel,
                 )
-                from PIL import Image
-                img = Image.fromarray(image)
-                parent = out_path.parent
-                parent.mkdir(parents=True, exist_ok=True)
-                img.save(str(out_path), "PNG")
-                show_overlay = getattr(viewer, "show_ray_overlay", None)
-                if callable(show_overlay):
-                    try:
-                        from qtpy import QtGui
-                        qimg = QtGui.QImage(
-                            image.data,
-                            image.shape[1],
-                            image.shape[0],
-                            image.strides[0],
-                            QtGui.QImage.Format_RGB888,
-                        ).copy()
-                        show_overlay(qimg)
-                    except Exception:
-                        pass
-                self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
-                return
+
+            render_func = _render_scene
+        else:
+            self._emit_message(f"ray: tracing {len(spheres)} spheres at {width}x{height} ...")
+
+            def _render_trace() -> np.ndarray:
+                return trace(
+                    spheres=spheres,
+                    camera=camera,
+                    light_directions=light_dirs_arr,
+                    width=width,
+                    height=height,
+                    background=bg_rgb,
+                    ambient=ambient,
+                    diffuse=diffuse,
+                    specular=specular,
+                    shininess=shininess,
+                    ssaa=ssaa_val,
+                    direct_specular=direct_specular,
+                    direct_specular_power=direct_specular_power,
+                    reflect_power=reflect_power,
+                    legacy_lighting=legacy_lighting,
+                    shadow=shadow_enabled,
+                    shadow_fudge=shadow_fudge,
+                    shadow_decay_factor=shadow_decay_factor,
+                    shadow_decay_range=shadow_decay_range,
+                    gamma=gamma,
+                    depth_cue=depth_cue,
+                    fog_start=fog_start,
+                    fog_intensity=fog_intensity,
+                    color_blend=color_blend,
+                    color_blend_red=color_blend_red,
+                    color_blend_green=color_blend_green,
+                    color_blend_blue=color_blend_blue,
+                    progress=progress,
+                    cancel=cancel,
+                )
+
+            render_func = _render_trace
+
+        self._render_ray_async(
+            render_func=render_func,
+            progress=progress,
+            cancel=cancel,
+            total_rows=total_rows,
+            out_path=out_path,
+            width=width,
+            height=height,
+            viewer=viewer,
+            window=window,
+        )
+
+    def _render_ray_async(
+        self,
+        render_func: Callable[[], np.ndarray],
+        progress: np.ndarray,
+        cancel: np.ndarray,
+        total_rows: int,
+        out_path: Path,
+        width: int,
+        height: int,
+        viewer: object,
+        window: Optional[object],
+    ) -> None:
+        """Run *render_func* in a background thread and show a progress dialog.
+
+        The dialog is modal to the Chimol window so the scene cannot be
+        modified while rendering, but the application event loop stays alive.
+        It displays a progress bar, an ETA, and a Cancel button.  When no real
+        GUI window is available (e.g. tests), rendering falls back to the
+        synchronous path.
+        """
+        parent = window if isinstance(window, QtWidgets.QWidget) else None
+        if parent is None:
+            # Headless / test context: run synchronously without a dialog.
+            try:
+                image = render_func()
             except Exception as exc:
-                self._emit_error(f"ray: scene render failed: {exc}")
+                self._emit_error(f"ray: {exc}")
                 return
-
-        self._emit_message(f"ray: tracing {len(spheres)} spheres at {width}x{height} ...")
-
-        try:
-            image = trace(
-                spheres=spheres,
-                camera=camera,
-                light_directions=light_dirs_arr,
-                width=width,
-                height=height,
-                background=bg_rgb,
-                ambient=ambient,
-                diffuse=diffuse,
-                specular=specular,
-                shininess=shininess,
-                ssaa=ssaa_val,
-                direct_specular=direct_specular,
-                direct_specular_power=direct_specular_power,
-                reflect_power=reflect_power,
-                legacy_lighting=legacy_lighting,
-                shadow=shadow_enabled,
-                shadow_fudge=shadow_fudge,
-                shadow_decay_factor=shadow_decay_factor,
-                shadow_decay_range=shadow_decay_range,
-                gamma=gamma,
-                depth_cue=depth_cue,
-                fog_start=fog_start,
-                fog_intensity=fog_intensity,
-                color_blend=color_blend,
-                color_blend_red=color_blend_red,
-                color_blend_green=color_blend_green,
-                color_blend_blue=color_blend_blue,
-            )
-        except Exception as exc:
-            self._emit_error(f"ray: trace failed: {exc}")
+            self._finish_ray(image, out_path, width, height, viewer, window)
             return
 
+        dialog = QtWidgets.QProgressDialog(
+            "Ray tracing...", "Cancel", 0, total_rows, parent,
+        )
+        dialog.setWindowTitle("Rendering")
+        dialog.setWindowModality(QtCore.Qt.WindowModal)
+        dialog.setMinimumDuration(0)
+        dialog.setValue(0)
+        dialog.setAutoClose(False)
+        dialog.setAutoReset(False)
+        dialog.setMinimumSize(360, 100)
+
+        start_time = time.time()
+        timer = QtCore.QTimer(parent)
+        timer.timeout.connect(
+            lambda: self._update_ray_progress(
+                dialog, progress, cancel, total_rows, start_time,
+            )
+        )
+        timer.start(100)
+
+        thread = RayRenderThread(render_func, parent=parent)
+        thread.finished.connect(
+            lambda image: self._on_ray_finished(
+                image, cancel, out_path, width, height, viewer, window, dialog, timer, thread,
+            )
+        )
+        thread.error.connect(
+            lambda msg: self._on_ray_error(msg, dialog, timer, thread)
+        )
+        dialog.canceled.connect(lambda: self._on_ray_cancel(cancel, dialog))
+        thread.start()
+
+    def _update_ray_progress(
+        self,
+        dialog: QtWidgets.QProgressDialog,
+        progress: np.ndarray,
+        cancel: np.ndarray,
+        total_rows: int,
+        start_time: float,
+    ) -> None:
+        """Poll the shared progress counter and update the dialog + ETA.
+
+        When the render thread reports real progress (NumPy path), we use it
+        directly.  When it does not (Numba path — atomic-free to keep the
+        hot loop fast), we fall back to a time-based estimate so the user
+        still sees a moving bar and an ETA.
+        """
         try:
+            current = int(progress[0])
+        except Exception:
+            current = 0
+
+        elapsed = time.time() - start_time
+        if cancel[0] != 0:
+            text = "Cancelling..."
+            fraction = min(0.99, dialog.value() / total_rows) if total_rows else 0
+        elif current > 0:
+            current = min(current, total_rows)
+            dialog.setValue(current)
+            fraction = current / total_rows if total_rows > 0 else 0.0
+            if fraction > 0.02:
+                eta = elapsed / fraction - elapsed
+                text = (
+                    f"Ray tracing... {int(fraction * 100)}%  "
+                    f"ETA: {max(0, int(eta))}s  (elapsed: {int(elapsed)}s)"
+                )
+            else:
+                text = f"Ray tracing... {int(fraction * 100)}%  (elapsed: {int(elapsed)}s)"
+        else:
+            # Time-based estimate: assume ~150k SSAA-rows per second on a
+            # modest machine; clamp to 99% so we never claim completion.
+            est_total = max(1, total_rows) / 150_000.0
+            fraction = min(0.99, elapsed / est_total) if est_total > 0 else 0
+            dialog.setValue(int(fraction * total_rows))
+            text = f"Ray tracing...  (elapsed: {int(elapsed)}s)"
+        dialog.setLabelText(text)
+
+    def _on_ray_cancel(
+        self,
+        cancel: np.ndarray,
+        dialog: QtWidgets.QProgressDialog,
+    ) -> None:
+        """Signal the background thread to stop rendering."""
+        cancel[0] = 1
+        dialog.setLabelText("Cancelling...")
+
+    def _finish_ray(
+        self,
+        image: object,
+        out_path: Path,
+        width: int,
+        height: int,
+        viewer: object,
+        window: Optional[object],
+    ) -> None:
+        """Save the ray-traced image, show the overlay and emit a message."""
+        try:
+            if image is None:
+                self._emit_error("ray: render returned no image")
+                return
             from PIL import Image
             img = Image.fromarray(image)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
             img.save(str(out_path), "PNG")
             show_overlay = getattr(viewer, "show_ray_overlay", None)
             if callable(show_overlay):
@@ -345,12 +505,49 @@ class ExportMixin(BaseCmd):
             self._emit_message(f"ray: wrote {out_path} ({width}x{height})")
         except Exception as exc:
             self._emit_error(f"ray: failed to save image: {exc}")
+        finally:
+            try:
+                if window is not None:
+                    window._update_sequence_view()
+            except Exception:
+                pass
 
-        try:
-            if window is not None:
-                window._update_sequence_view()
-        except Exception:
-            pass
+    def _on_ray_finished(
+        self,
+        image: object,
+        cancel: np.ndarray,
+        out_path: Path,
+        width: int,
+        height: int,
+        viewer: object,
+        window: Optional[object],
+        dialog: QtWidgets.QProgressDialog,
+        timer: QtCore.QTimer,
+        thread: RayRenderThread,
+    ) -> None:
+        timer.stop()
+        dialog.close()
+        if cancel[0] != 0:
+            self._emit_message("ray: cancelled")
+        else:
+            self._finish_ray(image, out_path, width, height, viewer, window)
+        thread.deleteLater()
+        dialog.deleteLater()
+        timer.deleteLater()
+
+    def _on_ray_error(
+        self,
+        msg: str,
+        dialog: QtWidgets.QProgressDialog,
+        timer: QtCore.QTimer,
+        thread: RayRenderThread,
+    ) -> None:
+        timer.stop()
+        dialog.close()
+        self._emit_error(f"ray: {msg}")
+        thread.deleteLater()
+        dialog.deleteLater()
+        timer.deleteLater()
 
     def _parse_background(self, spec) -> tuple:
         if isinstance(spec, str):

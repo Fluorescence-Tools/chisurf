@@ -13,7 +13,7 @@ try:
 except Exception:  # pragma: no cover - moview can run without chisurf
     _cs_settings = None
 
-DISPLAY_CONFIG_VERSION: int = 1
+DISPLAY_CONFIG_VERSION: int = 2
 """Current version of the chimol_display.json schema.
 
 Increment this when keys are added, renamed, or removed so that users
@@ -288,6 +288,11 @@ def _load_display_config() -> dict:
             "min_near_clip": 0.005,
             "max_near_clip": 5.0,
             "clip_wheel_scale": 0.85,
+            # Mouse interaction style: "pymol" rotates and pans the object in
+            # the camera view (intuitive, follows the cursor); "chimol"
+            # rotates and pans the camera/plane so the object moves opposite
+            # to the cursor.
+            "mouse_mode": "pymol",
         },
         "ray": {
             "ambient": 0.14,

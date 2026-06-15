@@ -1,0 +1,22 @@
+{
+  "id": "chimol",
+  "version": "0.2.0",
+  "display_name": "Structure:Chimol (protein viewer)",
+  "description": "Molecular structure viewer and protein analysis plugin for ChiSurf.",
+  "authors": ["Thomas-Otavio Peulen"],
+  "categories": ["Structure", "Molecular Viewer"],
+  "icon": "icon.png",
+  "state_namespace": "chimol",
+  "statefulness": {
+    "enabled": true,
+    "window": {
+      "enabled": true,
+      "settings_key": null
+    }
+  },
+  "entrypoints": {
+    "gui": "chisurf.plugins.chimol.chimol.app:MolViewPluginWindow"
+  },
+  "menu_hidden": false,
+  "deprecated": false
+}

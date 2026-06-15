@@ -142,20 +142,15 @@ class SequenceDock(QtCore.QObject):
         self.extra_seq_layout.setSpacing(0)
         sequence_layout.addWidget(self.extra_seq_container)
 
-        self._dock = QtWidgets.QDockWidget("Sequence", parent)
-        self._dock.setObjectName("ChimolSequenceDock")
-        self._dock.setAllowedAreas(
-            QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.TopDockWidgetArea
-        )
-        self._dock.setWidget(sequence_widget)
+        self._widget = sequence_widget
         sequence_widget.setSizePolicy(
             QtWidgets.QSizePolicy.Preferred,
             QtWidgets.QSizePolicy.Maximum,
         )
 
     @property
-    def dock_widget(self) -> QtWidgets.QDockWidget:
-        return self._dock
+    def widget(self) -> QtWidgets.QWidget:
+        return self._widget
 
     # ------------------------------------------------------------------
     # Helpers reused by the main window

@@ -27,6 +27,11 @@
 
 ### Fixed
 
+- **Fixed Chimol RMF rendering scale mismatch (nm/Å-like distortion)**:
+  - `MolView.set_rmf_data` now centers and scales RMF coordinates and radii by `_scale_factor`, matching `set_frames` and `add_structure`.
+  - Previously RMF-loaded structures were displayed in raw Angstrom units while cartoon/bond/bead sizes were scaled, causing distorted or "weird" rendering.
+  - Added regression test `test_set_rmf_data_scales_frames_and_radii_consistently`.
+
 - **Resolved submodule compilation errors with outdated Eigen**:
   - Added `eigen` and `cmake` to the macOS and Linux distribution environments and configured `CMAKE_PREFIX_PATH` and `CMAKE_ARGS` to ensure submodules (like `LabelLib`) use the modern Eigen version from the environment instead of their bundled legacy versions. This fixes compilation errors on newer compilers (AppleClang 17).
 

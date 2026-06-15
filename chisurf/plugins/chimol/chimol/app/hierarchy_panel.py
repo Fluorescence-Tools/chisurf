@@ -33,7 +33,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DisplayRole:
             return f"{node.name} [{node.node_type}]"
         elif role == QtCore.Qt.DecorationRole:
-            # Could add icons based on node_type
             pass
         return None
 
@@ -52,49 +51,37 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return QtCore.QModelIndex()
         node = index.internalPointer()
-        if node == self._root_node or node.parent is None:
-            return QtCore.QModelIndex()
-        
         parent_node = node.parent
-        grandparent_node = parent_node.parent
-        
-        if grandparent_node is None:
-            # parent_node must be root
-            return self.createIndex(0, 0, parent_node)
-        
-        # We need the row of parent_node within grandparent_node
-        row = 0
-        for i, child in enumerate(grandparent_node.children):
-            if child == parent_node:
-                row = i
-                break
-        return self.createIndex(row, 0, parent_node)
-
-    # A better way is to store parent pointers in RmfHierarchyNode or use a flat map.
-    # For now, let's keep it simple and just show the hierarchy.
+        if parent_node is None or parent_node == self._root_node:
+            return QtCore.QModelIndex()
+        return self.createIndex(0, 0, parent_node)
 
 
-class HierarchyDock(QtWidgets.QDockWidget):
-    """Dock widget for RMF hierarchy navigation."""
+class HierarchyDock(QtWidgets.QWidget):
+    """Hierarchy panel — content widget (no outer QDockWidget wrapper)."""
 
-    def __init__(self, parent=None):
-        super().__init__("Hierarchy", parent)
-        self.setObjectName("ChimolHierarchyDock")
-        self.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea | QtCore.Qt.RightDockWidgetArea)
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None) -> None:
+        super().__init__(parent)
+        self._model = HierarchyModel()
+        self._tree = QtWidgets.QTreeView(self)
+        self._tree.setModel(self._model)
+        self._tree.setHeaderHidden(True)
+        self._tree.setAnimated(True)
+        self._tree.setIndentation(16)
+        self._tree.setExpandsOnDoubleClick(True)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._tree)
 
-        self.tree_view = QtWidgets.QTreeView()
-        self.tree_view.setHeaderHidden(True)
-        self.model = HierarchyModel()
-        self.tree_view.setModel(self.model)
-        
-        container = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(container)
-        layout.setContentsMargins(2, 2, 2, 2)
-        layout.addWidget(self.tree_view)
-        
-        self.setWidget(container)
+    def set_hierarchy(self, root_node: Optional[RmfHierarchyNode]) -> None:
+        self._model.set_root_node(root_node)
+        if root_node is not None:
+            self._tree.expandToDepth(1)
 
-    def set_hierarchy(self, root: Optional[RmfHierarchyNode]):
-        self.model.set_root_node(root)
-        if root:
-            self.tree_view.expandToDepth(1)
+    @property
+    def model(self) -> HierarchyModel:
+        return self._model
+
+    @property
+    def tree_view(self) -> QtWidgets.QTreeView:
+        return self._tree

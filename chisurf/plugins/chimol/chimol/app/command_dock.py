@@ -139,12 +139,6 @@ class CommandDock(QtCore.QObject):
         spacing: int,
     ) -> None:
         super().__init__(parent)
-        self._dock = QtWidgets.QDockWidget("Command", parent)
-        self._dock.setObjectName("ChimolCommandDock")
-        self._dock.setAllowedAreas(
-            QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.TopDockWidgetArea
-        )
-        self._dock.setMinimumHeight(10)
 
         container = QtWidgets.QWidget(parent)
         layout = QtWidgets.QVBoxLayout(container)
@@ -204,7 +198,7 @@ class CommandDock(QtCore.QObject):
         layout.addWidget(self._output, 1)
         layout.addWidget(self._input, 0)
 
-        self._dock.setWidget(container)
+        self._widget = container
 
         self._history: list[str] = []
         self._history_index: Optional[int] = None
@@ -340,8 +334,8 @@ class CommandDock(QtCore.QObject):
     # ------------------------------------------------------------------
 
     @property
-    def dock_widget(self) -> QtWidgets.QDockWidget:
-        return self._dock
+    def widget(self) -> QtWidgets.QWidget:
+        return self._widget
 
     def clear(self) -> None:
         self._output.clear()

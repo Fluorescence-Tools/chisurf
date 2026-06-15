@@ -1,21 +1,21 @@
-"""Thin Chimol ChiSurf plugin shim.
-
-This module is intentionally very small. It exposes the plugin menu name and
-creates a :class:`MolViewPluginWindow` from the core viewer package when
-loaded as a plugin or when run as a standalone application.
-"""
+"""Chimol plugin — molecular structure viewer for ChiSurf."""
 
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
-from qtpy import QtWidgets
+from chisurf.core.plugin import load_manifest
+
+_manifest = load_manifest(Path(__file__).with_name("manifest.json"))
+if _manifest is not None:
+    name = _manifest.display_name
+else:
+    name = "Structure:Chimol (protein viewer)"
+
+__version__ = "0.2.0"
+
 from chisurf.plugins.chimol.chimol.app import MolViewPluginWindow
-
-# Public launcher metadata (no plugin menu registration here)
-__version__ = "0.0.1"
-
-name = "Structure:Chimol"
 
 
 def _create_window() -> MolViewPluginWindow:
@@ -29,7 +29,7 @@ def _create_window() -> MolViewPluginWindow:
 
 def main() -> None:
     """Launch Chimol as a standalone application."""
-
+    from qtpy import QtWidgets
     app = QtWidgets.QApplication.instance()
     owns_app = app is None
     if app is None:
@@ -40,7 +40,7 @@ def main() -> None:
         sys.exit(app.exec())
 
 
-if __name__ == "__main__":  # pragma: no cover - manual launch
+if __name__ == "__main__":
     main()
 
 

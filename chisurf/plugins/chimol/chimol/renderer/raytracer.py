@@ -168,6 +168,8 @@ if _HAVE_NUMBA:
         fog_start: float,
         fog_intensity: float,
         far_clip: float,
+        progress: np.ndarray,
+        cancel: np.ndarray,
     ) -> np.ndarray:
         """JIT-compiled ray tracing kernel with sphere + triangle support."""
         n_spheres: int = centers.shape[0]
@@ -215,6 +217,9 @@ if _HAVE_NUMBA:
         legacy = max(0.0, min(1.0, legacy_lighting))
 
         for py in _nb.prange(rh):
+            if py == 0 or py == rh - 1:
+                if cancel[0] != 0:
+                    continue
             for px in range(rw):
                 u = (float(px) + 0.5) / float(max(rw - 1, 1)) - 0.5
                 v = 0.5 - (float(py) + 0.5) / float(max(rh - 1, 1))
@@ -596,6 +601,9 @@ def trace(
     tri_vertices: np.ndarray | None = None,
     tri_vnormals: np.ndarray | None = None,
     tri_colors: np.ndarray | None = None,
+    # Progress / cancellation
+    progress: Optional[np.ndarray] = None,
+    cancel: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Return an (H, W, 3) uint8 raytraced image of spheres and triangles.
 
@@ -672,6 +680,15 @@ def trace(
 
     fov_rad = math.radians(camera.fov_degrees)
 
+    if progress is None:
+        progress = np.zeros(1, dtype=np.int64)
+    else:
+        progress = np.asarray(progress, dtype=np.int64)
+    if cancel is None:
+        cancel = np.zeros(1, dtype=np.int64)
+    else:
+        cancel = np.asarray(cancel, dtype=np.int64)
+
     if _HAVE_NUMBA:
         try:
             img = _jit_trace(
@@ -691,6 +708,8 @@ def trace(
                 float(shadow_decay_factor), float(shadow_decay_range),
                 int(depth_cue), float(fog_start), float(fog_intensity),
                 float(camera.far_clip),
+                progress,
+                cancel,
             )
         except Exception:
             img = _trace_numpy(
@@ -703,6 +722,8 @@ def trace(
                 shadow, shadow_fudge, shadow_decay_factor, shadow_decay_range,
                 depth_cue, fog_start, fog_intensity,
                 bg_r, bg_g, bg_b,
+                progress,
+                cancel,
             )
     else:
         img = _trace_numpy(
@@ -715,6 +736,8 @@ def trace(
             shadow, shadow_fudge, shadow_decay_factor, shadow_decay_range,
             depth_cue, fog_start, fog_intensity,
             bg_r, bg_g, bg_b,
+            progress,
+            cancel,
         )
 
     if color_blend:
@@ -775,9 +798,29 @@ def _trace_numpy(
     fog_start: float,
     fog_intensity: float,
     bg_r: int, bg_g: int, bg_b: int,
+    progress: Optional[np.ndarray] = None,
+    cancel: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Pure NumPy fallback for environments without Numba."""
+    if progress is not None:
+        progress = np.asarray(progress, dtype=np.int64)
+    if cancel is not None:
+        cancel = np.asarray(cancel, dtype=np.int64)
+
     rw, rh = width * ssaa, height * ssaa
+    total_steps = 6
+    step = 0
+
+    def _check_cancel() -> bool:
+        return cancel is not None and cancel[0] != 0
+
+    def _set_progress(frac: float) -> None:
+        if progress is not None:
+            progress[0] = int(frac * rh)
+
+    if _check_cancel():
+        return np.full((height, width, 3), background, dtype=np.uint8)
+
     origins, dirs = _build_ray_grid_numpy(camera, rw, rh, fov_rad)
 
     n_spheres = centers.shape[0]
@@ -811,6 +854,11 @@ def _trace_numpy(
         best_id[idx] = i
         best_is_tri[idx] = False
 
+    step += 1
+    _set_progress(step / total_steps)
+    if _check_cancel():
+        return np.full((height, width, 3), background, dtype=np.uint8)
+
     # Triangle intersection
     for ti in range(n_tri):
         v0 = tri_vertices[ti, 0]
@@ -837,6 +885,11 @@ def _trace_numpy(
         best_t[hit] = t[hit]
         best_id[hit] = ti
         best_is_tri[hit] = True
+
+    step += 1
+    _set_progress(step / total_steps)
+    if _check_cancel():
+        return np.full((height, width, 3), background, dtype=np.uint8)
 
     hit_mask = best_id >= 0
     bg_rgb = np.array([bg_r, bg_g, bg_b], dtype=np.float64)
@@ -897,6 +950,11 @@ def _trace_numpy(
         hit_normals[m] = n / nl
         hit_colors[m] = tri_colors[ti]
 
+    step += 1
+    _set_progress(step / total_steps)
+    if _check_cancel():
+        return np.full((height, width, 3), background, dtype=np.uint8)
+
     view_v = camera.origin - hit_pos
     view_v = view_v / (np.linalg.norm(view_v, axis=-1, keepdims=True) + 1e-9)
 
@@ -931,6 +989,11 @@ def _trace_numpy(
         spec_weight = lit[hit_mask] * (n_dot_h ** shininess)
         excess_arr[hit_mask] += specular * spec_weight * spec_per_light
 
+    step += 1
+    _set_progress(step / total_steps)
+    if _check_cancel():
+        return np.full((height, width, 3), background, dtype=np.uint8)
+
     n_dot_v_arr = np.clip(np.sum(hit_normals * view_v, axis=-1), 0.0, 1.0)
     direct_cmp = n_dot_v_arr ** direct_specular_power
     excess_arr[hit_mask] += direct_specular * direct_cmp
@@ -962,7 +1025,14 @@ def _trace_numpy(
                 + bg_rgb[c] * fog[hit_mask]
             )
 
+    step += 1
+    _set_progress(step / total_steps)
+    if _check_cancel():
+        return np.full((height, width, 3), background, dtype=np.uint8)
+
     base = _downsample_numpy(np.clip(img, 0.0, 255.0), height, width, ssaa)
+    step += 1
+    _set_progress(step / total_steps)
     return base
 
 

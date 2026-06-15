@@ -197,13 +197,36 @@ class MolView(QtWidgets.QWidget):
         *,
         object_id: str | None = None
     ) -> None:
-        """Load full RMF data (hierarchy, trajectory, radii) into an object."""
+        """Load full RMF data (hierarchy, trajectory, radii) into an object.
+
+        RMF coordinates are stored and returned in Angstroms by IMP.  Chimol's
+        internal scene uses the same scaled units as :meth:`set_frames` and
+        :meth:`add_structure` (coordinates are centered and multiplied by
+        ``_scale_factor``), so we apply that scaling here to keep bond,
+        cartoon, and bead sizes consistent with structure-loaded objects.
+        """
         with self._activate_object(object_id):
             state = self._get_active_state()
             state.rmf_hierarchy = hierarchy
-            state.frames = frames
-            state.frames_raw = frames
-            state.bead_radii = radii
+
+            if frames is not None and len(frames) > 0:
+                arr = np.asarray(frames, dtype=float)
+                flat = arr.reshape(-1, 3)
+                center, radius = _compute_center_radius(flat)
+                scale = float(self._scale_factor)
+                state.frames = (arr - center) * scale
+                state.frames_raw = arr
+                self._center = np.zeros(3, dtype=float)
+                self._radius = float(radius * scale)
+            else:
+                state.frames = frames
+                state.frames_raw = frames
+
+            if radii is not None:
+                state.bead_radii = np.asarray(radii, dtype=float) * float(self._scale_factor)
+            else:
+                state.bead_radii = radii
+
             if restraints:
                 state.restraints = restraints
             if rmf_provenance:
@@ -221,7 +244,7 @@ class MolView(QtWidgets.QWidget):
             if frames is not None and len(frames) > 0:
                 self._select_state_frame(state, 0)
                 self._total_frames = max(self._total_frames, len(frames))
-                n_points = int(np.asarray(frames).shape[1])
+                n_points = int(np.asarray(state.frames).shape[1])
                 state.cartoon_mask = np.zeros(n_points, dtype=bool)
                 state.ball_mask = np.ones(n_points, dtype=bool)
                 state.sticks_mask = np.ones(n_points, dtype=bool)
@@ -970,6 +993,26 @@ class MolView(QtWidgets.QWidget):
         finally:
             self._active_object_id = prev
 
+    @staticmethod
+    def _normalize_mouse_mode(mode: Any) -> str:
+        """Return a valid mouse rotation mode string.
+
+        Parameters
+        ----------
+        mode : Any
+            Candidate mode value (typically ``"pymol"`` or ``"chimol"``).
+
+        Returns
+        -------
+        str
+            ``"pymol"`` or ``"chimol"``. Unrecognised values fall back to
+            ``"pymol"``.
+        """
+        mode_str = str(mode).lower().strip()
+        if mode_str == "chimol":
+            return "chimol"
+        return "pymol"
+
     def __init__(
         self,
         parent: QtWidgets.QWidget | None = None,
@@ -1126,6 +1169,10 @@ class MolView(QtWidgets.QWidget):
             clip_wheel_scale = 0.85
         self._camera_clip_wheel_scale = clip_wheel_scale
 
+        self._mouse_mode = self._normalize_mouse_mode(
+            camera_cfg.get("mouse_mode", "pymol")
+        )
+
         # Camera defaults
         self._default_elevation = 20
         self._default_azimuth = 45
@@ -1190,6 +1237,9 @@ class MolView(QtWidgets.QWidget):
                     max_near_clip=self._camera_max_near_clip,
                     clip_wheel_scale=self._camera_clip_wheel_scale,
                 )
+            set_mouse_mode = getattr(self._renderer, "set_mouse_mode", None)
+            if callable(set_mouse_mode):
+                set_mouse_mode(self._mouse_mode)
             renderer_widget = self._renderer.widget()
             renderer_widget.setSizePolicy(
                 QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
@@ -1225,6 +1275,11 @@ class MolView(QtWidgets.QWidget):
 
     def _on_display_config_changed(self) -> None:
         """Recompute scene objects when display config is reloaded."""
+        try:
+            camera_cfg = _DISPLAY_CONFIG.get("camera", {})
+            self.set_mouse_mode(camera_cfg.get("mouse_mode", "pymol"))
+        except Exception:
+            pass
         if getattr(self, "_coords", None) is not None:
             try:
                 self._update_view()
@@ -1565,6 +1620,30 @@ class MolView(QtWidgets.QWidget):
             renderer.set_background_color(color)
         except Exception:
             pass
+
+    def set_mouse_mode(self, mode: str) -> None:
+        """Set the mouse interaction style.
+
+        Parameters
+        ----------
+        mode : str
+            ``"pymol"`` rotates and pans the object (protein) in the camera
+            view so it appears to follow the cursor (PyMOL-style).
+            ``"chimol"`` rotates and pans the camera / plane, so the object
+            moves opposite to the cursor (legacy Chimol style).
+        """
+        self._mouse_mode = self._normalize_mouse_mode(mode)
+        renderer = self._renderer
+        if renderer is None:
+            return
+        try:
+            renderer.set_mouse_mode(self._mouse_mode)
+        except Exception:
+            pass
+
+    def get_mouse_mode(self) -> str:
+        """Return the current left-drag rotation style."""
+        return self._mouse_mode
 
     def reset_view(self) -> None:
         """Reset the camera to show all visible objects at default orientation."""

@@ -1,4 +1,4 @@
-"""Toolbar/dock controls for the Chimol viewer."""
+"""Toolbar controls for the Chimol viewer."""
 
 from __future__ import annotations
 
@@ -7,66 +7,180 @@ from typing import Any, Optional
 from qtpy import QtWidgets, QtCore
 
 
-class ControlsDock(QtCore.QObject):
-    """Toolbar controls embedded inside a dock widget."""
+# ── Emoji-enhanced default button labels ──────────────────────────────
+_BUTTON_DEFAULTS: dict[str, dict[str, Any]] = {
+    "open": {
+        "text": "\U0001f4c2 Open",
+        "tool_tip": "Open structure file",
+    },
+    "plane": {
+        "text": "\u2708\ufe0f Plane",
+        "tool_tip": "Toggle reference plane",
+        "checkable": True,
+    },
+    "surface": {
+        "text": "\U0001f310 Surf",
+        "tool_tip": "Toggle surface representation",
+        "checkable": True,
+    },
+    "display_cfg": {
+        "text": "\u2699\ufe0f Cfg",
+        "tool_tip": "Open Chimol display configuration",
+    },
+    "mouse_mode": {
+        "text": "\U0001f5b1\ufe0f PyMOL",
+        "tool_tip": "Toggle PyMOL/Chimol mouse interaction mode (rotate + pan)",
+        "checkable": True,
+        "checked": True,
+    },
+    "color": {
+        "text": "\U0001f3a8 AA",
+        "tool_tip": "Color amino acids by residue type",
+        "checkable": True,
+    },
+    "color_ss": {
+        "text": "\U0001f52c SS",
+        "tool_tip": "Color by secondary structure (helix/strand/coil)",
+        "checkable": True,
+    },
+    "color_seq": {
+        "text": "\U0001f308 Seq",
+        "tool_tip": "Color by sequence position (gradient)",
+        "checkable": True,
+    },
+    "rep_cartoon": {
+        "text": "\U0001f9ec Cartoon",
+        "tool_tip": "Toggle cartoon ribbon",
+        "checkable": True,
+        "checked": True,
+    },
+    "rep_atoms": {
+        "text": "\u269b\ufe0f Atoms",
+        "tool_tip": "Toggle atoms/balls representation",
+        "checkable": True,
+    },
+    "rep_sticks": {
+        "text": "\U0001f3d7\ufe0f Sticks",
+        "tool_tip": "Toggle sticks (bond) representation",
+        "checkable": True,
+    },
+    "rep_trace": {
+        "text": "\U0001f4cf Trace",
+        "tool_tip": "Toggle CA trace line",
+        "checkable": True,
+    },
+    "rep_dots": {
+        "text": "\u2726 Dots",
+        "tool_tip": "Toggle fast dot cloud",
+        "checkable": True,
+    },
+    "rep_metaballs": {
+        "text": "\U0001f52e Metaball",
+        "tool_tip": "Toggle metaballs representation",
+        "checkable": True,
+    },
+    "info": {
+        "text": "\u2139\ufe0f Info",
+        "tool_tip": "Toggle system info panel",
+        "checkable": True,
+        "checked": True,
+    },
+}
+
+
+class ControlsToolbar(QtCore.QObject):
+    """Toolbar controls for the Chimol viewer.
+
+    Creates a QToolBar with labelled tool buttons organised into logical
+    groups separated by separators.
+    """
 
     def __init__(
         self,
-        parent: QtWidgets.QWidget,
+        parent: QtWidgets.QMainWindow,
         *,
-        margins: tuple[int, int, int, int],
-        spacing: int,
         button_overrides: Optional[dict[str, dict[str, Any]]] = None,
     ) -> None:
         super().__init__(parent)
-        self._dock = QtWidgets.QDockWidget("Controls", parent)
-        self._dock.setObjectName("ChimolControlsDock")
-        self._dock.setAllowedAreas(
-            QtCore.Qt.TopDockWidgetArea | QtCore.Qt.BottomDockWidgetArea
-        )
         overrides = dict(button_overrides or {})
 
-        def _button_cfg(key: str) -> dict[str, Any]:
-            cfg = overrides.get(key)
-            return cfg if isinstance(cfg, dict) else {}
+        def _cfg(key: str) -> dict[str, Any]:
+            base = dict(_BUTTON_DEFAULTS.get(key, {}))
+            ovr = overrides.get(key, {})
+            base.update(ovr)
+            return base
 
-        def _make_button(
-            key: str,
-            *,
-            text: str,
-            tool_tip: str,
-            checkable: bool = False,
-            checked: bool = False,
-            object_name: Optional[str] = None,
-        ) -> QtWidgets.QToolButton:
-            button = QtWidgets.QToolButton(parent)
-            cfg = _button_cfg(key)
+        self._toolbar = QtWidgets.QToolBar("View Controls", parent)
+        self._toolbar.setObjectName("ChimolToolBar")
+        self._toolbar.setIconSize(QtCore.QSize(16, 16))
+        self._toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
 
-            btn_text = cfg.get("text", text)
-            if btn_text is not None:
-                button.setText(str(btn_text))
+        # ── File / open ───────────────────────────────────────────────
+        self.button_open = self._add_button("open", _cfg("open"))
+        self._toolbar.addSeparator()
 
-            tip = cfg.get("tool_tip", tool_tip)
-            if tip is not None:
-                button.setToolTip(str(tip))
+        # ── Display group ─────────────────────────────────────────────
+        self.button_plane = self._add_button("plane", _cfg("plane"))
+        self.button_surface = self._add_button("surface", _cfg("surface"))
+        self.button_display_cfg = self._add_button("display_cfg", _cfg("display_cfg"))
+        self.button_mouse_mode = self._add_button("mouse_mode", _cfg("mouse_mode"))
+        self._toolbar.addSeparator()
 
-            is_checkable = cfg.get("checkable", checkable)
-            button.setCheckable(bool(is_checkable))
-            if button.isCheckable():
-                button.setChecked(bool(cfg.get("checked", checked)))
-            else:
-                button.setChecked(False)
+        # ── Colour group ──────────────────────────────────────────────
+        self.button_color = self._add_button("color", _cfg("color"))
+        self.button_color_ss = self._add_button("color_ss", _cfg("color_ss"))
+        self.button_color_sequence = self._add_button("color_seq", _cfg("color_seq"))
+        self._toolbar.addSeparator()
 
-            obj_name = cfg.get("object_name", object_name)
-            if obj_name:
-                button.setObjectName(str(obj_name))
+        # ── Representation group ──────────────────────────────────────
+        self.button_rep_cartoon = self._add_button(
+            "rep_cartoon", _cfg("rep_cartoon"),
+        )
+        self.button_rep_atoms = self._add_button("rep_atoms", _cfg("rep_atoms"))
+        self.button_rep_sticks = self._add_button("rep_sticks", _cfg("rep_sticks"))
+        self.button_rep_trace = self._add_button("rep_trace", _cfg("rep_trace"))
+        self.button_rep_dots = self._add_button("rep_dots", _cfg("rep_dots"))
+        self.button_rep_metaballs = self._add_button(
+            "rep_metaballs", _cfg("rep_metaballs"),
+        )
+        self._toolbar.addSeparator()
 
-            setters = cfg.get("setters")
-            if isinstance(setters, dict):
-                for method_name, value in setters.items():
-                    method = getattr(button, method_name, None)
-                    if not callable(method):
-                        continue
+        # ── Info ──────────────────────────────────────────────────────
+        self.button_info = self._add_button("info", _cfg("info"))
+
+    # ── public helpers ────────────────────────────────────────────────
+
+    @property
+    def toolbar(self) -> QtWidgets.QToolBar:
+        return self._toolbar
+
+    # ── internal helpers ──────────────────────────────────────────────
+
+    def _add_button(
+        self,
+        key: str,
+        cfg: dict[str, Any],
+    ) -> QtWidgets.QToolButton:
+        """Build a QToolButton from *cfg* and append it to the toolbar."""
+        btn = QtWidgets.QToolButton(self._toolbar)
+        btn.setText(str(cfg.get("text", key)))
+        tip = cfg.get("tool_tip")
+        if tip:
+            btn.setToolTip(str(tip))
+        checkable = bool(cfg.get("checkable", False))
+        btn.setCheckable(checkable)
+        if checkable:
+            btn.setChecked(bool(cfg.get("checked", False)))
+        obj_name = cfg.get("object_name")
+        if obj_name:
+            btn.setObjectName(str(obj_name))
+
+        # Apply arbitrary setter calls from config
+        setters = cfg.get("setters")
+        if isinstance(setters, dict):
+            for method_name, value in setters.items():
+                method = getattr(btn, method_name, None)
+                if callable(method):
                     try:
                         if isinstance(value, (list, tuple)):
                             method(*value)
@@ -75,153 +189,5 @@ class ControlsDock(QtCore.QObject):
                     except Exception:
                         continue
 
-            return button
-
-        toolbar = QtWidgets.QHBoxLayout()
-        toolbar.setSpacing(6)
-
-        self.button_open = _make_button(
-            "open",
-            text="Open",
-            tool_tip="Open structure file",
-        )
-        toolbar.addWidget(self.button_open)
-
-        display_group = QtWidgets.QHBoxLayout()
-        display_group.setSpacing(2)
-
-        self.button_plane = _make_button(
-            "plane",
-            text="Plane",
-            tool_tip="Toggle reference plane",
-            checkable=True,
-            checked=False,
-        )
-        self.button_surface = _make_button(
-            "surface",
-            text="Surf",
-            tool_tip="Toggle surface representation",
-            checkable=True,
-            checked=False,
-        )
-        self.button_display_cfg = _make_button(
-            "display_cfg",
-            text="Cfg",
-            tool_tip="Open Chimol display configuration JSON in the system editor",
-        )
-        display_group.addWidget(self.button_plane)
-        display_group.addWidget(self.button_surface)
-        display_group.addWidget(self.button_display_cfg)
-
-        color_group = QtWidgets.QHBoxLayout()
-        color_group.setSpacing(2)
-        self.button_color = _make_button(
-            "color",
-            text="Color AA",
-            tool_tip="Color amino acids by residue type",
-            checkable=True,
-            checked=False,
-        )
-        self.button_color_ss = _make_button(
-            "color_ss",
-            text="Color SS",
-            tool_tip="Color 3D geometry by secondary structure (helix/strand/coil)",
-            checkable=True,
-            checked=False,
-        )
-        self.button_color_sequence = _make_button(
-            "color_seq",
-            text="Color Seq",
-            tool_tip="Color atoms by sequence position (gradient)",
-            checkable=True,
-            checked=False,
-        )
-        color_group.addWidget(self.button_color)
-        color_group.addWidget(self.button_color_ss)
-        color_group.addWidget(self.button_color_sequence)
-
-        rep_group = QtWidgets.QHBoxLayout()
-        rep_group.setSpacing(2)
-        self.button_rep_cartoon = _make_button(
-            "rep_cartoon",
-            text="Cartoon",
-            tool_tip="Toggle cartoon ribbon (CA tube)",
-            checkable=True,
-            checked=True,
-            object_name="chimolRepCartoon",
-        )
-        self.button_rep_atoms = _make_button(
-            "rep_atoms",
-            text="Atoms",
-            tool_tip="Toggle atoms/balls representation",
-            checkable=True,
-            checked=False,
-            object_name="chimolRepAtoms",
-        )
-        self.button_rep_sticks = _make_button(
-            "rep_sticks",
-            text="Sticks",
-            tool_tip="Toggle sticks (bond) representation",
-            checkable=True,
-            checked=False,
-            object_name="chimolRepSticks",
-        )
-        self.button_rep_trace = _make_button(
-            "rep_trace",
-            text="Trace",
-            tool_tip="Toggle CA trace line",
-            checkable=True,
-            checked=False,
-            object_name="chimolRepTrace",
-        )
-        self.button_rep_dots = _make_button(
-            "rep_dots",
-            text="Dots",
-            tool_tip="Toggle fast dot cloud",
-            checkable=True,
-            checked=False,
-            object_name="chimolRepDots",
-        )
-        self.button_rep_metaballs = _make_button(
-            "rep_metaballs",
-            text="Metaball",
-            tool_tip="Toggle metaballs representation",
-            checkable=True,
-            checked=False,
-            object_name="chimolRepMetaball",
-        )
-        rep_group.addWidget(self.button_rep_cartoon)
-        rep_group.addWidget(self.button_rep_atoms)
-        rep_group.addWidget(self.button_rep_sticks)
-        rep_group.addWidget(self.button_rep_trace)
-        rep_group.addWidget(self.button_rep_dots)
-        rep_group.addWidget(self.button_rep_metaballs)
-
-        self.button_info = _make_button(
-            "info",
-            text="Info",
-            tool_tip="Toggle system info panel",
-            checkable=True,
-            checked=True,
-        )
-
-        toolbar.addLayout(display_group)
-        toolbar.addSpacing(8)
-        toolbar.addLayout(color_group)
-        toolbar.addSpacing(8)
-        toolbar.addLayout(rep_group)
-        toolbar.addWidget(self.button_info)
-        toolbar.addStretch(1)
-
-        controls_widget = QtWidgets.QWidget(parent)
-        controls_layout = QtWidgets.QVBoxLayout(controls_widget)
-        controls_layout.setContentsMargins(*margins)
-        controls_layout.setSpacing(spacing)
-        controls_layout.addLayout(toolbar)
-        controls_layout.addStretch(1)
-
-        self._dock.setWidget(controls_widget)
-
-    @property
-    def dock_widget(self) -> QtWidgets.QDockWidget:
-        return self._dock
+        self._toolbar.addWidget(btn)
+        return btn
