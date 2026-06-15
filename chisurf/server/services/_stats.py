@@ -3,7 +3,19 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 
-def _safe_chi2(fit: Any) -> Optional[float]:
+def _cached_float(obj: Any, names: tuple[str, ...]) -> Optional[float]:
+    """Return a cached float attribute without invoking descriptors."""
+    try:
+        values = getattr(obj, "__dict__", {})
+        for name in names:
+            if name in values:
+                return float(values[name])
+    except Exception:
+        pass
+    return None
+
+
+def _safe_chi2(fit: Any, *, compute: bool = False) -> Optional[float]:
     """Return the chi-squared value of *fit*, or ``None`` on failure.
 
     Parameters
@@ -12,13 +24,18 @@ def _safe_chi2(fit: Any) -> Optional[float]:
         Fit instance.
 
     """
+    cached = _cached_float(fit, ("chi2", "_chi2", "last_chi2", "_last_chi2"))
+    if cached is not None:
+        return cached
+    if not compute:
+        return None
     try:
         return float(getattr(fit, "chi2", float("nan")))
     except Exception:
         return None
 
 
-def _safe_chi2r(fit: Any) -> Optional[float]:
+def _safe_chi2r(fit: Any, *, compute: bool = False) -> Optional[float]:
     """Return the reduced chi-squared value of *fit*, or ``None`` on failure.
 
     Parameters
@@ -27,6 +44,11 @@ def _safe_chi2r(fit: Any) -> Optional[float]:
         Fit instance.
 
     """
+    cached = _cached_float(fit, ("chi2r", "_chi2r", "last_chi2r", "_last_chi2r"))
+    if cached is not None:
+        return cached
+    if not compute:
+        return None
     try:
         return float(getattr(fit, "chi2r", float("nan")))
     except Exception:

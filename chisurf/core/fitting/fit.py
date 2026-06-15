@@ -1563,7 +1563,20 @@ def sample_fit(
     steps, thin, chi2max, n_runs, step_size, temp : float or int, optional
         Sampling configuration passed through to
         :mod:`cs.core.fitting.sample`.
+
+    Raises
+    ------
+    ValueError
+        If ``fit.model`` is not a curve-based model (e.g. ProteinMC) and
+        therefore cannot be sampled with the generic emcee backend.
     """
+    model = getattr(fit, "model", None)
+    if model is None or not hasattr(model, "__getitem__") or not hasattr(model, "n_points"):
+        raise ValueError(
+            "Generic sampling requires a curve-based model. "
+            "Use the model-specific sampling workflow (e.g. ProteinMC's own sampling button)."
+        )
+
     # save initial parameter values
     pv = fit.model.parameter_values
     

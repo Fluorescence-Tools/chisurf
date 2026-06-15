@@ -185,9 +185,9 @@ def run_fit(
     if fit is None:
         return service_error("fit not found", error_code=NOT_FOUND)
     try:
-        chi2_before = _safe_chi2(fit)
+        chi2_before = _safe_chi2(fit, compute=True)
         fit.run()
-        chi2_after = _safe_chi2(fit)
+        chi2_after = _safe_chi2(fit, compute=True)
         fit_uid_val = str(getattr(fit, "unique_identifier", "") or "")
         if event_bus is not None:
             event_bus.publish("fit.ran", {"fit_index": idx, "fit_uid": fit_uid_val})
@@ -577,8 +577,8 @@ def fit_diagnostics(
     try:
         from chisurf.server.services.datasets import _sanitize_float_list
         fit_uid_val = str(getattr(fit, "unique_identifier", "") or "")
-        chi2 = _safe_chi2(fit)
-        chi2r = _safe_chi2r(fit)
+        chi2 = _safe_chi2(fit, compute=True)
+        chi2r = _safe_chi2r(fit, compute=True)
         n_points = _safe_n_points(fit)
         n_free = _safe_n_free(fit)
         parameters = _collect_fit_params(fit)
@@ -1047,7 +1047,13 @@ def fit_range_auto(
             return service_error("data reader has no autofitrange", error_code=INVALID_STATE)
         fit_range = reader.autofitrange(data)
         xmin, xmax = fit_range
-        result: Dict[str, Any] = {"ok": True, "xmin": int(xmin), "xmax": int(xmax)}
+        fit.fit_range = (int(xmin), int(xmax))
+        result: Dict[str, Any] = {
+            "ok": True,
+            "xmin": int(xmin),
+            "xmax": int(xmax),
+            "applied": True,
+        }
         # Check for 2D grid metadata
         meta = getattr(data, "meta_data", {}) or {}
         grid = meta.get("grid", {}) or {}
@@ -1259,6 +1265,7 @@ def fit_parameter_scan_start(
             import numpy as np
             values = np.linspace(lo, hi, int(n_steps))
             chi2s = []
+            chi2rs = []
             n_total = len(values)
 
             for i, v in enumerate(values):
@@ -1272,7 +1279,11 @@ def fit_parameter_scan_start(
                 chi2 = getattr(fit, "chi2", None)
                 if chi2 is None:
                     chi2 = float("nan")
+                chi2r = getattr(fit, "chi2r", None)
+                if chi2r is None:
+                    chi2r = float("nan")
                 chi2s.append(float(chi2))
+                chi2rs.append(float(chi2r))
                 _PARAMETER_SCAN_JOBS[job_id]["progress"] = int(100.0 * (i + 1) / n_total)
 
             # Restore original value
@@ -1283,6 +1294,7 @@ def fit_parameter_scan_start(
                 "progress": 100,
                 "values": [float(v) for v in values],
                 "chi2": chi2s,
+                "chi2r": chi2rs,
             })
         except Exception as e:
             _PARAMETER_SCAN_JOBS[job_id]["status"] = "failed"
@@ -1323,5 +1335,6 @@ def fit_parameter_scan_result(
         "status": job.get("status"),
         "values": job.get("values", []),
         "chi2": job.get("chi2", []),
+        "chi2r": job.get("chi2r", []),
         "error": job.get("error"),
     }

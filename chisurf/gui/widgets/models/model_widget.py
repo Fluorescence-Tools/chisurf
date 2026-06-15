@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 
-from qtpy import QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 import chisurf as cs
 import chisurf.core.fitting.fit
@@ -50,6 +50,10 @@ class ModelWidget(Model, QtWidgets.QWidget):
     @abc.abstractmethod
     def update(self) -> None:
         super().update()
+        if QtCore.QThread.currentThread() is not self.thread():
+            QtCore.QTimer.singleShot(0, self.update_widgets)
+            QtCore.QTimer.singleShot(0, self.update_plots)
+            return
         self.update_widgets()
         self.update_plots()
 

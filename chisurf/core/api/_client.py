@@ -234,9 +234,12 @@ class ChisurfClient:
     def subscribe(self, topic: str = "", callback: Optional[Callable] = None) -> Any:
         return self._client.subscribe(topic, callback)
 
-    def unsubscribe(self, topic: str = "") -> None:
+    def unsubscribe(self, topic: str = "", callback: Optional[Callable] = None) -> None:
         import zmq
 
+        if callback is not None:
+            self._client.unsubscribe(topic, callback)
+            return
         if self._client._sub_socket is not None:
             self._client._sub_socket.setsockopt_string(zmq.UNSUBSCRIBE, topic)
 

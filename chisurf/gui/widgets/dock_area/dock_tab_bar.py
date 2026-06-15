@@ -68,6 +68,7 @@ class DockTabBar(QtWidgets.QTabBar):
         # Check if we can drag this tab (must not be the only tab in DockArea)
         p = self.parent()
         from chisurf.gui.widgets.dock_area.dock_area import DockArea, DockTabWidget
+        from chisurf.gui.widgets.dock_area.dock_stacked_tab_widget import DockStackedTabWidget
 
         while p is not None and not isinstance(p, DockArea):
             p = p.parent()
@@ -76,6 +77,8 @@ class DockTabBar(QtWidgets.QTabBar):
         if dock_area is not None:
             total_tabs = 0
             for tw in dock_area.findChildren(DockTabWidget):
+                total_tabs += tw.count()
+            for tw in dock_area.findChildren(DockStackedTabWidget):
                 total_tabs += tw.count()
             if total_tabs <= 1:
                 super().mouseMoveEvent(event)

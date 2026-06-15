@@ -31,6 +31,7 @@ import chisurf.gui.widgets
 import chisurf.gui.widgets.fitting
 import chisurf.gui.widgets.history_browser
 import chisurf.gui.widgets.experiments.modelling
+import chisurf.gui.widgets as _gw
 
 # Heavy imports moved to deferred/local usage or warmup_imports
 # import cs.core.models
@@ -249,7 +250,7 @@ class Main(
                 setup_found = True
                 break
         if not setup_found:
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="Setup Not Found",
                 info=f"Setup '{name}' does not exist in the current experiment.",
                 show_fortune=False
@@ -342,7 +343,7 @@ class Main(
         except Exception:
             pass
         if cs.core.settings.gui['confirm_close_program']:
-            reply = cs.gui.widgets.general.MyMessageBox.question(
+            reply = _gw.general.MyMessageBox.question(
                 self,
                 'Message',
                 "Are you sure to quit?",
@@ -371,11 +372,11 @@ class Main(
         sub_window = self.mdiarea.currentSubWindow()
         if sub_window is not None:
             # Clear existing widgets from layouts
-            cs.gui.widgets.hide_items_in_layout(self.modelLayout)
+            _gw.hide_items_in_layout(self.modelLayout)
             header_layout = getattr(self, "analysisHeaderLayout", None)
             if header_layout is not None:
-                cs.gui.widgets.hide_items_in_layout(header_layout)
-            cs.gui.widgets.hide_items_in_layout(self.plotOptionsLayout)
+                _gw.hide_items_in_layout(header_layout)
+            _gw.hide_items_in_layout(self.plotOptionsLayout)
 
             # Handle fit windows first
             if hasattr(sub_window, 'fit') and sub_window.fit is not None:
@@ -468,7 +469,7 @@ class Main(
 
 
     def onLoadFit(self, **kwargs):
-        filename = cs.gui.widgets.get_filename(
+        filename = _gw.get_filename(
             file_type="*.fit.json",
             description="Load fit (fit.json)",
             **kwargs
@@ -488,11 +489,11 @@ class Main(
         )
 
         # Clear the analysis dock layouts
-        cs.gui.widgets.clear_layout(self.modelLayout)
+        _gw.clear_layout(self.modelLayout)
         header_layout = getattr(self, "analysisHeaderLayout", None)
         if header_layout is not None:
-            cs.gui.widgets.clear_layout(header_layout)
-        cs.gui.widgets.clear_layout(self.plotOptionsLayout)
+            _gw.clear_layout(header_layout)
+        _gw.clear_layout(self.plotOptionsLayout)
 
     def onAddDataset(self):
         filename = self.current_setup.controller.get_filename()
@@ -510,7 +511,7 @@ class Main(
         )
 
     def onSaveFits(self, event: QtCore.QEvent = None):
-        path, _ = cs.gui.widgets.get_directory()
+        path, _ = _gw.get_directory()
         if not path:
             return
         cs.working_path = path
@@ -539,7 +540,7 @@ class Main(
         except Exception as e:
             cs.logging.warning(f"onSaveFit: could not infer data folder from fit.data.filename: {e}")
 
-        path, _ = cs.gui.widgets.get_directory(**kwargs)
+        path, _ = _gw.get_directory(**kwargs)
         if not path:
             return
         # Keep behavior: user chooses where to save; update working path accordingly
@@ -554,7 +555,7 @@ class Main(
         try:
             self.open_context_help_for_reader(None)
         except Exception as e:
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="Help Plugin Error",
                 info=f"Error loading help plugin: {str(e)}",
                 show_fortune=False
@@ -642,7 +643,7 @@ class Main(
             except Exception:
                 pass
         except Exception as e:
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="Help Plugin Error",
                 info=f"Error loading help plugin: {str(e)}",
                 show_fortune=False
@@ -662,7 +663,7 @@ class Main(
             window.show()
         except Exception as e:
             # Show error message if plugin can't be loaded
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="Updater Plugin Error",
                 info=f"Error loading updater plugin: {str(e)}",
                 show_fortune=False
@@ -680,7 +681,7 @@ class Main(
             window = about_plugin.AboutDialog(parent=self)
             window.show()
         except Exception as e:
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="About Plugin Error",
                 info=f"Error opening About dialog: {str(e)}",
                 show_fortune=False
@@ -692,7 +693,7 @@ class Main(
         cs.core.settings.clear_settings_folder()
 
         # Show a confirmation popup
-        cs.gui.widgets.general.MyMessageBox(
+        _gw.general.MyMessageBox(
             label="Settings Reset",
             info="Local settings have been reset successfully.",
             show_fortune=False
@@ -713,14 +714,14 @@ class Main(
                     cs.logging.warning(f"Could not delete style file {file}: {e}")
 
             # Show a confirmation popup
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="Styles Reset",
                 info="User style files have been cleared successfully. Restart the application to apply default styles.",
                 show_fortune=False
             )
         else:
             # Show a message if the folder doesn't exist
-            cs.gui.widgets.general.MyMessageBox(
+            _gw.general.MyMessageBox(
                 label="Styles Reset",
                 info="No user style files found.",
                 show_fortune=False
@@ -732,7 +733,7 @@ class Main(
         cs.core.settings.clear_user_plugins_folder()
 
         # Show a confirmation popup
-        cs.gui.widgets.general.MyMessageBox(
+        _gw.general.MyMessageBox(
             label="User Plugins Reset",
             info="User plugins folder has been cleared successfully. Restart the application to apply changes.",
             show_fortune=False
@@ -1003,7 +1004,7 @@ class Main(
         self._current_project_dir = None
 
         self.experiment_names = list()
-        self.dataset_selector = cs.gui.widgets.experiments.ExperimentalDataSelector(
+        self.dataset_selector = _gw.experiments.ExperimentalDataSelector(
             click_close=False,
             curve_types='all',
             change_event=self.onCurrentDatasetChanged,
@@ -1012,7 +1013,7 @@ class Main(
         )
 
         # widget listing the existing fits
-        self.fit_selector = cs.gui.widgets.fitting.ModelDataRepresentationSelector(parent=self)
+        self.fit_selector = _gw.fitting.ModelDataRepresentationSelector(parent=self)
 
         # Setup status bar with progress bar and message
         self.status = misc_helpers.TruncatingStatusBar(self)
@@ -1580,7 +1581,7 @@ class Main(
                     "FRET RDA axis settings",
                     (
                         "The RDA axis settings widget could not be loaded.\n"
-                        "Please check that cs.gui.widgets.models.pda is available."
+                        "Please check that _gw.models.pda is available."
                     ),
                 )
             except Exception:
@@ -1615,7 +1616,7 @@ class Main(
         #      Settings                                          #
         ##########################################################
         # Configuration editor
-        self.configuration = cs.gui.widgets.settings_editor.SettingsEditor(
+        self.configuration = _gw.settings_editor.SettingsEditor(
             filename=cs.core.settings.chisurf_settings_file,
             window_title="ChiSurf Settings"
         )
@@ -1663,6 +1664,221 @@ class Main(
             cs.logging.warning(f"Failed to restore ribbon interface state: {e}")
         
         self.onExperimentChanged()
+
+    # ── ZMQ Server event handlers ──────────────────────────────────────
+
+    @QtCore.Slot(object)
+    def _on_server_event(self, payload: dict) -> None:
+        """Central dispatcher for all ZMQ server events.
+
+        Parameters
+        ----------
+        payload : dict
+            Event payload with at least a ``"topic"`` key.
+        """
+        try:
+            topic = payload.get("topic", "")
+            if topic.startswith("parameter.changed"):
+                self._refresh_active_parameter_display(payload)
+            elif topic in ("fit.ran", "fit.updated"):
+                self._refresh_fit_display(payload)
+            elif topic in ("fit.added", "fit.created"):
+                self._open_fit_subwindow_for_event(payload)
+            elif topic == "fit.removed":
+                self._close_fit_subwindow_for_event(payload)
+            elif topic.startswith("dataset."):
+                self._refresh_dataset_selector()
+            elif topic in ("session.restored", "project.loaded"):
+                self._rebuild_gui_from_server_state()
+            elif topic == "session.cleared":
+                self._close_all_fit_subwindows()
+                self._refresh_dataset_selector()
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("Error handling server event: %s", payload)
+
+    def _refresh_active_parameter_display(self, payload: dict = None) -> None:
+        """Refresh parameter display in the currently visible fit subwindow.
+
+        Parameters
+        ----------
+        payload : dict, optional
+            Event payload (may contain ``fit_uid`` and ``parameter_name``).
+        """
+        try:
+            sub = self.mdiarea.activeSubWindow()
+            if sub is None:
+                return
+            if hasattr(sub, "fit_widget") and sub.fit_widget is not None:
+                fw = sub.fit_widget
+                if hasattr(fw, "refresh_parameters"):
+                    fw.refresh_parameters()
+        except Exception:
+            pass
+
+    def _refresh_fit_display(self, payload: dict = None) -> None:
+        """Refresh chi-square display and plot in the active fit subwindow.
+
+        Parameters
+        ----------
+        payload : dict, optional
+            Event payload (may contain ``fit_uid``).
+        """
+        try:
+            sub = self.mdiarea.activeSubWindow()
+            if sub is None:
+                return
+            if hasattr(sub, "fit_widget") and sub.fit_widget is not None:
+                fw = sub.fit_widget
+                if hasattr(fw, "update_chi2"):
+                    fw.update_chi2()
+            if hasattr(sub, "plot_tab_widget") and sub.plot_tab_widget is not None:
+                if hasattr(sub.plot_tab_widget, "update"):
+                    sub.plot_tab_widget.update()
+        except Exception:
+            pass
+
+    def _refresh_dataset_selector(self) -> None:
+        """Repopulate the dataset selector combo-box from cs.imported_datasets."""
+        try:
+            cb = getattr(self, "comboBox_dataset", None)
+            if cb is None:
+                return
+            cb.blockSignals(True)
+            cb.clear()
+            import chisurf as cs
+            for ds in getattr(cs, "imported_datasets", []):
+                cb.addItem(str(getattr(ds, "name", repr(ds))))
+            cb.blockSignals(False)
+        except Exception:
+            pass
+
+    def _open_fit_subwindow(self, fit_obj) -> None:
+        """Create an MDI subwindow for a fit object.
+
+        Parameters
+        ----------
+        fit_obj : FitGroup
+            The fit group to create a subwindow for.
+        """
+        try:
+            # Skip if subwindow already exists for this fit
+            for sub in self.mdiarea.subWindowList():
+                existing_uid = str(getattr(getattr(sub, "fit", None), "unique_identifier", ""))
+                if existing_uid == str(getattr(fit_obj, "unique_identifier", "")):
+                    return
+            from chisurf.gui.widgets.fitting import FittingControllerWidget, FitSubWindow
+            fit_control_widget = FittingControllerWidget(
+                fit=fit_obj
+            )
+            header_layout = getattr(self, "analysisHeaderLayout", None)
+            if header_layout is not None:
+                header_layout.addWidget(fit_control_widget)
+            else:
+                self.modelLayout.addWidget(fit_control_widget)
+            for fit in fit_obj:
+                self.modelLayout.addWidget(fit.model)
+            fit_window = FitSubWindow(
+                fit=fit_obj,
+                control_layout=self.plotOptionsLayout,
+                fit_widget=fit_control_widget,
+            )
+            fit_window.setWindowTitle(fit_obj.name)
+            fit_window = self.mdiarea.addSubWindow(fit_window)
+            import chisurf.gui as _gui_mod
+            _gui_mod.fit_windows.append(fit_window)
+            self.current_fit = fit_obj
+            try:
+                fit_control_widget.onAutoFitRange()
+            except Exception:
+                pass
+            fit_window.show()
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("Failed to open fit subwindow")
+
+    def _open_fit_subwindow_for_event(self, payload: dict) -> None:
+        """Open an MDI subwindow for a newly added fit.
+
+        Parameters
+        ----------
+        payload : dict
+            Must contain ``"fit_uid"`` (str) and optionally ``"fit_index"`` (int).
+        """
+        try:
+            fit_uid = payload.get("fit_uid")
+            if fit_uid is None:
+                return
+            import chisurf as cs
+            fit_obj = None
+            for f in getattr(cs, "fits", []):
+                if str(getattr(f, "unique_identifier", "")) == str(fit_uid):
+                    fit_obj = f
+                    break
+            if fit_obj is not None:
+                self._open_fit_subwindow(fit_obj)
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("Failed to open fit subwindow for event: %s", payload)
+
+    def _close_fit_subwindow_for_event(self, payload: dict) -> None:
+        """Close the MDI subwindow for a removed fit.
+
+        Parameters
+        ----------
+        payload : dict
+            Must contain ``"fit_uid"`` (str).
+        """
+        try:
+            fit_uid = payload.get("fit_uid")
+            for sub in self.mdiarea.subWindowList():
+                widget = sub.widget()
+                uid = str(getattr(getattr(widget, "fit", None), "unique_identifier", ""))
+                if uid == str(fit_uid):
+                    sub.close()
+                    break
+        except Exception:
+            pass
+
+    def _close_all_fit_subwindows(self) -> None:
+        """Close all MDI fit subwindows without triggering fit-remove actions."""
+        try:
+            for sub in list(self.mdiarea.subWindowList()):
+                sub.close()
+        except Exception:
+            pass
+
+    def _rebuild_gui_from_server_state(self, payload: dict = None) -> None:
+        """Rebuild all MDI fit subwindows from the current server session.
+
+        Called on ``session.restored`` and ``project.loaded`` events.
+
+        Parameters
+        ----------
+        payload : dict, optional
+            Unused; present for uniform event handler signature.
+        """
+        try:
+            from chisurf.gui.widgets.fitting.fitting_client import get_fitting_client
+            import chisurf as cs
+            fc = get_fitting_client()
+            if fc is None:
+                return
+            self._close_all_fit_subwindows()
+            fits_dto = fc.list_fits()
+            for fit_dto in fits_dto:
+                fit_uid = fit_dto.get("uid")
+                fit_obj = None
+                for f in getattr(cs, "fits", []):
+                    if str(getattr(f, "unique_identifier", "")) == str(fit_uid):
+                        fit_obj = f
+                        break
+                if fit_obj is not None:
+                    self._open_fit_subwindow(fit_obj)
+            self._refresh_dataset_selector()
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception("Failed to rebuild GUI from server state")
 
     def toggle_ribbon_interface(self, enabled=None):
         """

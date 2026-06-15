@@ -3,6 +3,7 @@ from typing import Any
 from qtpy import QtCore, QtGui, QtWidgets
 
 from chisurf.gui.widgets.dock_area.dock_overlay import DockDropOverlay
+from chisurf.gui.widgets.dock_area.dock_stacked_tab_widget import DockStackedTabWidget
 from chisurf.gui.widgets.dock_area.dock_tab_bar import DockTabBar
 
 _MAX_TAB_TEXT_LEN = 30
@@ -213,13 +214,21 @@ class DockArea(QtWidgets.QWidget):
     newTabRequested = QtCore.Signal()
     layoutChanged = QtCore.Signal()
 
-    def __init__(self, parent: QtWidgets.QWidget = None):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget = None,
+        stacked_tabs: bool = False,
+    ):
         """Initialize the DockArea.
 
         Parameters
         ----------
         parent : QWidget, optional
             The parent widget.
+        stacked_tabs : bool, default=False
+            If True, tabs are rendered with a multi-row stacked tab bar
+            instead of the native single-row tab bar. This is decided at
+            initialization and cannot be changed later.
         """
         super().__init__(parent)
         self._all_widgets = []
@@ -238,6 +247,7 @@ class DockArea(QtWidgets.QWidget):
         self._context_menu_mode = "document"
         self._close_tab_callback = None
         self._tab_bar_visible = True
+        self._stacked_tabs = stacked_tabs
 
         # Setup main layout
         self._layout = QtWidgets.QVBoxLayout(self)
@@ -253,6 +263,9 @@ class DockArea(QtWidgets.QWidget):
         # Monitor focus changes to track the active plot/tab widget
         QtWidgets.QApplication.instance().focusChanged.connect(self._on_focus_changed)
         self.destroyed.connect(self._cleanup)
+        
+        # Enable drop on DockArea itself for splitting
+        self.setAcceptDrops(True)
 
     def _cleanup(self) -> None:
         try:
@@ -260,12 +273,31 @@ class DockArea(QtWidgets.QWidget):
         except Exception:
             pass
 
+    def _create_tab_widget(self):
+        """Create a new tab widget matching the configured tab style."""
+        if self._stacked_tabs:
+            return DockStackedTabWidget(self)
+        return DockTabWidget(self)
+
+    def _find_tab_widgets(self):
+        """Return all native and stacked tab widgets owned by this area."""
+        return list(self.findChildren(DockTabWidget)) + list(
+            self.findChildren(DockStackedTabWidget)
+        )
+
+    @staticmethod
+    def _find_tab_widgets_in(root: QtWidgets.QWidget):
+        """Return all native and stacked tab widgets under ``root``."""
+        return list(root.findChildren(DockTabWidget)) + list(
+            root.findChildren(DockStackedTabWidget)
+        )
+
     def _on_focus_changed(self, old: QtWidgets.QWidget, now: QtWidgets.QWidget) -> None:
         if now is None:
             return
         p = now
         while p is not None:
-            if isinstance(p, DockTabWidget) and p.dock_area == self:
+            if isinstance(p, (DockTabWidget, DockStackedTabWidget)) and p.dock_area == self:
                 self.set_active_tab_widget(p)
                 break
             p = p.parentWidget()
@@ -332,7 +364,7 @@ class DockArea(QtWidgets.QWidget):
             Whether the new-tab button should be visible.
         """
         self._new_tab_button_visible = visible
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             tw.setNewTabButtonVisible(visible)
 
 
@@ -349,6 +381,64 @@ class DockArea(QtWidgets.QWidget):
         self._root_widget = widget
         if widget is not None:
             self._layout.addWidget(widget)
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        """Accept drags with our custom tab format."""
+        if event.mimeData().hasFormat("application/x-chisurf-dock-tab"):
+            event.acceptProposedAction()
+
+    def _find_dock_target(self, pos: QtCore.QPoint):
+        """Find the closest dock tab widget at the given position."""
+        from chisurf.gui.widgets.dock_area.dock_stacked_tab_widget import DockStackedTabWidget
+        # Check if position is over a DockTabWidget or DockStackedTabWidget
+        target = self.childAt(pos)
+        while target is not None:
+            if isinstance(target, DockStackedTabWidget):
+                return target
+            if hasattr(target, "dock_area") and getattr(target, "dock_area", None) == self:
+                return target
+            target = target.parentWidget()
+        # If not found, return the root widget
+        return self._root_widget
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
+        """Accept valid tab drags over the DockArea itself.
+
+        Child tab widgets (DockTabWidget / DockStackedTabWidget) receive drop
+        events directly via Qt's event dispatch because they have
+        ``setAcceptDrops(True)``. This handler is only reached for positions
+        not covered by any child tab widget (e.g. empty space in the layout).
+        """
+        if event.mimeData().hasFormat("application/x-chisurf-dock-tab"):
+            event.acceptProposedAction()
+            self.show_overlay(event.pos())
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        """Handle drops on empty DockArea space (no child tab widget present).
+
+        When a tab is dropped on empty space, use the root widget as the
+        split target. Drops on child tab widgets are handled by those widgets
+        directly via Qt event dispatch.
+        """
+        if event.mimeData().hasFormat("application/x-chisurf-dock-tab"):
+            event.acceptProposedAction()
+            target_tw = self._root_widget
+            if target_tw is not None:
+                pos_in_target = target_tw.mapFrom(self, event.pos())
+                self.handle_drop(target_tw, pos_in_target, event.mimeData())
+            self.hide_overlay()
+
+    def show_overlay(self, pos: QtCore.QPoint) -> None:
+        """Show drop zone overlay at the given position."""
+        zone, rect = self.get_dock_zone(self.rect(), pos)
+        if zone != "center":
+            self._overlay.set_highlight(rect)
+        else:
+            self._overlay.hide()
+
+    def hide_overlay(self) -> None:
+        """Hide the drop zone overlay."""
+        self._overlay.hide()
 
     def _widget_key(self, widget: QtWidgets.QWidget, key_func=None) -> str:
         """Return a stable key for a docked page widget.
@@ -606,7 +696,7 @@ class DockArea(QtWidgets.QWidget):
             return None
         node_type = state.get("type")
         if node_type == "tab":
-            tab_widget = DockTabWidget(self)
+            tab_widget = self._create_tab_widget()
             tab_widget.setTabsClosable(self._tabs_closable)
             tab_widget.tabBar().setVisible(self._tab_bar_visible)
             tab_widget.setNewTabButtonVisible(self._new_tab_button_visible)
@@ -701,7 +791,7 @@ class DockArea(QtWidgets.QWidget):
         if self._root_widget is not None and self._root_widget not in excluded:
             self._layout.removeWidget(self._root_widget)
             self._root_widget = None
-        for tab_widget in list(self.findChildren(DockTabWidget)):
+        for tab_widget in list(self._find_tab_widgets()):
             if self._has_parent_in(tab_widget, excluded):
                 continue
             for idx in range(tab_widget.count() - 1, -1, -1):
@@ -748,7 +838,7 @@ class DockArea(QtWidgets.QWidget):
         if restored_root is None:
             return False
         self._hidden_widgets.clear()
-        excluded_widgets = set(restored_root.findChildren(DockTabWidget))
+        excluded_widgets = set(self._find_tab_widgets_in(restored_root))
         excluded_widgets.update(restored_root.findChildren(DockSplitter))
         if isinstance(restored_root, (DockTabWidget, DockSplitter)):
             excluded_widgets.add(restored_root)
@@ -764,12 +854,12 @@ class DockArea(QtWidgets.QWidget):
             self.layoutChanged.emit()
         return True
 
-    def set_active_tab_widget(self, tw: DockTabWidget) -> None:
+    def set_active_tab_widget(self, tw: DockTabWidget | DockStackedTabWidget) -> None:
         """Set the active tab widget and emit currentChanged if the active tab index changes.
 
         Parameters
         ----------
-        tw : DockTabWidget
+        tw : DockTabWidget or DockStackedTabWidget
             The tab widget that is currently active/focused.
         """
         self._active_tab_widget = tw
@@ -778,31 +868,32 @@ class DockArea(QtWidgets.QWidget):
             self._last_emitted_index = idx
             self.currentChanged.emit(idx)
 
-    def active_tab_widget(self) -> DockTabWidget:
+    def active_tab_widget(self) -> DockTabWidget | DockStackedTabWidget | None:
         """Return the currently active tab widget.
 
         Returns
         -------
-        DockTabWidget or None
+        DockTabWidget, DockStackedTabWidget, or None
         """
         if self._active_tab_widget is not None:
             return self._active_tab_widget
         return self.find_main_tab_widget()
 
-    def find_main_tab_widget(self, exclude_tw: DockTabWidget = None) -> DockTabWidget:
+    def find_main_tab_widget(
+        self, exclude_tw: DockTabWidget | DockStackedTabWidget | None = None
+    ) -> DockTabWidget | DockStackedTabWidget | None:
         """Find the primary tab widget (typically the first in the hierarchy).
 
         Parameters
         ----------
-        exclude_tw : DockTabWidget, optional
+        exclude_tw : DockTabWidget or DockStackedTabWidget, optional
             A tab widget to exclude from the search.
 
         Returns
         -------
-        DockTabWidget or None
+        DockTabWidget, DockStackedTabWidget, or None
         """
-        tws = self.findChildren(DockTabWidget)
-        for tw in tws:
+        for tw in self._find_tab_widgets():
             if tw != exclude_tw:
                 return tw
         return None
@@ -827,7 +918,7 @@ class DockArea(QtWidgets.QWidget):
         if widget in self._hidden_widgets:
             self._hidden_widgets.remove(widget)
         if self._root_widget is None:
-            tab_widget = DockTabWidget(self)
+            tab_widget = self._create_tab_widget()
             tab_widget.setTabsClosable(self._tabs_closable)
             tab_widget.tabBar().setVisible(self._tab_bar_visible)
             tab_widget.setNewTabButtonVisible(self._new_tab_button_visible)
@@ -1002,7 +1093,7 @@ class DockArea(QtWidgets.QWidget):
         display, tooltip = _shorten_path(full_for_shorten)
         if dirty and not display.endswith(" *"):
             display += " *"
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             for i in range(tw.count()):
                 if tw.widget(i) is w:
                     tw.setTabText(i, display)
@@ -1025,7 +1116,7 @@ class DockArea(QtWidgets.QWidget):
         self._tab_close_modes.pop(w, None)
         if w in self._hidden_widgets:
             self._hidden_widgets.remove(w)
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             for i in range(tw.count()):
                 if tw.widget(i) is w:
                     tw.removeTab(i)
@@ -1052,7 +1143,7 @@ class DockArea(QtWidgets.QWidget):
         w = self.widget(index)
         if w is None or w in self._hidden_widgets:
             return False
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             for local_index in range(tw.count()):
                 if tw.widget(local_index) is w:
                     tw.removeTab(local_index)
@@ -1076,7 +1167,7 @@ class DockArea(QtWidgets.QWidget):
         display, tooltip = _shorten_path(self._tab_names.get(w, ""))
         tab_widget = self.find_main_tab_widget()
         if tab_widget is None:
-            tab_widget = DockTabWidget(self)
+            tab_widget = self._create_tab_widget()
             tab_widget.setTabsClosable(self._tabs_closable)
             tab_widget.tabBar().setVisible(self._tab_bar_visible)
             tab_widget.setNewTabButtonVisible(self._new_tab_button_visible)
@@ -1114,9 +1205,11 @@ class DockArea(QtWidgets.QWidget):
         """Return whether a close request may close or hide ``index``."""
         return self.isTabVisible(index) and self.visibleCount() > 1
 
-    def _tab_widget_for_page(self, widget: QtWidgets.QWidget) -> DockTabWidget | None:
+    def _tab_widget_for_page(
+        self, widget: QtWidgets.QWidget
+    ) -> DockTabWidget | DockStackedTabWidget | None:
         """Return the tab widget containing ``widget``."""
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             for local_index in range(tw.count()):
                 if tw.widget(local_index) is widget:
                     return tw
@@ -1132,7 +1225,7 @@ class DockArea(QtWidgets.QWidget):
             The absolute tab index to activate.
         """
         w = self.widget(index)
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             for i in range(tw.count()):
                 if tw.widget(i) is w:
                     tw.setCurrentIndex(i)
@@ -1164,7 +1257,7 @@ class DockArea(QtWidgets.QWidget):
             Whether tabs are closable.
         """
         self._tabs_closable = closable
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             tw.setTabsClosable(closable)
 
     def setTabBarVisible(self, visible: bool) -> None:
@@ -1176,7 +1269,7 @@ class DockArea(QtWidgets.QWidget):
             Whether the tab bar should be visible.
         """
         self._tab_bar_visible = visible
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             tw.tabBar().setVisible(visible)
 
     def setDocumentMode(self, enabled: bool) -> None:
@@ -1187,7 +1280,7 @@ class DockArea(QtWidgets.QWidget):
         enabled : bool
             Whether document mode is enabled.
         """
-        for tw in self.findChildren(DockTabWidget):
+        for tw in self._find_tab_widgets():
             tw.setDocumentMode(enabled)
 
     def update(self, *args, **kwargs) -> None:
@@ -1196,12 +1289,16 @@ class DockArea(QtWidgets.QWidget):
         for child in self.findChildren(QtWidgets.QWidget):
             child.update(*args, **kwargs)
 
-    def update_overlay(self, target_tw: DockTabWidget, local_pos: QtCore.QPoint) -> None:
+    def update_overlay(
+        self,
+        target_tw: DockTabWidget | DockStackedTabWidget,
+        local_pos: QtCore.QPoint,
+    ) -> None:
         """Calculate the active drop zone and update the visual overlay.
 
         Parameters
         ----------
-        target_tw : DockTabWidget
+        target_tw : DockTabWidget or DockStackedTabWidget
             The tab widget the cursor is hovering over.
         local_pos : QPoint
             The hover position relative to the target tab widget.
@@ -1277,7 +1374,22 @@ class DockArea(QtWidgets.QWidget):
 
         zone, _ = self.get_dock_zone(target_tw.rect(), pos)
 
-        widget = source_tw.widget(source_idx)
+        # Get the widget from the source tab widget
+        # For QTabWidget (DockTabWidget), use widget(index)
+        # For DockStackedTabWidget, use _stacked_widget.widget(index)
+        try:
+            if hasattr(source_tw, "widget") and callable(getattr(source_tw, "widget", None)):
+                widget = source_tw.widget(source_idx)
+            elif hasattr(source_tw, "_stacked_widget"):
+                widget = source_tw._stacked_widget.widget(source_idx)
+            else:
+                return
+        except Exception:
+            return
+        
+        if widget is None:
+            return
+            
         title = source_tw.tabText(source_idx)
         full_name = self._tab_names.get(widget, title)
         display, tooltip = _shorten_path(full_name)
@@ -1307,7 +1419,7 @@ class DockArea(QtWidgets.QWidget):
         else:
             # Split drop
             source_tw.removeTab(source_idx)
-            new_tw = DockTabWidget(self)
+            new_tw = self._create_tab_widget()
             new_tw.setTabsClosable(self._tabs_closable)
             new_tw.tabBar().setVisible(self._tab_bar_visible)
             new_tw.setNewTabButtonVisible(self._new_tab_button_visible)
@@ -1320,14 +1432,19 @@ class DockArea(QtWidgets.QWidget):
             self.set_active_tab_widget(new_tw)
         self.layoutChanged.emit()
 
-    def split_tab_widget(self, target_tw: DockTabWidget, new_tw: DockTabWidget, zone: str) -> None:
+    def split_tab_widget(
+        self,
+        target_tw: DockTabWidget | DockStackedTabWidget,
+        new_tw: DockTabWidget | DockStackedTabWidget,
+        zone: str,
+    ) -> None:
         """Split a tab widget by wrapping them in a splitter.
 
         Parameters
         ----------
-        target_tw : DockTabWidget
+        target_tw : DockTabWidget or DockStackedTabWidget
             The existing tab widget to be split.
-        new_tw : DockTabWidget
+        new_tw : DockTabWidget or DockStackedTabWidget
             The new tab widget to be placed.
         zone : str
             The split zone ('left', 'right', 'top', 'bottom').
@@ -1364,12 +1481,14 @@ class DockArea(QtWidgets.QWidget):
         elif parent == self:
             self.set_root_widget(new_widget)
 
-    def cleanup_empty_tab_widget(self, tw: DockTabWidget) -> None:
+    def cleanup_empty_tab_widget(
+        self, tw: DockTabWidget | DockStackedTabWidget
+    ) -> None:
         """Remove empty tab widgets and simplify splitters.
 
         Parameters
         ----------
-        tw : DockTabWidget
+        tw : DockTabWidget or DockStackedTabWidget
             The tab widget that became empty.
         """
         if tw.count() > 0:
@@ -1394,12 +1513,14 @@ class DockArea(QtWidgets.QWidget):
                 parent.setParent(None)
                 parent.deleteLater()
 
-    def restore_tab(self, tw: DockTabWidget, index: int) -> None:
+    def restore_tab(
+        self, tw: DockTabWidget | DockStackedTabWidget, index: int
+    ) -> None:
         """Move a specific tab back to the main/primary tab group.
 
         Parameters
         ----------
-        tw : DockTabWidget
+        tw : DockTabWidget or DockStackedTabWidget
             The source tab widget.
         index : int
             The index of the tab within tw.
@@ -1421,12 +1542,14 @@ class DockArea(QtWidgets.QWidget):
         self.set_active_tab_widget(main_tw)
         self.layoutChanged.emit()
 
-    def restore_all_tabs(self, tw: DockTabWidget) -> None:
+    def restore_all_tabs(
+        self, tw: DockTabWidget | DockStackedTabWidget
+    ) -> None:
         """Move all tabs in a widget back to the main/primary tab group.
 
         Parameters
         ----------
-        tw : DockTabWidget
+        tw : DockTabWidget or DockStackedTabWidget
             The source tab widget.
         """
         main_tw = self.find_main_tab_widget(exclude_tw=tw)
@@ -1461,14 +1584,21 @@ class DockArea(QtWidgets.QWidget):
         self.tabCloseRequested.emit(abs_index)
 
     @staticmethod
-    def _set_tab_tooltip(tw: DockTabWidget, local_index: int, tooltip: str) -> None:
-        """Set a tooltip on a tab inside a DockTabWidget."""
+    def _set_tab_tooltip(
+        tw: DockTabWidget | DockStackedTabWidget,
+        local_index: int,
+        tooltip: str,
+    ) -> None:
+        """Set a tooltip on a tab inside a tab widget."""
         bar = tw.tabBar()
         if 0 <= local_index < bar.count():
             bar.setTabToolTip(local_index, tooltip)
 
     def _on_tab_context_menu(
-        self, tw: 'DockTabWidget', local_index: int, global_pos: QtCore.QPoint
+        self,
+        tw: DockTabWidget | DockStackedTabWidget,
+        local_index: int,
+        global_pos: QtCore.QPoint,
     ) -> None:
         """Build and show the right-click context menu for a tab.
 

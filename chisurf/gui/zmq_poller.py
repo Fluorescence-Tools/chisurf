@@ -33,7 +33,12 @@ class ZmqSubscriberPoller(QtCore.QObject):
         self._timer.start(poll_interval_ms)
 
     def _on_timer(self) -> None:
-# TODO: needs docstring
+        """Drain the ZMQ subscriber queue on the GUI thread.
+
+        Called every ``poll_interval_ms`` milliseconds by the internal
+        ``QTimer``. Dispatches all queued PUB events to registered
+        callbacks without blocking the event loop.
+        """
         try:
             self._client.drain()
         except Exception:

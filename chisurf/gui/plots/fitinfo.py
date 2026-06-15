@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -8,6 +9,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 from qtpy import QtCore, QtGui, QtWidgets
+
+from chisurf.core.file_formats import FILE_FORMATS as _FILE_FORMATS
 from qtpy.QtCore import Qt
 
 import chisurf.core.fitting
@@ -141,6 +144,47 @@ class FitInfo(plotbase.Plot):
         else:
             self._memory_metadata = dict(metadata)
             self.fit.flr_metadata = self._memory_metadata
+
+    @staticmethod
+    def _is_tttr_stream(stream: dict) -> bool:
+        """Check if a photon stream originates from a TTTR file format.
+
+        Uses the FILE_FORMATS registry (``chisurf/core/file_formats.json``).
+        A format is considered TTTR if its entry has a non-null
+        ``tttrlib_container`` or ``reading_routine``.
+        """
+        fp = stream.get("file_path") or ""
+        fmt = stream.get("file_format") or ""
+        if not fp and not fmt:
+            return False
+        # Try matching by file_format name first (e.g. "PicoQuant PTU").
+        if fmt:
+            fmt_lower = fmt.lower().strip()
+            for info in _FILE_FORMATS.values():
+                name = (info.get("name") or "").lower()
+                routine = info.get("reading_routine")
+                container = info.get("tttrlib_container")
+                if fmt_lower in (name, routine or "", container or ""):
+                    if (routine or container):
+                        return True
+        # Fallback: look up by file extension.
+        info = _FILE_FORMATS.get(Path(fp).suffix.lower())
+        if info is not None:
+            return bool(info.get("tttrlib_container") or info.get("reading_routine"))
+        return False
+
+    def _photon_streams_for_display(self) -> List[dict]:
+        """Return photon streams that should be shown in the fitinfo plot.
+
+        Only streams originating from TTTR files are included. Non-TTTR
+        entries (e.g. TCSPC CSV or text files) are excluded.
+        """
+        raw = (
+            self.db.get_photon_streams(self.analysis_id)
+            if self.db is not None
+            else getattr(self.fit, "flr_photon_streams", self._memory_streams)
+        )
+        return [s for s in raw if self._is_tttr_stream(s)]
 
     # ── Analysis tab ───────────────────────────────────────────────
 
@@ -691,7 +735,7 @@ class FitInfo(plotbase.Plot):
                 lines.append(f"  {k}: {v}")
         else:
             lines.append("  (no metadata)")
-        streams = self.db.get_photon_streams(self.analysis_id) if self.db is not None else getattr(self.fit, "flr_photon_streams", self._memory_streams)
+        streams = self._photon_streams_for_display()
         if streams:
             lines.append(f"\n--- Photon streams ({len(streams)}) ---")
             for s in streams:

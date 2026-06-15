@@ -8,6 +8,7 @@ import copy
 import importlib
 
 import chisurf as cs
+import chisurf.gui.widgets as _gw
 from chisurf.history import replay as _hr
 from qtpy import QtCore, QtWidgets
 
@@ -69,7 +70,7 @@ class ProjectMixin:
         self.onSaveProjectAs(event=event)
 
     def onSaveProjectAs(self: Main, event: QtCore.QEvent = None):
-        path, _ = cs.gui.widgets.get_directory()
+        path, _ = _gw.get_directory()
         if not path:
             return
 
@@ -134,7 +135,7 @@ class ProjectMixin:
             pass
 
     def onLoadProject(self: Main, event: QtCore.QEvent = None):
-        path, _ = cs.gui.widgets.get_directory(
+        path, _ = _gw.get_directory(
             caption="Select Project Folder"
         )
         if not path:
@@ -348,7 +349,7 @@ class SetupMixin:
     def _refresh_setup_ui(self: Main):
         """Show the reader widget for the current setup — no dispatch."""
         from qtpy import QtWidgets
-        cs.gui.widgets.hide_items_in_layout(
+        _gw.hide_items_in_layout(
             self.layout_experiment_reader
         )
         readers = self.current_experiment.readers
@@ -900,7 +901,7 @@ class HistoryMixin:
             parent_layout.insertWidget(insert_index, history_label)
             insert_index += 1
 
-            browser = cs.gui.widgets.history_browser.HistoryBrowserWidget(parent)
+            browser = _gw.history_browser.HistoryBrowserWidget(parent)
             browser.setObjectName("historyBrowser")
             browser.set_history(cs.history)
             try:

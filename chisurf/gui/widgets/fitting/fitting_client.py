@@ -16,6 +16,9 @@ The adapter ensures that:
 
 from __future__ import annotations
 
+import atexit
+import threading
+import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 import warnings
 
@@ -110,6 +113,7 @@ class FittingClient:
         client: Optional[ChisurfClient] = None,
     ) -> None:
         self._client = client
+        self._last_bootstrap_warning: float = 0.0
 
     @property
     def _rpc_available(self) -> bool:
@@ -119,12 +123,189 @@ class FittingClient:
             return False
 
     def _try_rpc(self, method: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Call an RPC method, logging any failure.
+
+        Parameters
+        ----------
+        method : str
+            RPC method name.
+        params : dict
+            Parameters to pass.
+
+        Returns
+        -------
+        dict or None
+            Response dict, or ``None`` on failure.
+        """
+        if self._in_server_dispatch():
+            return None
         if not self._rpc_available:
+            self._try_bootstrap_transport()
+        if not self._rpc_available:
+            import chisurf.logging
+            chisurf.logging.warning(
+                "FittingClient: RPC not available (no client) for method '%s'", method
+            )
             return None
         try:
             return self._client.call(method, params)
-        except Exception:
+        except RemoteError as e:
+            if self._is_transport_failure(str(e)):
+                self._drop_transport(method, e)
+                return None
+            import chisurf.logging
+            chisurf.logging.exception(
+                "FittingClient: RPC call '%s' failed", method
+            )
             return None
+        except Exception:
+            import chisurf.logging
+            chisurf.logging.exception(
+                "FittingClient: RPC call '%s' failed", method
+            )
+            return None
+
+    def _in_server_dispatch(self) -> bool:
+        """Return whether this call is already running inside the RPC server."""
+        try:
+            from chisurf.server.transport.zmq import in_server_dispatch
+
+            return in_server_dispatch()
+        except Exception:
+            return False
+
+    def _try_bootstrap_transport(self) -> bool:
+        """Attach to or start the embedded ChiSurf RPC transport."""
+        if self._in_server_dispatch():
+            return False
+        if self._rpc_available:
+            return True
+
+        try:
+            import chisurf
+            import chisurf.core.settings as cs_settings
+            import chisurf.logging
+            from chisurf.server.startup import (
+                rpc_is_available,
+                session_state_from_live_chisurf,
+            )
+
+            mfdb_cfg = cs_settings.cs_settings.get("mfdb", {}) or {}
+            host = str(mfdb_cfg.get("rpc_host", mfdb_cfg.get("last_server", "127.0.0.1")))
+            cmd_port = int(mfdb_cfg.get("cmd_port", mfdb_cfg.get("last_port", 8765)))
+            pub_port = int(mfdb_cfg.get("pub_port", cmd_port + 1))
+            timeout_ms = int(mfdb_cfg.get("fitting_timeout_ms", 300))
+
+            server = (
+                getattr(chisurf, "__chisurf_rpc_server__", None)
+                or getattr(chisurf, "__mfdb_rpc_server__", None)
+            )
+            if not rpc_is_available(host, cmd_port, pub_port, timeout_ms=100):
+                if server is not None:
+                    deadline = time.time() + 1.0
+                    while time.time() < deadline:
+                        if rpc_is_available(host, cmd_port, pub_port, timeout_ms=100):
+                            break
+                        time.sleep(0.05)
+                    else:
+                        try:
+                            server.stop()
+                        except Exception:
+                            pass
+                        server = None
+                        chisurf.__chisurf_rpc_server__ = None
+                        chisurf.__chisurf_rpc_server_thread__ = None
+                        chisurf.__mfdb_rpc_server__ = None
+                        chisurf.__mfdb_rpc_server_thread__ = None
+
+                if server is None:
+                    from chisurf.server.app import ChiSurfServer
+
+                    server = ChiSurfServer(
+                        host=host,
+                        cmd_port=cmd_port,
+                        pub_port=pub_port,
+                        state=session_state_from_live_chisurf(),
+                    )
+                    thread = threading.Thread(
+                        target=server.serve_forever,
+                        daemon=True,
+                        name="chisurf-rpc-server",
+                    )
+                    thread.start()
+                    chisurf.__chisurf_rpc_server__ = server
+                    chisurf.__chisurf_rpc_server_thread__ = thread
+                    chisurf.__mfdb_rpc_server__ = server
+                    chisurf.__mfdb_rpc_server_thread__ = thread
+                    atexit.register(server.stop)
+
+                deadline = time.time() + 3.0
+                while time.time() < deadline:
+                    if rpc_is_available(host, cmd_port, pub_port, timeout_ms=100):
+                        break
+                    time.sleep(0.05)
+
+            client = ChisurfClient(
+                host=host,
+                cmd_port=cmd_port,
+                pub_port=pub_port,
+                timeout_ms=timeout_ms,
+            )
+            client.connect()
+            client.call("meta.ping", {})
+            self._client = client
+            chisurf.logging.info(
+                "FittingClient: attached RPC transport at %s:%s",
+                host,
+                cmd_port,
+            )
+            return True
+        except Exception as e:
+            now = time.time()
+            if now - self._last_bootstrap_warning > 5.0:
+                self._last_bootstrap_warning = now
+                try:
+                    import chisurf.logging
+
+                    chisurf.logging.warning(
+                        "FittingClient: could not bootstrap RPC transport: %s",
+                        e,
+                    )
+                except Exception:
+                    pass
+            return False
+
+    def _is_transport_failure(self, message: str) -> bool:
+        """Return ``True`` for errors that mean the RPC transport is unusable."""
+        lowered = message.lower()
+        return any(
+            marker in lowered
+            for marker in (
+                "timeout",
+                "socket operation on non-socket",
+                "send failed",
+                "poll failed",
+                "recv failed",
+                "not a socket",
+            )
+        )
+
+    def _drop_transport(self, method: str, error: Exception) -> None:
+        """Close and forget an unreachable transport after a failed RPC call."""
+        import chisurf.logging
+
+        chisurf.logging.warning(
+            "FittingClient: disabling RPC after transport failure in '%s': %s",
+            method,
+            error,
+        )
+        client = self._client
+        self._client = None
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass
 
     # ── Fit CRUD ─────────────────────────────────────────────────────
 
@@ -752,6 +933,10 @@ class FittingClient:
     def drain(self) -> None:
         if self._client is not None:
             self._client.drain()
+
+    def unsubscribe(self, topic: str, callback: Callable) -> None:
+        if self._client is not None:
+            self._client.unsubscribe(topic, callback)
 
     # ── Convenience helpers ──────────────────────────────────────────
 

@@ -6,7 +6,7 @@ import pathlib
 
 import chisurf as cs
 from chisurf import logging
-from chisurf.gui import QtWidgets
+from chisurf.gui import QtCore, QtWidgets, run_on_gui_thread
 
 
 def _recent_projects_file() -> pathlib.Path:
@@ -175,6 +175,17 @@ def refresh_recent_projects_menu(window) -> None:
     window : QMainWindow
         The application main window.
     """
+    # Widget access must happen on the GUI thread. If this function is called
+    # from a worker thread (e.g. project auto-save during sampling), reschedule
+    # it on the GUI thread and return immediately.
+    try:
+        app = QtWidgets.QApplication.instance()
+        if app is not None and QtCore.QThread.currentThread() is not app.thread():
+            run_on_gui_thread(refresh_recent_projects_menu, window)
+            return
+    except Exception:
+        pass
+
     menu = getattr(window, "_menu_recent_projects", None)
     if menu is not None:
         try:

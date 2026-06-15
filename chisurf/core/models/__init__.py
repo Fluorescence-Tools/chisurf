@@ -2,6 +2,7 @@ from . model import *
 from chisurf import logging
 from chisurf.core.models.model import Model
 from chisurf.core.fitting.parameter import FittingParameter
+from chisurf.core.models import global_model
 
 
 def function_to_model_decorator(**kws):

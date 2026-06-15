@@ -77,8 +77,12 @@ def save_project(target_path: str, project_name: str):
 @action("project.load", schema={"project_path": str})
 def load_project(project_path: str):
     """Load a project from directory."""
-    from chisurf.macros import core_fit
-    return core_fit.load_project(project_path=project_path)
+    from chisurf.macros.core_fit import load_project_data, restore_gui_from_fits
+    from qtpy import QtCore
+    fit_uids = load_project_data(project_path)
+    # Schedule GUI rebuild on the Qt main thread so widget creation
+    # happens safely even when called from a non-GUI context.
+    QtCore.QTimer.singleShot(0, lambda: restore_gui_from_fits(fit_uids))
 
 
 @action("project.archive", schema={"project_id": str, "project_name": str, "experiment_id": None, "input_processed_data_ids": list, "notes": str})

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import queue
 import threading
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
@@ -10,6 +9,12 @@ if TYPE_CHECKING:
     import zmq
 
 _log = logging.getLogger(__name__)
+_SERVER_DISPATCH_CONTEXT = threading.local()
+
+
+def in_server_dispatch() -> bool:
+    """Return whether the current thread is handling a ZMQ RPC request."""
+    return bool(getattr(_SERVER_DISPATCH_CONTEXT, "active", False))
 
 
 class ZmqServer:
@@ -141,7 +146,12 @@ class ZmqServer:
         req_id = raw.get("id")
 
         try:
-            result = self._handler(method, params)
+            previous = in_server_dispatch()
+            _SERVER_DISPATCH_CONTEXT.active = True
+            try:
+                result = self._handler(method, params)
+            finally:
+                _SERVER_DISPATCH_CONTEXT.active = previous
             self._rep_socket.send_json({
                 "jsonrpc": "2.0",
                 "result": result,
@@ -213,41 +223,41 @@ class ZmqClient:
         self._req_socket: zmq.Socket | None = None
         self._sub_socket: zmq.Socket | None = None
         self._request_id: int = 0
-        # Thread-safe subscriber dispatch
+        # Subscriber dispatch is driven by drain() from the owning event loop.
         self._subscribers: Dict[str, list[Callable]] = {}
-        self._event_queue: queue.Queue | None = None
-        self._listener_thread: threading.Thread | None = None
+        self._call_lock = threading.RLock()
 
     def connect(self) -> None:
         """Create ZMQ sockets and connect to the server."""
         import zmq
-        self._ctx = zmq.Context()
+        if self._ctx is None:
+            self._ctx = zmq.Context()
         self._req_socket = self._ctx.socket(zmq.REQ)
+        self._req_socket.setsockopt(zmq.LINGER, 0)
         self._req_socket.connect(f"tcp://{self._host}:{self._cmd_port}")
 
     def close(self) -> None:
         """Close all ZMQ sockets and release resources."""
-        self._listener_thread = None
-        if self._req_socket is not None:
-            try:
-                self._req_socket.close(linger=0)
-            except Exception:
-                pass
-            self._req_socket = None
-        if self._sub_socket is not None:
-            try:
-                self._sub_socket.close(linger=0)
-            except Exception:
-                pass
-            self._sub_socket = None
-        if self._ctx is not None:
-            try:
-                self._ctx.term()
-            except Exception:
-                pass
-            self._ctx = None
-        self._subscribers.clear()
-        self._event_queue = None
+        with self._call_lock:
+            if self._req_socket is not None:
+                try:
+                    self._req_socket.close(linger=0)
+                except Exception:
+                    pass
+                self._req_socket = None
+            if self._sub_socket is not None:
+                try:
+                    self._sub_socket.close(linger=0)
+                except Exception:
+                    pass
+                self._sub_socket = None
+            if self._ctx is not None:
+                try:
+                    self._ctx.term()
+                except Exception:
+                    pass
+                self._ctx = None
+            self._subscribers.clear()
 
     def _reset_socket(self) -> None:
         """Tear down the REQ socket so the next call() creates a fresh one.
@@ -256,6 +266,8 @@ class ZmqClient:
         "reply pending" state, ZMQ's strict state machine rejects
         further send_json() calls.  Closing the socket and clearing
         the reference forces connect() to start from a clean state.
+        The shared context is intentionally kept alive because the
+        subscriber socket may still be using it.
         """
         if self._req_socket is not None:
             try:
@@ -263,67 +275,63 @@ class ZmqClient:
             except Exception:
                 pass
             self._req_socket = None
-        if self._ctx is not None:
-            try:
-                self._ctx.term()
-            except Exception:
-                pass
-            self._ctx = None
 
     def call(self, method: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Send a JSON-RPC request and wait for the response."""
-        if self._req_socket is None:
-            self.connect()
+        with self._call_lock:
+            if self._req_socket is None:
+                self.connect()
 
-        import zmq
-        self._request_id += 1
-        msg = {
-            "jsonrpc": "2.0",
-            "method": method,
-            "params": params or {},
-            "id": self._request_id,
-        }
+            import zmq
+            self._request_id += 1
+            msg = {
+                "jsonrpc": "2.0",
+                "method": method,
+                "params": params or {},
+                "id": self._request_id,
+            }
 
-        try:
-            self._req_socket.send_json(msg)
-        except zmq.ZMQError as e:
-            self._reset_socket()
-            return {"ok": False, "error": f"send failed: {e}"}
+            try:
+                self._req_socket.send_json(msg)
+            except zmq.ZMQError as e:
+                self._reset_socket()
+                return {"ok": False, "error": f"send failed: {e}"}
 
-        poller = zmq.Poller()
-        poller.register(self._req_socket, zmq.POLLIN)
-        try:
-            socks = dict(poller.poll(timeout=self._timeout_ms))
-        except zmq.ZMQError as e:
-            self._reset_socket()
-            return {"ok": False, "error": f"poll failed: {e}"}
+            poller = zmq.Poller()
+            poller.register(self._req_socket, zmq.POLLIN)
+            try:
+                socks = dict(poller.poll(timeout=self._timeout_ms))
+            except zmq.ZMQError as e:
+                self._reset_socket()
+                return {"ok": False, "error": f"poll failed: {e}"}
 
-        if self._req_socket not in socks:
-            self._reset_socket()
-            return {"ok": False, "error": "timeout: no response within {}ms".format(self._timeout_ms)}
+            if self._req_socket not in socks:
+                self._reset_socket()
+                return {"ok": False, "error": "timeout: no response within {}ms".format(self._timeout_ms)}
 
-        try:
-            return self._req_socket.recv_json()
-        except zmq.ZMQError as e:
-            self._reset_socket()
-            return {"ok": False, "error": f"recv failed: {e}"}
+            try:
+                return self._req_socket.recv_json()
+            except zmq.ZMQError as e:
+                self._reset_socket()
+                return {"ok": False, "error": f"recv failed: {e}"}
 
     def subscribe(self, topic: str = "", callback: Optional[Callable] = None) -> Any:
         """Register a subscriber for *topic*.
 
         ZMQ uses prefix matching, so ``"dataset."`` matches
         ``"dataset.added"``, ``"dataset.removed"`` etc.  The *callback*
-        is **never** called from a background thread; instead events
-        are buffered in a thread-safe queue.  Call :meth:`drain` from
-        your event loop (e.g. a QTimer in the main thread) to dispatch
-        queued events to the registered callbacks.
+        is invoked only by :meth:`drain`, which should be called from the
+        event-loop thread that owns the callback targets.
 
         If *callback* is ``None``, the raw SUB socket is returned for
         custom use.
         """
         import zmq
+        if self._ctx is None:
+            self._ctx = zmq.Context()
         if self._sub_socket is None:
             self._sub_socket = self._ctx.socket(zmq.SUB)
+            self._sub_socket.setsockopt(zmq.LINGER, 0)
             self._sub_socket.connect(f"tcp://{self._host}:{self._pub_port}")
 
         # Strip trailing glob characters — ZMQ uses literal prefix matching
@@ -335,22 +343,28 @@ class ZmqClient:
                 self._subscribers[topic] = []
             self._subscribers[topic].append(callback)
 
-            if self._listener_thread is None:
-                self._event_queue = queue.Queue()
-
-                def _listen():
-                    """Background thread: read SUB socket and queue events."""
-                    while True:
-                        try:
-                            topic_bytes, data = self._sub_socket.recv_multipart()
-                            self._event_queue.put((topic_bytes, data))
-                        except Exception:
-                            break
-
-                self._listener_thread = threading.Thread(target=_listen, daemon=True)
-                self._listener_thread.start()
-
         return self._sub_socket
+
+    def unsubscribe(self, topic: str, callback: Callable) -> None:
+        """Remove a previously registered subscriber callback.
+
+        Parameters
+        ----------
+        topic : str
+            The topic the callback was registered for.
+        callback : Callable
+            The callback to remove.
+        """
+        if topic in self._subscribers:
+            self._subscribers[topic] = [cb for cb in self._subscribers[topic] if cb is not callback]
+            if not self._subscribers[topic]:
+                del self._subscribers[topic]
+                zmq_topic = topic.rstrip("*?")
+                if self._sub_socket is not None:
+                    try:
+                        self._sub_socket.setsockopt_string(zmq.UNSUBSCRIBE, zmq_topic)
+                    except Exception:
+                        pass
 
     def drain(self) -> None:
         """Process all buffered subscriber events.
@@ -366,12 +380,13 @@ class ZmqClient:
         method replicates that same prefix logic for the final
         dispatch.
         """
-        q = self._event_queue
-        if q is None:
+        if self._sub_socket is None:
             return
+        import zmq
+
         while True:
             try:
-                topic_bytes, data = q.get_nowait()
+                topic_bytes, data = self._sub_socket.recv_multipart(flags=zmq.NOBLOCK)
                 topic = topic_bytes.decode("utf-8") if isinstance(topic_bytes, bytes) else str(topic_bytes)
                 payload = json.loads(data.decode("utf-8"))
                 for pattern, cbs in list(self._subscribers.items()):
@@ -386,5 +401,10 @@ class ZmqClient:
                                     "Subscriber callback error for topic '%s' (pattern '%s')",
                                     topic, pattern,
                                 )
-            except queue.Empty:
+            except zmq.Again:
+                break
+            except zmq.ZMQError:
+                break
+            except Exception:
+                _log.exception("Error draining subscriber event")
                 break

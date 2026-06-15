@@ -285,8 +285,10 @@ class FitTests(unittest.TestCase):
         )
 
     def test_fit_sample(self):
-        import chisurf.core.models
         import chisurf.core.fitting
+        import chisurf.core.fitting.fit
+        import chisurf.core.models
+        import chisurf.core.models.parse
 
         c_value = 3.1
         a_value = 1.2
@@ -388,3 +390,42 @@ class FitTests(unittest.TestCase):
             20
         )
 
+    def test_sample_fit_rejects_non_curve_model(self):
+        """sample_fit must raise ValueError for models lacking curve interface."""
+        from types import SimpleNamespace
+        from chisurf.core.fitting.fit import sample_fit
+
+        class NonCurveModel:
+            pass
+
+        fit = SimpleNamespace(model=NonCurveModel())
+        target_dir = tempfile.mkdtemp()
+        with self.assertRaises(ValueError):
+            sample_fit(
+                fit,
+                target_dir,
+                steps=10,
+                n_runs=1,
+            )
+
+    def test_support_plane_confidence_intervals(self):
+        """Support-plane scans calculate all displayed p-value ranges."""
+        import chisurf.core.fitting.support_plane
+
+        intervals = chisurf.core.fitting.support_plane.confidence_intervals_from_scan_result(
+            {
+                'parameter_values': np.array([-3.0, -1.0, 0.0, 1.0, 3.0]),
+                'chi2r': np.array([10.0, 2.0, 1.0, 2.0, 10.0]),
+                'chi2r_min': 1.0,
+                'v0': 0.0,
+                'nu': 100,
+                'n_extra_params': 1,
+            },
+            p_values=(0.68, 0.95, 0.99),
+        )
+        self.assertEqual([i['p_value'] for i in intervals], [0.68, 0.95, 0.99])
+        for interval in intervals:
+            lower, upper = interval['crossings']
+            self.assertLess(lower, 0.0)
+            self.assertGreater(upper, 0.0)
+            self.assertGreater(interval['threshold'], 1.0)

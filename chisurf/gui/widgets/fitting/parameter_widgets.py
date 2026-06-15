@@ -1464,14 +1464,7 @@ class FittingParameterWidget(Controller):
         # Ensure execution on the widget's thread (GUI thread). If called from another thread,
         # reschedule finalize to run on the correct thread and return immediately.
         if QtCore.QThread.currentThread() is not self.thread():
-            try:
-                # Queue the call to this object's thread (GUI thread)
-                QtCore.QMetaObject.invokeMethod(self, "finalize", QtCore.Qt.QueuedConnection)
-            except Exception:
-                # Fallback: schedule via QApplication event loop
-                app = QtWidgets.QApplication.instance()
-                if app is not None:
-                    QtCore.QTimer.singleShot(0, lambda: self.finalize())
+            QtCore.QTimer.singleShot(0, lambda: self.finalize())
             return
         #super().update(*args)
         self.blockSignals(True)

@@ -541,33 +541,36 @@ def _attach_tttr_header(fit_group, data_group):
         if k not in fit_group.flr_metadata:
             fit_group.flr_metadata[k] = v
 
-    # 4) Populate photon streams from source filenames in meta_data
-    raw_filenames = meta.get('filenames')
-    if not raw_filenames:
-        try:
-            raw_filenames = [
-                str(getattr(d, 'filename', ''))
-                for d in (data_group if hasattr(data_group, '__getitem__') else [data_group])
-                if getattr(d, 'filename', None)
-            ]
-        except Exception:
-            raw_filenames = []
-    if raw_filenames:
-        streams = []
-        for i, entry in enumerate(raw_filenames, 1):
-            if isinstance(entry, dict):
-                streams.append({
-                    "stream_id": f"stream_{i}",
-                    "file_path": entry.get('path', ''),
-                    "file_format": entry.get('format', ''),
-                })
-            else:
-                streams.append({
-                    "stream_id": f"stream_{i}",
-                    "file_path": str(entry),
-                    "file_format": "",
-                })
-        fit_group.flr_photon_streams = streams
+    # 4) Populate photon streams only for TTTR-originating data (indicated by a
+    #    non-empty tttr_header_json in meta_data). Non-TTTR files (e.g. TCSPC CSV)
+    #    set data.filename but should not appear in the photon-streams panel.
+    if meta.get('tttr_header_json'):
+        raw_filenames = meta.get('filenames')
+        if not raw_filenames:
+            try:
+                raw_filenames = [
+                    str(getattr(d, 'filename', ''))
+                    for d in (data_group if hasattr(data_group, '__getitem__') else [data_group])
+                    if getattr(d, 'filename', None)
+                ]
+            except Exception:
+                raw_filenames = []
+        if raw_filenames:
+            streams = []
+            for i, entry in enumerate(raw_filenames, 1):
+                if isinstance(entry, dict):
+                    streams.append({
+                        "stream_id": f"stream_{i}",
+                        "file_path": entry.get('path', ''),
+                        "file_format": entry.get('format', ''),
+                    })
+                else:
+                    streams.append({
+                        "stream_id": f"stream_{i}",
+                        "file_path": str(entry),
+                        "file_format": "",
+                    })
+            fit_group.flr_photon_streams = streams
 
 
 def add_fit(
@@ -577,6 +580,7 @@ def add_fit(
     _defer_cs_update: bool = False,
     _ui_updates_frozen: bool = False,
     _force_local: bool = False,
+    _skip_gui_creation: bool = False,
 ):
     # Phase 8: in server mode, route through the API so the server
     # creates the fit object.  The proxy list will pick it up on the
@@ -851,8 +855,24 @@ def add_fit(
                     source_uid=str(getattr(fit_group, "unique_identifier", "")) or "",
                 )
 
+            # During project load we skip GUI creation entirely —
+            # restore_gui_from_fits (called via QTimer) opens the windows.
+            if not _skip_gui_creation:
+                # Publish event so the GUI can create the MDI subwindow reactively
+                try:
+                    from chisurf.server.startup import get_shared_event_bus
+                    _bus = get_shared_event_bus()
+                    if _bus is not None:
+                        _bus.publish("fit.added", {
+                            "fit_uid": str(getattr(fit_group, "unique_identifier", "")),
+                            "fit_index": len(cs.fits) - 1,
+                            "fit_name": str(getattr(fit_group, "name", "")),
+                        })
+                except Exception:
+                    cs.logging.exception("add_fit: failed to publish fit.added event")
+
             # Batch UI updates to avoid repeated repaints while constructing widgets
-            if gui is not None:
+            if gui is not None and not _skip_gui_creation:
                 mdl_parent = getattr(gui.modelLayout, "parentWidget", lambda: None)()
                 plo_parent = getattr(gui.plotOptionsLayout, "parentWidget", lambda: None)()
                 try:
@@ -863,7 +883,11 @@ def add_fit(
                             plo_parent.setUpdatesEnabled(False)
                         gui.mdiarea.setUpdatesEnabled(False)
 
-                    fit_control_widget = cs.gui.widgets.fitting.FittingControllerWidget(
+                    from chisurf.gui.widgets.fitting import (
+                        FittingControllerWidget,
+                        FitSubWindow,
+                    )
+                    fit_control_widget = FittingControllerWidget(
                         fit=fit_group
                     )
                     header_layout = getattr(gui, "analysisHeaderLayout", None)
@@ -874,7 +898,7 @@ def add_fit(
                     for fit in fit_group:
                         gui.modelLayout.addWidget(fit.model)
 
-                    fit_window = cs.gui.widgets.fitting.FitSubWindow(
+                    fit_window = FitSubWindow(
                         fit=fit_group,
                         control_layout=gui.plotOptionsLayout,
                         fit_widget=fit_control_widget,
@@ -882,7 +906,8 @@ def add_fit(
 
                     fit_window.setWindowTitle(fit.name)
                     fit_window = gui.mdiarea.addSubWindow(fit_window)
-                    cs.gui.fit_windows.append(fit_window)
+                    import chisurf.gui as _gui_mod
+                    _gui_mod.fit_windows.append(fit_window)
                     gui.current_fit = fit_group
                     # Run auto-fit range synchronously so that each fit completes
                     # its range setup and model/plot updates before the next fit
@@ -2389,7 +2414,7 @@ def load_fit_project(project_path: str):
     )
 
 
-def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = None):
+def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = None, _skip_gui_creation: bool = False):
     """Restore a project state from a Project dataclass instance.
 
     Parameters
@@ -2449,10 +2474,39 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
 
     if gui is not None:
         try:
-            current_experiment_idx = ui_state.get("current_experiment_idx", 0)
-            total_exp = gui.comboBox_experimentSelect.count()
-            if 0 <= current_experiment_idx < total_exp:
-                gui.set_current_experiment_idx(current_experiment_idx)
+            # Prefer the experiment name saved in the project so that ProteinMC /
+            # Chimol projects select the correct experiment by name or key
+            # rather than relying on a hard-coded comboBox index.
+            current_exp_token = (
+                ui_state.get("current_experiment_name")
+                or ui_state.get("current_experiment_key")
+            )
+            exp_combo = getattr(gui, "comboBox_experimentSelect", None)
+            matched_idx = None
+            if isinstance(current_exp_token, str) and current_exp_token and exp_combo is not None:
+                # Try matching the comboBox display text first, then the
+                # experiment registry name/key.
+                idx = exp_combo.findText(current_exp_token)
+                if idx >= 0:
+                    matched_idx = idx
+                else:
+                    for i in range(exp_combo.count()):
+                        if exp_combo.itemText(i) == current_exp_token:
+                            matched_idx = i
+                            break
+                    if matched_idx is None:
+                        for reg_key, reg_exp in getattr(cs, "experiment", {}).items():
+                            if str(getattr(reg_exp, "name", "")) == current_exp_token or reg_key == current_exp_token:
+                                idx = exp_combo.findText(str(getattr(reg_exp, "name", reg_key)))
+                                if idx >= 0:
+                                    matched_idx = idx
+                                    break
+            if matched_idx is None:
+                current_experiment_idx = ui_state.get("current_experiment_idx", 0)
+                if exp_combo is not None and 0 <= current_experiment_idx < exp_combo.count():
+                    matched_idx = current_experiment_idx
+            if matched_idx is not None:
+                gui.set_current_experiment_idx(matched_idx)
         except Exception:
             pass
 
@@ -2657,7 +2711,7 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
             log.info("load_project: skipping GUI ProteinMC fit restore without QApplication")
             continue
         try:
-            add_fit(dataset_indices=group_indices, model_name=model_name)
+            add_fit(dataset_indices=group_indices, model_name=model_name, _skip_gui_creation=_skip_gui_creation)
         except Exception as exc:
             log.warning(f"load_project: add_fit failed for record {key}: {exc}")
             continue
@@ -2738,6 +2792,57 @@ def load_project_payload(proj: CSProject, project_path: typing.Optional[str] = N
             pass
     else:
         log.info("Project loaded from database")
+
+
+def load_project_data(project_path: str) -> list:
+    """Restore datasets and fits into cs.fits/cs.imported_datasets.
+
+    No Qt operations — safe to call from any thread or context.
+
+    Parameters
+    ----------
+    project_path : str
+        Path to the project directory containing ``project.json``.
+
+    Returns
+    -------
+    list of str
+        UIDs of the fits that were restored.
+    """
+    proj = project_load_json(project_path)
+    load_project_payload(proj, project_path, _skip_gui_creation=True)
+    return [str(getattr(f, "unique_identifier", "")) for f in getattr(cs, "fits", [])]
+
+
+def restore_gui_from_fits(fit_uids: list) -> None:
+    """Create MDI subwindows for each restored fit.
+
+    Must be called from the GUI thread. Silently skips if the
+    main window (``chisurf.cs``) is not available.
+
+    Parameters
+    ----------
+    fit_uids : list of str
+        UIDs returned by :func:`load_project_data`.
+    """
+    import chisurf as _cs
+    main_window = getattr(_cs, "cs", None)
+    if main_window is None:
+        _cs.logging.warning(
+            "restore_gui_from_fits: main window not available, skipping GUI restore"
+        )
+        return
+    for uid in fit_uids:
+        fit_obj = None
+        for f in getattr(_cs, "fits", []):
+            if str(getattr(f, "unique_identifier", "")) == str(uid):
+                fit_obj = f
+                break
+        if fit_obj is not None:
+            try:
+                main_window._open_fit_subwindow(fit_obj)
+            except Exception:
+                _cs.logging.exception("restore_gui_from_fits: failed to open subwindow for %s", uid)
 
 
 def load_project(project_path: str):

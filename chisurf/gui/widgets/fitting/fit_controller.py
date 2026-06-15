@@ -442,14 +442,18 @@ class FittingControllerWidget(Controller):
             if target_dir is None:
                 cs.logging.info("Model-defined sampling canceled!")
                 return
-            fc = get_fitting_client()
-            if fc is not None:
-                fc.start_sampling(
-                    fit_uid=str(getattr(self.fit, "unique_identifier", "") or ""),
-                    n_steps=self.n_steps,
-                    n_runs=self.n_runs,
-                    target_directory=str(target_dir) if target_dir else None,
+            # Model-specific sampling (e.g. ProteinMC) must run its own
+            # algorithm instead of the generic emcee server path, which
+            # assumes a curve-based model.
+            try:
+                sampling_handler(
+                    output_directory=target_dir,
+                    run_count=self.n_runs,
+                    n_iter=self.n_steps,
                 )
+                cs.logging.info("Model-defined sampling started.")
+            except Exception:
+                cs.logging.exception("Model-defined sampling failed")
             return
         if self._is_proteinmc_fit():
             cs.logging.warning("ProteinMC must handle Sampling itself; refusing to run generic emcee sampling.")
@@ -744,14 +748,22 @@ class FittingControllerWidget(Controller):
         try:
             fc = get_fitting_client()
             fit_uid_val = str(getattr(self.fit, "unique_identifier", "") or "")
+            range_applied_by_rpc = False
             if fc is not None:
                 result = fc.auto_fit_range(fit_uid=fit_uid_val)
                 if result.get("ok"):
                     xmin_1d, xmax_1d = result.get("xmin", 0), result.get("xmax", 0)
+                    range_applied_by_rpc = bool(result.get("applied"))
                 else:
-                    return
+                    try:
+                        xmin_1d, xmax_1d = self.fit.data.data_reader.autofitrange(self.fit.data)
+                    except Exception:
+                        return
             else:
-                return
+                try:
+                    xmin_1d, xmax_1d = self.fit.data.data_reader.autofitrange(self.fit.data)
+                except Exception:
+                    return
 
             cs.logging.info(f'onAutoFitRange: {xmin_1d, xmax_1d}')
 
@@ -785,14 +797,18 @@ class FittingControllerWidget(Controller):
                         n_flat = max(0, int(xmax_1d))
                     if fc is not None:
                         fc.set_fit_range(fit_uid=fit_uid_val, xmin=0, xmax=n_flat)
+                    else:
+                        self.fit.fit_range = (0, n_flat)
                     try:
                         self._update_2d_mask_from_spinboxes()
                     except Exception as e:
                         cs.logging.warning(f'Failed to update 2D mask after 2D autofitrange: {e}')
                 else:
                     self.xmin, self.xmax = (xmin_1d, xmax_1d)
-                    if fc is not None:
+                    if fc is not None and not range_applied_by_rpc:
                         fc.set_fit_range(fit_uid=fit_uid_val, xmin=xmin_1d, xmax=xmax_1d)
+                    elif fc is None:
+                        self.fit.fit_range = (int(xmin_1d), int(xmax_1d))
 
                 fit = self.fit
                 xmin_val = int(self.xmin)
@@ -803,8 +819,11 @@ class FittingControllerWidget(Controller):
 
                 def _do_deferred_update():
                     try:
-                        if fc is not None:
-                            fc.update_fit(fit_uid=fit_uid_val)
+                        if fc is None:
+                            try:
+                                fit.update()
+                            except Exception as e:
+                                cs.logging.warning(f"Local fit update after auto fit range failed: {e}")
                         try:
                             payload = {
                                 "fit_group": str(getattr(fit, "name", "")),
@@ -825,23 +844,6 @@ class FittingControllerWidget(Controller):
                                 summary=f"auto fit range for '{getattr(fit, 'name', '')}' to [{xmin_val}, {xmax_val})",
                                 payload=payload,
                             )
-                        except Exception:
-                            pass
-                        try:
-                            grouped = getattr(fit, "grouped_fits", None)
-                            if isinstance(grouped, (list, tuple)):
-                                models = [getattr(f, "model", None) for f in grouped]
-                            else:
-                                models = [getattr(fit, "model", None)]
-                            for m in models:
-                                hook = getattr(m, "on_auto_fit_range_completed", None)
-                                if callable(hook):
-                                    try:
-                                        hook()
-                                    except Exception as e:
-                                        cs.logging.warning(
-                                            f"FittingControllerWidget.onAutoFitRange: model hook on_auto_fit_range_completed failed: {e}"
-                                        )
                         except Exception:
                             pass
                     finally:

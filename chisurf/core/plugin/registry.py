@@ -55,8 +55,8 @@ class PluginRegistry:
         Parameters
         ----------
         search_paths : list of pathlib.Path, optional
-            Directories to search. Defaults to ``chisurf.core.plugins.__path__``,
-            ``chisurf.plugins.__path__``, and ``~/.chisurf/plugins/``.
+            Directories to search. Defaults to ``chisurf.plugins.__path__``
+            and ``~/.chisurf/plugins/``.
 
         Returns
         -------
@@ -204,12 +204,10 @@ class PluginRegistry:
 
     @staticmethod
     def _default_search_paths() -> list[pathlib.Path]:
-        from chisurf.core.plugins import __path__ as core_plugin_paths
         from chisurf.plugins import __path__ as plugin_paths
         from chisurf.plugins import user_plugins_dir
 
-        paths = [pathlib.Path(p) for p in core_plugin_paths]
-        paths.extend(pathlib.Path(p) for p in plugin_paths)
+        paths = [pathlib.Path(p) for p in plugin_paths]
         paths.append(user_plugins_dir)
         return paths
 

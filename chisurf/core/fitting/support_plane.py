@@ -202,6 +202,60 @@ def _find_side_crossing(
     return None
 
 
+def confidence_intervals_from_scan_result(
+        result: typing.Dict,
+        p_values=(0.68, 0.95, 0.99)
+) -> typing.List[typing.Dict]:
+    """Calculate p-value thresholds and crossings for a scan result.
+
+    Parameters
+    ----------
+    result : dict
+        Adaptive scan result containing ``parameter_values``, ``chi2r``,
+        ``chi2r_min``, ``v0``, ``nu``, and ``n_extra_params``.
+    p_values : iterable of float, optional
+        F-test p-values for which thresholds and crossing ranges should be
+        calculated.
+
+    Returns
+    -------
+    list of dict
+        One dictionary per p-value with ``p_value``, ``threshold`` and
+        ``crossings`` entries.
+    """
+    values = result.get('parameter_values', [])
+    chi2r = result.get('chi2r', [])
+    chi2r_min = float(result.get('chi2r_min', np.nan))
+    v0 = float(result.get('v0', np.nan))
+    nu = int(result.get('nu', 1))
+    n_extra_params = int(result.get('n_extra_params', 1))
+    intervals = []
+    if not np.isfinite(chi2r_min) or not np.isfinite(v0) or nu <= 0:
+        return intervals
+
+    for p_value in p_values:
+        try:
+            p_value = float(p_value)
+            threshold = cs.core.math.statistics.chi2_threshold(
+                chi2_min=chi2r_min,
+                n_extra_params=n_extra_params,
+                nu=nu,
+                p_value=p_value,
+            )
+        except Exception:
+            continue
+        crossings = (
+            _find_side_crossing(values, chi2r, threshold, v0, -1),
+            _find_side_crossing(values, chi2r, threshold, v0, +1),
+        )
+        intervals.append({
+            'p_value': p_value,
+            'threshold': float(threshold),
+            'crossings': crossings,
+        })
+    return intervals
+
+
 def _scan_one_side(
         fit: Fit,
         parameter,

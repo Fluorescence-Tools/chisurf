@@ -216,6 +216,9 @@ mfdb:
   default_user_id: user_default
   save_login: true
   autologin: false
+  last_server: 127.0.0.1
+  server_history:
+    - 127.0.0.1
 n_threads: 4
 optimization:
   global_optimize_local_first: false

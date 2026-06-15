@@ -228,6 +228,7 @@ class TCSPCTTTRReader(TCSPCReader):
             data_reader=self,
             ey=chisurf.core.fluorescence.tcspc.counting_noise(y)
         )
+        data_set.filename = filename
         data_group = chisurf.core.data.DataGroup([data_set])
         data_group.data_reader = self
         return data_group

@@ -122,8 +122,8 @@ class FCS(ExperimentReader):
         Returns
         -------
         tuple of int
-            ``(0, len(y))`` for curve data, ``(0, 0)`` otherwise.
+            ``(0, len(y) - 1)`` for curve data, ``(0, 0)`` otherwise.
         """
         if isinstance(data, (chisurf.core.data.DataCurve, chisurf.core.data.DataCurveGroup)):
-            return 0, len(data.y)
+            return 0, max(0, len(data.y) - 1)
         return 0, 0

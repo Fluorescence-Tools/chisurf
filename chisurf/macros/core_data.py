@@ -590,6 +590,18 @@ def add_dataset(
         else:
             cs.imported_datasets.append(dataset_group)
 
+        # Publish event so the GUI can update the dataset selector reactively
+        try:
+            from chisurf.server.startup import get_shared_event_bus
+            _bus = get_shared_event_bus()
+            if _bus is not None:
+                _bus.publish("dataset.added", {
+                    "dataset_index": len(cs.imported_datasets) - 1,
+                    "dataset_name": str(getattr(dataset, "name", "")),
+                })
+        except Exception:
+            cs.logging.exception("add_dataset: failed to publish dataset.added event")
+
         # Update UI only after successful append
         try:
             logging.info(
@@ -838,7 +850,7 @@ def reinitialize_application(
 
     _run('Resetting application state', _reset_state, 8)
     _run('Cleaning up references', _cleanup_specific_references, 9)
-    _run('Restoring main window reference', lambda: setattr(cs, 'gui', main_window) if main_window is not None else None, 9)
+    _run('Restoring main window reference', lambda: setattr(cs, 'cs', main_window) if main_window is not None else None, 9)
     _run('Force garbage collection', _force_garbage_collection, 10)
     _run('Resetting GUI components', _reset_gui_components, 10)
 

@@ -433,7 +433,10 @@ class ProteinMCStructurePlot(Plot):
             placeholder.setAlignment(QtCore.Qt.AlignCenter)
             self.layout.addWidget(placeholder, stretch=1)
         else:
-            self.viewer = ChimolView(parent=self, representation_mode="atoms")
+            # ChiSurf structure coordinates are in Angstrom; Chimol's default
+            # scale factor of 10 assumes nanometer input. Use 1.0 so the
+            # displayed size matches the RMF file and external viewers.
+            self.viewer = ChimolView(parent=self, representation_mode="atoms", scale_factor=1.0)
             self.viewer.setSizePolicy(
                 QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
             )

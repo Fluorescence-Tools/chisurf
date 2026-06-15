@@ -1356,24 +1356,64 @@ def get_win(app: QtWidgets.QApplication) -> cs.gui.main.Main:
     splash.update_progress(100)
     app.processEvents()
 
-    # Install FittingClient (ZMQ RPC adapter for widget/backend communication)
-    # Always installed.  When the server is unreachable, RPC calls return
-    # ``{"ok": False}`` — no direct in-process fallback.
+    # Install FittingClient (ZMQ RPC adapter for widget/backend communication).
+    # ZMQ connect is lazy, so probe with a short ping before exposing the
+    # transport to widgets.
     from chisurf.gui.widgets.fitting.fitting_client import install_fitting_client
+    fitting_adapter = None
     try:
         from chisurf.core.api._client import ChisurfClient
         import chisurf.core.settings as cs_settings
+        try:
+            _ensure_chisurf_rpc_server()
+        except Exception as _server_err:
+            logging.warning(f"FittingClient embedded server unavailable: {_server_err}")
         mfdb_cfg = cs_settings.cs_settings.get("mfdb", {})
-        _fitting_client = ChisurfClient(
+        fitting_transport = ChisurfClient(
             cmd_port=int(mfdb_cfg.get("cmd_port", 8765)),
             pub_port=int(mfdb_cfg.get("pub_port", 8766)),
             host=str(mfdb_cfg.get("rpc_host", "127.0.0.1")),
+            timeout_ms=int(mfdb_cfg.get("fitting_timeout_ms", 300)),
         )
-        _fitting_client.connect()
-        install_fitting_client(_fitting_client)
+        fitting_transport.connect()
+        fitting_transport.call("meta.ping", {})
+        fitting_adapter = install_fitting_client(fitting_transport)
     except Exception as _fc_err:
         logging.warning(f"FittingClient server unreachable: {_fc_err}")
-        install_fitting_client()
+        fitting_adapter = install_fitting_client()
+
+    # ── Event wiring (Phase 0) ─────────────────────────────────────────
+    import chisurf as _cs_ref
+    import chisurf.logging as _cs_log
+
+    def _handle_server_event(payload: dict) -> None:
+        try:
+            w = getattr(_cs_ref, "cs", None)
+            if w is not None:
+                w._on_server_event(payload)
+        except Exception:
+            _cs_log.exception("Error routing server event to GUI")
+
+    for _topic in ("fit.", "parameter.", "dataset.", "session.", "project.", "globalview."):
+        try:
+            fitting_adapter.subscribe(_topic, _handle_server_event)
+        except Exception:
+            logging.warning(f"Could not subscribe to topic '{_topic}'")
+
+    try:
+        from chisurf.gui.zmq_poller import ZmqSubscriberPoller
+        poller_client = getattr(getattr(fitting_adapter, "_client", None), "_client", None)
+        if poller_client is not None:
+            window._zmq_poller = ZmqSubscriberPoller(
+                poller_client,
+                poll_interval_ms=50,
+                parent=window,
+            )
+            logging.info("ZmqSubscriberPoller started (50 ms)")
+        else:
+            logging.info("ZmqSubscriberPoller not started; fitting RPC unavailable")
+    except Exception:
+        logging.exception("Failed to start ZmqSubscriberPoller")
 
     window.show()
     splash.hide()
@@ -1540,41 +1580,45 @@ def _mfdb_rpc_config() -> dict[str, int | str]:
     }
 
 
-def _mfdb_rpc_is_available(timeout_ms: int = 500) -> bool:
-    """Return whether the configured MFDB RPC endpoint responds."""
-    from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-
+def _chisurf_rpc_is_available(timeout_ms: int = 500) -> bool:
+    """Return whether the configured ChiSurf RPC endpoint responds."""
     cfg = _mfdb_rpc_config()
     try:
-        MFDBClient(
+        from chisurf.server.startup import rpc_is_available
+        return rpc_is_available(
             host=str(cfg["host"]),
             cmd_port=int(cfg["cmd_port"]),
             pub_port=int(cfg["pub_port"]),
             timeout_ms=timeout_ms,
-        ).list_users()
-        return True
+        )
     except Exception:
         return False
 
 
-def _ensure_mfdb_rpc_server() -> None:
-    """Start the embedded MFDB RPC server when no external server responds."""
-    if _mfdb_rpc_is_available(timeout_ms=300):
+def _ensure_chisurf_rpc_server() -> None:
+    """Start the embedded ChiSurf RPC server when no external server responds."""
+    if _chisurf_rpc_is_available(timeout_ms=300):
         return
 
-    existing = getattr(chisurf, "__mfdb_rpc_server__", None)
+    existing = (
+        getattr(chisurf, "__chisurf_rpc_server__", None)
+        or getattr(chisurf, "__mfdb_rpc_server__", None)
+    )
     if existing is not None:
-        if _mfdb_rpc_is_available(timeout_ms=1000):
+        if _chisurf_rpc_is_available(timeout_ms=1000):
             return
-        raise RuntimeError("Embedded MFDB RPC server exists but is not responding")
+        raise RuntimeError("Embedded ChiSurf RPC server exists but is not responding")
 
     cfg = _mfdb_rpc_config()
     from chisurf.server.app import ChiSurfServer
+    from chisurf.server.startup import session_state_from_live_chisurf
 
+    state = session_state_from_live_chisurf()
     server = ChiSurfServer(
         host=str(cfg["host"]),
         cmd_port=int(cfg["cmd_port"]),
         pub_port=int(cfg["pub_port"]),
+        state=state,
     )
     thread = threading.Thread(
         target=server.serve_forever,
@@ -1583,16 +1627,18 @@ def _ensure_mfdb_rpc_server() -> None:
     )
     thread.start()
 
+    chisurf.__chisurf_rpc_server__ = server
+    chisurf.__chisurf_rpc_server_thread__ = thread
     chisurf.__mfdb_rpc_server__ = server
     chisurf.__mfdb_rpc_server_thread__ = thread
     atexit.register(server.stop)
 
     deadline = time.time() + 5.0
     while time.time() < deadline:
-        if _mfdb_rpc_is_available(timeout_ms=200):
+        if _chisurf_rpc_is_available(timeout_ms=200):
             return
         time.sleep(0.05)
-    raise RuntimeError("Embedded MFDB RPC server did not become ready")
+    raise RuntimeError("Embedded ChiSurf RPC server did not become ready")
 
 
 class LoginDialog(QtWidgets.QDialog):
@@ -1600,8 +1646,8 @@ class LoginDialog(QtWidgets.QDialog):
         super().__init__(parent)
         self.setWindowTitle("ChiSurf Login")
         self.setModal(True)
-        self.setMinimumSize(360, 260)
-        self.resize(420, 300)
+        self.setMinimumSize(360, 220)
+        self.resize(420, 250)
 
         root_layout = QtWidgets.QVBoxLayout(self)
         root_layout.setSpacing(10)
@@ -1634,6 +1680,20 @@ class LoginDialog(QtWidgets.QDialog):
         layout = QtWidgets.QFormLayout()
         layout.setSpacing(8)
         
+        # Server and port row
+        server_layout = QtWidgets.QHBoxLayout()
+        self.server_combo = QtWidgets.QComboBox()
+        self.server_combo.setEditable(True)
+        self.server_combo.setPlaceholderText("127.0.0.1")
+        self.server_combo.setMinimumWidth(150)
+        self.port_spin = QtWidgets.QSpinBox()
+        self.port_spin.setRange(1, 65535)
+        self.port_spin.setValue(8765)
+        self.port_spin.setMinimumWidth(60)
+        self.port_spin.setMaximumWidth(80)
+        server_layout.addWidget(self.server_combo, 1)
+        server_layout.addWidget(self.port_spin, 0)
+        
         self.user_combo = QtWidgets.QComboBox()
         self.password_edit = QtWidgets.QLineEdit()
         self.password_edit.setEchoMode(QtWidgets.QLineEdit.Password)
@@ -1643,24 +1703,37 @@ class LoginDialog(QtWidgets.QDialog):
         self.btn_login = QtWidgets.QPushButton("Login")
         self.btn_cancel = QtWidgets.QPushButton("Cancel")
         
-        # Load users
-        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
-        try:
-            self.client = MFDBClient()
-            self.users = self.client.list_users()
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Database Error", f"Failed to connect to database:\n{e}")
-            self.users = []
-            
-        for u in self.users:
-            display = f"{u['display_name']} ({u['user_id']})"
-            if u.get("is_admin"):
-                display += " [Admin]"
-            self.user_combo.addItem(display, u["user_id"])
-            
-        # Select default user
+        # Load settings
         import chisurf.core.settings as cs_settings
         mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
+        
+        # Load server history
+        server_history = mfdb_settings.get("server_history", ["127.0.0.1"])
+        last_server = mfdb_settings.get("last_server", "127.0.0.1")
+        last_port = mfdb_settings.get("last_port", 8765)
+        
+        # Populate server combo with history, avoiding duplicates
+        seen_servers = set()
+        for server in server_history:
+            if server not in seen_servers:
+                self.server_combo.addItem(server)
+                seen_servers.add(server)
+        
+        # Set the last connected server (or first in history if not found)
+        idx = self.server_combo.findText(last_server)
+        if idx >= 0:
+            self.server_combo.setCurrentIndex(idx)
+        else:
+            self.server_combo.setCurrentText(last_server)
+        
+        # Set the last connected port
+        self.port_spin.setValue(int(last_port))
+        
+        # Load users from server
+        self.users = []
+        self.load_users_from_server()
+        
+        # Select default user
         default_user = mfdb_settings.get("default_user_id", "user_default")
         idx = self.user_combo.findData(default_user)
         if idx >= 0:
@@ -1668,6 +1741,7 @@ class LoginDialog(QtWidgets.QDialog):
         self.save_login_check.setChecked(bool(mfdb_settings.get("save_login", True)))
         self.auto_login_check.setChecked(bool(mfdb_settings.get("autologin", False)))
             
+        layout.addRow("Server:", server_layout)
         layout.addRow("Select User:", self.user_combo)
         layout.addRow("Password:", self.password_edit)
         layout.addRow("", self.save_login_check)
@@ -1683,8 +1757,13 @@ class LoginDialog(QtWidgets.QDialog):
         self.btn_login.clicked.connect(self.handle_login)
         self.btn_cancel.clicked.connect(self.reject)
         
+        self.server_combo.currentTextChanged.connect(self.on_server_changed)
+        self.port_spin.valueChanged.connect(self.on_port_changed)
         self.user_combo.currentIndexChanged.connect(self.on_user_changed)
         self.on_user_changed()
+        
+        # Set default focus to password field
+        self.password_edit.setFocus()
         
     def on_user_changed(self):
         user_id = self.user_combo.currentData()
@@ -1694,7 +1773,52 @@ class LoginDialog(QtWidgets.QDialog):
             self.password_edit.setEnabled(has_pw)
             if not has_pw:
                 self.password_edit.clear()
+        
+    def on_server_changed(self, text):
+        """Called when server address changes - reload users from new server."""
+        self.load_users_from_server()
+    
+    def on_port_changed(self, value):
+        """Called when port changes - reload users from server with new port."""
+        self.load_users_from_server()
+        
+    def load_users_from_server(self):
+        """Load users from the currently configured server."""
+        from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
+        
+        server_host = self.server_combo.currentText() or "127.0.0.1"
+        port = self.port_spin.value()
+        try:
+            # Create a new client with the current server host and port
+            self.client = MFDBClient(host=server_host, cmd_port=port, pub_port=port + 1)
+            self.users = self.client.list_users()
+            
+            # Remember current selection before clearing
+            current_user_id = self.user_combo.currentData()
+            
+            # Clear and repopulate user combo
+            self.user_combo.clear()
+            for u in self.users:
+                display = f"{u['display_name']} ({u['user_id']})"
+                if u.get("is_admin"):
+                    display += " [Admin]"
+                self.user_combo.addItem(display, u["user_id"])
                 
+            # Restore selection: try current user first, then default user
+            idx = self.user_combo.findData(current_user_id)
+            if idx < 0:
+                import chisurf.core.settings as cs_settings
+                mfdb_settings = cs_settings.cs_settings.get("mfdb", {})
+                default_user = mfdb_settings.get("default_user_id", "user_default")
+                idx = self.user_combo.findData(default_user)
+            if idx >= 0:
+                self.user_combo.setCurrentIndex(idx)
+                
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Database Error", f"Failed to connect to server '{server_host}':\n{e}")
+            self.users = []
+            self.user_combo.clear()
+            
     def handle_login(self):
         user_id = self.user_combo.currentData()
         password = self.password_edit.text()
@@ -1730,11 +1854,33 @@ class LoginDialog(QtWidgets.QDialog):
                     cs_settings.cs_settings["mfdb"]["default_user_id"] = user_id
                 cs_settings.cs_settings["mfdb"]["save_login"] = self.save_login_check.isChecked()
                 cs_settings.cs_settings["mfdb"]["autologin"] = self.auto_login_check.isChecked()
+                # Save server host and update history
+                server_host = self.server_combo.currentText() or "127.0.0.1"
+                
+                # Update server history
+                server_history = cs_settings.cs_settings.get("mfdb", {}).get("server_history", [])
+                if server_host not in server_history:
+                    server_history.insert(0, server_host)
+                    # Keep only last 5 servers
+                    if len(server_history) > 5:
+                        server_history = server_history[:5]
+                else:
+                    # Move to front if already exists
+                    server_history.remove(server_host)
+                    server_history.insert(0, server_host)
+                
+                cs_settings.cs_settings["mfdb"]["server_history"] = server_history
+                cs_settings.cs_settings["mfdb"]["last_server"] = server_host
+                cs_settings.cs_settings["mfdb"]["last_port"] = self.port_spin.value()
+                
                 if hasattr(cs_settings, "mfdb"):
                     if self.save_login_check.isChecked():
                         cs_settings.mfdb["default_user_id"] = user_id
                     cs_settings.mfdb["save_login"] = self.save_login_check.isChecked()
                     cs_settings.mfdb["autologin"] = self.auto_login_check.isChecked()
+                    cs_settings.mfdb["server_history"] = server_history
+                    cs_settings.mfdb["last_server"] = server_host
+                    cs_settings.mfdb["last_port"] = self.port_spin.value()
                     
                 self.accept()
             else:
@@ -1759,12 +1905,14 @@ def get_app():
         from chisurf.plugins.core.mfdb_admin.gui.client import MFDBClient
         import chisurf.core.settings as cs_settings
 
-        _ensure_mfdb_rpc_server()
+        _ensure_chisurf_rpc_server()
         
         default_user = cs_settings.cs_settings.get("mfdb", {}).get("default_user_id", "user_default")
         autologin = cs_settings.cs_settings.get("mfdb", {}).get("autologin", False)
+        server_host = cs_settings.cs_settings.get("mfdb", {}).get("last_server", "127.0.0.1")
+        server_port = cs_settings.cs_settings.get("mfdb", {}).get("last_port", 8765)
         
-        client = MFDBClient()
+        client = MFDBClient(host=server_host, cmd_port=server_port, pub_port=server_port + 1)
         users = client.list_users()
         user_data = next((u for u in users if u["user_id"] == default_user), None)
         

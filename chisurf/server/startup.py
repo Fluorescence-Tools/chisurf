@@ -151,6 +151,30 @@ def rpc_is_available(
         return False
 
 
+def get_shared_event_bus() -> Any:
+    """Return the event bus of the running embedded ChiSurf RPC server.
+
+    Returns ``None`` when no embedded server is running (e.g. in tests
+    that connect to an external server, or in headless mode).
+
+    Returns
+    -------
+    InProcessEventBus or None
+        The event bus, or ``None``.
+    """
+    try:
+        import chisurf as _cs
+        server = (
+            getattr(_cs, "__chisurf_rpc_server__", None)
+            or getattr(_cs, "__mfdb_rpc_server__", None)
+        )
+        if server is not None:
+            return getattr(server, "event_bus", None)
+    except Exception:
+        pass
+    return None
+
+
 def session_state_from_live_chisurf() -> Any:
     """Create a ``SessionState`` that references the live GUI session objects.
 

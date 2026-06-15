@@ -112,29 +112,17 @@
     <item row="2" column="0">
      <widget class="QLabel" name="label_3">
       <property name="text">
-       <string>P-val</string>
+       <string>p value</string>
       </property>
      </widget>
     </item>
     <item row="2" column="1" colspan="2">
-     <widget class="QDoubleSpinBox" name="doubleSpinBox_3">
+     <widget class="QLineEdit" name="lineEditPValues">
       <property name="toolTip">
-       <string>F-test p-value threshold</string>
+       <string>Comma-separated F-test p-value thresholds</string>
       </property>
-      <property name="decimals">
-       <number>4</number>
-      </property>
-      <property name="maximum">
-       <double>0.999900000000000</double>
-      </property>
-      <property name="minimum">
-       <double>0.500000000000000</double>
-      </property>
-      <property name="singleStep">
-       <double>0.010000000000000</double>
-      </property>
-      <property name="value">
-       <double>0.990000000000000</double>
+      <property name="text">
+       <string>0.68, 0.95, 0.99</string>
       </property>
      </widget>
     </item>
